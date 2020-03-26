@@ -1,0 +1,40 @@
+#!/usr/bin/env node
+
+'use strict'
+
+let debug = require( 'debug' )( 'www:server' )
+let http = require( 'http' )
+
+
+let { init } = require( '../app' )
+
+let app = init( )
+
+let port = process.env.PORT || 3000
+
+app.set( 'port', port )
+
+let server = http.createServer( app )
+
+server.on( 'error', err => {
+  let bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
+
+  switch ( error.code ) {
+    case 'EACCES':
+      console.error( bind + ' whattt requires elevated privileges' )
+      process.exit( 1 )
+      break
+    case 'EADDRINUSE':
+      console.error( bind + ' is already in use' )
+      process.exit( 1 )
+      break
+    default:
+      throw error
+  }
+} )
+
+server.on( 'listening', ( ) => {
+  debug( `Listening on ${server.address().port}` )
+} )
+
+server.listen( port )

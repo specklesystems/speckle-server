@@ -1,0 +1,28 @@
+{
+  "name": "server",
+  "version": "2.0.0",
+  "description": "speckle server",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www",
+    "test": "mocha -s 0 --exit",
+    "dev-test": "mocha --watch -s 0 --exit"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "app-root-path": "^3.0.0",
+    "body-parser": "^1.19.0",
+    "debug": "^4.1.1",
+    "express": "^4.17.1",
+    "knex": "^0.20.12",
+    "morgan": "^1.10.0",
+    "morgan-debug": "^2.0.0",
+    "pg": "^7.18.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "mocha": "^7.1.1"
+  }
+}
