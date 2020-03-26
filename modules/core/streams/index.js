@@ -1,6 +1,6 @@
 'use strict'
 const root = require( 'app-root-path' )
-const { getStreams, getStream, createStream, updateStream } = require( './controllers/streams' )
+const { getStreams, getStream, createStream, updateStream } = require( './controllers' )
 const { authenticate, authorize, announce } = require( `${root}/modules/shared` )
 
 const streams = require( 'express' ).Router( { mergeParams: true } )

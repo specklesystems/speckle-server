@@ -3,7 +3,7 @@
 const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
-const Streams = ( ) => knex( 'streams' )
+// const Streams = ( ) => knex( 'streams' )
 // const References = () => knex('references')
 
 module.exports = {

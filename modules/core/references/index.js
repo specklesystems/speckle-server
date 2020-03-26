@@ -1,6 +1,6 @@
 'use strict'
 
-const { getReferences, getReference, createReference, updateReference } = require( './controllers/references' )
+const { getReferences, getReference, createReference, updateReference } = require( './controllers' )
 
 // References (branches & tags)
 const references = require( 'express' ).Router( { mergeParams: true } )

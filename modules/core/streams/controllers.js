@@ -1,6 +1,6 @@
 'use strict'
 
-const { getStream, createStream, updateStream } = require( '../queries/streams' )
+const { getStream, createStream, updateStream } = require( './queries' )
 
 module.exports = {
 
