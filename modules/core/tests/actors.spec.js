@@ -10,7 +10,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${root}/db/knex` )
 
-const { createActor, getActor, updateActor, deleteActor } = require( '../queries/actors' )
+const { createActor, getActor, updateActor, deleteActor } = require( '../actors/queries' )
 
 describe( 'Actors', ( ) => {
   before( async ( ) => {

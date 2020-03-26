@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www",
     "test": "mocha -s 0 --exit",
-    "dev-test": "mocha --watch -s 0 --exit"
+    "test-watch": "mocha --watch -s 0 --exit"
   },
   "author": "",
   "license": "MIT",
