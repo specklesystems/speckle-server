@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "app-root-path": "^3.0.0",
+    "bcrypt": "^4.0.1",
     "body-parser": "^1.19.0",
     "debug": "^4.1.1",
     "express": "^4.17.1",

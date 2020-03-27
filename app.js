@@ -15,13 +15,13 @@ exports.init = ( ) => {
   app.use( bodyParser.urlencoded( { extended: false } ) )
 
   // Error responses
-  app.use( ( err, req, res, next ) => {
-    res.status( err.status || 500 )
-    res.json( {
-      message: err.message,
-      error: err
-    } )
-  } )
+  // app.use( ( err, req, res, next ) => {
+  //   res.status( err.status || 500 )
+  //   res.json( {
+  //     message: err.message,
+  //     error: err
+  //   } )
+  // } )
 
   app.get( '/', ( req, res ) => {
     res.send( { fantastic: 'speckle' } )

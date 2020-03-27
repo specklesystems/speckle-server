@@ -2,6 +2,7 @@
 
 // Knex table migrations
 exports.up = async knex => {
+  await knex.raw( 'CREATE EXTENSION IF NOT EXISTS "pgcrypto"' )
 
   // Streams Table
   await knex.schema.createTable( 'streams', table => {
@@ -9,7 +10,7 @@ exports.up = async knex => {
     table.text( 'name' )
     table.text( 'description' )
     table.boolean( 'public' ).defaultTo( true )
-    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'actors' ).notNullable( )
+    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.uuid( 'cloned_from' ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.unique( [ 'owner_id', 'name' ] )
@@ -68,7 +69,7 @@ exports.up = async knex => {
   } )
 
   await knex.schema.createTable( 'user_commits', table => {
-    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'actors' ).notNullable( )
+    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' )
   } )
 }
