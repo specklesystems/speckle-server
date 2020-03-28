@@ -24,20 +24,25 @@ describe( 'Streams', ( ) => {
     // await knex.migrate.rollback( )
 
   } )
+  
+  describe( 'Services/Queries', ( ) => {
 
-  describe( 'CRUD', ( ) => {
+  } )
+
+  describe( 'Integration', ( ) => {
 
     let myTestStream = { name: 'woowowo', id: 'noids', description: 'wonderful test stream' }
 
     it( 'Should create a stream', async ( ) => {
       const res = await chai.request( app ).post( '/streams' ).send( myTestStream )
-
+      assert.fail( )
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )
     } )
 
     it( 'Should get a stream', async ( ) => {
       const res = await chai.request( app ).get( `/streams/${myTestStream.id}` )
+      assert.fail( )
 
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )
@@ -47,6 +52,7 @@ describe( 'Streams', ( ) => {
     it( 'Should update a stream', async ( ) => {
       const res = await chai.request( app ).put( `/streams/${myTestStream.id}` ).send( { name: 'new name' } )
       const resUpdated = await chai.request( app ).get( `/streams/${myTestStream.id}` )
+      assert.fail( )
 
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )

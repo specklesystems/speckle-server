@@ -10,7 +10,7 @@ module.exports = {
   createStream: ( stream ) => {
     delete stream.id
     delete stream.created_at
-    return Streams( ).returning( 'id' ).insert( stream )
+    // return Streams( ).returning( 'id' ).insert( stream )
   },
 
   getStream: ( id ) => {
