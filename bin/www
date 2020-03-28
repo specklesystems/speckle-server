@@ -16,7 +16,7 @@ app.set( 'port', port )
 
 let server = http.createServer( app )
 
-server.on( 'error', err => {
+server.on( 'error', error => {
   let bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
 
   switch ( error.code ) {

@@ -13,13 +13,14 @@ You will need to have a postgres instance running on the default settings, with 
 ### Commit style
 When pushing commits to this repo, please follow the following guidelines: 
 
-1) Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors)
-2) Write code ;) 
-3) When ready to commit, type in the commandline `git cz` & follow the instructions. 
+1) Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally
+3) When ready to commit, type in the commandline `git cz` & follow the prompts.
 
-## Modularity Architecture
+## Modules
 
 The server dynamically loads individual 'modules' from each top level folder in `./modules`. It first loads the core modules, and thereafter others ("third party"). 
+
+### Loading
 
 Loading consists of two stages: 
 - **Preflight**: stage where a module can configure the behaviour of any shared middleware. 
@@ -27,10 +28,26 @@ Loading consists of two stages:
 
 Modules can create new and alter old database tables, if the knex migration files are present in a `migrations` subfolder (e.g., `./modules/your-module/migrations/my-new-table.js`). 
 
-Modules should include test files. These should be located in `./modules/your-module/test`. 
+### Structure
 
-TODOs: 
-- Enforce a certain loading order of third party modules. 
+A module should contain in its root folder an index.js file that exposes two functions: 
+
+```js
+exports.preflight = ( ) => { }
+exports.init = ( app ) => { }
+```
+
+Any database migration files should be stored and named accordingly in a `migrations` folder. Moreover, modules should include test files. These should be located in `tests`. Here's a sample structure: 
+
+```
+
+|-- index.js // entry file
+|-- migrations
+    `-- myTable.js
+`-- tests
+    `-- example.spec.js
+
+```
 
 ## Authentication & Authorization
 
