@@ -28,7 +28,6 @@ exports.init = ( ) => {
   } )
 
   require( './modules' )( app )
-  // TODO: load modules
 
   return app
 }

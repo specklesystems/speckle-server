@@ -123,11 +123,15 @@ describe( 'Actors & Tokens', ( ) => {
         expect( res.valid ).to.equal( false )
       } )
 
+      it( 'Should refuse an expired token', async ( ) => {
+        // TODO
+        assert.fail( )
+      } )
+
       it( 'Should get the tokens of an user', async ( ) => {
         let userTokens = await getUserTokens( myTestActor.id )
         expect( userTokens ).to.be.an( 'array' )
         expect( userTokens ).to.have.lengthOf( 2 )
-        // assert.fail( )
       } )
     } )
 

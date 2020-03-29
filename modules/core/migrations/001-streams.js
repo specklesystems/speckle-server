@@ -10,10 +10,28 @@ exports.up = async knex => {
     table.text( 'name' )
     table.text( 'description' )
     table.boolean( 'public' ).defaultTo( true )
-    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.uuid( 'cloned_from' ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
-    table.unique( [ 'owner_id', 'name' ] )
+    table.timestamp( 'updated_at' ).defaultTo( knex.fn.now( ) )
+    // table.unique( [ 'owner_id', 'name' ] )
+  } )
+
+  // creates an enum type for stream acl roles.
+  await knex.raw( `
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'speckle_acl_role_type') THEN
+        CREATE TYPE speckle_acl_role_type AS ENUM( 'owner', 'admin', 'write', 'read' );
+      END IF;
+    END$$;
+    ` )
+
+  await knex.schema.createTable( 'stream_acl', table => {
+    table.uuid( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.uuid( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.primary( [ 'user_id', 'stream_id' ] )
+    table.unique( ['user_id', 'stream_id' ] )
+    table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
   } )
 
   // Objects Table
@@ -36,7 +54,7 @@ exports.up = async knex => {
     DO $$
     BEGIN
       IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'speckle_reference_type') THEN
-        CREATE TYPE speckle_reference_type AS ENUM('branch', 'tag');
+        CREATE TYPE speckle_reference_type AS ENUM( 'branch', 'tag' );
       END IF;
     END$$;
     ` )
@@ -75,6 +93,7 @@ exports.up = async knex => {
 }
 
 exports.down = async knex => {
+  await knex.schema.dropTableIfExists( 'stream_acl' )
   await knex.schema.dropTableIfExists( 'stream_commits' )
   await knex.schema.dropTableIfExists( 'branch_commits' )
   await knex.schema.dropTableIfExists( 'user_commits' )
@@ -82,4 +101,5 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
   await knex.raw( `DROP TYPE IF EXISTS speckle_reference_type ` )
+  await knex.raw( `DROP TYPE IF EXISTS speckle_acl_role_type ` )
 }
