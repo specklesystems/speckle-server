@@ -10,7 +10,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${root}/db/knex` )
 
-const { createUser, getUser, updateUser, deleteUser, validatePasssword, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/queries' )
+const { createUser, getUser, updateUser, deleteUser, validatePasssword, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
 
 describe( 'Actors & Tokens', ( ) => {
   let myTestActor = {

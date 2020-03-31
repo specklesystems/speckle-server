@@ -10,8 +10,8 @@ const expect = chai.expect
 chai.use( chaiHttp )
 
 
-const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/queries' )
-const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/queries' )
+const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
+const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
 
 describe( 'Streams', ( ) => {
 
@@ -46,30 +46,32 @@ describe( 'Streams', ( ) => {
 
     } )
 
-    it( 'Should create a stream', async ( ) => {
-      testStream.id = await createStream( testStream, userOne.id )
-      expect( testStream ).to.have.property( 'id' )
-      expect( testStream.id ).to.not.be.null
+    describe( 'Base CRUD', ( ) => {
+      it( 'Should create a stream', async ( ) => {
+        testStream.id = await createStream( testStream, userOne.id )
+        expect( testStream ).to.have.property( 'id' )
+        expect( testStream.id ).to.not.be.null
 
-      secondTestStream.id = await createStream( secondTestStream, userOne.id )
-      expect( secondTestStream.id ).to.not.be.null
-    } )
+        secondTestStream.id = await createStream( secondTestStream, userOne.id )
+        expect( secondTestStream.id ).to.not.be.null
+      } )
 
-    it( 'Should get a stream', async ( ) => {
-      let stream = await getStream( testStream.id )
-      expect( stream ).to.not.be.null
-    } )
+      it( 'Should get a stream', async ( ) => {
+        let stream = await getStream( testStream.id )
+        expect( stream ).to.not.be.null
+      } )
 
-    it( 'Should update a stream', async ( ) => {
-      let sid = await updateStream( testStream.id, { name: "Modified Name", description: 'Wooot' } )
-      let stream = await getStream( testStream.id )
-      expect( stream.name ).to.equal( 'Modified Name' )
-      expect( stream.description ).to.equal( 'Wooot' )
-    } )
+      it( 'Should update a stream', async ( ) => {
+        let sid = await updateStream( testStream.id, { name: "Modified Name", description: 'Wooot' } )
+        let stream = await getStream( testStream.id )
+        expect( stream.name ).to.equal( 'Modified Name' )
+        expect( stream.description ).to.equal( 'Wooot' )
+      } )
 
-    it( 'Should get all streams for a user', async ( ) => {
-      let all = await getStreamsUser( userOne.id )
-      expect( all ).to.have.lengthOf( 2 )
+      it( 'Should get all streams for a user', async ( ) => {
+        let all = await getStreamsUser( userOne.id )
+        expect( all ).to.have.lengthOf( 2 )
+      } )
     } )
 
     describe( 'Sharing', ( ) => {
@@ -127,11 +129,9 @@ describe( 'Streams', ( ) => {
 
     } )
 
-
-
   } )
 
-  describe( 'Integration', ( ) => {
+  describe( 'Integration (API)', ( ) => {
 
     // The express app
     let app = null

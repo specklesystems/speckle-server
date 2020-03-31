@@ -7,6 +7,7 @@ const Streams = ( ) => knex( 'streams' )
 const Acl = ( ) => knex( 'stream_acl' )
 
 module.exports = {
+  
   createStream: async ( stream, ownerId ) => {
     delete stream.id
     delete stream.created_at
@@ -22,11 +23,6 @@ module.exports = {
     return Streams( ).where( { id: streamId } ).first( )
   },
 
-  /**
-   * @param  {string} The streamId you want to update
-   * @param  {object} The stream fields you want to update
-   * @return {string} the id of the updated stream
-   */
   updateStream: async ( streamId, stream ) => {
     delete stream.id
     delete stream.created_at
@@ -44,8 +40,6 @@ module.exports = {
     let query = Acl( ).insert( { user_id: userId, stream_id: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
 
     await knex.raw( query )
-
-
   },
 
   revokePermissionsStream: async ( streamId, userId ) => {
