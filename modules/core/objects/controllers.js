@@ -1,20 +1,19 @@
 'use strict'
 
 module.exports = {
-  getReferences: ( req, res, next ) => {
+  getObjects: ( req, res, next ) => {
     res.send( [ 1, 3, 4 ] )
   },
 
-  getReference: ( req, res, next ) => {
+  getObject: ( req, res, next ) => {
     res.send( { todo: true } )
   },
 
-  createReference: ( req, res, next ) => {
+  createObject: ( req, res, next ) => {
     res.send( { todo: true } )
   },
 
-  updateReference: ( req, res, next ) => {
+  updateObject: ( req, res, next ) => {
     res.send( { todo: true } )
   }
 }
-

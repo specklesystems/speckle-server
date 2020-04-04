@@ -31,7 +31,6 @@ describe( 'Streams', ( ) => {
 
   after( async ( ) => {
     await knex.migrate.rollback( )
-
   } )
 
   describe( 'Services/Queries', ( ) => {
@@ -143,14 +142,16 @@ describe( 'Streams', ( ) => {
     let myTestStream = { name: 'woowowo', id: 'noids', description: 'wonderful test stream' }
 
     it( 'Should create a stream', async ( ) => {
-      assert.fail( )
+      assert.fail( 'Not implemented yet.' )
+ 
       const res = await chai.request( app ).post( '/streams' ).send( myTestStream )
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )
     } )
 
     it( 'Should get a stream', async ( ) => {
-      assert.fail( )
+      assert.fail( 'Not implemented yet.' )
+      
       const res = await chai.request( app ).get( `/streams/${myTestStream.id}` )
 
       expect( res ).to.have.status( 200 )
@@ -159,7 +160,8 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Should update a stream', async ( ) => {
-      assert.fail( )
+      assert.fail( 'Not implemented yet.' )
+      
       const res = await chai.request( app ).put( `/streams/${myTestStream.id}` ).send( { name: 'new name' } )
       const resUpdated = await chai.request( app ).get( `/streams/${myTestStream.id}` )
 
@@ -172,7 +174,7 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Should delete a stream', async ( ) => {
-      assert.fail( )
+      assert.fail( 'Not implemented yet.' )
     } )
 
 
