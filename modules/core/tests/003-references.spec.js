@@ -18,9 +18,11 @@ const {
   updateTag,
   getTagById,
   deleteTagById,
+  getTagsByStreamId,
   createBranch,
   updateBranch,
   getBranchById,
+  getBranchesByStreamId,
   getStreamReferences
 } = require( '../references/services' )
 
@@ -73,7 +75,9 @@ describe( 'Tags & Branches', ( ) => {
     it( 'Should create a branch', async ( ) => {
       branch.id = await createBranch( branch, stream.id, user.id )
       expect( branch.id ).to.be.not.null
+    } )
 
+    it( 'Should not allow dupe branches', async ( ) => {
       try {
         await createBranch( branch, stream.id, user.id )
         assert.fail( 'Duplicate branches should not be allowed.' )
@@ -136,7 +140,12 @@ describe( 'Tags & Branches', ( ) => {
       expect( myTag ).to.deep.equal( tag )
     } )
 
-    it( 'Should update a tag', async ( ) => {} )
+    it( 'Should update a tag', async ( ) => {
+      await updateTag( { id: tag.id, name: 'v.1000.000.000+ultra', description: 'the ultimate release' } )
+      let myTag = await getTagById( tag.id )
+      expect( myTag.name ).to.equal( 'v.1000.000.000+ultra' )
+      expect( myTag.description ).to.equal( 'the ultimate release' )
+    } )
 
     it( 'Should get all stream references', async ( ) => {
       let references = await getStreamReferences( stream.id )
@@ -148,10 +157,17 @@ describe( 'Tags & Branches', ( ) => {
     } )
 
     it( 'Should get all stream tags', async ( ) => {
-
-    } )    
+      await createTag( { name: 'v3.0.0', commit_id: commit2.hash }, stream.id, user.id )
+      await createTag( { name: 'v4.0.0', commit_id: commit1.hash }, stream.id, user.id )
+      let tags = await getTagsByStreamId( stream.id )
+      expect( tags ).to.have.lengthOf( 4 )
+    } )
 
     it( 'Should get all stream branches', async ( ) => {
+      await createBranch( { name: 'master' }, stream.id, user.id ) // an actually useful branch name
+      await await createBranch( { name: 'dim-dev' }, stream.id, user.id )
+      let branches = await getBranchesByStreamId( stream.id )
+      expect( branches ).to.have.lengthOf( 3 )
 
     } )
 

@@ -38,7 +38,7 @@ module.exports = {
   },
 
   getTagsByStreamId: async ( streamId ) => {
-
+    return Refs( ).where( { stream_id: streamId, type: 'tag' } ).select( '*' )
   },
 
   /*
@@ -81,19 +81,15 @@ module.exports = {
     return branch
   },
 
+  getBranchesByStreamId: async ( streamId ) => {
+    return Refs( ).where( { stream_id: streamId, type: 'branch' } ).select( '*' )
+  },
+
   /*
     Generic
    */
   getStreamReferences: async ( streamId ) => {
     return Refs( ).where( { stream_id: streamId } ).select( '*' )
-  },
-
-  getStreamBranches: async ( streamId ) => {
-    return Refs( ).where( { stream_id: streamId, type: 'branch' } ).select( '*' )
-  },
-
-  getStreamTags: async ( streamId ) => {
-    return Refs( ).where( { stream_id: streamId, type: 'tag' } ).select( '*' )
   }
 
 }
