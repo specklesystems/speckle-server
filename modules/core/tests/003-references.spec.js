@@ -73,6 +73,7 @@ describe( 'Tags & Branches', ( ) => {
     } )
 
     it( 'Should create a branch', async ( ) => {
+      branch.commits = [ commit1.hash, commit1.hash ]
       branch.id = await createBranch( branch, stream.id, user.id )
       expect( branch.id ).to.be.not.null
     } )
@@ -107,7 +108,7 @@ describe( 'Tags & Branches', ( ) => {
       let newCommit = { test: 'test', best: true }
       newCommit.hash = await createObject( stream.id, user.id, newCommit )
 
-      branch.commits = [ commit2.hash, newCommit.hash ]
+      branch.commits = [ commit2.hash, newCommit.hash, commit1.hash ]
       branch.name = 'A Different Name'
       await updateBranch( branch )
 
@@ -130,7 +131,6 @@ describe( 'Tags & Branches', ( ) => {
       } catch {
         // Pass
       }
-
     } )
 
     it( 'Should get a tag', async ( ) => {
@@ -165,14 +165,9 @@ describe( 'Tags & Branches', ( ) => {
 
     it( 'Should get all stream branches', async ( ) => {
       await createBranch( { name: 'master' }, stream.id, user.id ) // an actually useful branch name
-      await await createBranch( { name: 'dim-dev' }, stream.id, user.id )
+      await createBranch( { name: 'dim-dev' }, stream.id, user.id )
       let branches = await getBranchesByStreamId( stream.id )
       expect( branches ).to.have.lengthOf( 3 )
-
     } )
-
-
-
   } )
-
 } )

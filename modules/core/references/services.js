@@ -53,8 +53,10 @@ module.exports = {
     branch.type = 'branch'
     let [ id ] = await Refs( ).returning( 'id' ).insert( branch )
 
-    let branchCommits = commits.map( commitId => { return { branch_id: id, commit_id: commitId } } )
-    await BranchCommits( ).insert( branchCommits ) // TODO: on conflict do nothing
+    if ( commits.length !== 0 ) {
+      let branchCommits = commits.map( commitId => { return { branch_id: id, commit_id: commitId } } )
+      await knex.raw( BranchCommits( ).insert( branchCommits ) + ' on conflict do nothing' )
+    }
     return id
   },
 
@@ -63,9 +65,11 @@ module.exports = {
     delete branch.commits
     delete branch.commit_id
 
-    let branchCommits = commits.map( commitId => { return { branch_id: branch.id, commit_id: commitId } } )
-    await BranchCommits( ).insert( branchCommits ) // TODO: on conflict do nothing
-
+    if ( commits.length !== 0 ) {
+      let branchCommits = commits.map( commitId => { return { branch_id: branch.id, commit_id: commitId } } )
+      await knex.raw( BranchCommits( ).insert( branchCommits ) + ' on conflict do nothing' )
+    }
+    
     await Refs( ).where( { id: branch.id } ).update( branch )
   },
 
