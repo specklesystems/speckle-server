@@ -16,10 +16,12 @@ module.exports = {
 
   createStream: async ( req, res, next ) => {
     try {
-      let id = await createStream( req.body )
-      res.status( 201 ).send( { todo: true } )
+      let id = await createStream( req.body, req.user.userId )
+      res.status( 201 ).send( { success: true, id: id } )
+      req.eventData = { id: id, userId: req.user.userId }
       next( )
     } catch ( err ) {
+      console.log( err )
       next( err )
     }
   },

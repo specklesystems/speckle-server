@@ -31,34 +31,50 @@ module.exports = {
   },
 
   createObjects: async ( streamId, userId, objects ) => {
-    let objTreeRefs = [ ]
-    let objsToInsert = [ ]
+    let batches = [ ]
+    let maxBatchSize = process.env.MAX_BATCH_SIZE || 1000
+    objects = [ ...objects ]
+    if ( objects.length > maxBatchSize ) {
+      while ( objects.length > 0 )
+        batches.push( objects.splice( 0, maxBatchSize ) );
+    } else {
+      batches.push( objects )
+    }
+
     let hashes = [ ]
 
-    let t0 = performance.now( )
+    let promises = batches.map( async ( batch, index ) => new Promise( async ( resolve, reject ) => {
+      let objTreeRefs = [ ]
+      let objsToInsert = [ ]
 
-    objects.forEach( obj => {
+      let t0 = performance.now( )
 
-      if ( obj.hasOwnProperty( '__tree' ) && obj.__tree ) {
-        objTreeRefs = [ ...objTreeRefs, ...obj.__tree.map( entry => {
-          return { parent: entry.split( '.' )[ 0 ], path: entry }
-        } ) ]
-      }
+      batch.forEach( obj => {
 
-      let insertionObject = prepInsertionObject( obj )
-      insertionObject.author = userId
+        if ( obj.hasOwnProperty( '__tree' ) && obj.__tree ) {
+          objTreeRefs = [ ...objTreeRefs, ...obj.__tree.map( entry => {
+            return { parent: entry.split( '.' )[ 0 ], path: entry }
+          } ) ]
+        }
 
-      objsToInsert.push( insertionObject )
-      hashes.push( insertionObject.hash )
-    } )
+        let insertionObject = prepInsertionObject( obj )
+        insertionObject.author = userId
 
-    let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
-    let queryRefs = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
-    await knex.raw( queryObjs )
-    await knex.raw( queryRefs )
+        objsToInsert.push( insertionObject )
+        hashes.push( insertionObject.hash )
+      } )
 
-    let t1 = performance.now( )
-    // debug( `Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
+      let queryRefs = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
+      await knex.raw( queryObjs )
+      await knex.raw( queryRefs )
+
+      let t1 = performance.now( )
+      debug( `Batch ${index + 1}/${batches.length}: Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      resolve( )
+    } ) )
+
+    await Promise.all( promises )
 
     return hashes
   },

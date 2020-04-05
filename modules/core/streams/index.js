@@ -7,11 +7,27 @@ const streams = require( 'express' ).Router( { mergeParams: true } )
 
 module.exports = streams
 
-streams.get( '/streams', authenticate, getStreams )
+streams.get(
+  '/streams',
+  authenticate( 'streams:read' ),
+  getStreams )
 
-streams.get( '/streams/:streamId', authenticate, authorize, getStream )
+streams.get(
+  '/streams/:streamId',
+  authenticate( 'streams:read' ),
+  authorize,
+  getStream )
 
-streams.post( '/streams', authenticate, authorize, createStream, announce )
+streams.post(
+  '/streams',
+  authenticate( 'streams:write' ),
+  authorize,
+  createStream,
+  announce( 'stream-created', 'user' ) )
 
-streams.put( '/streams/:streamId', authenticate, authorize, updateStream, announce )
-
+streams.put(
+  '/streams/:streamId',
+  authenticate( 'streams:write' ),
+  authorize,
+  updateStream,
+  announce( 'stream-updated', 'stream' ) )

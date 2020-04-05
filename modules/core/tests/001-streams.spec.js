@@ -133,26 +133,27 @@ describe( 'Streams', ( ) => {
   describe( 'Integration (API)', ( ) => {
 
     // The express app
-    let app = null
-
+    let app
+    let token
+    
     before( async ( ) => {
       app = init( )
+      token = await createToken( userOne.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
     } )
 
     let myTestStream = { name: 'woowowo', id: 'noids', description: 'wonderful test stream' }
 
     it( 'Should create a stream', async ( ) => {
-      assert.fail( 'Not implemented yet.' )
- 
-      const res = await chai.request( app ).post( '/streams' ).send( myTestStream )
-      expect( res ).to.have.status( 200 )
+      const res = await chai.request( app ).post( '/streams' ).set( 'Authorization', `Bearer ${token}` ).send( myTestStream )
+      expect( res ).to.have.status( 201 )
       expect( res.body ).to.have.property( 'id' )
+      myTestStream.id = res.body.id
     } )
 
     it( 'Should get a stream', async ( ) => {
       assert.fail( 'Not implemented yet.' )
-      
-      const res = await chai.request( app ).get( `/streams/${myTestStream.id}` )
+
+      const res = await chai.request( app ).get( `/streams/${myTestStream.id}` ).set( 'Authorization', `Bearer ${token}` )
 
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )
@@ -161,7 +162,7 @@ describe( 'Streams', ( ) => {
 
     it( 'Should update a stream', async ( ) => {
       assert.fail( 'Not implemented yet.' )
-      
+
       const res = await chai.request( app ).put( `/streams/${myTestStream.id}` ).send( { name: 'new name' } )
       const resUpdated = await chai.request( app ).get( `/streams/${myTestStream.id}` )
 

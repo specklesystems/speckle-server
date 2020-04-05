@@ -1,26 +1,48 @@
 'use strict'
 
-const debug = require( 'debug' )( 'speckle:middleware' )
+const debug = require( 'debug' )( 'speckle:test' )
+const root = require( 'app-root-path' )
+const { validateToken } = require( `${root}/modules/core/users/services` )
 
-let authenticate = ( req, res, next ) => {
-  // TODO
-  // Authenticates the api call
-  debug( '🔒 authentication middleware called' )
-  next( )
+function authenticate( scope, mandatory ) {
+  mandatory = mandatory || true
+
+  return async ( req, res, next ) => {
+    debug( `🔑 authenticate middleware called` )
+    
+    if ( !req.headers.authorization && mandatory ) {
+      return res.status( 403 ).send( { error: 'No credentials provided' } ) // next (err)?
+    }
+
+    let token = req.headers.authorization.split( ' ' )[ 1 ]
+    let { valid, scopes, userId } = await validateToken( token )
+
+    if ( !valid && mandatory ) {
+      return res.status( 403 ).send( { error: 'Invalid authorization' } )
+    }
+
+    if ( scopes.indexOf( scope ) === -1 && scopes.indexOf( '*' ) === -1 ) {
+      return res.status( 403 ).send( { error: 'Invalid scope' } )
+    }
+
+    req.user = { userId: userId, scopes: scopes }
+    next( )
+  }
 }
 
 let authorize = ( req, res, next ) => {
   // TODO
   // Authorizes the api call against permissions
-  debug( '🔑 authorization middleware called' )
+  debug( '🔑 authorization middleware called; yes by default LOL' )
   next( )
 }
 
-let announce = ( req, res, next ) => {
-  // TODO
-  // Implement event system
-  debug( '📣 announce middleware called' )
-  next( )
+function announce( eventName, eventScope ) {
+  return async ( req, res, next ) => {
+    debug( `📣 announce middleware called: ${eventName}:${eventScope}` )
+    debug( `Event data: ${JSON.stringify( req.eventData )}` )
+    next( )
+  }
 }
 
 let customMiddleware = {}

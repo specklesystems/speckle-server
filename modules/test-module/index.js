@@ -7,10 +7,10 @@ exports.preflight = ( options ) => {
 
   debug( 'Preflight test module' )
 
-  mw.authenticate = ( req, res, next ) => {
-    require( 'debug' )( 'speckle:middleware' )( '🔐 Modified authentication middleware called')
-    next( )
-  }
+  // mw.authenticate = ( req, res, next ) => {
+  //   require( 'debug' )( 'speckle:middleware' )( '🔐 Modified authentication middleware called')
+  //   next( )
+  // }
 }
 
 exports.init = ( app, options ) => {
