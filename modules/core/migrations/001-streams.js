@@ -10,7 +10,7 @@ exports.up = async knex => {
     table.uuid( 'id' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).unique( ).primary( )
     table.text( 'name' )
     table.text( 'description' )
-    table.boolean( 'public' ).defaultTo( true )
+    table.boolean( 'isPublic' ).defaultTo( true )
     table.uuid( 'cloned_from' ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updated_at' ).defaultTo( knex.fn.now( ) )
@@ -29,9 +29,9 @@ exports.up = async knex => {
 
   await knex.schema.createTable( 'stream_acl', table => {
     table.uuid( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
-    table.uuid( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
-    table.primary( [ 'user_id', 'stream_id' ] )
-    table.unique( [ 'user_id', 'stream_id' ] )
+    table.uuid( 'resource_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.primary( [ 'user_id', 'resource_id' ] )
+    table.unique( [ 'user_id', 'resource_id' ] )
     table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
   } )
 

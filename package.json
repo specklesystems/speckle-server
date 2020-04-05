@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www",
-    "test": "DEBUG=speckle:test NODE_ENV=test mocha -s 0 --exit",
-    "test-watch": "DEBUG=speckle:test NODE_ENV=test mocha --watch -s 0 --exit"
+    "test": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha -s 0 --exit",
+    "test-watch": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha --watch -s 0 --exit"
   },
   "author": "",
   "license": "MIT",

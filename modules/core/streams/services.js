@@ -14,7 +14,7 @@ module.exports = {
     stream.updated_at = knex.fn.now( )
 
     let [ res ] = await Streams( ).returning( 'id' ).insert( stream )
-    await Acl( ).insert( { user_id: ownerId, stream_id: res, role: 'owner' } )
+    await Acl( ).insert( { user_id: ownerId, resource_id: res, role: 'owner' } )
 
     return res
   },
@@ -32,19 +32,19 @@ module.exports = {
 
   grantPermissionsStream: async ( streamId, userId, role ) => {
     if ( role === 'owner' ) {
-      let [ ownerAcl ] = await Acl( ).where( { stream_id: streamId, role: 'owner' } ).returning( '*' ).del( )
-      await Acl( ).insert( { stream_id: streamId, user_id: ownerAcl.user_id, role: 'write' } )
+      let [ ownerAcl ] = await Acl( ).where( { resource_id: streamId, role: 'owner' } ).returning( '*' ).del( )
+      await Acl( ).insert( { resource_id: streamId, user_id: ownerAcl.user_id, role: 'write' } )
     }
 
     // upsert
-    let query = Acl( ).insert( { user_id: userId, stream_id: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
+    let query = Acl( ).insert( { user_id: userId, resource_id: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
 
     await knex.raw( query )
   },
 
   revokePermissionsStream: async ( streamId, userId ) => {
-    let streamAclEntries = Acl( ).where( { stream_id: streamId } ).select( '*' )
-    let delCount = await Acl( ).where( { stream_id: streamId, user_id: userId } ).whereNot( { role: 'owner' } ).del( )
+    let streamAclEntries = Acl( ).where( { resource_id: streamId } ).select( '*' )
+    let delCount = await Acl( ).where( { resource_id: streamId, user_id: userId } ).whereNot( { role: 'owner' } ).del( )
     if ( delCount === 0 )
       throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
   },
@@ -67,7 +67,7 @@ module.exports = {
     limit = limit || 100
 
     return Acl( ).where( { user_id: userId } )
-      .rightJoin( 'streams', { 'streams.id': 'stream_acl.stream_id' } )
+      .rightJoin( 'streams', { 'streams.id': 'stream_acl.resource_id' } )
       .limit( limit ).offset( offset )
   },
 }

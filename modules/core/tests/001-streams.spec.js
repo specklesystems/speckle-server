@@ -112,7 +112,7 @@ describe( 'Streams', ( ) => {
         }
       } )
 
-      it( 'A stream should not have more than one owner', async ( ) => {
+      it( '🤔 DUBIOUS: A stream should not have more than one owner', async ( ) => {
         let newStream = { name: 'XXX' }
         newStream.id = await createStream( newStream, userOne.id )
         await grantPermissionsStream( newStream.id, userTwo.id, 'owner' )
@@ -134,44 +134,89 @@ describe( 'Streams', ( ) => {
 
     // The express app
     let app
-    let token
-    
+
+    let userA = { username: 'A', name: 'DimitrieA ', email: 'didimitrie+a@gmail.com', password: 'sn3aky-1337-b1m' }
+    let userB = { username: 'B', name: 'DimitrieB ', email: 'didimitrie+b@gmail.com', password: 'sn3aky-1337-b1m' }
+
+    let tokenA
+    let tokenB
+
     before( async ( ) => {
       app = init( )
-      token = await createToken( userOne.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
+      userA.id = await createUser( userA )
+      userB.id = await createUser( userB )
+
+      tokenA = await createToken( userA.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
+      tokenB = await createToken( userB.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
     } )
 
-    let myTestStream = { name: 'woowowo', id: 'noids', description: 'wonderful test stream' }
+    let privateStream = { name: 'woowowo', id: 'noids', description: 'wonderful test stream', isPublic: false }
+    let publicStream = { name: 'i am public', isPublic: true }
 
     it( 'Should create a stream', async ( ) => {
-      const res = await chai.request( app ).post( '/streams' ).set( 'Authorization', `Bearer ${token}` ).send( myTestStream )
+      const res = await chai.request( app ).post( '/streams' ).set( 'Authorization', `Bearer ${tokenA}` ).send( privateStream )
       expect( res ).to.have.status( 201 )
       expect( res.body ).to.have.property( 'id' )
-      myTestStream.id = res.body.id
+      privateStream.id = res.body.id
+
+      const second = await chai.request( app ).post( '/streams' ).set( 'Authorization', `Bearer ${tokenA}` ).send( publicStream )
+      expect( second ).to.have.status( 201 )
+      expect( second.body ).to.have.property( 'id' )
+      publicStream.id = second.body.id
+
     } )
 
     it( 'Should get a stream', async ( ) => {
-      assert.fail( 'Not implemented yet.' )
-
-      const res = await chai.request( app ).get( `/streams/${myTestStream.id}` ).set( 'Authorization', `Bearer ${token}` )
+      const res = await chai.request( app ).get( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenA}` )
 
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )
       expect( res.body ).to.have.property( 'name' )
     } )
 
-    it( 'Should update a stream', async ( ) => {
-      assert.fail( 'Not implemented yet.' )
+    it( 'Should get a public stream, even if user is anonymous', async ( ) => {
+      const res = await chai.request( app ).get( `/streams/${publicStream.id}` )
+      expect( res ).to.have.status( 200 )
+      expect( res.body ).to.have.property( 'id' )
+      expect( res.body ).to.have.property( 'name' )
+    } )
 
-      const res = await chai.request( app ).put( `/streams/${myTestStream.id}` ).send( { name: 'new name' } )
-      const resUpdated = await chai.request( app ).get( `/streams/${myTestStream.id}` )
+    it( 'Should not get a private stream if user is not authenticated', async ( ) => {
+      const res = await chai.request( app ).get( `/streams/${privateStream.id}` )
+      expect( res ).to.have.status( 401 )
+    } )
+
+    it( 'Should not get a private stream if the user does not have access to it', async ( ) => {
+      const res = await chai.request( app ).get( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenB}` )
+      expect( res ).to.have.status( 401 )
+    } )
+
+    it( 'Should update a stream', async ( ) => {
+      const res = await chai.request( app ).put( `/streams/${publicStream.id}` ).send( { name: 'new name' } ).set( 'Authorization', `Bearer ${tokenA}` )
+      const resUpdated = await chai.request( app ).get( `/streams/${publicStream.id}` )
 
       expect( res ).to.have.status( 200 )
       expect( res.body ).to.have.property( 'id' )
 
       expect( resUpdated ).to.have.status( 200 )
-      expect( resUpdated ).to.have.property( 'name' )
-      expect( resUpdated.name ).to.equal( 'new name' )
+      expect( resUpdated.body ).to.have.property( 'name' )
+      expect( resUpdated.body.name ).to.equal( 'new name' )
+    } )
+
+    it( 'Should grant permissions on a stream', async ( ) => {
+      const shareRes = await chai.request( app ).post( `/streams/users/${privateStream.id}` ).send( { id: userB.id, role: 'read' } ).set( 'Authorization', `Bearer ${tokenA}` )
+      console.log(shareRes)
+      expect( shareRes ).to.have.status( 200 )
+      const userBRes = await chai.request( app ).get( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenB}` )
+      console.log(userBRes.status)
+      expect( userBRes ).to.have.status( 200 )
+      expect( userBRes.body ).to.have.property( 'name' )
+      expect( userBRes.body ).to.have.property( 'description' )
+    } )
+
+    it( 'Should revoke permissions on a stream', async ( ) => {
+      assert.fail( )
+
     } )
 
     it( 'Should delete a stream', async ( ) => {

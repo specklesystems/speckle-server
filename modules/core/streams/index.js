@@ -1,6 +1,6 @@
 'use strict'
 const root = require( 'app-root-path' )
-const { getStreams, getStream, createStream, updateStream } = require( './controllers' )
+const { getStreams, getStream, createStream, updateStream, grantPermissions, revokePermissions, getStreamUsers } = require( './controllers' )
 const { authenticate, authorize, announce } = require( `${root}/modules/shared` )
 
 const streams = require( 'express' ).Router( { mergeParams: true } )
@@ -13,21 +13,43 @@ streams.get(
   getStreams )
 
 streams.get(
-  '/streams/:streamId',
-  authenticate( 'streams:read' ),
-  authorize,
+  '/streams/:resourceId',
+  authenticate( 'streams:read', false ),
+  authorize( 'stream_acl', 'streams', 'read' ),
   getStream )
 
 streams.post(
   '/streams',
   authenticate( 'streams:write' ),
-  authorize,
   createStream,
   announce( 'stream-created', 'user' ) )
 
 streams.put(
-  '/streams/:streamId',
+  '/streams/:resourceId',
   authenticate( 'streams:write' ),
-  authorize,
+  authorize( 'stream_acl', 'streams', 'write' ),
   updateStream,
   announce( 'stream-updated', 'stream' ) )
+
+streams.post(
+  '/streams/:resourceId/users',
+  authenticate( 'streams:write' ),
+  authorize( 'stream_acl', 'streams', 'owner' ),
+  grantPermissions,
+  announce( 'stream-created', 'user' )
+)
+
+streams.get(
+  '/streams/:resourceId/users',
+  authenticate( 'streams:read' ),
+  authorize( 'stream_acl', 'streams', 'read' ),
+  getStreamUsers
+)
+
+streams.delete(
+  '/streams/:resourceId/users',
+  authenticate( 'streams:write' ),
+  authorize( 'stream_acl', 'streams', 'owner' ),
+  revokePermissions,
+  announce( 'stream-deleted', 'user' )
+)
