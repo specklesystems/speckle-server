@@ -17,7 +17,6 @@ exports.init = ( ) => {
 
   // Error responses
   app.use( ( err, req, res, next ) => {
-    debug( err )
     res.status( err.status || 500 )
     res.json( {
       message: err.message,

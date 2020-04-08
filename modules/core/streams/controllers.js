@@ -1,12 +1,16 @@
 'use strict'
 const debug = require( 'debug' )( 'speckle:test' )
-const { getStream, createStream, updateStream, grantPermissionsStream, revokePermissionsStream } = require( './services' )
+const { getUserStreams, getStreamUsers, getStream, createStream, updateStream, grantPermissionsStream, revokePermissionsStream } = require( './services' )
 
 module.exports = {
 
   getStreams: async ( req, res, next ) => {
-    res.status( 418 ).send( { todo: true } )
-    next( )
+    try {
+      let streams = await getUserStreams( req.user.id )
+      res.status( 200 ).send( streams )
+    } catch ( err ) {
+      next( err )
+    }
   },
 
   getStream: async ( req, res, next ) => {
@@ -45,18 +49,23 @@ module.exports = {
 
   grantPermissions: async ( req, res, next ) => {
     try {
-      await grantPermissionsStream( req.params.resourceId, req.body.id, req.body.role )
-      
+      await grantPermissionsStream( req.params.resourceId, req.body.id, req.body.role || 'read' )
+      res.status( 201 ).send( { success: true } )
+
+      req.eventData = { id: req.params.resourceId, userId: req.body.id }
       next( )
     } catch ( err ) {
       next( err )
     }
-
   },
 
   revokePermissions: async ( req, res, next ) => {
     try {
+      await revokePermissionsStream( req.params.resourceId, req.body.id )
+      res.status( 200 ).send( { success: true } )
 
+      req.eventData = { id: req.params.resourceId, userId: req.body.id }
+      next( )
     } catch ( err ) {
       next( err )
     }
@@ -64,8 +73,10 @@ module.exports = {
 
   getStreamUsers: async ( req, res, next ) => {
     try {
-
+      let users = await getStreamUsers( req.params.resourceId )
+      res.status( 200 ).send( users )
     } catch ( err ) {
+      console.log( err )
       next( err )
     }
   }

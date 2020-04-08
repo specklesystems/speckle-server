@@ -53,3 +53,5 @@ streams.delete(
   revokePermissions,
   announce( 'stream-deleted', 'user' )
 )
+
+// console.log( streams.stack )

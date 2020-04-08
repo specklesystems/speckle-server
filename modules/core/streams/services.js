@@ -1,5 +1,5 @@
 'use strict'
-
+const crs = require( 'crypto-random-string' )
 const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
@@ -7,11 +7,11 @@ const Streams = ( ) => knex( 'streams' )
 const Acl = ( ) => knex( 'stream_acl' )
 
 module.exports = {
-  
+
   createStream: async ( stream, ownerId ) => {
-    delete stream.id
     delete stream.created_at
     stream.updated_at = knex.fn.now( )
+    stream.id = crs( { length: 10 } )
 
     let [ res ] = await Streams( ).returning( 'id' ).insert( stream )
     await Acl( ).insert( { user_id: ownerId, resource_id: res, role: 'owner' } )
@@ -62,7 +62,7 @@ module.exports = {
     throw new Error( 'not implemented' )
   },
 
-  getStreamsUser: async ( userId, offset, limit ) => {
+  getUserStreams: async ( userId, offset, limit ) => {
     offset = offset || 0
     limit = limit || 100
 
@@ -70,4 +70,10 @@ module.exports = {
       .rightJoin( 'streams', { 'streams.id': 'stream_acl.resource_id' } )
       .limit( limit ).offset( offset )
   },
+
+  getStreamUsers: async ( streamId ) => {
+    return Acl( ).where( { resource_id: streamId } )
+      .rightJoin( 'users', { 'users.id': 'stream_acl.user_id' } )
+      .select( 'role', 'username', 'name', 'id' )
+  }
 }

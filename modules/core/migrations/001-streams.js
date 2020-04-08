@@ -7,11 +7,11 @@ exports.up = async knex => {
 
   // Streams Table
   await knex.schema.createTable( 'streams', table => {
-    table.uuid( 'id' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).unique( ).primary( )
+    table.text( 'id' ).unique( ).primary( )
     table.text( 'name' )
     table.text( 'description' )
     table.boolean( 'isPublic' ).defaultTo( true )
-    table.uuid( 'cloned_from' ).references( 'id' ).inTable( 'streams' )
+    table.text( 'cloned_from' ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updated_at' ).defaultTo( knex.fn.now( ) )
     // table.unique( [ 'owner_id', 'name' ] )
@@ -28,8 +28,8 @@ exports.up = async knex => {
     ` )
 
   await knex.schema.createTable( 'stream_acl', table => {
-    table.uuid( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
-    table.uuid( 'resource_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.text( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.text( 'resource_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
     table.primary( [ 'user_id', 'resource_id' ] )
     table.unique( [ 'user_id', 'resource_id' ] )
     table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
@@ -41,7 +41,7 @@ exports.up = async knex => {
     table.text( 'speckle_type' ).defaultTo( 'Base' ).notNullable( )
     table.text( 'applicationId' )
     table.jsonb( 'data' )
-    table.uuid( 'author' ).references( 'id' ).inTable( 'users' )
+    table.text( 'author' ).references( 'id' ).inTable( 'users' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.index( [ 'speckle_type' ], 'type_index' )
   } )
@@ -72,8 +72,8 @@ exports.up = async knex => {
   // Reference table. A reference can be a branch or a tag.
   await knex.schema.createTable( 'references', table => {
     table.uuid( 'id' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).unique( ).primary( )
-    table.uuid( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
-    table.uuid( 'author' ).references( 'id' ).inTable( 'users' )
+    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.text( 'author' ).references( 'id' ).inTable( 'users' )
     table.text( 'name' )
     table.specificType( 'type', 'speckle_reference_type' ).defaultTo( 'branch' )
     table.text( 'description' )
@@ -95,12 +95,12 @@ exports.up = async knex => {
   // Flat table to store all commits to this stream, regardless of branch.
   // Optional, might be removed as you can get all the commits from each branch...
   await knex.schema.createTable( 'stream_commits', table => {
-    table.uuid( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
     table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
   } )
 
   await knex.schema.createTable( 'user_commits', table => {
-    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.text( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' )
   } )
 }

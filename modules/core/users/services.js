@@ -9,7 +9,7 @@ const Keys = ( ) => knex( 'api_token' )
 
 module.exports = {
   createUser: async ( user ) => {
-    delete user.id
+    user.id = crs( { length: 10 } )
 
     if ( user.password ) {
       user.password_digest = await bcrypt.hash( user.password, 10 )

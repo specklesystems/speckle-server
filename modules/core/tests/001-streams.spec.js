@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 
 
 const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
-const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
+const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
 
 describe( 'Streams', ( ) => {
 
@@ -68,7 +68,7 @@ describe( 'Streams', ( ) => {
       } )
 
       it( 'Should get all streams for a user', async ( ) => {
-        let all = await getStreamsUser( userOne.id )
+        let all = await getUserStreams( userOne.id )
         expect( all ).to.have.lengthOf( 2 )
       } )
     } )
@@ -91,15 +91,22 @@ describe( 'Streams', ( ) => {
       } )
 
       it( 'Stream should show up in the other users` list', async ( ) => {
-        let userTwoStreams = await getStreamsUser( userTwo.id )
+        let userTwoStreams = await getUserStreams( userTwo.id )
         expect( userTwoStreams ).to.have.lengthOf( 1 )
         expect( userTwoStreams[ 0 ] ).to.have.property( 'role' )
         expect( userTwoStreams[ 0 ].role ).to.equal( 'write' )
       } )
 
+      it( 'Should get the users with access to a stream', async ( ) => {
+        let users = await getStreamUsers( testStream.id )
+        expect( users ).to.have.lengthOf( 2 )
+        expect( users[ 0 ] ).to.not.have.property( 'email' )
+        expect( users[ 0 ] ).to.have.property( 'id' )
+      } )
+
       it( 'Should revoke permissions on stream', async ( ) => {
         await revokePermissionsStream( testStream.id, userTwo.id )
-        let userTwoStreams = await getStreamsUser( userTwo.id )
+        let userTwoStreams = await getUserStreams( userTwo.id )
         expect( userTwoStreams ).to.have.lengthOf( 0 )
       } )
 
@@ -112,14 +119,14 @@ describe( 'Streams', ( ) => {
         }
       } )
 
-      it( '🤔 DUBIOUS: A stream should not have more than one owner', async ( ) => {
+      it( '🤔 DUBIOUS DESIGN DECISION: A stream should not have more than one owner', async ( ) => {
         let newStream = { name: 'XXX' }
         newStream.id = await createStream( newStream, userOne.id )
         await grantPermissionsStream( newStream.id, userTwo.id, 'owner' )
 
-        let usrStreams1 = await getStreamsUser( userOne.id )
+        let usrStreams1 = await getUserStreams( userOne.id )
         let s1 = usrStreams1.find( s => s.name === 'XXX' )
-        let usrStreams2 = await getStreamsUser( userTwo.id )
+        let usrStreams2 = await getUserStreams( userTwo.id )
         let s2 = usrStreams2.find( s => s.name === 'XXX' )
 
         expect( s1.role ).to.not.equal( 'owner' )
@@ -174,6 +181,12 @@ describe( 'Streams', ( ) => {
       expect( res.body ).to.have.property( 'name' )
     } )
 
+    it( 'Should get the all the streams of an user', async ( ) => {
+      const res = await chai.request( app ).get( `/streams` ).set( 'Authorization', `Bearer ${tokenA}` )
+      expect( res ).to.have.status( 200 )
+      expect( res.body ).to.have.lengthOf( 2 )
+    } )
+
     it( 'Should get a public stream, even if user is anonymous', async ( ) => {
       const res = await chai.request( app ).get( `/streams/${publicStream.id}` )
       expect( res ).to.have.status( 200 )
@@ -204,26 +217,32 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Should grant permissions on a stream', async ( ) => {
-      const shareRes = await chai.request( app ).post( `/streams/users/${privateStream.id}` ).send( { id: userB.id, role: 'read' } ).set( 'Authorization', `Bearer ${tokenA}` )
-      console.log(shareRes)
-      expect( shareRes ).to.have.status( 200 )
+      const shareRes = await chai.request( app ).post( `/streams/${privateStream.id}/users` ).send( { id: userB.id, role: 'read' } ).set( 'Authorization', `Bearer ${tokenA}` )
+      expect( shareRes ).to.have.status( 201 )
+
       const userBRes = await chai.request( app ).get( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenB}` )
-      console.log(userBRes.status)
       expect( userBRes ).to.have.status( 200 )
       expect( userBRes.body ).to.have.property( 'name' )
       expect( userBRes.body ).to.have.property( 'description' )
     } )
 
-    it( 'Should revoke permissions on a stream', async ( ) => {
-      assert.fail( )
+    it( 'Should get all users with access to a stream', async ( ) => {
+      const userRes = await chai.request( app ).get( `/streams/${privateStream.id}/users` ).set( 'Authorization', `Bearer ${tokenB}` )
+      expect( userRes ).to.have.status( 200 )
+      expect( userRes.body ).to.have.lengthOf( 2 )
+    } )
 
+    it( 'Should revoke permissions on a stream', async ( ) => {
+      const revokeRes = await chai.request( app ).delete( `/streams/${privateStream.id}/users` ).send( { id: userB.id, role: 'read' } ).set( 'Authorization', `Bearer ${tokenA}` )
+      expect( revokeRes ).to.have.status( 200 )
+
+      const userBRes = await chai.request( app ).get( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenB}` )
+      expect( userBRes ).to.have.status( 401 )
     } )
 
     it( 'Should delete a stream', async ( ) => {
       assert.fail( 'Not implemented yet.' )
     } )
-
-
 
   } )
 

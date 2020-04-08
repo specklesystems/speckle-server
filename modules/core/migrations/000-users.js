@@ -5,7 +5,7 @@ exports.up = async knex => {
   await knex.raw( 'CREATE EXTENSION IF NOT EXISTS "pgcrypto"' )
 
   await knex.schema.createTable( 'users', table => {
-    table.uuid( 'id' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).unique( ).primary( )
+    table.text( 'id' ).unique( ).primary( )
     table.text( 'username' ).unique( ).notNullable( )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.text( 'name' ).notNullable( )
@@ -18,7 +18,7 @@ exports.up = async knex => {
   await knex.schema.createTable( 'api_token', table => {
     table.text( 'id' ).unique( ).primary( )
     table.text( 'token_digest' ).unique( )
-    table.uuid( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.text( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.text( 'name' )
     table.text( 'last_chars' )
     table.specificType( 'scopes', 'text[]' )
