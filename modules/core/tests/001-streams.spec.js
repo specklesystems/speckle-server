@@ -221,7 +221,8 @@ describe( 'Streams', ( ) => {
       expect( shareRes ).to.have.status( 201 )
 
       const userBRes = await chai.request( app ).get( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenB}` )
-      expect( userBRes ).to.have.status( 200 )
+      // expect( userBRes ).to.have.status( 200 )
+      userBRes.should.have.status( 200 )
       expect( userBRes.body ).to.have.property( 'name' )
       expect( userBRes.body ).to.have.property( 'description' )
     } )

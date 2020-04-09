@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www",
-    "test": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha -s 0 --exit",
+    "test": "DEBUG=speckle:test,speckle:errors NODE_ENV=test nyc nyc --reporter=html mocha -s 0 --exit",
     "test-watch": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha --watch -s 0 --exit"
   },
   "author": "",
@@ -26,7 +26,8 @@
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "cz-conventional-changelog": "^3.1.0",
-    "mocha": "^7.1.1"
+    "mocha": "^7.1.1",
+    "nyc": "^15.0.1"
   },
   "config": {
     "commitizen": {
