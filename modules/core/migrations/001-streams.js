@@ -97,12 +97,9 @@ exports.up = async knex => {
   await knex.schema.createTable( 'stream_commits', table => {
     table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
     table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
+    table.primary( [ 'stream_id', 'commit_id' ] )
   } )
 
-  await knex.schema.createTable( 'user_commits', table => {
-    table.text( 'owner_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
-    table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' )
-  } )
 }
 
 exports.down = async knex => {

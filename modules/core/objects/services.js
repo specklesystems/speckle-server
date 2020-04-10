@@ -12,22 +12,45 @@ const knex = require( `${root}/db/knex` )
 const Streams = ( ) => knex( 'streams' )
 const Objects = ( ) => knex( 'objects' )
 const Refs = ( ) => knex( 'object_tree_refs' )
+const StreamCommits = ( ) => knex( 'stream_commits' )
 
 module.exports = {
+  /*
+      Commits
+      Note: commits are just a special type of objects.
+   */
 
-  createObject: async ( streamId, userId, object ) => {
+  async createCommit( streamId, userId, object ) {
+    object.speckle_type = 'commit'
+    let hash = await module.exports.createObject( streamId, userId, object )
+
+    let query = StreamCommits( ).insert( { stream_id: streamId, commitId: hash } ).toString( ) + ' on conflict do nothing'
+    await knex.raw( query )
+    
+    return hash
+  },
+
+  /*
+      Objects Proper
+   */
+  async createObject( streamId, userId, object ) {
     // Prep tree refs
     let objTreeRefs = object.hasOwnProperty( '__tree' ) && object.__tree ? object.__tree.map( entry => {
       return { parent: entry.split( '.' )[ 0 ], path: entry }
-    } ) : null
+    } ) : [ ]
 
     let insertionObject = prepInsertionObject( object )
     insertionObject.author = userId
 
-    let [ res ] = await Objects( ).returning( 'hash' ).insert( insertionObject )
-    await Refs( ).insert( objTreeRefs )
+    let q1 = Objects( ).insert( insertionObject ).toString( ) + ' on conflict do nothing'
+    await knex.raw( q1 )
 
-    return res
+    if ( objTreeRefs.length > 0 ) {
+      let q2 = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
+      await knex.raw( q2 )
+    }
+
+    return insertionObject.hash
   },
 
   createObjects: async ( streamId, userId, objects ) => {
@@ -65,9 +88,12 @@ module.exports = {
       } )
 
       let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
-      let queryRefs = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
       await knex.raw( queryObjs )
-      await knex.raw( queryRefs )
+
+      if ( objTreeRefs.length > 0 ) {
+        let queryRefs = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
+        await knex.raw( queryRefs )
+      }
 
       let t1 = performance.now( )
       debug( `Batch ${index + 1}/${batches.length}: Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )

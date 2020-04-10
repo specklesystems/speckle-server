@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
-const { createObject, createObjects, getObject, getObjects } = require( '../objects/services' )
+const { createCommit, createObject, createObjects, getObject, getObjects } = require( '../objects/services' )
 
 let sampleCommit = JSON.parse( `{
   "Objects": [
@@ -70,6 +70,12 @@ describe( 'Objects', ( ) => {
 
     before( async ( ) => {
 
+    } )
+
+    it( 'Should create a commit', async ( ) => {
+      let myHash = await createCommit( stream.id, userOne.id, sampleCommit )
+      console.log( myHash )
+      expect( myHash ).to.not.be.null
     } )
 
     it( 'Should create objects', async ( ) => {

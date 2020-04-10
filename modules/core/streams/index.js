@@ -10,26 +10,30 @@ module.exports = streams
 streams.get(
   '/streams',
   authenticate( 'streams:read' ),
-  getStreams )
+  getStreams
+)
 
 streams.get(
   '/streams/:resourceId',
   authenticate( 'streams:read', false ),
   authorize( 'stream_acl', 'streams', 'read' ),
-  getStream )
+  getStream
+)
 
 streams.post(
   '/streams',
   authenticate( 'streams:write' ),
   createStream,
-  announce( 'stream-created', 'user' ) )
+  announce( 'stream-created', 'user' )
+)
 
 streams.put(
   '/streams/:resourceId',
   authenticate( 'streams:write' ),
   authorize( 'stream_acl', 'streams', 'write' ),
   updateStream,
-  announce( 'stream-updated', 'stream' ) )
+  announce( 'stream-updated', 'stream' )
+)
 
 streams.post(
   '/streams/:resourceId/users',

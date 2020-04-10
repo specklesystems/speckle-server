@@ -7,12 +7,27 @@ const objects = require( 'express' ).Router( { mergeParams: true } )
 
 module.exports = objects
 
-objects.get( '/streams/:streamId/objects', getObjects )
+objects.get(
+  '/streams/:streamId/objects',
+  getObjects
+)
 
-objects.get( '/streams/:streamId/objects/:objectId', getObject )
+objects.get(
+  '/streams/:streamId/objects/:objectId',
+  getObject
+)
 
-objects.post( '/streams/:streamId/objects', createObject )
+objects.post(
+  '/streams/:streamId/objects',
+  createObject
+)
 
-object.post( '/streams/:streamId/commits', ( ) => {} ) // TODO
+object.post(
+  '/streams/:streamId/commits',
+  ( ) => {}
+)
 
-objects.put( '/streams/:streamId/objects/:objectId', updateObject )
+objects.put(
+  '/streams/:streamId/objects/:objectId',
+  updateObject
+)

@@ -15,6 +15,10 @@ module.exports = {
 
   updateReference: ( req, res, next ) => {
     res.send( { todo: true } )
+  },
+
+  deleteReference: ( req, res, next ) => {
+    res.send( { todo: true } )
   }
 }
 
