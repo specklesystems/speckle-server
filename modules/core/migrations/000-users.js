@@ -23,6 +23,7 @@ exports.up = async knex => {
     table.text( 'last_chars' )
     table.specificType( 'scopes', 'text[]' )
     table.boolean( 'revoked' ).defaultTo( false )
+    table.bigint( 'lifespan' ).defaultTo( 3.154e+12 )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'last_used' ).defaultTo( knex.fn.now( ) )
   } )

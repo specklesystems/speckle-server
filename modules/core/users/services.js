@@ -8,6 +8,13 @@ const Users = ( ) => knex( 'users' )
 const Keys = ( ) => knex( 'api_token' )
 
 module.exports = {
+
+  /*
+  
+      Users
+
+   */
+
   createUser: async ( user ) => {
     user.id = crs( { length: 10 } )
 
@@ -42,25 +49,39 @@ module.exports = {
     throw new Error( 'not implemented' )
   },
 
-  createToken: async ( userId, name, scopes ) => {
+  /*
+  
+      Tokens
+      Note: tokens are composed of a 10 char token id and a 32 char token string.
+      The token string is smoked, salted and hashed and stored in the database. 
+
+   */
+
+  createToken: async ( userId, name, scopes, lifespan ) => {
     let tokenId = crs( { length: 10 } )
     let tokenString = crs( { length: 32 } )
     let tokenHash = await bcrypt.hash( tokenString, 10 )
 
     let last_chars = tokenString.slice( tokenString.length - 6, tokenString.length )
 
-    let res = await Keys( ).returning( 'id' ).insert( { id: tokenId, token_digest: tokenHash, last_chars: last_chars, owner_id: userId, name: name, scopes: scopes } )
+    let res = await Keys( ).returning( 'id' ).insert( { id: tokenId, token_digest: tokenHash, last_chars: last_chars, owner_id: userId, name: name, scopes: scopes, lifespan: lifespan } )
 
     return tokenId + tokenString
   },
 
-  validateToken: async ( tokenString ) => {
+  async validateToken( tokenString ) {
     let tokenId = tokenString.slice( 0, 10 )
     let tokenContent = tokenString.slice( 10, 32 )
 
     let token = await Keys( ).where( { id: tokenId } ).select( '*' ).first( )
 
     if ( !token ) {
+      return { valid: false }
+    }
+    
+    const timeDiff = Math.abs( Date.now( ) - new Date( token.created_at ) )
+    if ( timeDiff > token.lifespan ) {
+      await module.exports.revokeToken( tokenId )
       return { valid: false }
     }
 

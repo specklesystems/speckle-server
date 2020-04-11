@@ -14,7 +14,7 @@ const { validateToken } = require( `${root}/modules/core/users/services` )
 
 // TODO: Cache results
 function authenticate( scope, mandatory ) {
-  mandatory = mandatory !== false
+  mandatory = mandatory !== false // defaults to true if not provided
 
   return async ( req, res, next ) => {
     debug( `🔑 authenticate middleware called` )
@@ -57,10 +57,9 @@ function authorize( aclTable, resourceTable, requiredRole ) {
 
   return async ( req, res, next ) => {
     debug( '🔑 authorization middleware called' )
-    
+
     try {
       let { isPublic } = await Resource( ).where( { id: req.params.resourceId } ).select( 'isPublic' ).first( )
-
       if ( isPublic ) return next( )
     } catch ( e ) {
       let err = new Error( `${req.params.resourceId} was not found.` )

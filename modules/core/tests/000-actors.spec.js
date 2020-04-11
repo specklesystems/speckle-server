@@ -26,6 +26,8 @@ describe( 'Actors & Tokens', ( ) => {
     let actorId = await createUser( myTestActor )
     myTestActor.id = actorId
 
+
+
     app = init( )
   } )
 
@@ -94,10 +96,12 @@ describe( 'Actors & Tokens', ( ) => {
       let myFirstToken
       let pregeneratedToken
       let revokedToken
+      let expireSoonToken
 
       before( async ( ) => {
         pregeneratedToken = await createToken( myTestActor.id, 'Whabadub', [ 'useless', 'scope:useless' ] )
         revokedToken = await createToken( myTestActor.id, 'Mr. Revoked', [ ] )
+        expireSoonToken = await createToken( myTestActor.id, 'Mayfly', [ ], 1 ) // 1ms lifespan
       } )
 
       it( 'Should create an api token', async ( ) => {
@@ -124,8 +128,9 @@ describe( 'Actors & Tokens', ( ) => {
       } )
 
       it( 'Should refuse an expired token', async ( ) => {
-        // TODO
-        assert.fail( )
+        let res = await validateToken( expireSoonToken )
+        expect( res.valid ).to.equal( false )
+        // assert.fail( )
       } )
 
       it( 'Should get the tokens of an user', async ( ) => {
