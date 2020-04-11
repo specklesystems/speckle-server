@@ -1,19 +1,47 @@
 'use strict'
 
+const { createCommit, getCommits, createObjects, getObject, getObjects } = require( './services' )
+
 module.exports = {
-  getObjects: ( req, res, next ) => {
-    res.send( [ 1, 3, 4 ] )
+  async getCommits( req, res, next ) {
+    try {
+      let commits = await getCommits( req.params.resourceId )
+      res.send( commits )
+      next( )
+    } catch ( err ) {
+      next( err )
+    }
   },
 
-  getObject: ( req, res, next ) => {
-    res.send( { todo: true } )
+  async createCommit( req, res, next ) {
+    try {
+      let id = await createCommit( req.params.resourceId, req.user.id, req.body )
+      res.status( 201 ).send( { success: true, id: id } )
+      next( )
+    } catch ( err ) {
+      next( err )
+    }
   },
 
-  createObject: ( req, res, next ) => {
-    res.send( { todo: true } )
+  async getObjects( req, res, next ) {
+    try {
+      let objIds = req.params.objectIds.split( ',' )
+      let objs = await getObjects( objIds )
+
+      res.send( objs )
+      next( )
+    } catch ( err ) {
+      next( err )
+    }
   },
 
-  updateObject: ( req, res, next ) => {
-    res.send( { todo: true } )
+  async createObjects( req, res, next ) {
+    try {
+      let hashes = await createObjects( req.params.resourceId, req.user.id, req.body )
+      res.status( 201 ).send( hashes )
+      next( )
+    } catch ( err ) {
+      next( err )
+    }
   }
 }

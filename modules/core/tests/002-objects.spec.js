@@ -74,7 +74,6 @@ describe( 'Objects', ( ) => {
 
     it( 'Should create a commit', async ( ) => {
       let myHash = await createCommit( stream.id, userOne.id, sampleCommit )
-      console.log( myHash )
       expect( myHash ).to.not.be.null
     } )
 
@@ -156,15 +155,71 @@ describe( 'Objects', ( ) => {
 
   describe( 'Integration (API)', ( ) => {
 
-    // The express app
-    let app = null
+    let app
+    let userA = { username: 'A', name: 'DimitrieA ', email: 'didimitrie+a@gmail.com', password: 'sn3aky-1337-b1m' }
+    let tokenA
+    let publicStream = { name: 'Some Nice Stream', isPublic: true }
+    let baseUrl
 
     before( async ( ) => {
       app = init( )
+      userA.id = await createUser( userA )
+      tokenA = await createToken( userA.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
+      publicStream.id = await createStream( publicStream, userA.id )
+      baseUrl = `/streams/${publicStream.id}`
     } )
 
-    it( 'Should create an object', async ( ) => {
-      assert.fail( 'Not implemented yet.' )
+    it( 'Should create a commit (or more)', async ( ) => {
+      const firstCommitRes = await chai.request( app ).post( `${baseUrl}/commits` ).send( sampleCommit ).set( 'Authorization', `Bearer ${tokenA}` )
+
+      expect( firstCommitRes ).to.have.status( 201 )
+
+      let secondCommit = { ...sampleCommit }
+      secondCommit.description = "Something else"
+      delete secondCommit.hash
+
+      const secondCommitRes = await chai.request( app ).post( `${baseUrl}/commits` ).send( secondCommit ).set( 'Authorization', `Bearer ${tokenA}` )
+
+      expect( secondCommitRes ).to.have.status( 201 )
+
+    } )
+
+    it( 'Should get all stream commits', async ( ) => {
+      const commits = await chai.request( app ).get( `${baseUrl}/commits` ).set( 'Authorization', `Bearer ${tokenA}` )
+
+      expect( commits ).to.have.status( 200 )
+      expect( commits.body ).to.have.lengthOf( 2 )
+      expect( commits.body[ 0 ] ).to.have.property( 'hash' )
+      expect( commits.body[ 0 ] ).to.have.property( 'speckle_type' )
+      expect( commits.body[ 0 ].speckle_type ).to.equal( 'commit' )
+    } )
+
+    let objs = [ ]
+    let objCount = 100
+
+    it( 'Should create objects', async ( ) => {
+      for ( let i = 0; i < objCount; i++ ) {
+        objs.push( {
+          amazingness: i * i,
+          somethingness: `API ${i%2===0 ? 'SUPER MEGA' : '1010101000010101'} ERRR`
+        } )
+      }
+
+      const objectCreationResult = await chai.request( app ).post( `${baseUrl}/objects` ).send( objs ).set( 'Authorization', `Bearer ${tokenA}` )
+
+      expect( objectCreationResult ).to.have.status( 201 )
+      expect( objectCreationResult.body ).to.have.lengthOf( objCount )
+
+      objs.forEach( ( o, i ) => o.hash = objectCreationResult.body[ i ] )
+    } )
+
+    it( 'Should get objects', async ( ) => {
+      const url = `${baseUrl}/objects/${objs.map( o => o.hash ).join( )}`
+      const objsResult = await chai.request( app ).get( url ).set( 'Authorization', `Bearer ${tokenA}` )
+
+      expect( objsResult ).to.have.status( 200 )
+      expect( objsResult.body ).to.have.lengthOf( objCount )
+      expect( objsResult.body[ 0 ] ).to.have.property( 'hash' )
     } )
 
   } )

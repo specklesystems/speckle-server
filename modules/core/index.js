@@ -13,4 +13,5 @@ exports.init = ( app, options ) => {
   app.use( '/', require( './users' ) )
   app.use( '/', require( './streams' ) )
   app.use( '/', require( './references' ) )
+  app.use( '/', require( './objects' ) )
 }

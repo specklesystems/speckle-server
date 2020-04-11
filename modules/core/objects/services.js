@@ -24,10 +24,15 @@ module.exports = {
     object.speckle_type = 'commit'
     let hash = await module.exports.createObject( streamId, userId, object )
 
-    let query = StreamCommits( ).insert( { stream_id: streamId, commitId: hash } ).toString( ) + ' on conflict do nothing'
+    let query = StreamCommits( ).insert( { stream_id: streamId, commit_id: hash } ).toString( ) + ' on conflict do nothing'
     await knex.raw( query )
-    
+
     return hash
+  },
+
+  async getCommits( streamId ) {
+    let commits = await StreamCommits( ).where( { stream_id: streamId } ).rightOuterJoin( 'objects', { 'objects.hash': 'stream_commits.commit_id' } ).select( 'data' )
+    return commits.map( o => o.data )
   },
 
   /*
