@@ -57,10 +57,16 @@ function authorize( aclTable, resourceTable, requiredRole ) {
 
   return async ( req, res, next ) => {
     debug( '🔑 authorization middleware called' )
+    
+    try {
+      let { isPublic } = await Resource( ).where( { id: req.params.resourceId } ).select( 'isPublic' ).first( )
 
-    let { isPublic } = await Resource( ).where( { id: req.params.resourceId } ).select( 'isPublic' ).first( )
-
-    if ( isPublic ) return next( )
+      if ( isPublic ) return next( )
+    } catch ( e ) {
+      let err = new Error( `${req.params.resourceId} was not found.` )
+      err.status = 404
+      return next( err )
+    }
 
     if ( !req.user ) return res.status( 401 ).send( { error: 'Unauthorized' } )
 
@@ -90,7 +96,7 @@ function announce( eventName, eventScope ) {
   return async ( req, res, next ) => {
     debug( `📣 announce middleware called: ${eventName}:${eventScope}` )
     debug( `Event data: ${JSON.stringify( req.eventData )}` )
-    
+
     next( )
   }
 }

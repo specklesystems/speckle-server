@@ -1,6 +1,6 @@
 'use strict'
 const debug = require( 'debug' )( 'speckle:test' )
-const { getUserStreams, getStreamUsers, getStream, createStream, updateStream, grantPermissionsStream, revokePermissionsStream } = require( './services' )
+const { getUserStreams, getStreamUsers, getStream, createStream, updateStream, deleteStream, grantPermissionsStream, revokePermissionsStream } = require( './services' )
 
 module.exports = {
 
@@ -41,6 +41,17 @@ module.exports = {
       res.status( 200 ).send( { success: true, id: id } )
 
       req.eventData = { id: id, userId: req.user.userId }
+      next( )
+    } catch ( err ) {
+      next( err )
+    }
+  },
+
+  async deleteStream( req, res, next ) {
+    try {
+      await deleteStream( req.params.resourceId )
+      res.status( 200 ).send( { success: true } )
+      req.eventData = { id: req.params.resourceId }
       next( )
     } catch ( err ) {
       next( err )

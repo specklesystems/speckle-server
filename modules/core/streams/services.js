@@ -49,9 +49,8 @@ module.exports = {
       throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
   },
 
-  deleteStream: ( streamId ) => {
-    // TODO: cascade through everything...
-    throw new Error( 'not implemented' )
+  async deleteStream( streamId ) {
+    await Streams( ).where( { id: streamId } ).del( )
   },
 
   cloneStream: ( streamId, ownerId ) => {

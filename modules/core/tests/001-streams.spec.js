@@ -71,6 +71,17 @@ describe( 'Streams', ( ) => {
         let all = await getUserStreams( userOne.id )
         expect( all ).to.have.lengthOf( 2 )
       } )
+
+      it( 'Should delete a stream', async ( ) => {
+        const id = await createStream( { name: 'to delete' }, userOne.id )
+        let all = await getUserStreams( userOne.id )
+        expect( all ).to.have.lengthOf( 3 )
+
+        await deleteStream( id )
+
+        all = await getUserStreams( userOne.id )
+        expect( all ).to.have.lengthOf( 2 )
+      } )
     } )
 
     describe( 'Sharing', ( ) => {
@@ -241,7 +252,12 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Should delete a stream', async ( ) => {
-      assert.fail( 'Not implemented yet.' )
+      const delRes = await chai.request( app ).delete( `/streams/${privateStream.id}` ).set( 'Authorization', `Bearer ${tokenA}` )
+
+      expect( delRes ).to.have.status( 200 )
+
+      const streamRes = await chai.request( app ).get( `/streams/${privateStream.id }` ).set( 'Authorization', `Bearer ${tokenA}` )
+      expect( streamRes ).to.have.status( 404 )
     } )
 
   } )

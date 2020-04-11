@@ -1,6 +1,6 @@
 'use strict'
 const root = require( 'app-root-path' )
-const { getStreams, getStream, createStream, updateStream, grantPermissions, revokePermissions, getStreamUsers } = require( './controllers' )
+const { getStreams, getStream, createStream, updateStream, deleteStream, grantPermissions, revokePermissions, getStreamUsers } = require( './controllers' )
 const { authenticate, authorize, announce } = require( `${root}/modules/shared` )
 
 const streams = require( 'express' ).Router( { mergeParams: true } )
@@ -33,6 +33,14 @@ streams.put(
   authorize( 'stream_acl', 'streams', 'write' ),
   updateStream,
   announce( 'stream-updated', 'stream' )
+)
+
+streams.delete(
+  '/streams/:resourceId',
+  authenticate( 'streams:write' ),
+  authorize( 'stream_acl', 'streams', 'owner' ),
+  deleteStream,
+  announce( 'stream-deleted', 'stream' )
 )
 
 streams.post(

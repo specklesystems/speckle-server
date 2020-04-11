@@ -24,7 +24,7 @@ exports.init = ( ) => {
   // Error responses
   app.use( ( err, req, res, next ) => {
     if ( process.env.NODE_ENV === 'test' ) {
-      debug( err )
+      debug( `${err.status}: ${err.message}` )
     }
     res.status( err.status || 500 )
     res.json( {
