@@ -78,8 +78,8 @@ describe( 'Objects', ( ) => {
     } )
 
     it( 'Should create objects', async ( ) => {
-      sampleObject.hash = await createObject( stream.id, userOne.id, sampleObject )
-      sampleCommit.hash = await createObject( stream.id, userOne.id, sampleCommit )
+      sampleObject.hash = await createObject( sampleObject )
+      sampleCommit.hash = await createObject( sampleCommit )
     } )
 
     let objCount_1 = 10
@@ -100,7 +100,7 @@ describe( 'Objects', ( ) => {
         } )
       }
 
-      let hashes = await createObjects( stream.id, userOne.id, objs )
+      let hashes = await createObjects( objs )
 
       expect( hashes ).to.have.lengthOf( objCount_1 )
 
@@ -124,7 +124,7 @@ describe( 'Objects', ( ) => {
         } )
       }
 
-      let hashes = await createObjects( stream.id, userOne.id, objs2 )
+      let hashes = await createObjects( objs2 )
 
       hashes.forEach( ( h, i ) => objs2[ i ].hash = h )
 

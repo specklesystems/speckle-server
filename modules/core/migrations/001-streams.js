@@ -28,8 +28,8 @@ exports.up = async knex => {
     ` )
 
   await knex.schema.createTable( 'stream_acl', table => {
-    table.text( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( )
-    table.text( 'resource_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.text( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
+    table.text( 'resource_id' ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
     table.primary( [ 'user_id', 'resource_id' ] )
     table.unique( [ 'user_id', 'resource_id' ] )
     table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
@@ -72,7 +72,7 @@ exports.up = async knex => {
   // Reference table. A reference can be a branch or a tag.
   await knex.schema.createTable( 'references', table => {
     table.uuid( 'id' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).unique( ).primary( )
-    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
     table.text( 'author' ).references( 'id' ).inTable( 'users' )
     table.text( 'name' )
     table.specificType( 'type', 'speckle_reference_type' ).defaultTo( 'branch' )
@@ -87,7 +87,7 @@ exports.up = async knex => {
   // Junction Table Branches >- -< Commits 
   // Note: Branches >- -< Commits is a many-to-many relationship (one commit can belong to multiple branches, one branch can have multiple commits) 
   await knex.schema.createTable( 'branch_commits', table => {
-    table.uuid( 'branch_id' ).references( 'id' ).inTable( 'references' ).notNullable( )
+    table.uuid( 'branch_id' ).references( 'id' ).inTable( 'references' ).notNullable( ).onDelete('cascade')
     table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
     table.primary( [ 'branch_id', 'commit_id' ] )
   } )
@@ -95,7 +95,7 @@ exports.up = async knex => {
   // Flat table to store all commits to this stream, regardless of branch.
   // Optional, might be removed as you can get all the commits from each branch...
   await knex.schema.createTable( 'stream_commits', table => {
-    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( )
+    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete('cascade')
     table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
     table.primary( [ 'stream_id', 'commit_id' ] )
   } )

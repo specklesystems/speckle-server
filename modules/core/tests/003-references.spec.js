@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
-const { createObject, createObjects, getObject, getObjects } = require( '../objects/services' )
+const { createObject, createCommit, createObjects, getObject, getObjects } = require( '../objects/services' )
 const {
   createTag,
   updateTag,
@@ -27,33 +27,32 @@ const {
 } = require( '../references/services' )
 
 describe( 'Tags & Branches', ( ) => {
+  let user = {
+    username: 'dim4242',
+    name: 'Dimitrie Stefanescu',
+    email: 'didimitrie4342@gmail.com',
+    password: 'sn3aky-1337-b1m'
+  }
+
+  let stream = {
+    name: 'Test Stream References',
+    description: 'Whatever goes in here usually...'
+  }
+
+  let commit1 = { description: 'First Commit' }
+
+  let commit2 = { description: 'Second Commit' }
+
+  let branch = {
+    name: '🧨 super branch 🧨',
+    description: 'a test branch'
+  }
+
+  let tag = {
+    name: 'v.1.20.3',
+    description: 'release version shite'
+  }
   describe( 'Services/Queries', ( ) => {
-
-    let user = {
-      username: 'dim4242',
-      name: 'Dimitrie Stefanescu',
-      email: 'didimitrie4342@gmail.com',
-      password: 'sn3aky-1337-b1m'
-    }
-
-    let stream = {
-      name: 'Test Stream References',
-      description: 'Whatever goes in here usually...'
-    }
-
-    let commit1 = { description: 'First Commit' }
-
-    let commit2 = { description: 'Second Commit' }
-
-    let branch = {
-      name: '🧨 super branch 🧨',
-      description: 'a test branch'
-    }
-
-    let tag = {
-      name: 'v.1.20.3',
-      description: 'release version shite'
-    }
 
     before( async ( ) => {
       await knex.migrate.latest( )
@@ -61,9 +60,9 @@ describe( 'Tags & Branches', ( ) => {
       user.id = await createUser( user )
       stream.id = await createStream( stream, user.id )
 
-      commit1.hash = await createObject( stream.id, user.id, commit1 )
+      commit1.hash = await createCommit( stream.id, user.id, commit1 )
       commit2.parents = [ commit1.hash ]
-      commit2.hash = await createObject( stream.id, user.id, commit2 )
+      commit2.hash = await createCommit( stream.id, user.id, commit2 )
 
       tag.commit_id = commit2.hash
     } )
@@ -106,7 +105,7 @@ describe( 'Tags & Branches', ( ) => {
       expect( myBranchAfterFirstUpdate.commits ).to.have.lengthOf( 1 )
 
       let newCommit = { test: 'test', best: true }
-      newCommit.hash = await createObject( stream.id, user.id, newCommit )
+      newCommit.hash = await createCommit( stream.id, user.id, newCommit )
 
       branch.commits = [ commit2.hash, newCommit.hash, commit1.hash ]
       branch.name = 'A Different Name'
@@ -170,4 +169,84 @@ describe( 'Tags & Branches', ( ) => {
       expect( branches ).to.have.lengthOf( 3 )
     } )
   } )
+
+  describe( 'Integration (API)', ( ) => {
+    let token
+
+    before( async ( ) => {
+      await knex.migrate.latest( )
+
+      user.id = await createUser( user )
+      token = await createToken( user.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
+
+      stream.id = await createStream( stream, user.id )
+
+      commit1.hash = await createCommit( stream.id, user.id, commit1 )
+      commit2.parents = [ commit1.hash ]
+      commit2.hash = await createCommit( stream.id, user.id, commit2 )
+      tag.commit_id = commit2.hash
+    } )
+
+    after( async ( ) => {
+      await knex.migrate.rollback( )
+    } )
+
+    it( 'Should create a tag', async ( ) => {
+      const response = await chai.request( app ).post( `/streams/${stream.id}/tags` ).send( tag ).set( 'Authorization', `Bearer ${token}` )
+      expect( response ).to.have.status( 201 )
+      expect( response.body ).to.have.property( 'id' )
+      tag.id = response.body.id
+    } )
+
+
+    it( 'Should update a tag', async ( ) => {
+      const response = await chai.request( app ).put( `/streams/${stream.id}/tags/${tag.id}` ).send( { name: 'semver love' } ).set( 'Authorization', `Bearer ${token}` )
+      expect( response ).to.have.status( 200 )
+    } )
+
+
+    it( 'Should get a tag', async ( ) => {
+      const tagResponse = await chai.request( app ).get( `/streams/${stream.id}/tags/${tag.id}` ).set( 'Authorization', `Bearer ${token}` )
+      expect( tagResponse ).to.have.status( 200 )
+      expect( tagResponse.body.name ).to.equal( 'semver love' )
+    } )
+
+
+    it( 'Should delete a tag', async ( ) => {
+      const deleteResponse = await chai.request( app ).delete( `/streams/${stream.id}/tags/${tag.id}` ).set( 'Authorization', `Bearer ${token}` )
+      expect( deleteResponse ).to.have.status( 200 )
+    } )
+
+
+    it( 'Should create a branch', async ( ) => {
+      branch.commits = [ commit1.hash, commit1.hash ]
+
+      const response = await chai.request( app ).post( `/streams/${stream.id}/branches` ).send( branch ).set( 'Authorization', `Bearer ${token}` )
+      expect( response ).to.have.status( 200 )
+      expect( response.body ).to.have.property( 'id' )
+      branch.id = response.body.id
+    } )
+
+
+    it( 'Should update a branch', async ( ) => {
+      const response = await chai.request( app ).put( `/streams/${stream.id}/branches/${branch.id}` ).send( { name: 'semver love' } ).set( 'Authorization', `Bearer ${token}` )
+      expect( response ).to.have.status( 200 )
+    } )
+
+
+    it( 'Should get a branch', async ( ) => {
+      const branchResponse = await chai.request( app ).get( `/streams/${stream.id}/branches/${branch.id}` ).set( 'Authorization', `Bearer ${token}` )
+      expect( branchResponse ).to.have.status( 200 )
+      expect( branchResponse.body ).to.have.property( 'name' )
+      expect( branchResponse.body.name ).to.equal( 'semver love' )
+    } )
+
+
+    it( 'Should delete create a branch', async ( ) => {
+      const deleteResponse = await chai.request( app ).delete( `/streams/${stream.id}/branches/${branch.id}` ).set( 'Authorization', `Bearer ${token}` )
+      expect( deleteResponse ).to.have.status( 200 )
+    } )
+
+  } )
+
 } )

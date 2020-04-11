@@ -22,7 +22,9 @@ module.exports = {
 
   async createCommit( streamId, userId, object ) {
     object.speckle_type = 'commit'
-    let hash = await module.exports.createObject( streamId, userId, object )
+    object.author = userId
+
+    let hash = await module.exports.createObject( object )
 
     let query = StreamCommits( ).insert( { stream_id: streamId, commit_id: hash } ).toString( ) + ' on conflict do nothing'
     await knex.raw( query )
@@ -38,14 +40,13 @@ module.exports = {
   /*
       Objects Proper
    */
-  async createObject( streamId, userId, object ) {
+  async createObject( object ) {
     // Prep tree refs
     let objTreeRefs = object.hasOwnProperty( '__tree' ) && object.__tree ? object.__tree.map( entry => {
       return { parent: entry.split( '.' )[ 0 ], path: entry }
     } ) : [ ]
 
     let insertionObject = prepInsertionObject( object )
-    insertionObject.author = userId
 
     let q1 = Objects( ).insert( insertionObject ).toString( ) + ' on conflict do nothing'
     await knex.raw( q1 )
@@ -58,7 +59,7 @@ module.exports = {
     return insertionObject.hash
   },
 
-  createObjects: async ( streamId, userId, objects ) => {
+  createObjects: async ( objects ) => {
     let batches = [ ]
     let maxBatchSize = process.env.MAX_BATCH_SIZE || 1000
     objects = [ ...objects ]
@@ -86,7 +87,6 @@ module.exports = {
         }
 
         let insertionObject = prepInsertionObject( obj )
-        insertionObject.author = userId
 
         objsToInsert.push( insertionObject )
         hashes.push( insertionObject.hash )

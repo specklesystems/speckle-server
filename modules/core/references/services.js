@@ -34,7 +34,7 @@ module.exports = {
   },
 
   deleteTagById: async ( tagId ) => {
-    return Refs( ).where( { id: tag.id, type: 'tag' } ).del( )
+    return Refs( ).where( { id: tagId, type: 'tag' } ).del( )
   },
 
   getTagsByStreamId: async ( streamId ) => {
@@ -69,7 +69,7 @@ module.exports = {
       let branchCommits = commits.map( commitId => { return { branch_id: branch.id, commit_id: commitId } } )
       await knex.raw( BranchCommits( ).insert( branchCommits ) + ' on conflict do nothing' )
     }
-    
+
     await Refs( ).where( { id: branch.id } ).update( branch )
   },
 
@@ -89,6 +89,9 @@ module.exports = {
     return Refs( ).where( { stream_id: streamId, type: 'branch' } ).select( '*' )
   },
 
+  async deleteBranchById( branchId ) {
+    await Refs( ).where( { id: branchId, type: 'branch' } ).del( )
+  },
   /*
     Generic
    */

@@ -15,9 +15,14 @@ exports.init = ( ) => {
   app.use( bodyParser.json( ) )
   app.use( bodyParser.urlencoded( { extended: false } ) )
 
+  app.get( '/', ( req, res ) => {
+    res.send( { fantastic: 'speckle' } )
+  } )
+
+  require( './modules' )( app )
+
   // Error responses
   app.use( ( err, req, res, next ) => {
-    console.log( "ERRRRRR")
     if ( process.env.NODE_ENV === 'test' ) {
       debug( err )
     }
@@ -27,12 +32,6 @@ exports.init = ( ) => {
       error: err
     } )
   } )
-
-  app.get( '/', ( req, res ) => {
-    res.send( { fantastic: 'speckle' } )
-  } )
-
-  require( './modules' )( app )
 
   return app
 }

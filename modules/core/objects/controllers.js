@@ -16,7 +16,7 @@ module.exports = {
   async createCommit( req, res, next ) {
     try {
       let id = await createCommit( req.params.resourceId, req.user.id, req.body )
-      res.status( 201 ).send( { success: true, id: id } )
+      res.status( 201 ).send( id )
       next( )
     } catch ( err ) {
       next( err )
@@ -37,7 +37,7 @@ module.exports = {
 
   async createObjects( req, res, next ) {
     try {
-      let hashes = await createObjects( req.params.resourceId, req.user.id, req.body )
+      let hashes = await createObjects( req.body )
       res.status( 201 ).send( hashes )
       next( )
     } catch ( err ) {
