@@ -15,6 +15,7 @@ module.exports = {
    */
   createTag: async ( tag, streamId, userId ) => {
     delete tag.commits // let's make sure
+    tag.id = crs( { length: 10 } )
     tag.stream_id = streamId
     tag.author = userId
     tag.type = 'tag'
@@ -48,6 +49,8 @@ module.exports = {
     let commits = branch.commits || [ ]
     delete branch.commits
     delete branch.commit_id
+    branch.id = crs( { length: 10 } )
+
     branch.stream_id = streamId
     branch.author = userId
     branch.type = 'branch'
@@ -57,7 +60,7 @@ module.exports = {
       let branchCommits = commits.map( commitId => { return { branch_id: id, commit_id: commitId } } )
       await knex.raw( BranchCommits( ).insert( branchCommits ) + ' on conflict do nothing' )
     }
-    return id
+    return branch.id
   },
 
   updateBranch: async ( branch ) => {
@@ -78,7 +81,7 @@ module.exports = {
   },
 
   getBranchById: async ( branchId ) => {
-    let [ branch ] = await Refs( ).where( { id: branchId, type: 'branch' } ).select( '*' )
+    let branch = await Refs( ).where( { id: branchId, type: 'branch' } ).first( ).select( '*' )
     let commits = await BranchCommits( ).where( { branch_id: branchId } )
     branch.commits = commits.map( c => c.commit_id )
 

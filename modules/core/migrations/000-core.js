@@ -5,13 +5,38 @@ exports.up = async knex => {
   await knex.raw( 'CREATE EXTENSION IF NOT EXISTS "pgcrypto"' )
   await knex.raw( 'CREATE EXTENSION IF NOT EXISTS "ltree"' )
 
+  await knex.schema.createTable( 'users', table => {
+    table.string( 'id', 10 ).primary( )
+    table.string( 'username', 20 ).unique( ).notNullable( )
+    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
+    table.string( 'name' ).notNullable( )
+    table.string( 'email' ).unique( )
+    table.jsonb( 'profiles' )
+    table.text( 'password_digest' ) // bcrypted pwd
+    table.bool( 'verified' ).defaultTo( false )
+  } )
+
+  // Api tokens. TODO: add moar comments
+  await knex.schema.createTable( 'api_token', table => {
+    table.string( 'id', 10 ).primary( )
+    table.string( 'token_digest' ).unique( )
+    table.string( 'owner_id', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.string( 'name' )
+    table.string( 'last_chars', 6 )
+    table.specificType( 'scopes', 'text[]' )
+    table.boolean( 'revoked' ).defaultTo( false )
+    table.bigint( 'lifespan' ).defaultTo( 3.154e+12 ) // defaults to a lifespan of 100 years
+    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
+    table.timestamp( 'last_used' ).defaultTo( knex.fn.now( ) )
+  } )
+
   // Streams Table
   await knex.schema.createTable( 'streams', table => {
-    table.text( 'id' ).unique( ).primary( )
-    table.text( 'name' )
+    table.string( 'id', 10 ).primary( )
+    table.string( 'name' )
     table.text( 'description' )
     table.boolean( 'isPublic' ).defaultTo( true )
-    table.text( 'cloned_from' ).references( 'id' ).inTable( 'streams' )
+    table.string( 'cloned_from', 10 ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updated_at' ).defaultTo( knex.fn.now( ) )
     // table.unique( [ 'owner_id', 'name' ] )
@@ -27,9 +52,10 @@ exports.up = async knex => {
     END$$;
     ` )
 
+  // Stream-users access control list.
   await knex.schema.createTable( 'stream_acl', table => {
-    table.text( 'user_id' ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
-    table.text( 'resource_id' ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'user_id', 10 ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'resource_id', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
     table.primary( [ 'user_id', 'resource_id' ] )
     table.unique( [ 'user_id', 'resource_id' ] )
     table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
@@ -37,29 +63,25 @@ exports.up = async knex => {
 
   // Objects Table
   await knex.schema.createTable( 'objects', table => {
-    table.text( 'hash' ).primary( )
-    table.text( 'speckle_type' ).defaultTo( 'Base' ).notNullable( )
-    table.text( 'applicationId' )
+    table.string( 'hash' ).primary( )
+    table.string( 'speckle_type' ).defaultTo( 'Base' ).notNullable( )
+    table.string( 'applicationId' )
     table.jsonb( 'data' )
-    table.text( 'author' ).references( 'id' ).inTable( 'users' )
+    table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.index( [ 'speckle_type' ], 'type_index' )
   } )
 
+  // Tree inheritance tracker
   await knex.schema.createTable( 'object_tree_refs', table => {
     table.increments( 'id' )
-    table.text( 'parent' )
+    table.string( 'parent' )
     table.specificType( 'path', 'ltree' )
   } )
 
   await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
 
-  // Sets a trigger to generate the hash of objects if not present.
-  // File
-  let hashTriggerObjects = require( './helperFunctions' ).hashTriggerGenerator( 'objects', 'hash' )
-  await knex.raw( hashTriggerObjects )
-
-  // creates an enum type for db references.
+  // creates an enum type for db reference types (branch, tag).
   await knex.raw( `
     DO $$
     BEGIN
@@ -71,14 +93,14 @@ exports.up = async knex => {
 
   // Reference table. A reference can be a branch or a tag.
   await knex.schema.createTable( 'references', table => {
-    table.uuid( 'id' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).unique( ).primary( )
-    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
-    table.text( 'author' ).references( 'id' ).inTable( 'users' )
-    table.text( 'name' )
+    table.string( 'id', 10 ).primary( )
+    table.string( 'stream_id', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
+    table.string( 'name' )
     table.specificType( 'type', 'speckle_reference_type' ).defaultTo( 'branch' )
     table.text( 'description' )
     // (Sparse) Only populated for tags, which hold one commit. 
-    table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' )
+    table.string( 'commit_id' ).references( 'hash' ).inTable( 'objects' )
     table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
     table.unique( [ 'stream_id', 'name' ] )
@@ -87,16 +109,16 @@ exports.up = async knex => {
   // Junction Table Branches >- -< Commits 
   // Note: Branches >- -< Commits is a many-to-many relationship (one commit can belong to multiple branches, one branch can have multiple commits) 
   await knex.schema.createTable( 'branch_commits', table => {
-    table.uuid( 'branch_id' ).references( 'id' ).inTable( 'references' ).notNullable( ).onDelete('cascade')
-    table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
+    table.string( 'branch_id', 10 ).references( 'id' ).inTable( 'references' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
     table.primary( [ 'branch_id', 'commit_id' ] )
   } )
 
   // Flat table to store all commits to this stream, regardless of branch.
   // Optional, might be removed as you can get all the commits from each branch...
   await knex.schema.createTable( 'stream_commits', table => {
-    table.text( 'stream_id' ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete('cascade')
-    table.text( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
+    table.string( 'stream_id', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
     table.primary( [ 'stream_id', 'commit_id' ] )
   } )
 
@@ -111,6 +133,8 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'object_tree_refs' )
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
+  await knex.schema.dropTableIfExists( 'api_token' )
+  await knex.schema.dropTableIfExists( 'users' )
   await knex.raw( `DROP TYPE IF EXISTS speckle_reference_type ` )
   await knex.raw( `DROP TYPE IF EXISTS speckle_acl_role_type ` )
 }

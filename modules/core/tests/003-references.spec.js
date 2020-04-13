@@ -79,7 +79,8 @@ describe( 'Tags & Branches', ( ) => {
 
     it( 'Should not allow dupe branches', async ( ) => {
       try {
-        await createBranch( branch, stream.id, user.id )
+        let dupeBranch = { ...branch }
+        await createBranch( dupeBranch, stream.id, user.id )
         assert.fail( 'Duplicate branches should not be allowed.' )
       } catch ( err ) {
         // Pass
@@ -125,7 +126,8 @@ describe( 'Tags & Branches', ( ) => {
 
     it( 'Should not allow for duplicate tags', async ( ) => {
       try {
-        await createTag( tag, stream.id, user.id )
+        let dupeTag = { ...tag }
+        await createTag( dupeTag, stream.id, user.id )
         assert.fail( )
       } catch {
         // Pass
