@@ -25,9 +25,17 @@ module.exports = {
 
   async getObjects( req, res, next ) {
     try {
-      let objIds = req.params.objectIds.split( ',' )
-      let objs = await getObjects( objIds )
+      let objIds
 
+      if ( req.params.objectIds ) {
+        objIds = req.params.objectIds.split( ',' )
+      } else if ( req.body ) {
+        objIds = req.body
+      }
+
+      if ( !objIds ) throw new Error( 'No objectids specified' )
+
+      let objs = await getObjects( objIds )
       res.send( objs )
       next( )
     } catch ( err ) {

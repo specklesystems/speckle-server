@@ -24,9 +24,17 @@ objects.post(
   createCommit
 )
 
-// Get an object
+// Get objects
 objects.get(
   '/streams/:resourceId/objects/:objectIds',
+  authenticate( 'streams:read', false ),
+  authorize( 'streams_acl', 'streams', 'read' ),
+  getObjects
+)
+
+// Get many objects (for when url gets too long)
+objects.post(
+  '/streams/:resourceId/objects/getmany',
   authenticate( 'streams:read', false ),
   authorize( 'streams_acl', 'streams', 'read' ),
   getObjects

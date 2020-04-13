@@ -5,7 +5,7 @@ const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
 const Users = ( ) => knex( 'users' )
-const Keys = ( ) => knex( 'api_token' )
+const Keys = ( ) => knex( 'api_tokens' )
 
 module.exports = {
 
@@ -15,7 +15,7 @@ module.exports = {
 
    */
 
-  createUser: async ( user ) => {
+  async createUser( user ) {
     user.id = crs( { length: 10 } )
 
     if ( user.password ) {
@@ -28,11 +28,11 @@ module.exports = {
     return res[ 0 ]
   },
 
-  getUser: async ( id ) => {
+  async getUser( id ) {
     return Users( ).where( { id: id } ).select( 'id', 'username', 'name', 'email', 'profiles', 'verified' ).first( )
   },
 
-  updateUser: async ( id, user ) => {
+  async updateUser( id, user ) {
     delete user.id
     delete user.password_digest
     delete user.password
@@ -40,12 +40,12 @@ module.exports = {
     await Users( ).where( { id: id } ).update( user )
   },
 
-  validatePasssword: async ( userId, password ) => {
+  async validatePasssword( userId, password ) {
     var { password_digest } = await Users( ).where( { id: userId } ).select( 'password_digest' ).first( )
     return bcrypt.compare( password, password_digest )
   },
 
-  deleteUser: ( id ) => {
+  async deleteUser( id ) {
     throw new Error( 'not implemented' )
   },
 
@@ -57,7 +57,7 @@ module.exports = {
 
    */
 
-  createToken: async ( userId, name, scopes, lifespan ) => {
+  async createToken( userId, name, scopes, lifespan ) {
     let tokenId = crs( { length: 10 } )
     let tokenString = crs( { length: 32 } )
     let tokenHash = await bcrypt.hash( tokenString, 10 )
@@ -78,7 +78,7 @@ module.exports = {
     if ( !token ) {
       return { valid: false }
     }
-    
+
     const timeDiff = Math.abs( Date.now( ) - new Date( token.created_at ) )
     if ( timeDiff > token.lifespan ) {
       await module.exports.revokeToken( tokenId )
@@ -94,12 +94,12 @@ module.exports = {
       return { valid: false }
   },
 
-  revokeToken: async ( tokenId ) => {
+  async revokeToken( tokenId ) {
     tokenId = tokenId.slice( 0, 10 )
     await Keys( ).where( { id: tokenId } ).del( )
   },
 
-  getUserTokens: async ( userId ) => {
+  async getUserTokens( userId ) {
     return Keys( ).where( { owner_id: userId } ).select( 'id', 'name', 'last_chars', 'scopes', 'created_at', 'last_used' )
   }
 }

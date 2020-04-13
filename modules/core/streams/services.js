@@ -8,7 +8,7 @@ const Acl = ( ) => knex( 'stream_acl' )
 
 module.exports = {
 
-  createStream: async ( stream, ownerId ) => {
+  async createStream ( stream, ownerId ) {
     delete stream.created_at
     stream.updated_at = knex.fn.now( )
     stream.id = crs( { length: 10 } )
@@ -19,18 +19,18 @@ module.exports = {
     return res
   },
 
-  getStream: ( streamId ) => {
+  async getStream ( streamId ) {
     return Streams( ).where( { id: streamId } ).first( )
   },
 
-  updateStream: async ( streamId, stream ) => {
+  async updateStream ( streamId, stream ) {
     delete stream.id
     delete stream.created_at
     let [ res ] = await Streams( ).returning( 'id' ).where( { id: streamId } ).update( stream )
     return res
   },
 
-  grantPermissionsStream: async ( streamId, userId, role ) => {
+  async grantPermissionsStream ( streamId, userId, role ) {
     if ( role === 'owner' ) {
       let [ ownerAcl ] = await Acl( ).where( { resource_id: streamId, role: 'owner' } ).returning( '*' ).del( )
       await Acl( ).insert( { resource_id: streamId, user_id: ownerAcl.user_id, role: 'write' } )
@@ -42,7 +42,7 @@ module.exports = {
     await knex.raw( query )
   },
 
-  revokePermissionsStream: async ( streamId, userId ) => {
+  async revokePermissionsStream ( streamId, userId ) {
     let streamAclEntries = Acl( ).where( { resource_id: streamId } ).select( '*' )
     let delCount = await Acl( ).where( { resource_id: streamId, user_id: userId } ).whereNot( { role: 'owner' } ).del( )
     if ( delCount === 0 )
@@ -53,7 +53,7 @@ module.exports = {
     await Streams( ).where( { id: streamId } ).del( )
   },
 
-  cloneStream: ( streamId, ownerId ) => {
+  async cloneStream( streamId, ownerId ) {
     //TODO: 
     // Clone stream and all its references
     // Tags: easy clone
@@ -61,7 +61,7 @@ module.exports = {
     throw new Error( 'not implemented' )
   },
 
-  getUserStreams: async ( userId, offset, limit ) => {
+  async getUserStreams ( userId, offset, limit ) {
     offset = offset || 0
     limit = limit || 100
 
@@ -70,7 +70,7 @@ module.exports = {
       .limit( limit ).offset( offset )
   },
 
-  getStreamUsers: async ( streamId ) => {
+  async getStreamUsers ( streamId ) {
     return Acl( ).where( { resource_id: streamId } )
       .rightJoin( 'users', { 'users.id': 'stream_acl.user_id' } )
       .select( 'role', 'username', 'name', 'id' )

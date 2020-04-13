@@ -83,7 +83,7 @@ describe( 'Objects', ( ) => {
     } )
 
     let objCount_1 = 10
-    let objCount_2 = 100
+    let objCount_2 = 1000
     let objs = [ ]
     let objs2 = [ ]
 
@@ -195,7 +195,7 @@ describe( 'Objects', ( ) => {
     } )
 
     let objs = [ ]
-    let objCount = 100
+    let objCount = 1000
 
     it( 'Should create objects', async ( ) => {
       for ( let i = 0; i < objCount; i++ ) {
@@ -213,10 +213,17 @@ describe( 'Objects', ( ) => {
       objs.forEach( ( o, i ) => o.hash = objectCreationResult.body[ i ] )
     } )
 
-    it( 'Should get objects', async ( ) => {
-      const url = `${baseUrl}/objects/${objs.map( o => o.hash ).join( )}`
+    it( 'Should get 10 objects', async ( ) => {
+      const url = `${baseUrl}/objects/${objs.slice(0,10).map( o => o.hash ).join( )}`
       const objsResult = await chai.request( app ).get( url ).set( 'Authorization', `Bearer ${tokenA}` )
 
+      expect( objsResult ).to.have.status( 200 )
+      expect( objsResult.body ).to.have.lengthOf( 10 )
+      expect( objsResult.body[ 0 ] ).to.have.property( 'hash' )
+    } )
+
+    it( 'Should get many objects', async ( ) => {
+      const objsResult = await chai.request( app ).post( `${baseUrl}/objects/getmany` ).send( objs.map( o => o.hash ) ).set( 'Authorization', `Bearer ${tokenA}` )
       expect( objsResult ).to.have.status( 200 )
       expect( objsResult.body ).to.have.lengthOf( objCount )
       expect( objsResult.body[ 0 ] ).to.have.property( 'hash' )

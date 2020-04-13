@@ -59,9 +59,9 @@ module.exports = {
     return insertionObject.hash
   },
 
-  createObjects: async ( objects ) => {
+  async createObjects( objects ) {
     let batches = [ ]
-    let maxBatchSize = process.env.MAX_BATCH_SIZE || 1000
+    let maxBatchSize = process.env.MAX_BATCH_SIZE || 250
     objects = [ ...objects ]
     if ( objects.length > maxBatchSize ) {
       while ( objects.length > 0 )
@@ -110,23 +110,23 @@ module.exports = {
     return hashes
   },
 
-  getObject: async ( objectId ) => {
+  async getObject( objectId ) {
     let { data } = await Objects( ).where( { hash: objectId } ).select( 'data' ).first( )
     return data
   },
 
-  getObjects: async ( objectIds ) => {
+  async getObjects( objectIds ) {
     let res = await Objects( ).whereIn( 'hash', objectIds ).select( 'data' )
     return res.map( r => r.data )
   },
 
   // NOTE: Derive Object
-  updateObject: async ( ) => {
+  async updateObject( ) {
     throw new Error( 'not implemeneted' )
   },
 
   // NOTE: Dangerous
-  deleteObject: async ( ) => {
+  async deleteObject( ) {
     // TODO: Cascade through all children?
     throw new Error( 'not implemeneted' )
   },

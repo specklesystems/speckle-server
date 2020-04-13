@@ -13,7 +13,7 @@ module.exports = {
   /*
     Tags
    */
-  createTag: async ( tag, streamId, userId ) => {
+  async createTag( tag, streamId, userId ) {
     delete tag.commits // let's make sure
     tag.id = crs( { length: 10 } )
     tag.stream_id = streamId
@@ -23,29 +23,29 @@ module.exports = {
     return id
   },
 
-  getTagById: async ( tagId ) => {
+  async getTagById( tagId ) {
     let [ ref ] = await Refs( ).where( { id: tagId, type: 'tag' } ).select( '*' )
     return ref
   },
 
-  updateTag: async ( tag ) => {
+  async updateTag( tag ) {
     delete tag.type
     tag.updatedAt = knex.fn.now( )
     await Refs( ).where( { id: tag.id, type: 'tag' } ).update( tag )
   },
 
-  deleteTagById: async ( tagId ) => {
+  async deleteTagById( tagId ) {
     return Refs( ).where( { id: tagId, type: 'tag' } ).del( )
   },
 
-  getTagsByStreamId: async ( streamId ) => {
+  async getTagsByStreamId( streamId ) {
     return Refs( ).where( { stream_id: streamId, type: 'tag' } ).select( '*' )
   },
 
   /*
     Branches
    */
-  createBranch: async ( branch, streamId, userId ) => {
+  async createBranch( branch, streamId, userId ) {
     let commits = branch.commits || [ ]
     delete branch.commits
     delete branch.commit_id
@@ -63,7 +63,7 @@ module.exports = {
     return branch.id
   },
 
-  updateBranch: async ( branch ) => {
+  async updateBranch( branch ) {
     let commits = branch.commits || [ ]
     delete branch.commits
     delete branch.commit_id
@@ -76,11 +76,11 @@ module.exports = {
     await Refs( ).where( { id: branch.id } ).update( branch )
   },
 
-  getBranchCommits: async ( branchId ) => {
+  async getBranchCommits( branchId ) {
     return BranchCommits( ).where( { branch_id: branchId } ).select( 'commit_id' )
   },
 
-  getBranchById: async ( branchId ) => {
+  async getBranchById( branchId ) {
     let branch = await Refs( ).where( { id: branchId, type: 'branch' } ).first( ).select( '*' )
     let commits = await BranchCommits( ).where( { branch_id: branchId } )
     branch.commits = commits.map( c => c.commit_id )
@@ -88,7 +88,7 @@ module.exports = {
     return branch
   },
 
-  getBranchesByStreamId: async ( streamId ) => {
+  async getBranchesByStreamId( streamId ) {
     return Refs( ).where( { stream_id: streamId, type: 'branch' } ).select( '*' )
   },
 
@@ -98,7 +98,7 @@ module.exports = {
   /*
     Generic
    */
-  getStreamReferences: async ( streamId ) => {
+  async getStreamReferences( streamId ) {
     return Refs( ).where( { stream_id: streamId } ).select( '*' )
   }
 

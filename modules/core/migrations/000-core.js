@@ -17,7 +17,7 @@ exports.up = async knex => {
   } )
 
   // Api tokens. TODO: add moar comments
-  await knex.schema.createTable( 'api_token', table => {
+  await knex.schema.createTable( 'api_tokens', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'token_digest' ).unique( )
     table.string( 'owner_id', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
@@ -133,7 +133,7 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'object_tree_refs' )
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
-  await knex.schema.dropTableIfExists( 'api_token' )
+  await knex.schema.dropTableIfExists( 'api_tokens' )
   await knex.schema.dropTableIfExists( 'users' )
   await knex.raw( `DROP TYPE IF EXISTS speckle_reference_type ` )
   await knex.raw( `DROP TYPE IF EXISTS speckle_acl_role_type ` )
