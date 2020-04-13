@@ -37,7 +37,8 @@ module.exports = {
 
   updateStream: async ( req, res, next ) => {
     try {
-      let id = await updateStream( req.params.resourceId, req.body )
+      req.body.id = req.params.resourceId
+      let id = await updateStream( req.body )
       res.status( 200 ).send( { success: true, id: id } )
 
       req.eventData = { id: id, userId: req.user.userId }

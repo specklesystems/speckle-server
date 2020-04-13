@@ -8,7 +8,7 @@ const Acl = ( ) => knex( 'stream_acl' )
 
 module.exports = {
 
-  async createStream ( stream, ownerId ) {
+  async createStream( stream, ownerId ) {
     delete stream.created_at
     stream.updated_at = knex.fn.now( )
     stream.id = crs( { length: 10 } )
@@ -19,18 +19,17 @@ module.exports = {
     return res
   },
 
-  async getStream ( streamId ) {
+  async getStream( streamId ) {
     return Streams( ).where( { id: streamId } ).first( )
   },
 
-  async updateStream ( streamId, stream ) {
-    delete stream.id
+  async updateStream( stream ) {
     delete stream.created_at
-    let [ res ] = await Streams( ).returning( 'id' ).where( { id: streamId } ).update( stream )
+    let [ res ] = await Streams( ).returning( 'id' ).where( { id: stream.id } ).update( stream )
     return res
   },
 
-  async grantPermissionsStream ( streamId, userId, role ) {
+  async grantPermissionsStream( streamId, userId, role ) {
     if ( role === 'owner' ) {
       let [ ownerAcl ] = await Acl( ).where( { resource_id: streamId, role: 'owner' } ).returning( '*' ).del( )
       await Acl( ).insert( { resource_id: streamId, user_id: ownerAcl.user_id, role: 'write' } )
@@ -42,7 +41,7 @@ module.exports = {
     await knex.raw( query )
   },
 
-  async revokePermissionsStream ( streamId, userId ) {
+  async revokePermissionsStream( streamId, userId ) {
     let streamAclEntries = Acl( ).where( { resource_id: streamId } ).select( '*' )
     let delCount = await Acl( ).where( { resource_id: streamId, user_id: userId } ).whereNot( { role: 'owner' } ).del( )
     if ( delCount === 0 )
@@ -61,7 +60,7 @@ module.exports = {
     throw new Error( 'not implemented' )
   },
 
-  async getUserStreams ( userId, offset, limit ) {
+  async getUserStreams( userId, offset, limit ) {
     offset = offset || 0
     limit = limit || 100
 
@@ -70,7 +69,7 @@ module.exports = {
       .limit( limit ).offset( offset )
   },
 
-  async getStreamUsers ( streamId ) {
+  async getStreamUsers( streamId ) {
     return Acl( ).where( { resource_id: streamId } )
       .rightJoin( 'users', { 'users.id': 'stream_acl.user_id' } )
       .select( 'role', 'username', 'name', 'id' )

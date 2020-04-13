@@ -61,7 +61,7 @@ describe( 'Streams', ( ) => {
       } )
 
       it( 'Should update a stream', async ( ) => {
-        let sid = await updateStream( testStream.id, { name: "Modified Name", description: 'Wooot' } )
+        let sid = await updateStream( { id: testStream.id, name: "Modified Name", description: 'Wooot' } )
         let stream = await getStream( testStream.id )
         expect( stream.name ).to.equal( 'Modified Name' )
         expect( stream.description ).to.equal( 'Wooot' )
