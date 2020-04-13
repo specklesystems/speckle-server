@@ -8,26 +8,26 @@ exports.up = async knex => {
   await knex.schema.createTable( 'users', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'username', 20 ).unique( ).notNullable( )
-    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
+    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'name' ).notNullable( )
     table.string( 'email' ).unique( )
     table.jsonb( 'profiles' )
-    table.text( 'password_digest' ) // bcrypted pwd
+    table.text( 'passwordDigest' ) // bcrypted pwd
     table.bool( 'verified' ).defaultTo( false )
   } )
 
   // Api tokens. TODO: add moar comments
   await knex.schema.createTable( 'api_tokens', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'token_digest' ).unique( )
-    table.string( 'owner_id', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.string( 'tokenDigest' ).unique( )
+    table.string( 'owner', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.string( 'name' )
-    table.string( 'last_chars', 6 )
+    table.string( 'lastChars', 6 )
     table.specificType( 'scopes', 'text[]' )
     table.boolean( 'revoked' ).defaultTo( false )
     table.bigint( 'lifespan' ).defaultTo( 3.154e+12 ) // defaults to a lifespan of 100 years
-    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
-    table.timestamp( 'last_used' ).defaultTo( knex.fn.now( ) )
+    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
+    table.timestamp( 'lastUsed' ).defaultTo( knex.fn.now( ) )
   } )
 
   // Streams Table
@@ -36,10 +36,9 @@ exports.up = async knex => {
     table.string( 'name' )
     table.text( 'description' )
     table.boolean( 'isPublic' ).defaultTo( true )
-    table.string( 'cloned_from', 10 ).references( 'id' ).inTable( 'streams' )
-    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
-    table.timestamp( 'updated_at' ).defaultTo( knex.fn.now( ) )
-    // table.unique( [ 'owner_id', 'name' ] )
+    table.string( 'clonedFrom', 10 ).references( 'id' ).inTable( 'streams' )
+    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
+    table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
   } )
 
   // creates an enum type for stream acl roles.
@@ -54,21 +53,21 @@ exports.up = async knex => {
 
   // Stream-users access control list.
   await knex.schema.createTable( 'stream_acl', table => {
-    table.string( 'user_id', 10 ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'resource_id', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
-    table.primary( [ 'user_id', 'resource_id' ] )
-    table.unique( [ 'user_id', 'resource_id' ] )
+    table.string( 'userId', 10 ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'resourceId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.primary( [ 'userId', 'resourceId' ] )
+    table.unique( [ 'userId', 'resourceId' ] )
     table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
   } )
 
   // Objects Table
   await knex.schema.createTable( 'objects', table => {
-    table.string( 'hash' ).primary( )
+    table.string( 'id' ).primary( )
     table.string( 'speckle_type' ).defaultTo( 'Base' ).notNullable( )
     table.string( 'applicationId' )
     table.jsonb( 'data' )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
-    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
+    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.index( [ 'speckle_type' ], 'type_index' )
   } )
 
@@ -94,32 +93,32 @@ exports.up = async knex => {
   // Reference table. A reference can be a branch or a tag.
   await knex.schema.createTable( 'references', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'stream_id', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
     table.string( 'name' )
     table.specificType( 'type', 'speckle_reference_type' ).defaultTo( 'branch' )
     table.text( 'description' )
     // (Sparse) Only populated for tags, which hold one commit. 
-    table.string( 'commit_id' ).references( 'hash' ).inTable( 'objects' )
-    table.timestamp( 'created_at' ).defaultTo( knex.fn.now( ) )
+    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' )
+    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
-    table.unique( [ 'stream_id', 'name' ] )
+    table.unique( [ 'streamId', 'name' ] )
   } )
 
   // Junction Table Branches >- -< Commits 
   // Note: Branches >- -< Commits is a many-to-many relationship (one commit can belong to multiple branches, one branch can have multiple commits) 
   await knex.schema.createTable( 'branch_commits', table => {
-    table.string( 'branch_id', 10 ).references( 'id' ).inTable( 'references' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
-    table.primary( [ 'branch_id', 'commit_id' ] )
+    table.string( 'branchId', 10 ).references( 'id' ).inTable( 'references' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' ).notNullable( )
+    table.primary( [ 'branchId', 'commitId' ] )
   } )
 
   // Flat table to store all commits to this stream, regardless of branch.
   // Optional, might be removed as you can get all the commits from each branch...
   await knex.schema.createTable( 'stream_commits', table => {
-    table.string( 'stream_id', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'commit_id' ).references( 'hash' ).inTable( 'objects' ).notNullable( )
-    table.primary( [ 'stream_id', 'commit_id' ] )
+    table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' ).notNullable( )
+    table.primary( [ 'streamId', 'commitId' ] )
   } )
 
 }

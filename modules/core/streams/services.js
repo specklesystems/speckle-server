@@ -9,12 +9,12 @@ const Acl = ( ) => knex( 'stream_acl' )
 module.exports = {
 
   async createStream( stream, ownerId ) {
-    delete stream.created_at
-    stream.updated_at = knex.fn.now( )
+    delete stream.createdAt
+    stream.updatedAt = knex.fn.now( )
     stream.id = crs( { length: 10 } )
 
     let [ res ] = await Streams( ).returning( 'id' ).insert( stream )
-    await Acl( ).insert( { user_id: ownerId, resource_id: res, role: 'owner' } )
+    await Acl( ).insert( { userId: ownerId, resourceId: res, role: 'owner' } )
 
     return res
   },
@@ -24,26 +24,26 @@ module.exports = {
   },
 
   async updateStream( stream ) {
-    delete stream.created_at
+    delete stream.createdAt
     let [ res ] = await Streams( ).returning( 'id' ).where( { id: stream.id } ).update( stream )
     return res
   },
 
   async grantPermissionsStream( streamId, userId, role ) {
     if ( role === 'owner' ) {
-      let [ ownerAcl ] = await Acl( ).where( { resource_id: streamId, role: 'owner' } ).returning( '*' ).del( )
-      await Acl( ).insert( { resource_id: streamId, user_id: ownerAcl.user_id, role: 'write' } )
+      let [ ownerAcl ] = await Acl( ).where( { resourceId: streamId, role: 'owner' } ).returning( '*' ).del( )
+      await Acl( ).insert( { resourceId: streamId, userId: ownerAcl.userId, role: 'write' } )
     }
 
     // upsert
-    let query = Acl( ).insert( { user_id: userId, resource_id: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
+    let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
 
     await knex.raw( query )
   },
 
   async revokePermissionsStream( streamId, userId ) {
-    let streamAclEntries = Acl( ).where( { resource_id: streamId } ).select( '*' )
-    let delCount = await Acl( ).where( { resource_id: streamId, user_id: userId } ).whereNot( { role: 'owner' } ).del( )
+    let streamAclEntries = Acl( ).where( { resourceId: streamId } ).select( '*' )
+    let delCount = await Acl( ).where( { resourceId: streamId, userId: userId } ).whereNot( { role: 'owner' } ).del( )
     if ( delCount === 0 )
       throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
   },
@@ -64,14 +64,14 @@ module.exports = {
     offset = offset || 0
     limit = limit || 100
 
-    return Acl( ).where( { user_id: userId } )
-      .rightJoin( 'streams', { 'streams.id': 'stream_acl.resource_id' } )
+    return Acl( ).where( { userId: userId } )
+      .rightJoin( 'streams', { 'streams.id': 'stream_acl.resourceId' } )
       .limit( limit ).offset( offset )
   },
 
   async getStreamUsers( streamId ) {
-    return Acl( ).where( { resource_id: streamId } )
-      .rightJoin( 'users', { 'users.id': 'stream_acl.user_id' } )
+    return Acl( ).where( { resourceId: streamId } )
+      .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
       .select( 'role', 'username', 'name', 'id' )
   }
 }

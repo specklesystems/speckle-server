@@ -26,7 +26,7 @@ let sampleCommit = JSON.parse( `{
     "beb6c53c4e531f4c259a59e943dd3043"
   ],
   "CreatedOn": "2020-03-18T12:06:07.82307Z",
-  "hash": "79eb41764cc2c065de752bd704bfc4aa",
+  "id": "79eb41764cc2c065de752bd704bfc4aa",
   "speckle_type": "Speckle.Core.Commit",
   "__tree": [
     "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f67"
@@ -35,7 +35,7 @@ let sampleCommit = JSON.parse( `{
 
 let sampleObject = JSON.parse( `{
   "Vertices": [],
-  "hash": "8a9b0676b7fe3e5e487bb34549e67f67",
+  "id": "8a9b0676b7fe3e5e487bb34549e67f67",
   "applicationId": "test",
   "speckle_type": "Tests.Polyline"
 }` )
@@ -73,13 +73,13 @@ describe( 'Objects', ( ) => {
     } )
 
     it( 'Should create a commit', async ( ) => {
-      let myHash = await createCommit( stream.id, userOne.id, sampleCommit )
-      expect( myHash ).to.not.be.null
+      let myId = await createCommit( stream.id, userOne.id, sampleCommit )
+      expect( myId ).to.not.be.null
     } )
 
     it( 'Should create objects', async ( ) => {
-      sampleObject.hash = await createObject( sampleObject )
-      sampleCommit.hash = await createObject( sampleCommit )
+      sampleObject.id = await createObject( sampleObject )
+      sampleCommit.id = await createObject( sampleCommit )
     } )
 
     let objCount_1 = 10
@@ -100,9 +100,9 @@ describe( 'Objects', ( ) => {
         } )
       }
 
-      let hashes = await createObjects( objs )
+      let ids = await createObjects( objs )
 
-      expect( hashes ).to.have.lengthOf( objCount_1 )
+      expect( ids ).to.have.lengthOf( objCount_1 )
 
     } ).timeout( 30000 )
 
@@ -124,31 +124,31 @@ describe( 'Objects', ( ) => {
         } )
       }
 
-      let hashes = await createObjects( objs2 )
+      let myIds = await createObjects( objs2 )
 
-      hashes.forEach( ( h, i ) => objs2[ i ].hash = h )
+      myIds.forEach( ( h, i ) => objs2[ i ].id = h )
 
-      expect( hashes ).to.have.lengthOf( objCount_2 )
+      expect( myIds ).to.have.lengthOf( objCount_2 )
 
     } ).timeout( 30000 )
 
     it( 'Should get a single object', async ( ) => {
 
-      let obj = await getObject( sampleCommit.hash )
+      let obj = await getObject( sampleCommit.id )
       expect( obj ).to.deep.equal( sampleCommit )
     } )
 
     it( 'Should get more objects', async ( ) => {
-      let myObjs = await getObjects( objs.map( o => o.hash ) )
+      let myObjs = await getObjects( objs.map( o => o.id ) )
       expect( myObjs ).to.have.lengthOf( objs.length )
 
-      let match1 = myObjs.find( o => o.hash === objs[ 0 ].hash )
+      let match1 = myObjs.find( o => o.id === objs[ 0 ].id )
       expect( match1 ).to.not.be.null
-      expect( match1.hash ).to.equal( objs[ 0 ].hash )
+      expect( match1.id ).to.equal( objs[ 0 ].id )
 
-      let match2 = myObjs.find( o => o.hash === objs[ 2 ].hash )
+      let match2 = myObjs.find( o => o.id === objs[ 2 ].id )
       expect( match2 ).to.not.be.null
-      expect( match2.hash ).to.equal( objs[ 2 ].hash )
+      expect( match2.id ).to.equal( objs[ 2 ].id )
     } )
 
   } )
@@ -176,7 +176,7 @@ describe( 'Objects', ( ) => {
 
       let secondCommit = { ...sampleCommit }
       secondCommit.description = "Something else"
-      delete secondCommit.hash
+      delete secondCommit.id
 
       const secondCommitRes = await chai.request( app ).post( `${baseUrl}/commits` ).send( secondCommit ).set( 'Authorization', `Bearer ${tokenA}` )
 
@@ -189,7 +189,7 @@ describe( 'Objects', ( ) => {
 
       expect( commits ).to.have.status( 200 )
       expect( commits.body ).to.have.lengthOf( 2 )
-      expect( commits.body[ 0 ] ).to.have.property( 'hash' )
+      expect( commits.body[ 0 ] ).to.have.property( 'id' )
       expect( commits.body[ 0 ] ).to.have.property( 'speckle_type' )
       expect( commits.body[ 0 ].speckle_type ).to.equal( 'commit' )
     } )
@@ -210,23 +210,23 @@ describe( 'Objects', ( ) => {
       expect( objectCreationResult ).to.have.status( 201 )
       expect( objectCreationResult.body ).to.have.lengthOf( objCount )
 
-      objs.forEach( ( o, i ) => o.hash = objectCreationResult.body[ i ] )
+      objs.forEach( ( o, i ) => o.id = objectCreationResult.body[ i ] )
     } )
 
     it( 'Should get 10 objects', async ( ) => {
-      const url = `${baseUrl}/objects/${objs.slice(0,10).map( o => o.hash ).join( )}`
+      const url = `${baseUrl}/objects/${objs.slice(0,10).map( o => o.id ).join( )}`
       const objsResult = await chai.request( app ).get( url ).set( 'Authorization', `Bearer ${tokenA}` )
 
       expect( objsResult ).to.have.status( 200 )
       expect( objsResult.body ).to.have.lengthOf( 10 )
-      expect( objsResult.body[ 0 ] ).to.have.property( 'hash' )
+      expect( objsResult.body[ 0 ] ).to.have.property( 'id' )
     } )
 
     it( 'Should get many objects', async ( ) => {
-      const objsResult = await chai.request( app ).post( `${baseUrl}/objects/getmany` ).send( objs.map( o => o.hash ) ).set( 'Authorization', `Bearer ${tokenA}` )
+      const objsResult = await chai.request( app ).post( `${baseUrl}/objects/getmany` ).send( objs.map( o => o.id ) ).set( 'Authorization', `Bearer ${tokenA}` )
       expect( objsResult ).to.have.status( 200 )
       expect( objsResult.body ).to.have.lengthOf( objCount )
-      expect( objsResult.body[ 0 ] ).to.have.property( 'hash' )
+      expect( objsResult.body[ 0 ] ).to.have.property( 'id' )
     } )
 
   } )

@@ -19,7 +19,7 @@ module.exports = {
     user.id = crs( { length: 10 } )
 
     if ( user.password ) {
-      user.password_digest = await bcrypt.hash( user.password, 10 )
+      user.passwordDigest = await bcrypt.hash( user.password, 10 )
       delete user.password
     }
 
@@ -34,15 +34,15 @@ module.exports = {
 
   async updateUser( id, user ) {
     delete user.id
-    delete user.password_digest
+    delete user.passwordDigest
     delete user.password
     delete user.email
     await Users( ).where( { id: id } ).update( user )
   },
 
   async validatePasssword( userId, password ) {
-    var { password_digest } = await Users( ).where( { id: userId } ).select( 'password_digest' ).first( )
-    return bcrypt.compare( password, password_digest )
+    var { passwordDigest } = await Users( ).where( { id: userId } ).select( 'passwordDigest' ).first( )
+    return bcrypt.compare( password, passwordDigest )
   },
 
   async deleteUser( id ) {
@@ -62,9 +62,9 @@ module.exports = {
     let tokenString = crs( { length: 32 } )
     let tokenHash = await bcrypt.hash( tokenString, 10 )
 
-    let last_chars = tokenString.slice( tokenString.length - 6, tokenString.length )
+    let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
 
-    let res = await Keys( ).returning( 'id' ).insert( { id: tokenId, token_digest: tokenHash, last_chars: last_chars, owner_id: userId, name: name, scopes: scopes, lifespan: lifespan } )
+    let res = await Keys( ).returning( 'id' ).insert( { id: tokenId, tokenDigest: tokenHash, lastChars: lastChars, owner: userId, name: name, scopes: scopes, lifespan: lifespan } )
 
     return tokenId + tokenString
   },
@@ -79,17 +79,17 @@ module.exports = {
       return { valid: false }
     }
 
-    const timeDiff = Math.abs( Date.now( ) - new Date( token.created_at ) )
+    const timeDiff = Math.abs( Date.now( ) - new Date( token.createdAt ) )
     if ( timeDiff > token.lifespan ) {
       await module.exports.revokeToken( tokenId )
       return { valid: false }
     }
 
-    let valid = bcrypt.compare( tokenContent, token.token_digest )
+    let valid = bcrypt.compare( tokenContent, token.tokenDigest )
 
     if ( valid ) {
-      await Keys( ).where( { id: tokenId } ).update( { last_used: knex.fn.now( ) } )
-      return { valid: true, userId: token.owner_id, scopes: token.scopes }
+      await Keys( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )
+      return { valid: true, userId: token.owner, scopes: token.scopes }
     } else
       return { valid: false }
   },
@@ -100,6 +100,6 @@ module.exports = {
   },
 
   async getUserTokens( userId ) {
-    return Keys( ).where( { owner_id: userId } ).select( 'id', 'name', 'last_chars', 'scopes', 'created_at', 'last_used' )
+    return Keys( ).where( { owner: userId } ).select( 'id', 'name', 'lastChars', 'scopes', 'createdAt', 'lastUsed' )
   }
 }

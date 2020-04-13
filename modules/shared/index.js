@@ -69,7 +69,7 @@ function authorize( aclTable, resourceTable, requiredRole ) {
 
     if ( !req.user ) return res.status( 401 ).send( { error: 'Unauthorized' } )
 
-    let [ entry ] = await ACL( ).where( { resource_id: req.params.resourceId, user_id: req.user.id } ).select( '*' )
+    let [ entry ] = await ACL( ).where( { resourceId: req.params.resourceId, userId: req.user.id } ).select( '*' )
 
     if ( !entry ) {
       return res.status( 401 ).send( { error: 'Unauthorized' } )

@@ -52,7 +52,7 @@ describe( 'Actors & Tokens', ( ) => {
 
       it( 'Should get an actor', async ( ) => {
         let actor = await getUser( myTestActor.id )
-        expect( actor ).to.not.have.property( 'password_digest' )
+        expect( actor ).to.not.have.property( 'passwordDigest' )
       } )
 
       it( 'Should update an actor', async ( ) => {

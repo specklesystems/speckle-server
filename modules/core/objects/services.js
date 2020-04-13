@@ -24,16 +24,16 @@ module.exports = {
     object.speckle_type = 'commit'
     object.author = userId
 
-    let hash = await module.exports.createObject( object )
+    let id = await module.exports.createObject( object )
 
-    let query = StreamCommits( ).insert( { stream_id: streamId, commit_id: hash } ).toString( ) + ' on conflict do nothing'
+    let query = StreamCommits( ).insert( { streamId: streamId, commitId: id } ).toString( ) + ' on conflict do nothing'
     await knex.raw( query )
 
-    return hash
+    return id
   },
 
   async getCommits( streamId ) {
-    let commits = await StreamCommits( ).where( { stream_id: streamId } ).rightOuterJoin( 'objects', { 'objects.hash': 'stream_commits.commit_id' } ).select( 'data' )
+    let commits = await StreamCommits( ).where( { streamId: streamId } ).rightOuterJoin( 'objects', { 'objects.id': 'stream_commits.commitId' } ).select( 'data' )
     return commits.map( o => o.data )
   },
 
@@ -56,7 +56,7 @@ module.exports = {
       await knex.raw( q2 )
     }
 
-    return insertionObject.hash
+    return insertionObject.id
   },
 
   async createObjects( objects ) {
@@ -70,7 +70,7 @@ module.exports = {
       batches.push( objects )
     }
 
-    let hashes = [ ]
+    let ids = [ ]
 
     let promises = batches.map( async ( batch, index ) => new Promise( async ( resolve, reject ) => {
       let objTreeRefs = [ ]
@@ -89,7 +89,7 @@ module.exports = {
         let insertionObject = prepInsertionObject( obj )
 
         objsToInsert.push( insertionObject )
-        hashes.push( insertionObject.hash )
+        ids.push( insertionObject.id )
       } )
 
       let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
@@ -107,16 +107,16 @@ module.exports = {
 
     await Promise.all( promises )
 
-    return hashes
+    return ids
   },
 
   async getObject( objectId ) {
-    let { data } = await Objects( ).where( { hash: objectId } ).select( 'data' ).first( )
+    let { data } = await Objects( ).where( { id: objectId } ).select( 'data' ).first( )
     return data
   },
 
   async getObjects( objectIds ) {
-    let res = await Objects( ).whereIn( 'hash', objectIds ).select( 'data' )
+    let res = await Objects( ).whereIn( 'id', objectIds ).select( 'data' )
     return res.map( r => r.data )
   },
 
@@ -136,12 +136,12 @@ module.exports = {
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject( obj ) {
-  obj.hash = obj.hash || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
+  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
   delete obj.__tree
   let stringifiedObj = JSON.stringify( obj )
   return {
     data: stringifiedObj, // stored in jsonb column
-    hash: obj.hash,
+    id: obj.id,
     applicationId: obj.applicationId,
     speckle_type: obj.speckle_type
   }

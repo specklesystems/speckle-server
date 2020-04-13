@@ -64,7 +64,7 @@ describe( 'Tags & Branches', ( ) => {
       commit2.parents = [ commit1.hash ]
       commit2.hash = await createCommit( stream.id, user.id, commit2 )
 
-      tag.commit_id = commit2.hash
+      tag.commitId = commit2.hash
     } )
 
     after( async ( ) => {
@@ -90,9 +90,9 @@ describe( 'Tags & Branches', ( ) => {
     it( 'Should get a branch', async ( ) => {
       let myBranch = await getBranchById( branch.id )
 
-      delete myBranch.created_at // delete minor stuffs
+      delete myBranch.createdAt // delete minor stuffs
       delete myBranch.updatedAt
-      delete myBranch.commit_id
+      delete myBranch.commitId
       delete myBranch.commits
 
       expect( myBranch ).to.deep.equal( branch )
@@ -136,7 +136,7 @@ describe( 'Tags & Branches', ( ) => {
 
     it( 'Should get a tag', async ( ) => {
       let myTag = await getTagById( tag.id )
-      delete myTag.created_at
+      delete myTag.createdAt
       delete myTag.updatedAt
       expect( myTag ).to.deep.equal( tag )
     } )
@@ -158,8 +158,8 @@ describe( 'Tags & Branches', ( ) => {
     } )
 
     it( 'Should get all stream tags', async ( ) => {
-      await createTag( { name: 'v3.0.0', commit_id: commit2.hash }, stream.id, user.id )
-      await createTag( { name: 'v4.0.0', commit_id: commit1.hash }, stream.id, user.id )
+      await createTag( { name: 'v3.0.0', commitId: commit2.hash }, stream.id, user.id )
+      await createTag( { name: 'v4.0.0', commitId: commit1.hash }, stream.id, user.id )
       let tags = await getTagsByStreamId( stream.id )
       expect( tags ).to.have.lengthOf( 4 )
     } )
@@ -186,7 +186,7 @@ describe( 'Tags & Branches', ( ) => {
       commit1.hash = await createCommit( stream.id, user.id, commit1 )
       commit2.parents = [ commit1.hash ]
       commit2.hash = await createCommit( stream.id, user.id, commit2 )
-      tag.commit_id = commit2.hash
+      tag.commitId = commit2.hash
     } )
 
     after( async ( ) => {
