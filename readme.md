@@ -2,9 +2,9 @@
 
 The next iteration of the speckle server. Hopefully made to last!
 
-## Contributing
+## Contributing
 
-### Local debugging & testing
+### Local debugging & testing
 
 To debug, simply run `npm run dev`. To test, run `npm run test`. To run tests in interactive mode, run `npm run test-watch`.
 
