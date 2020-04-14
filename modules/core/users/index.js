@@ -10,6 +10,6 @@ module.exports = users
 users.get( '/users/:userId', authenticate, authorize, ( ) => { res.send( 'todo' ) } )
 
 // TODO: Disable if local authentication is moot
-users.post( '/users/:userId', authenticate, authorize, ( ) => { res.send( 'todo' ) }, announce )
+// users.post( '/users/:userId', authenticate, authorize, ( ) => { res.send( 'todo' ) }, announce )
 
-users.put( '/users/:userId', authenticate, authorize, ( ) => { res.send( 'todo' ) }, announce )
+// users.put( '/users/:userId', authenticate, authorize, ( ) => { res.send( 'todo' ) }, announce )

@@ -10,6 +10,8 @@ To debug, simply run `npm run dev`. To test, run `npm run test`. To run tests in
 
 You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2` and `speckle2_test`.
 
+> For getting postgres running on osx, check out [postgres.app](https://postgresapp.com/), and the classic [pgadmin](https://www.pgadmin.org/download/pgadmin-4-macos/).
+
 ### Commit style
 When pushing commits to this repo, please follow the following guidelines: 
 
