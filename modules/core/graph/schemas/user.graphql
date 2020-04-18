@@ -1,0 +1,14 @@
+extend type Query {
+  user(id: String!): User
+}
+
+"""
+Basic user type, representing a person.
+I'm just checking out comments in grahpql actually.
+"""
+type User {
+  id: String!
+  username: String!
+  email: String!
+  name: String!
+}

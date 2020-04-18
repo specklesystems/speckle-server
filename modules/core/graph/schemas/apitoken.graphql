@@ -1,0 +1,14 @@
+extend type User{ 
+  """
+  The api tokens of this user.
+  """
+  apiTokens: [ApiToken!]!
+}
+
+type ApiToken {
+  id: String!
+  name: String!
+  lastChars: String!
+  scopes: [String]!
+  createdAt: String!
+}

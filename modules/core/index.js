@@ -14,7 +14,4 @@ exports.init = ( app, options ) => {
   app.use( '/', require( './streams' ) )
   app.use( '/', require( './references' ) )
   app.use( '/', require( './objects' ) )
-
-  require( './graphql')(app)
-  // app.use( '/graphql', require('./graphql') )
 }

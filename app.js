@@ -4,6 +4,7 @@ const express = require( 'express' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )( 'speckle:errors' )
+const { ApolloServer } = require( 'apollo-server-express' )
 
 exports.init = ( ) => {
   const app = express( )
@@ -19,7 +20,23 @@ exports.init = ( ) => {
     res.send( { fantastic: 'speckle' } )
   } )
 
-  require( './modules' )( app )
+  const { http, graph } = require( './modules' )
+
+  // Initialise default modules, including rest api handlers
+  http( app )
+
+  // Initialise graphql server
+  const graphqlServer = new ApolloServer( {
+    ...graph( ),
+    context: ( { req, res } ) => {
+      const token = req.headers.authorization
+      const user = {}
+      return { token, user }
+    }
+
+  } )
+
+  graphqlServer.applyMiddleware( { app: app } )
 
   // Error responses
   app.use( ( err, req, res, next ) => {
