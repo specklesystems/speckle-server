@@ -1,5 +1,5 @@
 'use strict'
-const { ForbiddenError } = require( 'apollo-server-express' )
+const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 const debug = require( 'debug' )( 'speckle:middleware' )
 const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
@@ -126,7 +126,7 @@ function authorize( aclTable, resourceTable, requiredRole ) {
 
  */
 
-async function authorizeResolver( userId, resourceId, aclTable, resourceTable, role ) {
+async function authorizeResolver( userId, resourceId, aclTable, resourceTable, requiredRole ) {
   let ACL = ( ) => knex( aclTable )
   let Resource = ( ) => knex( resourceTable )
 

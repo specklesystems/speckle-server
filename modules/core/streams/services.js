@@ -37,10 +37,12 @@ module.exports = {
   },
 
   async grantPermissionsStream( streamId, userId, role ) {
-    if ( role === 'owner' ) {
-      let [ ownerAcl ] = await Acl( ).where( { resourceId: streamId, role: 'owner' } ).returning( '*' ).del( )
-      await Acl( ).insert( { resourceId: streamId, userId: ownerAcl.userId, role: 'write' } )
-    }
+    // NOTE: allow streams to have more than one owner.
+    // That's why the code below is commented out.
+    // if ( role === 'owner' ) {
+    //   let [ ownerAcl ] = await Acl( ).where( { resourceId: streamId, role: 'owner' } ).returning( '*' ).del( )
+    //   await Acl( ).insert( { resourceId: streamId, userId: ownerAcl.userId, role: 'write' } )
+    // }
 
     // upsert
     let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
@@ -49,8 +51,13 @@ module.exports = {
   },
 
   async revokePermissionsStream( streamId, userId ) {
-    let streamAclEntries = Acl( ).where( { resourceId: streamId } ).select( '*' )
+    let streamAclEntriesCount = Acl( ).count( { resourceId: streamId } )
+    // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
+    // TODO: below behaviour not correct. Flow:
+    // Count owners 
+    // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
     let delCount = await Acl( ).where( { resourceId: streamId, userId: userId } ).whereNot( { role: 'owner' } ).del( )
+    
     if ( delCount === 0 )
       throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
   },

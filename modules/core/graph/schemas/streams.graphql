@@ -38,11 +38,11 @@ enum StreamUserRole {
   """
   Contributors can read and write.
   """
-  CONTRIBUTOR,
+  WRITE, # CONTRIBUTOR
   """
   Reviewers can view and pull.
   """
-  REVIEWER
+  READ # REVIEWER
 }
 
 extend type Mutation {
@@ -56,17 +56,17 @@ extend type Mutation {
   """
   Grants permissions to an user on a given stream. 
   """
-  streamGrantPermissions( streamId: String!, userId: String!, role: StreamUserRole! ): Boolean
+  streamGrantPermission( streamId: String!, userId: String!, role: StreamUserRole! ): Boolean
   """
   Revokes the permissions of an user on a given stream.
   """
-  streamRevokePermissions( streamId: String!, userId: String! ): Boolean
+  streamRevokePermission( streamId: String!, userId: String! ): Boolean
 
 }
 
 input StreamInput {
   id: String
-  name: String!
+  name: String
   description: String
   isPublic: Boolean
 }
