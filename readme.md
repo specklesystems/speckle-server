@@ -54,3 +54,13 @@ Any database migration files should be stored and named accordingly in a `migrat
 ## Authentication & Authorization
 
 // TODO
+
+## APIs
+
+### REST 
+
+// TODO
+
+### GraphQl
+
+// TODO

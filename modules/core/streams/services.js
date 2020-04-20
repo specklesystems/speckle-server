@@ -19,8 +19,15 @@ module.exports = {
     return res
   },
 
-  async getStream( streamId ) {
-    return Streams( ).where( { id: streamId } ).first( )
+  async getStream( streamId, userId ) {
+    if ( !userId )
+      return Streams( ).where( { id: streamId } ).select( '*' ).first( )
+
+    let stream = await Streams( ).where( { id: streamId } ).select( '*' ).first( )
+    let { role } = ( await Acl( ).where( { userId: userId, resourceId: streamId } ).select( 'role' ).first( ) ) || {}
+    
+    stream.role = role
+    return stream
   },
 
   async updateStream( stream ) {

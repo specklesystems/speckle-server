@@ -1,0 +1,82 @@
+extend type Stream {
+  commits: [CommitCollection]
+  tags: [Tag]
+  branches: [Branch]
+}
+
+type CommitCollection {
+  totalCount: Int
+  commits(offset: Int! = 0, limit: Int! = 20): [Object]
+}
+
+type Object {
+  id: String! 
+  speckleType: String!
+  applicationId: String!
+  createdAt: String
+  """
+  The full object.
+  """
+  data: JSON
+  """
+  Any objects that this object references.
+  
+  `offset`: TODO
+  
+  `limit`: TODO
+  
+  `depth`: TODO
+  
+  `query`: TODO
+  """
+  children(offset: Int! = 0, limit: Int! = 100, depth: Int! = 1, query: String): [Object]
+}
+
+enum REFERENCE_TYPE {
+  BRANCH,
+  TAG
+}
+
+interface Reference {
+  id: String!
+  name: String!
+  type: REFERENCE_TYPE!
+  description: String!
+  author: User!
+  createdAt: String
+  updatedAt: String
+}
+
+type Branch implements Reference {
+  id: String!
+  type: REFERENCE_TYPE!
+  name: String!
+  author: User!
+  description: String!
+  createdAt: String
+  updatedAt: String
+  commits: [CommitCollection]
+}
+
+type Tag implements Reference {
+  id: String!
+  type: REFERENCE_TYPE!
+  name: String!
+  author: User!
+  description: String!
+  createdAt: String
+  updatedAt: String
+  commit: Object
+}
+
+extend type Mutation {
+  commitCreate(_:Boolean):String
+  objectCreate(_:Boolean):[String]
+  branchCreate(_:Boolean):String
+  branchUpdate(_:Boolean):String
+  branchDelete(_:Boolean):String
+  tagCreate(_:Boolean):String
+  tagUpdate(_:Boolean):String
+  tagDelete(_:Boolean):String
+
+}

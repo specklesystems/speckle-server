@@ -1,0 +1,72 @@
+extend type Query {
+  stream(id: String!): Stream
+}
+
+type Stream {
+  id: String!
+  name: String!
+  description: String
+  isPublic: Boolean!
+  clonedFrom: Stream
+  createdAt: String!
+  updatedAt: String!
+  """
+  All the users with access to this stream.
+  """
+  users: [User]!
+  role: String
+}
+
+extend type User {
+  """
+  All the streams that a user has access to.
+  """
+  streamCollection(offset: Int! = 0, limit: Int! = 100): StreamCollection
+  role: String
+}
+
+type StreamCollection {
+  totalCount: Int!
+  streams: [Stream]
+}
+
+enum StreamUserRole {
+  """
+  Onwers own.
+  """
+  OWNER,
+  """
+  Contributors can read and write.
+  """
+  CONTRIBUTOR,
+  """
+  Reviewers can view and pull.
+  """
+  REVIEWER
+}
+
+extend type Mutation {
+  streamCreate( stream: StreamInput! ): String
+  streamUpdate( stream: StreamInput! ): String
+  streamDelete( id: String! ): Boolean
+  """
+  Clones a given stream, duplicating it within the current user's account without preserving access rights.
+  """
+  streamClone( id: String!): Boolean
+  """
+  Grants permissions to an user on a given stream. 
+  """
+  streamGrantPermissions( streamId: String!, userId: String!, role: StreamUserRole! ): Boolean
+  """
+  Revokes the permissions of an user on a given stream.
+  """
+  streamRevokePermissions( streamId: String!, userId: String! ): Boolean
+
+}
+
+input StreamInput {
+  id: String
+  name: String!
+  description: String
+  isPublic: Boolean
+}

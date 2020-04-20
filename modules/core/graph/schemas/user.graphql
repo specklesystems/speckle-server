@@ -1,14 +1,41 @@
 extend type Query {
-  user(id: String!): User
+  user(id: String): User
 }
 
 """
-Basic user type, representing a person.
-I'm just checking out comments in grahpql actually.
+Base user type.
 """
+
 type User {
   id: String!
   username: String!
   email: String!
   name: String!
+  verified: Boolean!
+  """
+  Any profiles provided by third party providers are stored in here.
+  """
+  profiles: JSON
+}
+
+extend type Mutation {
+  """
+  Temporary measure, equal to local registration. Should be disabled if local_auth is false.
+  """
+  userCreate(user: UserCreateInput): String
+  userEdit(user: UserEditInput): String
+}
+
+input UserCreateInput {
+  name: String!
+  username: String!
+  email: String!
+  password: String!
+}
+
+input UserEditInput {
+  name: String!
+  username: String!
+  company: String!
+  bio: String!
 }

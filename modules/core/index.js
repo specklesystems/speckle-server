@@ -1,7 +1,6 @@
 'use strict'
 let debug = require( 'debug' )( 'speckle:modules' )
 
-
 exports.preflight = ( options ) => {
   debug( 'Preflight core modules' )
 }

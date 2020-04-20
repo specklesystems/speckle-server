@@ -10,5 +10,7 @@ type ApiToken {
   name: String!
   lastChars: String!
   scopes: [String]!
-  createdAt: String!
+  createdAt: String! #date
+  lifespan: Int!
+  lastUsed: String! #date
 }

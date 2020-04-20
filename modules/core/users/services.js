@@ -71,7 +71,7 @@ module.exports = {
 
   async validateToken( tokenString ) {
     let tokenId = tokenString.slice( 0, 10 )
-    let tokenContent = tokenString.slice( 10, 32 )
+    let tokenContent = tokenString.slice( 10, 42 )
 
     let token = await Keys( ).where( { id: tokenId } ).select( '*' ).first( )
 
@@ -85,7 +85,7 @@ module.exports = {
       return { valid: false }
     }
 
-    let valid = bcrypt.compare( tokenContent, token.tokenDigest )
+    let valid = await bcrypt.compare( tokenContent, token.tokenDigest )
 
     if ( valid ) {
       await Keys( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )

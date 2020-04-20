@@ -6,6 +6,7 @@ const autoload = require( 'auto-load' )
 const values = require( 'lodash.values' )
 const merge = require( 'lodash.merge' )
 const debug = require( 'debug' )( 'speckle:modules' )
+const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 
 exports.http = ( app ) => {
 
@@ -52,8 +53,25 @@ exports.http = ( app ) => {
 
 exports.graph = ( ) => {
   let dirs = fs.readdirSync( `${root}/modules` )
-  let typeDefs = [ 'type Query { _: Boolean }' ]
-  let resolverObjs = [  ]
+
+  // Base query and mutation to allow for type extension by modules.
+  let typeDefs = [ `
+  ${scalarSchemas}
+
+  type Query { 
+  """
+  Stare into the void.
+  """
+    _: Boolean 
+  } 
+  type Mutation{
+  """
+  The void stares back.
+  """
+  _:Boolean
+  }` ]
+
+  let resolverObjs = [ ]
   // let directiveDirs = [ ]
 
   dirs.forEach( file => {
@@ -71,7 +89,7 @@ exports.graph = ( ) => {
     }
   } )
 
-  let resolvers = {}
+  let resolvers = { ...scalarResolvers }
   resolverObjs.forEach( o => {
     merge( resolvers, o )
   } )

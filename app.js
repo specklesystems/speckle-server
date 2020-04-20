@@ -6,6 +6,8 @@ const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )( 'speckle:errors' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
+const { contextApiTokenHelper } = require( './modules/shared' )
+
 exports.init = ( ) => {
   const app = express( )
 
@@ -28,12 +30,8 @@ exports.init = ( ) => {
   // Initialise graphql server
   const graphqlServer = new ApolloServer( {
     ...graph( ),
-    context: ( { req, res } ) => {
-      const token = req.headers.authorization
-      const user = {}
-      return { token, user }
-    }
-
+    context: contextApiTokenHelper,
+    tracing: true
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
