@@ -42,7 +42,7 @@ module.exports = {
    */
   async createObject( object ) {
     // Prep tree refs
-    let objTreeRefs = object.hasOwnProperty( '__tree' ) && object.__tree ? object.__tree.map( entry => {
+    let objTreeRefs = object.__tree !== null && object.__tree ? object.__tree.map( entry => {
       return { parent: entry.split( '.' )[ 0 ], path: entry }
     } ) : [ ]
 
@@ -80,7 +80,7 @@ module.exports = {
 
       batch.forEach( obj => {
 
-        if ( obj.hasOwnProperty( '__tree' ) && obj.__tree ) {
+        if ( obj.__tree !== null && obj.__tree ) {
           objTreeRefs = [ ...objTreeRefs, ...obj.__tree.map( entry => {
             return { parent: entry.split( '.' )[ 0 ], path: entry }
           } ) ]

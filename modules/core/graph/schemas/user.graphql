@@ -37,9 +37,7 @@ input UserCreateInput {
 }
 
 input UserEditInput {
-  id: String!
-  name: String!
-  username: String!
-  company: String!
-  bio: String!
+  name: String
+  company: String
+  bio: String
 }

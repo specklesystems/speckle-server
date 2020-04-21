@@ -23,9 +23,6 @@ module.exports = {
       return token
     },
     async userEdit( parent, args, context, info ) {
-      if ( context.userId !== args.user.id )
-        throw new AuthenticationError( 'Not authorized' )
-      
       await updateUser( context.userId, args.user )
       return true
     },

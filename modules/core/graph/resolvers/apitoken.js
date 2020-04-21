@@ -10,7 +10,7 @@ module.exports = {
   Mutation: {
     async apiTokenCreate( parent, args, context, info ) {
       //@todo enforce token creation authorization
-      await createToken( context.userId, args.name, args.scopes, args.lifespan )
+      return await createToken( context.userId, args.name, args.scopes, args.lifespan )
     },
     async apiTokenRevoke( parent, args, context, info ) {
       //@todo enforce token revokation authorization

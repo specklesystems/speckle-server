@@ -70,13 +70,38 @@ type Tag implements Reference {
 }
 
 extend type Mutation {
-  commitCreate(_:Boolean):String
-  objectCreate(_:Boolean):[String]
+  commitCreate( streamId: String!, commit:JSON! ):String!
+  objectCreate( streamId: String!, objects:[JSON]! ):[String]!
   branchCreate(_:Boolean):String
   branchUpdate(_:Boolean):String
   branchDelete(_:Boolean):String
   tagCreate(_:Boolean):String
   tagUpdate(_:Boolean):String
   tagDelete(_:Boolean):String
-
 }
+
+input CommitCreateInput {
+  """
+  The stream against which these objects will be created. 
+  """
+  streamId: String!
+  """
+  The objects you want to create.
+  """
+  commit: JSONObject!
+}
+
+input ObjectCreateInput {
+  """
+  The stream against which these objects will be created. 
+  """
+  streamId: String!
+  """
+  The objects you want to create.
+  """
+  objects: [JSONObject]!
+}
+
+
+
+
