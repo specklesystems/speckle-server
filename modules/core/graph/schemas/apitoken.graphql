@@ -11,6 +11,17 @@ type ApiToken {
   lastChars: String!
   scopes: [String]!
   createdAt: String! #date
-  lifespan: Int!
+  lifespan: BigInt!
   lastUsed: String! #date
+}
+
+extend type Mutation { 
+  """
+  Creates an api token.
+  """
+  apiTokenCreate(scopes: [String!]!, name: String!, lifespan: BigInt):String
+  """
+  Revokes (deletes) an api token.
+  """
+  apiTokenRevoke(token: String!):String
 }

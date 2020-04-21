@@ -8,10 +8,11 @@ module.exports = {
   Query: {
     async user( parent, args, context, info ) {
       if ( !context.auth ) throw new AuthenticationError( )
+
       if ( !args.id && !context.userId ) {
-        throw new UserInputError( )
+        throw new UserInputError( 'You must provide an user id.' )
       }
-      console.log(args)
+
       return await getUser( args.id || context.userId )
     }
   },
@@ -22,7 +23,11 @@ module.exports = {
       return token
     },
     async userEdit( parent, args, context, info ) {
-      // TODO
+      if ( context.userId !== args.user.id )
+        throw new AuthenticationError( 'Not authorized' )
+      
+      await updateUser( context.userId, args.user )
+      return true
     },
   }
 }

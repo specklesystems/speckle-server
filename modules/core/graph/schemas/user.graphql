@@ -1,4 +1,7 @@
 extend type Query {
+  """
+  Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
+  """
   user(id: String): User
 }
 
@@ -23,7 +26,7 @@ extend type Mutation {
   Temporary measure, equal to local registration. Should be disabled if local_auth is false.
   """
   userCreate(user: UserCreateInput): String
-  userEdit(user: UserEditInput): String
+  userEdit(user: UserEditInput): Boolean
 }
 
 input UserCreateInput {
@@ -34,6 +37,7 @@ input UserCreateInput {
 }
 
 input UserEditInput {
+  id: String!
   name: String!
   username: String!
   company: String!
