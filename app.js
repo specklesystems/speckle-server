@@ -7,9 +7,14 @@ const debug = require( 'debug' )( 'speckle:errors' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
 const { contextApiTokenHelper } = require( './modules/shared' )
+const knex = require('./db/knex')
 
 exports.init = ( ) => {
+
   const app = express( )
+  
+  // Init knex
+  knex.migrate.latest()
 
   if ( process.env.NODE_ENV !== 'test' ) {
     app.use( logger( 'speckle', 'dev', {} ) )

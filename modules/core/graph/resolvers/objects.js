@@ -3,13 +3,22 @@ const root = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const { createCommit, createObject, createObjects, getObject, getObjects } = require( '../../objects/services' )
+const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../references/services' )
 
 module.exports = {
   Query: {
 
   },
   Stream: {
+    async commits( parent, args, context, info ) {
 
+    },
+    async tags( parent, args, context, info ) {
+
+    },
+    async branches( parent, args, context, info ) {
+
+    },
   },
   Mutation: {
     async objectCreate( parent, args, context, info ) {
@@ -25,7 +34,50 @@ module.exports = {
 
       let id = await createCommit( args.streamId, context.userId, args.commit )
       return id
-    }
+    },
+    async branchCreate( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+
+      let id = await createBranch( args.branch, args.streamId, context.userId )
+      return id
+    },
+    async branchUpdate( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+
+      await updateBranch( args.branch )
+      return true
+    },
+    async branchDelete( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+
+      await deleteBranchById( args.branchId )
+      return true
+    },
+    async tagCreate( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      
+      let id = await createTag( args.tag, args.streamId, context.userId )
+      return id
+    },
+    async tagUpdate( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      
+      await updateTag( args.tag )
+      return true
+    },
+    async tagDelete( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      
+      await deleteTagById( args.tagId )
+      return true
+    },
+
   },
   Reference: {
     __resolveType( reference, context, info ) {

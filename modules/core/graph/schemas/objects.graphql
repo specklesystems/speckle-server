@@ -14,6 +14,7 @@ type Object {
   speckleType: String!
   applicationId: String!
   createdAt: String
+  description: String
   """
   The full object.
   """
@@ -70,14 +71,58 @@ type Tag implements Reference {
 }
 
 extend type Mutation {
-  commitCreate( streamId: String!, commit:JSON! ):String!
-  objectCreate( streamId: String!, objects:[JSON]! ):[String]!
-  branchCreate(_:Boolean):String
-  branchUpdate(_:Boolean):String
-  branchDelete(_:Boolean):String
-  tagCreate(_:Boolean):String
-  tagUpdate(_:Boolean):String
-  tagDelete(_:Boolean):String
+  """
+  Creates a special type of object, namely a commit. A commit is describes the particular shape of a data stream at one point in time. It's a collection of objects. 
+  Returns the hash of the commit.
+  """
+  commitCreate( streamId: String!, commit:JSONObject! ): String!
+  """
+  Creates a bunch of objects and returns their hashes. Note: data duplication is respected. 
+  Returns the hashes of the stored objects.
+  """
+  objectCreate( streamId: String!, objects:[JSONObject]! ): [String]!
+  """
+  Creates a branch.
+  """
+  branchCreate( streamId: String!, branch: BranchCreateInput ): String
+  """
+  Updates a branch. If a commit id array is present, the two get merged.
+  """
+  branchUpdate( streamId: String!, branch: BranchUpdateInput ): Boolean!
+  """
+  Deletes a branch.
+  """
+  branchDelete( streamId: String!, branchId: String! ):Boolean!
+  
+  tagCreate(streamId: String!, tag: TagCreateInput ): String!
+  tagUpdate(streamId: String!, tag: TagUpdateInput ): String
+  tagDelete( streamId: String!, tagId: String! ): String
+}
+
+input TagCreateInput {
+  name: String!
+  description: String
+  commit: String!
+}
+
+input TagUpdateInput {
+  id: String!
+  name: String
+  description: String
+  commit: String
+}
+
+input BranchCreateInput {
+  name: String!
+  description: String
+  commits: [String]
+}
+
+input BranchUpdateInput {
+  id: String!
+  name: String
+  description: String
+  commits: [String]
 }
 
 input CommitCreateInput {
