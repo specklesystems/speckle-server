@@ -1,24 +1,24 @@
 extend type Stream {
-  commits: CommitCollection
-  tags: TagCollection
+  commits(offset: Int! = 0, limit: Int = 20): CommitCollection
+  tags(offset: Int = 0, limit: Int = 20): TagCollection
   tag( id: String! ): Tag
-  branches: BranchCollection
+  branches(offset: Int = 0, limit: Int = 20): BranchCollection
   branch( id: String! ): Branch
 }
 
 type CommitCollection {
   totalCount: Int
-  commits(offset: Int! = 0, limit: Int! = 20): [Object]
+  commits: [Object]
 }
 
 type TagCollection {
   totalCount: Int
-  tags(offset: Int! = 0, limit: Int! = 20): [Tag]
+  tags: [Tag]
 }
 
 type BranchCollection {
   totalCount: Int
-  branches(offset: Int! = 0, limit: Int! = 20): [Branch]
+  branches: [Branch]
 }
 
 type Object {
@@ -83,7 +83,7 @@ type Branch implements Reference {
   description: String!
   createdAt: String
   updatedAt: String
-  commits: [CommitCollection]
+  commits( offset: Int! = 0, limit: Int! = 20 ): CommitCollection
 }
 
 type Tag implements Reference {
@@ -129,14 +129,14 @@ extend type Mutation {
 input TagCreateInput {
   name: String!
   description: String
-  commit: String!
+  commitId: String!
 }
 
 input TagUpdateInput {
   id: String!
   name: String
   description: String
-  commit: String
+  commitId: String
 }
 
 input BranchCreateInput {

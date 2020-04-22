@@ -4,7 +4,7 @@ const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const { getUser } = require( '../../users/services' )
 const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects } = require( '../../objects/services' )
-const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../references/services' )
+const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../references/services' )
 
 module.exports = {
   Query: {
@@ -33,10 +33,23 @@ module.exports = {
     }
   },
   Object: {
-    async author(parent, args, context, info ) {
-      let usr = await getUser( parent.author )
-      console.log( usr, parent )
-      return usr
+    async author( parent, args, context, info ) {
+      return await getUser( parent.author )
+    }
+  },
+  Tag: {
+    async commit( parent, args, context, info ) {
+      let obj = await getObject( parent.commitId )
+      return obj
+    }
+  },
+  Branch: {
+    async commits( parent, args, context, info ) {
+      // console.log( parent )
+      let commitIds = ( await getBranchCommits( parent.id ) ).map( o => o.commitId )
+      let commits = await getObjects( commitIds )
+      console.log( commits )
+      return { totalCount: commits.length, commits: commits.slice( args.offset, args.offset + args.limit ) }
     }
   },
   Mutation: {
