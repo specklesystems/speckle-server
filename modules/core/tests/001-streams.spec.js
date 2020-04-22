@@ -130,19 +130,19 @@ describe( 'Streams', ( ) => {
         }
       } )
 
-      it( '🤔 DUBIOUS DESIGN DECISION: A stream should not have more than one owner', async ( ) => {
-        let newStream = { name: 'XXX' }
-        newStream.id = await createStream( newStream, userOne.id )
-        await grantPermissionsStream( newStream.id, userTwo.id, 'owner' )
+      // it( '🤔 DUBIOUS DESIGN DECISION: A stream should not have more than one owner', async ( ) => {
+      //   let newStream = { name: 'XXX' }
+      //   newStream.id = await createStream( newStream, userOne.id )
+      //   await grantPermissionsStream( newStream.id, userTwo.id, 'owner' )
 
-        let usrStreams1 = await getUserStreams( userOne.id )
-        let s1 = usrStreams1.find( s => s.name === 'XXX' )
-        let usrStreams2 = await getUserStreams( userTwo.id )
-        let s2 = usrStreams2.find( s => s.name === 'XXX' )
+      //   let usrStreams1 = await getUserStreams( userOne.id )
+      //   let s1 = usrStreams1.find( s => s.name === 'XXX' )
+      //   let usrStreams2 = await getUserStreams( userTwo.id )
+      //   let s2 = usrStreams2.find( s => s.name === 'XXX' )
 
-        expect( s1.role ).to.not.equal( 'owner' )
-        expect( s1.role ).to.not.equal( s2.role )
-      } )
+      //   expect( s1.role ).to.not.equal( 'owner' )
+      //   expect( s1.role ).to.not.equal( s2.role )
+      // } )
 
     } )
 

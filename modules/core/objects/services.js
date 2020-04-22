@@ -34,9 +34,7 @@ module.exports = {
 
   async getCommitsByStreamId( streamId ) {
     let commits = await StreamCommits( ).where( { streamId: streamId } ).rightOuterJoin( 'objects', { 'objects.id': 'stream_commits.commitId' } ).select( '*' )
-    // console.log( commits )
     return commits
-    // return commits.map( o => ( { ...o.data, createdAt: o.createdAt } ) )
   },
 
   /*
@@ -113,13 +111,14 @@ module.exports = {
   },
 
   async getObject( objectId ) {
-    let { data } = await Objects( ).where( { id: objectId } ).select( 'data' ).first( )
-    return data
+    let res = await Objects( ).where( { id: objectId } ).select( '*' ).first( )
+    return res
   },
 
   async getObjects( objectIds ) {
-    let res = await Objects( ).whereIn( 'id', objectIds ).select( 'data' )
-    return res.map( r => r.data )
+    let res = await Objects( ).whereIn( 'id', objectIds ).select( '*' )
+    // return res.map( r => r.data )
+    return res
   },
 
   // NOTE: Derive Object
