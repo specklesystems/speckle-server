@@ -1,11 +1,11 @@
 'use strict'
 
-const { createCommit, getCommits, createObjects, getObject, getObjects } = require( './services' )
+const { createCommit, getCommitsByStreamId, createObjects, getObject, getObjects } = require( './services' )
 
 module.exports = {
   async getCommits( req, res, next ) {
     try {
-      let commits = await getCommits( req.params.resourceId )
+      let commits = await getCommitsByStreamId( req.params.resourceId )
       res.send( commits )
       next( )
     } catch ( err ) {
