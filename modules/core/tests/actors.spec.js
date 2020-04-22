@@ -28,7 +28,7 @@ describe( 'Actors & Tokens', ( ) => {
 
 
 
-    app = init( )
+    app = await init()
   } )
 
   after( async ( ) => {

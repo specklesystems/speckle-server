@@ -160,7 +160,7 @@ describe( 'Streams', ( ) => {
     let tokenB
 
     before( async ( ) => {
-      app = init( )
+      app = await init()
       userA.id = await createUser( userA )
       userB.id = await createUser( userB )
 
