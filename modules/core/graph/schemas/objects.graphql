@@ -1,7 +1,9 @@
 extend type Stream {
-  commits: [CommitCollection]
-  tags: [Tag]
-  branches: [Branch]
+  commits: CommitCollection
+  tags: TagCollection
+  tag( id: String! ): Tag
+  branches: BranchCollection
+  branch( id: String! ): Branch
 }
 
 type CommitCollection {
@@ -9,14 +11,39 @@ type CommitCollection {
   commits(offset: Int! = 0, limit: Int! = 20): [Object]
 }
 
+type TagCollection {
+  totalCount: Int
+  tags(offset: Int! = 0, limit: Int! = 20): [Tag]
+}
+
+type BranchCollection {
+  totalCount: Int
+  branches(offset: Int! = 0, limit: Int! = 20): [Branch]
+}
+
 type Object {
   id: String! 
   speckleType: String!
   applicationId: String!
-  createdAt: String
+  createdAt: DateTime
+  """
+  The object's description. Valid only in the case of commit objects.
+  """
   description: String
   """
-  The full object.
+  The object's creator. Valid only in the case of commit objects.
+  """
+  author: User
+  """
+  Any tags that this object belongs to. Valid only in the case of commit objects.
+  """
+  tag: [Tag]
+  """
+  Any branches that this object belongs to. Valid only in the case of commit objects.
+  """
+  branch: [Branch]
+  """
+  The full object, with all its props & other things. **NOTE:** If you're requesting objects for the purpose of recreating & displaying, you probably only want to request this specific field.
   """
   data: JSON
   """

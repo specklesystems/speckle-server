@@ -2,7 +2,8 @@
 const root = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
-const { createCommit, createObject, createObjects, getObject, getObjects } = require( '../../objects/services' )
+const { getUser } = require( '../../users/services' )
+const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects } = require( '../../objects/services' )
 const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../references/services' )
 
 module.exports = {
@@ -11,14 +12,32 @@ module.exports = {
   },
   Stream: {
     async commits( parent, args, context, info ) {
-
+      let commits = await getCommitsByStreamId( parent.id )
+      return { totalCount: commits.length, commits: commits }
     },
     async tags( parent, args, context, info ) {
-
+      // TODO: implement limits in service
+      let tags = await getTagsByStreamId( parent.id )
+      return { totalCount: tags.length, tags: tags.slice( args.offset, args.offset + args.limit ) }
+    },
+    async tag( parent, args, context, info ) {
+      return await getTagById( args.id )
     },
     async branches( parent, args, context, info ) {
-
+      // TODO: implement limits in service
+      let branches = await getBranchesByStreamId( parent.id )
+      return { totalCount: branches.length, branches: branches.slice( args.offset, args.offset + args.limit ) }
     },
+    async branch( parent, args, context, info ) {
+      return await getBranchById( args.id )
+    }
+  },
+  Object: {
+    async author(parent, args, context, info ) {
+      let usr = await getUser( parent.author )
+      console.log( usr, parent )
+      return usr
+    }
   },
   Mutation: {
     async objectCreate( parent, args, context, info ) {
@@ -59,21 +78,21 @@ module.exports = {
     async tagCreate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
-      
+
       let id = await createTag( args.tag, args.streamId, context.userId )
       return id
     },
     async tagUpdate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
-      
+
       await updateTag( args.tag )
       return true
     },
     async tagDelete( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
-      
+
       await deleteTagById( args.tagId )
       return true
     },

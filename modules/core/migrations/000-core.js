@@ -67,6 +67,7 @@ exports.up = async knex => {
     table.string( 'applicationId' )
     table.jsonb( 'data' )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
+    table.string( 'description' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.index( [ 'speckle_type' ], 'type_index' )
   } )

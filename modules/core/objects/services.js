@@ -32,9 +32,11 @@ module.exports = {
     return id
   },
 
-  async getCommits( streamId ) {
-    let commits = await StreamCommits( ).where( { streamId: streamId } ).rightOuterJoin( 'objects', { 'objects.id': 'stream_commits.commitId' } ).select( 'data' )
-    return commits.map( o => o.data )
+  async getCommitsByStreamId( streamId ) {
+    let commits = await StreamCommits( ).where( { streamId: streamId } ).rightOuterJoin( 'objects', { 'objects.id': 'stream_commits.commitId' } ).select( '*' )
+    // console.log( commits )
+    return commits
+    // return commits.map( o => ( { ...o.data, createdAt: o.createdAt } ) )
   },
 
   /*
@@ -143,6 +145,8 @@ function prepInsertionObject( obj ) {
     data: stringifiedObj, // stored in jsonb column
     id: obj.id,
     applicationId: obj.applicationId,
-    speckle_type: obj.speckle_type
+    speckle_type: obj.speckle_type,
+    description: obj.description,
+    author: obj.author
   }
 }
