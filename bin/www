@@ -8,7 +8,8 @@ let http = require( 'http' )
 
 let { init } = require( '../app' )
 
-init( ).then( ( app ) => {
+init( ).
+then( ( { app } ) => {
   let port = process.env.PORT || 3000
 
   app.set( 'port', port )

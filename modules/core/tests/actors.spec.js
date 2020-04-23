@@ -26,9 +26,6 @@ describe( 'Actors & Tokens', ( ) => {
     let actorId = await createUser( myTestActor )
     myTestActor.id = actorId
 
-
-
-    app = await init()
   } )
 
   after( async ( ) => {

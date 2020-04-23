@@ -163,7 +163,9 @@ describe( 'Objects', ( ) => {
     let baseUrl
 
     before( async ( ) => {
-      app = await init()
+      let initRes = await init( )
+      app = initRes.app
+      
       userA.id = await createUser( userA )
       tokenA = await createToken( userA.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
       publicStream.id = await createStream( publicStream, userA.id )

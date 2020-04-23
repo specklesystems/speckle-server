@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "test": "DEBUG=speckle:test,speckle:errors NODE_ENV=test nyc nyc --reporter=html mocha -s 0 --exit",
-    "test-watch": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha --watch -s 0 --exit"
+    "test-watch": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha --watch -s 0 --exit",
+    "test-watch-g": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "apollo-server-express": "^2.12.0",
+    "apollo-server-testing": "^2.12.0",
     "app-root-path": "^3.0.0",
     "auto-load": "^3.0.4",
     "bcrypt": "^4.0.1",

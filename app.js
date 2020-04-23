@@ -52,5 +52,5 @@ exports.init = async ( ) => {
     } )
   } )
 
-  return app
+  return { app, graphqlServer }
 }

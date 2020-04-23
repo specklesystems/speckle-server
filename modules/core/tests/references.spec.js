@@ -52,6 +52,7 @@ describe( 'Tags & Branches', ( ) => {
     name: 'v.1.20.3',
     description: 'release version shite'
   }
+
   describe( 'Services/Queries', ( ) => {
 
     before( async ( ) => {
@@ -174,10 +175,14 @@ describe( 'Tags & Branches', ( ) => {
 
   describe( 'Integration (API)', ( ) => {
     let token
+    let app 
 
     before( async ( ) => {
       await knex.migrate.latest( )
-
+      
+      let initRes = await init( )
+      app = initRes.app
+      
       user.id = await createUser( user )
       token = await createToken( user.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
 
