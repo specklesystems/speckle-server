@@ -3,7 +3,7 @@ const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
 const root = require( 'app-root-path' )
 
-const { init } = require( `${root}/app` )
+const { init, startHttp } = require( `${root}/app` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
@@ -15,34 +15,37 @@ const { createUser, createToken } = require( '../users/services' )
 describe( 'GraphQL API Core', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let app
+  let testServer
+  let addr
 
   before( async ( ) => {
     await knex.migrate.latest( )
-    // let app = await init( )
-    require( `${root}/bin/www` )
-
+    let { app } = await init( )
+    let { server } = await startHttp( app )
+    testServer = server
 
     userA.id = await createUser( userA )
     userA.token = `Bearer ${(await createToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'user:read', 'token:create', 'token:read' ] ))}`
     userB.id = await createUser( userB )
     userB.token = `Bearer ${(await createToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'user:read', 'token:create', 'token:read' ] ))}`
 
+    addr = `http://localhost:${process.env.PORT || 3000}`
   } )
 
   after( async ( ) => {
     await knex.migrate.rollback( )
+    testServer.close()
   } )
 
   describe( 'Mutations', ( ) => {
     it( 'Should create a stream', async ( ) => {
-      // const res = await chai.request(app).post('/graphql').send().set()
+      assert.fail('todo')
     } )
   } )
 
   describe( 'Queries', ( ) => {
     it( 'Should retrieve my profile', async ( ) => {
-      const res = await chai.request( 'http://localhost:3000' ).post( '/graphql' ).set( 'Authorization', userA.token ).send( {
+      const res = await chai.request( addr ).post( '/graphql' ).set( 'Authorization', userA.token ).send( {
         query: `
          {
             user {
