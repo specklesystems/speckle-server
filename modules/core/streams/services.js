@@ -48,6 +48,7 @@ module.exports = {
     let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
 
     await knex.raw( query )
+    return true
   },
 
   async revokePermissionsStream( streamId, userId ) {
@@ -60,6 +61,7 @@ module.exports = {
     
     if ( delCount === 0 )
       throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
+    return true
   },
 
   async deleteStream( streamId ) {

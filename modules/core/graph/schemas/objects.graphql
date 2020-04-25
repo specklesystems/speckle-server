@@ -120,9 +120,17 @@ extend type Mutation {
   Deletes a branch.
   """
   branchDelete( streamId: String!, branchId: String! ):Boolean!
-  
+  """
+  Creates a tag.
+  """
   tagCreate(streamId: String!, tag: TagCreateInput ): String!
-  tagUpdate(streamId: String!, tag: TagUpdateInput ): String
+  """
+  Updates a tag.
+  """
+  tagUpdate(streamId: String!, tag: TagUpdateInput ): Boolean!
+  """
+  Deletes a tag.
+  """
   tagDelete( streamId: String!, tagId: String! ): String
 }
 
@@ -158,7 +166,7 @@ input CommitCreateInput {
   """
   streamId: String!
   """
-  The objects you want to create.
+  The commit you want to create.
   """
   commit: JSONObject!
 }
