@@ -7,7 +7,7 @@
     "dev": "NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "test": "DEBUG=speckle:test,speckle:errors NODE_ENV=test nyc nyc --reporter=html mocha -s 0 --exit",
     "test-watch": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha --watch -s 0 --exit",
-    "test-watch-g": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit"
+    "test-graph": "DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit --no-config"
   },
   "author": "",
   "license": "MIT",
