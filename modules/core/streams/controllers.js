@@ -6,7 +6,7 @@ module.exports = {
 
   async getStreams( req, res, next ) {
     try {
-      let streams = await getUserStreams( req.user.id )
+      let streams = await getUserStreams( req.user.id, 0, 10e6, false )
       res.status( 200 ).send( streams )
     } catch ( err ) {
       next( err )

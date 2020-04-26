@@ -81,7 +81,7 @@ module.exports = {
 
     const timeDiff = Math.abs( Date.now( ) - new Date( token.createdAt ) )
     if ( timeDiff > token.lifespan ) {
-      await module.exports.revokeToken( tokenId )
+      await module.exports.revokeToken( tokenId, token.owner )
       return { valid: false }
     }
 

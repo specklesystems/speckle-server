@@ -15,6 +15,10 @@ module.exports = {
       let commits = await getCommitsByStreamId( parent.id )
       return { totalCount: commits.length, commits: commits }
     },
+    async commit( parent, args, context, info ) {
+      let commit = getObject( args.id )
+      return commit
+    },
     async tags( parent, args, context, info ) {
       // TODO: implement limits in service
       let tags = await getTagsByStreamId( parent.id )
@@ -35,6 +39,9 @@ module.exports = {
   Object: {
     async author( parent, args, context, info ) {
       return await getUser( parent.author )
+    },
+    async children( parent, args, context, info ) {
+
     }
   },
   Tag: {

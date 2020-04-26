@@ -118,7 +118,7 @@ describe( 'Actors & Tokens', ( ) => {
       } )
 
       it( 'Should revoke an api token', async ( ) => {
-        await revokeToken( revokedToken )
+        await revokeToken( revokedToken, myTestActor.id )
         let res = await validateToken( revokedToken )
         expect( res ).to.have.property( 'valid' )
         expect( res.valid ).to.equal( false )

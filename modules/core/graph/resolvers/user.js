@@ -8,9 +8,8 @@ module.exports = {
   Query: {
     async user( parent, args, context, info ) {
       
-      await validateScopes( context.scopes, 'users:read' )
-
       if ( !context.auth ) throw new AuthenticationError( )
+      await validateScopes( context.scopes, 'users:read' )
 
       if ( !args.id && !context.userId ) {
         throw new UserInputError( 'You must provide an user id.' )

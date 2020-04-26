@@ -20,6 +20,7 @@ describe( 'GraphQL API Core', ( ) => {
   let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
   let testServer
 
+  // set up app & two basic users to ping pong permissions around
   before( async ( ) => {
     await knex.migrate.latest( )
     let { app } = await init( )
@@ -432,17 +433,23 @@ describe( 'GraphQL API Core', ( ) => {
 
     } )
     it( 'should retrieve a stream tag', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { tag(id:"${retrievedStream.tags.tags[0].id}") { name description commit { id description } } } } ` } )
-      
+      const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { tag(id:"${retrievedStream.tags.tags[0].id}") { name description commit { id description author { id name } } } } } ` } )
+
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.stream.tag ).to.have.property( 'name' )
       expect( res.body.data.stream.tag ).to.have.property( 'description' )
       expect( res.body.data.stream.tag ).to.have.property( 'commit' )
+      expect( res.body.data.stream.tag.commit ).to.have.property( 'author' )
+      expect( res.body.data.stream.tag.commit.author.name ).to.equal( 'Miticå' )
 
     } )
     it( 'should retrieve a stream commit', async ( ) => {
-      assert.fail( 'not implemented yet' )
+      const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { commit(id:"${c2.id}") { id description data } } }` } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.stream.commit.description ).to.equal( 'test second commit' )
+
     } )
     it( 'should retrieve commit/object children', async ( ) => {
       assert.fail( 'not implemented yet' )

@@ -1,5 +1,6 @@
 extend type Stream {
   commits(offset: Int! = 0, limit: Int = 20): CommitCollection
+  commit(id: String!): Object!
   tags(offset: Int = 0, limit: Int = 20): TagCollection
   tag( id: String! ): Tag
   branches(offset: Int = 0, limit: Int = 20): BranchCollection
@@ -57,7 +58,12 @@ type Object {
   
   `query`: TODO
   """
-  children(offset: Int! = 0, limit: Int! = 100, depth: Int! = 1, query: String): [Object]
+  children(offset: Int! = 0, limit: Int! = 100, depth: Int! = 1, query: String): [ObjectCollection]
+}
+
+type ObjectCollection {
+  totalCount: Int!
+  objects: [Object]!
 }
 
 enum REFERENCE_TYPE {

@@ -23,7 +23,8 @@ module.exports = {
   User: {
     async streamCollection( parent, args, context, info ) {
       // TODO: Return only the user's public streams if parent.id !== context.userId
-      let streams = await getUserStreams( parent.id )
+      let publicOnly = parent.id !== context.userId
+      let streams = await getUserStreams( parent.id, args.offset, args.limit, publicOnly )
       // TODO: Implement offsets in service, not in friggin array slice
       return { totalCount: streams.length, streams: streams.slice( args.offset, args.offset + args.limit ) }
     }

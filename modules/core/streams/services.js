@@ -25,7 +25,7 @@ module.exports = {
 
     let stream = await Streams( ).where( { id: streamId } ).select( '*' ).first( )
     let { role } = ( await Acl( ).where( { userId: userId, resourceId: streamId } ).select( 'role' ).first( ) ) || {}
-    
+
     stream.role = role
     return stream
   },
@@ -58,7 +58,7 @@ module.exports = {
     // Count owners 
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
     let delCount = await Acl( ).where( { resourceId: streamId, userId: userId } ).whereNot( { role: 'owner' } ).del( )
-    
+
     if ( delCount === 0 )
       throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
     return true
@@ -76,11 +76,16 @@ module.exports = {
     throw new Error( 'not implemented' )
   },
 
-  async getUserStreams( userId, offset, limit ) {
+  async getUserStreams( userId, offset, limit, publicOnly ) {
     offset = offset || 0
     limit = limit || 100
+    publicOnly = publicOnly !== false //defaults to true if not provided
+    
+    let query = { userId: userId }
+    
+    if ( publicOnly ) query.isPublic = true
 
-    return Acl( ).where( { userId: userId } )
+    return Acl( ).where( query )
       .rightJoin( 'streams', { 'streams.id': 'stream_acl.resourceId' } )
       .limit( limit ).offset( offset )
   },
