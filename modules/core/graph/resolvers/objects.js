@@ -40,7 +40,6 @@ module.exports = {
   Tag: {
     async commit( parent, args, context, info ) {
       let obj = await getObject( parent.commitId )
-      console.log( obj )
       return obj
     }
   },

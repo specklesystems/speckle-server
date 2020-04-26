@@ -7,6 +7,9 @@ const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` 
 module.exports = {
   Query: {
     async user( parent, args, context, info ) {
+      
+      await validateScopes( context.scopes, 'users:read' )
+
       if ( !context.auth ) throw new AuthenticationError( )
 
       if ( !args.id && !context.userId ) {
@@ -16,7 +19,23 @@ module.exports = {
       return await getUser( args.id || context.userId )
     }
   },
+  User: {
+    async email( parent, args, context, info ) {
+      // if it's me, go ahead
+      if ( context.userId === parent.id )
+        return parent.email
+      
+      // otherwise check scopes
+      try {
+        await validateScopes( context.scopes, 'users:email' )
+        return parent.email
+      } catch ( err ) {
+        return null
+      }
+    }
+  },
   Mutation: {
+    // NOTE: this mutation will not exist, or will be enabled only if local user creation is enabled
     async userCreate( parent, args, context, info ) {
       let userId = await createUser( args.user )
       let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )

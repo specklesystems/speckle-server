@@ -10,6 +10,7 @@ exports.up = async knex => {
     table.string( 'username', 20 ).unique( ).notNullable( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'name' ).notNullable( )
+    table.string( 'bio' )
     table.string( 'email' ).unique( )
     table.jsonb( 'profiles' )
     table.text( 'passwordDigest' ) // bcrypted pwd
