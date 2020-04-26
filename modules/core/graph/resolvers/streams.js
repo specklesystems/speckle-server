@@ -38,7 +38,8 @@ module.exports = {
     async streamUpdate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.stream.id, 'stream_acl', 'streams', 'owner' )
-      return await updateStream( args.stream )
+      await updateStream( args.stream )
+      return true
     },
     async streamDelete( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
@@ -47,7 +48,7 @@ module.exports = {
       return await deleteStream( args.id )
     },
     async streamClone( parent, args, context, info ) {
-      // TODO
+      throw new ApolloError( 'Not implemented yet :)' )
     },
     async streamGrantPermission( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )

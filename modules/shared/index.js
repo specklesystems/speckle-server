@@ -96,7 +96,8 @@ function authorize( aclTable, resourceTable, requiredRole ) {
 
     try {
       let { isPublic } = await Resource( ).where( { id: req.params.resourceId } ).select( 'isPublic' ).first( )
-      if ( isPublic ) return next( )
+      // only return here if it's a read operation: weight < 200. 
+      if ( isPublic && roles[ requiredRole ] < 200) return next( )
     } catch ( e ) {
       let err = new Error( `${req.params.resourceId} was not found.` )
       err.status = 404
@@ -132,7 +133,8 @@ async function authorizeResolver( userId, resourceId, aclTable, resourceTable, r
 
   try {
     let { isPublic } = await Resource( ).where( { id: resourceId } ).select( 'isPublic' ).first( )
-    if ( isPublic ) return true
+    // only return here if it's a read operation: weight < 200. 
+    if ( isPublic && roles[ requiredRole ] < 200 ) return true
   } catch ( e ) {
     throw new ApolloError( `Resource of type ${resourceTable} with ${resourceId} not found.` )
   }

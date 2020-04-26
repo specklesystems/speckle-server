@@ -12,7 +12,7 @@ exports.preflight = ( options ) => {
   // }
   
   // Example scopes: 
-  // streams:read, streams:write, users:email, tokens:read, tokens:create
+  // streams:read, streams:write, users:email, users:search, tokens:read, tokens:create, token:delete
  
   // TODO: register roles exposed by this module.
   // Base role schema:
@@ -21,12 +21,13 @@ exports.preflight = ( options ) => {
   // description: String! (describe its behaviour)
   // resourceTarget: String! (describe which resource it should apply to)
   // aclTableName: String! (where are they stored)
+  // weight: Int! (ie, 100, 200, 300; higher nums depict elevated privileges)
   // }
   
   // Example roles (in use) for streams: 
-  // OWNER
-  // CONTRIBUTOR
-  // REVIEWER
+  // OWNER: 1000
+  // CONTRIBUTOR: 200
+  // REVIEWER: 100
 }
 
 exports.init = ( app, options ) => {

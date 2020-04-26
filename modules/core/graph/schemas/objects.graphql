@@ -131,7 +131,7 @@ extend type Mutation {
   """
   Deletes a tag.
   """
-  tagDelete( streamId: String!, tagId: String! ): String
+  tagDelete( streamId: String!, tagId: String! ): Boolean!
 }
 
 input TagCreateInput {

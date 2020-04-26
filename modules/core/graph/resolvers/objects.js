@@ -46,10 +46,8 @@ module.exports = {
   },
   Branch: {
     async commits( parent, args, context, info ) {
-      // console.log( parent )
       let commitIds = ( await getBranchCommits( parent.id ) ).map( o => o.commitId )
       let commits = await getObjects( commitIds )
-      console.log( commits )
       return { totalCount: commits.length, commits: commits.slice( args.offset, args.offset + args.limit ) }
     }
   },

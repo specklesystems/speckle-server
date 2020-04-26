@@ -26,9 +26,9 @@ describe( 'GraphQL API Core', ( ) => {
     testServer = server
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${(await createToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'user:read', 'token:create', 'token:read' ] ))}`
+    userA.token = `Bearer ${(await createToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'user:read', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
     userB.id = await createUser( userB )
-    userB.token = `Bearer ${(await createToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'user:read', 'token:create', 'token:read' ] ))}`
+    userB.token = `Bearer ${(await createToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'user:read', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
   } )
@@ -44,22 +44,60 @@ describe( 'GraphQL API Core', ( ) => {
   let ts3
   let ts4
 
+  // some api tokens
+  let token1
+  let token2
+  let token3
+
+  // object ids
   let objIds
+
+  // some commits
+  let c1 = { description: 'test first commit' }
+  let c2 = { description: 'test second commit' }
+
+  // some tags
+  let tag1 = { name: 'v.10.0.0', description: 'test tag' }
+  let tag2 = { name: 'v.20.0.0' }
+  let tag3 = { name: 'v.21.0.1-alpha' }
 
   describe( 'Mutations', ( ) => {
 
     it( 'Should create some api tokens', async ( ) => {
-      assert.fail( 'todo' )
+      const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:read"]) }` } )
+      expect( res1 ).to.be.json
+      expect( res1 ).to.have.status( 200 )
+      expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
+
+      token1 = `Bearer ${res1.body.data.apiTokenCreate}`
+
+      const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "user:email"]) }` } )
+      token2 = `Bearer ${res2.body.data.apiTokenCreate}`
+
+      const res3 = await sendRequest( userB.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "user:email"]) }` } )
+      token3 = `Bearer ${res3.body.data.apiTokenCreate}`
     } )
 
-    it( 'Should revoke an api token', async ( ) => {
-      assert.fail( 'todo' )
+    it( 'Should revoke an api token that the user owns', async ( ) => {
+      const res = await sendRequest( userA.token, { query: `mutation{ apiTokenRevoke(token:"${token2}")}` } )
+      console.log( res.body )
+      expect( res ).to.be.json
+      expect( res ).to.have.status( 200 )
+      expect( res.body.data.apiTokenRevoke ).to.equal( true )
     } )
 
-    it( 'Should fail to revoke an api token', async ( ) => {
-      assert.fail( 'todo' )
+    it( 'Should fail to revoke an api token that I do not own', async ( ) => {
+      const res = await sendRequest( userA.token, { query: `mutation{ apiTokenRevoke(token:"${token3}")}` } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.exist
+    } ) 
+
+    it( 'Should fail to create a stream with an invalid scope token', async ( ) => {
+      // Note: token1 has only stream read access
+      const res = await sendRequest( token1, { query: `mutation { streamCreate(stream: { name: "INVALID TS1 (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+      expect( res.body.errors ).to.exist
     } )
-    
+
     it( 'Should create some streams', async ( ) => {
       const resS1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "TS1 (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       expect( resS1 ).to.be.json
@@ -78,6 +116,15 @@ describe( 'GraphQL API Core', ( ) => {
       ts4 = resS4.body.data.streamCreate
     } )
 
+    it( 'Should update a stream', async ( ) => {
+      const resS1 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts1}" name: "TS1 (u A) Private UPDATED", description: "Hello World, Again!", isPublic:false } ) }` } )
+
+      expect( resS1 ).to.be.json
+      expect( resS1 ).to.have.status( 200 )
+      expect( resS1.body.data ).to.have.property( 'streamUpdate' )
+      expect( resS1.body.data.streamUpdate ).to.equal( true )
+    } )
+
     it( 'Should grant some permissions', async ( ) => {
       const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: WRITE) }` } )
 
@@ -92,6 +139,18 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res ).to.be.json
       expect( res ).to.have.status( 200 )
       expect( res.body.data.streamGrantPermission ).to.equal( true )
+    } )
+
+    it( 'Should fail to edit/write on a public stream if no access is provided', async ( ) => {
+      // ts4 is a public stream from uesrB
+      const res = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts4}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
+      expect( res.body.errors ).to.exist
+    } )
+
+    it( 'Should fail editing a private stream if no access has been granted', async ( ) => {
+      const res = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts3}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
+
+      expect( res.body.errors ).to.exist
     } )
 
     it( 'Should create some objects', async ( ) => {
@@ -112,9 +171,6 @@ describe( 'GraphQL API Core', ( ) => {
 
     } )
 
-    let c1 = { description: 'test first commit' }
-    let c2 = { description: 'test second commit' }
-
     it( 'Should create several commits', async ( ) => {
       let res = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: c1 } } )
 
@@ -127,10 +183,6 @@ describe( 'GraphQL API Core', ( ) => {
       res = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: c2 } } )
       c2.id = res.body.data.commitCreate
     } )
-
-    let tag1 = { name: 'v.10.0.0', description: 'test tag' }
-    let tag2 = { name: 'v.20.0.0' }
-    let tag3 = { name: 'v.21.0.1-alpha' }
 
     it( 'Should create two tags', async ( ) => {
       tag1.commitId = c1.id
@@ -155,7 +207,7 @@ describe( 'GraphQL API Core', ( ) => {
       tag3.commitId = c2.id
       res = await sendRequest( userA.token, { query: `
         mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: tag3 } } )
-
+      tag3.id = res.body.data.tagCreate
     } )
 
     it( 'Should update a tag', async ( ) => {
@@ -167,20 +219,48 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.data.tagUpdate ).to.equal( true )
     } )
 
+    it( 'Should delete a tag', async ( ) => {
+      const res = await sendRequest( userA.token, { query: `mutation{ tagDelete(streamId:"${ts1}", tagId:"${tag3.id}")}` } )
+      expect( res ).to.be.json
+      expect( res ).to.have.status( 200 )
+      expect( res.body.data ).to.have.property( 'tagDelete' )
+      expect( res.body.data.tagDelete ).to.equal( true )
+    } )
+
+    let b1 = { name: 'branch 1', description: 'test branch' }
+    let b2 = { name: 'master', description: 'master branch' }
+    let b3 = { name: 'branch 3', description: 'wow' }
+
     it( 'Should create several branches', async ( ) => {
-      assert.fail( 'todo' )
+      const res1 = await sendRequest( userA.token, { query: `mutation($branch:BranchCreateInput!) { branchCreate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: b1 } } )
+      expect( res1 ).to.be.json
+      expect( res1 ).to.have.status( 200 )
+      expect( res1.body.data ).to.have.property( 'branchCreate' )
+      expect( res1.body.data.branchCreate ).to.be.a( 'string' )
+      b1.id = res1.body.data.branchCreate
+
+      const res2 = await sendRequest( userB.token, { query: `mutation($branch:BranchCreateInput!) { branchCreate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: b2 } } )
+      b2.id = res2.body.data.branchCreate
+
+      const res3 = await sendRequest( userB.token, { query: `mutation($branch:BranchCreateInput!) { branchCreate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: b3 } } )
+      b3.id = res3.body.data.branchCreate
     } )
 
     it( 'Should update a branch', async ( ) => {
-      assert.fail( 'todo' )
+      const res1 = await sendRequest( userA.token, { query: `mutation($branch:BranchUpdateInput!) { branchUpdate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: { id: b1.id, commits: [ c1.id ] } } } )
+      expect( res1 ).to.be.json
+      expect( res1 ).to.have.status( 200 )
+      expect( res1.body.data ).to.have.property( 'branchUpdate' )
+      expect( res1.body.data.branchUpdate ).to.equal( true )
     } )
 
     it( 'Should delete a branch', async ( ) => {
-      assert.fail( 'todo' )
-    } )
+      const res = await sendRequest( userA.token, { query: `mutation { branchDelete(streamId:"${ts1}", branchId:"${b2.id}")}` } )
+      expect( res ).to.be.json
+      expect( res ).to.have.status( 200 )
+      expect( res.body.data ).to.have.property( 'branchDelete' )
+      expect( res.body.data.branchDelete ).to.equal( true )
 
-    it( 'Authorization check: should fail on private stream with no access', async ( ) => {
-      assert.fail( 'todo' )
     } )
 
   } )

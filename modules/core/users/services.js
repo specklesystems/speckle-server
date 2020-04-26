@@ -94,9 +94,16 @@ module.exports = {
       return { valid: false }
   },
 
-  async revokeToken( tokenId ) {
+  async revokeToken( tokenId, userId ) {
     tokenId = tokenId.slice( 0, 10 )
-    await Keys( ).where( { id: tokenId } ).del( )
+    let token = await Keys().where({id: tokenId}).select("*")
+    console.log( tokenId )
+    console.log( userId )
+    let delCount = await Keys( ).where( { id: tokenId, owner: userId } ).del( )
+
+    if ( delCount === 0 )
+      throw new Error( 'Did not revoke token' )
+    return true
   },
 
   async getUserTokens( userId ) {

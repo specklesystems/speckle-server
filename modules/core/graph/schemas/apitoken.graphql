@@ -19,9 +19,9 @@ extend type Mutation {
   """
   Creates an api token.
   """
-  apiTokenCreate(scopes: [String!]!, name: String!, lifespan: BigInt):String
+  apiTokenCreate(scopes: [String!]!, name: String!, lifespan: BigInt):String!
   """
   Revokes (deletes) an api token.
   """
-  apiTokenRevoke(token: String!):String
+  apiTokenRevoke(token: String!):Boolean!
 }

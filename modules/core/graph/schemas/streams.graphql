@@ -47,12 +47,13 @@ enum StreamUserRole {
 
 extend type Mutation {
   streamCreate( stream: StreamInput! ): String
-  streamUpdate( stream: StreamInput! ): String
-  streamDelete( id: String! ): Boolean
+  streamUpdate( stream: StreamInput! ): Boolean!
+  streamDelete( id: String! ): Boolean!
   """
   Clones a given stream, duplicating it within the current user's account without preserving access rights.
+  NOTE: Not implemented yet
   """
-  streamClone( id: String!): Boolean
+  streamClone( id: String!): Boolean!
   """
   Grants permissions to an user on a given stream. 
   """
