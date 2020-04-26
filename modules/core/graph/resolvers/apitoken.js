@@ -9,8 +9,7 @@ module.exports = {
   Query: {},
   User: {
     async apiTokens( parent, args, context, info ) {
-      return await getUserTokens( context.userId )
-    }
+   }
   },
   Mutation: {
     async apiTokenCreate( parent, args, context, info ) {

@@ -45,7 +45,8 @@ module.exports = {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.id, 'stream_acl', 'streams', 'owner' )
 
-      return await deleteStream( args.id )
+      await deleteStream( args.id )
+      return true
     },
     async streamClone( parent, args, context, info ) {
       throw new ApolloError( 'Not implemented yet :)' )
