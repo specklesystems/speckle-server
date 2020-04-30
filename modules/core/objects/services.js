@@ -115,9 +115,53 @@ module.exports = {
     return res
   },
 
+  async getObjectChildren( objectId, offset, limit, depth, query, fields, orderBy ) {
+    offset = Math.abs( offset ) || 0
+    limit = Math.abs( limit ) || 100
+    depth = Math.abs( depth ) || 2
+
+    fields = [ 'text', 'nest.flag', 'nest.what', 'arr[1]', 'arr[2]', 'nest.orderMe' ]
+    let selectFields = `obj_id as id, speckle_type`
+
+    fields.forEach( f => {
+      selectFields += `, jsonb_path_query(data, '$.${ f }') as "data.${f}"`
+    } )
+
+    orderBy = { property: 'nest.orderMe', direction: 'desc' }
+
+    //  console.log( Refs( ).where( { parent: objectId } ).select( '*' ).toString() )
+    //  TODO: Analyse and optimise query. 
+    let rawQuery = knex.raw( `
+      WITH ids AS (
+        SELECT DISTINCT unnest( string_to_array( ltree2text( subltree("path", 1, ${depth}) ), '.') ) as obj_id
+        FROM object_tree_refs
+        WHERE parent = '${objectId}'
+      ),
+      objs AS (
+        SELECT ${selectFields}
+        FROM ids 
+        JOIN objects ON ids.obj_id = objects.id
+        -- WHERE objects."data" @> '{"text": "This is object 1"}'
+        ${
+          orderBy && orderBy.property && orderBy.direction ? ("ORDER BY jsonb_path_query(data, '$." + orderBy.property + "' ) " + orderBy.direction || "ASC" ) : ""
+        }
+      ),
+      childrenCount AS (SELECT count(*) FROM ids),
+      resultCount AS (SELECT count(*) FROM objs)
+      SELECT * from objs
+      RIGHT JOIN (SELECT count(*) FROM objs) d(totalCount) ON TRUE
+      OFFSET ${offset}
+      LIMIT ${limit}
+    ` )
+
+    console.log( rawQuery.toString( ) )
+
+    let res = await rawQuery
+    console.log( res.rows )
+  },
+
   async getObjects( objectIds ) {
     let res = await Objects( ).whereIn( 'id', objectIds ).select( '*' )
-    // return res.map( r => r.data )
     return res
   },
 

@@ -25,7 +25,7 @@ type BranchCollection {
 type Object {
   id: String! 
   speckleType: String!
-  applicationId: String!
+  applicationId: String
   createdAt: DateTime
   """
   The object's description. Valid only in the case of commit objects.
@@ -58,7 +58,7 @@ type Object {
   
   `query`: TODO
   """
-  children(offset: Int! = 0, limit: Int! = 100, depth: Int! = 1, query: String): [ObjectCollection]
+  children(offset: Int! = 0, limit: Int! = 100, depth: Int! = 1, query: String, fields: [String] = [], ): [ObjectCollection]
 }
 
 type ObjectCollection {

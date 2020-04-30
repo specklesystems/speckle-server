@@ -41,7 +41,8 @@ module.exports = {
       return await getUser( parent.author )
     },
     async children( parent, args, context, info ) {
-
+      console.log( args )
+      throw new ApolloError( 'Not implemented' )
     }
   },
   Tag: {

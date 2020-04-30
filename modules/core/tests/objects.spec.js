@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
-const { createCommit, createObject, createObjects, getObject, getObjects } = require( '../objects/services' )
+const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren } = require( '../objects/services' )
 
 let sampleCommit = JSON.parse( `{
   "Objects": [
@@ -63,7 +63,7 @@ describe( 'Objects', ( ) => {
   } )
 
   after( async ( ) => {
-    await knex.migrate.rollback( )
+    // await knex.migrate.rollback( )
   } )
 
   describe( 'Services/Queries', ( ) => {
@@ -152,6 +152,51 @@ describe( 'Objects', ( ) => {
       expect( match2.id ).to.equal( objs[ 2 ].id )
     } )
 
+    it( 'Should get object children', async ( ) => {
+      let objectCount = 5
+      let objs = [ ]
+
+      for ( let i = 0; i < objectCount; i++ ) {
+        objs.push( {
+          id: `${i}_hash`,
+          text: `This is object ${i}`,
+          arr: [ 12, 21.0003, i * 100 ],
+          nest: {
+            flag: true,
+            what: 'butt ' + i,
+            orderMe: Math.random( ) * i,
+            nextNest: {
+              really: 'cool'
+            }
+          }
+        } )
+
+        // if ( i % 2 === 0 )
+        //   delete objs[ i ].nest
+
+        if ( i === 0 ) {
+          let __tree = [ ]
+
+          for ( let j = 1; j < objectCount - 1; j++ ) {
+            __tree.push( `0_hash.${j}_hash` )
+            __tree.push( `0_hash.${j}_hash.${j+1}_hash` )
+            __tree.push( `0_hash.0nasty_hash.0second_nasty.0third_nasty` )
+            if ( j < objectCount - 2 )
+              __tree.push( `0_hash.${j}_hash.${j+1}_hash.${j+2}_hash` )
+          }
+
+          objs[ i ].__tree = __tree
+        }
+      }
+
+      // console.log( objs )
+      let ids = await createObjects( objs )
+      console.log( ids )
+
+      let res = await getObjectChildren( '0_hash' )
+      // console.log( res )
+    } )
+
   } )
 
   describe( 'Integration (API)', ( ) => {
@@ -165,7 +210,7 @@ describe( 'Objects', ( ) => {
     before( async ( ) => {
       let initRes = await init( )
       app = initRes.app
-      
+
       userA.id = await createUser( userA )
       tokenA = await createToken( userA.id, 'Generic Token', [ 'streams:read', 'streams:write' ] )
       publicStream.id = await createStream( publicStream, userA.id )
