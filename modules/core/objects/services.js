@@ -102,6 +102,7 @@ module.exports = {
 
       let t1 = performance.now( )
       debug( `Batch ${index + 1}/${batches.length}: Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      // console.log( `Batch ${index + 1}/${batches.length}: Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       resolve( )
     } ) )
 
@@ -142,22 +143,51 @@ module.exports = {
         FROM ids 
         JOIN objects ON ids.obj_id = objects.id
         -- WHERE objects."data" @> '{"text": "This is object 1"}'
-        ${
-          orderBy && orderBy.property && orderBy.direction ? ("ORDER BY jsonb_path_query(data, '$." + orderBy.property + "' ) " + orderBy.direction || "ASC" ) : ""
-        }
-      ),
-      childrenCount AS (SELECT count(*) FROM ids),
-      resultCount AS (SELECT count(*) FROM objs)
+        ${ orderBy && orderBy.property && orderBy.direction ? ("ORDER BY jsonb_path_query(data, '$." + orderBy.property + "' ) " + orderBy.direction || "ASC" ) : "ORDER BY obj_id" }
+      )
       SELECT * from objs
       RIGHT JOIN (SELECT count(*) FROM objs) d(totalCount) ON TRUE
       OFFSET ${offset}
       LIMIT ${limit}
     ` )
 
+    let betterQuery = `
+    WITH ids AS(
+      SELECT unnest( string_to_array( ltree2text( subltree("path", 1, 2) ), '.') ) as obj_id
+      FROM object_tree_refs
+    --   WHERE path ~ '0_hash.*{1}'
+      WHERE nlevel(path) = 2
+    ),
+    objs AS(
+      SELECT obj_id, speckle_type, serial_id, 
+      jsonb_path_query(data, '$.text') as "data.text", 
+      jsonb_path_query(data, '$.nest.flag') as "data.nest.flag", 
+      jsonb_path_query(data, '$.nest.what') as "data.nest.what", 
+      jsonb_path_query(data, '$.arr[1]') as "data.arr[1]", 
+      jsonb_path_query(data, '$.arr[2]') as "data.arr[2]", 
+      jsonb_path_query(data, '$.nest.orderMe') as "data.nest.orderMe"
+      FROM ids
+      JOIN objects ON ids.obj_id = objects.id
+    --   WHERE (objects."data" -> 'nest' ->> 'orderMe')::numeric >= 19001
+    --   AND (objects."data"->'nest'->>'what') LIKE '%42%'
+    )
+    SELECT * FROM objs
+    RIGHT JOIN (SELECT count(*) FROM objs ) c(total_count) ON TRUE
+    ORDER BY serial_id desc
+    OFFSET 310
+    LIMIT 1000
+    `
+
     console.log( rawQuery.toString( ) )
 
+    let t0 = performance.now( )
+
     let res = await rawQuery
-    console.log( res.rows )
+
+    let t1 = performance.now( )
+
+
+    console.log( `Found ${res.rows.length} in ${t1-t0}ms.` )
   },
 
   async getObjects( objectIds ) {

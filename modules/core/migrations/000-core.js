@@ -73,11 +73,19 @@ exports.up = async knex => {
     table.index( [ 'speckle_type' ], 'type_index' )
   } )
 
+  await knex.raw( 'ALTER TABLE "objects" add column "serial_id" bigserial' )
+
   // Tree inheritance tracker
   await knex.schema.createTable( 'object_tree_refs', table => {
     table.increments( 'id' )
-    table.string( 'parent' )
+    table.string( 'parent' ).index( null, 'HASH' )
     table.specificType( 'path', 'ltree' )
+  } )
+
+  await knex.schema.createTable( 'object_children', table => {
+    table.string( 'parent' ).notNullable( )
+    table.string( 'child' ).notNullable( )
+    table.index( [ 'parent', 'child' ], 'pc_index' )
   } )
 
   await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
@@ -132,6 +140,7 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'user_commits' )
   await knex.schema.dropTableIfExists( 'references' )
   await knex.schema.dropTableIfExists( 'object_tree_refs' )
+  await knex.schema.dropTableIfExists( 'object_children' )
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
   await knex.schema.dropTableIfExists( 'api_tokens' )

@@ -153,7 +153,7 @@ describe( 'Objects', ( ) => {
     } )
 
     it( 'Should get object children', async ( ) => {
-      let objectCount = 5
+      let objectCount = 10000
       let objs = [ ]
 
       for ( let i = 0; i < objectCount; i++ ) {
@@ -177,12 +177,12 @@ describe( 'Objects', ( ) => {
         if ( i === 0 ) {
           let __tree = [ ]
 
-          for ( let j = 1; j < objectCount - 1; j++ ) {
+          for ( let j = 1; j < objectCount - 2; j++ ) {
             __tree.push( `0_hash.${j}_hash` )
             __tree.push( `0_hash.${j}_hash.${j+1}_hash` )
-            __tree.push( `0_hash.0nasty_hash.0second_nasty.0third_nasty` )
-            if ( j < objectCount - 2 )
-              __tree.push( `0_hash.${j}_hash.${j+1}_hash.${j+2}_hash` )
+            __tree.push( `0_hash.${j}_hash.${j+1}_hash.${j+2}_hash` )
+            // if ( j < objectCount - 2 )
+            //   __tree.push( `0_hash.${j}_hash.${j+1}_hash.${j+2}_hash` )
           }
 
           objs[ i ].__tree = __tree
@@ -191,11 +191,11 @@ describe( 'Objects', ( ) => {
 
       // console.log( objs )
       let ids = await createObjects( objs )
-      console.log( ids )
+      // console.log( ids )
 
       let res = await getObjectChildren( '0_hash' )
       // console.log( res )
-    } )
+    } ).timeout( 30000 )
 
   } )
 
