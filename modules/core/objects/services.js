@@ -12,6 +12,7 @@ const knex = require( `${root}/db/knex` )
 const Streams = ( ) => knex( 'streams' )
 const Objects = ( ) => knex( 'objects' )
 const Refs = ( ) => knex( 'object_tree_refs' )
+const Closures = ( ) => knex( 'object_children_closure' )
 const StreamCommits = ( ) => knex( 'stream_commits' )
 
 module.exports = {
@@ -41,18 +42,24 @@ module.exports = {
       Objects Proper
    */
   async createObject( object ) {
-    // Prep tree refs
-    let objTreeRefs = object.__tree !== null && object.__tree ? object.__tree.map( entry => {
-      return { parent: entry.split( '.' )[ 0 ], path: entry }
-    } ) : [ ]
 
     let insertionObject = prepInsertionObject( object )
+
+    let closures = [ ]
+    if ( object.__closure !== null ) {
+      for ( const prop in object.__closure ) {
+        closures.push( { parent: insertionObject.id, child: prop, minDepth: object.__closure[ prop ] } )
+      }
+    }
+
+    delete insertionObject.__tree
+    delete insertionObject.__closure
 
     let q1 = Objects( ).insert( insertionObject ).toString( ) + ' on conflict do nothing'
     await knex.raw( q1 )
 
-    if ( objTreeRefs.length > 0 ) {
-      let q2 = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
+    if ( closures.length > 0 ) {
+      let q2 = `${ Closures().insert( closures ).toString() } on conflict do nothing`
       await knex.raw( q2 )
     }
 
@@ -73,20 +80,23 @@ module.exports = {
     let ids = [ ]
 
     let promises = batches.map( async ( batch, index ) => new Promise( async ( resolve, reject ) => {
-      let objTreeRefs = [ ]
+      let closures = [ ]
       let objsToInsert = [ ]
 
       let t0 = performance.now( )
 
       batch.forEach( obj => {
 
-        if ( obj.__tree !== null && obj.__tree ) {
-          objTreeRefs = [ ...objTreeRefs, ...obj.__tree.map( entry => {
-            return { parent: entry.split( '.' )[ 0 ], path: entry }
-          } ) ]
+        let insertionObject = prepInsertionObject( obj )
+
+        if ( obj.__closure !== null ) {
+          for ( const prop in obj.__closure ) {
+            closures.push( { parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
+          }
         }
 
-        let insertionObject = prepInsertionObject( obj )
+        delete obj.__tree
+        delete obj.__closure
 
         objsToInsert.push( insertionObject )
         ids.push( insertionObject.id )
@@ -95,14 +105,14 @@ module.exports = {
       let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
       await knex.raw( queryObjs )
 
-      if ( objTreeRefs.length > 0 ) {
-        let queryRefs = Refs( ).insert( objTreeRefs ).toString( ) + ' on conflict do nothing'
-        await knex.raw( queryRefs )
+      if ( closures.length > 0 ) {
+        let q2 = `${ Closures().insert( closures ).toString() } on conflict do nothing`
+        await knex.raw( q2 )
       }
 
       let t1 = performance.now( )
-      debug( `Batch ${index + 1}/${batches.length}: Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )
-      // console.log( `Batch ${index + 1}/${batches.length}: Stored ${objTreeRefs.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       resolve( )
     } ) )
 
@@ -212,7 +222,6 @@ module.exports = {
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject( obj ) {
   obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
-  delete obj.__tree
   let stringifiedObj = JSON.stringify( obj )
   return {
     data: stringifiedObj, // stored in jsonb column

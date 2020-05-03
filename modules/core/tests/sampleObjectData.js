@@ -1,7 +1,7 @@
 module.exports = JSON.parse( `[
 {
   "name": "depth five",
-  "hash": "99b77f596443d2a2cf59124dbc6a4a8f",
+  "id": "99b77f596443d2a2cf59124dbc6a4a8f",
   "speckle_type": ""
 }, {
   "name": "depth four",
@@ -9,7 +9,7 @@ module.exports = JSON.parse( `[
     "speckle_type": "reference",
     "referencedId": "99b77f596443d2a2cf59124dbc6a4a8f"
   },
-  "hash": "c2cdd8d01c219703926f7282db700e14",
+  "id": "c2cdd8d01c219703926f7282db700e14",
   "speckle_type": "",
   "__tree": [
     "c2cdd8d01c219703926f7282db700e14.99b77f596443d2a2cf59124dbc6a4a8f"
@@ -23,7 +23,7 @@ module.exports = JSON.parse( `[
     "speckle_type": "reference",
     "referencedId": "c2cdd8d01c219703926f7282db700e14"
   },
-  "hash": "78af2314eed937c7338fccc4224393c0",
+  "id": "78af2314eed937c7338fccc4224393c0",
   "speckle_type": "",
   "__tree": [
     "78af2314eed937c7338fccc4224393c0.c2cdd8d01c219703926f7282db700e14",
@@ -45,7 +45,7 @@ module.exports = JSON.parse( `[
       "referencedId": "99b77f596443d2a2cf59124dbc6a4a8f"
     }
   ],
-  "hash": "254cb2d7094eca3c809cdac2ffc4010b",
+  "id": "254cb2d7094eca3c809cdac2ffc4010b",
   "speckle_type": "",
   "__tree": [
     "254cb2d7094eca3c809cdac2ffc4010b.78af2314eed937c7338fccc4224393c0",
@@ -68,7 +68,7 @@ module.exports = JSON.parse( `[
     "speckle_type": "reference",
     "referencedId": "99b77f596443d2a2cf59124dbc6a4a8f"
   },
-  "hash": "d2b9e647cb345673ff2b35ccab45ffc2",
+  "id": "d2b9e647cb345673ff2b35ccab45ffc2",
   "speckle_type": "",
   "__tree": [
     "d2b9e647cb345673ff2b35ccab45ffc2.254cb2d7094eca3c809cdac2ffc4010b",

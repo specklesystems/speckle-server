@@ -15,7 +15,6 @@ const { createStream, getStream, updateStream, deleteStream, getStreamsUser, gra
 const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren } = require( '../objects/services' )
 
 const sampleObjects = require( './sampleObjectData' )
-// console.log( sampleObjects )
 
 let sampleCommit = JSON.parse( `{
   "Objects": [
@@ -156,50 +155,11 @@ describe( 'Objects', ( ) => {
     } )
 
     it( 'Should get object children', async ( ) => {
-      let objectCount = 10000
-      let objs = [ ]
 
-      for ( let i = 0; i < objectCount; i++ ) {
-        objs.push( {
-          id: `${i}_hash`,
-          text: `This is object ${i}`,
-          arr: [ 12, 21.0003, i * 100 ],
-          nest: {
-            flag: true,
-            what: 'butt ' + i,
-            orderMe: Math.random( ) * i,
-            nextNest: {
-              really: 'cool'
-            }
-          },
-          __tree: [ ]
-        } )
+      let nestedBoys = createAShitTonOfFuckingObjects( 300000 )
 
-        // if ( i % 2 === 0 )
-        //   delete objs[ i ].nest
-
-        if ( i === 0 ) {
-          let __tree = [ ]
-
-          for ( let j = 1; j < objectCount - 2; j++ ) {
-            __tree.push( `0_hash.${j}_hash` )
-            __tree.push( `0_hash.${j}_hash.${j+1}_hash` )
-            __tree.push( `0_hash.${j}_hash.${j+1}_hash.${j+2}_hash` )
-            // if ( j < objectCount - 2 )
-            //   __tree.push( `0_hash.${j}_hash.${j+1}_hash.${j+2}_hash` )
-          }
-
-          objs[ i ].__tree = __tree
-        } else if ( i < objectCount - 2 ) {
-          objs[ i ].__tree.push( `${i}_hash.${i+1}_hash` )
-        }
-      }
-      let print = objs.slice( 1, 10 )
-      let ttree1 = objs[ 0 ].__tree.slice( 0, 30 )
-      console.log( ttree1 )
-      console.log( print.map( o => ( { id: o.id, tree: o.__tree } ) ) )
-      let ids = await createObjects( objs )
-      // console.log( ids )
+      let ids = await createObjects( nestedBoys )
+      console.log( `base id is: ${ids[0]} ` )
 
       let res = await getObjectChildren( '0_hash' )
       // console.log( res )
@@ -286,5 +246,34 @@ describe( 'Objects', ( ) => {
     } )
 
   } )
-
 } )
+
+const crypto = require( 'crypto' )
+
+function createAShitTonOfFuckingObjects( shitTon, noise ) {
+  shitTon = shitTon || 10000
+  noise = noise || Math.random() * 100
+
+  let objs = [ ]
+
+  let base = { name: 'base bastard 2', noise: noise, __closure: {} }
+  objs.push( base )
+
+  for ( let i = 0; i < shitTon; i++ ) {
+    let baby = { name: `mr. ${i}`, noise: noise, sortValueA: i, sortValueB: i * 0.42 * i }
+    getAFuckingId( baby )
+    base.__closure[ baby.id ] = 1
+    
+    if( i > 1000 )
+      base.__closure[ baby.id ] = i / 1000
+    
+    objs.push( baby )
+  }
+
+  getAFuckingId( base )
+  return objs
+}
+
+function getAFuckingId( obj ) {
+  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
+}
