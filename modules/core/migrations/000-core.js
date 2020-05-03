@@ -82,10 +82,11 @@ exports.up = async knex => {
     table.specificType( 'path', 'ltree' )
   } )
 
-  await knex.schema.createTable( 'object_children', table => {
+  await knex.schema.createTable( 'object_children_closure', table => {
     table.string( 'parent' ).notNullable( )
     table.string( 'child' ).notNullable( )
-    table.index( [ 'parent', 'child' ], 'pc_index' )
+    table.integer( 'minDepth' ).defaultTo( 1 ).notNullable()
+    // table.index( [ 'parent', 'child' ], 'pc_index' )
   } )
 
   await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
@@ -140,7 +141,7 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'user_commits' )
   await knex.schema.dropTableIfExists( 'references' )
   await knex.schema.dropTableIfExists( 'object_tree_refs' )
-  await knex.schema.dropTableIfExists( 'object_children' )
+  await knex.schema.dropTableIfExists( 'object_children_closure' )
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
   await knex.schema.dropTableIfExists( 'api_tokens' )

@@ -14,6 +14,9 @@ const { createUser, createToken, revokeToken, revokeTokenById, validateToken, ge
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
 const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren } = require( '../objects/services' )
 
+const sampleObjects = require( './sampleObjectData' )
+// console.log( sampleObjects )
+
 let sampleCommit = JSON.parse( `{
   "Objects": [
     {
@@ -168,7 +171,8 @@ describe( 'Objects', ( ) => {
             nextNest: {
               really: 'cool'
             }
-          }
+          },
+          __tree: [ ]
         } )
 
         // if ( i % 2 === 0 )
@@ -186,10 +190,14 @@ describe( 'Objects', ( ) => {
           }
 
           objs[ i ].__tree = __tree
+        } else if ( i < objectCount - 2 ) {
+          objs[ i ].__tree.push( `${i}_hash.${i+1}_hash` )
         }
       }
-
-      // console.log( objs )
+      let print = objs.slice( 1, 10 )
+      let ttree1 = objs[ 0 ].__tree.slice( 0, 30 )
+      console.log( ttree1 )
+      console.log( print.map( o => ( { id: o.id, tree: o.__tree } ) ) )
       let ids = await createObjects( objs )
       // console.log( ids )
 
