@@ -66,6 +66,8 @@ exports.up = async knex => {
     table.string( 'id' ).primary( )
     table.string( 'speckle_type' ).defaultTo( 'Base' ).notNullable( )
     table.string( 'applicationId' )
+    table.integer( 'totalChildrenCount' )
+    table.jsonb( 'totalChildrenCountByDepth' )
     table.jsonb( 'data' )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
     table.string( 'description' )
@@ -74,6 +76,7 @@ exports.up = async knex => {
   } )
 
   await knex.raw( 'ALTER TABLE "objects" add column "serial_id" bigserial' )
+  await knex.raw( 'CREATE INDEX serial_idx ON objects(serial_id) ' )
 
   // Tree inheritance tracker
   await knex.schema.createTable( 'object_tree_refs', table => {
@@ -81,15 +84,16 @@ exports.up = async knex => {
     table.string( 'parent' ).index( null, 'HASH' )
     table.specificType( 'path', 'ltree' )
   } )
+  await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
 
   await knex.schema.createTable( 'object_children_closure', table => {
-    table.string( 'parent' ).notNullable( )
-    table.string( 'child' ).notNullable( )
-    table.integer( 'minDepth' ).defaultTo( 1 ).notNullable()
-    // table.index( [ 'parent', 'child' ], 'pc_index' )
+    table.string( 'parent' ).notNullable( ).index()
+    table.string( 'child' ).notNullable( ).index()
+    table.integer( 'minDepth' ).defaultTo( 1 ).notNullable().index()
+    table.index( [ 'parent', 'child' ], 'parent_child_index' )
+    table.index( [ 'parent', 'minDepth' ], 'full_pcd_index' )
   } )
 
-  await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
 
   // creates an enum type for db reference types (branch, tag).
   await knex.raw( `

@@ -88,15 +88,26 @@ module.exports = {
       batch.forEach( obj => {
 
         let insertionObject = prepInsertionObject( obj )
-
+        let totalChildrenCountByDepth = {}
+        let totalChildrenCountGlobal = 0
         if ( obj.__closure !== null ) {
           for ( const prop in obj.__closure ) {
             closures.push( { parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
+            
+            totalChildrenCountGlobal++
+            
+            if( totalChildrenCountByDepth[ obj.__closure[prop].toString() ] )
+              totalChildrenCountByDepth[ obj.__closure[ prop ].toString() ]++
+            else 
+              totalChildrenCountByDepth[ obj.__closure[ prop ].toString() ] = 1
           }
         }
 
-        delete obj.__tree
-        delete obj.__closure
+        insertionObject.totalChildrenCount = totalChildrenCountGlobal
+        insertionObject.totalChildrenCountByDepth = JSON.stringify( totalChildrenCountByDepth )
+
+        delete insertionObject.__tree
+        delete insertionObject.__closure
 
         objsToInsert.push( insertionObject )
         ids.push( insertionObject.id )

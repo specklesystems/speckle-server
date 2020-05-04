@@ -156,13 +156,19 @@ describe( 'Objects', ( ) => {
 
     it( 'Should get object children', async ( ) => {
 
-      let nestedBoys = createAShitTonOfFuckingObjects( 300000 )
+      let objs_1 = createAShitTonOfFuckingObjects( 10000, 'noise__' )
+      let ids = await createObjects( objs_1 )
 
-      let ids = await createObjects( nestedBoys )
+      // let objs_2 = createAShitTonOfFuckingObjects( 20000, 'noise_2' )
+      // let ids2 = await createObjects( objs_2 )
+
+      // let objs_3 = createAShitTonOfFuckingObjects( 50000, 'noise_3' )
+      // let ids3 = await createObjects( objs_3 )
+      
       console.log( `base id is: ${ids[0]} ` )
+      console.log( `base id is: ${ids2[0]} ` )
+      console.log( `base id is: ${ids3[0]} ` )
 
-      let res = await getObjectChildren( '0_hash' )
-      // console.log( res )
     } ).timeout( 30000 )
 
   } )
