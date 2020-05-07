@@ -27,6 +27,7 @@
     "graphql-tools": "^4.0.7",
     "knex": "^0.20.12",
     "lodash.merge": "^4.6.2",
+    "lodash.set": "^4.3.2",
     "lodash.values": "^4.3.0",
     "morgan": "^1.10.0",
     "morgan-debug": "^2.0.0",

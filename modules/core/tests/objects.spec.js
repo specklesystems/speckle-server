@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../users/services' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../streams/services' )
-const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren } = require( '../objects/services' )
+const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../objects/services' )
 
 const sampleObjects = require( './sampleObjectData' )
 
@@ -154,22 +154,56 @@ describe( 'Objects', ( ) => {
       expect( match2.id ).to.equal( objs[ 2 ].id )
     } )
 
+    let parentObjectId
+
     it( 'Should get object children', async ( ) => {
 
-      let objs_1 = createAShitTonOfFuckingObjects( 10000, 'noise__' )
+      let objs_1 = createManyObjects( 100, 'noise__' )
       let ids = await createObjects( objs_1 )
 
-      // let objs_2 = createAShitTonOfFuckingObjects( 20000, 'noise_2' )
+      // let objs_2 = createManyObjects( 20000, 'noise_2' )
       // let ids2 = await createObjects( objs_2 )
 
-      // let objs_3 = createAShitTonOfFuckingObjects( 50000, 'noise_3' )
+      // let objs_3 = createManyObjects( 100000, 'noise_3' )
       // let ids3 = await createObjects( objs_3 )
-      
-      console.log( `base id is: ${ids[0]} ` )
-      console.log( `base id is: ${ids2[0]} ` )
-      console.log( `base id is: ${ids3[0]} ` )
+
+
+
+      // let { rows } = await getObjectChildren( { objectId: ids[0], select: ['id', 'name', 'sortValueB'] } )
+      // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
+      let limit = 50
+      let { rows: rows_1, cursor: cursor_1 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
+
+      expect( rows_1.length ).to.equal( limit )
+      expect( rows_1[ 0 ] ).to.be.an( 'object' )
+      expect( rows_1[ 0 ] ).to.have.property( 'id' )
+      expect( rows_1[ 0 ] ).to.have.nested.property( 'test.secondValue' )
+      expect( rows_1[ 0 ] ).to.have.nested.property( 'nest.mallard' )
+
+      expect( cursor_1 ).to.be.a( 'string' )
+
+      let { rows: rows_2, cursor: cursor_2 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
+
+      expect( rows_2.length ).to.equal( 50 )
+      expect( rows_2[ 0 ] ).to.be.an( 'object' )
+      expect( rows_2[ 0 ] ).to.have.property( 'id' )
+      expect( rows_2[ 0 ] ).to.have.nested.property( 'test.secondValue' )
+      expect( rows_2[ 0 ] ).to.have.nested.property( 'nest.mallard' )
+
+
+      let { rows, cursor } = await getObjectChildren( { objectId: ids[ 0 ], limit: 1000 } )
+      expect( rows.length ).to.equal( 100 )
+
+      parentObjectId = ids[ 0 ]
 
     } ).timeout( 30000 )
+
+    it( 'should query object children', async ( ) => {
+      // we're assuming the prev test objects exist
+
+      let test = await getObjectChildrenQuery(  { objectId: parentObjectId, select: [ 'nest.mallard', 'test.value' ] } )
+
+    } )
 
   } )
 
@@ -256,9 +290,9 @@ describe( 'Objects', ( ) => {
 
 const crypto = require( 'crypto' )
 
-function createAShitTonOfFuckingObjects( shitTon, noise ) {
+function createManyObjects( shitTon, noise ) {
   shitTon = shitTon || 10000
-  noise = noise || Math.random() * 100
+  noise = noise || Math.random( ) * 100
 
   let objs = [ ]
 
@@ -266,13 +300,21 @@ function createAShitTonOfFuckingObjects( shitTon, noise ) {
   objs.push( base )
 
   for ( let i = 0; i < shitTon; i++ ) {
-    let baby = { name: `mr. ${i}`, noise: noise, sortValueA: i, sortValueB: i * 0.42 * i }
+    let baby = {
+      name: `mr. ${i}`,
+      nest: { duck: true, mallard: 'false', arr: [ i + 42, i, i ] },
+      test: { value: i, secondValue: 'mallard ' + i % 10 },
+      objArr: [ { a: i }, { b: i * i }, { c: true } ],
+      noise: noise,
+      sortValueA: i,
+      sortValueB: i * 0.42 * i
+    }
     getAFuckingId( baby )
     base.__closure[ baby.id ] = 1
-    
-    if( i > 1000 )
+
+    if ( i > 1000 )
       base.__closure[ baby.id ] = i / 1000
-    
+
     objs.push( baby )
   }
 

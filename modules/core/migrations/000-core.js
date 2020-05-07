@@ -75,9 +75,6 @@ exports.up = async knex => {
     table.index( [ 'speckle_type' ], 'type_index' )
   } )
 
-  await knex.raw( 'ALTER TABLE "objects" add column "serial_id" bigserial' )
-  await knex.raw( 'CREATE INDEX serial_idx ON objects(serial_id) ' )
-
   // Tree inheritance tracker
   await knex.schema.createTable( 'object_tree_refs', table => {
     table.increments( 'id' )

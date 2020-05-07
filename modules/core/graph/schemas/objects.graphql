@@ -47,22 +47,28 @@ type Object {
   The full object, with all its props & other things. **NOTE:** If you're requesting objects for the purpose of recreating & displaying, you probably only want to request this specific field.
   """
   data: JSON
+  
   """
   Any objects that this object references.
-  
-  `offset`: TODO
-  
-  `limit`: TODO
-  
-  `depth`: TODO
-  
-  `query`: TODO
   """
-  children(offset: Int! = 0, limit: Int! = 100, depth: Int! = 1, query: String, fields: [String] = [], ): [ObjectCollection]
+  children(
+    limit: Int! = 100, 
+    depth: Int! = 50, 
+    select: [String], 
+    cursor: String, 
+    query: String,
+    orderBy: String  ): ObjectCollection!
+
+  """
+  Query the object's childern, so you can receive only the ones you want to. 
+  """
+  childernQuery(limit: Int! = 100, cursor:String, select: [String], depth: Int! = 1 ): ObjectCollection!
 }
 
 type ObjectCollection {
   totalCount: Int!
+  cursor: String!
+  hasMore: Boolean!
   objects: [Object]!
 }
 

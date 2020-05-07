@@ -3,6 +3,7 @@ const bcrypt = require( 'bcrypt' )
 const crs = require( 'crypto-random-string' )
 const { performance } = require( 'perf_hooks' )
 const crypto = require( 'crypto' )
+const set = require( 'lodash.set' )
 
 let debug = require( 'debug' )( 'speckle:services' )
 
@@ -67,6 +68,8 @@ module.exports = {
   },
 
   async createObjects( objects ) {
+    // TODO: Switch to knex batch inserting functionality
+    // see http://knexjs.org/#Utility-BatchInsert
     let batches = [ ]
     let maxBatchSize = process.env.MAX_BATCH_SIZE || 250
     objects = [ ...objects ]
@@ -93,13 +96,13 @@ module.exports = {
         if ( obj.__closure !== null ) {
           for ( const prop in obj.__closure ) {
             closures.push( { parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
-            
+
             totalChildrenCountGlobal++
-            
-            if( totalChildrenCountByDepth[ obj.__closure[prop].toString() ] )
-              totalChildrenCountByDepth[ obj.__closure[ prop ].toString() ]++
-            else 
-              totalChildrenCountByDepth[ obj.__closure[ prop ].toString() ] = 1
+
+            if ( totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ] )
+              totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ]++
+            else
+              totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ] = 1
           }
         }
 
@@ -137,78 +140,94 @@ module.exports = {
     return res
   },
 
-  async getObjectChildren( objectId, offset, limit, depth, query, fields, orderBy ) {
-    offset = Math.abs( offset ) || 0
-    limit = Math.abs( limit ) || 100
-    depth = Math.abs( depth ) || 2
+  async getObjectChildren( { objectId, limit, depth, select, cursor } ) {
+    limit = parseInt( limit ) || 50
+    depth = parseInt( depth ) || 1000
 
-    fields = [ 'text', 'nest.flag', 'nest.what', 'arr[1]', 'arr[2]', 'nest.orderMe' ]
-    let selectFields = `obj_id as id, speckle_type`
+    let unwrapData = false
+    let selectStatements = [ ]
 
-    fields.forEach( f => {
-      selectFields += `, jsonb_path_query(data, '$.${ f }') as "data.${f}"`
+    if ( select && select.length > 0 ) {
+      selectStatements.push( `jsonb_path_query(data, '$.id') as id` )
+      select.forEach( f => {
+        selectStatements += `, jsonb_path_query(data, '$.${ f }') as "${f}"`
+      } )
+    } else {
+      selectStatements.push( '"data"' )
+      unwrapData = true
+    }
+
+    let q = Closures( )
+      .select( knex.raw( selectStatements ) )
+      .rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
+      .where( knex.raw( 'parent = ?', [ objectId ] ) )
+      .andWhere( knex.raw( '"minDepth" < ?', [ depth ] ) )
+      .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
+      .orderBy( 'objects.id' )
+      .limit( limit )
+
+    let rows = await q
+
+    if ( unwrapData ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
+    else rows.forEach( ( o, i, arr ) => {
+      let no = {}
+      for ( let key in o ) set( no, key, o[ key ] )
+      arr[ i ] = no
     } )
 
-    orderBy = { property: 'nest.orderMe', direction: 'desc' }
+    let lastId = rows[ rows.length - 1 ].id
+    return { rows, cursor: lastId }
+  },
 
-    //  console.log( Refs( ).where( { parent: objectId } ).select( '*' ).toString() )
-    //  TODO: Analyse and optimise query. 
-    let rawQuery = knex.raw( `
-      WITH ids AS (
-        SELECT DISTINCT unnest( string_to_array( ltree2text( subltree("path", 1, ${depth}) ), '.') ) as obj_id
-        FROM object_tree_refs
-        WHERE parent = '${objectId}'
-      ),
-      objs AS (
-        SELECT ${selectFields}
-        FROM ids 
-        JOIN objects ON ids.obj_id = objects.id
-        -- WHERE objects."data" @> '{"text": "This is object 1"}'
-        ${ orderBy && orderBy.property && orderBy.direction ? ("ORDER BY jsonb_path_query(data, '$." + orderBy.property + "' ) " + orderBy.direction || "ASC" ) : "ORDER BY obj_id" }
-      )
-      SELECT * from objs
-      RIGHT JOIN (SELECT count(*) FROM objs) d(totalCount) ON TRUE
-      OFFSET ${offset}
-      LIMIT ${limit}
-    ` )
+  async getObjectChildrenQuery( { objectId, limit, depth, select, cursor, query } ) {
+    limit = parseInt( limit ) || 50
+    depth = parseInt( depth ) || 1000
 
-    let betterQuery = `
-    WITH ids AS(
-      SELECT unnest( string_to_array( ltree2text( subltree("path", 1, 2) ), '.') ) as obj_id
-      FROM object_tree_refs
-    --   WHERE path ~ '0_hash.*{1}'
-      WHERE nlevel(path) = 2
-    ),
-    objs AS(
-      SELECT obj_id, speckle_type, serial_id, 
-      jsonb_path_query(data, '$.text') as "data.text", 
-      jsonb_path_query(data, '$.nest.flag') as "data.nest.flag", 
-      jsonb_path_query(data, '$.nest.what') as "data.nest.what", 
-      jsonb_path_query(data, '$.arr[1]') as "data.arr[1]", 
-      jsonb_path_query(data, '$.arr[2]') as "data.arr[2]", 
-      jsonb_path_query(data, '$.nest.orderMe') as "data.nest.orderMe"
-      FROM ids
-      JOIN objects ON ids.obj_id = objects.id
-    --   WHERE (objects."data" -> 'nest' ->> 'orderMe')::numeric >= 19001
-    --   AND (objects."data"->'nest'->>'what') LIKE '%42%'
-    )
-    SELECT * FROM objs
-    RIGHT JOIN (SELECT count(*) FROM objs ) c(total_count) ON TRUE
-    ORDER BY serial_id desc
-    OFFSET 310
-    LIMIT 1000
-    `
+    let unwrapData = false
+    let q = knex.with( 'objs', qb => {
+        qb.select( 'id' ).from( 'object_children_closure' )
+        if ( select && select.length > 0 ) {
+          select.forEach( ( field, index ) => {
+            qb.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
+          } )
+        } else {
+          unwrapData = true
+          qb.select( 'data' )
+        }
+        qb.join( 'objects', 'child', '=', 'objects.id' )
+          .where( 'parent', objectId )
 
-    console.log( rawQuery.toString( ) )
+        if( query && query.length > 0) {
+          query.forEach( statement => {
+            // qb.andWhere()
+          })
+        }
 
-    let t0 = performance.now( )
+      } )
+      .select( '*' ).from( 'objs' )
+      .joinRaw( 'RIGHT JOIN ( SELECT count(*) FROM "objs" ) c(total_count) ON TRUE' )
+      // .orderBy() // TODO
+      .limit( 2 )
 
-    let res = await rawQuery
+    console.log( q.toString( ) )
 
-    let t1 = performance.now( )
+    let rows = await q
+    console.log( rows )
 
+    let totalCount = rows && rows.length > 0 ? rows[ 0 ].total_count : 0
 
-    console.log( `Found ${res.rows.length} in ${t1-t0}ms.` )
+    if ( unwrapData ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
+    else {
+      rows.forEach( ( o, i, arr ) => {
+        let no = {}
+        let k = 0
+        for ( let field of select ) {
+          set( no, field, o[ k++ ] )
+        }
+        arr[ i ] = no
+      } )
+    }
+    console.log( rows )
   },
 
   async getObjects( objectIds ) {
