@@ -201,7 +201,11 @@ describe( 'Objects', ( ) => {
     it( 'should query object children', async ( ) => {
       // we're assuming the prev test objects exist
 
-      let test = await getObjectChildrenQuery(  { objectId: parentObjectId, select: [ 'nest.mallard', 'test.value' ] } )
+      let test = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        select: [ 'nest', 'test.value' ],
+        query: [ { field: 'test.value', operator: '>', value: 14 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ]
+      } )
 
     } )
 

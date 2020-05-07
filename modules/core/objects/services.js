@@ -183,6 +183,7 @@ module.exports = {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
 
+    let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
     let unwrapData = false
     let q = knex.with( 'objs', qb => {
         qb.select( 'id' ).from( 'object_children_closure' )
@@ -196,23 +197,39 @@ module.exports = {
         }
         qb.join( 'objects', 'child', '=', 'objects.id' )
           .where( 'parent', objectId )
+          .andWhere( 'minDepth', '<', depth )
+          .andWhere( qb_inner => {
+            if ( query && query.length > 0 ) {
+              query.forEach( ( statement, index ) => {
+                let castType = 'string'
+                if ( typeof statement.value === 'string' ) castType = 'string'
+                if ( typeof statement.value === 'boolean' ) castType = 'boolean'
+                if ( typeof statement.value === 'number' ) castType = 'numeric'
 
-        if( query && query.length > 0) {
-          query.forEach( statement => {
-            // qb.andWhere()
-          })
-        }
+                if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
+                  throw new Error( 'Invalid operator' )
+
+                let whereClause
+                if ( index === 0 ) whereClause = 'where'
+                else {
+                  if ( statement.verb && statement.verb.toLowerCase() === 'or' ) whereClause = 'orWhere'
+                  else whereClause = 'andWhere'
+                }
+                // Note: castType is generated from the statement's value and operators are matched against a whitelist.
+                qb_inner[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, statement.value ] ) )
+              } )
+            }
+          } )
 
       } )
       .select( '*' ).from( 'objs' )
       .joinRaw( 'RIGHT JOIN ( SELECT count(*) FROM "objs" ) c(total_count) ON TRUE' )
       // .orderBy() // TODO
-      .limit( 2 )
+      .limit( limit )
 
     console.log( q.toString( ) )
 
     let rows = await q
-    console.log( rows )
 
     let totalCount = rows && rows.length > 0 ? rows[ 0 ].total_count : 0
 
@@ -227,7 +244,8 @@ module.exports = {
         arr[ i ] = no
       } )
     }
-    console.log( rows )
+    console.log( totalCount, rows )
+    return { totalCount, objects: rows }
   },
 
   async getObjects( objectIds ) {
