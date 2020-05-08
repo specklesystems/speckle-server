@@ -204,8 +204,32 @@ describe( 'Objects', ( ) => {
       let test = await getObjectChildrenQuery( {
         objectId: parentObjectId,
         select: [ 'nest', 'test.value' ],
-        query: [ { field: 'test.value', operator: '>', value: 14 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ]
+        limit: 3,
+        query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
+        orderBy: { field: 'test.value', direction: 'desc'}
       } )
+
+      let test2 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        select: [ 'nest', 'test.value' ],
+        limit: 30,
+        query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
+        orderBy: { field: 'test.value', direction: 'desc'},
+        cursor: test.cursor
+      } )
+
+      let test3 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        select: [ 'nest', 'test.value' ],
+        limit: 30,
+        query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
+        orderBy: { field: 'test.value', direction: 'desc'},
+        cursor: test2.cursor
+      } )
+
+      // console.log( test.objects )
+      // console.log( test2.objects )
+      console.log( test3 )
 
     } )
 
@@ -306,7 +330,7 @@ function createManyObjects( shitTon, noise ) {
   for ( let i = 0; i < shitTon; i++ ) {
     let baby = {
       name: `mr. ${i}`,
-      nest: { duck: true, mallard: 'false', arr: [ i + 42, i, i ] },
+      nest: { duck: true, mallard: 'falsey', arr: [ i + 42, i, i ] },
       test: { value: i, secondValue: 'mallard ' + i % 10 },
       objArr: [ { a: i }, { b: i * i }, { c: true } ],
       noise: noise,

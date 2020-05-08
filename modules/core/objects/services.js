@@ -4,6 +4,7 @@ const crs = require( 'crypto-random-string' )
 const { performance } = require( 'perf_hooks' )
 const crypto = require( 'crypto' )
 const set = require( 'lodash.set' )
+const get = require( 'lodash.get' )
 
 let debug = require( 'debug' )( 'speckle:services' )
 
@@ -179,59 +180,99 @@ module.exports = {
     return { rows, cursor: lastId }
   },
 
-  async getObjectChildrenQuery( { objectId, limit, depth, select, cursor, query } ) {
+  async getObjectChildrenQuery( { objectId, limit, depth, select, cursor, query, orderBy } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
+    orderBy = orderBy || { field: 'id', direction: 'asc' }
+
+    if ( cursor ) {
+      cursor = JSON.parse( Buffer.from( cursor, 'base64' ).toString( 'binary' ) )
+    }
 
     let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
     let unwrapData = false
-    let q = knex.with( 'objs', qb => {
-        qb.select( 'id' ).from( 'object_children_closure' )
+
+    let mainQuery = knex.with( 'objs', cteInnerQuery => {
+        cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
         if ( select && select.length > 0 ) {
+          // always select the id
+          if ( select.indexOf( 'id' ) === -1 )
+            select.push( 'id' )
+
           select.forEach( ( field, index ) => {
-            qb.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
+            cteInnerQuery.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
           } )
+
+          if ( orderBy && select.indexOf( orderBy.field ) === -1 ) {
+            cteInnerQuery.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + orderBy.field, name: select.length } ) )
+            select.push( orderBy.field ) // don't order by a field you don't select; it's stupid.
+          }
         } else {
           unwrapData = true
-          qb.select( 'data' )
+          cteInnerQuery.select( 'data' )
         }
-        qb.join( 'objects', 'child', '=', 'objects.id' )
+
+        cteInnerQuery.join( 'objects', 'child', '=', 'objects.id' )
           .where( 'parent', objectId )
           .andWhere( 'minDepth', '<', depth )
-          .andWhere( qb_inner => {
-            if ( query && query.length > 0 ) {
-              query.forEach( ( statement, index ) => {
-                let castType = 'string'
-                if ( typeof statement.value === 'string' ) castType = 'string'
-                if ( typeof statement.value === 'boolean' ) castType = 'boolean'
-                if ( typeof statement.value === 'number' ) castType = 'numeric'
 
-                if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
-                  throw new Error( 'Invalid operator' )
+        // Set cursor clause, if present.
+        if ( cursor ) {
+          let castType = 'string'
+          if ( typeof cursor.value === 'string' ) castType = 'string'
+          if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
+          if ( typeof cursor.value === 'number' ) castType = 'numeric'
 
-                let whereClause
-                if ( index === 0 ) whereClause = 'where'
-                else {
-                  if ( statement.verb && statement.verb.toLowerCase() === 'or' ) whereClause = 'orWhere'
-                  else whereClause = 'andWhere'
-                }
-                // Note: castType is generated from the statement's value and operators are matched against a whitelist.
-                qb_inner[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, statement.value ] ) )
-              } )
-            }
-          } )
+          if ( operatorsWhitelist.indexOf( cursor.operator ) == -1 )
+            throw new Error( 'Invalid operator for cursor' )
+
+          cteInnerQuery.andWhere( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ?? `, [ '$.' + cursor.field, cursor.value ] ) )
+        }
+
+        // User provided filters/queries. Grouped as to not intefere/override default clauses.
+        cteInnerQuery.andWhere( nestedWhereQuery => {
+          if ( query && query.length > 0 ) {
+            query.forEach( ( statement, index ) => {
+              let castType = 'string'
+              if ( typeof statement.value === 'string' ) castType = 'string'
+              if ( typeof statement.value === 'boolean' ) castType = 'boolean'
+              if ( typeof statement.value === 'number' ) castType = 'numeric'
+
+              if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
+                throw new Error( 'Invalid operator for query' )
+
+              let whereClause
+              if ( index === 0 ) whereClause = 'where'
+              else {
+                if ( statement.verb && statement.verb.toLowerCase( ) === 'or' ) whereClause = 'orWhere'
+                else whereClause = 'andWhere'
+              }
+              // Note: castType is generated from the statement's value and operators are matched against a whitelist.
+              nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, statement.value ] ) )
+            } )
+          }
+        } )
+
+        // Order by clause; validate direction!
+        let direction = orderBy.direction.toLowerCase( ) === 'desc' ? 'desc' : 'asc'
+        cteInnerQuery.orderBy( knex.raw( `jsonb_path_query_first( data, ? )`, [ '$.' + orderBy.field ] ), direction )
 
       } )
       .select( '*' ).from( 'objs' )
       .joinRaw( 'RIGHT JOIN ( SELECT count(*) FROM "objs" ) c(total_count) ON TRUE' )
-      // .orderBy() // TODO
       .limit( limit )
 
-    console.log( q.toString( ) )
+    // console.log( mainQuery.toString( ) )
 
-    let rows = await q
+    let rows = await mainQuery
 
-    let totalCount = rows && rows.length > 0 ? rows[ 0 ].total_count : 0
+    let totalCount = rows && rows.length > 0 ? parseInt( rows[ 0 ].total_count ) : 0
+    console.log('----')
+    console.log(totalCount)
+    console.log('----')
+    // Return early if there's nothing left...
+    if ( totalCount === 0 )
+      return { totalCount, objects: [ ], cursor: null }
 
     if ( unwrapData ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
     else {
@@ -244,8 +285,18 @@ module.exports = {
         arr[ i ] = no
       } )
     }
-    console.log( totalCount, rows )
-    return { totalCount, objects: rows }
+
+    cursor = cursor || {}
+    let cursorObj = {
+      field: cursor.field || orderBy.field,
+      operator: cursor.operator || ( orderBy.direction.toLowerCase( ) === 'desc' ? '<' : '>' ),
+      value: get( rows[ rows.length - 1 ], orderBy.field )
+    }
+
+    let cursorEncoded = Buffer.from( JSON.stringify( cursorObj ), 'binary' ).toString( 'base64' )
+    let cursorDecoded = Buffer.from( cursorEncoded, 'base64' ).toString( 'binary' )
+    
+    return { totalCount, objects: rows, cursor: cursorEncoded }
   },
 
   async getObjects( objectIds ) {
