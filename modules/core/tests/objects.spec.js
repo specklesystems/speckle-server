@@ -161,16 +161,16 @@ describe( 'Objects', ( ) => {
       let objs_1 = createManyObjects( 100, 'noise__' )
       let ids = await createObjects( objs_1 )
 
+      // The below are just performance benchmarking.
       // let objs_2 = createManyObjects( 20000, 'noise_2' )
       // let ids2 = await createObjects( objs_2 )
 
       // let objs_3 = createManyObjects( 100000, 'noise_3' )
       // let ids3 = await createObjects( objs_3 )
 
-
-
       // let { rows } = await getObjectChildren( { objectId: ids[0], select: ['id', 'name', 'sortValueB'] } )
       // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
+
       let limit = 50
       let { rows: rows_1, cursor: cursor_1 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
 
@@ -203,33 +203,33 @@ describe( 'Objects', ( ) => {
 
       let test = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'nest', 'test.value' ],
+        select: [ 'test.value' ],
         limit: 3,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
-        orderBy: { field: 'test.value', direction: 'desc'}
+        orderBy: { field: 'test.value', direction: 'asc'}
       } )
 
       let test2 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'nest', 'test.value' ],
-        limit: 30,
+        select: [ 'test.value', 'nest.duck' ],
+        limit: 40,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
-        orderBy: { field: 'test.value', direction: 'desc'},
+        orderBy: { field: 'test.value', direction: 'asc'},
         cursor: test.cursor
       } )
 
       let test3 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'nest', 'test.value' ],
-        limit: 30,
+        select: [ 'test.value' ],
+        limit: 2000,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
-        orderBy: { field: 'test.value', direction: 'desc'},
+        orderBy: { field: 'test.value', direction: 'asc'},
         cursor: test2.cursor
       } )
 
-      // console.log( test.objects )
-      // console.log( test2.objects )
-      console.log( test3 )
+      console.log( test.objects )
+      console.log( test2.objects )
+      console.log( test3.objects )
 
     } )
 

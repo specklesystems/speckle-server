@@ -50,6 +50,8 @@ type Object {
   
   """
   Any objects that this object references.
+
+  **NOTE**: Providing any of the two last arguments ( `query`, `orderBy` ) will trigger a different code branch that executes a much more expensive SQL query. It is not recommended to do so for basic clients that are interested in purely getting all the objects of a given commit.
   """
   children(
     limit: Int! = 100, 
@@ -67,8 +69,7 @@ type Object {
 
 type ObjectCollection {
   totalCount: Int!
-  cursor: String!
-  hasMore: Boolean!
+  cursor: String
   objects: [Object]!
 }
 

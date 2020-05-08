@@ -187,6 +187,9 @@ module.exports = {
 
     if ( cursor ) {
       cursor = JSON.parse( Buffer.from( cursor, 'base64' ).toString( 'binary' ) )
+      console.log( '-----' )
+      console.log( cursor )
+      console.log( '-----' )
     }
 
     let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
@@ -216,21 +219,9 @@ module.exports = {
           .where( 'parent', objectId )
           .andWhere( 'minDepth', '<', depth )
 
-        // Set cursor clause, if present.
-        if ( cursor ) {
-          let castType = 'string'
-          if ( typeof cursor.value === 'string' ) castType = 'string'
-          if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
-          if ( typeof cursor.value === 'number' ) castType = 'numeric'
-
-          if ( operatorsWhitelist.indexOf( cursor.operator ) == -1 )
-            throw new Error( 'Invalid operator for cursor' )
-
-          cteInnerQuery.andWhere( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ?? `, [ '$.' + cursor.field, cursor.value ] ) )
-        }
-
         // User provided filters/queries. Grouped as to not intefere/override default clauses.
         cteInnerQuery.andWhere( nestedWhereQuery => {
+          
           if ( query && query.length > 0 ) {
             query.forEach( ( statement, index ) => {
               let castType = 'string'
@@ -260,16 +251,34 @@ module.exports = {
       } )
       .select( '*' ).from( 'objs' )
       .joinRaw( 'RIGHT JOIN ( SELECT count(*) FROM "objs" ) c(total_count) ON TRUE' )
-      .limit( limit )
 
-    // console.log( mainQuery.toString( ) )
+    // Set cursor clause, if present.
+    if ( cursor ) {
+      let castType = 'string'
+      if ( typeof cursor.value === 'string' ) castType = 'string'
+      if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
+      if ( typeof cursor.value === 'number' ) castType = 'numeric'
+
+      if ( operatorsWhitelist.indexOf( cursor.operator ) == -1 )
+        throw new Error( 'Invalid operator for cursor' )
+
+      if ( unwrapData ) {// are we selecting the full object? 
+        mainQuery.where( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ?? `, [ '$.' + cursor.field, cursor.value ] ) )
+      }
+      else {
+        mainQuery.where( knex.raw( `??::${castType} ${cursor.operator} ?? `, [ select.indexOf( cursor.field ).toString(), cursor.value ] ) )
+      }
+    }
+
+
+    mainQuery.limit( limit )
 
     let rows = await mainQuery
-
     let totalCount = rows && rows.length > 0 ? parseInt( rows[ 0 ].total_count ) : 0
-    console.log('----')
-    console.log(totalCount)
-    console.log('----')
+    console.log( '----' )
+    console.log( totalCount )
+    console.log( rows[0] )
+    console.log( '----' )
     // Return early if there's nothing left...
     if ( totalCount === 0 )
       return { totalCount, objects: [ ], cursor: null }
@@ -295,7 +304,7 @@ module.exports = {
 
     let cursorEncoded = Buffer.from( JSON.stringify( cursorObj ), 'binary' ).toString( 'base64' )
     let cursorDecoded = Buffer.from( cursorEncoded, 'base64' ).toString( 'binary' )
-    
+
     return { totalCount, objects: rows, cursor: cursorEncoded }
   },
 
