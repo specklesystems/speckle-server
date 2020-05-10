@@ -246,7 +246,7 @@ describe( 'Objects', ( ) => {
         select: [ 'similar', 'id' ],
         query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
         orderBy: { field: 'similar', direction: 'asc' },
-        limit: 9
+        limit: 2
       } )
 
       let test4 = await getObjectChildrenQuery( {
@@ -255,7 +255,7 @@ describe( 'Objects', ( ) => {
         query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
         orderBy: { field: 'similar', direction: 'asc' },
         cursor: test3.cursor,
-        limit: 9
+        limit: 2
       } )
 
       console.log( test3.objects )

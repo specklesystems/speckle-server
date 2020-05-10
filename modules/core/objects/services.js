@@ -252,7 +252,7 @@ module.exports = {
         if ( orderBy.field === 'id' ) {
           cteInnerQuery.orderBy( 'id', direction )
         } else {
-          cteInnerQuery.orderByRaw( knex.raw( `jsonb_path_query_first( data, ? ) ${direction}`, [ '$.' + orderBy.field ] ) )
+          cteInnerQuery.orderByRaw( knex.raw( `jsonb_path_query_first( data, ? ) ${direction}, id asc`, [ '$.' + orderBy.field ] ) )
         }
 
       } )
@@ -266,6 +266,9 @@ module.exports = {
       if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
       if ( typeof cursor.value === 'number' ) castType = 'numeric'
 
+      if( castType === 'text')
+        cursor.value = `"${cursor.value}"`
+
       if ( operatorsWhitelist.indexOf( cursor.operator ) == -1 )
         throw new Error( 'Invalid operator for cursor' )
 
@@ -273,21 +276,21 @@ module.exports = {
         if ( cursor.field === 'id' ) {
           mainQuery.where( knex.raw( `id ${cursor.operator} ? `, [ cursor.value ] ) )
         } else {
-          mainQuery.where( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [ '$.' + cursor.field, castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+          mainQuery.where( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator}= ? `, [ '$.' + cursor.field, cursor.value ] ) )
         }
       } else {
-        mainQuery.where( knex.raw( `??::${castType} ${cursor.operator}= ? `, [ select.indexOf( cursor.field ).toString( ), castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+        mainQuery.where( knex.raw( `??::${castType} ${cursor.operator}= ? `, [ select.indexOf( cursor.field ).toString( ), cursor.value ] ) )
       }
 
       if ( cursor.lastSeenId ) {
         console.log(cursor)
         mainQuery.andWhere( qb => {
-          qb.where( 'id', '>=', cursor.lastSeenId )
+          qb.where( 'id', '>', cursor.lastSeenId )
           // qb.andWhere( 'id', '!=', cursor.lastSeenId )
           if ( unwrapData )
-            qb.orWhere( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [ '$.' + cursor.field, castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+            qb.orWhere( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [ '$.' + cursor.field, cursor.value ] ) )
           else
-            qb.orWhere( knex.raw( `??::${castType} ${cursor.operator} ? `, [ select.indexOf( cursor.field ).toString( ), castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+            qb.orWhere( knex.raw( `??::${castType} ${cursor.operator} ? `, [ select.indexOf( cursor.field ).toString( ), cursor.value ] ) )
         } )
       }
     }
