@@ -127,7 +127,7 @@ module.exports = {
 
       let t1 = performance.now( )
       debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
-      console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       resolve( )
     } ) )
 
@@ -187,66 +187,73 @@ module.exports = {
 
     if ( cursor ) {
       cursor = JSON.parse( Buffer.from( cursor, 'base64' ).toString( 'binary' ) )
-      console.log( '-----' )
-      console.log( cursor )
-      console.log( '-----' )
     }
 
-    let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
+    // Flag that keeps track of wether we select the whole "data" part of an object or not
     let unwrapData = false
+    if ( Array.isArray( select ) ) {
+      // if we order by a field that we do not select, select it!
+      if ( orderBy && select.indexOf( orderBy.field ) === -1 ) {
+        select.push( orderBy.field )
+      }
+    } else {
+      unwrapData = true
+    }
 
+    let additionalIdOrderBy = orderBy.field !== 'id'
+
+    let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
     let mainQuery = knex.with( 'objs', cteInnerQuery => {
-        cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
-        if ( select && select.length > 0 ) {
-          // always select the id
-          if ( select.indexOf( 'id' ) === -1 )
-            select.push( 'id' )
 
+        // always select the id
+        cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
+
+        // if there are any select fields, add them
+        if ( Array.isArray( select ) ) {
           select.forEach( ( field, index ) => {
             cteInnerQuery.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
           } )
-
-          if ( orderBy && select.indexOf( orderBy.field ) === -1 ) {
-            cteInnerQuery.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + orderBy.field, name: select.length } ) )
-            select.push( orderBy.field ) // don't order by a field you don't select; it's stupid.
-          }
+          // otherwise, get the whole object, as stored in the jsonb column
         } else {
-          unwrapData = true
           cteInnerQuery.select( 'data' )
         }
 
+        // join on objects table
         cteInnerQuery.join( 'objects', 'child', '=', 'objects.id' )
           .where( 'parent', objectId )
           .andWhere( 'minDepth', '<', depth )
 
-        // User provided filters/queries. Grouped as to not intefere/override default clauses.
-        cteInnerQuery.andWhere( nestedWhereQuery => {
-          
-          if ( query && query.length > 0 ) {
+        // Add user provided filters/queries.
+        if ( Array.isArray( query ) && query.length > 0 ) {
+          cteInnerQuery.andWhere( nestedWhereQuery => {
             query.forEach( ( statement, index ) => {
-              let castType = 'string'
-              if ( typeof statement.value === 'string' ) castType = 'string'
+              let castType = 'text'
+              if ( typeof statement.value === 'string' ) castType = 'text'
               if ( typeof statement.value === 'boolean' ) castType = 'boolean'
               if ( typeof statement.value === 'number' ) castType = 'numeric'
 
               if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
                 throw new Error( 'Invalid operator for query' )
 
+              // set the correct where clause (where, and where, or where)
               let whereClause
               if ( index === 0 ) whereClause = 'where'
-              else {
-                if ( statement.verb && statement.verb.toLowerCase( ) === 'or' ) whereClause = 'orWhere'
-                else whereClause = 'andWhere'
-              }
+              else if ( statement.verb && statement.verb.toLowerCase( ) === 'or' ) whereClause = 'orWhere'
+              else whereClause = 'andWhere'
+
               // Note: castType is generated from the statement's value and operators are matched against a whitelist.
-              nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, statement.value ] ) )
+              nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
             } )
-          }
-        } )
+          } )
+        }
 
         // Order by clause; validate direction!
-        let direction = orderBy.direction.toLowerCase( ) === 'desc' ? 'desc' : 'asc'
-        cteInnerQuery.orderBy( knex.raw( `jsonb_path_query_first( data, ? )`, [ '$.' + orderBy.field ] ), direction )
+        let direction = orderBy.direction && orderBy.direction.toLowerCase( ) === 'desc' ? 'desc' : 'asc'
+        if ( orderBy.field === 'id' ) {
+          cteInnerQuery.orderBy( 'id', direction )
+        } else {
+          cteInnerQuery.orderByRaw( knex.raw( `jsonb_path_query_first( data, ? ) ${direction}`, [ '$.' + orderBy.field ] ) )
+        }
 
       } )
       .select( '*' ).from( 'objs' )
@@ -254,31 +261,45 @@ module.exports = {
 
     // Set cursor clause, if present.
     if ( cursor ) {
-      let castType = 'string'
-      if ( typeof cursor.value === 'string' ) castType = 'string'
+      let castType = 'text'
+      if ( typeof cursor.value === 'string' ) castType = 'text'
       if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
       if ( typeof cursor.value === 'number' ) castType = 'numeric'
 
       if ( operatorsWhitelist.indexOf( cursor.operator ) == -1 )
         throw new Error( 'Invalid operator for cursor' )
 
-      if ( unwrapData ) {// are we selecting the full object? 
-        mainQuery.where( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ?? `, [ '$.' + cursor.field, cursor.value ] ) )
+      if ( unwrapData ) { // are we selecting the full object? 
+        if ( cursor.field === 'id' ) {
+          mainQuery.where( knex.raw( `id ${cursor.operator} ? `, [ cursor.value ] ) )
+        } else {
+          mainQuery.where( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [ '$.' + cursor.field, castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+        }
+      } else {
+        mainQuery.where( knex.raw( `??::${castType} ${cursor.operator}= ? `, [ select.indexOf( cursor.field ).toString( ), castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
       }
-      else {
-        mainQuery.where( knex.raw( `??::${castType} ${cursor.operator} ?? `, [ select.indexOf( cursor.field ).toString(), cursor.value ] ) )
+
+      if ( cursor.lastSeenId ) {
+        console.log(cursor)
+        mainQuery.andWhere( qb => {
+          qb.where( 'id', '>=', cursor.lastSeenId )
+          // qb.andWhere( 'id', '!=', cursor.lastSeenId )
+          if ( unwrapData )
+            qb.orWhere( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [ '$.' + cursor.field, castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+          else
+            qb.orWhere( knex.raw( `??::${castType} ${cursor.operator} ? `, [ select.indexOf( cursor.field ).toString( ), castType === 'text' ? `"${cursor.value}"` : cursor.value ] ) )
+        } )
       }
     }
 
-
     mainQuery.limit( limit )
+
+    console.log( mainQuery.toString( ) )
+    console.log( '-----' )
 
     let rows = await mainQuery
     let totalCount = rows && rows.length > 0 ? parseInt( rows[ 0 ].total_count ) : 0
-    console.log( '----' )
-    console.log( totalCount )
-    console.log( rows[0] )
-    console.log( '----' )
+
     // Return early if there's nothing left...
     if ( totalCount === 0 )
       return { totalCount, objects: [ ], cursor: null }
@@ -298,14 +319,18 @@ module.exports = {
     cursor = cursor || {}
     let cursorObj = {
       field: cursor.field || orderBy.field,
-      operator: cursor.operator || ( orderBy.direction.toLowerCase( ) === 'desc' ? '<' : '>' ),
+      operator: cursor.operator || ( orderBy.direction && orderBy.direction.toLowerCase( ) === 'desc' ? '<' : '>' ),
       value: get( rows[ rows.length - 1 ], orderBy.field )
     }
 
-    let cursorEncoded = Buffer.from( JSON.stringify( cursorObj ), 'binary' ).toString( 'base64' )
-    let cursorDecoded = Buffer.from( cursorEncoded, 'base64' ).toString( 'binary' )
+    if ( additionalIdOrderBy ) {
+      cursorObj.lastSeenId = rows[ rows.length - 1 ].id
+    }
 
-    return { totalCount, objects: rows, cursor: cursorEncoded }
+    // console.log( cursor )
+
+    let cursorEncoded = Buffer.from( JSON.stringify( cursorObj ), 'binary' ).toString( 'base64' )
+    return { totalCount, objects: rows, cursor: rows.length === limit ? cursorEncoded : null }
   },
 
   async getObjects( objectIds ) {

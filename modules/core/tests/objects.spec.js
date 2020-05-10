@@ -161,6 +161,8 @@ describe( 'Objects', ( ) => {
       let objs_1 = createManyObjects( 100, 'noise__' )
       let ids = await createObjects( objs_1 )
 
+      // console.log(ids[ 0 ])
+
       // The below are just performance benchmarking.
       // let objs_2 = createManyObjects( 20000, 'noise_2' )
       // let ids2 = await createObjects( objs_2 )
@@ -198,7 +200,7 @@ describe( 'Objects', ( ) => {
 
     } ).timeout( 30000 )
 
-    it( 'should query object children', async ( ) => {
+    it( 'should query object children, ascending order', async ( ) => {
       // we're assuming the prev test objects exist
 
       let test = await getObjectChildrenQuery( {
@@ -206,7 +208,7 @@ describe( 'Objects', ( ) => {
         select: [ 'test.value' ],
         limit: 3,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
-        orderBy: { field: 'test.value', direction: 'asc'}
+        orderBy: { field: 'test.value', direction: 'asc' }
       } )
 
       let test2 = await getObjectChildrenQuery( {
@@ -214,25 +216,153 @@ describe( 'Objects', ( ) => {
         select: [ 'test.value', 'nest.duck' ],
         limit: 40,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
-        orderBy: { field: 'test.value', direction: 'asc'},
+        orderBy: { field: 'test.value', direction: 'asc' },
         cursor: test.cursor
       } )
+      console.log( test.objects[ 0 ] )
+      // limit
+      expect( test.objects.length ).to.equal( 3 )
+      expect( test2.objects.length ).to.equal( 20 )
+
+      // cursors
+      expect( test.cursor ).to.be.a( 'string' )
+      expect( test2.cursor ).to.equal( null )
+
+      // total count should be correct (invariant) across all requests with same query
+      expect( test.totalCount ).to.equal( 23 )
+      expect( test2.totalCount ).to.equal( 23 )
+
+      expect( test.objects[ 0 ].test.value ).to.be.below( test.objects[ 1 ].test.value )
+      expect( test2.objects[ 0 ].test.value ).to.be.below( test2.objects[ 1 ].test.value )
+
+      // continuity 
+      expect( test.objects[ test.objects.length - 1 ].test.value + 1 ).to.equal( test2.objects[ 0 ].test.value )
+    } )
+
+    it( 'should query object children desc, without selecting fields', async ( ) => {
 
       let test3 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'test.value' ],
-        limit: 2000,
-        query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
-        orderBy: { field: 'test.value', direction: 'asc'},
-        cursor: test2.cursor
+        select: [ 'similar', 'id' ],
+        query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
+        orderBy: { field: 'similar', direction: 'asc' },
+        limit: 9
       } )
 
-      console.log( test.objects )
-      console.log( test2.objects )
+      let test4 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        select: [ 'similar', 'id' ],
+        query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
+        orderBy: { field: 'similar', direction: 'asc' },
+        cursor: test3.cursor,
+        limit: 9
+      } )
+
       console.log( test3.objects )
+      console.log( test4.objects )
+
+      // limit  
+      expect( test3.objects.length ).to.equal( 50 ) // default limit
+      expect( test4.objects.length ).to.equal( 50 ) // default limit
+
+      // cursors
+      expect( test3.cursor ).to.be.a( 'string' )
+      expect( test4.cursor ).to.be.a( 'string' )
+
+      // total count should be correct (invariant) across all requests with same query
+      expect( test3.totalCount ).to.equal( 100 )
+      expect( test4.totalCount ).to.equal( 100 )
+
+      expect( test3.objects[ 0 ].test.value ).to.be.above( test3.objects[ 1 ].test.value )
+      expect( test4.objects[ 0 ].test.value ).to.be.above( test4.objects[ 1 ].test.value )
+
+      // continuity (in reverse)
+      expect( test3.objects[ test3.objects.length - 1 ].test.value - 1 ).to.equal( test4.objects[ 0 ].test.value )
+    } )
+
+    it( 'should query object children with no results ', async ( ) => {
+      let test = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 9 } ],
+        orderBy: { field: 'test.value', direction: 'desc' }
+      } )
+
+      expect( test.totalCount ).to.equal( 0 )
+      expect( test.cursor ).to.be.null
+    } )
+
+    it( 'should not allow invalid query operators ', async ( ) => {
+      try {
+        let test = await getObjectChildrenQuery( {
+          objectId: parentObjectId,
+          query: [ { field: 'test.value', operator: '> 0; BOBBY DROPPPPED MY TABLES; -- and the bass?', value: 10 }, { field: 'test.value', operator: '<', value: 9 } ],
+          orderBy: { field: 'test.value', direction: 'desc' }
+        } )
+        assert.fail( 'sql injections are bad for health' )
+      } catch ( err ) {
+        // pass
+      }
 
     } )
 
+    it( 'should query childern and sort them by a boolean value ', async ( ) => {
+      let test = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 10,
+        query: [ { field: 'test.value', operator: '<', value: 10 } ],
+        orderBy: { field: 'nest.duck', direction: 'desc' }
+      } )
+
+      expect( test.objects[ 0 ].nest.duck ).to.equal( true )
+      expect( test.objects[ 9 ].nest.duck ).to.equal( false ) // last duck should be false
+
+      // TODO: test cursor
+    } )
+
+    it( 'should query childern and sort them by a string value ', async ( ) => {
+      let limVal = 20
+
+      let test = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 5,
+        query: [ { field: 'test.value', operator: '<', value: limVal } ],
+        orderBy: { field: 'name', direction: 'desc' }
+      } )
+
+      // expect( test.objects[ 0 ].name ).to.equal( `mr. ${limVal - 1}` )
+      // expect( test.objects[ test.objects.length - 1 ].name ).to.equal( `mr. ${limVal/2}` )
+
+      let test2 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 5,
+        query: [ { field: 'test.value', operator: '<', value: limVal } ],
+        orderBy: { field: 'name', direction: 'desc' },
+        cursor: test.cursor
+      } )
+
+      // console.log( test.objects )
+      // console.log( test2.objects )
+
+    } )
+
+    it( 'should query childern and sort them by id by default ', async ( ) => {
+      let test = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 3,
+        query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 100 } ],
+      } )
+
+      expect( test.totalCount ).to.equal( 90 )
+
+      let test2 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 3,
+        query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 100 } ],
+        cursor: test.cursor
+      } )
+      expect( test.objects[ 1 ].id < test.objects[ 2 ].id )
+      expect( test.objects[ 2 ].id < test2.objects[ 0 ].id )
+    } )
   } )
 
   describe( 'Integration (API)', ( ) => {
@@ -326,17 +456,21 @@ function createManyObjects( shitTon, noise ) {
 
   let base = { name: 'base bastard 2', noise: noise, __closure: {} }
   objs.push( base )
+  let k = 0
 
   for ( let i = 0; i < shitTon; i++ ) {
     let baby = {
       name: `mr. ${i}`,
-      nest: { duck: true, mallard: 'falsey', arr: [ i + 42, i, i ] },
+      nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [ i + 42, i, i ] },
       test: { value: i, secondValue: 'mallard ' + i % 10 },
+      similar: k,
+      even: i % 2 === 0,
       objArr: [ { a: i }, { b: i * i }, { c: true } ],
       noise: noise,
       sortValueA: i,
       sortValueB: i * 0.42 * i
     }
+    if ( i % 3 === 0 ) k++
     getAFuckingId( baby )
     base.__closure[ baby.id ] = 1
 
