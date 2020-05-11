@@ -145,7 +145,7 @@ module.exports = {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
 
-    let unwrapData = false
+    let fullObjectSelect = false
     let selectStatements = [ ]
 
     if ( select && select.length > 0 ) {
@@ -155,7 +155,7 @@ module.exports = {
       } )
     } else {
       selectStatements.push( '"data"' )
-      unwrapData = true
+      fullObjectSelect = true
     }
 
     let q = Closures( )
@@ -169,7 +169,7 @@ module.exports = {
 
     let rows = await q
 
-    if ( unwrapData ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
+    if ( fullObjectSelect ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
     else rows.forEach( ( o, i, arr ) => {
       let no = {}
       for ( let key in o ) set( no, key, o[ key ] )
@@ -185,26 +185,29 @@ module.exports = {
     depth = parseInt( depth ) || 1000
     orderBy = orderBy || { field: 'id', direction: 'asc' }
 
+    // Cursors received by this service should be base64 encoded. They are generated on first entry query by this service; They should never be client-side generated.
     if ( cursor ) {
       cursor = JSON.parse( Buffer.from( cursor, 'base64' ).toString( 'binary' ) )
     }
 
     // Flag that keeps track of wether we select the whole "data" part of an object or not
-    let unwrapData = false
+    let fullObjectSelect = false
     if ( Array.isArray( select ) ) {
       // if we order by a field that we do not select, select it!
       if ( orderBy && select.indexOf( orderBy.field ) === -1 ) {
         select.push( orderBy.field )
       }
+      // always add the id! 
+      if ( select.indexOf( 'id' ) === -1 ) select.unshift( 'id' )
     } else {
-      unwrapData = true
+      fullObjectSelect = true
     }
 
     let additionalIdOrderBy = orderBy.field !== 'id'
 
     let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
+    
     let mainQuery = knex.with( 'objs', cteInnerQuery => {
-
         // always select the id
         cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
 
@@ -235,13 +238,14 @@ module.exports = {
               if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
                 throw new Error( 'Invalid operator for query' )
 
-              // set the correct where clause (where, and where, or where)
+              // Determine the correct where clause (where, and where, or where)
               let whereClause
               if ( index === 0 ) whereClause = 'where'
               else if ( statement.verb && statement.verb.toLowerCase( ) === 'or' ) whereClause = 'orWhere'
               else whereClause = 'andWhere'
 
               // Note: castType is generated from the statement's value and operators are matched against a whitelist.
+              // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value. 
               nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
             } )
           } )
@@ -254,25 +258,27 @@ module.exports = {
         } else {
           cteInnerQuery.orderByRaw( knex.raw( `jsonb_path_query_first( data, ? ) ${direction}, id asc`, [ '$.' + orderBy.field ] ) )
         }
-
       } )
       .select( '*' ).from( 'objs' )
       .joinRaw( 'RIGHT JOIN ( SELECT count(*) FROM "objs" ) c(total_count) ON TRUE' )
 
-    // Set cursor clause, if present.
+    // Set cursor clause, if present. If it's not present, it's an entry query; this method will return a cursor based on its given query.
+    // We have implemented keyset pagination for more efficient searches on larger sets. This approach depends on an order by value provided by the user and a (hidden) primary key.
     if ( cursor ) {
       let castType = 'text'
       if ( typeof cursor.value === 'string' ) castType = 'text'
       if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
       if ( typeof cursor.value === 'number' ) castType = 'numeric'
 
-      if( castType === 'text')
+      // When strings are used inside an order clause, as mentioned above, we need to add qoutes around the comparison value, as the jsonb_path_query funcs return json encoded strings (`{"test":"foo"}` => test is returned as `"foo"`)
+      if ( castType === 'text' )
         cursor.value = `"${cursor.value}"`
 
       if ( operatorsWhitelist.indexOf( cursor.operator ) == -1 )
         throw new Error( 'Invalid operator for cursor' )
 
-      if ( unwrapData ) { // are we selecting the full object? 
+      // Unwrapping the tuple comparison of ( userOrderByField, id ) > ( lastValueOfUserOrderBy, lastSeenId )
+      if ( fullObjectSelect ) {
         if ( cursor.field === 'id' ) {
           mainQuery.where( knex.raw( `id ${cursor.operator} ? `, [ cursor.value ] ) )
         } else {
@@ -283,11 +289,9 @@ module.exports = {
       }
 
       if ( cursor.lastSeenId ) {
-        console.log(cursor)
         mainQuery.andWhere( qb => {
           qb.where( 'id', '>', cursor.lastSeenId )
-          // qb.andWhere( 'id', '!=', cursor.lastSeenId )
-          if ( unwrapData )
+          if ( fullObjectSelect )
             qb.orWhere( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [ '$.' + cursor.field, cursor.value ] ) )
           else
             qb.orWhere( knex.raw( `??::${castType} ${cursor.operator} ? `, [ select.indexOf( cursor.field ).toString( ), cursor.value ] ) )
@@ -297,17 +301,19 @@ module.exports = {
 
     mainQuery.limit( limit )
 
-    console.log( mainQuery.toString( ) )
-    console.log( '-----' )
+    // console.log( mainQuery.toString( ) )
+    // console.log( '-----' )
 
     let rows = await mainQuery
     let totalCount = rows && rows.length > 0 ? parseInt( rows[ 0 ].total_count ) : 0
 
-    // Return early if there's nothing left...
+    // Return early
     if ( totalCount === 0 )
       return { totalCount, objects: [ ], cursor: null }
 
-    if ( unwrapData ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
+    // Destructures the data field in the main array object
+    if ( fullObjectSelect ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
+    // OR reconstruct the object based on the provided select paths.
     else {
       rows.forEach( ( o, i, arr ) => {
         let no = {}
@@ -326,12 +332,12 @@ module.exports = {
       value: get( rows[ rows.length - 1 ], orderBy.field )
     }
 
+    // If we're not ordering by id (default case, where no order by argument is provided), we need to add the last seen id of this query in order to enable keyset pagination.
     if ( additionalIdOrderBy ) {
       cursorObj.lastSeenId = rows[ rows.length - 1 ].id
     }
 
-    // console.log( cursor )
-
+    // Cursor objetcs should be client-side opaque, hence we encode them to base64.
     let cursorEncoded = Buffer.from( JSON.stringify( cursorObj ), 'binary' ).toString( 'base64' )
     return { totalCount, objects: rows, cursor: rows.length === limit ? cursorEncoded : null }
   },

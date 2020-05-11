@@ -205,7 +205,7 @@ describe( 'Objects', ( ) => {
 
       let test = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'test.value' ],
+        select: [ 'id', 'test.value' ],
         limit: 3,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
         orderBy: { field: 'test.value', direction: 'asc' }
@@ -213,13 +213,13 @@ describe( 'Objects', ( ) => {
 
       let test2 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'test.value', 'nest.duck' ],
+        select: [ 'id', 'test.value', 'nest.duck' ],
         limit: 40,
         query: [ { field: 'test.value', operator: '>', value: 1 }, { field: 'test.value', operator: '<', value: 24 }, { verb: 'OR', field: 'test.value', operator: '=', value: 42 } ],
         orderBy: { field: 'test.value', direction: 'asc' },
         cursor: test.cursor
       } )
-      console.log( test.objects[ 0 ] )
+
       // limit
       expect( test.objects.length ).to.equal( 3 )
       expect( test2.objects.length ).to.equal( 20 )
@@ -239,31 +239,29 @@ describe( 'Objects', ( ) => {
       expect( test.objects[ test.objects.length - 1 ].test.value + 1 ).to.equal( test2.objects[ 0 ].test.value )
     } )
 
-    it( 'should query object children desc, without selecting fields', async ( ) => {
+    it( 'should query object children desc on a field with duplicate values, without selecting fields', async ( ) => {
 
+      // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc. 
       let test3 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'similar', 'id' ],
+        // select: [ 'similar', 'id' ],
         query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
         orderBy: { field: 'similar', direction: 'asc' },
-        limit: 2
+        limit: 5
       } )
 
       let test4 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        select: [ 'similar', 'id' ],
+        // select: [ 'similar', 'id' ],
         query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
         orderBy: { field: 'similar', direction: 'asc' },
         cursor: test3.cursor,
-        limit: 2
+        limit: 5
       } )
 
-      console.log( test3.objects )
-      console.log( test4.objects )
-
       // limit  
-      expect( test3.objects.length ).to.equal( 50 ) // default limit
-      expect( test4.objects.length ).to.equal( 50 ) // default limit
+      expect( test3.objects.length ).to.equal( 5 )
+      expect( test4.objects.length ).to.equal( 5 )
 
       // cursors
       expect( test3.cursor ).to.be.a( 'string' )
@@ -273,11 +271,13 @@ describe( 'Objects', ( ) => {
       expect( test3.totalCount ).to.equal( 100 )
       expect( test4.totalCount ).to.equal( 100 )
 
-      expect( test3.objects[ 0 ].test.value ).to.be.above( test3.objects[ 1 ].test.value )
-      expect( test4.objects[ 0 ].test.value ).to.be.above( test4.objects[ 1 ].test.value )
+      expect( test3.objects[ 0 ].similar ).to.be.below( test3.objects[ 1 ].similar ) // 0, 1, 1, 1, ... 
+      expect( test4.objects[ 0 ].similar ).to.be.below( test4.objects[ 3 ].similar )
 
       // continuity (in reverse)
-      expect( test3.objects[ test3.objects.length - 1 ].test.value - 1 ).to.equal( test4.objects[ 0 ].test.value )
+      expect( test3.objects[ test3.objects.length - 1 ].similar ).to.equal( test3.objects[ test3.objects.length - 2 ].similar + 1 )
+      expect( test3.objects[ test3.objects.length - 1 ].similar ).to.equal( test4.objects[ 0 ].similar )
+      expect( test4.objects[ 1 ].similar ).to.equal( test4.objects[ 2 ].similar - 1 )
     } )
 
     it( 'should query object children with no results ', async ( ) => {
@@ -308,15 +308,24 @@ describe( 'Objects', ( ) => {
     it( 'should query childern and sort them by a boolean value ', async ( ) => {
       let test = await getObjectChildrenQuery( {
         objectId: parentObjectId,
-        limit: 10,
+        limit: 5,
+        select: [ 'test.value', 'nest.duck' ],
         query: [ { field: 'test.value', operator: '<', value: 10 } ],
         orderBy: { field: 'nest.duck', direction: 'desc' }
       } )
 
-      expect( test.objects[ 0 ].nest.duck ).to.equal( true )
-      expect( test.objects[ 9 ].nest.duck ).to.equal( false ) // last duck should be false
+      let test2 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 5,
+        select: [ 'test.value', 'nest.duck' ],
+        query: [ { field: 'test.value', operator: '<', value: 10 } ],
+        orderBy: { field: 'nest.duck', direction: 'desc' },
+        cursor: test.cursor
+      } )
 
-      // TODO: test cursor
+      expect( test.objects[ 0 ].nest.duck ).to.equal( true )
+      expect( test2.objects[ test2.objects.length-1 ].nest.duck ).to.equal( false ) // last duck should be false
+
     } )
 
     it( 'should query childern and sort them by a string value ', async ( ) => {
@@ -326,7 +335,7 @@ describe( 'Objects', ( ) => {
         objectId: parentObjectId,
         limit: 5,
         query: [ { field: 'test.value', operator: '<', value: limVal } ],
-        orderBy: { field: 'name', direction: 'desc' }
+        orderBy: { field: 'name', direction: 'asc' }
       } )
 
       // expect( test.objects[ 0 ].name ).to.equal( `mr. ${limVal - 1}` )
@@ -336,12 +345,12 @@ describe( 'Objects', ( ) => {
         objectId: parentObjectId,
         limit: 5,
         query: [ { field: 'test.value', operator: '<', value: limVal } ],
-        orderBy: { field: 'name', direction: 'desc' },
+        orderBy: { field: 'name', direction: 'asc' },
         cursor: test.cursor
       } )
 
-      // console.log( test.objects )
-      // console.log( test2.objects )
+      console.log( test.objects )
+      console.log( test2.objects )
 
     } )
 
