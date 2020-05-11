@@ -180,6 +180,8 @@ module.exports = {
     return { rows, cursor: lastId }
   },
 
+  // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects. 
+  // A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result. 
   async getObjectChildrenQuery( { objectId, limit, depth, select, cursor, query, orderBy } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000

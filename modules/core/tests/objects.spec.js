@@ -324,7 +324,7 @@ describe( 'Objects', ( ) => {
       } )
 
       expect( test.objects[ 0 ].nest.duck ).to.equal( true )
-      expect( test2.objects[ test2.objects.length-1 ].nest.duck ).to.equal( false ) // last duck should be false
+      expect( test2.objects[ test2.objects.length - 1 ].nest.duck ).to.equal( false ) // last duck should be false
 
     } )
 
@@ -338,9 +338,6 @@ describe( 'Objects', ( ) => {
         orderBy: { field: 'name', direction: 'asc' }
       } )
 
-      // expect( test.objects[ 0 ].name ).to.equal( `mr. ${limVal - 1}` )
-      // expect( test.objects[ test.objects.length - 1 ].name ).to.equal( `mr. ${limVal/2}` )
-
       let test2 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
         limit: 5,
@@ -349,8 +346,14 @@ describe( 'Objects', ( ) => {
         cursor: test.cursor
       } )
 
-      console.log( test.objects )
-      console.log( test2.objects )
+      expect( test.objects.length ).to.equal( 5 )
+      expect( test.cursor ).to.be.a( 'string' )
+
+      expect( test.objects[ 0 ].name ).to.equal( 'mr. 0' )
+      expect( test.objects[ 1 ].name ).to.equal( 'mr. 1' )
+      expect( test.objects[ 2 ].name ).to.equal( 'mr. 10' ) // remeber kids, this is a lexicographical sort
+      expect( test.objects[ 4 ].name ).to.equal( 'mr. 12' )
+      expect( test2.objects[ 0 ].name ).to.equal( 'mr. 13' )
 
     } )
 
@@ -371,6 +374,43 @@ describe( 'Objects', ( ) => {
       } )
       expect( test.objects[ 1 ].id < test.objects[ 2 ].id )
       expect( test.objects[ 2 ].id < test2.objects[ 0 ].id )
+    } )
+
+    it( 'should just order results by something', async ( ) => {
+      
+      let test = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 2,
+        orderBy: { field: 'test.value', direction: 'desc' }
+      } )
+
+      let test2 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 2,
+        orderBy: { field: 'test.value', direction: 'desc' },
+        cursor: test.cursor
+      } )
+
+      expect( test.objects[1].test.value ).to.equal( test2.objects[0].test.value + 1 ) // continuity check
+
+      let test3 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 50,
+        orderBy: { field: 'nest.duck', direction: 'desc' }
+      } )
+
+      let test4 = await getObjectChildrenQuery( {
+        objectId: parentObjectId,
+        limit: 50,
+        orderBy: { field: 'nest.duck', direction: 'desc' },
+        cursor: test3.cursor
+      } )
+
+      expect( test3.objects[49].nest.duck ).to.equal( true )
+      expect( test4.objects[0].nest.duck ).to.equal( false )
+
+      console.log( test3.objects[49] )
+      console.log( test4.objects[0] )
     } )
   } )
 
@@ -451,6 +491,7 @@ describe( 'Objects', ( ) => {
       expect( objsResult.body ).to.have.lengthOf( objCount )
       expect( objsResult.body[ 0 ] ).to.have.property( 'id' )
     } )
+
 
   } )
 } )
