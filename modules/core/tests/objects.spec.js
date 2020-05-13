@@ -160,7 +160,7 @@ describe( 'Objects', ( ) => {
 
       let objs_1 = createManyObjects( 100, 'noise__' )
       let ids = await createObjects( objs_1 )
-
+      // console.log( ids )
       // console.log(ids[ 0 ])
 
       // The below are just performance benchmarking.
@@ -174,27 +174,27 @@ describe( 'Objects', ( ) => {
       // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
 
       let limit = 50
-      let { rows: rows_1, cursor: cursor_1 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
+      let { objects: rows_1, cursor: cursor_1 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
 
       expect( rows_1.length ).to.equal( limit )
       expect( rows_1[ 0 ] ).to.be.an( 'object' )
       expect( rows_1[ 0 ] ).to.have.property( 'id' )
-      expect( rows_1[ 0 ] ).to.have.nested.property( 'test.secondValue' )
-      expect( rows_1[ 0 ] ).to.have.nested.property( 'nest.mallard' )
+      expect( rows_1[ 0 ] ).to.have.nested.property( 'data.test.secondValue' )
+      expect( rows_1[ 0 ] ).to.have.nested.property( 'data.nest.mallard' )
 
       expect( cursor_1 ).to.be.a( 'string' )
 
-      let { rows: rows_2, cursor: cursor_2 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
+      let { objects: rows_2, cursor: cursor_2 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
 
       expect( rows_2.length ).to.equal( 50 )
       expect( rows_2[ 0 ] ).to.be.an( 'object' )
       expect( rows_2[ 0 ] ).to.have.property( 'id' )
-      expect( rows_2[ 0 ] ).to.have.nested.property( 'test.secondValue' )
-      expect( rows_2[ 0 ] ).to.have.nested.property( 'nest.mallard' )
+      expect( rows_2[ 0 ] ).to.have.nested.property( 'data.test.secondValue' )
+      expect( rows_2[ 0 ] ).to.have.nested.property( 'data.nest.mallard' )
 
 
-      let { rows, cursor } = await getObjectChildren( { objectId: ids[ 0 ], limit: 1000 } )
-      expect( rows.length ).to.equal( 100 )
+      let { objects, cursor } = await getObjectChildren( { objectId: ids[ 0 ], limit: 1000 } )
+      expect( objects.length ).to.equal( 100 )
 
       parentObjectId = ids[ 0 ]
 
@@ -220,6 +220,12 @@ describe( 'Objects', ( ) => {
         cursor: test.cursor
       } )
 
+      // console.log( test.cursor )
+
+      // console.log( test.objects.map( o => ( { v: o.data.test.value, id: o.id } ) ))
+      // console.log( test2.objects.map( o =>  ( { v: o.data.test.value, id: o.id } )))
+      // console.log( test2.objects)
+
       // limit
       expect( test.objects.length ).to.equal( 3 )
       expect( test2.objects.length ).to.equal( 20 )
@@ -232,11 +238,11 @@ describe( 'Objects', ( ) => {
       expect( test.totalCount ).to.equal( 23 )
       expect( test2.totalCount ).to.equal( 23 )
 
-      expect( test.objects[ 0 ].test.value ).to.be.below( test.objects[ 1 ].test.value )
-      expect( test2.objects[ 0 ].test.value ).to.be.below( test2.objects[ 1 ].test.value )
+      expect( test.objects[ 0 ].data.test.value ).to.be.below( test.objects[ 1 ].data.test.value )
+      expect( test2.objects[ 0 ].data.test.value ).to.be.below( test2.objects[ 1 ].data.test.value )
 
       // continuity 
-      expect( test.objects[ test.objects.length - 1 ].test.value + 1 ).to.equal( test2.objects[ 0 ].test.value )
+      expect( test.objects[ test.objects.length - 1 ].data.test.value + 1 ).to.equal( test2.objects[ 0 ].data.test.value )
     } )
 
     it( 'should query object children desc on a field with duplicate values, without selecting fields', async ( ) => {
@@ -271,13 +277,13 @@ describe( 'Objects', ( ) => {
       expect( test3.totalCount ).to.equal( 100 )
       expect( test4.totalCount ).to.equal( 100 )
 
-      expect( test3.objects[ 0 ].similar ).to.be.below( test3.objects[ 1 ].similar ) // 0, 1, 1, 1, ... 
-      expect( test4.objects[ 0 ].similar ).to.be.below( test4.objects[ 3 ].similar )
+      expect( test3.objects[ 0 ].data.similar ).to.be.below( test3.objects[ 1 ].data.similar ) // 0, 1, 1, 1, ... 
+      expect( test4.objects[ 0 ].data.similar ).to.be.below( test4.objects[ 3 ].data.similar )
 
       // continuity (in reverse)
-      expect( test3.objects[ test3.objects.length - 1 ].similar ).to.equal( test3.objects[ test3.objects.length - 2 ].similar + 1 )
-      expect( test3.objects[ test3.objects.length - 1 ].similar ).to.equal( test4.objects[ 0 ].similar )
-      expect( test4.objects[ 1 ].similar ).to.equal( test4.objects[ 2 ].similar - 1 )
+      expect( test3.objects[ test3.objects.length - 1 ].data.similar ).to.equal( test3.objects[ test3.objects.length - 2 ].data.similar + 1 )
+      expect( test3.objects[ test3.objects.length - 1 ].data.similar ).to.equal( test4.objects[ 0 ].data.similar )
+      expect( test4.objects[ 1 ].data.similar ).to.equal( test4.objects[ 2 ].data.similar - 1 )
     } )
 
     it( 'should query object children with no results ', async ( ) => {
@@ -323,8 +329,8 @@ describe( 'Objects', ( ) => {
         cursor: test.cursor
       } )
 
-      expect( test.objects[ 0 ].nest.duck ).to.equal( true )
-      expect( test2.objects[ test2.objects.length - 1 ].nest.duck ).to.equal( false ) // last duck should be false
+      expect( test.objects[ 0 ].data.nest.duck ).to.equal( true )
+      expect( test2.objects[ test2.objects.length - 1 ].data.nest.duck ).to.equal( false ) // last duck should be false
 
     } )
 
@@ -349,11 +355,11 @@ describe( 'Objects', ( ) => {
       expect( test.objects.length ).to.equal( 5 )
       expect( test.cursor ).to.be.a( 'string' )
 
-      expect( test.objects[ 0 ].name ).to.equal( 'mr. 0' )
-      expect( test.objects[ 1 ].name ).to.equal( 'mr. 1' )
-      expect( test.objects[ 2 ].name ).to.equal( 'mr. 10' ) // remeber kids, this is a lexicographical sort
-      expect( test.objects[ 4 ].name ).to.equal( 'mr. 12' )
-      expect( test2.objects[ 0 ].name ).to.equal( 'mr. 13' )
+      expect( test.objects[ 0 ].data.name ).to.equal( 'mr. 0' )
+      expect( test.objects[ 1 ].data.name ).to.equal( 'mr. 1' )
+      expect( test.objects[ 2 ].data.name ).to.equal( 'mr. 10' ) // remeber kids, this is a lexicographical sort
+      expect( test.objects[ 4 ].data.name ).to.equal( 'mr. 12' )
+      expect( test2.objects[ 0 ].data.name ).to.equal( 'mr. 13' )
 
     } )
 
@@ -391,7 +397,7 @@ describe( 'Objects', ( ) => {
         cursor: test.cursor
       } )
 
-      expect( test.objects[ 1 ].test.value ).to.equal( test2.objects[ 0 ].test.value + 1 ) // continuity check
+      expect( test.objects[ 1 ].data.test.value ).to.equal( test2.objects[ 0 ].data.test.value + 1 ) // continuity check
 
       let test3 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
@@ -406,8 +412,8 @@ describe( 'Objects', ( ) => {
         cursor: test3.cursor
       } )
 
-      expect( test3.objects[ 49 ].nest.duck ).to.equal( true )
-      expect( test4.objects[ 0 ].nest.duck ).to.equal( false )
+      expect( test3.objects[ 49 ].data.nest.duck ).to.equal( true )
+      expect( test4.objects[ 0 ].data.nest.duck ).to.equal( false )
 
     } )
   } )

@@ -41,11 +41,9 @@ module.exports = {
       return await getUser( parent.author )
     },
     async children( parent, args, context, info ) {
-      // console.log( parent )
-      // console.log( args )
-
+      
+      // Simple query
       if ( !args.query && !args.orderBy ) {
-        // Simple query
         let result = await getObjectChildren( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, cursor: args.cursor } )
         return { totalCount: parent.totalChildrenCount, cursor: result.cursor, objects: result.objects }
       }
@@ -53,7 +51,6 @@ module.exports = {
       // Comlex query
       let result = await getObjectChildrenQuery( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, query: args.query, orderBy: args.orderBy, cursor: args.cursor } )
       return result
-      // throw new ApolloError( 'Not implemented' )
     }
   },
   Tag: {

@@ -284,6 +284,7 @@ module.exports = {
 
     // Set cursor clause, if present. If it's not present, it's an entry query; this method will return a cursor based on its given query.
     // We have implemented keyset pagination for more efficient searches on larger sets. This approach depends on an order by value provided by the user and a (hidden) primary key.
+    // console.log( cursor )
     if ( cursor ) {
       let castType = 'text'
       if ( typeof cursor.value === 'string' ) castType = 'text'
@@ -320,7 +321,7 @@ module.exports = {
     }
 
     mainQuery.limit( limit )
-
+    // console.log( mainQuery.toString() )
     // Finally, execute the query
     let rows = await mainQuery
     let totalCount = rows && rows.length > 0 ? parseInt( rows[ 0 ].total_count ) : 0
@@ -329,10 +330,9 @@ module.exports = {
     if ( totalCount === 0 )
       return { totalCount, objects: [ ], cursor: null }
 
-    // Destructures the data field in the main array object
-    if ( fullObjectSelect ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
-    // OR reconstruct the object based on the provided select paths.
-    else {
+
+    // Reconstruct the object based on the provided select paths.
+    if ( !fullObjectSelect ) {
       rows.forEach( ( o, i, arr ) => {
         let no = { id: o.id, createdAt: o.createdAt, speckleType: o.speckleType, totalChildrenCount: o.totalChildrenCount, data: {} }
         let k = 0
@@ -348,7 +348,7 @@ module.exports = {
     let cursorObj = {
       field: cursor.field || orderBy.field,
       operator: cursor.operator || ( orderBy.direction && orderBy.direction.toLowerCase( ) === 'desc' ? '<' : '>' ),
-      value: get( rows[ rows.length - 1 ], orderBy.field )
+      value: get( rows[ rows.length - 1 ], `data.${orderBy.field}` )
     }
 
     // If we're not ordering by id (default case, where no order by argument is provided), we need to add the last seen id of this query in order to enable keyset pagination.
