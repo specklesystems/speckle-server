@@ -4,7 +4,7 @@
 		WHERE path ~ '0_hash.*{2}'
 		ORDER BY id
 	)
-	SELECT id, speckle_type, "data" -> 'nest' -> 'orderMe'
+	SELECT id, speckleType, "data" -> 'nest' -> 'orderMe'
 	FROM ids
 	JOIN objects ON obj_id = objects.id WITH ORDINALITY
 	OFFSET 2

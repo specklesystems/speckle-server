@@ -27,6 +27,7 @@ type Object {
   speckleType: String!
   applicationId: String
   createdAt: DateTime
+  totalChildrenCount: Int
   """
   The object's description. Valid only in the case of commit objects.
   """
@@ -49,7 +50,7 @@ type Object {
   data: JSON
   
   """
-  Any objects that this object references.
+  Get any objects that this object references. In the case of commits, this will give you a commit's constituent objects.
 
   **NOTE**: Providing any of the two last arguments ( `query`, `orderBy` ) will trigger a different code branch that executes a much more expensive SQL query. It is not recommended to do so for basic clients that are interested in purely getting all the objects of a given commit.
   """
@@ -58,13 +59,8 @@ type Object {
     depth: Int! = 50, 
     select: [String], 
     cursor: String, 
-    query: String,
-    orderBy: String  ): ObjectCollection!
-
-  """
-  Query the object's childern, so you can receive only the ones you want to. 
-  """
-  childernQuery(limit: Int! = 100, cursor:String, select: [String], depth: Int! = 1 ): ObjectCollection!
+    query: [JSONObject!],
+    orderBy: JSONObject  ): ObjectCollection!
 }
 
 type ObjectCollection {

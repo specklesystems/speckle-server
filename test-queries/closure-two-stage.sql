@@ -6,7 +6,7 @@ WITH ids AS (
 objs AS (
 	SELECT 
 		id, 
-		speckle_type,
+		speckleType,
 		"data"
 	FROM ids
 	JOIN objects ON ids.child = objects.id

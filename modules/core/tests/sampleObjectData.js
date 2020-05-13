@@ -2,15 +2,15 @@ module.exports = JSON.parse( `[
 {
   "name": "depth five",
   "id": "99b77f596443d2a2cf59124dbc6a4a8f",
-  "speckle_type": ""
+  "speckleType": ""
 }, {
   "name": "depth four",
   "@detach": {
-    "speckle_type": "reference",
+    "speckleType": "reference",
     "referencedId": "99b77f596443d2a2cf59124dbc6a4a8f"
   },
   "id": "c2cdd8d01c219703926f7282db700e14",
-  "speckle_type": "",
+  "speckleType": "",
   "__tree": [
     "c2cdd8d01c219703926f7282db700e14.99b77f596443d2a2cf59124dbc6a4a8f"
   ],
@@ -20,11 +20,11 @@ module.exports = JSON.parse( `[
 }, {
   "name": "depth three",
   "@detach": {
-    "speckle_type": "reference",
+    "speckleType": "reference",
     "referencedId": "c2cdd8d01c219703926f7282db700e14"
   },
   "id": "78af2314eed937c7338fccc4224393c0",
-  "speckle_type": "",
+  "speckleType": "",
   "__tree": [
     "78af2314eed937c7338fccc4224393c0.c2cdd8d01c219703926f7282db700e14",
     "78af2314eed937c7338fccc4224393c0.c2cdd8d01c219703926f7282db700e14.99b77f596443d2a2cf59124dbc6a4a8f"
@@ -36,17 +36,17 @@ module.exports = JSON.parse( `[
 }, {
   "name": "depth two",
   "@detach": {
-    "speckle_type": "reference",
+    "speckleType": "reference",
     "referencedId": "78af2314eed937c7338fccc4224393c0"
   },
   "@joker": [
     {
-      "speckle_type": "reference",
+      "speckleType": "reference",
       "referencedId": "99b77f596443d2a2cf59124dbc6a4a8f"
     }
   ],
   "id": "254cb2d7094eca3c809cdac2ffc4010b",
-  "speckle_type": "",
+  "speckleType": "",
   "__tree": [
     "254cb2d7094eca3c809cdac2ffc4010b.78af2314eed937c7338fccc4224393c0",
     "254cb2d7094eca3c809cdac2ffc4010b.78af2314eed937c7338fccc4224393c0.c2cdd8d01c219703926f7282db700e14",
@@ -61,15 +61,15 @@ module.exports = JSON.parse( `[
 }, {
   "name": "depth one",
   "@detach": {
-    "speckle_type": "reference",
+    "speckleType": "reference",
     "referencedId": "254cb2d7094eca3c809cdac2ffc4010b"
   },
   "@joker": {
-    "speckle_type": "reference",
+    "speckleType": "reference",
     "referencedId": "99b77f596443d2a2cf59124dbc6a4a8f"
   },
   "id": "d2b9e647cb345673ff2b35ccab45ffc2",
-  "speckle_type": "",
+  "speckleType": "",
   "__tree": [
     "d2b9e647cb345673ff2b35ccab45ffc2.254cb2d7094eca3c809cdac2ffc4010b",
     "d2b9e647cb345673ff2b35ccab45ffc2.254cb2d7094eca3c809cdac2ffc4010b.78af2314eed937c7338fccc4224393c0",

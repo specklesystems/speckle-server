@@ -3,7 +3,7 @@ WITH ids AS(
 	FROM object_tree_refs
 	WHERE parent = '0_hash'
 )
-SELECT obj_id, speckle_type, "data"
+SELECT obj_id, speckleType, "data"
 FROM ids
 JOIN objects ON ids.obj_id = objects.id
 OFFSET 0

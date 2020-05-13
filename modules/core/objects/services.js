@@ -24,7 +24,7 @@ module.exports = {
    */
 
   async createCommit( streamId, userId, object ) {
-    object.speckle_type = 'commit'
+    object.speckleType = 'commit'
     object.author = userId
 
     let id = await module.exports.createObject( object )
@@ -48,14 +48,23 @@ module.exports = {
     let insertionObject = prepInsertionObject( object )
 
     let closures = [ ]
+    let totalChildrenCountByDepth = {}
     if ( object.__closure !== null ) {
       for ( const prop in object.__closure ) {
         closures.push( { parent: insertionObject.id, child: prop, minDepth: object.__closure[ prop ] } )
+
+        if ( totalChildrenCountByDepth[ object.__closure[ prop ].toString( ) ] )
+          totalChildrenCountByDepth[ object.__closure[ prop ].toString( ) ]++
+        else
+          totalChildrenCountByDepth[ object.__closure[ prop ].toString( ) ] = 1
       }
     }
 
     delete insertionObject.__tree
     delete insertionObject.__closure
+
+    insertionObject.totalChildrenCount = closures.length
+    insertionObject.totalChildrenCountByDepth = JSON.stringify( totalChildrenCountByDepth )
 
     let q1 = Objects( ).insert( insertionObject ).toString( ) + ' on conflict do nothing'
     await knex.raw( q1 )
@@ -148,19 +157,22 @@ module.exports = {
     let fullObjectSelect = false
     let selectStatements = [ ]
 
-    if ( select && select.length > 0 ) {
-      selectStatements.push( `jsonb_path_query(data, '$.id') as id` )
-      select.forEach( f => {
-        selectStatements += `, jsonb_path_query(data, '$.${ f }') as "${f}"`
+    let q = Closures( )
+    q.select( 'id' )
+    q.select( 'createdAt' )
+    q.select( 'speckleType' )
+    q.select( 'totalChildrenCount' )
+
+    if ( Array.isArray( select ) ) {
+      select.forEach( ( field, index ) => {
+        q.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
       } )
     } else {
-      selectStatements.push( '"data"' )
       fullObjectSelect = true
+      q.select( 'data' )
     }
 
-    let q = Closures( )
-      .select( knex.raw( selectStatements ) )
-      .rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
+    q.rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
       .where( knex.raw( 'parent = ?', [ objectId ] ) )
       .andWhere( knex.raw( '"minDepth" < ?', [ depth ] ) )
       .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
@@ -169,15 +181,18 @@ module.exports = {
 
     let rows = await q
 
-    if ( fullObjectSelect ) rows.forEach( ( o, i, arr ) => arr[ i ] = { ...o.data } )
-    else rows.forEach( ( o, i, arr ) => {
-      let no = {}
-      for ( let key in o ) set( no, key, o[ key ] )
-      arr[ i ] = no
-    } )
+    if ( !fullObjectSelect )
+      rows.forEach( ( o, i, arr ) => {
+        let no = { id: o.id, createdAt: o.createdAt, speckleType: o.speckleType, totalChildrenCount: o.totalChildrenCount, data: {} }
+        let k = 0
+        for ( let field of select ) {
+          set( no.data, field, o[ k++ ] )
+        }
+        arr[ i ] = no
+      } )
 
     let lastId = rows[ rows.length - 1 ].id
-    return { rows, cursor: lastId }
+    return { objects: rows, cursor: lastId }
   },
 
   // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects. 
@@ -199,8 +214,8 @@ module.exports = {
       if ( orderBy && select.indexOf( orderBy.field ) === -1 ) {
         select.push( orderBy.field )
       }
-      // always add the id! 
-      if ( select.indexOf( 'id' ) === -1 ) select.unshift( 'id' )
+      // // always add the id! 
+      // if ( select.indexOf( 'id' ) === -1 ) select.unshift( 'id' )
     } else {
       fullObjectSelect = true
     }
@@ -208,10 +223,13 @@ module.exports = {
     let additionalIdOrderBy = orderBy.field !== 'id'
 
     let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
-    
+
     let mainQuery = knex.with( 'objs', cteInnerQuery => {
         // always select the id
         cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
+        cteInnerQuery.select( 'createdAt' )
+        cteInnerQuery.select( 'speckleType' )
+        cteInnerQuery.select( 'totalChildrenCount' )
 
         // if there are any select fields, add them
         if ( Array.isArray( select ) ) {
@@ -303,9 +321,7 @@ module.exports = {
 
     mainQuery.limit( limit )
 
-    // console.log( mainQuery.toString( ) )
-    // console.log( '-----' )
-
+    // Finally, execute the query
     let rows = await mainQuery
     let totalCount = rows && rows.length > 0 ? parseInt( rows[ 0 ].total_count ) : 0
 
@@ -318,15 +334,16 @@ module.exports = {
     // OR reconstruct the object based on the provided select paths.
     else {
       rows.forEach( ( o, i, arr ) => {
-        let no = {}
+        let no = { id: o.id, createdAt: o.createdAt, speckleType: o.speckleType, totalChildrenCount: o.totalChildrenCount, data: {} }
         let k = 0
         for ( let field of select ) {
-          set( no, field, o[ k++ ] )
+          set( no.data, field, o[ k++ ] )
         }
         arr[ i ] = no
       } )
     }
 
+    // Assemble the cursor for an eventual next call
     cursor = cursor || {}
     let cursorObj = {
       field: cursor.field || orderBy.field,
@@ -370,8 +387,7 @@ function prepInsertionObject( obj ) {
   return {
     data: stringifiedObj, // stored in jsonb column
     id: obj.id,
-    applicationId: obj.applicationId,
-    speckle_type: obj.speckle_type,
+    speckleType: obj.speckleType,
     description: obj.description,
     author: obj.author
   }

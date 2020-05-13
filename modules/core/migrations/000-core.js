@@ -61,21 +61,26 @@ exports.up = async knex => {
     table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
   } )
 
-  // Objects Table
+  // Objects Table. 
+  // First class citizen properties are: 
+  // id - the object's hash
+  // totalChildrenCount - how many subchildren, regardless of depth, this object has
+  // data - the jsonb object
+  // author - commit specific field
+  // description - commit specific field
+  // createdAt - date of insertion
   await knex.schema.createTable( 'objects', table => {
     table.string( 'id' ).primary( )
-    table.string( 'speckle_type' ).defaultTo( 'Base' ).notNullable( )
-    table.string( 'applicationId' )
+    table.string( 'speckleType' ).defaultTo( 'Base' ).notNullable( )
     table.integer( 'totalChildrenCount' )
     table.jsonb( 'totalChildrenCountByDepth' )
     table.jsonb( 'data' )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
     table.string( 'description' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
-    table.index( [ 'speckle_type' ], 'type_index' )
   } )
 
-  // Tree inheritance tracker
+  // Tree inheritance tracker (materialised path)
   await knex.schema.createTable( 'object_tree_refs', table => {
     table.increments( 'id' )
     table.string( 'parent' ).index( null, 'HASH' )
@@ -83,6 +88,7 @@ exports.up = async knex => {
   } )
   await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
 
+  // Closure table for tracking the relationships we care about
   await knex.schema.createTable( 'object_children_closure', table => {
     table.string( 'parent' ).notNullable( ).index()
     table.string( 'child' ).notNullable( ).index()

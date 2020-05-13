@@ -3,7 +3,7 @@ const root = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const { getUser } = require( '../../users/services' )
-const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects } = require( '../../objects/services' )
+const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../../objects/services' )
 const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../references/services' )
 
 module.exports = {
@@ -41,11 +41,19 @@ module.exports = {
       return await getUser( parent.author )
     },
     async children( parent, args, context, info ) {
-      console.log( parent.totalChildrenCount )
-      console.log( args )
+      // console.log( parent )
+      // console.log( args )
 
+      if ( !args.query && !args.orderBy ) {
+        // Simple query
+        let result = await getObjectChildren( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, cursor: args.cursor } )
+        return { totalCount: parent.totalChildrenCount, cursor: result.cursor, objects: result.objects }
+      }
 
-      throw new ApolloError( 'Not implemented' )
+      // Comlex query
+      let result = await getObjectChildrenQuery( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, query: args.query, orderBy: args.orderBy, cursor: args.cursor } )
+      return result
+      // throw new ApolloError( 'Not implemented' )
     }
   },
   Tag: {

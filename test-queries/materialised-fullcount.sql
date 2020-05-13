@@ -4,7 +4,7 @@ WITH ids AS (
         WHERE parent = '0_hash'
       ),
       objs AS (
-        SELECT obj_id as id, speckle_type, "data"
+        SELECT obj_id as id, speckleType, "data"
         FROM ids
         JOIN objects ON ids.obj_id = objects.id
         -- WHERE objects."data" @> '{"text": "This is object 1"}'

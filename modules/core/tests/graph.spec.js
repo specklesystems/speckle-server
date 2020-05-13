@@ -12,6 +12,7 @@ chai.use( chaiHttp )
 const knex = require( `${root}/db/knex` )
 
 const { createUser, createToken } = require( '../users/services' )
+const { createObject, createObjects } = require( '../objects/services' )
 
 let addr
 
@@ -22,6 +23,7 @@ describe( 'GraphQL API Core', ( ) => {
 
   // set up app & two basic users to ping pong permissions around
   before( async ( ) => {
+    await knex.migrate.rollback( )
     await knex.migrate.latest( )
     let { app } = await init( )
     let { server } = await startHttp( app )
@@ -36,7 +38,7 @@ describe( 'GraphQL API Core', ( ) => {
   } )
 
   after( async ( ) => {
-    await knex.migrate.rollback( )
+    // await knex.migrate.rollback( )
     testServer.close( )
   } )
 
@@ -78,7 +80,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
 
       token1 = `Bearer ${res1.body.data.apiTokenCreate}`
-
+      console.log( userA.token )
       const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
       token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
@@ -432,6 +434,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.data.stream.branch.commits.totalCount ).to.equal( 2 )
 
     } )
+
     it( 'should retrieve a stream tag', async ( ) => {
       const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { tag(id:"${retrievedStream.tags.tags[0].id}") { name description commit { id description author { id name } } } } } ` } )
 
@@ -444,6 +447,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.data.stream.tag.commit.author.name ).to.equal( 'Miticå' )
 
     } )
+
     it( 'should retrieve a stream commit', async ( ) => {
       const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { commit(id:"${c2.id}") { id description data } } }` } )
       expect( res ).to.be.json
@@ -451,8 +455,128 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.data.stream.commit.description ).to.equal( 'test second commit' )
 
     } )
-    it( 'should retrieve commit/object children', async ( ) => {
-      assert.fail( 'not implemented yet' )
+
+    describe( 'Objects', ( ) => {
+      let myCommit
+      let myObjs
+
+      before( async ( ) => {
+        let { commit, objs } = createManyObjects( 100, 'noise__' )
+        myCommit = commit
+        myObjs = objs
+      } )
+
+      it( 'should create a commit with its object children', async ( ) => {
+
+        const commitRes = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: myCommit } } )
+
+        let commitId = commitRes.body.data.commitCreate
+
+        expect( commitId ).to.be.a( 'string' )
+
+        const objsRes = await sendRequest( userA.token, { query: `mutation($objs:[JSONObject]!) { objectCreate(streamId:"${ts1}", objects: $objs) }`, variables: { objs: myObjs } } )
+
+        let objIds = objsRes.body.data.objectCreate
+
+        expect( objIds.length ).to.equal( 100 )
+
+      } )
+
+      it( 'should get a commits objects', async ( ) => {
+        let first = await sendRequest( userA.token, {
+          query: `
+          query {
+            stream(id:"${ts1}") {
+              id
+              name
+              commit( id:"${myCommit.id}" ) {
+                createdAt
+                author{ name }
+                children( limit: 2 ) {
+                  totalCount
+                  cursor
+                  objects {
+                    id
+                  }
+                }
+              }
+            }
+          }
+          `
+        } )
+
+
+        expect( first ).to.be.json
+        expect( first.body.errors ).to.not.exist
+        expect( first.body.data.stream ).to.be.an( 'object' )
+        expect( first.body.data.stream.commit ).to.be.an( 'object' )
+        expect( first.body.data.stream.commit.children.objects.length ).to.equal( 2 )
+
+        let second = await sendRequest( userA.token, {
+          query: `
+          query {
+            stream(id:"${ts1}") {
+              id
+              name
+              commit( id:"${myCommit.id}" ) {
+                createdAt
+                author{ name }
+                children( limit: 20, cursor: "${first.body.data.stream.commit.children.cursor}", select: ["sortValueA", "nest.arr[2]"] ) {
+                  totalCount
+                  objects {
+                    id
+                    data
+                  }
+                }
+              }
+            }
+          }
+          `
+        } )
+
+        expect( second ).to.be.json
+        expect( second.body.errors ).to.not.exist
+        expect( second.body.data.stream ).to.be.an( 'object' )
+        expect( second.body.data.stream.commit ).to.be.an( 'object' )
+        expect( second.body.data.stream.commit.children.objects.length ).to.equal( 20 )
+        expect( second.body.data.stream.commit.children.objects[ 0 ].data.sortValueA ).to.equal( 52 ) // when sorting by id, it's always 52
+        expect( second.body.data.stream.commit.children.objects[ 0 ].data.nest.arr[ 2 ] ).to.equal( 52 ) // when sorting by id, it's always 52
+      } )
+
+      it( 'should query a commits objects', async ( ) => {
+        let first = await sendRequest( userA.token, {
+          query: `
+          query( $query: [JSONObject!], $orderBy: JSONObject ) {
+            stream(id:"${ts1}") {
+              id
+              name
+              commit( id:"${myCommit.id}" ) {
+                createdAt
+                author{ name }
+                children( limit: 20, select:[ "sortValueA" ], query: $query, orderBy: $orderBy ) {
+                  totalCount
+                  cursor
+                  objects {
+                    id
+                    data
+                  }
+                }
+              }
+            }
+          }
+          `,
+          variables: { query: [ { field: 'sortValueA', operator: '>=', value: 42 } ], orderBy: { field: 'sortValueA' } }
+        } )
+
+        expect( first ).to.be.json
+        expect( first.body.errors ).to.not.exist
+        expect( first.body.data.stream ).to.be.an( 'object' )
+        expect( first.body.data.stream.commit ).to.be.an( 'object' )
+        expect( first.body.data.stream.commit.children.objects.length ).to.equal( 20 )
+        expect( first.body.data.stream.commit.children.objects[0].data.sortValueA).to.equal( 42 )
+        expect( first.body.data.stream.commit.children.objects[1].data.sortValueA).to.equal( 43 )
+      } )
+
     } )
 
   } )
@@ -466,4 +590,46 @@ describe( 'GraphQL API Core', ( ) => {
  */
 function sendRequest( auth, obj ) {
   return chai.request( addr ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+}
+
+// const crypto = require( 'crypto' )
+
+function createManyObjects( shitTon, noise ) {
+  shitTon = shitTon || 10000
+  noise = noise || Math.random( ) * 100
+
+  let objs = [ ]
+
+  let base = { name: 'base bastard 2', noise: noise, __closure: {} }
+  // objs.push( base )
+  let k = 0
+
+  for ( let i = 0; i < shitTon; i++ ) {
+    let baby = {
+      name: `mr. ${i}`,
+      nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [ i + 42, i, i ] },
+      test: { value: i, secondValue: 'mallard ' + i % 10 },
+      similar: k,
+      even: i % 2 === 0,
+      objArr: [ { a: i }, { b: i * i }, { c: true } ],
+      noise: noise,
+      sortValueA: i,
+      sortValueB: i * 0.42 * i
+    }
+    if ( i % 3 === 0 ) k++
+    getAFuckingId( baby )
+    base.__closure[ baby.id ] = 1
+
+    if ( i > 1000 )
+      base.__closure[ baby.id ] = i / 1000
+
+    objs.push( baby )
+  }
+
+  getAFuckingId( base )
+  return { commit: base, objs: objs }
+}
+
+function getAFuckingId( obj ) {
+  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
 }

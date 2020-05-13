@@ -19,7 +19,7 @@ const sampleObjects = require( './sampleObjectData' )
 let sampleCommit = JSON.parse( `{
   "Objects": [
     {
-      "speckle_type": "reference",
+      "speckleType": "reference",
       "referencedId": "8a9b0676b7fe3e5e487bb34549e67f67"
     }
   ],
@@ -29,7 +29,7 @@ let sampleCommit = JSON.parse( `{
   ],
   "CreatedOn": "2020-03-18T12:06:07.82307Z",
   "id": "79eb41764cc2c065de752bd704bfc4aa",
-  "speckle_type": "Speckle.Core.Commit",
+  "speckleType": "Speckle.Core.Commit",
   "__tree": [
     "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f67"
   ]
@@ -39,7 +39,7 @@ let sampleObject = JSON.parse( `{
   "Vertices": [],
   "id": "8a9b0676b7fe3e5e487bb34549e67f67",
   "applicationId": "test",
-  "speckle_type": "Tests.Polyline"
+  "speckleType": "Tests.Polyline"
 }` )
 
 describe( 'Objects', ( ) => {
@@ -377,7 +377,7 @@ describe( 'Objects', ( ) => {
     } )
 
     it( 'should just order results by something', async ( ) => {
-      
+
       let test = await getObjectChildrenQuery( {
         objectId: parentObjectId,
         limit: 2,
@@ -391,7 +391,7 @@ describe( 'Objects', ( ) => {
         cursor: test.cursor
       } )
 
-      expect( test.objects[1].test.value ).to.equal( test2.objects[0].test.value + 1 ) // continuity check
+      expect( test.objects[ 1 ].test.value ).to.equal( test2.objects[ 0 ].test.value + 1 ) // continuity check
 
       let test3 = await getObjectChildrenQuery( {
         objectId: parentObjectId,
@@ -406,11 +406,9 @@ describe( 'Objects', ( ) => {
         cursor: test3.cursor
       } )
 
-      expect( test3.objects[49].nest.duck ).to.equal( true )
-      expect( test4.objects[0].nest.duck ).to.equal( false )
+      expect( test3.objects[ 49 ].nest.duck ).to.equal( true )
+      expect( test4.objects[ 0 ].nest.duck ).to.equal( false )
 
-      console.log( test3.objects[49] )
-      console.log( test4.objects[0] )
     } )
   } )
 
@@ -453,8 +451,8 @@ describe( 'Objects', ( ) => {
       expect( commits ).to.have.status( 200 )
       expect( commits.body ).to.have.lengthOf( 2 )
       expect( commits.body[ 0 ] ).to.have.property( 'id' )
-      expect( commits.body[ 0 ] ).to.have.property( 'speckle_type' )
-      expect( commits.body[ 0 ].speckle_type ).to.equal( 'commit' )
+      expect( commits.body[ 0 ] ).to.have.property( 'speckleType' )
+      expect( commits.body[ 0 ].speckleType ).to.equal( 'commit' )
     } )
 
     let objs = [ ]
