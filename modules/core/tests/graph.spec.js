@@ -80,7 +80,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
 
       token1 = `Bearer ${res1.body.data.apiTokenCreate}`
-      console.log( userA.token )
+
       const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
       token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
