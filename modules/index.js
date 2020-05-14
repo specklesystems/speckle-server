@@ -8,7 +8,7 @@ const merge = require( 'lodash.merge' )
 const debug = require( 'debug' )( 'speckle:modules' )
 const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 
-exports.http = ( app ) => {
+exports.init = ( app ) => {
 
   let dirs = fs.readdirSync( `${root}/modules` )
   let moduleDirs = [ ]
@@ -21,32 +21,11 @@ exports.http = ( app ) => {
     }
   } )
 
-  /*
-      
-      Preflight
-
-   */
-
-  // Core Preflight
-  require( './core' ).preflight( app )
+  require( './core' ).init( )
 
   // Other modules preflight
   moduleDirs.forEach( dir => {
-    require( dir ).preflight( )
-  } )
-
-  /*
-      
-      HTTP Initialisation 
-      
-   */
-
-  // Core Init
-  require( './core' ).init( app )
-
-  // Other modules init
-  moduleDirs.forEach( dir => {
-    require( dir ).init( app )
+    require( dir ).init( )
   } )
 
 }
@@ -56,20 +35,21 @@ exports.graph = ( ) => {
 
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
-  ${scalarSchemas}
-
-  type Query { 
-  """
-  Stare into the void.
-  """
-    _: Boolean 
-  } 
-  type Mutation{
-  """
-  The void stares back.
-  """
-  _:Boolean
-  }` ]
+      ${scalarSchemas}
+      
+      type Query { 
+      """
+      Stare into the void.
+      """
+        _: Boolean 
+      } 
+      type Mutation{
+      """
+      The void stares back.
+      """
+      _:Boolean
+      }`
+    ]
 
   let resolverObjs = [ ]
   // let directiveDirs = [ ]

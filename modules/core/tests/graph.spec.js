@@ -11,8 +11,8 @@ chai.use( chaiHttp )
 
 const knex = require( `${root}/db/knex` )
 
-const { createUser, createToken } = require( '../users/services' )
-const { createObject, createObjects } = require( '../objects/services' )
+const { createUser, createToken } = require( '../services/users' )
+const { createObject, createObjects } = require( '../services/objects' )
 
 let addr
 

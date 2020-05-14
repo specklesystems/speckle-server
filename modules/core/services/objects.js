@@ -13,11 +13,11 @@ const knex = require( `${root}/db/knex` )
 
 const Streams = ( ) => knex( 'streams' )
 const Objects = ( ) => knex( 'objects' )
-const Refs = ( ) => knex( 'object_tree_refs' )
 const Closures = ( ) => knex( 'object_children_closure' )
 const StreamCommits = ( ) => knex( 'stream_commits' )
 
 module.exports = {
+  
   /*
       Commits
       Note: commits are just a special type of objects.

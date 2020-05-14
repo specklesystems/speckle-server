@@ -1,7 +1,7 @@
 'use strict'
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const root = require( 'app-root-path' )
-const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../../streams/services' )
+const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../../services/streams' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 
 module.exports = {

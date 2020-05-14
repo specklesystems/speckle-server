@@ -31,31 +31,19 @@ exports.init = async ( ) => {
     res.send( { fantastic: 'speckle' } )
   } )
 
-  const { http, graph } = require( './modules' )
+  const { init, graph } = require( './modules' )
 
   // Initialise default modules, including rest api handlers
-  http( app )
+  init( app )
 
   // Initialise graphql server
   const graphqlServer = new ApolloServer( {
     ...graph( ),
     context: contextApiTokenHelper,
-    tracing: true
+    tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
-
-  // Error responses
-  app.use( ( err, req, res, next ) => {
-    if ( process.env.NODE_ENV === 'test' ) {
-      debug( `${err.status}: ${err.message}` )
-    }
-    res.status( err.status || 500 )
-    res.json( {
-      message: err.message,
-      error: err
-    } )
-  } )
 
   return { app, graphqlServer }
 }
@@ -70,23 +58,6 @@ exports.startHttp = async ( app ) => {
   app.set( 'port', port )
 
   let server = http.createServer( app )
-
-  server.on( 'error', error => {
-    let bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
-
-    switch ( error.code ) {
-      case 'EACCES':
-        console.error( bind + ' whattt requires elevated privileges' )
-        process.exit( 1 )
-        break
-      case 'EADDRINUSE':
-        console.error( bind + ' is already in use' )
-        process.exit( 1 )
-        break
-      default:
-        throw error
-    }
-  } )
 
   server.on( 'listening', ( ) => {
     console.log( `Listening on ${server.address().port}` )

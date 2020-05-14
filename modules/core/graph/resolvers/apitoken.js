@@ -2,7 +2,7 @@
 
 const root = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
-const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../users/services' )
+const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/users' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 
 module.exports = {

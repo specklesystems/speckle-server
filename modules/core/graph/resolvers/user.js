@@ -1,7 +1,7 @@
 'use strict'
 const root = require( 'app-root-path' )
 const { AuthenticationError, UserInputError } = require( 'apollo-server-express' )
-const { createUser, getUser, updateUser, deleteUser, validatePasssword, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../users/services' )
+const { createUser, getUser, updateUser, deleteUser, validatePasssword, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/users' )
 const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 
 module.exports = {

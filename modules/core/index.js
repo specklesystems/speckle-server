@@ -1,7 +1,7 @@
 'use strict'
 let debug = require( 'debug' )( 'speckle:modules' )
 
-exports.preflight = ( options ) => {
+exports.init = ( options ) => {
   debug( 'Preflight core modules' )
 
   // TODO: register scopes exposed by this module
@@ -28,14 +28,4 @@ exports.preflight = ( options ) => {
   // OWNER: 1000
   // CONTRIBUTOR: 200
   // REVIEWER: 100
-}
-
-exports.init = ( app, options ) => {
-
-  debug( 'Init core modules' )
-
-  app.use( '/', require( './users' ) )
-  app.use( '/', require( './streams' ) )
-  app.use( '/', require( './references' ) )
-  app.use( '/', require( './objects' ) )
 }
