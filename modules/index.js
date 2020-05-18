@@ -8,10 +8,12 @@ const merge = require( 'lodash.merge' )
 const debug = require( 'debug' )( 'speckle:modules' )
 const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 
-exports.init = ( app ) => {
+exports.init = async ( app ) => {
 
   let dirs = fs.readdirSync( `${root}/modules` )
   let moduleDirs = [ ]
+
+  await require( './core' ).init( )
 
   dirs.forEach( file => {
     let fullPath = path.join( `${root}/modules`, file )
@@ -21,11 +23,9 @@ exports.init = ( app ) => {
     }
   } )
 
-  require( './core' ).init( )
-
   // Other modules preflight
-  moduleDirs.forEach( dir => {
-    require( dir ).init( )
+  moduleDirs.forEach(async dir => {
+    await require( dir ).init( app )
   } )
 
 }

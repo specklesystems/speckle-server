@@ -4,7 +4,6 @@ const crs = require( 'crypto-random-string' )
 const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
-const Streams = ( ) => knex( 'streams' )
 const Refs = ( ) => knex( 'references' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
 

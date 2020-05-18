@@ -62,7 +62,7 @@ module.exports = {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'owner' )
 
-      return await revokePermissionsStream( args.streamId, context.userId )
+      return await revokePermissionsStream( args.streamId, args.userId )
     }
   }
 }

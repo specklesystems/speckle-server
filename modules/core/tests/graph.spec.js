@@ -19,6 +19,7 @@ let addr
 describe( 'GraphQL API Core', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
+  let userC = { name: 'd3', username: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
   let testServer
 
   // set up app & two basic users to ping pong permissions around
@@ -33,6 +34,8 @@ describe( 'GraphQL API Core', ( ) => {
     userA.token = `Bearer ${(await createToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
     userB.id = await createUser( userB )
     userB.token = `Bearer ${(await createToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
+    userC.id = await createUser( userC )
+    userC.token = `Bearer ${(await createToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
   } )
@@ -152,6 +155,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.data.streamGrantPermission ).to.equal( true )
 
       const res2 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts5}", userId: "${userA.id}" role: WRITE) }` } )
+      const res3 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts3}", userId: "${userC.id}" role: WRITE) }` } )
     } )
 
     it( 'Should fail to grant permissions if not owner', async ( ) => {
@@ -174,6 +178,24 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.streamGrantPermission ).to.equal( true )
+    } )
+
+    it( 'Should revoke permissions', async ( ) => {
+      // first test if we can get it
+      const res = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.stream.name ).to.equal( 'TS3 (u B) Private' )
+
+      const revokeRes = await sendRequest( userB.token, { query: `mutation { streamRevokePermission( streamId: "${ts3}", userId:"${userC.id}")} ` } )
+      expect( revokeRes ).to.be.json
+      expect( revokeRes.body.errors ).to.not.exist
+      expect( revokeRes.body.data.streamRevokePermission ).to.equal( true )
+
+      const resNotAuth = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
+      expect( resNotAuth ).to.be.json
+      expect( resNotAuth.body.errors ).to.exist
+      
     } )
 
     it( 'Should fail to edit/write on a public stream if no access is provided', async ( ) => {
@@ -573,8 +595,8 @@ describe( 'GraphQL API Core', ( ) => {
         expect( first.body.data.stream ).to.be.an( 'object' )
         expect( first.body.data.stream.commit ).to.be.an( 'object' )
         expect( first.body.data.stream.commit.children.objects.length ).to.equal( 20 )
-        expect( first.body.data.stream.commit.children.objects[0].data.sortValueA).to.equal( 42 )
-        expect( first.body.data.stream.commit.children.objects[1].data.sortValueA).to.equal( 43 )
+        expect( first.body.data.stream.commit.children.objects[ 0 ].data.sortValueA ).to.equal( 42 )
+        expect( first.body.data.stream.commit.children.objects[ 1 ].data.sortValueA ).to.equal( 43 )
       } )
 
     } )

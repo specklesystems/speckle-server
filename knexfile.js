@@ -20,11 +20,6 @@ function walk( dir ) {
 
 let migrationDirs = walk( './modules' )
 
-// console.log( '\n' )
-// console.log( `🧠 Found ${migrationDirs.length} migrations dirs:` )
-// console.log( migrationDirs )
-// console.log( '\n' )
-
 module.exports = {
   test: {
     client: 'pg',

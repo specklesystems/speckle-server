@@ -22,27 +22,16 @@ extend type User {
   All the streams that a user has access to.
   """
   streamCollection(offset: Int! = 0, limit: Int! = 100): StreamCollection
+  
+  """
+  The role this user has on a specific stream (can be populated when accessing a stream's users).
+  """
   role: String
 }
 
 type StreamCollection {
   totalCount: Int!
   streams: [Stream]
-}
-
-enum StreamUserRole {
-  """
-  Onwers own.
-  """
-  OWNER,
-  """
-  Contributors can read and write.
-  """
-  WRITE, # CONTRIBUTOR
-  """
-  Reviewers can view and pull.
-  """
-  READ # REVIEWER
 }
 
 extend type Mutation {
@@ -57,7 +46,7 @@ extend type Mutation {
   """
   Grants permissions to an user on a given stream. 
   """
-  streamGrantPermission( streamId: String!, userId: String!, role: StreamUserRole! ): Boolean
+  streamGrantPermission( streamId: String!, userId: String!, role: String! ): Boolean
   """
   Revokes the permissions of an user on a given stream.
   """

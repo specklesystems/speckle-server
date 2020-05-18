@@ -11,10 +11,12 @@ exports.up = async knex => {
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'name' ).notNullable( )
     table.string( 'bio' )
+    table.string( 'company' )
     table.string( 'email' ).unique( )
+    table.bool( 'verified' ).defaultTo( false )
+    table.text( 'avatar' )
     table.jsonb( 'profiles' )
     table.text( 'passwordDigest' ) // bcrypted pwd
-    table.bool( 'verified' ).defaultTo( false )
   } )
 
   // Api tokens. TODO: add moar comments
@@ -29,6 +31,26 @@ exports.up = async knex => {
     table.bigint( 'lifespan' ).defaultTo( 3.154e+12 ) // defaults to a lifespan of 100 years
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'lastUsed' ).defaultTo( knex.fn.now( ) )
+  } )
+
+  await knex.schema.createTable( 'app_scopes', table => {
+    table.string( 'name' ).primary( )
+    table.text( 'description' ).notNullable( )
+  } )
+
+  // Token - Scopes junction table
+  await knex.schema.createTable( 'token_scopes', table => {
+    table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).notNullable( ).onDelete( 'cascade' ).index( )
+    table.string( 'scopeName' ).references( 'name' ).inTable( 'app_scopes' ).notNullable( ).onDelete( 'cascade' ).index( )
+    table.index( [ 'tokenId', 'scopeName' ], 'token_scope_combined_idx' )
+  } )
+
+  await knex.schema.createTable( 'user_roles', table => {
+    table.string( 'name' ).notNullable( )
+    table.text( 'description' ).notNullable( )
+    table.string( 'resourceTarget' ).notNullable( )
+    table.string( 'aclTableName' ).notNullable( )
+    table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
   } )
 
   // Streams Table
@@ -80,19 +102,11 @@ exports.up = async knex => {
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
   } )
 
-  // Tree inheritance tracker (materialised path)
-  await knex.schema.createTable( 'object_tree_refs', table => {
-    table.increments( 'id' )
-    table.string( 'parent' ).index( null, 'HASH' )
-    table.specificType( 'path', 'ltree' )
-  } )
-  await knex.raw( `CREATE INDEX tree_path_idx ON object_tree_refs USING gist(path)` )
-
   // Closure table for tracking the relationships we care about
   await knex.schema.createTable( 'object_children_closure', table => {
-    table.string( 'parent' ).notNullable( ).index()
-    table.string( 'child' ).notNullable( ).index()
-    table.integer( 'minDepth' ).defaultTo( 1 ).notNullable().index()
+    table.string( 'parent' ).notNullable( ).index( )
+    table.string( 'child' ).notNullable( ).index( )
+    table.integer( 'minDepth' ).defaultTo( 1 ).notNullable( ).index( )
     table.index( [ 'parent', 'child' ], 'parent_child_index' )
     table.index( [ 'parent', 'minDepth' ], 'full_pcd_index' )
   } )
@@ -143,16 +157,22 @@ exports.up = async knex => {
 
 exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'stream_acl' )
+  await knex.schema.dropTableIfExists( 'user_roles' )
+  
   await knex.schema.dropTableIfExists( 'stream_commits' )
   await knex.schema.dropTableIfExists( 'branch_commits' )
   await knex.schema.dropTableIfExists( 'user_commits' )
   await knex.schema.dropTableIfExists( 'references' )
-  await knex.schema.dropTableIfExists( 'object_tree_refs' )
   await knex.schema.dropTableIfExists( 'object_children_closure' )
+  
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
+  
+  await knex.schema.dropTableIfExists( 'token_scopes' )
+  await knex.schema.dropTableIfExists( 'app_scopes' )
   await knex.schema.dropTableIfExists( 'api_tokens' )
   await knex.schema.dropTableIfExists( 'users' )
+  
   await knex.raw( `DROP TYPE IF EXISTS speckle_reference_type ` )
   await knex.raw( `DROP TYPE IF EXISTS speckle_acl_role_type ` )
 }

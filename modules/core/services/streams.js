@@ -54,6 +54,10 @@ module.exports = {
   async revokePermissionsStream( streamId, userId ) {
     let streamAclEntriesCount = Acl( ).count( { resourceId: streamId } )
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
+    
+    if( streamAclEntriesCount === 1 )
+      throw new Error( 'Stream has only one ownership link left - cannot revoke permissions.' )
+
     // TODO: below behaviour not correct. Flow:
     // Count owners 
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)

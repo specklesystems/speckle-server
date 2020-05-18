@@ -1,31 +1,7 @@
 'use strict'
 let debug = require( 'debug' )( 'speckle:modules' )
 
-exports.init = ( options ) => {
-  debug( 'Preflight core modules' )
-
-  // TODO: register scopes exposed by this module
-  // Base scope schema: 
-  // type Scope {
-  // name: String! ie streams:read
-  // description: String! (human readable explanation)
-  // }
+exports.init = async ( app ) => {
+  debug( '💥\tInit core module' )
   
-  // Example scopes: 
-  // streams:read, streams:write, users:email, users:search, tokens:read, tokens:create, token:delete
- 
-  // TODO: register roles exposed by this module.
-  // Base role schema:
-  // type Role {
-  // name: String! (simple name)
-  // description: String! (describe its behaviour)
-  // resourceTarget: String! (describe which resource it should apply to)
-  // aclTableName: String! (where are they stored)
-  // weight: Int! (ie, 100, 200, 300; higher nums depict elevated privileges)
-  // }
-  
-  // Example roles (in use) for streams: 
-  // OWNER: 1000
-  // CONTRIBUTOR: 200
-  // REVIEWER: 100
 }

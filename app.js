@@ -34,7 +34,7 @@ exports.init = async ( ) => {
   const { init, graph } = require( './modules' )
 
   // Initialise default modules, including rest api handlers
-  init( app )
+  await init( app )
 
   // Initialise graphql server
   const graphqlServer = new ApolloServer( {
