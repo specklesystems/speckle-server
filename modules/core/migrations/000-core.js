@@ -19,20 +19,21 @@ exports.up = async knex => {
     table.text( 'passwordDigest' ) // bcrypted pwd
   } )
 
-  // Api tokens. TODO: add moar comments
+  // Tokens.
   await knex.schema.createTable( 'api_tokens', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'tokenDigest' ).unique( )
     table.string( 'owner', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.string( 'name' )
     table.string( 'lastChars', 6 )
-    table.specificType( 'scopes', 'text[]' )
+    // table.specificType( 'scopes', 'text[]' )
     table.boolean( 'revoked' ).defaultTo( false )
     table.bigint( 'lifespan' ).defaultTo( 3.154e+12 ) // defaults to a lifespan of 100 years
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'lastUsed' ).defaultTo( knex.fn.now( ) )
   } )
 
+  // Registered application scopes table.
   await knex.schema.createTable( 'app_scopes', table => {
     table.string( 'name' ).primary( )
     table.text( 'description' ).notNullable( )

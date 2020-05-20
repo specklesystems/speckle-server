@@ -6,6 +6,8 @@ const knex = require( `${root}/db/knex` )
 
 const Users = ( ) => knex( 'users' )
 const Keys = ( ) => knex( 'api_tokens' )
+const AppScopes = ( ) => knex( 'app_scopes' )
+const TokenScopes = ( ) => knex( 'token_scopes' )
 
 module.exports = {
 
@@ -22,9 +24,15 @@ module.exports = {
     let tokenString = crs( { length: 32 } )
     let tokenHash = await bcrypt.hash( tokenString, 10 )
 
+    if ( scopes.length === 0 ) throw new Error( 'No scopes provided' )
+
     let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
 
-    let res = await Keys( ).returning( 'id' ).insert( { id: tokenId, tokenDigest: tokenHash, lastChars: lastChars, owner: userId, name: name, scopes: scopes, lifespan: lifespan } )
+    let tRes = await Keys( ).returning( 'id' ).insert( { id: tokenId, tokenDigest: tokenHash, lastChars: lastChars, owner: userId, name: name, lifespan: lifespan } )
+
+    let token_scopes = scopes.map( scope => ( { tokenId: tokenId, scopeName: scope } ) )
+
+    let tsRes = await TokenScopes( ).insert( token_scopes )
 
     return tokenId + tokenString
   },
@@ -56,7 +64,7 @@ module.exports = {
 
   async revokeToken( tokenId, userId ) {
     tokenId = tokenId.slice( 0, 10 )
-    let token = await Keys().where({id: tokenId}).select("*")
+    let token = await Keys( ).where( { id: tokenId } ).select( "*" )
     let delCount = await Keys( ).where( { id: tokenId, owner: userId } ).del( )
 
     if ( delCount === 0 )
@@ -65,6 +73,18 @@ module.exports = {
   },
 
   async getUserTokens( userId ) {
-    return Keys( ).where( { owner: userId } ).select( 'id', 'name', 'lastChars', 'scopes', 'createdAt', 'lastUsed' )
+    let { rows } = await knex.raw( `
+      SELECT t.id, t.name, tt.scopes
+      FROM api_tokens t
+      JOIN(
+        SELECT ARRAY_AGG(token_scopes."scopeName") as "scopes", token_scopes."tokenId" as id
+        FROM token_scopes
+        JOIN api_tokens on "api_tokens"."id" = "token_scopes"."tokenId"
+        GROUP BY token_scopes."tokenId"
+      ) tt USING(id)
+      WHERE t."owner" = ?
+    `, [ userId ] )
+    return rows
+    // return Keys( ).where( { owner: userId } ).select( 'id', 'name', 'lastChars', 'createdAt', 'lastUsed' ).rightJoin( 'token_scopes', 'id', '=', 'token_scopes.tokenId' )
   }
 }

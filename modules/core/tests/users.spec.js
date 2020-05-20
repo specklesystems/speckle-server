@@ -21,7 +21,10 @@ describe( 'Actors & Tokens', ( ) => {
     password: 'sn3aky-1337-b1m'
   }
 
+  let otherUser = {}
+
   before( async ( ) => {
+    await knex.migrate.rollback( )
     await knex.migrate.latest( )
 
     let actorId = await createUser( myTestActor )
@@ -30,7 +33,7 @@ describe( 'Actors & Tokens', ( ) => {
   } )
 
   after( async ( ) => {
-    await knex.migrate.rollback( )
+
   } )
 
 
@@ -43,8 +46,9 @@ describe( 'Actors & Tokens', ( ) => {
       newUser.username = 'bill'
       newUser.password = 'testthebest'
 
-      let actor = await createUser( newUser )
-      newUser.id = actor.id
+      let actorId = await createUser( newUser )
+      newUser.id = actorId
+      otherUser = { ...newUser }
     } )
 
     it( 'Should get an actor', async ( ) => {
@@ -93,16 +97,18 @@ describe( 'Actors & Tokens', ( ) => {
     let myFirstToken
     let pregeneratedToken
     let revokedToken
+    let someOtherToken
     let expireSoonToken
 
     before( async ( ) => {
-      pregeneratedToken = await createToken( myTestActor.id, 'Whabadub', [ 'useless', 'scope:useless' ] )
-      revokedToken = await createToken( myTestActor.id, 'Mr. Revoked', [ ] )
-      expireSoonToken = await createToken( myTestActor.id, 'Mayfly', [ ], 1 ) // 1ms lifespan
+      pregeneratedToken = await createToken( myTestActor.id, 'Whabadub', [ 'streams:read', 'streams:write', 'profile:read', 'users:email' ] )
+      revokedToken = await createToken( myTestActor.id, 'Mr. Revoked', [ 'streams:read' ] )
+      someOtherToken = await createToken( otherUser.id, 'Hello World', [ 'streams:write' ] )
+      expireSoonToken = await createToken( myTestActor.id, 'Mayfly', [ 'streams:read' ], 1 ) // 1ms lifespan
     } )
 
     it( 'Should create an api token', async ( ) => {
-      let scopes = [ 'streams', 'user:read' ]
+      let scopes = [ 'streams:write', 'profile:read' ]
       let name = 'My Test Token'
 
       myFirstToken = await createToken( myTestActor.id, name, scopes )
@@ -132,6 +138,7 @@ describe( 'Actors & Tokens', ( ) => {
 
     it( 'Should get the tokens of an user', async ( ) => {
       let userTokens = await getUserTokens( myTestActor.id )
+      console.log( userTokens )
       expect( userTokens ).to.be.an( 'array' )
       expect( userTokens ).to.have.lengthOf( 2 )
     } )
