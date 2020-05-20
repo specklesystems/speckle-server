@@ -14,7 +14,7 @@ module.exports = {
     stream.id = crs( { length: 10 } )
 
     let [ res ] = await Streams( ).returning( 'id' ).insert( stream )
-    await Acl( ).insert( { userId: ownerId, resourceId: res, role: 'owner' } )
+    await Acl( ).insert( { userId: ownerId, resourceId: res, role: 'stream:owner' } )
 
     return res
   },
@@ -37,13 +37,6 @@ module.exports = {
   },
 
   async grantPermissionsStream( streamId, userId, role ) {
-    // NOTE: allow streams to have more than one owner.
-    // That's why the code below is commented out.
-    // if ( role === 'owner' ) {
-    //   let [ ownerAcl ] = await Acl( ).where( { resourceId: streamId, role: 'owner' } ).returning( '*' ).del( )
-    //   await Acl( ).insert( { resourceId: streamId, userId: ownerAcl.userId, role: 'write' } )
-    // }
-
     // upsert
     let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
 
@@ -54,17 +47,31 @@ module.exports = {
   async revokePermissionsStream( streamId, userId ) {
     let streamAclEntriesCount = Acl( ).count( { resourceId: streamId } )
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
-    
-    if( streamAclEntriesCount === 1 )
+
+    if ( streamAclEntriesCount === 1 )
       throw new Error( 'Stream has only one ownership link left - cannot revoke permissions.' )
 
     // TODO: below behaviour not correct. Flow:
     // Count owners 
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
-    let delCount = await Acl( ).where( { resourceId: streamId, userId: userId } ).whereNot( { role: 'owner' } ).del( )
+
+    let aclEntry = await Acl( ).where( { resourceId: streamId, userId: userId } ).select( '*' ).first( )
+
+    if ( aclEntry.role === 'stream:owner' ) {
+      let ownersCount = Acl( ).count( { resourceId: streamId, role: 'stream:owner' } )
+      if ( ownersCount === 1 )
+        throw new Error( 'Could not revoke permissions for user' )
+      else {
+        await Acl( ).where( { resourceId: streamId, userId: userId } ).del()
+        return true
+      }
+    }
+
+    let delCount = await Acl( ).where( { resourceId: streamId, userId: userId } ).del( )
 
     if ( delCount === 0 )
-      throw new Error( 'Could not revoke permissions for user. Is he an owner?' )
+      throw new Error( 'Could not revoke permissions for user' )
+
     return true
   },
 
@@ -84,9 +91,9 @@ module.exports = {
     offset = offset || 0
     limit = limit || 100
     publicOnly = publicOnly !== false //defaults to true if not provided
-    
+
     let query = { userId: userId }
-    
+
     if ( publicOnly ) query.isPublic = true
 
     return Acl( ).where( query )

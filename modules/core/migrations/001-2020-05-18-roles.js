@@ -5,19 +5,19 @@ exports.up = async knex => {
   debug( 'Setting up core module scopes.' )
 
   let streamRoles = [ {
-    name: 'owner',
+    name: 'stream:owner',
     description: 'Has full access, including deletion rights & access control.',
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
     weight: 1000
   }, {
-    name: 'contributor',
+    name: 'stream:contributor',
     description: 'Can edit, push and pull.',
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 200
+    weight: 500
   }, {
-    name: 'reviewer',
+    name: 'stream:reviewer',
     description: 'Can only view.',
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',

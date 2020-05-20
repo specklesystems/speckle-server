@@ -3,7 +3,7 @@ const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 const debug = require( 'debug' )( 'speckle:middleware' )
 const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
-const { validateToken } = require( `${root}/modules/core/services/users` )
+const { validateToken } = require( `${root}/modules/core/services/tokens` )
 
 /*
     
@@ -46,31 +46,36 @@ async function validateScopes( scopes, scope ) {
 
  */
 
-let roles = { admin: 1000, owner: 300, write: 200, read: 100 }
+let roles
 
-async function authorizeResolver( userId, resourceId, aclTable, resourceTable, requiredRole ) {
-  let ACL = ( ) => knex( aclTable )
-  let Resource = ( ) => knex( resourceTable )
+async function authorizeResolver( userId, resourceId, requiredRole ) {
+  if ( !roles )
+    roles = await knex( 'user_roles' ).select( '*' )
+
+  // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping. 
+
+  let role = roles.find( r => r.name === requiredRole )
+
+  if ( role === undefined || role === null ) throw new ApolloError( 'Unknown role: ' + requiredRole )
 
   try {
-    let { isPublic } = await Resource( ).where( { id: resourceId } ).select( 'isPublic' ).first( )
-    // only return here if it's a read operation: weight < 200. 
+    let { isPublic } = await knex( role.resourceTarget ).select( 'isPublic' ).where( { id: resourceId } ).first( )
     if ( isPublic && roles[ requiredRole ] < 200 ) return true
   } catch ( e ) {
-    throw new ApolloError( `Resource of type ${resourceTable} with ${resourceId} not found.` )
+    throw new ApolloError( `Resource of type ${resourceTable} with ${resourceId} not found` )
   }
 
-  if ( !userId ) throw new AuthenticationError( 'No user id found.' )
+  let entry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )
 
-  let [ entry ] = await ACL( ).where( { resourceId: resourceId, userId: userId } ).select( '*' )
+  if ( !entry ) throw new ForbiddenError( 'You are not authorized' )
 
-  if ( !entry )
-    throw new ForbiddenError( 'You are not authorized.' )
+  entry.role = roles.find( r => r.name === entry.role )
 
-  if ( roles[ entry.role ] >= roles[ requiredRole ] ) {
+  if ( entry.role.weight >= role.weight )
     return true
-  }
-  throw new ForbiddenError( 'You are not authorized.' )
+  else
+    throw new ForbiddenError( 'You are not authorized' )
+
 }
 
 module.exports = {

@@ -138,7 +138,6 @@ describe( 'Actors & Tokens', ( ) => {
 
     it( 'Should get the tokens of an user', async ( ) => {
       let userTokens = await getUserTokens( myTestActor.id )
-      console.log( userTokens )
       expect( userTokens ).to.be.an( 'array' )
       expect( userTokens ).to.have.lengthOf( 2 )
     } )

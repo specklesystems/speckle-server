@@ -26,7 +26,6 @@ exports.up = async knex => {
     table.string( 'owner', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.string( 'name' )
     table.string( 'lastChars', 6 )
-    // table.specificType( 'scopes', 'text[]' )
     table.boolean( 'revoked' ).defaultTo( false )
     table.bigint( 'lifespan' ).defaultTo( 3.154e+12 ) // defaults to a lifespan of 100 years
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -46,13 +45,6 @@ exports.up = async knex => {
     table.index( [ 'tokenId', 'scopeName' ], 'token_scope_combined_idx' )
   } )
 
-  await knex.schema.createTable( 'user_roles', table => {
-    table.string( 'name' ).notNullable( )
-    table.text( 'description' ).notNullable( )
-    table.string( 'resourceTarget' ).notNullable( )
-    table.string( 'aclTableName' ).notNullable( )
-    table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
-  } )
 
   // Streams Table
   await knex.schema.createTable( 'streams', table => {
@@ -65,23 +57,22 @@ exports.up = async knex => {
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
   } )
 
-  // creates an enum type for stream acl roles.
-  await knex.raw( `
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'speckle_acl_role_type') THEN
-        CREATE TYPE speckle_acl_role_type AS ENUM( 'owner', 'admin', 'write', 'read' );
-      END IF;
-    END$$;
-    ` )
+  // Roles
+  await knex.schema.createTable( 'user_roles', table => {
+    table.string( 'name' ).primary()
+    table.text( 'description' ).notNullable( )
+    table.string( 'resourceTarget' ).notNullable( )
+    table.string( 'aclTableName' ).notNullable( )
+    table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
+  } )
 
   // Stream-users access control list.
   await knex.schema.createTable( 'stream_acl', table => {
     table.string( 'userId', 10 ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'resourceId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'role' ).references( 'name' ).inTable( 'user_roles' ).notNullable( ).onDelete( 'cascade' )
     table.primary( [ 'userId', 'resourceId' ] )
     table.unique( [ 'userId', 'resourceId' ] )
-    table.specificType( 'role', 'speckle_acl_role_type' ).defaultTo( 'write' )
   } )
 
   // Objects Table. 
@@ -159,21 +150,21 @@ exports.up = async knex => {
 exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'stream_acl' )
   await knex.schema.dropTableIfExists( 'user_roles' )
-  
+
   await knex.schema.dropTableIfExists( 'stream_commits' )
   await knex.schema.dropTableIfExists( 'branch_commits' )
   await knex.schema.dropTableIfExists( 'user_commits' )
   await knex.schema.dropTableIfExists( 'references' )
   await knex.schema.dropTableIfExists( 'object_children_closure' )
-  
+
   await knex.schema.dropTableIfExists( 'objects' )
   await knex.schema.dropTableIfExists( 'streams' )
-  
+
   await knex.schema.dropTableIfExists( 'token_scopes' )
   await knex.schema.dropTableIfExists( 'app_scopes' )
   await knex.schema.dropTableIfExists( 'api_tokens' )
   await knex.schema.dropTableIfExists( 'users' )
-  
+
   await knex.raw( `DROP TYPE IF EXISTS speckle_reference_type ` )
   await knex.raw( `DROP TYPE IF EXISTS speckle_acl_role_type ` )
 }

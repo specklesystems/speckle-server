@@ -11,7 +11,8 @@ chai.use( chaiHttp )
 
 const knex = require( `${root}/db/knex` )
 
-const { createUser, createToken } = require( '../services/users' )
+const { createUser } = require( '../services/users' )
+const { createToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
 let addr
@@ -31,11 +32,11 @@ describe( 'GraphQL API Core', ( ) => {
     testServer = server
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${(await createToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
+    userA.token = `Bearer ${(await createToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read' ] ))}`
     userB.id = await createUser( userB )
-    userB.token = `Bearer ${(await createToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
+    userB.token = `Bearer ${(await createToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read' ] ))}`
     userC.id = await createUser( userC )
-    userC.token = `Bearer ${(await createToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:create', 'tokens:read', 'tokens:delete' ] ))}`
+    userC.token = `Bearer ${(await createToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read' ] ))}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
   } )
@@ -148,33 +149,32 @@ describe( 'GraphQL API Core', ( ) => {
     } )
 
     it( 'Should grant some permissions', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: WRITE) }` } )
-
+      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
+      
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.streamGrantPermission ).to.equal( true )
 
-      const res2 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts5}", userId: "${userA.id}" role: WRITE) }` } )
-      const res3 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts3}", userId: "${userC.id}" role: WRITE) }` } )
+      const res2 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner") }` } )
+      const res3 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner") }` } )
     } )
 
     it( 'Should fail to grant permissions if not owner', async ( ) => {
-      const res = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: WRITE) }` } )
+      const res = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
 
       expect( res ).to.be.json
       expect( res.body.errors ).to.exist
     } )
 
     it( 'Should fail to grant myself permissions', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userA.id}" role: WRITE) }` } )
+      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner") }` } )
 
       expect( res ).to.be.json
       expect( res.body.errors ).to.exist
     } )
 
     it( 'Should update permissions', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: READ) }` } )
-
+      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:reviewer") }` } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.streamGrantPermission ).to.equal( true )

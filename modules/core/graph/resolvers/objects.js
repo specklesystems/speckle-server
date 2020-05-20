@@ -69,56 +69,56 @@ module.exports = {
   Mutation: {
     async objectCreate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       let ids = await createObjects( args.objects )
       return ids
     },
     async commitCreate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       let id = await createCommit( args.streamId, context.userId, args.commit )
       return id
     },
     async branchCreate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       let id = await createBranch( args.branch, args.streamId, context.userId )
       return id
     },
     async branchUpdate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       await updateBranch( args.branch )
       return true
     },
     async branchDelete( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       await deleteBranchById( args.branchId )
       return true
     },
     async tagCreate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       let id = await createTag( args.tag, args.streamId, context.userId )
       return id
     },
     async tagUpdate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       await updateTag( args.tag )
       return true
     },
     async tagDelete( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'write' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
       await deleteTagById( args.tagId )
       return true

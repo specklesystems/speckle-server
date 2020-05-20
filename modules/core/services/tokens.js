@@ -57,7 +57,8 @@ module.exports = {
 
     if ( valid ) {
       await Keys( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )
-      return { valid: true, userId: token.owner, scopes: token.scopes }
+      let scopes = await TokenScopes( ).select( 'scopeName' ).where( { tokenId: tokenId } )
+      return { valid: true, userId: token.owner, scopes: scopes.map( s => s.scopeName ) }
     } else
       return { valid: false }
   },
@@ -85,6 +86,5 @@ module.exports = {
       WHERE t."owner" = ?
     `, [ userId ] )
     return rows
-    // return Keys( ).where( { owner: userId } ).select( 'id', 'name', 'lastChars', 'createdAt', 'lastUsed' ).rightJoin( 'token_scopes', 'id', '=', 'token_scopes.tokenId' )
   }
 }

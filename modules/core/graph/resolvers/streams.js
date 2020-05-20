@@ -8,7 +8,7 @@ module.exports = {
   Query: {
     async stream( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:read' )
-      await authorizeResolver( context.userId, args.id, 'stream_acl', 'streams', 'read' )
+      await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
 
       let stream = await getStream( args.id, context.userId )
       return stream
@@ -38,13 +38,13 @@ module.exports = {
     },
     async streamUpdate( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.stream.id, 'stream_acl', 'streams', 'owner' )
+      await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
       await updateStream( args.stream )
       return true
     },
     async streamDelete( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.id, 'stream_acl', 'streams', 'owner' )
+      await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
       await deleteStream( args.id )
       return true
@@ -54,13 +54,13 @@ module.exports = {
     },
     async streamGrantPermission( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'owner' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
       if ( context.userId === args.userId ) throw new AuthorizationError( 'You cannot set roles for yourself.' )
       return await grantPermissionsStream( args.streamId, args.userId, args.role.toLowerCase( ) || 'read' )
     },
     async streamRevokePermission( parent, args, context, info ) {
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream_acl', 'streams', 'owner' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 
       return await revokePermissionsStream( args.streamId, args.userId )
     }

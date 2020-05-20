@@ -4,7 +4,7 @@ let http = require( 'http' )
 const express = require( 'express' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
-const debug = require( 'debug' )( 'speckle:errors' )
+const debug = require( 'debug' )( 'speckle:generic' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
 const { contextApiTokenHelper } = require( './modules/shared' )
@@ -60,7 +60,7 @@ exports.startHttp = async ( app ) => {
   let server = http.createServer( app )
 
   server.on( 'listening', ( ) => {
-    console.log( `Listening on ${server.address().port}` )
+    debug( `Listening on ${server.address().port}` )
   } )
 
   server.listen( port )

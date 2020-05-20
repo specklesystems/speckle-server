@@ -93,15 +93,15 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Should share a stream with a user', async ( ) => {
-      await grantPermissionsStream( testStream.id, userTwo.id, 'read' )
-      await grantPermissionsStream( testStream.id, userTwo.id, 'write' ) // change perms
+      await grantPermissionsStream( testStream.id, userTwo.id, 'stream:reviewer' )
+      await grantPermissionsStream( testStream.id, userTwo.id, 'stream:contributor' ) // change perms
     } )
 
     it( 'Stream should show up in the other users` list', async ( ) => {
       let userTwoStreams = await getUserStreams( userTwo.id )
       expect( userTwoStreams ).to.have.lengthOf( 1 )
       expect( userTwoStreams[ 0 ] ).to.have.property( 'role' )
-      expect( userTwoStreams[ 0 ].role ).to.equal( 'write' )
+      expect( userTwoStreams[ 0 ].role ).to.equal( 'stream:contributor' )
     } )
 
     it( 'Should get the users with access to a stream', async ( ) => {
