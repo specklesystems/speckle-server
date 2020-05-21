@@ -34,12 +34,6 @@ module.exports = {
     }
   },
   Mutation: {
-    // NOTE: this mutation will not exist, or will be enabled only if local user creation is enabled
-    async userCreate( parent, args, context, info ) {
-      let userId = await createUser( args.user )
-      let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )
-      return token
-    },
     async userEdit( parent, args, context, info ) {
       await updateUser( context.userId, args.user )
       return true

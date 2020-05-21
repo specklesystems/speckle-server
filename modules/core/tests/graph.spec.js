@@ -150,7 +150,7 @@ describe( 'GraphQL API Core', ( ) => {
 
     it( 'Should grant some permissions', async ( ) => {
       const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
-      
+
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.streamGrantPermission ).to.equal( true )
@@ -195,7 +195,7 @@ describe( 'GraphQL API Core', ( ) => {
       const resNotAuth = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
       expect( resNotAuth ).to.be.json
       expect( resNotAuth.body.errors ).to.exist
-      
+
     } )
 
     it( 'Should fail to edit/write on a public stream if no access is provided', async ( ) => {
@@ -600,7 +600,43 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
     } )
+  } )
 
+  describe( 'Server Info', ( ) => {
+    it( 'Should return a valid server information object', async ( ) => {
+      let q = `
+        query{
+          serverInfo{
+            name
+            adminContact
+            tos
+            description
+            roles{
+              name
+              description
+              resourceTarget
+            }
+            scopes{
+              name
+              description
+            }
+          }
+        }`
+
+      let res = await sendRequest( null, { query: q } )
+      
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.serverInfo ).to.be.an( 'object' )
+  
+      let si = res.body.data.serverInfo
+      expect( si.name ).to.be.a( 'string' )
+      expect( si.adminContact ).to.be.a( 'string' )
+      expect( si.tos ).to.be.a( 'string' )
+      expect( si.description ).to.be.a( 'string' )
+      expect( si.roles ).to.be.a( 'array' )
+      expect( si.scopes ).to.be.a( 'array' )
+    } )
   } )
 } )
 

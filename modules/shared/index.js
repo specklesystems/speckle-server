@@ -13,18 +13,22 @@ const { validateToken } = require( `${root}/modules/core/services/tokens` )
 
 async function contextApiTokenHelper( { req, res } ) {
   // TODO: Cache results for 5 minutes
-  if ( req.headers.authorization ) {
+  if ( req.headers.authorization != null ) {
+    try {
+      let token = req.headers.authorization.split( ' ' )[ 1 ]
 
-    let token = req.headers.authorization.split( ' ' )[ 1 ]
+      let { valid, scopes, userId } = await validateToken( token )
 
-    let { valid, scopes, userId } = await validateToken( token )
+      if ( !valid ) {
+        return { auth: false }
+      }
 
-    if ( !valid ) {
-      return { auth: false }
+      return { auth: true, userId, token, scopes }
+    } catch ( e ) {
+      return { auth: false, err: e }
     }
-
-    return { auth: true, userId, token, scopes }
   }
+  return { auth: false }
 }
 
 /*

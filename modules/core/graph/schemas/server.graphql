@@ -1,0 +1,32 @@
+extend type Query { 
+  serverInfo: ServerInfo!
+}
+
+"""
+Information about this server.
+""" 
+type ServerInfo {
+  name: String!
+  description: String!
+  adminContact: String!
+  tos: String!
+  roles: [Role]
+  scopes: [Scope]
+}
+
+"""
+Available roles.
+"""
+type Role {
+  name: String!
+  description: String!
+  resourceTarget: String!
+}
+
+"""
+Available scopes.
+"""
+type Scope {
+  name: String!
+  description: String!
+}
