@@ -2,6 +2,8 @@
 
 let http = require( 'http' )
 const express = require( 'express' )
+const history = require( 'connect-history-api-fallback' )
+const root = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )( 'speckle:generic' )
@@ -27,9 +29,9 @@ exports.init = async ( ) => {
   app.use( bodyParser.json( ) )
   app.use( bodyParser.urlencoded( { extended: false } ) )
 
-  app.get( '/', ( req, res ) => {
-    res.send( { fantastic: 'speckle' } )
-  } )
+  // app.get( '/', ( req, res ) => {
+  //   res.send( { fantastic: 'speckle' } )
+  // } )
 
   const { init, graph } = require( './modules' )
 
@@ -57,6 +59,17 @@ exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
+
+  app.use( '/', express.static( `${root}/frontend/dist` ) )
+
+  app.all( '*', ( req, res ) => {
+    try {
+      res.sendFile( `${root}/frontend/dist/index.html` );
+    } catch ( error ) {
+      res.json( { success: false, message: "Something went wrong" } );
+    }
+  } );
+
   let server = http.createServer( app )
 
   server.on( 'listening', ( ) => {
@@ -64,6 +77,6 @@ exports.startHttp = async ( app ) => {
   } )
 
   server.listen( port )
-  
+
   return { server }
 }
