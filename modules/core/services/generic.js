@@ -19,6 +19,10 @@ module.exports = {
     return `TODO: True`
   },
 
+  async getServerVersion() {
+    return `2 DO` // get it?
+  },
+
   async getServerDescription( ) {
     return `TODO: True`
   },

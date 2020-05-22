@@ -2,7 +2,7 @@
 
 'use strict'
 
-let debug = require( 'debug' )( 'www:server' )
+let debug = require( 'debug' )( 'speckle:www' )
 let { init, startHttp } = require( '../app' )
 
 init( ).then( ( { app } ) => startHttp( app ) )

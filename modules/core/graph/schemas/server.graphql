@@ -10,8 +10,8 @@ type ServerInfo {
   description: String!
   adminContact: String!
   tos: String!
-  roles: [Role]
-  scopes: [Scope]
+  roles: [Role]!
+  scopes: [Scope]!
 }
 
 """
