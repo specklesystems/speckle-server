@@ -16,7 +16,7 @@ jobs:
           POSTGRES_DB: speckle2_test
     environment: 
       NODE_ENV: test
-      DATABASE_URL: 'postgres://localhost:/speckle2_test'
+      DATABASE_URL: 'postgres://0.0.0.0:5432/speckle2_test'
 
     steps:
       - checkout
@@ -27,4 +27,5 @@ jobs:
           paths:
             - node_modules
           key: 'deps-{{ checksum "package.json" }}'
+      - run: 'node -v'
       - run: 'npm run test:server'
