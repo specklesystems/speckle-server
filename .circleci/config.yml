@@ -18,9 +18,9 @@ jobs:
     environment: 
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
-      PGDATABASE: postgres
-      PGUSER: postgres
-      
+      PGDATABASE: speckle2_test
+      PGUSER: speckle
+
     steps:
       - checkout
       - restore_cache:
