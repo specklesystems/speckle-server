@@ -9,14 +9,14 @@ workflows:
 jobs:
   test:
     docker:
-      - image: 'circleci/node:latest'
+      - image: 'circleci/node:12'
       - image: circleci/postgres:latest-ram
         environment:
           POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_DB: speckle2_test
     environment: 
       NODE_ENV: test
-      DATABASE_URL: 'postgres://0.0.0.0:5432/speckle2_test'
+      DATABASE_URL: 'postgres://localhost:5432/speckle2_test'
 
     steps:
       - checkout
