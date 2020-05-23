@@ -8,7 +8,7 @@
     "build:frontend": "cd frontend && npm run build",
     "dev:server": "PORT=3000 NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "production:server": "PORT=3000 NODE_ENV=production nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
-    "test:server": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test nyc nyc --reporter=html mocha -s 0 --timeout 2000 --exit",
+    "test:server": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test nyc nyc --reporter=html,lcovonly mocha -s 0 --timeout 2000 --exit",
     "test:server:watch": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha --watch -s 0 --exit",
     "test:server:graph": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit --no-config",
     "test:server:generic": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test mocha ./modules/core/tests/generic.spec.js --watch -s 0 --exit --no-config",
