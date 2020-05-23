@@ -10,7 +10,7 @@ jobs:
   test:
     docker:
       - image: 'circleci/node:12'
-      - image: circleci/postgres:latest-ram
+      - image: circleci/postgres:12
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
