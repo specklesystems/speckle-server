@@ -4,8 +4,8 @@
   "description": "speckle server",
   "main": "index.js",
   "scripts": {
-    "dev:frontend":"",
-    "build:frontend":"",
+    "dev:frontend": "cd frontend && npm run serve",
+    "build:frontend": "cd frontend && npm run build",
     "dev:server": "PORT=3000 NODE_ENV=development DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "production:server": "PORT=3000 NODE_ENV=production nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "test:server": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test nyc nyc --reporter=html mocha -s 0 --exit",
@@ -26,7 +26,6 @@
     "auto-load": "^3.0.4",
     "bcrypt": "^4.0.1",
     "body-parser": "^1.19.0",
-    "connect-history-api-fallback": "^1.6.0",
     "crypto-random-string": "^3.2.0",
     "debug": "^4.1.1",
     "express": "^4.17.1",
