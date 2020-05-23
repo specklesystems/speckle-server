@@ -10,8 +10,7 @@ jobs:
     steps:
       - checkout
       - run: whoami
-      - run: |
-        psql -c "\list"
+      - run: psql -c "\list"
       - node/with-cache:
           steps:
             - run: npm install
