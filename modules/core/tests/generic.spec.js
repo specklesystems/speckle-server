@@ -10,6 +10,15 @@ const expect = chai.expect
 const { validateServerRole, contextApiTokenHelper, validateScopes, authorizeResolver } = require( '../../shared' )
 
 describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
+  
+  before( async ( ) => {
+    await knex.migrate.rollback( )
+    await knex.migrate.latest( )
+  } )
+
+  after( async ( ) => {
+    await knex.migrate.rollback( )
+  } )
 
   it( 'Validate scopes', async ( ) => {
     try {
