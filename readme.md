@@ -1,6 +1,9 @@
 # Speckle Server
 
-The next iteration of the speckle server. Hopefully made to last!
+The next iteration of the Speckle Server.
+
+[![Speckle-Next](https://circleci.com/gh/Speckle-Next/SpeckleServer.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/Speckle-Next/SpeckleServer/branch/master/graph/badge.svg?token=PHZWVNUVFE)](https://codecov.io/gh/Speckle-Next/SpeckleServer)
+
 
 ## Contributing
 
