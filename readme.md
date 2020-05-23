@@ -12,7 +12,7 @@ You will need to have a postgres instance running on the default settings, with 
 
 > For getting postgres running on osx, check out [postgres.app](https://postgresapp.com/), and the classic [pgadmin](https://www.pgadmin.org/download/pgadmin-4-macos/).
 
-### Commit style
+### How to commit to this repo
 When pushing commits to this repo, please follow the following guidelines: 
 
 1) Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally
@@ -32,11 +32,12 @@ Modules can create new and alter old database tables, if the knex migration file
 
 ### Structure
 
-A module should contain in its root folder an index.js file that exposes two functions: 
+A module should contain in its root folder an index.js file that exposes an init function: 
 
 ```js
-exports.preflight = ( ) => { }
-exports.init = ( app ) => { }
+exports.init = ( app ) => {
+    // Your module's initialisation code
+}
 ```
 
 Any database migration files should be stored and named accordingly in a `migrations` folder. Moreover, modules should include test files. These should be located in `tests`. Here's a sample structure: 
@@ -51,16 +52,14 @@ Any database migration files should be stored and named accordingly in a `migrat
 
 ```
 
-## Authentication & Authorization
-
 // TODO
 
-## APIs
-
-### REST 
-
-// TODO
+## API
 
 ### GraphQl
 
 // TODO
+### REST 
+
+Depecrated.
+
