@@ -1,4 +1,11 @@
 version: 2.1
+
+workflows:
+  version: 2.1
+  build:
+    jobs:
+      - test
+
 jobs:
   test:
     docker:
@@ -9,10 +16,10 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-        key: deps-{{ checksum "package.json" }}
-      - run: npm install
+          key: 'deps-{{ checksum "package.json" }}'
+      - run: 'npm install'
       - save_cache: 
-        paths:
-          - node_modules
-        key: deps-{{ checksum "package.json" }}
-      - run: npm run test:server
+          paths:
+            - node_modules
+          key: 'deps-{{ checksum "package.json" }}'
+      - run: 'npm run test:server'
