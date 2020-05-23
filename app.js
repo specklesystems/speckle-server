@@ -2,7 +2,6 @@
 
 let http = require( 'http' )
 const express = require( 'express' )
-const history = require( 'connect-history-api-fallback' )
 const root = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
