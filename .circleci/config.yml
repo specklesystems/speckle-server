@@ -12,11 +12,12 @@ jobs:
       - image: 'circleci/node:12'
       - image: circleci/postgres:latest-ram
         environment:
-          POSTGRES_HOST_AUTH_METHOD: trust
           POSTGRES_DB: speckle2_test
+          POSTGRES_PASSWORD: speckle
+          POSTGRES_USER: speckle
     environment: 
       NODE_ENV: test
-      DATABASE_URL: 'postgres://localhost:5432/speckle2_test'
+      DATABASE_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
 
     steps:
       - checkout
