@@ -78,7 +78,7 @@ describe( 'GraphQL API Core', ( ) => {
   describe( 'Mutations', ( ) => {
 
     it( 'Should create some api tokens', async ( ) => {
-      const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:read", "users:read"]) }` } )
+      const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read" ]) }` } )
       expect( res1 ).to.be.json
       expect( res1.body.errors ).to.not.exist
       expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
@@ -330,7 +330,6 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.errors ).to.not.exist
       expect( res.body.data ).to.have.property( 'streamDelete' )
       expect( res.body.data.streamDelete ).to.equal( true )
-
     } )
 
   } )
@@ -338,12 +337,13 @@ describe( 'GraphQL API Core', ( ) => {
   describe( 'Queries', ( ) => {
 
     it( 'Should retrieve my profile', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `{ user { id name email } }` } )
+      const res = await sendRequest( userA.token, { query: `{ user { id name email role apiTokens { id name } } }` } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data ).to.have.property( 'user' )
       expect( res.body.data.user.name ).to.equal( 'Miticå' )
       expect( res.body.data.user.email ).to.equal( 'd.1@speckle.systems' )
+      expect( res.body.data.user.role ).to.equal( 'server:admin' )
     } )
 
     it( 'Should retrieve a different profile profile', async ( ) => {

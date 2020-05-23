@@ -11,6 +11,9 @@ const { ApolloServer } = require( 'apollo-server-express' )
 const { contextApiTokenHelper } = require( './modules/shared' )
 const knex = require( './db/knex' )
 
+require( 'dotenv' ).config( { path: `${root}/.env` } )
+
+
 /**
  * Initialises the express application together with the graphql server middleware.
  * @return {[type]} an express applicaiton and the graphql server

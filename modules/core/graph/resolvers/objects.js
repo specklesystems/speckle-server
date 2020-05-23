@@ -1,7 +1,7 @@
 'use strict'
 const root = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
-const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const { getUser } = require( '../../services/users' )
 const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../../services/objects' )
 const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../services/references' )
@@ -68,6 +68,7 @@ module.exports = {
   },
   Mutation: {
     async objectCreate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -75,6 +76,7 @@ module.exports = {
       return ids
     },
     async commitCreate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -82,6 +84,7 @@ module.exports = {
       return id
     },
     async branchCreate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -89,6 +92,7 @@ module.exports = {
       return id
     },
     async branchUpdate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -96,6 +100,7 @@ module.exports = {
       return true
     },
     async branchDelete( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -103,6 +108,7 @@ module.exports = {
       return true
     },
     async tagCreate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -110,6 +116,7 @@ module.exports = {
       return id
     },
     async tagUpdate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 
@@ -117,6 +124,7 @@ module.exports = {
       return true
     },
     async tagDelete( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
 

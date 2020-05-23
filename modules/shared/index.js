@@ -17,18 +17,50 @@ async function contextApiTokenHelper( { req, res } ) {
     try {
       let token = req.headers.authorization.split( ' ' )[ 1 ]
 
-      let { valid, scopes, userId } = await validateToken( token )
+      let { valid, scopes, userId, role } = await validateToken( token )
 
       if ( !valid ) {
         return { auth: false }
       }
 
-      return { auth: true, userId, token, scopes }
+      return { auth: true, userId, role, token, scopes }
     } catch ( e ) {
+      // TODO: Think wether perhaps it's better to throw the error
       return { auth: false, err: e }
     }
   }
   return { auth: false }
+}
+
+/*
+    
+    Keeps track of all the available roles on this server. It's seeded by the methods below.
+
+ */
+let roles
+
+/*
+    
+    Validates a user's server-bound role (admin, normal user, etc.)
+
+ */
+
+async function validateServerRole( context, requiredRole ) {
+  if ( !roles )
+    roles = await knex( 'user_roles' ).select( '*' )
+
+  if ( !context.auth ) throw new ForbiddenError( 'You do not have the required priviliges' )
+  if ( context.role === 'server:admin' ) return true
+
+  let role = roles.find( r => r.name === requiredRole )
+  let myRole = roles.find( r => r.name === context.role )
+
+  if ( role === null ) new ApolloError( 'Invalid server role specified' )
+  if ( myRole === null ) new ForbiddenError( 'You do not have the required priviliges' )
+  if ( myRole.weight >= role.weight )
+    return true
+  else
+    throw new ForbiddenError( 'You do not have the required priviliges' )
 }
 
 /*
@@ -49,8 +81,6 @@ async function validateScopes( scopes, scope ) {
     Graphql authorization: checks user id against access control lists
 
  */
-
-let roles
 
 async function authorizeResolver( userId, resourceId, requiredRole ) {
   if ( !roles )
@@ -84,6 +114,7 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
 
 module.exports = {
   contextApiTokenHelper,
+  validateServerRole,
   validateScopes,
   authorizeResolver
 }

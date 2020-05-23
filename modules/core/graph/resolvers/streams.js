@@ -2,7 +2,7 @@
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const root = require( 'app-root-path' )
 const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../../services/streams' )
-const { validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 
 module.exports = {
   Query: {
@@ -31,18 +31,21 @@ module.exports = {
   },
   Mutation: {
     async streamCreate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
 
       let id = await createStream( args.stream, context.userId )
       return id
     },
     async streamUpdate( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
       await updateStream( args.stream )
       return true
     },
     async streamDelete( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
@@ -53,12 +56,14 @@ module.exports = {
       throw new ApolloError( 'Not implemented yet :)' )
     },
     async streamGrantPermission( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
       if ( context.userId === args.userId ) throw new AuthorizationError( 'You cannot set roles for yourself.' )
       return await grantPermissionsStream( args.streamId, args.userId, args.role.toLowerCase( ) || 'read' )
     },
     async streamRevokePermission( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 

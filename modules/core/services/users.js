@@ -5,7 +5,7 @@ const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
 const Users = ( ) => knex( 'users' )
-const Keys = ( ) => knex( 'api_tokens' )
+const ServerRoles = ( ) => knex( 'server_acl' )
 
 module.exports = {
 
@@ -16,6 +16,8 @@ module.exports = {
    */
 
   async createUser( user ) {
+    let [ { count } ] = await ServerRoles( ).where( { role: 'server:admin' } ).count( )
+
     user.id = crs( { length: 10 } )
 
     if ( user.password ) {
@@ -25,11 +27,24 @@ module.exports = {
 
     let res = await Users( ).returning( 'id' ).insert( user )
 
+    if ( parseInt( count ) === 0 ) {
+      await ServerRoles( ).insert( { userId: res[ 0 ], role: 'server:admin' } )
+    } else {
+      await ServerRoles( ).insert( { userId: res[ 0 ], role: 'server:user' } )
+    }
+
     return res[ 0 ]
   },
 
   async getUser( id ) {
-    return Users( ).where( { id: id } ).select( 'id', 'username', 'name', 'email', 'profiles', 'verified' ).first( )
+    let user = await Users( ).where( { id: id } ).select( '*' ).first( )
+    delete user.passwordDigest
+    return user
+  },
+
+  async getUserRole( id ) {
+    let { role } = await ServerRoles( ).where( { userId: id } ).select( 'role' ).first( )
+    return role 
   },
 
   async updateUser( id, user ) {

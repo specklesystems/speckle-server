@@ -2,7 +2,7 @@ extend type User{
   """
   The api tokens of this user.
   """
-  apiTokens: [ApiToken!]!
+  apiTokens: [ApiToken]
 }
 
 type ApiToken {

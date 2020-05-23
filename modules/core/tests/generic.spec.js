@@ -7,7 +7,7 @@ const knex = require( `${root}/db/knex` )
 
 const expect = chai.expect
 
-const { contextApiTokenHelper, validateScopes, authorizeResolver } = require( '../../shared' )
+const { validateServerRole, contextApiTokenHelper, validateScopes, authorizeResolver } = require( '../../shared' )
 
 describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
 
@@ -38,6 +38,33 @@ describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
 
     let res3 = await contextApiTokenHelper( { req: { headers: { authorization: undefined } } } )
     expect( res3.auth ).to.equal( false )
+  } )
+
+  it( 'Should validate server role', async ( ) => {
+    try {
+      let test = await validateServerRole( { auth: true, role: 'server:user' }, 'server:admin' )
+      assert.fail( )
+    } catch ( e ) {
+      assert.equal( 'the void', 'the void' )
+    }
+
+    try {
+      let test = await validateServerRole( { auth: true, role: 'HACZOR' }, '133TCR3w' )
+      assert.fail( 'Invalid roles should be refused' )
+    } catch ( e ) {
+      assert.equal( 'stares', 'stares' )
+    }
+
+    try {
+      let test = await validateServerRole( { auth: true, role: 'server:admin' }, '133TCR3w' )
+      assert.fail( 'Invalid roles should be refused' )
+    } catch ( e ) {
+      assert.equal( 'and waits dreaming', 'and waits dreaming' )
+    }
+
+    let test = await validateServerRole( { auth: true, role: 'server:admin' }, 'server:user' )
+    expect( test ).to.equal( true )
+
   } )
 
   it( 'Resolver Authorization Should fail nicely when roles & resources are wanky', async ( ) => {

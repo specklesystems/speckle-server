@@ -19,6 +19,20 @@ exports.up = async knex => {
     table.text( 'passwordDigest' ) // bcrypted pwd
   } )
 
+  // Roles
+  await knex.schema.createTable( 'user_roles', table => {
+    table.string( 'name' ).primary( )
+    table.text( 'description' ).notNullable( )
+    table.string( 'resourceTarget' ).notNullable( )
+    table.string( 'aclTableName' ).notNullable( )
+    table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
+  } )
+
+  await knex.schema.createTable( 'server_acl', table => {
+    table.string( 'userId', 10 ).references( 'id' ).inTable( 'users' ).primary( ).onDelete( 'cascade' )
+    table.string( 'role' ).references( 'name' ).inTable( 'user_roles' ).notNullable( ).onDelete( 'cascade' )
+  })
+
   // Tokens.
   await knex.schema.createTable( 'api_tokens', table => {
     table.string( 'id', 10 ).primary( )
@@ -55,15 +69,6 @@ exports.up = async knex => {
     table.string( 'clonedFrom', 10 ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
-  } )
-
-  // Roles
-  await knex.schema.createTable( 'user_roles', table => {
-    table.string( 'name' ).primary()
-    table.text( 'description' ).notNullable( )
-    table.string( 'resourceTarget' ).notNullable( )
-    table.string( 'aclTableName' ).notNullable( )
-    table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
   } )
 
   // Stream-users access control list.
@@ -148,6 +153,7 @@ exports.up = async knex => {
 }
 
 exports.down = async knex => {
+  await knex.schema.dropTableIfExists( 'server_acl' )
   await knex.schema.dropTableIfExists( 'stream_acl' )
   await knex.schema.dropTableIfExists( 'user_roles' )
 

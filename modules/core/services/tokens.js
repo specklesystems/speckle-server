@@ -8,6 +8,7 @@ const Users = ( ) => knex( 'users' )
 const Keys = ( ) => knex( 'api_tokens' )
 const AppScopes = ( ) => knex( 'app_scopes' )
 const TokenScopes = ( ) => knex( 'token_scopes' )
+const ServerRoles = ( ) => knex( 'server_acl' )
 
 module.exports = {
 
@@ -58,7 +59,8 @@ module.exports = {
     if ( valid ) {
       await Keys( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )
       let scopes = await TokenScopes( ).select( 'scopeName' ).where( { tokenId: tokenId } )
-      return { valid: true, userId: token.owner, scopes: scopes.map( s => s.scopeName ) }
+      let { role } = await ServerRoles( ).select( 'role' ).where( { userId: token.owner } ).first()
+      return { valid: true, userId: token.owner, role: role, scopes: scopes.map( s => s.scopeName ) }
     } else
       return { valid: false }
   },

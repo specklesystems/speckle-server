@@ -1,7 +1,6 @@
 'use strict'
 const root = require( 'app-root-path' )
-const { AuthenticationError, UserInputError } = require( 'apollo-server-express' )
-
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const { getAvailableScopes, getAvailableRoles, getServerName, getServerDescription, getAdminContact, getTOS } = require( '../../services/generic' )
 
 module.exports = {

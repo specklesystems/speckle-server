@@ -25,6 +25,22 @@ exports.up = async knex => {
   } ]
 
   await knex( 'user_roles' ).insert( streamRoles )
+
+  let serverRoles = [ {
+    name: 'server:admin',
+    description: 'Has full access to the server, including all users.',
+    resourceTarget: 'server',
+    aclTableName: 'server_acl',
+    weight: 1000
+  }, {
+    name: 'server:user',
+    description: 'Has normal access to the server.',
+    resourceTarget: 'server',
+    aclTableName: 'server_acl',
+    weight: 100
+  } ]
+
+  await knex( 'user_roles' ).insert( serverRoles )
 }
 
 exports.down = async knex => {

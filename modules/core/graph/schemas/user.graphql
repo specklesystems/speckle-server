@@ -18,11 +18,11 @@ type User {
   company: String
   avatar: String
   verified: Boolean
-  """
-  Any profiles provided by third party providers are stored in here.
-  """
   profiles: JSON
+  # apiTokens: [ApiToken]
 }
+
+
 
 extend type Mutation {
   """

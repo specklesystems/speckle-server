@@ -39,6 +39,10 @@ describe( 'Actors & Tokens', ( ) => {
 
   describe( 'Users', ( ) => {
 
+    it( 'First created user should be a server admin', async ( ) => {
+
+    } )
+
     it( 'Should create an actor', async ( ) => {
       let newUser = { ...myTestActor }
       newUser.name = 'Bill Gates'
@@ -121,6 +125,7 @@ describe( 'Actors & Tokens', ( ) => {
       expect( res.valid ).to.equal( true )
       expect( res ).to.have.property( 'scopes' )
       expect( res ).to.have.property( 'userId' )
+      expect( res ).to.have.property( 'role' )
     } )
 
     it( 'Should revoke an api token', async ( ) => {
