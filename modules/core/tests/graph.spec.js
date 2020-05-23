@@ -330,6 +330,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.errors ).to.not.exist
       expect( res.body.data ).to.have.property( 'streamDelete' )
       expect( res.body.data.streamDelete ).to.equal( true )
+      
     } )
 
   } )
