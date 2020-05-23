@@ -20,6 +20,8 @@ function walk( dir ) {
 
 let migrationDirs = walk( './modules' )
 
+console.log( 'my db is ' +  process.env.DATABASE_URL )
+
 module.exports = {
   test: {
     client: 'pg',
