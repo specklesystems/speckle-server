@@ -7,9 +7,11 @@ Information about this server.
 """ 
 type ServerInfo {
   name: String!
-  description: String!
-  adminContact: String!
-  tos: String!
+  company: String
+  description: String
+  adminContact: String
+  canonicalUrl: String
+  tos: String
   roles: [Role]!
   scopes: [Scope]!
 }

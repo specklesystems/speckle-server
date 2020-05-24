@@ -1,5 +1,6 @@
 'use strict'
 
+
 let http = require( 'http' )
 const express = require( 'express' )
 const root = require( 'app-root-path' )
@@ -8,10 +9,10 @@ const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )( 'speckle:generic' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
+require( 'dotenv' ).config( { path: `${root}/.env` } )
+
 const { contextApiTokenHelper } = require( './modules/shared' )
 const knex = require( './db/knex' )
-
-require( 'dotenv' ).config( { path: `${root}/.env` } )
 
 
 /**
@@ -30,10 +31,6 @@ exports.init = async ( ) => {
 
   app.use( bodyParser.json( ) )
   app.use( bodyParser.urlencoded( { extended: false } ) )
-
-  // app.get( '/', ( req, res ) => {
-  //   res.send( { fantastic: 'speckle' } )
-  // } )
 
   const { init, graph } = require( './modules' )
 
@@ -61,16 +58,23 @@ exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
+  let setupComplete = await require( `${root}/setupcheck` )( )
+  debug( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
 
   app.use( '/', express.static( `${root}/frontend/dist` ) )
-
   app.all( '*', ( req, res ) => {
     try {
-      res.sendFile( `${root}/frontend/dist/index.html` );
+      if ( setupComplete ) {
+        res.sendFile( `${root}/frontend/dist/app.html` )
+      } else {
+        res.sendFile( `${root}/frontend/dist/setup.html` )
+      }
     } catch ( error ) {
-      res.json( { success: false, message: "Something went wrong" } );
+      res.json( { success: false, message: "Something went wrong" } )
     }
   } );
+
+
 
   let server = http.createServer( app )
 

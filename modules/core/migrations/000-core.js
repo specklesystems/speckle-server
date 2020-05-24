@@ -3,7 +3,16 @@
 // Knex table migrations
 exports.up = async knex => {
   await knex.raw( 'CREATE EXTENSION IF NOT EXISTS "pgcrypto"' )
-  await knex.raw( 'CREATE EXTENSION IF NOT EXISTS "ltree"' )
+
+  await knex.schema.createTable( 'server_config', table => {
+    table.integer( 'id' ).notNullable( ).defaultTo( 0 ).index( )
+    table.string( 'name' ).defaultTo( 'My Speckle Server' )
+    table.string( 'company' )
+    table.string( 'description' )
+    table.string( 'canonicalUrl' )
+    table.string( 'adminContact' )
+    table.string( 'termsOfService' )
+  } )
 
   await knex.schema.createTable( 'users', table => {
     table.string( 'id', 10 ).primary( )
@@ -31,7 +40,7 @@ exports.up = async knex => {
   await knex.schema.createTable( 'server_acl', table => {
     table.string( 'userId', 10 ).references( 'id' ).inTable( 'users' ).primary( ).onDelete( 'cascade' )
     table.string( 'role' ).references( 'name' ).inTable( 'user_roles' ).notNullable( ).onDelete( 'cascade' )
-  })
+  } )
 
   // Tokens.
   await knex.schema.createTable( 'api_tokens', table => {
@@ -153,6 +162,8 @@ exports.up = async knex => {
 }
 
 exports.down = async knex => {
+  await knex.schema.dropTableIfExists( 'server_config' )
+  
   await knex.schema.dropTableIfExists( 'server_acl' )
   await knex.schema.dropTableIfExists( 'stream_acl' )
   await knex.schema.dropTableIfExists( 'user_roles' )

@@ -1,8 +1,9 @@
 'use strict'
 const root = require( 'app-root-path' )
-const { AuthenticationError, UserInputError } = require( 'apollo-server-express' )
+const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
 const { createUser, getUser, getUserRole, updateUser, deleteUser, validatePasssword, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/users' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const setupCheck = require( `${root}/setupcheck` )
 
 module.exports = {
   Query: {
@@ -41,5 +42,15 @@ module.exports = {
       await updateUser( context.userId, args.user )
       return true
     },
+    async userCreate( parent, args, context, info ) {
+      let setupComplete = await setupCheck( )
+      if ( setupComplete && process.env.STRATEGY_LOCAL !== 'true' )
+        throw new ApolloError( 'Registration method not available' )
+
+      let userId = await createUser( args.user )
+      let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )
+      return token
+
+    }
   }
 }

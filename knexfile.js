@@ -30,14 +30,14 @@ module.exports = {
   },
   development: {
     client: 'pg',
-    connection: 'postgres://localhost/speckle2',
+    connection: process.env.POSTGRES_URL || 'postgres://localhost/speckle2_dev',
     migrations: {
       directory: migrationDirs
     },
   },
   production: {
     client: 'pg',
-    connection: process.env.DATABASE_URL,
+    connection: process.env.POSTGRES_URL,
     migrations: {
       directory: migrationDirs
     }
