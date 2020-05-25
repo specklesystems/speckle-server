@@ -4,7 +4,7 @@
       <v-container align="center" mt-10>
         <v-row wrap justify='center'>
           <v-col sm='12' md='12' class='text-center'>
-            <h1 class='display-2 font-weight-light'>Welcome to your new Speckle Server!</h1>
+            <h1 class='display-2 font-weight-light mb-5'>Welcome to your new Speckle Server!</h1>
             <p class='subheading'>There's a bit of housekeeping to do first before we're ready to roll.</p>
           </v-col>
           <v-col cols='12' sm='12' md='12'>
