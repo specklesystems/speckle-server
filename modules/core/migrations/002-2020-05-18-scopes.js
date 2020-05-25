@@ -5,6 +5,10 @@ exports.up = async knex => {
   debug( 'Setting up core module scopes.' )
 
   let coreModuleScopes = [ {
+      name: 'server:setup',
+      description: 'Edit server information.'
+    },
+    {
       name: 'streams:read',
       description: 'Read your streams & and any associated information (branches, tags, comments, objects, etc.)'
     },
@@ -15,7 +19,8 @@ exports.up = async knex => {
     {
       name: 'profile:read',
       description: `Read your profile information`
-    }, {
+    },
+    {
       name: 'profile:email',
       description: `Access your email.`
     },
@@ -37,9 +42,9 @@ exports.up = async knex => {
     }
   ]
 
-  await knex('app_scopes').insert( coreModuleScopes )
+  await knex( 'app_scopes' ).insert( coreModuleScopes )
 }
 
 exports.down = async knex => {
-  await knex('app_scopes').where( true ).delete()
+  await knex( 'app_scopes' ).where( true ).delete( )
 }
