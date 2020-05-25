@@ -14,6 +14,7 @@ require( 'dotenv' ).config( { path: `${root}/.env` } )
 const { contextApiTokenHelper } = require( './modules/shared' )
 const knex = require( './db/knex' )
 
+let graphqlServer
 
 /**
  * Initialises the express application together with the graphql server middleware.
@@ -38,7 +39,7 @@ exports.init = async ( ) => {
   await init( app )
 
   // Initialise graphql server
-  const graphqlServer = new ApolloServer( {
+  graphqlServer = new ApolloServer( {
     ...graph( ),
     context: contextApiTokenHelper,
     tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
@@ -77,7 +78,9 @@ exports.startHttp = async ( app ) => {
 
 
   let server = http.createServer( app )
-
+  
+  graphqlServer.installSubscriptionHandlers( server )
+  
   server.on( 'listening', ( ) => {
     debug( `Listening on ${server.address().port}` )
   } )
