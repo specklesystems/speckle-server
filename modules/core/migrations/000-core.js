@@ -46,7 +46,7 @@ exports.up = async knex => {
   await knex.schema.createTable( 'api_tokens', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'tokenDigest' ).unique( )
-    table.string( 'owner', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
+    table.string( 'owner', 10 ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'name' )
     table.string( 'lastChars', 6 )
     table.boolean( 'revoked' ).defaultTo( false )
@@ -163,7 +163,7 @@ exports.up = async knex => {
 
 exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'server_config' )
-  
+
   await knex.schema.dropTableIfExists( 'server_acl' )
   await knex.schema.dropTableIfExists( 'stream_acl' )
   await knex.schema.dropTableIfExists( 'user_roles' )

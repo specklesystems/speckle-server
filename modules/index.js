@@ -41,13 +41,13 @@ exports.graph = ( ) => {
       """
       Stare into the void.
       """
-        _: Boolean 
+        _: String 
       } 
       type Mutation{
       """
       The void stares back.
       """
-      _:Boolean
+      _: String
       }`
     ]
 

@@ -19,16 +19,22 @@ type User {
   avatar: String
   verified: Boolean
   profiles: JSON
-  # apiTokens: [ApiToken]
 }
 
 
 
 extend type Mutation {
   """
-  Temporary measure, equal to local registration. Should be disabled if local_auth is false.
+  Local registration. Disabled if STRATEGY_LOCAL is set to false.
   """
   userCreate(user: UserCreateInput!): String
+  """
+  Endpoint used to create an admin user on server init. 
+  """
+  userCreateAdmin(user: UserCreateInput!): String
+  """
+  Edits a user's profile.
+  """
   userEdit(user: UserEditInput!): Boolean!
 }
 

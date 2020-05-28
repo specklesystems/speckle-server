@@ -75,8 +75,6 @@ exports.startHttp = async ( app ) => {
     }
   } );
 
-
-
   let server = http.createServer( app )
   
   graphqlServer.installSubscriptionHandlers( server )

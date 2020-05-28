@@ -1,12 +1,16 @@
 'use strict'
 const root = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
-const { createUser, getUser, getUserRole, updateUser, deleteUser, validatePasssword, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/users' )
+const { createUser, getUser, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
+const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const setupCheck = require( `${root}/setupcheck` )
 
 module.exports = {
   Query: {
+    async _( ) {
+      return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
+    },
     async user( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'users:read' )
@@ -51,6 +55,15 @@ module.exports = {
       let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )
       return token
 
+    },
+    async userCreateAdmin( parent, args, context, info ) {
+      let setupComplete = await setupCheck( )
+      if ( setupComplete ) throw new ApolloError( 'Registration method not available' )
+
+      let userId = await createUser( args.user )
+      let token = await createToken( userId, "Default Token", [ 'server:setup', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
+
+      return token
     }
   }
 }

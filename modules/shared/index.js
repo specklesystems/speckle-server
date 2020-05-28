@@ -13,6 +13,7 @@ const { validateToken } = require( `${root}/modules/core/services/tokens` )
 
 async function contextApiTokenHelper( { req, res } ) {
   // TODO: Cache results for 5 minutes
+  console.log( req.headers )
   if ( req.headers.authorization != null ) {
     try {
       let token = req.headers.authorization.split( ' ' )[ 1 ]
@@ -49,18 +50,18 @@ async function validateServerRole( context, requiredRole ) {
   if ( !roles )
     roles = await knex( 'user_roles' ).select( '*' )
 
-  if ( !context.auth ) throw new ForbiddenError( 'You do not have the required priviliges' )
+  if ( !context.auth ) throw new ForbiddenError( 'You must provide an auth token.' )
   if ( context.role === 'server:admin' ) return true
 
   let role = roles.find( r => r.name === requiredRole )
   let myRole = roles.find( r => r.name === context.role )
 
   if ( role === null ) new ApolloError( 'Invalid server role specified' )
-  if ( myRole === null ) new ForbiddenError( 'You do not have the required priviliges' )
+  if ( myRole === null ) new ForbiddenError( 'You do not have the required server role (null)' )
   if ( myRole.weight >= role.weight )
     return true
   else
-    throw new ForbiddenError( 'You do not have the required priviliges' )
+    throw new ForbiddenError( 'You do not have the required server role' )
 }
 
 /*

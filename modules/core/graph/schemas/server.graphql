@@ -32,3 +32,16 @@ type Scope {
   name: String!
   description: String!
 }
+
+extend type Mutation {
+  serverInfoUpdate( info: ServerInfoUpdateInput! ): Boolean
+}
+
+input ServerInfoUpdateInput {
+  name: String!
+  company: String
+  description: String
+  adminContact: String
+  canonicalUrl: String
+  tos: String
+}

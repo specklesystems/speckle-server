@@ -24,5 +24,13 @@ module.exports = {
       return await getAvailableScopes( )
     }
   },
-  Mutation: {}
+  Mutation: {
+    async serverInfoUpdate( parent, args, context, info ) {
+      console.log( context )
+      await validateServerRole( context, 'server:user' )
+      await validateScopes( context.scopes, 'server:setup' )
+      // TODO
+      return false
+    }
+  }
 }

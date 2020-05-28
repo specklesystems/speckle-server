@@ -22,9 +22,9 @@ module.exports = {
 
     if ( user.password ) {
       user.passwordDigest = await bcrypt.hash( user.password, 10 )
-      delete user.password
     }
-
+    delete user.password
+    
     let res = await Users( ).returning( 'id' ).insert( user )
 
     if ( parseInt( count ) === 0 ) {
@@ -44,7 +44,7 @@ module.exports = {
 
   async getUserRole( id ) {
     let { role } = await ServerRoles( ).where( { userId: id } ).select( 'role' ).first( )
-    return role 
+    return role
   },
 
   async updateUser( id, user ) {
