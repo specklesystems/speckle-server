@@ -4,8 +4,13 @@ const knex = require( `${root}/db/knex` )
 
 const Roles = ( ) => knex( 'user_roles' )
 const Scopes = ( ) => knex( 'app_scopes' )
+const Info = ( ) => knex( 'server_config' )
 
 module.exports = {
+
+  async getServerInfo( ) {
+    return await Info( ).select( '*' ).first( )
+  },
 
   async getAvailableScopes( ) {
     return await Scopes( ).select( '*' )
@@ -15,23 +20,11 @@ module.exports = {
     return await Roles( ).select( '*' )
   },
 
-  async getServerName( ) {
-    return `TODO: True`
-  },
-
-  async getServerVersion() {
-    return `2 DO` // get it?
-  },
-
-  async getServerDescription( ) {
-    return `TODO: True`
-  },
-
-  async getAdminContact( ) {
-    return `TODO: True`
-  },
-
-  async getTOS( ) {
-    return `TODO: True`
-  },
+  async updateServerInfo( { name, company, description, adminContact, termsOfService } ) {
+    let serverInfo = await Info( ).select( '*' ).first( )
+    if ( !serverInfo )
+      await Info( ).insert( { name, company, description, adminContact, termsOfService, completed: true } )
+    else
+      await Info( ).where( { id: 0 } ).update( { name, company, description, adminContact, termsOfService, completed: true } )
+  }
 }

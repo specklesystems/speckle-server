@@ -7,11 +7,12 @@ exports.up = async knex => {
   await knex.schema.createTable( 'server_config', table => {
     table.integer( 'id' ).notNullable( ).defaultTo( 0 ).index( )
     table.string( 'name' ).defaultTo( 'My Speckle Server' )
-    table.string( 'company' )
-    table.string( 'description' )
+    table.string( 'company' ).defaultTo( 'Acme. Inc.' )
+    table.string( 'description' ).defaultTo( 'Speckle is the open source data platform for AEC.' )
+    table.string( 'adminContact' ).defaultTo( 'n/a' )
+    table.string( 'termsOfService' ).defaultTo( 'n/a' )
     table.string( 'canonicalUrl' )
-    table.string( 'adminContact' )
-    table.string( 'termsOfService' )
+    table.boolean( 'completed' ).defaultTo( false )
   } )
 
   await knex.schema.createTable( 'users', table => {

@@ -5,7 +5,7 @@ const { createUser, getUser, getUserRole, updateUser, deleteUser, validatePasssw
 const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const setupCheck = require( `${root}/setupcheck` )
-
+const zxcvbn = require( 'zxcvbn' )
 module.exports = {
   Query: {
     async _( ) {
@@ -20,6 +20,10 @@ module.exports = {
       }
 
       return await getUser( args.id || context.userId )
+    },
+    async userPwdStrength( parent, args, context, info ) {
+      let res = zxcvbn( args.pwd )
+      return { score: res.score, feedback: res.feedback }
     }
   },
   User: {
@@ -50,6 +54,10 @@ module.exports = {
       let setupComplete = await setupCheck( )
       if ( setupComplete && process.env.STRATEGY_LOCAL !== 'true' )
         throw new ApolloError( 'Registration method not available' )
+
+      let res = zxcvbn( args.pwd )
+      
+      if ( res.score < 3 ) throw new ApolloError( 'Password too weak' )
 
       let userId = await createUser( args.user )
       let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )

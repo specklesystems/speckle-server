@@ -11,7 +11,7 @@ type ServerInfo {
   description: String
   adminContact: String
   canonicalUrl: String
-  tos: String
+  termsOfService: String
   roles: [Role]!
   scopes: [Scope]!
 }
@@ -43,5 +43,5 @@ input ServerInfoUpdateInput {
   description: String
   adminContact: String
   canonicalUrl: String
-  tos: String
+  termsOfService: String
 }

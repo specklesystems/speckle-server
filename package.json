@@ -34,13 +34,15 @@
     "graphql-scalars": "^1.1.0",
     "graphql-tools": "^4.0.7",
     "knex": "^0.20.12",
+    "lodash.debounce": "^4.0.8",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2",
     "lodash.set": "^4.3.2",
     "lodash.values": "^4.3.0",
     "morgan": "^1.10.0",
     "morgan-debug": "^2.0.0",
-    "pg": "^7.18.2"
+    "pg": "^7.18.2",
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",

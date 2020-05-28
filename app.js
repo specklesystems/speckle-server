@@ -55,16 +55,24 @@ exports.init = async ( ) => {
  * @param  {[type]} app [description]
  * @return {[type]}     [description]
  */
+
+const setupCheck = require( `${root}/setupcheck` )
 exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
-  let setupComplete = await require( `${root}/setupcheck` )( )
+  let setupComplete = await setupCheck( )
   debug( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
 
   app.use( '/', express.static( `${root}/frontend/dist` ) )
-  app.all( '*', ( req, res ) => {
+  app.all( '*', async ( req, res ) => {
+    
     try {
+      // refrehsing this variable on every request only if it's false  
+      if ( !setupComplete ) {
+        setupComplete = await setupCheck( )
+      }
+      
       if ( setupComplete ) {
         res.sendFile( `${root}/frontend/dist/app.html` )
       } else {
@@ -76,9 +84,9 @@ exports.startHttp = async ( app ) => {
   } );
 
   let server = http.createServer( app )
-  
+
   graphqlServer.installSubscriptionHandlers( server )
-  
+
   server.on( 'listening', ( ) => {
     debug( `Listening on ${server.address().port}` )
   } )

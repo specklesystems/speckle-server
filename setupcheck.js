@@ -6,8 +6,7 @@ module.exports = async ( ) => {
   let [ { count } ] = await ServerRoles( ).where( { role: 'server:admin' } ).count( )
   if ( parseInt( count ) === 0 ) return false
 
-  let conf = ServerConf( ).select( '*' ).first( )
-  if ( !conf ) return false
-
+  let conf = await ServerConf( ).select( '*' ).first( )
+  if ( !conf || !conf.completed ) return false
   return true
 }

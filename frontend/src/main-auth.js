@@ -1,13 +1,14 @@
 import Vue from 'vue'
-import SetupApp from './AppSetup.vue'
-import vuetify from './plugins/vuetify'
+import App from './AppAuth.vue'
+import router from './router'
+import vuetify from './plugins/vuetify';
 import { createProvider } from './vue-apollo'
 
 Vue.config.productionTip = false
 
 new Vue( {
+  router,
   vuetify,
   apolloProvider: createProvider( ),
-  render: h => h( SetupApp )
+  render: h => h( App )
 } ).$mount( '#app' )
-

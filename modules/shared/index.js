@@ -13,7 +13,7 @@ const { validateToken } = require( `${root}/modules/core/services/tokens` )
 
 async function contextApiTokenHelper( { req, res } ) {
   // TODO: Cache results for 5 minutes
-  console.log( req.headers )
+  // console.log( req.headers )
   if ( req.headers.authorization != null ) {
     try {
       let token = req.headers.authorization.split( ' ' )[ 1 ]
