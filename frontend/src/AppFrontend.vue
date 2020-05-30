@@ -8,6 +8,7 @@
     <v-navigation-drawer v-model="drawer" app clipped color="grey lighten-4">
     </v-navigation-drawer>
     <v-content>
+      
       <router-view></router-view>
     </v-content>
   </v-app>

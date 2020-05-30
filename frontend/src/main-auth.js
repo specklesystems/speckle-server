@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import App from './AppAuth.vue'
-import router from './router'
+import router from './router/auth-router'
 import vuetify from './plugins/vuetify';
 import { createProvider } from './vue-apollo'
 
