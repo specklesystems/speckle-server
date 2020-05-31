@@ -1,0 +1,14 @@
+extend type Query {
+  serverApp( id: String! ): ServerApp
+}
+
+type ServerApp {
+  id: String!
+  name: String!
+  author: String!
+  ownerId: String
+  createdAt: String!
+  firstparty: Boolean!
+  redirectUrl: String!
+  scopes: [Scope]
+}

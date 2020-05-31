@@ -5,20 +5,14 @@ import Home from '../views/Home.vue'
 Vue.use( VueRouter )
 
 const routes = [ {
-    path: '/auth/login',
-    name: 'Home',
-    component: ( ) => import( '../views/Login.vue' )
-  },{
-    path: '/auth/register',
-    name: 'Home',
-    component: ( ) => import( '../views/Register.vue' )
-  },
-  {
-    path: '/auth/authorize',
-    name: 'About',
-    component: ( ) => import( '../views/Authorize.vue' )
-  }
-]
+  path: '/auth/login',
+  name: 'Login',
+  component: ( ) => import( '../views/auth/Login.vue' )
+}, {
+  path: '/auth/register',
+  name: 'Register',
+  component: ( ) => import( '../views/auth/Registration.vue' )
+} ]
 
 const router = new VueRouter( {
   mode: 'history',

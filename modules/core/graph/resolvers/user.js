@@ -55,9 +55,9 @@ module.exports = {
       if ( setupComplete && process.env.STRATEGY_LOCAL !== 'true' )
         throw new ApolloError( 'Registration method not available' )
 
-      let res = zxcvbn( args.pwd )
+      let res = zxcvbn( args.user.password )
       
-      if ( res.score < 3 ) throw new ApolloError( 'Password too weak' )
+      if ( res.score < 3 ) throw new ApolloError( `Password too weak (score: ${res.score})` )
 
       let userId = await createUser( args.user )
       let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )

@@ -610,7 +610,7 @@ describe( 'GraphQL API Core', ( ) => {
           serverInfo{
             name
             adminContact
-            tos
+            termsOfService
             description
             roles{
               name
@@ -633,7 +633,7 @@ describe( 'GraphQL API Core', ( ) => {
       let si = res.body.data.serverInfo
       expect( si.name ).to.be.a( 'string' )
       expect( si.adminContact ).to.be.a( 'string' )
-      expect( si.tos ).to.be.a( 'string' )
+      expect( si.termsOfService ).to.be.a( 'string' )
       expect( si.description ).to.be.a( 'string' )
       expect( si.roles ).to.be.a( 'array' )
       expect( si.scopes ).to.be.a( 'array' )

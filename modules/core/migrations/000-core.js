@@ -57,7 +57,7 @@ exports.up = async knex => {
   } )
 
   // Registered application scopes table.
-  await knex.schema.createTable( 'app_scopes', table => {
+  await knex.schema.createTable( 'scopes', table => {
     table.string( 'name' ).primary( )
     table.text( 'description' ).notNullable( )
   } )
@@ -65,7 +65,7 @@ exports.up = async knex => {
   // Token - Scopes junction table
   await knex.schema.createTable( 'token_scopes', table => {
     table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).notNullable( ).onDelete( 'cascade' ).index( )
-    table.string( 'scopeName' ).references( 'name' ).inTable( 'app_scopes' ).notNullable( ).onDelete( 'cascade' ).index( )
+    table.string( 'scopeName' ).references( 'name' ).inTable( 'scopes' ).notNullable( ).onDelete( 'cascade' ).index( )
     table.index( [ 'tokenId', 'scopeName' ], 'token_scope_combined_idx' )
   } )
 
@@ -179,7 +179,7 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'streams' )
 
   await knex.schema.dropTableIfExists( 'token_scopes' )
-  await knex.schema.dropTableIfExists( 'app_scopes' )
+  await knex.schema.dropTableIfExists( 'scopes' )
   await knex.schema.dropTableIfExists( 'api_tokens' )
   await knex.schema.dropTableIfExists( 'users' )
 

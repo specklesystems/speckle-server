@@ -6,6 +6,14 @@ import { createProvider } from './vue-apollo'
 
 Vue.config.productionTip = false
 
+let urlParams = new URLSearchParams( window.location.search )
+let token = urlParams.get( 'token' )
+if ( token ) {
+  localStorage.setItem( 'AuthToken', token )
+}
+
+console.log( `Habeamus potentia? ${token}` )
+
 new Vue( {
   router,
   vuetify,

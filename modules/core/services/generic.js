@@ -3,7 +3,7 @@ const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
 const Roles = ( ) => knex( 'user_roles' )
-const Scopes = ( ) => knex( 'app_scopes' )
+const Scopes = ( ) => knex( 'scopes' )
 const Info = ( ) => knex( 'server_config' )
 
 module.exports = {

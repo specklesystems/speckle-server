@@ -42,9 +42,9 @@ exports.up = async knex => {
     }
   ]
 
-  await knex( 'app_scopes' ).insert( coreModuleScopes )
+  await knex( 'scopes' ).insert( coreModuleScopes )
 }
 
 exports.down = async knex => {
-  await knex( 'app_scopes' ).where( true ).delete( )
+  await knex( 'scopes' ).where( true ).delete( )
 }

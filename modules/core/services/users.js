@@ -24,7 +24,10 @@ module.exports = {
       user.passwordDigest = await bcrypt.hash( user.password, 10 )
     }
     delete user.password
-    
+
+    let usr = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
+    if ( usr ) throw new Error( 'Email taken. Try logging in?' )
+
     let res = await Users( ).returning( 'id' ).insert( user )
 
     if ( parseInt( count ) === 0 ) {

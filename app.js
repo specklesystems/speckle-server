@@ -6,7 +6,7 @@ const express = require( 'express' )
 const root = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
-const debug = require( 'debug' )( 'speckle:generic' )
+const debug = require( 'debug' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
 require( 'dotenv' ).config( { path: `${root}/.env` } )
@@ -57,38 +57,62 @@ exports.init = async ( ) => {
  */
 
 const setupCheck = require( `${root}/setupcheck` )
+const { createProxyMiddleware } = require( 'http-proxy-middleware' )
+
 exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
   let setupComplete = await setupCheck( )
-  debug( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
+  debug( 'speckle:info' )( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
 
-  app.use( '/', express.static( `${root}/frontend/dist` ) )
-  app.all( '*', async ( req, res ) => {
-    
-    try {
-      // refrehsing this variable on every request only if it's false  
-      if ( !setupComplete ) {
-        setupComplete = await setupCheck( )
+  if ( process.env.NODE_ENV === 'development' ) {
+    debug( 'speckle:http-startup' )( 'Proxying frontend (dev mode):' )
+    debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
+    debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/app` )
+    debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
+    debug( 'speckle:http-startup' )( `ℹ️  Don't forget to run npm run dev:frontend too in a different terminal.` )
+    const frontendProxy = createProxyMiddleware( { target: 'http://localhost:8080', changeOrigin: true, ws: false, logLevel: 'silent' } )
+    app.use( '/', frontendProxy )
+  } else {
+
+    app.use( '/', express.static( `${root}/frontend/dist` ) )
+
+    app.all( '/auth*', async ( req, res ) => {
+      try {
+        res.sendFile( `${root}/frontend/dist/auth.html` )
+      } catch ( err ) {
+
       }
-      
-      if ( setupComplete ) {
-        res.sendFile( `${root}/frontend/dist/app.html` )
-      } else {
-        res.sendFile( `${root}/frontend/dist/setup.html` )
+    } )
+
+    app.all( '*', async ( req, res ) => {
+
+      try {
+        // refrehsing this variable on every request only if it's false  
+        if ( !setupComplete ) {
+          setupComplete = await setupCheck( )
+        }
+
+        if ( setupComplete ) {
+          res.sendFile( `${root}/frontend/dist/app.html` )
+        } else {
+          res.sendFile( `${root}/frontend/dist/setup.html` )
+        }
+      } catch ( error ) {
+        res.json( { success: false, message: "Something went wrong" } )
       }
-    } catch ( error ) {
-      res.json( { success: false, message: "Something went wrong" } )
-    }
-  } );
+    } );
+  }
 
   let server = http.createServer( app )
 
   graphqlServer.installSubscriptionHandlers( server )
 
   server.on( 'listening', ( ) => {
+    debug( `  ` )
     debug( `Listening on ${server.address().port}` )
+    debug( `  ` )
   } )
 
   server.listen( port )
