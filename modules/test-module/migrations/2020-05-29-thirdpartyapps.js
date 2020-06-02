@@ -58,7 +58,8 @@ exports.up = async knex => {
   const scopes = await knex( 'scopes' ).select( '*' )
   const webAppScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'spklwebapp', scopeName: s.name } ) )
   await knex( 'server_apps_scopes' ).insert( webAppScopes )
-
+  const mockAppScopes = [ { appId: 'mock', scopeName: 'streams:read' }, { appId: 'mock', scopeName: 'streams:write' } ]
+  await knex( 'server_apps_scopes' ).insert( mockAppScopes )
 
 }
 

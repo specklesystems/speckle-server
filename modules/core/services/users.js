@@ -45,6 +45,12 @@ module.exports = {
     return user
   },
 
+  async getUserByEmail( { email } ) {
+    let user = await Users( ).where( { email: email } ).select( '*' ).first( )
+    delete user.passwordDigest
+    return user
+  },
+
   async getUserRole( id ) {
     let { role } = await ServerRoles( ).where( { userId: id } ).select( 'role' ).first( )
     return role

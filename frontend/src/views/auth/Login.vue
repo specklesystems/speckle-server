@@ -33,6 +33,16 @@ export default {
       try {
         let valid = this.$refs.form.validate( )
         if ( !valid ) throw new Error( 'Form validation failed' )
+        let result = await this.$apollo.mutate( {
+          mutation: gql ` mutation ($login: UserLoginInput!) { userLogin( user: $login ) }`,
+          variables: {
+            login: { email: this.form.email, password: this.form.password }
+          }
+        } )
+        console.log( result )
+        let token = result.data.userLogin
+        onLogin( this.$apolloProvider.clients.defaultClient, token )
+        
       } catch ( err ) {
         this.errorMessage = err.message
         this.registrationError = true

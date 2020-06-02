@@ -33,12 +33,12 @@
                         <v-expansion-panel-header>
                           Requested scopes
                           <template v-slot:actions>
-                            <v-icon color="primary">mdi-alert-circle</v-icon>
+                            <v-icon color="accent">mdi-alert-circle</v-icon>
                           </template>
                         </v-expansion-panel-header>
                         <v-expansion-panel-content>
                           <ul class='my-3'>
-                            <template v-for='scope in serverInfo.scopes'>
+                            <template v-for='scope in serverApp.scopes'>
                               <li :key='scope.name'>
                                 <b>{{scope.name}}</b>: {{scope.description}}
                               </li>
@@ -82,12 +82,22 @@ import debounce from 'lodash.debounce'
 export default {
   name: 'AppAuth',
   apollo: {
-    profile: {
+    user: {
       query: gql `query { user { name company } }`,
       error( err ) {
         console.log( 'Error retrieving profile!' )
         // console.log( err )
         this.loggedIn = false
+      },
+      result( { data, loading, networkStatus } ) {
+        if ( data.user ) {
+          this.loggedIn = true
+        } else {
+          this.loggedIn = false
+        }
+        console.log( data )
+        console.log( loading )
+        console.log( networkStatus )
       }
     },
     serverInfo: {
@@ -108,16 +118,17 @@ export default {
       'Google',
     ],
     appId: null,
-    serverApp: { name: 'App Name', author: 'Acme Inc', firstparty: false },
+    serverApp: { name: 'App Name', author: 'Acme Inc', firstparty: false, scopes: [ ] },
     loggedIn: null,
     profile: { user: null },
     user: { profile: null },
   } ),
-  methods: {},
+  methods: {
+    
+  },
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
     this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
-    // console.log( this.$router.history.current.query )
   }
 
 }

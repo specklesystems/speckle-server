@@ -1,7 +1,7 @@
 'use strict'
 const root = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
-const { createUser, getUser, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
+const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
 const { createToken, createTokenForApp, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const setupCheck = require( `${root}/setupcheck` )
@@ -53,11 +53,14 @@ module.exports = {
     async userLogin( parent, args, context, info ) {
       if ( process.env.STRATEGY_LOCAL !== 'true' )
         throw new ApolloError( 'Registration method not available' )
-      
-      let res = await validatePasssword( args )
-      let token = await createTokenForApp( { userId, appId: 'spklwebapp' } )
-      
-      return token
+      try {
+        let res = await validatePasssword( args.user )
+        let { id: userId } = await getUserByEmail( { email: args.user.email } )
+        let token = await createTokenForApp( { userId, appId: 'spklwebapp' } )
+        return token
+      } catch ( err ) {
+        throw new Error( 'Login failed' )
+      }
     },
     async userCreate( parent, args, context, info ) {
       let setupComplete = await setupCheck( )

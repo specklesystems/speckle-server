@@ -22,7 +22,7 @@ module.exports = {
   devServer: {
     historyApiFallback: {
       rewrites: [
-        { from: /\/app/, to: '/app.html' },
+        { from: /^\/$/, to: '/app.html' },
         { from: /\/auth/, to: '/auth.html' },
         { from: /\/setup/, to: '/setup.html' }
       ]
