@@ -11,14 +11,15 @@
                 <v-row style='margin-top:-10px;' dense>
                   <v-col cols=12>
                     <p class='title font-weight-light text-center'>
-                      Sign in to
-                      <v-tooltip bottom>
+                      Signing in to
+                      <!-- <v-tooltip bottom>
                         <template v-slot:activator="{ on }">
                           <b v-on="on">Speckle</b>
                         </template>
                         {{serverInfo.name}} <b>deployed by</b> {{serverInfo.company}}
-                      </v-tooltip>
-                      <br><span class='caption'>to continue to</span><br><b>{{serverApp.name}}</b>&nbsp;&nbsp;
+                      </v-tooltip> -->
+                      <!-- <span class='caption'>to continue to</span> -->
+                      <b>{{serverApp.name}}</b>&nbsp;&nbsp;
                       <v-tooltip bottom v-if='serverApp.firstparty'>
                         <template v-slot:activator="{ on }">
                           <v-icon color='accent' style='margin-top:-6px' v-on="on">mdi-shield-check</v-icon>
@@ -102,13 +103,15 @@ export default {
     currentUrl: window.location.origin,
     serverInfo: { name: 'Loading', },
     strategies: [
-      'Local',
+      'TODO:...',
       'Github',
       'Google',
     ],
     appId: null,
     serverApp: { name: 'App Name', author: 'Acme Inc', firstparty: false },
     loggedIn: null,
+    profile: { user: null },
+    user: { profile: null },
   } ),
   methods: {},
   mounted( ) {

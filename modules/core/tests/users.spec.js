@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 const knex = require( `${root}/db/knex` )
 
 const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
-const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
+const { createToken, createTokenForApp, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 
 describe( 'Actors & Tokens', ( ) => {
   let myTestActor = {
@@ -77,7 +77,7 @@ describe( 'Actors & Tokens', ( ) => {
 
       await updateUser( myTestActor.id, updatedActor )
 
-      let match = await validatePasssword( myTestActor.id, 'failwhale' )
+      let match = await validatePasssword( { email: myTestActor.email, password: 'failwhale' } )
       expect( match ).to.equal( false )
     } )
 
@@ -89,9 +89,9 @@ describe( 'Actors & Tokens', ( ) => {
       actor.name = 'Bob Gates'
       let id = await createUser( actor )
 
-      let match = await validatePasssword( id, 'super-test-200' )
+      let match = await validatePasssword( { email: actor.email, password: 'super-test-200' } )
       expect( match ).to.equal( true )
-      let match_wrong = await validatePasssword( id, 'super-test-2000' )
+      let match_wrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' })
       expect( match_wrong ).to.equal( false )
 
     } )
@@ -119,6 +119,11 @@ describe( 'Actors & Tokens', ( ) => {
       expect( myFirstToken ).to.have.lengthOf( 42 )
     } )
 
+    it( 'Should create an api token for an app', async ( ) => {
+      let test = await createTokenForApp( { userId: myTestActor.id, appId: 'spklwebapp' } )
+      expect( test ).to.have.lengthOf( 42 )
+    } )
+
     it( 'Should validate a token', async ( ) => {
       let res = await validateToken( pregeneratedToken )
       expect( res ).to.have.property( 'valid' )
@@ -144,7 +149,7 @@ describe( 'Actors & Tokens', ( ) => {
     it( 'Should get the tokens of an user', async ( ) => {
       let userTokens = await getUserTokens( myTestActor.id )
       expect( userTokens ).to.be.an( 'array' )
-      expect( userTokens ).to.have.lengthOf( 2 )
+      expect( userTokens ).to.have.lengthOf( 3 )
     } )
   } )
 

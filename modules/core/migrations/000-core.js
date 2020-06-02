@@ -69,7 +69,6 @@ exports.up = async knex => {
     table.index( [ 'tokenId', 'scopeName' ], 'token_scope_combined_idx' )
   } )
 
-
   // Streams Table
   await knex.schema.createTable( 'streams', table => {
     table.string( 'id', 10 ).primary( )

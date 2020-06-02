@@ -58,8 +58,8 @@ module.exports = {
     await Users( ).where( { id: id } ).update( user )
   },
 
-  async validatePasssword( userId, password ) {
-    var { passwordDigest } = await Users( ).where( { id: userId } ).select( 'passwordDigest' ).first( )
+  async validatePasssword( { email, password } ) {
+    var { passwordDigest } = await Users( ).where( { email: email } ).select( 'passwordDigest' ).first( )
     return bcrypt.compare( password, passwordDigest )
   },
 

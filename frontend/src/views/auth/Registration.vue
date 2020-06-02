@@ -79,7 +79,7 @@ export default {
         console.log( result.data.userCreate )
 
         onLogin( this.$apolloProvider.clients.defaultClient, result.data.userCreate )
-
+        this.$emit( 'completed' )
       } catch ( err ) {
         this.errorMessage = err.message
         this.registrationError = true

@@ -26,7 +26,11 @@ type User {
 
 extend type Mutation {
   """
-  Local registration. Disabled if STRATEGY_LOCAL is set to false.
+  Local user login strategy. Disabled if STRATEGY_LOCAL is set to false.
+  """
+  userLogin(user: UserLoginInput!): String
+  """
+  Local user registration strategy. Disabled if STRATEGY_LOCAL is set to false.
   """
   userCreate(user: UserCreateInput!): String
   """
@@ -42,6 +46,11 @@ extend type Mutation {
 input UserCreateInput {
   name: String!
   username: String!
+  email: String!
+  password: String!
+}
+
+input UserLoginInput {
   email: String!
   password: String!
 }

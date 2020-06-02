@@ -6,9 +6,11 @@ const knex = require( `${root}/db/knex` )
 
 const Users = ( ) => knex( 'users' )
 const Keys = ( ) => knex( 'api_tokens' )
-const AppScopes = ( ) => knex( 'scopes' )
+
 const TokenScopes = ( ) => knex( 'token_scopes' )
 const ServerRoles = ( ) => knex( 'server_acl' )
+const ServerApps = ( ) => knex( 'server_apps' )
+const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
 
 module.exports = {
 
@@ -38,8 +40,20 @@ module.exports = {
     return tokenId + tokenString
   },
 
-  async createTokenForApp( { userId, } ) {
+  async createTokenForApp( { userId, appId, lifespan } ) {
+    let tokenId = crs( { length: 10 } )
+    let tokenString = crs( { length: 32 } )
+    let tokenHash = await bcrypt.hash( tokenString, 10 )
+    let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
 
+    let scopes = await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: appId } )
+
+    let tRes = await Keys( ).returning( 'id' ).insert( { id: tokenId, tokenDigest: tokenHash, lastChars: lastChars, owner: userId, name: `${userId}-${appId}`, lifespan: lifespan } )
+
+    let token_scopes = scopes.map( scope => ( { tokenId: tokenId, scopeName: scope.scopeName } ) )
+    let tsRes = await TokenScopes( ).insert( token_scopes )
+
+    return tokenId + tokenString
   },
 
   async validateToken( tokenString ) {

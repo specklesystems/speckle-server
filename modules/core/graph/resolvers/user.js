@@ -2,7 +2,7 @@
 const root = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
 const { createUser, getUser, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
-const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
+const { createToken, createTokenForApp, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const setupCheck = require( `${root}/setupcheck` )
 const zxcvbn = require( 'zxcvbn' )
@@ -50,19 +50,30 @@ module.exports = {
       await updateUser( context.userId, args.user )
       return true
     },
+    async userLogin( parent, args, context, info ) {
+      if ( process.env.STRATEGY_LOCAL !== 'true' )
+        throw new ApolloError( 'Registration method not available' )
+      
+      let res = await validatePasssword( args )
+      let token = await createTokenForApp( { userId, appId: 'spklwebapp' } )
+      
+      return token
+    },
     async userCreate( parent, args, context, info ) {
       let setupComplete = await setupCheck( )
       if ( setupComplete && process.env.STRATEGY_LOCAL !== 'true' )
         throw new ApolloError( 'Registration method not available' )
 
-      let res = zxcvbn( args.user.password )
-      
-      if ( res.score < 3 ) throw new ApolloError( `Password too weak (score: ${res.score})` )
+      let passwordStrengthCheck = zxcvbn( args.user.password )
+
+      if ( passwordStrengthCheck.score < 3 ) throw new ApolloError( `Password too weak (score: ${passwordStrengthCheck.score})` )
 
       let userId = await createUser( args.user )
-      let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )
-      return token
 
+      // let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )
+      let token = await createTokenForApp( { userId, appId: 'spklwebapp' } )
+
+      return token
     },
     async userCreateAdmin( parent, args, context, info ) {
       let setupComplete = await setupCheck( )

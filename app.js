@@ -64,14 +64,16 @@ exports.startHttp = async ( app ) => {
   app.set( 'port', port )
 
   let setupComplete = await setupCheck( )
-  debug( 'speckle:info' )( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
+  
+  if ( process.env.NODE_ENV !== 'development' )
+    debug( 'speckle:info' )( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
 
   if ( process.env.NODE_ENV === 'development' ) {
     debug( 'speckle:http-startup' )( 'Proxying frontend (dev mode):' )
     debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
     debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/app` )
     debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
-    debug( 'speckle:http-startup' )( `ℹ️  Don't forget to run npm run dev:frontend too in a different terminal.` )
+    debug( 'speckle:hint' )( `ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
     const frontendProxy = createProxyMiddleware( { target: 'http://localhost:8080', changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
   } else {
