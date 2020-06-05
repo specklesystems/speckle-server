@@ -5,7 +5,8 @@ const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
 const Users = ( ) => knex( 'users' )
-const Keys = ( ) => knex( 'api_tokens' )
+const ApiTokens = ( ) => knex( 'api_tokens' )
+const PersonalApiTokens = ( ) => knex( 'personal_api_tokens' )
 
 const TokenScopes = ( ) => knex( 'token_scopes' )
 const ServerRoles = ( ) => knex( 'server_acl' )
@@ -22,45 +23,53 @@ module.exports = {
 
    */
 
-  async createToken( userId, name, scopes, lifespan ) {
+  async createBareToken( ) {
     let tokenId = crs( { length: 10 } )
     let tokenString = crs( { length: 32 } )
     let tokenHash = await bcrypt.hash( tokenString, 10 )
+    let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
+
+    return { tokenId, tokenString, tokenHash, lastChars }
+  },
+
+  async createToken( { userId, name, scopes, lifespan } ) {
+
+    let { tokenId, tokenString, tokenHash, lastChars } = await module.exports.createBareToken( )
 
     if ( scopes.length === 0 ) throw new Error( 'No scopes provided' )
 
-    let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
+    let token = {
+      id: tokenId,
+      tokenDigest: tokenHash,
+      lastChars: lastChars,
+      owner: userId,
+      name: name,
+      lifespan: lifespan
+    }
+    let tokenScopes = scopes.map( scope => ( { tokenId: tokenId, scopeName: scope } ) )
 
-    let tRes = await Keys( ).returning( 'id' ).insert( { id: tokenId, tokenDigest: tokenHash, lastChars: lastChars, owner: userId, name: name, lifespan: lifespan } )
+    await ApiTokens( ).insert( token )
+    await TokenScopes( ).insert( tokenScopes )
 
-    let token_scopes = scopes.map( scope => ( { tokenId: tokenId, scopeName: scope } ) )
-
-    let tsRes = await TokenScopes( ).insert( token_scopes )
-
-    return tokenId + tokenString
+    return { id: tokenId, token: tokenId + tokenString }
   },
 
-  async createTokenForApp( { userId, appId, lifespan } ) {
-    let tokenId = crs( { length: 10 } )
-    let tokenString = crs( { length: 32 } )
-    let tokenHash = await bcrypt.hash( tokenString, 10 )
-    let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
+  // Creates a personal access token for a user with a set of given scopes. 
+  async createPersonalAccessToken( userId, name, scopes, lifespan ) {
 
-    let scopes = await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: appId } )
+    let { id, token } = await module.exports.createToken( { userId, name, scopes, lifespan } )
 
-    let tRes = await Keys( ).returning( 'id' ).insert( { id: tokenId, tokenDigest: tokenHash, lastChars: lastChars, owner: userId, name: `${userId}-${appId}`, lifespan: lifespan } )
+    // Store the relationship 
+    await PersonalApiTokens( ).insert( { userId: userId, tokenId: id } )
 
-    let token_scopes = scopes.map( scope => ( { tokenId: tokenId, scopeName: scope.scopeName } ) )
-    let tsRes = await TokenScopes( ).insert( token_scopes )
-
-    return tokenId + tokenString
+    return token
   },
 
   async validateToken( tokenString ) {
     let tokenId = tokenString.slice( 0, 10 )
     let tokenContent = tokenString.slice( 10, 42 )
 
-    let token = await Keys( ).where( { id: tokenId } ).select( '*' ).first( )
+    let token = await ApiTokens( ).where( { id: tokenId } ).select( '*' ).first( )
 
     if ( !token ) {
       return { valid: false }
@@ -75,7 +84,7 @@ module.exports = {
     let valid = await bcrypt.compare( tokenContent, token.tokenDigest )
 
     if ( valid ) {
-      await Keys( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )
+      await ApiTokens( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )
       let scopes = await TokenScopes( ).select( 'scopeName' ).where( { tokenId: tokenId } )
       let { role } = await ServerRoles( ).select( 'role' ).where( { userId: token.owner } ).first( )
       return { valid: true, userId: token.owner, role: role, scopes: scopes.map( s => s.scopeName ) }
@@ -85,15 +94,25 @@ module.exports = {
 
   async revokeToken( tokenId, userId ) {
     tokenId = tokenId.slice( 0, 10 )
-    let token = await Keys( ).where( { id: tokenId } ).select( "*" )
-    let delCount = await Keys( ).where( { id: tokenId, owner: userId } ).del( )
+    let token = await ApiTokens( ).where( { id: tokenId } ).select( "*" )
+    let delCount = await ApiTokens( ).where( { id: tokenId, owner: userId } ).del( )
 
     if ( delCount === 0 )
       throw new Error( 'Did not revoke token' )
     return true
   },
 
+  async revokeTokenById( tokenId ) {
+    let delCount = await ApiTokens( ).where( { id: tokenId.slice( 0, 10 ) } ).del( )
+
+    if ( delCount === 0 )
+      throw new Error( 'Token revokation failed' )
+    return true
+  },
+
+
   async getUserTokens( userId ) {
+    // TODO: Change logic to use the JN table PersonalApiTokens
     let { rows } = await knex.raw( `
       SELECT t.id, t.name, tt.scopes
       FROM api_tokens t
@@ -106,5 +125,9 @@ module.exports = {
       WHERE t."owner" = ?
     `, [ userId ] )
     return rows
+  },
+
+  async getTokenScopes( tokenId ) {
+
   }
 }

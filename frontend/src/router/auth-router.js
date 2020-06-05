@@ -12,6 +12,10 @@ const routes = [ {
   path: '/auth/register',
   name: 'Register',
   component: ( ) => import( '../views/auth/Registration.vue' )
+}, {
+  path: '/auth/finalize',
+  name: 'AuthorizeApp',
+  component: ( ) => import( '../views/auth/AuthorizeApp.vue' )
 } ]
 
 const router = new VueRouter( {

@@ -56,6 +56,11 @@ exports.up = async knex => {
     table.timestamp( 'lastUsed' ).defaultTo( knex.fn.now( ) )
   } )
 
+  await knex.schema.createTable( 'personal_api_tokens', table => {
+    table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).onDelete( 'cascade' )
+    table.string( 'userId' ).references( 'id' ).inTable( 'users' ).onDelete( 'cascade' )
+  } )
+
   // Registered application scopes table.
   await knex.schema.createTable( 'scopes', table => {
     table.string( 'name' ).primary( )
@@ -179,6 +184,7 @@ exports.down = async knex => {
 
   await knex.schema.dropTableIfExists( 'token_scopes' )
   await knex.schema.dropTableIfExists( 'scopes' )
+  await knex.schema.dropTableIfExists( 'personal_api_tokens' )
   await knex.schema.dropTableIfExists( 'api_tokens' )
   await knex.schema.dropTableIfExists( 'users' )
 

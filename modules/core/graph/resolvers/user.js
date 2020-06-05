@@ -2,7 +2,7 @@
 const root = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
 const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
-const { createToken, createTokenForApp, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
+const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 const setupCheck = require( `${root}/setupcheck` )
 const zxcvbn = require( 'zxcvbn' )
@@ -54,12 +54,12 @@ module.exports = {
       if ( process.env.STRATEGY_LOCAL !== 'true' )
         throw new ApolloError( 'Registration method not available' )
       try {
-        let res = await validatePasssword( args.user )
-        let { id: userId } = await getUserByEmail( { email: args.user.email } )
-        let token = await createTokenForApp( { userId, appId: 'spklwebapp' } )
+        let res = await validatePasssword( { email: args.email, password: args.password } )
+        let { id: userId } = await getUserByEmail( { email: args.email } )
+        let token = await createAppToken( { userId, appId: 'spklwebapp' } )
         return token
       } catch ( err ) {
-        throw new Error( 'Login failed' )
+        throw new Error( 'Login failed' + err.message )
       }
     },
     async userCreate( parent, args, context, info ) {
@@ -67,23 +67,17 @@ module.exports = {
       if ( setupComplete && process.env.STRATEGY_LOCAL !== 'true' )
         throw new ApolloError( 'Registration method not available' )
 
-      let passwordStrengthCheck = zxcvbn( args.user.password )
-
-      if ( passwordStrengthCheck.score < 3 ) throw new ApolloError( `Password too weak (score: ${passwordStrengthCheck.score})` )
+      if ( zxcvbn( args.user.password ).score < 3 ) throw new ApolloError( `Password too weak` )
 
       let userId = await createUser( args.user )
-
-      // let token = await createToken( userId, "Default Token", [ 'streams:read', 'streams:write' ] )
-      let token = await createTokenForApp( { userId, appId: 'spklwebapp' } )
-
-      return token
+      return true
     },
     async userCreateAdmin( parent, args, context, info ) {
       let setupComplete = await setupCheck( )
       if ( setupComplete ) throw new ApolloError( 'Registration method not available' )
 
       let userId = await createUser( args.user )
-      let token = await createToken( userId, "Default Token", [ 'server:setup', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
+      let token = await createPersonalAccessToken( userId, "Default Token", [ 'server:setup', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
 
       return token
     }

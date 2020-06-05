@@ -28,21 +28,22 @@ import { onLogin } from '../../vue-apollo'
 import debounce from 'lodash.debounce'
 export default {
   name: 'Login',
+  apollo: {
+  },
   methods: {
     async loginUser( ) {
       try {
         let valid = this.$refs.form.validate( )
         if ( !valid ) throw new Error( 'Form validation failed' )
+        
         let result = await this.$apollo.mutate( {
-          mutation: gql ` mutation ($login: UserLoginInput!) { userLogin( user: $login ) }`,
-          variables: {
-            login: { email: this.form.email, password: this.form.password }
-          }
+          mutation: gql ` mutation { userLogin( email:"${this.form.email}", password: "${this.form.password}" ) }`,
         } )
-        console.log( result )
+        
         let token = result.data.userLogin
         onLogin( this.$apolloProvider.clients.defaultClient, token )
         
+        this.$emit( 'loggedin' )
       } catch ( err ) {
         this.errorMessage = err.message
         this.registrationError = true
@@ -60,6 +61,12 @@ export default {
     },
     registrationError: false,
     errorMessage: '',
-  } )
+    appId: null,
+    serverApp: null
+  } ),
+  mounted( ) {
+    let urlParams = new URLSearchParams( window.location.search )
+    this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
+  }
 }
 </script>

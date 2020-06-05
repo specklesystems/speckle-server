@@ -3,60 +3,42 @@
     <v-container fluid fill-height>
       <v-row align='center' justify='center'>
         <v-col xs='10' sm='8' md='6' lg='4' class=''>
-          <p class="caption">Hello auth wrapper. Loggedin {{loggedIn}}</p>
+          <!-- <p class="caption">Hello auth wrapper. Loggedin {{loggedIn}}</p> -->
           <v-card class='elevation-20'>
             <v-img class="white--text align-end" height="200px" src="./assets/s2logo-wide.svg"></v-img>
             <v-card-text class='pa-1'>
               <v-container fluid>
                 <v-row style='margin-top:-10px;' dense>
                   <v-col cols=12>
-                    <p class='title font-weight-light text-center'>
-                      Signing in to
-                      <!-- <v-tooltip bottom>
-                        <template v-slot:activator="{ on }">
-                          <b v-on="on">Speckle</b>
-                        </template>
-                        {{serverInfo.name}} <b>deployed by</b> {{serverInfo.company}}
-                      </v-tooltip> -->
-                      <!-- <span class='caption'>to continue to</span> -->
-                      <b>{{serverApp.name}}</b>&nbsp;&nbsp;
+                    <p class='title font-weight-light text-center' v-if='serverApp.firstparty'>
+                      Signing in to <b>{{serverApp.name}}</b>&nbsp;&nbsp;
                       <v-tooltip bottom v-if='serverApp.firstparty'>
                         <template v-slot:activator="{ on }">
                           <v-icon color='accent' style='margin-top:-6px' v-on="on">mdi-shield-check</v-icon>
                         </template>
                         <span>Verified application.</span>
                       </v-tooltip>
-                      <span v-else>by <b>{{serverApp.author}}</b></span>
                     </p>
-                    <v-expansion-panels hover tile small v-show='!serverApp.firstparty'>
-                      <v-expansion-panel>
-                        <v-expansion-panel-header>
-                          Requested scopes
-                          <template v-slot:actions>
-                            <v-icon color="accent">mdi-alert-circle</v-icon>
-                          </template>
-                        </v-expansion-panel-header>
-                        <v-expansion-panel-content>
-                          <ul class='my-3'>
-                            <template v-for='scope in serverApp.scopes'>
-                              <li :key='scope.name'>
-                                <b>{{scope.name}}</b>: {{scope.description}}
-                              </li>
-                            </template>
-                          </ul>
-                        </v-expansion-panel-content>
-                      </v-expansion-panel>
-                    </v-expansion-panels>
+                    <p class='title font-weight-light text-center' v-if='!serverApp.firstparty && !loggedIn'>
+                      You need to sign in first<br>to authorize <span class='accent--text'><b>{{serverApp.name}}</b></span> by <b>{{serverApp.author}}.</b>
+                      <!-- <b>{{serverApp.name}}</b> by {{serverApp.author}} by signing in to Speckle ({{serverInfo.name}}). -->
+                    </p>
                   </v-col>
                 </v-row>
               </v-container>
-              <!-- <v-btn block class='my-3 primary'>Allow</v-btn>
-                <v-btn small outlined block class='my-3' :href='`mailto:security@speckle.systems?cc=${serverInfo.adminContact}&subject=Suspicious third party app: ${serverApp.name}&body=Server: ${serverInfo.name} : ${serverInfo.company} : ${currentUrl}`'>Report</v-btn> -->
+              <!-- <transition name="fade-transition"> -->
               <router-view></router-view>
-              <div class='text-center'>or sign in with:</div>
-              <template v-for='s in strategies'>
-                <v-btn block color='' :key='s' class='my-2'>{{s}}</v-btn>
-              </template>
+              <!-- </transition> -->
+              <v-container v-if='!this.loggedIn'>
+                <v-row>
+                  <v-col cols='12'>
+                    <div class='text-center'>or sign in with:</div>
+                    <template v-for='s in strategies'>
+                      <v-btn block color='' :key='s' class='my-2'>{{s}}</v-btn>
+                    </template>
+                  </v-col>
+                </v-row>
+              </v-container>
             </v-card-text>
             <v-divider></v-divider>
             <v-card-text class='blue-grey lighten-5'>
@@ -85,8 +67,6 @@ export default {
     user: {
       query: gql `query { user { name company } }`,
       error( err ) {
-        console.log( 'Error retrieving profile!' )
-        // console.log( err )
         this.loggedIn = false
       },
       result( { data, loading, networkStatus } ) {
@@ -95,9 +75,6 @@ export default {
         } else {
           this.loggedIn = false
         }
-        console.log( data )
-        console.log( loading )
-        console.log( networkStatus )
       }
     },
     serverInfo: {
@@ -105,11 +82,25 @@ export default {
     },
     serverApp: {
       query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
-      skip( ) { return this.appId === null }
+      skip( ) { return this.appId === null },
+      result( { data, loading, networkStatus } ) {
+        if ( data )
+          this.proceedToAuthorization( )
+      },
+      error( ) {
+        console.log( 'Error: No such application' )
+      }
+    }
+  },
+  watch: {
+    loggedIn( newValue, oldValue ) {
+      if ( newValue )
+        this.proceedToAuthorization( )
     }
   },
   components: {},
   data: ( ) => ( {
+    panel: [ 0 ],
     currentUrl: window.location.origin,
     serverInfo: { name: 'Loading', },
     strategies: [
@@ -118,13 +109,38 @@ export default {
       'Google',
     ],
     appId: null,
-    serverApp: { name: 'App Name', author: 'Acme Inc', firstparty: false, scopes: [ ] },
+    serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },
     loggedIn: null,
     profile: { user: null },
     user: { profile: null },
   } ),
   methods: {
-    
+    proceedToAuthorization( ) {
+      console.log( 'proceedToAuthorization ' )
+      if ( this.serverApp === null || this.serverApp.firstparty === null ) return
+      if ( this.loggedIn === false ) return
+      console.log( 'Actually proceeding' )
+
+      if ( this.appId === 'spklwebapp' ) {
+        console.log( 'just redirect to "self"' )
+        window.location.replace( window.location.origin )
+        return
+      }
+      if ( this.serverApp.firstparty ) {
+        // Bypass authorization screen.
+        // 1) Create token for app (API CALL: Authorize App)
+        // 2) Redirect to app url with token body
+        console.log( 'just redirect fast-ish, it is a firstparty app' )
+        return
+      }
+
+      if ( this.$route.name !== "AuthorizeApp" ) {
+        let urlParams = new URLSearchParams( window.location.search )
+        this.$router.push( { name: "AuthorizeApp", query: { appId: urlParams.get( 'appId' ) } } )
+      }
+
+
+    }
   },
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )

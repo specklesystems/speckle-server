@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 const knex = require( `${root}/db/knex` )
 
 const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
-const { createToken, createTokenForApp, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
+const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 
 describe( 'Actors & Tokens', ( ) => {
   let myTestActor = {
@@ -105,24 +105,24 @@ describe( 'Actors & Tokens', ( ) => {
     let expireSoonToken
 
     before( async ( ) => {
-      pregeneratedToken = await createToken( myTestActor.id, 'Whabadub', [ 'streams:read', 'streams:write', 'profile:read', 'users:email' ] )
-      revokedToken = await createToken( myTestActor.id, 'Mr. Revoked', [ 'streams:read' ] )
-      someOtherToken = await createToken( otherUser.id, 'Hello World', [ 'streams:write' ] )
-      expireSoonToken = await createToken( myTestActor.id, 'Mayfly', [ 'streams:read' ], 1 ) // 1ms lifespan
+      pregeneratedToken = await createPersonalAccessToken( myTestActor.id, 'Whabadub', [ 'streams:read', 'streams:write', 'profile:read', 'users:email' ] )
+      revokedToken = await createPersonalAccessToken( myTestActor.id, 'Mr. Revoked', [ 'streams:read' ] )
+      someOtherToken = await createPersonalAccessToken( otherUser.id, 'Hello World', [ 'streams:write' ] )
+      expireSoonToken = await createPersonalAccessToken( myTestActor.id, 'Mayfly', [ 'streams:read' ], 1 ) // 1ms lifespan
     } )
 
-    it( 'Should create an api token', async ( ) => {
+    it( 'Should create an personal api token', async ( ) => {
       let scopes = [ 'streams:write', 'profile:read' ]
       let name = 'My Test Token'
 
-      myFirstToken = await createToken( myTestActor.id, name, scopes )
+      myFirstToken = await createPersonalAccessToken( myTestActor.id, name, scopes )
       expect( myFirstToken ).to.have.lengthOf( 42 )
     } )
 
-    it( 'Should create an api token for an app', async ( ) => {
-      let test = await createTokenForApp( { userId: myTestActor.id, appId: 'spklwebapp' } )
-      expect( test ).to.have.lengthOf( 42 )
-    } )
+    // it( 'Should create an api token for an app', async ( ) => {
+    //   let test = await createAppToken( { userId: myTestActor.id, appId: 'spklwebapp' } )
+    //   expect( test ).to.have.lengthOf( 42 )
+    // } )
 
     it( 'Should validate a token', async ( ) => {
       let res = await validateToken( pregeneratedToken )
@@ -149,7 +149,7 @@ describe( 'Actors & Tokens', ( ) => {
     it( 'Should get the tokens of an user', async ( ) => {
       let userTokens = await getUserTokens( myTestActor.id )
       expect( userTokens ).to.be.an( 'array' )
-      expect( userTokens ).to.have.lengthOf( 3 )
+      expect( userTokens ).to.have.lengthOf( 2 )
     } )
   } )
 

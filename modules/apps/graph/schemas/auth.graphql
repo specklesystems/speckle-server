@@ -1,0 +1,45 @@
+extend type Query {
+  serverApp( id: String! ): ServerApp
+}
+
+type ServerApp {
+  id: String!
+  name: String!
+  author: String!
+  ownerId: String
+  createdAt: String!
+  firstparty: Boolean!
+  redirectUrl: String!
+  scopes: [Scope]
+}
+
+extend type User {
+  """
+  Apps used by this user.
+  """
+  apps: [ServerApp]
+}
+
+extend type Mutation {
+    """
+    Authorizes an app on behalf of a user. Returns an access code that can be exchanged 
+    by the application for an api token.
+    """
+    appAuthorize( appId: String!, challenge: String! ): String!
+    """
+    Exchanges an access code for an api token.
+    """
+    appGetToken( appId: String!, appSecret: String!, accesCode: String!, challenge: String! ): AppTokenResponse!
+    """
+    Refreshes an expired token.
+    """
+    appRefreshToken( appId: String, appSecret:String!, refreshToken: String! ): AppTokenResponse!
+}
+
+type AppTokenResponse {
+  """
+  The actual bearer token.
+  """
+  token: String!
+  refreshToken: String!
+}

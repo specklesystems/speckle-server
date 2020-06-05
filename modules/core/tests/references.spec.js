@@ -10,7 +10,7 @@ const expect = chai.expect
 chai.use( chaiHttp )
 
 
-const { createUser, createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
+const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
 const { createObject, createCommit, createObjects, getObject, getObjects } = require( '../services/objects' )
 const {

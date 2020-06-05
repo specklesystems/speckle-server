@@ -1,6 +1,6 @@
 extend type User{ 
   """
-  The api tokens of this user.
+  Returns a list of your personal api tokens.
   """
   apiTokens: [ApiToken]
 }
@@ -17,11 +17,11 @@ type ApiToken {
 
 extend type Mutation { 
   """
-  Creates an api token.
+  Creates an personal api token.
   """
   apiTokenCreate(scopes: [String!]!, name: String!, lifespan: BigInt):String!
   """
-  Revokes (deletes) an api token.
+  Revokes (deletes) an personal api token.
   """
   apiTokenRevoke(token: String!):Boolean!
 }

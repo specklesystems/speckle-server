@@ -2,7 +2,7 @@
 
 const root = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
-const { createToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
+const { createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
 
 module.exports = {
@@ -22,7 +22,7 @@ module.exports = {
     async apiTokenCreate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'tokens:write' )
-      return await createToken( context.userId, args.name, args.scopes, args.lifespan )
+      return await createPersonalAccessToken( context.userId, args.name, args.scopes, args.lifespan )
     },
     async apiTokenRevoke( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )

@@ -24,11 +24,11 @@
           <v-row no-gutters align='center'>
             <!-- <v-col cols='3' class='caption flex-shrink-1 flex-grow-0'>Strength:</v-col> -->
             <v-col cols='12' class='flex-grow-1 flex-shrink-0' style="min-width: 100px; max-width: 100%;">
-              <v-progress-linear v-show='true' class='mt-1 mb-0' v-model="passwordStrength" :color="`${passwordStrength >= 75 ? 'green' : passwordStrength >= 50 ? 'orange' : 'red' }`">
+              <v-progress-linear v-show='true' height=5 class='mt-1 mb-0' v-model="passwordStrength" :color="`${passwordStrength >= 75 ? 'green' : passwordStrength >= 50 ? 'orange' : 'red' }`">
               </v-progress-linear>
             </v-col>
-            <v-col cols='12' class='caption text-center'>
-              {{this.pwdSuggestions ? this.pwdSuggestions : this.form.password ? 'Looks good.' : 'Choose a good password!' }}
+            <v-col cols='12' class='caption text-center mt-3'>
+              {{this.pwdSuggestions ? this.pwdSuggestions : this.form.password ? 'Looks good.' : 'Password strength' }}
               <span v-if='this.form.password !== this.form.passwordConf'><b>Passwords do not match.</b></span>
             </v-col>
           </v-row>
@@ -56,6 +56,7 @@ import debounce from 'lodash.debounce'
 
 export default {
   name: 'Registration',
+  apollo: {},
   methods: {
     debouncedPwdTest: debounce( async function ( ) {
       let result = await this.$apollo.query( { query: gql ` query{ userPwdStrength(pwd:"${this.form.password}")}` } )
@@ -69,17 +70,22 @@ export default {
         if ( this.form.password !== this.form.passwordConf ) throw new Error( 'Passwords do not match' )
         if ( this.passwordStrength < 3 ) throw new Error( 'Password too weak' )
 
-        let result = await this.$apollo.mutate( {
+        let registerResult = await this.$apollo.mutate( {
           mutation: gql `mutation ($user: UserCreateInput!) { userCreate( user: $user ) }`,
           variables: {
             user: { name: `${this.form.firstName} ${this.form.lastName}`, username: `${this.form.firstName}${this.form.lastName}`, email: this.form.email, password: this.form.password }
           }
         } )
 
-        console.log( result.data.userCreate )
+        if ( !registerResult.data.userCreate ) throw new Error( 'Failed to register.' )
 
-        onLogin( this.$apolloProvider.clients.defaultClient, result.data.userCreate )
-        this.$emit( 'completed' )
+        let loginResult = await this.$apollo.mutate( {
+          mutation: gql ` mutation { userLogin( email:"${this.form.email}", password: "${this.form.password}" ) }`,
+        } )
+
+        onLogin( this.$apolloProvider.clients.defaultClient, loginResult.data.userLogin )
+        localStorage.setItem( 'onboarding', 'true' )
+        this.$emit( 'loggedin' )
       } catch ( err ) {
         this.errorMessage = err.message
         this.registrationError = true
@@ -110,8 +116,14 @@ export default {
       ],
     },
     passwordStrength: 1,
-    pwdSuggestions: null
-  } )
+    pwdSuggestions: null,
+    appId: null,
+    serverApp: null
+  } ),
+  mounted( ) {
+    let urlParams = new URLSearchParams( window.location.search )
+    this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
+  }
 
 }
 </script>
