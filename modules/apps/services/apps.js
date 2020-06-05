@@ -5,8 +5,10 @@ const root = require( 'app-root-path' )
 const knex = require( `${root}/db/knex` )
 
 const { createToken, createBareToken } = require( `${root}/modules/core/services/tokens` )
+const ApiTokens = ( ) => knex( 'api_tokens' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
+const ServerAppsTokens = ( ) => knex( 'user_server_app_tokens' )
 const Scopes = ( ) => knex( 'scopes' )
 
 const AuthorizationCodes = ( ) => knex( 'authorization_codes' )
@@ -72,7 +74,10 @@ module.exports = {
 
     const { token: appToken } = await createToken( { userId: code.userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: appScopes } )
 
+    await ServerAppsTokens( ).insert( { userId: code.userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
+
     let bareToken = await createBareToken( )
+
 
     let refreshToken = {
       id: bareToken.tokenId,
@@ -118,10 +123,15 @@ module.exports = {
     if ( app.secret !== appSecret )
       throw new Error( 'Invalid request' )
 
-    console.log( app )
-
     // Create the new token
     const { token: appToken } = await createToken( { userId: userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
+
+    // Delete previous token, if it exists
+    let previousToken = await ServerAppsTokens( ).select( 'tokenId' ).where( { appId: appId, userId: userId } ).first( )
+    if ( previousToken )
+      await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
+
+    await ServerAppsTokens( ).insert( { userId: userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
 
     // Create a new refresh token
     let bareToken = await createBareToken( )

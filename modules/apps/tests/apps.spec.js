@@ -93,9 +93,12 @@ describe( 'Apps', ( ) => {
   it( 'Should refresh the token using the refresh token, and get a fresh refresh token and token', async ( ) => {
     let res = await refreshAppToken( { refreshToken: tokenCreateResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret, userId: actor.id } )
 
-    console.log( res )
+    expect( res.token ).to.be.a( 'string' )
+    expect( res.refreshToken ).to.be.a( 'string' )
 
-
+    let validation = await validateToken( res.token )
+    expect( validation.valid ).to.equal( true )
+    expect( validation.userId ).to.equal( actor.id )
   } )
 
 
