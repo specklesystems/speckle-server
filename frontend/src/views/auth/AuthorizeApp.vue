@@ -7,6 +7,8 @@
             Authorize <span class='accent--text'><b>{{serverApp.name}}</b></span> by <b>{{serverApp.author}}</b>?
           </p>
           <p class='caption text-center'>Clicking allow will redirect you to <i>{{serverApp.redirectUrl }}</i></p>
+          {{appId}}<br>
+          {{token}} // DEBUG
         </div>
         <v-expansion-panels multiple hover tile flat small v-show='!serverApp.firstparty' v-model='panel'>
           <v-expansion-panel>
@@ -96,11 +98,13 @@ export default {
     errorMessage: '',
     appId: null,
     serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },
-    user: null
+    user: null,
+    token: null
   } ),
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
     this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
+    this.token = urlParams.get( 'token' )
   }
 }
 </script>

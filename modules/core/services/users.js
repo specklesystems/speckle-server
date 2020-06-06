@@ -39,6 +39,18 @@ module.exports = {
     return res[ 0 ]
   },
 
+  async findOrCreateUser( { user, rawProfile } ) {
+    let existingUser = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
+
+    if ( existingUser )
+      return existingUser
+
+    user.password = crs( { length: 20 } )
+    user.verified = true // because we trust the external identity provider, no?
+    console.log( user )
+    return await module.exports.createUser( user )
+  },
+
   async getUser( id ) {
     let user = await Users( ).where( { id: id } ).select( '*' ).first( )
     delete user.passwordDigest

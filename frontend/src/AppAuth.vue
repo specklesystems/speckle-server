@@ -34,7 +34,7 @@
                   <v-col cols='12'>
                     <div class='text-center'>or sign in with:</div>
                     <template v-for='s in strategies'>
-                      <v-btn block color='' :key='s' class='my-2'>{{s}}</v-btn>
+                      <v-btn block color='' :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}`'>{{s.name}}</v-btn>
                     </template>
                   </v-col>
                 </v-row>
@@ -104,9 +104,9 @@ export default {
     currentUrl: window.location.origin,
     serverInfo: { name: 'Loading', },
     strategies: [
-      'TODO:...',
-      'Github',
-      'Google',
+      { name: 'TODO:...', url: '' },
+      { name: 'Github', url: '/auth/gh' },
+      { name: 'Google', url: '' },
     ],
     appId: null,
     serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },

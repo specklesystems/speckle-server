@@ -43,7 +43,6 @@ exports.up = async knex => {
     table.string( 'appId' ).references( 'id' ).inTable( 'server_apps' ).notNullable( ).onDelete( 'cascade' ).index( )
     table.string( 'userId' ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' ).index( )
     table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).notNullable( ).onDelete( 'cascade' ).index( )
-    table.unique( [ 'appId', 'userId' ] )
   } )
 
 

@@ -55,9 +55,10 @@ module.exports = {
   async createAppTokenFromAccessCode( { appId, appSecret, accessCode, challenge } ) {
     let code = await AuthorizationCodes( ).select( ).where( { id: accessCode } ).first( )
 
+    await AuthorizationCodes( ).where( { id: accessCode } ).del( )
+    
     const timeDiff = Math.abs( Date.now( ) - new Date( code.createdAt ) )
     if ( timeDiff > code.lifespan ) {
-      await AuthorizationCodes( ).where( { id: accessCode } ).del( )
       throw new Error( 'Access code expired' )
     }
 
@@ -77,7 +78,6 @@ module.exports = {
     await ServerAppsTokens( ).insert( { userId: code.userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
 
     let bareToken = await createBareToken( )
-
 
     let refreshToken = {
       id: bareToken.tokenId,
@@ -127,9 +127,10 @@ module.exports = {
     const { token: appToken } = await createToken( { userId: userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
 
     // Delete previous token, if it exists
-    let previousToken = await ServerAppsTokens( ).select( 'tokenId' ).where( { appId: appId, userId: userId } ).first( )
-    if ( previousToken )
-      await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
+    // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc? 
+    // let previousToken = await ServerAppsTokens( ).select( 'tokenId' ).where( { appId: appId, userId: userId } ).first( )
+    // if ( previousToken )
+    //   await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
 
     await ServerAppsTokens( ).insert( { userId: userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
 
