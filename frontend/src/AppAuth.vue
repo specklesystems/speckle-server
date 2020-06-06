@@ -31,20 +31,21 @@
               <!-- </transition> -->
               <v-container v-if='!this.loggedIn'>
                 <v-row>
-                  <v-col cols='12'>
-                    <div class='text-center'>or sign in with:</div>
-                    <template v-for='s in strategies'>
-                      <v-btn block color='' :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}`'>{{s.name}}</v-btn>
-                    </template>
-                  </v-col>
+                  <template v-for='s in strategies'>
+                    <v-col cols='6' class='text-center py-0 my-0'>
+                      <!-- <div class='text-center'>or sign in with:</div> -->
+                      <v-btn block large tile :color='s.color' dark :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}`'>{{s.name}}</v-btn>
+                    </v-col>
+                  </template>
                 </v-row>
               </v-container>
             </v-card-text>
             <v-divider></v-divider>
             <v-card-text class='blue-grey lighten-5'>
-              <div>
-                <b>{{serverInfo.name}}</b> deployed by {{serverInfo.company}}
+              <div class='text-center'>
+                <b>{{serverInfo.name}}</b> <br>deployed by<br><b>{{serverInfo.company}}</b>
                 <br>
+                <v-divider class='my-2'></v-divider>
                 <b>Terms of Service:</b> {{serverInfo.termsOfService}}
                 <br>
                 <b>Support:</b> {{serverInfo.adminContact}}
@@ -78,7 +79,7 @@ export default {
       }
     },
     serverInfo: {
-      query: gql ` query { serverInfo { name company adminContact termsOfService scopes { name description } } } `,
+      query: gql ` query { serverInfo { name company adminContact termsOfService scopes { name description } authStrategies { id name color icon url } } }  `,
     },
     serverApp: {
       query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
@@ -92,6 +93,14 @@ export default {
       }
     }
   },
+  computed: {
+    hasLocalStrategy( ) {
+      return this.serverInfo.authStrategies.indexOf( s => s.name === 'local ' ) !== -1
+    },
+    strategies( ) {
+      return this.serverInfo.authStrategies.filter( s => s.name !== 'local' )
+    }
+  },
   watch: {
     loggedIn( newValue, oldValue ) {
       if ( newValue )
@@ -102,12 +111,7 @@ export default {
   data: ( ) => ( {
     panel: [ 0 ],
     currentUrl: window.location.origin,
-    serverInfo: { name: 'Loading', },
-    strategies: [
-      { name: 'TODO:...', url: '' },
-      { name: 'Github', url: '/auth/gh' },
-      { name: 'Google', url: '' },
-    ],
+    serverInfo: { name: 'Loading', authStrategies: [] },
     appId: null,
     serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },
     loggedIn: null,

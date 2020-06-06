@@ -20,6 +20,17 @@ extend type User {
   apps: [ServerApp]
 }
 
+extend type ServerInfo {
+  authStrategies: [AuthStrategy]
+}
+
+type AuthStrategy {
+  id: String!,
+  name: String!,
+  icon: String!,
+  url: String!,
+  color: String
+}
 extend type Mutation {
     """
     Authorizes an app on behalf of a user. Returns an access code that can be exchanged 

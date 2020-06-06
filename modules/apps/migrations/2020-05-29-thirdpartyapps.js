@@ -27,8 +27,8 @@ exports.up = async knex => {
   await knex.schema.createTable( 'refresh_tokens', table => {
     table.string( 'id' ).primary( )
     table.string( 'tokenDigest' ).notNullable( )
-    table.string( 'appId' ).references( 'id' ).inTable( 'server_apps' )
-    table.string( 'userId' ).references( 'id' ).inTable( 'users' )
+    table.string( 'appId' ).references( 'id' ).inTable( 'server_apps' ).onDelete( 'cascade' )
+    table.string( 'userId' ).references( 'id' ).inTable( 'users' ).onDelete( 'cascade' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.bigint( 'lifespan' ).defaultTo( 1.577e+10 ) // 6 months
   } )

@@ -7,8 +7,6 @@
             Authorize <span class='accent--text'><b>{{serverApp.name}}</b></span> by <b>{{serverApp.author}}</b>?
           </p>
           <p class='caption text-center'>Clicking allow will redirect you to <i>{{serverApp.redirectUrl }}</i></p>
-          {{appId}}<br>
-          {{token}} // DEBUG
         </div>
         <v-expansion-panels multiple hover tile flat small v-show='!serverApp.firstparty' v-model='panel'>
           <v-expansion-panel>

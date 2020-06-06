@@ -5,6 +5,10 @@ import Home from '../views/Home.vue'
 Vue.use( VueRouter )
 
 const routes = [ {
+  path: '/auth',
+  name: 'Login',
+  component: ( ) => import( '../views/auth/Login.vue' )
+},{
   path: '/auth/login',
   name: 'Login',
   component: ( ) => import( '../views/auth/Login.vue' )

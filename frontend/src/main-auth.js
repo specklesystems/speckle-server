@@ -11,11 +11,12 @@ let appId = urlParams.get( 'appId' ) || 'spklwebapp'
 let token = urlParams.get( 'token' )
 let refreshToken = urlParams.get( 'refreshToken' )
 
-console.log( 'main init' )
-console.log( `token: ${token}; appid: ${appId} ` )
-console.log( `main init end` )
 if ( token )
   localStorage.setItem( 'AuthToken', token )
+
+if ( refreshToken )
+  localStorage.setItem( 'RefreshToken', token )
+
 
 new Vue( {
   router,
