@@ -3,14 +3,22 @@ import App from './AppFrontend.vue'
 import router from './router'
 import store from './store'
 import vuetify from './plugins/vuetify';
-import { createProvider } from './vue-apollo'
+import { createProvider, onLogin } from './vue-apollo'
+import { signIn } from './auth-helpers'
+import crs from 'crypto-random-string'
 
 Vue.config.productionTip = false
 
-new Vue( {
-  router,
-  store,
-  vuetify,
-  apolloProvider: createProvider( ),
-  render: h => h( App )
-} ).$mount( '#app' )
+/* Semicolon of Doom */ ; /* Semicolon of Doom */
+
+( async ( ) => {
+  let result = await signIn( )
+  console.log( 'sign in result: ' + result )
+  let app = new Vue( {
+    router,
+    store,
+    vuetify,
+    apolloProvider: createProvider( ),
+    render: h => h( App )
+  } ).$mount( '#app' )
+} )( )

@@ -56,7 +56,7 @@ module.exports = {
     let code = await AuthorizationCodes( ).select( ).where( { id: accessCode } ).first( )
 
     await AuthorizationCodes( ).where( { id: accessCode } ).del( )
-    
+
     const timeDiff = Math.abs( Date.now( ) - new Date( code.createdAt ) )
     if ( timeDiff > code.lifespan ) {
       throw new Error( 'Access code expired' )
@@ -94,7 +94,7 @@ module.exports = {
     }
   },
 
-  async refreshAppToken( { refreshToken, appId, appSecret, userId } ) {
+  async refreshAppToken( { refreshToken, appId, appSecret } ) {
     let refreshTokenId = refreshToken.slice( 0, 10 )
     let refreshTokenContent = refreshToken.slice( 10, 42 )
 
@@ -104,9 +104,6 @@ module.exports = {
       throw new Error( 'Invalid request' )
 
     if ( refreshTokenDb.appId !== appId )
-      throw new Error( 'Invalid request' )
-
-    if ( refreshTokenDb.userId !== userId )
       throw new Error( 'Invalid request' )
 
     const timeDiff = Math.abs( Date.now( ) - new Date( refreshTokenDb.createdAt ) )
@@ -124,7 +121,7 @@ module.exports = {
       throw new Error( 'Invalid request' )
 
     // Create the new token
-    const { token: appToken } = await createToken( { userId: userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
+    const { token: appToken } = await createToken( { userId: refreshTokenDb.userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
 
     // Delete previous token, if it exists
     // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc? 
@@ -132,7 +129,7 @@ module.exports = {
     // if ( previousToken )
     //   await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
 
-    await ServerAppsTokens( ).insert( { userId: userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
+    await ServerAppsTokens( ).insert( { userId: refreshTokenDb.userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
 
     // Create a new refresh token
     let bareToken = await createBareToken( )
@@ -141,7 +138,7 @@ module.exports = {
       id: bareToken.tokenId,
       tokenDigest: bareToken.tokenHash,
       appId: appId,
-      userId: userId
+      userId: refreshTokenDb.userId
     }
 
     const rtk = await RefreshTokens( ).insert( freshRefreshToken )

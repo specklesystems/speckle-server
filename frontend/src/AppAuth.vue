@@ -2,7 +2,7 @@
   <v-app>
     <v-container fluid fill-height>
       <v-row align='center' justify='center'>
-        <v-col xs='10' sm='8' md='6' lg='4' class=''>
+        <v-col xs='10' sm='6' md='5' lg='4' xl='3' class=''>
           <!-- <p class="caption">Hello auth wrapper. Loggedin {{loggedIn}}</p> -->
           <v-card class='elevation-20'>
             <v-img class="white--text align-end" height="200px" src="./assets/s2logo-wide.svg"></v-img>
@@ -34,7 +34,7 @@
                   <template v-for='s in strategies'>
                     <v-col cols='6' class='text-center py-0 my-0'>
                       <!-- <div class='text-center'>or sign in with:</div> -->
-                      <v-btn block large tile :color='s.color' dark :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}`'>{{s.name}}</v-btn>
+                      <v-btn block large tile :color='s.color' dark :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}&challenge=${challenge}`'>{{s.name}}</v-btn>
                     </v-col>
                   </template>
                 </v-row>
@@ -60,7 +60,7 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash.debounce'
-
+import crs from 'crypto-random-string'
 
 export default {
   name: 'AppAuth',
@@ -111,8 +111,9 @@ export default {
   data: ( ) => ( {
     panel: [ 0 ],
     currentUrl: window.location.origin,
-    serverInfo: { name: 'Loading', authStrategies: [] },
+    serverInfo: { name: 'Loading', authStrategies: [ ] },
     appId: null,
+    challenge: null,
     serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },
     loggedIn: null,
     profile: { user: null },
@@ -149,6 +150,7 @@ export default {
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
     this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
+    this.challenge = urlParams.get( 'challenge' ) || crs( { length: 10 } )
   }
 
 }

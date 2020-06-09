@@ -59,33 +59,23 @@ export default {
   apollo: {
     serverApp: {
       query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
-      skip( ) { return this.appId === null }
-    },
-    user: {
-      query: gql `query { user { name company } }`,
-      error( err ) {
-        let urlParams = new URLSearchParams( window.location.search )
-        this.$router.push( { name: "Login", query: { appId: urlParams.get( 'appId' ) } } )
-      },
+      skip( ) { return this.appId === null },
+      result( { data, loading, networkStatus } ) {
+        console.log( 'got data')
+        console.log( data )
+        if( data.serverApp.firstparty) {
+          let redirectUrl = data.serverApp.redirectUrl === 'self' ? '/' : data.serverApp.redirectUrl
+          window.location = `${redirectUrl}?access_code=${this.accessCode}`
+        }
+      }
     }
   },
   methods: {
     deny( ) {
       this.denied = true
-      // TODO: TODO: send a success=false to the redirect url
     },
     async allow( ) {
-      try {
-        let test = await this.$apollo.mutate( {
-          mutation: gql ` mutation { authorizeApp(appId:"${this.appId}") }`
-        } )
-
-        console.log( test )
-      } catch ( err ) {
-        console.log( err )
-        this.errorMessage = err.message
-        this.registrationError = true
-      }
+      // TODO: redirect to app redirect url with access code 
     }
   },
   data: ( ) => ( {
@@ -96,13 +86,18 @@ export default {
     errorMessage: '',
     appId: null,
     serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },
-    user: null,
-    token: null
+    token: null,
+    accessCode: null,
   } ),
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
     this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
-    this.token = urlParams.get( 'token' )
+    this.accessCode = urlParams.get( 'access_code' )
+
+    if( !this.accessCode ) {
+      this.$router.push( { name: "Login", query: { appId: urlParams.get( 'appId' ) } } )
+      return
+    }
   }
 }
 </script>
