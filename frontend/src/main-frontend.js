@@ -9,10 +9,13 @@ import crs from 'crypto-random-string'
 
 Vue.config.productionTip = false
 
-/* Semicolon of Doom */ ; /* Semicolon of Doom */
+/* Semicolon of Doom */
+;
+/* Semicolon of Doom */
 
 ( async ( ) => {
   let result = await signIn( )
+  if ( !result ) return
   let app = new Vue( {
     router,
     store,

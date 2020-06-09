@@ -1,6 +1,6 @@
 <template>
-  <v-form ref='form'>
-    <v-container fluid>
+  <v-container fluid v-if='hasLocalStrategy'>
+    <v-form ref='form'>
       <v-row style='margin-top:-10px;' dense>
         <v-col cols=12>
           <v-text-field label='your email' v-model='form.email' :rules='validation.emailRules' solo></v-text-field>
@@ -46,17 +46,27 @@
           Close
         </v-btn>
       </v-snackbar>
-    </v-container>
-  </v-form>
+    </v-form>
+  </v-container>
 </template>
 <script>
 import gql from 'graphql-tag'
 import { onLogin } from '../../vue-apollo'
 import debounce from 'lodash.debounce'
+import crs from 'crypto-random-string'
 
 export default {
   name: 'Registration',
-  apollo: {},
+  apollo: {
+    serverInfo: {
+      query: gql ` query { serverInfo { name company adminContact termsOfService scopes { name description } authStrategies { id name color icon url } } }  `,
+    },
+  },
+  computed: {
+    hasLocalStrategy( ) {
+      return this.serverInfo.authStrategies.findIndex( s => s.id === 'local' ) !== -1
+    }
+  },
   methods: {
     debouncedPwdTest: debounce( async function ( ) {
       let result = await this.$apollo.query( { query: gql ` query{ userPwdStrength(pwd:"${this.form.password}")}` } )
@@ -70,22 +80,24 @@ export default {
         if ( this.form.password !== this.form.passwordConf ) throw new Error( 'Passwords do not match' )
         if ( this.passwordStrength < 3 ) throw new Error( 'Password too weak' )
 
-        let registerResult = await this.$apollo.mutate( {
-          mutation: gql `mutation ($user: UserCreateInput!) { userCreate( user: $user ) }`,
-          variables: {
-            user: { name: `${this.form.firstName} ${this.form.lastName}`, username: `${this.form.firstName}${this.form.lastName}`, email: this.form.email, password: this.form.password }
-          }
+        let res = await fetch( `/auth/local/register?appId=${this.appId}&challenge=${this.challenge}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          redirect: 'follow', // obvs not working
+          body: JSON.stringify( {
+            email: this.form.email,
+            company: this.form.company,
+            password: this.form.password,
+            name: `${this.form.firstName} ${this.form.lastName}`,
+            username: `${this.form.firstName}-${this.form.lastName}`
+          } )
         } )
 
-        if ( !registerResult.data.userCreate ) throw new Error( 'Failed to register.' )
-
-        let loginResult = await this.$apollo.mutate( {
-          mutation: gql ` mutation { userLogin( email:"${this.form.email}", password: "${this.form.password}" ) }`,
-        } )
-
-        onLogin( this.$apolloProvider.clients.defaultClient, loginResult.data.userLogin )
-        localStorage.setItem( 'onboarding', 'true' )
-        this.$emit( 'loggedin' )
+        if( res.redirected ) {
+          window.location = res.url
+        }
       } catch ( err ) {
         this.errorMessage = err.message
         this.registrationError = true
@@ -93,6 +105,7 @@ export default {
     }
   },
   data: ( ) => ( {
+    serverInfo: { authStrategies: [ ] },
     form: {
       email: null,
       firstName: null,
@@ -118,12 +131,24 @@ export default {
     passwordStrength: 1,
     pwdSuggestions: null,
     appId: null,
-    serverApp: null
+    challenge: null
   } ),
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
-    this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
-  }
+    let appId = urlParams.get( 'appId' )
+    let challenge = urlParams.get( 'challenge' )
 
+    if ( !appId )
+      this.appId = 'spklwebapp'
+    else
+      this.appId = appId
+
+    if ( !challenge && this.appId === 'spklwebapp' ) {
+      this.challenge = crs( { length: 10 } )
+      localStorage.setItem( 'appChallenge', this.challenge )
+    } else if ( challenge ) {
+      this.challenge = challenge
+    }
+  }
 }
 </script>

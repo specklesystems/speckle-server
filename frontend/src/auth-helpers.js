@@ -9,6 +9,7 @@ export async function signIn( ) {
   if ( accessCode ) {
     let response = await getTokenFromAccessCode( accessCode )
     if ( response.hasOwnProperty( 'token' ) ) {
+      localStorage.clear()
       localStorage.setItem( 'AuthToken', response.token )
       localStorage.setItem( 'RefreshToken', response.refreshToken )
       window.history.replaceState( {}, document.title, '/' )
@@ -67,6 +68,7 @@ export async function signIn( ) {
 }
 
 export async function getTokenFromAccessCode( accessCode ) {
+  console.log( 'found local challenge: '  + localStorage.getItem( 'appChallenge' ) )
   let response = await fetch( '/auth/token', {
     method: 'POST',
     headers: {

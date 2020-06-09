@@ -76,7 +76,7 @@ module.exports = {
   },
 
   async validatePasssword( { email, password } ) {
-    var { passwordDigest } = await Users( ).where( { email: email } ).select( 'passwordDigest' ).first( )
+    let { passwordDigest } = await Users( ).where( { email: email } ).select( 'passwordDigest' ).first( )
     return bcrypt.compare( password, passwordDigest )
   },
 

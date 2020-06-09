@@ -1,9 +1,9 @@
 <template>
   <v-app>
-    <v-container fluid fill-height>
+    <v-container fluid fill-height v-if='!error'>
       <v-row align='center' justify='center'>
         <v-col xs='10' sm='6' md='5' lg='4' xl='3' class=''>
-          Err: {{error}} : {{errorMessage}}
+          Err: {{error}} : {{errorMessage}} // Local: {{hasLocalStrategy}}
           <v-card class='elevation-20'>
             <v-img class="white--text align-end" height="200px" src="./assets/s2logo-wide.svg"></v-img>
             <v-card-text class='pa-1'>
@@ -29,8 +29,7 @@
               <v-container>
                 <v-row>
                   <template v-for='s in strategies'>
-                    <v-col cols='6' class='text-center py-0 my-0'>
-                      <!-- <div class='text-center'>or sign in with:</div> -->
+                    <v-col cols='12' class='text-center py-0 my-0'>
                       <v-btn block large tile :color='s.color' dark :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}&challenge=${challenge}`'>{{s.name}}</v-btn>
                     </v-col>
                   </template>
@@ -47,6 +46,17 @@
                 <br>
                 <b>Support:</b> {{serverInfo.adminContact}}
               </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+    <v-container fluid fill-height v-else>
+      <v-row align='center' justify='center'>
+        <v-col xs='10' sm='6' md='5' lg='4' xl='3' class=''>
+          <v-card class='elevation-20' color='red'>
+            <v-card-text class='white--text title'>
+              <v-icon color='white'>mdi-bug</v-icon>&nbsp;{{errorMessage}}
             </v-card-text>
           </v-card>
         </v-col>
@@ -77,17 +87,17 @@ export default {
       },
       error( err ) {
         this.error = true
-        this.errorMessage = 'Invalid app authorization request: app not registered on this server.'
+        this.errorMessage = `Invalid app authorization request: could not find app with id "${this.appId}" on this server.`
         console.log( 'Error: No such application' )
       }
     }
   },
   computed: {
     hasLocalStrategy( ) {
-      return this.serverInfo.authStrategies.indexOf( s => s.name === 'local ' ) !== -1
+      return this.serverInfo.authStrategies.findIndex( s => s.id === 'local' ) !== -1
     },
     strategies( ) {
-      return this.serverInfo.authStrategies.filter( s => s.name !== 'local' )
+      return this.serverInfo.authStrategies.filter( s => s.id !== 'local' )
     }
   },
   components: {},
@@ -118,8 +128,14 @@ export default {
       this.appId = appId
 
     if ( !challenge && this.appId === 'spklwebapp' ) {
-      this.challenge = crs( { length: 10 } )
-      localStorage.setItem( 'appChallenge', this.challenge )
+
+      if ( localStorage.getItem( 'appChallenge' ) ) {
+        // Do nothing!
+        console.log( 'NOT setting up new challenge')
+      } else {
+        this.challenge = crs( { length: 10 } )
+        localStorage.setItem( 'appChallenge', this.challenge )
+      }
     } else if ( challenge ) {
       this.challenge = challenge
     } else {
@@ -128,6 +144,7 @@ export default {
     }
   },
   async beforeCreate( ) {
+    // checks login
     let token = localStorage.getItem( 'AuthToken' )
     if ( token ) {
       let testResponse = await fetch( '/graphql', {

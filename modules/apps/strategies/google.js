@@ -12,7 +12,7 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     id: 'google',
     name: 'Google',
     icon: 'TODO',
-    color: 'red darken-2',
+    color: 'white red--text',
     url: `/auth/goog`,
     callbackUrl: `/auth/goog/callback`
   }
