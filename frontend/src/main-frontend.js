@@ -13,7 +13,6 @@ Vue.config.productionTip = false
 
 ( async ( ) => {
   let result = await signIn( )
-  console.log( 'sign in result: ' + result )
   let app = new Vue( {
     router,
     store,

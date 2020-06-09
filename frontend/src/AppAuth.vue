@@ -3,7 +3,7 @@
     <v-container fluid fill-height>
       <v-row align='center' justify='center'>
         <v-col xs='10' sm='6' md='5' lg='4' xl='3' class=''>
-          <!-- <p class="caption">Hello auth wrapper. Loggedin {{loggedIn}}</p> -->
+          Err: {{error}} : {{errorMessage}}
           <v-card class='elevation-20'>
             <v-img class="white--text align-end" height="200px" src="./assets/s2logo-wide.svg"></v-img>
             <v-card-text class='pa-1'>
@@ -21,15 +21,12 @@
                     </p>
                     <p class='title font-weight-light text-center' v-if='!serverApp.firstparty && !loggedIn'>
                       You need to sign in first<br>to authorize <span class='accent--text'><b>{{serverApp.name}}</b></span> by <b>{{serverApp.author}}.</b>
-                      <!-- <b>{{serverApp.name}}</b> by {{serverApp.author}} by signing in to Speckle ({{serverInfo.name}}). -->
                     </p>
                   </v-col>
                 </v-row>
               </v-container>
-              <!-- <transition name="fade-transition"> -->
               <router-view></router-view>
-              <!-- </transition> -->
-              <v-container v-if='!this.loggedIn'>
+              <v-container>
                 <v-row>
                   <template v-for='s in strategies'>
                     <v-col cols='6' class='text-center py-0 my-0'>
@@ -65,30 +62,22 @@ import crs from 'crypto-random-string'
 export default {
   name: 'AppAuth',
   apollo: {
-    user: {
-      query: gql `query { user { name company } }`,
-      error( err ) {
-        this.loggedIn = false
-      },
-      result( { data, loading, networkStatus } ) {
-        if ( data.user ) {
-          this.loggedIn = true
-        } else {
-          this.loggedIn = false
-        }
-      }
-    },
     serverInfo: {
       query: gql ` query { serverInfo { name company adminContact termsOfService scopes { name description } authStrategies { id name color icon url } } }  `,
     },
     serverApp: {
       query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
       skip( ) { return this.appId === null },
-      result( { data, loading, networkStatus } ) {
-        if ( data )
-          this.proceedToAuthorization( )
+      data( { data }, key ) {
+        if ( data.errors ) {
+          this.error = true
+          this.errorMessage = 'Invalid app authorization request: app not registered on this server.'
+          console.log( 'Error: No such application!!!!!' )
+        }
       },
-      error( ) {
+      error( err ) {
+        this.error = true
+        this.errorMessage = 'Invalid app authorization request: app not registered on this server.'
         console.log( 'Error: No such application' )
       }
     }
@@ -101,16 +90,8 @@ export default {
       return this.serverInfo.authStrategies.filter( s => s.name !== 'local' )
     }
   },
-  watch: {
-    loggedIn( newValue, oldValue ) {
-      if ( newValue )
-        this.proceedToAuthorization( )
-    }
-  },
   components: {},
   data: ( ) => ( {
-    panel: [ 0 ],
-    currentUrl: window.location.origin,
     serverInfo: { name: 'Loading', authStrategies: [ ] },
     appId: null,
     challenge: null,
@@ -118,39 +99,49 @@ export default {
     loggedIn: null,
     profile: { user: null },
     user: { profile: null },
+    error: false,
+    errorMessage: null
   } ),
   methods: {
-    proceedToAuthorization( ) {
-      console.log( 'proceedToAuthorization ' )
-      if ( this.serverApp === null || this.serverApp.firstparty === null ) return
-      if ( this.loggedIn === false ) return
-      console.log( 'Actually proceeding' )
-
-      if ( this.appId === 'spklwebapp' ) {
-        console.log( 'just redirect to "self"' )
-        window.location.replace( window.location.origin )
-        return
-      }
-      if ( this.serverApp.firstparty ) {
-        // Bypass authorization screen.
-        // 1) Create token for app (API CALL: Authorize App)
-        // 2) Redirect to app url with token body
-        console.log( 'just redirect fast-ish, it is a firstparty app' )
-        return
-      }
-
-      if ( this.$route.name !== "AuthorizeApp" ) {
-        let urlParams = new URLSearchParams( window.location.search )
-        this.$router.push( { name: "AuthorizeApp", query: { appId: urlParams.get( 'appId' ) } } )
-      }
-
+    goToStrategy( ) {
 
     }
   },
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
-    this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
-    this.challenge = urlParams.get( 'challenge' ) || crs( { length: 10 } )
+    let appId = urlParams.get( 'appId' )
+    let challenge = urlParams.get( 'challenge' )
+
+    if ( !appId )
+      this.appId = 'spklwebapp'
+    else
+      this.appId = appId
+
+    if ( !challenge && this.appId === 'spklwebapp' ) {
+      this.challenge = crs( { length: 10 } )
+      localStorage.setItem( 'appChallenge', this.challenge )
+    } else if ( challenge ) {
+      this.challenge = challenge
+    } else {
+      this.error = true
+      this.errorMessage = 'Invalid app authorization request: missing challenge.'
+    }
+  },
+  async beforeCreate( ) {
+    let token = localStorage.getItem( 'AuthToken' )
+    if ( token ) {
+      let testResponse = await fetch( '/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( { query: `{ user { id } }` } )
+      } )
+      let data = ( await testResponse.json( ) ).data
+      if ( data.user )
+        return true
+    }
   }
 
 }

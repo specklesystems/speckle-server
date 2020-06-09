@@ -15,7 +15,6 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     color: 'red darken-2',
     url: `/auth/goog`,
     callbackUrl: `/auth/goog/callback`
-    // callbackUrl: ( new URL( '/auth/goog/callback', process.env.CANONICAL_URL ) ).toString( )
   }
 
   let myStrategy = new GoogleStrategy( {

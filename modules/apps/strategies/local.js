@@ -3,18 +3,30 @@ const passport = require( 'passport' )
 const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy
 const URL = require( 'url' ).URL
 const root = require( 'app-root-path' )
-const { findOrCreateUser } = require( `${root}/modules/core/services/users` )
+const { findOrCreateUser, validatePasssword, getUserByEmail } = require( `${root}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
 module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
 
-  // const strategy = {
-  //   id: 'google',
-  //   name: 'Google',
-  //   icon: 'TODO',
-  //   color: 'red darken-2',
-  //   url: `/auth/local`
-  // }
+  const strategy = {
+    id: 'local',
+    name: 'Local',
+    icon: 'TODO',
+    color: 'grey darken-2',
+    url: `/auth/local`
+  }
+
+  app.post( '/auth/local', session, sessionAppId, ( req, res, next ) => {
+    let valid = await validatePasssword( { email: req.body.email, password: req.body.password } )
+    if ( !valid ) {
+      // Deal with it
+      return res.status( 401 ).send( { err: true, message: 'Invalid credentials' } )
+    }
+
+    let { id } = await getUserByEmail( { email: req.body.email } )
+    req.user = { id: id }
+    next()
+  }, finalizeAuth )
 
   // let myStrategy = new GoogleStrategy( {
   //   clientID: process.env.GOOGLE_CLIENT_ID,

@@ -36,15 +36,7 @@ exports.init = ( app, options ) => {
   }
 
   let finalizeAuth = async ( req, res, next ) => {
-    console.log( req.session.appId )
-
     let app = await getApp( { id: req.session.appId } )
-
-    // let frontEndApp = await getApp( { id: 'spklwebapp' } )
-    // let acFrontEnd = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: 'backchannel' } )
-    // let { token: tokenFrontEnd, refreshToken: refreshTokenFrontEnd } = await createAppTokenFromAccessCode( { appId: 'spklwebapp', appSecret: frontEndApp.secret, accessCode: acFrontEnd, challenge: 'backchannel' } )
-    // return res.redirect( `/auth/finalize?token=${token}&refreshToken=${refreshToken}&appId=${req.session.appId}` )
-
     let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
     return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
   }
@@ -72,7 +64,7 @@ exports.init = ( app, options ) => {
 
 
   // Strategies initialisation & listing
-  
+
   let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
 
   authStrategies.push( githubStrategy )

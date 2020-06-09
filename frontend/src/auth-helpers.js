@@ -4,11 +4,9 @@ const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
 
 export async function signIn( ) {
-  console.log( 'sign ing in' )
   // Stage 0: if we have an access code, exchange it for a token
   const accessCode = ( new URLSearchParams( window.location.search ) ).get( 'access_code' )
   if ( accessCode ) {
-    console.log( 'access code flow' )
     let response = await getTokenFromAccessCode( accessCode )
     if ( response.hasOwnProperty( 'token' ) ) {
       localStorage.setItem( 'AuthToken', response.token )
@@ -21,7 +19,6 @@ export async function signIn( ) {
   // Stage 1: check if there is an existing valid token by pinging the graphql api
   let token = localStorage.getItem( 'AuthToken' )
   if ( token ) {
-    console.log( 'token flow' )
     let testResponse = await fetch( '/graphql', {
       method: 'POST',
       headers: {
@@ -41,8 +38,6 @@ export async function signIn( ) {
   let refreshToken = localStorage.getItem( 'RefreshToken' )
 
   if ( refreshToken ) {
-    console.log( 'refresh token flow flow' )
-    console.log( 'refreshing...' )
     let refreshResponse = await fetch( '/auth/token', {
       method: 'POST',
       headers: {
@@ -90,7 +85,6 @@ export async function getTokenFromAccessCode( accessCode ) {
 }
 
 export function redirectToAuth( ) {
-  console.log( 'redirecting to auth' )
   // Reaching this stage means we're initialising a full new auth flow, 
   // TIP: also means we need to refresh the app challenge as well.
   localStorage.setItem( 'appChallenge', crs( { length: 10 } ) )

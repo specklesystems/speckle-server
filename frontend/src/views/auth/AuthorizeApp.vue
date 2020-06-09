@@ -61,8 +61,6 @@ export default {
       query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
       skip( ) { return this.appId === null },
       result( { data, loading, networkStatus } ) {
-        console.log( 'got data')
-        console.log( data )
         if( data.serverApp.firstparty) {
           let redirectUrl = data.serverApp.redirectUrl === 'self' ? '/' : data.serverApp.redirectUrl
           window.location = `${redirectUrl}?access_code=${this.accessCode}`
