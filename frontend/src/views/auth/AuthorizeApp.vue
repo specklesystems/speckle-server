@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-row style='margin-top:-10px;' dense v-if='!denied'>
+    <v-row style='margin-top:-10px;' dense v-if='state===0'>
       <v-col cols=12>
         <div>
           <p class='title font-weight-light text-center'>
@@ -35,10 +35,17 @@
         <v-btn block tile color='primary' @click='deny'>Deny</v-btn>
       </v-col>
     </v-row>
-    <v-row v-else>
+    <v-row v-if='state===1'>
       <v-col cols='12'>
         <p class='title font-weight-light text-center'>
-          Okay.<br>You can close this page, or go <a :href='currentUrl'>to the homepage</a>.
+          Permissions denied.<br>You can safely close this page.
+        </p>
+      </v-col>
+    </v-row>
+    <v-row v-if='state===2'>
+      <v-col cols='12'>
+        <p class='title font-weight-light text-center'>
+          <b>Permissions granted.</b><br>You can now safely close this page.
         </p>
       </v-col>
     </v-row>
@@ -61,7 +68,7 @@ export default {
       query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
       skip( ) { return this.appId === null },
       result( { data, loading, networkStatus } ) {
-        if( data.serverApp.firstparty) {
+        if ( data.serverApp.firstparty ) {
           let redirectUrl = data.serverApp.redirectUrl === 'self' ? '/' : data.serverApp.redirectUrl
           window.location = `${redirectUrl}?access_code=${this.accessCode}`
         }
@@ -69,15 +76,18 @@ export default {
     }
   },
   methods: {
-    deny( ) {
-      this.denied = true
+    async deny( ) {
+      this.state = 1
+      window.history.replaceState( {}, document.title, '/auth/finalize' )
+      await fetch( `${this.serverApp.redirectUrl}?success=false`, { method: 'GET' } )
     },
     async allow( ) {
-      // TODO: redirect to app redirect url with access code 
+      this.state = 2
+      await fetch( `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`, { method: 'GET' } )
     }
   },
   data: ( ) => ( {
-    denied: false,
+    state: 0,
     currentUrl: window.location.origin,
     panel: [ 0 ],
     registrationError: false,
@@ -92,7 +102,7 @@ export default {
     this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
     this.accessCode = urlParams.get( 'access_code' )
 
-    if( !this.accessCode ) {
+    if ( !this.accessCode ) {
       this.$router.push( { name: "Login", query: { appId: urlParams.get( 'appId' ) } } )
       return
     }

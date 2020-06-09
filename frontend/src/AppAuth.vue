@@ -19,14 +19,14 @@
                         <span>Verified application.</span>
                       </v-tooltip>
                     </p>
-                    <p class='title font-weight-light text-center' v-if='!serverApp.firstparty && !loggedIn'>
+                    <p class='title font-weight-light text-center' v-if='!serverApp.firstparty && !isFinalizing'>
                       You need to sign in first<br>to authorize <span class='accent--text'><b>{{serverApp.name}}</b></span> by <b>{{serverApp.author}}.</b>
                     </p>
                   </v-col>
                 </v-row>
               </v-container>
               <router-view></router-view>
-              <v-container>
+              <v-container v-if='!isFinalizing'>
                 <v-row>
                   <template v-for='s in strategies'>
                     <v-col cols='12' class='text-center py-0 my-0'>
@@ -93,6 +93,9 @@ export default {
     }
   },
   computed: {
+    isFinalizing() {
+      return this.$route.path.indexOf('/finalize') !== -1
+    },
     hasLocalStrategy( ) {
       return this.serverInfo.authStrategies.findIndex( s => s.id === 'local' ) !== -1
     },
@@ -131,7 +134,6 @@ export default {
 
       if ( localStorage.getItem( 'appChallenge' ) ) {
         // Do nothing!
-        console.log( 'NOT setting up new challenge')
       } else {
         this.challenge = crs( { length: 10 } )
         localStorage.setItem( 'appChallenge', this.challenge )
@@ -139,8 +141,10 @@ export default {
     } else if ( challenge ) {
       this.challenge = challenge
     } else {
-      this.error = true
-      this.errorMessage = 'Invalid app authorization request: missing challenge.'
+      if ( window.location.href.indexOf( '/finalize' ) === -1 ) {
+        this.error = true
+        this.errorMessage = 'Invalid app authorization request: missing challenge.'
+      }
     }
   },
   async beforeCreate( ) {
