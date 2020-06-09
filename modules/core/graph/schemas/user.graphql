@@ -25,19 +25,10 @@ type User {
 
 
 extend type Mutation {
-
-  """
-  Local user login strategy. Disabled if STRATEGY_LOCAL is set to false.
-  """
-  userLogin( email: String!, password: String! ): String!
-
-  """
-  Local user registration strategy. Disabled if STRATEGY_LOCAL is set to false.
-  """
-  userCreate(user: UserCreateInput!): Boolean
   
   """
   Endpoint used to create an admin user on server init. 
+  TODO: Deprecate; update setup app to not use this one.
   """
   userCreateAdmin(user: UserCreateInput!): String
   

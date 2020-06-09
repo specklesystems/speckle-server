@@ -50,28 +50,7 @@ module.exports = {
       await updateUser( context.userId, args.user )
       return true
     },
-    async userLogin( parent, args, context, info ) {
-      if ( process.env.STRATEGY_LOCAL !== 'true' )
-        throw new ApolloError( 'Registration method not available' )
-      try {
-        let res = await validatePasssword( { email: args.email, password: args.password } )
-        let { id: userId } = await getUserByEmail( { email: args.email } )
-        let token = await createAppToken( { userId, appId: 'spklwebapp' } )
-        return token
-      } catch ( err ) {
-        throw new Error( 'Login failed' + err.message )
-      }
-    },
-    async userCreate( parent, args, context, info ) {
-      let setupComplete = await setupCheck( )
-      if ( setupComplete && process.env.STRATEGY_LOCAL !== 'true' )
-        throw new ApolloError( 'Registration method not available' )
-
-      if ( zxcvbn( args.user.password ).score < 3 ) throw new ApolloError( `Password too weak` )
-
-      let userId = await createUser( args.user )
-      return true
-    },
+    // TODO: remove; setup step needs to get rid of this dependency
     async userCreateAdmin( parent, args, context, info ) {
       let setupComplete = await setupCheck( )
       if ( setupComplete ) throw new ApolloError( 'Registration method not available' )
