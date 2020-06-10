@@ -3,7 +3,7 @@
 <html>
 
 <head>
-  <title>Simple GraphiQL Example</title>
+  <title>Speckle GraphQL API</title>
   <link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
 </head>
 
@@ -11,10 +11,12 @@
   <div id='speckle-header'>
     <div class='header'>
       <span class='header-title'>Speckle GraphQL API</span>
-      <span class='header-text' style='float: right;'>Hello <b><span id='username'>$Name</span></b> <button class='logout-button' onclick="logout()">logout</button></span>
+      <span class='header-text' style='float: right;'>Hello <b><span id='username'>$Name</span> @ <span class='' style='' id='serverDetails'>$ServerDetails</span></b> <button class='logout-button' onclick="logout()">logout</button></span>
     </div>
     <div class='warning'>
-      <div>Heads up! Speckle's GraphQL Explorer makes use of your <b>real, live, production data</b> from this server.</div>
+      <div>
+        <span>👋 &nbsp;Heads up! Speckle's GraphQL Explorer makes use of your <b>real, live, production data</b> from this server.</span>
+      </div>
     </div>
   </div>
   <div id="graphiql" style="height: 90vh;"></div>
@@ -33,7 +35,8 @@
 
 
   function redirectToAuth( ) {
-    window.location = '/auth?appId=explorer&challenge=explorer'
+    localStorage.setItem( 'challenge', Math.random( ).toString( 36 ).substring( 2, 15 ) + Math.random( ).toString( 36 ).substring( 2, 15 ) )
+    window.location = '/auth?appId=explorer&challenge=' + localStorage.getItem( 'challenge' )
   }
 
   async function accessCodeExchange( accessCode ) {
@@ -48,23 +51,23 @@
         accessCode: accessCode,
         appId: 'explorer',
         appSecret: 'explorer',
-        challenge: 'explorer'
+        challenge: localStorage.getItem( 'challenge' )
       } )
     } )
 
     let data = await response.json( )
-    // console.log( data )
+
     if ( data.hasOwnProperty( 'token' ) ) {
-      // console.log( 'settgin things! ')
+      localStorage.removeItem( 'challenge' )
       localStorage.setItem( 'AuthToken', data.token )
       localStorage.setItem( 'RefreshToken', data.refreshToken )
-      await setUserName()
-      initGQL( data.token )
+      await setUserName( )
+      await initGQL( data.token )
     }
 
   }
 
-  function initGQL( token ) {
+  async function initGQL( token ) {
     // GraphQLPlayground.init( document.getElementById( 'root' ), {
     //   endpointUrl: '/graphql',
     //   headers: {
@@ -75,6 +78,7 @@
       React.createElement( GraphiQL, { fetcher: graphQLFetcher } ),
       document.getElementById( 'graphiql' ),
     )
+    await setServerInfo( )
   }
 
   async function setUserName( ) {
@@ -89,6 +93,19 @@
 
     let data = ( await testResponse.json( ) ).data
     document.getElementById( 'username' ).innerHTML = data.user.name
+  }
+
+  async function setServerInfo( ) {
+    let testResponse = await fetch( '/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify( { query: `{ serverInfo { name company } }` } )
+    } )
+
+    let data = ( await testResponse.json( ) ).data
+    document.getElementById( 'serverDetails' ).innerHTML = `<b>${data.serverInfo.name}</b> deployed by <b>${data.serverInfo.company}</b>`
   }
 
   function logout( ) {
@@ -120,7 +137,7 @@
         if ( data.user ) {
           console.log( data.user )
           document.getElementById( 'username' ).innerHTML = data.user.name
-          initGQL( token )
+          await initGQL( token )
 
         }
       } else {
@@ -163,6 +180,11 @@
   font-size: small;
   font-weight: 200;
   line-height: 40px;
+}
+
+#serverDetails {
+  font-size: small;
+  font-weight: 200;
 }
 
 .logout-button {
