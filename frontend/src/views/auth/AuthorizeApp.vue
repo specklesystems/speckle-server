@@ -70,7 +70,11 @@ export default {
       result( { data, loading, networkStatus } ) {
         if ( data.serverApp.firstparty ) {
           let redirectUrl = data.serverApp.redirectUrl === 'self' ? '/' : data.serverApp.redirectUrl
-          window.location = `${redirectUrl}?access_code=${this.accessCode}`
+          try {
+            window.location = `${redirectUrl}?access_code=${this.accessCode}`
+          } catch ( err ) {
+            // Fetch? 
+          }
         }
       }
     }
@@ -78,12 +82,18 @@ export default {
   methods: {
     async deny( ) {
       this.state = 1
+      // setTimeout(function() {}.bind(this), 1000 * 2)
       window.history.replaceState( {}, document.title, '/auth/finalize' )
       await fetch( `${this.serverApp.redirectUrl}?success=false`, { method: 'GET' } )
     },
     async allow( ) {
       this.state = 2
-      await fetch( `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`, { method: 'GET' } )
+      try {
+        window.location = `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`
+      } catch ( err ) {
+        console.log( err )
+        await fetch( `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`, { method: 'GET' } )
+      }
     }
   },
   data: ( ) => ( {

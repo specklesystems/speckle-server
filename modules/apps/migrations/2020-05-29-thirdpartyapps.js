@@ -75,7 +75,21 @@ exports.up = async knex => {
 
   const scopes = await knex( 'scopes' ).select( '*' )
   const webAppScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'spklwebapp', scopeName: s.name } ) )
-  await knex( 'server_apps_scopes' ).insert( webAppScopes )
+  await knex( 'server_apps_scopes' ).insert( webAppScopes )  
+
+  // The api explorer app
+  await knex( 'server_apps' ).insert( {
+    id: 'explorer',
+    secret: 'explorer',
+    name: 'Speckle API Explorer',
+    description: 'GraphQL Playground with authentication.',
+    author: 'Speckle',
+    redirectUrl: '/explorer',
+    firstparty: false
+  } )
+
+  const explorerScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'explorer', scopeName: s.name } ) )
+  await knex( 'server_apps_scopes' ).insert( explorerScopes )
 
   // Mock application
   await knex( 'server_apps' ).insert( {
