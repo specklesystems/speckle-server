@@ -19,7 +19,7 @@ type User {
   company: String
   avatar: String
   verified: Boolean
-  profiles: JSON
+  profiles: JSONObject
 }
 
 

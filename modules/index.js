@@ -13,7 +13,7 @@ exports.init = async ( app ) => {
   let dirs = fs.readdirSync( `${root}/modules` )
   let moduleDirs = [ ]
 
-  await require( './core' ).init( )
+  await require( './core' ).init( app )
 
   dirs.forEach( file => {
     let fullPath = path.join( `${root}/modules`, file )
@@ -32,7 +32,6 @@ exports.init = async ( app ) => {
 
 exports.graph = ( ) => {
   let dirs = fs.readdirSync( `${root}/modules` )
-
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
