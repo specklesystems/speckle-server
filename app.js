@@ -3,6 +3,7 @@
 
 let http = require( 'http' )
 const express = require( 'express' )
+const compression = require( 'compression' )
 const root = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
@@ -30,8 +31,14 @@ exports.init = async ( ) => {
     app.use( logger( 'speckle', 'dev', {} ) )
   }
 
-  app.use( bodyParser.json( ) )
+  if ( process.env.COMPRESSION ) {
+    debug( `speckle:startup` )( 'Using app level compression. Consider enabling this at a proxy level.' )
+    app.use( compression( ) )
+  }
+
+  app.use( bodyParser.json( { limit: '10mb' } ) )
   app.use( bodyParser.urlencoded( { extended: false } ) )
+  // app.use( express.json( { limit: '1mb' } ) );
 
   const { init, graph } = require( './modules' )
 
@@ -64,14 +71,14 @@ exports.startHttp = async ( app ) => {
   app.set( 'port', port )
 
   let setupComplete = await setupCheck( )
-  
+
   if ( process.env.NODE_ENV !== 'development' )
     debug( 'speckle:info' )( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
 
   if ( process.env.NODE_ENV === 'development' ) {
     const frontendProxy = createProxyMiddleware( { target: 'http://localhost:8080', changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
-    
+
     debug( 'speckle:http-startup' )( '✨ Proxying frontend (dev mode):' )
     debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/` )
     debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
@@ -113,9 +120,7 @@ exports.startHttp = async ( app ) => {
   graphqlServer.installSubscriptionHandlers( server )
 
   server.on( 'listening', ( ) => {
-    debug( `  ` )
-    debug( `Listening on ${server.address().port}` )
-    debug( `  ` )
+    debug( `speckle:startup` )( `Listening on ${server.address().port}` )
   } )
 
   server.listen( port )

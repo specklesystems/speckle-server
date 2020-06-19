@@ -17,7 +17,7 @@ const Closures = ( ) => knex( 'object_children_closure' )
 const StreamCommits = ( ) => knex( 'stream_commits' )
 
 module.exports = {
-  
+
   /*
       Commits
       Note: commits are just a special type of objects.
@@ -126,8 +126,10 @@ module.exports = {
         ids.push( insertionObject.id )
       } )
 
-      let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
-      await knex.raw( queryObjs )
+      if ( objsToInsert.length > 0 ) {
+        let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
+        await knex.raw( queryObjs )
+      }
 
       if ( closures.length > 0 ) {
         let q2 = `${ Closures().insert( closures ).toString() } on conflict do nothing`
@@ -135,7 +137,7 @@ module.exports = {
       }
 
       let t1 = performance.now( )
-      debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      // debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       resolve( )
     } ) )

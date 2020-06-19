@@ -5,36 +5,18 @@ const Busboy = require( 'busboy' )
 exports.init = async ( app, options ) => {
   debug( 'speckle:modules' )( '💥\tInit core module' )
 
-  app.post( '/streaming', ( req, res ) => {
-    console.log( req.headers )
-    let busboy = new Busboy( { headers: req.headers } )
+  require( './rest/create' )( app )
 
-    res.writeHead( 200, { 'Content-Type': 'text/html; charset=UTF-8' } )
-    busboy.on( 'file', ( fieldname, file, filename, encoding, mimetype ) => {
+  // app.post( '/simplestreaming', ( req, res ) => {
 
-      console.log( 'File [' + fieldname + ']: filename: ' + filename );
-
-      file.on( 'data', function ( data ) {
-        console.log( 'File [' + fieldname + '] got ' + data.length + ' bytes' );
-      } );
-
-      file.on( 'end', function ( ) {
-        console.log( 'File [' + fieldname + '] Finished' );
-        console.log( file )
-        res.write( ':::' )
-        res.write( fieldname )
-      } );
-
-    } )
-
-    busboy.on( 'finish', function ( ) {
-      console.log( 'Done parsing form!' );
-      res.end()
-      // res.writeHead( 303, { Connection: 'close', Location: '/' } );
-      // res.end( );
-    } );
-
-    req.pipe( busboy )
-
-  } )
+  //   // req.on( 'data', chunk => {
+  //   //   console.log( 'Chunk: ' + chunk.toString( ) )
+  //   // } )
+  //   // req.on( 'end', ( ) => {
+  //   //   res.send( 'ok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomer' )
+  //   // } )
+  //   // 
+  //   console.log( `Got ${req.body.length} objects` )
+  //   res.send( 'ok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomerok thanks boomer' )
+  // } )
 }
