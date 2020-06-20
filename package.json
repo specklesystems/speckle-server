@@ -39,6 +39,7 @@
     "graphql-scalars": "^1.1.0",
     "graphql-tools": "^4.0.7",
     "knex": "^0.20.12",
+    "lodash.chunk": "^4.2.0",
     "lodash.debounce": "^4.0.8",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2",

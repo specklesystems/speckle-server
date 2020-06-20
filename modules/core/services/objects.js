@@ -5,6 +5,7 @@ const { performance } = require( 'perf_hooks' )
 const crypto = require( 'crypto' )
 const set = require( 'lodash.set' )
 const get = require( 'lodash.get' )
+const chunk = require( 'lodash.chunk' )
 
 let debug = require( 'debug' )( 'speckle:services' )
 
@@ -77,6 +78,68 @@ module.exports = {
     return insertionObject.id
   },
 
+  async createObjectsBatched( objects ) {
+    let closures = [ ]
+    let objsToInsert = [ ]
+    let ids = [ ]
+
+    objects.forEach( obj => {
+      let insertionObject = prepInsertionObject( obj )
+      let totalChildrenCountGlobal = 0
+      let totalChildrenCountByDepth = {}
+
+      if ( obj.__closure !== null ) {
+        for ( const prop in obj.__closure ) {
+          closures.push( { parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
+          totalChildrenCountGlobal++
+          if ( totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ] )
+            totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ]++
+          else
+            totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ] = 1
+        }
+      }
+
+      insertionObject.totalChildrenCount = totalChildrenCountGlobal
+      insertionObject.totalChildrenCountByDepth = JSON.stringify( totalChildrenCountByDepth )
+
+      delete insertionObject.__tree
+      delete insertionObject.__closure
+
+      objsToInsert.push( insertionObject )
+      ids.push( insertionObject.id )
+    } )
+
+    let closureBatchSize = 1000
+    let objectsBatchSize = 500
+
+    if ( objsToInsert.length > 0 ) {
+      let batches = chunk( objsToInsert, objectsBatchSize )
+      batches.forEach( async batch => {
+        await knex.transaction( async trx => {
+          let q = Objects( ).insert( batch ).toString( ) + ' on conflict do nothing'
+          const inserts = await trx.raw( q )
+        } )
+        debug( `Inserted ${batch.length} objects` )
+      } )
+
+      // await knex.batchInsert( 'objects', objsToInsert, 1000 )
+    }
+
+    if ( closures.length > 0 ) {
+      let batches = chunk( closures, closureBatchSize )
+
+      batches.forEach( async batch => {
+        await knex.transaction( async trx => {
+          let q = Closures( ).insert( batch ).toString( ) + ' on conflict do nothing'
+          const inserts = await trx.raw( q )
+        } )
+        debug( `Inserted ${batch.length} closures` )
+      } )
+      // await knex.batchInsert( 'object_children_closure', closures, 1000 )
+    }
+
+  },
+
   async createObjects( objects ) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
@@ -137,7 +200,7 @@ module.exports = {
       }
 
       let t1 = performance.now( )
-      // debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+      debug( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
       resolve( )
     } ) )
@@ -384,8 +447,19 @@ module.exports = {
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject( obj ) {
+  let memNow = process.memoryUsage( ).heapUsed / 1024 / 1024
+
+  // if ( obj.hash )
+  //   obj.id = obj.hash
+  // else
   obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
+
   let stringifiedObj = JSON.stringify( obj )
+  let memAfter = process.memoryUsage( ).heapUsed / 1024 / 1024
+  // if ( memAfter > 100 ) {
+  // console.log( memNow + 'mb', memAfter + 'mb' )
+  // console.log( obj.speckleType, obj.id )
+  // }
   return {
     data: stringifiedObj, // stored in jsonb column
     id: obj.id,
