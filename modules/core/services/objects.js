@@ -212,7 +212,7 @@ module.exports = {
 
   async getObject( objectId ) {
     let res = await Objects( ).where( { id: objectId } ).select( '*' ).first( )
-    return res
+    return res.data
   },
 
   async getObjectChildrenStream( { objectId } ) {
@@ -224,7 +224,7 @@ module.exports = {
       // .andWhere( knex.raw( '"minDepth" < ?', [ depth ] ) )
       // .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
       .orderBy( 'objects.id' )
-    return q.stream()
+    return q.stream( )
   },
 
   async getObjectChildren( { objectId, limit, depth, select, cursor } ) {
@@ -464,7 +464,7 @@ function prepInsertionObject( obj ) {
   if ( obj.hash )
     obj.id = obj.hash
   else
-  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
+    obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
 
   let stringifiedObj = JSON.stringify( obj )
   let memAfter = process.memoryUsage( ).heapUsed / 1024 / 1024

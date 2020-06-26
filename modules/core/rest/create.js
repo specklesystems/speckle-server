@@ -1,8 +1,9 @@
 'use strict'
 const zlib = require( 'zlib' )
 const Busboy = require( 'busboy' )
+let debug = require( 'debug' )
 
-const { createObjects, createObjectsBatched, getObjectChildrenStream } = require( '../services/objects' )
+const { createObjects, createObjectsBatched, getObject, getObjectChildrenStream } = require( '../services/objects' )
 
 module.exports = ( app ) => {
 
@@ -38,64 +39,70 @@ module.exports = ( app ) => {
     req.pipe( busboy )
   } )
 
-  app.get( '/objects/:streamId/object/:objectId', async ( req, res ) => {
-    console.log( 'getting objects route' )
+  app.get( '/objects/:streamId/:objectId', async ( req, res ) => {
 
-    let stream = await getObjectChildrenStream( { objectId: req.params.objectId } )
+    // TODO: authN & authZ checks
+
+    let simpleText = req.headers.accept === 'text/plain'
+
+    let dbStream = await getObjectChildrenStream( { objectId: req.params.objectId } )
 
     let currentChunkSize = 0
-    let maxChunkSize = 50000 // 
-    let chunk = '['
+    let maxChunkSize = 50000
+    let chunk = simpleText ? '' : [ ]
     let isFirst = true
 
-    res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': 'application/json' } )
-    // res.setHeader(  )
+
+    res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': simpleText ? 'text/plain' : 'application/json' } )
+
     const gzip = zlib.createGzip( )
 
-    stream.on( 'data', row => {
-      if ( currentChunkSize === 0 ) {
-        // chunk = '['
-      }
+    if ( !simpleText ) gzip.write( '[' )
 
-      if(isFirst) {
-        isFirst = false
+    // helper func to flush the gzip buffer
+    const writeBuffer = ( ) => {
+      if ( simpleText ) {
+        gzip.write( chunk )
       } else {
-        chunk += ','
+        gzip.write( `${chunk.join(',')}` )
       }
-      // if ( !passedFirstRow ){
-      //   chunk += ','
-      //   passedFirstRow = false
-      // }
-     
+      gzip.flush( )
+      currentChunkSize = 0
+      chunk = simpleText ? '' : [ ]
+    }
+
+    // Populate first object (the "commit")
+    let obj = await getObject( req.params.objectId )
+    var objString = JSON.stringify( obj )
+    if ( simpleText ) {
+      chunk += `${obj.id} \t ${objString}\n`
+    } else {
+      chunk.push( objString + ',' )
+    }
+
+    writeBuffer( )
+
+    dbStream.on( 'data', row => {
       let data = JSON.stringify( row.data )
       currentChunkSize += Buffer.byteLength( data, 'utf8' )
-
-
-
-      chunk += data
-
+      if ( simpleText ) {
+        chunk += `${row.data.id} \t ${data}\n`
+      } else {
+        chunk.push( data )
+      }
       if ( currentChunkSize >= maxChunkSize ) {
-        console.log( 'writing chunk', currentChunkSize )
-        // chunk += ']'
-        gzip.write( chunk )
-        gzip.flush( )
-        //res.write( chunk )
-        currentChunkSize = 0
-        chunk = ''
+        writeBuffer( )
       }
     } )
 
-    stream.on( 'error', err => {
-      // TODO
+    dbStream.on( 'error', err => {
+      debug( 'speckle:error' )( `Error in streaming object children for ${req.params.objectId}` )
     } )
 
-    stream.on( 'end', ( ) => {
+    dbStream.on( 'end', ( ) => {
       if ( currentChunkSize !== 0 ) {
-        chunk += ']'
-        gzip.write( chunk )
-        gzip.flush( )
-        currentChunkSize = 0
-        chunk = ''
+        writeBuffer( )
+        if ( !simpleText ) gzip.write( ']' )
         gzip.end( )
       }
     } )
