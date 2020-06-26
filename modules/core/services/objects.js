@@ -215,6 +215,18 @@ module.exports = {
     return res
   },
 
+  async getObjectChildrenStream( { objectId } ) {
+    let q = Closures( )
+    q.select( 'id' )
+    q.select( 'data' )
+    q.rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
+      .where( knex.raw( 'parent = ?', [ objectId ] ) )
+      // .andWhere( knex.raw( '"minDepth" < ?', [ depth ] ) )
+      // .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
+      .orderBy( 'objects.id' )
+    return q.stream()
+  },
+
   async getObjectChildren( { objectId, limit, depth, select, cursor } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
@@ -449,9 +461,9 @@ module.exports = {
 function prepInsertionObject( obj ) {
   let memNow = process.memoryUsage( ).heapUsed / 1024 / 1024
 
-  // if ( obj.hash )
-  //   obj.id = obj.hash
-  // else
+  if ( obj.hash )
+    obj.id = obj.hash
+  else
   obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
 
   let stringifiedObj = JSON.stringify( obj )
