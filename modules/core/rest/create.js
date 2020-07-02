@@ -61,6 +61,7 @@ module.exports = ( app ) => {
 
     // helper func to flush the gzip buffer
     const writeBuffer = ( ) => {
+      console.log( `writing buff ${currentChunkSize}` )
       if ( simpleText ) {
         gzip.write( chunk )
       } else {
@@ -75,18 +76,17 @@ module.exports = ( app ) => {
     let obj = await getObject( req.params.objectId )
     var objString = JSON.stringify( obj )
     if ( simpleText ) {
-      chunk += `${obj.id} \t ${objString}\n`
+      chunk += `${obj.id}\t${objString}\n`
     } else {
       chunk.push( objString + ',' )
     }
-
     writeBuffer( )
 
     dbStream.on( 'data', row => {
       let data = JSON.stringify( row.data )
       currentChunkSize += Buffer.byteLength( data, 'utf8' )
       if ( simpleText ) {
-        chunk += `${row.data.id} \t ${data}\n`
+        chunk += `${row.data.id}\t${data}\n`
       } else {
         chunk.push( data )
       }
@@ -103,10 +103,20 @@ module.exports = ( app ) => {
       if ( currentChunkSize !== 0 ) {
         writeBuffer( )
         if ( !simpleText ) gzip.write( ']' )
-        gzip.end( )
       }
+      gzip.end( )
+      console.log( 'written end' )
     } )
 
     gzip.pipe( res )
+  } )
+
+  app.get( '/objects/:streamId/:objectId/single', async ( req, res ) => {
+
+    // TODO: authN & authZ checks
+
+    let obj = await getObject( req.params.objectId )
+
+    res.send( obj )
   } )
 }
