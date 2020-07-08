@@ -210,8 +210,9 @@ module.exports = {
     return ids
   },
 
-  async getObject( objectId ) {
+  async getObject( { objectId } ) {
     let res = await Objects( ).where( { id: objectId } ).select( '*' ).first( )
+    res.data.totalChildrenCount = res.totalChildrenCount // move this back
     return res.data
   },
 

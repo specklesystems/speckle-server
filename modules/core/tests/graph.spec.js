@@ -330,7 +330,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.errors ).to.not.exist
       expect( res.body.data ).to.have.property( 'streamDelete' )
       expect( res.body.data.streamDelete ).to.equal( true )
-      
+
     } )
 
   } )
@@ -528,7 +528,6 @@ describe( 'GraphQL API Core', ( ) => {
           `
         } )
 
-
         expect( first ).to.be.json
         expect( first.body.errors ).to.not.exist
         expect( first.body.data.stream ).to.be.an( 'object' )
@@ -625,11 +624,11 @@ describe( 'GraphQL API Core', ( ) => {
         }`
 
       let res = await sendRequest( null, { query: q } )
-      
+
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.serverInfo ).to.be.an( 'object' )
-  
+
       let si = res.body.data.serverInfo
       expect( si.name ).to.be.a( 'string' )
       expect( si.adminContact ).to.be.a( 'string' )

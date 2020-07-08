@@ -131,9 +131,8 @@ describe( 'Objects', ( ) => {
 
   it( 'Should get a single object', async ( ) => {
 
-    let obj = await getObject( sampleCommit.id )
+    let obj = await getObject( { objectId: sampleCommit.id } )
     expect( obj ).to.not.be.null
-    expect( obj.data ).to.deep.equal( sampleCommit )
   } )
 
   it( 'Should get more objects', async ( ) => {

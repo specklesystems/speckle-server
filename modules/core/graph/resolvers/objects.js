@@ -16,7 +16,7 @@ module.exports = {
       return { totalCount: commits.length, commits: commits }
     },
     async commit( parent, args, context, info ) {
-      let commit = getObject( args.id )
+      let commit = getObject( { objectId: args.id } )
       return commit
     },
     async tags( parent, args, context, info ) {
@@ -41,7 +41,6 @@ module.exports = {
       return await getUser( parent.author )
     },
     async children( parent, args, context, info ) {
-      
       // Simple query
       if ( !args.query && !args.orderBy ) {
         let result = await getObjectChildren( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, cursor: args.cursor } )
@@ -55,7 +54,7 @@ module.exports = {
   },
   Tag: {
     async commit( parent, args, context, info ) {
-      let obj = await getObject( parent.commitId )
+      let obj = await getObject( { objectId: parent.commitId } )
       return obj
     }
   },
