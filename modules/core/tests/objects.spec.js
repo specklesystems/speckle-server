@@ -410,6 +410,14 @@ describe( 'Objects', ( ) => {
     expect( test4.objects[ 0 ].data.nest.duck ).to.equal( false )
 
   } )
+
+  it( 'should batch create objects', async ( ) => {
+    assert.fail( )
+  } )
+
+  it( 'should stream objects back', async ( ) => {
+    assert.fail( )
+  } )
 } )
 
 const crypto = require( 'crypto' )
