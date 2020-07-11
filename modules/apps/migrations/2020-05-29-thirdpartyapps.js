@@ -59,7 +59,11 @@ exports.up = async knex => {
     firstparty: true
   } )
 
-  const desktopConnectorScopes = [ { appId: 'connectors', scopeName: 'streams:read' }, { appId: 'connectors', scopeName: 'streams:write' } ]
+  const desktopConnectorScopes = [ 
+    { appId: 'connectors', scopeName: 'streams:read' }, 
+    { appId: 'connectors', scopeName: 'streams:write' },
+    { appId: 'connectors', scopeName: 'profile:read' },
+    { appId: 'connectors', scopeName: 'profile:email' } ]
   await knex( 'server_apps_scopes' ).insert( desktopConnectorScopes )
 
   // The main server web app
@@ -75,7 +79,7 @@ exports.up = async knex => {
 
   const scopes = await knex( 'scopes' ).select( '*' )
   const webAppScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'spklwebapp', scopeName: s.name } ) )
-  await knex( 'server_apps_scopes' ).insert( webAppScopes )  
+  await knex( 'server_apps_scopes' ).insert( webAppScopes )
 
   // The api explorer app
   await knex( 'server_apps' ).insert( {

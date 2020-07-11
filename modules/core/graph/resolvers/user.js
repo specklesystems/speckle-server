@@ -13,7 +13,11 @@ module.exports = {
     },
     async user( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'users:read' )
+
+      if ( !args.id )
+        await validateScopes( context.scopes, 'profile:read' )
+      else
+        await validateScopes( context.scopes, 'users:read' )
 
       if ( !args.id && !context.userId ) {
         throw new UserInputError( 'You must provide an user id.' )
@@ -29,16 +33,13 @@ module.exports = {
   User: {
     async email( parent, args, context, info ) {
       // if it's me, go ahead
-      if ( context.userId === parent.id )
+      if ( context.userId === parent.id ) {
+        await validateScopes( context.scopes, 'profile:email' )
         return parent.email
-
-      // otherwise check scopes
-      try {
-        await validateScopes( context.scopes, 'users:email' )
-        return parent.email
-      } catch ( err ) {
-        return null
       }
+
+      await validateScopes( context.scopes, 'users:email' )
+      return parent.email
     },
     async role( parent, args, context, info ) {
       return await getUserRole( parent.id )

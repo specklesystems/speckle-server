@@ -82,17 +82,15 @@ export default {
   methods: {
     async deny( ) {
       this.state = 1
-      // setTimeout(function() {}.bind(this), 1000 * 2)
       window.history.replaceState( {}, document.title, '/auth/finalize' )
-      await fetch( `${this.serverApp.redirectUrl}?success=false`, { method: 'GET' } )
+      fetch( `${this.serverApp.redirectUrl}?success=false`, { method: 'GET' } ).then( ).catch( )
     },
     async allow( ) {
       this.state = 2
       try {
         window.location = `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`
       } catch ( err ) {
-        console.log( err )
-        await fetch( `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`, { method: 'GET' } )
+        fetch( `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`, { method: 'GET' } ).then( ).catch( )
       }
     }
   },

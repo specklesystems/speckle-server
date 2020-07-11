@@ -40,6 +40,7 @@ exports.init = ( app, options ) => {
     return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
   }
 
+  // TODO: add cors
   app.post( '/auth/token', async ( req, res, next ) => {
     try {
       if ( req.body.refreshToken ) {
