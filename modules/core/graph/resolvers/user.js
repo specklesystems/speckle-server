@@ -32,14 +32,22 @@ module.exports = {
   },
   User: {
     async email( parent, args, context, info ) {
-      // if it's me, go ahead
+      // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if ( context.userId === parent.id ) {
-        await validateScopes( context.scopes, 'profile:email' )
-        return parent.email
+        try {
+          await validateScopes( context.scopes, 'profile:email' )
+          return parent.email
+        } catch ( err ) {
+          return null
+        }
       }
 
-      await validateScopes( context.scopes, 'users:email' )
-      return parent.email
+      try {
+        await validateScopes( context.scopes, 'users:email' )
+        return parent.email
+      } catch ( err ) {
+        return null
+      }
     },
     async role( parent, args, context, info ) {
       return await getUserRole( parent.id )
