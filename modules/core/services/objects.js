@@ -121,8 +121,6 @@ module.exports = {
         } )
         debug( `Inserted ${batch.length} objects` )
       } )
-
-      // await knex.batchInsert( 'objects', objsToInsert, 1000 )
     }
 
     if ( closures.length > 0 ) {
@@ -135,9 +133,7 @@ module.exports = {
         } )
         debug( `Inserted ${batch.length} closures` )
       } )
-      // await knex.batchInsert( 'object_children_closure', closures, 1000 )
     }
-
   },
 
   async createObjects( objects ) {

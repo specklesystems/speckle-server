@@ -12,7 +12,17 @@ chai.use( chaiHttp )
 
 const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
-const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../services/objects' )
+const {
+  createCommit,
+  createObject,
+  createObjects,
+  createObjectsBatched,
+  getObject,
+  getObjects,
+  getObjectChildren,
+  getObjectChildrenQuery,
+  getObjectChildrenStream
+} = require( '../services/objects' )
 
 const sampleObjects = require( './sampleObjectData' )
 
@@ -411,12 +421,28 @@ describe( 'Objects', ( ) => {
 
   } )
 
+  let commitId
   it( 'should batch create objects', async ( ) => {
-    assert.fail( )
+    let objs = createManyObjects( 3333, 'perlin merlin magic' )
+    commitId = objs[ 0 ].id
+
+    await createObjectsBatched( objs )
+
+    let parent = await getObject( { objectId: commitId } )
+    expect( parent.totalChildrenCount ).to.equal( 3333 )
+    let commitChildren = await getObjectChildren( { objectId: commitId, limit: 2 } )
+    expect( commitChildren.objects.length ).to.equal( 2 )
   } )
 
-  it( 'should stream objects back', async ( ) => {
-    assert.fail( )
+  it( 'should stream objects back', async ( done ) => {
+    let stream = await getObjectChildrenStream( { objectId: commitId } )
+    let tcount = 0
+
+    stream.on( 'data', row => tcount++ )
+    stream.on( 'end', ( ) => {
+      expect( tcount ).to.equal( 3333 )
+      done()
+    } )
   } )
 } )
 
