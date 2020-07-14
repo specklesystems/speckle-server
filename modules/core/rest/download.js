@@ -44,28 +44,31 @@ module.exports = ( app ) => {
     if ( !simpleText ) gzip.write( '[' )
 
     // helper func to flush the gzip buffer
-    const writeBuffer = ( ) => {
-      console.log( `writing buff ${currentChunkSize}` )
+    const writeBuffer = ( addTrailingComma ) => {
+      // console.log( `writing buff ${currentChunkSize}` )
       if ( simpleText ) {
         gzip.write( chunk )
       } else {
-        gzip.write( `${chunk.join(',')}` )
+        gzip.write( chunk.join( ',' ) )
+        if ( addTrailingComma ){
+          gzip.write( ',' )
+        }
       }
       gzip.flush( )
-      currentChunkSize = 0
       chunk = simpleText ? '' : [ ]
     }
 
     // Populate first object (the "commit")
-    let obj = await getObject( req.params.objectId )
+    let obj = await getObject( { objectId: req.params.objectId } )
     var objString = JSON.stringify( obj )
     if ( simpleText ) {
       chunk += `${obj.id}\t${objString}\n`
     } else {
-      chunk.push( objString + ',' )
+      chunk.push( objString )
     }
-    writeBuffer( )
+    writeBuffer( true )
 
+    let k = 0
     dbStream.on( 'data', row => {
       let data = JSON.stringify( row.data )
       currentChunkSize += Buffer.byteLength( data, 'utf8' )
@@ -75,8 +78,10 @@ module.exports = ( app ) => {
         chunk.push( data )
       }
       if ( currentChunkSize >= maxChunkSize ) {
-        writeBuffer( )
+        currentChunkSize = 0
+        writeBuffer( true )
       }
+      k++
     } )
 
     dbStream.on( 'error', err => {
@@ -85,13 +90,13 @@ module.exports = ( app ) => {
 
     dbStream.on( 'end', ( ) => {
       if ( currentChunkSize !== 0 ) {
-        writeBuffer( )
+        writeBuffer( false )
         if ( !simpleText ) gzip.write( ']' )
       }
       gzip.end( )
-      console.log( 'written end' )
     } )
 
+    // 🚬
     gzip.pipe( res )
   } )
 

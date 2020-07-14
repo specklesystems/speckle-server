@@ -39,7 +39,10 @@ describe( `Upload/Download Routes`, ( ) => {
     testStream.id = await createStream( testStream, userA.id )
   } )
 
-  after( async ( ) => {} )
+  after( async ( ) => {
+    await knex.migrate.rollback( )
+
+  } )
 
   it( 'Should not allow upload requests without an authorization token or valid streamId', async ( ) => {
 
@@ -71,10 +74,11 @@ describe( `Upload/Download Routes`, ( ) => {
   } )
 
   let parentId
+  let numObjs = 5000
 
   it( 'Should properly upload a bunch of objects', async ( ) => {
-    let objBatches = [ createManyObjects( 3000 ), createManyObjects( 3000 ), createManyObjects( 3000 ) ]
-    parentId = objBatches[0][0].id
+    let objBatches = [ createManyObjects( numObjs ), createManyObjects( numObjs ), createManyObjects( numObjs ) ]
+    parentId = objBatches[ 0 ][ 0 ].id
 
     let res =
       await request( expressApp )
@@ -87,14 +91,65 @@ describe( `Upload/Download Routes`, ( ) => {
     expect( res ).to.have.status( 303 )
   } )
 
-  it( 'Should properly download an object, with all its children', async ( ) => {
-    console.log( parentId )
-    let res = await request( expressApp )
-      .get(`/objects/${testStream.id}/${parentId}` )
-      .set( 'Authorization', userA.token )
+  it( 'Should properly download an object, with all its children, into a application/json response', ( done ) => {
+    new Promise( resolve => setTimeout( resolve, 1000 ) ) // avoids race condition
+      .then( ( ) => {
+        let res = request( expressApp )
+          .get( `/objects/${testStream.id}/${parentId}` )
+          .set( 'Authorization', userA.token )
+          .buffer( )
+          .parse( ( res, cb ) => {
+            res.data = ''
+            res.on( 'data', chunk => {
+              res.data += chunk.toString( )
+            } )
+            res.on( 'end', ( ) => {
+              cb( null, res.data )
+            } )
+          } )
+          .end( ( err, res ) => {
+            if ( err ) done( err )
+            try {
+              let o = JSON.parse( res.body )
+              expect( o.length ).to.equal( numObjs + 1 )
+              expect( res ).to.be.json
+              done( )
+            } catch ( err ) {
+              done( err )
+            }
+          } )
+      } )
+  } ).timeout( 5000 )
 
-    console.log( res.status)
-    assert.fail( )
+  it( 'Should properly download an object, with all its children, into a text/plain response', ( done ) => {
+    // new Promise( resolve => setTimeout( resolve, 1000 ) ) // avoids race condition
+    //   .then( ( ) => {
+    let res = request( expressApp )
+      .get( `/objects/${testStream.id}/${parentId}` )
+      .set( 'Authorization', userA.token )
+      .set( 'Accept', 'text/plain' )
+      .buffer( )
+      .parse( ( res, cb ) => {
+        res.data = ''
+        res.on( 'data', chunk => {
+          res.data += chunk.toString( )
+        } )
+        res.on( 'end', ( ) => {
+          cb( null, res.data )
+        } )
+      } )
+      .end( ( err, res ) => {
+        if ( err ) done( err )
+        try {
+          let o = res.body.split( '\n' ).filter( l => l !== '' )
+          expect( o.length ).to.equal( numObjs + 1 )
+          expect( res ).to.be.text
+          done( )
+        } catch ( err ) {
+          done( err )
+        }
+      } )
+    // } )
   } )
 
 } )
@@ -107,19 +162,10 @@ function createManyObjects( amount, noise ) {
 
   let base = { name: 'base bastard 2', noise: noise, __closure: {} }
   objs.push( base )
-  let k = 0
 
   for ( let i = 0; i < amount; i++ ) {
-    let baby = {
-      name: `mr. ${i}`,
-      nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [ i + 42, i, i ] },
-      test: { value: i, secondValue: 'mallard ' + i % 10 },
-      similar: k,
-    }
-
-    if ( i % 3 === 0 ) k++
+    let baby = { name: `mr. ${i}` }
     getId( baby )
-
     base.__closure[ baby.id ] = 1
     objs.push( baby )
   }

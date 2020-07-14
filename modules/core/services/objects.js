@@ -221,8 +221,6 @@ module.exports = {
     q.select( 'data' )
     q.rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
       .where( knex.raw( 'parent = ?', [ objectId ] ) )
-      // .andWhere( knex.raw( '"minDepth" < ?', [ depth ] ) )
-      // .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
       .orderBy( 'objects.id' )
     return q.stream( )
   },
