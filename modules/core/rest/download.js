@@ -1,17 +1,31 @@
 'use strict'
 const zlib = require( 'zlib' )
 const Busboy = require( 'busboy' )
-let debug = require( 'debug' )
+const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 
-const { contextMiddleware } = require( `${appRoot}/modules/shared` )
+const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
 
 module.exports = ( app ) => {
 
   app.get( '/objects/:streamId/:objectId', contextMiddleware, async ( req, res ) => {
 
-    // TODO: authN & authZ checks
+    if ( !req.context || !req.context.auth ) {
+      return res.status( 401 ).end( )
+    }
+
+    try {
+      await validateScopes( req.context.scopes, 'streams:read' )
+    } catch ( err ) {
+      return res.status( 401 ).end( )
+    }
+
+    try {
+      await authorizeResolver( req.context.userId, req.params.streamId, 'stream:reviewer' )
+    } catch ( err ) {
+      return res.status( 401 ).end( )
+    }
 
     let simpleText = req.headers.accept === 'text/plain'
 

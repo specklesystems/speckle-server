@@ -1,19 +1,32 @@
 'use strict'
 const zlib = require( 'zlib' )
 const Busboy = require( 'busboy' )
-let debug = require( 'debug' )
+const debug = require( 'debug' )
+const appRoot = require( 'app-root-path' )
+
+const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 const { createObjects, createObjectsBatched } = require( '../services/objects' )
 
 module.exports = ( app ) => {
 
-  app.post( '/objects/:streamId', async ( req, res ) => {
+  app.post( '/objects/:streamId', contextMiddleware, async ( req, res ) => {
 
-    if ( !req.context.auth ) {
+    if ( !req.context || !req.context.auth ) {
       return res.status( 401 ).end( )
     }
 
-    // TODO: authN & authZ checks -> can this user write to this stream? 
+    try {
+      await validateScopes( req.context.scopes, 'streams:write' )
+    } catch ( err ) {
+      return res.status( 401 ).end( )
+    }
+
+    try {
+      await authorizeResolver( req.context.userId, req.params.streamId, 'stream:contributor' )
+    } catch ( err ) {
+      return res.status( 401 ).end( )
+    }
 
     let busboy = new Busboy( { headers: req.headers } )
     let totalProcessed = 0
@@ -35,7 +48,7 @@ module.exports = ( app ) => {
     } )
 
     busboy.on( 'finish', ( ) => {
-      console.log( 'Done parsing ' + totalProcessed + ' objs ' + process.memoryUsage( ).heapUsed / 1024 / 1024 + ' mb mem' )
+      debug( 'speckle:upload-endpoint' )( 'Done parsing ' + totalProcessed + ' objs ' + process.memoryUsage( ).heapUsed / 1024 / 1024 + ' mb mem' )
       res.writeHead( 303, { Connection: 'close', Location: '/' } )
       res.end( )
     } )
