@@ -1,6 +1,6 @@
 'use strict'
-const root = require( 'app-root-path' )
-const knex = require( `${root}/db/knex` )
+const appRoot = require( 'app-root-path' )
+const knex = require( `${appRoot}/db/knex` )
 
 const Roles = ( ) => knex( 'user_roles' )
 const Scopes = ( ) => knex( 'scopes' )

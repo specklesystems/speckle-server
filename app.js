@@ -3,13 +3,14 @@
 
 let http = require( 'http' )
 const express = require( 'express' )
-const root = require( 'app-root-path' )
+const compression = require( 'compression' )
+const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
-require( 'dotenv' ).config( { path: `${root}/.env` } )
+require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 
 const { contextApiTokenHelper } = require( './modules/shared' )
 const knex = require( './db/knex' )
@@ -30,8 +31,14 @@ exports.init = async ( ) => {
     app.use( logger( 'speckle', 'dev', {} ) )
   }
 
-  app.use( bodyParser.json( ) )
+  if ( process.env.COMPRESSION ) {
+    debug( `speckle:startup` )( 'Using app level compression. Consider enabling this at a proxy level.' )
+    app.use( compression( ) )
+  }
+
+  app.use( bodyParser.json( { limit: '10mb' } ) )
   app.use( bodyParser.urlencoded( { extended: false } ) )
+  // app.use( express.json( { limit: '1mb' } ) );
 
   const { init, graph } = require( './modules' )
 
@@ -56,7 +63,7 @@ exports.init = async ( ) => {
  * @return {[type]}     [description]
  */
 
-const setupCheck = require( `${root}/setupcheck` )
+const setupCheck = require( `${appRoot}/setupcheck` )
 const { createProxyMiddleware } = require( 'http-proxy-middleware' )
 
 exports.startHttp = async ( app ) => {
@@ -64,14 +71,14 @@ exports.startHttp = async ( app ) => {
   app.set( 'port', port )
 
   let setupComplete = await setupCheck( )
-  
+
   if ( process.env.NODE_ENV !== 'development' )
     debug( 'speckle:info' )( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
 
   if ( process.env.NODE_ENV === 'development' ) {
     const frontendProxy = createProxyMiddleware( { target: 'http://localhost:8080', changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
-    
+
     debug( 'speckle:http-startup' )( '✨ Proxying frontend (dev mode):' )
     debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/` )
     debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
@@ -79,11 +86,11 @@ exports.startHttp = async ( app ) => {
     debug( 'speckle:hint' )( `ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
   } else {
 
-    app.use( '/', express.static( `${root}/frontend/dist` ) )
+    app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
 
     app.all( '/auth*', async ( req, res ) => {
       try {
-        res.sendFile( `${root}/frontend/dist/auth.html` )
+        res.sendFile( `${appRoot}/frontend/dist/auth.html` )
       } catch ( err ) {
 
       }
@@ -98,9 +105,9 @@ exports.startHttp = async ( app ) => {
         }
 
         if ( setupComplete ) {
-          res.sendFile( `${root}/frontend/dist/app.html` )
+          res.sendFile( `${appRoot}/frontend/dist/app.html` )
         } else {
-          res.sendFile( `${root}/frontend/dist/setup.html` )
+          res.sendFile( `${appRoot}/frontend/dist/setup.html` )
         }
       } catch ( error ) {
         res.json( { success: false, message: "Something went wrong" } )
@@ -113,9 +120,7 @@ exports.startHttp = async ( app ) => {
   graphqlServer.installSubscriptionHandlers( server )
 
   server.on( 'listening', ( ) => {
-    debug( `  ` )
-    debug( `Listening on ${server.address().port}` )
-    debug( `  ` )
+    debug( `speckle:startup` )( `Listening on ${server.address().port}` )
   } )
 
   server.listen( port )

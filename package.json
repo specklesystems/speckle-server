@@ -7,12 +7,13 @@
     "dev:all": "concurrently --kill-others \"npm run dev:server\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run serve",
     "build:frontend": "cd frontend && npm run build",
-    "dev:server": "PORT=3000 NODE_ENV=development POSTGRES_URL=postgres://localhost/speckle2_dev DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
+    "dev:server": "NODE_ENV=development POSTGRES_URL=postgres://localhost/speckle2_dev DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "test:server": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test nyc nyc --reporter html --reporter lcovonly mocha -s 0 --timeout 2000 --exit",
     "test:server:watch": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha --watch -s 0 --exit",
     "test:server:graph": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit --no-config",
     "test:server:generic": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/generic.spec.js --watch -s 0 --exit --no-config",
     "test:server:objects": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/objects.spec.js --watch -s 0 --exit --no-config",
+    "test:server:rest": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/rest.spec.js --watch -s 0 --exit --no-config",
     "test:server:streams": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/streams.spec.js --watch -s 0 --exit --no-config",
     "test:server:references": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/references.spec.js --watch -s 0 --exit --no-config",
     "test:server:users": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/users.spec.js --watch -s 0 --exit --no-config",
@@ -27,6 +28,8 @@
     "auto-load": "^3.0.4",
     "bcrypt": "^4.0.1",
     "body-parser": "^1.19.0",
+    "busboy": "^0.3.1",
+    "compression": "^1.7.4",
     "connect-redis": "^4.0.4",
     "crypto-random-string": "^3.2.0",
     "debug": "^4.1.1",
@@ -37,6 +40,7 @@
     "graphql-scalars": "^1.1.0",
     "graphql-tools": "^4.0.7",
     "knex": "^0.20.12",
+    "lodash.chunk": "^4.2.0",
     "lodash.debounce": "^4.0.8",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2",
@@ -49,6 +53,7 @@
     "passport-google-oauth2": "^0.2.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^7.18.2",
+    "pg-query-stream": "^3.1.1",
     "redis": "^3.0.2",
     "zxcvbn": "^4.4.2"
   },
@@ -59,7 +64,8 @@
     "cz-conventional-changelog": "^3.1.0",
     "http-proxy-middleware": "^1.0.4",
     "mocha": "^7.1.1",
-    "nyc": "^15.0.1"
+    "nyc": "^15.0.1",
+    "supertest": "^4.0.2"
   },
   "config": {
     "commitizen": {

@@ -1,9 +1,9 @@
 'use strict'
 const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 const debug = require( 'debug' )( 'speckle:middleware' )
-const root = require( 'app-root-path' )
-const knex = require( `${root}/db/knex` )
-const { validateToken } = require( `${root}/modules/core/services/tokens` )
+const appRoot = require( 'app-root-path' )
+const knex = require( `${appRoot}/db/knex` )
+const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
 /*
     
@@ -31,6 +31,13 @@ async function contextApiTokenHelper( { req, res } ) {
     }
   }
   return { auth: false }
+}
+
+// Middleware wrapper around the contextApiTokenHelper to be used in express routes
+async function contextMiddleware( req, res, next ) {
+  let result = await contextApiTokenHelper( { req, res } )
+  req.context = result
+  next()
 }
 
 /*
@@ -115,6 +122,7 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
 
 module.exports = {
   contextApiTokenHelper,
+  contextMiddleware,
   validateServerRole,
   validateScopes,
   authorizeResolver

@@ -2,14 +2,14 @@ const crypto = require( 'crypto' )
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 
-const { init, startHttp } = require( `${root}/app` )
+const { init, startHttp } = require( `${appRoot}/app` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
 
-const knex = require( `${root}/db/knex` )
+const knex = require( `${appRoot}/db/knex` )
 
 const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
@@ -32,11 +32,11 @@ describe( 'GraphQL API Core', ( ) => {
     testServer = server
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${(await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read' ] ))}`
+    userA.token = `Bearer ${(await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
     userB.id = await createUser( userB )
-    userB.token = `Bearer ${(await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read' ] ))}`
+    userB.token = `Bearer ${(await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
     userC.id = await createUser( userC )
-    userC.token = `Bearer ${(await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read' ] ))}`
+    userC.token = `Bearer ${(await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
   } )
@@ -330,7 +330,7 @@ describe( 'GraphQL API Core', ( ) => {
       expect( res.body.errors ).to.not.exist
       expect( res.body.data ).to.have.property( 'streamDelete' )
       expect( res.body.data.streamDelete ).to.equal( true )
-      
+
     } )
 
   } )
@@ -528,7 +528,6 @@ describe( 'GraphQL API Core', ( ) => {
           `
         } )
 
-
         expect( first ).to.be.json
         expect( first.body.errors ).to.not.exist
         expect( first.body.data.stream ).to.be.an( 'object' )
@@ -625,11 +624,11 @@ describe( 'GraphQL API Core', ( ) => {
         }`
 
       let res = await sendRequest( null, { query: q } )
-      
+
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.serverInfo ).to.be.an( 'object' )
-  
+
       let si = res.body.data.serverInfo
       expect( si.name ).to.be.a( 'string' )
       expect( si.adminContact ).to.be.a( 'string' )

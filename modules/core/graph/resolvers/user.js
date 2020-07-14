@@ -1,10 +1,10 @@
 'use strict'
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
 const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
-const setupCheck = require( `${root}/setupcheck` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+const setupCheck = require( `${appRoot}/setupcheck` )
 const zxcvbn = require( 'zxcvbn' )
 module.exports = {
   Query: {
@@ -13,7 +13,11 @@ module.exports = {
     },
     async user( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'users:read' )
+
+      if ( !args.id )
+        await validateScopes( context.scopes, 'profile:read' )
+      else
+        await validateScopes( context.scopes, 'users:read' )
 
       if ( !args.id && !context.userId ) {
         throw new UserInputError( 'You must provide an user id.' )
@@ -28,11 +32,16 @@ module.exports = {
   },
   User: {
     async email( parent, args, context, info ) {
-      // if it's me, go ahead
-      if ( context.userId === parent.id )
-        return parent.email
+      // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
+      if ( context.userId === parent.id ) {
+        try {
+          await validateScopes( context.scopes, 'profile:email' )
+          return parent.email
+        } catch ( err ) {
+          return null
+        }
+      }
 
-      // otherwise check scopes
       try {
         await validateScopes( context.scopes, 'users:email' )
         return parent.email

@@ -118,7 +118,7 @@ exports.up = async knex => {
     table.string( 'parent' ).notNullable( ).index( )
     table.string( 'child' ).notNullable( ).index( )
     table.integer( 'minDepth' ).defaultTo( 1 ).notNullable( ).index( )
-    table.index( [ 'parent', 'child' ], 'parent_child_index' )
+    table.unique( [ 'parent', 'child' ], 'parent_child_index' )
     table.index( [ 'parent', 'minDepth' ], 'full_pcd_index' )
   } )
 

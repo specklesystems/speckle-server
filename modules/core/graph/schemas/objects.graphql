@@ -47,7 +47,7 @@ type Object {
   """
   The full object, with all its props & other things. **NOTE:** If you're requesting objects for the purpose of recreating & displaying, you probably only want to request this specific field.
   """
-  data: JSON
+  data: JSONObject
   
   """
   Get any objects that this object references. In the case of commits, this will give you a commit's constituent objects.

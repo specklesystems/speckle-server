@@ -1,10 +1,10 @@
 'use strict'
 const bcrypt = require( 'bcrypt' )
 const crs = require( 'crypto-random-string' )
-const root = require( 'app-root-path' )
-const knex = require( `${root}/db/knex` )
+const appRoot = require( 'app-root-path' )
+const knex = require( `${appRoot}/db/knex` )
 
-const { createToken, createBareToken } = require( `${root}/modules/core/services/tokens` )
+const { createToken, createBareToken } = require( `${appRoot}/modules/core/services/tokens` )
 const ApiTokens = ( ) => knex( 'api_tokens' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )

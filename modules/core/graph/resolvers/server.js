@@ -1,6 +1,6 @@
 'use strict'
-const root = require( 'app-root-path' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const appRoot = require( 'app-root-path' )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { updateServerInfo, getServerInfo, getAvailableScopes, getAvailableRoles } = require( '../../services/generic' )
 
 module.exports = {

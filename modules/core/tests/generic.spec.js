@@ -1,9 +1,9 @@
 const chai = require( 'chai' )
 const assert = require( 'assert' )
 
-const root = require( 'app-root-path' )
-const { init } = require( `${root}/app` )
-const knex = require( `${root}/db/knex` )
+const appRoot = require( 'app-root-path' )
+const { init } = require( `${appRoot}/app` )
+const knex = require( `${appRoot}/db/knex` )
 
 const expect = chai.expect
 

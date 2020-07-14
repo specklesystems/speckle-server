@@ -2,9 +2,9 @@ const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
 
-const root = require( 'app-root-path' )
-const { init } = require( `${root}/app` )
-const knex = require( `${root}/db/knex` )
+const appRoot = require( 'app-root-path' )
+const { init } = require( `${appRoot}/app` )
+const knex = require( `${appRoot}/db/knex` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
@@ -12,7 +12,17 @@ chai.use( chaiHttp )
 
 const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
-const { createCommit, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../services/objects' )
+const {
+  createCommit,
+  createObject,
+  createObjects,
+  createObjectsBatched,
+  getObject,
+  getObjects,
+  getObjectChildren,
+  getObjectChildrenQuery,
+  getObjectChildrenStream
+} = require( '../services/objects' )
 
 const sampleObjects = require( './sampleObjectData' )
 
@@ -131,9 +141,8 @@ describe( 'Objects', ( ) => {
 
   it( 'Should get a single object', async ( ) => {
 
-    let obj = await getObject( sampleCommit.id )
+    let obj = await getObject( { objectId: sampleCommit.id } )
     expect( obj ).to.not.be.null
-    expect( obj.data ).to.deep.equal( sampleCommit )
   } )
 
   it( 'Should get more objects', async ( ) => {
@@ -411,6 +420,31 @@ describe( 'Objects', ( ) => {
     expect( test4.objects[ 0 ].data.nest.duck ).to.equal( false )
 
   } )
+
+  let commitId
+  it( 'should batch create objects', async ( ) => {
+    let objs = createManyObjects( 3333, 'perlin merlin magic' )
+    commitId = objs[ 0 ].id
+
+    await createObjectsBatched( objs )
+
+    let parent = await getObject( { objectId: commitId } )
+    expect( parent.totalChildrenCount ).to.equal( 3333 )
+    let commitChildren = await getObjectChildren( { objectId: commitId, limit: 2 } )
+    expect( commitChildren.objects.length ).to.equal( 2 )
+  } )
+
+  it( 'should stream objects back', ( done ) => {
+    let tcount = 0
+    getObjectChildrenStream( { objectId: commitId } )
+      .then( stream => {
+        stream.on( 'data', row => tcount++ )
+        stream.on( 'end', ( ) => {
+          expect( tcount ).to.equal( 3333 )
+          done( )
+        } )
+      } )
+  } )
 } )
 
 const crypto = require( 'crypto' )
@@ -437,12 +471,13 @@ function createManyObjects( shitTon, noise ) {
       sortValueA: i,
       sortValueB: i * 0.42 * i
     }
+
     if ( i % 3 === 0 ) k++
     getAFuckingId( baby )
-    base.__closure[ baby.id ] = 1
 
+    base.__closure[ baby.id ] = 1
     if ( i > 1000 )
-      base.__closure[ baby.id ] = i / 1000
+      base.__closure[ baby.id ] = 2
 
     objs.push( baby )
   }
