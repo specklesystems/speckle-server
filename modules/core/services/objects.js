@@ -83,6 +83,7 @@ module.exports = {
     let objsToInsert = [ ]
     let ids = [ ]
 
+    // Prep objects up
     objects.forEach( obj => {
       let insertionObject = prepInsertionObject( obj )
       let totalChildrenCountGlobal = 0
@@ -112,27 +113,29 @@ module.exports = {
     let closureBatchSize = 1000
     let objectsBatchSize = 500
 
+    // step 1: insert objecs 
     if ( objsToInsert.length > 0 ) {
       let batches = chunk( objsToInsert, objectsBatchSize )
-      batches.forEach( async batch => {
+      for ( const batch of batches ) {
         await knex.transaction( async trx => {
           let q = Objects( ).insert( batch ).toString( ) + ' on conflict do nothing'
           const inserts = await trx.raw( q )
         } )
         debug( `Inserted ${batch.length} objects` )
-      } )
+      }
     }
 
+    // step 2: insert closures
     if ( closures.length > 0 ) {
       let batches = chunk( closures, closureBatchSize )
 
-      batches.forEach( async batch => {
+      for ( const batch of batches ) {
         await knex.transaction( async trx => {
           let q = Closures( ).insert( batch ).toString( ) + ' on conflict do nothing'
           const inserts = await trx.raw( q )
         } )
         debug( `Inserted ${batch.length} closures` )
-      } )
+      } 
     }
   },
 
@@ -254,6 +257,10 @@ module.exports = {
       .limit( limit )
 
     let rows = await q
+
+    if ( rows.length === 0 ) {
+      return { objects: rows, cursor: null }
+    }
 
     if ( !fullObjectSelect )
       rows.forEach( ( o, i, arr ) => {

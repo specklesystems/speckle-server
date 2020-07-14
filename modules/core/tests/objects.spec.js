@@ -434,15 +434,16 @@ describe( 'Objects', ( ) => {
     expect( commitChildren.objects.length ).to.equal( 2 )
   } )
 
-  it( 'should stream objects back', async ( done ) => {
-    let stream = await getObjectChildrenStream( { objectId: commitId } )
+  it( 'should stream objects back', ( done ) => {
     let tcount = 0
-
-    stream.on( 'data', row => tcount++ )
-    stream.on( 'end', ( ) => {
-      expect( tcount ).to.equal( 3333 )
-      done()
-    } )
+    getObjectChildrenStream( { objectId: commitId } )
+      .then( stream => {
+        stream.on( 'data', row => tcount++ )
+        stream.on( 'end', ( ) => {
+          expect( tcount ).to.equal( 3333 )
+          done( )
+        } )
+      } )
   } )
 } )
 
@@ -470,12 +471,13 @@ function createManyObjects( shitTon, noise ) {
       sortValueA: i,
       sortValueB: i * 0.42 * i
     }
+
     if ( i % 3 === 0 ) k++
     getAFuckingId( baby )
-    base.__closure[ baby.id ] = 1
 
+    base.__closure[ baby.id ] = 1
     if ( i > 1000 )
-      base.__closure[ baby.id ] = i / 1000
+      base.__closure[ baby.id ] = 2
 
     objs.push( baby )
   }
