@@ -1,10 +1,10 @@
 'use strict'
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
 const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
-const setupCheck = require( `${root}/setupcheck` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+const setupCheck = require( `${appRoot}/setupcheck` )
 const zxcvbn = require( 'zxcvbn' )
 module.exports = {
   Query: {

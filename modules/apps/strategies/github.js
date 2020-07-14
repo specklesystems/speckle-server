@@ -3,8 +3,8 @@
 const passport = require( 'passport' )
 const GithubStrategy = require( 'passport-github2' )
 const URL = require( 'url' ).URL
-const root = require( 'app-root-path' )
-const { findOrCreateUser } = require( `${root}/modules/core/services/users` )
+const appRoot = require( 'app-root-path' )
+const { findOrCreateUser } = require( `${appRoot}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
 module.exports = ( app, session, sessionAppId, finalizeAuth ) => {

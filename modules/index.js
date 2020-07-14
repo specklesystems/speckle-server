@@ -1,7 +1,7 @@
 'use strict'
 const fs = require( 'fs' )
 const path = require( 'path' )
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const autoload = require( 'auto-load' )
 const values = require( 'lodash.values' )
 const merge = require( 'lodash.merge' )
@@ -10,13 +10,13 @@ const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 
 exports.init = async ( app ) => {
 
-  let dirs = fs.readdirSync( `${root}/modules` )
+  let dirs = fs.readdirSync( `${appRoot}/modules` )
   let moduleDirs = [ ]
 
   await require( './core' ).init( app )
 
   dirs.forEach( file => {
-    let fullPath = path.join( `${root}/modules`, file )
+    let fullPath = path.join( `${appRoot}/modules`, file )
 
     if ( fs.statSync( fullPath ).isDirectory( ) && file !== 'core' && file !== 'shared' ) {
       moduleDirs.push( fullPath )
@@ -31,7 +31,7 @@ exports.init = async ( app ) => {
 }
 
 exports.graph = ( ) => {
-  let dirs = fs.readdirSync( `${root}/modules` )
+  let dirs = fs.readdirSync( `${appRoot}/modules` )
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
@@ -54,7 +54,7 @@ exports.graph = ( ) => {
   // let directiveDirs = [ ]
 
   dirs.forEach( file => {
-    let fullPath = path.join( `${root}/modules`, file )
+    let fullPath = path.join( `${appRoot}/modules`, file )
 
     if ( fs.existsSync( path.join( fullPath, 'graph', 'schemas' ) ) ) {
       let moduleSchemas = fs.readdirSync( path.join( fullPath, 'graph', 'schemas' ) )

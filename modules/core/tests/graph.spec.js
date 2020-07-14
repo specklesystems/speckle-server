@@ -2,14 +2,14 @@ const crypto = require( 'crypto' )
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 
-const { init, startHttp } = require( `${root}/app` )
+const { init, startHttp } = require( `${appRoot}/app` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
 
-const knex = require( `${root}/db/knex` )
+const knex = require( `${appRoot}/db/knex` )
 
 const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )

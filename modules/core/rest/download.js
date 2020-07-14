@@ -2,12 +2,14 @@
 const zlib = require( 'zlib' )
 const Busboy = require( 'busboy' )
 let debug = require( 'debug' )
+const appRoot = require( 'app-root-path' )
 
+const { contextMiddleware } = require( `${appRoot}/modules/shared` )
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
 
 module.exports = ( app ) => {
 
-  app.get( '/objects/:streamId/:objectId', async ( req, res ) => {
+  app.get( '/objects/:streamId/:objectId', contextMiddleware, async ( req, res ) => {
 
     // TODO: authN & authZ checks
 

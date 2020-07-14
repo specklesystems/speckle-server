@@ -1,35 +1,37 @@
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 
-const { init, startHttp } = require( `${root}/app` )
+const { init, startHttp } = require( `${appRoot}/app` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
 
-const knex = require( `${root}/db/knex` )
+const knex = require( `${appRoot}/db/knex` )
 
 describe( `Upload/Download Routes`, ( ) => {
 
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
 
-  let testServer
+  // let testServer
+  let expressApp
   before( async ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
 
     let { app } = await init( )
-    let { server } = await startHttp( app )
-    testServer = server
+    expressApp = app
+    // let { server } = await startHttp( app )
+    // testServer = server
   } )
 
   after( async ( ) => {
-    testServer.close( )
   } )
 
   it( 'Should not allow upload requests without an authorization token', async ( ) => {
-    assert.fail()
+    let res = await chai.request( expressApp ).post(`/objects/${streamId}`).set('Authorization', myToken )
+    console.log( res )
   } )
 
   it( 'Should not allow download requests without an authorization token', async ( ) => {
@@ -55,3 +57,7 @@ describe( `Upload/Download Routes`, ( ) => {
   } )
 
 } )
+
+function sendRequest( auth, path, obj ) {
+  return chai.request( expressApp ).post( '/' ).set( 'Authorization', auth ).send( obj )
+}

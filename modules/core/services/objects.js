@@ -9,8 +9,8 @@ const chunk = require( 'lodash.chunk' )
 
 let debug = require( 'debug' )( 'speckle:services' )
 
-const root = require( 'app-root-path' )
-const knex = require( `${root}/db/knex` )
+const appRoot = require( 'app-root-path' )
+const knex = require( `${appRoot}/db/knex` )
 
 const Streams = ( ) => knex( 'streams' )
 const Objects = ( ) => knex( 'objects' )

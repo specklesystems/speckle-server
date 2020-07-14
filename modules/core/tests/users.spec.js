@@ -1,14 +1,14 @@
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 
-const { init } = require( `${root}/app` )
+const { init } = require( `${appRoot}/app` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
 
-const knex = require( `${root}/db/knex` )
+const knex = require( `${appRoot}/db/knex` )
 
 const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )

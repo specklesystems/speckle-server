@@ -1,9 +1,9 @@
 'use strict'
 
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 module.exports = {
   Query: {},

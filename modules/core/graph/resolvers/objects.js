@@ -1,7 +1,7 @@
 'use strict'
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getUser } = require( '../../services/users' )
 const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../../services/objects' )
 const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../services/references' )

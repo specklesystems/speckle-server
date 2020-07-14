@@ -4,13 +4,13 @@
 let http = require( 'http' )
 const express = require( 'express' )
 const compression = require( 'compression' )
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )
 const { ApolloServer } = require( 'apollo-server-express' )
 
-require( 'dotenv' ).config( { path: `${root}/.env` } )
+require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 
 const { contextApiTokenHelper } = require( './modules/shared' )
 const knex = require( './db/knex' )
@@ -63,7 +63,7 @@ exports.init = async ( ) => {
  * @return {[type]}     [description]
  */
 
-const setupCheck = require( `${root}/setupcheck` )
+const setupCheck = require( `${appRoot}/setupcheck` )
 const { createProxyMiddleware } = require( 'http-proxy-middleware' )
 
 exports.startHttp = async ( app ) => {
@@ -86,11 +86,11 @@ exports.startHttp = async ( app ) => {
     debug( 'speckle:hint' )( `ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
   } else {
 
-    app.use( '/', express.static( `${root}/frontend/dist` ) )
+    app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
 
     app.all( '/auth*', async ( req, res ) => {
       try {
-        res.sendFile( `${root}/frontend/dist/auth.html` )
+        res.sendFile( `${appRoot}/frontend/dist/auth.html` )
       } catch ( err ) {
 
       }
@@ -105,9 +105,9 @@ exports.startHttp = async ( app ) => {
         }
 
         if ( setupComplete ) {
-          res.sendFile( `${root}/frontend/dist/app.html` )
+          res.sendFile( `${appRoot}/frontend/dist/app.html` )
         } else {
-          res.sendFile( `${root}/frontend/dist/setup.html` )
+          res.sendFile( `${appRoot}/frontend/dist/setup.html` )
         }
       } catch ( error ) {
         res.json( { success: false, message: "Something went wrong" } )

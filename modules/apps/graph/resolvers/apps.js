@@ -1,10 +1,10 @@
 'use strict'
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 const { getApp } = require( '../../services/apps' )
 
-const { createAppToken } = require( `${root}/modules/core/services/tokens` )
+const { createAppToken } = require( `${appRoot}/modules/core/services/tokens` )
 const { createAuthorizationCode, exchangeAuthorizationCodeForToken } = require( `../../services/apps` )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${root}/modules/shared` )
+const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { authStrategies } = require( '../../index' )
 
 module.exports = {

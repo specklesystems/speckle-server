@@ -1,5 +1,5 @@
 'use strict'
-const root = require( 'app-root-path' )
+const appRoot = require( 'app-root-path' )
 
 const redis = require( 'redis' )
 const ExpressSession = require( 'express-session' )

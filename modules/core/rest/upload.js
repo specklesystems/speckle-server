@@ -9,6 +9,10 @@ module.exports = ( app ) => {
 
   app.post( '/objects/:streamId', async ( req, res ) => {
 
+    if ( !req.context.auth ) {
+      return res.status( 401 ).end( )
+    }
+
     // TODO: authN & authZ checks -> can this user write to this stream? 
 
     let busboy = new Busboy( { headers: req.headers } )

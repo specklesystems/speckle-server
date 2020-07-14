@@ -2,8 +2,8 @@
 const passport = require( 'passport' )
 const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy
 const URL = require( 'url' ).URL
-const root = require( 'app-root-path' )
-const { createUser, findOrCreateUser, validatePasssword, getUserByEmail } = require( `${root}/modules/core/services/users` )
+const appRoot = require( 'app-root-path' )
+const { createUser, findOrCreateUser, validatePasssword, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
 module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
