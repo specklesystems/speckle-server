@@ -23,6 +23,7 @@ jobs:
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: true
+      CANONICAL_URL: 'http://localhost:3000'
 
     steps:
       - checkout
