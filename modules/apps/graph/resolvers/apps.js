@@ -19,26 +19,5 @@ module.exports = {
     }
   },
   Mutation: {
-    async appAuthorize( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'apps:authorize' ) // TODO
-
-      // Implicit grant flow: returns the token directly
-      // let token = await createAppToken( { userId: context.userId, appId: args.appId } )
-      // return token
-
-      // TODO: Implement authorization code grant
-      let accessCode = await createAuthorizationCode( { userId: contex.userId, appId: args.appId, challenge: args.challenge } )
-      return accessCode
-    },
-    async appGetToken( parent, args, context, info ) {
-
-      let result = await exchangeAuthorizationCodeForToken( { appId: args.appId, appSecret: args.appSecret, accessCode: args.accessCode, challenge: args.challenge } )
-      // args.appId, args.appSecret, args.accessCode
-
-    },
-    async appRefreshToken( parent, args, context, info ) {
-      // TODO
-    }
   }
 }

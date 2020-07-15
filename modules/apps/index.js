@@ -74,13 +74,17 @@ exports.init = ( app, options ) => {
 
   // Strategies initialisation & listing
 
-  let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
-  authStrategies.push( githubStrategy )
+  if ( process.env.STRATEGY_GITHUB === 'true' ) {
+    let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
+    authStrategies.push( githubStrategy )
+  }
 
-  let googStrategy = require( './strategies/google' )( app, session, sessionAppId, finalizeAuth )
-  authStrategies.push( googStrategy )
+  if ( process.env.STRATEGY_GOOGLE === 'true' ) {
+    let googStrategy = require( './strategies/google' )( app, session, sessionAppId, finalizeAuth )
+    authStrategies.push( googStrategy )
+  }
 
-  if ( process.env.STRATEGY_LOCAL ) {
+  if ( process.env.STRATEGY_LOCAL === 'true' ) {
     let localStrategy = require( './strategies/local' )( app, session, sessionAppId, finalizeAuth )
     authStrategies.push( localStrategy )
   }
