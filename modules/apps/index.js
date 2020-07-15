@@ -35,9 +35,17 @@ exports.init = ( app, options ) => {
   }
 
   let finalizeAuth = async ( req, res, next ) => {
-    let app = await getApp( { id: req.session.appId } )
-    let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
-    return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
+    if ( req.session.appId ) {
+      try {
+        let app = await getApp( { id: req.session.appId } )
+        let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
+        return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
+      } catch ( err ) {
+        return res.status( 400 ).send( err.message )
+      }
+    } else {
+      return res.status( 200 ).end( )
+    }
   }
 
   // TODO: add cors
@@ -66,13 +74,17 @@ exports.init = ( app, options ) => {
 
   // Strategies initialisation & listing
 
-  let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
-  authStrategies.push( githubStrategy )
+  if ( process.env.STRATEGY_GITHUB === 'true' ) {
+    let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
+    authStrategies.push( githubStrategy )
+  }
 
-  let googStrategy = require( './strategies/google' )( app, session, sessionAppId, finalizeAuth )
-  authStrategies.push( googStrategy )
+  if ( process.env.STRATEGY_GOOGLE === 'true' ) {
+    let googStrategy = require( './strategies/google' )( app, session, sessionAppId, finalizeAuth )
+    authStrategies.push( googStrategy )
+  }
 
-  if ( process.env.STRATEGY_LOCAL ) {
+  if ( process.env.STRATEGY_LOCAL === 'true' ) {
     let localStrategy = require( './strategies/local' )( app, session, sessionAppId, finalizeAuth )
     authStrategies.push( localStrategy )
   }
