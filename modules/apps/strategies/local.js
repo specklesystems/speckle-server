@@ -28,6 +28,9 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
 
   app.post( '/auth/local/register', session, sessionAppId, async ( req, res, next ) => {
     try {
+      if ( !req.body.password )
+        throw new Error( 'Password missing' )
+      
       let userId = await createUser( req.body )
       req.user = { id: userId }
       return next( )

@@ -35,9 +35,17 @@ exports.init = ( app, options ) => {
   }
 
   let finalizeAuth = async ( req, res, next ) => {
-    let app = await getApp( { id: req.session.appId } )
-    let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
-    return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
+    if ( req.session.appId ) {
+      try {
+        let app = await getApp( { id: req.session.appId } )
+        let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
+        return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
+      } catch ( err ) {
+        return res.status( 400 ).send( err.message )
+      }
+    } else {
+      return res.status( 200 ).end( )
+    }
   }
 
   // TODO: add cors
