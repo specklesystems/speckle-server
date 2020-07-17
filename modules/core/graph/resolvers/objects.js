@@ -4,7 +4,7 @@ const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getUser } = require( '../../services/users' )
 const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../../services/objects' )
-const { createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../services/references' )
+const { createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId } = require( '../../services/branches' )
 
 module.exports = {
   Query: {

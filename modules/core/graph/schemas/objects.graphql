@@ -1,3 +1,4 @@
+
 extend type Stream {
   commits(offset: Int! = 0, limit: Int = 20): CommitCollection
   commit(id: String!): Object!
@@ -8,11 +9,13 @@ extend type Stream {
 type CommitCollection {
   totalCount: Int!
   commits: [Object]
+  cursor: String
 }
 
 type BranchCollection {
   totalCount: Int!
   branches: [Branch]
+  cursor: String
 }
 
 type Object {
@@ -44,24 +47,8 @@ type ObjectCollection {
   objects: [Object]!
 }
 
-enum REFERENCE_TYPE {
-  BRANCH,
-  TAG
-}
-
-interface Reference {
-  id: String!
-  name: String!
-  type: REFERENCE_TYPE!
-  description: String!
-  author: User!
-  createdAt: String
-  updatedAt: String
-}
-
 type Branch {
   id: String!
-  type: REFERENCE_TYPE!
   name: String!
   author: User!
   description: String!

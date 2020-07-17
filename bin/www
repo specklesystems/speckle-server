@@ -5,7 +5,8 @@
 let debug = require( 'debug' )( 'speckle:www' )
 let { init, startHttp } = require( '../app' )
 
-init( ).then( ( { app } ) => startHttp( app ) )
-  .catch( err => {
-    debug( err )
-  } )
+init( )
+  .then( ( { app } ) => startHttp( app ) )
+  .catch( err => debug( err ) )
+
+// 💥

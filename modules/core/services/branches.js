@@ -9,9 +9,6 @@ const BranchCommits = ( ) => knex( 'branch_commits' )
 
 module.exports = {
 
-  /*
-    Branches
-   */
   async createBranch( branch, streamId, userId ) {
     let commits = branch.commits || [ ]
     delete branch.commits
@@ -62,11 +59,5 @@ module.exports = {
   async deleteBranchById( branchId ) {
     await Refs( ).where( { id: branchId, type: 'branch' } ).del( )
   },
-  /*
-    Generic
-   */
-  async getStreamReferences( streamId ) {
-    return Refs( ).where( { streamId: streamId } ).select( '*' )
-  }
 
 }

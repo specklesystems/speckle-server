@@ -14,17 +14,11 @@ const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, val
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
 const { createObject, createCommit, createObjects, getObject, getObjects } = require( '../services/objects' )
 const {
-  createTag,
-  updateTag,
-  getTagById,
-  deleteTagById,
-  getTagsByStreamId,
   createBranch,
   updateBranch,
   getBranchById,
   getBranchesByStreamId,
-  getStreamReferences
-} = require( '../services/references' )
+} = require( '../services/branches' )
 
 describe( 'Tags & Branches', ( ) => {
   let user = {
@@ -114,37 +108,6 @@ describe( 'Tags & Branches', ( ) => {
     let myBranchAfterSecondUpdate = await getBranchById( branch.id )
     expect( myBranchAfterSecondUpdate.commits ).to.have.lengthOf( 3, 'Branch commits should not be removed, only appended.' )
     expect( myBranchAfterSecondUpdate.name ).to.equal( 'A Different Name' )
-  } )
-
-  it( 'Should create a tag', async ( ) => {
-    tag.id = await createTag( tag, stream.id, user.id )
-    expect( tag.id ).to.be.not.null
-
-    await createTag( { name: 'v.2.0.0', description: 'Woot boot moot' }, stream.id, user.id )
-  } )
-
-  it( 'Should not allow for duplicate tags', async ( ) => {
-    try {
-      let dupeTag = { ...tag }
-      await createTag( dupeTag, stream.id, user.id )
-      assert.fail( )
-    } catch {
-      // Pass
-    }
-  } )
-
-  it( 'Should get a tag', async ( ) => {
-    let myTag = await getTagById( tag.id )
-    delete myTag.createdAt
-    delete myTag.updatedAt
-    expect( myTag ).to.deep.equal( tag )
-  } )
-
-  it( 'Should update a tag', async ( ) => {
-    await updateTag( { id: tag.id, name: 'v.1000.000.000+ultra', description: 'the ultimate release' } )
-    let myTag = await getTagById( tag.id )
-    expect( myTag.name ).to.equal( 'v.1000.000.000+ultra' )
-    expect( myTag.description ).to.equal( 'the ultimate release' )
   } )
 
   it( 'Should get all stream references', async ( ) => {
