@@ -1,24 +1,17 @@
 extend type Stream {
   commits(offset: Int! = 0, limit: Int = 20): CommitCollection
   commit(id: String!): Object!
-  tags(offset: Int = 0, limit: Int = 20): TagCollection
-  tag( id: String! ): Tag
   branches(offset: Int = 0, limit: Int = 20): BranchCollection
   branch( id: String! ): Branch
 }
 
 type CommitCollection {
-  totalCount: Int
+  totalCount: Int!
   commits: [Object]
 }
 
-type TagCollection {
-  totalCount: Int
-  tags: [Tag]
-}
-
 type BranchCollection {
-  totalCount: Int
+  totalCount: Int!
   branches: [Branch]
 }
 
@@ -29,29 +22,11 @@ type Object {
   createdAt: DateTime
   totalChildrenCount: Int
   """
-  The object's description. Valid only in the case of commit objects.
-  """
-  description: String
-  """
-  The object's creator. Valid only in the case of commit objects.
-  """
-  author: User
-  """
-  Any tags that this object belongs to. Valid only in the case of commit objects.
-  """
-  tag: [Tag]
-  """
-  Any branches that this object belongs to. Valid only in the case of commit objects.
-  """
-  branch: [Branch]
-  """
   The full object, with all its props & other things. **NOTE:** If you're requesting objects for the purpose of recreating & displaying, you probably only want to request this specific field.
   """
   data: JSONObject
-  
   """
   Get any objects that this object references. In the case of commits, this will give you a commit's constituent objects.
-
   **NOTE**: Providing any of the two last arguments ( `query`, `orderBy` ) will trigger a different code branch that executes a much more expensive SQL query. It is not recommended to do so for basic clients that are interested in purely getting all the objects of a given commit.
   """
   children(
@@ -84,7 +59,7 @@ interface Reference {
   updatedAt: String
 }
 
-type Branch implements Reference {
+type Branch {
   id: String!
   type: REFERENCE_TYPE!
   name: String!
@@ -93,17 +68,6 @@ type Branch implements Reference {
   createdAt: String
   updatedAt: String
   commits( offset: Int! = 0, limit: Int! = 20 ): CommitCollection
-}
-
-type Tag implements Reference {
-  id: String!
-  type: REFERENCE_TYPE!
-  name: String!
-  author: User!
-  description: String!
-  createdAt: String
-  updatedAt: String
-  commit: Object
 }
 
 extend type Mutation {
@@ -128,32 +92,7 @@ extend type Mutation {
   """
   Deletes a branch.
   """
-  branchDelete( streamId: String!, branchId: String! ):Boolean!
-  """
-  Creates a tag.
-  """
-  tagCreate(streamId: String!, tag: TagCreateInput ): String!
-  """
-  Updates a tag.
-  """
-  tagUpdate(streamId: String!, tag: TagUpdateInput ): Boolean!
-  """
-  Deletes a tag.
-  """
-  tagDelete( streamId: String!, tagId: String! ): Boolean!
-}
-
-input TagCreateInput {
-  name: String!
-  description: String
-  commitId: String!
-}
-
-input TagUpdateInput {
-  id: String!
-  name: String
-  description: String
-  commitId: String
+  branchDelete( streamId: String!, branchId: String! ): Boolean!
 }
 
 input BranchCreateInput {
@@ -190,7 +129,3 @@ input ObjectCreateInput {
   """
   objects: [JSONObject]!
 }
-
-
-
-

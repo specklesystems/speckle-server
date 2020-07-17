@@ -100,11 +100,12 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
 
   if ( role === undefined || role === null ) throw new ApolloError( 'Unknown role: ' + requiredRole )
 
+  console.log( role )
   try {
     let { isPublic } = await knex( role.resourceTarget ).select( 'isPublic' ).where( { id: resourceId } ).first( )
     if ( isPublic && roles[ requiredRole ] < 200 ) return true
   } catch ( e ) {
-    throw new ApolloError( `Resource of type ${resourceTable} with ${resourceId} not found` )
+    throw new ApolloError( `Resource of type ${role.resourceTarget} with ${resourceId} not found` )
   }
 
   let entry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )

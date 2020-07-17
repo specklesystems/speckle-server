@@ -4,42 +4,10 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
-const Refs = ( ) => knex( 'references' )
+const Refs = ( ) => knex( 'branches' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
 
 module.exports = {
-
-  /*
-    Tags
-   */
-  async createTag( tag, streamId, userId ) {
-    delete tag.commits // let's make sure
-    tag.id = crs( { length: 10 } )
-    tag.streamId = streamId
-    tag.author = userId
-    tag.type = 'tag'
-    let [ id ] = await Refs( ).returning( 'id' ).insert( tag )
-    return id
-  },
-
-  async getTagById( tagId ) {
-    let [ ref ] = await Refs( ).where( { id: tagId, type: 'tag' } ).select( '*' )
-    return ref
-  },
-
-  async updateTag( tag ) {
-    delete tag.type
-    tag.updatedAt = knex.fn.now( )
-    await Refs( ).where( { id: tag.id, type: 'tag' } ).update( tag )
-  },
-
-  async deleteTagById( tagId ) {
-    return Refs( ).where( { id: tagId, type: 'tag' } ).del( )
-  },
-
-  async getTagsByStreamId( streamId ) {
-    return Refs( ).where( { streamId: streamId, type: 'tag' } ).select( '*' )
-  },
 
   /*
     Branches

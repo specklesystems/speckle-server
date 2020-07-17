@@ -21,7 +21,7 @@ extend type User {
   """
   All the streams that a user has access to.
   """
-  streamCollection(offset: Int! = 0, limit: Int! = 100): StreamCollection
+  streams(offset: Int! = 0, limit: Int! = 100): StreamCollection
   
   """
   The role this user has on a specific stream (can be populated when accessing a stream's users).
@@ -32,17 +32,22 @@ extend type User {
 type StreamCollection {
   totalCount: Int!
   streams: [Stream]
+  cursor: String
 }
 
 extend type Mutation {
-  streamCreate( stream: StreamInput! ): String
-  streamUpdate( stream: StreamInput! ): Boolean!
+  """
+  Creates a new stream.
+  """
+  streamCreate( stream: StreamCreateInput! ): String
+  """
+  Updates an existing stream.
+  """
+  streamUpdate( stream: StreamUpdateInput! ): Boolean!
+  """
+  Deletes an existing stream.
+  """
   streamDelete( id: String! ): Boolean!
-  """
-  Clones a given stream, duplicating it within the current user's account without preserving access rights.
-  NOTE: Not implemented yet
-  """
-  streamClone( id: String!): Boolean!
   """
   Grants permissions to an user on a given stream. 
   """
@@ -54,8 +59,14 @@ extend type Mutation {
 
 }
 
-input StreamInput {
-  id: String
+input StreamCreateInput {
+  name: String
+  description: String
+  isPublic: Boolean
+}
+
+input StreamUpdateInput {
+  id: String!
   name: String
   description: String
   isPublic: Boolean

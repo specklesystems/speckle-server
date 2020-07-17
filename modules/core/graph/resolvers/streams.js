@@ -21,7 +21,7 @@ module.exports = {
     }
   },
   User: {
-    async streamCollection( parent, args, context, info ) {
+    async streams( parent, args, context, info ) {
       // TODO: Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
       let streams = await getUserStreams( parent.id, args.offset, args.limit, publicOnly )
@@ -41,6 +41,7 @@ module.exports = {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
+      
       await updateStream( args.stream )
       return true
     },
@@ -51,9 +52,6 @@ module.exports = {
 
       await deleteStream( args.id )
       return true
-    },
-    async streamClone( parent, args, context, info ) {
-      throw new ApolloError( 'Not implemented yet :)' )
     },
     async streamGrantPermission( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )

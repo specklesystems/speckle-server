@@ -4,7 +4,7 @@ const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getUser } = require( '../../services/users' )
 const { createCommit, getCommitsByStreamId, createObject, createObjects, getObject, getObjects, getObjectChildren, getObjectChildrenQuery } = require( '../../services/objects' )
-const { createTag, updateTag, getTagById, deleteTagById, getTagsByStreamId, createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../services/references' )
+const { createBranch, updateBranch, getBranchById, getBranchCommits, deleteBranchById, getBranchesByStreamId, getStreamReferences } = require( '../../services/references' )
 
 module.exports = {
   Query: {
@@ -19,14 +19,6 @@ module.exports = {
       let commit = getObject( { objectId: args.id } )
       return commit
     },
-    async tags( parent, args, context, info ) {
-      // TODO: implement limits in service
-      let tags = await getTagsByStreamId( parent.id )
-      return { totalCount: tags.length, tags: tags.slice( args.offset, args.offset + args.limit ) }
-    },
-    async tag( parent, args, context, info ) {
-      return await getTagById( args.id )
-    },
     async branches( parent, args, context, info ) {
       // TODO: implement limits in service
       let branches = await getBranchesByStreamId( parent.id )
@@ -37,9 +29,6 @@ module.exports = {
     }
   },
   Object: {
-    async author( parent, args, context, info ) {
-      return await getUser( parent.author )
-    },
     async children( parent, args, context, info ) {
       // Simple query
       if ( !args.query && !args.orderBy ) {
@@ -50,12 +39,6 @@ module.exports = {
       // Comlex query
       let result = await getObjectChildrenQuery( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, query: args.query, orderBy: args.orderBy, cursor: args.cursor } )
       return result
-    }
-  },
-  Tag: {
-    async commit( parent, args, context, info ) {
-      let obj = await getObject( { objectId: parent.commitId } )
-      return obj
     }
   },
   Branch: {
@@ -105,37 +88,6 @@ module.exports = {
 
       await deleteBranchById( args.branchId )
       return true
-    },
-    async tagCreate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
-
-      let id = await createTag( args.tag, args.streamId, context.userId )
-      return id
-    },
-    async tagUpdate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
-
-      await updateTag( args.tag )
-      return true
-    },
-    async tagDelete( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
-
-      await deleteTagById( args.tagId )
-      return true
-    },
-
-  },
-  Reference: {
-    __resolveType( reference, context, info ) {
-      if ( reference.type === "branch" ) return 'Branch'
-      if ( reference.type === "tag" ) return 'Tag'
     }
-  },
+  }
 }

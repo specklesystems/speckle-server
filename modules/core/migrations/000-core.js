@@ -134,15 +134,12 @@ exports.up = async knex => {
     ` )
 
   // Reference table. A reference can be a branch or a tag.
-  await knex.schema.createTable( 'references', table => {
+  await knex.schema.createTable( 'branches', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
     table.string( 'name' )
-    table.specificType( 'type', 'speckle_reference_type' ).defaultTo( 'branch' )
     table.text( 'description' )
-    // (Sparse) Only populated for tags, which hold one commit. 
-    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
     table.unique( [ 'streamId', 'name' ] )
@@ -151,7 +148,7 @@ exports.up = async knex => {
   // Junction Table Branches >- -< Commits 
   // Note: Branches >- -< Commits is a many-to-many relationship (one commit can belong to multiple branches, one branch can have multiple commits) 
   await knex.schema.createTable( 'branch_commits', table => {
-    table.string( 'branchId', 10 ).references( 'id' ).inTable( 'references' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'branchId', 10 ).references( 'id' ).inTable( 'branches' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'commitId' ).references( 'id' ).inTable( 'objects' ).notNullable( )
     table.primary( [ 'branchId', 'commitId' ] )
   } )
@@ -176,7 +173,7 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'stream_commits' )
   await knex.schema.dropTableIfExists( 'branch_commits' )
   await knex.schema.dropTableIfExists( 'user_commits' )
-  await knex.schema.dropTableIfExists( 'references' )
+  await knex.schema.dropTableIfExists( 'branches' )
   await knex.schema.dropTableIfExists( 'object_children_closure' )
 
   await knex.schema.dropTableIfExists( 'objects' )
