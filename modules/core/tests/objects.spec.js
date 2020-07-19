@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
@@ -10,10 +11,9 @@ const expect = chai.expect
 chai.use( chaiHttp )
 
 
-const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
-const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
+const { createUser } = require( '../services/users' )
+const { createStream } = require( '../services/streams' )
 const {
-  createCommit,
   createObject,
   createObjects,
   createObjectsBatched,
@@ -23,8 +23,6 @@ const {
   getObjectChildrenQuery,
   getObjectChildrenStream
 } = require( '../services/objects' )
-
-const sampleObjects = require( './sampleObjectData' )
 
 let sampleCommit = JSON.parse( `{
   "Objects": [
@@ -39,10 +37,7 @@ let sampleCommit = JSON.parse( `{
   ],
   "CreatedOn": "2020-03-18T12:06:07.82307Z",
   "id": "79eb41764cc2c065de752bd704bfc4aa",
-  "speckleType": "Speckle.Core.Commit",
-  "__tree": [
-    "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f67"
-  ]
+  "speckleType": "Speckle.Core.Commit"
 }` )
 
 let sampleObject = JSON.parse( `{
@@ -62,7 +57,7 @@ describe( 'Objects', ( ) => {
   }
 
   let stream = {
-    name: 'Test Stream References',
+    name: 'Test Streams',
     description: 'Whatever goes in here usually...'
   }
 
@@ -71,17 +66,11 @@ describe( 'Objects', ( ) => {
     await knex.migrate.latest( )
 
     userOne.id = await createUser( userOne )
-    stream.id = await createStream( stream, userOne.id )
+    stream.id = await createStream( { ...stream, isPublic: false, ownerId: userOne.id } )
   } )
 
   after( async ( ) => {
     // await knex.migrate.rollback( )
-  } )
-
-
-  it( 'Should create a commit', async ( ) => {
-    let myId = await createCommit( stream.id, userOne.id, sampleCommit )
-    expect( myId ).to.not.be.null
   } )
 
   it( 'Should create objects', async ( ) => {
@@ -98,12 +87,7 @@ describe( 'Objects', ( ) => {
     for ( let i = 0; i < objCount_1; i++ ) {
       objs.push( {
         amazingness: i * i,
-        somethingness: `Sample ${i%2===0 ? 'SUPER MEGA' : '1010101000010101'} ERRR`,
-        __tree: [
-          "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f67",
-          "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f67" + i / 2.0,
-          "79eb41764cc2c065de752bd704bfc4aa." + i + "." + i * i,
-        ]
+        somethingness: `Sample ${i%2===0 ? 'SUPER MEGA' : '1010101000010101'} ERRR`
       } )
     }
 
@@ -140,7 +124,6 @@ describe( 'Objects', ( ) => {
   } ).timeout( 30000 )
 
   it( 'Should get a single object', async ( ) => {
-
     let obj = await getObject( { objectId: sampleCommit.id } )
     expect( obj ).to.not.be.null
   } )

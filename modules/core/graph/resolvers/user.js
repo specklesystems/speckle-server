@@ -58,16 +58,6 @@ module.exports = {
       await validateServerRole( context, 'server:user' )
       await updateUser( context.userId, args.user )
       return true
-    },
-    // TODO: remove; setup step needs to get rid of this dependency
-    async userCreateAdmin( parent, args, context, info ) {
-      let setupComplete = await setupCheck( )
-      if ( setupComplete ) throw new ApolloError( 'Registration method not available' )
-
-      let userId = await createUser( args.user )
-      let token = await createPersonalAccessToken( userId, "Default Token", [ 'server:setup', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
-
-      return token
     }
   }
 }

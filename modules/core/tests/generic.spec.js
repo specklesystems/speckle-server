@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const chai = require( 'chai' )
 const assert = require( 'assert' )
 

@@ -12,7 +12,7 @@ const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
  */
 
 async function contextApiTokenHelper( { req, res } ) {
-  // TODO: Cache results for 5 minutes
+  // TODO: Cache results for a minute
   // console.log( req.headers )
   if ( req.headers.authorization != null ) {
     try {
@@ -100,7 +100,6 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
 
   if ( role === undefined || role === null ) throw new ApolloError( 'Unknown role: ' + requiredRole )
 
-  console.log( role )
   try {
     let { isPublic } = await knex( role.resourceTarget ).select( 'isPublic' ).where( { id: resourceId } ).first( )
     if ( isPublic && roles[ requiredRole ] < 200 ) return true

@@ -7,14 +7,9 @@ type Stream {
   name: String!
   description: String
   isPublic: Boolean!
-  clonedFrom: Stream
   createdAt: String!
   updatedAt: String!
-  """
-  All the users with access to this stream.
-  """
   users: [User]!
-  role: String
 }
 
 extend type User {
@@ -22,7 +17,6 @@ extend type User {
   All the streams that a user has access to.
   """
   streams(offset: Int! = 0, limit: Int! = 100): StreamCollection
-  
   """
   The role this user has on a specific stream (can be populated when accessing a stream's users).
   """

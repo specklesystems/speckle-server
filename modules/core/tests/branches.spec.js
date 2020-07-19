@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
@@ -12,7 +13,7 @@ chai.use( chaiHttp )
 
 const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
 const { createStream, getStream, updateStream, deleteStream, getStreamsUser, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
-const { createObject, createCommit, createObjects, getObject, getObjects } = require( '../services/objects' )
+const { createObject, createObjects, getObject, getObjects } = require( '../services/objects' )
 const {
   createBranch,
   updateBranch,
@@ -20,7 +21,7 @@ const {
   getBranchesByStreamId,
 } = require( '../services/branches' )
 
-describe( 'Tags & Branches', ( ) => {
+describe( 'Branches', ( ) => {
   let user = {
     username: 'dim4242',
     name: 'Dimitrie Stefanescu',
@@ -42,11 +43,6 @@ describe( 'Tags & Branches', ( ) => {
     description: 'a test branch'
   }
 
-  let tag = {
-    name: 'v.1.20.3',
-    description: 'release version shite'
-  }
-
   before( async ( ) => {
     await knex.migrate.latest( )
 
@@ -56,8 +52,7 @@ describe( 'Tags & Branches', ( ) => {
     commit1.hash = await createCommit( stream.id, user.id, commit1 )
     commit2.parents = [ commit1.hash ]
     commit2.hash = await createCommit( stream.id, user.id, commit2 )
-
-    tag.commitId = commit2.hash
+    
   } )
 
   after( async ( ) => {

@@ -4,60 +4,38 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
-const Refs = ( ) => knex( 'branches' )
+const Branches = ( ) => knex( 'branches' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
 
 module.exports = {
 
-  async createBranch( branch, streamId, userId ) {
-    let commits = branch.commits || [ ]
-    delete branch.commits
-    delete branch.commitId
+  async createBranch( { name, description, streamId, authorId } ) {
+
+    let branch = {}
     branch.id = crs( { length: 10 } )
-
     branch.streamId = streamId
-    branch.author = userId
-    branch.type = 'branch'
-    let [ id ] = await Refs( ).returning( 'id' ).insert( branch )
+    branch.authorId = authorId
+    branch.name = name
+    branch.description = description
 
-    if ( commits.length !== 0 ) {
-      let branchCommits = commits.map( commitId => { return { branchId: id, commitId: commitId } } )
-      await knex.raw( BranchCommits( ).insert( branchCommits ) + ' on conflict do nothing' )
-    }
+    let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
+
     return branch.id
   },
 
-  async updateBranch( branch ) {
-    let commits = branch.commits || [ ]
-    delete branch.commits
-    delete branch.commitId
-
-    if ( commits.length !== 0 ) {
-      let branchCommits = commits.map( commitId => { return { branchId: branch.id, commitId: commitId } } )
-      await knex.raw( BranchCommits( ).insert( branchCommits ) + ' on conflict do nothing' )
-    }
-
-    await Refs( ).where( { id: branch.id } ).update( branch )
+  async updateBranch( { name, description } ) {
+    return await Branches( ).where( { id: branch.id } ).update( { name: name, description: description } )
   },
 
-  async getBranchCommits( branchId ) {
-    return BranchCommits( ).where( { branchId: branchId } ).select( 'commitId' )
+  async getBranchById( { branchId } ) {
+    return await Branches( ).where( { id: branchId } ).first( ).select( '*' )
   },
 
-  async getBranchById( branchId ) {
-    let branch = await Refs( ).where( { id: branchId, type: 'branch' } ).first( ).select( '*' )
-    let commits = await BranchCommits( ).where( { branchId: branchId } )
-    branch.commits = commits.map( c => c.commitId )
-
-    return branch
+  async getBranchesByStreamId( { streamId } ) {
+    return Branches( ).where( { streamId: streamId } ).select( '*' )
   },
 
-  async getBranchesByStreamId( streamId ) {
-    return Refs( ).where( { streamId: streamId, type: 'branch' } ).select( '*' )
+  async deleteBranchById( { branchId } ) {
+    return await Branches( ).where( { id: branchId } ).del( )
   },
-
-  async deleteBranchById( branchId ) {
-    await Refs( ).where( { id: branchId, type: 'branch' } ).del( )
-  },
-
 }

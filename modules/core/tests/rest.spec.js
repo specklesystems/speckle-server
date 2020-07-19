@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const request = require( 'supertest' )
@@ -36,7 +37,7 @@ describe( `Upload/Download Routes`, ( ) => {
     userA.id = await createUser( userA )
     userA.token = `Bearer ${(await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
 
-    testStream.id = await createStream( testStream, userA.id )
+    testStream.id = await createStream( { ...testStream, ownerId: userA.id } )
   } )
 
   after( async ( ) => {

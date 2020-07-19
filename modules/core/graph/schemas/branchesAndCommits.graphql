@@ -1,0 +1,80 @@
+extend type Stream {
+  commits( limit: Int! = 100, cursor: String ): CommitCollection
+  commit( id: String! ): Commit
+  branches( limit: Int! = 100, cursor: String ): BranchCollection
+  branch( name: String! ): Branch
+  branchById( id: String! ): Branch
+}
+
+type Branch{
+  id: String!
+  name: String!
+  author: User!
+  description: String!
+  commits( offset: Int! = 0, limit: Int! = 20 ): CommitCollection
+}
+
+type Commit {
+  id: String!
+  referencedObject: String!
+  realObject: Object
+  message: String
+  author: User
+}
+
+type BranchCollection {
+  totalCount: Int!
+  cursor: String
+  branches: [Branch]
+}
+
+type CommitCollection {
+  totalCount: Int!
+  cursor: String
+  commits: [Commit]
+}
+
+extend type Mutation {
+  branchCreate( branch: BranchCreateInput! ): String!
+  branchUpdate( branch: BranchUpdateInput! ): Boolean!
+  branchDelete( branch: BranchDeleteInput! ): Boolean!
+  commitCreate( commit: CommitCreateInput! ): String!
+  commitUpdate( commit: CommitUpdateInput! ): String!
+  commitDelete( commit: CommitDeleteInput! ): Boolean!
+}
+
+input BranchCreateInput {
+  streamId: String!
+  name: String!
+  description: String
+}
+
+input BranchUpdateInput {
+  streamId: String!
+  id: String!
+  name: String
+  description: String
+}
+
+input BranchDeleteInput {
+  streamId: String!
+  id: String!
+}
+
+input CommitCreateInput {
+  streamId: String!
+  branchName: String!
+  objectReference: String!
+  message: String
+}
+
+input CommitUpdateInput { 
+  streamId: String!
+  id: String!
+  message: String!
+}
+
+input CommitDeleteInput { 
+  streamId: String!
+  id: String!
+}

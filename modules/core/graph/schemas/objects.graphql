@@ -1,21 +1,5 @@
-
 extend type Stream {
-  commits(offset: Int! = 0, limit: Int = 20): CommitCollection
-  commit(id: String!): Object!
-  branches(offset: Int = 0, limit: Int = 20): BranchCollection
-  branch( id: String! ): Branch
-}
-
-type CommitCollection {
-  totalCount: Int!
-  commits: [Object]
-  cursor: String
-}
-
-type BranchCollection {
-  totalCount: Int!
-  branches: [Branch]
-  cursor: String
+  object( id: String! ): Object
 }
 
 type Object {
@@ -47,63 +31,8 @@ type ObjectCollection {
   objects: [Object]!
 }
 
-type Branch {
-  id: String!
-  name: String!
-  author: User!
-  description: String!
-  createdAt: String
-  updatedAt: String
-  commits( offset: Int! = 0, limit: Int! = 20 ): CommitCollection
-}
-
 extend type Mutation {
-  """
-  Creates a special type of object, namely a commit. A commit is describes the particular shape of a data stream at one point in time. It's a collection of objects. 
-  Returns the hash of the commit.
-  """
-  commitCreate( streamId: String!, commit:JSONObject! ): String!
-  """
-  Creates a bunch of objects and returns their hashes. Note: data duplication is respected. 
-  Returns the hashes of the stored objects.
-  """
   objectCreate( streamId: String!, objects:[JSONObject]! ): [String]!
-  """
-  Creates a branch.
-  """
-  branchCreate( streamId: String!, branch: BranchCreateInput ): String
-  """
-  Updates a branch. If a commit id array is present, the two get merged.
-  """
-  branchUpdate( streamId: String!, branch: BranchUpdateInput ): Boolean!
-  """
-  Deletes a branch.
-  """
-  branchDelete( streamId: String!, branchId: String! ): Boolean!
-}
-
-input BranchCreateInput {
-  name: String!
-  description: String
-  commits: [String]
-}
-
-input BranchUpdateInput {
-  id: String!
-  name: String
-  description: String
-  commits: [String]
-}
-
-input CommitCreateInput {
-  """
-  The stream against which these objects will be created. 
-  """
-  streamId: String!
-  """
-  The commit you want to create.
-  """
-  commit: JSONObject!
 }
 
 input ObjectCreateInput {

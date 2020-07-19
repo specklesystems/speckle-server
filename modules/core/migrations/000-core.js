@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 'use strict'
 
 // Knex table migrations
@@ -127,7 +128,7 @@ exports.up = async knex => {
     table.string( 'parent' ).notNullable( ).index( )
     table.string( 'child' ).notNullable( ).index( )
     table.integer( 'minDepth' ).defaultTo( 1 ).notNullable( ).index( )
-    table.unique( [ 'parent', 'child' ], 'parent_child_index' )
+    table.unique( [ 'parent', 'child' ], 'obj_parent_child_index' )
     table.index( [ 'parent', 'minDepth' ], 'full_pcd_index' )
   } )
 
@@ -135,7 +136,7 @@ exports.up = async knex => {
   // Any object can be "blessed" as a commit. 
   await knex.schema.createTable( 'commits', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'objectReference', 10 ).references( 'id' ).inTable( 'objects' ).notNullable( )
+    table.string( 'referencedObject', 10 ).references( 'id' ).inTable( 'objects' ).notNullable( )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.string( 'message' ).defaultTo( 'no message' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -148,7 +149,7 @@ exports.up = async knex => {
   await knex.schema.createTable( 'parent_commits', table => {
     table.string( 'parent', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( )
     table.string( 'child', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( )
-    table.unique( [ 'parent', 'child' ], 'parent_child_index' )
+    table.unique( [ 'parent', 'child' ], 'commit_parent_child_index' )
   } )
 
   // Branches table. 
@@ -156,7 +157,7 @@ exports.up = async knex => {
   await knex.schema.createTable( 'branches', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'author', 10 ).references( 'id' ).inTable( 'users' )
+    table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' )
     table.string( 'name' )
     table.text( 'description' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -167,7 +168,7 @@ exports.up = async knex => {
   // Junction Table Branches >- -< Commits 
   await knex.schema.createTable( 'branch_commits', table => {
     table.string( 'branchId', 10 ).references( 'id' ).inTable( 'branches' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'commitId' ).references( 'id' ).inTable( 'commits' ).notNullable( )
+    table.string( 'commitId' ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
     table.primary( [ 'branchId', 'commitId' ] )
   } )
 
@@ -175,7 +176,7 @@ exports.up = async knex => {
   // Added here to prevent a n+1 query (would happen if we'd rely to get all commits only from branches)
   await knex.schema.createTable( 'stream_commits', table => {
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' ).notNullable( )
+    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' ).notNullable( ).onDelete( 'cascade' )
     table.primary( [ 'streamId', 'commitId' ] )
   } )
 }

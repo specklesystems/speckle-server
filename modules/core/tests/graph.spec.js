@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const crypto = require( 'crypto' )
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
