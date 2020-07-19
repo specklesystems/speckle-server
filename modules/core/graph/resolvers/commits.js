@@ -10,7 +10,9 @@ const {
   updateCommit,
   deleteCommit,
   getCommitsByBranchId,
-  getCommitsByBranchName
+  getCommitsByBranchName,
+  getCommitsByUserId,
+  getCommitsTotalCountByUserId
 } = require( '../../services/commits' )
 
 const {
@@ -23,11 +25,34 @@ const {
 
 module.exports = {
   Query: {},
-  Stream: {},
-  Branch: {},
+  Stream: {
+    async commit( parent, args, context, info ) {
+      throw new ApolloError( 'not implemented' )
+    }
+  },
+  User: {
+    async commits( parent, args, context, info ) {
+      // TODO
+      throw new ApolloError( 'not implemented' )
+    }
+  },
+  Branch: {
+    async commits( parent, args, context, info ) {
+      throw new ApolloError( 'not implemented' )
+    }
+  },
   Mutation: {
-    async commitCreate( parent, args, context, info ) {},
-    async commitUpdate( parent, args, context, info ) {},
-    async commitDelete( parent, args, context, info ) {}
+    async commitCreate( parent, args, context, info ) {
+      throw new ApolloError('not implemented')
+
+    },
+    async commitUpdate( parent, args, context, info ) {
+      throw new ApolloError('not implemented')
+
+    },
+    async commitDelete( parent, args, context, info ) {
+      throw new ApolloError('not implemented')
+      
+    }
   }
 }

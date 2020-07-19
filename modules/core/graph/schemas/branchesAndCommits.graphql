@@ -3,7 +3,6 @@ extend type Stream {
   commit( id: String! ): Commit
   branches( limit: Int! = 20, cursor: String ): BranchCollection
   branch( name: String! ): Branch
-  branchById( id: String! ): Branch
 }
 
 extend type User {

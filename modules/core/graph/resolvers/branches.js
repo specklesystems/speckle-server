@@ -23,8 +23,19 @@ const {
 
 module.exports = {
   Query: {},
-  Stream: {},
-  Branch: {},
+  Stream: {
+    async branches( parent, args, context, info ) {
+      throw new ApolloError('not implemented')
+    },
+    async branch( parent, args, context, info ) {
+      throw new ApolloError('not implemented')
+    },
+  },
+  Branch: {
+    async author( parent, args, context, info ) {
+      throw new ApolloError( 'not implemented' )
+    }
+  },
   Mutation: {
     async branchCreate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
@@ -49,9 +60,6 @@ module.exports = {
 
       await deleteBranchById( args.branchId )
       return true
-    },
-    async commitCreate( parent, args, context, info ) {},
-    async commitUpdate( parent, args, context, info ) {},
-    async commitDelete( parent, args, context, info ) {}
+    }
   }
 }

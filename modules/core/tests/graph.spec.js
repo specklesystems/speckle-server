@@ -43,7 +43,6 @@ describe( 'GraphQL API Core', ( ) => {
   } )
 
   after( async ( ) => {
-    // await knex.migrate.rollback( )
     testServer.close( )
   } )
 
@@ -65,11 +64,6 @@ describe( 'GraphQL API Core', ( ) => {
   // some commits
   let c1 = { description: 'test first commit' }
   let c2 = { description: 'test second commit' }
-
-  // some tags
-  let tag1 = { name: 'v.10.0.0', description: 'test tag' }
-  let tag2 = { name: 'v.20.0.0' }
-  let tag3 = { name: 'v.21.0.1-alpha' }
 
   // some branches
   let b1 = { name: 'branch 1', description: 'test branch' }
@@ -142,7 +136,7 @@ describe( 'GraphQL API Core', ( ) => {
 
     it( 'Should update a stream', async ( ) => {
       const resS1 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts1}" name: "TS1 (u A) Private UPDATED", description: "Hello World, Again!", isPublic:false } ) }` } )
-
+      // console.log( resS1.body.errors )
       expect( resS1 ).to.be.json
       expect( resS1.body.errors ).to.not.exist
       expect( resS1.body.data ).to.have.property( 'streamUpdate' )
@@ -183,7 +177,7 @@ describe( 'GraphQL API Core', ( ) => {
 
     it( 'Should revoke permissions', async ( ) => {
       // first test if we can get it
-      const res = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
+      const res = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name } }` } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.stream.name ).to.equal( 'TS3 (u B) Private' )
@@ -241,49 +235,6 @@ describe( 'GraphQL API Core', ( ) => {
 
       res = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: c2 } } )
       c2.id = res.body.data.commitCreate
-    } )
-
-    it( 'Should create two tags', async ( ) => {
-      tag1.commitId = c1.id
-      tag2.commitId = c2.id
-
-      let res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag) }`, variables: { tag: tag1 } } )
-
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagCreate' )
-      tag1.id = res.body.data.tagCreate
-
-      // create a second tag
-      res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: tag2 } } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagCreate' )
-      tag2.id = res.body.data.tagCreate
-
-      tag3.commitId = c2.id
-      res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: tag3 } } )
-      tag3.id = res.body.data.tagCreate
-    } )
-
-    it( 'Should update a tag', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagUpdateInput){tagUpdate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: { id: tag2.id, description: 'Cool description!' } } } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagUpdate' )
-      expect( res.body.data.tagUpdate ).to.equal( true )
-    } )
-
-    it( 'Should delete a tag', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ tagDelete(streamId:"${ts1}", tagId:"${tag3.id}")}` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagDelete' )
-      expect( res.body.data.tagDelete ).to.equal( true )
     } )
 
     it( 'Should create several branches', async ( ) => {

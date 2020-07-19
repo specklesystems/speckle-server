@@ -91,7 +91,7 @@ describe( 'Branches', ( ) => {
     expect( branches ).to.have.lengthOf( 4 )
   } )
 
-  it( 'Should delete a bracnh', async ( ) => {
+  it( 'Should delete a branch', async ( ) => {
     await deleteBranchById( { id: branch.id } )
     let branches = await getBranchesByStreamId( { streamId: stream.id } )
     expect( branches ).to.have.lengthOf( 3 )
