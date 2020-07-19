@@ -152,14 +152,22 @@ describe( 'Commits', ( ) => {
     let { commits, cursor } = await getCommitsByUserId( { userId: user.id, limit: 3 } )
 
     let { commits: commits2, cursor: cursor2 } = await getCommitsByUserId( { userId: user.id, limit: 100, cursor: cursor } )
-    
+
     expect( commits.length ).to.equal( 3 )
     expect( commits2.length ).to.equal( 20 )
   } )
 
+  it( 'Should get the public commits of an user only', async ( ) => {
+    let privateStreamId = await createStream( { name: 'private', isPublic: false, ownerId: user.id } )
+    let commitId = await createCommitByBranchName( { streamId: privateStreamId, branchName: 'master', message: 'first commit', objectId: testObject.id, authorId: user.id } )
+
+    let { commits, cursor } = await getCommitsByUserId( { userId: user.id, limit: 1000 } )
+    expect( commits.length ).to.equal( 23 )
+  } )
+
   it( 'Should get the commit count of an user', async ( ) => {
     let c = await getCommitsTotalCountByUserId( { userId: user.id } )
-    expect( c ).to.equal( 23 )
+    expect( c ).to.equal( 24 )
   } )
 
 

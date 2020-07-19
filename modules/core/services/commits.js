@@ -133,8 +133,10 @@ module.exports = {
     return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
   },
 
-  async getCommitsByUserId( { userId, limit, cursor } ) {
+  async getCommitsByUserId( { userId, limit, cursor, publicOnly } ) {
     limit = limit || 20
+    publicOnly = publicOnly !== false
+
     let query =
       Commits( )
       .columns( [ 'commitId', 'message', 'referencedObject', 'commits.createdAt', { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] ).select( )
@@ -142,10 +144,14 @@ module.exports = {
       .join( 'streams', 'stream_commits.streamId', 'streams.id' )
       .where( 'author', userId )
 
+    if ( publicOnly )
+      query.andWhere( 'streams.isPublic', true )
+
     if ( cursor )
       query.andWhere( 'commits.createdAt', '<', cursor )
 
     query.orderBy( 'commits.createdAt', 'desc' ).limit( limit )
+
     let rows = await query
     return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
   },
