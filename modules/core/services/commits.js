@@ -33,12 +33,12 @@ module.exports = {
     // Link it to a stream
     await StreamCommits( ).insert( {
       streamId: streamId,
-      commitId: commitId
+      commitId: id
     } )
 
     // Link it to its children, if any.
-    if ( Array.isArray( previousCommitIds ) && previousCommitIds.length !== 0 ) {
-      let childrenMap = previousCommitIds.map( childId => { return { parent: id, child: id } } )
+    if ( Array.isArray( previousCommitIds ) && previousCommitIds.length > 0 ) {
+      let childrenMap = previousCommitIds.map( childId => { return { parent: id, child: childId } } )
       await ParentCommits( ).insert( childrenMap )
     }
 
@@ -47,7 +47,7 @@ module.exports = {
 
   async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, previousCommitIds } ) {
     let branches = await getBranchesByStreamId( { streamId: streamId } )
-    myBranch = bracnhes.find( b => b.name === branchName )
+    let myBranch = branches.find( b => b.name === branchName )
 
     if ( !myBranch )
       throw new Error( `Failed to find bracnh with name ${branchName}.` )
@@ -55,26 +55,103 @@ module.exports = {
     return await module.exports.createCommitByBranchId( { streamId, branchId: myBranch.id, objectId, authorId, message, previousCommitIds } )
   },
 
-  async updateCommit( { commitId, message } ) {
-    return await Commits( ).where( { id: commitId } ).update( { message: message } )
+  async updateCommit( { id, message } ) {
+    return await Commits( ).where( { id: id } ).update( { message: message } )
   },
 
-  async deleteCommit( { commitId } ) {
-    return await Commits( ).where( { id: commitId } ).del( )
+  async getCommitById( { id } ) {
+    return await Commits( ).where( { id: id } ).first( )
   },
 
-  async getCommitsByBranchId( { branchId } ) {
-    // TODO
-    throw new Error( 'Not implemented yet.' )
+  async deleteCommit( { id } ) {
+    return await Commits( ).where( { id: id } ).del( )
   },
 
-  async getCommitsByBranchName( { streamId, branchName } ) {
+  async getCommitsTotalCountByBranchId( { branchId } ) {
+    let [ res ] = await BranchCommits( ).count( ).where( 'branchId', branchId )
+
+    return parseInt( res.count )
+  },
+
+  async getCommitsTotalCountByBranchName( { streamId, branchName } ) {
     let branches = await getBranchesByStreamId( { streamId: streamId } )
-    myBranch = bracnhes.find( b => b.name === branchName )
+    let myBranch = branches.find( b => b.name === branchName )
 
     if ( !myBranch )
-      throw new Error( `Failed to find bracnh with name ${branchName}.` )
+      throw new Error( `Failed to find branch with name ${branchName}.` )
 
-    return module.exports.getCommitsByBranchId( { branchId: myBranch.id } )
+    return module.exports.getCommitsTotalCountByBranchId( { branchId: myBranch.id } )
   },
+
+  async getCommitsByBranchId( { branchId, limit, cursor } ) {
+    limit = limit || 20
+    let query = BranchCommits( ).columns( [ 'commitId', 'message', 'referencedObject', { author: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+      .join( 'commits', 'commits.id', 'branch_commits.commitId' )
+      .join( 'users', 'commits.author', 'users.id' )
+      .where( 'branchId', branchId )
+
+
+    if ( cursor )
+      query.andWhere( 'commits.createdAt', '<', cursor )
+
+    query.orderBy( 'commits.createdAt', 'desc' ).limit( limit )
+
+    let rows = await query
+
+    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
+  },
+
+  async getCommitsByBranchName( { streamId, branchName, limit, cursor } ) {
+    let branches = await getBranchesByStreamId( { streamId: streamId } )
+    let myBranch = branches.find( b => b.name === branchName )
+
+    if ( !myBranch )
+      throw new Error( `Failed to find branch with name ${branchName}.` )
+
+    return module.exports.getCommitsByBranchId( { branchId: myBranch.id, limit, cursor } )
+  },
+
+  async getCommitsTotalCountByStreamId( { streamId } ) {
+    let [ res ] = await StreamCommits( ).count( ).where( 'streamId', streamId )
+    return parseInt( res.count )
+  },
+
+  async getCommitsByStreamId( { streamId, limit, cursor } ) {
+    limit = limit || 20
+    let query = StreamCommits( ).columns( [ 'commitId', 'message', 'referencedObject', { author: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+      .join( 'commits', 'commits.id', 'stream_commits.commitId' )
+      .join( 'users', 'commits.author', 'users.id' )
+      .where( 'streamId', streamId )
+
+
+    if ( cursor )
+      query.andWhere( 'commits.createdAt', '<', cursor )
+
+    query.orderBy( 'commits.createdAt', 'desc' ).limit( limit )
+
+    let rows = await query
+    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
+  },
+
+  async getCommitsByUserId( { userId, limit, cursor } ) {
+    limit = limit || 20
+    let query =
+      Commits( )
+      .columns( [ 'commitId', 'message', 'referencedObject', 'commits.createdAt', { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] ).select( )
+      .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
+      .join( 'streams', 'stream_commits.streamId', 'streams.id' )
+      .where( 'author', userId )
+
+    if ( cursor )
+      query.andWhere( 'commits.createdAt', '<', cursor )
+
+    query.orderBy( 'commits.createdAt', 'desc' ).limit( limit )
+    let rows = await query
+    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
+  },
+
+  async getCommitsTotalCountByUserId( { userId } ) {
+    let [ res ] = await Commits( ).count( ).where( 'author', userId )
+    return parseInt( res.count )
+  }
 }

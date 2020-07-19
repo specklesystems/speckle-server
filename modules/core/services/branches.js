@@ -15,7 +15,7 @@ module.exports = {
     branch.id = crs( { length: 10 } )
     branch.streamId = streamId
     branch.authorId = authorId
-    branch.name = name
+    branch.name = name.toLowerCase( )
     branch.description = description
 
     let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
@@ -23,19 +23,19 @@ module.exports = {
     return branch.id
   },
 
-  async updateBranch( { name, description } ) {
-    return await Branches( ).where( { id: branch.id } ).update( { name: name, description: description } )
+  async updateBranch( { id, name, description } ) {
+    return await Branches( ).where( { id: id } ).update( { name: name, description: description } )
   },
 
-  async getBranchById( { branchId } ) {
-    return await Branches( ).where( { id: branchId } ).first( ).select( '*' )
+  async getBranchById( { id } ) {
+    return await Branches( ).where( { id: id } ).first( ).select( '*' )
   },
 
   async getBranchesByStreamId( { streamId } ) {
     return Branches( ).where( { streamId: streamId } ).select( '*' )
   },
 
-  async deleteBranchById( { branchId } ) {
-    return await Branches( ).where( { id: branchId } ).del( )
+  async deleteBranchById( { id } ) {
+    return await Branches( ).where( { id: id } ).del( )
   },
 }

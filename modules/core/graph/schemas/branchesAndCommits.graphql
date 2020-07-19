@@ -1,9 +1,13 @@
 extend type Stream {
-  commits( limit: Int! = 100, cursor: String ): CommitCollection
+  commits( limit: Int! = 20, cursor: String ): CommitCollection
   commit( id: String! ): Commit
-  branches( limit: Int! = 100, cursor: String ): BranchCollection
+  branches( limit: Int! = 20, cursor: String ): BranchCollection
   branch( name: String! ): Branch
   branchById( id: String! ): Branch
+}
+
+extend type User {
+  commits( limit: Int! = 20, cursor: String ): CommitCollectionUser
 }
 
 type Branch{
@@ -11,7 +15,7 @@ type Branch{
   name: String!
   author: User!
   description: String!
-  commits( offset: Int! = 0, limit: Int! = 20 ): CommitCollection
+  commits( limit: Int! = 20, cursor: String ): CommitCollection
 }
 
 type Commit {
@@ -19,7 +23,17 @@ type Commit {
   referencedObject: String!
   realObject: Object
   message: String
-  author: User
+  author: String
+  authorId: String
+}
+
+type CommitCollectionUserNode {
+  id: String!
+  referencedObject: String!
+  realObject: Object
+  message: String
+  streamId: String
+  streamName: String
 }
 
 type BranchCollection {
@@ -32,6 +46,12 @@ type CommitCollection {
   totalCount: Int!
   cursor: String
   commits: [Commit]
+}
+
+type CommitCollectionUser {
+  totalCount: Int!
+  cursor: String
+  commits: [CommitCollectionUserNode]
 }
 
 extend type Mutation {

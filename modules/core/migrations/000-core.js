@@ -136,7 +136,7 @@ exports.up = async knex => {
   // Any object can be "blessed" as a commit. 
   await knex.schema.createTable( 'commits', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'referencedObject', 10 ).references( 'id' ).inTable( 'objects' ).notNullable( )
+    table.string( 'referencedObject' ).references( 'id' ).inTable( 'objects' ).notNullable( )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
     table.string( 'message' ).defaultTo( 'no message' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -176,7 +176,7 @@ exports.up = async knex => {
   // Added here to prevent a n+1 query (would happen if we'd rely to get all commits only from branches)
   await knex.schema.createTable( 'stream_commits', table => {
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'commitId' ).references( 'id' ).inTable( 'objects' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'commitId' ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
     table.primary( [ 'streamId', 'commitId' ] )
   } )
 }
