@@ -147,8 +147,8 @@ exports.up = async knex => {
   // - one ancestor (simple sequential push)
   // - more ancestors (result of a merge)
   await knex.schema.createTable( 'parent_commits', table => {
-    table.string( 'parent', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( )
-    table.string( 'child', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( )
+    table.string( 'parent', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
+    table.string( 'child', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
     table.unique( [ 'parent', 'child' ], 'commit_parent_child_index' )
   } )
 

@@ -33,7 +33,10 @@ module.exports = {
   },
 
   async updateStream( { streamId, name, description } ) {
-    let [ res ] = await Streams( ).returning( 'id' ).where( { id: streamId } ).update( { name, description } )
+    let [ res ] = await Streams( )
+      .returning( 'id' )
+      .where( { id: streamId } )
+      .update( { name, description } )
     return res
   },
 

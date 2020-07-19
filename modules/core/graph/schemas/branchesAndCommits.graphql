@@ -83,8 +83,9 @@ input BranchDeleteInput {
 input CommitCreateInput {
   streamId: String!
   branchName: String!
-  objectReference: String!
+  objectId: String!
   message: String
+  previousCommitIds: [String]
 }
 
 input CommitUpdateInput { 
