@@ -1,7 +1,17 @@
 'use strict'
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const appRoot = require( 'app-root-path' )
-const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../../services/streams' )
+const {
+  createStream,
+  getStream,
+  updateStream,
+  deleteStream,
+  getUserStreams,
+  getUserStreamsCount,
+  getStreamUsers,
+  grantPermissionsStream,
+  revokePermissionsStream
+} = require( '../../services/streams' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 module.exports = {
@@ -24,9 +34,12 @@ module.exports = {
     async streams( parent, args, context, info ) {
       // Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
-      let streams = await getUserStreams( { userId: parent.id, offset: args.offset, limit: args.limit, publicOnly } )
-      // TODO: Implement offsets in service, not in friggin array slice
-      return { totalCount: streams.length, streams: streams.slice( args.offset, args.offset + args.limit ) }
+
+      let totalCount = await getUserStreamsCount( { userId: parent.id } )
+
+      let { cursor, streams } = await getUserStreams( { userId: parent.id, limit: args.limit, cursor: args.cursor, publicOnly: publicOnly } )
+
+      return { totalCount, cursor: cursor, streams: streams }
     }
   },
   Mutation: {

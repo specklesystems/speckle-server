@@ -6,7 +6,7 @@ const knex = require( `${appRoot}/db/knex` )
 const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
 /*
-    
+
     Graphql server context helper
 
  */
@@ -41,14 +41,14 @@ async function contextMiddleware( req, res, next ) {
 }
 
 /*
-    
+
     Keeps track of all the available roles on this server. It's seeded by the methods below.
 
  */
 let roles
 
 /*
-    
+
     Validates a user's server-bound role (admin, normal user, etc.)
 
  */
@@ -72,7 +72,7 @@ async function validateServerRole( context, requiredRole ) {
 }
 
 /*
-    
+
     Graphql scope validator
 
  */
@@ -85,7 +85,7 @@ async function validateScopes( scopes, scope ) {
 }
 
 /*
-    
+
     Graphql authorization: checks user id against access control lists
 
  */
@@ -94,7 +94,7 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
   if ( !roles )
     roles = await knex( 'user_roles' ).select( '*' )
 
-  // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping. 
+  // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   let role = roles.find( r => r.name === requiredRole )
 

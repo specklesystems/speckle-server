@@ -121,7 +121,8 @@ module.exports = {
 
   async getCommitsByStreamId( { streamId, limit, cursor } ) {
     limit = limit || 20
-    let query = StreamCommits( ).columns( [ 'commitId', 'message', 'referencedObject', { author: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+    let query = StreamCommits( )
+      .columns( [ 'commitId', 'message', 'referencedObject', { author: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
       .join( 'commits', 'commits.id', 'stream_commits.commitId' )
       .join( 'users', 'commits.author', 'users.id' )
       .where( 'streamId', streamId )

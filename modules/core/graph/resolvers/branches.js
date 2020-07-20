@@ -22,7 +22,7 @@ const {
 } = require( '../../services/branches' )
 
 module.exports = {
-  Query: {},
+  Query: { },
   Stream: {
     async branches( parent, args, context, info ) {
       throw new ApolloError( 'not implemented' )

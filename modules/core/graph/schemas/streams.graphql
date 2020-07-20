@@ -1,5 +1,5 @@
 extend type Query {
-  stream(id: String!): Stream
+  stream( id: String! ): Stream
 }
 
 type Stream {
@@ -9,24 +9,24 @@ type Stream {
   isPublic: Boolean!
   createdAt: String!
   updatedAt: String!
-  users: [User]!
+  users: [ User ]!
 }
 
 extend type User {
   """
   All the streams that a user has access to.
   """
-  streams(offset: Int! = 0, limit: Int! = 100): StreamCollection
+  streams( limit: Int! = 20, cursor: String ): StreamCollectionUser
   """
   The role this user has on a specific stream (can be populated when accessing a stream's users).
   """
   role: String
 }
 
-type StreamCollection {
+type StreamCollectionUser {
   totalCount: Int!
-  streams: [Stream]
   cursor: String
+  streams: [ Stream ]
 }
 
 extend type Mutation {
@@ -43,7 +43,7 @@ extend type Mutation {
   """
   streamDelete( id: String! ): Boolean!
   """
-  Grants permissions to an user on a given stream. 
+  Grants permissions to an user on a given stream.
   """
   streamGrantPermission( streamId: String!, userId: String!, role: String! ): Boolean
   """

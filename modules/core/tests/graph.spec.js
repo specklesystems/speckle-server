@@ -80,7 +80,6 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
 
         token1 = `Bearer ${res1.body.data.apiTokenCreate}`
-
         const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
         token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
@@ -414,12 +413,14 @@ describe( 'GraphQL API Core', ( ) => {
 
 
       it( 'Should retrieve my streams', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `{ user { streamCollection { totalCount streams { id name role } } } }` } )
+        const res = await sendRequest( userA.token, { query: `{ user { streams { totalCount streams { id name } } } }` } )
+        // console.log( res.body.errors[0].locations )
+        console.log( res.body.data )
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-        expect( res.body.data.user.streamCollection.totalCount ).to.equal( 3 )
+        expect( res.body.data.user.streams.totalCount ).to.equal( 3 )
 
-        let streams = res.body.data.user.streamCollection.streams
+        let streams = res.body.data.user.streams.streams
         let s1 = streams.find( s => s.name === 'TS1 (u A) Private UPDATED' )
         expect( s1 ).to.exist
       } )
@@ -541,6 +542,7 @@ describe( 'GraphQL API Core', ( ) => {
 
       } )
     } )
+
     describe( 'Objects', ( ) => {
       let myCommit
       let myObjs
@@ -665,6 +667,7 @@ describe( 'GraphQL API Core', ( ) => {
   } )
 
   describe( 'Server Info', ( ) => {
+
     it( 'Should return a valid server information object', async ( ) => {
       let q = `
         query{

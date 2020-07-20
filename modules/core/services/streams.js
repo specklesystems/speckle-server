@@ -62,7 +62,7 @@ module.exports = {
       throw new Error( 'Stream has only one ownership link left - cannot revoke permissions.' )
 
     // TODO: below behaviour not correct. Flow:
-    // Count owners 
+    // Count owners
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
 
     let aclEntry = await Acl( ).where( { resourceId: streamId, userId: userId } ).select( '*' ).first( )
@@ -85,22 +85,37 @@ module.exports = {
     return true
   },
 
-  async deleteStream( { streamId }  ) {
+  async deleteStream( { streamId } ) {
     return await Streams( ).where( { id: streamId } ).del( )
   },
 
-  async getUserStreams( { userId, offset, limit, publicOnly } ) {
-    offset = offset || 0
+  async getUserStreams( { userId, limit, cursor, publicOnly } ) {
     limit = limit || 100
     publicOnly = publicOnly !== false //defaults to true if not provided
 
-    let query = { userId: userId }
 
     if ( publicOnly ) query.isPublic = true
 
-    return Acl( ).where( query )
-      .rightJoin( 'streams', { 'streams.id': 'stream_acl.resourceId' } )
-      .limit( limit ).offset( offset )
+    let query = Acl( )
+      .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt' ] ).select( )
+      .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
+      .where( 'stream_acl.userId', userId )
+
+    if ( cursor )
+      query.andWhere( 'streams.updatedAt', '<', cursor )
+
+    if ( publicOnly )
+      query.andWhere( 'streams.isPublic', true )
+
+    query.orderBy( 'streams.updatedAt', 'desc' ).limit( limit )
+
+    let rows = await query
+    return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt : null }
+  },
+
+  async getUserStreamsCount( { userId } ) {
+    let [ res ] = await Acl( ).count( ).where( { userId: userId } )
+    return parseInt( res.count )
   },
 
   async getStreamUsers( { streamId } ) {

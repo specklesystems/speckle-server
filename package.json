@@ -8,6 +8,7 @@
     "dev:frontend": "cd frontend && npm run serve",
     "build:frontend": "cd frontend && npm run build",
     "dev:server": "NODE_ENV=development POSTGRES_URL=postgres://localhost/speckle2_dev DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
+    "dev:server:test": "NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_dev DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "test:server": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test nyc nyc --reporter html --reporter lcovonly mocha -s 0 --timeout 2000 --exit",
     "test:server:watch": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha --watch -s 0 --exit",
     "test:server:graph": "PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit --no-config",
