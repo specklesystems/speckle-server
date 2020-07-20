@@ -1,0 +1,18 @@
+{
+    "env": {
+        "browser": true,
+        "commonjs": true,
+        "es2020": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 11
+    },
+    "rules": {
+      "arrow-spacing": [ 2, { "before": true, "after": true } ],
+      "array-bracket-spacing": [ 2, "always" ],
+      "block-spacing": [ 2, "always" ],
+      "camelcase": [ 1, { "properties": "always" } ],
+      "space-in-parens": [ 2, "always" ],
+      "keyword-spacing": 2
+    }
+}

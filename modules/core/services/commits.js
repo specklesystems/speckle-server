@@ -46,6 +46,7 @@ module.exports = {
   },
 
   async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, previousCommitIds } ) {
+    branchName = branchName.toLowerCase()
     let branches = await getBranchesByStreamId( { streamId: streamId } )
     let myBranch = branches.find( b => b.name === branchName )
 
@@ -74,6 +75,7 @@ module.exports = {
   },
 
   async getCommitsTotalCountByBranchName( { streamId, branchName } ) {
+    branchName = branchName.toLowerCase()
     let branches = await getBranchesByStreamId( { streamId: streamId } )
     let myBranch = branches.find( b => b.name === branchName )
 
@@ -102,6 +104,7 @@ module.exports = {
   },
 
   async getCommitsByBranchName( { streamId, branchName, limit, cursor } ) {
+    branchName = branchName.toLowerCase()
     let branches = await getBranchesByStreamId( { streamId: streamId } )
     let myBranch = branches.find( b => b.name === branchName )
 

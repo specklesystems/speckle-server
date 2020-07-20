@@ -37,7 +37,7 @@ async function contextApiTokenHelper( { req, res } ) {
 async function contextMiddleware( req, res, next ) {
   let result = await contextApiTokenHelper( { req, res } )
   req.context = result
-  next()
+  next( )
 }
 
 /*
@@ -107,14 +107,14 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
     throw new ApolloError( `Resource of type ${role.resourceTarget} with ${resourceId} not found` )
   }
 
-  let entry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )
+  let userAclEntry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )
 
-  if ( !entry ) throw new ForbiddenError( 'You are not authorized' )
+  if ( !userAclEntry ) throw new ForbiddenError( 'You are not authorized' )
 
-  entry.role = roles.find( r => r.name === entry.role )
+  userAclEntry.role = roles.find( r => r.name === userAclEntry.role )
 
-  if ( entry.role.weight >= role.weight )
-    return true
+  if ( userAclEntry.role.weight >= role.weight )
+    return userAclEntry.role.name
   else
     throw new ForbiddenError( 'You are not authorized' )
 

@@ -1,7 +1,7 @@
 'use strict'
 
 const appRoot = require( 'app-root-path' )
-const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
+const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 const {
@@ -25,10 +25,10 @@ module.exports = {
   Query: {},
   Stream: {
     async branches( parent, args, context, info ) {
-      throw new ApolloError('not implemented')
+      throw new ApolloError( 'not implemented' )
     },
-    async branch( parent, args, context, info ) {
-      throw new ApolloError('not implemented')
+    async branch( parent, args, context, info) {
+      throw new ApolloError( 'not implemented' )
     },
   },
   Branch: {
@@ -40,26 +40,34 @@ module.exports = {
     async branchCreate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
+      await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
-      let id = await createBranch( args.branch, args.streamId, context.userId )
+      let id = await createBranch( { ...args.branch, authorId: context.userId } )
       return id
     },
+
     async branchUpdate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
+      await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
-      await updateBranch( args.branch )
-      return true
+      return await updateBranch( { ...args.branch } )
     },
+
     async branchDelete( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
+      let role = await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
-      await deleteBranchById( args.branchId )
-      return true
+      let branch = await getBranchById( { id: args.branch.id } )
+      if ( !branch ) {
+        throw new ApolloError( 'Branch not found.' )
+      }
+
+      if ( branch.authorId !== context.userId && role !== 'stream:owner' )
+        throw new ForbiddenError( 'Only the branch creator or stream owners are allowed to delete branches.' )
+
+      return await deleteBranchById( { id: args.branch.id } )
     }
   }
 }
