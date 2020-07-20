@@ -38,8 +38,8 @@ module.exports = {
       let totalCount = await getUserStreamsCount( { userId: parent.id } )
 
       let { cursor, streams } = await getUserStreams( { userId: parent.id, limit: args.limit, cursor: args.cursor, publicOnly: publicOnly } )
-
-      return { totalCount, cursor: cursor, streams: streams }
+      console.log( cursor )
+      return { totalCount, cursor: cursor, items: streams }
     }
   },
   Mutation: {

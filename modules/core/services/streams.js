@@ -110,7 +110,7 @@ module.exports = {
     query.orderBy( 'streams.updatedAt', 'desc' ).limit( limit )
 
     let rows = await query
-    return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt : null }
+    return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString() : null }
   },
 
   async getUserStreamsCount( { userId } ) {

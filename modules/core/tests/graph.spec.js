@@ -413,14 +413,39 @@ describe( 'GraphQL API Core', ( ) => {
 
 
       it( 'Should retrieve my streams', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `{ user { streams { totalCount streams { id name } } } }` } )
-        // console.log( res.body.errors[0].locations )
-        console.log( res.body.data )
+
+        // add more streams
+        await sendRequest(
+          userA.token, {
+            query: `mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }`,
+            variables: { myStream: { name: 'o hai' } }
+          } )
+
+        await sendRequest(
+          userA.token, {
+            query: `mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }`,
+            variables: { myStream: { name: 'bai now' } }
+          } )
+
+        await sendRequest(
+          userA.token, {
+            query: `mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }`,
+            variables: { myStream: { name: 'one more for the road' } }
+          } )
+
+        const res = await sendRequest( userA.token, { query: `{ user { streams( limit: 3 ) { totalCount cursor items { id name } } } }` } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-        expect( res.body.data.user.streams.totalCount ).to.equal( 3 )
+        expect( res.body.data.user.streams.items.length ).to.equal( 3 )
 
-        let streams = res.body.data.user.streams.streams
+        console.log( res.body.data.user.streams.cursor )
+
+        const res2 = await sendRequest( userA.token, { query: `{ user { streams( limit: 3, cursor: "${res.body.data.user.streams.cursor}" ) { totalCount cursor items { id name } } } }` } )
+
+        console.log( res2.body.errors )
+        console.log( res2.body.data )
+
+        let streams = res2.body.data.user.streams.items
         let s1 = streams.find( s => s.name === 'TS1 (u A) Private UPDATED' )
         expect( s1 ).to.exist
       } )

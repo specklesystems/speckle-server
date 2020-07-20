@@ -26,7 +26,7 @@ extend type User {
 type StreamCollectionUser {
   totalCount: Int!
   cursor: String
-  streams: [ Stream ]
+  items: [ Stream ]
 }
 
 extend type Mutation {
