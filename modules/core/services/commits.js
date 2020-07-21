@@ -46,7 +46,7 @@ module.exports = {
   },
 
   async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, previousCommitIds } ) {
-    branchName = branchName.toLowerCase()
+    branchName = branchName.toLowerCase( )
     let branches = await getBranchesByStreamId( { streamId: streamId } )
     let myBranch = branches.find( b => b.name === branchName )
 
@@ -75,7 +75,7 @@ module.exports = {
   },
 
   async getCommitsTotalCountByBranchName( { streamId, branchName } ) {
-    branchName = branchName.toLowerCase()
+    branchName = branchName.toLowerCase( )
     let branches = await getBranchesByStreamId( { streamId: streamId } )
     let myBranch = branches.find( b => b.name === branchName )
 
@@ -100,11 +100,11 @@ module.exports = {
 
     let rows = await query
 
-    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
+    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt.toISOString( ) : null }
   },
 
   async getCommitsByBranchName( { streamId, branchName, limit, cursor } ) {
-    branchName = branchName.toLowerCase()
+    branchName = branchName.toLowerCase( )
     let branches = await getBranchesByStreamId( { streamId: streamId } )
     let myBranch = branches.find( b => b.name === branchName )
 
@@ -119,6 +119,13 @@ module.exports = {
     return parseInt( res.count )
   },
 
+  /**
+   * Gets all the commits of a stream.
+   * @param  {[type]} options.streamId [description]
+   * @param  {[type]} options.limit    [description]
+   * @param  {[type]} options.cursor   [description]
+   * @return {[type]}                  [description]
+   */
   async getCommitsByStreamId( { streamId, limit, cursor } ) {
     limit = limit || 20
     let query = StreamCommits( )
@@ -134,7 +141,7 @@ module.exports = {
     query.orderBy( 'commits.createdAt', 'desc' ).limit( limit )
 
     let rows = await query
-    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
+    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt.toISOString( ) : null }
   },
 
   async getCommitsByUserId( { userId, limit, cursor, publicOnly } ) {
@@ -157,7 +164,7 @@ module.exports = {
     query.orderBy( 'commits.createdAt', 'desc' ).limit( limit )
 
     let rows = await query
-    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt : null }
+    return { commits: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].createdAt.toISOString( ) : null }
   },
 
   async getCommitsTotalCountByUserId( { userId } ) {

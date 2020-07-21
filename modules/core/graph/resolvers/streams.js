@@ -25,22 +25,24 @@ module.exports = {
     }
   },
   Stream: {
-    async users( parent, args, context, info ) {
-      let users = await getStreamUsers( parent.id )
+
+    async collaborators( parent, args, context, info ) {
+      let users = await getStreamUsers( { streamId: parent.id } )
       return users
     }
+
   },
   User: {
+
     async streams( parent, args, context, info ) {
       // Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
-
-      let totalCount = await getUserStreamsCount( { userId: parent.id } )
+      let totalCount = await getUserStreamsCount( { userId: parent.id, publicOnly } )
 
       let { cursor, streams } = await getUserStreams( { userId: parent.id, limit: args.limit, cursor: args.cursor, publicOnly: publicOnly } )
-      console.log( cursor )
       return { totalCount, cursor: cursor, items: streams }
     }
+
   },
   Mutation: {
     async streamCreate( parent, args, context, info ) {
@@ -50,6 +52,7 @@ module.exports = {
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
       return id
     },
+
     async streamUpdate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
@@ -58,6 +61,7 @@ module.exports = {
       await updateStream( { streamId: args.stream.id, name: args.stream.name, description: args.stream.description } )
       return true
     },
+
     async streamDelete( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
@@ -66,6 +70,7 @@ module.exports = {
       await deleteStream( { streamId: args.id } )
       return true
     },
+
     async streamGrantPermission( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
@@ -75,6 +80,7 @@ module.exports = {
 
       return await grantPermissionsStream( { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' } )
     },
+
     async streamRevokePermission( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )

@@ -93,9 +93,6 @@ module.exports = {
     limit = limit || 100
     publicOnly = publicOnly !== false //defaults to true if not provided
 
-
-    if ( publicOnly ) query.isPublic = true
-
     let query = Acl( )
       .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt' ] ).select( )
       .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
@@ -110,17 +107,32 @@ module.exports = {
     query.orderBy( 'streams.updatedAt', 'desc' ).limit( limit )
 
     let rows = await query
-    return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString() : null }
+    return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString( ) : null }
   },
 
-  async getUserStreamsCount( { userId } ) {
-    let [ res ] = await Acl( ).count( ).where( { userId: userId } )
+  async getUserStreamsCount( { userId, publicOnly } ) {
+
+    publicOnly = publicOnly !== false //defaults to true if not provided
+
+    let query = Acl( ).count( )
+      .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
+      .where( { userId: userId } )
+
+    if ( publicOnly )
+      query.andWhere( 'streams.isPublic', true )
+
+    let [ res ] = await query
     return parseInt( res.count )
   },
 
   async getStreamUsers( { streamId } ) {
-    return Acl( ).where( { resourceId: streamId } )
+    let query =
+      Acl( ).columns( { role: 'stream_acl.role' }, 'id', 'name' ).select( )
+      .where( { resourceId: streamId } )
       .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
-      .select( 'role', 'username', 'name', 'id' )
+      .select( 'stream_acl.role', 'username', 'name', 'id' )
+      .orderBy( 'users.id' )
+
+    return await query
   }
 }

@@ -438,18 +438,43 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.user.streams.items.length ).to.equal( 3 )
 
-        console.log( res.body.data.user.streams.cursor )
 
         const res2 = await sendRequest( userA.token, { query: `{ user { streams( limit: 3, cursor: "${res.body.data.user.streams.cursor}" ) { totalCount cursor items { id name } } } }` } )
-
-        console.log( res2.body.errors )
-        console.log( res2.body.data )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.user.streams.items.length ).to.equal( 3 )
 
         let streams = res2.body.data.user.streams.items
         let s1 = streams.find( s => s.name === 'TS1 (u A) Private UPDATED' )
         expect( s1 ).to.exist
       } )
 
+      it( 'Should retrieve my commits (across all streams)', async ( ) => {
+
+        for ( let i = 10; i < 20; i++ ) {
+          let c1 = {
+            message: 'what a message for a first commit',
+            streamId: ts1,
+            objectId: objIds[ i ],
+            branchName: 'master',
+          }
+          let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c1 } } )
+        }
+
+        const res = await sendRequest( userA.token, { query: `{ user { commits( limit: 3 ) { totalCount cursor items { commitId message referencedObject } } } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.user.commits.totalCount ).to.equal( 11 )
+        expect( res.body.data.user.commits.cursor ).to.exist
+        expect( res.body.data.user.commits.items.length ).to.equal( 3 )
+
+        const res2 = await sendRequest( userA.token, { query: `{ user { commits( limit: 3, cursor: "${res.body.data.user.commits.cursor}") { totalCount cursor items { commitId message referencedObject } } } }` } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.user.commits.totalCount ).to.equal( 11 )
+        expect( res2.body.data.user.commits.items.length ).to.equal( 3 )
+
+      } )
     } )
 
     describe( 'Different Users` Profile', ( ) => {
@@ -479,10 +504,11 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'Should only retrieve public streams from a different user profile ', async ( ) => {
-        const res = await sendRequest( token1, { query: `query { user(id:"${userB.id}") { streamCollection { totalCount streams { id name isPublic role }} } }` } )
+        const res = await sendRequest( token1, { query: `query { user( id:"${userB.id}" ) { streams { totalCount items { id name isPublic } } } }` } )
+
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-        expect( res.body.data.user.streamCollection.totalCount ).to.equal( 1 )
+        expect( res.body.data.user.streams.totalCount ).to.equal( 1 )
       } )
 
     } )
@@ -491,48 +517,24 @@ describe( 'GraphQL API Core', ( ) => {
 
       let retrievedStream
 
-      it( 'Should fully retrieve a stream', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `query {
-        stream(id:"${ts1}") {
-          id
-          name
-          createdAt
-          updatedAt
-          clonedFrom {
-            id
-          }
-          role
-          commits(offset:0 limit:100) {
-            totalCount
-            commits {
-              id
-              description
-            }
-          }
-          tags(offset:0 limit: 10) {
-            totalCount
-            tags {
+      it( 'Should retrieve a stream', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `
+          query {
+            stream(id:"${ts1}") {
               id
               name
-              commit {
+              createdAt
+              updatedAt
+              collaborators {
                 id
-                description
+                name
+                role
               }
             }
-          }
-          branches(offset:0 limit: 10 ) {
-            totalCount
-            branches {
-              id
-              name
-            }
-          }
-          users {
-            name
-            role
-          }
-        }
-      }` } )
+          }` } )
+
+        console.log( res.body.errors )
+        console.log( res.body.data.stream.collaborators )
 
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
@@ -541,10 +543,13 @@ describe( 'GraphQL API Core', ( ) => {
         retrievedStream = stream
 
         expect( stream.name ).to.equal( 'TS1 (u A) Private UPDATED' )
-        expect( stream.tags.totalCount ).to.equal( 2 )
-        expect( stream.branches.totalCount ).to.equal( 1 )
-        expect( stream.commits.totalCount ).to.equal( 2 )
-        expect( stream.users ).to.have.lengthOf( 2 )
+        expect( stream.collaborators ).to.have.lengthOf( 2 )
+        expect( stream.collaborators[ 0 ].role ).to.equal( 'stream:owner' )
+        expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:contributor' )
+      } )
+
+      it( 'should retrieve all stream branches', async ( ) => {
+        assert.fail( 'todo' )
       } )
 
       it( 'should retrieve a stream branch', async ( ) => {
@@ -557,6 +562,14 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.data.stream.branch.name ).to.equal( 'branch 1' )
         expect( res.body.data.stream.branch.commits.totalCount ).to.equal( 2 )
 
+      } )
+
+      it( 'should retrieve a branch`s commits', async ( ) => {
+        assert.fail( 'todo' )
+      } )
+
+      it( 'should retrieve all stream commits', async ( ) => {
+        assert.fail( 'todo' )
       } )
 
       it( 'should retrieve a stream commit', async ( ) => {

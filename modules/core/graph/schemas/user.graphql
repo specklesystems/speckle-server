@@ -19,9 +19,10 @@ type User {
   avatar: String
   verified: Boolean
   profiles: JSONObject
+  role: String
 }
 
-extend type Mutation {  
+extend type Mutation {
   """
   Edits a user's profile.
   """

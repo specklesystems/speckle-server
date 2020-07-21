@@ -36,15 +36,21 @@ module.exports = {
   User: {
 
     async commits( parent, args, context, info ) {
-      // TODO
-      throw new ApolloError( 'not implemented' )
+
+      let publicOnly = context.userId !== parent.id
+      let totalCount = await getCommitsTotalCountByUserId( { userId: parent.id } )
+      let { commits: items, cursor } = await getCommitsByUserId( { userId: parent.id, limit: args.limit, cursor: args.cursor, publicOnly } )
+
+      return { items, cursor, totalCount }
     }
 
   },
   Branch: {
 
     async commits( parent, args, context, info ) {
+
       throw new ApolloError( 'not implemented' )
+
     }
 
   },
@@ -62,7 +68,7 @@ module.exports = {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
-      
+
       let commit = await getCommitById( { id: args.commit.id } )
       if ( commit.author !== context.userId )
         throw new AuthorizationError( 'Only the author of a commit may update it.' )

@@ -9,7 +9,7 @@ type Stream {
   isPublic: Boolean!
   createdAt: String!
   updatedAt: String!
-  users: [ User ]!
+  collaborators: [ StreamCollaborator ]!
 }
 
 extend type User {
@@ -17,10 +17,12 @@ extend type User {
   All the streams that a user has access to.
   """
   streams( limit: Int! = 20, cursor: String ): StreamCollectionUser
-  """
-  The role this user has on a specific stream (can be populated when accessing a stream's users).
-  """
-  role: String
+}
+
+type StreamCollaborator {
+  id: String!
+  name: String!
+  role: String!
 }
 
 type StreamCollectionUser {

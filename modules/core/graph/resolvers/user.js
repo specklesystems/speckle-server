@@ -6,11 +6,14 @@ const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById,
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const setupCheck = require( `${appRoot}/setupcheck` )
 const zxcvbn = require( 'zxcvbn' )
+
 module.exports = {
   Query: {
+
     async _( ) {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
     },
+
     async user( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
 
@@ -25,12 +28,16 @@ module.exports = {
 
       return await getUser( args.id || context.userId )
     },
+
     async userPwdStrength( parent, args, context, info ) {
       let res = zxcvbn( args.pwd )
       return { score: res.score, feedback: res.feedback }
     }
+
   },
+
   User: {
+
     async email( parent, args, context, info ) {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if ( context.userId === parent.id ) {
@@ -49,10 +56,13 @@ module.exports = {
         return null
       }
     },
+
     async role( parent, args, context, info ) {
       return await getUserRole( parent.id )
     }
+
   },
+
   Mutation: {
     async userEdit( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
