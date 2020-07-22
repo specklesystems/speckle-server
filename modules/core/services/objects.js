@@ -19,31 +19,6 @@ const StreamCommits = ( ) => knex( 'stream_commits' )
 
 module.exports = {
 
-  /*
-      Commits
-      Note: commits are just a special type of objects.
-   */
-
-  async createCommit( streamId, userId, object ) {
-    object.speckleType = 'commit'
-    object.author = userId
-
-    let id = await module.exports.createObject( object )
-
-    let query = StreamCommits( ).insert( { streamId: streamId, commitId: id } ).toString( ) + ' on conflict do nothing'
-    await knex.raw( query )
-
-    return id
-  },
-
-  async getCommitsByStreamId( streamId ) {
-    let commits = await StreamCommits( ).where( { streamId: streamId } ).rightOuterJoin( 'objects', { 'objects.id': 'stream_commits.commitId' } ).select( '*' )
-    return commits
-  },
-
-  /*
-      Objects Proper
-   */
   async createObject( object ) {
 
     let insertionObject = prepInsertionObject( object )
@@ -448,13 +423,7 @@ module.exports = {
   // NOTE: Derive Object
   async updateObject( ) {
     throw new Error( 'not implemeneted' )
-  },
-
-  // NOTE: Dangerous
-  async deleteObject( ) {
-    // TODO: Cascade through all children?
-    throw new Error( 'not implemeneted' )
-  },
+  }
 }
 
 // Note: we're generating the hash here, rather than on the db side, as there are
@@ -470,15 +439,10 @@ function prepInsertionObject( obj ) {
 
   let stringifiedObj = JSON.stringify( obj )
   let memAfter = process.memoryUsage( ).heapUsed / 1024 / 1024
-  // if ( memAfter > 100 ) {
-  // console.log( memNow + 'mb', memAfter + 'mb' )
-  // console.log( obj.speckleType, obj.id )
-  // }
+
   return {
     data: stringifiedObj, // stored in jsonb column
     id: obj.id,
-    speckleType: obj.speckleType,
-    description: obj.description,
-    author: obj.author
+    speckleType: obj.speckleType
   }
 }

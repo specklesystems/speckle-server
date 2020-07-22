@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const request = require( 'supertest' )
@@ -149,5 +150,24 @@ describe( 'Apps', ( ) => {
         .send( { email: 'spam@speckle.systems', password: 'roll saving throw' } )
         .expect( 401 )
     } )
+  } )
+
+  describe( 'GraphQL', ( ) => {
+
+     before( async ( ) => {
+      await knex.migrate.rollback( )
+      await knex.migrate.latest( )
+
+      // TODO: init gql server
+    } )
+
+    after( async ( ) => {
+
+    } )
+
+    // it( 'should get app info', async ( ) => {
+    //   assert.fail( 'todo' )
+    // } )
+
   } )
 } )

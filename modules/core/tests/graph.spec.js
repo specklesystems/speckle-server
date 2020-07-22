@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const crypto = require( 'crypto' )
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
@@ -32,17 +33,16 @@ describe( 'GraphQL API Core', ( ) => {
     testServer = server
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${(await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
+    userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userB.id = await createUser( userB )
-    userB.token = `Bearer ${(await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
+    userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userC.id = await createUser( userC )
-    userC.token = `Bearer ${(await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
+    userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
   } )
 
   after( async ( ) => {
-    // await knex.migrate.rollback( )
     testServer.close( )
   } )
 
@@ -62,274 +62,336 @@ describe( 'GraphQL API Core', ( ) => {
   let objIds
 
   // some commits
-  let c1 = { description: 'test first commit' }
-  let c2 = { description: 'test second commit' }
-
-  // some tags
-  let tag1 = { name: 'v.10.0.0', description: 'test tag' }
-  let tag2 = { name: 'v.20.0.0' }
-  let tag3 = { name: 'v.21.0.1-alpha' }
+  let c1 = {}
+  let c2 = {}
 
   // some branches
-  let b1 = { name: 'branch 1', description: 'test branch' }
-  let b2 = { name: 'master', description: 'master branch' }
-  let b3 = { name: 'branch 3', description: 'wow' }
+  let b1 = {}
+  let b2 = {}
+  let b3 = {}
 
   describe( 'Mutations', ( ) => {
 
-    it( 'Should create some api tokens', async ( ) => {
-      const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read" ]) }` } )
-      expect( res1 ).to.be.json
-      expect( res1.body.errors ).to.not.exist
-      expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
+    describe( 'Users & Api tokens', ( ) => {
+      it( 'Should create some api tokens', async ( ) => {
+        const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read" ]) }` } )
+        expect( res1 ).to.be.json
+        expect( res1.body.errors ).to.not.exist
+        expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
 
-      token1 = `Bearer ${res1.body.data.apiTokenCreate}`
+        token1 = `Bearer ${res1.body.data.apiTokenCreate}`
+        const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
+        token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
-      const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
-      token2 = `Bearer ${res2.body.data.apiTokenCreate}`
+        const res3 = await sendRequest( userB.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
+        token3 = `Bearer ${res3.body.data.apiTokenCreate}`
+      } )
 
-      const res3 = await sendRequest( userB.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
-      token3 = `Bearer ${res3.body.data.apiTokenCreate}`
+      it( 'Should revoke an api token that the user owns', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation{ apiTokenRevoke(token:"${token2}")}` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.apiTokenRevoke ).to.equal( true )
+      } )
+
+      it( 'Should fail to revoke an api token that I do not own', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation{ apiTokenRevoke(token:"${token3}")}` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+      } )
+
+      it( 'Should fail to create a stream with an invalid scope token', async ( ) => {
+        // Note: token1 has only stream read access
+        const res = await sendRequest( token1, { query: `mutation { streamCreate(stream: { name: "INVALID TS1 (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+        expect( res.body.errors ).to.exist
+      } )
+
+      it( 'Should edit my profile', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation($user:UserEditInput!) { userEdit( user: $user) } `, variables: { user: { name: 'Miticå', bio: 'He never really knows what he is doing.' } } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userEdit ).to.equal( true )
+      } )
     } )
 
-    it( 'Should revoke an api token that the user owns', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ apiTokenRevoke(token:"${token2}")}` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.apiTokenRevoke ).to.equal( true )
-    } )
+    describe( 'Streams', ( ) => {
+      it( 'Should create some streams', async ( ) => {
+        const resS1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "TS1 (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+        expect( resS1 ).to.be.json
+        expect( resS1.body.errors ).to.not.exist
+        expect( resS1.body.data ).to.have.property( 'streamCreate' )
+        expect( resS1.body.data.streamCreate ).to.be.a( 'string' )
+        ts1 = resS1.body.data.streamCreate
 
-    it( 'Should fail to revoke an api token that I do not own', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ apiTokenRevoke(token:"${token3}")}` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.exist
-    } )
+        const resS2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "TS2 (u A)", description: "Hello Darkness", isPublic:true } ) }` } )
+        ts2 = resS2.body.data.streamCreate
 
-    it( 'Should fail to create a stream with an invalid scope token', async ( ) => {
-      // Note: token1 has only stream read access
-      const res = await sendRequest( token1, { query: `mutation { streamCreate(stream: { name: "INVALID TS1 (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( res.body.errors ).to.exist
-    } )
+        const resS3 = await sendRequest( userB.token, { query: `mutation { streamCreate(stream: { name: "TS3 (u B) Private", description: "Hello Pumba", isPublic:false } ) }` } )
+        ts3 = resS3.body.data.streamCreate
 
-    it( 'Should edit my profile', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation($user:UserEditInput!) { userEdit( user: $user) } `, variables: { user: { name: 'Miticå', bio: 'He never really knows what he is doing.' } } } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.userEdit ).to.equal( true )
-    } )
+        const resS4 = await sendRequest( userB.token, { query: `mutation { streamCreate(stream: { name: "TS4 (u B)", description: "Hello Julian", isPublic:true } ) }` } )
+        ts4 = resS4.body.data.streamCreate
 
-    it( 'Should create some streams', async ( ) => {
-      const resS1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "TS1 (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( resS1 ).to.be.json
-      expect( resS1.body.errors ).to.not.exist
-      expect( resS1.body.data ).to.have.property( 'streamCreate' )
-      expect( resS1.body.data.streamCreate ).to.be.a( 'string' )
-      ts1 = resS1.body.data.streamCreate
+        const resS5 = await sendRequest( userB.token, { query: `mutation { streamCreate(stream: { name: "TS5 (u B)", description: "Hello King", isPublic:true } ) }` } )
+        ts5 = resS5.body.data.streamCreate
+      } )
 
-      const resS2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "TS2 (u A)", description: "Hello Darkness", isPublic:true } ) }` } )
-      ts2 = resS2.body.data.streamCreate
+      it( 'Should update a stream', async ( ) => {
+        const resS1 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts1}" name: "TS1 (u A) Private UPDATED", description: "Hello World, Again!", isPublic:false } ) }` } )
+        // console.log( resS1.body.errors )
+        expect( resS1 ).to.be.json
+        expect( resS1.body.errors ).to.not.exist
+        expect( resS1.body.data ).to.have.property( 'streamUpdate' )
+        expect( resS1.body.data.streamUpdate ).to.equal( true )
+      } )
 
-      const resS3 = await sendRequest( userB.token, { query: `mutation { streamCreate(stream: { name: "TS3 (u B) Private", description: "Hello Pumba", isPublic:false } ) }` } )
-      ts3 = resS3.body.data.streamCreate
+      it( 'Should grant some permissions', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
 
-      const resS4 = await sendRequest( userB.token, { query: `mutation { streamCreate(stream: { name: "TS4 (u B)", description: "Hello Julian", isPublic:true } ) }` } )
-      ts4 = resS4.body.data.streamCreate
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.streamGrantPermission ).to.equal( true )
 
-      const resS5 = await sendRequest( userB.token, { query: `mutation { streamCreate(stream: { name: "TS5 (u B)", description: "Hello King", isPublic:true } ) }` } )
-      ts5 = resS5.body.data.streamCreate
-    } )
+        const res2 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner") }` } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
 
-    it( 'Should update a stream', async ( ) => {
-      const resS1 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts1}" name: "TS1 (u A) Private UPDATED", description: "Hello World, Again!", isPublic:false } ) }` } )
+        const res3 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner") }` } )
+        expect( res3 ).to.be.json
+        expect( res3.body.errors ).to.not.exist
+      } )
 
-      expect( resS1 ).to.be.json
-      expect( resS1.body.errors ).to.not.exist
-      expect( resS1.body.data ).to.have.property( 'streamUpdate' )
-      expect( resS1.body.data.streamUpdate ).to.equal( true )
-    } )
+      it( 'Should fail to grant permissions if not owner', async ( ) => {
+        const res = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
 
-    it( 'Should grant some permissions', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+      } )
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.streamGrantPermission ).to.equal( true )
+      it( 'Should fail to grant myself permissions', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner") }` } )
 
-      const res2 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner") }` } )
-      const res3 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner") }` } )
-    } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+      } )
 
-    it( 'Should fail to grant permissions if not owner', async ( ) => {
-      const res = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
+      it( 'Should update permissions', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:contributor") }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.streamGrantPermission ).to.equal( true )
+      } )
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.exist
-    } )
+      it( 'Should revoke permissions', async ( ) => {
+        // first test if we can get it
+        const res = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.name ).to.equal( 'TS3 (u B) Private' )
 
-    it( 'Should fail to grant myself permissions', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner") }` } )
+        const revokeRes = await sendRequest( userB.token, { query: `mutation { streamRevokePermission( streamId: "${ts3}", userId:"${userC.id}")} ` } )
+        expect( revokeRes ).to.be.json
+        expect( revokeRes.body.errors ).to.not.exist
+        expect( revokeRes.body.data.streamRevokePermission ).to.equal( true )
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.exist
-    } )
+        const resNotAuth = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
+        expect( resNotAuth ).to.be.json
+        expect( resNotAuth.body.errors ).to.exist
 
-    it( 'Should update permissions', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:reviewer") }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.streamGrantPermission ).to.equal( true )
-    } )
+      } )
 
-    it( 'Should revoke permissions', async ( ) => {
-      // first test if we can get it
-      const res = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.stream.name ).to.equal( 'TS3 (u B) Private' )
+      it( 'Should fail to edit/write on a public stream if no access is provided', async ( ) => {
+        // ts4 is a public stream from uesrB
+        const res = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts4}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
+        expect( res.body.errors ).to.exist
+      } )
 
-      const revokeRes = await sendRequest( userB.token, { query: `mutation { streamRevokePermission( streamId: "${ts3}", userId:"${userC.id}")} ` } )
-      expect( revokeRes ).to.be.json
-      expect( revokeRes.body.errors ).to.not.exist
-      expect( revokeRes.body.data.streamRevokePermission ).to.equal( true )
+      it( 'Should fail editing a private stream if no access has been granted', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts3}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
 
-      const resNotAuth = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
-      expect( resNotAuth ).to.be.json
-      expect( resNotAuth.body.errors ).to.exist
+        expect( res.body.errors ).to.exist
+      } )
 
-    } )
+      it( 'Should fail to delete a stream because of permissions', async ( ) => {
+        const res = await sendRequest( userB.token, { query: `mutation { streamDelete( id:"${ts1}")}` } )
+        expect( res ).to.be.json
 
-    it( 'Should fail to edit/write on a public stream if no access is provided', async ( ) => {
-      // ts4 is a public stream from uesrB
-      const res = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts4}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
-      expect( res.body.errors ).to.exist
-    } )
+        expect( res.body.errors ).to.exist
+        expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
+      } )
 
-    it( 'Should fail editing a private stream if no access has been granted', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts3}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
+      it( 'Should delete a stream', async ( ) => {
+        const res = await sendRequest( userB.token, { query: `mutation { streamDelete( id:"${ts4}")}` } )
 
-      expect( res.body.errors ).to.exist
-    } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'streamDelete' )
+        expect( res.body.data.streamDelete ).to.equal( true )
 
-    it( 'Should create some objects', async ( ) => {
-      let objs = [ ]
-      for ( let i = 0; i < 500; i++ ) {
-        if ( i % 2 === 0 ) objs.push( { applicationId: i, type: 'Point', x: i, y: 1, z: i * 0.42, extra: { super: true, arr: [ 1, 2, 3, 4 ] } } )
-        else if ( i % 3 === 0 ) objs.push( { applicationId: i, type: 'Line', start: { x: i, y: 1, z: i * 0.42 }, end: { x: 0, y: 2, z: i * i }, extra: { super: false, arr: [ 12, 23, 34, 42, { imp: [ 'possible', 'this', 'sturcture', 'is' ] } ] } } )
-        else objs.push( { cool: [ 's', 't', [ 'u', 'f', 'f', i ], { that: true } ], iValue: i + i / 3 } )
-      }
-
-      const res = await sendRequest( userA.token, { query: `mutation($objs:[JSONObject]!) { objectCreate(streamId:"${ts1}", objects: $objs) }`, variables: { objs: objs } } )
-
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.objectCreate ).to.have.lengthOf( objs.length )
-
-      objIds = res.body.data.objectCreate
+      } )
 
     } )
 
-    it( 'Should create several commits', async ( ) => {
-      c1.id = crypto.createHash( 'md5' ).update( JSON.stringify( c1 ) ).digest( 'hex' )
-      let res = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: c1 } } )
+    describe( 'Objects, Commits & Branches', ( ) => {
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'commitCreate' )
-      expect( res.body.data.commitCreate ).to.be.a( 'string' )
-      c1.id = res.body.data.commitCreate
+      it( 'Should create some objects', async ( ) => {
+        let objs = [ ]
+        for ( let i = 0; i < 500; i++ ) {
+          if ( i % 2 === 0 ) objs.push( { applicationId: i, type: 'Point', x: i, y: 1, z: i * 0.42, extra: { super: true, arr: [ 1, 2, 3, 4 ] } } )
+          else if ( i % 3 === 0 ) objs.push( { applicationId: i, type: 'Line', start: { x: i, y: 1, z: i * 0.42 }, end: { x: 0, y: 2, z: i * i }, extra: { super: false, arr: [ 12, 23, 34, 42, { imp: [ 'possible', 'this', 'sturcture', 'is' ] } ] } } )
+          else objs.push( { cool: [ 's', 't', [ 'u', 'f', 'f', i ], { that: true } ], iValue: i + i / 3 } )
+        }
 
-      res = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: c2 } } )
-      c2.id = res.body.data.commitCreate
-    } )
+        const res = await sendRequest( userA.token, { query: `mutation( $objs: [JSONObject]! ) { objectCreate( streamId:"${ts1}", objects: $objs ) }`, variables: { objs: objs } } )
 
-    it( 'Should create two tags', async ( ) => {
-      tag1.commitId = c1.id
-      tag2.commitId = c2.id
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.objectCreate ).to.have.lengthOf( objs.length )
 
-      let res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag) }`, variables: { tag: tag1 } } )
+        objIds = res.body.data.objectCreate
+      } )
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagCreate' )
-      tag1.id = res.body.data.tagCreate
+      it( 'Should create several commits', async ( ) => {
+        c1.message = 'what a message for a first commit'
+        c1.streamId = ts1
+        c1.objectId = objIds[ 0 ]
+        c1.branchName = 'master'
 
-      // create a second tag
-      res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: tag2 } } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagCreate' )
-      tag2.id = res.body.data.tagCreate
+        let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c1 } } )
 
-      tag3.commitId = c2.id
-      res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagCreateInput){tagCreate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: tag3 } } )
-      tag3.id = res.body.data.tagCreate
-    } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'commitCreate' )
+        expect( res.body.data.commitCreate ).to.be.a( 'string' )
+        c1.id = res.body.data.commitCreate
 
-    it( 'Should update a tag', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `
-        mutation($tag: TagUpdateInput){tagUpdate(streamId:"${ts1}", tag: $tag)}`, variables: { tag: { id: tag2.id, description: 'Cool description!' } } } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagUpdate' )
-      expect( res.body.data.tagUpdate ).to.equal( true )
-    } )
+        c2.message = 'what a message for a second commit'
+        c2.streamId = ts1
+        c2.objectId = objIds[ 1 ]
+        c2.branchName = 'master'
+        c2.previousCommitIds = [ c1.id ]
 
-    it( 'Should delete a tag', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation{ tagDelete(streamId:"${ts1}", tagId:"${tag3.id}")}` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'tagDelete' )
-      expect( res.body.data.tagDelete ).to.equal( true )
-    } )
+        res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c2 } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'commitCreate' )
+        expect( res.body.data.commitCreate ).to.be.a( 'string' )
 
-    it( 'Should create several branches', async ( ) => {
-      const res1 = await sendRequest( userA.token, { query: `mutation($branch:BranchCreateInput!) { branchCreate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: b1 } } )
-      expect( res1 ).to.be.json
-      expect( res1.body.errors ).to.not.exist
-      expect( res1.body.data ).to.have.property( 'branchCreate' )
-      expect( res1.body.data.branchCreate ).to.be.a( 'string' )
-      b1.id = res1.body.data.branchCreate
+        c2.id = res.body.data.commitCreate
+      } )
 
-      const res2 = await sendRequest( userB.token, { query: `mutation($branch:BranchCreateInput!) { branchCreate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: b2 } } )
-      b2.id = res2.body.data.branchCreate
+      it( 'Should update a commit', async ( ) => {
+        let updatePayload = {
+          streamId: ts1,
+          id: c1.id,
+          message: 'first commit'
+        }
+        let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitUpdateInput! ) { commitUpdate( commit: $myCommit ) }`, variables: { myCommit: updatePayload } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'commitUpdate' )
 
-      const res3 = await sendRequest( userB.token, { query: `mutation($branch:BranchCreateInput!) { branchCreate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: b3 } } )
-      b3.id = res3.body.data.branchCreate
-    } )
+        let res2 = await sendRequest( userB.token, { query: `mutation( $myCommit: CommitUpdateInput! ) { commitUpdate( commit: $myCommit ) }`, variables: { myCommit: updatePayload } } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.exist
+      } )
 
-    it( 'Should update a branch', async ( ) => {
-      const res1 = await sendRequest( userA.token, { query: `mutation($branch:BranchUpdateInput!) { branchUpdate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: { id: b1.id, commits: [ c1.id ] } } } )
-      expect( res1 ).to.be.json
-      expect( res1.body.errors ).to.not.exist
-      expect( res1.body.data ).to.have.property( 'branchUpdate' )
-      expect( res1.body.data.branchUpdate ).to.equal( true )
-    } )
+      it( 'Should delete a commit', async ( ) => {
+        let payload = { streamId: ts1, id: c2.id }
 
-    it( 'Should delete a branch', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `mutation { branchDelete(streamId:"${ts1}", branchId:"${b2.id}")}` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'branchDelete' )
-      expect( res.body.data.branchDelete ).to.equal( true )
-    } )
+        let res = await sendRequest( userB.token, { query: `mutation( $myCommit: CommitDeleteInput! ) { commitDelete( commit: $myCommit ) }`, variables: { myCommit: payload } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
 
-    it( 'Should fail to delete a stream because of permissions', async ( ) => {
-      const res = await sendRequest( userB.token, { query: `mutation { streamDelete( id:"${ts1}")}` } )
-      expect( res ).to.be.json
+        let res2 = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitDeleteInput! ) { commitDelete( commit: $myCommit ) }`, variables: { myCommit: payload } } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data ).to.have.property( 'commitDelete' )
+      } )
 
-      expect( res.body.errors ).to.exist
-      expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
-    } )
+      it( 'Should create several branches', async ( ) => {
+        b1 = { streamId: ts1, name: 'dim/dev', description: 'dimitries development branch' }
 
-    it( 'Should delete a stream', async ( ) => {
-      const res = await sendRequest( userB.token, { query: `mutation { streamDelete( id:"${ts4}")}` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'streamDelete' )
-      expect( res.body.data.streamDelete ).to.equal( true )
+        const res1 = await sendRequest( userA.token, { query: `mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }`, variables: { branch: b1 } } )
+        expect( res1 ).to.be.json
+        expect( res1.body.errors ).to.not.exist
+        expect( res1.body.data ).to.have.property( 'branchCreate' )
+        expect( res1.body.data.branchCreate ).to.be.a( 'string' )
+        b1.id = res1.body.data.branchCreate
+
+        b2 = { streamId: ts1, name: 'dim/dev/api-surgery', description: 'another branch' }
+
+        const res2 = await sendRequest( userB.token, { query: `mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }`, variables: { branch: b2 } } )
+        expect( res2.body.errors ).to.not.exist
+        b2.id = res2.body.data.branchCreate
+
+        b3 = { streamId: ts1, name: 'userB/dev/api', description: 'more branches branch' }
+        const res3 = await sendRequest( userB.token, { query: `mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }`, variables: { branch: b3 } } )
+        expect( res3.body.errors ).to.not.exist
+        b3.id = res3.body.data.branchCreate
+      } )
+
+      it( 'Should update a branch', async ( ) => {
+
+        let payload = {
+          streamId: ts1,
+          id: b2.id,
+          name: 'userb/whatever/whatever'
+        }
+
+        const res1 = await sendRequest( userA.token, { query: `mutation( $branch:BranchUpdateInput! ) { branchUpdate( branch:$branch ) }`, variables: { branch: payload } } )
+        expect( res1 ).to.be.json
+        expect( res1.body.errors ).to.not.exist
+        expect( res1.body.data ).to.have.property( 'branchUpdate' )
+        expect( res1.body.data.branchUpdate ).to.equal( true )
+      } )
+
+      it( 'Should delete a branch', async ( ) => {
+
+        // give C some access permissions
+        const perms = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userC.id}" role: "stream:contributor") }` } )
+
+        let payload = {
+          streamId: ts1,
+          id: b2.id
+        }
+
+        let badPayload = {
+          streamId: ts1,
+          id: 'APRIL FOOOLS!'
+        }
+
+        const res = await sendRequest( userC.token, { query: `mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }`, variables: { branch: badPayload } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+        expect( res.body.errors[ 0 ].message ).to.equal( 'Branch not found.' )
+
+        const res1 = await sendRequest( userC.token, { query: `mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }`, variables: { branch: payload } } )
+        expect( res1 ).to.be.json
+        expect( res1.body.errors ).to.exist
+        expect( res1.body.errors[ 0 ].message ).to.equal( 'Only the branch creator or stream owners are allowed to delete branches.' )
+
+        const res2 = await sendRequest( userA.token, { query: `mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }`, variables: { branch: payload } } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+
+        // revoke perms for c back (dont' wanna mess up our integration-unit tests below)
+        await sendRequest( userA.token, { query: `mutation{ streamRevokePermission( streamId: "${ts1}", userId: "${userC.id}" ) }` } )
+      } )
+
+      it( 'Should commit to a non-master branch as well...', async ( ) => {
+        let cc = {}
+        cc.message = 'what a message for a second commit'
+        cc.streamId = ts1
+        cc.objectId = objIds[ 3 ]
+        cc.branchName = 'userB/dev/api'
+
+        let res = await sendRequest( userB.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: cc } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'commitCreate' )
+        expect( res.body.data.commitCreate ).to.be.a( 'string' )
+      } )
 
     } )
 
@@ -337,184 +399,375 @@ describe( 'GraphQL API Core', ( ) => {
 
   describe( 'Queries', ( ) => {
 
-    it( 'Should retrieve my profile', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `{ user { id name email role apiTokens { id name } } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'user' )
-      expect( res.body.data.user.name ).to.equal( 'Miticå' )
-      expect( res.body.data.user.email ).to.equal( 'd.1@speckle.systems' )
-      expect( res.body.data.user.role ).to.equal( 'server:admin' )
-    } )
+    describe( 'My Profile', ( ) => {
 
-    it( 'Should retrieve a different profile profile', async ( ) => {
-      const res = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email } }` } )
+      it( 'Should retrieve my profile', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `{ user { id name email role apiTokens { id name } } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'user' )
+        expect( res.body.data.user.name ).to.equal( 'Miticå' )
+        expect( res.body.data.user.email ).to.equal( 'd.1@speckle.systems' )
+        expect( res.body.data.user.role ).to.equal( 'server:admin' )
+      } )
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data ).to.have.property( 'user' )
-      expect( res.body.data.user.name ).to.equal( 'd2' )
-      expect( res.body.data.user.email ).to.equal( 'd.2@speckle.systems' )
-    } )
 
-    it( 'Should not retrieve a profile if no auth', async ( ) => {
-      const res = await sendRequest( null, { query: `{ user { id name email } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.exist
-    } )
+      it( 'Should retrieve my streams', async ( ) => {
 
-    it( 'Should not retrieve user email field if out of scope', async ( ) => {
-      // token1 has only users:read scope
-      const res = await sendRequest( token1, { query: ` { user(id:"${userB.id}") { id name email } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.user.email ).to.be.null
-    } )
+        // add more streams
+        await sendRequest(
+          userA.token, {
+            query: `mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }`,
+            variables: { myStream: { name: 'o hai' } }
+          } )
 
-    it( 'Should retrieve my streams', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `{ user { streamCollection { totalCount streams { id name role } } } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.user.streamCollection.totalCount ).to.equal( 3 )
+        await sendRequest(
+          userA.token, {
+            query: `mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }`,
+            variables: { myStream: { name: 'bai now' } }
+          } )
 
-      let streams = res.body.data.user.streamCollection.streams
-      let s1 = streams.find( s => s.name === 'TS1 (u A) Private UPDATED' )
-      expect( s1 ).to.exist
-    } )
+        await sendRequest(
+          userA.token, {
+            query: `mutation( $myStream: StreamCreateInput! ) { streamCreate( stream: $myStream ) }`,
+            variables: { myStream: { name: 'one more for the road' } }
+          } )
 
-    it( 'Should only retrieve public streams from a different user profile ', async ( ) => {
-      const res = await sendRequest( token1, { query: `query { user(id:"${userB.id}") { streamCollection { totalCount streams { id name isPublic role }} } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.user.streamCollection.totalCount ).to.equal( 1 )
-    } )
+        const res = await sendRequest( userA.token, { query: `{ user { streams( limit: 3 ) { totalCount cursor items { id name } } } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.user.streams.items.length ).to.equal( 3 )
 
-    let retrievedStream
-    it( 'Should fully retrieve a stream', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `query { 
-        stream(id:"${ts1}") {
-          id
-          name
-          createdAt
-          updatedAt
-          clonedFrom {
-            id
+
+        const res2 = await sendRequest( userA.token, { query: `{ user { streams( limit: 3, cursor: "${res.body.data.user.streams.cursor}" ) { totalCount cursor items { id name } } } }` } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.user.streams.items.length ).to.equal( 3 )
+
+        let streams = res2.body.data.user.streams.items
+        let s1 = streams.find( s => s.name === 'TS1 (u A) Private UPDATED' )
+        expect( s1 ).to.exist
+      } )
+
+      it( 'Should retrieve my commits (across all streams)', async ( ) => {
+
+        for ( let i = 10; i < 20; i++ ) {
+          let c1 = {
+            message: `what a message for commit number ${i}`,
+            streamId: ts1,
+            objectId: objIds[ i ],
+            branchName: 'master',
           }
-          role
-          commits(offset:0 limit:100) {
-            totalCount
-            commits {
-              id
-              description
-            }
-          }
-          tags(offset:0 limit: 10) {
-            totalCount
-            tags {
-              id
-              name
-              commit {
-                id
-                description
-              }
-            }
-          }
-          branches(offset:0 limit: 10 ) {
-            totalCount
-            branches {
-              id
-              name
-            }
-          }
-          users {
-            name
-            role
-          }
+          let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c1 } } )
         }
-      }` } )
 
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
+        const res = await sendRequest( userA.token, { query: `{ user { commits( limit: 3 ) { totalCount cursor items { id message referencedObject } } } }` } )
 
-      let stream = res.body.data.stream
-      retrievedStream = stream
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.user.commits.totalCount ).to.equal( 11 )
+        expect( res.body.data.user.commits.cursor ).to.exist
+        expect( res.body.data.user.commits.items.length ).to.equal( 3 )
 
-      expect( stream.name ).to.equal( 'TS1 (u A) Private UPDATED' )
-      expect( stream.tags.totalCount ).to.equal( 2 )
-      expect( stream.branches.totalCount ).to.equal( 1 )
-      expect( stream.commits.totalCount ).to.equal( 2 )
-      expect( stream.users ).to.have.lengthOf( 2 )
-    } )
-
-    it( 'should retrieve a stream branch', async ( ) => {
-      // note: adding another commit for the sake of it
-      const res1 = await sendRequest( userA.token, { query: `mutation($branch:BranchUpdateInput!) { branchUpdate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: { id: b1.id, commits: [ c2.id ] } } } )
-      const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { branch(id:"${retrievedStream.branches.branches[0].id}") { name description commits { totalCount } } } } ` } )
-
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.stream.branch.name ).to.equal( 'branch 1' )
-      expect( res.body.data.stream.branch.commits.totalCount ).to.equal( 2 )
-
-    } )
-
-    it( 'should retrieve a stream tag', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { tag(id:"${retrievedStream.tags.tags[0].id}") { name description commit { id description author { id name } } } } } ` } )
-
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.stream.tag ).to.have.property( 'name' )
-      expect( res.body.data.stream.tag ).to.have.property( 'description' )
-      expect( res.body.data.stream.tag ).to.have.property( 'commit' )
-      expect( res.body.data.stream.tag.commit ).to.have.property( 'author' )
-      expect( res.body.data.stream.tag.commit.author.name ).to.equal( 'Miticå' )
-
-    } )
-
-    it( 'should retrieve a stream commit', async ( ) => {
-      const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { commit(id:"${c2.id}") { id description data } } }` } )
-      expect( res ).to.be.json
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.stream.commit.description ).to.equal( 'test second commit' )
-
-    } )
-
-    describe( 'Objects', ( ) => {
-      let myCommit
-      let myObjs
-
-      before( async ( ) => {
-        let { commit, objs } = createManyObjects( 100, 'noise__' )
-        myCommit = commit
-        myObjs = objs
-      } )
-
-      it( 'should create a commit with its object children', async ( ) => {
-
-        const commitRes = await sendRequest( userA.token, { query: `mutation($commit:JSONObject!) { commitCreate(streamId:"${ts1}", commit:$commit) }`, variables: { commit: myCommit } } )
-
-        let commitId = commitRes.body.data.commitCreate
-
-        expect( commitId ).to.be.a( 'string' )
-
-        const objsRes = await sendRequest( userA.token, { query: `mutation($objs:[JSONObject]!) { objectCreate(streamId:"${ts1}", objects: $objs) }`, variables: { objs: myObjs } } )
-
-        let objIds = objsRes.body.data.objectCreate
-
-        expect( objIds.length ).to.equal( 100 )
+        const res2 = await sendRequest( userA.token, { query: `{ user { commits( limit: 3, cursor: "${res.body.data.user.commits.cursor}") { totalCount cursor items { id message referencedObject } } } }` } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.user.commits.totalCount ).to.equal( 11 )
+        expect( res2.body.data.user.commits.items.length ).to.equal( 3 )
 
       } )
+    } )
 
-      it( 'should get a commits objects', async ( ) => {
-        let first = await sendRequest( userA.token, {
-          query: `
+    describe( 'Different Users` Profile', ( ) => {
+
+      it( 'Should retrieve a different profile profile', async ( ) => {
+        const res = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email } }` } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'user' )
+        expect( res.body.data.user.name ).to.equal( 'd2' )
+        expect( res.body.data.user.email ).to.equal( 'd.2@speckle.systems' )
+      } )
+
+      it( 'Should not retrieve a profile if no auth', async ( ) => {
+        const res = await sendRequest( null, { query: `{ user { id name email } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+      } )
+
+      it( 'Should not retrieve user email field if out of scope', async ( ) => {
+        // token1 has only users:read scope
+        const res = await sendRequest( token1, { query: ` { user(id:"${userB.id}") { id name email } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.user.email ).to.be.null
+      } )
+
+      it( 'Should only retrieve public streams from a different user profile ', async ( ) => {
+        const res = await sendRequest( token1, { query: `query { user( id:"${userB.id}" ) { streams { totalCount items { id name isPublic } } } }` } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.user.streams.totalCount ).to.equal( 1 )
+      } )
+
+    } )
+
+    describe( 'Streams', ( ) => {
+
+      let retrievedStream
+
+      it( 'Should retrieve a stream', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `
           query {
             stream(id:"${ts1}") {
               id
               name
-              commit( id:"${myCommit.id}" ) {
+              createdAt
+              updatedAt
+              collaborators {
+                id
+                name
+                role
+              }
+            }
+          }` } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+
+        let stream = res.body.data.stream
+        retrievedStream = stream
+
+        expect( stream.name ).to.equal( 'TS1 (u A) Private UPDATED' )
+        expect( stream.collaborators ).to.have.lengthOf( 2 )
+        expect( stream.collaborators[ 0 ].role ).to.equal( 'stream:contributor' )
+        expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:owner' )
+      } )
+
+      let bees = [ ]
+      it( 'should retrieve all stream branches', async ( ) => {
+        let query = `
+          query{
+            stream(id: "${ts1}"){
+              branches( limit: 2 ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  name
+                  author {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        `
+
+        let res = await sendRequest( userA.token, { query } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.branches.items.length ).to.equal( 2 )
+        expect( res.body.data.stream.branches.totalCount ).to.equal( 3 )
+        expect( res.body.data.stream.branches.cursor ).to.exist
+
+        bees = res.body.data.stream.branches.items
+
+        let query2 = `
+          query{
+            stream(id: "${ts1}"){
+              branches( limit: 2, cursor: "${ res.body.data.stream.branches.cursor }" ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  name
+                  author {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        `
+        let res2 = await sendRequest( userA.token, { query: query2 } )
+
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.stream.branches.items.length ).to.equal( 1 )
+        expect( res2.body.data.stream.branches.totalCount ).to.equal( 3 )
+      } )
+
+      it( 'should retrieve a stream branch', async ( ) => {
+
+        const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { branch( name: "${bees[1].name}" ) { name description } } } ` } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.branch.name ).to.equal( 'dim/dev' )
+      } )
+
+      it( 'should retrieve a branch`s commits', async ( ) => {
+        let query = `
+        query {
+          stream( id: "${ts1}" ) {
+            branch( name: "master" ) {
+              id
+              name
+              commits( limit: 5 ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  message
+                  createdAt
+                  referencedObject
+                  authorId
+                }
+              }
+            }
+          }
+        }
+        `
+        const res = await sendRequest( userA.token, { query: query } )
+        expect( res.body.data.stream.branch.commits.items.length ).to.equal( 5 )
+        expect( res.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'id' )
+        expect( res.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'message' )
+        expect( res.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'createdAt' )
+
+        let query2 = `
+        query {
+          stream( id: "${ts1}" ) {
+            branch( name: "master" ) {
+              id
+              name
+              commits( limit: 3, cursor: "${res.body.data.stream.branch.commits.cursor}" ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  message
+                  createdAt
+                  referencedObject
+                  authorId
+                  authorName
+                }
+              }
+            }
+          }
+        }`
+
+        const res2 = await sendRequest( userA.token, { query: query2 } )
+        // console.log( res2.body.errors )
+        // console.log( res2.body.data.stream.branch.commits )
+
+        expect( res2.body.data.stream.branch.commits.items.length ).to.equal( 3 )
+        expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'id' )
+        expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'message' )
+        expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'createdAt' )
+      } )
+
+      let commitList
+
+      it( 'should retrieve all stream commits', async ( ) => {
+        let query = `
+        query {
+          stream( id: "${ts1}" ) {
+            commits( limit: 10 ) {
+              totalCount
+              cursor
+              items {
+                id
+                message
+                authorId
+                authorName
+              }
+            }
+          }
+        }
+        `
+        const res = await sendRequest( userA.token, { query: query } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.commits.items.length ).to.equal( 10 )
+        expect( res.body.data.stream.commits.totalCount ).to.equal( 12 )
+
+        commitList = res.body.data.stream.commits.items
+
+        let query2 = `
+        query {
+          stream( id: "${ts1}" ) {
+            commits( limit: 10, cursor: "${res.body.data.stream.commits.cursor}" ) {
+              totalCount
+              cursor
+              items {
+                id
+                message
+                authorId
+                authorName
+              }
+            }
+          }
+        }
+        `
+
+        const res2 = await sendRequest( userA.token, { query: query2 } )
+
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.stream.commits.items.length ).to.equal( 2 )
+
+      } )
+
+      it( 'should retrieve a stream commit', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `query { stream( id:"${ts1}" ) { commit( id: "${commitList[ 0 ].id}" ) { id message referencedObject } } }` } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.commit.message ).to.equal( 'what a message for commit number 19' ) // should be the last created one
+
+      } )
+    } )
+
+    describe( 'Objects', ( ) => {
+
+      let myCommit
+      let myObjs
+
+      before( async ( ) => {
+        let { commit, objs } = generateManyObjects( 100, 'noise__' )
+        myCommit = commit
+        myObjs = objs
+      } )
+
+      it( 'should save many objects', async ( ) => {
+
+        let everything = [ myCommit, ...myObjs ]
+        const res = await sendRequest( userA.token, { query: `mutation($objs:[JSONObject]!) { objectCreate(streamId:"${ts1}", objects: $objs) }`, variables: { objs: everything } } )
+
+        let objIds = res.body.data.objectCreate
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( objIds.length ).to.equal( 101 ) // +1 for the actual "commit" object
+
+      } )
+
+      it( `should get an object's subojects objects`, async ( ) => {
+        let first = await sendRequest( userA.token, {
+          query: `
+          query {
+            stream( id:"${ts1}" ) {
+              id
+              name
+              object( id:"${myCommit.id}" ) {
                 createdAt
-                author{ name }
                 children( limit: 2 ) {
                   totalCount
                   cursor
@@ -531,8 +784,8 @@ describe( 'GraphQL API Core', ( ) => {
         expect( first ).to.be.json
         expect( first.body.errors ).to.not.exist
         expect( first.body.data.stream ).to.be.an( 'object' )
-        expect( first.body.data.stream.commit ).to.be.an( 'object' )
-        expect( first.body.data.stream.commit.children.objects.length ).to.equal( 2 )
+        expect( first.body.data.stream.object ).to.be.an( 'object' )
+        expect( first.body.data.stream.object.children.objects.length ).to.equal( 2 )
 
         let second = await sendRequest( userA.token, {
           query: `
@@ -540,10 +793,9 @@ describe( 'GraphQL API Core', ( ) => {
             stream(id:"${ts1}") {
               id
               name
-              commit( id:"${myCommit.id}" ) {
+              object( id:"${myCommit.id}" ) {
                 createdAt
-                author{ name }
-                children( limit: 20, cursor: "${first.body.data.stream.commit.children.cursor}", select: ["sortValueA", "nest.arr[2]"] ) {
+                children( limit: 20, cursor: "${first.body.data.stream.object.children.cursor}", select: ["sortValueA", "nest.arr[2]"] ) {
                   totalCount
                   objects {
                     id
@@ -559,22 +811,21 @@ describe( 'GraphQL API Core', ( ) => {
         expect( second ).to.be.json
         expect( second.body.errors ).to.not.exist
         expect( second.body.data.stream ).to.be.an( 'object' )
-        expect( second.body.data.stream.commit ).to.be.an( 'object' )
-        expect( second.body.data.stream.commit.children.objects.length ).to.equal( 20 )
-        expect( second.body.data.stream.commit.children.objects[ 0 ].data.sortValueA ).to.equal( 52 ) // when sorting by id, it's always 52
-        expect( second.body.data.stream.commit.children.objects[ 0 ].data.nest.arr[ 2 ] ).to.equal( 52 ) // when sorting by id, it's always 52
+        expect( second.body.data.stream.object ).to.be.an( 'object' )
+        expect( second.body.data.stream.object.children.objects.length ).to.equal( 20 )
+        expect( second.body.data.stream.object.children.objects[ 0 ].data.sortValueA ).to.equal( 52 ) // when sorting by id, it's always 52
+        expect( second.body.data.stream.object.children.objects[ 0 ].data.nest.arr[ 2 ] ).to.equal( 52 ) // when sorting by id, it's always 52
       } )
 
-      it( 'should query a commits objects', async ( ) => {
+      it( `should query an object's subojects`, async ( ) => {
         let first = await sendRequest( userA.token, {
           query: `
           query( $query: [JSONObject!], $orderBy: JSONObject ) {
             stream(id:"${ts1}") {
               id
               name
-              commit( id:"${myCommit.id}" ) {
+              object( id:"${myCommit.id}" ) {
                 createdAt
-                author{ name }
                 children( limit: 20, select:[ "sortValueA" ], query: $query, orderBy: $orderBy ) {
                   totalCount
                   cursor
@@ -593,16 +844,17 @@ describe( 'GraphQL API Core', ( ) => {
         expect( first ).to.be.json
         expect( first.body.errors ).to.not.exist
         expect( first.body.data.stream ).to.be.an( 'object' )
-        expect( first.body.data.stream.commit ).to.be.an( 'object' )
-        expect( first.body.data.stream.commit.children.objects.length ).to.equal( 20 )
-        expect( first.body.data.stream.commit.children.objects[ 0 ].data.sortValueA ).to.equal( 42 )
-        expect( first.body.data.stream.commit.children.objects[ 1 ].data.sortValueA ).to.equal( 43 )
+        expect( first.body.data.stream.object ).to.be.an( 'object' )
+        expect( first.body.data.stream.object.children.objects.length ).to.equal( 20 )
+        expect( first.body.data.stream.object.children.objects[ 0 ].data.sortValueA ).to.equal( 42 )
+        expect( first.body.data.stream.object.children.objects[ 1 ].data.sortValueA ).to.equal( 43 )
       } )
 
     } )
   } )
 
   describe( 'Server Info', ( ) => {
+
     it( 'Should return a valid server information object', async ( ) => {
       let q = `
         query{
@@ -652,7 +904,7 @@ function sendRequest( auth, obj ) {
 
 // const crypto = require( 'crypto' )
 
-function createManyObjects( shitTon, noise ) {
+function generateManyObjects( shitTon, noise ) {
   shitTon = shitTon || 10000
   noise = noise || Math.random( ) * 100
 
@@ -675,19 +927,18 @@ function createManyObjects( shitTon, noise ) {
       sortValueB: i * 0.42 * i
     }
     if ( i % 3 === 0 ) k++
-    getAFuckingId( baby )
-    base.__closure[ baby.id ] = 1
 
-    if ( i > 1000 )
-      base.__closure[ baby.id ] = i / 1000
+    getAnIdForThisOnePlease( baby )
+
+    base.__closure[ baby.id ] = 1
 
     objs.push( baby )
   }
 
-  getAFuckingId( base )
+  getAnIdForThisOnePlease( base )
   return { commit: base, objs: objs }
 }
 
-function getAFuckingId( obj ) {
+function getAnIdForThisOnePlease( obj ) {
   obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
 }

@@ -2,14 +2,13 @@ extend type Query {
   """
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
-  user(id: String): User
+  user( id: String ): User
   userPwdStrength( pwd: String! ): JSONObject
 }
 
 """
 Base user type.
 """
-
 type User {
   id: String!
   username: String
@@ -20,29 +19,14 @@ type User {
   avatar: String
   verified: Boolean
   profiles: JSONObject
+  role: String
 }
 
-
-
 extend type Mutation {
-  
-  """
-  Endpoint used to create an admin user on server init. 
-  TODO: Deprecate; update setup app to not use this one.
-  """
-  userCreateAdmin(user: UserCreateInput!): String
-  
   """
   Edits a user's profile.
   """
   userEdit(user: UserEditInput!): Boolean!
-}
-
-input UserCreateInput {
-  name: String!
-  username: String!
-  email: String!
-  password: String!
 }
 
 input UserEditInput {

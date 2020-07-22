@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 'use strict'
 let debug = require( 'debug' )( 'speckle:modules' )
 

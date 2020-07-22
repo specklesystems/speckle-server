@@ -1,0 +1,101 @@
+extend type Stream {
+  commits( limit: Int! = 20, cursor: String ): CommitCollection
+  commit( id: String! ): Commit
+  branches( limit: Int! = 100, cursor: String ): BranchCollection
+  branch( name: String! ): Branch
+}
+
+extend type User {
+  commits( limit: Int! = 20, cursor: String ): CommitCollectionUser
+}
+
+type Branch {
+  id: String!
+  name: String!
+  author: User!
+  description: String!
+  commits( limit: Int! = 20, cursor: String ): CommitCollection
+}
+
+type Commit {
+  id: String!
+  referencedObject: String!
+  realObject: Object
+  message: String
+  authorName: String
+  authorId: String
+  createdAt: String
+}
+
+type CommitCollectionUserNode {
+  id: String!
+  referencedObject: String!
+  realObject: Object
+  message: String
+  streamId: String
+  streamName: String
+}
+
+type BranchCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Branch]
+}
+
+type CommitCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Commit]
+}
+
+type CommitCollectionUser {
+  totalCount: Int!
+  cursor: String
+  items: [CommitCollectionUserNode]
+}
+
+extend type Mutation {
+  branchCreate( branch: BranchCreateInput! ): String!
+  branchUpdate( branch: BranchUpdateInput! ): Boolean!
+  branchDelete( branch: BranchDeleteInput! ): Boolean!
+  commitCreate( commit: CommitCreateInput! ): String!
+  commitUpdate( commit: CommitUpdateInput! ): String!
+  commitDelete( commit: CommitDeleteInput! ): Boolean!
+}
+
+input BranchCreateInput {
+  streamId: String!
+  name: String!
+  description: String
+}
+
+input BranchUpdateInput {
+  streamId: String!
+  id: String!
+  name: String
+  description: String
+}
+
+input BranchDeleteInput {
+  streamId: String!
+  id: String!
+}
+
+input CommitCreateInput {
+  streamId: String!
+  branchName: String!
+  objectId: String!
+  message: String
+  previousCommitIds: [String]
+}
+
+input CommitUpdateInput {
+  streamId: String!
+  id: String!
+  message: String!
+}
+
+input CommitDeleteInput {
+  streamId: String!
+  id: String!
+}

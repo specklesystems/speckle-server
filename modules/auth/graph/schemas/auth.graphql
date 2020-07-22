@@ -13,12 +13,12 @@ type ServerApp {
   scopes: [Scope]
 }
 
-extend type User {
-  """
-  Apps used by this user.
-  """
-  apps: [ServerApp]
-}
+# extend type User {
+#   """
+#   Apps used by this user.
+#   """
+#   apps: [ServerApp]
+# }
 
 extend type ServerInfo {
   authStrategies: [AuthStrategy]

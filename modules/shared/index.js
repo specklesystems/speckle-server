@@ -6,13 +6,13 @@ const knex = require( `${appRoot}/db/knex` )
 const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
 /*
-    
+
     Graphql server context helper
 
  */
 
 async function contextApiTokenHelper( { req, res } ) {
-  // TODO: Cache results for 5 minutes
+  // TODO: Cache results for a minute
   // console.log( req.headers )
   if ( req.headers.authorization != null ) {
     try {
@@ -37,18 +37,18 @@ async function contextApiTokenHelper( { req, res } ) {
 async function contextMiddleware( req, res, next ) {
   let result = await contextApiTokenHelper( { req, res } )
   req.context = result
-  next()
+  next( )
 }
 
 /*
-    
+
     Keeps track of all the available roles on this server. It's seeded by the methods below.
 
  */
 let roles
 
 /*
-    
+
     Validates a user's server-bound role (admin, normal user, etc.)
 
  */
@@ -72,7 +72,7 @@ async function validateServerRole( context, requiredRole ) {
 }
 
 /*
-    
+
     Graphql scope validator
 
  */
@@ -85,7 +85,7 @@ async function validateScopes( scopes, scope ) {
 }
 
 /*
-    
+
     Graphql authorization: checks user id against access control lists
 
  */
@@ -94,7 +94,7 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
   if ( !roles )
     roles = await knex( 'user_roles' ).select( '*' )
 
-  // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping. 
+  // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   let role = roles.find( r => r.name === requiredRole )
 
@@ -104,17 +104,17 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
     let { isPublic } = await knex( role.resourceTarget ).select( 'isPublic' ).where( { id: resourceId } ).first( )
     if ( isPublic && roles[ requiredRole ] < 200 ) return true
   } catch ( e ) {
-    throw new ApolloError( `Resource of type ${resourceTable} with ${resourceId} not found` )
+    throw new ApolloError( `Resource of type ${role.resourceTarget} with ${resourceId} not found` )
   }
 
-  let entry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )
+  let userAclEntry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )
 
-  if ( !entry ) throw new ForbiddenError( 'You are not authorized' )
+  if ( !userAclEntry ) throw new ForbiddenError( 'You are not authorized' )
 
-  entry.role = roles.find( r => r.name === entry.role )
+  userAclEntry.role = roles.find( r => r.name === userAclEntry.role )
 
-  if ( entry.role.weight >= role.weight )
-    return true
+  if ( userAclEntry.role.weight >= role.weight )
+    return userAclEntry.role.name
   else
     throw new ForbiddenError( 'You are not authorized' )
 
