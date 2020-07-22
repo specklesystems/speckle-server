@@ -1,6 +1,6 @@
 # Speckle Server
 
-The next iteration of the Speckle Server.
+The next iteration of the Speckle Server. dev:frontend
 
 [![Speckle-Next](https://circleci.com/gh/Speckle-Next/SpeckleServer.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/Speckle-Next/SpeckleServer/branch/master/graph/badge.svg?token=PHZWVNUVFE)](https://codecov.io/gh/Speckle-Next/SpeckleServer)
 
@@ -13,11 +13,13 @@ To debug, simply run `npm run dev:server`. To test, run `npm run test:server`. T
 
 #### Requirements
 
-You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2_dev` and `speckle2_test`.
+1. Dubplicate and rename `.env-example` to `.env`.
+
+2. You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2_dev` and `speckle2_test`.
 
 > For getting postgres running on osx, check out [postgres.app](https://postgresapp.com/), and the classic [pgadmin](https://www.pgadmin.org/download/pgadmin-4-macos/).
 
-You will also need Redis installed.
+3. You will also need Redis installed.
 
 > For which you can use the [redis.app](https://jpadilla.github.io/redisapp/).
 
