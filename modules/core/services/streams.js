@@ -131,7 +131,7 @@ module.exports = {
       .where( { resourceId: streamId } )
       .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
       .select( 'stream_acl.role', 'username', 'name', 'id' )
-      .orderBy( 'users.id' )
+      .orderBy( 'stream_acl.role' )
 
     return await query
   }

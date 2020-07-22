@@ -18,23 +18,36 @@ const {
   updateBranch,
   getBranchById,
   getBranchesByStreamId,
+  getBranchByNameAndStreamId,
   deleteBranchById
 } = require( '../../services/branches' )
 
+const { getUserById } = require( '../../services/users' )
+
 module.exports = {
-  Query: { },
+  Query: {},
   Stream: {
+
     async branches( parent, args, context, info ) {
-      throw new ApolloError( 'not implemented' )
+      let { items, cursor, totalCount } = await getBranchesByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor } )
+
+      return { totalCount, cursor, items }
     },
-    async branch( parent, args, context, info) {
-      throw new ApolloError( 'not implemented' )
+
+    async branch( parent, args, context, info ) {
+      return await getBranchByNameAndStreamId( { streamId: parent.id, name: args.name } )
     },
   },
   Branch: {
+
     async author( parent, args, context, info ) {
+      return await getUserById( { userId: parent.authorId } )
+    },
+
+    async commits( parent, args, context, info ) {
       throw new ApolloError( 'not implemented' )
     }
+
   },
   Mutation: {
     async branchCreate( parent, args, context, info ) {

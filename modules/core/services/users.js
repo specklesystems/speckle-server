@@ -10,7 +10,7 @@ const ServerRoles = ( ) => knex( 'server_acl' )
 module.exports = {
 
   /*
-  
+
       Users
 
    */
@@ -50,6 +50,13 @@ module.exports = {
     return { id: await module.exports.createUser( user ) }
   },
 
+  async getUserById( { userId } ) {
+    let user = await Users( ).where( { id: userId } ).select( '*' ).first( )
+    delete user.passwordDigest
+    return user
+  },
+
+  // TODO: deprecate
   async getUser( id ) {
     let user = await Users( ).where( { id: id } ).select( '*' ).first( )
     delete user.passwordDigest

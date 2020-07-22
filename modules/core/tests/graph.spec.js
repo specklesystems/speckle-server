@@ -533,9 +533,6 @@ describe( 'GraphQL API Core', ( ) => {
             }
           }` } )
 
-        console.log( res.body.errors )
-        console.log( res.body.data.stream.collaborators )
-
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
 
@@ -544,12 +541,62 @@ describe( 'GraphQL API Core', ( ) => {
 
         expect( stream.name ).to.equal( 'TS1 (u A) Private UPDATED' )
         expect( stream.collaborators ).to.have.lengthOf( 2 )
-        expect( stream.collaborators[ 0 ].role ).to.equal( 'stream:owner' )
-        expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:contributor' )
+        expect( stream.collaborators[ 0 ].role ).to.equal( 'stream:contributor' )
+        expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:owner' )
       } )
 
       it( 'should retrieve all stream branches', async ( ) => {
-        assert.fail( 'todo' )
+        let query = `
+          query{
+            stream(id: "${ts1}"){
+              branches( limit: 2 ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  name
+                  author {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        `
+
+        let res = await sendRequest( userA.token, { query } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.branches.items.length ).to.equal( 2 )
+        expect( res.body.data.stream.branches.totalCount ).to.equal( 3 )
+        expect( res.body.data.stream.branches.cursor ).to.exist
+
+        let query2 = `
+          query{
+            stream(id: "${ts1}"){
+              branches( limit: 2, cursor: "${ res.body.data.stream.branches.cursor }" ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  name
+                  author {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        `
+        let res2 = await sendRequest( userA.token, { query: query2 } )
+
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.stream.branches.items.length ).to.equal( 1 )
+        expect( res2.body.data.stream.branches.totalCount ).to.equal( 3 )
       } )
 
       it( 'should retrieve a stream branch', async ( ) => {

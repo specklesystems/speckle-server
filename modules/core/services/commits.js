@@ -10,7 +10,7 @@ const StreamCommits = ( ) => knex( 'stream_commits' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
 const ParentCommits = ( ) => knex( 'parent_commits' )
 
-const { getBranchesByStreamId } = require( './branches' )
+const { getBranchesByStreamId, getBranchByNameAndStreamId } = require( './branches' )
 
 module.exports = {
 
@@ -47,8 +47,7 @@ module.exports = {
 
   async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, previousCommitIds } ) {
     branchName = branchName.toLowerCase( )
-    let branches = await getBranchesByStreamId( { streamId: streamId } )
-    let myBranch = branches.find( b => b.name === branchName )
+    let myBranch = await getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
 
     if ( !myBranch )
       throw new Error( `Failed to find bracnh with name ${branchName}.` )
@@ -76,8 +75,7 @@ module.exports = {
 
   async getCommitsTotalCountByBranchName( { streamId, branchName } ) {
     branchName = branchName.toLowerCase( )
-    let branches = await getBranchesByStreamId( { streamId: streamId } )
-    let myBranch = branches.find( b => b.name === branchName )
+    let myBranch = await getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
 
     if ( !myBranch )
       throw new Error( `Failed to find branch with name ${branchName}.` )
@@ -105,8 +103,7 @@ module.exports = {
 
   async getCommitsByBranchName( { streamId, branchName, limit, cursor } ) {
     branchName = branchName.toLowerCase( )
-    let branches = await getBranchesByStreamId( { streamId: streamId } )
-    let myBranch = branches.find( b => b.name === branchName )
+    let myBranch = await getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
 
     if ( !myBranch )
       throw new Error( `Failed to find branch with name ${branchName}.` )
