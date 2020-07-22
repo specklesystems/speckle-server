@@ -85,7 +85,7 @@ module.exports = {
 
   async getCommitsByBranchId( { branchId, limit, cursor } ) {
     limit = limit || 20
-    let query = BranchCommits( ).columns( [ 'commitId', 'message', 'referencedObject', { author: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+    let query = BranchCommits( ).columns( [ { id: 'commitId' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
       .join( 'commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'users', 'commits.author', 'users.id' )
       .where( 'branchId', branchId )
@@ -126,7 +126,7 @@ module.exports = {
   async getCommitsByStreamId( { streamId, limit, cursor } ) {
     limit = limit || 20
     let query = StreamCommits( )
-      .columns( [ 'commitId', 'message', 'referencedObject', { author: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+      .columns( [ { id: 'commitId' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
       .join( 'commits', 'commits.id', 'stream_commits.commitId' )
       .join( 'users', 'commits.author', 'users.id' )
       .where( 'streamId', streamId )
@@ -147,7 +147,7 @@ module.exports = {
 
     let query =
       Commits( )
-      .columns( [ 'commitId', 'message', 'referencedObject', 'commits.createdAt', { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] ).select( )
+      .columns( [ { id: 'commitId' }, 'message', 'referencedObject', 'commits.createdAt', { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] ).select( )
       .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
       .join( 'streams', 'stream_commits.streamId', 'streams.id' )
       .where( 'author', userId )

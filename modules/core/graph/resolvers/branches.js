@@ -10,7 +10,8 @@ const {
   updateCommit,
   deleteCommit,
   getCommitsByBranchId,
-  getCommitsByBranchName
+  getCommitsByBranchName,
+  getCommitsTotalCountByBranchId
 } = require( '../../services/commits' )
 
 const {
@@ -42,10 +43,6 @@ module.exports = {
 
     async author( parent, args, context, info ) {
       return await getUserById( { userId: parent.authorId } )
-    },
-
-    async commits( parent, args, context, info ) {
-      throw new ApolloError( 'not implemented' )
     }
 
   },

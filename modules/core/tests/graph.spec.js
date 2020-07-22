@@ -453,7 +453,7 @@ describe( 'GraphQL API Core', ( ) => {
 
         for ( let i = 10; i < 20; i++ ) {
           let c1 = {
-            message: 'what a message for a first commit',
+            message: `what a message for commit number ${i}`,
             streamId: ts1,
             objectId: objIds[ i ],
             branchName: 'master',
@@ -461,14 +461,15 @@ describe( 'GraphQL API Core', ( ) => {
           let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c1 } } )
         }
 
-        const res = await sendRequest( userA.token, { query: `{ user { commits( limit: 3 ) { totalCount cursor items { commitId message referencedObject } } } }` } )
+        const res = await sendRequest( userA.token, { query: `{ user { commits( limit: 3 ) { totalCount cursor items { id message referencedObject } } } }` } )
+
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.user.commits.totalCount ).to.equal( 11 )
         expect( res.body.data.user.commits.cursor ).to.exist
         expect( res.body.data.user.commits.items.length ).to.equal( 3 )
 
-        const res2 = await sendRequest( userA.token, { query: `{ user { commits( limit: 3, cursor: "${res.body.data.user.commits.cursor}") { totalCount cursor items { commitId message referencedObject } } } }` } )
+        const res2 = await sendRequest( userA.token, { query: `{ user { commits( limit: 3, cursor: "${res.body.data.user.commits.cursor}") { totalCount cursor items { id message referencedObject } } } }` } )
         expect( res2 ).to.be.json
         expect( res2.body.errors ).to.not.exist
         expect( res2.body.data.user.commits.totalCount ).to.equal( 11 )
@@ -545,6 +546,7 @@ describe( 'GraphQL API Core', ( ) => {
         expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:owner' )
       } )
 
+      let bees = [ ]
       it( 'should retrieve all stream branches', async ( ) => {
         let query = `
           query{
@@ -573,6 +575,8 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.data.stream.branches.totalCount ).to.equal( 3 )
         expect( res.body.data.stream.branches.cursor ).to.exist
 
+        bees = res.body.data.stream.branches.items
+
         let query2 = `
           query{
             stream(id: "${ts1}"){
@@ -600,23 +604,123 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'should retrieve a stream branch', async ( ) => {
-        // note: adding another commit for the sake of it
-        const res1 = await sendRequest( userA.token, { query: `mutation($branch:BranchUpdateInput!) { branchUpdate(streamId:"${ts1}", branch:$branch) }`, variables: { branch: { id: b1.id, commits: [ c2.id ] } } } )
-        const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { branch(id:"${retrievedStream.branches.branches[0].id}") { name description commits { totalCount } } } } ` } )
+
+        const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { branch( name: "${bees[1].name}" ) { name description } } } ` } )
 
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-        expect( res.body.data.stream.branch.name ).to.equal( 'branch 1' )
-        expect( res.body.data.stream.branch.commits.totalCount ).to.equal( 2 )
-
+        expect( res.body.data.stream.branch.name ).to.equal( 'dim/dev' )
       } )
 
       it( 'should retrieve a branch`s commits', async ( ) => {
-        assert.fail( 'todo' )
+        let query = `
+        query {
+          stream( id: "${ts1}" ) {
+            branch( name: "master" ) {
+              id
+              name
+              commits( limit: 5 ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  message
+                  createdAt
+                  referencedObject
+                  authorId
+                }
+              }
+            }
+          }
+        }
+        `
+        const res = await sendRequest( userA.token, { query: query } )
+        expect( res.body.data.stream.branch.commits.items.length ).to.equal( 5 )
+        expect( res.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'id' )
+        expect( res.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'message' )
+        expect( res.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'createdAt' )
+
+        let query2 = `
+        query {
+          stream( id: "${ts1}" ) {
+            branch( name: "master" ) {
+              id
+              name
+              commits( limit: 3, cursor: "${res.body.data.stream.branch.commits.cursor}" ) {
+                totalCount
+                cursor
+                items {
+                  id
+                  message
+                  createdAt
+                  referencedObject
+                  authorId
+                  authorName
+                }
+              }
+            }
+          }
+        }`
+
+        const res2 = await sendRequest( userA.token, { query: query2 } )
+        // console.log( res2.body.errors )
+        // console.log( res2.body.data.stream.branch.commits )
+
+        expect( res2.body.data.stream.branch.commits.items.length ).to.equal( 3 )
+        expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'id' )
+        expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'message' )
+        expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'createdAt' )
       } )
 
       it( 'should retrieve all stream commits', async ( ) => {
-        assert.fail( 'todo' )
+        let query = `
+        query {
+          stream( id: "${ts1}" ) {
+            commits( limit: 10 ) {
+              totalCount
+              cursor
+              items {
+                id
+                message
+                authorId
+                authorName
+              }
+            }
+          }
+        }
+        `
+        const res = await sendRequest( userA.token, { query: query } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.commits.items.length ).to.equal( 10 )
+        expect( res.body.data.stream.commits.totalCount ).to.equal( 12 )
+
+        let query2 = `
+        query {
+          stream( id: "${ts1}" ) {
+            commits( limit: 10, cursor: "${res.body.data.stream.commits.cursor}" ) {
+              totalCount
+              cursor
+              items {
+                id
+                message
+                authorId
+                authorName
+              }
+            }
+          }
+        }
+        `
+
+        const res2 = await sendRequest( userA.token, { query: query2 } )
+        console.log( res2.body.errors )
+        console.log( res2.body.data.stream.commits )
+
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.not.exist
+        expect( res2.body.data.stream.commits.items.length ).to.equal( 2 )
+
       } )
 
       it( 'should retrieve a stream commit', async ( ) => {

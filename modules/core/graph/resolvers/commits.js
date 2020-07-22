@@ -13,7 +13,10 @@ const {
   getCommitsByBranchId,
   getCommitsByBranchName,
   getCommitsByUserId,
-  getCommitsTotalCountByUserId
+  getCommitsByStreamId,
+  getCommitsTotalCountByStreamId,
+  getCommitsTotalCountByUserId,
+  getCommitsTotalCountByBranchId
 } = require( '../../services/commits' )
 
 const {
@@ -27,6 +30,13 @@ const {
 module.exports = {
   Query: {},
   Stream: {
+
+    async commits( parent, args, context, info ) {
+      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor } )
+      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id } )
+
+      return { items, cursor, totalCount }
+    },
 
     async commit( parent, args, context, info ) {
       throw new ApolloError( 'not implemented' )
@@ -46,13 +56,12 @@ module.exports = {
 
   },
   Branch: {
-
     async commits( parent, args, context, info ) {
+      let { commits, cursor } = await getCommitsByBranchId( { branchId: parent.id, limit: args.limit, cursor: args.cursor } )
+      let totalCount = await getCommitsTotalCountByBranchId( { branchId: parent.id } )
 
-      throw new ApolloError( 'not implemented' )
-
+      return { items: commits, totalCount, cursor }
     }
-
   },
   Mutation: {
 

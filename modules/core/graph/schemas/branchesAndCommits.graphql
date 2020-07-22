@@ -22,12 +22,13 @@ type Commit {
   referencedObject: String!
   realObject: Object
   message: String
-  author: String
+  authorName: String
   authorId: String
+  createdAt: String
 }
 
 type CommitCollectionUserNode {
-  commitId: String!
+  id: String!
   referencedObject: String!
   realObject: Object
   message: String

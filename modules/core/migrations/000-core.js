@@ -17,7 +17,7 @@ exports.up = async knex => {
     table.boolean( 'completed' ).defaultTo( false )
   } )
 
-  // Users. 
+  // Users.
   await knex.schema.createTable( 'users', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'username', 20 ).unique( ).notNullable( )
@@ -34,8 +34,8 @@ exports.up = async knex => {
 
   // Roles.
   // Roles keep track of their name and the target resource they are applied to.
-  // The target resource must be a table name. 
-  // The heigher the weight, the bigger the permissions. 
+  // The target resource must be a table name.
+  // The heigher the weight, the bigger the permissions.
   await knex.schema.createTable( 'user_roles', table => {
     table.string( 'name' ).primary( )
     table.text( 'description' ).notNullable( )
@@ -44,7 +44,7 @@ exports.up = async knex => {
     table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
   } )
 
-  // Server-wide access control list. 
+  // Server-wide access control list.
   await knex.schema.createTable( 'server_acl', table => {
     table.string( 'userId', 10 ).references( 'id' ).inTable( 'users' ).primary( ).onDelete( 'cascade' )
     table.string( 'role' ).references( 'name' ).inTable( 'user_roles' ).notNullable( ).onDelete( 'cascade' )
@@ -70,13 +70,13 @@ exports.up = async knex => {
   } )
 
   // Registered application scopes table.
-  // Scopes limit what a token can actually do. 
+  // Scopes limit what a token can actually do.
   await knex.schema.createTable( 'scopes', table => {
     table.string( 'name' ).primary( )
     table.text( 'description' ).notNullable( )
   } )
 
-  // Token >- -< Scopes junction table. 
+  // Token >- -< Scopes junction table.
   await knex.schema.createTable( 'token_scopes', table => {
     table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).notNullable( ).onDelete( 'cascade' ).index( )
     table.string( 'scopeName' ).references( 'name' ).inTable( 'scopes' ).notNullable( ).onDelete( 'cascade' ).index( )
@@ -104,7 +104,7 @@ exports.up = async knex => {
     table.unique( [ 'userId', 'resourceId' ] )
   } )
 
-  // Objects Table. 
+  // Objects Table.
   // id - the object's *hash*
   // totalChildrenCount - how many subchildren, regardless of depth, this object has
   // totalChildrenCountByDepth - how many subchildren does this object have at a specific nesting depth.
@@ -119,11 +119,11 @@ exports.up = async knex => {
     table.jsonb( 'data' )
   } )
 
-  // Closure table for tracking the nesting relationships of objects. 
+  // Closure table for tracking the nesting relationships of objects.
   // Note: the usecase optimised for is that when we request an object, we either:
   // a) interactively request/query for its subchildren (sequentially)
   // or
-  // b) we want all of it! 
+  // b) we want all of it!
   await knex.schema.createTable( 'object_children_closure', table => {
     table.string( 'parent' ).notNullable( ).index( )
     table.string( 'child' ).notNullable( ).index( )
@@ -132,8 +132,8 @@ exports.up = async knex => {
     table.index( [ 'parent', 'minDepth' ], 'full_pcd_index' )
   } )
 
-  // Commit table. 
-  // Any object can be "blessed" as a commit. 
+  // Commit table.
+  // Any object can be "blessed" as a commit.
   await knex.schema.createTable( 'commits', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'referencedObject' ).references( 'id' ).inTable( 'objects' ).notNullable( )
@@ -142,7 +142,7 @@ exports.up = async knex => {
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
   } )
 
-  // Commit inheritance table. 
+  // Commit inheritance table.
   // Tracks the inheritance of commits. A commit may have:
   // - one ancestor (simple sequential push)
   // - more ancestors (result of a merge)
@@ -152,7 +152,7 @@ exports.up = async knex => {
     table.unique( [ 'parent', 'child' ], 'commit_parent_child_index' )
   } )
 
-  // Branches table. 
+  // Branches table.
   // A branch is a end-user scope-bound collection of commits.
   await knex.schema.createTable( 'branches', table => {
     table.string( 'id', 10 ).primary( )
@@ -165,7 +165,7 @@ exports.up = async knex => {
     table.unique( [ 'streamId', 'name' ] )
   } )
 
-  // Junction Table Branches >- -< Commits 
+  // Junction Table Branches >- -< Commits
   await knex.schema.createTable( 'branch_commits', table => {
     table.string( 'branchId', 10 ).references( 'id' ).inTable( 'branches' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'commitId' ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
