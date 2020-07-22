@@ -9,11 +9,17 @@ The next iteration of the Speckle Server.
 
 ### Local debugging & testing
 
-To debug, simply run `npm run dev`. To test, run `npm run test`. To run tests in interactive mode, run `npm run test-watch`.
+To debug, simply run `npm run dev:server`. To test, run `npm run test:server`. To run tests in interactive mode, run `npm run test:server:watch`.
 
-You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2` and `speckle2_test`.
+#### Requirements
+
+You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2_dev` and `speckle2_test`.
 
 > For getting postgres running on osx, check out [postgres.app](https://postgresapp.com/), and the classic [pgadmin](https://www.pgadmin.org/download/pgadmin-4-macos/).
+
+You will also need Redis installed.
+
+> For which you can use the [redis.app](https://jpadilla.github.io/redisapp/).
 
 ### How to commit to this repo
 When pushing commits to this repo, please follow the following guidelines: 
