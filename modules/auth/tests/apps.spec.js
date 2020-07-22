@@ -165,9 +165,9 @@ describe( 'Apps', ( ) => {
 
     } )
 
-    it( 'should get app info', async ( ) => {
-      assert.fail( 'todo' )
-    } )
+    // it( 'should get app info', async ( ) => {
+    //   assert.fail( 'todo' )
+    // } )
 
   } )
 } )

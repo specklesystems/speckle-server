@@ -66,19 +66,21 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Should get all streams for a user', async ( ) => {
-      let all = await getUserStreams( { userId: userOne.id } )
-      expect( all ).to.have.lengthOf( 2 )
+      let { streams, cursor } = await getUserStreams( { userId: userOne.id } )
+      // console.log( res )
+      expect( streams ).to.have.lengthOf( 2 )
+      expect( cursor ).to.exist
     } )
 
     it( 'Should delete a stream', async ( ) => {
       const id = await createStream( { name: 'mayfly', description: 'wonderful', ownerId: userOne.id } )
       let all = await getUserStreams( { userId: userOne.id } )
-      expect( all ).to.have.lengthOf( 3 )
+      expect( all.streams ).to.have.lengthOf( 3 )
 
       await deleteStream( { streamId: id } )
 
       all = await getUserStreams( { userId: userOne.id } )
-      expect( all ).to.have.lengthOf( 2 )
+      expect( all.streams ).to.have.lengthOf( 2 )
     } )
   } )
 
@@ -100,7 +102,8 @@ describe( 'Streams', ( ) => {
     } )
 
     it( 'Stream should show up in the other users` list', async ( ) => {
-      let userTwoStreams = await getUserStreams( { userId: userTwo.id } )
+      let { streams: userTwoStreams } = await getUserStreams( { userId: userTwo.id } )
+      // console.log( userTwoStreams )
       expect( userTwoStreams ).to.have.lengthOf( 1 )
       expect( userTwoStreams[ 0 ] ).to.have.property( 'role' )
       expect( userTwoStreams[ 0 ].role ).to.equal( 'stream:contributor' )
@@ -115,7 +118,7 @@ describe( 'Streams', ( ) => {
 
     it( 'Should revoke permissions on stream', async ( ) => {
       await revokePermissionsStream( { streamId: testStream.id, userId: userTwo.id } )
-      let userTwoStreams = await getUserStreams( { userId: userTwo.id } )
+      let { streams: userTwoStreams } = await getUserStreams( { userId: userTwo.id } )
       expect( userTwoStreams ).to.have.lengthOf( 0 )
     } )
 
