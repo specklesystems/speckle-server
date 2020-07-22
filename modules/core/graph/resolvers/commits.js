@@ -39,7 +39,8 @@ module.exports = {
     },
 
     async commit( parent, args, context, info ) {
-      throw new ApolloError( 'not implemented' )
+      let c = await getCommitById( { id: args.id } )
+      return c
     }
 
   },

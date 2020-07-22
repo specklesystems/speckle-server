@@ -16,10 +16,10 @@ const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
 module.exports = {
 
   /*
-  
+
       Tokens
       Note: tokens are composed of a 10 char token id and a 32 char token string.
-      The token string is smoked, salted and hashed and stored in the database. 
+      The token string is smoked, salted and hashed and stored in the database.
 
    */
 
@@ -54,12 +54,12 @@ module.exports = {
     return { id: tokenId, token: tokenId + tokenString }
   },
 
-  // Creates a personal access token for a user with a set of given scopes. 
+  // Creates a personal access token for a user with a set of given scopes.
   async createPersonalAccessToken( userId, name, scopes, lifespan ) {
 
     let { id, token } = await module.exports.createToken( { userId, name, scopes, lifespan } )
 
-    // Store the relationship 
+    // Store the relationship
     await PersonalApiTokens( ).insert( { userId: userId, tokenId: id } )
 
     return token

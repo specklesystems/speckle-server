@@ -672,6 +672,8 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res2.body.data.stream.branch.commits.items[ 0 ] ).to.have.property( 'createdAt' )
       } )
 
+      let commitList
+
       it( 'should retrieve all stream commits', async ( ) => {
         let query = `
         query {
@@ -696,6 +698,8 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.data.stream.commits.items.length ).to.equal( 10 )
         expect( res.body.data.stream.commits.totalCount ).to.equal( 12 )
 
+        commitList = res.body.data.stream.commits.items
+
         let query2 = `
         query {
           stream( id: "${ts1}" ) {
@@ -714,8 +718,6 @@ describe( 'GraphQL API Core', ( ) => {
         `
 
         const res2 = await sendRequest( userA.token, { query: query2 } )
-        console.log( res2.body.errors )
-        console.log( res2.body.data.stream.commits )
 
         expect( res2 ).to.be.json
         expect( res2.body.errors ).to.not.exist
@@ -724,10 +726,11 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'should retrieve a stream commit', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { commit(id:"${c2.id}") { id description data } } }` } )
+        const res = await sendRequest( userA.token, { query: `query { stream( id:"${ts1}" ) { commit( id: "${commitList[ 0 ].id}" ) { id message referencedObject } } }` } )
+
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-        expect( res.body.data.stream.commit.description ).to.equal( 'test second commit' )
+        expect( res.body.data.stream.commit.message ).to.equal( 'what a message for commit number 19' ) // should be the last created one
 
       } )
     } )

@@ -15,6 +15,7 @@ module.exports = {
     },
 
     async user( parent, args, context, info ) {
+
       await validateServerRole( context, 'server:user' )
 
       if ( !args.id )
