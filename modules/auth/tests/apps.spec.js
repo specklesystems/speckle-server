@@ -151,4 +151,23 @@ describe( 'Apps', ( ) => {
         .expect( 401 )
     } )
   } )
+
+  describe( 'GraphQL', ( ) => {
+
+     before( async ( ) => {
+      await knex.migrate.rollback( )
+      await knex.migrate.latest( )
+
+      // TODO: init gql server
+    } )
+
+    after( async ( ) => {
+
+    } )
+
+    it( 'should get app info', async ( ) => {
+      assert.fail( 'todo' )
+    } )
+
+  } )
 } )
