@@ -1,92 +1,92 @@
 'use strict'
-const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
-const appRoot = require( 'app-root-path' )
+const { AuthorizationError, ApolloError } = require('apollo-server-express')
+const appRoot = require('app-root-path')
 const {
-  createStream,
-  getStream,
-  updateStream,
-  deleteStream,
-  getUserStreams,
-  getUserStreamsCount,
-  getStreamUsers,
-  grantPermissionsStream,
-  revokePermissionsStream
-} = require( '../../services/streams' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+    createStream,
+    getStream,
+    updateStream,
+    deleteStream,
+    getUserStreams,
+    getUserStreamsCount,
+    getStreamUsers,
+    grantPermissionsStream,
+    revokePermissionsStream
+} = require('../../services/streams')
+const { validateServerRole, validateScopes, authorizeResolver } = require(`${appRoot}/modules/shared`)
 
 module.exports = {
-  Query: {
-    async stream( parent, args, context, info ) {
-      await validateScopes( context.scopes, 'streams:read' )
-      await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
+    Query: {
+        async stream(parent, args, context, info) {
+            await validateScopes(context.scopes, 'streams:read')
+            await authorizeResolver(context.userId, args.id, 'stream:reviewer')
 
-      let stream = await getStream( { streamId: args.id } )
-      return stream
-    }
-  },
-  Stream: {
-
-    async collaborators( parent, args, context, info ) {
-      let users = await getStreamUsers( { streamId: parent.id } )
-      return users
-    }
-
-  },
-  User: {
-
-    async streams( parent, args, context, info ) {
-      // Return only the user's public streams if parent.id !== context.userId
-      let publicOnly = parent.id !== context.userId
-      let totalCount = await getUserStreamsCount( { userId: parent.id, publicOnly } )
-
-      let { cursor, streams } = await getUserStreams( { userId: parent.id, limit: args.limit, cursor: args.cursor, publicOnly: publicOnly } )
-      return { totalCount, cursor: cursor, items: streams }
-    }
-
-  },
-  Mutation: {
-    async streamCreate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-
-      let id = await createStream( { ...args.stream, ownerId: context.userId } )
-      return id
+            let stream = await getStream({ streamId: args.id })
+            return stream
+        }
     },
+    Stream: {
 
-    async streamUpdate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
+        async collaborators(parent, args, context, info) {
+            let users = await getStreamUsers({ streamId: parent.id })
+            return users
+        }
 
-      await updateStream( { streamId: args.stream.id, name: args.stream.name, description: args.stream.description } )
-      return true
     },
+    User: {
 
-    async streamDelete( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.id, 'stream:owner' )
+        async streams(parent, args, context, info) {
+            // Return only the user's public streams if parent.id !== context.userId
+            let publicOnly = parent.id !== context.userId
+            let totalCount = await getUserStreamsCount({ userId: parent.id, publicOnly })
 
-      await deleteStream( { streamId: args.id } )
-      return true
+            let { cursor, streams } = await getUserStreams({ userId: parent.id, limit: args.limit, cursor: args.cursor, publicOnly: publicOnly })
+            return { totalCount, cursor: cursor, items: streams }
+        }
+
     },
+    Mutation: {
+        async streamCreate(parent, args, context, info) {
+            await validateServerRole(context, 'server:user')
+            await validateScopes(context.scopes, 'streams:write')
 
-    async streamGrantPermission( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+            let id = await createStream({...args.stream, ownerId: context.userId })
+            return id
+        },
 
-      if ( context.userId === args.userId ) throw new AuthorizationError( 'You cannot set roles for yourself.' )
+        async streamUpdate(parent, args, context, info) {
+            await validateServerRole(context, 'server:user')
+            await validateScopes(context.scopes, 'streams:write')
+            await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
 
-      return await grantPermissionsStream( { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' } )
-    },
+            await updateStream({ streamId: args.stream.id, name: args.stream.name, description: args.stream.description })
+            return true
+        },
 
-    async streamRevokePermission( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+        async streamDelete(parent, args, context, info) {
+            await validateServerRole(context, 'server:user')
+            await validateScopes(context.scopes, 'streams:write')
+            await authorizeResolver(context.userId, args.id, 'stream:owner')
 
-      return await revokePermissionsStream( { ...args } )
+            await deleteStream({ streamId: args.id })
+            return true
+        },
+
+        async streamGrantPermission(parent, args, context, info) {
+            await validateServerRole(context, 'server:user')
+            await validateScopes(context.scopes, 'streams:write')
+            await authorizeResolver(context.userId, args.streamId, 'stream:owner')
+
+            if (context.userId === args.userId) throw new Error('You cannot set roles for yourself.')
+
+            return await grantPermissionsStream({ streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase() || 'read' })
+        },
+
+        async streamRevokePermission(parent, args, context, info) {
+            await validateServerRole(context, 'server:user')
+            await validateScopes(context.scopes, 'streams:write')
+            await authorizeResolver(context.userId, args.streamId, 'stream:owner')
+
+            return await revokePermissionsStream({...args })
+        }
     }
-  }
 }

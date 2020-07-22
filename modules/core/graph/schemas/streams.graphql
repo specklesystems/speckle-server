@@ -45,11 +45,11 @@ extend type Mutation {
   """
   streamDelete( id: String! ): Boolean!
   """
-  Grants permissions to an user on a given stream.
+  Grants permissions to a user on a given stream.
   """
   streamGrantPermission( streamId: String!, userId: String!, role: String! ): Boolean
   """
-  Revokes the permissions of an user on a given stream.
+  Revokes the permissions of a user on a given stream.
   """
   streamRevokePermission( streamId: String!, userId: String! ): Boolean
 
