@@ -86,15 +86,18 @@ describe( 'Branches', ( ) => {
 
     await createBranch( { name: 'master-faster', streamId: stream.id, authorId: user.id } )
     await createBranch( { name: 'master-blaster', streamId: stream.id, authorId: user.id } )
+    await createBranch( { name: 'blaster-farter', streamId: stream.id, authorId: user.id } )
 
-    let branches = await getBranchesByStreamId( { streamId: stream.id } )
-    expect( branches ).to.have.lengthOf( 4 )
+    let { items, cursor, totalCount } = await getBranchesByStreamId( { streamId: stream.id } )
+    expect( items ).to.have.lengthOf( 5 )
+    expect( cursor ).to.exist
+    expect( totalCount ).to.exist
   } )
 
   it( 'Should delete a branch', async ( ) => {
     await deleteBranchById( { id: branch.id } )
-    let branches = await getBranchesByStreamId( { streamId: stream.id } )
-    expect( branches ).to.have.lengthOf( 3 )
+    let { items } = await getBranchesByStreamId( { streamId: stream.id } )
+    expect( items ).to.have.lengthOf( 4 )
   } )
 
 } )
