@@ -94,7 +94,7 @@ module.exports = {
     publicOnly = publicOnly !== false //defaults to true if not provided
 
     let query = Acl( )
-      .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt' ] ).select( )
+      .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt', 'role' ] ).select( )
       .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
       .where( 'stream_acl.userId', userId )
 
