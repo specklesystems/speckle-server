@@ -33,11 +33,12 @@ module.exports = {
         async users(parent, args, context, info) {
 
             await validateServerRole(context, 'server:user')
+            await validateScopes(context.scopes, 'profile:read')
+            await validateScopes(context.scopes, 'users:read')
 
-            if (!args.id)
-                await validateScopes(context.scopes, 'profile:read')
-            else
-                await validateScopes(context.scopes, 'users:read')
+            if (!args.query) {
+                throw new UserInputError('You must provide a search query.')
+            }
 
             return await findUsers(args.query)
         },
