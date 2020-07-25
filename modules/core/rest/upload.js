@@ -49,8 +49,8 @@ module.exports = ( app ) => {
 
     busboy.on( 'finish', ( ) => {
       debug( 'speckle:upload-endpoint' )( 'Done parsing ' + totalProcessed + ' objs ' + process.memoryUsage( ).heapUsed / 1024 / 1024 + ' mb mem' )
-      res.writeHead( 303, { Connection: 'close', Location: '/' } )
-      res.end( )
+
+      res.status( 201 ).end( )
     } )
 
     req.pipe( busboy )
