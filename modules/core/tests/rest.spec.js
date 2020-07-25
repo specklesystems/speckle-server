@@ -89,11 +89,11 @@ describe( `Upload/Download Routes`, ( ) => {
       .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
       .attach( 'batch3', Buffer.from( JSON.stringify( objBatches[ 2 ] ), 'utf8' ) )
 
-    expect( res ).to.have.status( 303 )
+    expect( res ).to.have.status( 201 )
   } )
 
   it( 'Should properly download an object, with all its children, into a application/json response', ( done ) => {
-    new Promise( resolve => setTimeout( resolve, 1000 ) ) // avoids race condition
+    new Promise( resolve => setTimeout( resolve, 1500 ) ) // avoids race condition
       .then( ( ) => {
         let res = request( expressApp )
           .get( `/objects/${testStream.id}/${parentId}` )
