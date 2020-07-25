@@ -59,7 +59,7 @@ extend type Mutation {
   branchUpdate( branch: BranchUpdateInput! ): Boolean!
   branchDelete( branch: BranchDeleteInput! ): Boolean!
   commitCreate( commit: CommitCreateInput! ): String!
-  commitUpdate( commit: CommitUpdateInput! ): String!
+  commitUpdate( commit: CommitUpdateInput! ): Boolean!
   commitDelete( commit: CommitDeleteInput! ): Boolean!
 }
 
