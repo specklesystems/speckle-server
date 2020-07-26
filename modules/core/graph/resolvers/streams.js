@@ -76,7 +76,7 @@ module.exports = {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 
-      if ( context.userId === args.userId ) throw new AuthorizationError( 'You cannot set roles for yourself.' )
+      if ( context.userId === args.userId ) throw new Error( 'You cannot set roles for yourself.' )
 
       return await grantPermissionsStream( { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' } )
     },

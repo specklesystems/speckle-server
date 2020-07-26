@@ -35,7 +35,7 @@ describe( `Upload/Download Routes`, ( ) => {
     expressApp = app
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${(await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ))}`
+    userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
 
     testStream.id = await createStream( { ...testStream, ownerId: userA.id } )
   } )

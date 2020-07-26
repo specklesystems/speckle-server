@@ -24,7 +24,7 @@ exports.init = async ( app ) => {
   } )
 
   // Other modules preflight
-  moduleDirs.forEach(async dir => {
+  moduleDirs.forEach( async dir => {
     await require( dir ).init( app )
   } )
 

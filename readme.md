@@ -9,33 +9,35 @@ The next iteration of the Speckle Server.
 
 ### Local debugging & testing
 
-To debug, simply run `npm run dev`. To test, run `npm run test`. To run tests in interactive mode, run `npm run test-watch`.
+To debug, simply run `npm run dev:server`. To test, run `npm run test:server`. To run tests in interactive mode, run `npm run test:server:watch`.
 
-You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2` and `speckle2_test`.
+#### Requirements
+
+1. Duplicate and rename `.env-example` to `.env`.
+
+2. You will need to have a postgres instance running on the default settings, with two databases present, named `speckle2_dev` and `speckle2_test`.
 
 > For getting postgres running on osx, check out [postgres.app](https://postgresapp.com/), and the classic [pgadmin](https://www.pgadmin.org/download/pgadmin-4-macos/).
 
-### How to commit to this repo
-When pushing commits to this repo, please follow the following guidelines: 
+3. You will also need Redis installed.
 
-1) Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally
-3) When ready to commit, type in the commandline `git cz` & follow the prompts.
+> For which you can use the [redis.app](https://jpadilla.github.io/redisapp/).
+
+### How to commit to this repo
+When pushing commits to this repo, please follow the following guidelines:
+
+- Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally (`npm i -g commitizen`).
+- When ready to commit, type in the commandline `git cz` & follow the prompts.
 
 ## Modules
 
-The server dynamically loads individual 'modules' from each top level folder in `./modules`. It first loads the core modules, and thereafter others ("third party"). 
+The server dynamically loads individual 'modules' from each top level folder in `./modules`. It first loads the core modules, and thereafter others.
 
-### Loading
-
-Loading consists of two stages: 
-- **Preflight**: stage where a module can configure the behaviour of any shared middleware. 
-- **Initialisation**: final stage, where modules should hoist their routes on the core express application.
-
-Modules can create new and alter old database tables, if the knex migration files are present in a `migrations` subfolder (e.g., `./modules/your-module/migrations/my-new-table.js`). 
+Modules can create new and alter old database tables, if the knex migration files are present in a `migrations` subfolder (e.g., `./modules/your-module/migrations/my-new-table.js`). Make sure to add a date in front of your migration file.
 
 ### Structure
 
-A module should contain in its root folder an index.js file that exposes an init function: 
+A module should contain in its root folder an index.js file that exposes an init function:
 
 ```js
 exports.init = ( app ) => {
@@ -43,7 +45,7 @@ exports.init = ( app ) => {
 }
 ```
 
-Any database migration files should be stored and named accordingly in a `migrations` folder. Moreover, modules should include test files. These should be located in `tests`. Here's a sample structure: 
+Any database migration files should be stored and named accordingly in a `migrations` folder. Moreover, modules should include test files. These should be located in `tests`. Here's a sample structure:
 
 ```
 
@@ -62,7 +64,7 @@ Any database migration files should be stored and named accordingly in a `migrat
 ### GraphQl
 
 // TODO
-### REST 
+### REST
 
 Depecrated.
 
