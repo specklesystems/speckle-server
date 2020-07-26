@@ -92,7 +92,7 @@ describe( 'Actors & Tokens', ( ) => {
 
       let match = await validatePasssword( { email: actor.email, password: 'super-test-200' } )
       expect( match ).to.equal( true )
-      let match_wrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' })
+      let match_wrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' } )
       expect( match_wrong ).to.equal( false )
 
     } )
