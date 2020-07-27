@@ -28,6 +28,14 @@ When pushing commits to this repo, please follow the following guidelines:
 
 - Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally (`npm i -g commitizen`).
 - When ready to commit, type in the commandline `git cz` & follow the prompts.
+- Install eslint globally `npm i -g eslint`
+    - if using VS code install the `eslint` extension
+    - we also recommend setting it to run on save by adding the following VS Code setting 
+    ```    
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    }
+    ```
 
 ## Modules
 
