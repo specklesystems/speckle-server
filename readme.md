@@ -26,8 +26,16 @@ To debug, simply run `npm run dev:server`. To test, run `npm run test:server`. T
 ### How to commit to this repo
 When pushing commits to this repo, please follow the following guidelines: 
 
-1) Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally
-3) When ready to commit, type in the commandline `git cz` & follow the prompts.
+1. Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally
+2. When ready to commit, type in the commandline `git cz` & follow the prompts.
+3. Install eslint globally `npm i -g eslint`
+    1. if using VS code install the `eslint` extension
+    2. we also recommend setting it to run on save by adding the following VS Code setting 
+    ```    
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    }
+    ```
 
 ## Modules
 
