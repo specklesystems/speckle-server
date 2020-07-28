@@ -44,6 +44,10 @@ module.exports = {
                 throw new UserInputError( 'Search query must be at least 3 carachters.' )
             }
 
+            if ( args.limit  && args.limit > 100 ) {
+                throw new UserInputError( 'Cannot return more than 100 results.' )
+            }
+
             return await searchUsers( args.query, args.limit )
         },
 

@@ -83,9 +83,8 @@ module.exports = {
     },
 
     async searchUsers( query, limit ) {
-        if ( limit > 100 || limit === undefined )
-            limit = 100
-            
+        
+        limit = limit || 100
         let likeQuery = "%" + query + "%"
         let users = await Users()
             .where( {email: query} ) //match full email or partial username / name
