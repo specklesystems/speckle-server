@@ -10,7 +10,6 @@ const BranchCommits = ( ) => knex( 'branch_commits' )
 module.exports = {
 
   async createBranch( { name, description, streamId, authorId } ) {
-
     let branch = {}
     branch.id = crs( { length: 10 } )
     branch.streamId = streamId

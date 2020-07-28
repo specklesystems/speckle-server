@@ -29,24 +29,20 @@ module.exports = {
       return await getUser( args.id || context.userId )
     },
 
-    async userSearchResults( parent, args, context, info ) {
+    async userSearch( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'profile:read' )
       await validateScopes( context.scopes, 'users:read' )
 
-      if ( !args.query ) {
-        throw new UserInputError( 'You must provide a search query.' )
-      }
-
-      if ( args.query.length < 3 ) {
+      if ( args.query.length < 3 ) 
         throw new UserInputError( 'Search query must be at least 3 carachters.' )
-      }
+      
 
-      if ( args.limit  && args.limit > 100 ) {
+      if ( args.limit  && args.limit > 100 ) 
         throw new UserInputError( 'Cannot return more than 100 results.' )
-      }
-
-      return await searchUsers( args.query, args.limit )
+      
+      let {cursor, users} = await searchUsers( args.query, args.limit, args.cursor )
+      return {cursor: cursor, items: users}
     },
 
     async userPwdStrength( parent, args, context, info ) {

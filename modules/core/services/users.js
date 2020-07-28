@@ -5,7 +5,7 @@ const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
 const Users = () => knex( 'users' )
-const ServerRoles = () => knex( 'server_acl' )
+const Acl = () => knex( 'server_acl' )
 
 module.exports = {
 
@@ -16,7 +16,7 @@ module.exports = {
      */
 
   async createUser( user ) {
-    let [ {count} ] = await ServerRoles().where( {role: 'server:admin'} ).count()
+    let [ {count} ] = await Acl().where( {role: 'server:admin'} ).count()
 
     user.id = crs( {length: 10} )
 
@@ -31,9 +31,9 @@ module.exports = {
     let res = await Users().returning( 'id' ).insert( user )
 
     if ( parseInt( count ) === 0 ) {
-      await ServerRoles().insert( {userId: res[0], role: 'server:admin'} )
+      await Acl().insert( {userId: res[0], role: 'server:admin'} )
     } else {
-      await ServerRoles().insert( {userId: res[0], role: 'server:user'} )
+      await Acl().insert( {userId: res[0], role: 'server:user'} )
     }
 
     return res[0]
@@ -70,7 +70,7 @@ module.exports = {
   },
 
   async getUserRole( id ) {
-    let {role} = await ServerRoles().where( {userId: id} ).select( 'role' ).first()
+    let {role} = await Acl().where( {userId: id} ).select( 'role' ).first()
     return role
   },
 
@@ -82,16 +82,23 @@ module.exports = {
     await Users().where( {id: id} ).update( user )
   },
 
-  async searchUsers( query, limit ) {
+  async searchUsers( searchQuery, limit, cursor ) {
     limit = limit || 100
-    let likeQuery = "%" + query + "%"
-    let users = await Users()
-      .where( {email: query} ) //match full email or partial username / name
-      .orWhere( 'username', 'like', likeQuery )
-      .orWhere( 'name', 'like', likeQuery )
-      .limit( limit )
+    let likeQuery = "%" + searchQuery + "%"
+    let query = Users()
+      .where( function () {
+        this.where( {email: searchQuery} ) //match full email or partial username / name
+          .orWhere( 'username', 'ILIKE', likeQuery )
+          .orWhere( 'name', 'ILIKE', likeQuery )
+      } )
 
-    return users
+    if ( cursor )
+      query.andWhere( 'users.createdAt', '<', cursor )
+
+    query.orderBy( 'users.createdAt', 'desc' ).limit( limit )
+
+    let rows = await query
+    return {users: rows, cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null}
   },
 
   async validatePasssword( {email, password} ) {

@@ -1,5 +1,7 @@
 extend type Query {
   stream( id: String! ): Stream
+  streams( limit: Int! = 100, cursor: String ): StreamCollection
+  streamSearch( query: String!, limit: Int! = 100, cursor: String ): StreamCollection
 }
 
 type Stream {
@@ -16,7 +18,7 @@ extend type User {
   """
   All the streams that a user has access to.
   """
-  streams( limit: Int! = 20, cursor: String ): StreamCollectionUser
+  streams( limit: Int! = 20, cursor: String ): StreamCollection
 }
 
 type StreamCollaborator {
@@ -25,11 +27,12 @@ type StreamCollaborator {
   role: String!
 }
 
-type StreamCollectionUser {
+type StreamCollection {
   totalCount: Int!
   cursor: String
   items: [ Stream ]
 }
+
 
 extend type Mutation {
   """

@@ -3,7 +3,7 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user( id: String ): User
-  userSearchResults(query: String, limit: Int! = 100): [UserSearchResult!]!
+  userSearch( query: String!, limit: Int! = 100, cursor: String ): UserSearchResultCollection
   userPwdStrength( pwd: String! ): JSONObject
 }
 
@@ -21,6 +21,11 @@ type User {
   verified: Boolean
   profiles: JSONObject
   role: String
+}
+
+type UserSearchResultCollection {
+  cursor: String
+  items: [ UserSearchResult ]
 }
 
 type UserSearchResult {

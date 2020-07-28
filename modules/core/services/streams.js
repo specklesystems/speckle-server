@@ -89,10 +89,10 @@ module.exports = {
     return await Streams( ).where( { id: streamId } ).del( )
   },
 
-  async getUserStreams( { userId, limit, cursor, publicOnly } ) {
+  async getUserStreams( {userId, limit, cursor, publicOnly, searchQuery } ) {
     limit = limit || 100
     publicOnly = publicOnly !== false //defaults to true if not provided
-
+    let likeQuery = "%" + searchQuery + "%"
     let query = Acl( )
       .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt', 'role' ] ).select( )
       .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
@@ -104,22 +104,35 @@ module.exports = {
     if ( publicOnly )
       query.andWhere( 'streams.isPublic', true )
 
+    if ( searchQuery )
+      query.andWhere( function () {
+        this.where( 'name', 'ILIKE', likeQuery )
+          .orWhere( 'description', 'ILIKE', likeQuery )
+          .orWhere( 'id', 'ILIKE', likeQuery ) //potentially useless?
+      } )
+
     query.orderBy( 'streams.updatedAt', 'desc' ).limit( limit )
 
     let rows = await query
     return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString( ) : null }
   },
 
-  async getUserStreamsCount( { userId, publicOnly } ) {
-
+  async getUserStreamsCount( {userId, publicOnly, searchQuery } ) {
     publicOnly = publicOnly !== false //defaults to true if not provided
-
+    let likeQuery = "%" + searchQuery + "%"
     let query = Acl( ).count( )
       .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
       .where( { userId: userId } )
 
     if ( publicOnly )
       query.andWhere( 'streams.isPublic', true )
+
+    if ( searchQuery )
+      query.andWhere( function () {
+        this.where( 'name', 'ILIKE', likeQuery )
+          .orWhere( 'description', 'ILIKE', likeQuery )
+          .orWhere( 'id', 'ILIKE', likeQuery ) //potentially useless?
+      } )
 
     let [ res ] = await query
     return parseInt( res.count )
@@ -128,10 +141,10 @@ module.exports = {
   async getStreamUsers( { streamId } ) {
     let query =
       Acl( ).columns( { role: 'stream_acl.role' }, 'id', 'name' ).select( )
-      .where( { resourceId: streamId } )
-      .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
-      .select( 'stream_acl.role', 'username', 'name', 'id' )
-      .orderBy( 'stream_acl.role' )
+        .where( { resourceId: streamId } )
+        .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
+        .select( 'stream_acl.role', 'username', 'name', 'id' )
+        .orderBy( 'stream_acl.role' )
 
     return await query
   }

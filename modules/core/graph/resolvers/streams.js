@@ -22,6 +22,28 @@ module.exports = {
 
       let stream = await getStream( { streamId: args.id } )
       return stream
+    },
+    async streams( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:read' )
+
+      if ( args.limit && args.limit > 100 )
+        throw new UserInputError( 'Cannot return more than 100 results.' )
+
+      let totalCount = await getUserStreamsCount( {userId: context.userId, publicOnly: false} )
+
+      let {cursor, streams} = await getUserStreams( {userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false} )
+      return {totalCount, cursor: cursor, items: streams}
+    },
+    async streamSearch( parent, args, context, info ) {
+      await validateScopes( context.scopes, 'streams:read' )
+
+      if ( args.limit && args.limit > 100 ) 
+        throw new UserInputError( 'Cannot return more than 100 results.' )
+
+      let totalCount = await getUserStreamsCount( {userId: context.userId, publicOnly: false, searchQuery: args.query} )
+
+      let {cursor, streams} = await getUserStreams( {userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false, searchQuery: args.query} )
+      return {totalCount, cursor: cursor, items: streams}
     }
   },
   Stream: {
@@ -35,6 +57,8 @@ module.exports = {
   User: {
 
     async streams( parent, args, context, info ) {
+      if ( args.limit && args.limit > 100 )
+        throw new UserInputError( 'Cannot return more than 100 results.' )
       // Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
       let totalCount = await getUserStreamsCount( { userId: parent.id, publicOnly } )
