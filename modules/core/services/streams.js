@@ -89,10 +89,10 @@ module.exports = {
     return await Streams( ).where( { id: streamId } ).del( )
   },
 
-  async getUserStreams( {userId, limit, cursor, publicOnly, searchQuery } ) {
-    limit = limit || 100
+  async getUserStreams( { userId, limit, cursor, publicOnly, searchQuery } ) {
+    limit = limit || 25
     publicOnly = publicOnly !== false //defaults to true if not provided
-    let likeQuery = "%" + searchQuery + "%"
+
     let query = Acl( )
       .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt', 'role' ] ).select( )
       .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
@@ -106,9 +106,9 @@ module.exports = {
 
     if ( searchQuery )
       query.andWhere( function () {
-        this.where( 'name', 'ILIKE', likeQuery )
-          .orWhere( 'description', 'ILIKE', likeQuery )
-          .orWhere( 'id', 'ILIKE', likeQuery ) //potentially useless?
+        this.where( 'name', 'ILIKE', `%${ searchQuery }%` )
+          .orWhere( 'description', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'id', 'ILIKE', `%${searchQuery}%` ) //potentially useless?
       } )
 
     query.orderBy( 'streams.updatedAt', 'desc' ).limit( limit )
@@ -119,7 +119,7 @@ module.exports = {
 
   async getUserStreamsCount( {userId, publicOnly, searchQuery } ) {
     publicOnly = publicOnly !== false //defaults to true if not provided
-    let likeQuery = "%" + searchQuery + "%"
+
     let query = Acl( ).count( )
       .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
       .where( { userId: userId } )
@@ -129,9 +129,9 @@ module.exports = {
 
     if ( searchQuery )
       query.andWhere( function () {
-        this.where( 'name', 'ILIKE', likeQuery )
-          .orWhere( 'description', 'ILIKE', likeQuery )
-          .orWhere( 'id', 'ILIKE', likeQuery ) //potentially useless?
+        this.where( 'name', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'description', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'id', 'ILIKE', `%${searchQuery}%` ) //potentially useless?
       } )
 
     let [ res ] = await query

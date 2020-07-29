@@ -1,12 +1,12 @@
 extend type Stream {
-  commits( limit: Int! = 20, cursor: String ): CommitCollection
+  commits( limit: Int! = 25, cursor: String ): CommitCollection
   commit( id: String! ): Commit
-  branches( limit: Int! = 100, cursor: String ): BranchCollection
+  branches( limit: Int! = 25, cursor: String ): BranchCollection
   branch( name: String! ): Branch
 }
 
 extend type User {
-  commits( limit: Int! = 20, cursor: String ): CommitCollectionUser
+  commits( limit: Int! = 25, cursor: String ): CommitCollectionUser
 }
 
 type Branch {
@@ -14,7 +14,7 @@ type Branch {
   name: String!
   author: User!
   description: String!
-  commits( limit: Int! = 20, cursor: String ): CommitCollection
+  commits( limit: Int! = 25, cursor: String ): CommitCollection
 }
 
 type Commit {

@@ -27,25 +27,13 @@ module.exports = {
       await validateScopes( context.scopes, 'streams:read' )
 
       if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 results.' )
+        throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
 
-      let totalCount = await getUserStreamsCount( {userId: context.userId, publicOnly: false} )
+      let totalCount = await getUserStreamsCount({userId: context.userId, publicOnly: false, searchQuery: args.query} )
 
-      let {cursor, streams} = await getUserStreams( {userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false} )
+      let {cursor, streams} = await getUserStreams({userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false, searchQuery: args.query} )
       return {totalCount, cursor: cursor, items: streams}
     },
-    async streamSearch( parent, args, context, info ) {
-      await validateScopes( context.scopes, 'streams:read' )
-
-      if ( args.limit && args.limit > 100 ) 
-        throw new UserInputError( 'Cannot return more than 100 results.' )
-
-      let totalCount = await getUserStreamsCount( {userId: context.userId, publicOnly: false, searchQuery: args.query} )
-
-      let {cursor, streams} = await getUserStreams( {userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false, searchQuery: args.query} )
-      return {totalCount, cursor: cursor, items: streams}
-    }
-  },
   Stream: {
 
     async collaborators( parent, args, context, info ) {
@@ -58,7 +46,7 @@ module.exports = {
 
     async streams( parent, args, context, info ) {
       if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 results.' )
+        throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
       // Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
       let totalCount = await getUserStreamsCount( { userId: parent.id, publicOnly } )

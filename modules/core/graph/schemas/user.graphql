@@ -3,7 +3,7 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user( id: String ): User
-  userSearch( query: String!, limit: Int! = 100, cursor: String ): UserSearchResultCollection
+  userSearch( query: String!, limit: Int! = 25, cursor: String ): UserSearchResultCollection
   userPwdStrength( pwd: String! ): JSONObject
 }
 
@@ -36,8 +36,6 @@ type UserSearchResult {
   company: String
   avatar: String
   verified: Boolean
-  profiles: JSONObject
-  role: String
 }
 
 extend type Mutation {

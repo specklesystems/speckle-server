@@ -31,7 +31,7 @@ module.exports = {
   },
 
   async getBranchesByStreamId( { streamId, limit, cursor } ) {
-    limit = limit || 100
+    limit = limit || 25
     let query = Branches( ).select( '*' ).where( { streamId: streamId } )
 
     if ( cursor )

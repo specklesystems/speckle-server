@@ -83,13 +83,14 @@ module.exports = {
   },
 
   async searchUsers( searchQuery, limit, cursor ) {
-    limit = limit || 100
-    let likeQuery = "%" + searchQuery + "%"
+    limit = limit || 25
+
     let query = Users()
-      .where( function () {
-        this.where( {email: searchQuery} ) //match full email or partial username / name
-          .orWhere( 'username', 'ILIKE', likeQuery )
-          .orWhere( 'name', 'ILIKE', likeQuery )
+      .select( 'id username name bio company verified avatar' )
+      .where( queryBuilder => {
+        queryBuilder.where( {email: searchQuery} ) //match full email or partial username / name
+        queryBuilder.orWhere( 'username', 'ILIKE', `%${searchQuery}%` )
+        queryBuilder.orWhere( 'name', 'ILIKE', `%${searchQuery}%` )
       } )
 
     if ( cursor )
