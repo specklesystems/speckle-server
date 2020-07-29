@@ -10,7 +10,6 @@ const BranchCommits = ( ) => knex( 'branch_commits' )
 module.exports = {
 
   async createBranch( { name, description, streamId, authorId } ) {
-
     let branch = {}
     branch.id = crs( { length: 10 } )
     branch.streamId = streamId
@@ -32,7 +31,7 @@ module.exports = {
   },
 
   async getBranchesByStreamId( { streamId, limit, cursor } ) {
-    limit = limit || 100
+    limit = limit || 25
     let query = Branches( ).select( '*' ).where( { streamId: streamId } )
 
     if ( cursor )

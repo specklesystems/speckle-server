@@ -1,7 +1,7 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
 const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
-const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, validatePasssword } = require( '../../services/users' )
+const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, searchUsers, validatePasssword } = require( '../../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const setupCheck = require( `${appRoot}/setupcheck` )
@@ -10,12 +10,11 @@ const zxcvbn = require( 'zxcvbn' )
 module.exports = {
   Query: {
 
-    async _( ) {
+    async _() {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
     },
 
     async user( parent, args, context, info ) {
-
       await validateServerRole( context, 'server:user' )
 
       if ( !args.id )
@@ -28,6 +27,22 @@ module.exports = {
       }
 
       return await getUser( args.id || context.userId )
+    },
+
+    async userSearch( parent, args, context, info ) {
+      await validateServerRole( context, 'server:user' )
+      await validateScopes( context.scopes, 'profile:read' )
+      await validateScopes( context.scopes, 'users:read' )
+
+      if ( args.query.length < 3 ) 
+        throw new UserInputError( 'Search query must be at least 3 carachters.' )
+      
+
+      if ( args.limit  && args.limit > 100 ) 
+        throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
+      
+      let {cursor, users} = await searchUsers( args.query, args.limit, args.cursor )
+      return {cursor: cursor, items: users}
     },
 
     async userPwdStrength( parent, args, context, info ) {
@@ -63,6 +78,8 @@ module.exports = {
     }
 
   },
+
+
 
   Mutation: {
     async userEdit( parent, args, context, info ) {

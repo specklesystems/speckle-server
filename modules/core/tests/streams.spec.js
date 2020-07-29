@@ -65,12 +65,19 @@ describe( 'Streams', ( ) => {
       expect( stream.description ).to.equal( 'Wooot' )
     } )
 
-    it( 'Should get all streams for a user', async ( ) => {
+    it( 'Should get all streams of a user', async ( ) => {
       let { streams, cursor } = await getUserStreams( { userId: userOne.id } )
       // console.log( res )
       expect( streams ).to.have.lengthOf( 2 )
       expect( cursor ).to.exist
     } )
+
+    it('Should search all streams of a user', async () => {
+      let {streams, cursor} = await getUserStreams({userId: userOne.id, searchQuery: "woo"})
+      // console.log( res )
+      expect(streams).to.have.lengthOf(1)
+      expect(cursor).to.exist
+    })
 
     it( 'Should delete a stream', async ( ) => {
       const id = await createStream( { name: 'mayfly', description: 'wonderful', ownerId: userOne.id } )

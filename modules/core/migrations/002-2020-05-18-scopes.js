@@ -6,50 +6,50 @@ exports.up = async knex => {
   debug( 'Setting up core module scopes.' )
 
   let coreModuleScopes = [ {
-      name: 'server:setup',
-      description: 'Edit server information.'
-    },
-    {
-      name: 'tokens:read',
-      description: `Access your api tokens.`
-    },
-    {
-      name: 'tokens:write',
-      description: `Create and delete api tokens on your behalf.`
-    },
-    {
-      name: 'apps:authorize',
-      description: 'Grant third party applications access rights on your behalf to the api.'
-    },
-    {
-      name: 'apps:create',
-      description: 'Register a third party application.'
-    },
-    {
-      name: 'streams:read',
-      description: 'Read your streams & and any associated information (branches, tags, comments, objects, etc.)'
-    },
-    {
-      name: 'streams:write',
-      description: 'Create streams on your behalf and read your streams & any associated information (any associated information (branches, tags, comments, objects, etc.)'
-    },
-    {
-      name: 'profile:read',
-      description: `Read your profile information`
-    },
-    {
-      name: 'profile:email',
-      description: `Access your email.`
-    },
+    name: 'server:setup',
+    description: 'Edit server information.'
+  },
+  {
+    name: 'tokens:read',
+    description: `Access your api tokens.`
+  },
+  {
+    name: 'tokens:write',
+    description: `Create and delete api tokens on your behalf.`
+  },
+  {
+    name: 'apps:authorize',
+    description: 'Grant third party applications access rights on your behalf to the api.'
+  },
+  {
+    name: 'apps:create',
+    description: 'Register a third party application.'
+  },
+  {
+    name: 'streams:read',
+    description: 'Read your streams & and any associated information (branches, tags, comments, objects, etc.)'
+  },
+  {
+    name: 'streams:write',
+    description: 'Create streams on your behalf and read your streams & any associated information (any associated information (branches, tags, comments, objects, etc.)'
+  },
+  {
+    name: 'profile:read',
+    description: `Read your profile information`
+  },
+  {
+    name: 'profile:email',
+    description: `Access your email.`
+  },
 
-    {
-      name: 'users:read',
-      description: `Read other users' profile on your behalf.`
-    },
-    {
-      name: 'users:email',
-      description: 'Access the emails of other users.'
-    }
+  {
+    name: 'users:read',
+    description: `Read other users' profile on your behalf.`
+  },
+  {
+    name: 'users:email',
+    description: 'Access the emails of other users.'
+  }
   ]
 
   await knex( 'scopes' ).insert( coreModuleScopes )

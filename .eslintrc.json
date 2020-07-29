@@ -7,13 +7,46 @@
     "parserOptions": {
         "ecmaVersion": 11
     },
-    "ignorePatterns": [ "modules/*/tests/*", "node_modules/*", "frontend/*"],
+    "ignorePatterns": [
+        "modules/*/tests/*",
+        "node_modules/*",
+        "frontend/*"
+    ],
     "rules": {
-      "arrow-spacing": [ 2, { "before": true, "after": true } ],
-      "array-bracket-spacing": [ 2, "always" ],
-      "block-spacing": [ 2, "always" ],
-      "camelcase": [ 1, { "properties": "always" } ],
-      "space-in-parens": [ 2, "always" ],
-      "keyword-spacing": 2
+        "arrow-spacing": [
+            2,
+            {
+                "before": true,
+                "after": true
+            }
+        ],
+        "array-bracket-spacing": [
+            2,
+            "always"
+        ],
+        "block-spacing": [
+            2,
+            "always"
+        ],
+        "camelcase": [
+            1,
+            {
+                "properties": "always"
+            }
+        ],
+        "space-in-parens": [
+            2,
+            "always"
+        ],
+        "keyword-spacing": 2,
+        "semi": "off",
+        "indent": [
+            "error",
+            2
+        ],
+        "padded-blocks": [
+            "error",
+            "never"
+        ]
     }
 }

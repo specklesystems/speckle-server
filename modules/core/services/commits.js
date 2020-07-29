@@ -15,7 +15,6 @@ const { getBranchesByStreamId, getBranchByNameAndStreamId } = require( './branch
 module.exports = {
 
   async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, previousCommitIds } ) {
-
     // Create main table entry
     let [ id ] = await Commits( ).returning( 'id' ).insert( {
       id: crs( { length: 10 } ),
@@ -84,7 +83,7 @@ module.exports = {
   },
 
   async getCommitsByBranchId( { branchId, limit, cursor } ) {
-    limit = limit || 20
+    limit = limit || 25
     let query = BranchCommits( ).columns( [ { id: 'commitId' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
       .join( 'commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'users', 'commits.author', 'users.id' )
@@ -124,7 +123,7 @@ module.exports = {
    * @return {[type]}                  [description]
    */
   async getCommitsByStreamId( { streamId, limit, cursor } ) {
-    limit = limit || 20
+    limit = limit || 25
     let query = StreamCommits( )
       .columns( [ { id: 'commitId' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
       .join( 'commits', 'commits.id', 'stream_commits.commitId' )
@@ -142,15 +141,15 @@ module.exports = {
   },
 
   async getCommitsByUserId( { userId, limit, cursor, publicOnly } ) {
-    limit = limit || 20
+    limit = limit || 25
     publicOnly = publicOnly !== false
 
     let query =
       Commits( )
-      .columns( [ { id: 'commitId' }, 'message', 'referencedObject', 'commits.createdAt', { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] ).select( )
-      .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
-      .join( 'streams', 'stream_commits.streamId', 'streams.id' )
-      .where( 'author', userId )
+        .columns( [ { id: 'commitId' }, 'message', 'referencedObject', 'commits.createdAt', { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] ).select( )
+        .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
+        .join( 'streams', 'stream_commits.streamId', 'streams.id' )
+        .where( 'author', userId )
 
     if ( publicOnly )
       query.andWhere( 'streams.isPublic', true )
