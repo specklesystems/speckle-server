@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
+const {createUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 
 describe( 'Actors & Tokens', ( ) => {
@@ -60,6 +60,12 @@ describe( 'Actors & Tokens', ( ) => {
       let actor = await getUser( myTestActor.id )
       expect( actor ).to.not.have.property( 'passwordDigest' )
     } )
+
+    it('Should search and get an users', async () => {
+      let {users} = await searchUsers("gates", 20, null)
+      expect(users).to.have.lengthOf(1)
+      expect(users[0].name).to.equal("Bill Gates")
+    })
 
     it( 'Should update an actor', async ( ) => {
       let updatedActor = { ...myTestActor }
