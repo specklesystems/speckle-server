@@ -60,6 +60,13 @@ extend type Mutation {
 
 }
 
+extend type Subscription {
+  """
+  Subscribes to new stream creation.
+  """
+  streamCreated: Stream!
+}
+
 input StreamCreateInput {
   name: String
   description: String

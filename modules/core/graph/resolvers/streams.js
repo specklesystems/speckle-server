@@ -13,6 +13,9 @@ const {
   revokePermissionsStream
 } = require( '../../services/streams' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+const { pubsub } = require( `${appRoot}/app` )
+
+const STREAM_CREATED = 'STREAM_CREATED'
 
 module.exports = {
   Query: {
@@ -29,10 +32,10 @@ module.exports = {
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
 
-      let totalCount = await getUserStreamsCount( {userId: context.userId, publicOnly: false, searchQuery: args.query} )
+      let totalCount = await getUserStreamsCount( { userId: context.userId, publicOnly: false, searchQuery: args.query } )
 
-      let {cursor, streams} = await getUserStreams( {userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false, searchQuery: args.query} )
-      return {totalCount, cursor: cursor, items: streams}
+      let { cursor, streams } = await getUserStreams( { userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false, searchQuery: args.query } )
+      return { totalCount, cursor: cursor, items: streams }
     }
   },
   Stream: {
@@ -62,6 +65,7 @@ module.exports = {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
 
+      await pubsub.publish( STREAM_CREATED, { streamCreated: args } )
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
       return id
     },
@@ -100,6 +104,11 @@ module.exports = {
       await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 
       return await revokePermissionsStream( { ...args } )
+    }
+  },
+  Subscription: {
+    streamCreated: {
+      subscribe: () => pubsub.asyncIterator( [ STREAM_CREATED ] )
     }
   }
 }

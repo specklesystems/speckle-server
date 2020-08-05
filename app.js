@@ -22,7 +22,6 @@ let graphqlServer
  * @return {[type]} an express applicaiton and the graphql server
  */
 exports.init = async ( ) => {
-
   const app = express( )
 
   await knex.migrate.latest( )
@@ -65,6 +64,9 @@ exports.init = async ( ) => {
 
 const setupCheck = require( `${appRoot}/setupcheck` )
 const { createProxyMiddleware } = require( 'http-proxy-middleware' )
+const { PubSub } = require( 'graphql-subscriptions' )
+const { SubscriptionServer } = require( 'subscriptions-transport-ws' )
+const { execute, subscribe } = require( 'graphql' )
 
 exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
@@ -85,7 +87,6 @@ exports.startHttp = async ( app ) => {
     debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
     debug( 'speckle:hint' )( `ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
   } else {
-
     app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
 
     app.all( '/auth*', async ( req, res ) => {
@@ -97,9 +98,8 @@ exports.startHttp = async ( app ) => {
     } )
 
     app.all( '*', async ( req, res ) => {
-
       try {
-        // refrehsing this variable on every request only if it's false  
+        // refrehsing this variable on every request only if it's false
         if ( !setupComplete ) {
           setupComplete = await setupCheck( )
         }
@@ -115,6 +115,7 @@ exports.startHttp = async ( app ) => {
     } );
   }
 
+  const pubsub = new PubSub()
   let server = http.createServer( app )
 
   graphqlServer.installSubscriptionHandlers( server )
@@ -123,7 +124,16 @@ exports.startHttp = async ( app ) => {
     debug( `speckle:startup` )( `Listening on ${server.address().port}` )
   } )
 
-  server.listen( port )
+  server.listen( port, () => {
+    new SubscriptionServer( {
+      execute,
+      subscribe,
+      //schema: graphqlSchema -- not sure how to get the full schema?
+    }, {
+      server: server,
+      path: '/subscriptions'
+    } )
+  } )
 
   return { server }
 }

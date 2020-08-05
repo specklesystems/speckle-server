@@ -9,7 +9,6 @@ const debug = require( 'debug' )( 'speckle:modules' )
 const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 
 exports.init = async ( app ) => {
-
   let dirs = fs.readdirSync( `${appRoot}/modules` )
   let moduleDirs = [ ]
 
@@ -27,7 +26,6 @@ exports.init = async ( app ) => {
   moduleDirs.forEach( async dir => {
     await require( dir ).init( app )
   } )
-
 }
 
 exports.graph = ( ) => {
@@ -47,8 +45,14 @@ exports.graph = ( ) => {
       The void stares back.
       """
       _: String
+      }
+      type Subscription{
+        """
+        It's lonely in the void.
+        """
+        _: String
       }`
-    ]
+  ]
 
   let resolverObjs = [ ]
   // let directiveDirs = [ ]
@@ -74,5 +78,4 @@ exports.graph = ( ) => {
   } )
 
   return { resolvers, typeDefs }
-
 }
