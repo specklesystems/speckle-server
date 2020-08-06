@@ -43,8 +43,8 @@ exports.init = async ( ) => {
 
   // Initialise default modules, including rest api handlers
   await init( app )
-  let obj = graph()
-  console.log( Object.keys(obj.resolvers) )
+  let obj = graph( )
+  console.log( Object.keys( obj.resolvers ) )
   // Initialise graphql server
   graphqlServer = new ApolloServer( {
     ...graph( ),
@@ -65,18 +65,14 @@ exports.init = async ( ) => {
   return { app, graphqlServer }
 }
 
+const setupCheck = require( `${appRoot}/setupcheck` )
+const { createProxyMiddleware } = require( 'http-proxy-middleware' )
+
 /**
  * Starts a http server, hoisting the express app to it.
  * @param  {[type]} app [description]
  * @return {[type]}     [description]
  */
-
-const setupCheck = require( `${appRoot}/setupcheck` )
-const { createProxyMiddleware } = require( 'http-proxy-middleware' )
-const { PubSub } = require( 'graphql-subscriptions' )
-const { SubscriptionServer } = require( 'subscriptions-transport-ws' )
-const { execute, subscribe } = require( 'graphql' )
-
 exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
@@ -128,12 +124,10 @@ exports.startHttp = async ( app ) => {
   graphqlServer.installSubscriptionHandlers( server )
 
   server.on( 'listening', ( ) => {
-    debug( `speckle:startup` )( `Listening on ${server.address().port}` )
+    debug( `speckle:startup` )( `My name is Spockle Server, and I'm running at ${server.address().port}` )
   } )
 
-  server.listen( port, () => {
-    // ?
-  } )
+  server.listen( port )
 
   return { server }
 }

@@ -1,6 +1,7 @@
 'use strict'
 const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
 const appRoot = require( 'app-root-path' )
+
 const {
   createStream,
   getStream,
@@ -12,8 +13,8 @@ const {
   grantPermissionsStream,
   revokePermissionsStream
 } = require( '../../services/streams' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
-const { pubsub } = require( `${appRoot}/app` )
+
+const { validateServerRole, validateScopes, authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 const STREAM_CREATED = 'STREAM_CREATED'
 

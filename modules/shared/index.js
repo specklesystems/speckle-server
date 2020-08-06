@@ -1,9 +1,18 @@
 'use strict'
 const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
+const { RedisPubSub } = require( 'graphql-redis-subscriptions' )
+const Redis = require( 'ioredis' )
 const debug = require( 'debug' )( 'speckle:middleware' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
+
+
+let pubsub = new RedisPubSub( {
+  publisher: new Redis( process.env.REDIS_URL ),
+  subscriber: new Redis( process.env.REDIS_URL ),
+} )
+
 
 /*
 
@@ -18,6 +27,8 @@ async function contextApiTokenHelper( { req, res, connection } ) {
     // means we're checking a gql subscription connection here
     // TODO: check how we pass in tokens in here, and check them as we do for the standard route
     // for now, just returning auth: false
+    debug( `⚠️ (todo) subscritions are not yet authenticated. You shall pass, but as non-authenticated for now.` )
+
     return { auth: false }
   }
 
@@ -124,7 +135,6 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
     return userAclEntry.role.name
   else
     throw new ForbiddenError( 'You are not authorized' )
-
 }
 
 module.exports = {
@@ -132,5 +142,6 @@ module.exports = {
   contextMiddleware,
   validateServerRole,
   validateScopes,
-  authorizeResolver
+  authorizeResolver,
+  pubsub
 }

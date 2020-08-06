@@ -51,8 +51,7 @@ exports.graph = ( ) => {
         It's lonely in the void.
         """
         _: String
-      }`
-  ]
+      }` ]
 
   let resolverObjs = [ ]
   // let directiveDirs = [ ]
