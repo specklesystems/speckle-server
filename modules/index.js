@@ -33,13 +33,13 @@ exports.graph = ( ) => {
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
-      
-      type Query { 
+
+      type Query {
       """
       Stare into the void.
       """
-        _: String 
-      } 
+        _: String
+      }
       type Mutation{
       """
       The void stares back.
@@ -60,6 +60,7 @@ exports.graph = ( ) => {
   dirs.forEach( file => {
     let fullPath = path.join( `${appRoot}/modules`, file )
 
+    // load and merge the type defintions
     if ( fs.existsSync( path.join( fullPath, 'graph', 'schemas' ) ) ) {
       let moduleSchemas = fs.readdirSync( path.join( fullPath, 'graph', 'schemas' ) )
       moduleSchemas.forEach( schema => {
@@ -67,6 +68,7 @@ exports.graph = ( ) => {
       } )
     }
 
+    // first pass load of resolvers
     if ( fs.existsSync( path.join( fullPath, 'graph', 'resolvers' ) ) ) {
       resolverObjs = [ ...resolverObjs, ...values( autoload( path.join( fullPath, 'graph', 'resolvers' ) ) ) ]
     }

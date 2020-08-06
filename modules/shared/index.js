@@ -11,9 +11,16 @@ const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
  */
 
-async function contextApiTokenHelper( { req, res } ) {
+async function contextApiTokenHelper( { req, res, connection } ) {
   // TODO: Cache results for a minute
   // console.log( req.headers )
+  if ( connection ) {
+    // means we're checking a gql subscription connection here
+    // TODO: check how we pass in tokens in here, and check them as we do for the standard route
+    // for now, just returning auth: false
+    return { auth: false }
+  }
+
   if ( req.headers.authorization != null ) {
     try {
       let token = req.headers.authorization.split( ' ' )[ 1 ]

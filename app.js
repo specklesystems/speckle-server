@@ -43,11 +43,20 @@ exports.init = async ( ) => {
 
   // Initialise default modules, including rest api handlers
   await init( app )
-
+  let obj = graph()
+  console.log( Object.keys(obj.resolvers) )
   // Initialise graphql server
   graphqlServer = new ApolloServer( {
     ...graph( ),
     context: contextApiTokenHelper,
+    subscriptions: {
+      onConnect: ( connectionParams, webSocket, context ) => {
+        debug( `speckle:debug` )( 'ws on connect event' )
+      },
+      onDisconnect: ( webSocket, context ) => {
+        debug( `speckle:debug` )( 'ws on disconnect connect event' )
+      },
+    },
     tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
   } )
 
@@ -115,9 +124,7 @@ exports.startHttp = async ( app ) => {
     } );
   }
 
-  const pubsub = new PubSub()
   let server = http.createServer( app )
-
   graphqlServer.installSubscriptionHandlers( server )
 
   server.on( 'listening', ( ) => {
@@ -125,14 +132,7 @@ exports.startHttp = async ( app ) => {
   } )
 
   server.listen( port, () => {
-    new SubscriptionServer( {
-      execute,
-      subscribe,
-      //schema: graphqlSchema -- not sure how to get the full schema?
-    }, {
-      server: server,
-      path: '/subscriptions'
-    } )
+    // ?
   } )
 
   return { server }
