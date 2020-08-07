@@ -1,5 +1,5 @@
 'use strict'
-const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
+const { AuthorizationError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const appRoot = require( 'app-root-path' )
 
 const {
@@ -66,8 +66,9 @@ module.exports = {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
 
-      await pubsub.publish( STREAM_CREATED, { streamCreated: args } )
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
+      let stream = await getStream( { streamId: id } )
+      await pubsub.publish( STREAM_CREATED, { streamCreated: stream, ownerId: context.userId } )
       return id
     },
 
@@ -109,7 +110,10 @@ module.exports = {
   },
   Subscription: {
     streamCreated: {
-      subscribe: () => pubsub.asyncIterator( [ STREAM_CREATED ] )
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_CREATED ] ),
+        ( payload, variables ) => {
+          return payload.ownerId === variables.ownerId
+        } )
     }
   }
 }

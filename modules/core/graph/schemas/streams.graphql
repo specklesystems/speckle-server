@@ -64,7 +64,7 @@ extend type Subscription {
   """
   Subscribes to new stream creation.
   """
-  streamCreated: Stream!
+  streamCreated( ownerId: String! ): Stream!
 }
 
 input StreamCreateInput {
