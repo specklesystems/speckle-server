@@ -7,6 +7,7 @@ const values = require( 'lodash.values' )
 const merge = require( 'lodash.merge' )
 const debug = require( 'debug' )( 'speckle:modules' )
 const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
+const { HasScopeDirective } = require( './core/graph/directives/hasScope' )
 
 exports.init = async ( app ) => {
   let dirs = fs.readdirSync( `${appRoot}/modules` )
@@ -33,6 +34,7 @@ exports.graph = ( ) => {
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
+      directive @hasScope(scope: String!) on FIELD_DEFINITION
 
       type Query {
       """
@@ -71,6 +73,8 @@ exports.graph = ( ) => {
     if ( fs.existsSync( path.join( fullPath, 'graph', 'resolvers' ) ) ) {
       resolverObjs = [ ...resolverObjs, ...values( autoload( path.join( fullPath, 'graph', 'resolvers' ) ) ) ]
     }
+
+    // should load directives here in similar way
   } )
 
   let resolvers = { ...scalarResolvers }
@@ -78,5 +82,10 @@ exports.graph = ( ) => {
     merge( resolvers, o )
   } )
 
-  return { resolvers, typeDefs }
+  // register directives temp
+  let schemaDirectives = {
+    hasScope: HasScopeDirective
+  }
+
+  return { resolvers, typeDefs, schemaDirectives }
 }
