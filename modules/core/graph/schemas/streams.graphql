@@ -64,7 +64,7 @@ extend type Subscription {
   """
   Subscribes to new stream creation.
   """
-  streamCreated( ownerId: String! ): Stream!
+  streamCreated( ownerId: String! ): Stream! @hasScope(scope: "streams:read")
 }
 
 input StreamCreateInput {
