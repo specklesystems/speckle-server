@@ -52,12 +52,17 @@ exports.init = async ( ) => {
     subscriptions: {
       onConnect: ( connectionParams, webSocket, context ) => {
         debug( `speckle:debug` )( 'ws on connect event' )
+        if ( connectionParams.Authorization ) {
+          let token = connectionParams.Authorization.split( ' ' )[ 1 ]
+          return { token: token }
+        }
       },
       onDisconnect: ( webSocket, context ) => {
         debug( `speckle:debug` )( 'ws on disconnect connect event' )
       },
     },
-    tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
+    tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development',
+    debug: true
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
