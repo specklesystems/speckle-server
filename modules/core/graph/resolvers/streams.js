@@ -67,8 +67,7 @@ module.exports = {
       await validateScopes( context.scopes, 'streams:write' )
 
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
-      let stream = await getStream( { streamId: id } )
-      await pubsub.publish( STREAM_CREATED, { streamCreated: stream, ownerId: context.userId } )
+      await pubsub.publish( STREAM_CREATED, { streamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
       return id
     },
 
