@@ -29,6 +29,22 @@ async function contextApiTokenHelper( { req, res, connection } ) {
     // for now, just returning auth: false
     debug( `⚠️ (todo) subscritions are not yet authenticated. You shall pass, but as non-authenticated for now.` )
 
+    if ( connection.context.token ) {
+      try {
+        let token = connection.context.token
+
+        let { valid, scopes, userId, role } = await validateToken( token )
+
+        if ( !valid ) {
+          return { auth: false }
+        }
+
+        return { auth: true, userId, role, token, scopes }
+      } catch ( e ) {
+        return { auth: false, err: e }
+      }
+    }
+
     return { auth: false }
   }
 
@@ -48,6 +64,7 @@ async function contextApiTokenHelper( { req, res, connection } ) {
       return { auth: false, err: e }
     }
   }
+
   return { auth: false }
 }
 
