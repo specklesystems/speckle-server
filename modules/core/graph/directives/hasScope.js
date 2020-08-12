@@ -17,7 +17,7 @@ module.exports = {
         if ( currentScopes.indexOf( requiredScope ) === -1 && currentScopes.indexOf( '*' ) === -1 )
           throw new ForbiddenError( `sorry, you need scope '${requiredScope}' but you have '${currentScopes}'` )
 
-        const data = await await resolver.call( this, parent, args, context, info )
+        const data = await resolver.call( this, parent, args, context, info )
 
         return data
       }
