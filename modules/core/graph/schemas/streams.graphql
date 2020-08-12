@@ -62,9 +62,17 @@ extend type Mutation {
 
 extend type Subscription {
   """
-  Subscribes to new stream creation.
+  Subscribes to new stream created event.
   """
-  streamCreated( ownerId: String! ): Stream! @hasScope(scope: "streams:read")
+  streamCreated( ownerId: String! ): JSONObject! @hasRole(role: "server:user") @hasScope(scope: "streams:read") 
+  """
+  Subscribes to stream updated event.
+  """
+  streamUpdated( streamId: String! ): JSONObject! @hasRole(role: "server:user") @hasScope(scope: "streams:read") 
+  """
+  Subscribes to stream deleted event. (do we want this for streamId?)
+  """
+  streamDeleted( ownerId: String! ): JSONObject! @hasRole(role: "server:user") @hasScope(scope: "streams:read") 
 }
 
 input StreamCreateInput {

@@ -17,6 +17,8 @@ const {
 const { validateServerRole, validateScopes, authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 const STREAM_CREATED = 'STREAM_CREATED'
+const STREAM_UPDATED = 'STREAM_UPDATED'
+const STREAM_DELETED = 'STREAM_DELETED'
 
 module.exports = {
   Query: {
@@ -76,7 +78,9 @@ module.exports = {
       await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
-      await updateStream( { streamId: args.stream.id, name: args.stream.name, description: args.stream.description } )
+      let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description }
+      await updateStream( update )
+      await pubsub.publish( STREAM_UPDATED, { streamUpdated: update, streamId: args.stream.id } )
       return true
     },
 
@@ -86,6 +90,7 @@ module.exports = {
       await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
       await deleteStream( { streamId: args.id } )
+      await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, ownerId: context.userId } )
       return true
     },
 
@@ -110,6 +115,18 @@ module.exports = {
   Subscription: {
     streamCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_CREATED ] ),
+        ( payload, variables ) => {
+          return payload.ownerId === variables.ownerId
+        } )
+    },
+    streamUpdated: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_UPDATED ] ),
+        ( payload, variables ) => {
+          return payload.streamId === variables.streamId
+        } )
+    },
+    streamDeleted: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_DELETED ] ),
         ( payload, variables ) => {
           return payload.ownerId === variables.ownerId
         } )
