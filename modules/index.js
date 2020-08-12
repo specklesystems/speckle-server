@@ -7,7 +7,6 @@ const values = require( 'lodash.values' )
 const merge = require( 'lodash.merge' )
 const debug = require( 'debug' )( 'speckle:modules' )
 const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
-const { HasScopeDirective } = require( './core/graph/directives/hasScope' )
 
 exports.init = async ( app ) => {
   let dirs = fs.readdirSync( `${appRoot}/modules` )
@@ -56,12 +55,12 @@ exports.graph = ( ) => {
       }` ]
 
   let resolverObjs = [ ]
-  // let directiveDirs = [ ]
+  let schemaDirectives = { }
 
   dirs.forEach( file => {
     let fullPath = path.join( `${appRoot}/modules`, file )
 
-    // load and merge the type defintions
+    // load and merge the type definitions
     if ( fs.existsSync( path.join( fullPath, 'graph', 'schemas' ) ) ) {
       let moduleSchemas = fs.readdirSync( path.join( fullPath, 'graph', 'schemas' ) )
       moduleSchemas.forEach( schema => {
@@ -74,18 +73,16 @@ exports.graph = ( ) => {
       resolverObjs = [ ...resolverObjs, ...values( autoload( path.join( fullPath, 'graph', 'resolvers' ) ) ) ]
     }
 
-    // should load directives here in similar way
+    // load directives
+    if ( fs.existsSync( path.join( fullPath, 'graph', 'directives' ) ) ) {
+      schemaDirectives = Object.assign( ...values( autoload( path.join( fullPath, 'graph', 'directives' ) ) ) )
+    }
   } )
 
   let resolvers = { ...scalarResolvers }
   resolverObjs.forEach( o => {
     merge( resolvers, o )
   } )
-
-  // register directives temp
-  let schemaDirectives = {
-    hasScope: HasScopeDirective
-  }
 
   return { resolvers, typeDefs, schemaDirectives }
 }
