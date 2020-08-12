@@ -8,7 +8,7 @@ const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )
-const { ApolloServer } = require( 'apollo-server-express' )
+const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
 require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 
@@ -56,6 +56,8 @@ exports.init = async ( ) => {
           let token = connectionParams.Authorization.split( ' ' )[ 1 ]
           return { token: token }
         }
+
+        throw new ForbiddenError( 'You need a token to subscribe' )
       },
       onDisconnect: ( webSocket, context ) => {
         debug( `speckle:debug` )( 'ws on disconnect connect event' )
