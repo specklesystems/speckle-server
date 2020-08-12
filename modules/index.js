@@ -34,6 +34,7 @@ exports.graph = ( ) => {
   let typeDefs = [ `
       ${scalarSchemas}
       directive @hasScope(scope: String!) on FIELD_DEFINITION
+      directive @hasRole(role: String!) on FIELD_DEFINITION
 
       type Query {
       """
@@ -84,5 +85,6 @@ exports.graph = ( ) => {
     merge( resolvers, o )
   } )
 
+  console.log( schemaDirectives )
   return { resolvers, typeDefs, schemaDirectives }
 }
