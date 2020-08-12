@@ -64,7 +64,7 @@ exports.init = async ( ) => {
       },
     },
     tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development',
-    debug: true
+    // debug: true
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
