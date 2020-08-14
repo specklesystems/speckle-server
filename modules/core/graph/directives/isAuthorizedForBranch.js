@@ -4,7 +4,7 @@ const appRoot = require( 'app-root-path' )
 const { authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 module.exports = {
-  isAuthorizedForStream: class IsAuthorizedForStreamDirective extends SchemaDirectiveVisitor {
+  isAuthorizedForBranch: class IsAuthorizedForBranchDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition( field ) {
       const { resolver = field.resolve || defaultFieldResolver, name } = field
       const requiredRole = this.args.role
