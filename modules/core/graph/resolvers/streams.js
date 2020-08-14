@@ -16,21 +16,24 @@ const {
 
 const { validateServerRole, validateScopes, authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
+// subscription events
 const STREAM_CREATED = 'STREAM_CREATED'
 const STREAM_UPDATED = 'STREAM_UPDATED'
 const STREAM_DELETED = 'STREAM_DELETED'
+const STREAM_PERMISSION_GRANTED = 'STREAM_PERMISSION_GRANTED'
+const STREAM_PERMISSION_REVOKED = 'STREAM_PERMISSION_REVOKED'
 
 module.exports = {
   Query: {
     async stream( parent, args, context, info ) {
-      await validateScopes( context.scopes, 'streams:read' )
-      await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
+      // await validateScopes( context.scopes, 'streams:read' )
+      // await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
 
       let stream = await getStream( { streamId: args.id } )
       return stream
     },
     async streams( parent, args, context, info ) {
-      await validateScopes( context.scopes, 'streams:read' )
+      // await validateScopes( context.scopes, 'streams:read' )
 
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
@@ -65,8 +68,8 @@ module.exports = {
   },
   Mutation: {
     async streamCreate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
+      // await validateServerRole( context, 'server:user' )
+      // await validateScopes( context.scopes, 'streams:write' )
 
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
       await pubsub.publish( STREAM_CREATED, { streamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
@@ -74,9 +77,9 @@ module.exports = {
     },
 
     async streamUpdate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
+      // await validateServerRole( context, 'server:user' )
+      // await validateScopes( context.scopes, 'streams:write' )
+      // await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
       let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description }
       await updateStream( update )
@@ -85,9 +88,9 @@ module.exports = {
     },
 
     async streamDelete( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.id, 'stream:owner' )
+      // await validateServerRole( context, 'server:user' )
+      // await validateScopes( context.scopes, 'streams:write' )
+      // await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
       await deleteStream( { streamId: args.id } )
       await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, ownerId: context.userId } )
@@ -95,19 +98,21 @@ module.exports = {
     },
 
     async streamGrantPermission( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+      // await validateServerRole( context, 'server:user' )
+      // await validateScopes( context.scopes, 'streams:write' )
+      // await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 
       if ( context.userId === args.userId ) throw new Error( 'You cannot set roles for yourself.' )
 
-      return await grantPermissionsStream( { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' } )
+      let permissionParams = { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase() || 'read' }
+      await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
+      return await grantPermissionsStream( permissionParams )
     },
 
     async streamRevokePermission( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+      // await validateServerRole( context, 'server:user' )
+      // await validateScopes( context.scopes, 'streams:write' )
+      // await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 
       return await revokePermissionsStream( { ...args } )
     }
@@ -129,6 +134,12 @@ module.exports = {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_DELETED ] ),
         ( payload, variables ) => {
           return payload.ownerId === variables.ownerId
+        } )
+    },
+    streamPermissionGranted: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
+        ( payload, variables ) => {
+          return payload.userId === variables.userId
         } )
     }
   }
