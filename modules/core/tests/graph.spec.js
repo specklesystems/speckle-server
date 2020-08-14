@@ -17,6 +17,7 @@ const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
 let addr
+let wsAddr
 
 describe( 'GraphQL API Core', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
@@ -40,6 +41,7 @@ describe( 'GraphQL API Core', ( ) => {
     userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
+    wsAddr = `ws://localhost:${process.env.PORT || 3000}` 
   } )
 
   after( async ( ) => {
@@ -890,16 +892,59 @@ describe( 'GraphQL API Core', ( ) => {
       expect( si.scopes ).to.be.a( 'array' )
     } )
   } )
+
+  describe('Subscriptions', () => {
+    describe('Streams', () => {
+      // so these sub requests obv don't work -- i thought it would be as easy as replacing the address with the ws address but i was very wrong 🙃
+      // sending like a regular request rn just so tests can be written
+      
+      it('Should be notified when a stream is created', async () => {
+        const subSC = await sendRequest(userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }`}) 
+        const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+        
+        console.log(subSC.body.errors)
+        expect(await subSC).to.be.json
+        expect(subSC.body.errors).to.not.exist
+        expect(subSC.body.data).to.have.property('streamCreated')
+        expect(subSC.body.data.streamCreated).to.exist
+        
+      })
+      
+      it('Should not be notified when another user creates a stream', async () => {
+        const subSCB = await sendRequest(userB.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userB.id}" ) }` })
+        const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+        
+        expect(await subSCB).to.be.json
+        expect(subSCB.body.errors).to.not.exist
+        expect(subSCB.body.data.streamCreated).to.not.exist
+      })
+      
+      it('Should be notified when a stream is updated', async () => {
+        const subSC = await sendRequest(userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }`})
+        const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+        const streamId = resSC.body.data.streamCreate
+        
+        const subSU = await sendRequest(userA.token, { query: `subscription streamUpdated { streamUpdated( streamId: "${streamId}" ) }` })
+        const resSU = await sendRequest(userA.token, {query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }`})
+        
+        console.log(resSU.body)
+        expect(await subSU).to.be.json
+        expect(subSU.body.errors).to.not.exist
+        expect(subSU.body.data).to.have.property('streamUpdated')
+        expect(subSU.body.data.streamUpdated).to.exist
+      })
+    })
+  })
 } )
 
 /**
- * Sends a graphql reuqest. Convenience wrapper.
- * @param  {string} auth the users's token
+ * Sends a graphql request. Convenience wrapper.
+ * @param  {string} auth the user's token
  * @param  {string} obj  the query/mutation to send
  * @return {Promise}      the awaitable request
  */
-function sendRequest( auth, obj ) {
-  return chai.request( addr ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+function sendRequest( auth, obj, address = addr ) {
+  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
 }
 
 // const crypto = require( 'crypto' )
