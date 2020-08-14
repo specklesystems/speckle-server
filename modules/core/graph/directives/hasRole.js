@@ -8,9 +8,8 @@ let roles
 module.exports = {
   hasRole: class HasRoleDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition( field ) {
-      const { resolver = defaultFieldResolver, name } = field
+      const { resolver = field.resolve || defaultFieldResolver, name } = field
       const requiredRole = this.args.role
-      console.log( requiredRole )
 
       field.resolve = async function ( parent, args, context, info ) {
         if ( !roles )
@@ -22,7 +21,6 @@ module.exports = {
         } else {
           let role = roles.find( r => r.name === requiredRole )
           let myRole = roles.find( r => r.name === context.role )
-          console.log( context.role )
 
           if ( role === null ) new ApolloError( 'Invalid server role specified' )
           if ( myRole === null ) new ForbiddenError( 'You do not have the required server role (null)' )
