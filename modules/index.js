@@ -33,8 +33,8 @@ exports.graph = ( ) => {
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
-      directive @hasScope(scope: String!) on FIELD_DEFINITION
-      directive @hasRole(role: String!) on FIELD_DEFINITION
+      directive @hasScope(scope: String!) on FIELD_DEFINITION | OBJECT
+      directive @hasRole(role: String!) on FIELD_DEFINITION | OBJECT
       directive @isAuthorizedForStream(role: String!) on FIELD_DEFINITION
       directive @isAuthorizedForBranch(role: String!) on FIELD_DEFINITION
       directive @isAuthorizedForCommit(role: String!) on FIELD_DEFINITION

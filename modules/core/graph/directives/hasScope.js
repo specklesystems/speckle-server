@@ -1,23 +1,39 @@
 const { ForbiddenError, SchemaDirectiveVisitor } = require( 'apollo-server-express' )
 const { defaultFieldResolver } = require( 'graphql' )
+const appRoot = require( 'app-root-path' )
+const { validateScopes } = require( `${appRoot}/modules/shared` )
 
 module.exports = {
   hasScope: class HasScopeDirective extends SchemaDirectiveVisitor {
-    visitFieldDefinition( field ) {
-      const { resolver = field.resolve || defaultFieldResolver, name } = field
-      const requiredScope = this.args.scope
+    visitObject( type ) {
+      this.wrapFields( type )
+    }
 
-      field.resolve = async function ( parent, args, context, info ) {
-        const currentScopes = context.scopes
-        //   taken from validateScopes
-        if ( !currentScopes )
-          throw new ForbiddenError( `sorry, you need scope '${requiredScope}' but you don't have any scopes.` )
-        if ( currentScopes.indexOf( requiredScope ) === -1 && currentScopes.indexOf( '*' ) === -1 )
-          throw new ForbiddenError( `sorry, you need scope '${requiredScope}' but you have '${currentScopes}'` )
+    visitFieldDefinition( field, details ) {
+      this.wrapFields( details.objectType )
+    }
 
-        const data = await resolver.call( this, parent, args, context, info )
-        return data
-      }
+    wrapFields( objectType ) {
+      // Mark the GraphQLObjectType object to avoid re-wrapping
+      if ( objectType._authScopeFieldsWrapped ) return
+      objectType._authScopeFieldsWrapped = true
+
+      const fields = objectType.getFields()
+
+      Object.keys( fields ).forEach( fieldName => {
+        const field = fields[ fieldName ];
+        const { resolver = field.resolve || defaultFieldResolver, name } = field
+        const requiredScope = this.args.scope
+
+        field.resolve = async function ( parent, args, context, info ) {
+          const currentScopes = context.scopes
+          await validateScopes( currentScopes, requiredScope )
+
+          const data = await resolver.call( this, parent, args, context, info )
+          return data
+        }
+      } )
     }
   }
 }
+

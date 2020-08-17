@@ -1,12 +1,11 @@
-extend type Query {
+extend type Query 
+              @hasScope(scope: "streams:read"){
   stream( id: String! ): Stream
     @isAuthorizedForStream(role: "stream:reviewer") 
-    @hasScope(scope: "streams:read")
   """
   All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
   """
   streams( query: String!, limit: Int! = 25, cursor: String ): StreamCollection 
-    @hasScope(scope: "streams:read")
 }
 
 type Stream {
@@ -39,41 +38,34 @@ type StreamCollection {
 }
 
 
-extend type Mutation {
+extend type Mutation 
+              @hasScope(scope: "streams:write")
+              @hasRole(role: "server:user") {
   """
   Creates a new stream.
   """
   streamCreate( stream: StreamCreateInput! ): String
-    @hasScope(scope: "streams:write")
-    @hasRole(role: "server:user")
   """
   Updates an existing stream.
   """
   streamUpdate( stream: StreamUpdateInput! ): Boolean!
     @isAuthorizedForStream(role: "stream:owner")
-    @hasScope(scope: "streams:write")
-    @hasRole(role: "server:user")
   """
   Deletes an existing stream.
   """
   streamDelete( id: String! ): Boolean!
     @isAuthorizedForStream(role: "stream:owner")
-    @hasScope(scope: "streams:write")
-    @hasRole(role: "server:user")
   """
   Grants permissions to a user on a given stream.
   """
   streamGrantPermission( streamId: String!, userId: String!, role: String! ): Boolean
     @isAuthorizedForStream(role: "stream:owner")
-    @hasScope(scope: "streams:write")
-    @hasRole(role: "server:user")
   """
   Revokes the permissions of a user on a given stream.
   """
   streamRevokePermission( streamId: String!, userId: String! ): Boolean
     @isAuthorizedForStream(role: "stream:owner")
-    @hasScope(scope: "streams:write")
-    @hasRole(role: "server:user")
+
 
 }
 
@@ -93,6 +85,7 @@ extend type Subscription {
   """
   streamDeleted( ownerId: String! ): JSONObject
     # @isAuthorizedForStream(role: "stream:reviewer") ah this doesn't work b/c deleted before auth gets checked
+    # TODO: how should auth be enforced for this?
   """
   Subscribes to stream permission granted event.
   """

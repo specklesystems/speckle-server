@@ -1,36 +1,38 @@
-const { ApolloError, ForbiddenError, SchemaDirectiveVisitor } = require( 'apollo-server-express' )
+const { SchemaDirectiveVisitor } = require( 'apollo-server-express' )
 const { defaultFieldResolver } = require( 'graphql' )
 const appRoot = require( 'app-root-path' )
-const knex = require( `${appRoot}/db/knex` )
+const { validateServerRole } = require( `${appRoot}/modules/shared` )
 
-let roles
 
 module.exports = {
   hasRole: class HasRoleDirective extends SchemaDirectiveVisitor {
-    visitFieldDefinition( field ) {
-      const { resolver = field.resolve || defaultFieldResolver, name } = field
-      const requiredRole = this.args.role
+    visitObject( type ) {
+      this.wrapFields( type )
+    }
 
-      field.resolve = async function ( parent, args, context, info ) {
-        if ( !roles )
-          roles = await knex( 'user_roles' ).select( '*' )
+    visitFieldDefinition( field, details ) {
+      this.wrapFields( details.objectType )
+    }
 
-        if ( !context.auth ) throw new ForbiddenError( 'You must provide an auth token.' )
-        if ( context.role === 'server:admin' ) {
-          // pass
-        } else {
-          let role = roles.find( r => r.name === requiredRole )
-          let myRole = roles.find( r => r.name === context.role )
+    wrapFields( objectType ) {
+      // Mark the GraphQLObjectType object to avoid re-wrapping
+      if ( objectType._authRoleFieldsWrapped ) return
+      objectType._authRoleFieldsWrapped = true
 
-          if ( role === null ) new ApolloError( 'Invalid server role specified' )
-          if ( myRole === null ) new ForbiddenError( 'You do not have the required server role (null)' )
-          if ( myRole.weight < role.weight )
-            throw new ForbiddenError( 'You do not have the required server role' )
+      const fields = objectType.getFields()
+
+      Object.keys( fields ).forEach( fieldName => {
+        const field = fields[ fieldName ];
+        const { resolver = field.resolve || defaultFieldResolver, name } = field
+        const requiredRole = this.args.role
+
+        field.resolve = async function ( parent, args, context, info ) {
+          await validateServerRole( context, requiredRole )
+
+          const data = await resolver.call( this, parent, args, context, info )
+          return data
         }
-
-        const data = await resolver.call( this, parent, args, context, info )
-        return data
-      }
+      } )
     }
   }
 }
