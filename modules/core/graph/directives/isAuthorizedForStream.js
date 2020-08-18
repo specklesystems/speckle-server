@@ -11,6 +11,8 @@ module.exports = {
       let resourceId
 
       field.resolve = async function ( parent, args, context, info ) {
+        if ( !context.auth ) throw new ForbiddenError( `You need to provide an auth token for path: '${name}'` )
+
         if ( info.parentType == 'Subscription' ) {
           resourceId = ( parent[ name ].streamId || parent[ name ].id )
         } else {
