@@ -1,5 +1,5 @@
 'use strict'
-const { AuthorizationError, ApolloError, withFilter } = require( 'apollo-server-express' )
+const { withFilter } = require( 'apollo-server-express' )
 const appRoot = require( 'app-root-path' )
 
 const {
@@ -105,16 +105,18 @@ module.exports = {
       if ( context.userId === args.userId ) throw new Error( 'You cannot set roles for yourself.' )
 
       let permissionParams = { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase() || 'read' }
-      await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
-      return await grantPermissionsStream( permissionParams )
+      let granted = await grantPermissionsStream( permissionParams )
+      if ( granted ) await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
+      return granted
     },
 
     async streamRevokePermission( parent, args, context, info ) {
       // await validateServerRole( context, 'server:user' )
       // await validateScopes( context.scopes, 'streams:write' )
       // await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
-
-      return await revokePermissionsStream( { ...args } )
+      let revoked = await revokePermissionsStream( { ...args } )
+      if ( revoked ) await pubsub.publish( STREAM_PERMISSION_REVOKED, { streamPermissionRevoked: { ...args }, userId: args.userId } )
+      return revoked
     }
   },
   Subscription: {
@@ -141,6 +143,13 @@ module.exports = {
         ( payload, variables ) => {
           return payload.userId === variables.userId
         } )
+    },
+    streamPermissionRevoked: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
+        ( payload, variables ) => {
+          return payload.userId === variables.userId
+        } )
     }
   }
+
 }

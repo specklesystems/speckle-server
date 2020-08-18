@@ -91,6 +91,11 @@ extend type Subscription {
   """
   streamPermissionGranted( userId: String! ): JSONObject
     @isAuthorizedForStream(role: "stream:reviewer")
+  """
+  Subscribes to stream permission revoked event.
+  """
+  streamPermissionRevoked( userId: String! ): JSONObject
+    @isAuthorizedForStream(role: "stream:reviewer")
 }
 
 input StreamCreateInput {
