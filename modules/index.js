@@ -35,9 +35,6 @@ exports.graph = ( ) => {
       ${scalarSchemas}
       directive @hasScope(scope: String!) on FIELD_DEFINITION | OBJECT
       directive @hasRole(role: String!) on FIELD_DEFINITION | OBJECT
-      directive @isAuthorizedForStream(role: String!) on FIELD_DEFINITION
-      directive @isAuthorizedForBranch(role: String!) on FIELD_DEFINITION
-      directive @isAuthorizedForCommit(role: String!) on FIELD_DEFINITION
 
       type Query {
       """
