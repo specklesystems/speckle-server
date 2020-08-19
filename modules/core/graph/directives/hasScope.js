@@ -10,18 +10,23 @@ module.exports = {
     }
 
     visitFieldDefinition( field, details ) {
-      this.wrapFields( details.objectType )
+      // this.wrapFields( details.objectType )
+      const { resolver = field.resolve || defaultFieldResolver, name } = field
+      const requiredScope = this.args.scope
+
+      field.resolve = async function ( parent, args, context, info ) {
+        const currentScopes = context.scopes
+        await validateScopes( currentScopes, requiredScope )
+
+        const data = await resolver.call( this, parent, args, context, info )
+        return data
+      }
     }
 
     wrapFields( objectType ) {
-      // Mark the GraphQLObjectType object to avoid re-wrapping
-      if ( objectType._authScopeFieldsWrapped ) return
-      objectType._authScopeFieldsWrapped = true
-
       const fields = objectType.getFields()
-
       Object.keys( fields ).forEach( fieldName => {
-        const field = fields[ fieldName ];
+        const field = fields[ fieldName ]
         const { resolver = field.resolve || defaultFieldResolver, name } = field
         const requiredScope = this.args.scope
 
