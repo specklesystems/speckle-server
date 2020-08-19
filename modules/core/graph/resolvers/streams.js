@@ -72,14 +72,14 @@ module.exports = {
       // await validateScopes( context.scopes, 'streams:write' )
 
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
-      await pubsub.publish( STREAM_CREATED, { streamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
+      await pubsub.publish( STREAM_CREATED, { userStreamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
       return id
     },
 
     async streamUpdate( parent, args, context, info ) {
       // await validateServerRole( context, 'server:user' )
       // await validateScopes( context.scopes, 'streams:write' )
-      // await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
+      await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
       let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description }
       await updateStream( update )
@@ -90,17 +90,17 @@ module.exports = {
     async streamDelete( parent, args, context, info ) {
       // await validateServerRole( context, 'server:user' )
       // await validateScopes( context.scopes, 'streams:write' )
-      // await authorizeResolver( context.userId, args.id, 'stream:owner' )
+      await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
       await deleteStream( { streamId: args.id } )
-      await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, ownerId: context.userId } )
+      await pubsub.publish( STREAM_DELETED, { userStreamDeleted: { streamId: args.id }, ownerId: context.userId } )
       return true
     },
 
     async streamGrantPermission( parent, args, context, info ) {
       // await validateServerRole( context, 'server:user' )
       // await validateScopes( context.scopes, 'streams:write' )
-      // await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
 
       if ( context.userId === args.userId ) throw new Error( 'You cannot set roles for yourself.' )
 
@@ -113,14 +113,14 @@ module.exports = {
     async streamRevokePermission( parent, args, context, info ) {
       // await validateServerRole( context, 'server:user' )
       // await validateScopes( context.scopes, 'streams:write' )
-      // await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
       let revoked = await revokePermissionsStream( { ...args } )
       if ( revoked ) await pubsub.publish( STREAM_PERMISSION_REVOKED, { streamPermissionRevoked: { ...args }, userId: args.userId } )
       return revoked
     }
   },
   Subscription: {
-    streamCreated: {
+    userStreamCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_CREATED ] ),
         ( payload, variables ) => {
           return payload.ownerId === variables.ownerId
@@ -132,7 +132,7 @@ module.exports = {
           return payload.streamId === variables.streamId
         } )
     },
-    streamDeleted: {
+    userStreamDeleted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_DELETED ] ),
         ( payload, variables ) => {
           return payload.ownerId === variables.ownerId

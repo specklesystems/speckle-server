@@ -1,7 +1,6 @@
-extend type Query 
-              @hasScope(scope: "streams:read"){
+extend type Query {
   stream( id: String! ): Stream
-    @isAuthorizedForStream(role: "stream:reviewer") 
+    @hasScope(scope: "streams:write")
   """
   All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
   """
@@ -38,64 +37,67 @@ type StreamCollection {
 }
 
 
-extend type Mutation 
-              @hasScope(scope: "streams:write")
-              @hasRole(role: "server:user") {
+extend type Mutation {
   """
   Creates a new stream.
   """
   streamCreate( stream: StreamCreateInput! ): String
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Updates an existing stream.
   """
   streamUpdate( stream: StreamUpdateInput! ): Boolean!
-    @isAuthorizedForStream(role: "stream:owner")
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Deletes an existing stream.
   """
   streamDelete( id: String! ): Boolean!
-    @isAuthorizedForStream(role: "stream:owner")
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Grants permissions to a user on a given stream.
   """
   streamGrantPermission( streamId: String!, userId: String!, role: String! ): Boolean
-    @isAuthorizedForStream(role: "stream:owner")
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Revokes the permissions of a user on a given stream.
   """
   streamRevokePermission( streamId: String!, userId: String! ): Boolean
-    @isAuthorizedForStream(role: "stream:owner")
-
-
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
 }
 
 extend type Subscription {
   """
   Subscribes to new stream created event.
   """
-  streamCreated( ownerId: String! ): JSONObject
-    @isAuthorizedForStream(role: "stream:reviewer")
+  userStreamCreated( ownerId: String! ): JSONObject
+    # TODO: how should auth be enforced for this?
+    @hasRole(role: "server:user")
   """
   Subscribes to stream updated event.
   """
   streamUpdated( streamId: String! ): JSONObject
-    @isAuthorizedForStream(role: "stream:reviewer") 
+    @hasRole(role: "server:user")
   """
   Subscribes to stream deleted event. (do we want this for streamId?)
   """
-  streamDeleted( ownerId: String! ): JSONObject
-    # @isAuthorizedForStream(role: "stream:reviewer") ah this doesn't work b/c deleted before auth gets checked
+  userStreamDeleted( ownerId: String! ): JSONObject
     # TODO: how should auth be enforced for this?
+    @hasRole(role: "server:user")
   """
   Subscribes to stream permission granted event.
   """
   streamPermissionGranted( userId: String! ): JSONObject
-    @isAuthorizedForStream(role: "stream:reviewer")
+    @hasRole(role: "server:user")
   """
   Subscribes to stream permission revoked event.
   """
   streamPermissionRevoked( userId: String! ): JSONObject
-    @isAuthorizedForStream(role: "stream:reviewer")
+    @hasRole(role: "server:user")
 }
 
 input StreamCreateInput {
