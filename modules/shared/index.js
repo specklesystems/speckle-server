@@ -27,7 +27,9 @@ async function contextApiTokenHelper( { req, res, connection } ) {
     // means we're checking a gql subscription connection here
     // TODO: check how we pass in tokens in here, and check them as we do for the standard route
     // for now, just returning auth: false
-    debug( `⚠️ (todo) subscritions are not yet authenticated. You shall pass, but as non-authenticated for now.` )
+    // debug( `⚠️ (todo) subscritions are not yet authenticated. You shall pass, but as non-authenticated for now.` )
+
+    console.log( connection.context )
 
     if ( connection.context.token ) {
       try {
@@ -48,11 +50,13 @@ async function contextApiTokenHelper( { req, res, connection } ) {
     return { auth: false }
   }
 
+  // console.log( req.headers )
   if ( req.headers.authorization != null ) {
     try {
       let token = req.headers.authorization.split( ' ' )[ 1 ]
-
+      console.log( token )
       let { valid, scopes, userId, role } = await validateToken( token )
+      console.log( valid, scopes, userId, role )
 
       if ( !valid ) {
         return { auth: false }

@@ -52,14 +52,17 @@ exports.init = async ( ) => {
     subscriptions: {
       onConnect: ( connectionParams, webSocket, context ) => {
         debug( `speckle:debug` )( 'ws on connect event' )
-        if ( connectionParams.Authorization ) {
-          let token = connectionParams.Authorization.split( ' ' )[ 1 ]
+        // console.log( connectionParams )
+        if ( connectionParams.Authorization || connectionParams.headers.Authorization ) {
+          let header = connectionParams.Authorization || connectionParams.headers.Authorization
+          let token = header.split( ' ' )[ 1 ]
           return { token: token }
         }
 
         throw new ForbiddenError( 'You need a token to subscribe' )
       },
       onDisconnect: ( webSocket, context ) => {
+        // console.log( context )
         debug( `speckle:debug` )( 'ws on disconnect connect event' )
       },
     },
