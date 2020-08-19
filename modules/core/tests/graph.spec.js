@@ -907,7 +907,8 @@ describe( 'GraphQL API Core', ( ) => {
 
     before( async ( ) => {
       client = new SubscriptionClient( `${addr}/graphql`, { reconnect: true }, WebSocket )
-      apolloClient = new ApolloClient( { networkInterface: client, cache: new InMemoryCache( ), link: createHttpLink( { uri: `${addr}/graphql`, fetch: fetch } ) } )
+      // NOTE: Client is authorizing as userA!
+      apolloClient = new ApolloClient( { networkInterface: client, cache: new InMemoryCache( ), link: createHttpLink( { uri: `${addr}/graphql`, headers: { "Authorization": userA.token }, fetch: fetch } ) } )
     } )
 
     after( ( ) => {
@@ -918,24 +919,35 @@ describe( 'GraphQL API Core', ( ) => {
       // so these sub requests obv don't work -- i thought it would be as easy as replacing the address with the ws address but i was very wrong 🙃
       // sending like a regular request rn just so tests can be written
 
-      it( 'Should be notified when a stream is created', async ( ) => {
+      it( 'Should be notified when a stream is created', ( done ) => {
         // const subSC = await sendRequest( userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }` } )
 
+        let events = [ ]
+
         apolloClient
-          .subscribe( { query: gql`subscription mySub { streamCreated ( ownerId: "${userA.id}" ) }` } )
+          .subscribe( { query: gql `subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }` } )
           .subscribe( {
             next( data ) {
-              console.log( 'subscription event data: ')
+              console.log( 'subscription event data: ' )
               console.log( data )
+              events.push( data )
             },
             error( err ) {
-              console.log( 'subscription error event data: ')
+              console.log( 'subscription error event data: ' )
               console.log( err )
             }
           } )
 
-        const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-        const resSC2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+        sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+          .then( res => {
+            return sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+          } )
+          .then( res => {
+            // setTimeout( function ( ) {
+            //   expect( events.length ).to.equal( 2 )
+            //   done( )
+            // }, 3000 )
+          } )
 
         // console.log( subSC.body.errors )
         // expect( await subSC ).to.be.json

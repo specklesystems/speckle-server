@@ -71,7 +71,7 @@ module.exports = {
       // await validateScopes( context.scopes, 'streams:write' )
 
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
-      await pubsub.publish( USER_STREAM_CREATED, { streamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
+      await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
       return id
     },
 
@@ -81,8 +81,11 @@ module.exports = {
       // await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
       let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description }
+
       await updateStream( update )
+
       await pubsub.publish( STREAM_UPDATED, { streamUpdated: update, streamId: args.stream.id } )
+
       return true
     },
 
@@ -91,12 +94,15 @@ module.exports = {
       // await validateScopes( context.scopes, 'streams:write' )
       // await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
+      // TODO: Notify all stream userss
       let users = await getStreamUsers( { streamId: args.id } )
 
       for ( let user of users ) {
-        // TODO: Broadcast event to all users
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { streamId: args.id }, ownerId: user.id } )
       }
-      // await pubsub.publish( USER_STREAM_DELETED, { streamDeleted: { streamId: args.id }, ownerId: context.userId } )
+
+      // TODO: Notify any listeners on the streamId
+      await pubsub.publish( STREAM_DELETED, { streamDeleted: args.id, streamId: args.id } )
 
       // Delete after event so we can do authz
       await deleteStream( { streamId: args.id } )
@@ -112,7 +118,12 @@ module.exports = {
 
       let permissionParams = { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' }
       let granted = await grantPermissionsStream( permissionParams )
-      if ( granted ) await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
+
+      if ( granted ) {
+        let stream = await getStream( { streamId: args.streamId } )
+        await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: stream.id, name: stream.name, description: stream.description }, userId: args.userId } )
+      }
+
       return granted
     },
 
@@ -121,7 +132,11 @@ module.exports = {
       // await validateScopes( context.scopes, 'streams:write' )
       // await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
       let revoked = await revokePermissionsStream( { ...args } )
-      if ( revoked ) await pubsub.publish( STREAM_PERMISSION_REVOKED, { streamPermissionRevoked: { ...args }, userId: args.userId } )
+
+      if ( revoked ) {
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: args.streamId, userId: args.userId } )
+      }
+
       return revoked
     }
   },
