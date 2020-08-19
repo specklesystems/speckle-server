@@ -41,7 +41,7 @@ describe( 'GraphQL API Core', ( ) => {
     userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
-    wsAddr = `ws://localhost:${process.env.PORT || 3000}` 
+    wsAddr = `ws://localhost:${process.env.PORT || 3000}`
   } )
 
   after( async ( ) => {
@@ -893,48 +893,83 @@ describe( 'GraphQL API Core', ( ) => {
     } )
   } )
 
-  describe('Subscriptions', () => {
-    describe('Streams', () => {
+  describe( 'Subscriptions', ( ) => {
+    const WebSocket = require( 'ws' )
+    const { SubscriptionClient } = require( 'subscriptions-transport-ws' )
+    const { ApolloClient } = require( 'apollo-client' )
+    const { InMemoryCache } = require( 'apollo-cache-inmemory' )
+    const { createHttpLink } = require( 'apollo-link-http' )
+    const gql = require( 'graphql-tag' )
+    const fetch = require( 'node-fetch' )
+
+    let client
+    let apolloClient
+
+    before( async ( ) => {
+      client = new SubscriptionClient( `${addr}/graphql`, { reconnect: true }, WebSocket )
+      apolloClient = new ApolloClient( { networkInterface: client, cache: new InMemoryCache( ), link: createHttpLink( { uri: `${addr}/graphql`, fetch: fetch } ) } )
+    } )
+
+    after( ( ) => {
+      client.close( )
+    } )
+
+    describe( 'Streams', ( ) => {
       // so these sub requests obv don't work -- i thought it would be as easy as replacing the address with the ws address but i was very wrong 🙃
       // sending like a regular request rn just so tests can be written
-      
-      it('Should be notified when a stream is created', async () => {
-        const subSC = await sendRequest(userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }`}) 
-        const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
-        
-        console.log(subSC.body.errors)
-        expect(await subSC).to.be.json
-        expect(subSC.body.errors).to.not.exist
-        expect(subSC.body.data).to.have.property('streamCreated')
-        expect(subSC.body.data.streamCreated).to.exist
-        
-      })
-      
-      it('Should not be notified when another user creates a stream', async () => {
-        const subSCB = await sendRequest(userB.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userB.id}" ) }` })
-        const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
-        
-        expect(await subSCB).to.be.json
-        expect(subSCB.body.errors).to.not.exist
-        expect(subSCB.body.data.streamCreated).to.not.exist
-      })
-      
-      it('Should be notified when a stream is updated', async () => {
-        const subSC = await sendRequest(userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }`})
-        const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+
+      it( 'Should be notified when a stream is created', async ( ) => {
+        // const subSC = await sendRequest( userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }` } )
+
+        apolloClient
+          .subscribe( { query: gql`subscription mySub { streamCreated ( ownerId: "${userA.id}" ) }` } )
+          .subscribe( {
+            next( data ) {
+              console.log( 'subscription event data: ')
+              console.log( data )
+            },
+            error( err ) {
+              console.log( 'subscription error event data: ')
+              console.log( err )
+            }
+          } )
+
+        const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+        const resSC2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+
+        // console.log( subSC.body.errors )
+        // expect( await subSC ).to.be.json
+        // expect( subSC.body.errors ).to.not.exist
+        // expect( subSC.body.data ).to.have.property( 'streamCreated' )
+        // expect( subSC.body.data.streamCreated ).to.exist
+
+      } ).timeout( 5000 )
+
+      it( 'Should not be notified when another user creates a stream', async ( ) => {
+        const subSCB = await sendRequest( userB.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userB.id}" ) }` } )
+        const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+
+        expect( await subSCB ).to.be.json
+        expect( subSCB.body.errors ).to.not.exist
+        expect( subSCB.body.data.streamCreated ).to.not.exist
+      } )
+
+      it( 'Should be notified when a stream is updated', async ( ) => {
+        const subSC = await sendRequest( userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }` } )
+        const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
         const streamId = resSC.body.data.streamCreate
-        
-        const subSU = await sendRequest(userA.token, { query: `subscription streamUpdated { streamUpdated( streamId: "${streamId}" ) }` })
-        const resSU = await sendRequest(userA.token, {query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }`})
-        
-        console.log(resSU.body)
-        expect(await subSU).to.be.json
-        expect(subSU.body.errors).to.not.exist
-        expect(subSU.body.data).to.have.property('streamUpdated')
-        expect(subSU.body.data.streamUpdated).to.exist
-      })
-    })
-  })
+
+        const subSU = await sendRequest( userA.token, { query: `subscription streamUpdated { streamUpdated( streamId: "${streamId}" ) }` } )
+        const resSU = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }` } )
+
+        console.log( resSU.body )
+        expect( await subSU ).to.be.json
+        expect( subSU.body.errors ).to.not.exist
+        expect( subSU.body.data ).to.have.property( 'streamUpdated' )
+        expect( subSU.body.data.streamUpdated ).to.exist
+      } )
+    } )
+  } )
 } )
 
 /**

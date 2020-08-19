@@ -17,11 +17,10 @@ const {
 const { validateServerRole, validateScopes, authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 // subscription events
-const STREAM_CREATED = 'STREAM_CREATED'
+const USER_STREAM_CREATED = 'USER_STREAM_CREATED'
+const USER_STREAM_DELETED = 'USER_STREAM_DELETED'
 const STREAM_UPDATED = 'STREAM_UPDATED'
 const STREAM_DELETED = 'STREAM_DELETED'
-const STREAM_PERMISSION_GRANTED = 'STREAM_PERMISSION_GRANTED'
-const STREAM_PERMISSION_REVOKED = 'STREAM_PERMISSION_REVOKED'
 
 module.exports = {
   Query: {
@@ -57,7 +56,7 @@ module.exports = {
     async streams( parent, args, context, info ) {
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
-        // Return only the user's public streams if parent.id !== context.userId
+      // Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
       let totalCount = await getUserStreamsCount( { userId: parent.id, publicOnly } )
 
@@ -72,7 +71,7 @@ module.exports = {
       // await validateScopes( context.scopes, 'streams:write' )
 
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
-      await pubsub.publish( STREAM_CREATED, { streamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
+      await pubsub.publish( USER_STREAM_CREATED, { streamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
       return id
     },
 
@@ -92,8 +91,15 @@ module.exports = {
       // await validateScopes( context.scopes, 'streams:write' )
       // await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
+      let users = await getStreamUsers( { streamId: args.id } )
+
+      for ( let user of users ) {
+        // TODO: Broadcast event to all users
+      }
+      // await pubsub.publish( USER_STREAM_DELETED, { streamDeleted: { streamId: args.id }, ownerId: context.userId } )
+
+      // Delete after event so we can do authz
       await deleteStream( { streamId: args.id } )
-      await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, ownerId: context.userId } )
       return true
     },
 
@@ -104,7 +110,7 @@ module.exports = {
 
       if ( context.userId === args.userId ) throw new Error( 'You cannot set roles for yourself.' )
 
-      let permissionParams = { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase() || 'read' }
+      let permissionParams = { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' }
       let granted = await grantPermissionsStream( permissionParams )
       if ( granted ) await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
       return granted
@@ -120,34 +126,32 @@ module.exports = {
     }
   },
   Subscription: {
-    streamCreated: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_CREATED ] ),
-        ( payload, variables ) => {
+    userStreamCreated: {
+      subscribe: withFilter(
+        ( ) => pubsub.asyncIterator( [ USER_STREAM_CREATED ] ),
+        ( payload, variables, context, info ) => {
+          return payload.ownerId === variables.ownerId
+        } )
+    },
+    userStreamDeleted: {
+      subscribe: withFilter(
+        ( ) => pubsub.asyncIterator( [ USER_STREAM_DELETED ] ),
+        ( payload, variables, context, info ) => {
           return payload.ownerId === variables.ownerId
         } )
     },
     streamUpdated: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_UPDATED ] ),
+      subscribe: withFilter(
+        ( ) => pubsub.asyncIterator( [ STREAM_UPDATED ] ),
         ( payload, variables ) => {
           return payload.streamId === variables.streamId
         } )
     },
     streamDeleted: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_DELETED ] ),
+      subscribe: withFilter(
+        ( ) => pubsub.asyncIterator( [ STREAM_DELETED ] ),
         ( payload, variables ) => {
           return payload.ownerId === variables.ownerId
-        } )
-    },
-    streamPermissionGranted: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
-        ( payload, variables ) => {
-          return payload.userId === variables.userId
-        } )
-    },
-    streamPermissionRevoked: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
-        ( payload, variables ) => {
-          return payload.userId === variables.userId
         } )
     }
   }
