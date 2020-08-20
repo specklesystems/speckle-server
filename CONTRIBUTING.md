@@ -15,6 +15,8 @@ This means that what might look like a simple quick change in one repo may have 
 
 - If you come up with nothing, **open a new issue with a clear title and description**, as much relevant information as possible: system configuration, code samples & steps to reproduce the problem. 
 
+- Can't mention this often enough: tells us how to reproduce the problem! We will ignore or flag as such issues without reproduction steps. 
+
 - Try to reference & note all potentially affected projects.
 
 ### Sending a PR for Bug Fixes
@@ -28,6 +30,7 @@ The golden rule is to Discuss First!
 - Before embarking on adding a new feature, suggest it first as an issue with the `enhancement` label and/or title - this will allow relevant people to pitch in
 - We'll now discuss your requirements and see how and if they fit within the Speckle ecosystem. 
 - The last step is to actually start writing code & submit a PR so we can follow along! 
+- All new features should, if and where possible, come with tests. We won't merge without! 
 
 > Many clients may potentially have overlapping scopes, some features might already be in dev somewhere else, or might have been postponed to the next major release due to api instability in that area. For example, adding a delete stream button in the accounts panel in rhino: this feature was planned for speckle admin, and the whole functionality of the accounts panel in rhino is to be greatly reduced!
 
@@ -44,3 +47,5 @@ Why? However trivial the changes might seem, there might be subtle reasons for t
 Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion either on our [chat channels](https://slacker.speckle.works) or [the forum](https://discourse.speckle.works).
 
 🙌❤️💙💚💜🙌
+
+> This document version might be superseeded. The authorative source is [here](https://github.com/Speckle-Next/repo-management-basics/edit/master/CONTRIBUTING.md).
