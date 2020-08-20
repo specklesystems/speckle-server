@@ -8,7 +8,8 @@
     "dev:frontend": "cd frontend && npm run serve",
     "build:frontend": "cd frontend && npm run build",
     "dev:server": "cross-env NODE_ENV=development POSTGRES_URL=postgres://localhost/speckle2_dev DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
-    "dev:server:test": "cross-env PORT=3002 NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
+    "dev:server:test": "cross-env PORT=3002 NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test DEBUG=www:server,speckle:* node bin/www",
+    "dev:server:test:watch": "cross-env PORT=3002 NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test DEBUG=www:server,speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "test:server": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test nyc nyc --reporter html --reporter lcovonly mocha -s 0 --timeout 2000 --exit",
     "test:server:watch": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha --watch -s 0 --exit",
     "test:server:graph": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/graph.spec.js --watch -s 0 --exit --no-config",
@@ -79,6 +80,7 @@
     "http-proxy-middleware": "^1.0.4",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
+    "nodemon": "^2.0.4",
     "nyc": "^15.0.1",
     "supertest": "^4.0.2",
     "ws": "^7.3.1"

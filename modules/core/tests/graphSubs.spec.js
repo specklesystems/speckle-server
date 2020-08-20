@@ -56,7 +56,14 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     await knex.migrate.latest( )
 
     const childProcess = require( 'child_process' )
-    serverProcess = childProcess.exec( "npm run dev:server:test" )
+    serverProcess = childProcess.exec( "npm run dev:server:test", ( error, stdout, stderr ) => {
+      if ( error ) {
+        console.error( `exec error: ${error}` )
+        return
+      }
+      console.log( `stdout: ${stdout}` )
+      console.error( `stderr: ${stderr}` )
+    } )
 
     await sleep( 2000 )
 
