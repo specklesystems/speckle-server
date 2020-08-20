@@ -9,11 +9,11 @@
 This section should hold a quick intro on what this repo's about. For example: 
 
 This repo holds Speckle's: 
-- base COC, 
-- Contribution Guidelines, 
-- README template (this one!),
-- Issue Template,
-- OSS License (Apache 2.0) & notice.
+- Default [Code of Conduct](https://github.com/Speckle-Next/repo-management-basics/blob/master/CODE_OF_CONDUCT.md), 
+- Default [Contribution Guidelines](https://github.com/Speckle-Next/repo-management-basics/blob/master/CONTRIBUTING.md), 
+- README template (you're reading it now),
+- Default [Issue Template](https://github.com/Speckle-Next/repo-management-basics/blob/master/ISSUE_TEMPLATE.md),
+- OSS License (Apache 2.0)
 
 Either copy paste the parts that are useful in existing repos, or use this as a base when creating a new repository. 
 
@@ -41,4 +41,4 @@ The Speckle Community hangs out in two main places, usually:
 Do join and introduce yourself! 
 
 ## License
-Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different `LICENSE` file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via [email](mailto:hello@speckle.systems).
+Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different license file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via [email](mailto:hello@speckle.systems).
