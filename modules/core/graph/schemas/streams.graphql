@@ -88,7 +88,9 @@ extend type Subscription {
   """
   Subscribes to new stream created event for a given user.
   """
-  userStreamCreated( ownerId: String! ): JSONObject @hasRole(role: "server:user") @hasScope(scope: "profile:read")
+    userStreamCreated( ownerId: String! ): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
 
   # Source:
   # - stream delete mutation (target: all stream users in acl)
@@ -98,19 +100,13 @@ extend type Subscription {
   """
   Subscribes to stream deleted event for a given user.
   """
-  userStreamCreated( ownerId: String! ): JSONObject
-    # TODO: how should auth be enforced for this?
+  userStreamDeleted( ownerId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
   """
   Subscribes to stream updated event.
   """
   streamUpdated( streamId: String! ): JSONObject
-    @hasRole(role: "server:user")
-  """
-  Subscribes to stream deleted event. (do we want this for streamId?)
-  """
-  userStreamDeleted( ownerId: String! ): JSONObject
-    # TODO: how should auth be enforced for this?
     @hasRole(role: "server:user")
   """
   Subscribes to stream permission granted event.
