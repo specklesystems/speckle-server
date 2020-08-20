@@ -22,18 +22,15 @@ const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken, validateToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
-// const addr = `http://localhost:${process.env.PORT || 3000}`
-// const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
-const addr = `http://localhost:3000/graphql`
-const wsAddr = `ws://localhost:3000/graphql`
+const addr = `http://localhost:${process.env.PORT || 3000}`
+const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
+// const addr = `http://localhost:3000/graphql`
+// const wsAddr = `ws://localhost:3000/graphql`
 
 describe( 'GraphQL API Subscriptions', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let userC = { name: 'd3', username: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
   let testServer
-
-
 
   const getWsClient = ( wsurl, authToken ) => {
     const client = new SubscriptionClient( wsAddr, {
@@ -44,9 +41,6 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     return client
   }
 
-  // wsurl: GraphQL endpoint
-  // query: GraphQL query (use gql`` from the 'graphql-tag'  library)
-  // variables: Query variables object
   const createSubscriptionObservable = ( wsurl, authToken, query, variables ) => {
     authToken = authToken || userA.token
     const link = new WebSocketLink( getWsClient( wsurl, authToken ) )
@@ -57,9 +51,9 @@ describe( 'GraphQL API Subscriptions', ( ) => {
   before( async ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
-    // let { app } = await init( )
-    // let { server } = await startHttp( app )
-    // testServer = server
+    let { app } = await init( )
+    let { server } = await startHttp( app )
+    testServer = server
 
     userA.id = await createUser( userA )
     let token = await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] )
@@ -70,8 +64,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
   } )
 
   after( async ( ) => {
-    // client.close( )
-    // testServer.close( )
+    testServer.close( )
   } )
 
 
@@ -79,14 +72,14 @@ describe( 'GraphQL API Subscriptions', ( ) => {
   describe( 'Streams', ( ) => {
 
     it( 'Should be notified when a stream is created', async ( ) => {
+      let eventNum = 0
       const query = gql `subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
-      let rageQuitNum = 0
-      let consumer = client.subscribe( eventData => {
-        // console.log( 'WOOOT ' )
+      const consumer = client.subscribe( eventData => {
+        // console.log( 'Create subscription log' )
         // console.log( eventData )
-        // console.log( 'WOOOT ' )
-        rageQuitNum++
+        expect( eventData.data.userStreamCreated ).to.exist
+        eventNum++
       } )
 
       let sc1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
@@ -95,35 +88,36 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       let sc2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       expect( sc2.body.errors ).to.not.exist
 
-      console.log( 'sleeping for a bit' )
-      await sleep( 1000 )
-      expect( rageQuitNum ).to.equal( 2 )
+      await sleep( 1000 ) // we need to wait up a second here
+      expect( eventNum ).to.equal( 2 )
 
-    } ).timeout( 5000 )
+      consumer.unsubscribe( )
+    } ).timeout( 2000 )
 
-    // it( 'Should not be notified when another user creates a stream', async ( ) => {
-    //   const subSCB = await sendRequest( userB.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userB.id}" ) }` } )
-    //   const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+    it( 'Should be notified when a stream is updated', async ( ) => {
 
-    //   expect( await subSCB ).to.be.json
-    //   expect( subSCB.body.errors ).to.not.exist
-    //   expect( subSCB.body.data.streamCreated ).to.not.exist
-    // } )
+      const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+      const streamId = resSC.body.data.streamCreate
 
-    // it( 'Should be notified when a stream is updated', async ( ) => {
-    //   const subSC = await sendRequest( userA.token, { query: `subscription streamCreated { streamCreated ( ownerId: "${userA.id}" ) }` } )
-    //   const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-    //   const streamId = resSC.body.data.streamCreate
+      let eventNum = 0
+      const query = gql `subscription streamUpdated { streamUpdated( streamId: "${streamId}" ) }`
+      const client = createSubscriptionObservable( wsAddr, userA.token, query )
+      const consumer = client.subscribe( eventData => {
+        // console.log( 'update subscription log' )
+        // console.log( eventData )
+        expect( eventData.data.streamUpdated ).to.exist
+        eventNum++
+      } )
 
-    //   const subSU = await sendRequest( userA.token, { query: `subscription streamUpdated { streamUpdated( streamId: "${streamId}" ) }` } )
-    //   const resSU = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }` } )
+      const resSU = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }` } )
+      expect( resSU.body.errors ).to.not.exist
+      const resSU_2 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }` } )
+      expect( resSU_2.body.errors ).to.not.exist
 
-    //   console.log( resSU.body )
-    //   expect( await subSU ).to.be.json
-    //   expect( subSU.body.errors ).to.not.exist
-    //   expect( subSU.body.data ).to.have.property( 'streamUpdated' )
-    //   expect( subSU.body.data.streamUpdated ).to.exist
-    // } )
+      await sleep( 1000 ) // we need to wait up a second here
+      expect( eventNum ).to.equal( 2 )
+      consumer.unsubscribe( )
+    } )
   } )
 
 } )

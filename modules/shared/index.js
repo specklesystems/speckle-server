@@ -21,52 +21,33 @@ let pubsub = new RedisPubSub( {
  */
 
 async function contextApiTokenHelper( { req, res, connection } ) {
-  // TODO: Cache results for a minute
-  // console.log( req.headers )
-  if ( connection ) {
-    // means we're checking a gql subscription connection here
-    // TODO: check how we pass in tokens in here, and check them as we do for the standard route
-    // for now, just returning auth: false
-    // debug( `⚠️ (todo) subscritions are not yet authenticated. You shall pass, but as non-authenticated for now.` )
+  let token = null
 
-    console.log( connection.context )
-
-    if ( connection.context.token ) {
-      try {
-        let token = connection.context.token
-
-        let { valid, scopes, userId, role } = await validateToken( token )
-
-        if ( !valid ) {
-          return { auth: false }
-        }
-
-        return { auth: true, userId, role, token, scopes }
-      } catch ( e ) {
-        return { auth: false, err: e }
-      }
-    }
-
-    return { auth: false }
+  if ( connection && connection.context.token ) { // Websockets (subscriptions)
+    token = connection.context.token
+  } else if ( req && req.headers.authorization ) { // Standard http
+    token = req.headers.authorization
   }
 
-  // console.log( req.headers )
-  if ( req.headers.authorization != null ) {
-    try {
-      let token = req.headers.authorization.split( ' ' )[ 1 ]
-      console.log( token )
-      let { valid, scopes, userId, role } = await validateToken( token )
-      console.log( valid, scopes, userId, role )
+  if ( token && token.includes( "Bearer " ) ) {
+    token = token.split( " " )[ 1 ]
+  }
 
-      if ( !valid ) {
-        return { auth: false }
-      }
+  if ( token === null )
+    return { auth: false }
 
-      return { auth: true, userId, role, token, scopes }
-    } catch ( e ) {
-      // TODO: Think wether perhaps it's better to throw the error
-      return { auth: false, err: e }
+
+  try {
+    let { valid, scopes, userId, role } = await validateToken( token )
+
+    if ( !valid ) {
+      return { auth: false }
     }
+
+    return { auth: true, userId, role, token, scopes }
+  } catch ( e ) {
+    // TODO: Think wether perhaps it's better to throw the error
+    return { auth: false, err: e }
   }
 
   return { auth: false }

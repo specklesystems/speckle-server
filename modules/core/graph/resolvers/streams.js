@@ -145,6 +145,7 @@ module.exports = {
       subscribe: withFilter(
         ( ) => pubsub.asyncIterator( [ USER_STREAM_CREATED ] ),
         ( payload, variables, context, info ) => {
+          console.log( 'woot ' )
           return payload.ownerId === variables.ownerId
         } )
     },
