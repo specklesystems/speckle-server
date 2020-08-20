@@ -49,7 +49,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
   // set up app & two basic users to ping pong permissions around
   before( async function ( ) {
-    this.timeout( 7000 ) // we need to wait for the server to start in the child process!
+    this.timeout( 5000 ) // we need to wait for the server to start in the child process!
 
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
@@ -94,7 +94,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       expect( eventNum ).to.equal( 2 )
 
       consumer.unsubscribe( )
-    } ).timeout( 7000 )
+    } ).timeout( 5000 )
 
     it( 'Should be notified when a stream is updated', async ( ) => {
 
