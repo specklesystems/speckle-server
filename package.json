@@ -79,6 +79,7 @@
     "http-proxy-middleware": "^1.0.4",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
+    "nodemon": "^2.0.4",
     "nyc": "^15.0.1",
     "supertest": "^4.0.2",
     "ws": "^7.3.1"
