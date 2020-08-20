@@ -94,7 +94,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       expect( eventNum ).to.equal( 2 )
 
       consumer.unsubscribe( )
-    } ).timeout( 2000 )
+    } ).timeout( 5000 )
 
     it( 'Should be notified when a stream is updated', async ( ) => {
 
