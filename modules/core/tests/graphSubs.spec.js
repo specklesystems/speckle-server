@@ -24,8 +24,8 @@ const { createObject, createObjects } = require( '../services/objects' )
 
 // const addr = `http://localhost:${process.env.PORT || 3000}`
 // const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
-const addr = `http://localhost:3000/graphql`
-const wsAddr = `ws://localhost:3000/graphql`
+const addr = `http://localhost:3002/graphql`
+const wsAddr = `ws://localhost:3002/graphql`
 
 describe( 'GraphQL API Subscriptions', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
