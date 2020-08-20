@@ -74,5 +74,3 @@ available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.ht
 
 For answers to common questions about this code of conduct, see
 https://www.contributor-covenant.org/faq
-
-> This document version might be superseeded. The authorative source is [here](https://github.com/Speckle-Next/repo-management-basics/blob/master/CODE_OF_CONDUCT.md).
