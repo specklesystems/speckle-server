@@ -47,5 +47,3 @@ Why? However trivial the changes might seem, there might be subtle reasons for t
 Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion either on our [chat channels](https://slacker.speckle.works) or [the forum](https://discourse.speckle.works).
 
 🙌❤️💙💚💜🙌
-
-> This document version might be superseeded. The authorative source is [here](https://github.com/Speckle-Next/repo-management-basics/edit/master/CONTRIBUTING.md).
