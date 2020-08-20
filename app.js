@@ -44,7 +44,7 @@ exports.init = async ( ) => {
   // Initialise default modules, including rest api handlers
   await init( app )
   let obj = graph( )
-  console.log( Object.keys( obj.resolvers ) )
+
   // Initialise graphql server
   graphqlServer = new ApolloServer( {
     ...graph( ),

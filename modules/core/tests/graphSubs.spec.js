@@ -22,15 +22,15 @@ const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken, validateToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
-const addr = `http://localhost:${process.env.PORT || 3000}`
-const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
-// const addr = `http://localhost:3000/graphql`
-// const wsAddr = `ws://localhost:3000/graphql`
+// const addr = `http://localhost:${process.env.PORT || 3000}`
+// const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
+const addr = `http://localhost:3000/graphql`
+const wsAddr = `ws://localhost:3000/graphql`
 
 describe( 'GraphQL API Subscriptions', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let testServer
+  let serverProcess
 
   const getWsClient = ( wsurl, authToken ) => {
     const client = new SubscriptionClient( wsAddr, {
@@ -48,12 +48,16 @@ describe( 'GraphQL API Subscriptions', ( ) => {
   }
 
   // set up app & two basic users to ping pong permissions around
-  before( async ( ) => {
+  before( async function ( ) {
+    this.timeout( 5000 ) // we need to wait for the server to start in the child process!
+
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
-    let { app } = await init( )
-    let { server } = await startHttp( app )
-    testServer = server
+
+    const childProcess = require( 'child_process' )
+    serverProcess = childProcess.exec( "npm run dev:server:test" )
+
+    await sleep( 2000 )
 
     userA.id = await createUser( userA )
     let token = await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] )
@@ -64,10 +68,8 @@ describe( 'GraphQL API Subscriptions', ( ) => {
   } )
 
   after( async ( ) => {
-    testServer.close( )
+    serverProcess.kill( )
   } )
-
-
 
   describe( 'Streams', ( ) => {
 
@@ -114,8 +116,11 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const resSU_2 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }` } )
       expect( resSU_2.body.errors ).to.not.exist
 
+      const resSU_3 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }` } )
+      expect( resSU_3.body.errors ).to.not.exist
+
       await sleep( 1000 ) // we need to wait up a second here
-      expect( eventNum ).to.equal( 2 )
+      expect( eventNum ).to.equal( 3 )
       consumer.unsubscribe( )
     } )
   } )
