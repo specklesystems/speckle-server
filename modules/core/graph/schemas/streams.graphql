@@ -4,7 +4,7 @@ extend type Query {
   """
   All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
   """
-  streams( query: String!, limit: Int! = 25, cursor: String ): StreamCollection 
+  streams( query: String!, limit: Int! = 25, cursor: String ): StreamCollection
 }
 
 type Stream {
@@ -21,7 +21,7 @@ extend type User {
   """
   All the streams that a user has access to.
   """
-  streams( limit: Int! = 25, cursor: String ): StreamCollection 
+  streams( limit: Int! = 25, cursor: String ): StreamCollection
 }
 
 type StreamCollaborator {
@@ -71,8 +71,32 @@ extend type Mutation {
 }
 
 extend type Subscription {
+
+  #
+  # User bound subscriptions that operate on the stream collection of an user
+  # Example relevant view/usecase: a given user's profile page.
+  #
+
+  # Source:
+  # - stream created mutation (target: stream creator)
+  # - stream grant permissions (target: grantee id)
+  #
+  # Payload: maybe just the streamId? as this event will trigger a new call to get the user's streams on the client side?
+  # 
+  # TODO: scope check: if context.userId === variables.userId -> profile:read; otherwise users:read
+  # Q: make the arg optional; if not present -> default to context.user?
   """
-  Subscribes to new stream created event.
+  Subscribes to new stream created event for a given user.
+  """
+  userStreamCreated( ownerId: String! ): JSONObject @hasRole(role: "server:user") @hasScope(scope: "profile:read")
+
+  # Source:
+  # - stream delete mutation (target: all stream users in acl)
+  # - stream revoke permissions (target: grantee id)
+  #
+  # Payload: maybe just the streamId? as this event will trigger a new call to get the user's streams on the client side?
+  """
+  Subscribes to stream deleted event for a given user.
   """
   userStreamCreated( ownerId: String! ): JSONObject
     # TODO: how should auth be enforced for this?
@@ -94,7 +118,7 @@ extend type Subscription {
   streamPermissionGranted( userId: String! ): JSONObject
     @hasRole(role: "server:user")
   """
-  Subscribes to stream permission revoked event.
+  Subscribes to stream delete event.
   """
   streamPermissionRevoked( userId: String! ): JSONObject
     @hasRole(role: "server:user")

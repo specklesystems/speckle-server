@@ -11,11 +11,13 @@ const AUTH_TOKEN = 'AuthToken'
 
 // Http endpoint
 const httpEndpoint = process.env.VUE_APP_GRAPHQL_HTTP || 'http://localhost:3000/graphql'
+// WS endpoint
+const wsEndpoint = process.env.VUE_APP_GRAPHQL_WS || 'ws://localhost:3000/graphql'
 
 // Subscription Client
-const subscriptionClient = new SubscriptionClient(httpEndpoint, {
+const subscriptionClient = new SubscriptionClient( wsEndpoint, {
   reconnect: true
-})
+} )
 
 // Config
 const defaultOptions = {
@@ -56,6 +58,7 @@ const defaultOptions = {
 
 // Call this in the Vue app file
 export function createProvider( options = {} ) {
+  // console.log( defaultOptions )
   // Create apollo client
   const { apolloClient, wsClient } = createApolloClient( {
     ...defaultOptions,
