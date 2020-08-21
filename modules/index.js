@@ -33,8 +33,8 @@ exports.graph = ( ) => {
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
-      directive @hasScope(scope: String!) on FIELD_DEFINITION | OBJECT
-      directive @hasRole(role: String!) on FIELD_DEFINITION | OBJECT
+      directive @hasScope(scope: String!) on FIELD_DEFINITION
+      directive @hasRole(role: String!) on FIELD_DEFINITION
 
       type Query {
       """
