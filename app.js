@@ -51,7 +51,7 @@ exports.init = async ( ) => {
     context: contextApiTokenHelper,
     subscriptions: {
       onConnect: ( connectionParams, webSocket, context ) => {
-        debug( `speckle:debug` )( 'ws on connect event' )
+        // debug( `speckle:debug` )( 'ws on connect event' )
         // console.log( connectionParams )
         if ( connectionParams.Authorization || connectionParams.headers.Authorization ) {
           let header = connectionParams.Authorization || connectionParams.headers.Authorization

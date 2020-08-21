@@ -55,17 +55,17 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     const childProcess = require( 'child_process' )
     serverProcess = childProcess.spawn( /^win/.test( process.platform ) ? 'npm.cmd' : 'npm', [ "run", "dev:server:test" ], { cwd: `${appRoot}` } )
 
-    serverProcess.stdout.on( 'data', data => {
-      console.log( `stdout: ${data}` )
-    } )
+    // serverProcess.stdout.on( 'data', data => {
+    //   console.log( `stdout: ${data}` )
+    // } )
 
-    serverProcess.stderr.on( 'data', ( data ) => {
-      console.error( `stderr: ${data}` )
-    } )
+    // serverProcess.stderr.on( 'data', ( data ) => {
+    //   console.error( `stderr: ${data}` )
+    // } )
 
-    serverProcess.on( 'close', ( code ) => {
-      console.log( `child process exited with code ${code}` )
-    } )
+    // serverProcess.on( 'close', ( code ) => {
+    //   console.log( `child process exited with code ${code}` )
+    // } )
 
     await sleep( 5000 )
 
@@ -182,7 +182,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let sg = await sendRequest( userA.token, {
-        query: `mutation { streamGrantPermission( streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor" ) }`
+        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
       } )
       expect( sg.body.errors ).to.not.exist
 
@@ -206,11 +206,11 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let sg = await sendRequest( userA.token, {
-        query: `mutation { streamGrantPermission( streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor" ) }`
+        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
       } )
       expect( sg.body.errors ).to.not.exist
       let sr = await sendRequest( userA.token, {
-        query: `mutation { streamRevokePermission( streamId: "${streamId}", userId: "${userB.id}" ) }`
+        query: `mutation { streamRevokePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}"} ) }`
       } )
       expect( sr.body.error ).to.not.exist
 
@@ -400,8 +400,8 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     it( 'Should be notified when a commit is created', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
-      const resOC1 = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
-      const resOC2 = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {wow: "cool 🐟"} ) }` } )
+      const resOC1 = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {hello: "goodbye 🌊"}} ) }` } )
+      const resOC2 = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {wow: "cool 🐟"}} ) }` } )
       const objId1 = resOC1.body.data.objectCreate
       const objId2 = resOC2.body.data.objectCreate
 
@@ -432,7 +432,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     it( 'Should be notified when a commit is updated', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
-      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
+      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {hello: "goodbye 🌊"}} ) }` } )
       const objId = resOC.body.data.objectCreate
       const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` } )
       const commitId = resCC.body.data.commitCreate
@@ -464,7 +464,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     it( 'Should be notified when a commit is deleted', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
-      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
+      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {hello: "goodbye 🌊"}} ) }` } )
       const objId = resOC.body.data.objectCreate
       const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` } )
       const commitId = resCC.body.data.commitCreate
@@ -492,7 +492,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     it( `Should *not* be notified when a commit is created on a stream you're not authorised for`, async () => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
-      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
+      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {hello: "goodbye 🌊"}} ) }` } )
       const objId = resOC.body.data.objectCreate
 
       let eventNum = 0

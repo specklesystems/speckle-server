@@ -106,16 +106,16 @@ module.exports = {
     },
 
     async streamGrantPermission( parent, args, context, info ) {
-      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
+      await authorizeResolver( context.userId, args.permissionParams.streamId, 'stream:owner' )
 
-      if ( context.userId === args.userId ) throw new Error( 'You cannot set roles for yourself.' )
+      if ( context.userId === args.permissionParams.userId ) throw new Error( 'You cannot set roles for yourself.' )
 
-      let permissionParams = { streamId: args.streamId, userId: args.userId, role: args.role.toLowerCase( ) || 'read' }
-      let granted = await grantPermissionsStream( permissionParams )
+      let params = { streamId: args.permissionParams.streamId, userId: args.permissionParams.userId, role: args.permissionParams.role.toLowerCase( ) || 'read' }
+      let granted = await grantPermissionsStream( params )
 
       if ( granted ) {
         await pubsub.publish( STREAM_PERMISSION_GRANTED, {
-          streamPermissionGranted: permissionParams, userId: args.userId, streamId: args.streamId
+          streamPermissionGranted: params, userId: params.userId, streamId: params.streamId
         } )
       }
 
@@ -123,12 +123,12 @@ module.exports = {
     },
 
     async streamRevokePermission( parent, args, context, info ) {
-      await authorizeResolver( context.userId, args.streamId, 'stream:owner' )
-      let revoked = await revokePermissionsStream( { ...args } )
+      await authorizeResolver( context.userId, args.permissionParams.streamId, 'stream:owner' )
+      let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
         await pubsub.publish( STREAM_PERMISSION_REVOKED, {
-          streamPermissionRevoked: { ...args }, userId: args.userId, streamId: args.streamId
+          streamPermissionRevoked: { ...args.permissionParams }, userId: args.permissionParams.userId, streamId: args.permissionParams.streamId
         } )
       }
 
