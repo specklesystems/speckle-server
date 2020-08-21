@@ -99,13 +99,17 @@ module.exports = {
   Subscription: {
     branchCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_CREATED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.streamId === variables.streamId
         } )
     },
     branchUpdated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_UPDATED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           let streamMatch = payload.streamId === variables.streamId
           if ( streamMatch && variables.branchId ) {
             return payload.branchId === variables.branchId
@@ -116,7 +120,9 @@ module.exports = {
     },
     branchDeleted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_DELETED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.streamId === variables.streamId
         } )
     }

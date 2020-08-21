@@ -122,7 +122,9 @@ module.exports = {
       let granted = await grantPermissionsStream( permissionParams )
 
       if ( granted ) {
-        await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
+        await pubsub.publish( STREAM_PERMISSION_GRANTED, {
+          streamPermissionGranted: permissionParams, userId: args.userId, streamId: args.streamId
+        } )
       }
 
       return granted
@@ -135,7 +137,9 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args } )
 
       if ( revoked ) {
-        await pubsub.publish( STREAM_PERMISSION_REVOKED, { streamPermissionRevoked: { ...args }, userId: args.userId } )
+        await pubsub.publish( STREAM_PERMISSION_REVOKED, {
+          streamPermissionRevoked: { ...args }, userId: args.userId, streamId: args.streamId
+        } )
       }
 
       return revoked
@@ -151,7 +155,9 @@ module.exports = {
     streamUpdated: {
       subscribe: withFilter(
         ( ) => pubsub.asyncIterator( [ STREAM_UPDATED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.streamId === variables.streamId
         } )
     },
@@ -163,13 +169,17 @@ module.exports = {
     },
     streamPermissionGranted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.userId === variables.userId
         } )
     },
     streamPermissionRevoked: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.userId === variables.userId
         } )
     }

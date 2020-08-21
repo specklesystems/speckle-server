@@ -133,13 +133,17 @@ module.exports = {
   Subscription: {
     commitCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_CREATED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.streamId === variables.streamId
         } )
     },
     commitUpdated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_UPDATED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           let streamMatch = payload.streamId === variables.streamId
           if ( streamMatch && variables.commitId ) {
             return payload.commitId === variables.commitId
@@ -150,7 +154,9 @@ module.exports = {
     },
     commitDeleted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_DELETED ] ),
-        ( payload, variables ) => {
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
           return payload.streamId === variables.streamId
         } )
     }
