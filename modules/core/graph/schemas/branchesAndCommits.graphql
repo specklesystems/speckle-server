@@ -83,32 +83,38 @@ extend type Subscription {
   """
   branchCreated( streamId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
   """
   Subscribe to branch updated event.
   """
   branchUpdated( streamId: String!, branchId: String ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
   """
   Subscribe to branch deleted event
   """
   branchDeleted( streamId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 
   """
   Subscribe to commit created event
   """
   commitCreated( streamId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
   """
   Subscribe to commit updated event.
   """
   commitUpdated( streamId: String!, commitId: String ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
   """
   Subscribe to commit deleted event
   """
   commitDeleted( streamId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 }
 
 input BranchCreateInput {
