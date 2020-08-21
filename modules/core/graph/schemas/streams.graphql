@@ -74,21 +74,20 @@ extend type Subscription {
 
   #
   # User bound subscriptions that operate on the stream collection of an user
-  # Example relevant view/usecase: a given user's profile page.
+  # Example relevant view/usecase: updates when working in GH or Dynamo
   #
 
   # Source:
   # - stream created mutation (target: stream creator)
   # - stream grant permissions (target: grantee id)
   #
-  # Payload: maybe just the streamId? as this event will trigger a new call to get the user's streams on the client side?
+  # Payload: streamId and sreamCreate input args
   # 
-  # TODO: scope check: if context.userId === variables.userId -> profile:read; otherwise users:read
-  # Q: make the arg optional; if not present -> default to context.user?
+  # As per discussion, removed `ownerId` input so this now just works for the current user
   """
   Subscribes to new stream created event for a given user.
   """
-    userStreamCreated( ownerId: String! ): JSONObject
+    userStreamCreated: JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:read")
 
@@ -96,18 +95,19 @@ extend type Subscription {
   # - stream delete mutation (target: all stream users in acl)
   # - stream revoke permissions (target: grantee id)
   #
-  # Payload: maybe just the streamId? as this event will trigger a new call to get the user's streams on the client side?
+  # Payload: streamId
   """
   Subscribes to stream deleted event for a given user.
   """
-  userStreamDeleted( ownerId: String! ): JSONObject
+  userStreamDeleted: JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:read")
   """
   Subscribes to stream updated event.
   """
-  streamUpdated( streamId: String! ): JSONObject
+  streamUpdated( streamId: String ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
   """
   Subscribes to stream permission granted event.
   """

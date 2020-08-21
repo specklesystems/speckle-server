@@ -144,8 +144,8 @@ module.exports = {
   Subscription: {
     userStreamCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ USER_STREAM_CREATED ] ),
-        ( payload, variables ) => {
-          return payload.ownerId === variables.ownerId
+        ( payload, variables, context ) => {
+          return payload.ownerId === context.userId
         } )
     },
     streamUpdated: {
@@ -157,8 +157,8 @@ module.exports = {
     },
     userStreamDeleted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ USER_STREAM_DELETED ] ),
-        ( payload, variables ) => {
-          return payload.ownerId === variables.ownerId
+        ( payload, variables, context ) => {
+          return payload.ownerId === context.userId
         } )
     },
     streamPermissionGranted: {

@@ -81,7 +81,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     
     userC.id = await createUser( userC )
-    userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'users:read', 'users:email' ] ) )}`
+    userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email' ] ) )}`
   } )
 
   after( async ( ) => {
@@ -92,7 +92,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
     it( 'Should be notified when a stream is created', async ( ) => {
       let eventNum = 0
-      const query = gql `subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
+      const query = gql `subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         // console.log( 'Create subscription log' )
@@ -152,7 +152,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const sid2 = sc2.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql `subscription userStreamDeleted { userStreamDeleted( ownerId: "${userA.id}" ) }`
+      const query = gql `subscription userStreamDeleted { userStreamDeleted }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.userStreamDeleted ).to.exist
@@ -226,7 +226,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     })
 
     it( 'Should *not* be notified of stream creation if invalid token', async () => {
-      const query = gql`subscription mySub { userStreamCreated ( userId: "${userA.id}" ) }`
+      const query = gql`subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable( wsAddr, "faketoken123", query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data ).to.not.exist
@@ -242,7 +242,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     } )
 
     it( 'Should *not* be notified of another user stream created', async () => {
-      const query = gql`subscription mySub { userStreamCreated ( ownerId: "${userB.id}" ) }`
+      const query = gql`subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable(wsAddr, userB.token, query)
       const consumer = client.subscribe(eventData => {
         expect( eventData.data.userStreamCreated ).to.not.exist
@@ -261,7 +261,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     } )
 
     it( 'Should *not* allow subscribing to stream creation without profile:read scope', async () => {
-      const query = gql`subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
+      const query = gql`subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable(wsAddr, userC.token, query)
       const consumer = client.subscribe(eventData => {
         expect( eventData.data.userStreamCreated ).to.not.exist
@@ -269,10 +269,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep(500)
 
-      let sc1 = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      let sc1 = await sendRequest(userC.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
       expect(sc1.body.errors).to.not.exist
 
-      let sc2 = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      let sc2 = await sendRequest(userC.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
       expect(sc2.body.errors).to.not.exist
 
       await sleep(1000) // we need to wait up a second here
