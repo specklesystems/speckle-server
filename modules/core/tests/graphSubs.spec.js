@@ -56,7 +56,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     await knex.migrate.latest( )
 
     const childProcess = require( 'child_process' )
-    serverProcess = childProcess.spawn( "npm", [ "run", "dev:server:test" ], { cwd: `${appRoot}` } )
+    serverProcess = childProcess.spawn(/^win/.test(process.platform) ? 'npm.cmd' : 'npm', ["run", "dev:server:test"], { cwd: `${appRoot}` })
 
     serverProcess.stdout.on( 'data', data => {
       console.log( `stdout: ${data}` )
