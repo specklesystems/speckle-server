@@ -60,13 +60,13 @@ extend type Mutation {
   """
   Grants permissions to a user on a given stream.
   """
-  streamGrantPermission( permissionParams: StreamGrantPermissionInput ): Boolean
+  streamGrantPermission( permissionParams: StreamGrantPermissionInput! ): Boolean
     @hasRole(role: "server:user") 
     @hasScope(scope: "streams:write")
   """
   Revokes the permissions of a user on a given stream.
   """
-  streamRevokePermission( permissionParams: StreamRevokePermissionInput ): Boolean
+  streamRevokePermission( permissionParams: StreamRevokePermissionInput! ): Boolean
     @hasRole(role: "server:user") 
     @hasScope(scope: "streams:write")
 }
