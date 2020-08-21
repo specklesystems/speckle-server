@@ -44,6 +44,6 @@ Why? However trivial the changes might seem, there might be subtle reasons for t
 
 
 ## Wrap up
-Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion either on our [chat channels](https://slacker.speckle.works) or [the forum](https://discourse.speckle.works).
+Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion either on our community [forum](https://discourse.speckle.works) or [chat](https://speckle-works.slack.com/join/shared_invite/enQtNjY5Mzk2NTYxNTA4LTU4MWI5ZjdhMjFmMTIxZDIzOTAzMzRmMTZhY2QxMmM1ZjVmNzJmZGMzMDVlZmJjYWQxYWU0MWJkYmY3N2JjNGI).
 
 🙌❤️💙💚💜🙌
