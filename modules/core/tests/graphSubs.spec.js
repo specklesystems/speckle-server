@@ -31,6 +31,7 @@ const wsAddr = `ws://localhost:3002/graphql`
 describe( 'GraphQL API Subscriptions', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
+  let userC = { name: 'd3', username: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
   let serverProcess
 
   const getWsClient = ( wsurl, authToken ) => {
@@ -78,6 +79,9 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
     userB.id = await createUser( userB )
     userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
+    
+    userC.id = await createUser( userC )
+    userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'users:read', 'users:email' ] ) )}`
   } )
 
   after( async ( ) => {
@@ -225,8 +229,6 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const query = gql`subscription mySub { userStreamCreated ( userId: "${userA.id}" ) }`
       const client = createSubscriptionObservable( wsAddr, "faketoken123", query )
       const consumer = client.subscribe( eventData => {
-        // console.log( 'Create subscription log' )
-        // console.log( eventData )
         expect( eventData.data ).to.not.exist
       } )
 
@@ -238,6 +240,45 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 1000 ) // we need to wait up a second here
       consumer.unsubscribe( )
     } )
+
+    it( 'Should *not* be notified of another user stream created', async () => {
+      const query = gql`subscription mySub { userStreamCreated ( ownerId: "${userB.id}" ) }`
+      const client = createSubscriptionObservable(wsAddr, userB.token, query)
+      const consumer = client.subscribe(eventData => {
+        expect( eventData.data.userStreamCreated ).to.not.exist
+      })
+
+      await sleep(500)
+
+      let sc1 = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      expect(sc1.body.errors).to.not.exist
+
+      let sc2 = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      expect(sc2.body.errors).to.not.exist
+
+      await sleep(1000) // we need to wait up a second here
+      consumer.unsubscribe()
+    } )
+
+    it( 'Should *not* allow subscribing to stream creation without profile:read scope', async () => {
+      const query = gql`subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
+      const client = createSubscriptionObservable(wsAddr, userC.token, query)
+      const consumer = client.subscribe(eventData => {
+        expect( eventData.data.userStreamCreated ).to.not.exist
+      })
+
+      await sleep(500)
+
+      let sc1 = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      expect(sc1.body.errors).to.not.exist
+
+      let sc2 = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      expect(sc2.body.errors).to.not.exist
+
+      await sleep(1000) // we need to wait up a second here
+      consumer.unsubscribe()
+    } )
+
   } )
 
   describe( 'Branches', ( ) => {
