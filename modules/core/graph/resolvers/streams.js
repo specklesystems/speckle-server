@@ -169,17 +169,13 @@ module.exports = {
     },
     streamPermissionGranted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
-        async ( payload, variables, context ) => {
-          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
-
+        ( payload, variables ) => {
           return payload.userId === variables.userId
         } )
     },
     streamPermissionRevoked: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
-        async ( payload, variables, context ) => {
-          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
-
+        ( payload, variables ) => {
           return payload.userId === variables.userId
         } )
     }

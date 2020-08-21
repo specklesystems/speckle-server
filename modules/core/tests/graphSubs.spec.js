@@ -200,7 +200,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const streamId = resSC.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql`subscription permissionRevoked { streamPermissionRevoked(userId: "${userB.id}") }`
+      const query = gql`subscription permissionRevoked { streamPermissionRevoked( userId: "${userB.id}" ) }`
       const client = createSubscriptionObservable( wsAddr, userB.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.streamPermissionRevoked ).to.exist
@@ -213,11 +213,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
         query: `mutation { streamGrantPermission( streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor" ) }`
       } )
       expect( sg.body.errors ).to.not.exist
-
       let sr = await sendRequest( userA.token, {
-        query: `mutation { streamRevokePermission( streamId: "${streamId}", userId: "${userB.id}" ) } `
+        query: `mutation { streamRevokePermission( streamId: "${streamId}", userId: "${userB.id}" ) }`
       } )
-      expect( sr.body.errors ).to.not.exist
+      expect( sr.body.error ).to.not.exist
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 1 )
@@ -375,6 +374,30 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       expect( eventNum ).to.equal( 2 )
       consumer.unsubscribe( )
     } )
+
+    it( `Should *not* be notified when a branch is created for a stream you're not authorised for`, async () => {
+      const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+      const streamId = resSC.body.data.streamCreate
+
+      let eventNum = 0
+      const query = gql`subscription { branchCreated( streamId: "${streamId}" ) }`
+      const client = createSubscriptionObservable( wsAddr, userB.token, query )
+      const consumer = client.subscribe( eventData => {
+        expect( eventData.data.branchCreated ).to.not.exist
+        eventNum++
+      } )
+
+      await sleep( 500 )
+
+      let bc = await sendRequest( userA.token, {
+        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }`
+      } )
+      expect( bc.body.errors ).to.not.exist
+
+      await sleep( 1000 ) // we need to wait up a second here
+      expect( eventNum ).to.equal( 0 )
+      consumer.unsubscribe()
+    } )
   } )
 
   describe( 'Commits', ( ) => {
@@ -468,6 +491,32 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 1 )
       consumer.unsubscribe( )
+    } )
+
+    it( `Should *not* be notified when a commit is created on a stream you're not authorised for`, async () => {
+      const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
+      const streamId = resSC.body.data.streamCreate
+      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
+      const objId = resOC.body.data.objectCreate
+
+      let eventNum = 0
+      const query = gql`subscription { commitCreated( streamId: "${streamId}" ) }`
+      const client = createSubscriptionObservable( wsAddr, userB.token, query )
+      const consumer = client.subscribe( eventData => {
+        expect( eventData.data.commitCreated ).to.not.exist
+        eventNum++
+      } )
+
+      await sleep( 500 )
+
+      let cc = await sendRequest( userA.token, {
+        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }`
+      } )
+      expect( cc.body.errors ).to.not.exist
+
+      await sleep( 1000 ) // we need to wait up a second here
+      expect( eventNum ).to.equal( 0 )
+      consumer.unsubscribe()
     } )
   } )
 } )
