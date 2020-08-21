@@ -21,6 +21,8 @@ const USER_STREAM_CREATED = 'USER_STREAM_CREATED'
 const USER_STREAM_DELETED = 'USER_STREAM_DELETED'
 const STREAM_UPDATED = 'STREAM_UPDATED'
 const STREAM_DELETED = 'STREAM_DELETED'
+const STREAM_PERMISSION_GRANTED = 'STREAM_PERMISSION_GRANTED'
+const STREAM_PERMISSION_REVOKED = 'STREAM_PERMISSION_REVOKED'
 
 module.exports = {
   Query: {
@@ -120,8 +122,7 @@ module.exports = {
       let granted = await grantPermissionsStream( permissionParams )
 
       if ( granted ) {
-        let stream = await getStream( { streamId: args.streamId } )
-        await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: stream.id, name: stream.name, description: stream.description }, userId: args.userId } )
+        await pubsub.publish( STREAM_PERMISSION_GRANTED, { streamPermissionGranted: permissionParams, userId: args.userId } )
       }
 
       return granted
@@ -134,7 +135,7 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args } )
 
       if ( revoked ) {
-        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: args.streamId, userId: args.userId } )
+        await pubsub.publish( STREAM_PERMISSION_REVOKED, { streamPermissionRevoked: { ...args }, userId: args.userId } )
       }
 
       return revoked
@@ -158,6 +159,18 @@ module.exports = {
       subscribe: withFilter( () => pubsub.asyncIterator( [ USER_STREAM_DELETED ] ),
         ( payload, variables ) => {
           return payload.ownerId === variables.ownerId
+        } )
+    },
+    streamPermissionGranted: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
+        ( payload, variables ) => {
+          return payload.userId === variables.userId
+        } )
+    },
+    streamPermissionRevoked: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
+        ( payload, variables ) => {
+          return payload.userId === variables.userId
         } )
     }
   }
