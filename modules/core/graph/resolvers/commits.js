@@ -1,8 +1,8 @@
 'use strict'
 
 const appRoot = require( 'app-root-path' )
-const { AuthorizationError, ApolloError, withFilter } = require( 'apollo-server-express' )
-const { validateServerRole, validateScopes, authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
+const { AuthorizationError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
+const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 const {
   createCommitByBranchName,
@@ -18,14 +18,6 @@ const {
   getCommitsTotalCountByUserId,
   getCommitsTotalCountByBranchId
 } = require( '../../services/commits' )
-
-const {
-  createBranch,
-  updateBranch,
-  getBranchById,
-  getBranchesByStreamId,
-  deleteBranchById
-} = require( '../../services/branches' )
 
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
@@ -52,7 +44,6 @@ module.exports = {
 
   },
   User: {
-
     async commits( parent, args, context, info ) {
       let publicOnly = context.userId !== parent.id
       let totalCount = await getCommitsTotalCountByUserId( { userId: parent.id } )
@@ -65,6 +56,7 @@ module.exports = {
 
   },
   Branch: {
+
     async commits( parent, args, context, info ) {
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
@@ -73,12 +65,11 @@ module.exports = {
 
       return { items: commits, totalCount, cursor }
     }
+
   },
   Mutation: {
 
     async commitCreate( parent, args, context, info ) {
-      // await validateServerRole( context, 'server:user' )
-      // await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
       let id = await createCommitByBranchName( { ...args.commit, authorId: context.userId } )
@@ -93,8 +84,6 @@ module.exports = {
     },
 
     async commitUpdate( parent, args, context, info ) {
-      // await validateServerRole( context, 'server:user' )
-      // await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
       let commit = await getCommitById( { id: args.commit.id } )
@@ -114,8 +103,6 @@ module.exports = {
     },
 
     async commitDelete( parent, args, context, info ) {
-      // await validateServerRole( context, 'server:user' )
-      // await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
       let commit = await getCommitById( { id: args.commit.id } )
@@ -131,6 +118,7 @@ module.exports = {
     }
   },
   Subscription: {
+
     commitCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_CREATED ] ),
         async ( payload, variables, context ) => {
@@ -139,6 +127,7 @@ module.exports = {
           return payload.streamId === variables.streamId
         } )
     },
+
     commitUpdated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_UPDATED ] ),
         async ( payload, variables, context ) => {
@@ -152,6 +141,7 @@ module.exports = {
           return streamMatch
         } )
     },
+
     commitDeleted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_DELETED ] ),
         async ( payload, variables, context ) => {
@@ -160,5 +150,6 @@ module.exports = {
           return payload.streamId === variables.streamId
         } )
     }
+
   }
 }

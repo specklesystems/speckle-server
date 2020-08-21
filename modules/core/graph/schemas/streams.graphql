@@ -1,10 +1,11 @@
 extend type Query {
   stream( id: String! ): Stream
-    @hasScope(scope: "streams:write")
+    @hasScope(scope: "streams:read")
   """
   All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
   """
   streams( query: String!, limit: Int! = 25, cursor: String ): StreamCollection
+    @hasScope(scope: "streams:read")
 }
 
 type Stream {

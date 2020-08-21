@@ -1,9 +1,7 @@
 /* eslint-disable no-undef */
 /* istanbul ignore file */
-const crypto = require( 'crypto' )
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
-const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 
 const gql = require( 'graphql-tag' )
@@ -12,7 +10,6 @@ const { WebSocketLink } = require( 'apollo-link-ws' )
 const { SubscriptionClient } = require( 'subscriptions-transport-ws' )
 const ws = require( 'ws' )
 
-const { init, startHttp } = require( `${appRoot}/app` )
 
 const expect = chai.expect
 chai.use( chaiHttp )
@@ -20,8 +17,7 @@ chai.use( chaiHttp )
 const knex = require( `${appRoot}/db/knex` )
 
 const { createUser } = require( '../services/users' )
-const { createPersonalAccessToken, validateToken } = require( '../services/tokens' )
-const { createObject, createObjects } = require( '../services/objects' )
+const { createPersonalAccessToken } = require( '../services/tokens' )
 
 // const addr = `http://localhost:${process.env.PORT || 3000}`
 // const wsAddr = `ws://localhost:${process.env.PORT || 3000}`

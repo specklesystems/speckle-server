@@ -1,8 +1,8 @@
 'use strict'
 
 const appRoot = require( 'app-root-path' )
-const { ForbiddenError, ApolloError, withFilter } = require( 'apollo-server-express' )
-const { validateServerRole, validateScopes, authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
+const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
+const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 const {
   createBranch,
@@ -35,6 +35,7 @@ module.exports = {
     async branch( parent, args, context, info ) {
       return await getBranchByNameAndStreamId( { streamId: parent.id, name: args.name } )
     },
+
   },
   Branch: {
 
@@ -44,24 +45,22 @@ module.exports = {
 
   },
   Mutation: {
+
     async branchCreate( parent, args, context, info ) {
-      // await validateServerRole( context, 'server:user' )
-      // await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
       let id = await createBranch( { ...args.branch, authorId: context.userId } )
       if ( id ) {
         await pubsub.publish( BRANCH_CREATED, {
           branchCreated: { ...args.branch, id: id, authorId: context.userId },
-          streamId: args.branch.streamId } )
+          streamId: args.branch.streamId
+        } )
       }
 
       return id
     },
 
     async branchUpdate( parent, args, context, info ) {
-      // await validateServerRole( context, 'server:user' )
-      // await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
       let updated = await updateBranch( { ...args.branch } )
       if ( updated ) {
@@ -76,8 +75,6 @@ module.exports = {
     },
 
     async branchDelete( parent, args, context, info ) {
-      // await validateServerRole( context, 'server:user' )
-      // await validateScopes( context.scopes, 'streams:write' )
       let role = await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
       let branch = await getBranchById( { id: args.branch.id } )
@@ -95,8 +92,10 @@ module.exports = {
 
       return deleted
     }
+
   },
   Subscription: {
+
     branchCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_CREATED ] ),
         async ( payload, variables, context ) => {
@@ -105,6 +104,7 @@ module.exports = {
           return payload.streamId === variables.streamId
         } )
     },
+
     branchUpdated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_UPDATED ] ),
         async ( payload, variables, context ) => {
@@ -118,6 +118,7 @@ module.exports = {
           return streamMatch
         } )
     },
+
     branchDeleted: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_DELETED ] ),
         async ( payload, variables, context ) => {
@@ -126,5 +127,6 @@ module.exports = {
           return payload.streamId === variables.streamId
         } )
     }
+
   }
 }
