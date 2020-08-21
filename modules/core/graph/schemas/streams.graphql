@@ -113,11 +113,13 @@ extend type Subscription {
   """
   streamPermissionGranted( userId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
   """
   Subscribes to stream delete event.
   """
   streamPermissionRevoked( userId: String! ): JSONObject
     @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
 }
 
 input StreamCreateInput {

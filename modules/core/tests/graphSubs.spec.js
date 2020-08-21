@@ -158,13 +158,66 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       consumer.unsubscribe()
     } )
 
+    it( 'Should be notified when stream permission is granted', async () => {
+      const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      const streamId = resSC.body.data.streamCreate
+
+      let eventNum = 0
+      const query = gql`subscription permissionGranted { streamPermissionGranted( userId: "${userB.id}" ) }`
+      const client = createSubscriptionObservable(wsAddr, userB.token, query)
+      const consumer = client.subscribe(eventData => {
+        expect(eventData.data.streamPermissionGranted).to.exist
+        eventNum++
+      })
+
+      await sleep(500)
+
+      let sg = await sendRequest(userA.token, {
+        query: `mutation { streamGrantPermission( streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor" ) }`
+      })
+      expect(sg.body.errors).to.not.exist
+
+      await sleep(1000) // we need to wait up a second here
+      expect(eventNum).to.equal(1)
+      consumer.unsubscribe( )
+    })
+    
+    it( 'Should be notified when stream permission is revoked', async () => {
+      const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+      const streamId = resSC.body.data.streamCreate
+
+      let eventNum = 0
+      const query = gql`subscription permissionRevoked { streamPermissionRevoked(userId: "${userB.id}") }`
+      const client = createSubscriptionObservable(wsAddr, userB.token, query)
+      const consumer = client.subscribe(eventData => {
+        expect(eventData.data.streamPermissionRevoked).to.exist
+        eventNum++
+      })
+
+      await sleep(500)
+
+      let sg = await sendRequest(userA.token, {
+        query: `mutation { streamGrantPermission( streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor" ) }`
+      })
+      expect(sg.body.errors).to.not.exist
+
+      let sr = await sendRequest(userA.token, {
+        query: `mutation { streamRevokePermission( streamId: "${streamId}", userId: "${userB.id}" ) } `
+      })
+      expect(sr.body.errors).to.not.exist
+
+      await sleep(1000) // we need to wait up a second here
+      expect(eventNum).to.equal(1)
+      consumer.unsubscribe( )
+    })
+
     it( 'Should *not* be notified of stream creation if invalid token', async () => {
-      const query = gql`subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
+      const query = gql`subscription mySub { userStreamCreated ( userId: "${userA.id}" ) }`
       const client = createSubscriptionObservable( wsAddr, "faketoken123", query )
       const consumer = client.subscribe( eventData => {
         // console.log( 'Create subscription log' )
         // console.log( eventData )
-        expect( eventData.data.userStreamCreated ).to.not.exist
+        expect( eventData.data ).to.not.exist
       } )
 
       let sc1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
