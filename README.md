@@ -32,6 +32,10 @@ Default sections:
 
 This doesn't make sense here, but in general, we should try to provide a small "how to" guide on local development and debugging, as it lowers the barrier to contributions. 
 
+## Contributing
+
+Please make sure you read the [contribution guidelines](https://github.com/Speckle-Next/repo-management-basics/blob/master/CONTRIBUTING.md) for an overview of the best practices we try to follow.
+
 ## Community 
 
 The Speckle Community hangs out in two main places, usually: 
