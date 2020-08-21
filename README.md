@@ -9,10 +9,10 @@
 This section should hold a quick intro on what this repo's about. For example: 
 
 This repo holds Speckle's: 
-- Default [Code of Conduct](https://github.com/Speckle-Next/repo-management-basics/blob/master/CODE_OF_CONDUCT.md), 
-- Default [Contribution Guidelines](https://github.com/Speckle-Next/repo-management-basics/blob/master/CONTRIBUTING.md), 
+- Default [Code of Conduct](CODE_OF_CONDUCT.md), 
+- Default [Contribution Guidelines](CONTRIBUTING.md), 
 - README template (you're reading it now),
-- Default [Issue Template](https://github.com/Speckle-Next/repo-management-basics/blob/master/ISSUE_TEMPLATE.md),
+- Default [Issue Template](ISSUE_TEMPLATE.md),
 - OSS License (Apache 2.0)
 
 Either copy paste the parts that are useful in existing repos, or use this as a base when creating a new repository. 
@@ -34,7 +34,7 @@ This doesn't make sense here, but in general, we should try to provide a small "
 
 ## Contributing
 
-Please make sure you read the [contribution guidelines](https://github.com/Speckle-Next/repo-management-basics/blob/master/CONTRIBUTING.md) for an overview of the best practices we try to follow.
+Please make sure you read the [contribution guidelines](CONTRIBUTING.md) for an overview of the best practices we try to follow.
 
 ## Community 
 
