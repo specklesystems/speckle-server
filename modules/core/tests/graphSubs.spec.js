@@ -50,22 +50,27 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
   // set up app & two basic users to ping pong permissions around
   before( async function ( ) {
-    this.timeout( 5000 ) // we need to wait for the server to start in the child process!
+    this.timeout( 10000 ) // we need to wait for the server to start in the child process!
 
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
 
     const childProcess = require( 'child_process' )
-    serverProcess = childProcess.exec( "npm run dev:server:test", ( error, stdout, stderr ) => {
-      if ( error ) {
-        console.error( `exec error: ${error}` )
-        return
-      }
-      console.log( `stdout: ${stdout}` )
-      console.error( `stderr: ${stderr}` )
+    serverProcess = childProcess.spawn( "npm", [ "run", "dev:server:test" ], { cwd: `${appRoot}` } )
+
+    serverProcess.stdout.on( 'data', data => {
+      console.log( `stdout: ${data}` )
     } )
 
-    await sleep( 2000 )
+    serverProcess.stderr.on( 'data', ( data ) => {
+      console.error( `stderr: ${data}` )
+    } )
+
+    serverProcess.on( 'close', ( code ) => {
+      console.log( `child process exited with code ${code}` )
+    } )
+
+    await sleep( 5000 )
 
     userA.id = await createUser( userA )
     let token = await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] )
@@ -131,7 +136,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       consumer.unsubscribe( )
     } )
 
-    it( 'Should be notified when a stream is deleted', async () => {
+    it( 'Should be notified when a stream is deleted', async ( ) => {
       const sc1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const sc2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
 
@@ -139,7 +144,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const sid2 = sc2.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql`subscription userStreamDeleted { userStreamDeleted( ownerId: "${userA.id}" ) }`
+      const query = gql `subscription userStreamDeleted { userStreamDeleted( ownerId: "${userA.id}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.userStreamDeleted ).to.exist
@@ -155,11 +160,11 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
 
-    it( 'Should *not* be notified of stream creation if invalid token', async () => {
-      const query = gql`subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
+    it( 'Should *not* be notified of stream creation if invalid token', async ( ) => {
+      const query = gql `subscription mySub { userStreamCreated ( ownerId: "${userA.id}" ) }`
       const client = createSubscriptionObservable( wsAddr, "faketoken123", query )
       const consumer = client.subscribe( eventData => {
         // console.log( 'Create subscription log' )
@@ -171,17 +176,17 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       expect( sc1.body.errors ).to.not.exist
 
       await sleep( 1000 ) // we need to wait up a second here
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
   } )
 
-  describe( 'Branches', () => {
-    it( 'Should be notified when a branch is created', async () => {
+  describe( 'Branches', ( ) => {
+    it( 'Should be notified when a branch is created', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql`subscription { branchCreated( streamId: "${streamId}" ) }`
+      const query = gql `subscription { branchCreated( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.branchCreated ).to.exist
@@ -199,10 +204,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
 
-    it( 'Should be notified when a branch is updated', async () => {
+    it( 'Should be notified when a branch is updated', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
       const bc1 = await sendRequest( userA.token, {
@@ -211,7 +216,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const branchId = bc1.body.data.branchCreate
 
       let eventNum = 0
-      const query = gql`subscription { branchUpdated( streamId: "${streamId}" ) }`
+      const query = gql `subscription { branchUpdated( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.branchUpdated ).to.exist
@@ -229,10 +234,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
 
-    it( 'Should be notified when a branch is deleted', async () => {
+    it( 'Should be notified when a branch is deleted', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
       const bc1 = await sendRequest( userA.token, {
@@ -245,7 +250,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const bid2 = bc2.body.data.branchCreate
 
       let eventNum = 0
-      const query = gql`subscription { branchDeleted( streamId: "${streamId}" ) }`
+      const query = gql `subscription { branchDeleted( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.branchDeleted ).to.exist
@@ -263,12 +268,12 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
   } )
 
-  describe( 'Commits', () => {
-    it( 'Should be notified when a commit is created', async () => {
+  describe( 'Commits', ( ) => {
+    it( 'Should be notified when a commit is created', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
       const resOC1 = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
@@ -277,7 +282,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const objId2 = resOC2.body.data.objectCreate
 
       let eventNum = 0
-      const query = gql`subscription { commitCreated( streamId: "${streamId}" ) }`
+      const query = gql `subscription { commitCreated( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.commitCreated ).to.exist
@@ -295,10 +300,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
 
-    it( 'Should be notified when a commit is updated', async () => {
+    it( 'Should be notified when a commit is updated', async ( ) => {
       const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
       const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
@@ -307,7 +312,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const commitId = resCC.body.data.commitCreate
 
       let eventNum = 0
-      const query = gql`subscription { commitUpdated( streamId: "${streamId}" ) }`
+      const query = gql `subscription { commitUpdated( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.commitUpdated ).to.exist
@@ -325,33 +330,33 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
 
-    it( 'Should be notified when a commit is deleted', async () => {
-      const resSC = await sendRequest(userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` })
+    it( 'Should be notified when a commit is deleted', async ( ) => {
+      const resSC = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
       const streamId = resSC.body.data.streamCreate
-      const resOC = await sendRequest(userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` })
+      const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate(streamId: "${streamId}", objects: {hello: "goodbye 🌊"} ) }` } )
       const objId = resOC.body.data.objectCreate
-      const resCC = await sendRequest(userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` })
+      const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` } )
       const commitId = resCC.body.data.commitCreate
 
       let eventNum = 0
-      const query = gql`subscription { commitDeleted( streamId: "${streamId}" ) }`
+      const query = gql `subscription { commitDeleted( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.commitDeleted ).to.exist
         eventNum++
       } )
 
-      let cd = await sendRequest(userA.token, {
+      let cd = await sendRequest( userA.token, {
         query: `mutation { commitDelete ( commit: { streamId: "${streamId}", id: "${commitId}" } ) }`
-      })
+      } )
       expect( cd.body.errors ).to.not.exist
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 1 )
-      consumer.unsubscribe()
+      consumer.unsubscribe( )
     } )
   } )
 } )
