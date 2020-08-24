@@ -3,7 +3,7 @@
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const appRoot = require( 'app-root-path' )
-
+const request = require( 'supertest' )
 const gql = require( 'graphql-tag' )
 const { execute } = require( 'apollo-link' )
 const { WebSocketLink } = require( 'apollo-link-ws' )
@@ -90,8 +90,6 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const query = gql `subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
-        // console.log( 'Create subscription log' )
-        // console.log( eventData )
         expect( eventData.data.userStreamCreated ).to.exist
         eventNum++
       } )
@@ -99,10 +97,12 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let sc1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc1.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       let sc2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc2.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 2500 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -127,12 +127,15 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       const resSU = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }` } )
-      expect( resSU.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
       const resSU_2 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }` } )
-      expect( resSU_2.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       const resSU_3 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }` } )
-      expect( resSU_3.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 3 )
@@ -157,10 +160,12 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let sd1 = await sendRequest( userA.token, { query: `mutation { streamDelete(id: "${sid1}" ) }` } )
-      expect( sd1.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       let sd2 = await sendRequest( userA.token, { query: `mutation { streamDelete(id: "${sid2}" ) }` } )
-      expect( sd2.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -181,10 +186,11 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
       await sleep( 500 )
 
-      let sg = await sendRequest( userA.token, {
-        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
-      } )
-      expect( sg.body.errors ).to.not.exist
+      let sg =
+        await sendRequest( userA.token, {
+          query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }` } )
+          .expect( 200 )
+          .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 1 )
@@ -206,13 +212,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let sg = await sendRequest( userA.token, {
-        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
-      } )
-      expect( sg.body.errors ).to.not.exist
+        query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
       let sr = await sendRequest( userA.token, {
-        query: `mutation { streamRevokePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}"} ) }`
-      } )
-      expect( sr.body.error ).to.not.exist
+        query: `mutation { streamRevokePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}"} ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 1 )
@@ -220,18 +226,22 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     } )
 
     it( 'Should *not* be notified of stream creation if invalid token', async () => {
+      let eventNum = 0
       const query = gql`subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable( wsAddr, "faketoken123", query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data ).to.not.exist
+        eventNum++
       } )
 
       await sleep( 500 )
 
       let sc1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc1.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
+      expect( eventNum ).to.equal( 0 )
       consumer.unsubscribe( )
     } )
 
@@ -245,31 +255,41 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let sc1 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc1.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       let sc2 = await sendRequest( userA.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc2.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       consumer.unsubscribe()
     } )
 
     it( 'Should *not* allow subscribing to stream creation without profile:read scope', async () => {
+      let eventNum = 0
       const query = gql`subscription mySub { userStreamCreated }`
       const client = createSubscriptionObservable( wsAddr, userC.token, query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data.userStreamCreated ).to.not.exist
+        eventNum++
       } )
 
       await sleep( 500 )
 
       let sc1 = await sendRequest( userC.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc1.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       let sc2 = await sendRequest( userC.token, { query: `mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }` } )
-      expect( sc2.body.errors ).to.not.exist
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
+      // unlike with `validateResolver` and `withFilter` within the subscription resolver, this is controlled with a
+      // directive which wraps the entire resolver. it seems that in this case the resolver fully executes and does ping
+      // the subscriber and increment the eventNum, but ofc does not return a payload if you don't satisfy the directive
+      expect( eventNum ).to.equal( 2 )
       consumer.unsubscribe()
     } )
   } )
@@ -290,13 +310,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let bc1 = await sendRequest( userA.token, {
-        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }`
-      } )
-      expect( bc1.body.errors ).to.not.exist
+        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
       let bc2 = await sendRequest( userA.token, {
-        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "another branch 🥬", description: "this is a test branch 🌳" } ) }`
-      } )
-      expect( bc2.body.errors ).to.not.exist
+        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "another branch 🥬", description: "this is a test branch 🌳" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -322,13 +342,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let bu1 = await sendRequest( userA.token, {
-        query: `mutation { branchUpdate ( branch: { streamId: "${streamId}", id: "${branchId}", description: "updating this branch" } ) }`
-      } )
-      expect( bu1.body.errors ).to.not.exist
+        query: `mutation { branchUpdate ( branch: { streamId: "${streamId}", id: "${branchId}", description: "updating this branch" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
       let bu2 = await sendRequest( userA.token, {
-        query: `mutation { branchUpdate ( branch: { streamId: "${streamId}", id: "${branchId}", description: "updating this branch v2" } ) }`
-      } )
-      expect( bu2.body.errors ).to.not.exist
+        query: `mutation { branchUpdate ( branch: { streamId: "${streamId}", id: "${branchId}", description: "updating this branch v2" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -358,13 +378,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let bd1 = await sendRequest( userA.token, {
-        query: `mutation { branchDelete ( branch: { streamId: "${streamId}", id: "${bid1}" } ) }`
-      } )
-      expect( bd1.body.errors ).to.not.exist
+        query: `mutation { branchDelete ( branch: { streamId: "${streamId}", id: "${bid1}" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
       let bd2 = await sendRequest( userA.token, {
-        query: `mutation { branchDelete ( branch: { streamId: "${streamId}", id: "${bid2}" } ) }`
-      } )
-      expect( bd2.body.errors ).to.not.exist
+        query: `mutation { branchDelete ( branch: { streamId: "${streamId}", id: "${bid2}" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -386,9 +406,9 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let bc = await sendRequest( userA.token, {
-        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }`
-      } )
-      expect( bc.body.errors ).to.not.exist
+        query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 0 )
@@ -416,13 +436,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let cc1 = await sendRequest( userA.token, {
-        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId1}" } ) }`
-      } )
-      expect( cc1.body.errors ).to.not.exist
+        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId1}" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
       let cc2 = await sendRequest( userA.token, {
-        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId2}" } ) }`
-      } )
-      expect( cc2.body.errors ).to.not.exist
+        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId2}" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -448,13 +468,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let cu1 = await sendRequest( userA.token, {
-        query: `mutation { commitUpdate ( commit: { streamId: "${streamId}", id: "${commitId}", message: "updating this commit" } ) }`
-      } )
-      expect( cu1.body.errors ).to.not.exist
+        query: `mutation { commitUpdate ( commit: { streamId: "${streamId}", id: "${commitId}", message: "updating this commit" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
       let cu2 = await sendRequest( userA.token, {
-        query: `mutation { commitUpdate ( commit: { streamId: "${streamId}", id: "${commitId}", message: "updating this commit v2" } ) }`
-      } )
-      expect( cu2.body.errors ).to.not.exist
+        query: `mutation { commitUpdate ( commit: { streamId: "${streamId}", id: "${commitId}", message: "updating this commit v2" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 2 )
@@ -480,9 +500,9 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let cd = await sendRequest( userA.token, {
-        query: `mutation { commitDelete ( commit: { streamId: "${streamId}", id: "${commitId}" } ) }`
-      } )
-      expect( cd.body.errors ).to.not.exist
+        query: `mutation { commitDelete ( commit: { streamId: "${streamId}", id: "${commitId}" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 1 )
@@ -506,9 +526,9 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       await sleep( 500 )
 
       let cc = await sendRequest( userA.token, {
-        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }`
-      } )
-      expect( cc.body.errors ).to.not.exist
+        query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` } )
+        .expect( 200 )
+        .expect( noErrors )
 
       await sleep( 1000 ) // we need to wait up a second here
       expect( eventNum ).to.equal( 0 )
@@ -524,11 +544,20 @@ describe( 'GraphQL API Subscriptions', ( ) => {
  * @return {Promise}      the awaitable request
  */
 function sendRequest( auth, obj, address = addr ) {
-  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+  return request( address ).post( '/graphql' ).set( { 'Authorization': auth, 'Accept': 'application/json' } ).send( obj )
 }
 
 function sleep( ms ) {
   return new Promise( ( resolve ) => {
     setTimeout( resolve, ms )
   } )
+}
+
+/**
+ * Checks the response body for errors. To be used in expect assertions.
+ * Will throw an error if 'errors' exist.
+ * @param {*} res
+ */
+function noErrors( res ) {
+  if ( 'errors' in res.body ) throw new Error( `Failed GraphQL request: ${res.body.errors[ 0 ].message}` )
 }
