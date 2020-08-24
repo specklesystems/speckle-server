@@ -99,9 +99,9 @@ async function validateServerRole( context, requiredRole ) {
 
 async function validateScopes( scopes, scope ) {
   if ( !scopes )
-    throw new ForbiddenError( 'You do not have the required priviliges.' )
+    throw new ForbiddenError( 'You do not have the required privileges.' )
   if ( scopes.indexOf( scope ) === -1 && scopes.indexOf( '*' ) === -1 )
-    throw new ForbiddenError( 'You do not have the required priviliges.' )
+    throw new ForbiddenError( 'You do not have the required privileges.' )
 }
 
 /*
