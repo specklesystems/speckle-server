@@ -16,7 +16,7 @@ jobs:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
           POSTGRES_USER: speckle
-    environment: 
+    environment:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
       PGDATABASE: speckle2_test
@@ -30,7 +30,7 @@ jobs:
       - restore_cache:
           key: 'deps-{{ checksum "package.json" }}'
       - run: 'npm install'
-      - save_cache: 
+      - save_cache:
           paths:
             - node_modules
           key: 'deps-{{ checksum "package.json" }}'

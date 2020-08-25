@@ -9,7 +9,6 @@ const debug = require( 'debug' )( 'speckle:modules' )
 const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 
 exports.init = async ( app ) => {
-
   let dirs = fs.readdirSync( `${appRoot}/modules` )
   let moduleDirs = [ ]
 
@@ -27,7 +26,6 @@ exports.init = async ( app ) => {
   moduleDirs.forEach( async dir => {
     await require( dir ).init( app )
   } )
-
 }
 
 exports.graph = ( ) => {
@@ -35,27 +33,35 @@ exports.graph = ( ) => {
   // Base query and mutation to allow for type extension by modules.
   let typeDefs = [ `
       ${scalarSchemas}
-      
-      type Query { 
+      directive @hasScope(scope: String!) on FIELD_DEFINITION
+      directive @hasRole(role: String!) on FIELD_DEFINITION
+
+      type Query {
       """
       Stare into the void.
       """
-        _: String 
-      } 
+        _: String
+      }
       type Mutation{
       """
       The void stares back.
       """
       _: String
-      }`
-    ]
+      }
+      type Subscription{
+        """
+        It's lonely in the void.
+        """
+        _: String
+      }` ]
 
   let resolverObjs = [ ]
-  // let directiveDirs = [ ]
+  let schemaDirectives = { }
 
   dirs.forEach( file => {
     let fullPath = path.join( `${appRoot}/modules`, file )
 
+    // load and merge the type definitions
     if ( fs.existsSync( path.join( fullPath, 'graph', 'schemas' ) ) ) {
       let moduleSchemas = fs.readdirSync( path.join( fullPath, 'graph', 'schemas' ) )
       moduleSchemas.forEach( schema => {
@@ -63,8 +69,14 @@ exports.graph = ( ) => {
       } )
     }
 
+    // first pass load of resolvers
     if ( fs.existsSync( path.join( fullPath, 'graph', 'resolvers' ) ) ) {
       resolverObjs = [ ...resolverObjs, ...values( autoload( path.join( fullPath, 'graph', 'resolvers' ) ) ) ]
+    }
+
+    // load directives
+    if ( fs.existsSync( path.join( fullPath, 'graph', 'directives' ) ) ) {
+      schemaDirectives = Object.assign( ...values( autoload( path.join( fullPath, 'graph', 'directives' ) ) ) )
     }
   } )
 
@@ -73,6 +85,6 @@ exports.graph = ( ) => {
     merge( resolvers, o )
   } )
 
-  return { resolvers, typeDefs }
-
+  // console.log( schemaDirectives )
+  return { resolvers, typeDefs, schemaDirectives }
 }

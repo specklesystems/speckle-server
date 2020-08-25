@@ -27,6 +27,7 @@ module.exports = {
         let result = await getObjectChildren( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, cursor: args.cursor } )
         return { totalCount: parent.totalChildrenCount, cursor: result.cursor, objects: result.objects }
       }
+
       // The complex query branch
       let result = await getObjectChildrenQuery( { objectId: parent.id, limit: args.limit, depth: args.depth, select: args.select, query: args.query, orderBy: args.orderBy, cursor: args.cursor } )
       return result
@@ -36,9 +37,9 @@ module.exports = {
     async objectCreate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'streams:write' )
-      await authorizeResolver( context.userId, args.streamId, 'stream:contributor' )
+      await authorizeResolver( context.userId, args.objectInput.streamId, 'stream:contributor' )
 
-      let ids = await createObjects( args.objects )
+      let ids = await createObjects( args.objectInput.objects )
       return ids
     }
   }

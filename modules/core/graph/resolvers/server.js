@@ -6,7 +6,7 @@ const { updateServerInfo, getServerInfo, getAvailableScopes, getAvailableRoles }
 module.exports = {
   Query: {
     async serverInfo( parent, args, context, info ) {
-      return await getServerInfo( )
+      return await getServerInfo()
     }
   },
   ServerInfo: {

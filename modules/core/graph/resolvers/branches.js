@@ -1,18 +1,8 @@
 'use strict'
 
 const appRoot = require( 'app-root-path' )
-const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
-
-const {
-  createCommitByBranchName,
-  createCommitByBranchId,
-  updateCommit,
-  deleteCommit,
-  getCommitsByBranchId,
-  getCommitsByBranchName,
-  getCommitsTotalCountByBranchId
-} = require( '../../services/commits' )
+const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
+const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 const {
   createBranch,
@@ -24,6 +14,11 @@ const {
 } = require( '../../services/branches' )
 
 const { getUserById } = require( '../../services/users' )
+
+// subscription events
+const BRANCH_CREATED = 'BRANCH_CREATED'
+const BRANCH_UPDATED = 'BRANCH_UPDATED'
+const BRANCH_DELETED = 'BRANCH_DELETED'
 
 module.exports = {
   Query: {},
@@ -40,6 +35,7 @@ module.exports = {
     async branch( parent, args, context, info ) {
       return await getBranchByNameAndStreamId( { streamId: parent.id, name: args.name } )
     },
+
   },
   Branch: {
 
@@ -49,26 +45,36 @@ module.exports = {
 
   },
   Mutation: {
+
     async branchCreate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
       let id = await createBranch( { ...args.branch, authorId: context.userId } )
+      if ( id ) {
+        await pubsub.publish( BRANCH_CREATED, {
+          branchCreated: { ...args.branch, id: id, authorId: context.userId },
+          streamId: args.branch.streamId
+        } )
+      }
+
       return id
     },
 
     async branchUpdate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
+      let updated = await updateBranch( { ...args.branch } )
+      if ( updated ) {
+        await pubsub.publish( BRANCH_UPDATED, {
+          branchUpdated: { ...args.branch },
+          streamId: args.branch.streamId,
+          branchId: args.branch.id
+        } )
+      }
 
-      return await updateBranch( { ...args.branch } )
+      return updated
     },
 
     async branchDelete( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
-      await validateScopes( context.scopes, 'streams:write' )
       let role = await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
       let branch = await getBranchById( { id: args.branch.id } )
@@ -79,7 +85,48 @@ module.exports = {
       if ( branch.authorId !== context.userId && role !== 'stream:owner' )
         throw new ForbiddenError( 'Only the branch creator or stream owners are allowed to delete branches.' )
 
-      return await deleteBranchById( { id: args.branch.id } )
+      let deleted = await deleteBranchById( { id: args.branch.id } )
+      if ( deleted ) {
+        await pubsub.publish( BRANCH_DELETED, { branchDeleted: { ...args.branch }, streamId: args.branch.streamId } )
+      }
+
+      return deleted
     }
+
+  },
+  Subscription: {
+
+    branchCreated: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_CREATED ] ),
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
+          return payload.streamId === variables.streamId
+        } )
+    },
+
+    branchUpdated: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_UPDATED ] ),
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
+          let streamMatch = payload.streamId === variables.streamId
+          if ( streamMatch && variables.branchId ) {
+            return payload.branchId === variables.branchId
+          }
+
+          return streamMatch
+        } )
+    },
+
+    branchDeleted: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ BRANCH_DELETED ] ),
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+
+          return payload.streamId === variables.streamId
+        } )
+    }
+
   }
 }

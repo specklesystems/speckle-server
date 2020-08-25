@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueApollo from 'vue-apollo'
 import { createApolloClient, restartWebsockets } from 'vue-cli-plugin-apollo/graphql-client'
+import { SubscriptionClient } from 'subscriptions-transport-ws';
 
 // Install the vue plugin
 Vue.use( VueApollo )
@@ -10,6 +11,13 @@ const AUTH_TOKEN = 'AuthToken'
 
 // Http endpoint
 const httpEndpoint = process.env.VUE_APP_GRAPHQL_HTTP || 'http://localhost:3000/graphql'
+// WS endpoint
+const wsEndpoint = process.env.VUE_APP_GRAPHQL_WS || 'ws://localhost:3000/graphql'
+
+// Subscription Client
+const subscriptionClient = new SubscriptionClient( wsEndpoint, {
+  reconnect: true
+} )
 
 // Config
 const defaultOptions = {
@@ -27,6 +35,8 @@ const defaultOptions = {
   websocketsOnly: false,
   // Is being rendered on the server?
   ssr: false,
+  // Subscription Client
+  networkInterface: subscriptionClient
 
   // Override default apollo link
   // note: don't override httpLink here, specify httpLink options in the
@@ -48,6 +58,7 @@ const defaultOptions = {
 
 // Call this in the Vue app file
 export function createProvider( options = {} ) {
+  // console.log( defaultOptions )
   // Create apollo client
   const { apolloClient, wsClient } = createApolloClient( {
     ...defaultOptions,

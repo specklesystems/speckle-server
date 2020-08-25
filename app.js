@@ -8,7 +8,7 @@ const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )
-const { ApolloServer } = require( 'apollo-server-express' )
+const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
 require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 
@@ -22,7 +22,6 @@ let graphqlServer
  * @return {[type]} an express applicaiton and the graphql server
  */
 exports.init = async ( ) => {
-
   const app = express( )
 
   await knex.migrate.latest( )
@@ -44,12 +43,31 @@ exports.init = async ( ) => {
 
   // Initialise default modules, including rest api handlers
   await init( app )
+  let obj = graph( )
 
   // Initialise graphql server
   graphqlServer = new ApolloServer( {
     ...graph( ),
     context: contextApiTokenHelper,
-    tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development'
+    subscriptions: {
+      onConnect: ( connectionParams, webSocket, context ) => {
+        // debug( `speckle:debug` )( 'ws on connect event' )
+        // console.log( connectionParams )
+        if ( connectionParams.Authorization || connectionParams.headers.Authorization ) {
+          let header = connectionParams.Authorization || connectionParams.headers.Authorization
+          let token = header.split( ' ' )[ 1 ]
+          return { token: token }
+        }
+
+        throw new ForbiddenError( 'You need a token to subscribe' )
+      },
+      onDisconnect: ( webSocket, context ) => {
+        // console.log( context )
+        debug( `speckle:debug` )( 'ws on disconnect connect event' )
+      },
+    },
+    tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development',
+    // debug: true
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
@@ -57,15 +75,14 @@ exports.init = async ( ) => {
   return { app, graphqlServer }
 }
 
+const setupCheck = require( `${appRoot}/setupcheck` )
+const { createProxyMiddleware } = require( 'http-proxy-middleware' )
+
 /**
  * Starts a http server, hoisting the express app to it.
  * @param  {[type]} app [description]
  * @return {[type]}     [description]
  */
-
-const setupCheck = require( `${appRoot}/setupcheck` )
-const { createProxyMiddleware } = require( 'http-proxy-middleware' )
-
 exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
@@ -85,7 +102,6 @@ exports.startHttp = async ( app ) => {
     debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
     debug( 'speckle:hint' )( `ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
   } else {
-
     app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
 
     app.all( '/auth*', async ( req, res ) => {
@@ -97,9 +113,8 @@ exports.startHttp = async ( app ) => {
     } )
 
     app.all( '*', async ( req, res ) => {
-
       try {
-        // refrehsing this variable on every request only if it's false  
+        // refrehsing this variable on every request only if it's false
         if ( !setupComplete ) {
           setupComplete = await setupCheck( )
         }
@@ -116,11 +131,10 @@ exports.startHttp = async ( app ) => {
   }
 
   let server = http.createServer( app )
-
   graphqlServer.installSubscriptionHandlers( server )
 
   server.on( 'listening', ( ) => {
-    debug( `speckle:startup` )( `Listening on ${server.address().port}` )
+    debug( `speckle:startup` )( `My name is Spockle Server, and I'm running at ${server.address().port}` )
   } )
 
   server.listen( port )

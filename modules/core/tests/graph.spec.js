@@ -17,6 +17,7 @@ const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
 let addr
+let wsAddr
 
 describe( 'GraphQL API Core', ( ) => {
   let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
@@ -40,6 +41,7 @@ describe( 'GraphQL API Core', ( ) => {
     userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
 
     addr = `http://localhost:${process.env.PORT || 3000}`
+    wsAddr = `ws://localhost:${process.env.PORT || 3000}`
   } )
 
   after( async ( ) => {
@@ -71,19 +73,18 @@ describe( 'GraphQL API Core', ( ) => {
   let b3 = {}
 
   describe( 'Mutations', ( ) => {
-
     describe( 'Users & Api tokens', ( ) => {
       it( 'Should create some api tokens', async ( ) => {
-        const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read" ]) }` } )
+        const res1 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:read", "users:read", "tokens:read"]}) }` } )
         expect( res1 ).to.be.json
         expect( res1.body.errors ).to.not.exist
         expect( res1.body.data.apiTokenCreate ).to.be.a( 'string' )
 
         token1 = `Bearer ${res1.body.data.apiTokenCreate}`
-        const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
+        const res2 = await sendRequest( userA.token, { query: `mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }` } )
         token2 = `Bearer ${res2.body.data.apiTokenCreate}`
 
-        const res3 = await sendRequest( userB.token, { query: `mutation { apiTokenCreate(name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]) }` } )
+        const res3 = await sendRequest( userB.token, { query: `mutation { apiTokenCreate(token: {name:"Token 1", scopes: ["streams:write", "streams:read", "users:email"]}) }` } )
         token3 = `Bearer ${res3.body.data.apiTokenCreate}`
       } )
 
@@ -146,37 +147,47 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'Should grant some permissions', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
+        const res = await sendRequest( userA.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
+        } )
 
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.streamGrantPermission ).to.equal( true )
 
-        const res2 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner") }` } )
+        const res2 = await sendRequest( userB.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts5}", userId: "${userA.id}" role: "stream:owner"}) }`
+        } )
         expect( res2 ).to.be.json
         expect( res2.body.errors ).to.not.exist
 
-        const res3 = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner") }` } )
+        const res3 = await sendRequest( userB.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts3}", userId: "${userC.id}" role: "stream:owner"}) }`
+        } )
         expect( res3 ).to.be.json
         expect( res3.body.errors ).to.not.exist
       } )
 
       it( 'Should fail to grant permissions if not owner', async ( ) => {
-        const res = await sendRequest( userB.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner") }` } )
-
+        const res = await sendRequest( userB.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:owner"}) }`
+        } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.exist
       } )
 
       it( 'Should fail to grant myself permissions', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner") }` } )
-
+        const res = await sendRequest( userA.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner"}) }`
+        } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.exist
       } )
 
       it( 'Should update permissions', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userB.id}" role: "stream:contributor") }` } )
+        const res = await sendRequest( userA.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userB.id}" role: "stream:contributor"}) }`
+        } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.streamGrantPermission ).to.equal( true )
@@ -189,7 +200,9 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.stream.name ).to.equal( 'TS3 (u B) Private' )
 
-        const revokeRes = await sendRequest( userB.token, { query: `mutation { streamRevokePermission( streamId: "${ts3}", userId:"${userC.id}")} ` } )
+        const revokeRes = await sendRequest( userB.token, {
+          query: `mutation { streamRevokePermission( permissionParams: {streamId: "${ts3}", userId:"${userC.id}"} ) }`
+        } )
         expect( revokeRes ).to.be.json
         expect( revokeRes.body.errors ).to.not.exist
         expect( revokeRes.body.data.streamRevokePermission ).to.equal( true )
@@ -197,7 +210,6 @@ describe( 'GraphQL API Core', ( ) => {
         const resNotAuth = await sendRequest( userC.token, { query: `query { stream(id:"${ts3}") { id name role } }` } )
         expect( resNotAuth ).to.be.json
         expect( resNotAuth.body.errors ).to.exist
-
       } )
 
       it( 'Should fail to edit/write on a public stream if no access is provided', async ( ) => {
@@ -227,13 +239,10 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data ).to.have.property( 'streamDelete' )
         expect( res.body.data.streamDelete ).to.equal( true )
-
       } )
-
     } )
 
     describe( 'Objects, Commits & Branches', ( ) => {
-
       it( 'Should create some objects', async ( ) => {
         let objs = [ ]
         for ( let i = 0; i < 500; i++ ) {
@@ -242,7 +251,7 @@ describe( 'GraphQL API Core', ( ) => {
           else objs.push( { cool: [ 's', 't', [ 'u', 'f', 'f', i ], { that: true } ], iValue: i + i / 3 } )
         }
 
-        const res = await sendRequest( userA.token, { query: `mutation( $objs: [JSONObject]! ) { objectCreate( streamId:"${ts1}", objects: $objs ) }`, variables: { objs: objs } } )
+        const res = await sendRequest( userA.token, { query: `mutation( $objs: [JSONObject]! ) { objectCreate( objectInput: {streamId:"${ts1}", objects: $objs} ) }`, variables: { objs: objs } } )
 
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
@@ -332,7 +341,6 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'Should update a branch', async ( ) => {
-
         let payload = {
           streamId: ts1,
           id: b2.id,
@@ -347,9 +355,10 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'Should delete a branch', async ( ) => {
-
         // give C some access permissions
-        const perms = await sendRequest( userA.token, { query: `mutation{ streamGrantPermission( streamId: "${ts1}", userId: "${userC.id}" role: "stream:contributor") }` } )
+        const perms = await sendRequest( userA.token, {
+          query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}" role: "stream:contributor"}) }`
+        } )
 
         let payload = {
           streamId: ts1,
@@ -376,7 +385,7 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res2.body.errors ).to.not.exist
 
         // revoke perms for c back (dont' wanna mess up our integration-unit tests below)
-        await sendRequest( userA.token, { query: `mutation{ streamRevokePermission( streamId: "${ts1}", userId: "${userC.id}" ) }` } )
+        await sendRequest( userA.token, { query: `mutation{ streamRevokePermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}"} ) }` } )
       } )
 
       it( 'Should commit to a non-master branch as well...', async ( ) => {
@@ -392,15 +401,11 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.data ).to.have.property( 'commitCreate' )
         expect( res.body.data.commitCreate ).to.be.a( 'string' )
       } )
-
     } )
-
   } )
 
   describe( 'Queries', ( ) => {
-
     describe( 'My Profile', ( ) => {
-
       it( 'Should retrieve my profile', async ( ) => {
         const res = await sendRequest( userA.token, { query: `{ user { id name email role apiTokens { id name } } }` } )
         expect( res ).to.be.json
@@ -413,7 +418,6 @@ describe( 'GraphQL API Core', ( ) => {
 
 
       it( 'Should retrieve my streams', async ( ) => {
-
         // add more streams
         await sendRequest(
           userA.token, {
@@ -450,7 +454,6 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'Should retrieve my commits (across all streams)', async ( ) => {
-
         for ( let i = 10; i < 20; i++ ) {
           let c1 = {
             message: `what a message for commit number ${i}`,
@@ -474,12 +477,10 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res2.body.errors ).to.not.exist
         expect( res2.body.data.user.commits.totalCount ).to.equal( 11 )
         expect( res2.body.data.user.commits.items.length ).to.equal( 3 )
-
       } )
     } )
 
     describe( 'Different Users` Profile', ( ) => {
-
       it( 'Should retrieve a different profile profile', async ( ) => {
         const res = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email } }` } )
 
@@ -511,11 +512,9 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.user.streams.totalCount ).to.equal( 1 )
       } )
-
     } )
 
     describe( 'Streams', ( ) => {
-
       let retrievedStream
 
       it( 'Should retrieve a stream', async ( ) => {
@@ -604,8 +603,7 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'should retrieve a stream branch', async ( ) => {
-
-        const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { branch( name: "${bees[1].name}" ) { name description } } } ` } )
+        const res = await sendRequest( userA.token, { query: `query { stream(id:"${ts1}") { branch( name: "${bees[ 1 ].name}" ) { name description } } } ` } )
 
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
@@ -722,7 +720,6 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res2 ).to.be.json
         expect( res2.body.errors ).to.not.exist
         expect( res2.body.data.stream.commits.items.length ).to.equal( 2 )
-
       } )
 
       it( 'should retrieve a stream commit', async ( ) => {
@@ -731,12 +728,10 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.stream.commit.message ).to.equal( 'what a message for commit number 19' ) // should be the last created one
-
       } )
     } )
 
     describe( 'Objects', ( ) => {
-
       let myCommit
       let myObjs
 
@@ -747,16 +742,14 @@ describe( 'GraphQL API Core', ( ) => {
       } )
 
       it( 'should save many objects', async ( ) => {
-
         let everything = [ myCommit, ...myObjs ]
-        const res = await sendRequest( userA.token, { query: `mutation($objs:[JSONObject]!) { objectCreate(streamId:"${ts1}", objects: $objs) }`, variables: { objs: everything } } )
+        const res = await sendRequest( userA.token, { query: `mutation($objs:[JSONObject]!) { objectCreate(objectInput: {streamId:"${ts1}", objects: $objs}) }`, variables: { objs: everything } } )
 
         let objIds = res.body.data.objectCreate
 
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( objIds.length ).to.equal( 101 ) // +1 for the actual "commit" object
-
       } )
 
       it( `should get an object's subojects objects`, async ( ) => {
@@ -849,12 +842,10 @@ describe( 'GraphQL API Core', ( ) => {
         expect( first.body.data.stream.object.children.objects[ 0 ].data.sortValueA ).to.equal( 42 )
         expect( first.body.data.stream.object.children.objects[ 1 ].data.sortValueA ).to.equal( 43 )
       } )
-
     } )
   } )
 
   describe( 'Server Info', ( ) => {
-
     it( 'Should return a valid server information object', async ( ) => {
       let q = `
         query{
@@ -893,13 +884,13 @@ describe( 'GraphQL API Core', ( ) => {
 } )
 
 /**
- * Sends a graphql reuqest. Convenience wrapper.
- * @param  {string} auth the users's token
+ * Sends a graphql request. Convenience wrapper.
+ * @param  {string} auth the user's token
  * @param  {string} obj  the query/mutation to send
  * @return {Promise}      the awaitable request
  */
-function sendRequest( auth, obj ) {
-  return chai.request( addr ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+function sendRequest( auth, obj, address = addr ) {
+  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
 }
 
 // const crypto = require( 'crypto' )

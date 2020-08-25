@@ -1,9 +1,18 @@
 'use strict'
 const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
+const { RedisPubSub } = require( 'graphql-redis-subscriptions' )
+const Redis = require( 'ioredis' )
 const debug = require( 'debug' )( 'speckle:middleware' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
+
+
+let pubsub = new RedisPubSub( {
+  publisher: new Redis( process.env.REDIS_URL ),
+  subscriber: new Redis( process.env.REDIS_URL ),
+} )
+
 
 /*
 
@@ -11,25 +20,36 @@ const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
  */
 
-async function contextApiTokenHelper( { req, res } ) {
-  // TODO: Cache results for a minute
-  // console.log( req.headers )
-  if ( req.headers.authorization != null ) {
-    try {
-      let token = req.headers.authorization.split( ' ' )[ 1 ]
+async function contextApiTokenHelper( { req, res, connection } ) {
+  let token = null
 
-      let { valid, scopes, userId, role } = await validateToken( token )
-
-      if ( !valid ) {
-        return { auth: false }
-      }
-
-      return { auth: true, userId, role, token, scopes }
-    } catch ( e ) {
-      // TODO: Think wether perhaps it's better to throw the error
-      return { auth: false, err: e }
-    }
+  if ( connection && connection.context.token ) { // Websockets (subscriptions)
+    token = connection.context.token
+  } else if ( req && req.headers.authorization ) { // Standard http
+    token = req.headers.authorization
   }
+
+  if ( token && token.includes( "Bearer " ) ) {
+    token = token.split( " " )[ 1 ]
+  }
+
+  if ( token === null )
+    return { auth: false }
+
+
+  try {
+    let { valid, scopes, userId, role } = await validateToken( token )
+
+    if ( !valid ) {
+      return { auth: false }
+    }
+
+    return { auth: true, userId, role, token, scopes }
+  } catch ( e ) {
+    // TODO: Think wether perhaps it's better to throw the error
+    return { auth: false, err: e }
+  }
+
   return { auth: false }
 }
 
@@ -79,9 +99,9 @@ async function validateServerRole( context, requiredRole ) {
 
 async function validateScopes( scopes, scope ) {
   if ( !scopes )
-    throw new ForbiddenError( 'You do not have the required priviliges.' )
+    throw new ForbiddenError( 'You do not have the required privileges.' )
   if ( scopes.indexOf( scope ) === -1 && scopes.indexOf( '*' ) === -1 )
-    throw new ForbiddenError( 'You do not have the required priviliges.' )
+    throw new ForbiddenError( 'You do not have the required privileges.' )
 }
 
 /*
@@ -117,7 +137,6 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
     return userAclEntry.role.name
   else
     throw new ForbiddenError( 'You are not authorized' )
-
 }
 
 module.exports = {
@@ -125,5 +144,6 @@ module.exports = {
   contextMiddleware,
   validateServerRole,
   validateScopes,
-  authorizeResolver
+  authorizeResolver,
+  pubsub
 }

@@ -1,9 +1,11 @@
 extend type Query {
   stream( id: String! ): Stream
+    @hasScope(scope: "streams:read")
   """
   All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
   """
   streams( query: String!, limit: Int! = 25, cursor: String ): StreamCollection
+    @hasScope(scope: "streams:read")
 }
 
 type Stream {
@@ -41,23 +43,84 @@ extend type Mutation {
   Creates a new stream.
   """
   streamCreate( stream: StreamCreateInput! ): String
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Updates an existing stream.
   """
   streamUpdate( stream: StreamUpdateInput! ): Boolean!
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Deletes an existing stream.
   """
   streamDelete( id: String! ): Boolean!
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Grants permissions to a user on a given stream.
   """
-  streamGrantPermission( streamId: String!, userId: String!, role: String! ): Boolean
+  streamGrantPermission( permissionParams: StreamGrantPermissionInput! ): Boolean
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
   """
   Revokes the permissions of a user on a given stream.
   """
-  streamRevokePermission( streamId: String!, userId: String! ): Boolean
+  streamRevokePermission( permissionParams: StreamRevokePermissionInput! ): Boolean
+    @hasRole(role: "server:user") 
+    @hasScope(scope: "streams:write")
+}
 
+extend type Subscription {
+
+  #
+  # User bound subscriptions that operate on the stream collection of an user
+  # Example relevant view/usecase: updates when working in GH or Dynamo
+  #
+
+  # Source:
+  # - stream created mutation (target: stream creator)
+  # - stream grant permissions (target: grantee id)
+  #
+  # Payload: streamId and sreamCreate input args
+  # 
+  # As per discussion, removed `ownerId` input so this now just works for the current user
+  """
+  Subscribes to new stream created event for a given user.
+  """
+    userStreamCreated: JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
+
+  # Source:
+  # - stream delete mutation (target: all stream users in acl)
+  # - stream revoke permissions (target: grantee id)
+  #
+  # Payload: streamId
+  """
+  Subscribes to stream deleted event for a given user.
+  """
+  userStreamDeleted: JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
+  """
+  Subscribes to stream updated event.
+  """
+  streamUpdated( streamId: String ): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+  """
+  Subscribes to stream permission granted event.
+  """
+  streamPermissionGranted( userId: String! ): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
+  """
+  Subscribes to stream delete event.
+  """
+  streamPermissionRevoked( userId: String! ): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:read")
 }
 
 input StreamCreateInput {
@@ -71,4 +134,15 @@ input StreamUpdateInput {
   name: String
   description: String
   isPublic: Boolean
+}
+
+input StreamGrantPermissionInput {
+  streamId: String!,
+  userId: String!,
+  role: String!
+}
+
+input StreamRevokePermissionInput {
+  streamId: String!,
+  userId: String!
 }
