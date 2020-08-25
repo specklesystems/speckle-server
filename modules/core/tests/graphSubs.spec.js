@@ -55,9 +55,9 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     const childProcess = require( 'child_process' )
     serverProcess = childProcess.spawn( /^win/.test( process.platform ) ? 'npm.cmd' : 'npm', [ "run", "dev:server:test" ], { cwd: `${appRoot}` } )
 
-    serverProcess.stderr.on( 'data', ( data ) => {
-      console.error( `stderr: ${data}` )
-    } )
+    // serverProcess.stderr.on( 'data', ( data ) => {
+    //   console.error( `stderr: ${data}` )
+    // } )
 
     await sleep( 5000 )
 

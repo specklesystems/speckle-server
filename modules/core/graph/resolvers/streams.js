@@ -115,7 +115,7 @@ module.exports = {
 
       if ( granted ) {
         await pubsub.publish( STREAM_PERMISSION_GRANTED, {
-          streamPermissionGranted: params, userId: params.userId, streamId: params.streamId
+          streamPermissionGranted: { ...params, grantor: context.userId }, userId: params.userId, streamId: params.streamId
         } )
       }
 
