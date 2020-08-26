@@ -25,7 +25,9 @@ To get started, first clone this repo.
 
 ### Setup
 
-To run the Server in debug mode:
+#### Server
+
+To run the **Server** in debug mode:
 
 - Duplicate and rename `.env-example` to `.env` & fill it in! 
 - Make sure a postgres instance is running locally, with two databases present, named `speckle2_dev` and `speckle2_test`.
@@ -33,7 +35,9 @@ To run the Server in debug mode:
 - Run `npm install`
 - Run `npm run dev:server` 🚀
 
-To run the Frontend locally in debug mode:
+#### Frontend
+
+To run the **Frontend** locally in debug mode:
 
 - Switch your working directory to `/frontend`
 - Run `npm install`
