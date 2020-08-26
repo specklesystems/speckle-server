@@ -46,12 +46,24 @@ To run the **Frontend** locally in debug mode:
 To build the frontend, simply run `npm run build:frontend`. 
 
 > Tips: 
+> 
 > Postgres: For getting postgres, check out [postgres.app](https://postgresapp.com/), and the classic [pgadmin](https://www.pgadmin.org/download/pgadmin-4-macos/).
+> 
 > Redis: you can use the [redis.app](https://jpadilla.github.io/redisapp/).
+
+#### Windows
+
+Some extra tips if you come across issues on Windows:
+
+Redis isn't officially supported for Windows, but you can get a slightly out of date version [here](https://github.com/microsoftarchive/redis/releases/tag/win-3.0.504) which should work just fine.
+
+For postgres, [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) and [Postbird](https://github.com/Paxa/postbird/releases) are both good options for a GUI.
+
+If starting up postgres isn't working, check your environment variables to make sure `C:\Program Files\PostgreSQL\<version>\bin` has been added to your system Path. You can also add variables `PGUSER` and `PGPASSWORD` here so you can skip logging in each time.
 
 ### Testing
 
-The Server is quite throughly covered by tests. Once you have followed the setup steps above, you can run all the tests by hitting `npm run test:server`. 
+The Server is quite thoroughly covered by tests. Once you have followed the setup steps above, you can run all the tests by hitting `npm run test:server`. 
 
 For testing specific functionality, check out the npm scripts in `package.json` - they are breaking down the tests piecemeal. When working on the Server, we've always found useful to run in watch mode only the tests pertaining to what we were working on (e.g., `npm run test:server:objects`). 
 
