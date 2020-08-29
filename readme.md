@@ -61,6 +61,8 @@ For postgres, [pgAdmin](https://www.pgadmin.org/download/pgadmin-4-windows/) and
 
 If starting up postgres isn't working, check your environment variables to make sure `C:\Program Files\PostgreSQL\<version>\bin` has been added to your system Path. You can also add variables `PGUSER` and `PGPASSWORD` here so you can skip logging in each time.
 
+Make sure you're on node version 12 as newer versions of node may have problems connecting to the db.
+
 ### Testing
 
 The Server is quite thoroughly covered by tests. Once you have followed the setup steps above, you can run all the tests by hitting `npm run test:server`. 
