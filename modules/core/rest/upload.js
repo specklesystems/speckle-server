@@ -9,9 +9,7 @@ const { contextMiddleware, validateScopes, authorizeResolver } = require( `${app
 const { createObjects, createObjectsBatched } = require( '../services/objects' )
 
 module.exports = ( app ) => {
-
   app.post( '/objects/:streamId', contextMiddleware, async ( req, res ) => {
-
     if ( !req.context || !req.context.auth ) {
       return res.status( 401 ).end( )
     }

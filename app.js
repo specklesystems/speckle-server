@@ -2,6 +2,8 @@
 
 
 let http = require( 'http' )
+const url = require( 'url' )
+let WebSocket = require( 'ws' )
 const express = require( 'express' )
 const compression = require( 'compression' )
 const appRoot = require( 'app-root-path' )
@@ -43,7 +45,6 @@ exports.init = async ( ) => {
 
   // Initialise default modules, including rest api handlers
   await init( app )
-  let obj = graph( )
 
   // Initialise graphql server
   graphqlServer = new ApolloServer( {
@@ -51,23 +52,21 @@ exports.init = async ( ) => {
     context: contextApiTokenHelper,
     subscriptions: {
       onConnect: ( connectionParams, webSocket, context ) => {
-        // debug( `speckle:debug` )( 'ws on connect event' )
-        // console.log( connectionParams )
-        if ( connectionParams.Authorization || connectionParams.headers.Authorization ) {
-          let header = connectionParams.Authorization || connectionParams.headers.Authorization
-          let token = header.split( ' ' )[ 1 ]
-          return { token: token }
+        try {
+          if ( connectionParams.Authorization || connectionParams.authorization || connectionParams.headers.Authorization ) {
+            let header = connectionParams.Authorization || connectionParams.authorization || connectionParams.headers.Authorization
+            let token = header.split( ' ' )[ 1 ]
+            return { token: token }
+          }
+        } catch ( e ) {
+          throw new ForbiddenError( 'You need a token to subscribe' )
         }
-
-        throw new ForbiddenError( 'You need a token to subscribe' )
       },
       onDisconnect: ( webSocket, context ) => {
-        // console.log( context )
         debug( `speckle:debug` )( 'ws on disconnect connect event' )
       },
     },
-    tracing: process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development',
-    // debug: true
+    tracing: process.env.NODE_ENV === 'development'
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
@@ -100,7 +99,7 @@ exports.startHttp = async ( app ) => {
     debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/` )
     debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
     debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
-    debug( 'speckle:hint' )( `ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
+    debug( 'speckle:hint' )( `        ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
   } else {
     app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
 
@@ -127,17 +126,19 @@ exports.startHttp = async ( app ) => {
       } catch ( error ) {
         res.json( { success: false, message: "Something went wrong" } )
       }
-    } );
+    } )
   }
 
   let server = http.createServer( app )
+
   graphqlServer.installSubscriptionHandlers( server )
 
+  graphqlServer.applyMiddleware( { app: app } )
+
   server.on( 'listening', ( ) => {
-    debug( `speckle:startup` )( `My name is Spockle Server, and I'm running at ${server.address().port}` )
+    debug( `speckle:startup` )( `     🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
   } )
 
   server.listen( port )
-
   return { server }
 }

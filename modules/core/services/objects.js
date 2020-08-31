@@ -20,7 +20,6 @@ const StreamCommits = ( ) => knex( 'stream_commits' )
 module.exports = {
 
   async createObject( object ) {
-
     let insertionObject = prepInsertionObject( object )
 
     let closures = [ ]
@@ -136,7 +135,6 @@ module.exports = {
       let t0 = performance.now( )
 
       batch.forEach( obj => {
-
         let insertionObject = prepInsertionObject( obj )
         let totalChildrenCountByDepth = {}
         let totalChildrenCountGlobal = 0
@@ -279,60 +277,60 @@ module.exports = {
     let operatorsWhitelist = [ '=', '>', '>=', '<', '<=', '!=' ]
 
     let mainQuery = knex.with( 'objs', cteInnerQuery => {
-        // always select the id
-        cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
-        cteInnerQuery.select( 'createdAt' )
-        cteInnerQuery.select( 'speckleType' )
-        cteInnerQuery.select( 'totalChildrenCount' )
+      // always select the id
+      cteInnerQuery.select( 'id' ).from( 'object_children_closure' )
+      cteInnerQuery.select( 'createdAt' )
+      cteInnerQuery.select( 'speckleType' )
+      cteInnerQuery.select( 'totalChildrenCount' )
 
-        // if there are any select fields, add them
-        if ( Array.isArray( select ) ) {
-          select.forEach( ( field, index ) => {
-            cteInnerQuery.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
+      // if there are any select fields, add them
+      if ( Array.isArray( select ) ) {
+        select.forEach( ( field, index ) => {
+          cteInnerQuery.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: "$." + field, name: '' + index } ) )
+        } )
+        // otherwise, get the whole object, as stored in the jsonb column
+      } else {
+        cteInnerQuery.select( 'data' )
+      }
+
+      // join on objects table
+      cteInnerQuery.join( 'objects', 'child', '=', 'objects.id' )
+        .where( 'parent', objectId )
+        .andWhere( 'minDepth', '<', depth )
+
+      // Add user provided filters/queries.
+      if ( Array.isArray( query ) && query.length > 0 ) {
+        cteInnerQuery.andWhere( nestedWhereQuery => {
+          query.forEach( ( statement, index ) => {
+            let castType = 'text'
+            if ( typeof statement.value === 'string' ) castType = 'text'
+            if ( typeof statement.value === 'boolean' ) castType = 'boolean'
+            if ( typeof statement.value === 'number' ) castType = 'numeric'
+
+            if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
+              throw new Error( 'Invalid operator for query' )
+
+            // Determine the correct where clause (where, and where, or where)
+            let whereClause
+            if ( index === 0 ) whereClause = 'where'
+            else if ( statement.verb && statement.verb.toLowerCase( ) === 'or' ) whereClause = 'orWhere'
+            else whereClause = 'andWhere'
+
+            // Note: castType is generated from the statement's value and operators are matched against a whitelist.
+            // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value. 
+            nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
           } )
-          // otherwise, get the whole object, as stored in the jsonb column
-        } else {
-          cteInnerQuery.select( 'data' )
-        }
+        } )
+      }
 
-        // join on objects table
-        cteInnerQuery.join( 'objects', 'child', '=', 'objects.id' )
-          .where( 'parent', objectId )
-          .andWhere( 'minDepth', '<', depth )
-
-        // Add user provided filters/queries.
-        if ( Array.isArray( query ) && query.length > 0 ) {
-          cteInnerQuery.andWhere( nestedWhereQuery => {
-            query.forEach( ( statement, index ) => {
-              let castType = 'text'
-              if ( typeof statement.value === 'string' ) castType = 'text'
-              if ( typeof statement.value === 'boolean' ) castType = 'boolean'
-              if ( typeof statement.value === 'number' ) castType = 'numeric'
-
-              if ( operatorsWhitelist.indexOf( statement.operator ) == -1 )
-                throw new Error( 'Invalid operator for query' )
-
-              // Determine the correct where clause (where, and where, or where)
-              let whereClause
-              if ( index === 0 ) whereClause = 'where'
-              else if ( statement.verb && statement.verb.toLowerCase( ) === 'or' ) whereClause = 'orWhere'
-              else whereClause = 'andWhere'
-
-              // Note: castType is generated from the statement's value and operators are matched against a whitelist.
-              // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value. 
-              nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
-            } )
-          } )
-        }
-
-        // Order by clause; validate direction!
-        let direction = orderBy.direction && orderBy.direction.toLowerCase( ) === 'desc' ? 'desc' : 'asc'
-        if ( orderBy.field === 'id' ) {
-          cteInnerQuery.orderBy( 'id', direction )
-        } else {
-          cteInnerQuery.orderByRaw( knex.raw( `jsonb_path_query_first( data, ? ) ${direction}, id asc`, [ '$.' + orderBy.field ] ) )
-        }
-      } )
+      // Order by clause; validate direction!
+      let direction = orderBy.direction && orderBy.direction.toLowerCase( ) === 'desc' ? 'desc' : 'asc'
+      if ( orderBy.field === 'id' ) {
+        cteInnerQuery.orderBy( 'id', direction )
+      } else {
+        cteInnerQuery.orderByRaw( knex.raw( `jsonb_path_query_first( data, ? ) ${direction}, id asc`, [ '$.' + orderBy.field ] ) )
+      }
+    } )
       .select( '*' ).from( 'objs' )
       .joinRaw( 'RIGHT JOIN ( SELECT count(*) FROM "objs" ) c(total_count) ON TRUE' )
 

@@ -13,7 +13,6 @@ let authStrategies = [ ]
 exports.authStrategies = authStrategies
 
 exports.init = ( app, options ) => {
-
   debug( 'speckle:modules' )( '🔑 \tInit app, authn and authz module' )
 
   passport.serializeUser( ( user, done ) => done( null, user ) )
@@ -64,7 +63,6 @@ exports.init = ( app, options ) => {
 
       let authResponse = await createAppTokenFromAccessCode( { appId: req.body.appId, appSecret: req.body.appSecret, accessCode: req.body.accessCode, challenge: req.body.challenge } )
       return res.send( authResponse )
-
     } catch ( err ) {
       debug( 'speckle:errors' )( err )
       return res.status( 401 ).send( { err: err.message } )
