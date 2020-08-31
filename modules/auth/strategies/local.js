@@ -7,7 +7,6 @@ const { createUser, findOrCreateUser, validatePasssword, getUserByEmail } = requ
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
 module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
-
   const strategy = {
     id: 'local',
     name: 'Local',

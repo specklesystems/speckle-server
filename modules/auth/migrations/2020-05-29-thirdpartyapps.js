@@ -109,7 +109,6 @@ exports.up = async knex => {
 
   const mockAppScopes = [ { appId: 'mock', scopeName: 'streams:read' }, { appId: 'mock', scopeName: 'users:read' }, { appId: 'mock', scopeName: 'profile:email' } ]
   await knex( 'server_apps_scopes' ).insert( mockAppScopes )
-
 }
 
 exports.down = async knex => {

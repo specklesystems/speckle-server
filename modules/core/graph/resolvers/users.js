@@ -4,7 +4,6 @@ const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-se
 const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, searchUsers, validatePasssword } = require( '../../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
-const setupCheck = require( `${appRoot}/setupcheck` )
 const zxcvbn = require( 'zxcvbn' )
 
 module.exports = {

@@ -33,7 +33,6 @@ module.exports = {
   },
 
   async createToken( { userId, name, scopes, lifespan } ) {
-
     let { tokenId, tokenString, tokenHash, lastChars } = await module.exports.createBareToken( )
 
     if ( scopes.length === 0 ) throw new Error( 'No scopes provided' )
@@ -56,7 +55,6 @@ module.exports = {
 
   // Creates a personal access token for a user with a set of given scopes.
   async createPersonalAccessToken( userId, name, scopes, lifespan ) {
-
     let { id, token } = await module.exports.createToken( { userId, name, scopes, lifespan } )
 
     // Store the relationship

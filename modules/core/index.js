@@ -8,5 +8,4 @@ exports.init = async ( app, options ) => {
   // Initialises the two main bulk upload/download endpoints
   require( './rest/upload' )( app )
   require( './rest/download' )( app )
-
 }

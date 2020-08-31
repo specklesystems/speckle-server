@@ -1,11 +1,5 @@
 module.exports = {
   pages: {
-    setup: {
-      entry: 'src/main-serversetup.js',
-      title: 'Speckle Server Preflight Setup',
-      template: 'public/setup.html',
-      filename: 'setup.html'
-    },
     app: {
       entry: 'src/main-frontend.js',
       title: 'Speckle!',
@@ -23,8 +17,7 @@ module.exports = {
     historyApiFallback: {
       rewrites: [
         { from: /^\/$/, to: '/app.html' },
-        { from: /\/auth/, to: '/auth.html' },
-        { from: /\/setup/, to: '/setup.html' }
+        { from: /\/auth/, to: '/auth.html' }
       ]
     }
   },

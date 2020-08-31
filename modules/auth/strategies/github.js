@@ -9,7 +9,6 @@ const { findOrCreateUser } = require( `${appRoot}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
 module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
-
   const strategy = {
     id: 'github',
     name: 'Github',

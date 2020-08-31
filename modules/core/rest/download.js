@@ -8,9 +8,7 @@ const { contextMiddleware, validateScopes, authorizeResolver } = require( `${app
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
 
 module.exports = ( app ) => {
-
   app.get( '/objects/:streamId/:objectId', contextMiddleware, async ( req, res ) => {
-
     if ( !req.context || !req.context.auth ) {
       return res.status( 401 ).end( )
     }
@@ -102,7 +100,6 @@ module.exports = ( app ) => {
 
   // TODO: is this needed/used? 
   app.get( '/objects/:streamId/:objectId/single', async ( req, res ) => {
-
     // TODO: authN & authZ checks
 
     let obj = await getObject( req.params.objectId )
