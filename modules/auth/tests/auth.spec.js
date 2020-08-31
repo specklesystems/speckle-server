@@ -125,6 +125,8 @@ describe( 'Apps', ( ) => {
         .post( `/auth/local/register` )
         .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', username: 'dimitrie', company: 'speckle', password: 'roll saving throws' } )
         .expect( 200 )
+
+      expect( res.body.id ).to.be.a.string
     } )
 
     it( 'Should fail to register a new user w/o password', async ( ) => {
@@ -154,7 +156,7 @@ describe( 'Apps', ( ) => {
 
   describe( 'GraphQL', ( ) => {
 
-     before( async ( ) => {
+    before( async ( ) => {
       await knex.migrate.rollback( )
       await knex.migrate.latest( )
 
