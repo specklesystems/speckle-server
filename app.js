@@ -86,11 +86,8 @@ exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
-  let setupComplete = await setupCheck( )
-
-  if ( process.env.NODE_ENV !== 'development' )
-    debug( 'speckle:info' )( `Setup is ${setupComplete ? '' : 'not'} complete. Serving ${setupComplete ? 'main app' : 'setup app'}` )
-
+  // Handles frontend proxying:
+  // Dev mode -> proxy form the local webpack server
   if ( process.env.NODE_ENV === 'development' ) {
     const frontendProxy = createProxyMiddleware( { target: 'http://localhost:8080', changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
@@ -100,7 +97,10 @@ exports.startHttp = async ( app ) => {
     debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
     debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
     debug( 'speckle:hint' )( `        ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
-  } else {
+  }
+
+  // Production mode -> serve things statically.
+  else {
     app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
 
     app.all( '/auth*', async ( req, res ) => {
@@ -112,27 +112,14 @@ exports.startHttp = async ( app ) => {
     } )
 
     app.all( '*', async ( req, res ) => {
-      try {
-        // refrehsing this variable on every request only if it's false
-        if ( !setupComplete ) {
-          setupComplete = await setupCheck( )
-        }
-
-        if ( setupComplete ) {
-          res.sendFile( `${appRoot}/frontend/dist/app.html` )
-        } else {
-          res.sendFile( `${appRoot}/frontend/dist/setup.html` )
-        }
-      } catch ( error ) {
-        res.json( { success: false, message: "Something went wrong" } )
-      }
+      res.sendFile( `${appRoot}/frontend/dist/app.html` )
     } )
   }
 
   let server = http.createServer( app )
 
+  // Final apollo server setup
   graphqlServer.installSubscriptionHandlers( server )
-
   graphqlServer.applyMiddleware( { app: app } )
 
   server.on( 'listening', ( ) => {
