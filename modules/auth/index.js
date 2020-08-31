@@ -43,7 +43,7 @@ exports.init = ( app, options ) => {
         return res.status( 400 ).send( err.message )
       }
     } else {
-      return res.status( 200 ).end( )
+      return res.status( 200 ).send( { userId: req.user.id } )
     }
   }
 

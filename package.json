@@ -21,7 +21,7 @@
     "test:server:branches": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/branches.spec.js --watch -s 0 --exit --no-config",
     "test:server:commits": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/commits.spec.js --watch -s 0 --exit --no-config",
     "test:server:users": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/core/tests/users.spec.js --watch -s 0 --exit --no-config",
-    "test:server:apps": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/auth/tests/apps.spec.js --watch -s 0 --exit --no-config"
+    "test:server:auth": "cross-env PORT=3001 DEBUG=speckle:test,speckle:errors NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test mocha ./modules/auth/tests/auth.spec.js --watch -s 0 --exit --no-config"
   },
   "author": "The Specklers",
   "license": "",

@@ -74,7 +74,6 @@ exports.init = async ( ) => {
   return { app, graphqlServer }
 }
 
-const setupCheck = require( `${appRoot}/setupcheck` )
 const { createProxyMiddleware } = require( 'http-proxy-middleware' )
 
 /**
