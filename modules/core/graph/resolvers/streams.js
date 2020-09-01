@@ -24,6 +24,12 @@ const STREAM_DELETED = 'STREAM_DELETED'
 const STREAM_PERMISSION_GRANTED = 'STREAM_PERMISSION_GRANTED'
 const STREAM_PERMISSION_REVOKED = 'STREAM_PERMISSION_REVOKED'
 
+function sleep( ms ) {
+  return new Promise( ( resolve ) => {
+    setTimeout( resolve, ms )
+  } )
+}
+
 module.exports = {
   Query: {
 
@@ -45,6 +51,7 @@ module.exports = {
     }
 
   },
+
   Stream: {
 
     async collaborators( parent, args, context, info ) {
@@ -53,6 +60,7 @@ module.exports = {
     }
 
   },
+
   User: {
 
     async streams( parent, args, context, info ) {
@@ -67,6 +75,7 @@ module.exports = {
     }
 
   },
+
   Mutation: {
 
     async streamCreate( parent, args, context, info ) {
@@ -82,7 +91,7 @@ module.exports = {
 
       await updateStream( update )
 
-      await pubsub.publish( STREAM_UPDATED, { streamUpdated: update, streamId: args.stream.id } )
+      await pubsub.publish( STREAM_UPDATED, { streamUpdated: { id: args.stream.id, name: args.stream.name, description: args.stream.description }, id: args.stream.id } )
 
       return true
     },
@@ -90,15 +99,18 @@ module.exports = {
     async streamDelete( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.id, 'stream:owner' )
 
-      // TODO: Notify all stream users
+      // Notify any listeners on the streamId
+      await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, streamId: args.id } )
+
+      // Notify all stream users
       let users = await getStreamUsers( { streamId: args.id } )
 
       for ( let user of users ) {
-        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { streamId: args.id }, ownerId: user.id } )
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.id }, ownerId: user.id } )
       }
 
-      // TODO: Notify any listeners on the streamId
-      await pubsub.publish( STREAM_DELETED, { streamDeleted: args.id, streamId: args.id } )
+      // delay deletion by a bit so we can do auth checks
+      await sleep( 250 )
 
       // Delete after event so we can do authz
       await deleteStream( { streamId: args.id } )
@@ -114,9 +126,7 @@ module.exports = {
       let granted = await grantPermissionsStream( params )
 
       if ( granted ) {
-        await pubsub.publish( STREAM_PERMISSION_GRANTED, {
-          streamPermissionGranted: { ...params, grantor: context.userId }, userId: params.userId, streamId: params.streamId
-        } )
+        await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: args.permissionParams.streamId, sharedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 
       return granted
@@ -127,19 +137,25 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
-        await pubsub.publish( STREAM_PERMISSION_REVOKED, {
-          streamPermissionRevoked: { ...args.permissionParams }, userId: args.permissionParams.userId, streamId: args.permissionParams.streamId
-        } )
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 
       return revoked
     }
 
   },
+
   Subscription: {
 
     userStreamCreated: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ USER_STREAM_CREATED ] ),
+      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ USER_STREAM_CREATED ] ),
+        ( payload, variables, context ) => {
+          return payload.ownerId === context.userId
+        } )
+    },
+
+    userStreamDeleted: {
+      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ USER_STREAM_DELETED ] ),
         ( payload, variables, context ) => {
           return payload.ownerId === context.userId
         } )
@@ -149,32 +165,17 @@ module.exports = {
       subscribe: withFilter(
         ( ) => pubsub.asyncIterator( [ STREAM_UPDATED ] ),
         async ( payload, variables, context ) => {
-          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+          await authorizeResolver( context.userId, payload.id, 'stream:reviewer' )
+          return payload.id === variables.streamId
+        } )
+    },
 
+    streamDeleted: {
+      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ STREAM_DELETED ] ),
+        async ( payload, variables, context ) => {
+          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
           return payload.streamId === variables.streamId
         } )
     },
-
-    userStreamDeleted: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ USER_STREAM_DELETED ] ),
-        ( payload, variables, context ) => {
-          return payload.ownerId === context.userId
-        } )
-    },
-
-    streamPermissionGranted: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
-        ( payload, variables ) => {
-          return payload.userId === variables.userId
-        } )
-    },
-
-    streamPermissionRevoked: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
-        ( payload, variables ) => {
-          return payload.userId === variables.userId
-        } )
-    }
   }
-
 }

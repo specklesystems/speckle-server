@@ -129,14 +129,14 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
 
   let userAclEntry = await knex( role.aclTableName ).select( '*' ).where( { resourceId: resourceId, userId: userId } ).first( )
 
-  if ( !userAclEntry ) throw new ForbiddenError( 'You are not authorized' )
+  if ( !userAclEntry ) throw new ForbiddenError( 'You do not have access to this resource.' )
 
   userAclEntry.role = roles.find( r => r.name === userAclEntry.role )
 
   if ( userAclEntry.role.weight >= role.weight )
     return userAclEntry.role.name
   else
-    throw new ForbiddenError( 'You are not authorized' )
+    throw new ForbiddenError( 'You are not authorized.' )
 }
 
 module.exports = {
