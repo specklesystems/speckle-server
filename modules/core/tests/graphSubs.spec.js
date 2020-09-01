@@ -140,7 +140,6 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const query = gql `subscription permissionGranted { userStreamCreated }`
       const client = createSubscriptionObservable( wsAddr, userB.token, query )
       const consumer = client.subscribe( eventData => {
-        console.log( eventData )
         expect( eventData.data.userStreamCreated ).to.exist
         expect( eventData.data.userStreamCreated.sharedBy ).to.exist
         eventNum++
@@ -168,7 +167,6 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const query = gql `subscription permissionRevoked { userStreamDeleted }`
       const client = createSubscriptionObservable( wsAddr, userB.token, query )
       const consumer = client.subscribe( eventData => {
-        console.log( eventData.data )
         expect( eventData.data.userStreamDeleted ).to.exist
         expect( eventData.data.userStreamDeleted.revokedBy ).to.exist
         eventNum++

@@ -91,7 +91,7 @@ module.exports = {
 
       await updateStream( update )
 
-      await pubsub.publish( STREAM_UPDATED, { streamUpdated: update, streamId: args.stream.id } )
+      await pubsub.publish( STREAM_UPDATED, { streamUpdated: update, id: args.stream.id } )
 
       return true
     },
@@ -106,7 +106,7 @@ module.exports = {
       let users = await getStreamUsers( { streamId: args.id } )
 
       for ( let user of users ) {
-        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { streamId: args.id }, ownerId: user.id } )
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.id }, ownerId: user.id } )
       }
 
       // delay deletion by a bit so we can do auth checks
@@ -137,7 +137,7 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
-        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { streamId: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
         // await pubsub.publish( USER_STREAM_DELETED, {
         //   userStreamPermissionRevoked: { ...args.permissionParams },
         //   userId: args.permissionParams.userId,
