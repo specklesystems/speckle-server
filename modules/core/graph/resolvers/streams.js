@@ -91,7 +91,7 @@ module.exports = {
 
       await updateStream( update )
 
-      await pubsub.publish( STREAM_UPDATED, { streamUpdated: update, id: args.stream.id } )
+      await pubsub.publish( STREAM_UPDATED, { streamUpdated: { id: args.stream.id, name: args.stream.name, description: args.stream.description }, id: args.stream.id } )
 
       return true
     },
@@ -138,11 +138,6 @@ module.exports = {
 
       if ( revoked ) {
         await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
-        // await pubsub.publish( USER_STREAM_DELETED, {
-        //   userStreamPermissionRevoked: { ...args.permissionParams },
-        //   userId: args.permissionParams.userId,
-        //   streamId: args.permissionParams.streamId
-        // } )
       }
 
       return revoked
@@ -170,8 +165,8 @@ module.exports = {
       subscribe: withFilter(
         ( ) => pubsub.asyncIterator( [ STREAM_UPDATED ] ),
         async ( payload, variables, context ) => {
-          await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
-          return payload.streamId === variables.streamId
+          await authorizeResolver( context.userId, payload.id, 'stream:reviewer' )
+          return payload.id === variables.streamId
         } )
     },
 

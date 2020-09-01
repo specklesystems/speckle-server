@@ -198,8 +198,6 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const query = gql `subscription streamUpdated { streamUpdated( streamId: "${streamId}" ) }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
-        // console.log( 'update subscription log' )
-        // console.log( eventData )
         expect( eventData.data.streamUpdated ).to.exist
         eventNum++
       } )
