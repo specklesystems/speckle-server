@@ -51,6 +51,7 @@ module.exports = {
     }
 
   },
+
   Stream: {
 
     async collaborators( parent, args, context, info ) {
@@ -59,6 +60,7 @@ module.exports = {
     }
 
   },
+
   User: {
 
     async streams( parent, args, context, info ) {
@@ -73,6 +75,7 @@ module.exports = {
     }
 
   },
+
   Mutation: {
 
     async streamCreate( parent, args, context, info ) {
@@ -123,11 +126,7 @@ module.exports = {
       let granted = await grantPermissionsStream( params )
 
       if ( granted ) {
-        await pubsub.publish( STREAM_PERMISSION_GRANTED, {
-          streamPermissionGranted: { ...params, grantor: context.userId },
-          userId: params.userId,
-          streamId: params.streamId
-        } )
+        await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: args.permissionParams.streamId, sharedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 
       return granted
@@ -138,17 +137,19 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
-        await pubsub.publish( STREAM_PERMISSION_REVOKED, {
-          streamPermissionRevoked: { ...args.permissionParams },
-          userId: args.permissionParams.userId,
-          streamId: args.permissionParams.streamId
-        } )
+        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { streamId: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
+        // await pubsub.publish( USER_STREAM_DELETED, {
+        //   userStreamPermissionRevoked: { ...args.permissionParams },
+        //   userId: args.permissionParams.userId,
+        //   streamId: args.permissionParams.streamId
+        // } )
       }
 
       return revoked
     }
 
   },
+
   Subscription: {
 
     userStreamCreated: {
@@ -181,19 +182,5 @@ module.exports = {
           return payload.streamId === variables.streamId
         } )
     },
-
-    streamPermissionGranted: {
-      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ STREAM_PERMISSION_GRANTED ] ),
-        ( payload, variables ) => {
-          return payload.userId === variables.userId
-        } )
-    },
-
-    streamPermissionRevoked: {
-      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ STREAM_PERMISSION_REVOKED ] ),
-        ( payload, variables ) => {
-          return payload.userId === variables.userId
-        } )
-    }
   }
 }

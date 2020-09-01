@@ -111,19 +111,6 @@ extend type Subscription {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  """
-  Subscribes to stream permission granted event. Use this to display an up-to-date list of streams for your profile.
-  """
-  streamPermissionGranted( userId: String! ): JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "profile:read")
-
-  """
-  Subscribes to stream delete event. Use this to display an up-to-date list of streams for your profile.
-  """
-  streamPermissionRevoked( userId: String! ): JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "profile:read")
 }
 
 input StreamCreateInput {
