@@ -17,12 +17,10 @@ const {
 const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 // subscription events
-const USER_STREAM_CREATED = 'USER_STREAM_CREATED'
-const USER_STREAM_DELETED = 'USER_STREAM_DELETED'
+const USER_STREAM_ADDED = 'USER_STREAM_ADDED'
+const USER_STREAM_REMOVED = 'USER_STREAM_REMOVED'
 const STREAM_UPDATED = 'STREAM_UPDATED'
 const STREAM_DELETED = 'STREAM_DELETED'
-const STREAM_PERMISSION_GRANTED = 'STREAM_PERMISSION_GRANTED'
-const STREAM_PERMISSION_REVOKED = 'STREAM_PERMISSION_REVOKED'
 
 function sleep( ms ) {
   return new Promise( ( resolve ) => {
@@ -80,7 +78,7 @@ module.exports = {
 
     async streamCreate( parent, args, context, info ) {
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
-      await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: id, ...args.stream }, ownerId: context.userId } )
+      await pubsub.publish( USER_STREAM_ADDED, { userStreamAdded: { id: id, ...args.stream }, ownerId: context.userId } )
       return id
     },
 
@@ -106,7 +104,7 @@ module.exports = {
       let users = await getStreamUsers( { streamId: args.id } )
 
       for ( let user of users ) {
-        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.id }, ownerId: user.id } )
+        await pubsub.publish( USER_STREAM_REMOVED, { userStreamRemoved: { id: args.id }, ownerId: user.id } )
       }
 
       // delay deletion by a bit so we can do auth checks
@@ -126,7 +124,7 @@ module.exports = {
       let granted = await grantPermissionsStream( params )
 
       if ( granted ) {
-        await pubsub.publish( USER_STREAM_CREATED, { userStreamCreated: { id: args.permissionParams.streamId, sharedBy: context.userId }, ownerId: args.permissionParams.userId } )
+        await pubsub.publish( USER_STREAM_ADDED, { userStreamAdded: { id: args.permissionParams.streamId, sharedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 
       return granted
@@ -137,7 +135,7 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
-        await pubsub.publish( USER_STREAM_DELETED, { userStreamDeleted: { id: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
+        await pubsub.publish( USER_STREAM_REMOVED, { userStreamRemoved: { id: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 
       return revoked
@@ -147,15 +145,15 @@ module.exports = {
 
   Subscription: {
 
-    userStreamCreated: {
-      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ USER_STREAM_CREATED ] ),
+    userStreamAdded: {
+      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ USER_STREAM_ADDED ] ),
         ( payload, variables, context ) => {
           return payload.ownerId === context.userId
         } )
     },
 
-    userStreamDeleted: {
-      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ USER_STREAM_DELETED ] ),
+    userStreamRemoved: {
+      subscribe: withFilter( ( ) => pubsub.asyncIterator( [ USER_STREAM_REMOVED ] ),
         ( payload, variables, context ) => {
           return payload.ownerId === context.userId
         } )
