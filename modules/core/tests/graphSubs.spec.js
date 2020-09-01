@@ -79,10 +79,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
   describe( 'Streams', ( ) => {
     it( 'A user (me) should be notified when a stream is created', async ( ) => {
       let eventNum = 0
-      const query = gql `subscription mySub { userStreamCreated }`
+      const query = gql `subscription mySub { userStreamAdded }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
-        expect( eventData.data.userStreamCreated ).to.exist
+        expect( eventData.data.userStreamAdded ).to.exist
         eventNum++
       } )
 
@@ -110,10 +110,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const sid2 = sc2.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql `subscription userStreamDeleted { userStreamDeleted }`
+      const query = gql `subscription userStreamRemoved { userStreamRemoved }`
       const client = createSubscriptionObservable( wsAddr, userA.token, query )
       const consumer = client.subscribe( eventData => {
-        expect( eventData.data.userStreamDeleted ).to.exist
+        expect( eventData.data.userStreamRemoved ).to.exist
         eventNum++
       } )
 
@@ -137,11 +137,11 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const streamId = resSC.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql `subscription permissionGranted { userStreamCreated }`
+      const query = gql `subscription permissionGranted { userStreamAdded }`
       const client = createSubscriptionObservable( wsAddr, userB.token, query )
       const consumer = client.subscribe( eventData => {
-        expect( eventData.data.userStreamCreated ).to.exist
-        expect( eventData.data.userStreamCreated.sharedBy ).to.exist
+        expect( eventData.data.userStreamAdded ).to.exist
+        expect( eventData.data.userStreamAdded.sharedBy ).to.exist
         eventNum++
       } )
 
@@ -164,11 +164,11 @@ describe( 'GraphQL API Subscriptions', ( ) => {
       const streamId = resSC.body.data.streamCreate
 
       let eventNum = 0
-      const query = gql `subscription permissionRevoked { userStreamDeleted }`
+      const query = gql `subscription permissionRevoked { userStreamRemoved }`
       const client = createSubscriptionObservable( wsAddr, userB.token, query )
       const consumer = client.subscribe( eventData => {
-        expect( eventData.data.userStreamDeleted ).to.exist
-        expect( eventData.data.userStreamDeleted.revokedBy ).to.exist
+        expect( eventData.data.userStreamRemoved ).to.exist
+        expect( eventData.data.userStreamRemoved.revokedBy ).to.exist
         eventNum++
       } )
 
@@ -245,7 +245,7 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
     it( 'Should *not* be notified of stream creation if invalid token', async ( ) => {
       let eventNum = 0
-      const query = gql `subscription mySub { userStreamCreated }`
+      const query = gql `subscription mySub { userStreamAdded }`
       const client = createSubscriptionObservable( wsAddr, "faketoken123", query )
       const consumer = client.subscribe( eventData => {
         expect( eventData.data ).to.not.exist
@@ -264,10 +264,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     } ).timeout( 5000 )
 
     it( 'Should *not* be notified of another user stream created', async ( ) => {
-      const query = gql `subscription mySub { userStreamCreated }`
+      const query = gql `subscription mySub { userStreamAdded }`
       const client = createSubscriptionObservable( wsAddr, userB.token, query )
       const consumer = client.subscribe( eventData => {
-        expect( eventData.data.userStreamCreated ).to.not.exist
+        expect( eventData.data.userStreamAdded ).to.not.exist
       } )
 
       await sleep( 500 )
@@ -286,10 +286,10 @@ describe( 'GraphQL API Subscriptions', ( ) => {
 
     it( 'Should *not* allow subscribing to stream creation without profile:read scope', async ( ) => {
       let eventNum = 0
-      const query = gql `subscription mySub { userStreamCreated }`
+      const query = gql `subscription mySub { userStreamAdded }`
       const client = createSubscriptionObservable( wsAddr, userC.token, query )
       const consumer = client.subscribe( eventData => {
-        expect( eventData.data.userStreamCreated ).to.not.exist
+        expect( eventData.data.userStreamAdded ).to.not.exist
         eventNum++
       } )
 

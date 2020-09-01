@@ -79,18 +79,18 @@ extend type Subscription {
   #
 
   """
-  Subscribes to new stream created event for your profile. Use this to display an up-to-date list of streams.
+  Subscribes to new stream added event for your profile. Use this to display an up-to-date list of streams.
   **NOTE**: If someone shares a stream with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
   """
-    userStreamCreated: JSONObject
+  userStreamAdded: JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:read")
 
   """
-  Subscribes to stream deleted event for your profile. Use this to display an up-to-date list of streams for your profile.
+  Subscribes to stream removed event for your profile. Use this to display an up-to-date list of streams for your profile.
   **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
   """
-  userStreamDeleted: JSONObject
+  userStreamRemoved: JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:read")
 
