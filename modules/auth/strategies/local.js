@@ -1,8 +1,8 @@
 'use strict'
 const passport = require( 'passport' )
-const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy
 const URL = require( 'url' ).URL
 const appRoot = require( 'app-root-path' )
+const debug = require( 'debug' )
 const { createUser, findOrCreateUser, validatePasssword, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
@@ -29,11 +29,11 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     try {
       if ( !req.body.password )
         throw new Error( 'Password missing' )
-      
       let userId = await createUser( req.body )
       req.user = { id: userId }
       return next( )
     } catch ( err ) {
+      debug( 'speckle:errors' )( err )
       return res.status( 400 ).send( { err: err.message } )
     }
   }, finalizeAuth )
