@@ -6,7 +6,9 @@ const ExpressSession = require( 'express-session' )
 const RedisStore = require( 'connect-redis' )( ExpressSession )
 const passport = require( 'passport' )
 const debug = require( 'debug' )
+
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( './services/apps' )
+const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 
 let authStrategies = [ ]
 
@@ -43,7 +45,11 @@ exports.init = ( app, options ) => {
         return res.status( 400 ).send( err.message )
       }
     } else {
-      return res.status( 200 ).send( { userId: req.user.id } )
+      if ( process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ) {
+        let token = await createPersonalAccessToken( req.user.id, 'test token', [ 'streams:write', 'streams:read', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
+        return res.status( 200 ).send( { userId: req.user.id, apiToken: token } )
+      }
+      return res.status( 200 ).end( )
     }
   }
 
