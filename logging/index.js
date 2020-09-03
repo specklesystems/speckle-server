@@ -6,7 +6,7 @@ module.exports = function ( app ) {
   Sentry.setUser( { id: machineIdSync( ) } )
 
   Sentry.init( {
-    dsn: 'https://84171d4d992f43a5bc867a6694934b01@o436188.ingest.sentry.io/5416515',
+    dsn: process.env.SENTRY_DSN || 'https://84171d4d992f43a5bc867a6694934b01@o436188.ingest.sentry.io/5416515',
     integrations: [
       new Sentry.Integrations.Http( { tracing: true } ),
       new Tracing.Integrations.Express( { app } )
