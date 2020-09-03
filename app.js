@@ -1,15 +1,19 @@
 'use strict'
 
-
-let http = require( 'http' )
+const http = require( 'http' )
 const url = require( 'url' )
-let WebSocket = require( 'ws' )
+const WebSocket = require( 'ws' )
 const express = require( 'express' )
 const compression = require( 'compression' )
 const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const debug = require( 'debug' )
+
+const Sentry = require( '@sentry/node' )
+const Tracing = require( '@sentry/tracing' )
+const SentryInit = require( `${appRoot}/logging` )
+
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
 require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
@@ -25,6 +29,8 @@ let graphqlServer
  */
 exports.init = async ( ) => {
   const app = express( )
+
+  SentryInit( app )
 
   await knex.migrate.latest( )
 
@@ -66,6 +72,9 @@ exports.init = async ( ) => {
         debug( `speckle:debug` )( 'ws on disconnect connect event' )
       },
     },
+    plugins: [
+      require( `${appRoot}/logging/apolloPlugin` )
+    ],
     tracing: process.env.NODE_ENV === 'development'
   } )
 
@@ -120,6 +129,8 @@ exports.startHttp = async ( app ) => {
   // Final apollo server setup
   graphqlServer.installSubscriptionHandlers( server )
   graphqlServer.applyMiddleware( { app: app } )
+
+  app.use( Sentry.Handlers.errorHandler( ) )
 
   server.on( 'listening', ( ) => {
     debug( `speckle:startup` )( `     🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
