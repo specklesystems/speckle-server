@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const Sentry = require( '@sentry/node' )
 
 module.exports = function ( { err, kind, extras } ) {

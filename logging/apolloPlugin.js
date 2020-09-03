@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const Sentry = require( '@sentry/node' )
 const { ApolloError } = require( 'apollo-server-express' )
 

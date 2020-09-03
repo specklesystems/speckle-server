@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
 const { machineIdSync } = require( 'node-machine-id' )
