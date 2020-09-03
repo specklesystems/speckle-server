@@ -7,6 +7,7 @@ const RedisStore = require( 'connect-redis' )( ExpressSession )
 const passport = require( 'passport' )
 const debug = require( 'debug' )
 
+const sentry = require( `${appRoot}/logging/sentryHelper` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( './services/apps' )
 const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 
@@ -42,7 +43,8 @@ exports.init = ( app, options ) => {
         let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
         return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
       } catch ( err ) {
-        return res.status( 400 ).send( err.message )
+        sentry( { err } )
+        res.status( 401 ).send( 'Invalid request.' )
       }
     } else {
       if ( process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ) {
@@ -70,7 +72,7 @@ exports.init = ( app, options ) => {
       let authResponse = await createAppTokenFromAccessCode( { appId: req.body.appId, appSecret: req.body.appSecret, accessCode: req.body.accessCode, challenge: req.body.challenge } )
       return res.send( authResponse )
     } catch ( err ) {
-      debug( 'speckle:errors' )( err )
+      sentry( { err } )
       return res.status( 401 ).send( { err: err.message } )
     }
   } )
