@@ -3,16 +3,20 @@ const { ApolloError } = require( 'apollo-server-express' )
 
 module.exports = {
   requestDidStart( ctx ) {
-    console.log( ctx.request )
-    let transaction = Sentry.startTransaction( {
-      op: 'GQL Task',
-      name: ctx.request.operationName
-    } )
-
-    Sentry.configureScope( scope => scope.setSpan( transaction ) )
-    ctx.request.transaction = transaction
-
     return {
+      didResolveOperation( ctx ) {
+        if ( !ctx.operation ) {
+          return
+        }
+
+        let transaction = Sentry.startTransaction( {
+          op: `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`,
+          name: `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
+        } )
+
+        Sentry.configureScope( scope => scope.setSpan( transaction ) )
+        ctx.request.transaction = transaction
+      },
       didEncounterErrors( ctx ) {
         if ( !ctx.operation )
           return
@@ -36,9 +40,6 @@ module.exports = {
             Sentry.captureException( err )
           } )
         }
-      },
-      didResolveOperation( ctx ) {
-        console.log( ctx.operation )
       },
       willSendResponse( ctx ) {
         if ( ctx.request.transaction ) {
