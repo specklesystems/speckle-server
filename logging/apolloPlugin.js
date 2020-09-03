@@ -2,7 +2,16 @@ const Sentry = require( '@sentry/node' )
 const { ApolloError } = require( 'apollo-server-express' )
 
 module.exports = {
-  requestDidStart( ) {
+  requestDidStart( ctx ) {
+    console.log( ctx.request )
+    let transaction = Sentry.startTransaction( {
+      op: 'GQL Task',
+      name: ctx.request.operationName
+    } )
+
+    Sentry.configureScope( scope => scope.setSpan( transaction ) )
+    ctx.request.transaction = transaction
+
     return {
       didEncounterErrors( ctx ) {
         if ( !ctx.operation )
@@ -12,7 +21,6 @@ module.exports = {
           if ( err instanceof ApolloError ) {
             continue
           }
-
           Sentry.withScope( scope => {
             scope.setTag( 'kind', ctx.operation.operation )
             scope.setExtra( 'query', ctx.request.query )
@@ -27,6 +35,14 @@ module.exports = {
             }
             Sentry.captureException( err )
           } )
+        }
+      },
+      didResolveOperation( ctx ) {
+        console.log( ctx.operation )
+      },
+      willSendResponse( ctx ) {
+        if ( ctx.request.transaction ) {
+          ctx.request.transaction.finish( )
         }
       }
     }
