@@ -7,13 +7,24 @@ exports.up = async knex => {
   await knex.schema.createTable( 'server_apps', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'secret', 10 )
-    table.string( 'name' ).notNullable( )
-    table.string( 'author' ).notNullable( )
-    table.string( 'description' )
-    table.string( 'ownerId' ).references( 'id' ).inTable( 'users' ).onDelete( 'cascade' )
+
+    table.string( 'name', 200 ).notNullable( )
+    table.string( 'description', 500 )
+    table.string( 'termsAndConditionsLink', 100 )
+    table.string( 'logo' )
+
+    table.boolean( 'public' ).defaultTo( false )
+
+    table.string( 'authorId' ).references( 'id' ).inTable( 'users' ).onDelete( 'cascade' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
-    table.string( 'redirectUrl' ).notNullable( )
-    table.boolean( 'firstparty' ).defaultTo( false ).notNullable( )
+
+    table.string( 'redirectUrl', 100 ).notNullable( )
+  } )
+
+  // Tracks which scopes are available to each individual app.
+  await knex.schema.createTable( 'server_apps_scopes', table => {
+    table.string( 'appId' ).references( 'id' ).inTable( 'server_apps' ).notNullable( ).onDelete( 'cascade' ).index( )
+    table.string( 'scopeName' ).references( 'name' ).inTable( 'scopes' ).notNullable( ).onDelete( 'cascade' ).index( )
   } )
 
   await knex.schema.createTable( 'authorization_codes', table => {
@@ -34,12 +45,6 @@ exports.up = async knex => {
     table.bigint( 'lifespan' ).defaultTo( 1.577e+10 ) // 6 months
   } )
 
-  // Tracks which scopes are available to each individual app.
-  await knex.schema.createTable( 'server_apps_scopes', table => {
-    table.string( 'appId' ).references( 'id' ).inTable( 'server_apps' ).notNullable( ).onDelete( 'cascade' ).index( )
-    table.string( 'scopeName' ).references( 'name' ).inTable( 'scopes' ).notNullable( ).onDelete( 'cascade' ).index( )
-  } )
-
   await knex.schema.createTable( 'user_server_app_tokens', table => {
     table.string( 'appId' ).references( 'id' ).inTable( 'server_apps' ).notNullable( ).onDelete( 'cascade' ).index( )
     table.string( 'userId' ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' ).index( )
@@ -48,23 +53,23 @@ exports.up = async knex => {
 
 
 
-  // Seed the table with the two applications we're going to provide. They have invariant ids :) 
+  // Seed the table with the two applications we're going to provide. They have invariant ids :)
   // 1) Desktop connectors
   await knex( 'server_apps' ).insert( {
-    id: 'connectors',
-    secret: 'connectors',
-    name: 'Speckle Desktop Connectors',
-    description: 'These are the desktop connectors for various authoring software (Rhino, Revit, etc.).',
-    author: 'Speckle',
-    redirectUrl: 'http://localhost:24707', // will redirect to a local server 
-    firstparty: true
+    id: 'sdm',
+    secret: 'sdm',
+    name: 'Speckle Desktop Manager',
+    description: 'Manages local installations of Speckle connectors, kits and everything else.',
+    redirectUrl: 'speckle://', // will redirect to a local server
   } )
 
-  const desktopConnectorScopes = [ 
-    { appId: 'connectors', scopeName: 'streams:read' }, 
-    { appId: 'connectors', scopeName: 'streams:write' },
-    { appId: 'connectors', scopeName: 'profile:read' },
-    { appId: 'connectors', scopeName: 'profile:email' } ]
+  const desktopConnectorScopes = [
+    { appId: 'sdm', scopeName: 'streams:read' },
+    { appId: 'sdm', scopeName: 'streams:write' },
+    { appId: 'sdm', scopeName: 'profile:read' },
+    { appId: 'sdm', scopeName: 'profile:email' },
+    { appId: 'sdm', scopeName: 'users:read' },
+  ]
   await knex( 'server_apps_scopes' ).insert( desktopConnectorScopes )
 
   // The main server web app
@@ -73,9 +78,7 @@ exports.up = async knex => {
     secret: 'spklwebapp',
     name: 'Speckle',
     description: 'This is the main Speckle server web application.',
-    author: 'Speckle',
     redirectUrl: 'self', // ie, will just redirect to window.location
-    firstparty: true
   } )
 
   const scopes = await knex( 'scopes' ).select( '*' )
@@ -88,9 +91,7 @@ exports.up = async knex => {
     secret: 'explorer',
     name: 'Speckle API Explorer',
     description: 'GraphQL Playground with authentication.',
-    author: 'Speckle',
     redirectUrl: '/explorer',
-    firstparty: false
   } )
 
   const explorerScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'explorer', scopeName: s.name } ) )
@@ -102,9 +103,7 @@ exports.up = async knex => {
     secret: '12345',
     name: 'Mock Application',
     description: 'Lorem ipsum dolor sic amet.',
-    author: 'Radomir',
     redirectUrl: 'http://localhost:1337', // ie, will just redirect to window.location
-    firstparty: false
   } )
 
   const mockAppScopes = [ { appId: 'mock', scopeName: 'streams:read' }, { appId: 'mock', scopeName: 'users:read' }, { appId: 'mock', scopeName: 'profile:email' } ]

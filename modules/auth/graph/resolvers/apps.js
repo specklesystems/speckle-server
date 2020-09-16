@@ -9,7 +9,9 @@ const { authStrategies } = require( '../../index' )
 
 module.exports = {
   Query: {
-    async serverApp( parent, args, context, info ) {
+    async app( parent, args, context, info ) {
+      // TODO: check authorization
+      // If user === owner, return full app, otherwise delete the secret!
       return await getApp( { id: args.id } )
     }
   },
@@ -18,6 +20,24 @@ module.exports = {
       return authStrategies
     }
   },
+  User: {
+    async authorizedApps( parent, args, context, info ) {
+      // TODO
+    },
+    async createdApps( parent, args, context, info ) {
+      // TODO
+    }
+  },
   Mutation: {
+    async appCreate( parent, args, context, info ) {
+      // TODO
+    },
+    async appUpdate( parent, args, context, info ) {
+      // restrict to owner
+    },
+    async appDelete( parent, args, context, info ) {
+      // TODO
+      // restrict to owner
+    },
   }
 }
