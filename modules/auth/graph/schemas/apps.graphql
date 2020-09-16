@@ -1,0 +1,44 @@
+extend type Query {
+  """
+  Gets a specific app from the server.
+  """
+  app( id: String! ): ServerApp
+
+  """
+  Returns all the publicly available apps on this server.
+  """
+  apps: [ServerApp]
+}
+
+type ServerApp {
+  id: String!
+  secret: String!
+  name: String!
+  description: String
+  termsAndConditionsLink: String
+  logo: String
+  authorId: User
+  createdAt: String!
+  redirectUrl: String!
+  scopes: [Scope]!
+}
+
+extend type User {
+  authorizedApps: [ServerApp]
+  createdApps: [ServerApp]
+}
+
+extend type Mutation {
+  appCreate(app: AppCreateUpdateInput): String!
+  appUpdate(app: AppCreateUpdateInput): Boolean!
+  appDelete(appId: String!): Boolean!
+}
+
+input AppCreateUpdateInput {
+  name: String!
+  description: String!
+  termsAndConditionsLink: String
+  logo: String
+  redirectUrl: String!
+  scopes: [String]!
+}

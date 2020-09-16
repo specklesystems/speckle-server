@@ -1,26 +1,7 @@
-extend type Query {
-  app( id: String! ): ServerApp
-}
-
-type ServerApp {
-  id: String!
-  secret: String!
-  name: String!
-  description: String
-  termsAndConditionsLink: String
-  logo: String
-  authorId: User
-  createdAt: String!
-  redirectUrl: String!
-  scopes: [Scope]!
-}
-
-extend type User {
-  authorizedApps: [ServerApp]
-  createdApps: [ServerApp]
-}
-
 extend type ServerInfo {
+  """
+  The authentication strategies available on this server.
+  """
   authStrategies: [AuthStrategy]
 }
 
@@ -30,19 +11,4 @@ type AuthStrategy {
   icon: String!,
   url: String!,
   color: String
-}
-
-extend type Mutation {
-  appCreate(app: AppCreateUpdateInput): String!
-  appUpdate(app: AppCreateUpdateInput): Boolean
-  appDelete(appId: String): Boolean
-}
-
-input AppCreateUpdateInput {
-  name: String!
-  description: String!
-  termsAndConditionsLink: String
-  logo: String
-  redirectUrl: String!
-  scopes: [String]!
 }
