@@ -20,7 +20,6 @@ exports.up = async knex => {
   // Users.
   await knex.schema.createTable( 'users', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'username', 20 ).unique( ).notNullable( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'name', 256 ).notNullable( )
     table.string( 'bio' )
