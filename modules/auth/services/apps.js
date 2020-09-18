@@ -18,18 +18,21 @@ const RefreshTokens = ( ) => knex( 'refresh_tokens' )
 let allScopes = null
 
 module.exports = {
+
   async getApp( { id } ) {
+
     if ( allScopes === null ) allScopes = await Scopes( ).select( '*' )
 
     let app = await ServerApps( ).select( '*' ).where( { id: id } ).first( )
     let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
-
-    app.author = await Users( ).select( 'id', 'name' ).where( { id: app.authorId } )
+    app.author = await Users( ).select( 'id', 'name' ).where( { id: app.authorId } ).first( )
     return app
+
   },
 
   async createApp( app ) {
+
     app.id = crs( { length: 10 } )
     app.secret = crs( { length: 10 } )
 
@@ -45,6 +48,7 @@ module.exports = {
     await ServerApps( ).insert( app )
     await ServerAppsScopes( ).insert( scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
     return { id: app.id, secret: app.secret }
+
   },
 
   async updateApp( { app } ) {
