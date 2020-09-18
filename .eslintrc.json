@@ -44,10 +44,6 @@
             "error",
             2
         ],
-        "padded-blocks": [
-            "error",
-            "never"
-        ],
         "space-unary-ops": [
             2, {
                 "words": true,

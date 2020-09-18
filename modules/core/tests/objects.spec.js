@@ -50,7 +50,6 @@ let sampleObject = JSON.parse( `{
 describe( 'Objects', ( ) => {
 
   let userOne = {
-    username: 'dim42',
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie43@gmail.com',
     password: 'sn3aky-1337-b1m'
@@ -228,13 +227,13 @@ describe( 'Objects', ( ) => {
     expect( test.objects[ 0 ].data.test.value ).to.be.below( test.objects[ 1 ].data.test.value )
     expect( test2.objects[ 0 ].data.test.value ).to.be.below( test2.objects[ 1 ].data.test.value )
 
-    // continuity 
+    // continuity
     expect( test.objects[ test.objects.length - 1 ].data.test.value + 1 ).to.equal( test2.objects[ 0 ].data.test.value )
   } )
 
   it( 'should query object children desc on a field with duplicate values, without selecting fields', async ( ) => {
 
-    // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc. 
+    // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc.
     let test3 = await getObjectChildrenQuery( {
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
@@ -252,7 +251,7 @@ describe( 'Objects', ( ) => {
       limit: 5
     } )
 
-    // limit  
+    // limit
     expect( test3.objects.length ).to.equal( 5 )
     expect( test4.objects.length ).to.equal( 5 )
 
@@ -264,7 +263,7 @@ describe( 'Objects', ( ) => {
     expect( test3.totalCount ).to.equal( 100 )
     expect( test4.totalCount ).to.equal( 100 )
 
-    expect( test3.objects[ 0 ].data.similar ).to.be.below( test3.objects[ 1 ].data.similar ) // 0, 1, 1, 1, ... 
+    expect( test3.objects[ 0 ].data.similar ).to.be.below( test3.objects[ 1 ].data.similar ) // 0, 1, 1, 1, ...
     expect( test4.objects[ 0 ].data.similar ).to.be.below( test4.objects[ 3 ].data.similar )
 
     // continuity (in reverse)

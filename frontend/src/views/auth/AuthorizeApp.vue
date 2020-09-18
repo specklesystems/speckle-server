@@ -4,11 +4,11 @@
       <v-col cols=12>
         <div>
           <p class='title font-weight-light text-center'>
-            Authorize <span class='accent--text'><b>{{serverApp.name}}</b></span> by <b>{{serverApp.author}}</b>?
+            Authorize <span class='accent--text'><b>{{app.name}}</b></span> by <b>{{app.author}}</b>?
           </p>
-          <p class='caption text-center'>Clicking allow will redirect you to <i>{{serverApp.redirectUrl }}</i></p>
+          <p class='caption text-center'>Clicking allow will redirect you to <i>{{app.redirectUrl }}</i></p>
         </div>
-        <v-expansion-panels multiple hover tile flat small v-show='!serverApp.firstparty' v-model='panel'>
+        <v-expansion-panels multiple hover tile flat small v-show='!app.firstparty' v-model='panel'>
           <v-expansion-panel>
             <v-expansion-panel-header class=' elevation-0'>
               <b>Requested permissions:</b>
@@ -18,7 +18,7 @@
             </v-expansion-panel-header>
             <v-expansion-panel-content>
               <ul class='my-3'>
-                <template v-for='scope in serverApp.scopes'>
+                <template v-for='scope in app.scopes'>
                   <li :key='scope.name'>
                     <b>{{scope.name}}</b>: {{scope.description}}
                   </li>
@@ -58,62 +58,90 @@
   </v-container>
 </template>
 <script>
-import gql from 'graphql-tag'
-import { onLogin } from '../../vue-apollo'
-import debounce from 'lodash.debounce'
-export default {
-  name: 'AuthorizeApp',
-  apollo: {
-    serverApp: {
-      query( ) { return gql ` query { serverApp( id: "${this.appId}") { id name author ownerId firstparty redirectUrl scopes {name description} } } ` },
-      skip( ) { return this.appId === null },
-      result( { data, loading, networkStatus } ) {
-        if ( data.serverApp.firstparty ) {
-          let redirectUrl = data.serverApp.redirectUrl === 'self' ? '/' : data.serverApp.redirectUrl
-          try {
-            window.location = `${redirectUrl}?access_code=${this.accessCode}`
-          } catch ( err ) {
-            // Fetch? 
+  import gql from 'graphql-tag'
+  import {
+    onLogin
+  } from '../../vue-apollo'
+  import debounce from 'lodash.debounce'
+  export default {
+    name: 'AuthorizeApp',
+    apollo: {
+      app: {
+        query() {
+          return gql ` query { app( id: "${this.appId}") { id name redirectUrl scopes {name description} } } `
+        },
+        skip() {
+          return this.appId === null
+        },
+        result({
+          data,
+          loading,
+          networkStatus
+        }) {
+          if (data.app.firstparty) {
+            let redirectUrl = data.app.redirectUrl === 'self' ? '/' : data.app.redirectUrl
+            try {
+              window.location = `${redirectUrl}?access_code=${this.accessCode}`
+            } catch (err) {
+              // Fetch?
+            }
           }
         }
       }
-    }
-  },
-  methods: {
-    async deny( ) {
-      this.state = 1
-      window.history.replaceState( {}, document.title, '/auth/finalize' )
-      fetch( `${this.serverApp.redirectUrl}?success=false`, { method: 'GET' } ).then( ).catch( )
     },
-    async allow( ) {
-      this.state = 2
-      try {
-        window.location = `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`
-      } catch ( err ) {
-        fetch( `${this.serverApp.redirectUrl}?access_code=${this.accessCode}`, { method: 'GET' } ).then( ).catch( )
+    methods: {
+      async deny() {
+        this.state = 1
+        window.history.replaceState({}, document.title, '/auth/finalize')
+        fetch(`${this.app.redirectUrl}?success=false`, {
+          method: 'GET'
+        }).then().catch()
+      },
+      async allow() {
+        this.state = 2
+        if (this.app.redirectUrl === 'self')
+          window.location = `${location.origin}/?access_code=${this.accessCode}`
+        else {
+          try {
+            window.location = `${this.app.redirectUrl}?access_code=${this.accessCode}`
+          } catch (err) {
+            fetch(`${this.app.redirectUrl}?access_code=${this.accessCode}`, {
+              method: 'GET'
+            }).then().catch()
+          }
+        }
+      }
+    },
+    data: () => ({
+      state: 0,
+      currentUrl: window.location.origin,
+      panel: [0],
+      registrationError: false,
+      errorMessage: '',
+      appId: null,
+      app: {
+        name: null,
+        author: null,
+        firstparty: null,
+        scopes: []
+      },
+      token: null,
+      accessCode: null,
+    }),
+    mounted() {
+      let urlParams = new URLSearchParams(window.location.search)
+      this.appId = urlParams.get('appId') || 'spklwebapp'
+      this.accessCode = urlParams.get('access_code')
+      if (!this.accessCode) {
+        this.$router.push({
+          name: "Login",
+          query: {
+            appId: urlParams.get('appId')
+          }
+        })
+        return
       }
     }
-  },
-  data: ( ) => ( {
-    state: 0,
-    currentUrl: window.location.origin,
-    panel: [ 0 ],
-    registrationError: false,
-    errorMessage: '',
-    appId: null,
-    serverApp: { name: null, author: null, firstparty: null, scopes: [ ] },
-    token: null,
-    accessCode: null,
-  } ),
-  mounted( ) {
-    let urlParams = new URLSearchParams( window.location.search )
-    this.appId = urlParams.get( 'appId' ) || 'spklwebapp'
-    this.accessCode = urlParams.get( 'access_code' )
-
-    if ( !this.accessCode ) {
-      this.$router.push( { name: "Login", query: { appId: urlParams.get( 'appId' ) } } )
-      return
-    }
   }
-}
+
 </script>

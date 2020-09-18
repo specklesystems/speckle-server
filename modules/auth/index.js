@@ -77,6 +77,9 @@ exports.init = ( app, options ) => {
     }
   } )
 
+  // TODO: add logout route
+  //
+
 
   // Strategies initialisation & listing
 

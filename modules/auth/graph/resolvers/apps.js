@@ -15,11 +15,6 @@ module.exports = {
       return await getApp( { id: args.id } )
     }
   },
-  ServerInfo: {
-    authStrategies( parent, args, context, info ) {
-      return authStrategies
-    }
-  },
   User: {
     async authorizedApps( parent, args, context, info ) {
       // TODO

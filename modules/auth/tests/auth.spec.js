@@ -15,13 +15,12 @@ const knex = require( `${appRoot}/db/knex` )
 const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( `${appRoot}/modules/core/services/users` )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( `${appRoot}/modules/core/services/tokens` )
 
-const { getApp, registerApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( '../services/apps' )
+const { getApp, createApp, updateApp, deleteApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( '../services/apps' )
 
 describe( 'Apps', ( ) => {
 
-  describe( 'Services', ( ) => {
+  describe( 'Services @apps-services', ( ) => {
     let actor = {
-      username: 'DimitrieStefanescu',
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie@gmail.com',
       password: 'wtfwtfwtf'
@@ -42,7 +41,6 @@ describe( 'Apps', ( ) => {
       expect( app ).to.be.an( 'object' )
       expect( app.redirectUrl ).to.be.a( 'string' )
       expect( app.scopes ).to.be.a( 'array' )
-      expect( app.firstparty ).to.equal( true )
     } )
 
     it( 'Should get the mock app', async ( ) => {
@@ -50,24 +48,33 @@ describe( 'Apps', ( ) => {
       expect( app ).to.be.an( 'object' )
       expect( app.redirectUrl ).to.be.a( 'string' )
       expect( app.scopes ).to.be.a( 'array' )
-      expect( app.firstparty ).to.equal( false )
     } )
 
     let myTestApp = null
 
     it( 'Should register an app', async ( ) => {
-      let res = await registerApp( { name: 'test application', firstparty: true, author: actor.id, scopes: [ 'streams:read' ], redirectUrl: 'http://localhost:1335' } )
+      let res = await createApp( { name: 'test application', scopes: [ 'streams:read' ], redirectUrl: 'http://localhost:1335' } )
 
       expect( res ).to.have.property( 'id' )
       expect( res ).to.have.property( 'secret' )
 
       expect( res.id ).to.be.a( 'string' )
       expect( res.secret ).to.be.a( 'string' )
-      myTestApp = res
 
       let app = await getApp( { id: res.id } )
-      expect( app.firstparty ).to.equal( false )
       expect( app.id ).to.equal( res.id )
+      myTestApp = app
+    } )
+
+    it( 'Should update an app', async ( ) => {
+      let res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:read', 'users:read' ] } } )
+      expect( res ).to.be.a( 'string' )
+
+      let app = await getApp( { id: myTestApp.id } )
+      expect( app.name ).to.equal( 'updated test application' )
+      expect( app.scopes ).to.be.an( 'array' )
+      expect( app.scopes.map( s => s.name ) ).to.include( 'users:read' )
+      expect( app.scopes.map( s => s.name ) ).to.include( 'streams:read' )
     } )
 
     let challenge = 'random'
@@ -103,9 +110,43 @@ describe( 'Apps', ( ) => {
       expect( validation.valid ).to.equal( true )
       expect( validation.userId ).to.equal( actor.id )
     } )
+
+    it( 'Should invalidate all tokens, refresh tokens and access codes for an app if it is updated', async ( ) => {
+      let unusedAccessCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
+      let usedAccessCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
+      let apiTokenResponse = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: usedAccessCode, challenge: challenge } )
+
+      // We now have one unused acces code, an api token and a refresh token.
+      // Proceed to update the app:
+      let res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:write', 'users:read' ] } } )
+
+      let validationResponse = await validateToken( apiTokenResponse.token )
+      expect( validationResponse.valid ).to.equal( false )
+
+      try {
+        let refresh = await refreshAppToken( { refreshToken: apiTokenResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret } )
+        assert.fail( 'Should not be able to refresh token' )
+      } catch ( e ) {
+        // Pass
+      }
+
+      try {
+        let refresh = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: unusedAccessCode, challenge: 'random' } )
+        assert.fail( 'Should not be able to generate new token using old access code' )
+      } catch ( e ) {
+        // Pass
+      }
+
+    } )
+
+    it( 'Should delete an app', async ( ) => {
+      let res = await deleteApp( { id: myTestApp.id } )
+      expect( res ).to.equal( 1 )
+    } )
+
   } )
 
-  describe( 'Local authN', ( ) => {
+  describe( 'Local authN @auth-local', ( ) => {
     let expressApp
     before( async ( ) => {
       await knex.migrate.rollback( )
@@ -123,7 +164,7 @@ describe( 'Apps', ( ) => {
       let res =
         await request( expressApp )
         .post( `/auth/local/register` )
-        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', username: 'dimitrie', company: 'speckle', password: 'roll saving throws' } )
+        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 200 )
 
       expect( res.body.id ).to.be.a.string
@@ -133,7 +174,7 @@ describe( 'Apps', ( ) => {
       let res =
         await request( expressApp )
         .post( `/auth/local/register` )
-        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', username: 'dimitrie' } )
+        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu' } )
         .expect( 400 )
     } )
 
@@ -154,7 +195,7 @@ describe( 'Apps', ( ) => {
     } )
   } )
 
-  describe( 'GraphQL', ( ) => {
+  describe( 'GraphQL @apps-api', ( ) => {
 
     before( async ( ) => {
       await knex.migrate.rollback( )

@@ -20,9 +20,9 @@ let addr
 let wsAddr
 
 describe( 'GraphQL API Core', ( ) => {
-  let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
-  let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let userC = { name: 'd3', username: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
+  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
+  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
+  let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
   let testServer
 
   // set up app & two basic users to ping pong permissions around

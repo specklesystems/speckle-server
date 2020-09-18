@@ -85,7 +85,7 @@ exports.up = async knex => {
   // Streams table.
   await knex.schema.createTable( 'streams', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'name' )
+    table.string( 'name' ).notNullable( ).defaultTo( 'Unnamed Stream' )
     table.text( 'description' )
     table.boolean( 'isPublic' ).defaultTo( true )
     table.string( 'clonedFrom', 10 ).references( 'id' ).inTable( 'streams' )

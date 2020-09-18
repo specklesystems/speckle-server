@@ -25,7 +25,6 @@ const {
 describe( 'Branches', ( ) => {
 
   let user = {
-    username: 'dim4242',
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie4342@gmail.com',
     password: 'sn3aky-1337-b1m'

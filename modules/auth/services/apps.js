@@ -4,7 +4,7 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
-const { createToken, createBareToken } = require( `${appRoot}/modules/core/services/tokens` )
+const { createToken, createBareToken, revokeTokenById } = require( `${appRoot}/modules/core/services/tokens` )
 const ApiTokens = ( ) => knex( 'api_tokens' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
@@ -27,7 +27,7 @@ module.exports = {
     return app
   },
 
-  async registerApp( app ) {
+  async createApp( app ) {
     app.id = crs( { length: 10 } )
     app.secret = crs( { length: 10 } )
 
@@ -38,6 +38,50 @@ module.exports = {
     await ServerApps( ).insert( app )
     await ServerAppsScopes( ).insert( scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
     return { id: app.id, secret: app.secret }
+  },
+
+  async updateApp( { app } ) {
+
+    // any app update should nuke everything and force users to re-authorize it.
+    await module.exports.revokeExistingAppCredentials( { appId: app.id } )
+
+    if ( app.scopes ) {
+      // Flush existing app scopes
+      await ServerAppsScopes( ).where( { appId: app.id } ).del( )
+      // Update new scopes
+      await ServerAppsScopes( ).insert( app.scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
+    }
+
+    delete app.secret
+    delete app.scopes
+
+    let [ res ] = await ServerApps( ).returning( 'id' ).where( { id: app.id } ).update( app )
+    return res
+  },
+
+  async deleteApp( { id } ) {
+
+    await module.exports.revokeExistingAppCredentials( { appId: id } )
+
+    return await ServerApps( ).where( { id: id } ).del( )
+
+  },
+
+  async revokeExistingAppCredentials( { appId } ) {
+
+    let resAc = await AuthorizationCodes( ).where( { appId: appId } ).del( )
+    let resRT = await RefreshTokens( ).where( { appId: appId } ).del( )
+
+    // TODO: delete tokens
+    let resT = await ApiTokens( )
+      .whereIn( 'id', qb => {
+        qb.select( 'tokenId' ).from( 'user_server_app_tokens' ).where( { appId: appId } )
+      } )
+      .del( )
+  },
+
+  async revokeExistingAppCredentialsForUser( { appId, userId } ) {
+    // TODO
   },
 
   async createAuthorizationCode( { appId, userId, challenge } ) {
@@ -124,7 +168,7 @@ module.exports = {
     const { token: appToken } = await createToken( { userId: refreshTokenDb.userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
 
     // Delete previous token, if it exists
-    // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc? 
+    // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc?
     // let previousToken = await ServerAppsTokens( ).select( 'tokenId' ).where( { appId: appId, userId: userId } ).first( )
     // if ( previousToken )
     //   await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
