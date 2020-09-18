@@ -12,7 +12,15 @@ module.exports = {
     async app( parent, args, context, info ) {
       // TODO: check authorization
       // If user === owner, return full app, otherwise delete the secret!
-      return await getApp( { id: args.id } )
+      let app = await getApp( { id: args.id } )
+      return app
+    }
+  },
+  ServerApp: {
+    secret( parent, args, context, info ) {
+      if ( parent.author.id === context.user.id )
+        return parent.secret
+      return 'App secrets are only revealed to their author.'
     }
   },
   User: {
@@ -25,7 +33,7 @@ module.exports = {
   },
   Mutation: {
     async appCreate( parent, args, context, info ) {
-      // TODO
+
     },
     async appUpdate( parent, args, context, info ) {
       // restrict to owner

@@ -14,6 +14,7 @@ exports.up = async knex => {
     table.string( 'logo' )
 
     table.boolean( 'public' ).defaultTo( false )
+    table.boolean( 'trustByDefault' ).defaultTo( false )
 
     table.string( 'authorId' ).references( 'id' ).inTable( 'users' ).onDelete( 'cascade' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -51,63 +52,15 @@ exports.up = async knex => {
     table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).notNullable( ).onDelete( 'cascade' ).index( )
   } )
 
+  let appTokenScopes = [ {
+    name: 'apps:read',
+    description: 'See what applications you have created or have authorized.'
+  }, {
+    name: 'apps:write',
+    description: 'Register applications on your behalf.'
+  } ]
 
-
-  // Seed the table with the two applications we're going to provide. They have invariant ids :)
-  // 1) Desktop connectors
-  await knex( 'server_apps' ).insert( {
-    id: 'sdm',
-    secret: 'sdm',
-    name: 'Speckle Desktop Manager',
-    description: 'Manages local installations of Speckle connectors, kits and everything else.',
-    redirectUrl: 'speckle://', // will redirect to a local server
-  } )
-
-  const desktopConnectorScopes = [
-    { appId: 'sdm', scopeName: 'streams:read' },
-    { appId: 'sdm', scopeName: 'streams:write' },
-    { appId: 'sdm', scopeName: 'profile:read' },
-    { appId: 'sdm', scopeName: 'profile:email' },
-    { appId: 'sdm', scopeName: 'users:read' },
-  ]
-  await knex( 'server_apps_scopes' ).insert( desktopConnectorScopes )
-
-  // The main server web app
-  await knex( 'server_apps' ).insert( {
-    id: 'spklwebapp',
-    secret: 'spklwebapp',
-    name: 'Speckle',
-    description: 'This is the main Speckle server web application.',
-    redirectUrl: 'self', // ie, will just redirect to window.location
-  } )
-
-  const scopes = await knex( 'scopes' ).select( '*' )
-  const webAppScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'spklwebapp', scopeName: s.name } ) )
-  await knex( 'server_apps_scopes' ).insert( webAppScopes )
-
-  // The api explorer app
-  await knex( 'server_apps' ).insert( {
-    id: 'explorer',
-    secret: 'explorer',
-    name: 'Speckle API Explorer',
-    description: 'GraphQL Playground with authentication.',
-    redirectUrl: '/explorer',
-  } )
-
-  const explorerScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'explorer', scopeName: s.name } ) )
-  await knex( 'server_apps_scopes' ).insert( explorerScopes )
-
-  // Mock application
-  await knex( 'server_apps' ).insert( {
-    id: 'mock',
-    secret: '12345',
-    name: 'Mock Application',
-    description: 'Lorem ipsum dolor sic amet.',
-    redirectUrl: 'http://localhost:1337', // ie, will just redirect to window.location
-  } )
-
-  const mockAppScopes = [ { appId: 'mock', scopeName: 'streams:read' }, { appId: 'mock', scopeName: 'users:read' }, { appId: 'mock', scopeName: 'profile:email' } ]
-  await knex( 'server_apps_scopes' ).insert( mockAppScopes )
+  await knex( 'scopes' ).insert( appTokenScopes )
 }
 
 exports.down = async knex => {

@@ -5,6 +5,7 @@ const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
 const { createToken, createBareToken, revokeTokenById } = require( `${appRoot}/modules/core/services/tokens` )
+const Users = ( ) => knex( 'users' )
 const ApiTokens = ( ) => knex( 'api_tokens' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
@@ -22,8 +23,9 @@ module.exports = {
 
     let app = await ServerApps( ).select( '*' ).where( { id: id } ).first( )
     let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
-
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
+
+    app.author = await Users( ).select( 'id', 'name' ).where( { id: app.authorId } )
     return app
   },
 
@@ -31,9 +33,14 @@ module.exports = {
     app.id = crs( { length: 10 } )
     app.secret = crs( { length: 10 } )
 
+    if ( !app.scopes ) {
+      throw new Error( 'Cannot create an app with no scopes.' )
+    }
     let scopes = [ ...app.scopes ]
+
     delete app.scopes
     delete app.firstparty
+    delete app.trustByDefault
 
     await ServerApps( ).insert( app )
     await ServerAppsScopes( ).insert( scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
@@ -69,19 +76,29 @@ module.exports = {
 
   async revokeExistingAppCredentials( { appId } ) {
 
-    let resAc = await AuthorizationCodes( ).where( { appId: appId } ).del( )
-    let resRT = await RefreshTokens( ).where( { appId: appId } ).del( )
+    let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId } ).del( )
+    let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId } ).del( )
 
-    // TODO: delete tokens
-    let resT = await ApiTokens( )
+    let resApiTokenDelete = await ApiTokens( )
       .whereIn( 'id', qb => {
         qb.select( 'tokenId' ).from( 'user_server_app_tokens' ).where( { appId: appId } )
       } )
       .del( )
+
+    return resApiTokenDelete
   },
 
   async revokeExistingAppCredentialsForUser( { appId, userId } ) {
     // TODO
+    let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId, userId: userId } ).del( )
+    let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId, userId: userId } ).del( )
+    let resApiTokenDelete = await ApiTokens( )
+      .whereIn( 'id', qb => {
+        qb.select( 'tokenId' ).from( 'user_server_app_tokens' ).where( { appId: appId, userId: userId } )
+      } )
+      .del( )
+
+    return resApiTokenDelete
   },
 
   async createAuthorizationCode( { appId, userId, challenge } ) {

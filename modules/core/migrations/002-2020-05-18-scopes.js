@@ -18,14 +18,6 @@ exports.up = async knex => {
     description: `Create and delete api tokens on your behalf.`
   },
   {
-    name: 'apps:authorize',
-    description: 'Grant third party applications access rights on your behalf to the api.'
-  },
-  {
-    name: 'apps:create',
-    description: 'Register a third party application.'
-  },
-  {
     name: 'streams:read',
     description: 'Read your streams & and any associated information (branches, tags, comments, objects, etc.)'
   },
@@ -41,7 +33,6 @@ exports.up = async knex => {
     name: 'profile:email',
     description: `Access your email.`
   },
-
   {
     name: 'users:read',
     description: `Read other users' profile on your behalf.`
@@ -49,8 +40,7 @@ exports.up = async knex => {
   {
     name: 'users:email',
     description: 'Access the emails of other users.'
-  }
-  ]
+  } ]
 
   await knex( 'scopes' ).insert( coreModuleScopes )
 }

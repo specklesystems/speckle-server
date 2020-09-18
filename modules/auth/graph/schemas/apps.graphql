@@ -17,21 +17,63 @@ type ServerApp {
   description: String
   termsAndConditionsLink: String
   logo: String
-  authorId: User
+  trustByDefault: Boolean
+  author: AppAuthor
   createdAt: String!
   redirectUrl: String!
   scopes: [Scope]!
 }
 
+type AppAuthor {
+  name: String
+  id: String
+}
+
 extend type User {
+  """
+  Returns the apps you have authorized.
+  """
   authorizedApps: [ServerApp]
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:read")
+
+  """
+  Returns the apps you have created.
+  """
   createdApps: [ServerApp]
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:read")
 }
 
 extend type Mutation {
+  """
+  Register a new third party application.
+  """
   appCreate(app: AppCreateUpdateInput): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+  """
+  Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.**
+  """
   appUpdate(app: AppCreateUpdateInput): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+  """
+  Deletes a thirty party application.
+  """
   appDelete(appId: String!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+  """
+  Revokes (de-authorizes) an application that you have previously authorized.
+  """
+  appRevokeAccess(appId: String!): Boolean
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
 }
 
 input AppCreateUpdateInput {

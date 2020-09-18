@@ -1,6 +1,10 @@
 extend type Query {
+  """
+  Returns a specific stream.
+  """
   stream( id: String! ): Stream
     @hasScope(scope: "streams:read")
+
   """
   All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
   """
