@@ -1,11 +1,21 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
-const { getApp } = require( '../../services/apps' )
+const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 
+const {
+  getApp,
+  getAllPublicApps,
+  getAllAppsCreatedByUser,
+  getAllAppsAuthorizedByUser,
+  createApp,
+  updateApp,
+  deleteApp,
+  revokeExistingAppCredentialsForUser,
+  createAuthorizationCode,
+  exchangeAuthorizationCodeForToken
+} = require( `../../services/apps` )
 const { createAppToken } = require( `${appRoot}/modules/core/services/tokens` )
-const { createApp, updateApp, deleteApp, createAuthorizationCode, exchangeAuthorizationCodeForToken } = require( `../../services/apps` )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
-const { authStrategies } = require( '../../index' )
 
 module.exports = {
   Query: {
@@ -19,7 +29,7 @@ module.exports = {
 
     async apps( parent, args, context, info ) {
 
-      // TODO: Get all public server apps
+      return await getAllPublicApps( )
 
     }
 
@@ -40,10 +50,11 @@ module.exports = {
 
   User: {
     async authorizedApps( parent, args, context, info ) {
-      // TODO
+      let res = await getAllAppsAuthorizedByUser( { userId: context.userId } )
+      return res
     },
     async createdApps( parent, args, context, info ) {
-      // TODO
+      return await getAllAppsCreatedByUser( { userId: context.userId } )
     }
   },
   Mutation: {
@@ -56,12 +67,29 @@ module.exports = {
     },
 
     async appUpdate( parent, args, context, info ) {
-      // restrict to owner
+
+      let app = await getApp( { id: args.app.id } )
+      if ( !app.author && context.role !== 'server:admin' ) throw new ForbiddenError( 'You are not authorized to edit this app.' )
+      if ( app.author.id !== context.userId && context.role !== 'server:admin' ) throw new ForbiddenError( 'You are not authorized to edit this app.' )
+
+      await updateApp( { app: args.app } )
+      return true
+
     },
 
     async appDelete( parent, args, context, info ) {
-      // TODO
-      // restrict to owner
+
+      let app = await getApp( { id: args.appId } )
+
+      if ( !app.author && context.role !== 'server:admin' ) throw new ForbiddenError( 'You are not authorized to edit this app.' )
+      if ( app.author.id !== context.userId && context.role !== 'server:admin' ) throw new ForbiddenError( 'You are not authorized to edit this app.' )
+
+      return ( await deleteApp( { id: args.appId } ) ) === 1
+
     },
+
+    async appRevokeAccess( parent, args, context, info ) {
+      return await revokeExistingAppCredentialsForUser( { appId: args.appId, userId: context.userId } )
+    }
   }
 }

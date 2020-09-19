@@ -13,9 +13,11 @@ chai.use( chaiHttp )
 const knex = require( `${appRoot}/db/knex` )
 
 const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( `${appRoot}/modules/core/services/users` )
-const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( `${appRoot}/modules/core/services/tokens` )
+const { createPersonalAccessToken, validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
-const { getApp, createApp, updateApp, deleteApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken, revokeExistingAppCredentialsForUser } = require( '../services/apps' )
+const { getApp, getAllPublicApps, createApp, updateApp, deleteApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken, revokeExistingAppCredentialsForUser } = require( '../services/apps' )
+
+const serverAddress = `http://localhost:${process.env.PORT || 3000}`
 
 describe( 'Apps', ( ) => {
 
@@ -53,7 +55,7 @@ describe( 'Apps', ( ) => {
     let myTestApp = null
 
     it( 'Should register an app', async ( ) => {
-      let res = await createApp( { name: 'test application', scopes: [ 'streams:read' ], redirectUrl: 'http://localhost:1335' } )
+      const res = await createApp( { name: 'test application', public: true, scopes: [ 'streams:read' ], redirectUrl: 'http://localhost:1335' } )
 
       expect( res ).to.have.property( 'id' )
       expect( res ).to.have.property( 'secret' )
@@ -66,9 +68,15 @@ describe( 'Apps', ( ) => {
       myTestApp = app
     } )
 
+    it( 'Should get all the public apps on this server', async ( ) => {
+      let apps = await getAllPublicApps( )
+      expect( apps ).to.be.an( 'array' )
+      expect( apps.length ).to.equal( 4 )
+    } )
+
     it( 'Should fail to register an app with no scopes', async ( ) => {
       try {
-        let res = await createApp( { name: 'test application2', redirectUrl: 'http://localhost:1335' } )
+        const res = await createApp( { name: 'test application2', redirectUrl: 'http://localhost:1335' } )
         assert.fail( )
       } catch ( e ) {
         // pass
@@ -76,7 +84,7 @@ describe( 'Apps', ( ) => {
     } )
 
     it( 'Should update an app', async ( ) => {
-      let res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:read', 'users:read' ] } } )
+      const res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:read', 'users:read' ] } } )
       expect( res ).to.be.a( 'string' )
 
       let app = await getApp( { id: myTestApp.id } )
@@ -95,7 +103,7 @@ describe( 'Apps', ( ) => {
 
     let tokenCreateResponse = null
     it( 'Should get an api token in exchange for the authorization code ', async ( ) => {
-      let response = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: authorizationCode, challenge: 'random' } )
+      const response = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: authorizationCode, challenge: 'random' } )
       expect( response ).to.have.property( 'token' )
       expect( response.token ).to.be.a( 'string' )
       expect( response ).to.have.property( 'refreshToken' )
@@ -110,7 +118,7 @@ describe( 'Apps', ( ) => {
     } )
 
     it( 'Should refresh the token using the refresh token, and get a fresh refresh token and token', async ( ) => {
-      let res = await refreshAppToken( { refreshToken: tokenCreateResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret, userId: actor.id } )
+      const res = await refreshAppToken( { refreshToken: tokenCreateResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret, userId: actor.id } )
 
       expect( res.token ).to.be.a( 'string' )
       expect( res.refreshToken ).to.be.a( 'string' )
@@ -127,7 +135,7 @@ describe( 'Apps', ( ) => {
 
       // We now have one unused acces code, an api token and a refresh token.
       // Proceed to update the app:
-      let res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:write', 'users:read' ] } } )
+      const res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:write', 'users:read' ] } } )
 
       let validationResponse = await validateToken( apiTokenResponse.token )
       expect( validationResponse.valid ).to.equal( false )
@@ -159,7 +167,7 @@ describe( 'Apps', ( ) => {
       let accesCode = await createAuthorizationCode( { appId: myTestApp.id, userId: secondUser.id, challenge } )
       let apiTokenResponse = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: accesCode, challenge: challenge } )
 
-      let res = await revokeExistingAppCredentialsForUser( { appId: myTestApp.id, userId: secondUser.id } )
+      const res = await revokeExistingAppCredentialsForUser( { appId: myTestApp.id, userId: secondUser.id } )
 
       try {
         let refresh = await refreshAppToken( { refreshToken: apiTokenResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret } )
@@ -178,7 +186,7 @@ describe( 'Apps', ( ) => {
     } )
 
     it( 'Should delete an app', async ( ) => {
-      let res = await deleteApp( { id: myTestApp.id } )
+      const res = await deleteApp( { id: myTestApp.id } )
       expect( res ).to.equal( 1 )
     } )
 
@@ -188,6 +196,9 @@ describe( 'Apps', ( ) => {
 
     let testServer
     let testUser
+    let testUser2
+    let testToken
+    let testToken2
 
     before( async ( ) => {
 
@@ -205,6 +216,17 @@ describe( 'Apps', ( ) => {
       }
 
       testUser.id = await createUser( testUser )
+      testToken = `Bearer ${( await createPersonalAccessToken( testUser.id, 'test token', [ 'profile:read', 'apps:read', 'apps:write' ] ) )}`
+
+      testUser2 = {
+        name: 'Mr. Mac',
+        email: 'steve@jobs.com',
+        password: 'wtfwtfwtf'
+      }
+
+      testUser2.id = await createUser( testUser2 )
+      testToken2 = `Bearer ${( await createPersonalAccessToken( testUser2.id, 'test token', [ 'profile:read', 'apps:read', 'apps:write' ] ) )}`
+
 
     } )
 
@@ -214,34 +236,156 @@ describe( 'Apps', ( ) => {
 
     } )
 
+    let testAppId
     it( 'Should create an app', async ( ) => {
+
+      const query = `mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } `
+      const variables = { myApp: { name: 'Test App', public: true, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
+
+      const res = await sendRequest( testToken, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+      testAppId = res.body.data.appCreate
+
+    } )
+
+
+    it( 'Should not create an app if request is not authenticated', async ( ) => {
+
+      const query = `
+        mutation createApp($myApp:AppCreateInput!) {
+          appCreate( app: $myApp )
+        }
+      `
+      const variables = { myApp: { name: 'Test App', description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
+
+      const res = await sendRequest( null, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.exist
 
     } )
 
     it( 'Should get app info', async ( ) => {
-      assert.fail( 'todo' )
+
+      const query = `
+        query getApp {
+          app( id: "${testAppId}") {
+            name
+            secret
+            description
+            author {
+              name
+              id
+            }
+            scopes {
+              name
+              description
+            }
+          }
+        }
+      `
+
+      const res = await sendRequest( testToken, { query } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.app.name ).to.equal( 'Test App' )
+      expect( res.body.data.app.scopes.length ).to.equal( 1 )
+      expect( res.body.data.app.secret ).to.exist
+
     } )
 
-    it( 'Should get app info without secret if not authenticated, owner or admin', async ( ) => {
-      assert.fail( 'todo' )
+    it( 'Should get all the public apps on this server', async ( ) => {
+
+      const query = `query allapps{ apps { name description author { id name } } }`
+      const res = await sendRequest( null, { query } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.apps ).to.be.an( 'array' )
+      expect( res.body.data.apps.length ).to.equal( 4 )
+
+    } )
+
+    it( 'Should get app info without secret if not authenticated and owner', async ( ) => {
+
+      const query = `query getApp { app( id: "${testAppId}") { name secret } }`
+
+      const res = await sendRequest( null, { query } )
+      expect( res.body.data.app.secret ).to.equal( 'App secrets are only revealed to their author 😉' )
+
+      const res2 = await sendRequest( testToken2, { query } )
+      expect( res2.body.data.app.secret ).to.equal( 'App secrets are only revealed to their author 😉' )
+
     } )
 
     it( 'Should update app info', async ( ) => {
-      assert.fail( 'todo' )
+
+      const query = `
+        mutation updateApp($myApp:AppUpdateInput!) {
+          appUpdate( app: $myApp )
+        }
+      `
+      const variables = { myApp: { id: testAppId, name: 'Updated Test App', description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
+
+      const res = await sendRequest( testToken, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.data.appUpdate ).to.equal( true )
+
+      const query2 = `query getApp { app( id: "${testAppId}") { name } }`
+      const res2 = await sendRequest( null, { query: query2 } )
+
+      expect( res2.body.data.app.name ).to.equal( 'Updated Test App' )
+
+    } )
+
+    it( 'Should not delete app if request is not authenticated/user is app owner', async ( ) => {
+
+      const query = `mutation del { appDelete( id: "${testAppId}" ) }`
+      const res = await sendRequest( null, { query } )
+      expect( res.body.errors ).to.exist
+
+      const res2 = await sendRequest( testToken2, { query } )
+      expect( res2.body.errors ).to.exist
     } )
 
     it( 'Should delete app', async ( ) => {
-      assert.fail( 'todo' )
+
+      const query = `mutation del { appDelete( appId: "${testAppId}" ) }`
+      const res = await sendRequest( testToken, { query } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.appDelete ).to.equal( true )
+
+    } )
+
+    it( 'Should get the apps that i have created', async ( ) => {
+
+      const query = `mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } `
+      let variables = { myApp: { name: 'Another Test App', public: false, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
+      await sendRequest( testToken, { query, variables } )
+
+      variables = { myApp: { name: 'The n-th Test App', public: false, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
+      await sendRequest( testToken, { query, variables } )
+
+      const getMyAppsQuery = `query usersApps{ createdApps { id name description } }`
+
+      let res = await sendRequest( testToken, { query: getMyAppsQuery } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.createdApps ).to.be.an( 'array' )
+      expect( res.body.data.createdApps.length ).to.equal( 3 )
     } )
 
     it( 'Should get my authorised apps', async ( ) => {
       assert.fail( 'todo' )
     } )
 
-    it( 'Should get the apps that i have created', async ( ) => {
-
+    it( 'Should revoke access to an app I have authorised', async ( ) => {
+      assert.fail( 'todo' )
     } )
-
 
   } )
 } )
+
+function sendRequest( auth, obj, address = serverAddress ) {
+
+  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+
+}

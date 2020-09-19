@@ -1,7 +1,8 @@
 /* istanbul ignore file */
 'use strict'
 
-// Seed the table with the two applications we're going to provide. They have invariant ids.
+// Seed the table with the applications we're going to provide. They have
+// invariant ids so they can work across multiple servers.
 exports.up = async knex => {
 
   //
@@ -13,6 +14,7 @@ exports.up = async knex => {
     name: 'Speckle Desktop Manager',
     description: 'Manages local installations of Speckle connectors, kits and everything else.',
     trustByDefault: true,
+    public: true,
     redirectUrl: 'speckle://' // will redirect to a local server
   } )
 
@@ -31,9 +33,12 @@ exports.up = async knex => {
   await knex( 'server_apps' ).insert( {
     id: 'spklwebapp',
     secret: 'spklwebapp',
-    name: 'Speckle',
-    description: 'This is the main Speckle server web application.',
+    name: 'Speckle Web Manager',
+    description: `
+    The Speckle Web Manager is your one-stop place to manage and coordinate your data.
+    `,
     trustByDefault: true,
+    public: true,
     redirectUrl: 'self'
   } )
 
@@ -50,6 +55,7 @@ exports.up = async knex => {
     name: 'Speckle API Explorer',
     description: 'GraphQL Playground with authentication.',
     trustByDefault: true,
+    public: true,
     redirectUrl: '/explorer',
   } )
 

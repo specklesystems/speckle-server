@@ -24,11 +24,58 @@ module.exports = {
     if ( allScopes === null ) allScopes = await Scopes( ).select( '*' )
 
     let app = await ServerApps( ).select( '*' ).where( { id: id } ).first( )
+    if ( !app ) throw new Error( 'App does not exist.' )
+
     let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
     app.author = await Users( ).select( 'id', 'name' ).where( { id: app.authorId } ).first( )
     return app
 
+  },
+
+  async getAllPublicApps( ) {
+
+    let apps = await ServerApps( )
+      .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
+      .where( { public: true } )
+      .leftJoin( 'users', 'users.id', '=', 'server_apps.authorId' )
+      .orderBy( 'server_apps.trustByDefault', 'DESC' )
+
+    apps.forEach( app => {
+      if ( app.authorName ) {
+        app.author = { name: app.authorName, id: app.authorId }
+      }
+      delete app.authorName
+      delete app.authorId
+    } )
+
+    return apps
+  },
+
+  async getAllAppsCreatedByUser( { userId } ) {
+
+    let apps = await ServerApps( )
+      .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
+      .where( { authorId: userId } )
+      .leftJoin( 'users', 'users.id', '=', 'server_apps.authorId' )
+
+    apps.forEach( app => {
+      if ( app.authorName ) {
+        app.author = { name: app.authorName, id: app.authorId }
+      }
+      delete app.authorName
+      delete app.authorId
+    } )
+
+    return apps
+  },
+
+  async getAllAppsAuthorizedByUser( { userId } ) {
+    let res =  ServerAppsTokens( )
+      .select( knex.raw( 'distinct on ("user_server_app_tokens.appId")' ) )
+      .leftJoin( 'server_apps', 'server_apps.id', '=', 'id' )
+      .where( { userId: userId } )
+    console.log( res )
   },
 
   async createApp( app ) {
@@ -93,7 +140,7 @@ module.exports = {
   },
 
   async revokeExistingAppCredentialsForUser( { appId, userId } ) {
-    // TODO
+
     let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId, userId: userId } ).del( )
     let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId, userId: userId } ).del( )
     let resApiTokenDelete = await ApiTokens( )
@@ -106,6 +153,7 @@ module.exports = {
   },
 
   async createAuthorizationCode( { appId, userId, challenge } ) {
+
     let ac = {
       id: crs( { length: 42 } ),
       appId: appId,
@@ -115,6 +163,7 @@ module.exports = {
 
     await AuthorizationCodes( ).insert( ac )
     return ac.id
+
   },
 
   async createAppTokenFromAccessCode( { appId, appSecret, accessCode, challenge } ) {
