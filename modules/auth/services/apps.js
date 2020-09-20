@@ -71,11 +71,18 @@ module.exports = {
   },
 
   async getAllAppsAuthorizedByUser( { userId } ) {
-    let res =  ServerAppsTokens( )
-      .select( knex.raw( 'distinct on ("user_server_app_tokens.appId")' ) )
-      .leftJoin( 'server_apps', 'server_apps.id', '=', 'id' )
-      .where( { userId: userId } )
-    console.log( res )
+
+    let query = knex.raw( `
+      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
+      FROM user_server_app_tokens a
+      LEFT JOIN server_apps sa ON sa.id = a."appId"
+      LEFT JOIN users u ON sa."authorId" = u.id
+      WHERE a."userId" = ?
+      `, [ userId ] )
+
+    let { rows } = await query
+    return rows
+
   },
 
   async createApp( app ) {
@@ -86,6 +93,7 @@ module.exports = {
     if ( !app.scopes ) {
       throw new Error( 'Cannot create an app with no scopes.' )
     }
+
     let scopes = [ ...app.scopes ]
 
     delete app.scopes
@@ -115,6 +123,7 @@ module.exports = {
 
     let [ res ] = await ServerApps( ).returning( 'id' ).where( { id: app.id } ).update( app )
     return res
+
   },
 
   async deleteApp( { id } ) {
@@ -137,6 +146,7 @@ module.exports = {
       .del( )
 
     return resApiTokenDelete
+
   },
 
   async revokeExistingAppCredentialsForUser( { appId, userId } ) {
@@ -150,6 +160,7 @@ module.exports = {
       .del( )
 
     return resApiTokenDelete
+
   },
 
   async createAuthorizationCode( { appId, userId, challenge } ) {
@@ -167,6 +178,7 @@ module.exports = {
   },
 
   async createAppTokenFromAccessCode( { appId, appSecret, accessCode, challenge } ) {
+
     let code = await AuthorizationCodes( ).select( ).where( { id: accessCode } ).first( )
 
     await AuthorizationCodes( ).where( { id: accessCode } ).del( )
@@ -206,9 +218,11 @@ module.exports = {
       token: appToken,
       refreshToken: bareToken.tokenId + bareToken.tokenString
     }
+
   },
 
   async refreshAppToken( { refreshToken, appId, appSecret } ) {
+
     let refreshTokenId = refreshToken.slice( 0, 10 )
     let refreshTokenContent = refreshToken.slice( 10, 42 )
 
@@ -262,5 +276,6 @@ module.exports = {
       token: appToken,
       refreshToken: bareToken.tokenId + bareToken.tokenString
     }
+
   }
 }

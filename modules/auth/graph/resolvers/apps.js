@@ -50,11 +50,15 @@ module.exports = {
 
   User: {
     async authorizedApps( parent, args, context, info ) {
+
       let res = await getAllAppsAuthorizedByUser( { userId: context.userId } )
       return res
+
     },
     async createdApps( parent, args, context, info ) {
+
       return await getAllAppsCreatedByUser( { userId: context.userId } )
+
     }
   },
   Mutation: {

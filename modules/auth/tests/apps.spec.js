@@ -19,7 +19,7 @@ const { getApp, getAllPublicApps, createApp, updateApp, deleteApp, createAuthori
 
 const serverAddress = `http://localhost:${process.env.PORT || 3000}`
 
-describe( 'Apps', ( ) => {
+describe( 'Apps @apps', ( ) => {
 
   describe( 'Services @apps-services', ( ) => {
     let actor = {
@@ -84,6 +84,7 @@ describe( 'Apps', ( ) => {
     } )
 
     it( 'Should update an app', async ( ) => {
+
       const res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:read', 'users:read' ] } } )
       expect( res ).to.be.a( 'string' )
 
@@ -92,17 +93,23 @@ describe( 'Apps', ( ) => {
       expect( app.scopes ).to.be.an( 'array' )
       expect( app.scopes.map( s => s.name ) ).to.include( 'users:read' )
       expect( app.scopes.map( s => s.name ) ).to.include( 'streams:read' )
+
     } )
 
     let challenge = 'random'
     let authorizationCode = null
+
     it( 'Should get an authorization code for the app', async ( ) => {
+
       authorizationCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
       expect( authorizationCode ).to.be.a( 'string' )
+
     } )
 
     let tokenCreateResponse = null
+
     it( 'Should get an api token in exchange for the authorization code ', async ( ) => {
+
       const response = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: authorizationCode, challenge: 'random' } )
       expect( response ).to.have.property( 'token' )
       expect( response.token ).to.be.a( 'string' )
@@ -115,9 +122,11 @@ describe( 'Apps', ( ) => {
       expect( validation.valid ).to.equal( true )
       expect( validation.userId ).to.equal( actor.id )
       expect( validation.scopes[ 0 ] ).to.equal( 'streams:read' )
+
     } )
 
     it( 'Should refresh the token using the refresh token, and get a fresh refresh token and token', async ( ) => {
+
       const res = await refreshAppToken( { refreshToken: tokenCreateResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret, userId: actor.id } )
 
       expect( res.token ).to.be.a( 'string' )
@@ -126,9 +135,11 @@ describe( 'Apps', ( ) => {
       let validation = await validateToken( res.token )
       expect( validation.valid ).to.equal( true )
       expect( validation.userId ).to.equal( actor.id )
+
     } )
 
     it( 'Should invalidate all tokens, refresh tokens and access codes for an app if it is updated', async ( ) => {
+
       let unusedAccessCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
       let usedAccessCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
       let apiTokenResponse = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: usedAccessCode, challenge: challenge } )
@@ -157,6 +168,7 @@ describe( 'Apps', ( ) => {
     } )
 
     it( 'Should revoke access for a given user', async ( ) => {
+
       let secondUser = {
         name: 'Dimitrie Stefanescu',
         email: 'didimitrie.wow@gmail.com',
@@ -186,8 +198,10 @@ describe( 'Apps', ( ) => {
     } )
 
     it( 'Should delete an app', async ( ) => {
+
       const res = await deleteApp( { id: myTestApp.id } )
       expect( res ).to.equal( 1 )
+
     } )
 
   } )
@@ -237,6 +251,8 @@ describe( 'Apps', ( ) => {
     } )
 
     let testAppId
+    let testApp
+
     it( 'Should create an app', async ( ) => {
 
       const query = `mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } `
@@ -291,6 +307,7 @@ describe( 'Apps', ( ) => {
       expect( res.body.data.app.name ).to.equal( 'Test App' )
       expect( res.body.data.app.scopes.length ).to.equal( 1 )
       expect( res.body.data.app.secret ).to.exist
+      testApp = res.body.data.app
 
     } )
 
@@ -347,15 +364,6 @@ describe( 'Apps', ( ) => {
       expect( res2.body.errors ).to.exist
     } )
 
-    it( 'Should delete app', async ( ) => {
-
-      const query = `mutation del { appDelete( appId: "${testAppId}" ) }`
-      const res = await sendRequest( testToken, { query } )
-      expect( res.body.errors ).to.not.exist
-      expect( res.body.data.appDelete ).to.equal( true )
-
-    } )
-
     it( 'Should get the apps that i have created', async ( ) => {
 
       const query = `mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } `
@@ -365,20 +373,51 @@ describe( 'Apps', ( ) => {
       variables = { myApp: { name: 'The n-th Test App', public: false, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
       await sendRequest( testToken, { query, variables } )
 
-      const getMyAppsQuery = `query usersApps{ createdApps { id name description } }`
+      const getMyAppsQuery = `query usersApps{ user { createdApps { id name description } } }`
 
       let res = await sendRequest( testToken, { query: getMyAppsQuery } )
       expect( res.body.errors ).to.not.exist
-      expect( res.body.data.createdApps ).to.be.an( 'array' )
-      expect( res.body.data.createdApps.length ).to.equal( 3 )
+      expect( res.body.data.user.createdApps ).to.be.an( 'array' )
+      expect( res.body.data.user.createdApps.length ).to.equal( 3 )
+
     } )
 
     it( 'Should get my authorised apps', async ( ) => {
-      assert.fail( 'todo' )
+
+      // 'authorize' the test app.
+      const authorizationCode_1 = await createAuthorizationCode( { appId: testAppId, userId: testUser.id, challenge: 'floating points' } )
+      const response_1 = await createAppTokenFromAccessCode( { appId: testAppId, appSecret: testApp.secret, accessCode: authorizationCode_1, challenge: 'floating points' } )
+
+      const authorizationCode_2 = await createAuthorizationCode( { appId: 'sdm', userId: testUser.id, challenge: 'floating points' } )
+      const response_2 = await createAppTokenFromAccessCode( { appId: 'sdm', appSecret: 'sdm', accessCode: authorizationCode_2, challenge: 'floating points' } )
+
+
+      const query = `query myAuthApps{ user { authorizedApps { id name description termsAndConditionsLink logo author { id name } } } }`
+
+      let res = await sendRequest( testToken, { query } )
+
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.user.authorizedApps ).to.be.an( 'array' )
+      expect( res.body.data.user.authorizedApps.length ).to.equal( 2 )
+
     } )
 
     it( 'Should revoke access to an app I have authorised', async ( ) => {
-      assert.fail( 'todo' )
+
+      const query = `mutation revokeAcces{ appRevokeAccess( appId: "${testAppId}" ) }`
+      const res = await sendRequest( testToken, { query } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.appRevokeAccess ).to.equal( true )
+
+    } )
+
+    it( 'Should delete app', async ( ) => {
+
+      const query = `mutation del { appDelete( appId: "${testAppId}" ) }`
+      const res = await sendRequest( testToken, { query } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.appDelete ).to.equal( true )
+
     } )
 
   } )
