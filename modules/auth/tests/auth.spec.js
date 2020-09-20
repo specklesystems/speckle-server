@@ -4,13 +4,13 @@ const request = require( 'supertest' )
 const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 
-const { init } = require( `${appRoot}/app` )
+const { init, startHttp } = require( `${appRoot}/app` )
 
 const expect = chai.expect
 
 const knex = require( `${appRoot}/db/knex` )
 
-describe( 'Auth', ( ) => {
+describe( 'Auth @auth', ( ) => {
 
   describe( 'Local authN @auth-local', ( ) => {
     let expressApp
@@ -60,4 +60,46 @@ describe( 'Auth', ( ) => {
         .expect( 401 )
     } )
   } )
+
+  describe( 'Strategies List @auth-info', ( ) => {
+
+    let testServer
+
+    before( async ( ) => {
+
+      await knex.migrate.rollback( )
+      await knex.migrate.latest( )
+
+      let { app } = await init( )
+      let { server } = await startHttp( app )
+      testServer = server
+
+    } )
+
+    after( async ( ) => {
+
+      testServer.close( )
+
+    } )
+
+    it( 'ServerInfo Query should return the auth strategies available', async ( ) => {
+
+      const query = `query sinfo { serverInfo { authStrategies { id name icon url color } } }`
+      const res = await sendRequest( null, { query } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.serverInfo.authStrategies ).to.be.an( 'array' )
+
+    } )
+
+
+  } )
+
 } )
+
+const serverAddress = `http://localhost:${process.env.PORT || 3000}`
+
+function sendRequest( auth, obj, address = serverAddress ) {
+
+  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+
+}

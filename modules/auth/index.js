@@ -78,23 +78,30 @@ exports.init = ( app, options ) => {
   } )
 
   // TODO: add logout route
-  //
 
 
   // Strategies initialisation & listing
+  // NOTE: if no strategies are defined, the local one will be enabled.
+
+  let strategyCount = 0
 
   if ( process.env.STRATEGY_GITHUB === 'true' ) {
     let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
     authStrategies.push( githubStrategy )
+    strategyCount++
   }
 
   if ( process.env.STRATEGY_GOOGLE === 'true' ) {
     let googStrategy = require( './strategies/google' )( app, session, sessionAppId, finalizeAuth )
     authStrategies.push( googStrategy )
+    strategyCount++
   }
 
-  if ( process.env.STRATEGY_LOCAL === 'true' ) {
+  // Note: always leave the local strategy init for last so as to be able to
+  // force enable it in case no others are present.
+  if ( process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0 ) {
     let localStrategy = require( './strategies/local' )( app, session, sessionAppId, finalizeAuth )
     authStrategies.push( localStrategy )
   }
+
 }
