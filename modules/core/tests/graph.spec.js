@@ -34,7 +34,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     testServer = server
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
+    userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'server:setup', 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userB.id = await createUser( userB )
     userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userC.id = await createUser( userC )
@@ -557,6 +557,28 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.userSearch.items.length ).to.equal( 3 )
+
+        // by email
+        query = `query { userSearch( query: "matteo_2@tomato.com" ) { cursor items { id name } } } `
+        res = await sendRequest( userB.token, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userSearch.items.length ).to.equal( 1 )
+
+      } )
+
+      it( 'Should not search for some users if bad request', async ( ) => {
+
+        const query_lim = `query { userSearch( query: "mi" ) { cursor items { id name } } } `
+        let res = await sendRequest( userB.token, { query: query_lim } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+
+        const query_pagination = `query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } `
+        res = await sendRequest( userB.token, { query: query_pagination } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+
       } )
 
     } )
@@ -590,6 +612,15 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( stream.collaborators ).to.have.lengthOf( 2 )
         expect( stream.collaborators[ 0 ].role ).to.equal( 'stream:contributor' )
         expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:owner' )
+      } )
+
+      it( 'Should retrieve a public stream even if not authenticated', async ( ) => {
+
+        const query = `query { stream( id: "${ts2}" ) { name createdAt } }`
+        const res = await sendRequest( null, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+
       } )
 
       let bees = [ ]
@@ -892,7 +923,16 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     } )
   } )
 
-  describe( 'Server Info', ( ) => {
+  describe( 'Generic / Server Info', ( ) => {
+
+    it( 'Should eval string for password strength', async ( ) => {
+
+      const query = `query { userPwdStrength( pwd: "garbage" ) } `
+      const res = await sendRequest( null, { query } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+
+    } )
 
     it( 'Should return a valid server information object', async ( ) => {
       let q = `
@@ -931,7 +971,23 @@ describe( 'GraphQL API Core @core-api', ( ) => {
 
     it( 'Should update the server info object', async ( ) => {
 
-      assert.fail( 'todo' )
+      const query = `mutation updateSInfo($info: ServerInfoUpdateInput!) { serverInfoUpdate( info: $info ) } `
+      const variables = { info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' } }
+
+      const res = await sendRequest( userA.token, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+
+    } )
+
+    it( 'Should NOT update the server info object if user is not an admin', async ( ) => {
+
+      const query = `mutation updateSInfo( $info: ServerInfoUpdateInput! ) { serverInfoUpdate( info: $info ) } `
+      const variables = { info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' } }
+
+      const res = await sendRequest( userB.token, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.exist
 
     } )
 

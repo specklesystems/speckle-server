@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 'use strict'
 
 let env = process.env.NODE_ENV || 'development'

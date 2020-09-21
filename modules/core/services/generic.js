@@ -30,9 +30,9 @@ module.exports = {
 
     let serverInfo = await Info( ).select( '*' ).first( )
     if ( !serverInfo )
-      await Info( ).insert( { name, company, description, adminContact, termsOfService, completed: true } )
+      return await Info( ).insert( { name, company, description, adminContact, termsOfService, completed: true } )
     else
-      await Info( ).where( { id: 0 } ).update( { name, company, description, adminContact, termsOfService, completed: true } )
+      return await Info( ).where( { id: 0 } ).update( { name, company, description, adminContact, termsOfService, completed: true } )
 
   }
 }
