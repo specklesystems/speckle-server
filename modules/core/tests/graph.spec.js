@@ -512,6 +512,13 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.user.streams.totalCount ).to.equal( 1 )
       } )
+
+      it( 'Should search for some users', async ( ) => {
+
+        assert.fail( 'todo' )
+
+      } )
+
     } )
 
     describe( 'Streams', ( ) => {
@@ -880,6 +887,13 @@ describe( 'GraphQL API Core', ( ) => {
       expect( si.roles ).to.be.a( 'array' )
       expect( si.scopes ).to.be.a( 'array' )
     } )
+
+    it( 'Should update the server info object', async ( ) => {
+
+      assert.fail( 'todo' )
+
+    } )
+
   } )
 } )
 

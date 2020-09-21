@@ -128,7 +128,7 @@ describe( 'Auth @auth', ( ) => {
 
     } )
 
-    it( 'Should fail to exchange a token for an access code with a wrong challenge, app secret, or spoof access code', async ( ) => {
+    it( 'Should NOT exchange a token for an access code with a wrong challenge, app secret, spoofed access code, or malformed input', async ( ) => {
 
       let appId = 'sdm'
       let challenge = 'random'
@@ -157,6 +157,77 @@ describe( 'Auth @auth', ( ) => {
       tokenResponse = await request( expressApp )
         .post( `/auth/token` )
         .send( { appId: 'spklwebapp', appSecret: 'spklwebapp', accessCode, challenge } )
+        .expect( 401 )
+
+      // Send pure garbage
+      tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { accessCode, challenge } )
+        .expect( 401 )
+
+    } )
+
+    it( 'Should refresh a token', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+
+      let tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'sdm', accessCode, challenge } )
+        .expect( 200 )
+
+      expect( tokenResponse.body.token ).to.exist
+      expect( tokenResponse.body.refreshToken ).to.exist
+
+      let refreshTokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'sdm' } )
+        .expect( 200 )
+
+      expect( refreshTokenResponse.body.token ).to.exist
+      expect( refreshTokenResponse.body.refreshToken ).to.exist
+    } )
+
+    it( 'Should NOT refresh a token with bad juju inputs', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+
+      let tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'sdm', accessCode, challenge } )
+        .expect( 200 )
+
+      expect( tokenResponse.body.token ).to.exist
+      expect( tokenResponse.body.refreshToken ).to.exist
+
+      // spoof secret
+      let refreshTokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'WRONG' } )
+        .expect( 401 )
+
+      // swap app (use on rt for another app)
+      refreshTokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { refreshToken: tokenResponse.body.refreshToken, appId: 'spklwebapp', appSecret: 'spklwebapp' } )
         .expect( 401 )
 
     } )
