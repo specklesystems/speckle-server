@@ -19,7 +19,7 @@ const { createObject, createObjects } = require( '../services/objects' )
 let addr
 let wsAddr
 
-describe( 'GraphQL API Core', ( ) => {
+describe( 'GraphQL API Core @core-api', ( ) => {
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
   let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
@@ -515,8 +515,48 @@ describe( 'GraphQL API Core', ( ) => {
 
       it( 'Should search for some users', async ( ) => {
 
-        assert.fail( 'todo' )
+        for ( var i = 0; i < 10; i++ ) {
+          // create 10 users: 3 bakers and 7 millers
+          await createUser( {
+            name: `Master ${ i <= 2 ? "Baker" : "Miller" } Matteo The ${i}${ i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'} of His Name`,
+            email: `matteo_${i}@tomato.com`,
+            password: `${ i % 2 === 0 ? "Baker" : "Tomato" }`
+          } )
+        }
 
+        let query = `
+          query search {
+            userSearch( query: "miller" ) {
+              cursor
+              items {
+                id
+                name
+              }
+            }
+          }
+        `
+
+        let res = await sendRequest( userB.token, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userSearch.items.length ).to.equal( 7 )
+
+        query = `
+          query search {
+            userSearch( query: "baker" ) {
+              cursor
+              items {
+                id
+                name
+              }
+            }
+          }
+        `
+
+        res = await sendRequest( userB.token, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userSearch.items.length ).to.equal( 3 )
       } )
 
     } )
@@ -853,6 +893,7 @@ describe( 'GraphQL API Core', ( ) => {
   } )
 
   describe( 'Server Info', ( ) => {
+
     it( 'Should return a valid server information object', async ( ) => {
       let q = `
         query{

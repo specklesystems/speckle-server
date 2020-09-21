@@ -16,6 +16,7 @@ let authStrategies = [ ]
 exports.authStrategies = authStrategies
 
 exports.init = ( app, options ) => {
+
   debug( 'speckle:modules' )( '🔑 \tInit app, authn and authz module' )
 
   passport.serializeUser( ( user, done ) => done( null, user ) )
