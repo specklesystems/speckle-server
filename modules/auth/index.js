@@ -31,33 +31,49 @@ exports.init = ( app, options ) => {
   } )
 
   let sessionAppId = ( req, res, next ) => {
+
     req.session.appId = req.query.appId
     req.session.challenge = req.query.challenge
     next( )
+
   }
 
   let finalizeAuth = async ( req, res, next ) => {
+
     if ( req.session.appId ) {
+
       try {
+
         let app = await getApp( { id: req.session.appId } )
         let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
         return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
+
       } catch ( err ) {
+
         sentry( { err } )
         res.status( 401 ).send( 'Invalid request.' )
+
       }
+
     } else {
+
       if ( process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ) {
+
         let token = await createPersonalAccessToken( req.user.id, 'test token', [ 'streams:write', 'streams:read', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
         return res.status( 200 ).send( { userId: req.user.id, apiToken: token } )
+
       }
+
       return res.status( 200 ).end( )
+
     }
   }
 
   // TODO: add cors
   app.post( '/auth/token', async ( req, res, next ) => {
+
     try {
+
       if ( req.body.refreshToken ) {
         if ( !req.body.appId || !req.body.appSecret )
           throw new Error( 'Invalid request - refresh token' )
@@ -71,10 +87,14 @@ exports.init = ( app, options ) => {
 
       let authResponse = await createAppTokenFromAccessCode( { appId: req.body.appId, appSecret: req.body.appSecret, accessCode: req.body.accessCode, challenge: req.body.challenge } )
       return res.send( authResponse )
+
     } catch ( err ) {
+
       sentry( { err } )
       return res.status( 401 ).send( { err: err.message } )
+
     }
+
   } )
 
   // TODO: add logout route

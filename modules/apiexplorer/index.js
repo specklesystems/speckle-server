@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 'use strict'
 const debug = require( 'debug' )
 const express = require( 'express' )
