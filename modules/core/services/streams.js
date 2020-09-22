@@ -143,7 +143,7 @@ module.exports = {
       Acl( ).columns( { role: 'stream_acl.role' }, 'id', 'name' ).select( )
         .where( { resourceId: streamId } )
         .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
-        .select( 'stream_acl.role', 'username', 'name', 'id' )
+        .select( 'stream_acl.role', 'name', 'id' )
         .orderBy( 'stream_acl.role' )
 
     return await query

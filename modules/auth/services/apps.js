@@ -4,7 +4,8 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
-const { createToken, createBareToken } = require( `${appRoot}/modules/core/services/tokens` )
+const { createToken, createBareToken, revokeTokenById } = require( `${appRoot}/modules/core/services/tokens` )
+const Users = ( ) => knex( 'users' )
 const ApiTokens = ( ) => knex( 'api_tokens' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
@@ -17,30 +18,153 @@ const RefreshTokens = ( ) => knex( 'refresh_tokens' )
 let allScopes = null
 
 module.exports = {
+
   async getApp( { id } ) {
+
     if ( allScopes === null ) allScopes = await Scopes( ).select( '*' )
 
     let app = await ServerApps( ).select( '*' ).where( { id: id } ).first( )
-    let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
+    if ( !app ) throw new Error( 'App does not exist.' )
 
+    let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
+    app.author = await Users( ).select( 'id', 'name' ).where( { id: app.authorId } ).first( )
     return app
+
   },
 
-  async registerApp( app ) {
+  async getAllPublicApps( ) {
+
+    let apps = await ServerApps( )
+      .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
+      .where( { public: true } )
+      .leftJoin( 'users', 'users.id', '=', 'server_apps.authorId' )
+      .orderBy( 'server_apps.trustByDefault', 'DESC' )
+
+    apps.forEach( app => {
+      if ( app.authorName ) {
+        app.author = { name: app.authorName, id: app.authorId }
+      }
+      delete app.authorName
+      delete app.authorId
+    } )
+
+    return apps
+  },
+
+  async getAllAppsCreatedByUser( { userId } ) {
+
+    let apps = await ServerApps( )
+      .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
+      .where( { authorId: userId } )
+      .leftJoin( 'users', 'users.id', '=', 'server_apps.authorId' )
+
+    apps.forEach( app => {
+      if ( app.authorName ) {
+        app.author = { name: app.authorName, id: app.authorId }
+      }
+      delete app.authorName
+      delete app.authorId
+    } )
+
+    return apps
+  },
+
+  async getAllAppsAuthorizedByUser( { userId } ) {
+
+    let query = knex.raw( `
+      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
+      FROM user_server_app_tokens a
+      LEFT JOIN server_apps sa ON sa.id = a."appId"
+      LEFT JOIN users u ON sa."authorId" = u.id
+      WHERE a."userId" = ?
+      `, [ userId ] )
+
+    let { rows } = await query
+    return rows
+
+  },
+
+  async createApp( app ) {
+
     app.id = crs( { length: 10 } )
     app.secret = crs( { length: 10 } )
 
+    if ( !app.scopes ) {
+      throw new Error( 'Cannot create an app with no scopes.' )
+    }
+
     let scopes = [ ...app.scopes ]
+
     delete app.scopes
     delete app.firstparty
+    delete app.trustByDefault
 
     await ServerApps( ).insert( app )
     await ServerAppsScopes( ).insert( scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
     return { id: app.id, secret: app.secret }
+
+  },
+
+  async updateApp( { app } ) {
+
+    // any app update should nuke everything and force users to re-authorize it.
+    await module.exports.revokeExistingAppCredentials( { appId: app.id } )
+
+    if ( app.scopes ) {
+      // Flush existing app scopes
+      await ServerAppsScopes( ).where( { appId: app.id } ).del( )
+      // Update new scopes
+      await ServerAppsScopes( ).insert( app.scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
+    }
+
+    delete app.secret
+    delete app.scopes
+
+    let [ res ] = await ServerApps( ).returning( 'id' ).where( { id: app.id } ).update( app )
+    return res
+
+  },
+
+  async deleteApp( { id } ) {
+
+    await module.exports.revokeExistingAppCredentials( { appId: id } )
+
+    return await ServerApps( ).where( { id: id } ).del( )
+
+  },
+
+  async revokeExistingAppCredentials( { appId } ) {
+
+    let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId } ).del( )
+    let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId } ).del( )
+
+    let resApiTokenDelete = await ApiTokens( )
+      .whereIn( 'id', qb => {
+        qb.select( 'tokenId' ).from( 'user_server_app_tokens' ).where( { appId: appId } )
+      } )
+      .del( )
+
+    return resApiTokenDelete
+
+  },
+
+  async revokeExistingAppCredentialsForUser( { appId, userId } ) {
+
+    let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId, userId: userId } ).del( )
+    let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId, userId: userId } ).del( )
+    let resApiTokenDelete = await ApiTokens( )
+      .whereIn( 'id', qb => {
+        qb.select( 'tokenId' ).from( 'user_server_app_tokens' ).where( { appId: appId, userId: userId } )
+      } )
+      .del( )
+
+    return resApiTokenDelete
+
   },
 
   async createAuthorizationCode( { appId, userId, challenge } ) {
+
     let ac = {
       id: crs( { length: 42 } ),
       appId: appId,
@@ -50,9 +174,11 @@ module.exports = {
 
     await AuthorizationCodes( ).insert( ac )
     return ac.id
+
   },
 
   async createAppTokenFromAccessCode( { appId, appSecret, accessCode, challenge } ) {
+
     let code = await AuthorizationCodes( ).select( ).where( { id: accessCode } ).first( )
 
     await AuthorizationCodes( ).where( { id: accessCode } ).del( )
@@ -92,9 +218,11 @@ module.exports = {
       token: appToken,
       refreshToken: bareToken.tokenId + bareToken.tokenString
     }
+
   },
 
   async refreshAppToken( { refreshToken, appId, appSecret } ) {
+
     let refreshTokenId = refreshToken.slice( 0, 10 )
     let refreshTokenContent = refreshToken.slice( 10, 42 )
 
@@ -124,7 +252,7 @@ module.exports = {
     const { token: appToken } = await createToken( { userId: refreshTokenDb.userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
 
     // Delete previous token, if it exists
-    // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc? 
+    // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc?
     // let previousToken = await ServerAppsTokens( ).select( 'tokenId' ).where( { appId: appId, userId: userId } ).first( )
     // if ( previousToken )
     //   await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
@@ -148,5 +276,6 @@ module.exports = {
       token: appToken,
       refreshToken: bareToken.tokenId + bareToken.tokenString
     }
+
   }
 }

@@ -16,7 +16,6 @@ const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById,
 
 describe( 'Actors & Tokens', ( ) => {
   let myTestActor = {
-    username: 'dim',
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
     password: 'sn3aky-1337-b1m'
@@ -48,7 +47,6 @@ describe( 'Actors & Tokens', ( ) => {
       let newUser = { ...myTestActor }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
-      newUser.username = 'bill'
       newUser.password = 'testthebest'
 
       let actorId = await createUser( newUser )
@@ -69,12 +67,12 @@ describe( 'Actors & Tokens', ( ) => {
 
     it( 'Should update an actor', async ( ) => {
       let updatedActor = { ...myTestActor }
-      updatedActor.username = 'didimitrie'
+      updatedActor.name = 'didimitrie'
 
       await updateUser( myTestActor.id, updatedActor )
 
       let actor = await getUser( myTestActor.id )
-      expect( actor.username ).to.equal( updatedActor.username )
+      expect( actor.name ).to.equal( updatedActor.name )
 
     } )
 
@@ -92,8 +90,8 @@ describe( 'Actors & Tokens', ( ) => {
       let actor = {}
       actor.password = 'super-test-200'
       actor.email = 'e@ma.il'
-      actor.username = 'dimitrie'
       actor.name = 'Bob Gates'
+
       let id = await createUser( actor )
 
       let match = await validatePasssword( { email: actor.email, password: 'super-test-200' } )

@@ -1,5 +1,5 @@
 'use strict'
-const { UserInputError, withFilter } = require( 'apollo-server-express' )
+const { ForbiddenError, UserInputError, withFilter } = require( 'apollo-server-express' )
 const appRoot = require( 'app-root-path' )
 
 const {
@@ -14,7 +14,7 @@ const {
   revokePermissionsStream
 } = require( '../../services/streams' )
 
-const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
+const { authorizeResolver, validateScopes, pubsub } = require( `${appRoot}/modules/shared` )
 
 // subscription events
 const USER_STREAM_ADDED = 'USER_STREAM_ADDED'
@@ -32,9 +32,17 @@ module.exports = {
   Query: {
 
     async stream( parent, args, context, info ) {
-      await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
 
       let stream = await getStream( { streamId: args.id } )
+
+      if ( !stream.isPublic && context.auth === false )
+        throw new ForbiddenError( 'You are not authorised.' )
+
+      if ( !stream.isPublic ) {
+        await validateScopes( context.scopes, 'streams:read' )
+        await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
+      }
+
       return stream
     },
 

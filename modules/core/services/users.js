@@ -86,10 +86,9 @@ module.exports = {
     limit = limit || 25
 
     let query = Users( )
-      .select( 'id', 'username', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt' )
+      .select( 'id', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt' )
       .where( queryBuilder => {
-        queryBuilder.where( { email: searchQuery } ) //match full email or partial username / name
-        queryBuilder.orWhere( 'username', 'ILIKE', `%${searchQuery}%` )
+        queryBuilder.where( { email: searchQuery } ) //match full email or partial name
         queryBuilder.orWhere( 'name', 'ILIKE', `%${searchQuery}%` )
       } )
 

@@ -21,13 +21,13 @@ const { createPersonalAccessToken } = require( '../services/tokens' )
 
 // const addr = `http://localhost:${process.env.PORT || 3000}`
 // const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
-const addr = `http://localhost:3002/graphql`
-const wsAddr = `ws://localhost:3002/graphql`
+const addr = `http://localhost:${process.env.PORT}/graphql`
+const wsAddr = `ws://localhost:${process.env.PORT}/graphql`
 
-describe( 'GraphQL API Subscriptions', ( ) => {
-  let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
-  let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let userC = { name: 'd3', username: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
+describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
+  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
+  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
+  let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
   let serverProcess
 
   const getWsClient = ( wsurl, authToken ) => {
@@ -53,11 +53,13 @@ describe( 'GraphQL API Subscriptions', ( ) => {
     await knex.migrate.latest( )
 
     const childProcess = require( 'child_process' )
-    serverProcess = childProcess.spawn( /^win/.test( process.platform ) ? 'npm.cmd' : 'npm', [ "run", "dev:server:test" ], { cwd: `${appRoot}` } )
+    console.log( `  Starting server... this might take a bit.` )
+    serverProcess = childProcess.spawn( /^win/.test( process.platform ) ? 'npm.cmd' : 'npm', [ "run", "dev:server:test" ], { cwd: appRoot.path } )
 
-    // serverProcess.stderr.on( 'data', ( data ) => {
-    //   console.error( `stderr: ${data}` )
-    // } )
+    serverProcess.stderr.on( 'data', ( data ) => {
+      // uncomment this line to understand a bit more what's happening...
+      // console.error( `stderr: ${data}` )
+    } )
 
     await sleep( 3000 )
 

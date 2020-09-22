@@ -69,7 +69,7 @@ export default {
           mutation ($user: UserCreateInput!) { userCreateAdmin( user: $user ) }
         `,
           variables: {
-            user: { name: `${this.firstName} ${this.lastName}`, username: `${this.firstName}${this.lastName}`, email: this.email, password: this.password }
+            user: { name: `${this.firstName} ${this.lastName}`, email: this.email, password: this.password }
           }
         } )
         this.loading = false

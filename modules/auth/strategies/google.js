@@ -26,7 +26,7 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     let email = profile.emails[ 0 ].value
     let name = profile.displayName
 
-    let user = { email, name, username: name.slice( 0, 20 ) }
+    let user = { email, name }
 
     let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
     return done( null, myUser )

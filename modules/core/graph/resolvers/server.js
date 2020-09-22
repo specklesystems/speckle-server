@@ -5,26 +5,42 @@ const { updateServerInfo, getServerInfo, getAvailableScopes, getAvailableRoles }
 
 module.exports = {
   Query: {
+
     async serverInfo( parent, args, context, info ) {
+
       return await getServerInfo()
+
     }
+
   },
+
   ServerInfo: {
+
     async roles( parent, args, context, info ) {
+
       return await getAvailableRoles( )
+
     },
+
     async scopes( parent, args, context, info ) {
+
       return await getAvailableScopes( )
+
     }
   },
+
   Mutation: {
+
     async serverInfoUpdate( parent, args, context, info ) {
-      await validateServerRole( context, 'server:user' )
+
+      await validateServerRole( context, 'server:admin' )
       await validateScopes( context.scopes, 'server:setup' )
 
       await updateServerInfo( args.info )
-
       return true
+
     }
+
   }
+
 }

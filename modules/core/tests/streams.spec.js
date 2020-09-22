@@ -17,7 +17,6 @@ const { createStream, getStream, updateStream, deleteStream, getUserStreams, get
 describe( 'Streams', ( ) => {
 
   let userOne = {
-    username: 'dim',
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
     password: 'sn3aky-1337-b1m'
@@ -93,7 +92,6 @@ describe( 'Streams', ( ) => {
 
   describe( 'Sharing', ( ) => {
     let userTwo = {
-      username: 'dimsecond',
       name: 'Dimitrie Stefanescu 2',
       email: 'didimitrie2@gmail.com',
       password: 'sn3aky-1337-b1m'

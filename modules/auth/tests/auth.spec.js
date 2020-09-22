@@ -1,111 +1,18 @@
 /* istanbul ignore file */
 const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
 const request = require( 'supertest' )
 const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 
-const { init } = require( `${appRoot}/app` )
+const { init, startHttp } = require( `${appRoot}/app` )
 
 const expect = chai.expect
-chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, getUser, updateUser, deleteUser, validatePasssword } = require( `${appRoot}/modules/core/services/users` )
-const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( `${appRoot}/modules/core/services/tokens` )
+describe( 'Auth @auth', ( ) => {
 
-const { getApp, registerApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( '../services/apps' )
-
-describe( 'Apps', ( ) => {
-
-  describe( 'Services', ( ) => {
-    let actor = {
-      username: 'DimitrieStefanescu',
-      name: 'Dimitrie Stefanescu',
-      email: 'didimitrie@gmail.com',
-      password: 'wtfwtfwtf'
-    }
-
-    before( async ( ) => {
-      await knex.migrate.rollback( )
-      await knex.migrate.latest( )
-      actor.id = await createUser( actor )
-    } )
-
-    after( async ( ) => {
-
-    } )
-
-    it( 'Should get the frontend main app', async ( ) => {
-      let app = await getApp( { id: 'spklwebapp' } )
-      expect( app ).to.be.an( 'object' )
-      expect( app.redirectUrl ).to.be.a( 'string' )
-      expect( app.scopes ).to.be.a( 'array' )
-      expect( app.firstparty ).to.equal( true )
-    } )
-
-    it( 'Should get the mock app', async ( ) => {
-      let app = await getApp( { id: 'mock' } )
-      expect( app ).to.be.an( 'object' )
-      expect( app.redirectUrl ).to.be.a( 'string' )
-      expect( app.scopes ).to.be.a( 'array' )
-      expect( app.firstparty ).to.equal( false )
-    } )
-
-    let myTestApp = null
-
-    it( 'Should register an app', async ( ) => {
-      let res = await registerApp( { name: 'test application', firstparty: true, author: actor.id, scopes: [ 'streams:read' ], redirectUrl: 'http://localhost:1335' } )
-
-      expect( res ).to.have.property( 'id' )
-      expect( res ).to.have.property( 'secret' )
-
-      expect( res.id ).to.be.a( 'string' )
-      expect( res.secret ).to.be.a( 'string' )
-      myTestApp = res
-
-      let app = await getApp( { id: res.id } )
-      expect( app.firstparty ).to.equal( false )
-      expect( app.id ).to.equal( res.id )
-    } )
-
-    let challenge = 'random'
-    let authorizationCode = null
-    it( 'Should get an authorization code for the app', async ( ) => {
-      authorizationCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
-      expect( authorizationCode ).to.be.a( 'string' )
-    } )
-
-    let tokenCreateResponse = null
-    it( 'Should get an api token in exchange for the authorization code ', async ( ) => {
-      let response = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: authorizationCode, challenge: 'random' } )
-      expect( response ).to.have.property( 'token' )
-      expect( response.token ).to.be.a( 'string' )
-      expect( response ).to.have.property( 'refreshToken' )
-      expect( response.refreshToken ).to.be.a( 'string' )
-
-      tokenCreateResponse = response
-
-      let validation = await validateToken( response.token )
-      expect( validation.valid ).to.equal( true )
-      expect( validation.userId ).to.equal( actor.id )
-      expect( validation.scopes[ 0 ] ).to.equal( 'streams:read' )
-    } )
-
-    it( 'Should refresh the token using the refresh token, and get a fresh refresh token and token', async ( ) => {
-      let res = await refreshAppToken( { refreshToken: tokenCreateResponse.refreshToken, appId: myTestApp.id, appSecret: myTestApp.secret, userId: actor.id } )
-
-      expect( res.token ).to.be.a( 'string' )
-      expect( res.refreshToken ).to.be.a( 'string' )
-
-      let validation = await validateToken( res.token )
-      expect( validation.valid ).to.equal( true )
-      expect( validation.userId ).to.equal( actor.id )
-    } )
-  } )
-
-  describe( 'Local authN', ( ) => {
+  describe( 'Local authN & authZ (token endpoints) @auth-local', ( ) => {
     let expressApp
     before( async ( ) => {
       await knex.migrate.rollback( )
@@ -123,7 +30,7 @@ describe( 'Apps', ( ) => {
       let res =
         await request( expressApp )
         .post( `/auth/local/register` )
-        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', username: 'dimitrie', company: 'speckle', password: 'roll saving throws' } )
+        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 200 )
 
       expect( res.body.id ).to.be.a.string
@@ -133,7 +40,7 @@ describe( 'Apps', ( ) => {
       let res =
         await request( expressApp )
         .post( `/auth/local/register` )
-        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', username: 'dimitrie' } )
+        .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu' } )
         .expect( 400 )
     } )
 
@@ -152,24 +59,220 @@ describe( 'Apps', ( ) => {
         .send( { email: 'spam@speckle.systems', password: 'roll saving throw' } )
         .expect( 401 )
     } )
+
+    it( 'Should redirect login with access code', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+      expect( accessCode ).to.be.a( 'string' )
+
+    } )
+
+    it( 'Should redirect registration with access code', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/register?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam_2@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+      expect( accessCode ).to.be.a( 'string' )
+
+    } )
+
+    it( 'Should NOT redirect login with access code on invalid app id', async ( ) => {
+
+      let appId = 'blarf'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 401 )
+
+    } )
+
+    it( 'Should exchange a token for an access code', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+
+      let tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'sdm', accessCode, challenge } )
+        .expect( 200 )
+
+      expect( tokenResponse.body.token ).to.exist
+      expect( tokenResponse.body.refreshToken ).to.exist
+
+    } )
+
+    it( 'Should NOT exchange a token for an access code with a wrong challenge, app secret, spoofed access code, or malformed input', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+
+      // Spoof the challenge
+      let tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'sdm', accessCode, challenge: 'WRONG' } )
+        .expect( 401 )
+
+      // Spoof the secret
+      tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'spoof', accessCode, challenge } )
+        .expect( 401 )
+
+      // Swap the app
+      tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId: 'spklwebapp', appSecret: 'spklwebapp', accessCode, challenge } )
+        .expect( 401 )
+
+      // Send pure garbage
+      tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { accessCode, challenge } )
+        .expect( 401 )
+
+    } )
+
+    it( 'Should refresh a token', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+
+      let tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'sdm', accessCode, challenge } )
+        .expect( 200 )
+
+      expect( tokenResponse.body.token ).to.exist
+      expect( tokenResponse.body.refreshToken ).to.exist
+
+      let refreshTokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'sdm' } )
+        .expect( 200 )
+
+      expect( refreshTokenResponse.body.token ).to.exist
+      expect( refreshTokenResponse.body.refreshToken ).to.exist
+    } )
+
+    it( 'Should NOT refresh a token with bad juju inputs', async ( ) => {
+
+      let appId = 'sdm'
+      let challenge = 'random'
+
+      let res =
+        await request( expressApp )
+        .post( `/auth/local/login?appId=${appId}&challenge=${challenge}` )
+        .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
+
+      let tokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { appId, appSecret: 'sdm', accessCode, challenge } )
+        .expect( 200 )
+
+      expect( tokenResponse.body.token ).to.exist
+      expect( tokenResponse.body.refreshToken ).to.exist
+
+      // spoof secret
+      let refreshTokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'WRONG' } )
+        .expect( 401 )
+
+      // swap app (use on rt for another app)
+      refreshTokenResponse = await request( expressApp )
+        .post( `/auth/token` )
+        .send( { refreshToken: tokenResponse.body.refreshToken, appId: 'spklwebapp', appSecret: 'spklwebapp' } )
+        .expect( 401 )
+
+    } )
+
   } )
 
-  describe( 'GraphQL', ( ) => {
+  describe( 'Strategies List @auth-info', ( ) => {
+
+    let testServer
 
     before( async ( ) => {
+
       await knex.migrate.rollback( )
       await knex.migrate.latest( )
 
-      // TODO: init gql server
+      let { app } = await init( )
+      let { server } = await startHttp( app )
+      testServer = server
+
     } )
 
     after( async ( ) => {
 
+      testServer.close( )
+
     } )
 
-    // it( 'should get app info', async ( ) => {
-    //   assert.fail( 'todo' )
-    // } )
+    it( 'ServerInfo Query should return the auth strategies available', async ( ) => {
+
+      const query = `query sinfo { serverInfo { authStrategies { id name icon url color } } }`
+      const res = await sendRequest( null, { query } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.serverInfo.authStrategies ).to.be.an( 'array' )
+
+    } )
+
 
   } )
+
 } )
+
+const serverAddress = `http://localhost:${process.env.PORT || 3000}`
+
+function sendRequest( auth, obj, address = serverAddress ) {
+
+  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
+
+}

@@ -19,10 +19,10 @@ const { createObject, createObjects } = require( '../services/objects' )
 let addr
 let wsAddr
 
-describe( 'GraphQL API Core', ( ) => {
-  let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
-  let userB = { name: 'd2', username: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let userC = { name: 'd3', username: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
+describe( 'GraphQL API Core @core-api', ( ) => {
+  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
+  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
+  let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
   let testServer
 
   // set up app & two basic users to ping pong permissions around
@@ -34,7 +34,7 @@ describe( 'GraphQL API Core', ( ) => {
     testServer = server
 
     userA.id = await createUser( userA )
-    userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
+    userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'server:setup', 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userB.id = await createUser( userB )
     userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userC.id = await createUser( userC )
@@ -512,6 +512,75 @@ describe( 'GraphQL API Core', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.user.streams.totalCount ).to.equal( 1 )
       } )
+
+      it( 'Should search for some users', async ( ) => {
+
+        for ( var i = 0; i < 10; i++ ) {
+          // create 10 users: 3 bakers and 7 millers
+          await createUser( {
+            name: `Master ${ i <= 2 ? "Baker" : "Miller" } Matteo The ${i}${ i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'} of His Name`,
+            email: `matteo_${i}@tomato.com`,
+            password: `${ i % 2 === 0 ? "Baker" : "Tomato" }`
+          } )
+        }
+
+        let query = `
+          query search {
+            userSearch( query: "miller" ) {
+              cursor
+              items {
+                id
+                name
+              }
+            }
+          }
+        `
+
+        let res = await sendRequest( userB.token, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userSearch.items.length ).to.equal( 7 )
+
+        query = `
+          query search {
+            userSearch( query: "baker" ) {
+              cursor
+              items {
+                id
+                name
+              }
+            }
+          }
+        `
+
+        res = await sendRequest( userB.token, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userSearch.items.length ).to.equal( 3 )
+
+        // by email
+        query = `query { userSearch( query: "matteo_2@tomato.com" ) { cursor items { id name } } } `
+        res = await sendRequest( userB.token, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.userSearch.items.length ).to.equal( 1 )
+
+      } )
+
+      it( 'Should not search for some users if bad request', async ( ) => {
+
+        const query_lim = `query { userSearch( query: "mi" ) { cursor items { id name } } } `
+        let res = await sendRequest( userB.token, { query: query_lim } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+
+        const query_pagination = `query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } `
+        res = await sendRequest( userB.token, { query: query_pagination } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+
+      } )
+
     } )
 
     describe( 'Streams', ( ) => {
@@ -543,6 +612,15 @@ describe( 'GraphQL API Core', ( ) => {
         expect( stream.collaborators ).to.have.lengthOf( 2 )
         expect( stream.collaborators[ 0 ].role ).to.equal( 'stream:contributor' )
         expect( stream.collaborators[ 1 ].role ).to.equal( 'stream:owner' )
+      } )
+
+      it( 'Should retrieve a public stream even if not authenticated', async ( ) => {
+
+        const query = `query { stream( id: "${ts2}" ) { name createdAt } }`
+        const res = await sendRequest( null, { query } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+
       } )
 
       let bees = [ ]
@@ -845,7 +923,17 @@ describe( 'GraphQL API Core', ( ) => {
     } )
   } )
 
-  describe( 'Server Info', ( ) => {
+  describe( 'Generic / Server Info', ( ) => {
+
+    it( 'Should eval string for password strength', async ( ) => {
+
+      const query = `query { userPwdStrength( pwd: "garbage" ) } `
+      const res = await sendRequest( null, { query } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+
+    } )
+
     it( 'Should return a valid server information object', async ( ) => {
       let q = `
         query{
@@ -880,6 +968,29 @@ describe( 'GraphQL API Core', ( ) => {
       expect( si.roles ).to.be.a( 'array' )
       expect( si.scopes ).to.be.a( 'array' )
     } )
+
+    it( 'Should update the server info object', async ( ) => {
+
+      const query = `mutation updateSInfo($info: ServerInfoUpdateInput!) { serverInfoUpdate( info: $info ) } `
+      const variables = { info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' } }
+
+      const res = await sendRequest( userA.token, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.not.exist
+
+    } )
+
+    it( 'Should NOT update the server info object if user is not an admin', async ( ) => {
+
+      const query = `mutation updateSInfo( $info: ServerInfoUpdateInput! ) { serverInfoUpdate( info: $info ) } `
+      const variables = { info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' } }
+
+      const res = await sendRequest( userB.token, { query, variables } )
+      expect( res ).to.be.json
+      expect( res.body.errors ).to.exist
+
+    } )
+
   } )
 } )
 

@@ -1,10 +1,10 @@
-extend type Query { 
+extend type Query {
   serverInfo: ServerInfo!
 }
 
 """
 Information about this server.
-""" 
+"""
 type ServerInfo {
   name: String!
   company: String
@@ -42,6 +42,5 @@ input ServerInfoUpdateInput {
   company: String
   description: String
   adminContact: String
-  canonicalUrl: String
   termsOfService: String
 }

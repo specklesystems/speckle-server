@@ -20,7 +20,7 @@ const { createStream } = require( '../services/streams' )
 
 describe( `Upload/Download Routes`, ( ) => {
 
-  let userA = { name: 'd1', username: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
+  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let testStream = {
     name: 'Test Stream 01',
     description: 'wonderful test stream'

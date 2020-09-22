@@ -108,7 +108,6 @@ module.exports = {
     return true
   },
 
-
   async getUserTokens( userId ) {
     // TODO: Change logic to use the JN table PersonalApiTokens
     let { rows } = await knex.raw( `
@@ -123,9 +122,5 @@ module.exports = {
       WHERE t."owner" = ?
     `, [ userId ] )
     return rows
-  },
-
-  async getTokenScopes( tokenId ) {
-
   }
 }

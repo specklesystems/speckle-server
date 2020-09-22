@@ -1,6 +1,12 @@
+/* istanbul ignore file */
 'use strict'
 const fs = require( 'fs' )
 const path = require( 'path' )
+const appRoot = require( 'app-root-path' )
+
+// Load up .ENV file
+
+require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 
 function walk( dir ) {
   let results = [ ]

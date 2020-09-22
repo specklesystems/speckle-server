@@ -20,7 +20,6 @@ exports.up = async knex => {
   // Users.
   await knex.schema.createTable( 'users', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'username', 20 ).unique( ).notNullable( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'name', 256 ).notNullable( )
     table.string( 'bio' )
@@ -86,7 +85,7 @@ exports.up = async knex => {
   // Streams table.
   await knex.schema.createTable( 'streams', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'name' )
+    table.string( 'name' ).notNullable( ).defaultTo( 'Unnamed Stream' )
     table.text( 'description' )
     table.boolean( 'isPublic' ).defaultTo( true )
     table.string( 'clonedFrom', 10 ).references( 'id' ).inTable( 'streams' )

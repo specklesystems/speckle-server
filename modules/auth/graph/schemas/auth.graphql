@@ -1,26 +1,7 @@
-extend type Query {
-  serverApp( id: String! ): ServerApp
-}
-
-type ServerApp {
-  id: String!
-  name: String!
-  author: String!
-  ownerId: String
-  createdAt: String!
-  firstparty: Boolean!
-  redirectUrl: String!
-  scopes: [Scope]
-}
-
-# extend type User {
-#   """
-#   Apps used by this user.
-#   """
-#   apps: [ServerApp]
-# }
-
 extend type ServerInfo {
+  """
+  The authentication strategies available on this server.
+  """
   authStrategies: [AuthStrategy]
 }
 

@@ -90,8 +90,7 @@ export default {
             email: this.form.email,
             company: this.form.company,
             password: this.form.password,
-            name: `${this.form.firstName} ${this.form.lastName}`,
-            username: `${this.form.firstName}-${this.form.lastName}`
+            name: `${this.form.firstName} ${this.form.lastName}`
           } )
         } )
 

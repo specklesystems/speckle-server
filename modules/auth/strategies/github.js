@@ -28,7 +28,7 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     let name = profile.displayName || profile.username
     let bio = profile._json.bio
 
-    let user = { email, name, bio, username: profile.username }
+    let user = { email, name, bio }
 
     let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
     return done( null, myUser )
