@@ -5,7 +5,7 @@
 
 #### Status
 
-[![Speckle-Next](https://circleci.com/gh/specklesystems/Server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/Speckle-Next/SpeckleServer/branch/master/graph/badge.svg?token=PHZWVNUVFE)](https://codecov.io/gh/Speckle-Next/SpeckleServer)
+[![Speckle-Next](https://circleci.com/gh/specklesystems/Server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/specklesystems/Server/branch/master/graph/badge.svg)](https://codecov.io/gh/specklesystems/Server)
 
 ## Disclaimer
 This is an early alpha release, not meant for use in production! We're working to stabilise the 2.0 API, and until then there will be breaking changes. You have been warned!
