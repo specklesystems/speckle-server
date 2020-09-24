@@ -23,12 +23,17 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     clientSecret: process.env.GITHUB_CLIENT_SECRET,
     callbackURL: strategy.callbackUrl,
     scope: [ 'profile', 'user:email' ],
-  }, async ( accessToken, refreshToken, profile, done ) => {
+    passReqToCallback: true
+  }, async ( req, accessToken, refreshToken, profile, done ) => {
+
     let email = profile.emails[ 0 ].value
     let name = profile.displayName || profile.username
     let bio = profile._json.bio
 
     let user = { email, name, bio }
+
+    if ( req.session.suuid )
+      user.suuid = req.session.suuid
 
     let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
     return done( null, myUser )

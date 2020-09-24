@@ -9,7 +9,7 @@
           <v-text-field label='password' type='password' v-model='form.password' :rules='validation.passwordRules' solo style='margin-top:-12px;'></v-text-field>
           <v-btn block large color='accent' style='top:-22px;' @click='loginUser'>Log in</v-btn>
           <p class='text-center'>
-            <v-btn text small block color='accent' :to='{ name: "Register", query: { appId: $route.query.appId } }'>Create Account</v-btn>
+            <v-btn text small block color='accent' :to='{ name: "Register", query: { appId: $route.query.appId, challenge: $route.query.challenge, suuid: $route.query.suuid } }'>Create Account</v-btn>
           </p>
         </v-col>
       </v-row>
@@ -45,18 +45,23 @@ export default {
       try {
         let valid = this.$refs.form.validate( )
         if ( !valid ) throw new Error( 'Form validation failed' )
+
+        let user = {
+          email: this.form.email,
+          password: this.form.password
+        }
+
+        if ( this.suuid ) user.suuid = this.suuid
+
         let res = await fetch( `/auth/local/login?appId=${this.appId}&challenge=${this.challenge}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           redirect: 'follow', // obvs not working
-          body: JSON.stringify( {
-            email: this.form.email,
-            password: this.form.password
-          } )
+          body: JSON.stringify( user )
         } )
-        console.log( res )
+
         if ( res.redirected ) {
           window.location = res.url
         }
@@ -84,12 +89,15 @@ export default {
     registrationError: false,
     errorMessage: '',
     appId: null,
-    serverApp: null
+    serverApp: null,
+    suuid: null
   } ),
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
     let appId = urlParams.get( 'appId' )
     let challenge = urlParams.get( 'challenge' )
+    let suuid = urlParams.get( 'suuid' )
+    this.suuid = suuid
 
     if ( !appId )
       this.appId = 'spklwebapp'
@@ -104,4 +112,5 @@ export default {
     }
   }
 }
+
 </script>

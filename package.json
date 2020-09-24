@@ -16,9 +16,8 @@
     "build:frontend": "cd frontend && npm run build",
     "dev:server": "cross-env NODE_ENV=development DEBUG=speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
-    "test:server": "cross-env PORT=3001 NODE_ENV=test nyc nyc --reporter html --reporter lcovonly mocha -s 0 --timeout 5000 --exit"
+    "test:server": "cross-env PORT=3001 NODE_ENV=test nyc nyc --reporter html --reporter lcovonly mocha -s 0 --timeout 10000 --exit"
   },
-
   "dependencies": {
     "@sentry/node": "^5.22.3",
     "@sentry/tracing": "^5.22.3",
@@ -75,7 +74,7 @@
     "cz-conventional-changelog": "^3.1.0",
     "eslint": "^7.5.0",
     "http-proxy-middleware": "^1.0.4",
-    "mocha": "^7.1.1",
+    "mocha": "^7.2.0",
     "node-fetch": "^2.6.1",
     "nodemon": "^2.0.4",
     "nyc": "^15.0.1",

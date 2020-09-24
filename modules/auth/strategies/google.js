@@ -22,11 +22,17 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: strategy.callbackUrl,
     scope: [ 'profile', 'email' ],
-  }, async ( accessToken, refreshToken, profile, done ) => {
+    passReqToCallback: true
+  }, async ( req, accessToken, refreshToken, profile, done ) => {
+
     let email = profile.emails[ 0 ].value
     let name = profile.displayName
 
     let user = { email, name }
+
+    if ( req.session.suuid ) {
+      user.suuid = req.session.suuid
+    }
 
     let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
     return done( null, myUser )

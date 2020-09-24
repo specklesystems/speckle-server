@@ -15,7 +15,7 @@ exports.up = async knex => {
     description: 'Manages local installations of Speckle connectors, kits and everything else.',
     trustByDefault: true,
     public: true,
-    redirectUrl: 'speckle://' // will redirect to a local server
+    redirectUrl: 'speckle://account' // will redirect to a local server
   } )
 
   const desktopConnectorScopes = [
