@@ -13,7 +13,7 @@ module.exports = {
 
         Users
 
-     */
+  */
 
   async createUser( user ) {
     let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
@@ -42,8 +42,15 @@ module.exports = {
   async findOrCreateUser( { user, rawProfile } ) {
     let existingUser = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
 
-    if ( existingUser )
+    if ( existingUser ) {
+
+      if ( user.suuid ) {
+        await module.exports.updateUser( existingUser.id, { suuid: user.suuid } )
+      }
+
+      existingUser.suuid = user.suuid
       return existingUser
+    }
 
     user.password = crs( { length: 20 } )
     user.verified = true // because we trust the external identity provider, no?

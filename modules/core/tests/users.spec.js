@@ -11,10 +11,10 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const {createUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
+const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 
-describe( 'Actors & Tokens', ( ) => {
+describe( 'Actors & Tokens @user-services', ( ) => {
   let myTestActor = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
@@ -52,6 +52,49 @@ describe( 'Actors & Tokens', ( ) => {
       let actorId = await createUser( newUser )
       newUser.id = actorId
       otherUser = { ...newUser }
+
+      expect( actorId ).to.be.a( 'string' )
+    } )
+
+    it( 'Should not create an actor with the same email', async ( ) => {
+
+      let newUser = { ...myTestActor }
+      newUser.name = 'Bill Gates'
+      newUser.email = 'bill@gates.com'
+      newUser.password = 'testthebest'
+
+      try {
+        let actorId = await createUser( newUser )
+        assert.fail( 'dupe email' )
+      } catch ( e ) {
+        // pass
+      }
+
+    } )
+
+    it( 'Find or create should create a user', async ( ) => {
+
+      let newUser = { ...myTestActor }
+      newUser.name = 'Steve Ballmer Balls'
+      newUser.email = 'ballmer@balls.com'
+      newUser.password = 'testthebest'
+
+      let { id } = await findOrCreateUser( { user: newUser } )
+      expect( id ).to.be.a( 'string' )
+
+    } )
+
+    it( 'Find or create should NOT create a user', async ( ) => {
+
+      let newUser = { ...myTestActor }
+      newUser.name = 'Steve Ballmer Balls'
+      newUser.email = 'ballmer@balls.com'
+      newUser.password = 'testthebest'
+      newUser.suuid = 'really it does not matter'
+
+      let { id } = await findOrCreateUser( { user: newUser } )
+      expect( id ).to.be.a( 'string' )
+
     } )
 
     it( 'Should get an actor', async ( ) => {
@@ -59,11 +102,11 @@ describe( 'Actors & Tokens', ( ) => {
       expect( actor ).to.not.have.property( 'passwordDigest' )
     } )
 
-    it('Should search and get an users', async () => {
-      let {users} = await searchUsers("gates", 20, null)
-      expect(users).to.have.lengthOf(1)
-      expect(users[0].name).to.equal("Bill Gates")
-    })
+    it( 'Should search and get an users', async ( ) => {
+      let { users } = await searchUsers( "gates", 20, null )
+      expect( users ).to.have.lengthOf( 1 )
+      expect( users[ 0 ].name ).to.equal( "Bill Gates" )
+    } )
 
     it( 'Should update an actor', async ( ) => {
       let updatedActor = { ...myTestActor }

@@ -70,7 +70,7 @@ exports.init = async ( ) => {
         }
       },
       onDisconnect: ( webSocket, context ) => {
-        debug( `speckle:debug` )( 'ws on disconnect connect event' )
+        // debug( `speckle:debug` )( 'ws on disconnect connect event' )
       },
     },
     plugins: [

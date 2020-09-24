@@ -28,15 +28,19 @@ exports.init = ( app, options ) => {
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,
-    cookie: { maxAge: 60000 * 60 }
+    cookie: { maxAge: 1000 * 60 * 3 } // 3 minutes
   } )
 
   let sessionAppId = ( req, res, next ) => {
 
     req.session.appId = req.query.appId
     req.session.challenge = req.query.challenge
-    next( )
 
+    if ( req.query.suuid ) {
+      req.session.suuid = req.query.suuid
+    }
+
+    next( )
   }
 
   let finalizeAuth = async ( req, res, next ) => {
@@ -47,12 +51,16 @@ exports.init = ( app, options ) => {
 
         let app = await getApp( { id: req.session.appId } )
         let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
-        return res.redirect( `/auth/finalize?appId=${req.session.appId}&access_code=${ac}` )
+
+        if ( req.session ) req.session.destroy( )
+        return res.redirect( `/auth/finalize?appId=${app.id}&access_code=${ac}` )
+
 
       } catch ( err ) {
 
         sentry( { err } )
-        res.status( 401 ).send( 'Invalid request.' )
+        if ( req.session ) req.session.destroy( )
+        return res.status( 401 ).send( 'Invalid request.' )
 
       }
 
@@ -61,10 +69,13 @@ exports.init = ( app, options ) => {
       if ( process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ) {
 
         let token = await createPersonalAccessToken( req.user.id, 'test token', [ 'streams:write', 'streams:read', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
+        if ( req.session ) req.session.destroy( )
         return res.status( 200 ).send( { userId: req.user.id, apiToken: token } )
+
 
       }
 
+      if ( req.session ) req.session.destroy( )
       return res.status( 200 ).end( )
 
     }

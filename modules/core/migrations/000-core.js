@@ -20,9 +20,10 @@ exports.up = async knex => {
   // Users.
   await knex.schema.createTable( 'users', table => {
     table.string( 'id', 10 ).primary( )
+    table.string( 'suuid' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).index( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'name', 256 ).notNullable( )
-    table.string( 'bio' )
+    table.string( 'bio', 1024 )
     table.string( 'company', 256 )
     table.string( 'email' ).unique( )
     table.bool( 'verified' ).defaultTo( false )

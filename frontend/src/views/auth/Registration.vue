@@ -36,7 +36,7 @@
         <v-col cols=12>
           <v-btn block large color='accent' style='margin-top:-0px;' @click='registerUser'>Sign Up</v-btn>
           <p class='text-center'>
-            <v-btn text small block color='accent' :to='{ name: "Login", query: { appId: $route.query.appId } }' class='mt-5'>Login</v-btn>
+            <v-btn text small block color='accent' :to='{ name: "Login", query: { appId: $route.query.appId, challenge: $route.query.challenge, suuid: $route.query.suuid } }' class='mt-5'>Login</v-btn>
           </p>
         </v-col>
       </v-row>
@@ -80,21 +80,25 @@ export default {
         if ( this.form.password !== this.form.passwordConf ) throw new Error( 'Passwords do not match' )
         if ( this.passwordStrength < 3 ) throw new Error( 'Password too weak' )
 
+        let user = {
+          email: this.form.email,
+          company: this.form.company,
+          password: this.form.password,
+          name: `${this.form.firstName} ${this.form.lastName}`,
+        }
+
+        if( this.suuid ) user.suuid = this.suuid
+
         let res = await fetch( `/auth/local/register?appId=${this.appId}&challenge=${this.challenge}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           redirect: 'follow', // obvs not working
-          body: JSON.stringify( {
-            email: this.form.email,
-            company: this.form.company,
-            password: this.form.password,
-            name: `${this.form.firstName} ${this.form.lastName}`
-          } )
+          body: JSON.stringify( user )
         } )
 
-        if( res.redirected ) {
+        if ( res.redirected ) {
           window.location = res.url
         }
       } catch ( err ) {
@@ -130,13 +134,17 @@ export default {
     passwordStrength: 1,
     pwdSuggestions: null,
     appId: null,
-    challenge: null
+    challenge: null,
+    suuid: null
   } ),
   mounted( ) {
     let urlParams = new URLSearchParams( window.location.search )
     let appId = urlParams.get( 'appId' )
     let challenge = urlParams.get( 'challenge' )
+    let suuid = urlParams.get( 'suuid' )
 
+    this.suuid = suuid
+    console.log( this.suuid )
     if ( !appId )
       this.appId = 'spklwebapp'
     else
@@ -150,4 +158,5 @@ export default {
     }
   }
 }
+
 </script>

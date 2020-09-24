@@ -30,7 +30,7 @@
                 <v-row>
                   <template v-for='s in strategies'>
                     <v-col cols='12' class='text-center py-0 my-0'>
-                      <v-btn block large tile :color='s.color' dark :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}&challenge=${challenge}`'>{{s.name}}</v-btn>
+                      <v-btn block large tile :color='s.color' dark :key='s.name' class='my-2' :href='`${s.url}?appId=${appId}&challenge=${challenge}${ suuid ? "&suuid=" + suuid : "" }`'>{{s.name}}</v-btn>
                     </v-col>
                   </template>
                 </v-row>
@@ -65,121 +65,125 @@
   </v-app>
 </template>
 <script>
-  import gql from 'graphql-tag'
-  import debounce from 'lodash.debounce'
-  import crs from 'crypto-random-string'
-  export default {
-    name: 'AppAuth',
-    apollo: {
-      serverInfo: {
-        query: gql ` query { serverInfo { name company adminContact termsOfService scopes { name description } authStrategies { id name color icon url } } }  `,
+import gql from 'graphql-tag'
+import debounce from 'lodash.debounce'
+import crs from 'crypto-random-string'
+export default {
+  name: 'AppAuth',
+  apollo: {
+    serverInfo: {
+      query: gql ` query { serverInfo { name company adminContact termsOfService scopes { name description } authStrategies { id name color icon url } } }  `,
+    },
+    app: {
+      query( ) {
+        return gql ` query { app( id: "${this.appId}") { id name redirectUrl scopes {name description} } } `
       },
-      app: {
-        query() {
-          return gql ` query { app( id: "${this.appId}") { id name redirectUrl scopes {name description} } } `
-        },
-        skip() {
-          return this.appId === null
-        },
-        data({
-          data
-        }, key) {
-          if (data.errors) {
-            this.error = true
-            this.errorMessage = 'Invalid app authorization request: app not registered on this server.'
-            console.log('Error: No such application!!!!!')
-          }
-        },
-        error(err) {
+      skip( ) {
+        return this.appId === null
+      },
+      data( {
+        data
+      }, key ) {
+        if ( data.errors ) {
           this.error = true
-          this.errorMessage = `Invalid app authorization request: could not find app with id "${this.appId}" on this server.`
-          console.log('Error: No such application')
+          this.errorMessage = 'Invalid app authorization request: app not registered on this server.'
+          console.log( 'Error: No such application!!!!!' )
         }
-      }
-    },
-    computed: {
-      isFinalizing() {
-        return this.$route.path.indexOf('/finalize') !== -1
       },
-      hasLocalStrategy() {
-        return this.serverInfo.authStrategies.findIndex(s => s.id === 'local') !== -1
-      },
-      strategies() {
-        return this.serverInfo.authStrategies.filter(s => s.id !== 'local')
-      }
-    },
-    components: {},
-    data: () => ({
-      serverInfo: {
-        name: 'Loading',
-        authStrategies: []
-      },
-      appId: null,
-      challenge: null,
-      app: {
-        name: null,
-        author: null,
-        firstparty: null,
-        scopes: []
-      },
-      loggedIn: null,
-      profile: {
-        user: null
-      },
-      user: {
-        profile: null
-      },
-      error: false,
-      errorMessage: null
-    }),
-    methods: {
-      goToStrategy() {}
-    },
-    mounted() {
-      let urlParams = new URLSearchParams(window.location.search)
-      let appId = urlParams.get('appId')
-      let challenge = urlParams.get('challenge')
-      if (!appId)
-        this.appId = 'spklwebapp'
-      else
-        this.appId = appId
-      if (!challenge && this.appId === 'spklwebapp') {
-        if (localStorage.getItem('appChallenge')) {
-          // Do nothing!
-        } else {
-          this.challenge = crs({
-            length: 10
-          })
-          localStorage.setItem('appChallenge', this.challenge)
-        }
-      } else if (challenge) {
-        this.challenge = challenge
-      } else {
-        if (window.location.href.indexOf('/finalize') === -1) {
-          this.error = true
-          this.errorMessage = 'Invalid app authorization request: missing challenge.'
-        }
-      }
-    },
-    async beforeCreate() {
-      // checks login
-      let token = localStorage.getItem('AuthToken')
-      if (token) {
-        let testResponse = await fetch('/graphql', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            query: `{ user { id } }`
-          })
-        })
-        let data = (await testResponse.json()).data
-        if (data.user)
-          return true
+      error( err ) {
+        this.error = true
+        this.errorMessage = `Invalid app authorization request: could not find app with id "${this.appId}" on this server.`
+        console.log( 'Error: No such application' )
       }
     }
+  },
+  computed: {
+    isFinalizing( ) {
+      return this.$route.path.indexOf( '/finalize' ) !== -1
+    },
+    hasLocalStrategy( ) {
+      return this.serverInfo.authStrategies.findIndex( s => s.id === 'local' ) !== -1
+    },
+    strategies( ) {
+      return this.serverInfo.authStrategies.filter( s => s.id !== 'local' )
+    }
+  },
+  components: {},
+  data: ( ) => ( {
+    serverInfo: {
+      name: 'Loading',
+      authStrategies: [ ]
+    },
+    appId: null,
+    challenge: null,
+    suuid: null,
+    app: {
+      name: null,
+      author: null,
+      firstparty: null,
+      scopes: [ ]
+    },
+    loggedIn: null,
+    profile: {
+      user: null
+    },
+    user: {
+      profile: null
+    },
+    error: false,
+    errorMessage: null
+  } ),
+  methods: {
+    goToStrategy( ) {}
+  },
+  mounted( ) {
+    let urlParams = new URLSearchParams( window.location.search )
+    let appId = urlParams.get( 'appId' )
+    let challenge = urlParams.get( 'challenge' )
+    let suuid = urlParams.get( 'suuid' )
+    this.suuid = suuid
+
+    if ( !appId )
+      this.appId = 'spklwebapp'
+    else
+      this.appId = appId
+    if ( !challenge && this.appId === 'spklwebapp' ) {
+      if ( localStorage.getItem( 'appChallenge' ) ) {
+        // Do nothing!
+      } else {
+        this.challenge = crs( {
+          length: 10
+        } )
+        localStorage.setItem( 'appChallenge', this.challenge )
+      }
+    } else if ( challenge ) {
+      this.challenge = challenge
+    } else {
+      if ( window.location.href.indexOf( '/finalize' ) === -1 ) {
+        this.error = true
+        this.errorMessage = 'Invalid app authorization request: missing challenge.'
+      }
+    }
+  },
+  async beforeCreate( ) {
+    // checks login
+    let token = localStorage.getItem( 'AuthToken' )
+    if ( token ) {
+      let testResponse = await fetch( '/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( {
+          query: `{ user { id } }`
+        } )
+      } )
+      let data = ( await testResponse.json( ) ).data
+      if ( data.user )
+        return true
+    }
   }
+}
 
 </script>
