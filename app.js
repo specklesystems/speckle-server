@@ -95,16 +95,17 @@ exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
+  let frontendPort = process.env.FRONTEND_PORT || 8080
+
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
   if ( process.env.NODE_ENV === 'development' ) {
-    const frontendProxy = createProxyMiddleware( { target: 'http://localhost:8080', changeOrigin: true, ws: false, logLevel: 'silent' } )
+    const frontendProxy = createProxyMiddleware( { target: `http://localhost:${frontendPort}`, changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
 
     debug( 'speckle:http-startup' )( '✨ Proxying frontend (dev mode):' )
     debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/` )
     debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
-    debug( 'speckle:http-startup' )( `👉 setup application: http://localhost:${port}/setup` )
     debug( 'speckle:hint' )( `        ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
   }
 
