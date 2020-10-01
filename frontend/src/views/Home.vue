@@ -1,8 +1,39 @@
 <template>
-  <div>
-    <h1>
+  <div v-if="user.streams && user.streams.items">
+    <v-card class="mb-5" elevation="0" rounded="lg">
+      <v-subheader class="text-uppercase"> Recent activity: </v-subheader>
+      <v-chip class="ml-3 mb-3" small color="indigo" text-color="white">
+        all activity
+      </v-chip>
+      <v-chip class="ml-3 mb-3" small color="orange" text-color="white">
+        your activity
+      </v-chip>
+      <v-chip class="ml-3 mb-3" small color="green" text-color="white">
+        team activity
+      </v-chip>
+    </v-card>
 
-    </h1>
+    <v-card
+      v-for="(stream, i) in user.streams.items"
+      :key="i"
+      class="mb-2"
+      elevation="0"
+      rounded="lg"
+    >
+      <v-row class="caption pl-4 pr-4 grey--text text--lighten-1">
+        <v-col><strong>You</strong> created a new stream</v-col>
+        <v-spacer></v-spacer>
+        
+        <v-col class="text-right"><timeago :datetime="parseInt(stream.createdAt)"></timeago></v-col>
+      </v-row>
+      <v-divider></v-divider>
+      <v-card-title>
+        {{ stream.name }}
+      </v-card-title>
+      <v-card-subtitle>
+        {{ stream.description }}
+      </v-card-subtitle>
+    </v-card>
   </div>
 </template>
 <script>

@@ -2,11 +2,16 @@
   <v-app id="inspire">
     <v-app-bar app color="white" flat>
       <v-container class="py-0 fill-height">
-        <v-img contain max-height="30" max-width="30" src="./assets/logo.svg" />
-        <v-toolbar-title class="mr-5" style="margin-top: -4px">
-          <span class="primary--text caption"><b>SPECKLE</b></span
-          >&nbsp;<span class="caption">ADMIN</span>
-        </v-toolbar-title>
+        
+
+
+        <v-btn text>
+          <v-img contain max-height="30" max-width="30" src="./assets/logo.svg" />
+          <div class="mt-1">
+            <span class="primary--text"><b>SPECKLE</b></span>&nbsp;<span class="font-weight-light">ADMIN</span>
+          </div>
+          
+        </v-btn>
 
         <v-btn v-for="link in links" :key="link" text>
           {{ link }}
@@ -56,11 +61,11 @@
           </v-col>
 
           <v-col>
-            <v-sheet min-height="70vh" rounded="lg">
-              <v-main>
-                <router-view></router-view>
+            <!-- <v-sheet min-height="70vh" rounded="lg"> -->
+              <v-main class="pt-0">
+                <router-view :user="user"></router-view>
               </v-main>
-            </v-sheet>
+            <!-- </v-sheet> -->
           </v-col>
         </v-row>
       </v-container>
@@ -113,6 +118,12 @@ export default {
   data: () => ( {
     user: {},
     links: [ "streams", "projects", "profile", "settings", "help" ],
-  } )
+  } ),
+  
+  watch:{
+    user( val ){
+      console.log( val )
+    }
+  }
 }
 </script>

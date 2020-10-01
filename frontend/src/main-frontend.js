@@ -3,9 +3,10 @@ import App from './AppFrontend.vue'
 import router from './router'
 import store from './store'
 import vuetify from './plugins/vuetify';
-import { createProvider, onLogin } from './vue-apollo'
+import { createProvider, } from './vue-apollo'
 import { signIn } from './auth-helpers'
-import crs from 'crypto-random-string'
+import VueTimeago from 'vue-timeago'
+
 
 Vue.config.productionTip = false
 
@@ -13,10 +14,16 @@ Vue.config.productionTip = false
 ;
 /* Semicolon of Doom */
 
+
+
 ( async ( ) => {
   let result = await signIn( )
   if ( !result ) return
-  let app = new Vue( {
+
+  Vue.use( VueTimeago, {
+    locale: 'en' } )
+
+  new Vue( {
     router,
     store,
     vuetify,
