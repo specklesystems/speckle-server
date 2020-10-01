@@ -1,33 +1,118 @@
 <template>
-  <v-app>
-    <v-app-bar app clipped-left color="primary" dark>
-      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-      <span class="title ml-3 mr-5">Speckle&nbsp;<span class="font-weight-light">2</span></span>
-      <v-spacer></v-spacer>
+  <v-app id="inspire">
+    <v-app-bar app color="white" flat>
+      <v-container class="py-0 fill-height">
+        <v-img contain max-height="30" max-width="30" src="./assets/logo.svg" />
+        <v-toolbar-title class="mr-5" style="margin-top: -4px">
+          <span class="primary--text caption"><b>SPECKLE</b></span
+          >&nbsp;<span class="caption">ADMIN</span>
+        </v-toolbar-title>
+
+        <v-btn v-for="link in links" :key="link" text>
+          {{ link }}
+        </v-btn>
+
+        <v-spacer></v-spacer>
+
+        <v-responsive max-width="260">
+          <v-text-field
+            dense
+            flat
+            hide-details
+            rounded
+            solo-inverted
+          ></v-text-field>
+        </v-responsive>
+      </v-container>
     </v-app-bar>
-    <v-navigation-drawer v-model="drawer" app clipped color="grey lighten-4">
-      So you think somthig should be here? 
-    </v-navigation-drawer>
-    <v-content>      
-      <router-view></router-view>
-    </v-content>
+
+    <v-main class="grey lighten-3">
+      <v-container>
+        <v-row>
+          <v-col cols="3">
+            <v-sheet rounded="lg">
+              <v-sheet rounded="lg" class="pa-4 text-center">
+                <v-avatar class="mb-4" color="grey lighten-1" size="64">
+                  <v-img v-if="user.avatar" :src="user.avatar" />
+                  <v-icon>mdi-account</v-icon>
+                </v-avatar>
+
+                <div>
+                  <strong>{{ user.name }}</strong>
+                </div>
+                <div>{{ user.company }}</div>
+                <code>{{ user.id }}</code>
+              </v-sheet>
+
+              <v-divider></v-divider>
+              <v-list color="transparent">
+                <v-list-item v-for="n in 5" :key="n" link>
+                  <v-list-item-content>
+                    <v-list-item-title> List Item {{ n }} </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </v-sheet>
+          </v-col>
+
+          <v-col>
+            <v-sheet min-height="70vh" rounded="lg">
+              <v-main>
+                <router-view></router-view>
+              </v-main>
+            </v-sheet>
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
   </v-app>
 </template>
 <script>
-import HelloWorld from './components/HelloWorld';
+import gql from "graphql-tag"
 
 export default {
-  name: 'App',
-
-  components: {
-    HelloWorld,
+  name: "App",
+  apollo: {
+    user: {
+      query: gql`
+        query {
+          user {
+            id
+            email
+            name
+            bio
+            company
+            avatar
+            verified
+            profiles
+            role
+            streams(limit: 25) {
+              totalCount
+              cursor
+              items {
+                id
+                name
+                description
+                isPublic
+                createdAt
+                updatedAt
+                collaborators {
+                  id
+                  name
+                  role
+                }
+              }
+            }
+          }
+        }
+      `,
+    },
   },
+  components: {},
 
-  data: ( ) => ( {
-    setup: true,
-    drawer: true
-  } ),
-
-
+  data: () => ( {
+    user: {},
+    links: [ "streams", "projects", "profile", "settings", "help" ],
+  } )
 }
 </script>
