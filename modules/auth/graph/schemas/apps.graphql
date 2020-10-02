@@ -20,7 +20,7 @@ type ServerApp {
   public: Boolean
   trustByDefault: Boolean
   author: AppAuthor
-  createdAt: String!
+  createdAt: DateTime!
   redirectUrl: String!
   scopes: [Scope]!
 }
