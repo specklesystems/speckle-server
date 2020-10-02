@@ -16,8 +16,8 @@ type Stream {
   name: String!
   description: String
   isPublic: Boolean!
-  createdAt: String!
-  updatedAt: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
   collaborators: [ StreamCollaborator ]!
 }
 
