@@ -1,0 +1,9 @@
+query {
+  serverInfo {
+    name
+    company
+    description
+    adminContact
+    canonicalUrl
+  }
+}

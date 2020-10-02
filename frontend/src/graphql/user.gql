@@ -1,5 +1,5 @@
 query {
-    user {
+  user {
     id
     email
     name
@@ -10,21 +10,32 @@ query {
     profiles
     role
     streams(limit: 25) {
-        totalCount
-        cursor
-        items {
-            id
-            name
-            description
-            isPublic
-            createdAt
-            updatedAt
-            collaborators {
-                id
-                name
-                role
-            }
+      totalCount
+      cursor
+      items {
+        id
+        name
+        description
+        isPublic
+        createdAt
+        updatedAt
+        collaborators {
+          id
+          name
+          role
         }
+      }
     }
+    commits(limit: 25) {
+      totalCount
+      cursor
+      items {
+        id
+        message
+        streamId
+        streamName
+        createdAt
+      }
     }
+  }
 }

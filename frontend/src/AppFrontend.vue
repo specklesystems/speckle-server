@@ -43,21 +43,28 @@
       <v-container>
         <v-row>
           <v-col cols="3">
-            <v-sheet rounded="lg">
-              <v-sheet rounded="lg" class="pa-4 text-center">
-                <v-avatar class="mb-4" color="grey lighten-1" size="64">
-                  <v-img v-if="user.avatar" :src="user.avatar" />
-                  <v-icon>mdi-account</v-icon>
-                </v-avatar>
+            <v-sheet rounded="lg" class="pa-4 text-center">
+              <v-avatar class="mb-4" color="grey lighten-1" size="64">
+                <v-img v-if="user.avatar" :src="user.avatar" />
+                <v-icon>mdi-account</v-icon>
+              </v-avatar>
+              <div>
+                <strong>{{ user.name }}</strong>
+              </div>
+              <div>{{ user.company }}</div>
+              <code>{{ user.id }}</code>
+            </v-sheet>
 
-                <div>
-                  <strong>{{ user.name }}</strong>
-                </div>
-                <div>{{ user.company }}</div>
-                <code>{{ user.id }}</code>
-              </v-sheet>
-
-              <v-divider></v-divider>
+            <v-sheet rounded="lg" class="mt-2 pa-4 text-center">
+              <div>
+                <strong>{{ serverInfo.name }}</strong>
+              </div>
+              <div>{{ serverInfo.company }}</div>
+              <div>{{ serverInfo.description }}</div>
+              <div>{{ serverInfo.adminContact }}</div>
+              <code>{{ serverInfo.canonicalUrl }}</code>
+            </v-sheet>
+            <v-sheet rounded="lg" class="mt-2">
               <v-list color="transparent">
                 <v-list-item v-for="n in 5" :key="n" link>
                   <v-list-item-content>
@@ -81,50 +88,26 @@
   </v-app>
 </template>
 <script>
-import gql from "graphql-tag"
+import userQuery from "./graphql/user.gql"
+import serverQuery from "./graphql/server.gql"
 
 export default {
   name: "App",
   apollo: {
     user: {
-      query: gql`
-        query {
-          user {
-            id
-            email
-            name
-            bio
-            company
-            avatar
-            verified
-            profiles
-            role
-            streams(limit: 25) {
-              totalCount
-              cursor
-              items {
-                id
-                name
-                description
-                isPublic
-                createdAt
-                updatedAt
-                collaborators {
-                  id
-                  name
-                  role
-                }
-              }
-            }
-          }
-        }
-      `
+      prefetch: true,
+      query: userQuery
+    },
+    serverInfo: {
+      prefetch: true,
+      query: serverQuery
     }
   },
   components: {},
 
   data: () => ({
     user: {},
+    serverInfo: {},
     navLinks: [
       { link: "/streams", name: "streams" },
       { link: "/teams", name: "teams" },

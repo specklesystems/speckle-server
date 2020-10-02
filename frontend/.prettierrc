@@ -5,5 +5,7 @@
   "endOfLine": "auto",
   "bracketSpacing": true,
   "eslintIntegration": true,
-  "jsxBracketSameLine": true
+  "jsxBracketSameLine": true,
+  "vueIndentScriptAndStyle": false,
+  "htmlWhitespaceSensitivity": "ignore"
 }
