@@ -34,6 +34,7 @@ type CommitCollectionUserNode {
   message: String
   streamId: String
   streamName: String
+  createdAt: String
 }
 
 type BranchCollection {
