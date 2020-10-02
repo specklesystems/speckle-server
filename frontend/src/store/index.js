@@ -1,7 +1,6 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
-import gql from 'graphql-tag'
-
+import Vue from "vue"
+import Vuex from "vuex"
+import gql from "graphql-tag"
 
 Vue.use( Vuex )
 
@@ -15,15 +14,11 @@ export default new Vuex.Store( {
     }
   },
   actions: {
-
     // async getUser( { commit } ) {
     //   let user = gql `{ userQuery }`
     //   console.log( user )
     //   commit( 'SET_USER', user )
     // }
   },
-  modules: {
-  }
+  modules: {}
 } )
-
-

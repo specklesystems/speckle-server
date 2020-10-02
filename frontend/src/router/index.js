@@ -1,25 +1,32 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
+import Streams from '../views/Streams.vue'
 
-Vue.use( VueRouter )
+Vue.use(VueRouter)
 
-const routes = [ {
+const routes = [
+  {
     path: '/',
-    name: 'Home',
-    component: ( ) => import( '../views/Home.vue' )
+    name: 'home',
+    component: Home
+  },
+  {
+    path: '/streams',
+    name: 'streams',
+    component: Streams
   },
   {
     path: '/about',
     name: 'About',
-    component: ( ) => import( '../views/About.vue' )
+    component: () => import('../views/About.vue')
   }
 ]
 
-const router = new VueRouter( {
+const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
-} )
+})
 
 export default router

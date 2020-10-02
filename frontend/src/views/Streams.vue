@@ -12,6 +12,7 @@
         team activity
       </v-chip>
     </v-card>
+
     <v-card
       v-for="(stream, i) in user.streams.items"
       :key="i"
@@ -21,12 +22,13 @@
     >
       <v-row class="caption pl-4 pr-4 grey--text text--lighten-1">
         <v-col><strong>You</strong> created a new stream</v-col>
-        <v-spacer></v-spacer>
-        <v-col class="text-right"
-          ><timeago :datetime="parseInt(stream.createdAt)"></timeago
-        ></v-col>
+        <v-spacer />
+
+        <v-col class="text-right">
+          <timeago :datetime="parseInt(stream.createdAt)" />
+        </v-col>
       </v-row>
-      <v-divider></v-divider>
+      <v-divider />
       <v-card-title>
         {{ stream.name }}
       </v-card-title>
@@ -38,7 +40,6 @@
 </template>
 <script>
 // @ is an alias to /src
-
 //import gql from "graphql-tag"
 
 export default {

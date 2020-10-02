@@ -5,7 +5,7 @@
         
 
 
-        <v-btn text>
+        <v-btn text to="/">
           <v-img contain max-height="30" max-width="30" src="./assets/logo.svg" />
           <div class="mt-1">
             <span class="primary--text"><b>SPECKLE</b></span>&nbsp;<span class="font-weight-light">ADMIN</span>
@@ -13,8 +13,8 @@
           
         </v-btn>
 
-        <v-btn v-for="link in links" :key="link" text>
-          {{ link }}
+        <v-btn v-for="link in navLinks" :key="link.name" text class="text-uppercase" :to="link.link">
+          {{ link.name }}
         </v-btn>
 
         <v-spacer></v-spacer>
@@ -117,8 +117,13 @@ export default {
 
   data: () => ( {
     user: {},
-    links: [ "streams", "projects", "profile", "settings", "help" ],
-  } ),
+    navLinks: [ 
+      {link: "/streams", name:"streams"}, 
+      {link: "/teams", name:"teams"}, 
+      {link: "/profile", name:"profile"}, 
+      {link: "/settings", name:"settings"}, 
+      {link: "/help", name:"help"}
+    ] } ),
   
   watch:{
     user( val ){
