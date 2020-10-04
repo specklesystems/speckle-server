@@ -10,8 +10,9 @@
             src="./assets/logo.svg"
           />
           <div class="mt-1">
-            <span class="primary--text"><b>SPECKLE</b></span
-            >&nbsp;<span class="font-weight-light">ADMIN</span>
+            <span class="primary--text"><b>SPECKLE</b></span>
+            &nbsp;
+            <span class="font-weight-light">ADMIN</span>
           </div>
         </v-btn>
 
@@ -63,15 +64,6 @@
               <div>{{ serverInfo.description }}</div>
               <div>{{ serverInfo.adminContact }}</div>
               <code>{{ serverInfo.canonicalUrl }}</code>
-            </v-sheet>
-            <v-sheet rounded="lg" class="mt-2">
-              <v-list color="transparent">
-                <v-list-item v-for="n in 5" :key="n" link>
-                  <v-list-item-content>
-                    <v-list-item-title> List Item {{ n }} </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
             </v-sheet>
           </v-col>
 

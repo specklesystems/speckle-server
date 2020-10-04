@@ -24,6 +24,12 @@ query {
           name
           role
         }
+        commits {
+          totalCount
+        }
+        branches {
+          totalCount
+        }
       }
     }
     commits(limit: 25) {
