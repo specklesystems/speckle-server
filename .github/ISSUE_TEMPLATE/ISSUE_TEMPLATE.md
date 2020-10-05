@@ -1,3 +1,11 @@
+---
+name: New issue
+about: Create a report to help us improve
+title:
+labels:
+assignees:
+---
+
 If it's your first time here - or you forgot about them - make sure you read the [contribution guidelines](CONTRIBUTING.md), and then feel free to delete this line!
 
 ### Expected vs. Actual Behavior
