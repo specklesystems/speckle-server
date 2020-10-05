@@ -36,7 +36,7 @@ This doesn't make sense here, but in general, we should try to provide a small "
 
 ## Contributing
 
-Please make sure you read the [contribution guidelines](CONTRIBUTING.md) for an overview of the best practices we try to follow.
+Please make sure you read the [contribution guidelines](.github/CONTRIBUTING.md) for an overview of the best practices we try to follow.
 
 ## Community
 
