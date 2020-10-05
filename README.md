@@ -13,6 +13,7 @@ This repo holds Speckle's:
 - Default [Contribution Guidelines](.github/CONTRIBUTING.md),
 - README template (you're reading it now),
 - Default [Issue Template](.github/ISSUE_TEMPLATE/ISSUE_TEMPLATE.md),
+- Default [Pull Request Template](.github/PULL_REQUEST_TEMPLATE/PR_TEMPLATE.md),
 - OSS License (Apache 2.0)
 
 Either copy paste the parts that are useful in existing repos, or use this as a base when creating a new repository.
