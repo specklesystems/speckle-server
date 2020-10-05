@@ -17,7 +17,8 @@ module.exports = {
     historyApiFallback: {
       rewrites: [
         { from: /^\/$/, to: "/app.html" },
-        { from: /\/auth/, to: "/auth.html" }
+        { from: /\/auth/, to: "/auth.html" },
+        { from: /./, to: "/app.html" }
       ]
     }
   },
