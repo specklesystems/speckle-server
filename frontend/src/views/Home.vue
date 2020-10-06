@@ -13,15 +13,13 @@
       </v-chip-group>
     </v-card>
     <div v-for="(activity, i) in recentActivity" :key="i">
-      <!-- STREAM -->
       <stream-box
         v-if="activity.__typename === 'Stream'"
         :stream="activity"
+        :is-feed="true"
       ></stream-box>
-
-      <!-- COMMIT -->
       <commit-box
-        v-if="activity.__typename === 'CommitCollectionUserNode'"
+        v-else-if="activity.__typename === 'CommitCollectionUserNode'"
         :commit="activity"
       ></commit-box>
     </div>
@@ -82,6 +80,7 @@ export default {
           if (group.length > 1) {
             activityGrouped.push({
               streamName: group[0].streamName,
+              streamId: group[0].streamId,
               createdAt: group[0].createdAt,
               message: group[0].message,
               __typename: "CommitCollectionUserNode",
@@ -97,6 +96,7 @@ export default {
           if (group.length > 1) {
             activityGrouped.push({
               streamName: group[0].streamName,
+              streamId: group[0].streamId,
               createdAt: group[0].createdAt,
               message: group[0].message,
               __typename: "CommitCollectionUserNode",
@@ -122,8 +122,16 @@ export default {
   }
 }
 </script>
-<style scoped>
+<style>
 .streamid {
   font-family: monospace !important;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
 </style>

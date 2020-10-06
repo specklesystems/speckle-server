@@ -1,5 +1,5 @@
 <template>
-  <v-app id="inspire">
+  <v-app id="speckle">
     <v-app-bar app color="white" flat>
       <v-container class="py-0 fill-height">
         <v-btn text to="/">
@@ -62,8 +62,12 @@
               </div>
               <div>{{ serverInfo.company }}</div>
               <div>{{ serverInfo.description }}</div>
-              <div>{{ serverInfo.adminContact }}</div>
-              <code>{{ serverInfo.canonicalUrl }}</code>
+              <div v-if="serverInfo.adminContact">
+                {{ serverInfo.adminContact }}
+              </div>
+              <code v-if="serverInfo.canonicalUrl">
+                {{ serverInfo.canonicalUrl }}
+              </code>
             </v-sheet>
           </v-col>
 

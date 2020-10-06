@@ -1,7 +1,5 @@
 import Vue from "vue"
 import VueRouter from "vue-router"
-import Home from "../views/Home.vue"
-import Streams from "../views/Streams.vue"
 
 Vue.use(VueRouter)
 
@@ -9,12 +7,17 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: Home
+    component: () => import("../views/Home.vue")
   },
   {
     path: "/streams",
-    name: "streams",
-    component: Streams
+    name: "Streams",
+    component: () => import("../views/Streams.vue")
+  },
+  {
+    path: "/streams/:id",
+    name: "Stream",
+    component: () => import("../views/Stream.vue")
   },
   {
     path: "/help",
