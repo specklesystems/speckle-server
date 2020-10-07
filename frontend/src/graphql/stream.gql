@@ -40,5 +40,8 @@ query Stream($id: String!) {
         }
       }
     }
+    commits {
+      totalCount
+    }
   }
 }

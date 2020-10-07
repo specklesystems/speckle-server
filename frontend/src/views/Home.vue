@@ -1,46 +1,54 @@
 <template>
-  <div v-if="recentActivity">
-    <v-card class="mb-5" elevation="0" rounded="lg">
-      <v-subheader class="text-uppercase">Recent activity:</v-subheader>
-      <v-chip-group
-        v-model="selectedActivity"
-        mandatory
-        active-class="blue--text text--accent-1"
-      >
-        <v-chip class="ml-3 mb-3" small>all activity</v-chip>
-        <v-chip class="mb-3" small>streams</v-chip>
-        <v-chip class="mb-3" small>commits</v-chip>
-      </v-chip-group>
-    </v-card>
-    <div v-for="(activity, i) in recentActivity" :key="i">
-      <stream-box
-        v-if="activity.__typename === 'Stream'"
-        :stream="activity"
-        :is-feed="true"
-      ></stream-box>
-      <commit-box
-        v-else-if="activity.__typename === 'CommitCollectionUserNode'"
-        :commit="activity"
-      ></commit-box>
-    </div>
-  </div>
+  <v-container>
+    <v-row>
+      <v-col cols="3">
+        <sidebar-home></sidebar-home>
+      </v-col>
+      <v-col cols="9">
+        <div v-if="recentActivity">
+          <v-card class="mb-5" elevation="0" rounded="lg">
+            <v-subheader class="text-uppercase">Recent activity:</v-subheader>
+            <v-chip-group
+              v-model="selectedActivity"
+              mandatory
+              active-class="blue--text text--accent-1"
+            >
+              <v-chip class="ml-3 mb-3" small>all activity</v-chip>
+              <v-chip class="mb-3" small>streams</v-chip>
+              <v-chip class="mb-3" small>commits</v-chip>
+            </v-chip-group>
+          </v-card>
+          <div v-for="(activity, i) in recentActivity" :key="i">
+            <feed-stream
+              v-if="activity.__typename === 'Stream'"
+              :stream="activity"
+            ></feed-stream>
+            <feed-commit
+              v-else-if="activity.__typename === 'CommitCollectionUserNode'"
+              :commit="activity"
+            ></feed-commit>
+          </div>
+        </div>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 <script>
-import StreamBox from "../components/StreamBox"
-import CommitBox from "../components/CommitBox"
+import SidebarHome from "../components/SidebarHome"
+import FeedStream from "../components/FeedStream"
+import FeedCommit from "../components/FeedCommit"
+import userQuery from "../graphql/user.gql"
 
 export default {
   name: "Home",
-  components: { StreamBox, CommitBox },
-  props: {
+  components: { SidebarHome, FeedStream, FeedCommit },
+  apollo: {
     user: {
-      type: Object,
-      default: function () {
-        return {}
-      }
+      prefetch: true,
+      query: userQuery
     }
   },
-  data: () => ({ selectedActivity: 0 }),
+  data: () => ({ selectedActivity: 0, user: {} }),
   computed: {
     recentActivity() {
       let activity = []
