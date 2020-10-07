@@ -264,7 +264,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         c1.message = 'what a message for a first commit'
         c1.streamId = ts1
         c1.objectId = objIds[ 0 ]
-        c1.branchName = 'master'
+        c1.branchName = 'main'
 
         let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c1 } } )
 
@@ -277,7 +277,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         c2.message = 'what a message for a second commit'
         c2.streamId = ts1
         c2.objectId = objIds[ 1 ]
-        c2.branchName = 'master'
+        c2.branchName = 'main'
         c2.previousCommitIds = [ c1.id ]
 
         res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c2 } } )
@@ -388,7 +388,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         await sendRequest( userA.token, { query: `mutation{ streamRevokePermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}"} ) }` } )
       } )
 
-      it( 'Should commit to a non-master branch as well...', async ( ) => {
+      it( 'Should commit to a non-main branch as well...', async ( ) => {
         let cc = {}
         cc.message = 'what a message for a second commit'
         cc.streamId = ts1
@@ -459,7 +459,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
             message: `what a message for commit number ${i}`,
             streamId: ts1,
             objectId: objIds[ i ],
-            branchName: 'master',
+            branchName: 'main',
           }
           let res = await sendRequest( userA.token, { query: `mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }`, variables: { myCommit: c1 } } )
         }
@@ -692,7 +692,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         let query = `
         query {
           stream( id: "${ts1}" ) {
-            branch( name: "master" ) {
+            branch( name: "main" ) {
               id
               name
               commits( limit: 5 ) {
@@ -719,7 +719,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         let query2 = `
         query {
           stream( id: "${ts1}" ) {
-            branch( name: "master" ) {
+            branch( name: "main" ) {
               id
               name
               commits( limit: 3, cursor: "${res.body.data.stream.branch.commits.cursor}" ) {

@@ -61,7 +61,7 @@ describe( 'Branches', ( ) => {
 
   it( 'Should not allow duplicate branch names', async ( ) => {
     try {
-      await createBranch( { name: 'master', streamId: stream.id, authorId: user.id } )
+      await createBranch( { name: 'main', streamId: stream.id, authorId: user.id } )
       assert.fail( 'Duplicate branches should not be allowed.' )
     } catch ( err ) {
       expect( err.message ).to.contain( 'duplicate key value violates unique constraint' )
@@ -83,8 +83,8 @@ describe( 'Branches', ( ) => {
 
   it( 'Should get all stream branches', async ( ) => {
 
-    await createBranch( { name: 'master-faster', streamId: stream.id, authorId: user.id } )
-    await createBranch( { name: 'master-blaster', streamId: stream.id, authorId: user.id } )
+    await createBranch( { name: 'main-faster', streamId: stream.id, authorId: user.id } )
+    await createBranch( { name: 'main-blaster', streamId: stream.id, authorId: user.id } )
     await createBranch( { name: 'blaster-farter', streamId: stream.id, authorId: user.id } )
 
     let { items, cursor, totalCount } = await getBranchesByStreamId( { streamId: stream.id } )
