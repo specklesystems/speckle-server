@@ -23,8 +23,8 @@ module.exports = {
     let [ streamId ] = await Streams( ).returning( 'id' ).insert( stream )
     await Acl( ).insert( { userId: ownerId, resourceId: streamId, role: 'stream:owner' } )
 
-    // Create a default master branch
-    await createBranch( { name: 'master', description: 'default branch', streamId: streamId, authorId: ownerId } )
+    // Create a default main branch
+    await createBranch( { name: 'main', description: 'default branch', streamId: streamId, authorId: ownerId } )
     return streamId
   },
 

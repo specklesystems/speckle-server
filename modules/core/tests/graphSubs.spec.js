@@ -463,12 +463,12 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
       await sleep( 500 )
 
       let cc1 = await sendRequest( userA.token, {
-          query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId1}" } ) }`
+          query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId1}" } ) }`
         } )
         .expect( 200 )
         .expect( noErrors )
       let cc2 = await sendRequest( userA.token, {
-          query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId2}" } ) }`
+          query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId2}" } ) }`
         } )
         .expect( 200 )
         .expect( noErrors )
@@ -483,7 +483,7 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
       const streamId = resSC.body.data.streamCreate
       const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {hello: "goodbye 🌊"}} ) }` } )
       const objId = resOC.body.data.objectCreate
-      const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` } )
+      const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId}" } ) }` } )
       const commitId = resCC.body.data.commitCreate
 
       let eventNum = 0
@@ -517,7 +517,7 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
       const streamId = resSC.body.data.streamCreate
       const resOC = await sendRequest( userA.token, { query: `mutation { objectCreate( objectInput: {streamId: "${streamId}", objects: {hello: "goodbye 🌊"}} ) }` } )
       const objId = resOC.body.data.objectCreate
-      const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }` } )
+      const resCC = await sendRequest( userA.token, { query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId}" } ) }` } )
       const commitId = resCC.body.data.commitCreate
 
       let eventNum = 0
@@ -558,7 +558,7 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
       await sleep( 500 )
 
       let cc = await sendRequest( userA.token, {
-          query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "master", objectId: "${objId}" } ) }`
+          query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId}" } ) }`
         } )
         .expect( 200 )
         .expect( noErrors )
