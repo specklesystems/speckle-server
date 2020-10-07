@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <v-card v-if="stream.id" rounded="lg" class="pa-4" elevation="0">
+  <div v-if="stream">
+    <v-card rounded="lg" class="pa-4" elevation="0">
       <v-card-title>{{ stream.name }}</v-card-title>
       <v-card-text>
         <p class="subtitle-1 font-weight-light">{{ stream.description }}</p>
@@ -39,14 +39,24 @@
         <p>
           <span v-if="stream.isPublic">
             <v-icon small>mdi-lock-open</v-icon>
-            public via link
+            link sharing on
           </span>
           <span v-else>
             <v-icon small>mdi-lock-outline</v-icon>
-            private
+            link sharing off
           </span>
         </p>
       </v-card-text>
+    </v-card>
+
+    <v-card rounded="lg" class="mt-2 pa-4" elevation="0">
+      <v-card-title class="subtitle-1">Collaborators</v-card-title>
+      <v-card-actions class="ml-2 mr-2">
+        <v-btn small fab color="primary">
+          <v-icon small>mdi-account-multiple-plus</v-icon>
+        </v-btn>
+        <!-- TODO: LIST COLLABORATORS -->
+      </v-card-actions>
     </v-card>
   </div>
 </template>
@@ -54,7 +64,7 @@
 import streamQuery from "../graphql/stream.gql"
 
 export default {
-  data: () => ({ stream: {} }),
+  data: () => ({}),
   apollo: {
     stream: {
       prefetch: true,

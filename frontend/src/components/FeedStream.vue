@@ -21,7 +21,7 @@
           <v-col cols="7" class="pt-0 pb-0">
             <v-card-title class="subtitle-2">
               <router-link :to="'streams/' + stream.id">
-                {{ stream.name }} as asa dfsd f gdfgdfg gdfg fg dfgd
+                {{ stream.name }}
               </router-link>
             </v-card-title>
             <v-card-subtitle>

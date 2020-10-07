@@ -12,7 +12,7 @@
       <code>{{ user.id }}</code>
     </v-sheet>
 
-    <v-sheet rounded="lg" class="mt-2 pa-4 text-center">
+    <v-sheet rounded="lg" class="mt-5 pa-4 text-center">
       <div>
         <strong>{{ serverInfo.name }}</strong>
       </div>

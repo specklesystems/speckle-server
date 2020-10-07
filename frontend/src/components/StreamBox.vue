@@ -3,7 +3,7 @@
     <v-col cols="7">
       <div class="subtitle-2">
         <router-link :to="'streams/' + stream.id">
-          {{ stream.name }} as asa dfsd f gdfgdfg gdfg fg dfgd
+          {{ stream.name }}
         </router-link>
       </div>
       <div>

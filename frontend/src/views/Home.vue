@@ -4,31 +4,40 @@
       <v-col cols="3">
         <sidebar-home></sidebar-home>
       </v-col>
-      <v-col cols="9">
-        <div v-if="recentActivity">
-          <v-card class="mb-5" elevation="0" rounded="lg">
-            <v-subheader class="text-uppercase">Recent activity:</v-subheader>
-            <v-chip-group
-              v-model="selectedActivity"
-              mandatory
-              active-class="blue--text text--accent-1"
-            >
-              <v-chip class="ml-3 mb-3" small>all activity</v-chip>
-              <v-chip class="mb-3" small>streams</v-chip>
-              <v-chip class="mb-3" small>commits</v-chip>
-            </v-chip-group>
-          </v-card>
-          <div v-for="(activity, i) in recentActivity" :key="i">
-            <feed-stream
-              v-if="activity.__typename === 'Stream'"
-              :stream="activity"
-            ></feed-stream>
-            <feed-commit
-              v-else-if="activity.__typename === 'CommitCollectionUserNode'"
-              :commit="activity"
-            ></feed-commit>
-          </div>
-        </div>
+      <v-col v-if="recentActivity" cols="9">
+        <v-row>
+          <v-col class="pt-0">
+            <v-card class="pa-5" elevation="0" rounded="lg">
+              <v-subheader class="text-uppercase">Recent activity:</v-subheader>
+              <v-chip-group
+                v-model="selectedActivity"
+                mandatory
+                active-class="primary--text text--accent-1"
+              >
+                <v-chip class="ml-3 mb-3" small>all activity</v-chip>
+                <v-chip class="mb-3" small>streams</v-chip>
+                <v-chip class="mb-3" small>commits</v-chip>
+              </v-chip-group>
+
+              <div class="clear"></div>
+            </v-card>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <v-col class="ml-4 pt-0">
+            <div v-for="(activity, i) in recentActivity" :key="i">
+              <feed-stream
+                v-if="activity.__typename === 'Stream'"
+                :stream="activity"
+              ></feed-stream>
+              <feed-commit
+                v-else-if="activity.__typename === 'CommitCollectionUserNode'"
+                :commit="activity"
+              ></feed-commit>
+            </div>
+          </v-col>
+        </v-row>
       </v-col>
     </v-row>
   </v-container>
@@ -130,7 +139,7 @@ export default {
   }
 }
 </script>
-<style>
+<style scoped>
 .streamid {
   font-family: monospace !important;
 }

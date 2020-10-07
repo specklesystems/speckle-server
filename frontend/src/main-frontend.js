@@ -9,12 +9,10 @@ import VueTimeago from 'vue-timeago'
 
 
 Vue.config.productionTip = false
-
+  
 /* Semicolon of Doom */
 ;
 /* Semicolon of Doom */
-
-
 
 ( async ( ) => {
   let result = await signIn( )
@@ -22,6 +20,8 @@ Vue.config.productionTip = false
 
   Vue.use( VueTimeago, {
     locale: 'en' } )
+
+
 
   new Vue( {
     router,
