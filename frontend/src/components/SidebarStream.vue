@@ -49,7 +49,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card rounded="lg" class="mt-2 pa-4" elevation="0">
+    <v-card rounded="lg" class="mt-5 pa-4" elevation="0">
       <v-card-title class="subtitle-1">Collaborators</v-card-title>
       <v-card-actions class="ml-2 mr-2">
         <v-btn small fab color="primary">

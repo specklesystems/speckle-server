@@ -4,9 +4,22 @@
       <v-col cols="3">
         <sidebar-home></sidebar-home>
       </v-col>
-      <v-col cols="9">
+      <v-col v-if="user" cols="9">
         <v-card rounded="lg" class="pa-5" elevation="0">
           <v-card-title>Your Streams</v-card-title>
+          <v-btn
+            class="ml-3 mt-5 text-right"
+            color="primary"
+            elevation="0"
+            small
+            @click="newStream"
+          >
+            <v-icon small class="mr-1">mdi-plus-box-outline</v-icon>
+            new stream
+          </v-btn>
+
+          <new-stream ref="newStreamDialog"></new-stream>
+
           <v-card-text v-if="user.streams && user.streams.items">
             <div v-for="(stream, i) in user.streams.items" :key="i">
               <stream-box :stream="stream"></stream-box>
@@ -19,20 +32,54 @@
   </v-container>
 </template>
 <script>
+import gql from "graphql-tag"
 import StreamBox from "../components/StreamBox"
 import SidebarHome from "../components/SidebarHome"
+import NewStream from "../components/dialogs/NewStream"
 import userQuery from "../graphql/user.gql"
 
 export default {
   name: "Streams",
-  components: { StreamBox, SidebarHome },
+  components: { StreamBox, SidebarHome, NewStream },
   apollo: {
     user: {
       prefetch: true,
       query: userQuery
     }
   },
-  data: () => ({})
+  data: () => ({}),
+  methods: {
+    newStream() {
+      this.$refs.newStreamDialog.open().then((dialog) => {
+        if (!dialog.result) return
+
+        this.$apollo
+          .mutate({
+            mutation: gql`
+              mutation streamCreate($myStream: StreamCreateInput!) {
+                streamCreate(stream: $myStream)
+              }
+            `,
+            variables: {
+              myStream: {
+                name: dialog.name,
+                description: dialog.description
+              }
+            }
+          })
+          .then((data) => {
+            // Result
+            console.log(data)
+
+            this.$apollo.queries.user.refetch()
+          })
+          .catch((error) => {
+            // Error
+            console.error(error)
+          })
+      })
+    }
+  }
 }
 </script>
 <style>

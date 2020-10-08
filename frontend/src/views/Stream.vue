@@ -11,12 +11,13 @@
               <v-subheader class="text-uppercase">Branches:</v-subheader>
 
               <v-chip-group
+                v-model="selectedBranch"
                 mandatory
                 class="ml-3"
                 active-class="primary--text text--accent-1"
               >
                 <v-chip
-                  v-for="(branch, i) in stream.branches.items"
+                  v-for="(branch, i) in branches"
                   :key="i"
                   class="mb-3"
                   small
@@ -37,6 +38,13 @@
               <new-branch ref="newBranchDialog"></new-branch>
 
               <div class="clear"></div>
+
+              <p
+                v-if="branches[selectedBranch].description"
+                class="subtitle-1 font-weight-light ml-4 mt-2"
+              >
+                {{ branches[selectedBranch].description }}
+              </p>
             </v-card>
           </v-col>
         </v-row>
@@ -44,6 +52,25 @@
           <v-col>
             <v-card rounded="lg" class="pa-5" elevation="0">
               <v-subheader class="text-uppercase">Commits:</v-subheader>
+
+              <v-card-text>
+                <p
+                  v-if="branches[selectedBranch].commits.items.length === 0"
+                  class="subtitle-1 font-weight-light"
+                >
+                  There are no commits in this branch just yet, try sending
+                  something...
+                </p>
+                <div
+                  v-for="(commit, i) in branches[selectedBranch].commits.items"
+                  :key="i"
+                >
+                  <div class="subtitle-2 mb-5">
+                    {{ commit.message }}
+                  </div>
+                  <!-- TODO: add more info and maby let user create a new commit? -->
+                </div>
+              </v-card-text>
             </v-card>
           </v-col>
         </v-row>
@@ -72,9 +99,15 @@ export default {
       }
     }
   },
-  data: () => ({}),
+  data: () => ({ selectedBranch: 0 }),
+  computed: {
+    branches() {
+      //reverse without changing original array
+      return this.stream.branches.items.slice().reverse()
+    }
+  },
   watch: {
-    stream(val) {
+    selectedBranch(val) {
       console.log(val)
     }
   },
