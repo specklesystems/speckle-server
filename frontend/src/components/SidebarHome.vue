@@ -1,9 +1,12 @@
 <template>
   <div>
     <v-sheet rounded="lg" class="pa-4 text-center">
-      <v-avatar class="mb-4" color="grey lighten-1" size="64">
+      <v-avatar class="mb-4" color="grey lighten-3" size="64">
         <v-img v-if="user.avatar" :src="user.avatar" />
-        <v-icon>mdi-account</v-icon>
+        <v-img
+          v-else
+          :src="`https://robohash.org/` + user.id + `.png?size=64x64`"
+        />
       </v-avatar>
       <div>
         <strong>{{ user.name }}</strong>

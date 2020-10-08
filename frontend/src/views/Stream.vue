@@ -26,6 +26,17 @@
                 </v-chip>
               </v-chip-group>
 
+              <!-- <v-btn
+                class="mt-1 text-right"
+                color="primary"
+                elevation="0"
+                small
+                @click="newBranch"
+              >
+                <v-icon small class="mr-1">mdi-source-branch-plus</v-icon>
+                new branch
+              </v-btn> -->
+
               <v-chip-group
                 active-class="primary--text text--accent-1"
                 mandatory
@@ -90,6 +101,7 @@ import streamQuery from "../graphql/stream.gql"
 export default {
   name: "Stream",
   components: { SidebarStream, NewBranch },
+  data: () => ({ selectedBranch: 0 }),
   apollo: {
     stream: {
       prefetch: true,
@@ -102,7 +114,6 @@ export default {
       }
     }
   },
-  data: () => ({ selectedBranch: 0 }),
   computed: {
     branches() {
       //reverse without changing original array

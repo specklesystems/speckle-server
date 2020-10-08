@@ -1,7 +1,16 @@
 <template>
   <div v-if="stream">
     <v-card rounded="lg" class="pa-4" elevation="0">
-      <v-card-title>{{ stream.name }}</v-card-title>
+      <v-card-title>
+        {{ stream.name }}
+        <v-spacer></v-spacer>
+        <v-btn small icon @click="editStream">
+          <v-icon small>mdi-pencil-outline</v-icon>
+        </v-btn>
+      </v-card-title>
+
+      <stream-dialog ref="editStreamDialog"></stream-dialog>
+
       <v-card-text>
         <p class="subtitle-1 font-weight-light">{{ stream.description }}</p>
 
@@ -33,8 +42,8 @@
         <p>
           <v-icon small>mdi-account-outline</v-icon>
           &nbsp;
-          <span>{{ stream.collaborators.length - 1 }}</span>
-          collaborator{{ stream.collaborators.length - 1 === 1 ? "" : "s" }}
+          <span>{{ stream.collaborators.length }}</span>
+          collaborator{{ stream.collaborators.length === 1 ? "" : "s" }}
         </p>
         <p>
           <span v-if="stream.isPublic">
@@ -52,18 +61,33 @@
     <v-card rounded="lg" class="mt-5 pa-4" elevation="0">
       <v-card-title class="subtitle-1">Collaborators</v-card-title>
       <v-card-actions class="ml-2 mr-2">
-        <v-btn small fab color="primary">
+        <v-btn small fab color="primary" class="ma-1" elevation="0">
           <v-icon small>mdi-account-multiple-plus</v-icon>
         </v-btn>
-        <!-- TODO: LIST COLLABORATORS -->
+        <v-avatar
+          v-for="(collab, i) in stream.collaborators"
+          :key="i"
+          class="ma-1"
+          color="grey lighten-3"
+          size="40"
+        >
+          <v-img v-if="collab.avatar" :src="collab.avatar" />
+          <v-img
+            v-else
+            :src="`https://robohash.org/` + collab.id + `.png?size=40x40`"
+          />
+        </v-avatar>
       </v-card-actions>
     </v-card>
   </div>
 </template>
 <script>
+import gql from "graphql-tag"
 import streamQuery from "../graphql/stream.gql"
+import StreamDialog from "../components/dialogs/StreamDialog"
 
 export default {
+  components: { StreamDialog },
   data: () => ({}),
   apollo: {
     stream: {
@@ -75,6 +99,37 @@ export default {
           id: this.$route.params.id
         }
       }
+    }
+  },
+  methods: {
+    editStream() {
+      this.$refs.editStreamDialog.open(this.stream).then((dialog) => {
+        if (!dialog.result) return
+        console.log(dialog)
+        this.$apollo
+          .mutate({
+            mutation: gql`
+              mutation streamUpdate($myStream: StreamUpdateInput!) {
+                streamUpdate(stream: $myStream)
+              }
+            `,
+            variables: {
+              myStream: {
+                id: dialog.stream.id,
+                name: dialog.stream.name,
+                description: dialog.stream.description,
+                isPublic: dialog.stream.isPublic //TODO: this is not working https://github.com/specklesystems/Server/issues/30
+              }
+            }
+          })
+          .then((data) => {
+            this.$apollo.queries.stream.refetch()
+          })
+          .catch((error) => {
+            // Error
+            console.error(error)
+          })
+      })
     }
   }
 }

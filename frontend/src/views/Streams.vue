@@ -18,7 +18,7 @@
             new stream
           </v-btn>
 
-          <new-stream ref="newStreamDialog"></new-stream>
+          <stream-dialog ref="newStreamDialog"></stream-dialog>
 
           <v-card-text v-if="user.streams && user.streams.items">
             <div v-for="(stream, i) in user.streams.items" :key="i">
@@ -35,12 +35,12 @@
 import gql from "graphql-tag"
 import StreamBox from "../components/StreamBox"
 import SidebarHome from "../components/SidebarHome"
-import NewStream from "../components/dialogs/NewStream"
+import StreamDialog from "../components/dialogs/StreamDialog"
 import userQuery from "../graphql/user.gql"
 
 export default {
   name: "Streams",
-  components: { StreamBox, SidebarHome, NewStream },
+  components: { StreamBox, SidebarHome, StreamDialog },
   apollo: {
     user: {
       prefetch: true,
@@ -52,7 +52,7 @@ export default {
     newStream() {
       this.$refs.newStreamDialog.open().then((dialog) => {
         if (!dialog.result) return
-
+        console.log(dialog)
         this.$apollo
           .mutate({
             mutation: gql`
@@ -62,9 +62,9 @@ export default {
             `,
             variables: {
               myStream: {
-                name: dialog.name,
-                description: dialog.description,
-                isPublic: dialog.isPublic
+                name: dialog.stream.name,
+                description: dialog.stream.description,
+                isPublic: dialog.stream.isPublic
               }
             }
           })

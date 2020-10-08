@@ -2,7 +2,7 @@ module.exports = {
   pages: {
     app: {
       entry: "src/main-frontend.js",
-      title: "Speckle!",
+      title: "Speckle",
       template: "public/app.html",
       filename: "app.html"
     },

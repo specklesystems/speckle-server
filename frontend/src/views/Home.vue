@@ -25,15 +25,17 @@
         </v-row>
 
         <v-row>
-          <v-col class="ml-4 pt-0">
+          <v-col class="ml-0 pt-0">
             <div v-for="(activity, i) in recentActivity" :key="i">
               <feed-stream
                 v-if="activity.__typename === 'Stream'"
                 :stream="activity"
+                :user="user"
               ></feed-stream>
               <feed-commit
                 v-else-if="activity.__typename === 'CommitCollectionUserNode'"
                 :commit="activity"
+                :user="user"
               ></feed-commit>
             </div>
           </v-col>
@@ -126,6 +128,11 @@ export default {
       return activityGrouped
     }
   },
+  watch: {
+    user(val) {
+      console.log(val)
+    }
+  },
   methods: {
     compareUpdates(a, b) {
       if (a.createdAt < b.createdAt) {
@@ -139,16 +146,3 @@ export default {
   }
 }
 </script>
-<style scoped>
-.streamid {
-  font-family: monospace !important;
-}
-
-a {
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-</style>

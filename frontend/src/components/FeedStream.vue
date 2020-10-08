@@ -1,9 +1,12 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <v-avatar class="mt-11" color="grey lighten-1" size="32">
-        <!-- <v-img :src="user.avatar" /> -->
-        <v-icon>mdi-account</v-icon>
+      <v-avatar class="mt-10" color="white" size="40">
+        <v-img v-if="user.avatar" :src="user.avatar" />
+        <v-img
+          v-else
+          :src="`https://robohash.org/` + user.id + `.png?size=40x40`"
+        />
       </v-avatar>
     </div>
     <div class="ml-12">
@@ -65,6 +68,12 @@ export default {
         return {}
       }
     },
+    user: {
+      type: Object,
+      default: function () {
+        return {}
+      }
+    },
     isFeed: {
       type: Boolean,
       default: false
@@ -72,3 +81,16 @@ export default {
   }
 }
 </script>
+<style scoped>
+.streamid {
+  font-family: monospace !important;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+</style>
