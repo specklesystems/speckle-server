@@ -63,7 +63,8 @@ export default {
             variables: {
               myStream: {
                 name: dialog.name,
-                description: dialog.description
+                description: dialog.description,
+                isPublic: dialog.isPublic
               }
             }
           })

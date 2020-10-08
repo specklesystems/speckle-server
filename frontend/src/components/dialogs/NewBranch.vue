@@ -4,13 +4,14 @@
       <v-card-title class="subtitle-1">New Branch</v-card-title>
 
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-form>
+        <v-form ref="form" v-model="valid" lazy-validation>
           <v-container>
             <v-row>
               <v-col cols="12" class="pb-0">
                 <v-text-field
                   v-model="name"
                   label="Name"
+                  :rules="nameRules"
                   required
                   filled
                 ></v-text-field>
@@ -38,11 +39,16 @@
 </template>
 <script>
 export default {
-  data: () => ({
-    dialog: false,
-    name: "",
-    description: ""
-  }),
+  props: ["branches"],
+  data() {
+    return {
+      dialog: false,
+      name: "",
+      nameRules: [],
+      description: "",
+      valid: true
+    }
+  },
   computed: {
     show: {
       get() {
@@ -56,23 +62,45 @@ export default {
       }
     }
   },
+  watch: {
+    name(val) {
+      this.nameRules = []
+    }
+  },
   methods: {
     open() {
       this.dialog = true
-      this.name = ""
-      this.description = ""
+      if (this.$refs.form) this.$refs.form.reset()
+
       return new Promise((resolve, reject) => {
         this.resolve = resolve
         this.reject = reject
       })
     },
     agree() {
-      this.resolve({
-        result: true,
-        name: this.name,
-        description: this.description
+      //prevents annoying validation message from popping at each keystroke
+      //to be used in conjunction with the watch event above and the timer function
+      //source: https://stackoverflow.com/a/57555332
+      this.nameRules = [
+        (v) => !!v || "Branches need a name too!",
+        (v) =>
+          (v && this.branches.filter((e) => e.name === v).length === 0) ||
+          "A branch with this name already exists",
+        (v) => (v && v.length <= 25) || "Name must be less than 25 characters",
+        (v) => (v && v.length >= 3) || "Name must be at least 3 characters"
+      ]
+
+      let self = this
+      setTimeout(function () {
+        if (self.$refs.form.validate()) {
+          self.resolve({
+            result: true,
+            name: self.name,
+            description: self.description
+          })
+          self.dialog = false
+        }
       })
-      this.dialog = false
     },
     cancel() {
       this.resolve({

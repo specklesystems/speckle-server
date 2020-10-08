@@ -35,7 +35,10 @@
                   new branch
                 </v-chip>
               </v-chip-group>
-              <new-branch ref="newBranchDialog"></new-branch>
+              <new-branch
+                ref="newBranchDialog"
+                :branches="branches"
+              ></new-branch>
 
               <div class="clear"></div>
 

@@ -4,13 +4,14 @@
       <v-card-title class="subtitle-1">New Stream</v-card-title>
 
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-form>
+        <v-form ref="form" v-model="valid" lazy-validation>
           <v-container>
             <v-row>
               <v-col cols="12" class="pb-0">
                 <v-text-field
                   v-model="name"
                   label="Name"
+                  :rules="nameRules"
                   required
                   filled
                 ></v-text-field>
@@ -26,12 +27,22 @@
                 ></v-textarea>
               </v-col>
             </v-row>
+            <v-row>
+              <v-col cols="12" class="pt-0 pb-0">
+                <v-switch
+                  v-model="isPublic"
+                  :label="`Link sharing ` + (isPublic ? `on` : `off`)"
+                ></v-switch>
+              </v-col>
+            </v-row>
           </v-container>
         </v-form>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" text @click.native="agree">Create</v-btn>
+        <v-btn :disabled="!valid" color="primary" text @click.native="agree">
+          Create
+        </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -41,7 +52,10 @@ export default {
   data: () => ({
     dialog: false,
     name: "",
-    description: ""
+    nameRules: [],
+    description: "",
+    isPublic: true,
+    valid: true
   }),
   computed: {
     show: {
@@ -56,23 +70,43 @@ export default {
       }
     }
   },
+  watch: {
+    name(val) {
+      this.nameRules = []
+    }
+  },
   methods: {
     open() {
       this.dialog = true
-      this.name = ""
-      this.description = ""
+      if (this.$refs.form) this.$refs.form.reset()
+      this.isPublic = true // set to true by default
+
       return new Promise((resolve, reject) => {
         this.resolve = resolve
         this.reject = reject
       })
     },
     agree() {
-      this.resolve({
-        result: true,
-        name: this.name,
-        description: this.description
+      this.nameRules = [
+        (v) => !!v || "Streams need a name too!",
+        (v) => (v && v.length <= 25) || "Name must be less than 25 characters",
+        (v) => (v && v.length >= 3) || "Name must be at least 3 characters"
+      ]
+
+      if (!this.$refs.form.validate()) return
+
+      let self = this
+      setTimeout(function () {
+        if (self.$refs.form.validate()) {
+          self.resolve({
+            result: true,
+            name: self.name,
+            description: self.description,
+            isPublic: self.isPublic
+          })
+          self.dialog = false
+        }
       })
-      this.dialog = false
     },
     cancel() {
       this.resolve({
