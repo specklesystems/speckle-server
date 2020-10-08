@@ -118,7 +118,7 @@ describe( 'Commits', ( ) => {
     expect( commits ).to.be.an( 'array' )
     expect( commits.length ).to.equal( 2 )
 
-    let { commits: commits2, cursor: cursor2 } = await getCommitsByBranchName( { streamId: stream.id, branchName: 'masmainter', limit: 5, cursor: cursor } )
+    let { commits: commits2, cursor: cursor2 } = await getCommitsByBranchName( { streamId: stream.id, branchName: 'main', limit: 5, cursor: cursor } )
     expect( commits2.length ).to.equal( 5 )
   } )
 

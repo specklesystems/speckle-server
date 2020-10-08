@@ -24,7 +24,7 @@ type Commit {
   message: String
   authorName: String
   authorId: String
-  createdAt: String
+  createdAt: DateTime
 }
 
 type CommitCollectionUserNode {
@@ -65,7 +65,7 @@ extend type Mutation {
   branchDelete( branch: BranchDeleteInput! ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
-    
+
   commitCreate( commit: CommitCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")

@@ -1,9 +1,9 @@
-extend type User{ 
+extend type User{
   """
   Returns a list of your personal api tokens.
   """
   apiTokens: [ApiToken]
-    @hasRole(role: "server:user") 
+    @hasRole(role: "server:user")
     @hasScope(scope: "tokens:read")
 }
 
@@ -12,7 +12,7 @@ type ApiToken {
   name: String!
   lastChars: String!
   scopes: [String]!
-  createdAt: String! #date
+  createdAt: DateTime! #date
   lifespan: BigInt!
   lastUsed: String! #date
 }
@@ -23,17 +23,17 @@ input ApiTokenCreateInput {
   lifespan: BigInt
 }
 
-extend type Mutation { 
+extend type Mutation {
   """
   Creates an personal api token.
   """
   apiTokenCreate(token: ApiTokenCreateInput!):String!
-    @hasRole(role: "server:user") 
+    @hasRole(role: "server:user")
     @hasScope(scope: "tokens:write")
   """
   Revokes (deletes) an personal api token.
   """
   apiTokenRevoke(token: String!):Boolean!
-    @hasRole(role: "server:user") 
+    @hasRole(role: "server:user")
     @hasScope(scope: "tokens:write")
 }
