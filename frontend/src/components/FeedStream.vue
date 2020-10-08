@@ -13,7 +13,7 @@
           &nbsp;
           <strong>You</strong>
           created a new stream &nbsp;
-          <timeago :datetime="parseInt(stream.createdAt)"></timeago>
+          <timeago :datetime="stream.createdAt"></timeago>
         </v-col>
       </v-row>
       <v-card class="mb-3" elevation="0" rounded="lg">

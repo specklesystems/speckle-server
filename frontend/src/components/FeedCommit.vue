@@ -22,7 +22,7 @@
             </router-link>
           </strong>
           &nbsp;
-          <timeago :datetime="parseInt(commit.createdAt)"></timeago>
+          <timeago :datetime="commit.createdAt"></timeago>
         </v-col>
       </v-row>
 
@@ -47,7 +47,7 @@
                       </v-col>
                       <v-spacer></v-spacer>
                       <v-col class="text-right">
-                        <timeago :datetime="parseInt(item.createdAt)"></timeago>
+                        <timeago :datetime="item.createdAt"></timeago>
                       </v-col>
                     </v-row>
                     <v-divider v-if="i < commit.items.length - 1"></v-divider>

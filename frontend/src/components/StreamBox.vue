@@ -43,9 +43,9 @@
 
       <div class="mt-1 grey--text text--lighten-1">
         Created
-        <timeago :datetime="parseInt(stream.createdAt)"></timeago>
+        <timeago :datetime="stream.createdAt"></timeago>
         , updated
-        <timeago :datetime="parseInt(stream.updatedAt)"></timeago>
+        <timeago :datetime="stream.updatedAt"></timeago>
       </div>
     </v-col>
   </v-row>
