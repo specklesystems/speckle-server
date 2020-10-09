@@ -79,7 +79,7 @@ module.exports = {
   },
 
   Mutation: {
-    async userEdit( parent, args, context, info ) {
+    async userUpdate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
       await updateUser( context.userId, args.user )
       return true

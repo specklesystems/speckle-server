@@ -97,8 +97,8 @@ export default {
         this.$apollo
           .mutate({
             mutation: gql`
-              mutation userEdit($myUser: UserEditInput!) {
-                userEdit(user: $myUser)
+              mutation userUpdate($myUser: UserUpdateInput!) {
+                userUpdate(user: $myUser)
               }
             `,
             variables: {
