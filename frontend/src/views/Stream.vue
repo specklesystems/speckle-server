@@ -76,14 +76,18 @@
                   {{ branches[selectedBranch].name }} branch just yet, try
                   sending something...
                 </p>
+
                 <div
                   v-for="(commit, i) in branches[selectedBranch].commits.items"
                   :key="i"
                 >
-                  <div class="subtitle-2 mb-5">
-                    {{ commit.message }}
-                  </div>
-                  <!-- TODO: add more info and maby let user create a new commit? -->
+                  <list-item-commit
+                    :commit="commit"
+                    :stream-id="stream.id"
+                  ></list-item-commit>
+                  <v-divider
+                    v-if="i < branches[selectedBranch].commits.items.length - 1"
+                  ></v-divider>
                 </div>
               </v-card-text>
             </v-card>
@@ -97,11 +101,12 @@
 import gql from "graphql-tag"
 import SidebarStream from "../components/SidebarStream"
 import BranchDialog from "../components/dialogs/BranchDialog"
+import ListItemCommit from "../components/ListItemCommit"
 import streamQuery from "../graphql/stream.gql"
 
 export default {
   name: "Stream",
-  components: { SidebarStream, BranchDialog },
+  components: { SidebarStream, BranchDialog, ListItemCommit },
   data: () => ({ selectedBranch: 0 }),
   apollo: {
     stream: {
@@ -122,7 +127,7 @@ export default {
     }
   },
   watch: {
-    selectedBranch(val) {
+    stream(val) {
       console.log(val)
     }
   },
@@ -164,18 +169,6 @@ export default {
 }
 </script>
 <style scoped>
-.streamid {
-  font-family: monospace !important;
-}
-
-a {
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
 .v-item-group {
   float: left;
 }

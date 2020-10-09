@@ -55,3 +55,21 @@ export default {
   })
 }
 </script>
+<style>
+.v-card__text,
+.v-card__title {
+  word-break: normal !important;
+}
+
+.streamid {
+  font-family: monospace !important;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+</style>

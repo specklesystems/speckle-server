@@ -7,7 +7,7 @@
       <v-btn
         small
         icon
-        style="position: absolute; right: 20px; top: 20px"
+        style="position: absolute; right: 15px; top: 15px"
         @click="editStream"
       >
         <v-icon small>mdi-pencil-outline</v-icon>
@@ -109,7 +109,7 @@ export default {
     editStream() {
       this.$refs.editStreamDialog.open(this.stream).then((dialog) => {
         if (!dialog.result) return
-        console.log(dialog)
+
         this.$apollo
           .mutate({
             mutation: gql`
@@ -118,12 +118,8 @@ export default {
               }
             `,
             variables: {
-              myStream: {
-                id: dialog.stream.id,
-                name: dialog.stream.name,
-                description: dialog.stream.description,
-                isPublic: dialog.stream.isPublic //TODO: this is not working https://github.com/specklesystems/Server/issues/30
-              }
+              myStream: { ...dialog.stream }
+              //isPublic: dialog.stream.isPublic //TODO: this is not working https://github.com/specklesystems/Server/issues/30
             }
           })
           .then((data) => {

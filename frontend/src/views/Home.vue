@@ -80,6 +80,9 @@ export default {
       ) {
         activity.push(...this.user.commits.items)
       }
+
+      if (activity.length === 1) return activity
+
       activity.sort(this.compareUpdates)
 
       let group = []

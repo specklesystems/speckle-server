@@ -81,16 +81,4 @@ export default {
   }
 }
 </script>
-<style scoped>
-.streamid {
-  font-family: monospace !important;
-}
-
-a {
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-</style>
+<style scoped></style>

@@ -22,7 +22,7 @@
 
           <v-card-text v-if="user.streams && user.streams.items">
             <div v-for="(stream, i) in user.streams.items" :key="i">
-              <stream-box :stream="stream"></stream-box>
+              <list-item-stream :stream="stream"></list-item-stream>
               <v-divider v-if="i < user.streams.items.length - 1"></v-divider>
             </div>
           </v-card-text>
@@ -33,14 +33,14 @@
 </template>
 <script>
 import gql from "graphql-tag"
-import StreamBox from "../components/StreamBox"
+import ListItemStream from "../components/ListItemStream"
 import SidebarHome from "../components/SidebarHome"
 import StreamDialog from "../components/dialogs/StreamDialog"
 import userQuery from "../graphql/user.gql"
 
 export default {
   name: "Streams",
-  components: { StreamBox, SidebarHome, StreamDialog },
+  components: { ListItemStream, SidebarHome, StreamDialog },
   apollo: {
     user: {
       prefetch: true,
@@ -83,16 +83,4 @@ export default {
   }
 }
 </script>
-<style>
-.streamid {
-  font-family: monospace !important;
-}
-
-a {
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-</style>
+<style></style>

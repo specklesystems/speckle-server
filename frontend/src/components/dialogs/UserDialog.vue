@@ -79,7 +79,7 @@ export default {
       this.dialog = true
       if (this.$refs.form) this.$refs.form.resetValidation()
 
-      this.user = { ...user }
+      this.user = { name: user.name, company: user.company, bio: user.bio }
 
       return new Promise((resolve, reject) => {
         this.resolve = resolve

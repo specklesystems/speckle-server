@@ -1,9 +1,7 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
     <v-card class="pa-4">
-      <v-card-title class="subtitle-1">
-        {{ isEdit ? `Edit` : `New` }} Stream
-      </v-card-title>
+      <v-card-title class="subtitle-1">Edit Server Info</v-card-title>
 
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">
         <v-form ref="form" v-model="valid" lazy-validation>
@@ -11,7 +9,7 @@
             <v-row>
               <v-col cols="12" class="pb-0">
                 <v-text-field
-                  v-model="stream.name"
+                  v-model="server.name"
                   label="Name"
                   :rules="nameRules"
                   required
@@ -21,8 +19,17 @@
             </v-row>
             <v-row>
               <v-col cols="12" class="pt-0 pb-0">
+                <v-text-field
+                  v-model="server.company"
+                  filled
+                  label="Company"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" class="pt-0 pb-0">
                 <v-textarea
-                  v-model="stream.description"
+                  v-model="server.description"
                   filled
                   rows="2"
                   label="Description"
@@ -31,10 +38,21 @@
             </v-row>
             <v-row>
               <v-col cols="12" class="pt-0 pb-0">
-                <v-switch
-                  v-model="stream.isPublic"
-                  :label="`Link sharing ` + (stream.isPublic ? `on` : `off`)"
-                ></v-switch>
+                <v-text-field
+                  v-model="server.adminContact"
+                  filled
+                  label="Admin Contact"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12" class="pt-0 pb-0">
+                <v-textarea
+                  v-model="server.termsOfService"
+                  filled
+                  rows="4"
+                  label="TermsOf Service"
+                ></v-textarea>
               </v-col>
             </v-row>
           </v-container>
@@ -43,7 +61,7 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn :disabled="!valid" color="primary" text @click.native="agree">
-          {{ isEdit ? `Save` : `Create` }}
+          Save
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -53,10 +71,9 @@
 export default {
   data: () => ({
     dialog: false,
-    stream: { isPublic: true },
+    server: {},
     nameRules: [],
-    valid: true,
-    isEdit: false
+    valid: true
   }),
   computed: {
     show: {
@@ -72,26 +89,21 @@ export default {
     }
   },
   watch: {
-    "stream.name"(val) {
+    "server.name"(val) {
       this.nameRules = []
     }
   },
   methods: {
-    open(stream) {
+    open(server) {
       this.dialog = true
       if (this.$refs.form) this.$refs.form.resetValidation()
 
-      if (stream) {
-        this.stream = {
-          id: stream.id,
-          name: stream.name,
-          description: stream.description,
-          isPublic: stream.isPublic
-        }
-
-        this.isEdit = true
-      } else {
-        this.stream = { isPublic: true }
+      this.server = {
+        name: server.name,
+        company: server.company,
+        description: server.description,
+        termsOfService: server.termsOfService,
+        adminContact: server.adminContact
       }
 
       return new Promise((resolve, reject) => {
@@ -101,9 +113,8 @@ export default {
     },
     agree() {
       this.nameRules = [
-        (v) => !!v || "Streams need a name too!",
-        (v) =>
-          (v && v.length <= 100) || "Name must be less than 100 characters",
+        (v) => !!v || "Servers need a name too!",
+        (v) => (v && v.length <= 100) || "Name must be less than 25 characters",
         (v) => (v && v.length >= 3) || "Name must be at least 3 characters"
       ]
 
@@ -112,7 +123,7 @@ export default {
         if (self.$refs.form.validate()) {
           self.resolve({
             result: true,
-            stream: self.stream
+            server: self.server
           })
           self.dialog = false
         }

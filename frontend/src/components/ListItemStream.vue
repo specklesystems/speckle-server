@@ -6,7 +6,7 @@
           {{ stream.name }}
         </router-link>
       </div>
-      <div>
+      <div class="caption">
         {{ stream.description }}
       </div>
     </v-col>
