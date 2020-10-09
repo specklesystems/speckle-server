@@ -1,13 +1,17 @@
 <template>
   <div v-if="stream">
     <v-card rounded="lg" class="pa-4" elevation="0">
-      <v-card-title>
+      <v-card-title class="mr-8">
         {{ stream.name }}
-        <v-spacer></v-spacer>
-        <v-btn small icon @click="editStream">
-          <v-icon small>mdi-pencil-outline</v-icon>
-        </v-btn>
       </v-card-title>
+      <v-btn
+        small
+        icon
+        style="position: absolute; right: 20px; top: 20px"
+        @click="editStream"
+      >
+        <v-icon small>mdi-pencil-outline</v-icon>
+      </v-btn>
 
       <stream-dialog ref="editStreamDialog"></stream-dialog>
 
@@ -32,7 +36,7 @@
           </span>
         </p>
         <p>
-          <v-icon small>mdi-cube-outline</v-icon>
+          <v-icon small>mdi-history</v-icon>
           &nbsp;
           <span>
             {{ stream.commits.totalCount }}

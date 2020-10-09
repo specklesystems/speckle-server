@@ -46,10 +46,10 @@
                   new branch
                 </v-chip>
               </v-chip-group>
-              <new-branch
+              <branch-dialog
                 ref="newBranchDialog"
                 :branches="branches"
-              ></new-branch>
+              ></branch-dialog>
 
               <div class="clear"></div>
 
@@ -72,8 +72,9 @@
                   v-if="branches[selectedBranch].commits.items.length === 0"
                   class="subtitle-1 font-weight-light"
                 >
-                  There are no commits in this branch just yet, try sending
-                  something...
+                  There are no commits in the
+                  {{ branches[selectedBranch].name }} branch just yet, try
+                  sending something...
                 </p>
                 <div
                   v-for="(commit, i) in branches[selectedBranch].commits.items"
@@ -95,12 +96,12 @@
 <script>
 import gql from "graphql-tag"
 import SidebarStream from "../components/SidebarStream"
-import NewBranch from "../components/dialogs/NewBranch"
+import BranchDialog from "../components/dialogs/BranchDialog"
 import streamQuery from "../graphql/stream.gql"
 
 export default {
   name: "Stream",
-  components: { SidebarStream, NewBranch },
+  components: { SidebarStream, BranchDialog },
   data: () => ({ selectedBranch: 0 }),
   apollo: {
     stream: {

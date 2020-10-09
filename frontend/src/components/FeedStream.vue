@@ -45,7 +45,7 @@
               <v-icon small>mdi-source-branch</v-icon>
               <span class="ma-2"></span>
               <span>{{ stream.commits.totalCount }}</span>
-              <v-icon small>mdi-cube-outline</v-icon>
+              <v-icon small>mdi-history</v-icon>
               <span class="ma-2"></span>
               <span>{{ stream.collaborators.length }}</span>
               <v-icon small>mdi-account-outline</v-icon>

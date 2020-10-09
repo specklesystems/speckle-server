@@ -27,7 +27,7 @@
         <span>{{ stream.branches.totalCount }}</span>
 
         <span class="ma-2"></span>
-        <v-icon small>mdi-cube-outline</v-icon>
+        <v-icon small>mdi-history</v-icon>
         &nbsp;
         <span>{{ stream.commits.totalCount }}</span>
 

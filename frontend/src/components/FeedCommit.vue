@@ -12,7 +12,7 @@
     <div class="ml-12">
       <v-row class="caption">
         <v-col class="pb-2">
-          <v-icon small color="grey lighten-1">mdi-cube-outline</v-icon>
+          <v-icon small color="grey lighten-1">mdi-history</v-icon>
           &nbsp;
           <strong>You</strong>
           pushed

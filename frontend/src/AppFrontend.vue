@@ -50,9 +50,6 @@ export default {
   data: () => ({
     navLinks: [
       { link: "/streams", name: "streams" },
-      { link: "/teams", name: "teams" },
-      { link: "/profile", name: "profile" },
-      { link: "/settings", name: "settings" },
       { link: "/help", name: "help" }
     ]
   })
