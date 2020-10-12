@@ -30,7 +30,7 @@ To get started, first clone this repo.
 To run the **Server** in debug mode:
 
 - Duplicate and rename `.env-example` to `.env` & fill it in! 
-- Make sure a postgres instance is running locally, with two databases present, named `speckle2_dev` and `speckle2_test`.
+- Make sure a postgres instance is running locally, with two databases present, named `speckle2_dev` and `speckle2_test` (or whatever needed to match your .env `POSTGRES_URL` variable).
 - Make sure a redis instance is running locally. 
 - Run `npm install`
 - Run `npm run dev:server` 🚀
