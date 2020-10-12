@@ -2,7 +2,7 @@
   <v-container>
     <v-row v-if="stream">
       <v-col cols="3">
-        <sidebar-stream></sidebar-stream>
+        <sidebar-stream :stream="stream"></sidebar-stream>
       </v-col>
       <v-col cols="9">
         <v-row>
@@ -47,7 +47,7 @@
                 </v-chip>
               </v-chip-group>
               <branch-dialog
-                ref="newBranchDialog"
+                ref="branchDialog"
                 :branches="branches"
               ></branch-dialog>
 
@@ -59,6 +59,15 @@
               >
                 {{ branches[selectedBranch].description }}
               </p>
+
+              <v-btn
+                small
+                icon
+                style="position: absolute; right: 15px; top: 15px"
+                @click="editBranch"
+              >
+                <v-icon small>mdi-pencil-outline</v-icon>
+              </v-btn>
             </v-card>
           </v-col>
         </v-row>
@@ -133,9 +142,9 @@ export default {
   },
   methods: {
     newBranch() {
-      this.$refs.newBranchDialog.open().then((dialog) => {
+      this.$refs.branchDialog.open().then((dialog) => {
         if (!dialog.result) return
-
+        console.log(dialog.result)
         this.$apollo
           .mutate({
             mutation: gql`
@@ -146,8 +155,7 @@ export default {
             variables: {
               myBranch: {
                 streamId: this.stream.id,
-                name: dialog.name,
-                description: dialog.description
+                ...dialog.branch
               }
             }
           })
@@ -164,6 +172,61 @@ export default {
             //this.newTag = newTag
           })
       })
+    },
+    editBranch() {
+      this.$refs.branchDialog
+        .open(this.branches[this.selectedBranch], this.stream.id)
+        .then((dialog) => {
+          if (!dialog.result) return
+
+          //DELETE BRANCH
+          if (dialog.delete) {
+            this.$apollo
+              .mutate({
+                mutation: gql`
+                  mutation branchDelete($myBranch: BranchDeleteInput!) {
+                    branchDelete(branch: $myBranch)
+                  }
+                `,
+                variables: {
+                  myBranch: {
+                    id: this.branches[this.selectedBranch].id,
+                    streamId: this.stream.id
+                  }
+                }
+              })
+              .then((data) => {
+                this.selectedBranch = 0
+                this.$apollo.queries.stream.refetch()
+              })
+              .catch((error) => {
+                // Error
+                console.error(error)
+              })
+
+            return
+          }
+
+          //EDIT BRANCH
+          this.$apollo
+            .mutate({
+              mutation: gql`
+                mutation branchUpdate($myBranch: BranchUpdateInput!) {
+                  branchUpdate(branch: $myBranch)
+                }
+              `,
+              variables: {
+                myBranch: { ...dialog.branch }
+              }
+            })
+            .then((data) => {
+              this.$apollo.queries.stream.refetch()
+            })
+            .catch((error) => {
+              // Error
+              console.error(error)
+            })
+        })
     }
   }
 }

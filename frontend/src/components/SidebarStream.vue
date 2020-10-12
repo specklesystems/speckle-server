@@ -22,7 +22,7 @@
           <v-icon small>mdi-key-outline</v-icon>
           &nbsp;
           <span class="streamid">
-            <router-link :to="'streams/' + stream.id">
+            <router-link :to="'/streams/' + stream.id">
               {{ stream.id }}
             </router-link>
           </span>
@@ -92,24 +92,38 @@ import StreamDialog from "../components/dialogs/StreamDialog"
 
 export default {
   components: { StreamDialog },
+  props: ["stream"],
   data: () => ({}),
-  apollo: {
-    stream: {
-      prefetch: true,
-      query: streamQuery,
-      variables() {
-        // Use vue reactive properties here
-        return {
-          id: this.$route.params.id
-        }
-      }
-    }
-  },
   methods: {
     editStream() {
       this.$refs.editStreamDialog.open(this.stream).then((dialog) => {
         if (!dialog.result) return
 
+        //DELETE STREAM
+        if (dialog.delete) {
+          this.$apollo
+            .mutate({
+              mutation: gql`
+                mutation streamDelete($id: String!) {
+                  streamDelete(id: $id)
+                }
+              `,
+              variables: {
+                id: this.stream.id
+              }
+            })
+            .then((data) => {
+              this.$router.push({ name: "streams" })
+            })
+            .catch((error) => {
+              // Error
+              console.error(error)
+            })
+
+          return
+        }
+
+        //EDIT STREAM
         this.$apollo
           .mutate({
             mutation: gql`

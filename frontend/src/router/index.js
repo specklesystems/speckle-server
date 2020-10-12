@@ -14,7 +14,7 @@ const routes = [
   },
   {
     path: "/streams",
-    name: "Streams",
+    name: "streams",
     meta: {
       title: "Streams | Speckle"
     },
@@ -22,15 +22,23 @@ const routes = [
   },
   {
     path: "/streams/:id",
-    name: "Stream",
+    name: "stream",
     meta: {
       title: "Stream | Speckle"
     },
     component: () => import("../views/Stream.vue")
   },
   {
+    path: "/streams/:streamid/commits/:id",
+    name: "commit",
+    meta: {
+      title: "Commit | Speckle"
+    },
+    component: () => import("../views/Commit.vue")
+  },
+  {
     path: "/help",
-    name: "Help",
+    name: "help",
     meta: {
       title: "Help | Speckle"
     },
@@ -38,7 +46,7 @@ const routes = [
   },
   {
     path: "/about",
-    name: "About",
+    name: "about",
     meta: {
       title: "About | Speckle"
     },
@@ -46,7 +54,7 @@ const routes = [
   },
   {
     path: "*",
-    name: "Not Found",
+    name: "notfound",
     meta: {
       title: "Not Found | Speckle"
     },

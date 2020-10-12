@@ -37,6 +37,33 @@
                 ></v-switch>
               </v-col>
             </v-row>
+            <v-row v-if="isEdit">
+              <v-col cols="12" class="pt-10 pb-5">
+                <v-btn
+                  v-if="!pendingDelete"
+                  color="error"
+                  block
+                  outlined
+                  @click="pendingDelete = true"
+                >
+                  Delete Stream
+                </v-btn>
+                <div v-if="pendingDelete">
+                  <span>Delete forever?</span>
+                  <v-btn
+                    class="ml-5"
+                    color="error"
+                    depressed
+                    @click.native="doDelete"
+                  >
+                    Yes
+                  </v-btn>
+                  <v-btn class="ml-5" depressed @click="pendingDelete = false">
+                    No
+                  </v-btn>
+                </div>
+              </v-col>
+            </v-row>
           </v-container>
         </v-form>
       </v-card-text>
@@ -56,7 +83,8 @@ export default {
     stream: { isPublic: true },
     nameRules: [],
     valid: true,
-    isEdit: false
+    isEdit: false,
+    pendingDelete: false
   }),
   computed: {
     show: {
@@ -78,7 +106,12 @@ export default {
   },
   methods: {
     open(stream) {
+      //set defaults
       this.dialog = true
+      this.pendingDelete = false
+      this.isEdit = false
+      this.stream = { isPublic: true }
+
       if (this.$refs.form) this.$refs.form.resetValidation()
 
       if (stream) {
@@ -90,8 +123,6 @@ export default {
         }
 
         this.isEdit = true
-      } else {
-        this.stream = { isPublic: true }
       }
 
       return new Promise((resolve, reject) => {
@@ -121,6 +152,14 @@ export default {
     cancel() {
       this.resolve({
         result: false
+      })
+      this.dialog = false
+    },
+
+    doDelete() {
+      this.resolve({
+        result: true,
+        delete: true
       })
       this.dialog = false
     }

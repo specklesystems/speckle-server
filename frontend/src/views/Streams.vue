@@ -44,7 +44,8 @@ export default {
   apollo: {
     user: {
       prefetch: true,
-      query: userQuery
+      query: userQuery,
+      fetchPolicy: "cache-and-network" //https://www.apollographql.com/docs/react/data/queries/
     }
   },
   data: () => ({}),
