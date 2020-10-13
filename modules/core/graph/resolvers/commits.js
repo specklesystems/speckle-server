@@ -1,7 +1,7 @@
 'use strict'
 
 const appRoot = require( 'app-root-path' )
-const { AuthorizationError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
+const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 
 const {
@@ -87,8 +87,8 @@ module.exports = {
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
       let commit = await getCommitById( { id: args.commit.id } )
-      if ( commit.author !== context.userId )
-        throw new AuthorizationError( 'Only the author of a commit may update it.' )
+      if ( commit.authorId !== context.userId )
+        throw new ForbiddenError( 'Only the author of a commit may update it.' )
 
       let updated = await updateCommit( { ...args.commit } )
       if ( updated ) {
@@ -106,8 +106,8 @@ module.exports = {
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
       let commit = await getCommitById( { id: args.commit.id } )
-      if ( commit.author !== context.userId )
-        throw new AuthorizationError( 'Only the author of a commit may delete it.' )
+      if ( commit.authorId !== context.userId )
+        throw new ForbiddenError( 'Only the author of a commit may delete it.' )
 
       let deleted = await deleteCommit( { id: args.commit.id } )
       if ( deleted ) {

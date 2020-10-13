@@ -105,6 +105,7 @@ describe( 'Commits', ( ) => {
   it( 'Should get a commit by id', async ( ) => {
     let cm = await getCommitById( { id: commitId1 } )
     expect( cm.message ).to.equal( 'FIRST COMMIT YOOOOOO' )
+    expect( cm.authorId ).to.equal( user.id )
   } )
 
   it( 'Should get the commits from a branch', async ( ) => {

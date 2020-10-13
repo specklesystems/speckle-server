@@ -20,7 +20,6 @@ type Branch {
 type Commit {
   id: String!
   referencedObject: String!
-  realObject: Object
   message: String
   authorName: String
   authorId: String
@@ -30,7 +29,6 @@ type Commit {
 type CommitCollectionUserNode {
   id: String!
   referencedObject: String!
-  realObject: Object
   message: String
   streamId: String
   streamName: String
