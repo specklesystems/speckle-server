@@ -59,7 +59,10 @@ module.exports = {
   },
 
   async getCommitById( { id } ) {
-    return await Commits( ).where( { id: id } ).first( )
+    return await Commits( ).columns( [ { id: 'commits.id' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+      .join( 'users', 'commits.author', 'users.id' )
+      .join( 'objects', 'commits.referencedObject', 'objects.id' )
+      .where( { "commits.id": id } ).first( )
   },
 
   async deleteCommit( { id } ) {
