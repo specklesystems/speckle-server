@@ -49,7 +49,7 @@ module.exports = {
     let myBranch = await getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
 
     if ( !myBranch )
-      throw new Error( `Failed to find bracnh with name ${branchName}.` )
+      throw new Error( `Failed to find branch with name ${branchName}.` )
 
     return await module.exports.createCommitByBranchId( { streamId, branchId: myBranch.id, objectId, authorId, message, previousCommitIds } )
   },
