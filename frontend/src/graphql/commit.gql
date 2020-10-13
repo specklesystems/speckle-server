@@ -23,14 +23,6 @@ query Stream($streamid: String!, $id: String!) {
       authorName
       authorId
       createdAt
-      realObject {
-        id
-        speckleType
-        applicationId
-        createdAt
-        totalChildrenCount
-        data
-      }
     }
   }
 }

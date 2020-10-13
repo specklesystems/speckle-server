@@ -21,7 +21,7 @@ const routes = [
     component: () => import("../views/Streams.vue")
   },
   {
-    path: "/streams/:id",
+    path: "/streams/:streamId",
     name: "stream",
     meta: {
       title: "Stream | Speckle"
@@ -29,7 +29,7 @@ const routes = [
     component: () => import("../views/Stream.vue")
   },
   {
-    path: "/streams/:streamid/commits/:id",
+    path: "/streams/:streamId/commits/:commitId",
     name: "commit",
     meta: {
       title: "Commit | Speckle"

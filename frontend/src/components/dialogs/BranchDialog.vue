@@ -6,7 +6,12 @@
       </v-card-title>
 
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-form ref="form" v-model="valid" lazy-validation>
+        <v-form
+          ref="form"
+          v-model="valid"
+          lazy-validation
+          @submit.prevent="agree"
+        >
           <v-container>
             <v-row>
               <v-col cols="12" class="pb-0">
@@ -17,6 +22,7 @@
                   required
                   filled
                   :disabled="branch.name == 'main'"
+                  autofocus
                 ></v-text-field>
               </v-col>
             </v-row>

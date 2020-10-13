@@ -124,7 +124,7 @@ export default {
       variables() {
         // Use vue reactive properties here
         return {
-          id: this.$route.params.id
+          id: this.$route.params.streamId
         }
       }
     }

@@ -92,7 +92,18 @@ import StreamDialog from "../components/dialogs/StreamDialog"
 
 export default {
   components: { StreamDialog },
-  props: ["stream"],
+  apollo: {
+    stream: {
+      prefetch: true,
+      query: streamQuery,
+      variables() {
+        // Use vue reactive properties here
+        return {
+          id: this.$route.params.streamId
+        }
+      }
+    }
+  },
   data: () => ({}),
   methods: {
     editStream() {
