@@ -37,8 +37,8 @@
         <span>{{ stream.collaborators.length }}</span>
 
         <span class="ma-2"></span>
-        <v-icon v-if="stream.isPublic" small>mdi-lock-open</v-icon>
-        <v-icon v-else small>mdi-lock-outline</v-icon>
+        <v-icon v-if="stream.isPublic" small>mdi-link</v-icon>
+        <v-icon v-else small>mdi-link-lock</v-icon>
       </div>
 
       <div class="mt-1 grey--text text--lighten-1">

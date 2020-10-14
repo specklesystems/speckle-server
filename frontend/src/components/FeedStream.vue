@@ -50,8 +50,8 @@
               <span>{{ stream.collaborators.length }}</span>
               <v-icon small>mdi-account-outline</v-icon>
               <span class="ma-2"></span>
-              <v-icon v-if="stream.isPublic" small>mdi-lock-open</v-icon>
-              <v-icon v-else small>mdi-lock-outline</v-icon>
+              <v-icon v-if="stream.isPublic" small>mdi-link</v-icon>
+              <v-icon v-else small>mdi-link-lock</v-icon>
             </div>
           </v-col>
         </v-row>

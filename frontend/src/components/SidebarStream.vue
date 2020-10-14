@@ -51,11 +51,11 @@
         </p>
         <p>
           <span v-if="stream.isPublic">
-            <v-icon small>mdi-lock-open</v-icon>
+            <v-icon small>mdi-link</v-icon>
             link sharing on
           </span>
           <span v-else>
-            <v-icon small>mdi-lock-outline</v-icon>
+            <v-icon small>mdi-link-lock</v-icon>
             link sharing off
           </span>
         </p>

@@ -29,7 +29,7 @@ let migrationDirs = walk( './modules' )
 module.exports = {
   test: {
     client: 'pg',
-    connection: process.env.POSTGRES_URL || 'postgres://localhost/speckle2_test',
+    connection: 'postgres://localhost/speckle2_test',
     migrations: {
       directory: migrationDirs
     },

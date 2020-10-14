@@ -13,7 +13,7 @@ type Branch {
   id: String!
   name: String!
   author: User!
-  description: String!
+  description: String
   commits(limit: Int! = 25, cursor: String): CommitCollection
 }
 
