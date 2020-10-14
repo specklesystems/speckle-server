@@ -23,6 +23,7 @@ query {
           id
           name
           company
+          avatar
           role
         }
         commits {

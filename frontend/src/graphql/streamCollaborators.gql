@@ -1,0 +1,12 @@
+query Stream($id: String!) {
+  stream(id: $id) {
+    id
+    collaborators {
+      id
+      name
+      role
+      company
+      avatar
+    }
+  }
+}

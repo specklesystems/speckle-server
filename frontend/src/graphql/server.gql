@@ -5,5 +5,10 @@ query {
     description
     adminContact
     canonicalUrl
+    roles {
+      name
+      description
+      resourceTarget
+    }
   }
 }

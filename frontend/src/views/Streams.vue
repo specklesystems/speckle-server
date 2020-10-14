@@ -7,16 +7,19 @@
       <v-col v-if="user" cols="9">
         <v-card rounded="lg" class="pa-5" elevation="0">
           <v-card-title>Your Streams</v-card-title>
-          <v-btn
-            class="ml-3 mt-5 text-right"
-            color="primary"
-            elevation="0"
-            small
-            @click="newStream"
-          >
-            <v-icon small class="mr-1">mdi-plus-box-outline</v-icon>
-            new stream
-          </v-btn>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+              class="ml-3 mt-5 text-right"
+              color="primary"
+              elevation="0"
+              small
+              @click="newStream"
+            >
+              <v-icon small class="mr-1">mdi-plus-box-outline</v-icon>
+              new stream
+            </v-btn>
+          </v-card-actions>
 
           <stream-dialog ref="streamDialog"></stream-dialog>
 

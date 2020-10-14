@@ -66,6 +66,7 @@
       <v-card-title class="subtitle-1">Collaborators</v-card-title>
       <v-card-actions class="ml-2 mr-2">
         <v-btn
+          v-if="isStreamOwner"
           small
           fab
           color="primary"
@@ -78,6 +79,8 @@
         <stream-share-dialog
           ref="streamShareDialog"
           :users="stream.collaborators"
+          :stream-id="stream.id"
+          :user-id="user.id"
         ></stream-share-dialog>
 
         <v-avatar
@@ -115,9 +118,33 @@ export default {
           id: this.$route.params.streamId
         }
       }
+    },
+    user: {
+      prefetch: true,
+      query: gql`
+        query {
+          user {
+            id
+          }
+        }
+      `
     }
   },
-  data: () => ({}),
+  data: () => ({ user: {} }),
+  computed: {
+    isStreamOwner() {
+      return (
+        this.stream.collaborators.filter(
+          (x) => x.id === this.user.id && x.role === "stream:owner"
+        ).length > 0
+      )
+    }
+  },
+  watch: {
+    user(val) {
+      //console.log(val)
+    }
+  },
   methods: {
     shareStream() {
       this.$refs.streamShareDialog.open()
