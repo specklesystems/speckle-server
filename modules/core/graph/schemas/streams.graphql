@@ -32,6 +32,8 @@ type StreamCollaborator {
   id: String!
   name: String!
   role: String!
+  company: String
+  avatar: String
 }
 
 type StreamCollection {
