@@ -6,16 +6,17 @@
       class="pa-4 text-center"
       style="position: relative"
     >
-      <v-card-title class="justify-center">
-        <v-avatar class="mb-4" color="grey lighten-3" size="64">
+      <v-card-title class="justify-center pb-0">
+        <v-avatar color="grey lighten-3" size="64">
           <v-img v-if="user.avatar" :src="user.avatar" />
           <v-img
             v-else
             :src="`https://robohash.org/` + user.id + `.png?size=64x64`"
           />
         </v-avatar>
-
-        <span>{{ user.name }}</span>
+      </v-card-title>
+      <v-card-title class="justify-center">
+        {{ user.name }}
       </v-card-title>
       <v-card-text>
         <p class="subtitle-1">{{ user.company }}</p>

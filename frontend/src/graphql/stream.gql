@@ -10,6 +10,7 @@ query Stream($id: String!) {
       id
       name
       role
+      company
     }
     branches {
       totalCount

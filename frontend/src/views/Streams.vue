@@ -18,7 +18,7 @@
             new stream
           </v-btn>
 
-          <stream-dialog ref="newStreamDialog"></stream-dialog>
+          <stream-dialog ref="streamDialog"></stream-dialog>
 
           <v-card-text v-if="user.streams && user.streams.items">
             <div v-for="(stream, i) in user.streams.items" :key="i">
@@ -51,7 +51,7 @@ export default {
   data: () => ({}),
   methods: {
     newStream() {
-      this.$refs.newStreamDialog.open().then((dialog) => {
+      this.$refs.streamDialog.open().then((dialog) => {
         if (!dialog.result) return
         console.log(dialog)
         this.$apollo

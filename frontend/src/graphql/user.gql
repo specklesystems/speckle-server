@@ -22,6 +22,7 @@ query {
         collaborators {
           id
           name
+          company
           role
         }
         commits {

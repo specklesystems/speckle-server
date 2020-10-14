@@ -13,7 +13,7 @@
         <v-icon small>mdi-pencil-outline</v-icon>
       </v-btn>
 
-      <stream-dialog ref="editStreamDialog"></stream-dialog>
+      <stream-dialog ref="streamDialog"></stream-dialog>
 
       <v-card-text>
         <p class="subtitle-1 font-weight-light">{{ stream.description }}</p>
@@ -65,9 +65,21 @@
     <v-card rounded="lg" class="mt-5 pa-4" elevation="0">
       <v-card-title class="subtitle-1">Collaborators</v-card-title>
       <v-card-actions class="ml-2 mr-2">
-        <v-btn small fab color="primary" class="ma-1" elevation="0">
+        <v-btn
+          small
+          fab
+          color="primary"
+          class="ma-1"
+          elevation="0"
+          @click="shareStream"
+        >
           <v-icon small>mdi-account-multiple-plus</v-icon>
         </v-btn>
+        <stream-share-dialog
+          ref="streamShareDialog"
+          :users="stream.collaborators"
+        ></stream-share-dialog>
+
         <v-avatar
           v-for="(collab, i) in stream.collaborators"
           :key="i"
@@ -89,9 +101,10 @@
 import gql from "graphql-tag"
 import streamQuery from "../graphql/stream.gql"
 import StreamDialog from "../components/dialogs/StreamDialog"
+import StreamShareDialog from "../components/dialogs/StreamShareDialog"
 
 export default {
-  components: { StreamDialog },
+  components: { StreamDialog, StreamShareDialog },
   apollo: {
     stream: {
       prefetch: true,
@@ -106,8 +119,11 @@ export default {
   },
   data: () => ({}),
   methods: {
+    shareStream() {
+      this.$refs.streamShareDialog.open()
+    },
     editStream() {
-      this.$refs.editStreamDialog.open(this.stream).then((dialog) => {
+      this.$refs.streamDialog.open(this.stream).then((dialog) => {
         if (!dialog.result) return
 
         //DELETE STREAM
