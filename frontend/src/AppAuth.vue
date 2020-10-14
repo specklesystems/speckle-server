@@ -24,7 +24,7 @@
                       <v-tooltip v-if="app.firstparty" bottom>
                         <template #activator="{ on }">
                           <v-icon
-                            color="accent"
+                            color="primary"
                             style="margin-top: -6px"
                             v-on="on"
                           >
@@ -41,7 +41,7 @@
                       You need to sign in first
                       <br />
                       to authorize
-                      <span class="accent--text">
+                      <span class="primary--text">
                         <b>{{ app.name }}</b>
                       </span>
                       by
