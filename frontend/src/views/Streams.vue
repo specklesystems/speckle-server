@@ -5,7 +5,7 @@
         <sidebar-home></sidebar-home>
       </v-col>
       <v-col cols="9">
-        <v-card rounded="lg" class="pa-5" elevation="0">
+        <v-card rounded="lg" class="pa-5" elevation="0" color="background2">
           <v-card-title>Your Streams</v-card-title>
           <v-card-actions>
             <span class="ml-2">

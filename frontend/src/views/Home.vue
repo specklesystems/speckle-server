@@ -7,7 +7,7 @@
       <v-col v-if="recentActivity" cols="9">
         <v-row>
           <v-col class="pt-0">
-            <v-card class="pa-5" elevation="0" rounded="lg">
+            <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
               <v-subheader class="text-uppercase">Recent activity:</v-subheader>
               <v-chip-group
                 v-model="selectedActivity"
@@ -48,7 +48,7 @@
 import SidebarHome from "../components/SidebarHome"
 import FeedStream from "../components/FeedStream"
 import FeedCommit from "../components/FeedCommit"
-import userQuery from "../graphql/user.gql"
+import userFeedQuery from "../graphql/userFeed.gql"
 
 export default {
   name: "Home",
@@ -56,7 +56,7 @@ export default {
   apollo: {
     user: {
       prefetch: true,
-      query: userQuery
+      query: userFeedQuery
     }
   },
   data: () => ({ selectedActivity: 0, user: {} }),

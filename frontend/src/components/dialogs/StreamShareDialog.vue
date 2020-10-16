@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="dialog" width="600" @keydown.esc="dialog = false">
-    <v-card class="pa-4">
+    <v-card class="pa-4" color="background2">
       <v-card-title class="subtitle-1">Manage collaborators</v-card-title>
 
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">

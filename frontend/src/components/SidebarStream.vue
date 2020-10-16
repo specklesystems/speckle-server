@@ -1,6 +1,6 @@
 <template>
   <div v-if="stream">
-    <v-card rounded="lg" class="pa-4" elevation="0">
+    <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
       <v-card-title class="mr-8">
         {{ stream.name }}
       </v-card-title>
@@ -62,7 +62,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card rounded="lg" class="mt-5 pa-4" elevation="0">
+    <v-card rounded="lg" class="mt-5 pa-4" elevation="0" color="background2">
       <v-card-title class="subtitle-1">Collaborators</v-card-title>
       <div class="ml-2 mr-2">
         <v-btn

@@ -5,7 +5,7 @@
         <sidebar-home></sidebar-home>
       </v-col>
       <v-col cols="9">
-        <v-sheet rounded="lg" class="pa-15 text-center">
+        <v-sheet rounded="lg" class="pa-15 text-center" color="background2">
           <h1>Need Help?</h1>
           <p class="ma-10 subtitle-1 font-weight-light">
             Get free help from the

@@ -7,7 +7,7 @@
       <v-col cols="9">
         <v-row>
           <v-col class="pt-0">
-            <v-card class="pa-5" elevation="0" rounded="lg">
+            <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
               <v-subheader class="text-uppercase">Branches:</v-subheader>
 
               <v-chip-group
@@ -73,7 +73,7 @@
         </v-row>
         <v-row>
           <v-col>
-            <v-card rounded="lg" class="pa-5" elevation="0">
+            <v-card rounded="lg" class="pa-5" elevation="0" color="background2">
               <v-subheader class="text-uppercase">Commits:</v-subheader>
 
               <v-card-text>

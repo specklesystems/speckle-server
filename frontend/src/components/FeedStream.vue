@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <v-avatar class="mt-10" color="white" size="40">
+      <v-avatar class="mt-10" color="background2" size="40">
         <v-img v-if="user.avatar" :src="user.avatar" />
         <v-img
           v-else
@@ -19,7 +19,7 @@
           <timeago :datetime="stream.createdAt"></timeago>
         </v-col>
       </v-row>
-      <v-card class="mb-3" elevation="0" rounded="lg">
+      <v-card class="mb-3" elevation="0" rounded="lg" color="background2">
         <v-row>
           <v-col cols="7" class="pt-0 pb-0">
             <v-card-title class="subtitle-2">

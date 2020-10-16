@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card class="pa-4">
+    <v-card class="pa-4" color="background2">
       <v-card-title class="subtitle-1">Edit Server Info</v-card-title>
 
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">
@@ -53,12 +53,12 @@
             </v-row>
             <v-row>
               <v-col cols="12" class="pt-0 pb-0">
-                <v-textarea
+                <v-text-field
                   v-model="server.termsOfService"
                   filled
-                  rows="4"
-                  label="TermsOf Service"
-                ></v-textarea>
+                  label="Terms Of Service"
+                  placeholder="https://..."
+                ></v-text-field>
               </v-col>
             </v-row>
           </v-container>

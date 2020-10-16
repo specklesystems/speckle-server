@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card class="pa-4">
+    <v-card class="pa-4" color="background2">
       <v-card-title class="subtitle-1">
         {{ isEdit ? `Edit` : `New` }} Stream
       </v-card-title>

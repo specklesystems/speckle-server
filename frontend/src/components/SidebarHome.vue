@@ -5,9 +5,10 @@
       rounded="lg"
       class="pa-4 text-center"
       style="position: relative"
+      color="background2"
     >
       <v-card-title class="justify-center pb-0">
-        <v-avatar color="grey lighten-3" size="64">
+        <v-avatar color="background" size="64">
           <v-img v-if="user.avatar" :src="user.avatar" />
           <v-img
             v-else
@@ -23,7 +24,7 @@
         <p>
           {{ user.bio }}
         </p>
-        <code>{{ user.id }}</code>
+        <span class="streamid">{{ user.id }}</span>
       </v-card-text>
       <v-btn
         small
@@ -42,6 +43,7 @@
       class="mt-5 pa-4 text-center"
       style="position: relative"
       elevation="0"
+      color="background2"
     >
       <v-card-title class="justify-center text-wrap">
         {{ serverInfo.name }}

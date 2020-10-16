@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <v-avatar class="mt-10" color="white" size="40">
+      <v-avatar class="mt-10" color="background2" size="40">
         <v-img v-if="user.avatar" :src="user.avatar" />
         <v-img
           v-else
@@ -29,19 +29,19 @@
         </v-col>
       </v-row>
 
-      <v-card class="mb-3" elevation="0" rounded="lg">
+      <v-card class="mb-3" elevation="0" rounded="lg" color="background2">
         <v-card-title v-if="!commit.items" class="subtitle-2">
           {{ commit.message }}
         </v-card-title>
-        <v-expansion-panels v-else flat>
+        <v-expansion-panels v-else flat color="background2">
           <v-expansion-panel>
-            <v-expansion-panel-header class="pl-4">
+            <v-expansion-panel-header class="pl-4" color="background2">
               <span class="subtitle-2">
                 {{ commit.message }}
               </span>
             </v-expansion-panel-header>
-            <v-expansion-panel-content>
-              <v-list dense>
+            <v-expansion-panel-content color="background2">
+              <v-list dense color="background2">
                 <v-list-item v-for="(item, i) in commit.items" :key="i">
                   <div style="width: 100%">
                     <v-row class="caption">
