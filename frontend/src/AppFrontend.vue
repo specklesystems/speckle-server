@@ -64,21 +64,20 @@
             </v-list-item>
             <v-divider></v-divider>
             <v-list-item-group>
-              <v-list-item v-if="!isDark" inactive>
+              <v-list-item
+                v-if="!this.$vuetify.theme.dark"
+                @click="switchTheme"
+              >
                 <v-list-item-content>Dark mode</v-list-item-content>
                 <v-list-item-action>
-                  <v-btn icon @click="toggleDark">
-                    <v-icon>mdi-weather-night</v-icon>
-                  </v-btn>
+                  <v-icon>mdi-weather-night</v-icon>
                 </v-list-item-action>
               </v-list-item>
-              <v-list-item v-else inactive>
+              <v-list-item v-else @click="switchTheme">
                 <v-list-item-content>Light mode</v-list-item-content>
-                <v-list-item-actions>
-                  <v-btn icon @click="toggleDark">
-                    <v-icon>mdi-white-balance-sunny</v-icon>
-                  </v-btn>
-                </v-list-item-actions>
+                <v-list-item-action>
+                  <v-icon>mdi-white-balance-sunny</v-icon>
+                </v-list-item-action>
               </v-list-item>
               <v-divider></v-divider>
               <!-- <v-list-item href="https://speckle.systems/" target="_blank">
@@ -118,19 +117,16 @@ export default {
     background() {
       let theme = this.$vuetify.theme.dark ? "dark" : "light"
       return `background-color: ${this.$vuetify.theme.themes[theme].background};`
-    },
-    isDark() {
-      let isDark = localStorage.getItem("darkModeEnabled") ?? false
-      return isDark
     }
   },
-  mounted() {
-    this.$vuetify.theme.dark = this.isDark
-  },
+
   methods: {
-    toggleDark() {
+    switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem("darkModeEnabled", this.$vuetify.theme.dark)
+      localStorage.setItem(
+        "darkModeEnabled",
+        this.$vuetify.theme.dark ? "dark" : "light"
+      )
     },
     signOut() {
       localStorage.clear()
