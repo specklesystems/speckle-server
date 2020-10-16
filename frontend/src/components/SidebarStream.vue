@@ -59,6 +59,14 @@
             link sharing off
           </span>
         </p>
+        <p>
+          Created
+          <timeago :datetime="stream.createdAt"></timeago>
+        </p>
+        <p>
+          Updated
+          <timeago :datetime="stream.updatedAt"></timeago>
+        </p>
       </v-card-text>
     </v-card>
 

@@ -1,7 +1,7 @@
 <template>
   <v-row align="center">
     <v-col cols="1">
-      <v-avatar color="grey lighten-3" size="40">
+      <v-avatar color="background" size="40">
         <v-img v-if="user.avatar" :src="user.avatar" />
         <v-img
           v-else

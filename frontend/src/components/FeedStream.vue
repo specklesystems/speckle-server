@@ -12,7 +12,7 @@
     <div class="ml-12">
       <v-row class="caption">
         <v-col cols="12" class="pb-2">
-          <v-icon small color="grey lighten-1">mdi-compare-vertical</v-icon>
+          <v-icon small>mdi-compare-vertical</v-icon>
           &nbsp;
           <strong>You</strong>
           created a new stream &nbsp;

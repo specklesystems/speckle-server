@@ -19,12 +19,13 @@
                 autofocus
                 hide-no-data
                 hide-details
-                label="Users"
                 placeholder="Type to search..."
                 item-text="name"
                 return-object
                 clearable
                 cache-items
+                label="Users"
+                item-value="id"
               >
                 <template #selection="{ attr, on, item, selected }">
                   <v-chip
@@ -37,7 +38,7 @@
                     v-on="on"
                     @click:close="remove(item)"
                   >
-                    <v-avatar left color="grey lighten-3">
+                    <v-avatar left color="background">
                       <v-img
                         :src="
                           `https://robohash.org/` + item.id + `.png?size=32x32`
@@ -47,8 +48,8 @@
                     <span v-text="item.name"></span>
                   </v-chip>
                 </template>
-                <template #item="{ item }">
-                  <v-list-item-avatar color="grey lighten-3">
+                <template #item="{ item }" color="background">
+                  <v-list-item-avatar color="background">
                     <v-img
                       :src="
                         `https://robohash.org/` + item.id + `.png?size=40x40`
@@ -157,7 +158,6 @@ export default {
   data: () => ({
     dialog: false,
     search: "",
-    query: "",
     selectedUsers: null,
     selectedRole: null,
     userSearch: { items: [] },

@@ -39,7 +39,10 @@
               <v-col cols="12" class="pt-0 pb-0">
                 <v-switch
                   v-model="stream.isPublic"
-                  :label="`Link sharing ` + (stream.isPublic ? `on` : `off`)"
+                  :label="
+                    `Link sharing ` +
+                    (stream.isPublic ? `on` : `off` + ` (not working)`)
+                  "
                 ></v-switch>
               </v-col>
             </v-row>
