@@ -1,6 +1,7 @@
 query Stream($id: String!) {
   stream(id: $id) {
     id
+    isPublic
     collaborators {
       id
       name

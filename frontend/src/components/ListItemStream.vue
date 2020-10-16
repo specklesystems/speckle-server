@@ -13,11 +13,11 @@
     <!-- <v-spacer></v-spacer> -->
     <v-col cols="5" class="caption text-right">
       <div>
-        <v-icon small>mdi-key-outline</v-icon>
+        <btn-click-copy :text="stream.id"></btn-click-copy>
         &nbsp;
         <span class="streamid">
           <router-link :to="'streams/' + stream.id">
-            {{ stream.id }}
+            <span>{{ stream.id }}</span>
           </router-link>
         </span>
 
@@ -51,7 +51,10 @@
   </v-row>
 </template>
 <script>
+import BtnClickCopy from "./BtnClickCopy"
+
 export default {
+  components: { BtnClickCopy },
   props: {
     stream: {
       type: Object,

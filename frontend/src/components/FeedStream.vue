@@ -34,21 +34,24 @@
           <!-- <v-spacer></v-spacer> -->
           <v-col cols="5" class="caption text-right">
             <div class="mt-1 mr-4">
-              <span class="streamid">
-                <router-link :to="'streams/' + stream.id">
-                  {{ stream.id }}
-                </router-link>
-              </span>
-              <v-icon small>mdi-key-outline</v-icon>
+              <btn-click-copy :text="stream.id"></btn-click-copy>
+              <router-link :to="'streams/' + stream.id" class="streamid">
+                <span>{{ stream.id }}</span>
+              </router-link>
+
+              <!-- <v-icon small>mdi-key-outline</v-icon> -->
               <span class="ma-2"></span>
-              <span>{{ stream.branches.totalCount }}</span>
               <v-icon small>mdi-source-branch</v-icon>
+              <span>{{ stream.branches.totalCount }}</span>
+
               <span class="ma-2"></span>
-              <span>{{ stream.commits.totalCount }}</span>
               <v-icon small>mdi-history</v-icon>
+              <span>{{ stream.commits.totalCount }}</span>
+
               <span class="ma-2"></span>
-              <span>{{ stream.collaborators.length }}</span>
               <v-icon small>mdi-account-outline</v-icon>
+              <span>{{ stream.collaborators.length }}</span>
+
               <span class="ma-2"></span>
               <v-icon v-if="stream.isPublic" small>mdi-link</v-icon>
               <v-icon v-else small>mdi-link-lock</v-icon>
@@ -60,7 +63,10 @@
   </div>
 </template>
 <script>
+import BtnClickCopy from "./BtnClickCopy"
+
 export default {
+  components: { BtnClickCopy },
   props: {
     stream: {
       type: Object,
@@ -81,4 +87,3 @@ export default {
   }
 }
 </script>
-<style scoped></style>

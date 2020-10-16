@@ -137,7 +137,7 @@ export default {
   },
   watch: {
     stream(val) {
-      console.log(val)
+      //console.log(val)
     }
   },
   methods: {

@@ -12,15 +12,19 @@
                 :loading="$apollo.loading"
                 :items="items"
                 :search-input.sync="search"
+                :filter="filter"
                 multiple
+                counter="3"
                 chips
                 autofocus
                 hide-no-data
+                hide-details
                 label="Users"
                 placeholder="Type to search..."
                 item-text="name"
                 return-object
                 clearable
+                cache-items
               >
                 <template #selection="{ attr, on, item, selected }">
                   <v-chip
@@ -62,7 +66,7 @@
             </v-col>
           </v-row>
           <v-row class="mb-5" align="center">
-            <v-col cols="12" class="pt-0 pb-0">
+            <v-col cols="12" class="pt-4 pb-0">
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-select
@@ -119,11 +123,16 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="12" class="pt-0 pb-0">
-              <!-- <v-switch
-                v-model="stream.isPublic"
-                :label="`Link sharing ` + (stream.isPublic ? `on` : `off`)"
-              ></v-switch> -->
+            <v-col cols="12" class="pt-3 pb-0">
+              <v-banner color="secondary" class="white--text" single-line>
+                <v-avatar slot="icon" color="white" size="32">
+                  <v-icon color="secondary">mdi-link</v-icon>
+                </v-avatar>
+
+                Link sharing is
+                <b>ON</b>
+                anyone with a link to this stream is able to view it.
+              </v-banner>
             </v-col>
           </v-row>
         </v-container>
@@ -146,7 +155,7 @@ export default {
   components: { ListItemUser },
   props: ["streamId", "userId"],
   data: () => ({
-    dialog: true,
+    dialog: false,
     search: "",
     query: "",
     selectedUsers: null,
@@ -200,25 +209,28 @@ export default {
     }
   },
   watch: {
-    selectedRole(val) {
-      console.log(val)
+    selectedUsers(val) {
+      //console.log(val)
+      this.search = ""
+    },
+    roles(val) {
+      this.selectedRole = this.roles[0]
     }
   },
   methods: {
     open() {
       this.dialog = true
     },
+    //filters out cached items that have been added already
+    //the cache-items prop is REQUIRED when using async items and a multiple prom
+    filter(item) {
+      return this.stream.collaborators.map((x) => x.id).indexOf(item.id) === -1
+    },
     remove(item) {
       console.log(item)
       const index = this.selectedUsers.map((x) => x.id).indexOf(item.id)
       if (index >= 0) this.selectedUsers.splice(index, 1)
     },
-    // filter(item) {
-    //   console.log("A")
-    //   return (
-    //     this.stream.collaborators.filter((x) => x.id === item.id).length === 0
-    //   )
-    // },
     isUniqueStreamOwner(id) {
       return (
         this.userId === id &&

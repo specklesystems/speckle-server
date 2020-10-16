@@ -4,10 +4,16 @@
       <v-col cols="3">
         <sidebar-home></sidebar-home>
       </v-col>
-      <v-col v-if="user" cols="9">
+      <v-col cols="9">
         <v-card rounded="lg" class="pa-5" elevation="0">
           <v-card-title>Your Streams</v-card-title>
           <v-card-actions>
+            <span class="ml-2">
+              You have {{ streams.totalCount }} stream{{
+                streams.totalCount == 1 ? `` : `s`
+              }}
+              in total.
+            </span>
             <v-spacer></v-spacer>
             <v-btn
               class="ml-3 mt-5 text-right"
@@ -23,11 +29,16 @@
 
           <stream-dialog ref="streamDialog"></stream-dialog>
 
-          <v-card-text v-if="user.streams && user.streams.items">
-            <div v-for="(stream, i) in user.streams.items" :key="i">
+          <v-card-text v-if="streams && streams.items">
+            <div v-for="(stream, i) in streams.items" :key="i">
               <list-item-stream :stream="stream"></list-item-stream>
-              <v-divider v-if="i < user.streams.items.length - 1"></v-divider>
+              <v-divider v-if="i < streams.items.length - 1"></v-divider>
             </div>
+
+            <infinite-loading @infinite="infiniteHandler">
+              <div slot="no-more">These are all your streams!</div>
+              <div slot="no-results">There are no streams to load</div>
+            </infinite-loading>
           </v-card-text>
         </v-card>
       </v-col>
@@ -39,20 +50,52 @@ import gql from "graphql-tag"
 import ListItemStream from "../components/ListItemStream"
 import SidebarHome from "../components/SidebarHome"
 import StreamDialog from "../components/dialogs/StreamDialog"
-import userQuery from "../graphql/user.gql"
+import streamsQuery from "../graphql/streams.gql"
+import InfiniteLoading from "vue-infinite-loading"
 
 export default {
   name: "Streams",
-  components: { ListItemStream, SidebarHome, StreamDialog },
+  components: { ListItemStream, SidebarHome, StreamDialog, InfiniteLoading },
   apollo: {
-    user: {
+    streams: {
       prefetch: true,
-      query: userQuery,
+      query: streamsQuery,
       fetchPolicy: "cache-and-network" //https://www.apollographql.com/docs/react/data/queries/
     }
   },
-  data: () => ({}),
+  data: () => ({
+    streams: []
+  }),
+  computed: {},
+  watch: {},
   methods: {
+    infiniteHandler($state) {
+      this.$apollo.queries.streams.fetchMore({
+        variables: {
+          cursor: this.streams.cursor
+        },
+        // Transform the previous result with new data
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          console.log(fetchMoreResult)
+          const newItems = fetchMoreResult.streams.items
+
+          //set vue-infinite state
+          if (newItems.length === 0) $state.complete()
+          else $state.loaded()
+
+          return {
+            streams: {
+              __typename: previousResult.streams.__typename,
+              totalCount: fetchMoreResult.streams.totalCount,
+              cursor: fetchMoreResult.streams.cursor,
+              // Merging the new streams
+              items: [...previousResult.streams.items, ...newItems]
+            }
+          }
+        }
+      })
+    },
+
     newStream() {
       this.$refs.streamDialog.open().then((dialog) => {
         if (!dialog.result) return
@@ -76,7 +119,7 @@ export default {
             // Result
             console.log(data)
 
-            this.$apollo.queries.user.refetch()
+            this.$apollo.queries.stream.refetch()
           })
           .catch((error) => {
             // Error

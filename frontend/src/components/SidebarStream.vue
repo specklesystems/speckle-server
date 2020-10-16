@@ -19,7 +19,7 @@
         <p class="subtitle-1 font-weight-light">{{ stream.description }}</p>
 
         <p>
-          <v-icon small>mdi-key-outline</v-icon>
+          <btn-click-copy :text="stream.id"></btn-click-copy>
           &nbsp;
           <span class="streamid">
             <router-link :to="'/streams/' + stream.id">
@@ -64,7 +64,7 @@
 
     <v-card rounded="lg" class="mt-5 pa-4" elevation="0">
       <v-card-title class="subtitle-1">Collaborators</v-card-title>
-      <v-card-actions class="ml-2 mr-2">
+      <div class="ml-2 mr-2">
         <v-btn
           v-if="isStreamOwner"
           small
@@ -96,7 +96,7 @@
             :src="`https://robohash.org/` + collab.id + `.png?size=40x40`"
           />
         </v-avatar>
-      </v-card-actions>
+      </div>
     </v-card>
   </div>
 </template>
@@ -105,9 +105,10 @@ import gql from "graphql-tag"
 import streamQuery from "../graphql/stream.gql"
 import StreamDialog from "../components/dialogs/StreamDialog"
 import StreamShareDialog from "../components/dialogs/StreamShareDialog"
+import BtnClickCopy from "./BtnClickCopy"
 
 export default {
-  components: { StreamDialog, StreamShareDialog },
+  components: { StreamDialog, StreamShareDialog, BtnClickCopy },
   apollo: {
     stream: {
       prefetch: true,
