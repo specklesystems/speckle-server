@@ -17,6 +17,7 @@
 
               <commit-dialog ref="commitDialog"></commit-dialog>
               <v-btn
+                v-tooltip="'Edit commit details'"
                 small
                 icon
                 style="position: absolute; right: 15px; top: 15px"

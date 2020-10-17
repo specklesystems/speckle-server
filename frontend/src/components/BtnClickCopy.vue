@@ -1,6 +1,6 @@
 <template>
   <span>
-    <v-btn icon small @click="copy">
+    <v-btn v-tooltip="'Copy to clipboard'" icon small @click="copy">
       <v-icon small>mdi-content-copy</v-icon>
     </v-btn>
     <input id="text-to-copy" type="hidden" :value="text" />

@@ -22,23 +22,54 @@
         </span>
 
         <span class="ma-2"></span>
-        <v-icon small>mdi-source-branch</v-icon>
+        <v-icon
+          v-tooltip="
+            stream.branches.totalCount +
+            ' branch' +
+            (stream.branches.totalCount === 1 ? '' : 'es')
+          "
+          small
+        >
+          mdi-source-branch
+        </v-icon>
         &nbsp;
         <span>{{ stream.branches.totalCount }}</span>
 
         <span class="ma-2"></span>
-        <v-icon small>mdi-history</v-icon>
+        <v-icon
+          v-tooltip="
+            stream.commits.totalCount +
+            ' commit' +
+            (stream.commits.totalCount === 1 ? '' : 's')
+          "
+          small
+        >
+          mdi-history
+        </v-icon>
         &nbsp;
         <span>{{ stream.commits.totalCount }}</span>
 
         <span class="ma-2"></span>
-        <v-icon small>mdi-account-outline</v-icon>
+        <v-icon
+          v-tooltip="
+            stream.collaborators.length +
+            ' collaborator' +
+            (stream.collaborators.length === 1 ? '' : 's')
+          "
+          small
+        >
+          mdi-account-outline
+        </v-icon>
         &nbsp;
         <span>{{ stream.collaborators.length }}</span>
 
         <span class="ma-2"></span>
-        <v-icon v-if="stream.isPublic" small>mdi-link</v-icon>
-        <v-icon v-else small>mdi-link-lock</v-icon>
+        <v-icon v-if="stream.isPublic" v-tooltip="`Link sharing on`" small>
+          mdi-link
+        </v-icon>
+        <v-icon v-else v-tooltip="`Link sharing off`" small>
+          mdi-link-lock
+        </v-icon>
       </div>
 
       <div class="mt-1 grey--text text--lighten-1">

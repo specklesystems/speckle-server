@@ -5,6 +5,7 @@
         {{ stream.name }}
       </v-card-title>
       <v-btn
+        v-tooltip="'Edit stream details'"
         small
         icon
         style="position: absolute; right: 15px; top: 15px"
@@ -75,6 +76,7 @@
       <div class="ml-2 mr-2">
         <v-btn
           v-if="isStreamOwner"
+          v-tooltip="'Manage collaborators'"
           small
           fab
           color="primary"

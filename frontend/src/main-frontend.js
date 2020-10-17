@@ -6,9 +6,17 @@ import vuetify from './plugins/vuetify';
 import { createProvider, } from './vue-apollo'
 import { signIn } from './auth-helpers'
 import VueTimeago from 'vue-timeago'
+import VTooltip from 'v-tooltip'
 
 
 Vue.config.productionTip = false
+
+Vue.use( VueTimeago, {
+    locale: 'en' } )
+    
+Vue.use(VTooltip)
+
+
   
 /* Semicolon of Doom */
 ;
@@ -18,11 +26,6 @@ Vue.config.productionTip = false
   let result = await signIn( )
   if ( !result ) return
 
-  Vue.use( VueTimeago, {
-    locale: 'en' } )
-
-
-
   new Vue( {
     router,
     store,
@@ -31,3 +34,4 @@ Vue.config.productionTip = false
     render: h => h( App )
   } ).$mount( '#app' )
 } )( )
+

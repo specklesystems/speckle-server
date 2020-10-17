@@ -35,7 +35,7 @@
               <v-divider v-if="i < streams.items.length - 1"></v-divider>
             </div>
 
-            <infinite-loading @infinite="infiniteHandler">
+            <infinite-loading @infinite="infiniteHandler" v-if="streams.items.length < streams.totalCount">
               <div slot="no-more">These are all your streams!</div>
               <div slot="no-results">There are no streams to load</div>
             </infinite-loading>
@@ -119,7 +119,7 @@ export default {
             // Result
             console.log(data)
 
-            this.$apollo.queries.stream.refetch()
+            this.$apollo.queries.streams.refetch()
           })
           .catch((error) => {
             // Error

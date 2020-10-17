@@ -12,6 +12,7 @@
     "core-js": "^3.6.4",
     "crypto-random-string": "^3.3.0",
     "lodash.debounce": "^4.0.8",
+    "v-tooltip": "^2.0.3",
     "vue": "^2.6.12",
     "vue-apollo": "^3.0.4",
     "vue-infinite-loading": "^2.4.5",
