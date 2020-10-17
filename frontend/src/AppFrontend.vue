@@ -2,7 +2,7 @@
   <v-app id="speckle">
     <v-app-bar app color="background2" flat class="no-decor">
       <v-container class="py-0 fill-height">
-        <v-btn text to="/">
+        <v-btn text to="/" active-class="no-active">
           <v-img
             contain
             max-height="30"
@@ -224,6 +224,10 @@ a:hover {
 
 .no-decor a:hover {
   text-decoration: none;
+}
+
+.v-btn--active.no-active::before {
+  opacity: 0 !important;
 }
 
 /* .theme--dark {
