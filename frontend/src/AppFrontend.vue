@@ -242,6 +242,12 @@ a:hover {
   font-weight: 400 !important;
 }
 
+/* DARK MODE HARD FIXES */
+
+.theme--dark.v-list {
+  background-color: #303132 !important;
+}
+
 /* TOOLTIPs */
 
 .tooltip {
