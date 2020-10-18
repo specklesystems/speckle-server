@@ -1,6 +1,6 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
-const { AuthorizationError, ApolloError } = require( 'apollo-server-express' )
+const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 const { getUser } = require( '../../services/users' )

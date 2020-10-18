@@ -1,12 +1,12 @@
 extend type Stream {
-  commits( limit: Int! = 25, cursor: String ): CommitCollection
-  commit( id: String! ): Commit
-  branches( limit: Int! = 25, cursor: String ): BranchCollection
-  branch( name: String! ): Branch
+  commits(limit: Int! = 25, cursor: String): CommitCollection
+  commit(id: String!): Commit
+  branches(limit: Int! = 25, cursor: String): BranchCollection
+  branch(name: String!): Branch
 }
 
 extend type User {
-  commits( limit: Int! = 25, cursor: String ): CommitCollectionUser
+  commits(limit: Int! = 25, cursor: String): CommitCollectionUser
 }
 
 type Branch {
@@ -14,13 +14,12 @@ type Branch {
   name: String!
   author: User!
   description: String!
-  commits( limit: Int! = 25, cursor: String ): CommitCollection
+  commits(limit: Int! = 25, cursor: String): CommitCollection
 }
 
 type Commit {
   id: String!
   referencedObject: String!
-  realObject: Object
   message: String
   authorName: String
   authorId: String
@@ -30,7 +29,6 @@ type Commit {
 type CommitCollectionUserNode {
   id: String!
   referencedObject: String!
-  realObject: Object
   message: String
   streamId: String
   streamName: String
@@ -55,23 +53,23 @@ type CommitCollectionUser {
 }
 
 extend type Mutation {
-  branchCreate( branch: BranchCreateInput! ): String!
+  branchCreate(branch: BranchCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
-  branchUpdate( branch: BranchUpdateInput! ): Boolean!
+  branchUpdate(branch: BranchUpdateInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
-  branchDelete( branch: BranchDeleteInput! ): Boolean!
+  branchDelete(branch: BranchDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 
-  commitCreate( commit: CommitCreateInput! ): String!
+  commitCreate(commit: CommitCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
-  commitUpdate( commit: CommitUpdateInput! ): Boolean!
+  commitUpdate(commit: CommitUpdateInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
-  commitDelete( commit: CommitDeleteInput! ): Boolean!
+  commitDelete(commit: CommitDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 }
@@ -81,38 +79,38 @@ extend type Subscription {
   """
   Subscribe to branch created event
   """
-  branchCreated( streamId: String! ): JSONObject
+  branchCreated(streamId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
   """
   Subscribe to branch updated event.
   """
-  branchUpdated( streamId: String!, branchId: String ): JSONObject
+  branchUpdated(streamId: String!, branchId: String): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
   """
   Subscribe to branch deleted event
   """
-  branchDeleted( streamId: String! ): JSONObject
+  branchDeleted(streamId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
   Subscribe to commit created event
   """
-  commitCreated( streamId: String! ): JSONObject
+  commitCreated(streamId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
   """
   Subscribe to commit updated event.
   """
-  commitUpdated( streamId: String!, commitId: String ): JSONObject
+  commitUpdated(streamId: String!, commitId: String): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
   """
   Subscribe to commit deleted event
   """
-  commitDeleted( streamId: String! ): JSONObject
+  commitDeleted(streamId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 }

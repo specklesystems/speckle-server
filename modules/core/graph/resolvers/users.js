@@ -1,6 +1,6 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
-const { ApolloError, AuthenticationError, UserInputError } = require( 'apollo-server-express' )
+const { ApolloError, ForbiddenError, UserInputError } = require( 'apollo-server-express' )
 const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, searchUsers, validatePasssword } = require( '../../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
