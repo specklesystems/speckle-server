@@ -168,7 +168,8 @@ export default {
       },
       skip() {
         return !this.search || this.search.length < 3
-      }
+      },
+      debounce: 300
     }
   },
   computed: {
