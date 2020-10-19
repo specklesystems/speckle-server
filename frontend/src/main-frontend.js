@@ -14,7 +14,7 @@ Vue.config.productionTip = false
 Vue.use( VueTimeago, {
     locale: 'en' } )
     
-Vue.use(VTooltip)
+Vue.use(VTooltip, { defaultDelay: 300})
 
 
   
