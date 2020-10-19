@@ -119,7 +119,7 @@ export default {
             // Result
             console.log(data)
 
-            this.$apollo.queries.stream.refetch()
+            this.$apollo.queries.streams.refetch()
           })
           .catch((error) => {
             // Error
