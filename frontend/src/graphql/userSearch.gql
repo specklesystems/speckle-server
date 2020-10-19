@@ -1,0 +1,13 @@
+query UserSearch($query: String!, $limit: Int!) {
+  userSearch(query: $query, limit: $limit) {
+    cursor
+    items {
+      id
+      name
+      bio
+      company
+      avatar
+      verified
+    }
+  }
+}

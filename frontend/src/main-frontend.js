@@ -3,12 +3,21 @@ import App from './AppFrontend.vue'
 import router from './router'
 import store from './store'
 import vuetify from './plugins/vuetify';
-import { createProvider, onLogin } from './vue-apollo'
+import { createProvider, } from './vue-apollo'
 import { signIn } from './auth-helpers'
-import crs from 'crypto-random-string'
+import VueTimeago from 'vue-timeago'
+import VTooltip from 'v-tooltip'
+
 
 Vue.config.productionTip = false
 
+Vue.use( VueTimeago, {
+    locale: 'en' } )
+    
+Vue.use(VTooltip, { defaultDelay: 300})
+
+
+  
 /* Semicolon of Doom */
 ;
 /* Semicolon of Doom */
@@ -16,7 +25,8 @@ Vue.config.productionTip = false
 ( async ( ) => {
   let result = await signIn( )
   if ( !result ) return
-  let app = new Vue( {
+
+  new Vue( {
     router,
     store,
     vuetify,
@@ -24,3 +34,4 @@ Vue.config.productionTip = false
     render: h => h( App )
   } ).$mount( '#app' )
 } )( )
+

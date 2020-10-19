@@ -108,10 +108,10 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       } )
 
       it( 'Should edit my profile', async ( ) => {
-        const res = await sendRequest( userA.token, { query: `mutation($user:UserEditInput!) { userEdit( user: $user) } `, variables: { user: { name: 'Miticå', bio: 'He never really knows what he is doing.' } } } )
+        const res = await sendRequest( userA.token, { query: `mutation($user:UserUpdateInput!) { userUpdate( user: $user) } `, variables: { user: { name: 'Miticå', bio: 'He never really knows what he is doing.' } } } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-        expect( res.body.data.userEdit ).to.equal( true )
+        expect( res.body.data.userUpdate ).to.equal( true )
       } )
     } )
 

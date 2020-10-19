@@ -1,13 +1,21 @@
 {
   "env": {
     "browser": true,
-    "commonjs": true,
-    "es2020": true
+    "es2021": true
   },
+  "ignorePatterns": ["main-frontend.js"],
+  "extends": [
+    "plugin:vue/recommended",
+    "prettier",
+    "prettier/vue",
+    "plugin:prettier/recommended",
+    "eslint:recommended"
+  ],
   "parserOptions": {
-    "ecmaVersion": 11
+    "ecmaVersion": 12,
+    "sourceType": "module"
   },
-  "ignorePatterns": ["modules/*/tests/*", "node_modules/*"],
+  "plugins": ["vue", "prettier"],
   "rules": {
     "arrow-spacing": [
       2,
@@ -16,7 +24,7 @@
         "after": true
       }
     ],
-    "array-bracket-spacing": [2, "always"],
+    //"array-bracket-spacing": [2, "always"],
     "block-spacing": [2, "always"],
     "camelcase": [
       1,
@@ -24,7 +32,7 @@
         "properties": "always"
       }
     ],
-    "space-in-parens": [2, "always"],
+    // "space-in-parens": [2, "always"],
     "keyword-spacing": 2,
     "semi": "off",
     "indent": ["error", 2],

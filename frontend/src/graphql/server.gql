@@ -1,0 +1,14 @@
+query {
+  serverInfo {
+    name
+    company
+    description
+    adminContact
+    canonicalUrl
+    roles {
+      name
+      description
+      resourceTarget
+    }
+  }
+}

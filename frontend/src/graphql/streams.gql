@@ -1,0 +1,27 @@
+query Streams($cursor: String) {
+  streams(cursor: $cursor) {
+    totalCount
+    cursor
+    items {
+      id
+      name
+      description
+      isPublic
+      createdAt
+      updatedAt
+      collaborators {
+        id
+        name
+        company
+        avatar
+        role
+      }
+      commits {
+        totalCount
+      }
+      branches {
+        totalCount
+      }
+    }
+  }
+}

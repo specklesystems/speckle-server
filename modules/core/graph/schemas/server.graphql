@@ -34,7 +34,9 @@ type Scope {
 }
 
 extend type Mutation {
-  serverInfoUpdate( info: ServerInfoUpdateInput! ): Boolean
+  serverInfoUpdate(info: ServerInfoUpdateInput!): Boolean
+    @hasRole(role: "server:admin")
+    @hasScope(scope: "server:setup")
 }
 
 input ServerInfoUpdateInput {
