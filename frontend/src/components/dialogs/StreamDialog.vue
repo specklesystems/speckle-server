@@ -46,30 +46,38 @@
                 ></v-switch>
               </v-col>
             </v-row>
-            <v-row v-if="isEdit">
-              <v-col cols="12" class="pt-10 pb-5">
-                <v-btn
-                  v-if="!pendingDelete"
-                  color="error"
-                  block
-                  outlined
-                  @click="pendingDelete = true"
-                >
-                  Delete Stream
-                </v-btn>
-                <div v-if="pendingDelete">
-                  <span>Delete forever?</span>
+            <v-row v-if="isEdit" align="center">
+              <v-col cols="12" class="pt-2 pb-2">
+                <div v-if="!pendingDelete">
                   <v-btn
-                    class="ml-5"
                     color="error"
                     depressed
-                    @click.native="doDelete"
+                    class="mt-5"
+                    @click="pendingDelete = true"
                   >
+                    Delete Stream
+                  </v-btn>
+                  <p
+                    class="ml-4 mt-0 pt-0 caption"
+                    style="display: inline-flex; width: 250px"
+                  >
+                    Delete this stream forever, no going back here!
+                  </p>
+                </div>
+
+                <div v-if="pendingDelete">
+                  <v-btn color="error" depressed @click.native="doDelete">
                     Yes
                   </v-btn>
                   <v-btn class="ml-5" depressed @click="pendingDelete = false">
                     No
                   </v-btn>
+                  <p
+                    class="ml-4 mt-0 pt-0 caption"
+                    style="display: inline-flex; width: 150px"
+                  >
+                    Are you sure?
+                  </p>
                 </div>
               </v-col>
             </v-row>

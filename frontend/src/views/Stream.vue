@@ -61,6 +61,7 @@
               </p>
 
               <v-btn
+                v-tooltip="'Edit branch details'"
                 small
                 icon
                 style="position: absolute; right: 15px; top: 15px"

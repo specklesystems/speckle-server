@@ -27,6 +27,7 @@
         <span class="streamid">{{ user.id }}</span>
       </v-card-text>
       <v-btn
+        v-tooltip="'Edit profile'"
         small
         icon
         style="position: absolute; right: 15px; top: 15px"
@@ -60,6 +61,7 @@
       </v-card-text>
       <v-btn
         v-if="user.role === `server:admin`"
+        v-tooltip="'Edit server information'"
         small
         icon
         style="position: absolute; right: 15px; top: 15px"
