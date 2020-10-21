@@ -87,7 +87,7 @@ module.exports = {
     let closureBatchSize = 1000
     let objectsBatchSize = 500
 
-    // step 1: insert objecs 
+    // step 1: insert objecs
     if ( objsToInsert.length > 0 ) {
       let batches = chunk( objsToInsert, objectsBatchSize )
       for ( const batch of batches ) {
@@ -109,8 +109,9 @@ module.exports = {
           const inserts = await trx.raw( q )
         } )
         debug( `Inserted ${batch.length} closures` )
-      } 
+      }
     }
+    return true
   },
 
   async createObjects( objects ) {
@@ -247,8 +248,8 @@ module.exports = {
     return { objects: rows, cursor: lastId }
   },
 
-  // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects. 
-  // A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result. 
+  // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects.
+  // A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result.
   async getObjectChildrenQuery( { objectId, limit, depth, select, cursor, query, orderBy } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
@@ -266,7 +267,7 @@ module.exports = {
       if ( orderBy && select.indexOf( orderBy.field ) === -1 ) {
         select.push( orderBy.field )
       }
-      // // always add the id! 
+      // // always add the id!
       // if ( select.indexOf( 'id' ) === -1 ) select.unshift( 'id' )
     } else {
       fullObjectSelect = true
@@ -317,7 +318,7 @@ module.exports = {
             else whereClause = 'andWhere'
 
             // Note: castType is generated from the statement's value and operators are matched against a whitelist.
-            // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value. 
+            // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value.
             nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
           } )
         } )
