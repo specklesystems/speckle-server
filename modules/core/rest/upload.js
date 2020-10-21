@@ -26,9 +26,13 @@ module.exports = ( app ) => {
       return res.status( 401 ).end( )
     }
 
+    debug( 'speckle:upload-endpoint' )( `Upload started` )
+
     let busboy = new Busboy( { headers: req.headers } )
     let totalProcessed = 0
     let last = {}
+
+    let promises = []
 
     busboy.on( 'file', ( fieldname, file, filename, encoding, mimetype ) => {
       let buffer = ''
@@ -41,13 +45,20 @@ module.exports = ( app ) => {
         let objs = JSON.parse( buffer )
         last = objs[ objs.length - 1 ]
         totalProcessed += objs.length
-        await createObjectsBatched( objs )
+
+        let promise = createObjectsBatched( objs )
+        promises.push( promise )
+
+        await promise // Fire it up already
       } )
     } )
 
-    busboy.on( 'finish', ( ) => {
+    busboy.on( 'finish', async ( ) => {
       debug( 'speckle:upload-endpoint' )( 'Done parsing ' + totalProcessed + ' objs ' + process.memoryUsage( ).heapUsed / 1024 / 1024 + ' mb mem' )
 
+      await Promise.all( promises )
+
+      debug( 'speckle:upload-endpoint' )( `Upload ended` )
       res.status( 201 ).end( )
     } )
 
