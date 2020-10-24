@@ -10,6 +10,9 @@ const { createObjects, createObjectsBatched } = require( '../services/objects' )
 
 module.exports = ( app ) => {
   app.post( '/objects/:streamId', contextMiddleware, async ( req, res ) => {
+
+    debug( 'speckle:upload-endpoint' )( `booom upload endpoint` )
+
     if ( !req.context || !req.context.auth ) {
       return res.status( 401 ).end( )
     }
@@ -32,17 +35,19 @@ module.exports = ( app ) => {
     let totalProcessed = 0
     let last = {}
 
-    let promises = []
+    let promises = [ ]
 
     busboy.on( 'file', ( fieldname, file, filename, encoding, mimetype ) => {
-      let buffer = ''
+      let buffer = [ ]
 
       file.on( 'data', ( data ) => {
-        if ( data ) buffer += data
+        if ( data ) buffer.push( data )
       } )
 
       file.on( 'end', async ( ) => {
-        let objs = JSON.parse( buffer )
+        let gunzipedBuffer = zlib.gunzipSync( Buffer.concat( buffer ) ).toString( )
+
+        let objs = JSON.parse( gunzipedBuffer )
         last = objs[ objs.length - 1 ]
         totalProcessed += objs.length
 
