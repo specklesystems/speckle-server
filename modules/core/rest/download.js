@@ -25,6 +25,12 @@ module.exports = ( app ) => {
       return res.status( 401 ).end( )
     }
 
+    // Populate first object (the "commit")
+    let obj = await getObject( { objectId: req.params.objectId } )
+    if ( !obj ) {
+      return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+    }
+
     let simpleText = req.headers.accept === 'text/plain'
 
     let dbStream = await getObjectChildrenStream( { objectId: req.params.objectId } )
@@ -48,7 +54,7 @@ module.exports = ( app ) => {
         gzip.write( chunk )
       } else {
         gzip.write( chunk.join( ',' ) )
-        if ( addTrailingComma ){
+        if ( addTrailingComma ) {
           gzip.write( ',' )
         }
       }
@@ -56,8 +62,6 @@ module.exports = ( app ) => {
       chunk = simpleText ? '' : [ ]
     }
 
-    // Populate first object (the "commit")
-    let obj = await getObject( { objectId: req.params.objectId } )
     var objString = JSON.stringify( obj )
     if ( simpleText ) {
       chunk += `${obj.id}\t${objString}\n`
@@ -67,23 +71,31 @@ module.exports = ( app ) => {
     writeBuffer( true )
 
     let k = 0
+    let requestDropped = false
     dbStream.on( 'data', row => {
-      let data = JSON.stringify( row.data )
-      currentChunkSize += Buffer.byteLength( data, 'utf8' )
-      if ( simpleText ) {
-        chunk += `${row.data.id}\t${data}\n`
-      } else {
-        chunk.push( data )
+      try {
+        let data = JSON.stringify( row.data )
+        currentChunkSize += Buffer.byteLength( data, 'utf8' )
+        if ( simpleText ) {
+          chunk += `${row.data.id}\t${data}\n`
+        } else {
+          chunk.push( data )
+        }
+        if ( currentChunkSize >= maxChunkSize ) {
+          currentChunkSize = 0
+          writeBuffer( true )
+        }
+        k++
+      } catch ( e ) {
+        requestDropped = true
+        res.status( 400 ).send( 'Failed to find object, or object is corrupted.' )
       }
-      if ( currentChunkSize >= maxChunkSize ) {
-        currentChunkSize = 0
-        writeBuffer( true )
-      }
-      k++
     } )
 
     dbStream.on( 'error', err => {
       debug( 'speckle:error' )( `Error in streaming object children for ${req.params.objectId}` )
+      requestDropped = true
+      res.status( 400 ).send( 'Failed to find object, or object is corrupted.' )
     } )
 
     dbStream.on( 'end', ( ) => {
@@ -98,7 +110,7 @@ module.exports = ( app ) => {
     gzip.pipe( res )
   } )
 
-  // TODO: is this needed/used? 
+  // TODO: is this needed/used?
   app.get( '/objects/:streamId/:objectId/single', async ( req, res ) => {
     // TODO: authN & authZ checks
 
