@@ -6,6 +6,8 @@ const request = require( 'supertest' )
 const assert = require( 'assert' )
 const crypto = require( 'crypto' )
 const appRoot = require( 'app-root-path' )
+const zlib = require( 'zlib' )
+
 
 const { init, startHttp } = require( `${appRoot}/app` )
 
@@ -18,7 +20,7 @@ const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createStream } = require( '../services/streams' )
 
-describe( `Upload/Download Routes`, ( ) => {
+describe( `Upload/Download Routes @api-rest`, ( ) => {
 
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
   let testStream = {
@@ -85,9 +87,15 @@ describe( `Upload/Download Routes`, ( ) => {
       await request( expressApp )
       .post( `/objects/${testStream.id}` )
       .set( 'Authorization', userA.token )
+      .set( 'Content-type', 'multipart/form-data' )
       .attach( 'batch1', Buffer.from( JSON.stringify( objBatches[ 0 ] ), 'utf8' ) )
       .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
       .attach( 'batch3', Buffer.from( JSON.stringify( objBatches[ 2 ] ), 'utf8' ) )
+
+    // TODO: test gziped uploads. They work. Current blocker: cannot set content-type for each part in the 'multipart' request.
+    // .attach( 'batch1', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 0 ] ) ), 'utf8' ) )
+    // .attach( 'batch2', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 1 ] ) ), 'utf8' ) )
+    // .attach( 'batch3', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 2 ] ) ), 'utf8' ) )
 
     expect( res ).to.have.status( 201 )
   } )
@@ -123,8 +131,7 @@ describe( `Upload/Download Routes`, ( ) => {
   } ).timeout( 5000 )
 
   it( 'Should properly download an object, with all its children, into a text/plain response', ( done ) => {
-    // new Promise( resolve => setTimeout( resolve, 1000 ) ) // avoids race condition
-    //   .then( ( ) => {
+
     let res = request( expressApp )
       .get( `/objects/${testStream.id}/${parentId}` )
       .set( 'Authorization', userA.token )
@@ -150,7 +157,7 @@ describe( `Upload/Download Routes`, ( ) => {
           done( err )
         }
       } )
-    // } )
+
   } )
 
 } )
