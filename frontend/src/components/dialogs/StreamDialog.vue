@@ -151,7 +151,7 @@ export default {
       this.nameRules = [
         (v) => !!v || "Streams need a name too!",
         (v) =>
-          (v && v.length <= 100) || "Name must be less than 100 characters",
+          (v && v.length <= 150) || "Name must be less than 150 characters",
         (v) => (v && v.length >= 3) || "Name must be at least 3 characters"
       ]
 

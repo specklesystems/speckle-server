@@ -13,12 +13,14 @@
       <v-row class="caption">
         <v-col class="pb-2">
           <v-icon small>mdi-history</v-icon>
-          &nbsp;
-          <strong>You</strong>
-          pushed
-          <span v-if="commit.items">{{ commit.items.length }} commits</span>
-          <span v-else>a commit</span>
-          to
+          &nbsp; You have
+          <strong>
+            <span v-if="commit.items">
+              {{ commit.items.length }} new commits
+            </span>
+            <span v-else>a new commit</span>
+          </strong>
+          in
           <strong>
             <router-link :to="'streams/' + commit.streamId">
               {{ commit.streamName }}
