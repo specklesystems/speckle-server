@@ -9,9 +9,10 @@ export async function signIn( ) {
   if ( accessCode ) {
     let response = await getTokenFromAccessCode( accessCode )
     if ( response.hasOwnProperty( 'token' ) ) {
-      localStorage.clear()
+      localStorage.clear( )
       localStorage.setItem( 'AuthToken', response.token )
       localStorage.setItem( 'RefreshToken', response.refreshToken )
+      await prefetchUserAndSetSuuid( )
       window.history.replaceState( {}, document.title, '/' )
       return true
     }
@@ -20,16 +21,7 @@ export async function signIn( ) {
   // Stage 1: check if there is an existing valid token by pinging the graphql api
   let token = localStorage.getItem( 'AuthToken' )
   if ( token ) {
-    let testResponse = await fetch( '/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( { query: `{ user { id } }` } )
-    } )
-
-    let data = ( await testResponse.json( ) ).data
+    let data = await prefetchUserAndSetSuuid( )
     // if res.data.user is non null, means the ping was ok & token is valid
     if ( data.user )
       return true
@@ -39,6 +31,7 @@ export async function signIn( ) {
   let refreshToken = localStorage.getItem( 'RefreshToken' )
 
   if ( refreshToken ) {
+
     let refreshResponse = await fetch( '/auth/token', {
       method: 'POST',
       headers: {
@@ -56,9 +49,10 @@ export async function signIn( ) {
     if ( data.hasOwnProperty( 'token' ) ) {
       localStorage.setItem( 'AuthToken', data.token )
       localStorage.setItem( 'RefreshToken', data.refreshToken )
+      await prefetchUserAndSetSuuid( )
       return true
     }
- 
+
   }
 
   // tried all avenues, means we need to init a full authorization flow.
@@ -67,8 +61,29 @@ export async function signIn( ) {
   return false
 }
 
+async function prefetchUserAndSetSuuid( ) {
+  let token = localStorage.getItem( 'AuthToken' )
+  if ( token ) {
+    let testResponse = await fetch( '/graphql', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify( { query: `{ user { id suuid } }` } )
+    } )
+
+    let data = ( await testResponse.json( ) ).data
+    if ( data.user ) {
+      localStorage.setItem( 'suuid', data.user.suuid )
+    }
+
+    return data
+  }
+}
+
 export async function getTokenFromAccessCode( accessCode ) {
-  console.log( 'found local challenge: '  + localStorage.getItem( 'appChallenge' ) )
+  console.log( 'found local challenge: ' + localStorage.getItem( 'appChallenge' ) )
   let response = await fetch( '/auth/token', {
     method: 'POST',
     headers: {
@@ -87,7 +102,7 @@ export async function getTokenFromAccessCode( accessCode ) {
 }
 
 export function redirectToAuth( ) {
-  // Reaching this stage means we're initialising a full new auth flow, 
+  // Reaching this stage means we're initialising a full new auth flow,
   // TIP: also means we need to refresh the app challenge as well.
   localStorage.setItem( 'appChallenge', crs( { length: 10 } ) )
   // Finally, redirect to the auth lock.

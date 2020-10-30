@@ -46,7 +46,6 @@ exports.init = async ( ) => {
 
   app.use( bodyParser.json( { limit: '10mb' } ) )
   app.use( bodyParser.urlencoded( { extended: false } ) )
-  // app.use( express.json( { limit: '1mb' } ) );
 
   const { init, graph } = require( './modules' )
 

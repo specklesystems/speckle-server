@@ -3,51 +3,19 @@
     <v-app-bar app color="background2" flat class="no-decor">
       <v-container class="py-0 fill-height">
         <v-btn text to="/" active-class="no-active">
-          <v-img
-            contain
-            max-height="30"
-            max-width="30"
-            src="./assets/logo.svg"
-          />
+          <v-img contain max-height="30" max-width="30" src="./assets/logo.svg" />
           <div class="mt-1">
             <span class="primary--text"><b>SPECKLE</b></span>
             <!-- &nbsp;
             <span class="font-weight-light">ADMIN</span> -->
           </div>
         </v-btn>
-
-        <v-btn
-          v-for="link in navLinks"
-          :key="link.name"
-          text
-          class="text-uppercase"
-          :to="link.link"
-        >
+        <v-btn v-for="link in navLinks" :key="link.name" text class="text-uppercase" :to="link.link">
           {{ link.name }}
         </v-btn>
-
         <v-spacer></v-spacer>
         <v-responsive max-width="300">
-          <v-autocomplete
-            v-model="selectedSearchResult"
-            :loading="$apollo.loading"
-            :items="streams.items"
-            :search-input.sync="search"
-            no-filter
-            counter="3"
-            rounded
-            filled
-            dense
-            flat
-            hide-no-data
-            hide-details
-            placeholder="Search streams..."
-            item-text="name"
-            item-value="id"
-            return-object
-            clearable
-            append-icon=""
-          >
+          <v-autocomplete v-model="selectedSearchResult" :loading="$apollo.loading" :items="streams.items" :search-input.sync="search" no-filter counter="3" rounded filled dense flat hide-no-data hide-details placeholder="Search streams..." item-text="name" item-value="id" return-object clearable append-icon="">
             <template #item="{ item }" color="background">
               <v-list-item-content>
                 <v-list-item-title>
@@ -57,9 +25,7 @@
                     <span class="streamid">{{ item.id }}</span>
                   </v-row>
                 </v-list-item-title>
-                <v-list-item-subtitle
-                  v-text="item.description"
-                ></v-list-item-subtitle>
+                <v-list-item-subtitle v-text="item.description"></v-list-item-subtitle>
                 <v-list-item-subtitle class="caption">
                   Updated
                   <timeago :datetime="item.updatedAt"></timeago>
@@ -70,20 +36,10 @@
         </v-responsive>
         <v-menu v-if="user" bottom left offset-y class="userMenu">
           <template #activator="{ on, attrs }">
-            <v-btn
-              icon
-              v-bind="attrs"
-              height="38"
-              width="38"
-              class="ml-3"
-              v-on="on"
-            >
+            <v-btn icon v-bind="attrs" height="38" width="38" class="ml-3" v-on="on">
               <v-avatar color="background" size="38">
                 <v-img v-if="user.avatar" :src="user.avatar" />
-                <v-img
-                  v-else
-                  :src="`https://robohash.org/` + user.id + `.png?size=38x38`"
-                />
+                <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=38x38`" />
               </v-avatar>
             </v-btn>
           </template>
@@ -95,11 +51,7 @@
               </v-list-item-content>
             </v-list-item>
             <v-divider></v-divider>
-            <v-list-item
-              v-if="!this.$vuetify.theme.dark"
-              link
-              @click="switchTheme"
-            >
+            <v-list-item v-if="!this.$vuetify.theme.dark" link @click="switchTheme">
               <v-list-item-content>Dark mode</v-list-item-content>
               <v-list-item-icon>
                 <v-icon>mdi-weather-night</v-icon>
@@ -121,8 +73,13 @@
         </v-menu>
       </v-container>
     </v-app-bar>
-
     <v-main :style="background">
+      <v-banner elevation="13" single-line>
+        <div class='text-center pa-3'>
+          Hello 👋 We are collecting some data on how you interact with this site so we can deliver a better Speckle.
+          <v-btn color='primary' small style='margin-top:-4px'>Ok, that's fine!</v-btn>
+        </div>
+      </v-banner>
       <router-view></router-view>
     </v-main>
   </v-app>
@@ -132,22 +89,22 @@ import userQuery from "./graphql/user.gql"
 import gql from "graphql-tag"
 
 export default {
-  data: () => ({
+  data: ( ) => ( {
     search: "",
-    streams: { items: [] },
+    streams: { items: [ ] },
     selectedSearchResult: null,
     navLinks: [
       { link: "/streams", name: "streams" },
       { link: "/help", name: "help" }
     ]
-  }),
+  } ),
   apollo: {
     user: {
       prefetch: true,
       query: userQuery
     },
     streams: {
-      query: gql`
+      query: gql `
         query Streams($query: String) {
           streams(query: $query) {
             totalCount
@@ -161,49 +118,50 @@ export default {
           }
         }
       `,
-      variables() {
+      variables( ) {
         return {
           query: this.search
         }
       },
-      skip() {
+      skip( ) {
         return !this.search || this.search.length < 3
       },
       debounce: 300
     }
   },
   computed: {
-    background() {
+    background( ) {
       let theme = this.$vuetify.theme.dark ? "dark" : "light"
       return `background-color: ${this.$vuetify.theme.themes[theme].background};`
     }
   },
   watch: {
-    selectedSearchResult(val) {
+    selectedSearchResult( val ) {
       this.search = ""
-      this.streams.items = []
-      if (val)
-        this.$router.push({ name: "stream", params: { streamId: val.id } })
+      this.streams.items = [ ]
+      if ( val )
+        this.$router.push( { name: "stream", params: { streamId: val.id } } )
     },
-    "streams.items"(val) {
-      console.log(val)
+    "streams.items"( val ) {
+      console.log( val )
     }
   },
 
   methods: {
-    switchTheme() {
+    switchTheme( ) {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem(
         "darkModeEnabled",
         this.$vuetify.theme.dark ? "dark" : "light"
       )
     },
-    signOut() {
-      localStorage.clear()
-      location.reload()
+    signOut( ) {
+      localStorage.clear( )
+      location.reload( )
     }
   }
 }
+
 </script>
 <style>
 .v-card__text,
@@ -232,7 +190,7 @@ a:hover {
 }
 
 /* .theme--dark {
-  /color: #cfcdcc !important; 
+  /color: #cfcdcc !important;
 } */
 
 /* don't like fat text */
@@ -358,4 +316,5 @@ a:hover {
   opacity: 1;
   transition: opacity 0.15s;
 }
+
 </style>
