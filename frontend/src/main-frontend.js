@@ -1,23 +1,24 @@
 import Vue from 'vue'
 import App from './AppFrontend.vue'
+
+import { createProvider } from './vue-apollo'
+import { signIn } from './auth-helpers'
+
 import router from './router'
 import store from './store'
 import vuetify from './plugins/vuetify';
-import { createProvider, } from './vue-apollo'
-import { signIn } from './auth-helpers'
-import VueTimeago from 'vue-timeago'
-import VTooltip from 'v-tooltip'
-
 
 Vue.config.productionTip = false
 
-Vue.use( VueTimeago, {
-    locale: 'en' } )
-    
-Vue.use(VTooltip, { defaultDelay: 300})
+import VueTimeago from 'vue-timeago'
+Vue.use( VueTimeago, { locale: 'en' } )
+
+import VTooltip from 'v-tooltip'
+Vue.use( VTooltip, { defaultDelay: 300 } )
+
+import VueMatomo from 'vue-matomo'
 
 
-  
 /* Semicolon of Doom */
 ;
 /* Semicolon of Doom */
@@ -25,6 +26,13 @@ Vue.use(VTooltip, { defaultDelay: 300})
 ( async ( ) => {
   let result = await signIn( )
   if ( !result ) return
+
+  Vue.use( VueMatomo, {
+    host: 'https://speckle.matomo.cloud',
+    siteId: 4,
+    router: router,
+    userId: localStorage.getItem( 'suuid' )
+  } )
 
   new Vue( {
     router,
@@ -34,4 +42,3 @@ Vue.use(VTooltip, { defaultDelay: 300})
     render: h => h( App )
   } ).$mount( '#app' )
 } )( )
-
