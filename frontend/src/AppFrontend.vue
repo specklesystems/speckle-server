@@ -74,12 +74,6 @@
       </v-container>
     </v-app-bar>
     <v-main :style="background">
-      <v-banner elevation="13" single-line>
-        <div class='text-center pa-3'>
-          Hello 👋 We are collecting some data on how you interact with this site so we can deliver a better Speckle.
-          <v-btn color='primary' small style='margin-top:-4px'>Ok, that's fine!</v-btn>
-        </div>
-      </v-banner>
       <router-view></router-view>
     </v-main>
   </v-app>
