@@ -1,21 +1,27 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="3">
+<!--       <v-col cols="3">
         <sidebar-home></sidebar-home>
-      </v-col>
-      <v-col cols="9">
+      </v-col> -->
+      <v-col cols="12">
         <v-card rounded="lg" class="pa-5" elevation="0" color="background2">
           <v-card-title>Your Streams</v-card-title>
           <v-card-actions>
             <span class="ml-2">
               You have {{ streams.totalCount }} stream{{
-              streams.totalCount == 1 ? `` : `s`
+                streams.totalCount == 1 ? `` : `s`
               }}
               in total.
             </span>
             <v-spacer></v-spacer>
-            <v-btn class="ml-3 mt-5 text-right" color="primary" elevation="0" small @click="newStream">
+            <v-btn
+              class="ml-3 mt-5 text-right"
+              color="primary"
+              elevation="0"
+              small
+              @click="newStream"
+            >
               <v-icon small class="mr-1">mdi-plus-box-outline</v-icon>
               new stream
             </v-btn>
@@ -26,7 +32,10 @@
               <list-item-stream :stream="stream"></list-item-stream>
               <v-divider v-if="i < streams.items.length - 1"></v-divider>
             </div>
-            <infinite-loading @infinite="infiniteHandler" v-if="streams.items.length < streams.totalCount">
+            <infinite-loading
+              v-if="streams.items.length < streams.totalCount"
+              @infinite="infiniteHandler"
+            >
               <div slot="no-more">These are all your streams!</div>
               <div slot="no-results">There are no streams to load</div>
             </infinite-loading>
@@ -54,25 +63,29 @@ export default {
       fetchPolicy: "cache-and-network" //https://www.apollographql.com/docs/react/data/queries/
     }
   },
-  data: ( ) => ( {
-    streams: [ ]
-  } ),
+  data: () => ({
+    streams: []
+  }),
   computed: {},
   watch: {},
+  mounted() {
+    console.log(this.$route)
+    this.$matomo && this.$matomo.trackPageView("streams")
+  },
   methods: {
-    infiniteHandler( $state ) {
-      this.$apollo.queries.streams.fetchMore( {
+    infiniteHandler($state) {
+      this.$apollo.queries.streams.fetchMore({
         variables: {
           cursor: this.streams.cursor
         },
         // Transform the previous result with new data
-        updateQuery: ( previousResult, { fetchMoreResult } ) => {
-          console.log( fetchMoreResult )
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          console.log(fetchMoreResult)
           const newItems = fetchMoreResult.streams.items
 
           //set vue-infinite state
-          if ( newItems.length === 0 ) $state.complete( )
-          else $state.loaded( )
+          if (newItems.length === 0) $state.complete()
+          else $state.loaded()
 
           return {
             streams: {
@@ -80,20 +93,20 @@ export default {
               totalCount: fetchMoreResult.streams.totalCount,
               cursor: fetchMoreResult.streams.cursor,
               // Merging the new streams
-              items: [ ...previousResult.streams.items, ...newItems ]
+              items: [...previousResult.streams.items, ...newItems]
             }
           }
         }
-      } )
+      })
     },
 
-    newStream( ) {
-      this.$refs.streamDialog.open( ).then( ( dialog ) => {
-        if ( !dialog.result ) return
-        console.log( dialog )
+    newStream() {
+      this.$refs.streamDialog.open().then((dialog) => {
+        if (!dialog.result) return
+        console.log(dialog)
         this.$apollo
-          .mutate( {
-            mutation: gql `
+          .mutate({
+            mutation: gql`
               mutation streamCreate($myStream: StreamCreateInput!) {
                 streamCreate(stream: $myStream)
               }
@@ -105,25 +118,20 @@ export default {
                 isPublic: dialog.stream.isPublic
               }
             }
-          } )
-          .then( ( data ) => {
+          })
+          .then((data) => {
             // Result
-            console.log( data )
+            console.log(data)
 
-            this.$apollo.queries.streams.refetch( )
-          } )
-          .catch( ( error ) => {
+            this.$apollo.queries.streams.refetch()
+          })
+          .catch((error) => {
             // Error
-            console.error( error )
-          } )
-      } )
+            console.error(error)
+          })
+      })
     }
-  },
-  mounted( ) {
-    console.log(this.$route)
-    this.$matomo && this.$matomo.trackPageView( "streams" )
   }
 }
-
 </script>
 <style></style>

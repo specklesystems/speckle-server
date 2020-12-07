@@ -2,7 +2,7 @@
   <div v-if="stream">
     <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
       <v-card-title class="mr-8">
-        {{ stream.name }}
+        <h2 class="font-weight-bold">{{ stream.name }}</h2>
       </v-card-title>
       <v-btn
         v-tooltip="'Edit stream details'"
@@ -13,12 +13,9 @@
       >
         <v-icon small>mdi-pencil-outline</v-icon>
       </v-btn>
-
       <stream-dialog ref="streamDialog"></stream-dialog>
-
       <v-card-text>
-        <p class="subtitle-1 font-weight-light">{{ stream.description }}</p>
-
+        <!-- <p class="subtitle-1 font-weight-light">{{ stream.description }}</p> -->
         <p>
           <btn-click-copy :text="stream.id"></btn-click-copy>
           &nbsp;
@@ -69,22 +66,36 @@
           <timeago :datetime="stream.updatedAt"></timeago>
         </p>
       </v-card-text>
-    </v-card>
-
-    <v-card rounded="lg" class="mt-5 pa-4" elevation="0" color="background2">
-      <v-card-title class="subtitle-1">Collaborators</v-card-title>
+      <v-divider></v-divider>
+      <v-card-title><h5>Collaborators</h5></v-card-title>
       <div class="ml-2 mr-2">
+        <v-row v-for="(collab, i) in stream.collaborators" :key="i">
+          <v-col sm="3">
+            <v-avatar class="ma-1" color="grey lighten-3" size="40">
+              <v-img v-if="collab.avatar" :src="collab.avatar" />
+              <v-img
+                v-else
+                :src="`https://robohash.org/` + collab.id + `.png?size=40x40`"
+              />
+            </v-avatar>
+          </v-col>
+          <v-col>
+            <span class="text-body-2">{{ collab.name }}</span>
+            <br />
+            <span class="caption">{{ collab.role }}</span>
+          </v-col>
+        </v-row>
         <v-btn
           v-if="isStreamOwner"
           v-tooltip="'Manage collaborators'"
-          small
-          fab
+          block
           color="primary"
           class="ma-1"
           elevation="0"
           @click="shareStream"
         >
-          <v-icon small>mdi-account-multiple-plus</v-icon>
+          Add / Manage
+          <v-icon small class="ml-3">mdi-account-multiple-plus</v-icon>
         </v-btn>
         <stream-share-dialog
           ref="streamShareDialog"
@@ -92,20 +103,6 @@
           :stream-id="stream.id"
           :user-id="user.id"
         ></stream-share-dialog>
-
-        <v-avatar
-          v-for="(collab, i) in stream.collaborators"
-          :key="i"
-          class="ma-1"
-          color="grey lighten-3"
-          size="40"
-        >
-          <v-img v-if="collab.avatar" :src="collab.avatar" />
-          <v-img
-            v-else
-            :src="`https://robohash.org/` + collab.id + `.png?size=40x40`"
-          />
-        </v-avatar>
       </div>
     </v-card>
   </div>
@@ -116,9 +113,12 @@ import streamQuery from "../graphql/stream.gql"
 import StreamDialog from "../components/dialogs/StreamDialog"
 import StreamShareDialog from "../components/dialogs/StreamShareDialog"
 import BtnClickCopy from "./BtnClickCopy"
-
 export default {
-  components: { StreamDialog, StreamShareDialog, BtnClickCopy },
+  components: {
+    StreamDialog,
+    StreamShareDialog,
+    BtnClickCopy
+  },
   apollo: {
     stream: {
       prefetch: true,
@@ -141,7 +141,9 @@ export default {
       `
     }
   },
-  data: () => ({ user: {} }),
+  data: () => ({
+    user: {}
+  }),
   computed: {
     isStreamOwner() {
       return (
@@ -163,7 +165,6 @@ export default {
     editStream() {
       this.$refs.streamDialog.open(this.stream).then((dialog) => {
         if (!dialog.result) return
-
         //DELETE STREAM
         if (dialog.delete) {
           this.$apollo
@@ -178,16 +179,16 @@ export default {
               }
             })
             .then((data) => {
-              this.$router.push({ name: "streams" })
+              this.$router.push({
+                name: "streams"
+              })
             })
             .catch((error) => {
               // Error
               console.error(error)
             })
-
           return
         }
-
         //EDIT STREAM
         this.$apollo
           .mutate({
