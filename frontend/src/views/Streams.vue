@@ -1,32 +1,41 @@
 <template>
   <v-container>
     <v-row>
-<!--       <v-col cols="3">
-        <sidebar-home></sidebar-home>
-      </v-col> -->
-      <v-col cols="12">
-        <v-card rounded="lg" class="pa-5" elevation="0" color="background2">
-          <v-card-title>Your Streams</v-card-title>
-          <v-card-actions>
-            <span class="ml-2">
+      <v-col cols="12" sm="12" lg="3" md="4">
+        <v-card rounded="lg" class="pa-5" elevation="0" color="background">
+          <v-card-title>
+            <h2 class="font-weight-light">Streams</h2>
+          </v-card-title>
+          <v-card-text>
+            <span>
               You have {{ streams.totalCount }} stream{{
                 streams.totalCount == 1 ? `` : `s`
               }}
               in total.
             </span>
-            <v-spacer></v-spacer>
+          </v-card-text>
+          <v-card-actions>
             <v-btn
               class="ml-3 mt-5 text-right"
               color="primary"
               elevation="0"
-              small
+              block
               @click="newStream"
             >
-              <v-icon small class="mr-1">mdi-plus-box-outline</v-icon>
+              <v-icon small class="mr-1">mdi-plus-box</v-icon>
               new stream
             </v-btn>
           </v-card-actions>
           <stream-dialog ref="streamDialog"></stream-dialog>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="12" lg="9" md="8">
+        <v-card class="mt-4" elevation="0" color="background2">
+          <div v-if="$apollo.loading">
+            <v-skeleton-loader
+              type="card, article, article"
+            ></v-skeleton-loader>
+          </div>
           <v-card-text v-if="streams && streams.items">
             <div v-for="(stream, i) in streams.items" :key="i">
               <list-item-stream :stream="stream"></list-item-stream>

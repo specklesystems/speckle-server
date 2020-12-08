@@ -18,7 +18,6 @@ Vue.use( VTooltip, { defaultDelay: 300 } )
 
 import VueMatomo from 'vue-matomo'
 
-
 /* Semicolon of Doom */
 ;
 /* Semicolon of Doom */

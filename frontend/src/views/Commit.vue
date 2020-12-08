@@ -1,16 +1,20 @@
 <template>
   <v-container>
     <v-row v-if="stream">
-      <v-col cols="3">
+      <v-col cols="12" sm="12" lg="3" md="4">
         <sidebar-stream :stream="stream"></sidebar-stream>
       </v-col>
-      <v-col cols="9">
+      <v-col cols="12" sm="12" lg="9" md="8">
         <v-row>
-          <v-col class="pt-0">
-            <v-card class="pa-5" elevation="0" rounded="lg">
+          <v-col>
+            <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
               <v-card-title class="mr-8">
+                <v-icon class="mr-2">mdi-source-commit</v-icon>
                 {{ stream.commit.message }}
               </v-card-title>
+              <v-card-text>
+                {{ stream.commit.referencedObject }}
+              </v-card-text>
               <!-- TODO need an endpoint to get a commit by ID
                -->
               <v-subheader class="text-uppercase">WORK IN PROGRESS</v-subheader>

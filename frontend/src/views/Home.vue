@@ -1,10 +1,10 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="3">
+      <v-col sm="12" lg="3" md="4" class="d-none d-md-flex">
         <sidebar-home></sidebar-home>
       </v-col>
-      <v-col v-if="recentActivity" cols="9">
+      <v-col v-if="recentActivity" sm="12" md="8" lg="9">
         <v-row>
           <v-col class="pt-0">
             <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
