@@ -1,96 +1,97 @@
 <template>
   <v-container>
     <v-row v-if="stream">
-      <v-col cols="3">
+      <v-col sm="12" lg="3" md="4">
         <sidebar-stream :stream="stream"></sidebar-stream>
       </v-col>
-      <v-col cols="9">
+
+      <!-- Description -->
+
+      <v-col sm="12" lg="9" md="8">
         <v-row>
-          <v-col class="pt-0">
-            <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
-              <v-subheader class="text-uppercase">Branches:</v-subheader>
-              <v-chip-group
-                v-model="selectedBranch"
-                mandatory
-                class="ml-3"
-                active-class="primary--text text--accent-1"
-              >
-                <v-chip
-                  v-for="(branch, i) in branches"
-                  :key="i"
-                  class="mb-3"
-                  small
-                >
-                  {{ branch.name }}
-                </v-chip>
-              </v-chip-group>
-              <!-- <v-btn
-                class="mt-1 text-right"
-                color="primary"
-                elevation="0"
-                small
-                @click="newBranch"
-              >
-                <v-icon small class="mr-1">mdi-source-branch-plus</v-icon>
-                new branch
-              </v-btn> -->
-              <v-chip-group
-                active-class="primary--text text--accent-1"
-                mandatory
-              >
-                <v-chip small class="mb-3" active @click="newBranch">
-                  <v-icon small class="mr-1">mdi-source-branch-plus</v-icon>
-                  new branch
-                </v-chip>
-              </v-chip-group>
-              <branch-dialog
-                ref="branchDialog"
-                :branches="branches"
-              ></branch-dialog>
-              <div class="clear"></div>
-              <p
-                v-if="branches[selectedBranch].description"
-                class="subtitle-1 font-weight-light ml-4 mt-2"
-              >
-                {{ branches[selectedBranch].description }}
-              </p>
-              <v-btn
-                v-tooltip="'Edit branch details'"
-                small
-                icon
-                style="position: absolute; right: 15px; top: 15px"
-                @click="editBranch"
-              >
-                <v-icon small>mdi-pencil-outline</v-icon>
-              </v-btn>
+          <v-col cols="12" sm="12" lg="12">
+            <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
+              <v-card-title>Description</v-card-title>
+              <v-card-text>
+                {{ stream.description }}
+              </v-card-text>
             </v-card>
           </v-col>
-        </v-row>
-        <v-row>
-          <v-col>
-            <v-card rounded="lg" class="pa-5" elevation="0" color="background2">
-              <v-subheader class="text-uppercase">Commits:</v-subheader>
+
+          <!-- Branches -->
+
+          <v-col cols="12" sm="12" lg="12">
+            <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
+              <v-card-title>
+                <v-icon class='mr-2'>mdi-source-branch</v-icon>
+                Branches
+              </v-card-title>
               <v-card-text>
-                <p
-                  v-if="branches[selectedBranch].commits.items.length === 0"
-                  class="subtitle-1 font-weight-light"
-                >
-                  There are no commits in the
-                  {{ branches[selectedBranch].name }} branch just yet, try
-                  sending something...
-                </p>
-                <div
-                  v-for="(commit, i) in branches[selectedBranch].commits.items"
-                  :key="i"
-                >
-                  <list-item-commit
-                    :commit="commit"
-                    :stream-id="stream.id"
-                  ></list-item-commit>
-                  <v-divider
-                    v-if="i < branches[selectedBranch].commits.items.length - 1"
-                  ></v-divider>
-                </div>
+                Branches allow you to manage parallel versions of data in a
+                single stream, by organising them within a topic.
+              </v-card-text>
+              <v-card-text>
+                <v-list two-line color="transparent">
+                  <template v-for="item in branches">
+                    <v-list-item
+                      :key="item.id"
+                      :to="`/streams/${stream.id}/branches/${item.name}`"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          <b>{{ item.name }}</b>
+                          &nbsp;
+                          <v-chip outlined>
+                            <v-avatar
+                              size="10"
+                              left
+                              class="primary white--text"
+                            >
+                              {{ item.commits.totalCount }}
+                            </v-avatar>
+                            commits
+                          </v-chip>
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{
+                            item.description
+                              ? item.description
+                              : "no description provided"
+                          }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                </v-list>
+                <v-btn block @click="newBranch">Create a new branch</v-btn>
+                <branch-dialog
+                  ref="branchDialog"
+                  :branches="branches"
+                ></branch-dialog>
+              </v-card-text>
+            </v-card>
+          </v-col>
+
+          <!-- Commits -->
+
+          <v-col cols="12" sm="12">
+            <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
+              <v-card-title>
+                Latest activity &nbsp;&nbsp;&nbsp;
+                <span class="font-weight-light ml-2 body-1">
+                  ({{ commits.totalCount }} total)
+                </span>
+              </v-card-title>
+              <v-card-text>
+                All the commits from this stream are below.
+              </v-card-text>
+              <v-card-text>
+                <list-item-commit
+                  v-for="item in commits.items"
+                  :key="item.id"
+                  :commit="item"
+                  :stream-id="stream.id"
+                ></list-item-commit>
               </v-card-text>
             </v-card>
           </v-col>
@@ -105,11 +106,31 @@ import SidebarStream from "../components/SidebarStream"
 import BranchDialog from "../components/dialogs/BranchDialog"
 import ListItemCommit from "../components/ListItemCommit"
 import streamQuery from "../graphql/stream.gql"
+import streamCommitsQuery from "../graphql/streamCommits.gql"
 
 export default {
   name: "Stream",
   components: { SidebarStream, BranchDialog, ListItemCommit },
-  data: () => ({ selectedBranch: 0 }),
+  data() {
+    return {
+      selectedBranch: 0,
+      stream: {
+        id: null,
+        branches: {
+          totalCount: 0,
+          items: []
+        },
+        commits: {
+          totalCount: 0,
+          items: []
+        }
+      },
+      commits: {
+        totalCount: 0,
+        items: []
+      }
+    }
+  },
   apollo: {
     stream: {
       prefetch: true,
@@ -120,6 +141,15 @@ export default {
           id: this.$route.params.streamId
         }
       }
+    },
+    commits: {
+      query: streamCommitsQuery,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      },
+      update: (data) => data.stream.commits
     }
   },
   computed: {
@@ -128,13 +158,7 @@ export default {
       return this.stream.branches.items.slice().reverse()
     }
   },
-  watch: {
-    stream(val) {
-      //console.log(val)
-    }
-  },
   mounted() {
-    console.log(this.$route)
     this.$matomo && this.$matomo.trackPageView("streams/single")
   },
   methods: {
