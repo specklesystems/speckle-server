@@ -3,11 +3,11 @@
     <v-card
       elevation="0"
       rounded="lg"
-      class="pa-4 text-center"
+      class="pa-4 zzz=text-center"
       style="position: relative"
-      color="background2"
+      color="transparent"
     >
-      <v-card-title class="justify-center pb-0">
+      <v-card-title class="zzz-justify-center pb-0">
         <v-avatar color="background" size="64">
           <v-img v-if="user.avatar" :src="user.avatar" />
           <v-img
@@ -16,8 +16,8 @@
           />
         </v-avatar>
       </v-card-title>
-      <v-card-title class="justify-center">
-        {{ user.name }}
+      <v-card-title class="zzz-justify-center">
+        Welcome, {{ user.name }}!
       </v-card-title>
       <v-card-text>
         <p class="subtitle-1">{{ user.company }}</p>
@@ -37,17 +37,20 @@
       </v-btn>
 
       <user-dialog ref="editUserDialog"></user-dialog>
-    </v-card>
 
-    <v-card
-      rounded="lg"
-      class="mt-5 pa-4 text-center"
-      style="position: relative"
-      elevation="0"
-      color="background2"
-    >
-      <v-card-title class="justify-center text-wrap">
+      <v-divider class="my-5"></v-divider>
+
+      <v-card-title class="zzz-justify-center text-wrap">
         {{ serverInfo.name }}
+        <v-btn
+          v-if="user.role === `server:admin`"
+          v-tooltip="'Edit server information'"
+          small
+          icon
+          @click="editServer"
+        >
+          <v-icon small>mdi-pencil-outline</v-icon>
+        </v-btn>
       </v-card-title>
       <v-card-text>
         <p class="subtitle-1">{{ serverInfo.company }}</p>
@@ -59,16 +62,6 @@
           {{ serverInfo.canonicalUrl }}
         </code>
       </v-card-text>
-      <v-btn
-        v-if="user.role === `server:admin`"
-        v-tooltip="'Edit server information'"
-        small
-        icon
-        style="position: absolute; right: 15px; top: 15px"
-        @click="editServer"
-      >
-        <v-icon small>mdi-pencil-outline</v-icon>
-      </v-btn>
 
       <server-dialog ref="editServerDialog"></server-dialog>
     </v-card>

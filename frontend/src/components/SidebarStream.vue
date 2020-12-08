@@ -1,10 +1,17 @@
 <template>
-  <div v-if="stream">
-    <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
+  <v-card rounded="lg" class="pa-4" elevation="0" color="transparent">
+    <div v-if="$apollo.loading">
+      <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
+    </div>
+    <div v-else>
       <v-card-title class="mr-8">
-        <h2 class="font-weight-bold">{{ stream.name }}</h2>
+        <h2 class="font-weight-light">
+          <router-link :to="'/streams/' + stream.id">
+            {{ stream.name }}
+          </router-link>
+        </h2>
       </v-card-title>
-      <v-btn
+     <!--  <v-btn
         v-tooltip="'Edit stream details'"
         small
         icon
@@ -12,19 +19,11 @@
         @click="editStream"
       >
         <v-icon small>mdi-pencil-outline</v-icon>
-      </v-btn>
+      </v-btn> -->
       <stream-dialog ref="streamDialog"></stream-dialog>
+      <v-divider />
       <v-card-text>
         <!-- <p class="subtitle-1 font-weight-light">{{ stream.description }}</p> -->
-        <p>
-          <btn-click-copy :text="stream.id"></btn-click-copy>
-          &nbsp;
-          <span class="streamid">
-            <router-link :to="'/streams/' + stream.id">
-              {{ stream.id }}
-            </router-link>
-          </span>
-        </p>
         <p>
           <v-icon small>mdi-source-branch</v-icon>
           &nbsp;
@@ -104,8 +103,8 @@
           :user-id="user.id"
         ></stream-share-dialog>
       </div>
-    </v-card>
-  </div>
+    </div>
+  </v-card>
 </template>
 <script>
 import gql from "graphql-tag"
@@ -142,7 +141,10 @@ export default {
     }
   },
   data: () => ({
-    user: {}
+    user: {},
+    stream: {
+      id: null
+    }
   }),
   computed: {
     isStreamOwner() {
