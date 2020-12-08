@@ -9,6 +9,18 @@
     <title><%= htmlWebpackPlugin.options.title %></title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
+    <style type="text/css">
+      body {
+        background-color: black;
+        color: white;
+      }
+      @media screen and (prefers-color-scheme: light) {
+        body {
+          background-color: white;
+          color: black;
+        }
+      }
+    </style>
   </head>
   <body>
     <noscript>
@@ -28,10 +40,10 @@
       margin: auto;
       text-align: center;
       font-weight: 400;
-      font-size: 60px;
+      font-size: 18px;
       '
       >
-      🔑
+      🔓 Logging you in...
     </div>
     <!-- built files will be auto injected -->
   </body>
