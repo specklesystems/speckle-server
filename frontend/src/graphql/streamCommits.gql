@@ -1,0 +1,16 @@
+query Stream($id: String!) {
+  stream(id: $id) {
+    id
+    commits {
+      totalCount
+      items{
+        id
+        authorId
+        authorName
+        authorAvatar
+        createdAt
+        message
+      }
+    }
+  }
+}

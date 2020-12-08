@@ -19,26 +19,9 @@ query Stream($id: String!) {
       items {
         id
         name
-        author {
-          id
-          suuid
-          email
-          name
-          bio
-          company
-          avatar
-        }
         description
         commits {
           totalCount
-          cursor
-          items {
-            id
-            message
-            authorName
-            authorId
-            createdAt
-          }
         }
       }
     }
