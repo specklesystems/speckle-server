@@ -1,7 +1,7 @@
 <template>
   <v-app id="speckle">
-    <v-app-bar app color="background2" class="no-decor">
-      <v-container class="py-0 fill-height">
+    <v-app-bar app color="" class="no-decor">
+      <v-container class="py-0 fill-height hidden-sm-and-down">
         <v-btn text to="/" active-class="no-active">
           <v-img
             contain
@@ -118,7 +118,128 @@
           </v-list>
         </v-menu>
       </v-container>
+      <v-container class="hidden-md-and-up">
+        <v-row>
+          <v-col>
+            <v-btn icon @click="showMobileMenu = !showMobileMenu">
+              <v-icon v-if="!showMobileMenu">mdi-menu</v-icon>
+              <v-icon v-else>mdi-close</v-icon>
+            </v-btn>
+          </v-col>
+          <v-col class="text-center">
+            <v-btn text to="/" active-class="no-active" icon>
+              <v-img
+                contain
+                max-height="40"
+                max-width="40"
+                src="./assets/logo.svg"
+              />
+            </v-btn>
+          </v-col>
+          <v-col class="text-right">
+            <v-menu v-if="user" bottom left offset-y class="userMenu">
+              <template #activator="{ on, attrs }">
+                <v-btn icon v-bind="attrs" v-on="on">
+                  <v-avatar color="background" size="28">
+                    <v-img v-if="user.avatar" :src="user.avatar" />
+                    <v-img
+                      v-else
+                      :src="
+                        `https://robohash.org/` + user.id + `.png?size=38x38`
+                      "
+                    />
+                  </v-avatar>
+                </v-btn>
+              </template>
+              <v-list dense class="userMenu" color="background2">
+                <v-list-item>
+                  <v-list-item-content class="caption">
+                    Signed in as:
+                    <strong>{{ user.name }}</strong>
+                  </v-list-item-content>
+                </v-list-item>
+                <v-divider></v-divider>
+                <v-list-item
+                  v-if="!this.$vuetify.theme.dark"
+                  link
+                  @click="switchTheme"
+                >
+                  <v-list-item-content>Dark mode</v-list-item-content>
+                  <v-list-item-icon>
+                    <v-icon>mdi-weather-night</v-icon>
+                  </v-list-item-icon>
+                </v-list-item>
+                <v-list-item v-else exact @click="switchTheme">
+                  <v-list-item-content>Light mode</v-list-item-content>
+                  <v-list-item-icon>
+                    <v-icon>mdi-white-balance-sunny</v-icon>
+                  </v-list-item-icon>
+                </v-list-item>
+                <v-list-item @click="signOut">
+                  <v-list-item-content>Sign out</v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-app-bar>
+    <v-card
+      v-show="showMobileMenu"
+      style="position: relative; top: 40px"
+      class="pa-5"
+    >
+      <v-row>
+        <v-col v-for="link in navLinks" :key="link.name" cols="12">
+          <v-btn text block :to="link.link">
+            {{ link.name }}
+          </v-btn>
+        </v-col>
+        <v-col cols="12">
+          <v-divider class="mb-5"></v-divider>
+          <v-autocomplete
+            v-model="selectedSearchResult"
+            class="mt-4"
+            :loading="$apollo.loading"
+            :items="streams.items"
+            :search-input.sync="search"
+            no-filter
+            counter="3"
+            rounded
+            filled
+            dense
+            flat
+            hide-no-data
+            hide-details
+            placeholder="Search streams..."
+            item-text="name"
+            item-value="id"
+            return-object
+            clearable
+            append-icon=""
+          >
+            <template #item="{ item }" color="background">
+              <v-list-item-content>
+                <v-list-item-title>
+                  <v-row class="pa-0 ma-0">
+                    {{ item.name }}
+                    <v-spacer></v-spacer>
+                    <span class="streamid">{{ item.id }}</span>
+                  </v-row>
+                </v-list-item-title>
+                <v-list-item-subtitle
+                  v-text="item.description"
+                ></v-list-item-subtitle>
+                <v-list-item-subtitle class="caption">
+                  Updated
+                  <timeago :datetime="item.updatedAt"></timeago>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </template>
+          </v-autocomplete>
+        </v-col>
+      </v-row>
+    </v-card>
     <v-main :style="background">
       <router-view></router-view>
     </v-main>
@@ -131,6 +252,7 @@ import gql from "graphql-tag"
 export default {
   data: () => ({
     search: "",
+    showMobileMenu: false,
     streams: { items: [] },
     selectedSearchResult: null,
     navLinks: [
@@ -177,14 +299,14 @@ export default {
     }
   },
   watch: {
+    $route(to, from) {
+      this.showMobileMenu = false
+    },
     selectedSearchResult(val) {
       this.search = ""
       this.streams.items = []
       if (val)
         this.$router.push({ name: "stream", params: { streamId: val.id } })
-    },
-    "streams.items"(val) {
-      console.log(val)
     }
   },
 
@@ -219,6 +341,7 @@ a {
 
 a:hover {
   text-decoration: underline;
+  text-decoration-color: rgba(10, 102, 255, 0.25);
 }
 
 .no-decor a:hover {
