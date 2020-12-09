@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-row>
-      <v-col cols="12" sm="12" lg="3" md="4">
+      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <v-card rounded="lg" class="pa-5" elevation="0" color="background">
           <v-card-title>
             <h2 class="font-weight-light">Streams</h2>
@@ -29,7 +29,7 @@
           <stream-dialog ref="streamDialog"></stream-dialog>
         </v-card>
       </v-col>
-      <v-col cols="12" sm="12" lg="9" md="8">
+      <v-col cols="12" sm="12" md="8" lg="9" >
         <v-card class="mt-4" elevation="0" color="background2">
           <div v-if="$apollo.loading">
             <v-skeleton-loader

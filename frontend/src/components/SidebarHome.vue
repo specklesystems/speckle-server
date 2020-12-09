@@ -7,8 +7,8 @@
       style="position: relative"
       color="transparent"
     >
-      <v-card-title class="zzz-justify-center pb-0">
-        <v-avatar color="background" size="64">
+      <v-card-title class="text-center">
+        <v-avatar color="background" size="124">
           <v-img v-if="user.avatar" :src="user.avatar" />
           <v-img
             v-else

@@ -33,7 +33,9 @@
 
       <v-card class="mb-3" elevation="0" rounded="lg" color="background2">
         <v-card-title v-if="!commit.items" class="subtitle-2">
-          {{ commit.message }}
+          <router-link :to="`streams/${commit.streamId}/commits/${commit.id}`">
+            {{ commit.message }}
+          </router-link>
         </v-card-title>
         <v-expansion-panels v-else flat color="background2">
           <v-expansion-panel>
@@ -44,7 +46,11 @@
             </v-expansion-panel-header>
             <v-expansion-panel-content color="background2">
               <v-list dense color="background2">
-                <v-list-item v-for="(item, i) in commit.items" :key="i">
+                <v-list-item
+                  v-for="(item, i) in commit.items"
+                  :key="i"
+                  :to="`streams/${item.streamId}/commits/${item.id}`"
+                >
                   <div style="width: 100%">
                     <v-row class="caption">
                       <v-col>

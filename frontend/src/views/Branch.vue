@@ -11,7 +11,7 @@
       </v-col>
       <v-col cols="12" sm="12" lg="9" md="8">
         <v-row>
-          <v-col class="pt-0">
+          <v-col>
             <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
               <v-card-title class="mr-8">
                 <v-icon class="mr-2">mdi-source-branch</v-icon>
