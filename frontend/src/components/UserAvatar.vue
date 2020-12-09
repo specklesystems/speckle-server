@@ -8,6 +8,7 @@
           :size="size"
           v-bind="attrs"
           v-on="on"
+          to="/"
         >
           <v-img v-if="avatar" :src="avatar" />
           <v-img

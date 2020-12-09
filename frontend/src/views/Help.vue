@@ -2,7 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="3">
-        <sidebar-home></sidebar-home>
+        <server-info-card></server-info-card>
       </v-col>
       <v-col cols="9">
         <v-sheet rounded="lg" class="pa-15 text-center" color="background2">
@@ -23,9 +23,9 @@
   </v-container>
 </template>
 <script>
-import SidebarHome from "../components/SidebarHome"
+import ServerInfoCard from "../components/ServerInfoCard"
 
 export default {
-  components: { SidebarHome }
+  components: { ServerInfoCard }
 }
 </script>

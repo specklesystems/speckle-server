@@ -2,11 +2,28 @@
   <v-container>
     <v-row>
       <v-col sm="12" lg="3" md="4" xl="2" class="d-none d-md-flex">
-        <sidebar-home></sidebar-home>
-        <!-- <p>Follow Speckle on Twitter!</p> -->
+        <div>
+          <server-info-card></server-info-card>
+          <v-card class="elevation-0" color="transparent">
+            <v-card-text>
+              <v-btn
+                href="https://twitter.com/specklesystems"
+                target="_blank"
+                text
+                small
+                style="margin-left: -10px"
+              >
+                <v-icon small class="mr-2">mdi-twitter</v-icon>
+                Speckle on Twitter!
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </div>
       </v-col>
       <v-col v-if="$apollo.loading" sm="12" md="8" lg="9">
-        <v-skeleton-loader type="list-item-two-line, list-item-three-line"></v-skeleton-loader>
+        <v-skeleton-loader
+          type="list-item-two-line, list-item-three-line"
+        ></v-skeleton-loader>
       </v-col>
       <v-col v-if="recentActivity && !$apollo.loading" sm="12" md="8" lg="9">
         <v-row>
@@ -27,7 +44,6 @@
             </v-card>
           </v-col>
         </v-row>
-
         <v-row>
           <v-col class="ml-0 pt-0">
             <div v-for="(activity, i) in recentActivity" :key="i">
@@ -49,14 +65,14 @@
   </v-container>
 </template>
 <script>
-import SidebarHome from "../components/SidebarHome"
+import ServerInfoCard from "../components/ServerInfoCard"
 import FeedStream from "../components/FeedStream"
 import FeedCommit from "../components/FeedCommit"
 import userFeedQuery from "../graphql/userFeed.gql"
 
 export default {
   name: "Home",
-  components: { SidebarHome, FeedStream, FeedCommit },
+  components: { ServerInfoCard, FeedStream, FeedCommit },
   apollo: {
     user: {
       prefetch: true,

@@ -3,25 +3,15 @@
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <v-card rounded="lg" class="pa-5" elevation="0" color="background">
-          <v-card-title>
-            <h2 class="font-weight-light">Streams</h2>
-          </v-card-title>
+          <v-card-title>Streams</v-card-title>
           <v-card-text>
-            <span>
-              You have {{ streams.totalCount }} stream{{
-                streams.totalCount == 1 ? `` : `s`
-              }}
-              in total.
-            </span>
+            You have {{ streams.totalCount }} stream{{
+              streams.totalCount == 1 ? `` : `s`
+            }}
+            in total.
           </v-card-text>
           <v-card-actions>
-            <v-btn
-              class="ml-3 mt-5 text-right"
-              color="primary"
-              elevation="0"
-              block
-              @click="newStream"
-            >
+            <v-btn color="primary" elevation="0" block @click="newStream">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
               new stream
             </v-btn>
@@ -29,7 +19,7 @@
           <stream-dialog ref="streamDialog"></stream-dialog>
         </v-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" >
+      <v-col cols="12" sm="12" md="8" lg="9">
         <v-card class="mt-4" elevation="0" color="background2">
           <div v-if="$apollo.loading">
             <v-skeleton-loader
@@ -57,14 +47,13 @@
 <script>
 import gql from "graphql-tag"
 import ListItemStream from "../components/ListItemStream"
-import SidebarHome from "../components/SidebarHome"
 import StreamDialog from "../components/dialogs/StreamDialog"
 import streamsQuery from "../graphql/streams.gql"
 import InfiniteLoading from "vue-infinite-loading"
 
 export default {
   name: "Streams",
-  components: { ListItemStream, SidebarHome, StreamDialog, InfiniteLoading },
+  components: { ListItemStream, StreamDialog, InfiniteLoading },
   apollo: {
     streams: {
       prefetch: true,
@@ -78,7 +67,6 @@ export default {
   computed: {},
   watch: {},
   mounted() {
-    console.log(this.$route)
     this.$matomo && this.$matomo.trackPageView("streams")
   },
   methods: {
@@ -108,7 +96,6 @@ export default {
         }
       })
     },
-
     newStream() {
       this.$refs.streamDialog.open().then((dialog) => {
         if (!dialog.result) return

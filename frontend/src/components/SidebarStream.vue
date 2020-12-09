@@ -5,11 +5,9 @@
     </div>
     <div v-else>
       <v-card-title class="mr-8">
-        <h2 class="font-weight-light">
-          <router-link :to="'/streams/' + stream.id">
-            {{ stream.name }}
-          </router-link>
-        </h2>
+        <router-link :to="'/streams/' + stream.id">
+          {{ stream.name }}
+        </router-link>
       </v-card-title>
       <!--  <v-btn
         v-tooltip="'Edit stream details'"
@@ -150,11 +148,6 @@ export default {
           (x) => x.id === this.user.id && x.role === "stream:owner"
         ).length > 0
       )
-    }
-  },
-  watch: {
-    user(val) {
-      //console.log(val)
     }
   },
   methods: {
