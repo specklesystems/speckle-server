@@ -352,6 +352,14 @@ a:hover {
   opacity: 0 !important;
 }
 
+.hoverable-border {
+  border: 1px transparent;
+}
+
+.hoverable-border:hover {
+  border: 1px blue;
+}
+
 /* .theme--dark {
   /color: #cfcdcc !important;
 } */
@@ -362,6 +370,12 @@ a:hover {
 .v-list--dense .v-list-item .v-list-item__title,
 .v-list--dense .v-list-item .v-list-item__subtitle {
   font-weight: 400 !important;
+}
+
+/*WHYYYY*/
+.v-tooltip__content {
+  pointer-events: all !important;
+  opacity: 1 !important;
 }
 
 /* DARK MODE HARD FIXES */

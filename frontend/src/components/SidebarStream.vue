@@ -11,7 +11,7 @@
           </router-link>
         </h2>
       </v-card-title>
-     <!--  <v-btn
+      <!--  <v-btn
         v-tooltip="'Edit stream details'"
         small
         icon
@@ -70,13 +70,12 @@
       <div class="ml-2 mr-2">
         <v-row v-for="(collab, i) in stream.collaborators" :key="i">
           <v-col sm="3">
-            <v-avatar class="ma-1" color="grey lighten-3" size="40">
-              <v-img v-if="collab.avatar" :src="collab.avatar" />
-              <v-img
-                v-else
-                :src="`https://robohash.org/` + collab.id + `.png?size=40x40`"
-              />
-            </v-avatar>
+            <user-avatar
+              :id="collab.id"
+              :size="40"
+              :avatar="collab.avatar"
+              :name="collab.name"
+            ></user-avatar>
           </v-col>
           <v-col>
             <span class="text-body-2">{{ collab.name }}</span>
@@ -111,12 +110,13 @@ import gql from "graphql-tag"
 import streamQuery from "../graphql/stream.gql"
 import StreamDialog from "../components/dialogs/StreamDialog"
 import StreamShareDialog from "../components/dialogs/StreamShareDialog"
-import BtnClickCopy from "./BtnClickCopy"
+import UserAvatar from "../components/UserAvatar"
+
 export default {
   components: {
     StreamDialog,
     StreamShareDialog,
-    BtnClickCopy
+    UserAvatar
   },
   apollo: {
     stream: {

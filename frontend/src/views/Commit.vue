@@ -13,11 +13,20 @@
                 {{ stream.commit.message }}
               </v-card-title>
               <v-card-text>
-                {{ stream.commit.referencedObject }}
+                on
+                <b>{{ commitDate }}</b>
+                by
+                <b>{{ stream.commit.authorName }}</b>
+                <user-avatar
+                  :id="stream.commit.authorId"
+                  :name="stream.commit.authorName"
+                  :avatar="stream.commit.authorAvatar"
+                  :size="21"
+                ></user-avatar>
+                <v-divider class="my-5"></v-divider>
+                Ref object id:
+                <code>{{ stream.commit.referencedObject }}</code>
               </v-card-text>
-              <!-- TODO need an endpoint to get a commit by ID
-               -->
-              <v-subheader class="text-uppercase">WORK IN PROGRESS</v-subheader>
 
               <commit-dialog ref="commitDialog"></commit-dialog>
               <v-btn
@@ -25,10 +34,30 @@
                 small
                 icon
                 style="position: absolute; right: 15px; top: 15px"
-                @click="editBranch"
+                @click="editCommit"
               >
                 <v-icon small>mdi-pencil-outline</v-icon>
               </v-btn>
+            </v-card>
+            <v-card
+              class="pa-4 mt-4"
+              elevation="0"
+              rounded="lg"
+              color="background2"
+            >
+              <v-card-title class="mr-8">
+                <v-icon class="mr-2">mdi-database</v-icon>
+                Data
+              </v-card-title>
+              <v-card-text class="pa-0">
+                <object-speckle-viewer
+                  class="mt-4"
+                  :stream-id="stream.id"
+                  :object-id="stream.commit.referencedObject"
+                  :value="commitObject"
+                  :expand="true"
+                ></object-speckle-viewer>
+              </v-card-text>
             </v-card>
           </v-col>
         </v-row>
@@ -39,12 +68,14 @@
 <script>
 import gql from "graphql-tag"
 import SidebarStream from "../components/SidebarStream"
+import UserAvatar from "../components/UserAvatar"
+import ObjectSpeckleViewer from "../components/ObjectSpeckleViewer"
 import streamCommitQuery from "../graphql/commit.gql"
 import CommitDialog from "../components/dialogs/CommitDialog"
 
 export default {
   name: "Commit",
-  components: { SidebarStream, CommitDialog },
+  components: { SidebarStream, CommitDialog, UserAvatar, ObjectSpeckleViewer },
   data: () => ({ selectedBranch: 0 }),
   apollo: {
     stream: {
@@ -59,14 +90,28 @@ export default {
       }
     }
   },
-  computed: {},
+  computed: {
+    commitDate() {
+      if (!this.stream.commit) return null
+      let date = new Date(this.stream.commit.createdAt)
+      let options = { year: "numeric", month: "long", day: "numeric" }
+
+      return date.toLocaleString(undefined, options)
+    },
+    commitObject() {
+      return {
+        speckle_type: "reference",
+        referencedId: this.stream.commit.referencedObject
+      }
+    }
+  },
   watch: {
     stream(val) {
       console.log(val)
     }
   },
   methods: {
-    editBranch() {
+    editCommit() {
       this.$refs.commitDialog
         .open(this.stream.commit, this.stream.id)
         .then((dialog) => {

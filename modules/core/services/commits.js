@@ -59,7 +59,7 @@ module.exports = {
   },
 
   async getCommitById( { id } ) {
-    return await Commits( ).columns( [ { id: 'commits.id' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, 'commits.createdAt' ] ).select( )
+    return await Commits( ).columns( [ { id: 'commits.id' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' }, 'commits.createdAt' ] ).select( )
       .join( 'users', 'commits.author', 'users.id' )
       .where( { "commits.id": id } ).first( )
   },
