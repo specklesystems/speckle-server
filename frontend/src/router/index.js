@@ -45,6 +45,30 @@ const routes = [
     component: () => import("../views/Commit.vue")
   },
   {
+    path: "/streams/:streamId/objects/:objectId",
+    name: "objects",
+    meta: {
+      title: "Object | Speckle"
+    },
+    component: () => import("../views/Object.vue")
+  },
+  {
+    path: "/profile",
+    name: "profile",
+    meta: {
+      title: "Your Profile | Speckle"
+    },
+    component: () => import("../views/Profile.vue")
+  },
+  {
+    path: "/profile/:userId",
+    name: "user profile",
+    meta: {
+      title: "User Profile | Speckle"
+    },
+    component: () => import("../views/ProfileUser.vue")
+  },
+  {
     path: "/help",
     name: "help",
     meta: {

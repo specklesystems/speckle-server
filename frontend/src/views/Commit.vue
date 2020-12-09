@@ -76,7 +76,7 @@ import CommitDialog from "../components/dialogs/CommitDialog"
 export default {
   name: "Commit",
   components: { SidebarStream, CommitDialog, UserAvatar, ObjectSpeckleViewer },
-  data: () => ({ selectedBranch: 0 }),
+  data: () => ({}),
   apollo: {
     stream: {
       prefetch: true,
@@ -103,11 +103,6 @@ export default {
         speckle_type: "reference",
         referencedId: this.stream.commit.referencedObject
       }
-    }
-  },
-  watch: {
-    stream(val) {
-      console.log(val)
     }
   },
   methods: {

@@ -87,9 +87,6 @@
           v-if="isStreamOwner"
           v-tooltip="'Manage collaborators'"
           block
-          color="primary"
-          class="ma-1"
-          elevation="0"
           @click="shareStream"
         >
           Add / Manage

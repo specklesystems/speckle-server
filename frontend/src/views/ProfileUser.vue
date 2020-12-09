@@ -1,13 +1,13 @@
 <template>
   <v-container>
-    <v-row>TODO</v-row>
+    <v-row>TODO (Profile User {{ $route.params.userId }})</v-row>
   </v-container>
 </template>
 <script>
 import gql from "graphql-tag"
 
 export default {
-  name: "Profile",
+  name: "ProfileUser",
   components: {},
   data: () => ({}),
   apollo: {},

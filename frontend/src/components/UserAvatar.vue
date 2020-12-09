@@ -1,6 +1,6 @@
 <template>
   <div style="display: inline-block">
-    <v-tooltip bottom color="transparent" open-on-focus close-delay="1200">
+    <v-tooltip right color="transparent" open-on-focus close-delay="1200">
       <template #activator="{ on, attrs }">
         <v-avatar
           class="ma-1"
@@ -16,7 +16,7 @@
           />
         </v-avatar>
       </template>
-      <v-card style="width: 300px" :to="`/profile/${id}`">
+      <v-card style="width: 200px" :to="`/profile/${id}`">
         <v-card-text v-if="!$apollo.loading" class="text-center">
           <v-avatar class="my-4" color="grey lighten-3" :size="40">
             <v-img v-if="avatar" :src="avatar" />

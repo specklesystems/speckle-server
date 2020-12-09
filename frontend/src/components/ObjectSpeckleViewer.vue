@@ -18,6 +18,13 @@
           {{ localExpand ? "mdi-minus" : "mdi-plus" }}
         </v-icon>
       </v-chip>
+      <v-btn
+        icon
+        small
+        :to="`/streams/${streamId}/objects/${value.referencedId}`"
+      >
+        <v-icon small>mdi-open-in-new</v-icon>
+      </v-btn>
     </v-card-title>
     <v-card-title v-if="!object">
       <v-chip color="" @click="toggleLoadExpand">
@@ -28,6 +35,13 @@
           {{ localExpand ? "mdi-minus" : "mdi-plus" }}
         </v-icon>
       </v-chip>
+      <v-btn
+        icon
+        small
+        :to="`/streams/${streamId}/objects/${value.referencedId}`"
+      >
+        <v-icon small>mdi-open-in-new</v-icon>
+      </v-btn>
     </v-card-title>
     <v-card-text v-if="localExpand" class="pr-0 pl-3">
       <v-skeleton-loader
