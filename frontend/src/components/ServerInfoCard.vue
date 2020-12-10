@@ -1,6 +1,6 @@
 <template>
   <v-card color="transparent" class="elevation-0">
-    <v-card-title class="text-wrap">
+    <v-card-title class="text-wrap" v-if="user">
       {{ serverInfo.name }}
       <v-btn
         v-if="user.role === `server:admin`"

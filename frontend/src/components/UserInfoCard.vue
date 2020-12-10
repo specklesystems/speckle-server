@@ -15,20 +15,21 @@
     <v-card-text v-if="user">
       <p class="subtitle-1">{{ user.company }}</p>
       <p>
+        <b>Bio:</b>
         {{ user.bio }}
       </p>
-      <span class="streamid">{{ user.id }}</span>
+      <p v-if="user.email">
+        <b>Email:</b>
+        {{ user.email }}
+      </p>
+      <span class="caption" v-if="isSelf">Your user id: {{ user.id }}</span>
     </v-card-text>
-<!--     <v-btn
-      v-tooltip="'Edit profile'"
-      small
-      icon
-      style="position: absolute; right: 15px; top: 15px"
-      @click="editUser"
-    >
-      <v-icon small>mdi-pencil-outline</v-icon>
-    </v-btn> -->
-
+    <v-card-actions>
+      <v-btn v-if="isSelf" block @click="editUser">
+        Edit
+        <v-icon small class="ml-3">mdi-pencil-outline</v-icon>
+      </v-btn>
+    </v-card-actions>
     <user-dialog ref="editUserDialog"></user-dialog>
   </v-card>
 </template>
@@ -51,6 +52,12 @@ export default {
   apollo: {
     user: {
       query: userQuery
+    }
+  },
+  computed: {
+    isSelf() {
+      if (!this.user) return false
+      return this.user.id === localStorage.getItem("uuid")
     }
   },
   methods: {
