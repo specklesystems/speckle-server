@@ -12,6 +12,13 @@ export default {
   data: () => ({}),
   apollo: {},
   computed: {},
+  created() {
+    console.log(this.$route.params.userId)
+    console.log(localStorage.getItem("uuid"))
+    if (this.$route.params.userId === localStorage.getItem("uuid")) {
+      this.$router.push("/profile")
+    }
+  },
   methods: {}
 }
 </script>
