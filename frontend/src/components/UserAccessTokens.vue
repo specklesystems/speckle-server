@@ -3,8 +3,12 @@
     <v-card-title>Personal Access Tokens</v-card-title>
     <v-card-text>
       Personal Access Tokens can be used to access the Speckle API on this
-      server; they function like ordinary OAuth access tokens.
-      <b>Treat them like a password!</b>
+      server; they function like ordinary OAuth access tokens. Use them in your
+      scripts or apps!
+      <b>
+        Treat them like a password: do not post them anywhere where they could
+        be accessed by others (e.g., public repos).
+      </b>
     </v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
     <v-card-text v-if="tokens">
@@ -13,13 +17,14 @@
           v-for="token in tokens"
           :key="token.id"
           :token="token"
+          @deleted="refreshList"
         />
       </v-list>
     </v-card-text>
     <v-card-text>
       <v-btn @click="tokenDialog = true">new token</v-btn>
-      <v-dialog v-model="tokenDialog" width="500">
-        <token-dialog />
+      <v-dialog v-model="tokenDialog" persistent width="500">
+        <token-dialog @token-added="refreshList" @close="tokenDialog = false" />
       </v-dialog>
     </v-card-text>
   </v-card>
@@ -55,6 +60,10 @@ export default {
       update: (data) => data.user.apiTokens
     }
   },
-  methods: {}
+  methods: {
+    refreshList() {
+      this.$apollo.queries.tokens.refetch()
+    }
+  }
 }
 </script>

@@ -1,10 +1,12 @@
 <template>
   <v-card class="pa-4" color="background2">
-    <v-card-title class="subtitle-1">
+    <v-card-title>
       Create a New Personal Access Token
+      <v-spacer></v-spacer>
+      <v-btn text color="error" icon @click="clearAndClose"><v-icon>mdi-close</v-icon></v-btn>
     </v-card-title>
     <v-card-text>
-      <v-form>
+      <v-form v-show="!fullTokenResult">
         <h3 class="mt-3">Token Scopes</h3>
         <p>
           It's good practice to limit the scopes of your token to the absolute
@@ -46,8 +48,21 @@
           autofocus
         ></v-text-field>
         <br />
-        <v-btn>Save</v-btn>
+        <v-btn @click="createToken">Save</v-btn>
+        <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
       </v-form>
+      <div v-show="fullTokenResult">
+        <div class="text-center my-5">
+          <h2 class="mb-5 font-weight-normal">Your new token:</h2>
+          <code class="subtitle-1 pa-3 my-4">{{ fullTokenResult }}</code>
+        </div>
+        <v-alert type="info">
+          <b>Note:</b>
+          This is the first and last time you will be able to see the full
+          token. Please copy paste it somewhere safe now.
+        </v-alert>
+        <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -83,19 +98,41 @@ export default {
         (v) => !!v || "Name is required",
         (v) => (v && v.length <= 60) || "Name must be less than 60 characters"
       ],
-      selectedScopes: []
+      selectedScopes: [],
+      fullTokenResult: null
     }
   },
-  computed: {
-    showDialog: {
-      get() {
-        return this.show
-      },
-      set(value) {
-        this.$emit("input", value)
+  methods: {
+    clearAndClose() {
+      this.fullTokenResult = null
+      this.name = null
+      this.selectedScopes = []
+      this.$emit("close")
+    },
+    async createToken() {
+      try {
+        let res = await this.$apollo.mutate({
+          mutation: gql`
+            mutation($token: ApiTokenCreateInput!) {
+              apiTokenCreate(token: $token)
+            }
+          `,
+          variables: {
+            token: {
+              name: this.name,
+              scopes: this.selectedScopes
+            }
+          }
+        })
+        this.fullTokenResult = res.data.apiTokenCreate
+        this.name = null
+        this.selectedScopes = []
+        this.$emit("token-added")
+      } catch (e) {
+        // TODO: how do we catch and display errors?
+        console.log(e)
       }
     }
-  },
-  methods: {}
+  }
 }
 </script>
