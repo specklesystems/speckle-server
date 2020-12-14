@@ -29,6 +29,7 @@ type ServerAppListItem {
   id: String!
   name: String!
   description: String
+  redirectUrl: String!
   termsAndConditionsLink: String
   logo: String
   author: AppAuthor
