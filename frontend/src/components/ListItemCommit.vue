@@ -1,13 +1,12 @@
 <template>
   <v-row>
-    <v-col cols="1">
-      <v-avatar class="ma-1" color="grey lighten-3" size="40">
-        <v-img v-if="commit.authorAvatar" :src="commit.authorAvatar" />
-        <v-img
-          v-else
-          :src="`https://robohash.org/` + commit.authorId + `.png?size=40x40`"
-        />
-      </v-avatar>
+    <v-col cols="1" style="margin-top: 8px;">
+      <user-avatar
+        :id="commit.authorId"
+        :avatar="commit.authorAvatar"
+        :name="commit.authorName"
+        :size="30"
+      />
     </v-col>
     <v-col cols="7">
       <div class="subtitle-1">
@@ -35,7 +34,10 @@
   </v-row>
 </template>
 <script>
+  import UserAvatar from "./UserAvatar"
+
 export default {
+  components: {UserAvatar},
   props: ["commit", "streamId"],
   computed: {
     commitDate() {

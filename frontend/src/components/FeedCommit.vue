@@ -1,13 +1,12 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <v-avatar class="mt-10" color="background2" size="40">
-        <v-img v-if="user.avatar" :src="user.avatar" />
-        <v-img
-          v-else
-          :src="`https://robohash.org/` + user.id + `.png?size=40x40`"
-        />
-      </v-avatar>
+      <user-avatar
+        :id="user.id"
+        :avatar="user.avatar"
+        :name="user.name"
+        :size="30"
+      />
     </div>
     <div class="ml-12">
       <v-row class="caption">
@@ -73,7 +72,10 @@
   </div>
 </template>
 <script>
+import UserAvatar from "./UserAvatar"
+
 export default {
+  components: { UserAvatar },
   props: {
     commit: {
       type: Object,

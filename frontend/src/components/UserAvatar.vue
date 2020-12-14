@@ -1,14 +1,14 @@
 <template>
   <div style="display: inline-block">
-    <v-tooltip right color="transparent" open-on-focus close-delay="1200">
+    <v-menu offset-x open-on-hover>
       <template #activator="{ on, attrs }">
         <v-avatar
           class="ma-1"
           color="grey lighten-3"
           :size="size"
           v-bind="attrs"
-          v-on="on"
           to="/"
+          v-on="on"
         >
           <v-img v-if="avatar" :src="avatar" />
           <v-img
@@ -39,7 +39,7 @@
           <br />
         </v-card-text>
       </v-card>
-    </v-tooltip>
+    </v-menu>
   </div>
 </template>
 <script>
