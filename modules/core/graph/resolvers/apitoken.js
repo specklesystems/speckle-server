@@ -12,7 +12,6 @@ module.exports = {
       if ( parent.id !== context.userId ) throw new ForbiddenError( 'You can only view your own tokens' )
 
       let tokens = await getUserTokens( context.userId )
-      console.log( tokens )
       return tokens
     }
   },
