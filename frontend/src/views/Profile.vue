@@ -5,15 +5,11 @@
         <user-info-card></user-info-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9">
+        <v-alert type="info">
+          Heads up! Currently this section is intended mostly for developers.
+        </v-alert>
         <user-access-tokens />
-        <v-card class="elevation-0 mt-3" color="background2">
-          <v-card-title>Your Apps</v-card-title>
-          <v-card-text>TODO</v-card-text>
-        </v-card>
-        <v-card class="elevat ion-0 mt-3" color="background2">
-          <v-card-title>Authorized Apps</v-card-title>
-          <v-card-text>TODO</v-card-text>
-        </v-card>
+        <user-apps />
       </v-col>
     </v-row>
   </v-container>
@@ -23,10 +19,11 @@ import gql from "graphql-tag"
 import userQuery from "../graphql/user.gql"
 import UserInfoCard from "../components/UserInfoCard"
 import UserAccessTokens from "../components/UserAccessTokens"
+import UserApps from "../components/UserApps"
 
 export default {
   name: "Profile",
-  components: { UserInfoCard, UserAccessTokens },
+  components: { UserInfoCard, UserAccessTokens, UserApps },
   data: () => ({}),
   apollo: {
     user: {

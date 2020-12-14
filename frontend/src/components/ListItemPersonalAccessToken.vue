@@ -1,5 +1,5 @@
 <template>
-  <v-list-item>
+  <v-list-item class="px-0">
     <v-list-item-content>
       <v-list-item-title>
         <v-chip small class="mr-2">{{ token.id }}</v-chip>
@@ -13,18 +13,18 @@
       </v-list-item-subtitle>
     </v-list-item-content>
     <v-list-item-action>
-      <v-btn small icon @click="showRevokeConfirm = true">
-        <v-icon color="error">mdi-delete</v-icon>
+      <v-btn small text @click="showRevokeConfirm = true" color="error">
+        <v-icon small class="mr-2">mdi-delete</v-icon> delete
       </v-btn>
     </v-list-item-action>
     <v-dialog v-model="showRevokeConfirm" width="500">
       <v-card class="pa-3">
         <v-card-title>Are you sure?</v-card-title>
         <v-card-text>
-          You cannot undo this action. This will permanently delete this token.
+          You cannot undo this action. This will permanently delete the <b>{{ token.name }}</b> token. Anything relying on it will stop working.
         </v-card-text>
         <v-card-actions>
-          <v-btn color="error" @click="revokeToken">Delete</v-btn>
+          <v-btn text color="error" @click="revokeToken">Delete</v-btn>
           <v-btn @click="showRevokeConfirm = false">Cancel</v-btn>
         </v-card-actions>
       </v-card>
