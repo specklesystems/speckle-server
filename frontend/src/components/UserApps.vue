@@ -1,12 +1,13 @@
 <template>
-  <v-card color="background2" class="elevation-0 mt-3">
+  <v-card color="background2" class="elevation-0 mt-3 mb-5">
     <v-card-title>Applications</v-card-title>
     <v-card-text>
-      Register and manage third-party Speckle Applications. TODO: Blurb
+      Register and manage third-party Speckle Apps that, once authorised by a
+      user on this server, can act on their behalf.
     </v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
-    <v-card-text v-if="apps">
-      <v-list three-line>
+    <v-card-text v-if="apps && apps.length !== 0">
+      <v-list two-line>
         <list-item-user-app
           v-for="app in apps"
           :key="app.id"
@@ -15,10 +16,11 @@
         />
       </v-list>
     </v-card-text>
+    <v-card-text v-else>You have no apps.</v-card-text>
     <v-card-text>
-      <v-btn @click="tokenDialog = true">new app</v-btn>
-      <v-dialog v-model="tokenDialog" persistent width="500">
-        <token-dialog @token-added="refreshList" @close="tokenDialog = false" />
+      <v-btn class="mb-5" @click="appDialog = true">new app</v-btn>
+      <v-dialog v-model="appDialog" width="500">
+        <new-app-dialog @app-added="refreshList" @close="appDialog = false" />
       </v-dialog>
     </v-card-text>
   </v-card>
@@ -26,13 +28,13 @@
 <script>
 import gql from "graphql-tag"
 import ListItemUserApp from "./ListItemUserApp"
-import TokenDialog from "./dialogs/TokenDialog"
+import NewAppDialog from "./dialogs/NewAppDialog"
 
 export default {
-  components: { ListItemUserApp, TokenDialog },
+  components: { ListItemUserApp, NewAppDialog },
   data() {
     return {
-      tokenDialog: false
+      appDialog: false
     }
   },
   apollo: {

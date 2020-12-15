@@ -1,20 +1,25 @@
 <template>
   <v-card class="pa-4" color="background2">
     <v-card-title>
-      Create a New Personal Access Token
+      Create a New App
       <v-spacer></v-spacer>
       <v-btn text color="error" icon @click="clearAndClose">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
     <v-card-text>
-      <v-form v-show="!fullTokenResult">
-        <h3 class="mt-3">Token Scopes</h3>
-        <p>
-          It's good practice to limit the scopes of your token to the absolute
-          minimum. For example, if your application or script will only read and
-          write streams, select just those scopes.
-        </p>
+      <v-form v-show="!appCreateResult">
+        <h3 class="mt-3">App Name</h3>
+        <v-text-field
+          v-model="name"
+          label="App Name"
+          :rules="nameRules"
+          required
+          autofocus
+        ></v-text-field>
+        <br />
+        <h3 class="mt-3">App Scopes</h3>
+        <p>It's good practice to limit the scopes to the absolute minimum.</p>
         <v-select
           v-model="selectedScopes"
           label="Scopes"
@@ -24,36 +29,43 @@
           chips
           :menu-props="{ maxWidth: 420 }"
         ></v-select>
-        <p v-if="selectedScopes.length === 0" class="error--text">
-          Please select some scopes.
-        </p>
         <br />
-        <h3 class="mt-3">Token Name</h3>
+        <h3 class="mt-3">Redirect URL</h3>
         <p>
-          A name to remember this token by - can be the name of the script or
-          application you're planning to use it in!
+          After authentication, the users will be redirected (together with an
+          access token) to this url.
         </p>
         <v-text-field
-          v-model="name"
-          label="Token Name"
-          :rules="nameRules"
+          v-model="redirectUrl"
+          label="App redirect url"
+          :rules="redirectUrlRules"
           required
-          filled
-          autofocus
         ></v-text-field>
         <br />
-        <v-btn @click="createToken">Save</v-btn>
+        <h3 class="mt-3">App Description</h3>
+        <v-textarea
+          v-model="description"
+          label="A short description of your applicaiton."
+        ></v-textarea>
+        <v-btn @click="createApp">Save</v-btn>
         <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
       </v-form>
-      <div v-show="fullTokenResult">
+      <div v-show="appCreateResult">
         <div class="text-center my-5">
-          <h2 class="mb-5 font-weight-normal">Your new token:</h2>
-          <code class="subtitle-1 pa-3 my-4">{{ fullTokenResult }}</code>
+          <h2 class="mb-5 font-weight-normal">Your new app's id:</h2>
+          <code class="subtitle-1 pa-3 my-4">{{ appCreateResult }}</code>
         </div>
         <v-alert type="info">
-          <b>Note:</b>
-          This is the first and last time you will be able to see the full
-          token. Please copy paste it somewhere safe now.
+          <p>
+            <b>Note:</b>
+            To authenticate users inside your app, direct them to
+            <code style="word-break: break-all">
+              {{ rootUrl }}/auth/appId={{ appCreateResult }}&challenge=XXX
+            </code>
+            , where
+            <code>XXX</code>
+            is OAuth2 code challenge.
+          </p>
         </v-alert>
         <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
       </div>
@@ -72,6 +84,7 @@ export default {
   },
   apollo: {
     scopes: {
+      prefetch: true,
       query: gql`
         query {
           serverInfo {
@@ -93,10 +106,27 @@ export default {
         (v) => (v && v.length <= 60) || "Name must be less than 60 characters"
       ],
       selectedScopes: [],
-      fullTokenResult: null
+      redirectUrl: null,
+      redirectUrlRules: [
+        (v) => !!v || "Redirect url is required",
+        (v) => {
+          try {
+            var x = new URL(v)
+            return true
+          } catch {
+            return "url must be valid"
+          }
+        }
+      ],
+      logo: null,
+      description: null,
+      appCreateResult: null
     }
   },
   computed: {
+    rootUrl() {
+      return window.location.origin
+    },
     parsedScopes() {
       if (!this.scopes) return []
       let arr = []
@@ -110,30 +140,32 @@ export default {
   },
   methods: {
     clearAndClose() {
-      this.fullTokenResult = null
+      this.appCreateResult = null
       this.name = null
       this.selectedScopes = []
       this.$emit("close")
     },
-    async createToken() {
+    async createApp() {
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`
-            mutation($token: ApiTokenCreateInput!) {
-              apiTokenCreate(token: $token)
+            mutation($app: AppCreateInput!) {
+              appCreate(app: $app)
             }
           `,
           variables: {
-            token: {
+            app: {
               name: this.name,
-              scopes: this.selectedScopes
+              scopes: this.selectedScopes,
+              redirectUrl: this.redirectUrl,
+              description: this.description
             }
           }
         })
-        this.fullTokenResult = res.data.apiTokenCreate
+        this.appCreateResult = res.data.appCreate
         this.name = null
         this.selectedScopes = []
-        this.$emit("token-added")
+        this.$emit("app-added")
       } catch (e) {
         // TODO: how do we catch and display errors?
         console.log(e)

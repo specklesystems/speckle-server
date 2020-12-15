@@ -5,8 +5,19 @@
         <user-info-card></user-info-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9">
+        <v-card v-if="user" class="mb-3">
+          <v-card-text class="body-1">
+            You have
+            <v-icon small>mdi-compare-vertical</v-icon>
+            <b>{{ user.streams.totalCount }}</b>
+            streams and
+            <v-icon small>mdi-source-commit</v-icon>
+            <b>{{ user.commits.totalCount }}</b>
+            commits.
+          </v-card-text>
+        </v-card>
         <v-alert type="info">
-          Heads up! Currently this section is intended mostly for developers.
+          Heads up! The sections below are intended for developers.
         </v-alert>
         <user-access-tokens />
         <user-apps />
