@@ -11,10 +11,29 @@
         <v-row>
           <v-col cols="12" sm="12" lg="12">
             <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
-              <v-card-title>Description</v-card-title>
-              <v-card-text>
-                {{ stream.description }}
+              <v-card-title v-if="!stream.description">
+                Description
+              </v-card-title>
+              <v-card-text v-if="!stream.description">
+                No description provided.
               </v-card-text>
+              <v-card-text
+                v-if="stream.description"
+                class="marked-preview"
+                v-html="compiledStreamDescription"
+              ></v-card-text>
+              <v-card-actions>
+                <v-btn small @click="dialogDescription = true">
+                  Edit Description
+                </v-btn>
+                <v-dialog v-model="dialogDescription">
+                  <stream-description-dialog
+                    :id="stream.id"
+                    :description="stream.description"
+                    @close="closeDescription"
+                  />
+                </v-dialog>
+              </v-card-actions>
             </v-card>
           </v-col>
 
@@ -23,7 +42,7 @@
           <v-col cols="12" sm="12" lg="12">
             <v-card rounded="lg" class="pa-4" elevation="0" color="background2">
               <v-card-title>
-                <v-icon class='mr-2'>mdi-source-branch</v-icon>
+                <v-icon class="mr-2">mdi-source-branch</v-icon>
                 Branches
               </v-card-title>
               <v-card-text>
@@ -41,14 +60,8 @@
                         <v-list-item-title>
                           <b>{{ item.name }}</b>
                           &nbsp;
-                          <v-chip outlined>
-                            <v-avatar
-                              size="10"
-                              left
-                              class="primary white--text"
-                            >
-                              {{ item.commits.totalCount }}
-                            </v-avatar>
+                          <v-chip small>
+                            {{ item.commits.totalCount }}
                             commits
                           </v-chip>
                         </v-list-item-title>
@@ -63,7 +76,7 @@
                     </v-list-item>
                   </template>
                 </v-list>
-                <v-btn block @click="newBranch">Create a new branch</v-btn>
+                <v-btn small @click="newBranch">new branch</v-btn>
                 <branch-dialog
                   ref="branchDialog"
                   :branches="branches"
@@ -101,18 +114,27 @@
   </v-container>
 </template>
 <script>
+import marked from "marked"
+import DOMPurify from "dompurify"
 import gql from "graphql-tag"
 import SidebarStream from "../components/SidebarStream"
 import BranchDialog from "../components/dialogs/BranchDialog"
+import StreamDescriptionDialog from "../components/dialogs/StreamDescriptionDialog"
 import ListItemCommit from "../components/ListItemCommit"
 import streamQuery from "../graphql/stream.gql"
 import streamCommitsQuery from "../graphql/streamCommits.gql"
 
 export default {
   name: "Stream",
-  components: { SidebarStream, BranchDialog, ListItemCommit },
+  components: {
+    SidebarStream,
+    BranchDialog,
+    ListItemCommit,
+    StreamDescriptionDialog
+  },
   data() {
     return {
+      dialogDescription: false,
       selectedBranch: 0,
       stream: {
         id: null,
@@ -153,6 +175,11 @@ export default {
     }
   },
   computed: {
+    compiledStreamDescription() {
+      if (!this.stream.description) return ""
+      let md = marked(this.stream.description)
+      return DOMPurify.sanitize(md)
+    },
     branches() {
       //reverse without changing original array
       return this.stream.branches.items.slice().reverse()
@@ -162,6 +189,10 @@ export default {
     this.$matomo && this.$matomo.trackPageView("streams/single")
   },
   methods: {
+    closeDescription(newDescription) {
+      this.stream.description = newDescription
+      this.dialogDescription = false
+    },
     newBranch() {
       this.$refs.branchDialog.open().then((dialog) => {
         if (!dialog.result) return
