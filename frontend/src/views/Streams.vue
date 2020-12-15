@@ -20,7 +20,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9">
-        <v-card class="mt-4" elevation="0" color="background2">
+        <v-card class="mt-4" elevation="0" color="transparent">
           <div v-if="$apollo.loading">
             <v-skeleton-loader
               type="card, article, article"
@@ -29,7 +29,6 @@
           <v-card-text v-if="streams && streams.items">
             <div v-for="(stream, i) in streams.items" :key="i">
               <list-item-stream :stream="stream"></list-item-stream>
-              <v-divider v-if="i < streams.items.length - 1"></v-divider>
             </div>
             <infinite-loading
               v-if="streams.items.length < streams.totalCount"
@@ -77,7 +76,6 @@ export default {
         },
         // Transform the previous result with new data
         updateQuery: (previousResult, { fetchMoreResult }) => {
-          console.log(fetchMoreResult)
           const newItems = fetchMoreResult.streams.items
 
           //set vue-infinite state
@@ -99,7 +97,6 @@ export default {
     newStream() {
       this.$refs.streamDialog.open().then((dialog) => {
         if (!dialog.result) return
-        console.log(dialog)
         this.$apollo
           .mutate({
             mutation: gql`
