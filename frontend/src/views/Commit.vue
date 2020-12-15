@@ -27,7 +27,6 @@
                 Ref object id:
                 <code>{{ stream.commit.referencedObject }}</code>
               </v-card-text>
-
               <commit-dialog ref="commitDialog"></commit-dialog>
               <v-btn
                 v-tooltip="'Edit commit details'"
@@ -39,6 +38,27 @@
                 <v-icon small>mdi-pencil-outline</v-icon>
               </v-btn>
             </v-card>
+            <v-expansion-panels flat>
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  <span>
+                    How to get the data from this commit
+                  </span>
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <p class="caption">
+                    <b>Grasshopper & Dynamo:</b>
+                    Copy and paste this page's url into a text panel and connect
+                    that to the "Stream" input of a receiver component.
+                  </p>
+                  <p class="caption">
+                    <b>Other clients:</b>
+                    Switch to this commit's branch, and then select it from
+                    commits the dropdown.
+                  </p>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+            </v-expansion-panels>
             <v-card
               class="pa-4 mt-4"
               elevation="0"

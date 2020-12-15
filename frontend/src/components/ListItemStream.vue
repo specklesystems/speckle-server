@@ -1,91 +1,76 @@
 <template>
-  <v-row>
-    <v-col cols="7">
-      <div class="subtitle-2">
-        <router-link :to="'streams/' + stream.id">
+  <v-card
+    class="pa-5 mb-2 elevation-0"
+    color="background2"
+    :to="'streams/' + stream.id"
+  >
+    <v-row>
+      <v-col cols="6">
+        <div class="subtitle-2">
           {{ stream.name }}
-        </router-link>
-      </div>
-      <div class="caption">
-        {{ stream.description }}
-      </div>
-    </v-col>
-    <!-- <v-spacer></v-spacer> -->
-    <v-col cols="5" class="caption text-right">
-      <div>
-        <btn-click-copy :text="stream.id"></btn-click-copy>
-        &nbsp;
-        <span class="streamid">
-          <router-link :to="'streams/' + stream.id">
-            <span>{{ stream.id }}</span>
-          </router-link>
-        </span>
-
-        <span class="ma-2"></span>
-        <v-icon
-          v-tooltip="
-            stream.branches.totalCount +
-            ' branch' +
-            (stream.branches.totalCount === 1 ? '' : 'es')
-          "
-          small
-        >
-          mdi-source-branch
-        </v-icon>
-        &nbsp;
-        <span>{{ stream.branches.totalCount }}</span>
-
-        <span class="ma-2"></span>
-        <v-icon
-          v-tooltip="
-            stream.commits.totalCount +
-            ' commit' +
-            (stream.commits.totalCount === 1 ? '' : 's')
-          "
-          small
-        >
-          mdi-history
-        </v-icon>
-        &nbsp;
-        <span>{{ stream.commits.totalCount }}</span>
-
-        <span class="ma-2"></span>
-        <v-icon
-          v-tooltip="
-            stream.collaborators.length +
-            ' collaborator' +
-            (stream.collaborators.length === 1 ? '' : 's')
-          "
-          small
-        >
-          mdi-account-outline
-        </v-icon>
-        &nbsp;
-        <span>{{ stream.collaborators.length }}</span>
-
-        <span class="ma-2"></span>
-        <v-icon v-if="stream.isPublic" v-tooltip="`Link sharing on`" small>
-          mdi-link
-        </v-icon>
-        <v-icon v-else v-tooltip="`Link sharing off`" small>
-          mdi-link-lock
-        </v-icon>
-      </div>
-
-      <div class="mt-1 grey--text text--lighten-1">
-        Created
-        <timeago :datetime="stream.createdAt"></timeago>
-        , updated
-        <timeago :datetime="stream.updatedAt"></timeago>
-      </div>
-    </v-col>
-  </v-row>
+        </div>
+        <div class="caption">
+          <code>{{ stream.id }}</code>
+          Created
+          <timeago :datetime="stream.createdAt"></timeago>
+          , updated
+          <timeago :datetime="stream.updatedAt"></timeago>
+        </div>
+      </v-col>
+      <v-col cols="6" class="caption text-right">
+        <div>
+          <span class="ma-2"></span>
+          <v-icon
+            v-tooltip="
+              stream.branches.totalCount +
+              ' branch' +
+              (stream.branches.totalCount === 1 ? '' : 'es')
+            "
+            small
+          >
+            mdi-source-branch
+          </v-icon>
+          &nbsp;
+          <span>{{ stream.branches.totalCount }}</span>
+          &nbsp;
+          <v-icon
+            v-tooltip="
+              stream.commits.totalCount +
+              ' commit' +
+              (stream.commits.totalCount === 1 ? '' : 's')
+            "
+            small
+          >
+            mdi-history
+          </v-icon>
+          &nbsp;
+          <span>{{ stream.commits.totalCount }}</span>
+          &nbsp;
+          <v-icon v-if="stream.isPublic" v-tooltip="`Link sharing on`" small>
+            mdi-link
+          </v-icon>
+          &nbsp;&nbsp;&nbsp;
+          <v-icon v-else v-tooltip="`Link sharing off`" small>
+            mdi-shield-lock
+          </v-icon>
+          <user-avatar
+            v-for="user in stream.collaborators"
+            :id="user.id"
+            :key="user.id"
+            :avatar="user.avatar"
+            :size="30"
+            :name="user.name"
+          />
+        </div>
+      </v-col>
+    </v-row>
+  </v-card>
 </template>
 <script>
-import BtnClickCopy from "./BtnClickCopy"
+import UserAvatar from "../components/UserAvatar"
 
 export default {
-  components: { BtnClickCopy },
+  components: { UserAvatar },
   props: {
     stream: {
       type: Object,

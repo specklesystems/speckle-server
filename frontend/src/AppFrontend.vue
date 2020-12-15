@@ -1,6 +1,6 @@
 <template>
   <v-app id="speckle">
-    <v-app-bar app color="" class="no-decor">
+    <v-app-bar app color="background2">
       <v-container class="py-0 fill-height hidden-sm-and-down">
         <v-btn text to="/" active-class="no-active">
           <v-img
@@ -139,6 +139,26 @@ export default {
 }
 </script>
 <style>
+.marked-preview h1 {
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+
+.marked-preview h2 {
+  padding-bottom: 7px;
+  padding-top: 7px;
+}
+
+.marked-preview h3 {
+  padding-bottom: 5px;
+  padding-top: 5px;
+}
+
+.marked-preview hr {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
 .v-card__text,
 .v-card__title {
   word-break: normal !important;

@@ -7,7 +7,6 @@
           color="grey lighten-3"
           :size="size"
           v-bind="attrs"
-          to="/"
           v-on="on"
         >
           <v-img v-if="avatar" :src="avatar" />
@@ -17,7 +16,7 @@
           />
         </v-avatar>
       </template>
-      <v-card style="width: 200px" :to="`/profile/${id}`">
+      <v-card style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
         <v-card-text v-if="!$apollo.loading" class="text-center">
           <v-avatar class="my-4" color="grey lighten-3" :size="40">
             <v-img v-if="avatar" :src="avatar" />
@@ -56,6 +55,14 @@ export default {
     id: {
       type: String,
       default: null
+    }
+  },
+  computed: {
+    isSelf() {
+      return this.id === localStorage.getItem("uuid")
+    },
+    loggedInUserId() {
+      return localStorage.getItem("uuid")
     }
   },
   apollo: {

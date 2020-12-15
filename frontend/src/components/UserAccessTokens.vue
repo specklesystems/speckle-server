@@ -11,7 +11,7 @@
       </b>
     </v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
-    <v-card-text v-if="tokens">
+    <v-card-text v-if="tokens && tokens.length != 0">
       <v-list three-line>
         <list-item-token
           v-for="token in tokens"
@@ -21,8 +21,9 @@
         />
       </v-list>
     </v-card-text>
+    <v-card-text v-else>You have no api tokens.</v-card-text>
     <v-card-text>
-      <v-btn @click="tokenDialog = true">new token</v-btn>
+      <v-btn @click="tokenDialog = true" class="mb-5">new token</v-btn>
       <v-dialog v-model="tokenDialog" persistent width="500">
         <token-dialog @token-added="refreshList" @close="tokenDialog = false" />
       </v-dialog>
@@ -53,6 +54,7 @@ export default {
               lastUsed
               lastChars
               createdAt
+              scopes
             }
           }
         }
