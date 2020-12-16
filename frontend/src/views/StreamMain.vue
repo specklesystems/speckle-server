@@ -1,6 +1,9 @@
 <template>
-  <v-row v-if="stream && !$apollo.loading">
-    <v-col sm="12">
+  <v-row>
+    <v-col v-if="!stream || $apollo.loading" cols="12">
+      <v-skeleton-loader type="article, article"></v-skeleton-loader>
+    </v-col>
+    <v-col v-else sm="12">
       <v-card rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
         <v-card-title v-if="!stream.description">Description</v-card-title>
         <v-card-text v-if="!stream.description">
@@ -11,7 +14,7 @@
           class="marked-preview"
           v-html="compiledStreamDescription"
         ></v-card-text>
-        <v-card-actions v-if="canEdit">
+        <v-card-actions v-if="userRole === 'owner'">
           <v-btn small @click="dialogDescription = true">
             Edit Description
           </v-btn>
@@ -62,7 +65,13 @@
               </v-list-item>
             </template>
           </v-list>
-          <v-btn v-if="canEdit" small @click="newBranch">new branch</v-btn>
+          <v-btn
+            v-if="userRole === 'contributor' || userRole === 'owner'"
+            small
+            @click="newBranch"
+          >
+            new branch
+          </v-btn>
           <branch-dialog
             ref="branchDialog"
             :branches="branches"
@@ -89,11 +98,6 @@
       </v-card>
     </v-col>
   </v-row>
-  <v-row v-else>
-    <v-col cols="12">
-      <v-skeleton-loader type="article, article"></v-skeleton-loader>
-    </v-col>
-  </v-row>
 </template>
 <script>
 import marked from "marked"
@@ -102,7 +106,6 @@ import gql from "graphql-tag"
 import BranchDialog from "../components/dialogs/BranchDialog"
 import StreamDescriptionDialog from "../components/dialogs/StreamDescriptionDialog"
 import ListItemCommit from "../components/ListItemCommit"
-import streamQuery from "../graphql/stream.gql"
 import streamCommitsQuery from "../graphql/streamCommits.gql"
 
 export default {
@@ -116,6 +119,10 @@ export default {
     stream: {
       type: Object,
       default: () => null
+    },
+    userRole: {
+      type: String,
+      default: null
     }
   },
   data() {
@@ -125,15 +132,6 @@ export default {
     }
   },
   apollo: {
-    // stream: {
-    //   prefetch: true,
-    //   query: streamQuery,
-    //   variables() {
-    //     return {
-    //       id: this.$route.params.streamId
-    //     }
-    //   }
-    // },
     commits: {
       query: streamCommitsQuery,
       variables() {
@@ -145,15 +143,6 @@ export default {
     }
   },
   computed: {
-    canEdit() {
-      if (!this.stream.collaborators) return false
-      let uuid = localStorage.getItem("uuid")
-      let contrib = this.stream.collaborators.find(
-        (u) => u.id === uuid && u.role === "stream:owner"
-      )
-      if (contrib) return true
-      return false
-    },
     compiledStreamDescription() {
       if (!this.stream.description) return ""
       let md = marked(this.stream.description)
@@ -175,7 +164,7 @@ export default {
     newBranch() {
       this.$refs.branchDialog.open().then((dialog) => {
         if (!dialog.result) return
-        console.log(dialog.result)
+        
         this.$apollo
           .mutate({
             mutation: gql`

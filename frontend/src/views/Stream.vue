@@ -1,11 +1,11 @@
 <template>
   <v-container>
     <v-row v-if="stream">
-      <v-col sm="12" lg="3" md="4">
-        <sidebar-stream :stream="stream" :can-edit="canEdit"></sidebar-stream>
+      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
+        <sidebar-stream :stream="stream" :user-role="userRole"></sidebar-stream>
       </v-col>
-      <v-col sm="12" lg="9" md="8">
-        <router-view :stream="stream"></router-view>
+      <v-col cols="12" sm="12" md="8" lg="9">
+        <router-view :stream="stream" :user-role="userRole"></router-view>
       </v-col>
     </v-row>
   </v-container>
@@ -62,14 +62,12 @@ export default {
     }
   },
   computed: {
-    canEdit() {
-      if (!this.stream.collaborators) return false
+    userRole() {
       let uuid = localStorage.getItem("uuid")
-      let contrib = this.stream.collaborators.find(
-        (u) => u.id === uuid && u.role === "stream:owner"
-      )
-      if (contrib) return true
-      return false
+      if (!uuid) return null
+      let contrib = this.stream.collaborators.find((u) => u.id === uuid)
+      if (contrib) return contrib.role.split(":")[1]
+      else return null
     }
   },
   mounted() {},
