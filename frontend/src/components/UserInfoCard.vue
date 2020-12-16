@@ -25,7 +25,7 @@
       <span class="caption" v-if="isSelf">Your user id: {{ user.id }}</span>
     </v-card-text>
     <v-card-actions>
-      <v-btn v-if="isSelf" block @click="editUser">
+      <v-btn v-if="isSelf" block small @click="editUser">
         Edit
         <v-icon small class="ml-3">mdi-pencil-outline</v-icon>
       </v-btn>

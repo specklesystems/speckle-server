@@ -48,15 +48,7 @@
           Updated
           <timeago :datetime="stream.updatedAt"></timeago>
         </p>
-        <v-btn
-          v-if="canEdit"
-          small
-          outlined
-          text
-
-          color=""
-          @click="editStream"
-        >
+        <v-btn v-if="userRole === 'owner'" block small @click="editStream">
           Edit
           <v-icon small class="ml-3">mdi-cog-outline</v-icon>
         </v-btn>
@@ -80,19 +72,22 @@
             <span class="caption">{{ collab.role.split(":")[1] }}</span>
           </v-col>
         </v-row>
-        <v-btn
+        <v-btn v-if="userRole === 'owner'" block small @click="shareStream">
+          Manage
+          <v-icon small class="ml-3">mdi-account-multiple</v-icon>
+        </v-btn>
+        <!-- <v-btn
           v-if="canEdit"
           small
           outlined
           text
-          
           color=""
           class="mt-3"
           @click="shareStream"
         >
           Manage
           <v-icon small class="ml-3">mdi-account-multiple</v-icon>
-        </v-btn>
+        </v-btn> -->
         <v-dialog v-model="dialogShare">
           <h1>WIP</h1>
         </v-dialog>
@@ -123,6 +118,10 @@ export default {
     stream: {
       type: Object,
       default: () => null
+    },
+    userRole: {
+      type: String,
+      default: null
     }
   },
   apollo: {},
@@ -132,9 +131,6 @@ export default {
   computed: {
     isHomeRoute() {
       return this.$route.name === "stream"
-    },
-    canEdit() {
-      return true
     },
     userId() {
       return localStorage.getItem("uuid")
