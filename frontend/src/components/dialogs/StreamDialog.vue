@@ -27,16 +27,6 @@
             </v-row>
             <v-row>
               <v-col cols="12" class="pt-0 pb-0">
-                <v-textarea
-                  v-model="stream.description"
-                  filled
-                  rows="2"
-                  label="Description"
-                ></v-textarea>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" class="pt-0 pb-0">
                 <v-switch
                   v-model="stream.isPublic"
                   :label="

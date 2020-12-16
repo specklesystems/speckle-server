@@ -28,7 +28,6 @@
             <span class="streamid">{{ item.id }}</span>
           </v-row>
         </v-list-item-title>
-        <v-list-item-subtitle v-text="item.description"></v-list-item-subtitle>
         <v-list-item-subtitle class="caption">
           Updated
           <timeago :datetime="item.updatedAt"></timeago>
@@ -56,7 +55,6 @@ export default {
             items {
               id
               name
-              description
               updatedAt
             }
           }

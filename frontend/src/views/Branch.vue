@@ -1,42 +1,31 @@
 <template>
-  <v-container>
-    <v-row v-if="$apollo.loading">
-      <v-col cols="12">
-        <v-skeleton-loader type="article, article"></v-skeleton-loader>
-      </v-col>
-    </v-row>
-    <v-row v-else>
-      <v-col cols="12" sm="12" lg="3" md="4">
-        <sidebar-stream :stream="stream"></sidebar-stream>
-      </v-col>
-      <v-col cols="12" sm="12" lg="9" md="8">
-        <v-row>
-          <v-col>
-            <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
-              <v-card-title class="mr-8">
-                <v-icon class="mr-2">mdi-source-branch</v-icon>
-                {{ branch.name }}
-              </v-card-title>
-              <v-card-text>
-                {{ branch.description }}
-              </v-card-text>
-              <v-subheader class="text-uppercase">
-                Commits ({{ branch.commits.totalCount }})
-              </v-subheader>
-              <v-card-text>
-                <list-item-commit
-                  v-for="item in branch.commits.items"
-                  :key="item.id"
-                  :commit="item"
-                  :stream-id="stream.id"
-                ></list-item-commit>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-  </v-container>
+  <v-row>
+    <v-col v-if="$apollo.loading">
+      <v-skeleton-loader type="article, article"></v-skeleton-loader>
+    </v-col>
+    <v-col v-else cols="12">
+      <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
+        <v-card-title class="mr-8">
+          <v-icon class="mr-2">mdi-source-branch</v-icon>
+          {{ branch.name }}
+        </v-card-title>
+        <v-card-text>
+          {{ branch.description }}
+        </v-card-text>
+        <v-subheader class="text-uppercase">
+          Commits ({{ branch.commits.totalCount }})
+        </v-subheader>
+        <v-card-text>
+          <list-item-commit
+            v-for="item in branch.commits.items"
+            :key="item.id"
+            :commit="item"
+            :stream-id="stream.id"
+          ></list-item-commit>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
 <script>
 import gql from "graphql-tag"
@@ -73,11 +62,6 @@ export default {
     }
   },
   computed: {},
-  watch: {
-    stream(val) {
-      console.log(val)
-    }
-  },
   methods: {
     editBranch() {
       this.$refs.commitDialog

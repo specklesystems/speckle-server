@@ -1,27 +1,19 @@
 <template>
   <v-card rounded="lg" class="pa-4" elevation="0" color="transparent">
-    <div v-if="$apollo.loading">
+    <div v-if="!stream">
       <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
     </div>
-    <div v-else>
+    <div v-if="stream">
       <v-card-title class="mr-8">
-        <router-link :to="'/streams/' + stream.id">
+        <router-link v-show="!isHomeRoute" :to="'/streams/' + stream.id">
           {{ stream.name }}
         </router-link>
+        <div v-show="isHomeRoute">
+          {{ stream.name }}
+        </div>
       </v-card-title>
-      <!--  <v-btn
-        v-tooltip="'Edit stream details'"
-        small
-        icon
-        style="position: absolute; right: 15px; top: 15px"
-        @click="editStream"
-      >
-        <v-icon small>mdi-pencil-outline</v-icon>
-      </v-btn> -->
-      <stream-dialog ref="streamDialog"></stream-dialog>
-      <v-divider />
+      <v-divider></v-divider>
       <v-card-text>
-        <!-- <p class="subtitle-1 font-weight-light">{{ stream.description }}</p> -->
         <p>
           <v-icon small>mdi-source-branch</v-icon>
           &nbsp;
@@ -37,12 +29,6 @@
             {{ stream.commits.totalCount }}
             commit{{ stream.commits.totalCount === 1 ? "" : "s" }}
           </span>
-        </p>
-        <p>
-          <v-icon small>mdi-account-outline</v-icon>
-          &nbsp;
-          <span>{{ stream.collaborators.length }}</span>
-          collaborator{{ stream.collaborators.length === 1 ? "" : "s" }}
         </p>
         <p>
           <span v-if="stream.isPublic">
@@ -62,10 +48,23 @@
           Updated
           <timeago :datetime="stream.updatedAt"></timeago>
         </p>
+        <v-btn
+          v-if="canEdit"
+          small
+          outlined
+          text
+
+          color=""
+          @click="editStream"
+        >
+          Edit
+          <v-icon small class="ml-3">mdi-cog-outline</v-icon>
+        </v-btn>
+        <stream-dialog ref="streamDialog"></stream-dialog>
       </v-card-text>
-      <v-divider></v-divider>
+
       <v-card-title><h5>Collaborators</h5></v-card-title>
-      <div class="ml-2 mr-2">
+      <v-card-text>
         <v-row v-for="(collab, i) in stream.collaborators" :key="i">
           <v-col sm="3">
             <user-avatar
@@ -78,31 +77,38 @@
           <v-col>
             <span class="text-body-2">{{ collab.name }}</span>
             <br />
-            <span class="caption">{{ collab.role }}</span>
+            <span class="caption">{{ collab.role.split(":")[1] }}</span>
           </v-col>
         </v-row>
         <v-btn
-          v-if="isStreamOwner"
-          v-tooltip="'Manage collaborators'"
-          block
+          v-if="canEdit"
+          small
+          outlined
+          text
+          
+          color=""
+          class="mt-3"
           @click="shareStream"
         >
-          Add / Manage
-          <v-icon small class="ml-3">mdi-account-multiple-plus</v-icon>
+          Manage
+          <v-icon small class="ml-3">mdi-account-multiple</v-icon>
         </v-btn>
-        <stream-share-dialog
+        <v-dialog v-model="dialogShare">
+          <h1>WIP</h1>
+        </v-dialog>
+        <!--         <stream-share-dialog
+          v-if="stream"
           ref="streamShareDialog"
           :users="stream.collaborators"
           :stream-id="stream.id"
-          :user-id="user.id"
-        ></stream-share-dialog>
-      </div>
+          :user-id="userId"
+        ></stream-share-dialog> -->
+      </v-card-text>
     </div>
   </v-card>
 </template>
 <script>
 import gql from "graphql-tag"
-import streamQuery from "../graphql/stream.gql"
 import StreamDialog from "../components/dialogs/StreamDialog"
 import StreamShareDialog from "../components/dialogs/StreamShareDialog"
 import UserAvatar from "../components/UserAvatar"
@@ -113,46 +119,30 @@ export default {
     StreamShareDialog,
     UserAvatar
   },
-  apollo: {
+  props: {
     stream: {
-      prefetch: true,
-      query: streamQuery,
-      variables() {
-        // Use vue reactive properties here
-        return {
-          id: this.$route.params.streamId
-        }
-      }
-    },
-    user: {
-      prefetch: true,
-      query: gql`
-        query {
-          user {
-            id
-          }
-        }
-      `
+      type: Object,
+      default: () => null
     }
   },
+  apollo: {},
   data: () => ({
-    user: {},
-    stream: {
-      id: null
-    }
+    dialogShare: false
   }),
   computed: {
-    isStreamOwner() {
-      return (
-        this.stream.collaborators.filter(
-          (x) => x.id === this.user.id && x.role === "stream:owner"
-        ).length > 0
-      )
+    isHomeRoute() {
+      return this.$route.name === "stream"
+    },
+    canEdit() {
+      return true
+    },
+    userId() {
+      return localStorage.getItem("uuid")
     }
   },
   methods: {
     shareStream() {
-      this.$refs.streamShareDialog.open()
+      this.dialogShare = true
     },
     editStream() {
       this.$refs.streamDialog.open(this.stream).then((dialog) => {

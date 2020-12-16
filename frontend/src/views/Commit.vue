@@ -1,89 +1,73 @@
 <template>
-  <v-container>
-    <v-row v-if="stream">
-      <v-col cols="12" sm="12" lg="3" md="4">
-        <sidebar-stream :stream="stream"></sidebar-stream>
-      </v-col>
-      <v-col cols="12" sm="12" lg="9" md="8">
-        <v-row>
-          <v-col>
-            <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
-              <v-card-title class="mr-8">
-                <v-icon class="mr-2">mdi-source-commit</v-icon>
-                {{ stream.commit.message }}
-              </v-card-title>
-              <v-card-text>
-                on
-                <b>{{ commitDate }}</b>
-                by
-                <b>{{ stream.commit.authorName }}</b>
-                <user-avatar
-                  :id="stream.commit.authorId"
-                  :name="stream.commit.authorName"
-                  :avatar="stream.commit.authorAvatar"
-                  :size="21"
-                ></user-avatar>
-                <v-divider class="my-5"></v-divider>
-                Ref object id:
-                <code>{{ stream.commit.referencedObject }}</code>
-              </v-card-text>
-              <commit-dialog ref="commitDialog"></commit-dialog>
-              <v-btn
-                v-tooltip="'Edit commit details'"
-                small
-                icon
-                style="position: absolute; right: 15px; top: 15px"
-                @click="editCommit"
-              >
-                <v-icon small>mdi-pencil-outline</v-icon>
-              </v-btn>
-            </v-card>
-            <v-expansion-panels flat>
-              <v-expansion-panel>
-                <v-expansion-panel-header>
-                  <span>
-                    How to get the data from this commit
-                  </span>
-                </v-expansion-panel-header>
-                <v-expansion-panel-content>
-                  <p class="caption">
-                    <b>Grasshopper & Dynamo:</b>
-                    Copy and paste this page's url into a text panel and connect
-                    that to the "Stream" input of a receiver component.
-                  </p>
-                  <p class="caption">
-                    <b>Other clients:</b>
-                    Switch to this commit's branch, and then select it from
-                    commits the dropdown.
-                  </p>
-                </v-expansion-panel-content>
-              </v-expansion-panel>
-            </v-expansion-panels>
-            <v-card
-              class="pa-4 mt-4"
-              elevation="0"
-              rounded="lg"
-              color="background2"
-            >
-              <v-card-title class="mr-8">
-                <v-icon class="mr-2">mdi-database</v-icon>
-                Data
-              </v-card-title>
-              <v-card-text class="pa-0">
-                <object-speckle-viewer
-                  class="mt-4"
-                  :stream-id="stream.id"
-                  :object-id="stream.commit.referencedObject"
-                  :value="commitObject"
-                  :expand="true"
-                ></object-speckle-viewer>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-col>
-    </v-row>
-  </v-container>
+  <v-row v-if="stream">
+    <v-col cols="12">
+      <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
+        <v-card-title class="mr-8">
+          <v-icon class="mr-2">mdi-source-commit</v-icon>
+          {{ stream.commit.message }}
+        </v-card-title>
+        <v-card-text>
+          on
+          <b>{{ commitDate }}</b>
+          by
+          <b>{{ stream.commit.authorName }}</b>
+          <user-avatar
+            :id="stream.commit.authorId"
+            :name="stream.commit.authorName"
+            :avatar="stream.commit.authorAvatar"
+            :size="25"
+            class="ml-1"
+          ></user-avatar>
+        </v-card-text>
+        <commit-dialog ref="commitDialog"></commit-dialog>
+        <v-btn
+          v-tooltip="'Edit commit details'"
+          small
+          icon
+          style="position: absolute; right: 15px; top: 15px"
+          @click="editCommit"
+        >
+          <v-icon small>mdi-pencil-outline</v-icon>
+        </v-btn>
+      </v-card>
+      <v-card>
+        <v-expansion-panels flat focusable>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              <span>How to get the data from this commit</span>
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <p class="caption mt-4">
+                <b>Grasshopper & Dynamo:</b>
+                Copy and paste this page's url into a text panel and connect
+                that to the "Stream" input of a receiver component.
+              </p>
+              <p class="caption">
+                <b>Other clients:</b>
+                Switch to this commit's branch, and then select it from commits
+                the dropdown.
+              </p>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-card>
+      <v-card class="pa-4 mt-4" elevation="0" rounded="lg" color="background2">
+        <v-card-title class="mr-8">
+          <v-icon class="mr-2">mdi-database</v-icon>
+          Data
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <object-speckle-viewer
+            class="mt-4"
+            :stream-id="stream.id"
+            :object-id="stream.commit.referencedObject"
+            :value="commitObject"
+            :expand="true"
+          ></object-speckle-viewer>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
 </template>
 <script>
 import gql from "graphql-tag"

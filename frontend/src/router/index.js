@@ -22,35 +22,44 @@ const routes = [
   },
   {
     path: "/streams/:streamId",
-    name: "stream",
     meta: {
       title: "Stream | Speckle"
     },
-    component: () => import("../views/Stream.vue")
-  },
-  {
-    path: "/streams/:streamId/branches/:branchName",
-    name: "branch",
-    meta: {
-      title: "Branch | Speckle"
-    },
-    component: () => import("../views/Branch.vue")
-  },
-  {
-    path: "/streams/:streamId/commits/:commitId",
-    name: "commit",
-    meta: {
-      title: "Commit | Speckle"
-    },
-    component: () => import("../views/Commit.vue")
-  },
-  {
-    path: "/streams/:streamId/objects/:objectId",
-    name: "objects",
-    meta: {
-      title: "Object | Speckle"
-    },
-    component: () => import("../views/Object.vue")
+    component: () => import("../views/Stream.vue"),
+    children: [
+      {
+        path: "",
+        name: "stream",
+        meta: {
+          title: "Stream | Speckle"
+        },
+        component: () => import("../views/StreamMain.vue")
+      },
+      {
+        path: "branches/:branchName",
+        name: "branch",
+        meta: {
+          title: "Branch | Speckle"
+        },
+        component: () => import("../views/Branch.vue")
+      },
+      {
+        path: "commits/:commitId",
+        name: "commit",
+        meta: {
+          title: "Commit | Speckle"
+        },
+        component: () => import("../views/Commit.vue")
+      },
+      {
+        path: "objects/:objectId",
+        name: "objects",
+        meta: {
+          title: "Object | Speckle"
+        },
+        component: () => import("../views/Object.vue")
+      }
+    ]
   },
   {
     path: "/profile",
