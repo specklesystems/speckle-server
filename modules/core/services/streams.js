@@ -32,16 +32,11 @@ module.exports = {
     return await Streams( ).where( { id: streamId } ).select( '*' ).first( )
   },
 
-  async updateStream( { streamId, name, description } ) {
+  async updateStream( { streamId, name, description, isPublic } ) {
     let [ res ] = await Streams( )
       .returning( 'id' )
       .where( { id: streamId } )
-      .update( { name, description } )
-    return res
-  },
-
-  async updateStreamPrivacy( { isPublic } ) {
-    let [ res ] = await Streams( ).returning( 'id' ).where( { id: stream.id } ).update( { isPublic } )
+      .update( { name, description, isPublic } )
     return res
   },
 
