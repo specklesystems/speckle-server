@@ -1,10 +1,14 @@
 <template>
   <v-container>
+    <v-row v-if="$apollo.loading">
+      <v-skeleton-loader type="card, article"></v-skeleton-loader>
+      <v-skeleton-loader type="card, article"></v-skeleton-loader>
+    </v-row>
     <v-row v-if="stream">
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <sidebar-stream :stream="stream" :user-role="userRole"></sidebar-stream>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
         <router-view :stream="stream" :user-role="userRole"></router-view>
       </v-col>
     </v-row>
@@ -65,6 +69,7 @@ export default {
     userRole() {
       let uuid = localStorage.getItem("uuid")
       if (!uuid) return null
+      if (this.$apollo.loading) return null
       let contrib = this.stream.collaborators.find((u) => u.id === uuid)
       if (contrib) return contrib.role.split(":")[1]
       else return null

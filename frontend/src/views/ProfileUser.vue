@@ -1,22 +1,52 @@
 <template>
   <v-container>
-    <v-row>TODO (Profile User {{ $route.params.userId }})</v-row>
+    <v-row v-if="$apollo.loading">
+      <v-col cols="12">
+        <v-skeleton-loader type="card, article"></v-skeleton-loader>
+      </v-col>
+    </v-row>
+    <v-row v-else>
+      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
+        <user-info-card :user="user"></user-info-card>
+      </v-col>
+      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
+        <v-card class="mb-3 elevation-0" color="background2">
+          <v-card-title>
+            {{ user.name }} has {{ user.streams.totalCount }} public streams and
+            {{ user.commits.totalCount }} commits.
+          </v-card-title>
+        </v-card>
+        <div v-for="(stream, i) in user.streams.items" :key="i">
+          <list-item-stream :stream="stream"></list-item-stream>
+        </div>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script>
-import gql from "graphql-tag"
+import userById from "../graphql/userById.gql"
+import UserInfoCard from "../components/UserInfoCard"
+import ListItemStream from "../components/ListItemStream"
 
 export default {
   name: "ProfileUser",
-  components: {},
+  components: { UserInfoCard, ListItemStream },
   data: () => ({}),
-  apollo: {},
+  apollo: {
+    user: {
+      query: userById,
+      variables() {
+        return {
+          id: this.$route.params.userId
+        }
+      }
+    }
+  },
   computed: {},
   created() {
-    console.log(this.$route.params.userId)
-    console.log(localStorage.getItem("uuid"))
+    // Move to self profile
     if (this.$route.params.userId === localStorage.getItem("uuid")) {
-      this.$router.push("/profile")
+      this.$router.replace({ path: "/profile" })
     }
   },
   methods: {}

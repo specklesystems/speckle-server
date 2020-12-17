@@ -1,57 +1,96 @@
 <template>
   <v-card color="transparent" class="elevation-0">
-    <v-card-title v-if="user" class="text-center">
-      <v-avatar color="background" size="124">
-        <v-img v-if="user.avatar" :src="user.avatar" />
-        <v-img
-          v-else
-          :src="`https://robohash.org/` + user.id + `.png?size=64x64`"
-        />
-      </v-avatar>
-    </v-card-title>
-    <v-card-title v-if="user" class="zzz-justify-center">
-      {{ user.name }}
-    </v-card-title>
-    <v-card-text v-if="user">
-      <p class="subtitle-1">{{ user.company }}</p>
-      <p>
-        <b>Bio:</b>
-        {{ user.bio }}
-      </p>
-      <p v-if="user.email">
-        <b>Email:</b>
-        {{ user.email }}
-      </p>
-      <span class="caption" v-if="isSelf">Your user id: {{ user.id }}</span>
-    </v-card-text>
-    <v-card-actions>
-      <v-btn v-if="isSelf" block small @click="editUser">
-        Edit
-        <v-icon small class="ml-3">mdi-pencil-outline</v-icon>
-      </v-btn>
-    </v-card-actions>
-    <user-dialog ref="editUserDialog"></user-dialog>
+    <div v-if="!user">
+      <v-skeleton-loader type="card"></v-skeleton-loader>
+    </div>
+    <div v-else>
+      <v-card-title class="text-center mb-5 mt-5 pt-5 pb-5">
+        <v-btn
+          v-tooltip="'Change your profile picture.'"
+          color="transparent"
+          text
+          class="elevation-0 pa-0 ma-0"
+        >
+          <v-avatar class="elevation-1" size="124" @click="avatarDialog = true">
+            <v-img v-if="user.avatar" :src="user.avatar" />
+            <v-img
+              v-else
+              :src="`https://robohash.org/` + user.id + `.png?size=64x64`"
+            />
+          </v-avatar>
+        </v-btn>
+        <v-dialog v-model="avatarDialog" max-width="400">
+          <v-card>
+            <v-card-title class="text-center">
+              Choose a new profile picture
+            </v-card-title>
+            <v-card-text class="text-center pa-0 ma-0 mt-5">
+              <v-image-input
+                v-model="imageData"
+                :image-quality="0.85"
+                :image-height="128"
+                :image-width="128"
+                full-width
+                full-height
+                clearable
+                image-format="jpeg"
+              />
+            </v-card-text>
+            <v-card-actions>
+              <span class="caption" v-if="imageData">You look wonderful!</span>
+              <v-spacer></v-spacer>
+              <v-btn text @click="avatarDialog = false">cancel</v-btn>
+              <v-btn :disabled="!imageData" @click="updateAvatar">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-card-title>
+      <v-card-title>
+        {{ user.name }}
+      </v-card-title>
+      <v-card-text>
+        <p v-if="user.company" class="subtitle-1">{{ user.company }}</p>
+        <p v-if="user.bio">
+          <b>Bio:</b>
+          {{ user.bio }}
+        </p>
+        <p v-else>This user keeps an air of mystery around themselves.</p>
+        <p v-if="user.email && isSelf">
+          <b>Email:</b>
+          {{ user.email }}
+        </p>
+        <span v-if="isSelf" class="caption">Your user id: {{ user.id }}</span>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn v-if="isSelf" block small @click="userDialog = true">
+          Edit
+          <v-icon small class="ml-3">mdi-pencil-outline</v-icon>
+        </v-btn>
+      </v-card-actions>
+      <v-dialog v-model="userDialog" max-width="600">
+        <user-dialog :user="user" @close="userDialog = false"></user-dialog>
+      </v-dialog>
+    </div>
   </v-card>
 </template>
 <script>
 import gql from "graphql-tag"
-import userQuery from "../graphql/user.gql"
 import UserDialog from "../components/dialogs/UserDialog"
+import VImageInput from "vuetify-image-input/a-la-carte"
 
 export default {
-  components: { UserDialog },
+  components: { UserDialog, VImageInput },
   props: {
-    userId: {
-      type: String,
+    user: {
+      type: Object,
       default: null
     }
   },
   data() {
-    return {}
-  },
-  apollo: {
-    user: {
-      query: userQuery
+    return {
+      userDialog: false,
+      avatarDialog: false,
+      imageData: null
     }
   },
   computed: {
@@ -61,29 +100,26 @@ export default {
     }
   },
   methods: {
-    editUser() {
-      this.$refs.editUserDialog.open(this.user).then((dialog) => {
-        if (!dialog.result) return
-        console.log(dialog)
-        this.$apollo
-          .mutate({
-            mutation: gql`
-              mutation userUpdate($myUser: UserUpdateInput!) {
-                userUpdate(user: $myUser)
-              }
-            `,
-            variables: {
-              myUser: { ...dialog.user }
+    async updateAvatar() {
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation userUpdate($update: UserUpdateInput!) {
+              userUpdate(user: $update)
             }
-          })
-          .then((data) => {
-            this.$apollo.queries.user.refetch()
-          })
-          .catch((error) => {
-            // Error
-            console.error(error)
-          })
-      })
+          `,
+          variables: {
+            update: {
+              avatar: this.imageData
+            }
+          }
+        })
+        this.user.avatar = this.imageData
+      } catch (e) {
+        console.log(e)
+      }
+
+      this.avatarDialog = false
     }
   }
 }

@@ -2,7 +2,7 @@
   <v-card
     class="pa-5 mb-2 elevation-0"
     color="background2"
-    :to="'streams/' + stream.id"
+    :to="'/streams/' + stream.id"
   >
     <v-row>
       <v-col cols="6">
