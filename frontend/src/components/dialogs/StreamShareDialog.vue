@@ -1,175 +1,107 @@
 <template>
-  <v-dialog v-model="dialog" width="600" @keydown.esc="dialog = false">
-    <v-card class="pa-4" color="background2">
-      <v-card-title class="subtitle-1">Manage collaborators</v-card-title>
-
-      <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-container>
-          <v-row>
-            <v-col cols="12" class="pb-0">
-              <v-autocomplete
-                v-model="selectedUsers"
-                :loading="$apollo.loading"
-                :items="items"
-                :search-input.sync="search"
-                :filter="filter"
-                multiple
-                counter="3"
-                chips
-                autofocus
-                hide-no-data
-                hide-details
-                placeholder="Type to search..."
-                item-text="name"
-                return-object
-                clearable
-                cache-items
-                label="Users"
-                item-value="id"
-              >
-                <template #selection="{ attr, on, item, selected }">
-                  <v-chip
-                    v-bind="attr"
-                    :input-value="selected"
-                    color="secondary"
-                    class="white--text"
-                    pill
-                    close
-                    v-on="on"
-                    @click:close="remove(item)"
-                  >
-                    <v-avatar left color="background">
-                      <v-img
-                        :src="
-                          `https://robohash.org/` + item.id + `.png?size=32x32`
-                        "
-                      />
-                    </v-avatar>
-                    <span v-text="item.name"></span>
-                  </v-chip>
-                </template>
-                <template #item="{ item }" color="background">
-                  <v-list-item-avatar color="background">
-                    <v-img
-                      :src="
-                        `https://robohash.org/` + item.id + `.png?size=40x40`
-                      "
-                    />
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.name"></v-list-item-title>
-                    <v-list-item-subtitle
-                      v-text="item.company"
-                    ></v-list-item-subtitle>
-                  </v-list-item-content>
-                </template>
-              </v-autocomplete>
-            </v-col>
-          </v-row>
-          <v-row class="mb-5" align="center">
-            <v-col cols="12" class="pt-4 pb-0">
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-select
-                  v-model="selectedRole"
-                  :items="roles"
-                  item-text="name"
-                  return-object
-                  label="Role"
-                  class="mr-5"
-                  dense
-                  style="width: 40px"
-                >
-                  <template #selection="{ item }">
-                    <span class="caption">
-                      {{ item.name.replace("stream:", "") }}
-                    </span>
-                  </template>
-                  <template #item="{ item }">
-                    <span class="caption">
-                      {{ item.name.replace("stream:", "") }}
-                    </span>
-                  </template>
-                </v-select>
-                <v-btn
-                  class="primary mb-3"
-                  :disabled="
-                    !selectedUsers ||
-                    selectedUsers.length === 0 ||
-                    !selectedRole
-                  "
-                  @click="grantStreamPermission"
-                >
-                  Add collaborators
-                </v-btn>
-              </v-card-actions>
-              <div v-if="selectedRole" class="caption text-right">
-                {{ selectedRole.description }}
-              </div>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12" class="pt-0 pb-0">
-              <div class="subtitle-1 pb-2">Collaborators</div>
-              <div v-for="(user, i) in stream.collaborators" :key="i">
-                <list-item-user
-                  :user="user"
-                  :user-remove-click="revokeStreamPermission"
-                  :is-unique-stream-owner="isUniqueStreamOwner(user.id)"
-                ></list-item-user>
-                <v-divider
-                  v-if="i < stream.collaborators.length - 1"
-                ></v-divider>
-              </div>
-            </v-col>
-          </v-row>
-          <v-row>
-            <v-col cols="12" class="pt-3 pb-0">
-              <v-banner color="secondary" class="white--text" single-line>
-                <v-avatar slot="icon" color="white" size="32">
-                  <v-icon color="secondary">mdi-link</v-icon>
-                </v-avatar>
-
-                Link sharing is
-                <b>ON</b>
-                anyone with a link to this stream is able to view it.
-              </v-banner>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" text @click.native="dialog = false">Close</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <v-card class="" color="background2" :loading="loading">
+    <template slot="progress">
+      <v-progress-linear indeterminate></v-progress-linear>
+    </template>
+    <v-card-title class="pt-10">Add collaborators</v-card-title>
+    <v-card-text>
+      <v-text-field v-model="search" label="Search for a user" />
+      <div v-if="$apollo.loading">Searching.</div>
+      <v-list v-if="userSearch && userSearch.items" dense one-line class="px-0 mx-0">
+        <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
+          <v-list-item-content>
+            <v-list-item-title>No users found.</v-list-item-title>
+            <v-list-item-subtitle>
+              Note: you can search by name as well as email.
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item
+          v-for="item in filteredSearchResults"
+          :key="item.id"
+          class="px-0 mx-0"
+          @click="addCollab(item)"
+        >
+          <v-list-item-avatar>
+            <user-avatar
+              :id="item.id"
+              :name="item.name"
+              :avatar="item.avatar"
+              :size="25"
+              class="ml-1"
+            ></user-avatar>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{ item.name }}</v-list-item-title>
+            <v-list-item-subtitle>
+              {{ item.company ? item.company : 'no company info' }}
+            </v-list-item-subtitle>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-icon>mdi-plus</v-icon>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
+    <v-card-title>Existing collaborators</v-card-title>
+    <v-card-text class="px-0">
+      <v-list>
+        <v-list-item v-for="user in collaborators" :key="user.id">
+          <v-list-item-icon>
+            <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="42" />
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title class="font-weight-bold">{{ user.name }}</v-list-item-title>
+            <v-list-item-subtitle>
+              <!-- Role: {{ user.role.replace('stream:', '') }} -->
+              <v-select
+                v-model="user.role"
+                :items="roleSelectValues"
+                :disabled="user.id === myId"
+                class="py-0 my-0"
+                @change="setUserPermissions(user)"
+              ></v-select>
+            </v-list-item-subtitle>
+          </v-list-item-content>
+          <v-list-item-action></v-list-item-action>
+          <v-list-item-action>
+            <v-btn icon small color="error" @click="removeUser(user)">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-list-item-action>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn color="primary" text @click="$emit('close')">Close</v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 <script>
-import gql from "graphql-tag"
-import serverQuery from "../../graphql/server.gql"
-import streamCollaboratorsQuery from "../../graphql/streamCollaborators.gql"
-import userSearchQuery from "../../graphql/userSearch.gql"
-import ListItemUser from "../ListItemUser"
+import gql from 'graphql-tag'
+import serverQuery from '../../graphql/server.gql'
+import streamCollaboratorsQuery from '../../graphql/streamCollaborators.gql'
+import userSearchQuery from '../../graphql/userSearch.gql'
+import UserAvatar from '../UserAvatar'
 
 export default {
-  components: { ListItemUser },
-  props: ["streamId", "userId"],
+  components: { UserAvatar },
+  props: ['streamId', 'userId'],
   data: () => ({
-    dialog: false,
-    search: "",
+    search: '',
     selectedUsers: null,
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    user: {}
+    user: {},
+    loading: false
   }),
   apollo: {
     stream: {
       prefetch: true,
       query: streamCollaboratorsQuery,
       variables() {
-        // Use vue reactive properties here
         return {
           id: this.streamId
         }
@@ -178,7 +110,6 @@ export default {
     userSearch: {
       query: userSearchQuery,
       variables() {
-        // Use vue reactive properties here
         return {
           query: this.search,
           limit: 25
@@ -195,114 +126,99 @@ export default {
     }
   },
   computed: {
+    roleSelectValues() {
+      if (!this.roles) return []
+      let arr = []
+      for (let role of this.roles) {
+        arr.push({ text: role.name, value: role.name })
+        arr.push({ header: `${role.description}` })
+        arr.push({ divider: true })
+      }
+      return arr
+    },
     roles() {
-      return this.serverInfo.roles
-        .filter((x) => x.resourceTarget === "streams")
-        .reverse()
+      return this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams').reverse()
     },
-    items() {
-      let items = []
-      this.userSearch.items.forEach((item) => {
-        if (this.stream.collaborators.map((x) => x.id).indexOf(item.id) === -1)
-          items.push(item)
-      })
-      return items
-    }
-  },
-  watch: {
-    selectedUsers(val) {
-      //console.log(val)
-      this.search = ""
+    collaborators() {
+      if (!this.stream) return []
+      return this.stream.collaborators.filter((user) => user.id !== this.myId)
     },
-    roles(val) {
-      this.selectedRole = this.roles[0]
+    filteredSearchResults() {
+      if (!this.userSearch) return null
+      let users = []
+      for (let u of this.userSearch.items) {
+        if (u.id === this.myId) continue
+        let indx = this.collaborators.findIndex((eu) => eu.id === u.id)
+        if (indx === -1) users.push(u)
+      }
+      return users
+    },
+    myId() {
+      return localStorage.getItem('uuid')
     }
   },
   methods: {
-    open() {
-      this.dialog = true
-    },
-    //filters out cached items that have been added already
-    //the cache-items prop is REQUIRED when using async items and a multiple prom
-    filter(item) {
-      return this.stream.collaborators.map((x) => x.id).indexOf(item.id) === -1
-    },
-    remove(item) {
-      console.log(item)
-      const index = this.selectedUsers.map((x) => x.id).indexOf(item.id)
-      if (index >= 0) this.selectedUsers.splice(index, 1)
-    },
-    isUniqueStreamOwner(id) {
-      return (
-        this.userId === id &&
-        this.stream.collaborators.filter((x) => x.role === "stream:owner")
-          .length === 1 &&
-        this.stream.collaborators.filter(
-          (x) => x.id === this.userId && x.role === "stream:owner"
-        ).length === 1
-      )
-    },
-    grantStreamPermission() {
-      var promises = []
-
-      this.selectedUsers.forEach((user) => {
-        promises.push(
-          this.$apollo
-            .mutate({
-              mutation: gql`
-                mutation streamGrantPermission(
-                  $permissionParams: StreamGrantPermissionInput!
-                ) {
-                  streamGrantPermission(permissionParams: $permissionParams)
-                }
-              `,
-              variables: {
-                permissionParams: {
-                  streamId: this.streamId,
-                  userId: user.id,
-                  role: this.selectedRole.name
-                }
-              }
-            })
-            .then((data) => {
-              //
-            })
-            .catch((error) => {
-              // Error
-              console.error(error)
-            })
-        )
-      })
-
-      Promise.all(promises).then(() => {
-        this.$apollo.queries.stream.refetch()
-        this.selectedUsers = []
-      })
-    },
-    revokeStreamPermission(id) {
-      this.$apollo
-        .mutate({
+    async removeUser(user) {
+      this.loading = true
+      try {
+        await this.$apollo.mutate({
           mutation: gql`
-            mutation streamRevokePermission(
-              $permissionParams: StreamRevokePermissionInput!
-            ) {
-              streamRevokePermission(permissionParams: $permissionParams)
+            mutation streamRevokePermission($params: StreamRevokePermissionInput!) {
+              streamRevokePermission(permissionParams: $params)
             }
           `,
           variables: {
-            permissionParams: {
+            params: {
               streamId: this.streamId,
-              userId: id
+              userId: user.id
             }
           }
         })
-        .then((data) => {
-          this.$apollo.queries.stream.refetch()
+        let index = this.stream.collaborators.findIndex((u) => u.id === user.id)
+        if (index !== -1) {
+          this.stream.collaborators.splice(index, 1)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+      this.$apollo.queries.stream.refetch()
+      this.loading = false
+    },
+    async setUserPermissions(user) {
+      this.loading = true
+      await this.grantPermissionUser(user)
+      this.loading = false
+      this.$apollo.queries.stream.refetch()
+    },
+    async addCollab(user) {
+      this.loading = true
+      this.search = null
+      this.userSearch.items = null
+      user.role = 'stream:contributor'
+      await this.grantPermissionUser(user)
+      this.stream.collaborators.unshift(user)
+      this.loading = false
+      this.$apollo.queries.stream.refetch()
+    },
+    async grantPermissionUser(user) {
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation grantPerm($params: StreamGrantPermissionInput!) {
+              streamGrantPermission(permissionParams: $params)
+            }
+          `,
+          variables: {
+            params: {
+              streamId: this.streamId,
+              userId: user.id,
+              role: user.role
+            }
+          }
         })
-        .catch((error) => {
-          // Error
-          console.error(error)
-        })
+      } catch (e) {
+        console.log(e)
+      }
     }
   }
 }

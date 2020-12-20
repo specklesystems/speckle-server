@@ -1,17 +1,9 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
     <v-card class="pa-4" color="background2">
-      <v-card-title class="subtitle-1">
-        {{ isEdit ? `Edit` : `New` }} Stream
-      </v-card-title>
-
+      <v-card-title class="subtitle-1">{{ isEdit ? `Edit` : `New` }} Stream</v-card-title>
       <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-form
-          ref="form"
-          v-model="valid"
-          lazy-validation
-          @submit.prevent="agree"
-        >
+        <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
           <v-container>
             <v-row>
               <v-col cols="12" class="pb-0">
@@ -29,43 +21,25 @@
               <v-col cols="12" class="pt-0 pb-0">
                 <v-switch
                   v-model="stream.isPublic"
-                  :label="
-                    `Link sharing ` +
-                    (stream.isPublic ? `on` : `off` + ` (not working)`)
-                  "
+                  :label="`Link sharing ` + (stream.isPublic ? `on` : `off` + ` (not working)`)"
                 ></v-switch>
               </v-col>
             </v-row>
             <v-row v-if="isEdit" align="center">
               <v-col cols="12" class="pt-2 pb-2">
                 <div v-if="!pendingDelete">
-                  <v-btn
-                    color="error"
-                    depressed
-                    class="mt-5"
-                    @click="pendingDelete = true"
-                  >
+                  <v-btn color="error" depressed class="mt-5" @click="pendingDelete = true">
                     Delete Stream
                   </v-btn>
-                  <p
-                    class="ml-4 mt-0 pt-0 caption"
-                    style="display: inline-flex; width: 250px"
-                  >
+                  <p class="ml-4 mt-0 pt-0 caption" style="display: inline-flex; width: 250px">
                     Delete this stream forever, no going back here!
                   </p>
                 </div>
 
                 <div v-if="pendingDelete">
-                  <v-btn color="error" depressed @click.native="doDelete">
-                    Yes
-                  </v-btn>
-                  <v-btn class="ml-5" depressed @click="pendingDelete = false">
-                    No
-                  </v-btn>
-                  <p
-                    class="ml-4 mt-0 pt-0 caption"
-                    style="display: inline-flex; width: 150px"
-                  >
+                  <v-btn color="error" depressed @click.native="doDelete">Yes</v-btn>
+                  <v-btn class="ml-5" depressed @click="pendingDelete = false">No</v-btn>
+                  <p class="ml-4 mt-0 pt-0 caption" style="display: inline-flex; width: 150px">
                     Are you sure?
                   </p>
                 </div>
@@ -107,7 +81,7 @@ export default {
     }
   },
   watch: {
-    "stream.name"(val) {
+    'stream.name'(val) {
       this.nameRules = []
     }
   },
@@ -139,10 +113,9 @@ export default {
     },
     agree() {
       this.nameRules = [
-        (v) => !!v || "Streams need a name too!",
-        (v) =>
-          (v && v.length <= 150) || "Name must be less than 150 characters",
-        (v) => (v && v.length >= 3) || "Name must be at least 3 characters"
+        (v) => !!v || 'Streams need a name too!',
+        (v) => (v && v.length <= 150) || 'Name must be less than 150 characters',
+        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ]
 
       let self = this

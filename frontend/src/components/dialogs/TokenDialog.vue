@@ -11,9 +11,8 @@
       <v-form v-show="!fullTokenResult">
         <h3 class="mt-3">Token Scopes</h3>
         <p>
-          It's good practice to limit the scopes of your token to the absolute
-          minimum. For example, if your application or script will only read and
-          write streams, select just those scopes.
+          It's good practice to limit the scopes of your token to the absolute minimum. For example,
+          if your application or script will only read and write streams, select just those scopes.
         </p>
         <v-select
           v-model="selectedScopes"
@@ -24,14 +23,12 @@
           chips
           :menu-props="{ maxWidth: 420 }"
         ></v-select>
-        <p v-if="selectedScopes.length === 0" class="error--text">
-          Please select some scopes.
-        </p>
+        <p v-if="selectedScopes.length === 0" class="error--text">Please select some scopes.</p>
         <br />
         <h3 class="mt-3">Token Name</h3>
         <p>
-          A name to remember this token by - can be the name of the script or
-          application you're planning to use it in!
+          A name to remember this token by - can be the name of the script or application you're
+          planning to use it in!
         </p>
         <v-text-field
           v-model="name"
@@ -52,8 +49,8 @@
         </div>
         <v-alert type="info">
           <b>Note:</b>
-          This is the first and last time you will be able to see the full
-          token. Please copy paste it somewhere safe now.
+          This is the first and last time you will be able to see the full token. Please copy paste
+          it somewhere safe now.
         </v-alert>
         <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
       </div>
@@ -61,7 +58,7 @@
   </v-card>
 </template>
 <script>
-import gql from "graphql-tag"
+import gql from 'graphql-tag'
 
 export default {
   props: {
@@ -89,8 +86,8 @@ export default {
     return {
       name: null,
       nameRules: [
-        (v) => !!v || "Name is required",
-        (v) => (v && v.length <= 60) || "Name must be less than 60 characters"
+        (v) => !!v || 'Name is required',
+        (v) => (v && v.length <= 60) || 'Name must be less than 60 characters'
       ],
       selectedScopes: [],
       fullTokenResult: null
@@ -113,7 +110,7 @@ export default {
       this.fullTokenResult = null
       this.name = null
       this.selectedScopes = []
-      this.$emit("close")
+      this.$emit('close')
     },
     async createToken() {
       try {
@@ -133,7 +130,7 @@ export default {
         this.fullTokenResult = res.data.apiTokenCreate
         this.name = null
         this.selectedScopes = []
-        this.$emit("token-added")
+        this.$emit('token-added')
       } catch (e) {
         // TODO: how do we catch and display errors?
         console.log(e)
