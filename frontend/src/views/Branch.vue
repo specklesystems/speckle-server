@@ -12,6 +12,37 @@
         <v-card-text>
           {{ branch.description }}
         </v-card-text>
+      </v-card>
+      <v-card>
+        <v-expansion-panels flat focusable>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              <span>How to use this branch in desktop clients</span>
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <p class="caption mt-4">
+                <b>Grasshopper & Dynamo:</b>
+                Copy and paste this page's url into a text panel and connect
+                that to the "Stream" input of a receiver component or sender
+                component.
+                <b>Senders</b>
+                will push commits to this branch, whereas
+                <b>receivers</b>
+                will always pull the latest commit from this branch.
+              </p>
+              <p class="caption">
+                <b>Other clients:</b>
+                Select this branch from the UI. You will now be able to either
+                <b>send</b>
+                (push commits to), or
+                <b>receive</b>
+                the latest commit or a specified one.
+              </p>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </v-card>
+      <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
         <v-subheader class="text-uppercase">
           Commits ({{ branch.commits.totalCount }})
         </v-subheader>

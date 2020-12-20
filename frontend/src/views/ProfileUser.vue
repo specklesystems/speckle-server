@@ -24,12 +24,12 @@
   </v-container>
 </template>
 <script>
-import userById from "../graphql/userById.gql"
-import UserInfoCard from "../components/UserInfoCard"
-import ListItemStream from "../components/ListItemStream"
+import userById from '../graphql/userById.gql'
+import UserInfoCard from '../components/UserInfoCard'
+import ListItemStream from '../components/ListItemStream'
 
 export default {
-  name: "ProfileUser",
+  name: 'ProfileUser',
   components: { UserInfoCard, ListItemStream },
   data: () => ({}),
   apollo: {
@@ -45,8 +45,8 @@ export default {
   computed: {},
   created() {
     // Move to self profile
-    if (this.$route.params.userId === localStorage.getItem("uuid")) {
-      this.$router.replace({ path: "/profile" })
+    if (this.$route.params.userId === localStorage.getItem('uuid')) {
+      this.$router.replace({ path: '/profile' })
     }
   },
   methods: {}

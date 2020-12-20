@@ -39,13 +39,12 @@
             <v-expansion-panel-content>
               <p class="caption mt-4">
                 <b>Grasshopper & Dynamo:</b>
-                Copy and paste this page's url into a text panel and connect
-                that to the "Stream" input of a receiver component.
+                Copy and paste this page's url into a text panel and connect that to the "Stream"
+                input of a receiver component.
               </p>
               <p class="caption">
                 <b>Other clients:</b>
-                Switch to this commit's branch, and then select it from commits
-                the dropdown.
+                Switch to this commit's branch, and then select it from commits the dropdown.
               </p>
             </v-expansion-panel-content>
           </v-expansion-panel>
@@ -70,15 +69,15 @@
   </v-row>
 </template>
 <script>
-import gql from "graphql-tag"
-import SidebarStream from "../components/SidebarStream"
-import UserAvatar from "../components/UserAvatar"
-import ObjectSpeckleViewer from "../components/ObjectSpeckleViewer"
-import streamCommitQuery from "../graphql/commit.gql"
-import CommitDialog from "../components/dialogs/CommitDialog"
+import gql from 'graphql-tag'
+import SidebarStream from '../components/SidebarStream'
+import UserAvatar from '../components/UserAvatar'
+import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
+import streamCommitQuery from '../graphql/commit.gql'
+import CommitDialog from '../components/dialogs/CommitDialog'
 
 export default {
-  name: "Commit",
+  name: 'Commit',
   components: { SidebarStream, CommitDialog, UserAvatar, ObjectSpeckleViewer },
   data: () => ({}),
   apollo: {
@@ -98,43 +97,41 @@ export default {
     commitDate() {
       if (!this.stream.commit) return null
       let date = new Date(this.stream.commit.createdAt)
-      let options = { year: "numeric", month: "long", day: "numeric" }
+      let options = { year: 'numeric', month: 'long', day: 'numeric' }
 
       return date.toLocaleString(undefined, options)
     },
     commitObject() {
       return {
-        speckle_type: "reference",
+        speckle_type: 'reference',
         referencedId: this.stream.commit.referencedObject
       }
     }
   },
   methods: {
     editCommit() {
-      this.$refs.commitDialog
-        .open(this.stream.commit, this.stream.id)
-        .then((dialog) => {
-          if (!dialog.result) return
+      this.$refs.commitDialog.open(this.stream.commit, this.stream.id).then((dialog) => {
+        if (!dialog.result) return
 
-          this.$apollo
-            .mutate({
-              mutation: gql`
-                mutation commitUpdate($myCommit: CommitUpdateInput!) {
-                  commitUpdate(commit: $myCommit)
-                }
-              `,
-              variables: {
-                myCommit: { ...dialog.commit }
+        this.$apollo
+          .mutate({
+            mutation: gql`
+              mutation commitUpdate($myCommit: CommitUpdateInput!) {
+                commitUpdate(commit: $myCommit)
               }
-            })
-            .then((data) => {
-              this.$apollo.queries.stream.refetch()
-            })
-            .catch((error) => {
-              // Error
-              console.error(error)
-            })
-        })
+            `,
+            variables: {
+              myCommit: { ...dialog.commit }
+            }
+          })
+          .then((data) => {
+            this.$apollo.queries.stream.refetch()
+          })
+          .catch((error) => {
+            // Error
+            console.error(error)
+          })
+      })
     }
   }
 }

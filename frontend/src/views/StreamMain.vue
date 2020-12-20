@@ -6,18 +6,14 @@
     <v-col v-else sm="12">
       <v-card rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
         <v-card-title v-if="!stream.description">Description</v-card-title>
-        <v-card-text v-if="!stream.description">
-          No description provided.
-        </v-card-text>
+        <v-card-text v-if="!stream.description">No description provided.</v-card-text>
         <v-card-text
           v-if="stream.description"
           class="marked-preview"
           v-html="compiledStreamDescription"
         ></v-card-text>
         <v-card-actions v-if="userRole === 'owner'">
-          <v-btn small @click="dialogDescription = true">
-            Edit Description
-          </v-btn>
+          <v-btn small @click="dialogDescription = true">Edit Description</v-btn>
           <v-dialog v-model="dialogDescription">
             <stream-description-dialog
               :id="stream.id"
@@ -34,26 +30,19 @@
           Branches
         </v-card-title>
         <v-card-text>
-          Branches allow you to manage parallel versions of data in a single
-          stream, by organising them within a topic.
+          Branches allow you to manage parallel versions of data in a single stream, by organising
+          them within a topic.
         </v-card-text>
         <v-card-text>
           <v-list two-line color="transparent">
             <template v-for="item in branches">
-              <v-list-item
-                :key="item.id"
-                :to="`/streams/${stream.id}/branches/${item.name}`"
-              >
+              <v-list-item :key="item.id" :to="`/streams/${stream.id}/branches/${item.name}`">
                 <v-list-item-content>
                   <v-list-item-title>
                     <b>{{ item.name }}</b>
                   </v-list-item-title>
                   <v-list-item-subtitle>
-                    {{
-                      item.description
-                        ? item.description
-                        : "no description provided"
-                    }}
+                    {{ item.description ? item.description : 'no description provided' }}
                   </v-list-item-subtitle>
                 </v-list-item-content>
                 <v-list-item-action>
@@ -65,26 +54,17 @@
               </v-list-item>
             </template>
           </v-list>
-          <v-btn
-            v-if="userRole === 'contributor' || userRole === 'owner'"
-            small
-            @click="newBranch"
-          >
+          <v-btn v-if="userRole === 'contributor' || userRole === 'owner'" small @click="newBranch">
             new branch
           </v-btn>
-          <branch-dialog
-            ref="branchDialog"
-            :branches="branches"
-          ></branch-dialog>
+          <branch-dialog ref="branchDialog" :branches="branches"></branch-dialog>
         </v-card-text>
       </v-card>
 
       <v-card rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
         <v-card-title>
           Latest activity &nbsp;&nbsp;&nbsp;
-          <span class="font-weight-light ml-2 body-1">
-            ({{ commits.totalCount }} total)
-          </span>
+          <span class="font-weight-light ml-2 body-1">({{ commits.totalCount }} total)</span>
         </v-card-title>
         <v-card-text>All the commits from this stream are below.</v-card-text>
         <v-card-text v-if="stream.commits">
@@ -100,16 +80,16 @@
   </v-row>
 </template>
 <script>
-import marked from "marked"
-import DOMPurify from "dompurify"
-import gql from "graphql-tag"
-import BranchDialog from "../components/dialogs/BranchDialog"
-import StreamDescriptionDialog from "../components/dialogs/StreamDescriptionDialog"
-import ListItemCommit from "../components/ListItemCommit"
-import streamCommitsQuery from "../graphql/streamCommits.gql"
+import marked from 'marked'
+import DOMPurify from 'dompurify'
+import gql from 'graphql-tag'
+import BranchDialog from '../components/dialogs/BranchDialog'
+import StreamDescriptionDialog from '../components/dialogs/StreamDescriptionDialog'
+import ListItemCommit from '../components/ListItemCommit'
+import streamCommitsQuery from '../graphql/streamCommits.gql'
 
 export default {
-  name: "StreamMain",
+  name: 'StreamMain',
   components: {
     BranchDialog,
     ListItemCommit,
@@ -144,7 +124,7 @@ export default {
   },
   computed: {
     compiledStreamDescription() {
-      if (!this.stream.description) return ""
+      if (!this.stream.description) return ''
       let md = marked(this.stream.description)
       return DOMPurify.sanitize(md)
     },
@@ -154,7 +134,7 @@ export default {
     }
   },
   mounted() {
-    this.$matomo && this.$matomo.trackPageView("streams/single")
+    this.$matomo && this.$matomo.trackPageView('streams/single')
   },
   methods: {
     closeDescription(newDescription) {
@@ -164,7 +144,7 @@ export default {
     newBranch() {
       this.$refs.branchDialog.open().then((dialog) => {
         if (!dialog.result) return
-        
+
         this.$apollo
           .mutate({
             mutation: gql`

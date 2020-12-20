@@ -5,26 +5,24 @@
         <v-card rounded="lg" class="pa-5" elevation="0" color="background">
           <v-card-title>Streams</v-card-title>
           <v-card-text>
-            You have {{ streams.totalCount }} stream{{
-              streams.totalCount == 1 ? `` : `s`
-            }}
+            You have {{ streams.totalCount }} stream{{ streams.totalCount == 1 ? `` : `s` }}
             in total.
           </v-card-text>
           <v-card-actions>
-            <v-btn color="primary" elevation="0" block @click="newStream">
+            <v-btn color="primary" elevation="0" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
               new stream
             </v-btn>
           </v-card-actions>
-          <stream-dialog ref="streamDialog"></stream-dialog>
+          <v-dialog v-model="newStreamDialog" max-width="500">
+            <new-stream-dialog :open="newStreamDialog" />
+          </v-dialog>
         </v-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="7">
         <v-card class="mt-4" elevation="0" color="transparent">
           <div v-if="$apollo.loading">
-            <v-skeleton-loader
-              type="card, article, article"
-            ></v-skeleton-loader>
+            <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
           </div>
           <v-card-text v-if="streams && streams.items">
             <div v-for="(stream, i) in streams.items" :key="i">
@@ -44,29 +42,30 @@
   </v-container>
 </template>
 <script>
-import gql from "graphql-tag"
-import ListItemStream from "../components/ListItemStream"
-import StreamDialog from "../components/dialogs/StreamDialog"
-import streamsQuery from "../graphql/streams.gql"
-import InfiniteLoading from "vue-infinite-loading"
+import gql from 'graphql-tag'
+import ListItemStream from '../components/ListItemStream'
+import NewStreamDialog from '../components/dialogs/NewStreamDialog'
+import streamsQuery from '../graphql/streams.gql'
+import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
-  name: "Streams",
-  components: { ListItemStream, StreamDialog, InfiniteLoading },
+  name: 'Streams',
+  components: { ListItemStream, NewStreamDialog, InfiniteLoading },
   apollo: {
     streams: {
       prefetch: true,
       query: streamsQuery,
-      fetchPolicy: "cache-and-network" //https://www.apollographql.com/docs/react/data/queries/
+      fetchPolicy: 'cache-and-network' //https://www.apollographql.com/docs/react/data/queries/
     }
   },
   data: () => ({
-    streams: []
+    streams: [],
+    newStreamDialog: false
   }),
   computed: {},
   watch: {},
   mounted() {
-    this.$matomo && this.$matomo.trackPageView("streams")
+    this.$matomo && this.$matomo.trackPageView('streams')
   },
   methods: {
     infiniteHandler($state) {

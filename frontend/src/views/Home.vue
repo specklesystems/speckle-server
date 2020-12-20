@@ -2,30 +2,29 @@
   <v-container>
     <v-row>
       <v-col sm="12" lg="3" md="4" xl="2" class="d-none d-md-flex">
-        <div>
+        <v-card rounded="lg" class="pa-4" elevation="0" color="transparent">
           <server-info-card></server-info-card>
-          <v-card class="elevation-0" color="transparent">
-            <v-card-text>
-              <v-btn
-                href="https://twitter.com/specklesystems"
-                target="_blank"
-                text
-                small
-                style="margin-left: -10px"
-              >
-                <v-icon small class="mr-2">mdi-twitter</v-icon>
-                Speckle on Twitter!
-              </v-btn>
-            </v-card-text>
-          </v-card>
-        </div>
+          <v-card-text>
+            <v-btn color="primary" elevation="0" block @click="newStreamDialog = true">
+              <v-icon small class="mr-1">mdi-plus-box</v-icon>
+              new stream
+            </v-btn>
+            <br />
+            <v-dialog v-model="newStreamDialog" max-width="500">
+              <new-stream-dialog :open="newStreamDialog" />
+            </v-dialog>
+
+            <v-btn href="https://twitter.com/specklesystems" target="_blank" text small>
+              <v-icon small class="mr-2">mdi-twitter</v-icon>
+              Speckle on Twitter!
+            </v-btn>
+          </v-card-text>
+        </v-card>
       </v-col>
-      <v-col v-if="$apollo.loading" sm="12" md="8" lg="9">
-        <v-skeleton-loader
-          type="list-item-two-line, list-item-three-line"
-        ></v-skeleton-loader>
+      <v-col v-if="$apollo.loading" sm="12" md="8" lg="9" xl="7">
+        <v-skeleton-loader type="list-item-two-line, list-item-three-line"></v-skeleton-loader>
       </v-col>
-      <v-col v-if="recentActivity && !$apollo.loading" sm="12" md="8" lg="9">
+      <v-col v-if="recentActivity && !$apollo.loading" sm="12" md="8" lg="9" xl="7">
         <v-row>
           <v-col class="pt-0">
             <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
@@ -65,39 +64,32 @@
   </v-container>
 </template>
 <script>
-import ServerInfoCard from "../components/ServerInfoCard"
-import FeedStream from "../components/FeedStream"
-import FeedCommit from "../components/FeedCommit"
-import userFeedQuery from "../graphql/userFeed.gql"
+import ServerInfoCard from '../components/ServerInfoCard'
+import FeedStream from '../components/FeedStream'
+import FeedCommit from '../components/FeedCommit'
+import userFeedQuery from '../graphql/userFeed.gql'
+import NewStreamDialog from '../components/dialogs/NewStreamDialog'
 
 export default {
-  name: "Home",
-  components: { ServerInfoCard, FeedStream, FeedCommit },
+  name: 'Home',
+  components: { ServerInfoCard, FeedStream, FeedCommit, NewStreamDialog },
   apollo: {
     user: {
       prefetch: true,
       query: userFeedQuery
     }
   },
-  data: () => ({ selectedActivity: 0, user: {} }),
+  data: () => ({ selectedActivity: 0, user: {}, newStreamDialog: false }),
   computed: {
     recentActivity() {
       let activity = []
       let activityGrouped = []
 
-      if (
-        this.user.streams &&
-        this.user.streams.items &&
-        this.selectedActivity != 2
-      ) {
+      if (this.user.streams && this.user.streams.items && this.selectedActivity != 2) {
         activity.push(...this.user.streams.items)
       }
 
-      if (
-        this.user.commits &&
-        this.user.commits.items &&
-        this.selectedActivity != 1
-      ) {
+      if (this.user.commits && this.user.commits.items && this.selectedActivity != 1) {
         activity.push(...this.user.commits.items)
       }
 
@@ -114,7 +106,7 @@ export default {
         }
 
         if (
-          group[0].__typename === "CommitCollectionUserNode" &&
+          group[0].__typename === 'CommitCollectionUserNode' &&
           group[0].streamId === activity[i].streamId
         ) {
           group.push(activity[i])
@@ -125,7 +117,7 @@ export default {
               streamId: group[0].streamId,
               createdAt: group[0].createdAt,
               message: group[0].message,
-              __typename: "CommitCollectionUserNode",
+              __typename: 'CommitCollectionUserNode',
               items: group
             })
           } else activityGrouped.push(...group)
@@ -141,7 +133,7 @@ export default {
               streamId: group[0].streamId,
               createdAt: group[0].createdAt,
               message: group[0].message,
-              __typename: "CommitCollectionUserNode",
+              __typename: 'CommitCollectionUserNode',
               items: group
             })
           } else activityGrouped.push(...group)
