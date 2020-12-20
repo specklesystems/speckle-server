@@ -3,8 +3,8 @@ extend type Stream {
 }
 
 type Object {
-  id: String! 
-  speckleType: String!
+  id: String!
+  speckleType: String
   applicationId: String
   createdAt: DateTime
   totalChildrenCount: Int
@@ -17,10 +17,10 @@ type Object {
   **NOTE**: Providing any of the two last arguments ( `query`, `orderBy` ) will trigger a different code branch that executes a much more expensive SQL query. It is not recommended to do so for basic clients that are interested in purely getting all the objects of a given commit.
   """
   children(
-    limit: Int! = 100, 
-    depth: Int! = 50, 
-    select: [String], 
-    cursor: String, 
+    limit: Int! = 100,
+    depth: Int! = 50,
+    select: [String],
+    cursor: String,
     query: [JSONObject!],
     orderBy: JSONObject  ): ObjectCollection!
 }
@@ -37,7 +37,7 @@ extend type Mutation {
 
 input ObjectCreateInput {
   """
-  The stream against which these objects will be created. 
+  The stream against which these objects will be created.
   """
   streamId: String!
   """

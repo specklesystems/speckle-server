@@ -20,7 +20,12 @@ module.exports = {
       return await createPersonalAccessToken( context.userId, args.token.name, args.token.scopes, args.token.lifespan )
     },
     async apiTokenRevoke( parent, args, context, info ) {
-      await revokeToken( args.token.split( ' ' )[ 1 ], context.userId ) // let's not revoke other people's tokens
+      let id = null
+      if ( args.token.toLowerCase().includes( "bearer" ) )
+        id = args.token.split( ' ' )[ 1 ]
+      else
+        id = args.token
+      await revokeToken( id, context.userId ) // let's not revoke other people's tokens
       return true
     }
   }

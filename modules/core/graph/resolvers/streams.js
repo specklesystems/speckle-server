@@ -93,7 +93,7 @@ module.exports = {
     async streamUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
-      let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description }
+      let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description, isPublic: args.stream.isPublic }
 
       await updateStream( update )
 

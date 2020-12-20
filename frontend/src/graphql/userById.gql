@@ -1,0 +1,34 @@
+query User($id: String!){
+  user(id: $id) {
+    id
+    email
+    name
+    bio
+    company
+    avatar
+    streams {
+      totalCount
+      items {
+        id
+        name
+        isPublic
+        createdAt
+        updatedAt
+        collaborators{
+          id
+          name
+          avatar
+        }
+        commits {
+          totalCount
+        }
+        branches {
+          totalCount
+        }
+      }
+    }
+    commits {
+      totalCount
+    }
+  }
+}

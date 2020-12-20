@@ -14,7 +14,7 @@ type ApiToken {
   scopes: [String]!
   createdAt: DateTime! #date
   lifespan: BigInt!
-  lastUsed: String! #date
+  lastUsed: DateTime! #date
 }
 
 input ApiTokenCreateInput {

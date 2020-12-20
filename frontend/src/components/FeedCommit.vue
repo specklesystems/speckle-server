@@ -1,13 +1,7 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <v-avatar class="mt-10" color="background2" size="40">
-        <v-img v-if="user.avatar" :src="user.avatar" />
-        <v-img
-          v-else
-          :src="`https://robohash.org/` + user.id + `.png?size=40x40`"
-        />
-      </v-avatar>
+      <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="30" />
     </div>
     <div class="ml-12">
       <v-row class="caption">
@@ -15,9 +9,7 @@
           <v-icon small>mdi-history</v-icon>
           &nbsp; You have
           <strong>
-            <span v-if="commit.items">
-              {{ commit.items.length }} new commits
-            </span>
+            <span v-if="commit.items">{{ commit.items.length }} new commits</span>
             <span v-else>a new commit</span>
           </strong>
           in
@@ -33,9 +25,11 @@
 
       <v-card class="mb-3" elevation="0" rounded="lg" color="background2">
         <v-card-title v-if="!commit.items" class="subtitle-2">
-          {{ commit.message }}
+          <router-link :to="`streams/${commit.streamId}/commits/${commit.id}`">
+            {{ commit.message }}
+          </router-link>
         </v-card-title>
-        <v-expansion-panels v-else flat color="background2">
+        <v-expansion-panels v-else multiple :value="expando" flat color="background2">
           <v-expansion-panel>
             <v-expansion-panel-header class="pl-4" color="background2">
               <span class="subtitle-2">
@@ -44,7 +38,11 @@
             </v-expansion-panel-header>
             <v-expansion-panel-content color="background2">
               <v-list dense color="background2">
-                <v-list-item v-for="(item, i) in commit.items" :key="i">
+                <v-list-item
+                  v-for="(item, i) in commit.items"
+                  :key="i"
+                  :to="`streams/${item.streamId}/commits/${item.id}`"
+                >
                   <div style="width: 100%">
                     <v-row class="caption">
                       <v-col>
@@ -67,7 +65,10 @@
   </div>
 </template>
 <script>
+import UserAvatar from './UserAvatar'
+
 export default {
+  components: { UserAvatar },
   props: {
     commit: {
       type: Object,
@@ -80,6 +81,11 @@ export default {
       default: function () {
         return {}
       }
+    }
+  },
+  data() {
+    return {
+      expando: [0]
     }
   }
 }

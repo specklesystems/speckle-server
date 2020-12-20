@@ -1,13 +1,7 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <v-avatar class="mt-10" color="background2" size="40">
-        <v-img v-if="user.avatar" :src="user.avatar" />
-        <v-img
-          v-else
-          :src="`https://robohash.org/` + user.id + `.png?size=40x40`"
-        />
-      </v-avatar>
+      <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="30" />
     </div>
     <div class="ml-12">
       <v-row class="caption">
@@ -27,9 +21,9 @@
                 {{ stream.name }}
               </router-link>
             </v-card-title>
-            <v-card-subtitle>
+            <!-- <v-card-subtitle>
               {{ stream.description }}
-            </v-card-subtitle>
+            </v-card-subtitle> -->
           </v-col>
 
           <v-col cols="5" class="caption text-right">
@@ -80,16 +74,8 @@
               <span>{{ stream.collaborators.length }}</span>
 
               <span class="ma-2"></span>
-              <v-icon
-                v-if="stream.isPublic"
-                v-tooltip="`Link sharing on`"
-                small
-              >
-                mdi-link
-              </v-icon>
-              <v-icon v-else v-tooltip="`Link sharing off`" small>
-                mdi-link-lock
-              </v-icon>
+              <v-icon v-if="stream.isPublic" v-tooltip="`Link sharing on`" small>mdi-link</v-icon>
+              <v-icon v-else v-tooltip="`Link sharing off`" small>mdi-link-lock</v-icon>
             </div>
           </v-col>
         </v-row>
@@ -98,10 +84,11 @@
   </div>
 </template>
 <script>
-import BtnClickCopy from "./BtnClickCopy"
+import BtnClickCopy from './BtnClickCopy'
+import UserAvatar from './UserAvatar'
 
 export default {
-  components: { BtnClickCopy },
+  components: { BtnClickCopy, UserAvatar },
   props: {
     stream: {
       type: Object,

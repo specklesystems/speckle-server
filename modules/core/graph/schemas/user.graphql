@@ -52,4 +52,5 @@ input UserUpdateInput {
   name: String
   company: String
   bio: String
+  avatar: String
 }

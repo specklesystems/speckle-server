@@ -1,27 +1,13 @@
 query Stream($streamid: String!, $id: String!) {
   stream(id: $streamid) {
     id
-    name
-    description
-    isPublic
-    createdAt
-    updatedAt
-    collaborators {
-      id
-      name
-      role
-    }
-    branches {
-      totalCount
-    }
-    commits {
-      totalCount
-    }
     commit(id: $id) {
       id
       message
+      referencedObject
       authorName
       authorId
+      authorAvatar
       createdAt
     }
   }

@@ -1,77 +1,127 @@
-import Vue from "vue"
-import VueRouter from "vue-router"
+import Vue from 'vue'
+import VueRouter from 'vue-router'
 
-Vue.use( VueRouter )
+Vue.use(VueRouter)
 
-const routes = [ {
-    path: "/",
-    name: "home",
+const routes = [
+  {
+    path: '/',
+    name: 'home',
     meta: {
-      title: "Home | Speckle"
+      title: 'Home | Speckle'
     },
-    component: ( ) => import( "../views/Home.vue" )
+    component: () => import('../views/Home.vue')
   },
   {
-    path: "/streams",
-    name: "streams",
+    path: '/streams',
+    name: 'streams',
     meta: {
-      title: "Streams | Speckle"
+      title: 'Streams | Speckle'
     },
-    component: ( ) => import( "../views/Streams.vue" )
+    component: () => import('../views/Streams.vue')
   },
   {
-    path: "/streams/:streamId",
-    name: "stream",
+    path: '/streams/:streamId',
     meta: {
-      title: "Stream | Speckle"
+      title: 'Stream | Speckle'
     },
-    component: ( ) => import( "../views/Stream.vue" )
+    component: () => import('../views/Stream.vue'),
+    children: [
+      {
+        path: '',
+        name: 'stream',
+        meta: {
+          title: 'Stream | Speckle'
+        },
+        component: () => import('../views/StreamMain.vue')
+      },
+      {
+        path: 'branches/:branchName',
+        name: 'branch',
+        meta: {
+          title: 'Branch | Speckle'
+        },
+        component: () => import('../views/Branch.vue')
+      },
+      {
+        path: 'commits/:commitId',
+        name: 'commit',
+        meta: {
+          title: 'Commit | Speckle'
+        },
+        component: () => import('../views/Commit.vue')
+      },
+      {
+        path: 'objects/:objectId',
+        name: 'objects',
+        meta: {
+          title: 'Object | Speckle'
+        },
+        component: () => import('../views/Object.vue')
+      }
+    ]
   },
   {
-    path: "/streams/:streamId/commits/:commitId",
-    name: "commit",
+    path: '/profile',
+    name: 'profile',
     meta: {
-      title: "Commit | Speckle"
+      title: 'Your Profile | Speckle'
     },
-    component: ( ) => import( "../views/Commit.vue" )
+    component: () => import('../views/Profile.vue')
   },
   {
-    path: "/help",
-    name: "help",
+    path: '/profile/:userId',
+    name: 'user profile',
     meta: {
-      title: "Help | Speckle"
+      title: 'User Profile | Speckle'
     },
-    component: ( ) => import( "../views/Help.vue" )
+    component: () => import('../views/ProfileUser.vue')
   },
   {
-    path: "/about",
-    name: "about",
+    path: '/help',
+    name: 'help',
     meta: {
-      title: "About | Speckle"
+      title: 'Help | Speckle'
     },
-    component: ( ) => import( "../views/About.vue" )
+    component: () => import('../views/Help.vue')
   },
   {
-    path: "*",
-    name: "notfound",
+    path: '/about',
+    name: 'about',
     meta: {
-      title: "Not Found | Speckle"
+      title: 'About | Speckle'
     },
-    component: ( ) => import( "../views/NotFound.vue" )
+    component: () => import('../views/About.vue')
+  },
+  {
+    path: '/error',
+    name: 'error',
+    meta: {
+      title: 'Error | Speckle'
+    },
+    component: () => import('../views/Error.vue')
+  },
+  {
+    path: '*',
+    name: 'notfound',
+    meta: {
+      title: 'Not Found | Speckle'
+    },
+    component: () => import('../views/NotFound.vue')
   }
 ]
 
-const router = new VueRouter( {
-  mode: "history",
+const router = new VueRouter({
+  mode: 'history',
   base: process.env.BASE_URL,
   routes
-} )
+})
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
-router.afterEach( ( to, from ) => {
-  Vue.nextTick( ( ) => {
-    document.title = ( to.meta && to.meta.title ) || "Speckle"
-  } )
-} )
+router.afterEach((to, from) => {
+  Vue.nextTick(() => {
+    document.title = (to.meta && to.meta.title) || 'Speckle'
+  })
+})
 
 export default router

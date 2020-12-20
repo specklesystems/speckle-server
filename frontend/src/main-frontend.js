@@ -13,11 +13,16 @@ Vue.config.productionTip = false
 import VueTimeago from 'vue-timeago'
 Vue.use( VueTimeago, { locale: 'en' } )
 
+import VueFilterDateParse from '@vuejs-community/vue-filter-date-parse'
+Vue.use(VueFilterDateParse)
+
+import VueFilterDateFormat from '@vuejs-community/vue-filter-date-format'
+Vue.use(VueFilterDateFormat)
+
 import VTooltip from 'v-tooltip'
 Vue.use( VTooltip, { defaultDelay: 300 } )
 
 import VueMatomo from 'vue-matomo'
-
 
 /* Semicolon of Doom */
 ;

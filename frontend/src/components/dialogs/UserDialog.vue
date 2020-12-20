@@ -1,121 +1,107 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card class="pa-4" color="background2">
-      <v-card-title class="subtitle-1">Edit Profile</v-card-title>
-
-      <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-form
-          ref="form"
-          v-model="valid"
-          lazy-validation
-          @submit.prevent="agree"
-        >
-          <v-container>
-            <v-row>
-              <v-col cols="12" class="pb-0">
-                <v-text-field
-                  v-model="user.name"
-                  label="Name"
-                  :rules="nameRules"
-                  required
-                  filled
-                  autofocus
-                ></v-text-field>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" class="pt-0 pb-0">
-                <v-text-field
-                  v-model="user.company"
-                  filled
-                  label="Company"
-                ></v-text-field>
-              </v-col>
-            </v-row>
-            <v-row>
-              <v-col cols="12" class="pt-0 pb-0">
-                <v-textarea
-                  v-model="user.bio"
-                  filled
-                  rows="2"
-                  label="Bio"
-                ></v-textarea>
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-form>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn :disabled="!valid" color="primary" text @click.native="agree">
-          Save
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <v-card class="pa-4" color="background2">
+    <v-card-title class="subtitle-1">Edit Profile</v-card-title>
+    <v-card-text class="pl-2 pr-2 pt-0 pb-0">
+      <v-form
+        ref="form"
+        v-model="valid"
+        lazy-validation
+        @submit.prevent="agree"
+      >
+        <v-container>
+          <v-row>
+            <v-col cols="12" class="pb-0">
+              <v-text-field
+                v-model="user.name"
+                label="Name"
+                :rules="nameRules"
+                required
+                filled
+                autofocus
+              ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12" class="pt-0 pb-0">
+              <v-text-field
+                v-model="user.company"
+                filled
+                label="Company"
+              ></v-text-field>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12" class="pt-0 pb-0">
+              <v-textarea
+                v-model="user.bio"
+                :rules="bioRules"
+                filled
+                rows="2"
+                label="Bio"
+              ></v-textarea>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-form>
+    </v-card-text>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn text @click="$emit('close')">cancel</v-btn>
+      <v-btn :disabled="!valid" :loading="isLoading" @click.native="updateUser">
+        Save
+      </v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 <script>
+import gql from "graphql-tag"
+
+
 export default {
+  props: {
+    user: {
+      type: Object,
+      default: null
+    }
+  },
   data: () => ({
     dialog: false,
-    user: {},
-    nameRules: [],
-    valid: true
+    isLoading: false,
+    nameRules: [
+      (v) => !!v || "Name is required",
+      (v) => (v && v.length <= 60) || "Name must be less than 60 characters."
+    ],
+    bioRules: [
+      (v) => (v && v.length <= 500) || "Bio must be less than 500 characters."
+    ],
+    valid: true,
   }),
-  computed: {
-    show: {
-      get() {
-        return this.dialog
-      },
-      set(value) {
-        this.dialog = value
-        if (value === false) {
-          this.cancel()
-        }
-      }
-    }
-  },
-  watch: {
-    "user.name"(val) {
-      this.nameRules = []
-    }
-  },
+  computed: {},
+  watch: {},
   methods: {
-    open(user) {
-      this.dialog = true
-      if (this.$refs.form) this.$refs.form.resetValidation()
-
-      this.user = { name: user.name, company: user.company, bio: user.bio }
-
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve
-        this.reject = reject
-      })
-    },
-    agree() {
-      this.nameRules = [
-        (v) => !!v || "You need a name!",
-        (v) =>
-          (v && v.length <= 100) || "Name must be less than 100 characters",
-        (v) => (v && v.length >= 3) || "Name must be at least 3 characters"
-      ]
-
-      let self = this
-      setTimeout(function () {
-        if (self.$refs.form.validate()) {
-          self.resolve({
-            result: true,
-            user: self.user
-          })
-          self.dialog = false
-        }
-      })
-    },
-    cancel() {
-      this.resolve({
-        result: false
-      })
-      this.dialog = false
+    async updateUser() {
+      try {
+        this.isLoading = true
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation userUpdate($myUser: UserUpdateInput!) {
+              userUpdate(user: $myUser)
+            }
+          `,
+          variables: {
+            myUser: {
+              name: this.user.name,
+              bio: this.user.bio,
+              company: this.user.company
+            }
+          }
+        })
+        this.isLoading = false
+        this.$emit("close")
+      } catch (e) {
+        // TODO: log
+        console.log(e)
+      }
     }
   }
 }

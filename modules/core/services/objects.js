@@ -187,7 +187,7 @@ module.exports = {
     let res = await Objects( ).where( { id: objectId } ).select( '*' ).first( )
     if ( !res ) return null
     res.data.totalChildrenCount = res.totalChildrenCount // move this back
-    return res.data
+    return res
   },
 
   async getObjectChildrenStream( { objectId } ) {

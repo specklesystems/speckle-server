@@ -15,32 +15,6 @@ query Stream($id: String!) {
     }
     branches {
       totalCount
-      cursor
-      items {
-        id
-        name
-        author {
-          id
-          suuid
-          email
-          name
-          bio
-          company
-          avatar
-        }
-        description
-        commits {
-          totalCount
-          cursor
-          items {
-            id
-            message
-            authorName
-            authorId
-            createdAt
-          }
-        }
-      }
     }
     commits {
       totalCount

@@ -55,7 +55,7 @@ module.exports = {
   async getAllAppsCreatedByUser( { userId } ) {
 
     let apps = await ServerApps( )
-      .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
+      .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.redirectUrl', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
       .where( { authorId: userId } )
       .leftJoin( 'users', 'users.id', '=', 'server_apps.authorId' )
 

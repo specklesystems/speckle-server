@@ -109,17 +109,33 @@ module.exports = {
   },
 
   async getUserTokens( userId ) {
-    // TODO: Change logic to use the JN table PersonalApiTokens
     let { rows } = await knex.raw( `
-      SELECT t.id, t.name, tt.scopes
-      FROM api_tokens t
-      JOIN(
-        SELECT ARRAY_AGG(token_scopes."scopeName") as "scopes", token_scopes."tokenId" as id
-        FROM token_scopes
-        JOIN api_tokens on "api_tokens"."id" = "token_scopes"."tokenId"
-        GROUP BY token_scopes."tokenId"
-      ) tt USING(id)
-      WHERE t."owner" = ?
+      SELECT
+        t.id,
+        t.name,
+        t."lastChars",
+        t."createdAt",
+        t.lifespan,
+        t."name",
+        t."lastUsed",
+        ts.scopes
+      FROM
+        api_tokens t
+        JOIN (
+          SELECT
+            ARRAY_AGG(token_scopes. "scopeName") AS "scopes",
+            token_scopes. "tokenId" AS id
+          FROM
+            token_scopes
+            JOIN api_tokens ON "api_tokens"."id" = "token_scopes"."tokenId"
+          GROUP BY
+            token_scopes. "tokenId") ts USING (id)
+      WHERE
+        t.id IN(
+          SELECT
+            "tokenId" FROM personal_api_tokens
+          WHERE
+            "userId" = ? )
     `, [ userId ] )
     return rows
   }
