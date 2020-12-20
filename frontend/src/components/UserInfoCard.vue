@@ -1,30 +1,26 @@
 <template>
-  <v-card color="transparent" class="elevation-0">
+  <v-card color="transparent" class="elevation-0 text-center">
     <div v-if="!user">
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
     <div v-else>
-      <v-card-title class="text-center mb-5 mt-5 pt-5 pb-5">
+      <v-card-title class="text-center mb-5 mt-5 pt-15 pb-15">
         <v-btn
           v-tooltip="'Change your profile picture.'"
           color="transparent"
           text
+          block
           :disabled="!isSelf"
           class="elevation-0 pa-0 ma-0"
         >
-          <v-avatar class="elevation-1" size="124" @click="avatarDialog = true">
+          <v-avatar class="elevation-0" size="100" @click="avatarDialog = true">
             <v-img v-if="user.avatar" :src="user.avatar" />
-            <v-img
-              v-else
-              :src="`https://robohash.org/` + user.id + `.png?size=64x64`"
-            />
+            <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=64x64`" />
           </v-avatar>
         </v-btn>
         <v-dialog v-model="avatarDialog" max-width="400">
           <v-card>
-            <v-card-title class="text-center">
-              Choose a new profile picture
-            </v-card-title>
+            <v-card-title class="text-center">Choose a new profile picture</v-card-title>
             <v-card-text class="text-center pa-0 ma-0 mt-5">
               <v-image-input
                 v-model="imageData"
@@ -38,7 +34,7 @@
               />
             </v-card-text>
             <v-card-actions>
-              <span class="caption" v-if="imageData">You look wonderful!</span>
+              <span v-if="imageData" class="caption">You look wonderful!</span>
               <v-spacer></v-spacer>
               <v-btn text @click="avatarDialog = false">cancel</v-btn>
               <v-btn :disabled="!imageData" @click="updateAvatar">Save</v-btn>
@@ -46,7 +42,7 @@
           </v-card>
         </v-dialog>
       </v-card-title>
-      <v-card-title>
+      <v-card-title class="text-center justify-center">
         {{ user.name }}
       </v-card-title>
       <v-card-text>
@@ -75,9 +71,9 @@
   </v-card>
 </template>
 <script>
-import gql from "graphql-tag"
-import UserDialog from "../components/dialogs/UserDialog"
-import VImageInput from "vuetify-image-input/a-la-carte"
+import gql from 'graphql-tag'
+import UserDialog from '../components/dialogs/UserDialog'
+import VImageInput from 'vuetify-image-input/a-la-carte'
 
 export default {
   components: { UserDialog, VImageInput },
@@ -97,7 +93,7 @@ export default {
   computed: {
     isSelf() {
       if (!this.user) return false
-      return this.user.id === localStorage.getItem("uuid")
+      return this.user.id === localStorage.getItem('uuid')
     }
   },
   methods: {

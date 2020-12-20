@@ -14,7 +14,7 @@
               <new-stream-dialog :open="newStreamDialog" />
             </v-dialog>
 
-            <v-btn href="https://twitter.com/specklesystems" target="_blank" text small>
+            <v-btn href="https://twitter.com/specklesystems" target="_blank" block text>
               <v-icon small class="mr-2">mdi-twitter</v-icon>
               Speckle on Twitter!
             </v-btn>

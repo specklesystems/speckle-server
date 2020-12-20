@@ -1,4 +1,4 @@
-query Stream($id: String!) {
+query StreamCommits($id: String!) {
   stream(id: $id) {
     id
     commits {

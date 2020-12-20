@@ -1,11 +1,15 @@
 <template>
-  <v-card rounded="lg" class="pa-4" elevation="0" color="transparent">
-    <div v-if="!stream">
-      <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
-    </div>
-    <div v-if="stream">
+  <v-card rounded="lg" class="pa-4" elevation="0" color="transparent" :loading="$apollo.loading">
+    <template slot="progress">
+      <v-progress-linear indeterminate></v-progress-linear>
+    </template>
+    <div>
       <v-card-title class="mr-8">
-        <router-link v-show="!isHomeRoute" :to="'/streams/' + stream.id">
+        <router-link
+          v-show="!isHomeRoute"
+          :to="'/streams/' + stream.id"
+          class="text-decoration-none"
+        >
           {{ stream.name }}
         </router-link>
         <div v-show="isHomeRoute">
@@ -94,6 +98,7 @@
   </v-card>
 </template>
 <script>
+import streamQuery from '../graphql/stream.gql'
 import EditStreamDialog from '../components/dialogs/EditStreamDialog'
 import StreamShareDialog from '../components/dialogs/StreamShareDialog'
 import UserAvatar from '../components/UserAvatar'
@@ -105,13 +110,19 @@ export default {
     UserAvatar
   },
   props: {
-    stream: {
-      type: Object,
-      default: () => null
-    },
     userRole: {
       type: String,
       default: null
+    }
+  },
+  apollo: {
+    stream: {
+      query: streamQuery,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      }
     }
   },
   data: () => ({
@@ -136,8 +147,9 @@ export default {
   methods: {
     editClosed() {
       this.editStreamDialog = false
-      this.$emit('refresh')
+      this.$apollo.queries.stream.refetch()
     }
   }
 }
 </script>
+<style scoped></style>

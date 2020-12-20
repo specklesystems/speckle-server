@@ -3,12 +3,7 @@
     <v-app-bar app color="background2">
       <v-container class="py-0 fill-height hidden-sm-and-down">
         <v-btn text to="/" active-class="no-active">
-          <v-img
-            contain
-            max-height="30"
-            max-width="30"
-            src="./assets/logo.svg"
-          />
+          <v-img contain max-height="30" max-width="30" src="./assets/logo.svg" />
           <div class="mt-1">
             <span class="primary--text"><b></b></span>
           </div>
@@ -38,12 +33,7 @@
           </v-col>
           <v-col class="text-center">
             <v-btn text to="/" active-class="no-active" icon>
-              <v-img
-                contain
-                max-height="40"
-                max-width="40"
-                src="./assets/logo.svg"
-              />
+              <v-img contain max-height="40" max-width="40" src="./assets/logo.svg" />
             </v-btn>
           </v-col>
           <v-col class="text-right" style="margin-top: 8px">
@@ -52,11 +42,7 @@
         </v-row>
       </v-container>
     </v-app-bar>
-    <v-card
-      v-show="showMobileMenu"
-      style="position: relative; top: 40px"
-      class="pa-5"
-    >
+    <v-card v-show="showMobileMenu" style="position: relative; top: 40px" class="pa-5">
       <v-row>
         <v-col v-for="link in navLinks" :key="link.name" cols="12">
           <v-btn text block :to="link.link">
@@ -75,22 +61,22 @@
   </v-app>
 </template>
 <script>
-import userQuery from "./graphql/user.gql"
-import gql from "graphql-tag"
-import UserMenuTop from "./components/UserMenuTop"
-import SearchBar from "./components/SearchBar"
+import userQuery from './graphql/user.gql'
+import gql from 'graphql-tag'
+import UserMenuTop from './components/UserMenuTop'
+import SearchBar from './components/SearchBar'
 
 export default {
   components: { UserMenuTop, SearchBar },
   data: () => ({
-    search: "",
+    search: '',
     showMobileMenu: false,
     streams: { items: [] },
     selectedSearchResult: null,
     navLinks: [
-      { link: "/streams", name: "streams" },
-      { link: "/profile", name: "profile" },
-      { link: "/help", name: "help" }
+      { link: '/streams', name: 'streams' },
+      { link: '/profile', name: 'profile' },
+      { link: '/help', name: 'help' }
     ]
   }),
   apollo: {
@@ -126,7 +112,7 @@ export default {
   },
   computed: {
     background() {
-      let theme = this.$vuetify.theme.dark ? "dark" : "light"
+      let theme = this.$vuetify.theme.dark ? 'dark' : 'light'
       return `background-color: ${this.$vuetify.theme.themes[theme].background};`
     }
   },
@@ -159,70 +145,18 @@ export default {
   margin-bottom: 10px;
 }
 
-.v-card__text,
-.v-card__title {
-  word-break: normal !important;
-}
-
-.streamid {
-  font-family: monospace !important;
-}
-
-a {
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-  text-decoration-color: rgba(10, 102, 255, 0.25);
-}
-
-.no-decor a:hover {
-  text-decoration: none;
-}
-
-.v-btn--active.no-active::before {
-  opacity: 0 !important;
-}
-
-.hoverable-border {
-  border: 1px transparent;
-}
-
-.hoverable-border:hover {
-  border: 1px blue;
-}
-
-/* .theme--dark {
-  /color: #cfcdcc !important;
-} */
-
-/* don't like fat text */
-.v-list-item--dense .v-list-item__title,
-.v-list-item--dense .v-list-item__subtitle,
-.v-list--dense .v-list-item .v-list-item__title,
-.v-list--dense .v-list-item .v-list-item__subtitle {
-  font-weight: 400 !important;
-}
-
-/*WHYYYY*/
-.v-tooltip__content {
-  pointer-events: all !important;
-  opacity: 1 !important;
-}
-
-/* DARK MODE HARD FIXES */
-
-.theme--dark.v-list {
-  background-color: #303132 !important;
-}
+/*.v-application code {
+  background-color: #969696;
+  color: #171717;
+  padding: 0 0.4rem;
+}*/
 
 /* TOOLTIPs */
 
 .tooltip {
   display: block !important;
   z-index: 10000;
-  font-family: "Roboto", sans-serif !important;
+  font-family: 'Roboto', sans-serif !important;
   font-size: 0.75rem !important;
 }
 
@@ -243,11 +177,11 @@ a:hover {
   z-index: 1;
 }
 
-.tooltip[x-placement^="top"] {
+.tooltip[x-placement^='top'] {
   margin-bottom: 5px;
 }
 
-.tooltip[x-placement^="top"] .tooltip-arrow {
+.tooltip[x-placement^='top'] .tooltip-arrow {
   border-width: 5px 5px 0 5px;
   border-left-color: transparent !important;
   border-right-color: transparent !important;
@@ -258,11 +192,11 @@ a:hover {
   margin-bottom: 0;
 }
 
-.tooltip[x-placement^="bottom"] {
+.tooltip[x-placement^='bottom'] {
   margin-top: 5px;
 }
 
-.tooltip[x-placement^="bottom"] .tooltip-arrow {
+.tooltip[x-placement^='bottom'] .tooltip-arrow {
   border-width: 0 5px 5px 5px;
   border-left-color: transparent !important;
   border-right-color: transparent !important;
@@ -273,11 +207,11 @@ a:hover {
   margin-bottom: 0;
 }
 
-.tooltip[x-placement^="right"] {
+.tooltip[x-placement^='right'] {
   margin-left: 5px;
 }
 
-.tooltip[x-placement^="right"] .tooltip-arrow {
+.tooltip[x-placement^='right'] .tooltip-arrow {
   border-width: 5px 5px 5px 0;
   border-left-color: transparent !important;
   border-top-color: transparent !important;
@@ -288,11 +222,11 @@ a:hover {
   margin-right: 0;
 }
 
-.tooltip[x-placement^="left"] {
+.tooltip[x-placement^='left'] {
   margin-right: 5px;
 }
 
-.tooltip[x-placement^="left"] .tooltip-arrow {
+.tooltip[x-placement^='left'] .tooltip-arrow {
   border-width: 5px 0 5px 5px;
   border-top-color: transparent !important;
   border-right-color: transparent !important;
@@ -315,13 +249,13 @@ a:hover {
   border-color: #f9f9f9;
 }
 
-.tooltip[aria-hidden="true"] {
+.tooltip[aria-hidden='true'] {
   visibility: hidden;
   opacity: 0;
   transition: opacity 0.15s, visibility 0.15s;
 }
 
-.tooltip[aria-hidden="false"] {
+.tooltip[aria-hidden='false'] {
   visibility: visible;
   opacity: 1;
   transition: opacity 0.15s;

@@ -2,18 +2,13 @@
   <v-card color="background2" class="elevation-0 mt-3 mb-5">
     <v-card-title>Applications</v-card-title>
     <v-card-text>
-      Register and manage third-party Speckle Apps that, once authorised by a
-      user on this server, can act on their behalf.
+      Register and manage third-party Speckle Apps that, once authorised by a user on this server,
+      can act on their behalf.
     </v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
     <v-card-text v-if="apps && apps.length !== 0">
-      <v-list two-line>
-        <list-item-user-app
-          v-for="app in apps"
-          :key="app.id"
-          :app="app"
-          @deleted="refreshList"
-        />
+      <v-list two-line class="transparent">
+        <list-item-user-app v-for="app in apps" :key="app.id" :app="app" @deleted="refreshList" />
       </v-list>
     </v-card-text>
     <v-card-text v-else>You have no apps.</v-card-text>
@@ -26,9 +21,9 @@
   </v-card>
 </template>
 <script>
-import gql from "graphql-tag"
-import ListItemUserApp from "./ListItemUserApp"
-import NewAppDialog from "./dialogs/NewAppDialog"
+import gql from 'graphql-tag'
+import ListItemUserApp from './ListItemUserApp'
+import NewAppDialog from './dialogs/NewAppDialog'
 
 export default {
   components: { ListItemUserApp, NewAppDialog },

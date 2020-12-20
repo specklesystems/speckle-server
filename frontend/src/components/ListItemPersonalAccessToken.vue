@@ -27,7 +27,7 @@
           <h3>Are you sure?</h3>
           You cannot undo this action. This will permanently delete the
           <b>{{ token.name }}</b>
-          app. Any scripts relying on it will stop working.
+          token. Any scripts relying on it will stop working.
           <v-divider class="my-3"></v-divider>
           <v-btn text color="error" @click="revokeToken">Delete</v-btn>
           <v-btn @click="showRevokeConfirm = false">Cancel</v-btn>

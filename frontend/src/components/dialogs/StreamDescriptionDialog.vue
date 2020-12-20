@@ -1,10 +1,27 @@
 <template>
-  <v-card class="pa-4" color="background2">
-    <v-card-title class="subtitle-1">Edit Description</v-card-title>
-    <v-card-text>
+  <v-card :loading="loading">
+    <template slot="progress">
+      <v-progress-linear indeterminate></v-progress-linear>
+    </template>
+    <v-card-title>Edit Description</v-card-title>
+    <v-card-text class="py-0 my-0">
       <v-row>
         <v-col cols="12" sm="12" md="6">
-          <p>Markdown is enabled.</p>
+          <p class="caption">
+            Use Markdown! Tips:
+            <code>#, ##, ###</code>
+            prefix headings, links:
+            <code>[speckle](https://speckle.systems)</code>
+            , images:
+            <code>![image title](image url)</code>
+            , list items are prefixed by
+            <code>-</code>
+            on new lines,
+            <b>bold</b>
+            text by surrounding it with
+            <code>**</code>
+            , etc.
+          </p>
           <v-textarea
             v-model="innerStreamDescription"
             auto-grow
@@ -14,13 +31,13 @@
           ></v-textarea>
         </v-col>
         <v-col cols="12" sm="12" md="6">
-          <p>Preview</p>
+          <p class="caption">Preview</p>
           <div class="marked-preview" v-html="compiledMarkdown"></div>
         </v-col>
       </v-row>
     </v-card-text>
-    <v-card-actions>
-      <v-btn @click.native="save">Save & Close</v-btn>
+    <v-card-actions class="pb-10">
+      <v-btn block @click.native="save">Save & Close</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -31,37 +48,33 @@ import gql from 'graphql-tag'
 
 export default {
   props: {
-    id: String,
+    id: {
+      type: String,
+      default: null
+    },
     description: {
       type: String,
       default: null
     }
   },
-  data: () => ({
-    innerStreamDescription: null
-  }),
+  data() {
+    return {
+      innerStreamDescription: this.description,
+      loading: false
+    }
+  },
   computed: {
     compiledMarkdown() {
       if (!this.innerStreamDescription) return ''
       let md = marked(this.innerStreamDescription)
       return DOMPurify.sanitize(md)
-    },
-    streamDescription: {
-      get() {
-        return this.innerStreamDescription
-      },
-      set(value) {
-        this.innerStreamDescription = value
-      }
     }
-  },
-  mounted() {
-    this.innerStreamDescription = this.description
   },
   methods: {
     async save() {
+      this.loading = true
       try {
-        this.$apollo.mutate({
+        await this.$apollo.mutate({
           mutation: gql`
             mutation editDescription($input: StreamUpdateInput!) {
               streamUpdate(stream: $input)
@@ -74,10 +87,11 @@ export default {
             }
           }
         })
-        this.$emit('close', this.innerStreamDescription)
       } catch (e) {
         console.log(e)
       }
+      this.loading = false
+      this.$emit('close')
     }
   }
 }

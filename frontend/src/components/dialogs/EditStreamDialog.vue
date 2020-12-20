@@ -34,11 +34,11 @@
       </v-card-actions>
     </v-form>
     <v-divider class="my-5" v-show="!showDelete" />
-    <v-card-title v-show="!showDelete" class="error--text body-2">
-      <v-btn block x-small outlined color="error" @click="showDelete = true">Delete Stream</v-btn>
+    <v-card-title v-show="!showDelete" class="error--text body-2 pa-2">
+      <v-btn block x-small text color="error" @click="showDelete = true">Delete Stream</v-btn>
     </v-card-title>
     <v-card-text v-show="showDelete" class="caption py-5">
-      <h3 class="error--text">Deleting Stream {{ internalName }}</h3>
+      <h2 class="error--text py-3">Deleting Stream {{ internalName }}</h2>
       <span class="error--text">
         Type the name of the stream below to confirm you really want to delete it.
         <b>You cannot undo this action.</b>
@@ -48,6 +48,9 @@
         label="confirm stream name"
         class="pr-5"
       ></v-text-field>
+    </v-card-text>
+    <v-card-actions v-show="showDelete">
+      <v-spacer></v-spacer>
       <v-btn
         class="mr-3"
         color="error"
@@ -58,7 +61,7 @@
         delete
       </v-btn>
       <v-btn @click="showDelete = false">Cancel</v-btn>
-    </v-card-text>
+    </v-card-actions>
   </v-card>
 </template>
 <script>

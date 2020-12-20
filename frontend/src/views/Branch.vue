@@ -12,6 +12,12 @@
         <v-card-text>
           {{ branch.description }}
         </v-card-text>
+        <v-card-actions>
+          <v-btn small @click="dialogEdit = true">Edit</v-btn>
+          <v-dialog v-model="dialogEdit" max-width="500">
+            <branch-edit-dialog :branch="branch" @close="closeEdit" />
+          </v-dialog>
+        </v-card-actions>
       </v-card>
       <v-card>
         <v-expansion-panels flat focusable>
@@ -22,9 +28,8 @@
             <v-expansion-panel-content>
               <p class="caption mt-4">
                 <b>Grasshopper & Dynamo:</b>
-                Copy and paste this page's url into a text panel and connect
-                that to the "Stream" input of a receiver component or sender
-                component.
+                Copy and paste this page's url into a text panel and connect that to the "Stream"
+                input of a receiver component or sender component.
                 <b>Senders</b>
                 will push commits to this branch, whereas
                 <b>receivers</b>
@@ -43,15 +48,16 @@
         </v-expansion-panels>
       </v-card>
       <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
-        <v-subheader class="text-uppercase">
-          Commits ({{ branch.commits.totalCount }})
-        </v-subheader>
+        <v-subheader class="text-uppercase">Commits ({{ branch.commits.totalCount }})</v-subheader>
+        <v-card-text v-if="branch.commits.totalCount === 0">
+          It's a bit lonely here: there are no commits on this branch.
+        </v-card-text>
         <v-card-text>
           <list-item-commit
             v-for="item in branch.commits.items"
             :key="item.id"
             :commit="item"
-            :stream-id="stream.id"
+            :stream-id="streamId"
           ></list-item-commit>
         </v-card-text>
       </v-card>
@@ -59,29 +65,21 @@
   </v-row>
 </template>
 <script>
-import gql from "graphql-tag"
-import SidebarStream from "../components/SidebarStream"
-import streamQuery from "../graphql/stream.gql"
-import branchQuery from "../graphql/branch.gql"
-import ListItemCommit from "../components/ListItemCommit"
-import CommitDialog from "../components/dialogs/CommitDialog"
+import gql from 'graphql-tag'
+import branchQuery from '../graphql/branch.gql'
+import ListItemCommit from '../components/ListItemCommit'
+import BranchEditDialog from '../components/dialogs/BranchEditDialog'
 
 export default {
-  name: "Commit",
-  components: { SidebarStream, CommitDialog, ListItemCommit },
-  data: () => ({ selectedBranch: 0 }),
+  name: 'Branch',
+  components: { ListItemCommit, BranchEditDialog },
+  data() {
+    return {
+      dialogEdit: false
+    }
+  },
   apollo: {
-    stream: {
-      prefetch: true,
-      query: streamQuery,
-      variables() {
-        return {
-          id: this.$route.params.streamId
-        }
-      }
-    },
     branch: {
-      prefetch: true,
       query: branchQuery,
       variables() {
         return {
@@ -89,36 +87,55 @@ export default {
           branchName: this.$route.params.branchName
         }
       },
-      update: (data) => data.stream.branch
+      update: (data) => data.stream.branch,
+      error(error) {
+        this.$router.push({ path: '/error' })
+      }
     }
   },
-  computed: {},
+  computed: {
+    streamId() {
+      return this.$route.params.streamId
+    }
+  },
   methods: {
-    editBranch() {
-      this.$refs.commitDialog
-        .open(this.stream.commit, this.stream.id)
-        .then((dialog) => {
-          if (!dialog.result) return
-
-          this.$apollo
-            .mutate({
-              mutation: gql`
-                mutation commitUpdate($myCommit: CommitUpdateInput!) {
-                  commitUpdate(commit: $myCommit)
-                }
-              `,
-              variables: {
-                myCommit: { ...dialog.commit }
-              }
-            })
-            .then((data) => {
-              this.$apollo.queries.stream.refetch()
-            })
-            .catch((error) => {
-              // Error
-              console.error(error)
-            })
+    closeEdit({ name, deleted }) {
+      this.dialogEdit = false
+      if (deleted) {
+        this.$router.push({ path: `/streams/${this.streamId}` })
+        return
+      }
+      if (name !== this.$route.params.branchName) {
+        this.$router.push({
+          path: `/streams/${this.streamId}/branches/${encodeURIComponent(name)}`
         })
+        return
+      }
+      this.$apollo.queries.branch.refetch()
+    },
+    editBranch() {
+      this.$refs.commitDialog.open(this.stream.commit, this.stream.id).then((dialog) => {
+        if (!dialog.result) return
+
+        this.$apollo
+          .mutate({
+            mutation: gql`
+              mutation commitUpdate($myCommit: CommitUpdateInput!) {
+                commitUpdate(commit: $myCommit)
+              }
+            `,
+            variables: {
+              myCommit: { ...dialog.commit }
+            }
+          })
+          .then((data) => {
+            this.$apollo.queries.stream.refetch()
+          })
+          .catch((error) => {
+            // Error
+            console.error(error)
+          })
+      })
     }
   }
 }

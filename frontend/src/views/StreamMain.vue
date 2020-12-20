@@ -1,14 +1,17 @@
 <template>
   <v-row>
-    <v-col v-if="!stream || $apollo.loading" cols="12">
+    <!--     <v-col v-if="!stream || $apollo.loading" cols="12">
       <v-skeleton-loader type="article, article"></v-skeleton-loader>
-    </v-col>
-    <v-col v-else sm="12">
-      <v-card rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
-        <v-card-title v-if="!stream.description">Description</v-card-title>
-        <v-card-text v-if="!stream.description">No description provided.</v-card-text>
+    </v-col> -->
+    <v-col sm="12">
+      <v-card v-if="$apollo.queries.description.loading">
+        <v-skeleton-loader type="article"></v-skeleton-loader>
+      </v-card>
+      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
+        <v-card-title v-if="!description">Description</v-card-title>
+        <v-card-text v-if="!description">No description provided.</v-card-text>
         <v-card-text
-          v-if="stream.description"
+          v-if="description"
           class="marked-preview"
           v-html="compiledStreamDescription"
         ></v-card-text>
@@ -16,27 +19,33 @@
           <v-btn small @click="dialogDescription = true">Edit Description</v-btn>
           <v-dialog v-model="dialogDescription">
             <stream-description-dialog
-              :id="stream.id"
-              :description="stream.description"
+              :id="$route.params.streamId"
+              :description="description"
               @close="closeDescription"
             />
           </v-dialog>
         </v-card-actions>
       </v-card>
 
-      <v-card rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
+      <v-card v-if="$apollo.queries.branches.loading">
+        <v-skeleton-loader type="article"></v-skeleton-loader>
+      </v-card>
+      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
         <v-card-title>
           <v-icon class="mr-2">mdi-source-branch</v-icon>
           Branches
         </v-card-title>
         <v-card-text>
-          Branches allow you to manage parallel versions of data in a single stream, by organising
-          them within a topic.
+          A branch represents an independent line of data. You can think of them as an independent
+          directory, staging area and project history.
         </v-card-text>
         <v-card-text>
           <v-list two-line color="transparent">
-            <template v-for="item in branches">
-              <v-list-item :key="item.id" :to="`/streams/${stream.id}/branches/${item.name}`">
+            <template v-for="item in branches.items">
+              <v-list-item
+                :key="item.id"
+                :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(item.name)}`"
+              >
                 <v-list-item-content>
                   <v-list-item-title>
                     <b>{{ item.name }}</b>
@@ -54,25 +63,39 @@
               </v-list-item>
             </template>
           </v-list>
-          <v-btn v-if="userRole === 'contributor' || userRole === 'owner'" small @click="newBranch">
+          <v-btn
+            v-if="userRole === 'contributor' || userRole === 'owner'"
+            small
+            @click="dialogBranch = true"
+          >
             new branch
           </v-btn>
-          <branch-dialog ref="branchDialog" :branches="branches"></branch-dialog>
+          <v-dialog v-model="dialogBranch" max-width="500">
+            <new-branch-dialog
+              :branch-names="branches.items.map((b) => b.name)"
+              :stream-id="$route.params.streamId"
+              @close="closeBranchDialog"
+            />
+          </v-dialog>
         </v-card-text>
       </v-card>
 
-      <v-card rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
+      <v-card v-if="$apollo.queries.commits.loading">
+        <v-skeleton-loader type="article"></v-skeleton-loader>
+      </v-card>
+
+      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
         <v-card-title>
           Latest activity &nbsp;&nbsp;&nbsp;
           <span class="font-weight-light ml-2 body-1">({{ commits.totalCount }} total)</span>
         </v-card-title>
         <v-card-text>All the commits from this stream are below.</v-card-text>
-        <v-card-text v-if="stream.commits">
+        <v-card-text v-if="commits">
           <list-item-commit
             v-for="item in commits.items"
             :key="item.id"
             :commit="item"
-            :stream-id="stream.id"
+            :stream-id="$route.params.streamId"
           ></list-item-commit>
         </v-card-text>
       </v-card>
@@ -83,15 +106,16 @@
 import marked from 'marked'
 import DOMPurify from 'dompurify'
 import gql from 'graphql-tag'
-import BranchDialog from '../components/dialogs/BranchDialog'
+import NewBranchDialog from '../components/dialogs/BranchNewDialog'
 import StreamDescriptionDialog from '../components/dialogs/StreamDescriptionDialog'
 import ListItemCommit from '../components/ListItemCommit'
 import streamCommitsQuery from '../graphql/streamCommits.gql'
+import streamBranchesQuery from '../graphql/streamBranches.gql'
 
 export default {
   name: 'StreamMain',
   components: {
-    BranchDialog,
+    NewBranchDialog,
     ListItemCommit,
     StreamDescriptionDialog
   },
@@ -108,6 +132,7 @@ export default {
   data() {
     return {
       dialogDescription: false,
+      dialogBranch: false,
       selectedBranch: 0
     }
   },
@@ -120,123 +145,62 @@ export default {
         }
       },
       update: (data) => data.stream.commits
+    },
+    branches: {
+      query: streamBranchesQuery,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      },
+      update(data) {
+        data.stream.branches.items = data.stream.branches.items.reverse()
+        return data.stream.branches
+      }
+    },
+    description: {
+      query: gql`
+        query($id: String!) {
+          stream(id: $id) {
+            id
+            description
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      },
+      update: (data) => data.stream.description
     }
   },
   computed: {
-    compiledStreamDescription() {
-      if (!this.stream.description) return ''
-      let md = marked(this.stream.description)
-      return DOMPurify.sanitize(md)
+    branchNames() {
+      if (!this.branches) return []
+      return this.branches.items.map((b) => b.name)
     },
-    branches() {
-      //reverse without changing original array
-      return this.stream.branches.items.slice().reverse()
+    compiledStreamDescription() {
+      if (!this.description) return ''
+      let md = marked(this.description)
+      return DOMPurify.sanitize(md)
     }
   },
   mounted() {
     this.$matomo && this.$matomo.trackPageView('streams/single')
+    this.$apollo.queries.branches.refetch()
+    this.$apollo.queries.description.refetch()
+    this.$apollo.queries.commits.refetch()
   },
   methods: {
-    closeDescription(newDescription) {
-      this.stream.description = newDescription
+    closeDescription() {
       this.dialogDescription = false
+      this.$apollo.queries.description.refetch()
     },
-    newBranch() {
-      this.$refs.branchDialog.open().then((dialog) => {
-        if (!dialog.result) return
-
-        this.$apollo
-          .mutate({
-            mutation: gql`
-              mutation branchCreate($myBranch: BranchCreateInput!) {
-                branchCreate(branch: $myBranch)
-              }
-            `,
-            variables: {
-              myBranch: {
-                streamId: this.stream.id,
-                ...dialog.branch
-              }
-            }
-          })
-          .then((data) => {
-            // Result
-            console.log(data)
-
-            this.$apollo.queries.stream.refetch()
-          })
-          .catch((error) => {
-            // Error
-            console.error(error)
-            // We restore the initial user input
-            //this.newTag = newTag
-          })
-      })
-    },
-    editBranch() {
-      this.$refs.branchDialog
-        .open(this.branches[this.selectedBranch], this.stream.id)
-        .then((dialog) => {
-          if (!dialog.result) return
-
-          //DELETE BRANCH
-          if (dialog.delete) {
-            this.$apollo
-              .mutate({
-                mutation: gql`
-                  mutation branchDelete($myBranch: BranchDeleteInput!) {
-                    branchDelete(branch: $myBranch)
-                  }
-                `,
-                variables: {
-                  myBranch: {
-                    id: this.branches[this.selectedBranch].id,
-                    streamId: this.stream.id
-                  }
-                }
-              })
-              .then((data) => {
-                this.selectedBranch = 0
-                this.$apollo.queries.stream.refetch()
-              })
-              .catch((error) => {
-                // Error
-                console.error(error)
-              })
-
-            return
-          }
-
-          //EDIT BRANCH
-          this.$apollo
-            .mutate({
-              mutation: gql`
-                mutation branchUpdate($myBranch: BranchUpdateInput!) {
-                  branchUpdate(branch: $myBranch)
-                }
-              `,
-              variables: {
-                myBranch: { ...dialog.branch }
-              }
-            })
-            .then((data) => {
-              this.$apollo.queries.stream.refetch()
-            })
-            .catch((error) => {
-              // Error
-              console.error(error)
-            })
-        })
+    closeBranchDialog() {
+      this.dialogBranch = false
+      this.$apollo.queries.branches.refetch()
     }
   }
 }
 </script>
-<style scoped>
-.v-item-group {
-  float: left;
-}
-
-.clear {
-  clear: both;
-}
-</style>

@@ -7,13 +7,16 @@
       <v-col cols="12" sm="12" md="8" lg="9" xl="7">
         <v-card v-if="user" class="mb-3">
           <v-card-text class="body-1">
-            You have
-            <v-icon small>mdi-compare-vertical</v-icon>
-            <b>{{ user.streams.totalCount }}</b>
-            streams and
-            <v-icon small>mdi-source-commit</v-icon>
-            <b>{{ user.commits.totalCount }}</b>
-            commits.
+            <span>
+              You have
+              <v-icon small>mdi-compare-vertical</v-icon>
+              <b>{{ user.streams.totalCount }}</b>
+              streams and
+              <v-icon small>mdi-source-commit</v-icon>
+              <b>{{ user.commits.totalCount }}</b>
+              commits.
+            </span>
+            <v-btn icon to="/streams"><v-icon>mdi-arrow-right</v-icon></v-btn>
           </v-card-text>
         </v-card>
         <v-alert type="info">Heads up! The sections below are intended for developers.</v-alert>

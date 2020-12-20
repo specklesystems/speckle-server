@@ -15,15 +15,6 @@ query Stream($id: String!) {
     }
     branches {
       totalCount
-      cursor
-      items {
-        id
-        name
-        description
-        commits {
-          totalCount
-        }
-      }
     }
     commits {
       totalCount
