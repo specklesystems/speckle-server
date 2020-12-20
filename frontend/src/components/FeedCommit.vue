@@ -1,12 +1,7 @@
 <template>
   <div>
     <div class="text-center" style="position: absolute">
-      <user-avatar
-        :id="user.id"
-        :avatar="user.avatar"
-        :name="user.name"
-        :size="30"
-      />
+      <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="30" />
     </div>
     <div class="ml-12">
       <v-row class="caption">
@@ -14,9 +9,7 @@
           <v-icon small>mdi-history</v-icon>
           &nbsp; You have
           <strong>
-            <span v-if="commit.items">
-              {{ commit.items.length }} new commits
-            </span>
+            <span v-if="commit.items">{{ commit.items.length }} new commits</span>
             <span v-else>a new commit</span>
           </strong>
           in
@@ -36,7 +29,7 @@
             {{ commit.message }}
           </router-link>
         </v-card-title>
-        <v-expansion-panels v-else flat color="background2">
+        <v-expansion-panels v-else multiple :value="expando" flat color="background2">
           <v-expansion-panel>
             <v-expansion-panel-header class="pl-4" color="background2">
               <span class="subtitle-2">
@@ -72,7 +65,7 @@
   </div>
 </template>
 <script>
-import UserAvatar from "./UserAvatar"
+import UserAvatar from './UserAvatar'
 
 export default {
   components: { UserAvatar },
@@ -88,6 +81,11 @@ export default {
       default: function () {
         return {}
       }
+    }
+  },
+  data() {
+    return {
+      expando: [0]
     }
   }
 }

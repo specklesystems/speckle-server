@@ -12,14 +12,19 @@
           {{ stream.name }}
         </div>
       </v-card-title>
-      <v-divider></v-divider>
+      <v-divider class="mx-4"></v-divider>
       <v-card-text>
+        <p class="caption grey--text mt-0 pb-0">
+          Created
+          <timeago :datetime="stream.createdAt"></timeago>
+          ({{ streamDate }})
+        </p>
         <p>
           <v-icon small>mdi-source-branch</v-icon>
           &nbsp;
           <span>
             {{ stream.branches.totalCount }}
-            branch{{ stream.branches.totalCount === 1 ? "" : "es" }}
+            branch{{ stream.branches.totalCount === 1 ? '' : 'es' }}
           </span>
         </p>
         <p>
@@ -27,38 +32,38 @@
           &nbsp;
           <span>
             {{ stream.commits.totalCount }}
-            commit{{ stream.commits.totalCount === 1 ? "" : "s" }}
+            commit{{ stream.commits.totalCount === 1 ? '' : 's' }}
           </span>
         </p>
         <p>
           <span v-if="stream.isPublic">
             <v-icon small>mdi-link</v-icon>
-            link sharing on
+            &nbsp; link sharing on
           </span>
           <span v-else>
-            <v-icon small>mdi-link-lock</v-icon>
-            link sharing off
+            <v-icon small>mdi-shield-lock</v-icon>
+            &nbsp; link sharing off
           </span>
         </p>
-        <p>
-          Created
-          <timeago :datetime="stream.createdAt"></timeago>
-        </p>
-        <p>
-          Updated
-          <timeago :datetime="stream.updatedAt"></timeago>
-        </p>
-        <v-btn v-if="userRole === 'owner'" block small @click="editStream">
+        <v-btn v-if="userRole === 'owner'" block small @click="editStreamDialog = true">
           Edit
           <v-icon small class="ml-3">mdi-cog-outline</v-icon>
         </v-btn>
-        <stream-dialog ref="streamDialog"></stream-dialog>
+        <v-dialog v-model="editStreamDialog" max-width="500">
+          <edit-stream-dialog
+            :stream-id="stream.id"
+            :name="stream.name"
+            :is-public="stream.isPublic"
+            :open="editStreamDialog"
+            @close="editClosed"
+          />
+        </v-dialog>
       </v-card-text>
 
       <v-card-title><h5>Collaborators</h5></v-card-title>
       <v-card-text>
-        <v-row v-for="(collab, i) in stream.collaborators" :key="i">
-          <v-col sm="3">
+        <v-row v-for="(collab, i) in stream.collaborators" :key="i" no-gutters>
+          <v-col sm="3" class="mb-2">
             <user-avatar
               :id="collab.id"
               :size="40"
@@ -66,51 +71,36 @@
               :name="collab.name"
             ></user-avatar>
           </v-col>
-          <v-col>
+          <v-col class="mb-2">
             <span class="text-body-2">{{ collab.name }}</span>
             <br />
-            <span class="caption">{{ collab.role.split(":")[1] }}</span>
+            <span class="caption">{{ collab.role.split(':')[1] }}</span>
           </v-col>
         </v-row>
-        <v-btn v-if="userRole === 'owner'" block small @click="shareStream">
+        <v-btn v-if="userRole === 'owner'" block small @click="dialogShare = true">
           Manage
           <v-icon small class="ml-3">mdi-account-multiple</v-icon>
         </v-btn>
-        <!-- <v-btn
-          v-if="canEdit"
-          small
-          outlined
-          text
-          color=""
-          class="mt-3"
-          @click="shareStream"
-        >
-          Manage
-          <v-icon small class="ml-3">mdi-account-multiple</v-icon>
-        </v-btn> -->
-        <v-dialog v-model="dialogShare">
-          <h1>WIP</h1>
+        <v-dialog v-model="dialogShare" max-width="500">
+          <stream-share-dialog
+            :users="stream.collaborators"
+            :stream-id="stream.id"
+            :user-id="userId"
+            @close="dialogShare = false"
+          ></stream-share-dialog>
         </v-dialog>
-        <!--         <stream-share-dialog
-          v-if="stream"
-          ref="streamShareDialog"
-          :users="stream.collaborators"
-          :stream-id="stream.id"
-          :user-id="userId"
-        ></stream-share-dialog> -->
       </v-card-text>
     </div>
   </v-card>
 </template>
 <script>
-import gql from "graphql-tag"
-import StreamDialog from "../components/dialogs/StreamDialog"
-import StreamShareDialog from "../components/dialogs/StreamShareDialog"
-import UserAvatar from "../components/UserAvatar"
+import EditStreamDialog from '../components/dialogs/EditStreamDialog'
+import StreamShareDialog from '../components/dialogs/StreamShareDialog'
+import UserAvatar from '../components/UserAvatar'
 
 export default {
   components: {
-    StreamDialog,
+    EditStreamDialog,
     StreamShareDialog,
     UserAvatar
   },
@@ -124,70 +114,29 @@ export default {
       default: null
     }
   },
-  apollo: {},
   data: () => ({
+    editStreamDialog: false,
     dialogShare: false
   }),
   computed: {
     isHomeRoute() {
-      return this.$route.name === "stream"
+      return this.$route.name === 'stream'
     },
     userId() {
-      return localStorage.getItem("uuid")
+      return localStorage.getItem('uuid')
+    },
+    streamDate() {
+      if (!this.stream) return null
+      let date = new Date(this.stream.createdAt)
+      let options = { year: 'numeric', month: 'short', day: 'numeric' }
+
+      return date.toLocaleString(undefined, options)
     }
   },
   methods: {
-    shareStream() {
-      this.dialogShare = true
-    },
-    editStream() {
-      this.$refs.streamDialog.open(this.stream).then((dialog) => {
-        if (!dialog.result) return
-        //DELETE STREAM
-        if (dialog.delete) {
-          this.$apollo
-            .mutate({
-              mutation: gql`
-                mutation streamDelete($id: String!) {
-                  streamDelete(id: $id)
-                }
-              `,
-              variables: {
-                id: this.stream.id
-              }
-            })
-            .then((data) => {
-              this.$router.push({
-                name: "streams"
-              })
-            })
-            .catch((error) => {
-              // Error
-              console.error(error)
-            })
-          return
-        }
-        //EDIT STREAM
-        this.$apollo
-          .mutate({
-            mutation: gql`
-              mutation streamUpdate($myStream: StreamUpdateInput!) {
-                streamUpdate(stream: $myStream)
-              }
-            `,
-            variables: {
-              myStream: { ...dialog.stream }
-              //isPublic: dialog.stream.isPublic //TODO: this is not working https://github.com/specklesystems/Server/issues/30
-            }
-          })
-          .then((data) => {
-            this.$apollo.queries.stream.refetch()
-          })
-          .catch((error) => {
-            // Error
-            console.error(error)
-          })
-      })
+    editClosed() {
+      this.editStreamDialog = false
+      this.$emit('refresh')
     }
   }
 }

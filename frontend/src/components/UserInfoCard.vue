@@ -9,6 +9,7 @@
           v-tooltip="'Change your profile picture.'"
           color="transparent"
           text
+          :disabled="!isSelf"
           class="elevation-0 pa-0 ma-0"
         >
           <v-avatar class="elevation-1" size="124" @click="avatarDialog = true">
@@ -59,7 +60,7 @@
           <b>Email:</b>
           {{ user.email }}
         </p>
-        <span v-if="isSelf" class="caption">Your user id: {{ user.id }}</span>
+        <span v-if="isSelf" class="caption">Your id: {{ user.id }}</span>
       </v-card-text>
       <v-card-actions>
         <v-btn v-if="isSelf" block small @click="userDialog = true">
