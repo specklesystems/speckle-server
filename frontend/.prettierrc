@@ -7,5 +7,7 @@
   "eslintIntegration": true,
   "jsxBracketSameLine": true,
   "vueIndentScriptAndStyle": false,
-  "htmlWhitespaceSensitivity": "ignore"
+  "htmlWhitespaceSensitivity": "ignore",
+  "printWidth": 100,
+  "singleQuote": true
 }
