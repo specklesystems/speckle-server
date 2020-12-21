@@ -1,37 +1,25 @@
 <template>
-  <v-row>
-    <v-col cols="1" style="margin-top: 8px">
+  <v-list-item :to="`/streams/${streamId}/commits/${commit.id}`">
+    <v-list-item-icon>
       <user-avatar
         :id="commit.authorId"
         :avatar="commit.authorAvatar"
         :name="commit.authorName"
         :size="30"
       />
-    </v-col>
-    <v-col cols="7">
-      <div class="subtitle-1">
-        <router-link :to="'/streams/' + streamId + '/commits/' + commit.id">
-          {{ commit.message }}
-        </router-link>
-      </div>
-      <div class="caption">
+    </v-list-item-icon>
+    <v-list-item-content>
+      <v-list-item-title>
+        {{ commit.message }}
+      </v-list-item-title>
+      <v-list-item-subtitle class="caption">
         <b>{{ commit.authorName }}</b>
         committed
         <timeago :datetime="commit.createdAt"></timeago>
         ({{ commitDate }})
-      </div>
-    </v-col>
-    <!-- <v-spacer></v-spacer> -->
-    <v-col cols="3" class="caption text-right">
-      <div>
-        <span class="streamid">
-          <router-link :to="'/streams/' + streamId + '/commits/' + commit.id">
-            {{ commit.id }}
-          </router-link>
-        </span>
-      </div>
-    </v-col>
-  </v-row>
+      </v-list-item-subtitle>
+    </v-list-item-content>
+  </v-list-item>
 </template>
 <script>
 import UserAvatar from './UserAvatar'

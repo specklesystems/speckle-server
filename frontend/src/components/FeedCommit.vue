@@ -43,18 +43,12 @@
                   :key="i"
                   :to="`streams/${item.streamId}/commits/${item.id}`"
                 >
-                  <div style="width: 100%">
-                    <v-row class="caption">
-                      <v-col>
-                        <span class="caption">{{ item.message }}</span>
-                      </v-col>
-                      <v-spacer></v-spacer>
-                      <v-col class="text-right">
-                        <timeago :datetime="item.createdAt"></timeago>
-                      </v-col>
-                    </v-row>
-                    <v-divider v-if="i < commit.items.length - 1"></v-divider>
-                  </div>
+                  <v-list-item-content>
+                    <v-list-item-title>{{ item.message }}</v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-icon class="caption">
+                    <timeago :datetime="item.createdAt"></timeago>
+                  </v-list-item-icon>
                 </v-list-item>
               </v-list>
             </v-expansion-panel-content>

@@ -1,20 +1,28 @@
 <template>
   <v-container>
     <v-row>
-      <v-col sm="12" lg="3" md="4" xl="2" class="d-none d-md-flex">
+      <v-col sm="12" lg="3" md="4" xl="2">
         <v-card rounded="lg" class="pa-4" elevation="0" color="transparent">
-          <server-info-card></server-info-card>
+          <div class="d-none d-md-flex">
+            <server-info-card></server-info-card>
+          </div>
           <v-card-text>
             <v-btn color="primary" elevation="0" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
               new stream
             </v-btn>
-            <br />
+            <br class="d-none d-md-flex" />
             <v-dialog v-model="newStreamDialog" max-width="500">
               <new-stream-dialog :open="newStreamDialog" />
             </v-dialog>
 
-            <v-btn href="https://twitter.com/specklesystems" target="_blank" block text>
+            <v-btn
+              class="d-none d-md-flex"
+              href="https://twitter.com/specklesystems"
+              target="_blank"
+              block
+              text
+            >
               <v-icon small class="mr-2">mdi-twitter</v-icon>
               Speckle on Twitter!
             </v-btn>
