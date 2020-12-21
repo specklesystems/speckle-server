@@ -12,7 +12,7 @@
         <v-card-text>
           {{ branch.description }}
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions v-if="userRole === 'contributor' || userRole === 'owner'">
           <v-btn small @click="dialogEdit = true">Edit</v-btn>
           <v-dialog v-model="dialogEdit" max-width="500">
             <branch-edit-dialog :branch="branch" @close="closeEdit" />
@@ -73,6 +73,12 @@ import BranchEditDialog from '../components/dialogs/BranchEditDialog'
 export default {
   name: 'Branch',
   components: { ListItemCommit, BranchEditDialog },
+  props: {
+    userRole: {
+      type: String,
+      default: null
+    }
+  },
   data() {
     return {
       dialogEdit: false

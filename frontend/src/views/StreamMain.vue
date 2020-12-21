@@ -1,8 +1,5 @@
 <template>
   <v-row>
-    <!--     <v-col v-if="!stream || $apollo.loading" cols="12">
-      <v-skeleton-loader type="article, article"></v-skeleton-loader>
-    </v-col> -->
     <v-col sm="12">
       <v-card v-if="$apollo.queries.description.loading">
         <v-skeleton-loader type="article"></v-skeleton-loader>
@@ -26,7 +23,6 @@
           </v-dialog>
         </v-card-actions>
       </v-card>
-
       <v-card v-if="$apollo.queries.branches.loading">
         <v-skeleton-loader type="article"></v-skeleton-loader>
       </v-card>
@@ -91,12 +87,14 @@
         </v-card-title>
         <v-card-text>All the commits from this stream are below.</v-card-text>
         <v-card-text v-if="commits">
-          <list-item-commit
-            v-for="item in commits.items"
-            :key="item.id"
-            :commit="item"
-            :stream-id="$route.params.streamId"
-          ></list-item-commit>
+          <v-list two-line color="transparent">
+            <list-item-commit
+              v-for="item in commits.items"
+              :key="item.id"
+              :commit="item"
+              :stream-id="$route.params.streamId"
+            ></list-item-commit>
+          </v-list>
         </v-card-text>
       </v-card>
     </v-col>

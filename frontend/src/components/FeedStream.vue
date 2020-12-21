@@ -14,69 +14,48 @@
         </v-col>
       </v-row>
       <v-card class="mb-3" elevation="0" rounded="lg" color="background2">
-        <v-row>
-          <v-col cols="7" class="pt-0 pb-0">
+        <v-row justify-center>
+          <v-col cols="12">
             <v-card-title class="subtitle-2">
-              <router-link :to="'streams/' + stream.id">
+              <router-link :to="'streams/' + stream.id" class="mr-4">
                 {{ stream.name }}
               </router-link>
+              <div class="caption">
+                <v-icon
+                  v-tooltip="
+                    stream.branches.totalCount +
+                    ' branch' +
+                    (stream.branches.totalCount === 1 ? '' : 'es')
+                  "
+                  small
+                >
+                  mdi-source-branch
+                </v-icon>
+                <span class="mr-2">{{ stream.branches.totalCount }}</span>
+                <v-icon
+                  v-tooltip="
+                    stream.commits.totalCount +
+                    ' commit' +
+                    (stream.commits.totalCount === 1 ? '' : 's')
+                  "
+                  small
+                >
+                  mdi-history
+                </v-icon>
+                <span class="mr-2">{{ stream.commits.totalCount }}</span>
+                <v-icon
+                  v-tooltip="
+                    stream.collaborators.length +
+                    ' collaborator' +
+                    (stream.collaborators.length === 1 ? '' : 's')
+                  "
+                  small
+                >
+                  mdi-account-outline
+                </v-icon>
+                <span class="mr-2 pr-2">{{ stream.collaborators.length }}</span>
+              </div>
             </v-card-title>
-            <!-- <v-card-subtitle>
-              {{ stream.description }}
-            </v-card-subtitle> -->
-          </v-col>
-
-          <v-col cols="5" class="caption text-right">
-            <div class="mt-1 mr-4">
-              <btn-click-copy :text="stream.id"></btn-click-copy>
-              <router-link :to="'streams/' + stream.id" class="streamid">
-                <span>{{ stream.id }}</span>
-              </router-link>
-
-              <!-- <v-icon small>mdi-key-outline</v-icon> -->
-              <span class="ma-2"></span>
-              <v-icon
-                v-tooltip="
-                  stream.branches.totalCount +
-                  ' branch' +
-                  (stream.branches.totalCount === 1 ? '' : 'es')
-                "
-                small
-              >
-                mdi-source-branch
-              </v-icon>
-              <span>{{ stream.branches.totalCount }}</span>
-
-              <span class="ma-2"></span>
-              <v-icon
-                v-tooltip="
-                  stream.commits.totalCount +
-                  ' commit' +
-                  (stream.commits.totalCount === 1 ? '' : 's')
-                "
-                small
-              >
-                mdi-history
-              </v-icon>
-              <span>{{ stream.commits.totalCount }}</span>
-
-              <span class="ma-2"></span>
-              <v-icon
-                v-tooltip="
-                  stream.collaborators.length +
-                  ' collaborator' +
-                  (stream.collaborators.length === 1 ? '' : 's')
-                "
-                small
-              >
-                mdi-account-outline
-              </v-icon>
-              <span>{{ stream.collaborators.length }}</span>
-
-              <span class="ma-2"></span>
-              <v-icon v-if="stream.isPublic" v-tooltip="`Link sharing on`" small>mdi-link</v-icon>
-              <v-icon v-else v-tooltip="`Link sharing off`" small>mdi-link-lock</v-icon>
-            </div>
           </v-col>
         </v-row>
       </v-card>

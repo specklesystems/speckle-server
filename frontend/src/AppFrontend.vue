@@ -26,35 +26,45 @@
       <v-container class="hidden-md-and-up">
         <v-row>
           <v-col>
-            <v-btn icon @click="showMobileMenu = !showMobileMenu">
-              <v-icon v-if="!showMobileMenu">mdi-menu</v-icon>
-              <v-icon v-else>mdi-close</v-icon>
-            </v-btn>
+            <v-menu
+              :value="showMobileMenu"
+              transition="slide-y-transition"
+              bottom
+              offset-y
+              :close-on-content-click="false"
+              min-width="100%"
+            >
+              <template #activator="{ on, attrs }">
+                <v-btn icon v-bind="attrs" v-on="on" @click="showMobileMenu = true">
+                  <v-icon>mdi-menu</v-icon>
+                </v-btn>
+              </template>
+              <v-card class="background2">
+                <v-row>
+                  <v-col v-for="link in navLinks" :key="link.name" cols="12">
+                    <v-btn text block :to="link.link">
+                      {{ link.name }}
+                    </v-btn>
+                  </v-col>
+                  <v-col cols="12" class="px-10 pb-7">
+                    <v-divider class="mb-5"></v-divider>
+                    <search-bar />
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-menu>
           </v-col>
           <v-col class="text-center">
             <v-btn text to="/" active-class="no-active" icon>
               <v-img contain max-height="40" max-width="40" src="./assets/logo.svg" />
             </v-btn>
           </v-col>
-          <v-col class="text-right" style="margin-top: 8px">
+          <v-col class="text-right" style="margin-top: 5px">
             <user-menu-top :user="user" />
           </v-col>
         </v-row>
       </v-container>
     </v-app-bar>
-    <v-card v-show="showMobileMenu" style="position: relative; top: 40px" class="pa-5">
-      <v-row>
-        <v-col v-for="link in navLinks" :key="link.name" cols="12">
-          <v-btn text block :to="link.link">
-            {{ link.name }}
-          </v-btn>
-        </v-col>
-        <v-col cols="12">
-          <v-divider class="mb-5"></v-divider>
-          <search-bar />
-        </v-col>
-      </v-row>
-    </v-card>
     <v-main :style="background">
       <router-view></router-view>
     </v-main>
@@ -68,17 +78,19 @@ import SearchBar from './components/SearchBar'
 
 export default {
   components: { UserMenuTop, SearchBar },
-  data: () => ({
-    search: '',
-    showMobileMenu: false,
-    streams: { items: [] },
-    selectedSearchResult: null,
-    navLinks: [
-      { link: '/streams', name: 'streams' },
-      { link: '/profile', name: 'profile' },
-      { link: '/help', name: 'help' }
-    ]
-  }),
+  data() {
+    return {
+      search: '',
+      showMobileMenu: false,
+      streams: { items: [] },
+      selectedSearchResult: null,
+      navLinks: [
+        { link: '/streams', name: 'streams' },
+        { link: '/profile', name: 'profile' },
+        { link: '/help', name: 'help' }
+      ]
+    }
+  },
   apollo: {
     user: {
       prefetch: true,
@@ -143,6 +155,10 @@ export default {
 .marked-preview hr {
   margin-top: 10px;
   margin-bottom: 10px;
+}
+
+.no-active::before {
+  background-color: transparent !important;
 }
 
 /*.v-application code {
