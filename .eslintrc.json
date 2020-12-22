@@ -26,7 +26,8 @@
     ],
     "space-in-parens": [2, "always"],
     "keyword-spacing": 2,
-    "semi": "off",
+    "semi": [1, "never"],
+    "quotes": [1, "single"],
     "indent": ["error", 2],
     "space-unary-ops": [
       2,
