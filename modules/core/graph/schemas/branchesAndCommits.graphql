@@ -24,6 +24,7 @@ type Commit {
   sourceApplication: String
   totalChildrenCount: Int
   branchName: String
+  parents: [String]
   authorName: String
   authorId: String
   authorAvatar: String
@@ -37,6 +38,7 @@ type CommitCollectionUserNode {
   sourceApplication: String
   totalChildrenCount: Int
   branchName: String
+  parents: [String]
   streamId: String
   streamName: String
   createdAt: DateTime
@@ -148,7 +150,8 @@ input CommitCreateInput {
   message: String
   sourceApplication: String
   totalChildrenCount: Int
-  previousCommitIds: [String]
+  previousCommitIds: [String] @deprecated( reason: "Use the `parents` field.")
+  parents: [String]
 }
 
 input CommitUpdateInput {
