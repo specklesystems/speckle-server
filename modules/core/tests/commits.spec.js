@@ -180,7 +180,9 @@ describe( 'Commits @core-commits', ( ) => {
     let { commits: branchCommits } = await getCommitsByBranchName( { streamId: stream.id, branchName: 'main', limit: 2 } )
     let branchCommit = branchCommits[0]
 
-    console.log( userCommit, serverCommit, branchCommit )
+    let idCommit = await getCommitById( {id: streamCommits[4].id} )
+
+    console.log( userCommit, serverCommit, branchCommit, idCommit )
 
     expect( userCommit ).to.have.property( 'sourceApplication' )
     expect( userCommit.sourceApplication ).to.be.a( 'string' )

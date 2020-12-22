@@ -70,8 +70,12 @@ module.exports = {
   },
 
   async getCommitById( { id } ) {
-    return await Commits( ).columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', { authorName: 'name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' }, 'commits.createdAt' ] ).select( )
+    return await Commits( )
+      .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
+      .select( )
       .join( 'users', 'commits.author', 'users.id' )
+      .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
+      .join( 'branches', 'branches.id', 'branch_commits.branchId' )
       .where( { 'commits.id': id } ).first( )
   },
 
