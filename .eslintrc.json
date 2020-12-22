@@ -7,7 +7,7 @@
   "parserOptions": {
     "ecmaVersion": 11
   },
-  "ignorePatterns": ["modules/*/tests/*", "node_modules/*"],
+  "ignorePatterns": ["node_modules/*"],
   "rules": {
     "arrow-spacing": [
       2,
