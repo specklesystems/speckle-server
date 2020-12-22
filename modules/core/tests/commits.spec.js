@@ -170,7 +170,7 @@ describe( 'Commits @core-commits', ( ) => {
     expect( c ).to.equal( 24 )
   } )
 
-  it( 'Commits should have source, total count and branch name fields', async() => {
+  it( 'Commits should have source, total count, branch name and ancestor fields', async() => {
     let { commits: userCommits } = await getCommitsByUserId( { userId: user.id, limit: 1000 } )
     let userCommit = userCommits[0]
 
@@ -182,15 +182,18 @@ describe( 'Commits @core-commits', ( ) => {
 
     console.log( userCommit, serverCommit, branchCommit )
 
-    expect(userCommit).to.have.property('sourceApplication')
-    expect(userCommit.sourceApplication).to.be.a('string')
+    expect( userCommit ).to.have.property( 'sourceApplication' )
+    expect( userCommit.sourceApplication ).to.be.a( 'string' )
 
-    expect(userCommit).to.have.property( 'totalChildrenCount')
-    expect(userCommit.totalChildrenCount).to.be.a('number')
+    expect( userCommit ).to.have.property( 'totalChildrenCount' )
+    expect( userCommit.totalChildrenCount ).to.be.a( 'number' )
 
-    expect(userCommit).to.have.property('branchName')
-    expect(userCommit.branchName).to.be.a('string')
-  })
+    expect( userCommit ).to.have.property( 'branchName' )
+    expect( userCommit.branchName ).to.be.a( 'string' )
+
+    expect( userCommit ).to.have.property( 'parents' )
+    expect( userCommit.branchName ).to.be.a( 'array' )
+  } )
 
 
 } )
