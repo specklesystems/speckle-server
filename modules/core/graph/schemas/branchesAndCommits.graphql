@@ -21,6 +21,9 @@ type Commit {
   id: String!
   referencedObject: String!
   message: String
+  sourceApplication: String
+  totalChildrenCount: Int
+  branchName: String
   authorName: String
   authorId: String
   authorAvatar: String
@@ -31,6 +34,9 @@ type CommitCollectionUserNode {
   id: String!
   referencedObject: String!
   message: String
+  sourceApplication: String
+  totalChildrenCount: Int
+  branchName: String
   streamId: String
   streamName: String
   createdAt: DateTime
@@ -140,6 +146,8 @@ input CommitCreateInput {
   branchName: String!
   objectId: String!
   message: String
+  sourceApplication: String
+  totalChildrenCount: Int
   previousCommitIds: [String]
 }
 

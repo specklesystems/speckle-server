@@ -33,6 +33,8 @@ exports.init = async ( ) => {
 
   SentryInit( app )
 
+  // Moves things along automatically on restart.
+  // Should perhaps be done manually?
   await knex.migrate.latest( )
 
   if ( process.env.NODE_ENV !== 'test' ) {

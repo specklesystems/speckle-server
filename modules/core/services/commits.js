@@ -11,16 +11,26 @@ const BranchCommits = ( ) => knex( 'branch_commits' )
 const ParentCommits = ( ) => knex( 'parent_commits' )
 
 const { getBranchesByStreamId, getBranchByNameAndStreamId } = require( './branches' )
+const { getObject } = require( './objects' )
 
 module.exports = {
 
-  async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, previousCommitIds } ) {
+  async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, sourceApplication, totalChildrenCount, previousCommitIds } ) {
+
+    // If no total children count is passed in, get it from the original object
+    // that this commit references.
+    if ( !totalChildrenCount ){
+      let { totalChildrenCount: tc } = await getObject( {objectId} )
+      totalChildrenCount = tc
+    }
+
     // Create main table entry
     let [ id ] = await Commits( ).returning( 'id' ).insert( {
       id: crs( { length: 10 } ),
       referencedObject: objectId,
       author: authorId,
-      message: message
+      sourceApplication,
+      message
     } )
 
     // Link it to a branch
@@ -61,7 +71,7 @@ module.exports = {
   async getCommitById( { id } ) {
     return await Commits( ).columns( [ { id: 'commits.id' }, 'message', 'referencedObject', { authorName: 'name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' }, 'commits.createdAt' ] ).select( )
       .join( 'users', 'commits.author', 'users.id' )
-      .where( { "commits.id": id } ).first( )
+      .where( { 'commits.id': id } ).first( )
   },
 
   async deleteCommit( { id } ) {
@@ -117,13 +127,6 @@ module.exports = {
     return parseInt( res.count )
   },
 
-  /**
-   * Gets all the commits of a stream.
-   * @param  {[type]} options.streamId [description]
-   * @param  {[type]} options.limit    [description]
-   * @param  {[type]} options.cursor   [description]
-   * @return {[type]}                  [description]
-   */
   async getCommitsByStreamId( { streamId, limit, cursor } ) {
     limit = limit || 25
     let query = StreamCommits( )

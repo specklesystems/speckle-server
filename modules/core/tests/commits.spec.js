@@ -31,7 +31,7 @@ const {
   getCommitsTotalCountByUserId
 } = require( '../services/commits' )
 
-describe( 'Commits', ( ) => {
+describe( 'Commits @core-commits', ( ) => {
 
   let user = {
     name: 'Dimitrie Stefanescu',
