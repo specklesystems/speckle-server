@@ -8,10 +8,10 @@ exports.up = async knex => {
     table.string( 'id', 10 ).primary( )
     table.string( 'secret', 10 )
 
-    table.string( 'name', 200 ).notNullable( )
-    table.string( 'description', 500 )
-    table.string( 'termsAndConditionsLink', 100 )
-    table.string( 'logo' )
+    table.string( 'name', 256 ).notNullable( )
+    table.string( 'description', 512 )
+    table.string( 'termsAndConditionsLink', 256 )
+    table.string( 'logo', 524288 )
 
     table.boolean( 'public' ).defaultTo( false )
     table.boolean( 'trustByDefault' ).defaultTo( false )

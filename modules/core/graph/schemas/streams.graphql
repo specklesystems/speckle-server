@@ -16,6 +16,10 @@ type Stream {
   name: String!
   description: String
   isPublic: Boolean!
+  """
+  Your role for this stream. `null` if request is not authenticated, or the stream is not explictely shared with you.
+  """
+  role: String
   createdAt: DateTime!
   updatedAt: DateTime!
   collaborators: [ StreamCollaborator ]!

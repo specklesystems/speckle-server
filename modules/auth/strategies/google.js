@@ -13,8 +13,8 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     name: 'Google',
     icon: 'TODO',
     color: 'white red--text',
-    url: `/auth/goog`,
-    callbackUrl: `/auth/goog/callback`
+    url: '/auth/goog',
+    callbackUrl: '/auth/goog/callback'
   }
 
   let myStrategy = new GoogleStrategy( {
@@ -28,7 +28,7 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     let email = profile.emails[ 0 ].value
     let name = profile.displayName
 
-    let user = { email, name }
+    let user = { email, name, avatar: profile._json.picture }
 
     if ( req.session.suuid ) {
       user.suuid = req.session.suuid

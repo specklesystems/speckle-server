@@ -28,8 +28,14 @@ module.exports = {
     return streamId
   },
 
-  async getStream( { streamId } ) {
-    return await Streams( ).where( { id: streamId } ).select( '*' ).first( )
+  async getStream( { streamId, userId } ) {
+    let stream = await Streams( ).where( { id: streamId } ).select( '*' ).first( )
+    if ( !userId )
+      return stream
+
+    let { role } = await Acl().where( { resourceId: streamId, userId: userId } ).select( 'role' ).first()
+    stream.role = role
+    return stream
   },
 
   async updateStream( { streamId, name, description, isPublic } ) {
@@ -48,7 +54,7 @@ module.exports = {
     await knex.raw( query )
 
     // update stream updated at
-    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
     return true
   },
 
@@ -81,7 +87,7 @@ module.exports = {
       throw new Error( 'Could not revoke permissions for user' )
 
     // update stream updated at
-    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
 
     return true
   },
@@ -118,7 +124,7 @@ module.exports = {
     return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString( ) : null }
   },
 
-  async getUserStreamsCount( {userId, publicOnly, searchQuery } ) {
+  async getUserStreamsCount( { userId, publicOnly, searchQuery } ) {
     publicOnly = publicOnly !== false //defaults to true if not provided
 
     let query = Acl( ).count( )
