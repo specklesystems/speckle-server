@@ -3,31 +3,17 @@
     <v-container v-if="!error" fluid fill-height>
       <v-row align="center" justify="center">
         <v-col xs="10" sm="6" md="5" lg="4" xl="3" class="">
-          Err: {{ error }} : {{ errorMessage }} // Local: {{ hasLocalStrategy }}
-          <v-card class="elevation-20">
-            <v-img
-              class="white--text align-end"
-              height="100px"
-              src="./assets/s2logo-wide.svg"
-            ></v-img>
-            <v-card-text class="pa-1">
+          <v-card class="elevation-20" rounded="lg">
+            <v-card-text>
               <v-container fluid>
-                <v-row style="margin-top: -10px" dense>
+                <v-row>
                   <v-col cols="12">
-                    <p
-                      v-if="app.firstparty"
-                      class="title font-weight-light text-center"
-                    >
+                    <p v-if="app.firstparty" class="title font-weight-light">
                       Signing in to
                       <b>{{ app.name }}</b>
-                      &nbsp;&nbsp;
                       <v-tooltip v-if="app.firstparty" bottom>
                         <template #activator="{ on }">
-                          <v-icon
-                            color="primary"
-                            style="margin-top: -6px"
-                            v-on="on"
-                          >
+                          <v-icon color="primary" style="margin-top: -6px" v-on="on">
                             mdi-shield-check
                           </v-icon>
                         </template>
@@ -36,16 +22,17 @@
                     </p>
                     <p
                       v-if="!app.firstparty && !isFinalizing"
-                      class="title font-weight-light text-center"
+                      class="title font-weight-light"
                     >
                       You need to sign in first
-                      <br />
                       to authorize
                       <span class="primary--text">
                         <b>{{ app.name }}</b>
                       </span>
-                      by
-                      <b>{{ app.author }}.</b>
+                      <span v-if="app.author">
+                        by
+                        <b>{{ app.author }}.</b>
+                      </span>
                     </p>
                   </v-col>
                 </v-row>
@@ -54,9 +41,8 @@
               <v-container v-if="!isFinalizing">
                 <v-row>
                   <template v-for="s in strategies">
-                    <v-col cols="12" class="text-center py-0 my-0">
+                    <v-col :key="s.name" cols="12" class="text-center py-0 my-0">
                       <v-btn
-                        :key="s.name"
                         block
                         large
                         tile
@@ -110,11 +96,11 @@
   </v-app>
 </template>
 <script>
-import gql from "graphql-tag"
-import debounce from "lodash.debounce"
-import crs from "crypto-random-string"
+import gql from 'graphql-tag'
+import debounce from 'lodash.debounce'
+import crs from 'crypto-random-string'
 export default {
-  name: "AppAuth",
+  name: 'AppAuth',
   apollo: {
     serverInfo: {
       query: gql`
@@ -150,21 +136,21 @@ export default {
         if (data.errors) {
           this.error = true
           this.errorMessage =
-            "Invalid app authorization request: app not registered on this server."
-          console.log("Error: No such application!!!!!")
+            'Invalid app authorization request: app not registered on this server.'
+          console.log('Error: No such application!!!!!')
         }
       },
       error(err) {
         this.error = true
         this.errorMessage = `Invalid app authorization request: could not find app with id "${this.appId}" on this server.`
-        console.log("Error: No such application")
+        console.log('Error: No such application')
       }
     }
   },
   components: {},
   data: () => ({
     serverInfo: {
-      name: "Loading",
+      name: 'Loading',
       authStrategies: []
     },
     appId: null,
@@ -188,54 +174,51 @@ export default {
   }),
   computed: {
     isFinalizing() {
-      return this.$route.path.indexOf("/finalize") !== -1
+      return this.$route.path.indexOf('/finalize') !== -1
     },
     hasLocalStrategy() {
-      return (
-        this.serverInfo.authStrategies.findIndex((s) => s.id === "local") !== -1
-      )
+      return this.serverInfo.authStrategies.findIndex((s) => s.id === 'local') !== -1
     },
     strategies() {
-      return this.serverInfo.authStrategies.filter((s) => s.id !== "local")
+      return this.serverInfo.authStrategies.filter((s) => s.id !== 'local')
     }
   },
   mounted() {
     let urlParams = new URLSearchParams(window.location.search)
-    let appId = urlParams.get("appId")
-    let challenge = urlParams.get("challenge")
-    let suuid = urlParams.get("suuid")
+    let appId = urlParams.get('appId')
+    let challenge = urlParams.get('challenge')
+    let suuid = urlParams.get('suuid')
     this.suuid = suuid
 
-    if (!appId) this.appId = "spklwebapp"
+    if (!appId) this.appId = 'spklwebapp'
     else this.appId = appId
-    if (!challenge && this.appId === "spklwebapp") {
-      if (localStorage.getItem("appChallenge")) {
+    if (!challenge && this.appId === 'spklwebapp') {
+      if (localStorage.getItem('appChallenge')) {
         // Do nothing!
       } else {
         this.challenge = crs({
           length: 10
         })
-        localStorage.setItem("appChallenge", this.challenge)
+        localStorage.setItem('appChallenge', this.challenge)
       }
     } else if (challenge) {
       this.challenge = challenge
     } else {
-      if (window.location.href.indexOf("/finalize") === -1) {
+      if (window.location.href.indexOf('/finalize') === -1) {
         this.error = true
-        this.errorMessage =
-          "Invalid app authorization request: missing challenge."
+        this.errorMessage = 'Invalid app authorization request: missing challenge.'
       }
     }
   },
   async beforeCreate() {
     // checks login
-    let token = localStorage.getItem("AuthToken")
+    let token = localStorage.getItem('AuthToken')
     if (token) {
-      let testResponse = await fetch("/graphql", {
-        method: "POST",
+      let testResponse = await fetch('/graphql', {
+        method: 'POST',
         headers: {
-          Authorization: "Bearer " + token,
-          "Content-Type": "application/json"
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           query: `{ user { id } }`
