@@ -66,7 +66,6 @@ module.exports = {
       .join( 'users', 'commits.author', 'users.id' )
       .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'branches', 'branches.id', 'branch_commits.branchId' )
-      // .leftJoin( 'parent_commits', 'parent_commits.parent', 'commits.id' )
       .where( { 'commits.id': id } )
       .first( )
     return await query
@@ -137,7 +136,6 @@ module.exports = {
       .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'branches', 'branches.id', 'branch_commits.branchId' )
       .where( 'stream_commits.streamId', streamId )
-
 
     if ( cursor )
       query.andWhere( 'commits.createdAt', '<', cursor )

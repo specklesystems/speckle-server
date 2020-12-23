@@ -814,6 +814,13 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.stream.commit.message ).to.equal( 'what a message for commit number 19' ) // should be the last created one
       } )
+
+      it( 'should retrieve the latest stream commit if no id is specified', async ( ) => {
+        const res = await sendRequest( userA.token, { query: `query { stream( id:"${ts1}" ) { commit { id message referencedObject } } }` } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.stream.commit.message ).to.equal( 'what a message for commit number 19' ) // should be the last created one
+      } )
     } )
 
     describe( 'Objects', ( ) => {
