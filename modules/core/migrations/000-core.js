@@ -142,10 +142,8 @@ exports.up = async knex => {
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
   } )
 
-  // Commit inheritance table.
-  // Tracks the inheritance of commits. A commit may have:
-  // - one ancestor (simple sequential push)
-  // - more ancestors (result of a merge)
+  // NOTE: DEPRECATED
+  // Table is dropped in later migration.
   await knex.schema.createTable( 'parent_commits', table => {
     table.string( 'parent', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'child', 10 ).references( 'id' ).inTable( 'commits' ).notNullable( ).onDelete( 'cascade' )
