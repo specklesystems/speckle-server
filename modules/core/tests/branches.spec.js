@@ -22,7 +22,7 @@ const {
   deleteBranchById
 } = require( '../services/branches' )
 
-describe( 'Branches', ( ) => {
+describe( 'Branches @core-branches', ( ) => {
 
   let user = {
     name: 'Dimitrie Stefanescu',

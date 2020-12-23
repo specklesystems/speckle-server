@@ -129,7 +129,7 @@ module.exports = {
             token_scopes
             JOIN api_tokens ON "api_tokens"."id" = "token_scopes"."tokenId"
           GROUP BY
-            token_scopes. "tokenId") ts USING (id)
+            token_scopes. "tokenId" ) ts USING (id)
       WHERE
         t.id IN(
           SELECT

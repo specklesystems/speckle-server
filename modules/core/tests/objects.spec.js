@@ -47,7 +47,7 @@ let sampleObject = JSON.parse( `{
   "speckleType": "Tests.Polyline"
 }` )
 
-describe( 'Objects', ( ) => {
+describe( 'Objects @core-objects', ( ) => {
 
   let userOne = {
     name: 'Dimitrie Stefanescu',
