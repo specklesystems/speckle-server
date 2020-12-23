@@ -19,6 +19,7 @@ const {
   updateBranch,
   getBranchById,
   getBranchesByStreamId,
+  getBranchByNameAndStreamId,
   deleteBranchById
 } = require( '../services/branches' )
 
@@ -94,9 +95,20 @@ describe( 'Branches @core-branches', ( ) => {
   } )
 
   it( 'Should delete a branch', async ( ) => {
-    await deleteBranchById( { id: branch.id } )
+    await deleteBranchById( { id: branch.id, streamId: stream.id } )
     let { items } = await getBranchesByStreamId( { streamId: stream.id } )
     expect( items ).to.have.lengthOf( 4 )
+  } )
+
+  it( 'Should NOT delete the main branch', async ( ) => {
+    let b = await getBranchByNameAndStreamId( { streamId: stream.id, name: 'main' } )
+    try {
+      await deleteBranchById( { id: b.id, streamId: stream.id } )
+      assert.fail()
+    } catch ( e ){
+      // pass
+    }
+
   } )
 
 } )

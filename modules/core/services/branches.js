@@ -4,6 +4,7 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
+const Streams = ( ) => knex( 'streams' )
 const Branches = ( ) => knex( 'branches' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
 
@@ -18,6 +19,9 @@ module.exports = {
     branch.description = description
 
     let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
+
+    // update stream updated at
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
 
     return branch.id
   },
@@ -54,7 +58,13 @@ module.exports = {
     return await query
   },
 
-  async deleteBranchById( { id } ) {
-    return await Branches( ).where( { id: id } ).del( )
+  async deleteBranchById( { id, streamId } ) {
+    let branch = await module.exports.getBranchById( { id: id } )
+    if ( branch.name === 'main' )
+      throw new Error( 'Cannot delete the main branch.' )
+
+    await Branches( ).where( { id: id } ).del( )
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
+    return true
   },
 }
