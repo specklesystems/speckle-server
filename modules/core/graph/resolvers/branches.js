@@ -50,6 +50,7 @@ module.exports = {
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
       let id = await createBranch( { ...args.branch, authorId: context.userId } )
+
       if ( id ) {
         await pubsub.publish( BRANCH_CREATED, {
           branchCreated: { ...args.branch, id: id, authorId: context.userId },
@@ -62,7 +63,9 @@ module.exports = {
 
     async branchUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
+
       let updated = await updateBranch( { ...args.branch } )
+
       if ( updated ) {
         await pubsub.publish( BRANCH_UPDATED, {
           branchUpdated: { ...args.branch },
@@ -85,7 +88,7 @@ module.exports = {
       if ( branch.authorId !== context.userId && role !== 'stream:owner' )
         throw new ForbiddenError( 'Only the branch creator or stream owners are allowed to delete branches.' )
 
-      let deleted = await deleteBranchById( { id: args.branch.id } )
+      let deleted = await deleteBranchById( { id: args.branch.id, streamId: args.branch.streamId } )
       if ( deleted ) {
         await pubsub.publish( BRANCH_DELETED, { branchDeleted: { ...args.branch }, streamId: args.branch.streamId } )
       }

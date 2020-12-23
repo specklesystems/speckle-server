@@ -58,7 +58,9 @@ module.exports = {
     return await query
   },
 
-  async deleteBranchById( { id } ) {
-    return await Branches( ).where( { id: id } ).del( )
+  async deleteBranchById( { id, streamId } ) {
+    await Branches( ).where( { id: id } ).del( )
+    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+    return true
   },
 }
