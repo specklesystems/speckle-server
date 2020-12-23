@@ -4,6 +4,7 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
+const Streams = ( ) => knex( 'streams' )
 const Branches = ( ) => knex( 'branches' )
 const Commits = ( ) => knex( 'commits' )
 const StreamCommits = ( ) => knex( 'stream_commits' )
@@ -16,7 +17,6 @@ const { getObject } = require( './objects' )
 module.exports = {
 
   async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {
-
     // If no total children count is passed in, get it from the original object
     // that this commit references.
     if ( !totalChildrenCount ){
@@ -40,6 +40,8 @@ module.exports = {
     // Link it to a stream
     await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
 
+    // update stream updated at
+    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
     return id
   },
 

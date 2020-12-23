@@ -36,16 +36,19 @@ module.exports = {
     let [ res ] = await Streams( )
       .returning( 'id' )
       .where( { id: streamId } )
-      .update( { name, description, isPublic } )
+      .update( { name, description, isPublic, updatedAt: knex.fn.now() } )
     return res
   },
 
   async grantPermissionsStream( { streamId, userId, role } ) {
     // upserts the existing role (sets a new one!)
     // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
-    let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ` on conflict on constraint stream_acl_pkey do update set role=excluded.role`
+    let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
     await knex.raw( query )
+
+    // update stream updated at
+    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
     return true
   },
 
@@ -76,6 +79,9 @@ module.exports = {
 
     if ( delCount === 0 )
       throw new Error( 'Could not revoke permissions for user' )
+
+    // update stream updated at
+    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
 
     return true
   },
