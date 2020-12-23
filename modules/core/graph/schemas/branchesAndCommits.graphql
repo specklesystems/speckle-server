@@ -150,7 +150,10 @@ input CommitCreateInput {
   message: String
   sourceApplication: String
   totalChildrenCount: Int
-  previousCommitIds: [String] @deprecated( reason: "Use the `parents` field.")
+  """
+  **DEPRECATED** Use the `parents` field.
+  """
+  previousCommitIds: [String]
   parents: [String]
 }
 

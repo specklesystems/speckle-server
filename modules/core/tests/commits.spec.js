@@ -81,10 +81,10 @@ describe( 'Commits @core-commits', ( ) => {
   } )
 
   it( 'Should create a commit with a previous commit id', async ( ) => {
-    commitId2 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'second commit', sourceApplication: 'tests', objectId: testObject2.id, authorId: user.id, previousCommitIds: [ commitId1 ] } )
+    commitId2 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'second commit', sourceApplication: 'tests', objectId: testObject2.id, authorId: user.id, parents: [ commitId1 ] } )
     expect( commitId2 ).to.be.a.string
 
-    commitId3 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'third commit', sourceApplication: 'tests', objectId: testObject3.id, authorId: user.id, previousCommitIds: [ commitId1, commitId2 ] } )
+    commitId3 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'third commit', sourceApplication: 'tests', objectId: testObject3.id, authorId: user.id, parents: [ commitId1, commitId2 ] } )
 
     expect( commitId3 ).to.be.a.string
   } )
@@ -130,6 +130,8 @@ describe( 'Commits @core-commits', ( ) => {
 
   it( 'Should get the commits from a stream', async ( ) => {
     await createBranch( { name: 'dim/dev', streamId: stream.id, authorId: user.id } )
+
+    let prevId
     for ( let i = 0; i < 10; i++ ) {
       let t = { thud: i }
       t.id = await createObject( t )
@@ -170,7 +172,7 @@ describe( 'Commits @core-commits', ( ) => {
     expect( c ).to.equal( 24 )
   } )
 
-  it( 'Commits should have source, total count, branch name and ancestor fields', async() => {
+  it( 'Commits should have source, total count, branch name and parents fields', async() => {
     let { commits: userCommits } = await getCommitsByUserId( { userId: user.id, limit: 1000 } )
     let userCommit = userCommits[0]
 
@@ -180,22 +182,32 @@ describe( 'Commits @core-commits', ( ) => {
     let { commits: branchCommits } = await getCommitsByBranchName( { streamId: stream.id, branchName: 'main', limit: 2 } )
     let branchCommit = branchCommits[0]
 
-    let idCommit = await getCommitById( {id: streamCommits[4].id} )
+    let idCommit = await getCommitById( {id: commitId3 } )
 
-    console.log( userCommit, serverCommit, branchCommit, idCommit )
+    for ( let commit of [ userCommit, serverCommit, branchCommit, idCommit ] ) {
+      expect( commit ).to.have.property( 'sourceApplication' )
+      expect( commit.sourceApplication ).to.be.a( 'string' )
 
-    expect( userCommit ).to.have.property( 'sourceApplication' )
-    expect( userCommit.sourceApplication ).to.be.a( 'string' )
+      expect( commit ).to.have.property( 'totalChildrenCount' )
+      expect( commit.totalChildrenCount ).to.be.a( 'number' )
 
-    expect( userCommit ).to.have.property( 'totalChildrenCount' )
-    expect( userCommit.totalChildrenCount ).to.be.a( 'number' )
+      expect( commit ).to.have.property( 'branchName' )
+      expect( commit.branchName ).to.be.a( 'string' )
 
-    expect( userCommit ).to.have.property( 'branchName' )
-    expect( userCommit.branchName ).to.be.a( 'string' )
+      expect( commit ).to.have.property( 'parents' )
+    }
 
-    expect( userCommit ).to.have.property( 'parents' )
-    expect( userCommit.branchName ).to.be.a( 'array' )
+    expect( idCommit.parents ).to.be.a( 'array' )
+    expect( idCommit.parents.length ).to.equal( 2 )
   } )
 
+  it( 'Should have an array of parents', async() => {
+    let commits = [ await getCommitById( {id: commitId3 } ), await await getCommitById( {id: commitId2 } ) ]
 
+    for ( let commit of commits ) {
+      expect( commit ).to.have.property( 'parents' )
+      expect( commit.parents ).to.be.a( 'array' )
+      expect( commit.parents.length ).to.greaterThan( 0 )
+    }
+  } )
 } )

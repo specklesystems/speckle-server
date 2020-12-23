@@ -31,26 +31,14 @@ module.exports = {
       author: authorId,
       sourceApplication,
       totalChildrenCount,
+      parents,
       message
     } )
 
     // Link it to a branch
-    await BranchCommits( ).insert( {
-      branchId: branchId,
-      commitId: id
-    } )
-
+    await BranchCommits( ).insert( {branchId: branchId, commitId: id} )
     // Link it to a stream
-    await StreamCommits( ).insert( {
-      streamId: streamId,
-      commitId: id
-    } )
-
-    // Link it to its children, if any.
-    if ( Array.isArray( parents ) && parents.length > 0 ) {
-      let childrenMap = parents.map( childId => { return { parent: id, child: childId } } )
-      await ParentCommits( ).insert( childrenMap )
-    }
+    await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
 
     return id
   },
@@ -70,13 +58,16 @@ module.exports = {
   },
 
   async getCommitById( { id } ) {
-    return await Commits( )
-      .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
+    let query = await Commits( )
+      .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
       .select( )
       .join( 'users', 'commits.author', 'users.id' )
       .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'branches', 'branches.id', 'branch_commits.branchId' )
-      .where( { 'commits.id': id } ).first( )
+      // .leftJoin( 'parent_commits', 'parent_commits.parent', 'commits.id' )
+      .where( { 'commits.id': id } )
+      .first( )
+    return await query
   },
 
   async deleteCommit( { id } ) {
@@ -102,7 +93,7 @@ module.exports = {
   async getCommitsByBranchId( { branchId, limit, cursor } ) {
     limit = limit || 25
     let query = BranchCommits( )
-      .columns( [ { id: 'commitId' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount',  'commits.createdAt', { branchName: 'branches.name' },{ authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
+      .columns( [ { id: 'commitId' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents',  'commits.createdAt', { branchName: 'branches.name' },{ authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
       .select( )
       .join( 'commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'users', 'commits.author', 'users.id' )
@@ -137,7 +128,7 @@ module.exports = {
   async getCommitsByStreamId( { streamId, limit, cursor } ) {
     limit = limit || 25
     let query = StreamCommits( )
-      .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
+      .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
       .select( )
       .join( 'commits', 'commits.id', 'stream_commits.commitId' )
       .join( 'users', 'commits.author', 'users.id' )
@@ -161,7 +152,7 @@ module.exports = {
 
     let query =
       Commits( )
-        .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'commits.createdAt', { branchName: 'branches.name' }, { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] )
+        .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] )
         .select( )
         .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
         .join( 'streams', 'stream_commits.streamId', 'streams.id' )
