@@ -76,7 +76,7 @@ describe( 'Commits @core-commits', ( ) => {
   let commitId1, commitId2, commitId3
 
   it( 'Should create a commit by branch name', async ( ) => {
-    commitId1 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject.id, authorId: user.id, sourceApplication: 'tests' } )
+    commitId1 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject.id, authorId: user.id } )
     expect( commitId1 ).to.be.a.string
   } )
 

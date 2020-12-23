@@ -13,7 +13,9 @@ chai.use( chaiHttp )
 
 const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
 const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
-const { createBranch,updateBranch,deleteBranchById } = require( '../services/branches' )
+const { createBranch, getBranchByNameAndStreamId, updateBranch, deleteBranchById } = require( '../services/branches' )
+const { createObject, createObjects } = require( '../services/objects' )
+const { createCommitByBranchName } = require( '../services/commits' )
 
 describe( 'Streams @core-streams', ( ) => {
 
@@ -48,8 +50,7 @@ describe( 'Streams @core-streams', ( ) => {
 
   let secondTestStream = { name: 'Test Stream 02', description: 'wot' }
 
-
-  describe( 'Base CRUD', ( ) => {
+  describe( 'Create, Read, Update, Delete Streams', ( ) => {
     it( 'Should create a stream', async ( ) => {
       testStream.id = await createStream( { ...testStream, ownerId: userOne.id } )
       expect( testStream ).to.have.property( 'id' )
@@ -79,7 +80,7 @@ describe( 'Streams @core-streams', ( ) => {
     } )
 
     it( 'Should search all streams of a user', async () => {
-      let {streams, cursor} = await getUserStreams( {userId: userOne.id, searchQuery: 'woo'} )
+      let { streams, cursor } = await getUserStreams( { userId: userOne.id, searchQuery: 'woo' } )
       // console.log( res )
       expect( streams ).to.have.lengthOf( 1 )
       expect( cursor ).to.exist
@@ -97,7 +98,7 @@ describe( 'Streams @core-streams', ( ) => {
     } )
   } )
 
-  describe( 'Sharing', ( ) => {
+  describe( 'Sharing: Grant & Revoke permissions', ( ) => {
 
     before( async ( ) => {
       userTwo.id = await createUser( userTwo )
@@ -139,56 +140,71 @@ describe( 'Streams @core-streams', ( ) => {
     } )
   } )
 
-  describe( 'Updates', () => {
+  describe( '`UpdatedAt` prop update', () => {
     let s = {
       name: 'T1'
     }
 
     it( 'Should update stream updatedAt on stream update ', async() => {
-      s.id = await createStream( {...s, ownerId: userOne.id} )
-      s = await getStream( {streamId: s.id} )
+      s.id = await createStream( { ...s, ownerId: userOne.id } )
+      s = await getStream( { streamId: s.id } )
 
-      await sleep( 500 )
+      await sleep( 100 )
 
-      await updateStream( {streamId: s.id, name: 'TU1'} )
-      let su = await getStream( {streamId: s.id} )
+      await updateStream( { streamId: s.id, name: 'TU1' } )
+      let su = await getStream( { streamId: s.id } )
 
       expect( su.updatedAt ).to.not.equal( s.updatedAt )
     } )
 
     it( 'Should update stream updatedAt on sharing operations ', async() => {
-      s = await getStream( {streamId: s.id} )
+      s = await getStream( { streamId: s.id } )
 
       await grantPermissionsStream( { streamId: s.id, userId: userTwo.id, role: 'stream:contributor' } )
 
-      await sleep( 500 )
-      let su = await getStream( {streamId: s.id} )
+      await sleep( 100 )
+      let su = await getStream( { streamId: s.id } )
       expect( su.updatedAt ).to.not.equal( s.updatedAt )
 
       await revokePermissionsStream( { streamId: s.id, userId: userTwo.id } )
 
-      await sleep( 500 )
-      su = await getStream( {streamId: s.id} )
+      await sleep( 100 )
+      su = await getStream( { streamId: s.id } )
       expect( su.updatedAt ).to.not.equal( s.updatedAt )
     } )
 
     it( 'Should update stream updatedAt on branch operations ', async() => {
-      s = await getStream( {streamId: s.id} )
+      s = await getStream( { streamId: s.id } )
 
-      await sleep( 500 )
+      await sleep( 100 )
       await createBranch( { name: 'dim/lol', streamId: s.id, authorId: userOne.id } )
-      su = await getStream( {streamId: s.id} )
+      let su = await getStream( { streamId: s.id } )
       expect( su.updatedAt ).to.not.equal( s.updatedAt )
 
-      // TODO: check deletion, etc.
+      await sleep( 100 )
+      let b = await getBranchByNameAndStreamId( { streamId: s.id, name: 'dim/lol' } )
+      await deleteBranchById( { id: b.id, streamId: s.id } )
+      let su2 = await getStream( { streamId: s.id } )
+      expect( su2.updatedAt ).to.not.equal( su.updatedAt )
     } )
 
+    it( 'Should update stream updatedAt on commit operations ', async() => {
+      s = await getStream( { streamId: s.id } )
+
+      await sleep( 100 )
+      let testObject = { foo: 'bar', baz: 'qux' }
+      testObject.id = await createObject( testObject )
+      commitId1 = await createCommitByBranchName( { streamId: s.id, branchName: 'main', message: 'first commit', objectId: testObject.id, authorId: userOne.id, sourceApplication: 'tests' } )
+
+      su = await getStream( { streamId: s.id } )
+      expect( su.updatedAt ).to.not.equal( s.updatedAt )
+    } )
 
   } )
 } )
 
 function sleep( ms ) {
-  console.log( `\t⏰ Sleeping ${ms}ms ` )
+  // console.log( `\t Sleeping ${ms}ms ` )
   return new Promise( ( resolve ) => {
     setTimeout( resolve, ms )
   } )

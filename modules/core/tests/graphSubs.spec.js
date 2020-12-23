@@ -581,7 +581,7 @@ function sendRequest( auth, obj, address = addr ) {
 }
 
 function sleep( ms ) {
-  console.log( `\t⏰ Sleeping ${ms}ms ` )
+  console.log( `\t Sleeping ${ms}ms ` )
   return new Promise( ( resolve ) => {
     setTimeout( resolve, ms )
   } )
