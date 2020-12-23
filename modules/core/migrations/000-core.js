@@ -22,14 +22,14 @@ exports.up = async knex => {
     table.string( 'id', 10 ).primary( )
     table.string( 'suuid' ).defaultTo( knex.raw( 'gen_random_uuid()' ) ).index( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
-    table.string( 'name', 256 ).notNullable( )
-    table.string( 'bio', 1024 )
-    table.string( 'company', 256 )
+    table.string( 'name', 512 ).notNullable( )
+    table.string( 'bio', 2048 )
+    table.string( 'company', 512 )
     table.string( 'email' ).unique( )
     table.bool( 'verified' ).defaultTo( false )
-    table.text( 'avatar' )
+    table.string( 'avatar',  524288 )
     table.jsonb( 'profiles' )
-    table.text( 'passwordDigest' ) // bcrypted pwd
+    table.string( 'passwordDigest' ) // bcrypted pwd
   } )
 
   // Roles.
@@ -37,10 +37,10 @@ exports.up = async knex => {
   // The target resource must be a table name.
   // The heigher the weight, the bigger the permissions.
   await knex.schema.createTable( 'user_roles', table => {
-    table.string( 'name' ).primary( )
-    table.text( 'description' ).notNullable( )
-    table.string( 'resourceTarget' ).notNullable( )
-    table.string( 'aclTableName' ).notNullable( )
+    table.string( 'name', 256 ).primary( )
+    table.string( 'description', 256 ).notNullable( )
+    table.string( 'resourceTarget', 256 ).notNullable( )
+    table.string( 'aclTableName', 256 ).notNullable( )
     table.integer( 'weight' ).defaultTo( 100 ).notNullable( )
   } )
 
@@ -55,7 +55,7 @@ exports.up = async knex => {
     table.string( 'id', 10 ).primary( )
     table.string( 'tokenDigest' ).unique( )
     table.string( 'owner', 10 ).references( 'id' ).inTable( 'users' ).notNullable( ).onDelete( 'cascade' )
-    table.string( 'name' )
+    table.string( 'name', 512 )
     table.string( 'lastChars', 6 )
     table.boolean( 'revoked' ).defaultTo( false )
     table.bigint( 'lifespan' ).defaultTo( 3.154e+12 ) // defaults to a lifespan of 100 years
@@ -72,8 +72,8 @@ exports.up = async knex => {
   // Registered application scopes table.
   // Scopes limit what a token can actually do.
   await knex.schema.createTable( 'scopes', table => {
-    table.string( 'name' ).primary( )
-    table.text( 'description' ).notNullable( )
+    table.string( 'name', 512 ).primary( )
+    table.string( 'description', 512 ).notNullable( )
   } )
 
   // Token >- -< Scopes junction table.
@@ -86,8 +86,8 @@ exports.up = async knex => {
   // Streams table.
   await knex.schema.createTable( 'streams', table => {
     table.string( 'id', 10 ).primary( )
-    table.string( 'name' ).notNullable( ).defaultTo( 'Unnamed Stream' )
-    table.text( 'description' )
+    table.string( 'name', 512 ).notNullable( ).defaultTo( 'Unnamed Stream' )
+    table.string( 'description', 65536 )
     table.boolean( 'isPublic' ).defaultTo( true )
     table.string( 'clonedFrom', 10 ).references( 'id' ).inTable( 'streams' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -112,7 +112,7 @@ exports.up = async knex => {
   // data - the full object stored as a jsonb representation.
   await knex.schema.createTable( 'objects', table => {
     table.string( 'id' ).primary( )
-    table.string( 'speckleType', 255 ).defaultTo( 'Base' ).notNullable( )
+    table.string( 'speckleType', 1024 ).defaultTo( 'Base' ).notNullable( )
     table.integer( 'totalChildrenCount' )
     table.jsonb( 'totalChildrenCountByDepth' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
@@ -138,7 +138,7 @@ exports.up = async knex => {
     table.string( 'id', 10 ).primary( )
     table.string( 'referencedObject' ).references( 'id' ).inTable( 'objects' ).notNullable( )
     table.string( 'author', 10 ).references( 'id' ).inTable( 'users' ).notNullable( )
-    table.string( 'message' ).defaultTo( 'no message' )
+    table.string( 'message', 65536 ).defaultTo( 'no message' )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
   } )
 
@@ -156,8 +156,8 @@ exports.up = async knex => {
     table.string( 'id', 10 ).primary( )
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).notNullable( ).onDelete( 'cascade' )
     table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' )
-    table.string( 'name' )
-    table.text( 'description' )
+    table.string( 'name', 512 )
+    table.string( 'description', 65536 )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
     table.unique( [ 'streamId', 'name' ] )
