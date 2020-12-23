@@ -139,7 +139,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
 
       it( 'Should update a stream', async ( ) => {
         const resS1 = await sendRequest( userA.token, { query: `mutation { streamUpdate(stream: {id:"${ts1}" name: "TS1 (u A) Private UPDATED", description: "Hello World, Again!", isPublic:false } ) }` } )
-        // console.log( resS1.body.errors )
+
         expect( resS1 ).to.be.json
         expect( resS1.body.errors ).to.not.exist
         expect( resS1.body.data ).to.have.property( 'streamUpdate' )
@@ -180,6 +180,15 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         const res = await sendRequest( userA.token, {
           query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userA.id}" role: "stream:owner"}) }`
         } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+      } )
+
+      it( 'Should not revoke my own permissions', async() => {
+        const res = await sendRequest( userA.token, {
+          query: `mutation{ streamRevokePermission( permissionParams: {streamId: "${ts1}", userId: "${userA.id}" }) }`
+        } )
+
         expect( res ).to.be.json
         expect( res.body.errors ).to.exist
       } )

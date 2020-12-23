@@ -137,6 +137,7 @@ module.exports = {
       .join( 'branches', 'branches.id', 'branch_commits.branchId' )
       .where( 'stream_commits.streamId', streamId )
 
+
     if ( cursor )
       query.andWhere( 'commits.createdAt', '<', cursor )
 

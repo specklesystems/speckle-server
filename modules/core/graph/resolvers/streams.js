@@ -1,5 +1,5 @@
 'use strict'
-const { ForbiddenError, UserInputError, withFilter } = require( 'apollo-server-express' )
+const { ApolloError, ForbiddenError, UserInputError, withFilter } = require( 'apollo-server-express' )
 const appRoot = require( 'app-root-path' )
 
 const {
@@ -34,6 +34,8 @@ module.exports = {
     async stream( parent, args, context, info ) {
 
       let stream = await getStream( { streamId: args.id } )
+      if ( !stream )
+        throw new ApolloError( 'Stream not found' )
 
       if ( !stream.isPublic && context.auth === false )
         throw new ForbiddenError( 'You are not authorised.' )
@@ -47,8 +49,8 @@ module.exports = {
     },
 
     async streams( parent, args, context, info ) {
-      if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
+      if ( args.limit && args.limit > 50 )
+        throw new UserInputError( 'Cannot return more than 50 items at a time.' )
 
       let totalCount = await getUserStreamsCount( { userId: context.userId, publicOnly: false, searchQuery: args.query } )
 
@@ -70,8 +72,8 @@ module.exports = {
   User: {
 
     async streams( parent, args, context, info ) {
-      if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
+      if ( args.limit && args.limit > 50 )
+        throw new UserInputError( 'Cannot return more than 50 items.' )
       // Return only the user's public streams if parent.id !== context.userId
       let publicOnly = parent.id !== context.userId
       let totalCount = await getUserStreamsCount( { userId: parent.id, publicOnly } )
@@ -140,6 +142,10 @@ module.exports = {
 
     async streamRevokePermission( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.permissionParams.streamId, 'stream:owner' )
+
+      if ( context.userId === args.permissionParams.userId )
+        throw new ApolloError( 'You cannot revoke your own access rights to a stream.' )
+
       let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
