@@ -1,11 +1,10 @@
 import Vue from 'vue'
-import App from './AppFrontend.vue'
+import App from './App.vue'
 
 import { createProvider } from './vue-apollo'
-import { signIn } from './auth-helpers'
+import { signIn, checkAccessCodeAndGetTokens, prefetchUserAndSetSuuid } from './auth-helpers'
 
 import router from './router'
-import store from './store'
 import vuetify from './plugins/vuetify';
 
 Vue.config.productionTip = false
@@ -24,26 +23,51 @@ Vue.use( VTooltip, { defaultDelay: 300 } )
 
 import VueMatomo from 'vue-matomo'
 
-/* Semicolon of Doom */
-;
-/* Semicolon of Doom */
+Vue.use( VueMatomo, {
+  host: 'https://speckle.matomo.cloud',
+  siteId: 4,
+  router: router,
+  userId: localStorage.getItem( 'suuid' )
+} )
 
-( async ( ) => {
-  let result = await signIn( )
-  if ( !result ) return
+let AuthToken = localStorage.getItem('AuthToken')
+let RefreshToken = localStorage.getItem('RefreshToken')
 
-  Vue.use( VueMatomo, {
-    host: 'https://speckle.matomo.cloud',
-    siteId: 4,
-    router: router,
-    userId: localStorage.getItem( 'suuid' )
-  } )
+if(AuthToken) {
+  console.log( 'haz auth token')
+  prefetchUserAndSetSuuid()
+  .then(res => {
+    initVue()
+  })
+  .catch( err => {
+    if(RefreshToken) {
+      // TODO: try to rotate token & prefetch user, etc.
+    }
+  })
 
+} else {
+
+  checkAccessCodeAndGetTokens()
+  .then(res => {
+    return prefetchUserAndSetSuuid()
+  })
+  .then(res => {
+    initVue()
+  })
+  .catch( err => {
+    initVue()
+  })
+
+}
+
+function initVue() {
   new Vue( {
     router,
-    store,
     vuetify,
     apolloProvider: createProvider( ),
     render: h => h( App )
   } ).$mount( '#app' )
-} )( )
+}
+
+
+
