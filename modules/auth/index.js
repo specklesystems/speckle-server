@@ -8,8 +8,10 @@ const passport = require( 'passport' )
 const debug = require( 'debug' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
-const { getApp, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( './services/apps' )
-const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
+const { getApp, getAllAppsAuthorizedByUser, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( './services/apps' )
+const { createPersonalAccessToken, validateToken, revokeTokenById } = require( `${appRoot}/modules/core/services/tokens` )
+const { revokeRefreshToken } = require( `${appRoot}/modules/auth/services/apps` )
+const { validateScopes, contextMiddleware } = require( `${appRoot}/modules/shared` )
 
 let authStrategies = [ ]
 
@@ -31,61 +33,95 @@ exports.init = ( app, options ) => {
     cookie: { maxAge: 1000 * 60 * 3 } // 3 minutes
   } )
 
-  let sessionAppId = ( req, res, next ) => {
-
-    req.session.appId = req.query.appId
+  let sessionStorage = ( req, res, next ) => {
     req.session.challenge = req.query.challenge
-
     if ( req.query.suuid ) {
       req.session.suuid = req.query.suuid
     }
-
     next( )
   }
 
+  /*
+  Finalizes authentication for the main frontend application.
+   */
   let finalizeAuth = async ( req, res, next ) => {
-
-    if ( req.session.appId ) {
-
-      try {
-
-        let app = await getApp( { id: req.session.appId } )
-        let ac = await createAuthorizationCode( { appId: app.id, userId: req.user.id, challenge: req.session.challenge } )
-
-        if ( req.session ) req.session.destroy( )
-        return res.redirect( `/auth/finalize?appId=${app.id}&access_code=${ac}` )
-
-
-      } catch ( err ) {
-
-        sentry( { err } )
-        if ( req.session ) req.session.destroy( )
-        return res.status( 401 ).send( 'Invalid request.' )
-
-      }
-
-    } else {
-
-      if ( process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' ) {
-
-        let token = await createPersonalAccessToken( req.user.id, 'test token', [ 'streams:write', 'streams:read', 'profile:read', 'profile:email', 'users:read', 'users:email' ] )
-        if ( req.session ) req.session.destroy( )
-        return res.status( 200 ).send( { userId: req.user.id, apiToken: token } )
-
-
-      }
+    try {
+      let app = await getApp( { id: 'spklwebapp' } )
+      let ac = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: req.session.challenge } )
 
       if ( req.session ) req.session.destroy( )
-      return res.status( 200 ).end( )
-
+      return res.redirect( `${app.redirectUrl}?access_code=${ac}` )
+    } catch ( err ) {
+      sentry( { err } )
+      if ( req.session ) req.session.destroy( )
+      return res.status( 401 ).send( 'Invalid request.' )
     }
   }
 
-  // TODO: add cors
-  app.post( '/auth/token', async ( req, res, next ) => {
+  /*
+  Strategies initialisation & listing
+  */
 
+  let strategyCount = 0
+
+  if ( process.env.STRATEGY_GOOGLE === 'true' ) {
+    let googStrategy = require( './strategies/google' )( app, session, sessionStorage, finalizeAuth )
+    authStrategies.push( googStrategy )
+    strategyCount++
+  }
+
+  if ( process.env.STRATEGY_GITHUB === 'true' ) {
+    let githubStrategy = require( './strategies/github' )( app, session, sessionStorage, finalizeAuth )
+    authStrategies.push( githubStrategy )
+    strategyCount++
+  }
+
+  // Note: always leave the local strategy init for last so as to be able to
+  // force enable it in case no others are present.
+  if ( process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0 ) {
+    let localStrategy = require( './strategies/local' )( app, session, sessionStorage, finalizeAuth )
+    authStrategies.push( localStrategy )
+  }
+
+  /*
+  Auth routes
+  */
+
+  /*
+  Generates an access code for an app.
+   */
+  app.get( '/auth/accesscode', async( req, res, next ) => {
     try {
+      let appId = req.query.appId
+      let app = await getApp( { id: appId } )
+      if ( !app ) throw new Error( 'App does not exist.' )
 
+      let challenge = req.query.challenge
+      let userToken = req.query.token
+
+      // 1. Validate token
+      let { valid, scopes, userId, role } = await validateToken( userToken )
+      if ( !valid ) throw new Error( 'Invalid token' )
+
+      // 2. Validate token scopes
+      await validateScopes( scopes, 'tokens:write' )
+
+      let ac = await createAuthorizationCode( { appId, userId, challenge } )
+      return res.redirect( `${app.redirectUrl}?access_code=${ac}` )
+
+    } catch ( err ) {
+      sentry( { err } )
+      debug( 'speckle:errors' )( err )
+      return res.status( 400 ).send( err.message )
+    }
+  } )
+
+  /*
+  Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
+   */
+  app.post( '/auth/token', async ( req, res, next ) => {
+    try {
+      // Token refresh
       if ( req.body.refreshToken ) {
         if ( !req.body.appId || !req.body.appSecret )
           throw new Error( 'Invalid request - refresh token' )
@@ -94,46 +130,37 @@ exports.init = ( app, options ) => {
         return res.send( authResponse )
       }
 
+      // Access-code - token exchange
       if ( !req.body.appId || !req.body.appSecret || !req.body.accessCode || !req.body.challenge )
         throw new Error( 'Invalid request' + JSON.stringify( req.body ) )
 
       let authResponse = await createAppTokenFromAccessCode( { appId: req.body.appId, appSecret: req.body.appSecret, accessCode: req.body.accessCode, challenge: req.body.challenge } )
       return res.send( authResponse )
-
     } catch ( err ) {
-
       sentry( { err } )
       return res.status( 401 ).send( { err: err.message } )
-
     }
-
   } )
 
-  // TODO: add logout route
+  /*
+  Ensures a user is logged out by invalidating their token and refresh token.
+   */
+  app.post( '/auth/logout', async ( req, res, next ) => {
+    try {
+      let token = req.body.token
+      let refreshToken = req.body.refreshToken
 
+      if ( !token ) throw new Error( 'Invalid request' )
+      await revokeTokenById( token )
 
-  // Strategies initialisation & listing
-  // NOTE: if no strategies are defined, the local one will be enabled.
+      if ( refreshToken )
+        revokeRefreshToken( { tokenId:refreshToken } )
 
-  let strategyCount = 0
+      return res.status( 200 ).send( { message: 'You have logged out.' } )
 
-  if ( process.env.STRATEGY_GITHUB === 'true' ) {
-    let githubStrategy = require( './strategies/github' )( app, session, sessionAppId, finalizeAuth )
-    authStrategies.push( githubStrategy )
-    strategyCount++
-  }
-
-  if ( process.env.STRATEGY_GOOGLE === 'true' ) {
-    let googStrategy = require( './strategies/google' )( app, session, sessionAppId, finalizeAuth )
-    authStrategies.push( googStrategy )
-    strategyCount++
-  }
-
-  // Note: always leave the local strategy init for last so as to be able to
-  // force enable it in case no others are present.
-  if ( process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0 ) {
-    let localStrategy = require( './strategies/local' )( app, session, sessionAppId, finalizeAuth )
-    authStrategies.push( localStrategy )
-  }
-
+    } catch ( err ){
+      sentry( { err } )
+      return res.status( 400 ).send( { err: err.message } )
+    }
+  } )
 }

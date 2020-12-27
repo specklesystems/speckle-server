@@ -92,7 +92,6 @@ module.exports = {
 
   async revokeToken( tokenId, userId ) {
     tokenId = tokenId.slice( 0, 10 )
-    let token = await ApiTokens( ).where( { id: tokenId } ).select( "*" )
     let delCount = await ApiTokens( ).where( { id: tokenId, owner: userId } ).del( )
 
     if ( delCount === 0 )

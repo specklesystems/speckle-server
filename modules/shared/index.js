@@ -29,8 +29,8 @@ async function contextApiTokenHelper( { req, res, connection } ) {
     token = req.headers.authorization
   }
 
-  if ( token && token.includes( "Bearer " ) ) {
-    token = token.split( " " )[ 1 ]
+  if ( token && token.includes( 'Bearer ' ) ) {
+    token = token.split( ' ' )[ 1 ]
   }
 
   if ( token === null )

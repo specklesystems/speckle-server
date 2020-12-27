@@ -161,38 +161,23 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
-  let path = to.path
-  let name = to.name
 
-  console.log(uuid, redirect, path, name)
+  if (!uuid && to.name !== 'Login' && to.name !== 'Register') {
+    localStorage.setItem('shouldRedirectTo', to.path)
 
-  if (!uuid && (to.name !== 'Login' && to.name !== 'Register')) return next({ name: 'Login' })
+    return next({ name: 'Login' })
+  }
+
+  if ((to.name === 'Login' || to.name === 'Register') && uuid) {
+    return next({ name: 'home' })
+  }
+
+  if (uuid && redirect && redirect !== to.path) {
+    localStorage.removeItem('shouldRedirectTo')
+    return next({ path: redirect })
+  }
 
   return next()
-  // if (!(to.name === 'Login' || to.name === 'Register') && !localStorage.getItem('uuid')) {
-  //   localStorage.setItem('shouldRedirectTo', to.path)
-  //   return next({ name: 'Login' })
-  // } else if (
-  //   (to.name === 'Login' || to.name === 'Register') &&
-  //   !!localStorage.getItem('uuid') &&
-  //   !!localStorage.getItem('shouldRedirectTo')
-  // ) {
-  //   return next({ name: 'home' })
-  // } else if (localStorage.getItem('shouldRedirectTo')) {
-  //   let path = localStorage.getItem('shouldRedirectTo')
-  //   localStorage.removeItem('shouldRedirectTo')
-  //   return next({ path })
-  // } else {
-  //   return next()
-  // }
-
-  // else if (localStorage.getItem('uuid')) {
-  //   let shouldRedirectTo = localStorage.getItem('shouldRedirectTo')
-  //   localStorage.removeItem('shouldRedirectTo')
-  //   if (shouldRedirectTo) {
-  //     return next() // TODO: redirect to prev url
-  //   } else return next()
-  // }
 })
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`

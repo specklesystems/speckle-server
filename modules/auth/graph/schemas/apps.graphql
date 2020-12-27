@@ -38,6 +38,7 @@ type ServerAppListItem {
 type AppAuthor {
   name: String
   id: String
+  avatar: String
 }
 
 extend type User {

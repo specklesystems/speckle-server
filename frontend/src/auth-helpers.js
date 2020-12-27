@@ -13,7 +13,6 @@ export async function checkAccessCodeAndGetTokens() {
     let response = await getTokenFromAccessCode(accessCode)
     // eslint-disable-next-line no-prototype-builtins
     if (response.hasOwnProperty('token')) {
-      localStorage.clear()
       localStorage.setItem('AuthToken', response.token)
       localStorage.setItem('RefreshToken', response.refreshToken)
       window.history.replaceState({}, document.title, '/')
@@ -66,14 +65,6 @@ export async function getTokenFromAccessCode(accessCode) {
 
   let data = await response.json()
   return data
-}
-
-export function redirectToAuth() {
-  // Reaching this stage means we're initialising a full new auth flow,
-  // TIP: also means we need to refresh the app challenge as well.
-  localStorage.setItem('appChallenge', crs({ length: 10 }))
-  // Finally, redirect to the auth lock.
-  window.location = `/auth?appId=${appId}&challenge=${localStorage.getItem('appChallenge')}`
 }
 
 /**

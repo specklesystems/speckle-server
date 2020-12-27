@@ -7,12 +7,12 @@ const appRoot = require( 'app-root-path' )
 const { findOrCreateUser } = require( `${appRoot}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
-module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
+module.exports = ( app, session, sessionStorage, finalizeAuth ) => {
   const strategy = {
     id: 'google',
     name: 'Google',
-    icon: 'TODO',
-    color: 'white red--text',
+    icon: 'mdi-google',
+    color: 'red darken-3',
     url: '/auth/goog',
     callbackUrl: '/auth/goog/callback'
   }
@@ -40,7 +40,7 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
 
   passport.use( myStrategy )
 
-  app.get( strategy.url, session, sessionAppId, passport.authenticate( 'google' ) )
+  app.get( strategy.url, session, sessionStorage, passport.authenticate( 'google' ) )
   app.get( '/auth/goog/callback', session, passport.authenticate( 'google', { failureRedirect: '/auth/error' } ), finalizeAuth )
 
   return strategy

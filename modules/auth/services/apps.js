@@ -28,7 +28,7 @@ module.exports = {
 
     let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
-    app.author = await Users( ).select( 'id', 'name' ).where( { id: app.authorId } ).first( )
+    app.author = await Users( ).select( 'id', 'name', 'avatar' ).where( { id: app.authorId } ).first( )
     return app
 
   },
@@ -132,6 +132,15 @@ module.exports = {
 
     return await ServerApps( ).where( { id: id } ).del( )
 
+  },
+
+  async revokeRefreshToken( { tokenId } ) {
+    tokenId = tokenId.slice( 0, 10 )
+    let delCount = await RefreshTokens( ).where( { id: tokenId } ).del( )
+
+    if ( delCount === 0 )
+      throw new Error( 'Did not revoke token' )
+    return true
   },
 
   async revokeExistingAppCredentials( { appId } ) {

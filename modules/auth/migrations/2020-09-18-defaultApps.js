@@ -20,10 +20,9 @@ exports.up = async knex => {
 
   const desktopConnectorScopes = [
     { appId: 'sdm', scopeName: 'streams:read' },
-    { appId: 'sdm', scopeName: 'streams:write' },
     { appId: 'sdm', scopeName: 'profile:read' },
     { appId: 'sdm', scopeName: 'profile:email' },
-    { appId: 'sdm', scopeName: 'users:read' },
+    { appId: 'sdm', scopeName: 'users:read' }
   ]
   await knex( 'server_apps_scopes' ).insert( desktopConnectorScopes )
 
@@ -39,7 +38,7 @@ exports.up = async knex => {
     `,
     trustByDefault: true,
     public: true,
-    redirectUrl: 'self'
+    redirectUrl: process.env.CANONICAL_URL
   } )
 
   const scopes = await knex( 'scopes' ).select( '*' )
@@ -56,7 +55,7 @@ exports.up = async knex => {
     description: 'GraphQL Playground with authentication.',
     trustByDefault: true,
     public: true,
-    redirectUrl: '/explorer',
+    redirectUrl: `${process.env.CANONICAL_URL}/explorer`
   } )
 
   const explorerScopes = scopes.filter( s => s.name !== 'server:setup' ).map( s => ( { appId: 'explorer', scopeName: s.name } ) )
@@ -70,10 +69,10 @@ exports.up = async knex => {
     secret: '12345',
     name: 'Mock Application',
     description: 'Lorem ipsum dolor sic amet.',
-    redirectUrl: 'http://localhost:1337', // ie, will just redirect to window.location
+    redirectUrl: 'http://localhost:1337'
   } )
 
-  const mockAppScopes = [ { appId: 'mock', scopeName: 'streams:read' }, { appId: 'mock', scopeName: 'users:read' }, { appId: 'mock', scopeName: 'profile:email' } ]
+  const mockAppScopes = [ { appId: 'mock', scopeName: 'streams:read' }, { appId: 'mock', scopeName: 'streams:write' }, { appId: 'mock', scopeName: 'users:read' }, { appId: 'mock', scopeName: 'profile:email' } ]
   await knex( 'server_apps_scopes' ).insert( mockAppScopes )
 }
 

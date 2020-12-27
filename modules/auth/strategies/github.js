@@ -8,13 +8,13 @@ const appRoot = require( 'app-root-path' )
 const { findOrCreateUser } = require( `${appRoot}/modules/core/services/users` )
 const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
 
-module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
+module.exports = ( app, session, sessionStorage, finalizeAuth ) => {
   const strategy = {
     id: 'github',
     name: 'Github',
-    icon: 'TODO',
-    color: 'grey darken-2',
-    url: `/auth/gh`,
+    icon: 'mdi-github',
+    color: 'grey darken-3',
+    url: '/auth/gh',
     callbackUrl: ( new URL( '/auth/gh/callback', process.env.CANONICAL_URL ) ).toString( )
   }
 
@@ -41,7 +41,7 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
 
   passport.use( myStrategy )
 
-  app.get( strategy.url, session, sessionAppId, passport.authenticate( 'github', { failureRedirect: '/auth/error' } ) )
+  app.get( strategy.url, session, sessionStorage, passport.authenticate( 'github', { failureRedirect: '/auth/error' } ) )
   app.get( '/auth/gh/callback', session, passport.authenticate( 'github', { failureRedirect: '/auth/error' } ), finalizeAuth )
 
   return strategy

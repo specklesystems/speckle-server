@@ -42,7 +42,6 @@ exports.init = async ( ) => {
   }
 
   if ( process.env.COMPRESSION ) {
-    debug( `speckle:startup` )( 'Using app level compression. Consider enabling this at a proxy level.' )
     app.use( compression( ) )
   }
 
@@ -77,7 +76,9 @@ exports.init = async ( ) => {
     plugins: [
       require( `${appRoot}/logging/apolloPlugin` )
     ],
-    tracing: process.env.NODE_ENV === 'development'
+    tracing: process.env.NODE_ENV === 'development',
+    introspection: true,
+    playground: true
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
@@ -106,8 +107,7 @@ exports.startHttp = async ( app ) => {
 
     debug( 'speckle:http-startup' )( '✨ Proxying frontend (dev mode):' )
     debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/` )
-    debug( 'speckle:http-startup' )( `👉 auth application: http://localhost:${port}/auth` )
-    debug( 'speckle:hint' )( `        ℹ️  Don't forget to run "npm run dev:frontend" in a different terminal to start the vue application.` )
+    debug( 'speckle:hint' )( 'ℹ️  Don\'t forget to run "npm run dev:frontend" in a different terminal to start the vue application.' )
   }
 
   // Production mode -> serve things statically.
@@ -136,7 +136,7 @@ exports.startHttp = async ( app ) => {
   app.use( Sentry.Handlers.errorHandler( ) )
 
   server.on( 'listening', ( ) => {
-    debug( `speckle:startup` )( `     🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
+    debug( 'speckle:startup' )( `     🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
   } )
 
   server.listen( port )

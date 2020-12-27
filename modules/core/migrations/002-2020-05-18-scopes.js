@@ -5,26 +5,26 @@ let debug = require( 'debug' )( 'speckle:modules' )
 exports.up = async knex => {
   debug( 'Setting up core module scopes.' )
 
-  let coreModuleScopes = [ 
+  let coreModuleScopes = [
     {
       name: 'streams:read',
-      description: 'Read your streams & and any associated information (branches, tags, comments, objects, etc.)'
+      description: 'Read your streams, and any associated information (branches, commits, objects).'
     },
     {
       name: 'streams:write',
-      description: 'Create streams on your behalf and read your streams & any associated information (any associated information (branches, tags, comments, objects, etc.)'
+      description: 'Create streams on your behalf, and any associated data (branches, commits, objects).'
     },
     {
       name: 'profile:read',
-      description: `Read your profile information.`
+      description: 'Read your profile information (name, bio, company).'
     },
     {
       name: 'profile:email',
-      description: `Access your email.`
+      description: 'Grants access to the email address you registered with.'
     },
     {
       name: 'users:read',
-      description: `Read other users' profile on your behalf.`
+      description: 'Read other users\' profile on your behalf.'
     },
     {
       name: 'users:email',
@@ -36,12 +36,12 @@ exports.up = async knex => {
     },
     {
       name: 'tokens:read',
-      description: `Access your api tokens.`
+      description: 'Access your api tokens.'
     },
     {
       name: 'tokens:write',
-      description: `Create and delete api tokens on your behalf.`
-    }]
+      description: 'Create and delete api tokens on your behalf.'
+    } ]
 
   await knex( 'scopes' ).insert( coreModuleScopes )
 }

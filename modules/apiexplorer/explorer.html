@@ -25,127 +25,127 @@
   <script crossorigin src="https://unpkg.com/graphiql/graphiql.min.js"></script>
   <script>
   const graphQLFetcher = graphQLParams =>
-    fetch( '/graphql', {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem( 'AuthToken' ) },
-      body: JSON.stringify( graphQLParams ),
-    } )
+  fetch( '/graphql', {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem( 'AuthToken' ) },
+    body: JSON.stringify( graphQLParams ),
+  } )
     .then( response => response.json( ) )
     .catch( ( ) => response.text( ) )
 
 
-  function redirectToAuth( ) {
-    localStorage.setItem( 'challenge', Math.random( ).toString( 36 ).substring( 2, 15 ) + Math.random( ).toString( 36 ).substring( 2, 15 ) )
-    window.location = '/auth?appId=explorer&challenge=' + localStorage.getItem( 'challenge' )
-  }
+function redirectToAuth( ) {
+  localStorage.setItem( 'challenge', Math.random( ).toString( 36 ).substring( 2, 15 ) + Math.random( ).toString( 36 ).substring( 2, 15 ) )
+  window.location = `/authn/verify/explorer/${localStorage.getItem( 'challenge' )}`
+}
 
-  async function accessCodeExchange( accessCode ) {
-    window.history.replaceState( {}, document.title, '/explorer' )
+async function accessCodeExchange( accessCode ) {
+  window.history.replaceState( {}, document.title, '/explorer' )
 
-    let response = await fetch( '/auth/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( {
-        accessCode: accessCode,
-        appId: 'explorer',
-        appSecret: 'explorer',
-        challenge: localStorage.getItem( 'challenge' )
-      } )
+  let response = await fetch( '/auth/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( {
+      accessCode: accessCode,
+      appId: 'explorer',
+      appSecret: 'explorer',
+      challenge: localStorage.getItem( 'challenge' )
     } )
-
-    let data = await response.json( )
-
-    if ( data.hasOwnProperty( 'token' ) ) {
-      localStorage.removeItem( 'challenge' )
-      localStorage.setItem( 'AuthToken', data.token )
-      localStorage.setItem( 'RefreshToken', data.refreshToken )
-      await setUserName( )
-      await initGQL( data.token )
-    }
-
-  }
-
-  async function initGQL( token ) {
-    // GraphQLPlayground.init( document.getElementById( 'root' ), {
-    //   endpointUrl: '/graphql',
-    //   headers: {
-    //     'Authorization': 'Bearer ' + token
-    //   }
-    // } )
-    ReactDOM.render(
-      React.createElement( GraphiQL, { fetcher: graphQLFetcher } ),
-      document.getElementById( 'graphiql' ),
-    )
-    await setServerInfo( )
-  }
-
-  async function setUserName( ) {
-    let testResponse = await fetch( '/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem( 'AuthToken' ),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( { query: `{ user { name } }` } )
-    } )
-
-    let data = ( await testResponse.json( ) ).data
-    document.getElementById( 'username' ).innerHTML = data.user.name
-  }
-
-  async function setServerInfo( ) {
-    let testResponse = await fetch( '/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( { query: `{ serverInfo { name company } }` } )
-    } )
-
-    let data = ( await testResponse.json( ) ).data
-    document.getElementById( 'serverDetails' ).innerHTML = `<b>${data.serverInfo.name}</b> deployed by <b>${data.serverInfo.company}</b>`
-  }
-
-  function logout( ) {
-    localStorage.removeItem( 'AuthToken' )
-    localStorage.removeItem( 'RefreshToken' )
-    window.location = '/explorer'
-  }
-
-  window.addEventListener( 'load', async function ( event ) {
-    let urlParams = new URLSearchParams( window.location.search )
-    let accessCode = urlParams.get( 'access_code' )
-
-    if ( accessCode ) {
-      accessCodeExchange( accessCode )
-    } else {
-      let token = localStorage.getItem( 'AuthToken' )
-      if ( token ) {
-        let testResponse = await fetch( '/graphql', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify( { query: `{ user { name } }` } )
-        } )
-
-        let data = ( await testResponse.json( ) ).data
-        // if res.data.user is non null, means the ping was ok & token is valid
-        if ( data.user ) {
-          console.log( data.user )
-          document.getElementById( 'username' ).innerHTML = data.user.name
-          await initGQL( token )
-
-        }
-      } else {
-        redirectToAuth( )
-      }
-    }
   } )
-  </script>
+
+  let data = await response.json( )
+
+  if ( data.hasOwnProperty( 'token' ) ) {
+    localStorage.removeItem( 'challenge' )
+    localStorage.setItem( 'AuthToken', data.token )
+    localStorage.setItem( 'RefreshToken', data.refreshToken )
+    await setUserName( )
+    await initGQL( data.token )
+  }
+
+}
+
+async function initGQL( token ) {
+  // GraphQLPlayground.init( document.getElementById( 'root' ), {
+  //   endpointUrl: '/graphql',
+  //   headers: {
+  //     'Authorization': 'Bearer ' + token
+  //   }
+  // } )
+  ReactDOM.render(
+    React.createElement( GraphiQL, { fetcher: graphQLFetcher } ),
+    document.getElementById( 'graphiql' ),
+  )
+  await setServerInfo( )
+}
+
+async function setUserName( ) {
+  let testResponse = await fetch( '/graphql', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + localStorage.getItem( 'AuthToken' ),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( { query: `{ user { name } }` } )
+  } )
+
+  let data = ( await testResponse.json( ) ).data
+  document.getElementById( 'username' ).innerHTML = data.user.name
+}
+
+async function setServerInfo( ) {
+  let testResponse = await fetch( '/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( { query: `{ serverInfo { name company } }` } )
+  } )
+
+  let data = ( await testResponse.json( ) ).data
+  document.getElementById( 'serverDetails' ).innerHTML = `<b>${data.serverInfo.name}</b> deployed by <b>${data.serverInfo.company}</b>`
+}
+
+function logout( ) {
+  localStorage.removeItem( 'AuthToken' )
+  localStorage.removeItem( 'RefreshToken' )
+  window.location = '/explorer'
+}
+
+window.addEventListener( 'load', async function ( event ) {
+  let urlParams = new URLSearchParams( window.location.search )
+  let accessCode = urlParams.get( 'access_code' )
+
+  if ( accessCode ) {
+    accessCodeExchange( accessCode )
+  } else {
+    let token = localStorage.getItem( 'AuthToken' )
+    if ( token ) {
+      let testResponse = await fetch( '/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( { query: '{ user { name } }' } )
+      } )
+
+      let data = ( await testResponse.json( ) ).data
+      // if res.data.user is non null, means the ping was ok & token is valid
+      if ( data.user ) {
+        console.log( data.user )
+        document.getElementById( 'username' ).innerHTML = data.user.name
+        await initGQL( token )
+
+      }
+    } else {
+      redirectToAuth( )
+    }
+  }
+} )
+</script>
 </body>
 <style>
 #speckle-header {
