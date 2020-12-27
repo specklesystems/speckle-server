@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div class="pt-4">
     <div class="text-center" style="position: absolute">
       <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="30" />
     </div>
     <div class="ml-12">
       <v-row class="caption">
-        <v-col cols="12" class="pb-2">
+        <v-col cols="12" class="pb-2 mb-3">
           <v-icon small>mdi-compare-vertical</v-icon>
           &nbsp; You have a
           <strong>new stream</strong>
@@ -63,11 +63,10 @@
   </div>
 </template>
 <script>
-import BtnClickCopy from './BtnClickCopy'
 import UserAvatar from './UserAvatar'
 
 export default {
-  components: { BtnClickCopy, UserAvatar },
+  components: { UserAvatar },
   props: {
     stream: {
       type: Object,

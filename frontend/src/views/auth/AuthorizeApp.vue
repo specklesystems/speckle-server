@@ -44,9 +44,12 @@
       </v-expansion-panels>
     </v-card-text>
     <v-card-actions class="justify-center px-10">
-      <v-btn color="error" style="width: 50%" :href="`${app.redirectUrl}?denied=true`">Deny</v-btn>
+      <v-btn color="error" style="width: 50%" :href="denyUrl">Deny</v-btn>
       <v-btn color="primary" style="width: 50%" @click="allow">Allow</v-btn>
     </v-card-actions>
+    <v-card-text class="caption text-center">
+      Clicking allow will redirect you to {{ app.redirectUrl }}
+    </v-card-text>
   </v-card>
 </template>
 <script>
@@ -90,10 +93,12 @@ export default {
       panel: []
     }
   },
+  computed: {
+    denyUrl() {
+      return `${this.app.redirectUrl}?denied=true`
+    }
+  },
   methods: {
-    async deny() {
-      window.location.replace(`${this.app.redirectUrl}?denied=true`)
-    },
     async allow() {
       window.location.replace(
         `${window.location.origin}/auth/accesscode?appId=${this.app.id}&challenge=${

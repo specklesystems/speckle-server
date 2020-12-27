@@ -49,6 +49,7 @@
   </v-menu>
 </template>
 <script>
+import { signOut } from '@/auth-helpers'
 export default {
   props: {
     user: {
@@ -66,11 +67,7 @@ export default {
   },
   methods: {
     signOut() {
-      localStorage.removeItem('suuid')
-      localStorage.removeItem('uuid')
-      localStorage.removeItem('RefreshToken')
-      localStorage.removeItem('AuthToken')
-      location.reload()
+      signOut()
     },
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark

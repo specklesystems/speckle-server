@@ -62,12 +62,11 @@
 <script>
 import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
-import Blurb from '../../components/auth/Blurb'
 import Strategies from '../../components/auth/Strategies'
 
 export default {
   name: 'Login',
-  components: { Blurb, Strategies },
+  components: { Strategies },
   apollo: {
     serverInfo: {
       query: gql`
@@ -149,7 +148,7 @@ export default {
     async loginUser() {
       try {
         let valid = this.$refs.form.validate()
-        if (!valid) throw new Error('Form validation failed')
+        if (!valid) return
 
         let user = {
           email: this.form.email,
@@ -158,7 +157,7 @@ export default {
 
         if (this.suuid) user.suuid = this.suuid
 
-        let res = await fetch(`/auth/local/login?appId=${this.appId}&challenge=${this.challenge}`, {
+        let res = await fetch(`/auth/local/login?challenge=${this.challenge}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -167,14 +166,12 @@ export default {
           body: JSON.stringify(user)
         })
 
-        let data = await res.json()
-        console.log(data)
-
-        if (data.err) throw new Error(data.message)
-
         if (res.redirected) {
           window.location = res.url
         }
+
+        let data = await res.json()
+        if (data.err) throw new Error(data.message)
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true

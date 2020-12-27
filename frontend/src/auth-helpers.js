@@ -3,6 +3,10 @@ import crs from 'crypto-random-string'
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
 
+/**
+ * Checks for an access token in the url and tries to exchange it for a token/refresh pair.
+ * @return {boolean} true if everything is ok, otherwise throws an error.
+ */
 export async function checkAccessCodeAndGetTokens() {
   const accessCode = new URLSearchParams(window.location.search).get('access_code')
   if (accessCode) {
@@ -20,6 +24,10 @@ export async function checkAccessCodeAndGetTokens() {
   }
 }
 
+/**
+ * Gets the user id and suuid and sets them in local storage.
+ * @return {Object} The full graphql response.
+ */
 export async function prefetchUserAndSetSuuid() {
   let token = localStorage.getItem('AuthToken')
   if (token) {
@@ -68,63 +76,53 @@ export function redirectToAuth() {
   window.location = `/auth?appId=${appId}&challenge=${localStorage.getItem('appChallenge')}`
 }
 
+/**
+ * Signs out the current session
+ * @return {null}
+ */
 export async function signOut() {
-  // TODO
+  await fetch('/auth/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      token: localStorage.getItem('AuthToken'),
+      refreshToken: localStorage.getItem('RefreshToken')
+    })
+  })
+
+  localStorage.removeItem('AuthToken')
+  localStorage.removeItem('RefreshToken')
+  localStorage.removeItem('suuid')
+  localStorage.removeItem('uuid')
+
+  window.location.reload()
 }
 
-export async function signIn() {
-  // Stage 0: if we have an access code, exchange it for a token
-  const accessCode = new URLSearchParams(window.location.search).get('access_code')
-  if (accessCode) {
-    let response = await getTokenFromAccessCode(accessCode)
-    // eslint-disable-next-line no-prototype-builtins
-    if (response.hasOwnProperty('token')) {
-      localStorage.clear()
-      localStorage.setItem('AuthToken', response.token)
-      localStorage.setItem('RefreshToken', response.refreshToken)
-      await prefetchUserAndSetSuuid()
-      window.history.replaceState({}, document.title, '/')
-      return true
-    }
-  }
-
-  // Stage 1: check if there is an existing valid token by pinging the graphql api
-  let token = localStorage.getItem('AuthToken')
-  if (token) {
-    let data = await prefetchUserAndSetSuuid()
-    // if res.data.user is non null, means the ping was ok & token is valid
-    if (data.user) return true
-  }
-
-  // Stage 2: check if we have a valid refresh token by using it!
+export async function refreshToken() {
   let refreshToken = localStorage.getItem('RefreshToken')
+  if (!refreshToken) throw new Error('No refresh token found')
 
-  if (refreshToken) {
-    let refreshResponse = await fetch('/auth/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        refreshToken: refreshToken,
-        appId: appId,
-        appSecret: appSecret
-      })
+  let refreshResponse = await fetch('/auth/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      refreshToken: refreshToken,
+      appId: appId,
+      appSecret: appSecret
     })
+  })
 
-    let data = await refreshResponse.json()
+  let data = await refreshResponse.json()
 
-    // eslint-disable-next-line no-prototype-builtins
-    if (data.hasOwnProperty('token')) {
-      localStorage.setItem('AuthToken', data.token)
-      localStorage.setItem('RefreshToken', data.refreshToken)
-      await prefetchUserAndSetSuuid()
-      return true
-    }
+  // eslint-disable-next-line no-prototype-builtins
+  if (data.hasOwnProperty('token')) {
+    localStorage.setItem('AuthToken', data.token)
+    localStorage.setItem('RefreshToken', data.refreshToken)
+    await prefetchUserAndSetSuuid()
+    return true
   }
-
-  // tried all avenues, means we need to init a full authorization flow.
-  // this will essentially refresh the browser window, so no need to return.
-  redirectToAuth()
-  return false
 }

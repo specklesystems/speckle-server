@@ -126,12 +126,11 @@ import gql from 'graphql-tag'
 import debounce from 'lodash.debounce'
 import crs from 'crypto-random-string'
 
-import Blurb from '../../components/auth/Blurb'
 import Strategies from '../../components/auth/Strategies'
 
 export default {
   name: 'Registration',
-  components: { Blurb, Strategies },
+  components: { Strategies },
   apollo: {
     serverInfo: {
       query: gql`
@@ -214,7 +213,6 @@ export default {
     let suuid = urlParams.get('suuid')
 
     this.suuid = suuid
-    console.log(this.suuid)
     if (!appId) this.appId = 'spklwebapp'
     else this.appId = appId
 
@@ -244,29 +242,27 @@ export default {
           email: this.form.email,
           company: this.form.company,
           password: this.form.password,
-          name: `${this.form.firstName} ${this.form.lastName}`
+          name: `${this.form.firstName}`
         }
 
         if (this.suuid) user.suuid = this.suuid
 
-        let res = await fetch(
-          `/auth/local/register?appId=${this.appId}&challenge=${this.challenge}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            redirect: 'follow', // obvs not working
-            body: JSON.stringify(user)
-          }
-        )
-
-        let data = await res.json()
-        if (data.err) throw new Error(data.err)
+        let res = await fetch(`/auth/local/register?challenge=${this.challenge}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          redirect: 'follow', // obvs not working
+          body: JSON.stringify(user)
+        })
 
         if (res.redirected) {
           window.location = res.url
+          return
         }
+
+        let data = await res.json()
+        if (data.err) throw new Error(data.err)
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true

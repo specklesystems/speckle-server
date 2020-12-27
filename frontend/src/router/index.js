@@ -7,6 +7,7 @@ const routes = [
   {
     path: '/authn',
     name: 'Auth',
+    redirect: '/authn/login',
     component: () => import('../views/Auth.vue'),
     children: [
       {
@@ -153,17 +154,37 @@ const routes = [
 
 const router = new VueRouter({
   mode: 'history',
-  base: process.env.BASE_URL,
+  // base: process.env.BASE_URL,
   routes
 })
 
 router.beforeEach((to, from, next) => {
-  if (!(to.name === 'Login' || to.name === 'Register') && !localStorage.getItem('uuid')) {
-    localStorage.setItem('shouldRedirectTo', to.name)
-    return next({ name: 'Login' })
-  } else if ((to.name === 'Login' || to.name === 'Register') && !!localStorage.getItem('uuid')) {
-    return next({ name: 'home' })
-  } else return next()
+  let uuid = localStorage.getItem('uuid')
+  let redirect = localStorage.getItem('shouldRedirectTo')
+  let path = to.path
+  let name = to.name
+
+  console.log(uuid, redirect, path, name)
+
+  if (!uuid && (to.name !== 'Login' && to.name !== 'Register')) return next({ name: 'Login' })
+
+  return next()
+  // if (!(to.name === 'Login' || to.name === 'Register') && !localStorage.getItem('uuid')) {
+  //   localStorage.setItem('shouldRedirectTo', to.path)
+  //   return next({ name: 'Login' })
+  // } else if (
+  //   (to.name === 'Login' || to.name === 'Register') &&
+  //   !!localStorage.getItem('uuid') &&
+  //   !!localStorage.getItem('shouldRedirectTo')
+  // ) {
+  //   return next({ name: 'home' })
+  // } else if (localStorage.getItem('shouldRedirectTo')) {
+  //   let path = localStorage.getItem('shouldRedirectTo')
+  //   localStorage.removeItem('shouldRedirectTo')
+  //   return next({ path })
+  // } else {
+  //   return next()
+  // }
 
   // else if (localStorage.getItem('uuid')) {
   //   let shouldRedirectTo = localStorage.getItem('shouldRedirectTo')
