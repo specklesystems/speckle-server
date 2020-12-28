@@ -43,9 +43,11 @@ export async function prefetchUserAndSetSuuid() {
     if (data.user) {
       localStorage.setItem('suuid', data.user.suuid)
       localStorage.setItem('uuid', data.user.id)
+      return data
+    } else {
+      await signOut()
+      throw new Error('Failed to set user')
     }
-
-    return data
   }
 }
 

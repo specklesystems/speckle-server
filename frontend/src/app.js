@@ -42,6 +42,7 @@ if (AuthToken) {
       if (RefreshToken) {
         // TODO: try to rotate token & prefetch user, etc.
       }
+      window.location = `${window.location.origin}/authn/login`
     })
 } else {
   checkAccessCodeAndGetTokens()
