@@ -1,5 +1,5 @@
 <template>
-  <v-card v-if="!$apollo.loading" rounded="lg" class="py-4 elevation-10">
+  <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="py-4 elevation-10">
     <v-card-text class="text-h5 font-weight-regular text-center pt-10">
       <v-icon v-if="app.trustByDefault" class="mr-2 primary--text">mdi-shield-check</v-icon>
       <b class="primary--text">{{ app.name }}</b>
@@ -44,11 +44,21 @@
       </v-expansion-panels>
     </v-card-text>
     <v-card-actions class="justify-center px-10">
-      <v-btn color="error" style="width: 50%" :href="denyUrl">Deny</v-btn>
+      <v-btn color="error" style="width: 50%" @click="deny">Deny</v-btn>
       <v-btn color="primary" style="width: 50%" @click="allow">Allow</v-btn>
     </v-card-actions>
     <v-card-text class="caption text-center">
       Clicking allow will redirect you to {{ app.redirectUrl }}
+    </v-card-text>
+  </v-card>
+  <v-card v-else>
+    <v-card-text v-if="action === 1" class="text-center">
+      <b>Permission granted.</b>
+      You can now close this window.
+    </v-card-text>
+    <v-card-text v-if="action === -1" class="text-center">
+      <b>Permission denied.</b>
+      You can now close this window.
     </v-card-text>
   </v-card>
 </template>
@@ -90,7 +100,8 @@ export default {
   },
   data() {
     return {
-      panel: []
+      panel: [],
+      action: 0
     }
   },
   computed: {
@@ -99,11 +110,16 @@ export default {
     }
   },
   methods: {
+    async deny() {
+      this.action = -1
+      window.location.replace(this.denyUrl)
+    },
     async allow() {
+      this.action = 1
       window.location.replace(
         `${window.location.origin}/auth/accesscode?appId=${this.app.id}&challenge=${
           this.$route.params.challenge
-        }&token=${localStorage.getItem('AuthToken')}`
+        }&token=${localStorage.getItem('AuthToken')}&suuid=${this.$route.query.suuid}`
       )
     }
   }

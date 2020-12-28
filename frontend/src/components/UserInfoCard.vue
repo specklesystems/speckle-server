@@ -4,7 +4,7 @@
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
     <div v-else>
-      <v-card-title class="text-center mb-5 mt-5 pt-15 pb-15">
+      <v-card-title class="text-center mb-5 mt-5 pt-15 pb-10">
         <v-btn
           v-tooltip="'Change your profile picture.'"
           color="transparent"
@@ -25,8 +25,8 @@
               <v-image-input
                 v-model="imageData"
                 :image-quality="0.85"
-                :image-height="128"
-                :image-width="128"
+                :image-height="256"
+                :image-width="256"
                 full-width
                 full-height
                 clearable
@@ -59,9 +59,9 @@
         <span v-if="isSelf" class="caption">Your id: {{ user.id }}</span>
       </v-card-text>
       <v-card-actions>
-        <v-btn v-if="isSelf" block small @click="userDialog = true">
+        <v-btn v-if="isSelf" small plain color="primary" text block @click="userDialog = true">
+          <v-icon small class="mr-2">mdi-pencil-outline</v-icon>
           Edit
-          <v-icon small class="ml-3">mdi-pencil-outline</v-icon>
         </v-btn>
       </v-card-actions>
       <v-dialog v-model="userDialog" max-width="600">

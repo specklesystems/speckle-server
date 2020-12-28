@@ -73,7 +73,7 @@ module.exports = {
   async getAllAppsAuthorizedByUser( { userId } ) {
 
     let query = knex.raw( `
-      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
+      SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description",  sa."trustByDefault", sa."redirectUrl" as "redirectUrl", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
       FROM user_server_app_tokens a
       LEFT JOIN server_apps sa ON sa.id = a."appId"
       LEFT JOIN users u ON sa."authorId" = u.id
@@ -82,7 +82,6 @@ module.exports = {
 
     let { rows } = await query
     return rows
-
   },
 
   async createApp( app ) {

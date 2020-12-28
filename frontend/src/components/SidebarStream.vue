@@ -10,6 +10,10 @@
       <div v-show="isHomeRoute">
         {{ stream.name }}
       </div>
+      <v-btn v-show="!isHomeRoute" plain small class="mt-3 pa-0" :to="'/streams/' + stream.id">
+        <v-icon small>mdi-chevron-left</v-icon>
+        back to stream
+      </v-btn>
     </v-card-title>
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
@@ -95,6 +99,7 @@
         color="primary"
         text
         @click="dialogShare = true"
+        class="px-0"
       >
         <v-icon small class="mr-2">mdi-account-multiple</v-icon>
         Manage
