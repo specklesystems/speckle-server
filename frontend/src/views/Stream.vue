@@ -30,8 +30,8 @@ export default {
           id: this.$route.params.streamId
         }
       },
-      error() {
-        this.$router.push({ path: '/error' })
+      error(err) {
+        // this.$router.push({ path: `/error?message=${err.message}` })
       }
     }
   },

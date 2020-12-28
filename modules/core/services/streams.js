@@ -34,7 +34,7 @@ module.exports = {
       return stream
 
     let acl = await Acl().where( { resourceId: streamId, userId: userId } ).select( 'role' ).first()
-    stream.role = acl.role
+    if ( acl ) stream.role = acl.role
     return stream
   },
 

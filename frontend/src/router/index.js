@@ -127,14 +127,6 @@ const routes = [
     ]
   },
   {
-    path: '/about',
-    name: 'about',
-    meta: {
-      title: 'About | Speckle'
-    },
-    component: () => import('../views/About.vue')
-  },
-  {
     path: '/error',
     name: 'error',
     meta: {
