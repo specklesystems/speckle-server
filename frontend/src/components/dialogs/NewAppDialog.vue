@@ -32,8 +32,8 @@
         <br />
         <h3 class="mt-3">Redirect URL</h3>
         <p>
-          After authentication, the users will be redirected (together with an
-          access token) to this url.
+          After authentication, the users will be redirected (together with an access token) to this
+          url.
         </p>
         <v-text-field
           v-model="redirectUrl"
@@ -51,20 +51,24 @@
         <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
       </v-form>
       <div v-show="appCreateResult">
-        <div class="text-center my-5">
-          <h2 class="mb-5 font-weight-normal">Your new app's id:</h2>
-          <code class="subtitle-1 pa-3 my-4">{{ appCreateResult }}</code>
+        <div v-if="app" class="text-center my-5">
+          <h2 class="mb-5 font-weight-normal">Your new app's details:</h2>
+          App Id:
+          <code class="subtitle-1 pa-3 my-4">{{ app.id }}</code>
+          <v-divider class="mt-5 pt-5" />
+          App Secret:
+          <code class="subtitle-1 pa-3 my-4">{{ app.secret }}</code>
         </div>
         <v-alert type="info">
           <p>
             <b>Note:</b>
             To authenticate users inside your app, direct them to
             <code style="word-break: break-all">
-              {{ rootUrl }}/auth/appId={{ appCreateResult }}&challenge=XXX
+              {{ rootUrl }}/authn/verify/{appId}/{challenge}
             </code>
             , where
-            <code>XXX</code>
-            is OAuth2 code challenge.
+            <code>challenge</code>
+            is an OAuth2 plain code challenge.
           </p>
         </v-alert>
         <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
@@ -73,7 +77,7 @@
   </v-card>
 </template>
 <script>
-import gql from "graphql-tag"
+import gql from 'graphql-tag'
 
 export default {
   props: {
@@ -96,25 +100,42 @@ export default {
         }
       `,
       update: (data) => data.serverInfo.scopes
+    },
+    app: {
+      query: gql`
+        query($id: String!) {
+          app(id: $id) {
+            id
+            name
+            secret
+          }
+        }
+      `,
+      variables() {
+        return { id: this.appCreateResult }
+      },
+      skip() {
+        return !this.appCreateResult
+      }
     }
   },
   data() {
     return {
       name: null,
       nameRules: [
-        (v) => !!v || "Name is required",
-        (v) => (v && v.length <= 60) || "Name must be less than 60 characters"
+        (v) => !!v || 'Name is required',
+        (v) => (v && v.length <= 60) || 'Name must be less than 60 characters'
       ],
       selectedScopes: [],
       redirectUrl: null,
       redirectUrlRules: [
-        (v) => !!v || "Redirect url is required",
+        (v) => !!v || 'Redirect url is required',
         (v) => {
           try {
             var x = new URL(v)
             return true
           } catch {
-            return "url must be valid"
+            return 'url must be valid'
           }
         }
       ],
@@ -143,7 +164,7 @@ export default {
       this.appCreateResult = null
       this.name = null
       this.selectedScopes = []
-      this.$emit("close")
+      this.$emit('close')
     },
     async createApp() {
       try {
@@ -165,7 +186,7 @@ export default {
         this.appCreateResult = res.data.appCreate
         this.name = null
         this.selectedScopes = []
-        this.$emit("app-added")
+        this.$emit('app-added')
       } catch (e) {
         // TODO: how do we catch and display errors?
         console.log(e)

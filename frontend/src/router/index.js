@@ -128,7 +128,7 @@ const routes = [
   },
   {
     path: '/error',
-    name: 'error',
+    name: 'Error',
     meta: {
       title: 'Error | Speckle'
     },
@@ -154,7 +154,7 @@ router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
 
-  if (!uuid && to.name !== 'Login' && to.name !== 'Register') {
+  if (!uuid && to.name !== 'Login' && to.name !== 'Register' && to.name !== 'Error') {
     localStorage.setItem('shouldRedirectTo', to.path)
 
     return next({ name: 'Login' })
@@ -174,6 +174,9 @@ router.beforeEach((to, from, next) => {
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
 router.afterEach((to, from) => {
+  let redirect = localStorage.getItem('shouldRedirectTo')
+  if (redirect === to.path) localStorage.removeItem('shouldRedirectTo')
+
   Vue.nextTick(() => {
     document.title = (to.meta && to.meta.title) || 'Speckle'
   })

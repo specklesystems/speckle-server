@@ -31,22 +31,37 @@
                 </v-icon>
                 {{ app.name }}
               </h3>
-              <p>{{ app.description }}</p>
-              <p v-show="app.id === 'spklwebapp'" class="caption">
-                (This is the app your're currently using!)
+              <p>
+                {{ app.description }}
+                <span v-show="app.id === 'spklwebapp'" class="caption">
+                  (This is the app your're currently using!)
+                </span>
               </p>
             </v-card-text>
             <v-spacer></v-spacer>
-            <v-card-text class="caption my-0 py-0">
-              Note: Revoking access will log you out of all instances of this app.
-            </v-card-text>
             <v-card-actions>
-              <v-btn plain small color="error" @click="revokeAccess(app)">Revoke access</v-btn>
+              <v-btn plain small color="error" @click="showRevokeAccessDialog(app)">
+                Revoke access
+              </v-btn>
               <v-btn plain small :href="app.redirectUrl" target="_blank">Open</v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
+      <v-dialog v-model="showRevokeDialog" max-width="500">
+        <v-card>
+          <v-card-title>Revoke Access</v-card-title>
+          <v-card-text>
+            Revoking access to your app will log you out of it on all devices. Are you sure you want
+            to proceed?
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn plain small color="error" @click="revokeAccess()">Revoke access</v-btn>
+            <v-btn plain small>Cancel</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
   </v-card>
 </template>
@@ -57,7 +72,9 @@ export default {
   components: {},
   data() {
     return {
-      appDialog: false
+      appDialog: false,
+      showRevokeDialog: false,
+      appToRevoke: null
     }
   },
   apollo: {
@@ -89,10 +106,15 @@ export default {
     }
   },
   methods: {
-    async revokeAccess(app) {
+    showRevokeAccessDialog(app) {
+      this.showRevokeDialog = true
+      this.appToRevoke = app
+    },
+    async revokeAccess() {
+      this.showRevokeDialog = false
       await this.$apollo.mutate({
         mutation: gql`
-          mutation{ appRevokeAccess(appId: "${app.id}")}
+          mutation{ appRevokeAccess(appId: "${this.appToRevoke.id}")}
         `
       })
       this.refreshList()

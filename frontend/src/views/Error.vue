@@ -5,8 +5,8 @@
         <v-col cols="12" md="8">
           <v-sheet rounded="lg" class="pa-5">
             <h1>
-              Oups. There was an error
-              <v-icon large>mdi-bug</v-icon>
+              <v-icon large class="mr-2">mdi-bug</v-icon>
+              There was an error :(
             </h1>
             <v-alert v-if="$route.query.message" type="info" class="mt-5">
               The server said:
@@ -14,7 +14,19 @@
               <pre>{{ $route.query.message }}</pre>
             </v-alert>
             <v-divider class="my-5" />
-            <h3>Feedback</h3>
+            <h3>
+              <v-icon small class="mr-2">mdi-home</v-icon>
+              Next Steps
+            </h3>
+            <p>
+              Shall we try going back
+              <a href="/">home</a>
+              ?
+            </p>
+            <h3>
+              <v-icon small class="mr-2">mdi-comment</v-icon>
+              Feedback
+            </h3>
             <p>If you're feeling industrious, we'd love if you reported this error:</p>
             <p class="body-2">
               1)

@@ -31,7 +31,7 @@ export default {
         }
       },
       error(err) {
-        // this.$router.push({ path: `/error?message=${err.message}` })
+        this.$router.push({ path: `/error?message=${err.message}` })
       }
     }
   },
