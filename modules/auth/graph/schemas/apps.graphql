@@ -12,7 +12,7 @@ extend type Query {
 
 type ServerApp {
   id: String!
-  secret: String!
+  secret: String
   name: String!
   description: String
   termsAndConditionsLink: String
@@ -53,7 +53,7 @@ extend type User {
   """
   Returns the apps you have created.
   """
-  createdApps: [ServerAppListItem]
+  createdApps: [ServerApp]
     @hasRole(role: "server:user")
     @hasScope(scope: "apps:read")
 }
