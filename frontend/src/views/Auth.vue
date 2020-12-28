@@ -2,7 +2,7 @@
   <v-app id="speckle-auth">
     <v-container fill-height fluid>
       <v-row align="center" justify="center">
-        <v-col v-if="showBlurb" cols="12" md="6" lg="6" xl="4">
+        <v-col v-if="showBlurb" cols="12" md="6" lg="6" xl="4" class="hidden-sm-and-down">
           <blurb :server-info="serverInfo" />
         </v-col>
         <v-col cols="12" md="6" lg="4" xl="3">

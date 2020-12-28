@@ -1,6 +1,12 @@
 <template>
   <v-card class="elevation-20" rounded="lg">
-    <v-card-title class="justify-center pt-10 pb-2">Interoperability in seconds</v-card-title>
+        <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
+      <v-img src="@/assets/logo.svg" max-width="30" />
+    </v-card-title>
+    <v-card-title class="justify-center pt-5 pb-2">
+      <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
+      Interoperability in seconds
+    </v-card-title>
     <strategies :strategies="strategies" :app-id="appId" :challenge="challenge" :suuid="suuid" />
     <div v-if="hasLocalStrategy">
       <v-card-title class="justify-center pb-5 pt-0 body-1 text--secondary">
