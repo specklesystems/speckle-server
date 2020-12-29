@@ -257,13 +257,7 @@ module.exports = {
       throw new Error( 'Invalid request' )
 
     // Create the new token
-    const { token: appToken } = await createToken( { userId: refreshTokenDb.userId, name: `${app.name}-token`, /* lifespan: 1.21e+9, */ scopes: app.scopes.map( s => s.name ) } )
-
-    // Delete previous token, if it exists
-    // NOTE: not cool. Why? What if the user wants to be logged in via two different browsers/devices/etc?
-    // let previousToken = await ServerAppsTokens( ).select( 'tokenId' ).where( { appId: appId, userId: userId } ).first( )
-    // if ( previousToken )
-    //   await ApiTokens( ).where( { id: previousToken.tokenId } ).del( )
+    const { token: appToken } = await createToken( { userId: refreshTokenDb.userId, name: `${app.name}-token`, scopes: app.scopes.map( s => s.name ) } )
 
     await ServerAppsTokens( ).insert( { userId: refreshTokenDb.userId, tokenId: appToken.slice( 0, 10 ), appId: appId } )
 
