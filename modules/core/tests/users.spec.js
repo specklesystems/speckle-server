@@ -26,6 +26,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
   before( async ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
+    await init()
 
     let actorId = await createUser( myTestActor )
     myTestActor.id = actorId
@@ -33,7 +34,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
   } )
 
   after( async ( ) => {
-
+    await knex.migrate.rollback( )
   } )
 
 

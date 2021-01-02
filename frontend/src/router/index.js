@@ -174,8 +174,8 @@ router.beforeEach((to, from, next) => {
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
 router.afterEach((to, from) => {
-  let redirect = localStorage.getItem('shouldRedirectTo')
-  if (redirect === to.path) localStorage.removeItem('shouldRedirectTo')
+  if (localStorage.getItem('shouldRedirectTo') === to.path)
+    localStorage.removeItem('shouldRedirectTo')
 
   Vue.nextTick(() => {
     document.title = (to.meta && to.meta.title) || 'Speckle'

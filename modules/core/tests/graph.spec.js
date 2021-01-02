@@ -45,6 +45,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
   } )
 
   after( async ( ) => {
+    await knex.migrate.rollback( )
     testServer.close( )
   } )
 

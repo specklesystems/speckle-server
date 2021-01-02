@@ -105,22 +105,14 @@ exports.startHttp = async ( app ) => {
     const frontendProxy = createProxyMiddleware( { target: `http://localhost:${frontendPort}`, changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
 
-    debug( 'speckle:http-startup' )( '✨ Proxying frontend (dev mode):' )
-    debug( 'speckle:http-startup' )( `👉 main application: http://localhost:${port}/` )
+    debug( 'speckle:startup' )( '✨ Proxying frontend (dev mode):' )
+    debug( 'speckle:startup' )( `👉 main application: http://localhost:${port}/` )
     debug( 'speckle:hint' )( 'ℹ️  Don\'t forget to run "npm run dev:frontend" in a different terminal to start the vue application.' )
   }
 
   // Production mode -> serve things statically.
   else {
     app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
-
-    app.all( '/auth*', async ( req, res ) => {
-      try {
-        res.sendFile( `${appRoot}/frontend/dist/auth.html` )
-      } catch ( err ) {
-
-      }
-    } )
 
     app.all( '*', async ( req, res ) => {
       res.sendFile( `${appRoot}/frontend/dist/app.html` )

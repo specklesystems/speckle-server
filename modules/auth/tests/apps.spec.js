@@ -29,13 +29,16 @@ describe( 'Apps @apps', ( ) => {
     }
 
     before( async ( ) => {
-      await knex.migrate.rollback( )
-      await knex.migrate.latest( )
+      // await knex.migrate.rollback( )
+      // await knex.migrate.latest( )
+
+      await init()
+
       actor.id = await createUser( actor )
     } )
 
     after( async ( ) => {
-
+      await knex.migrate.rollback( )
     } )
 
     it( 'Should get the frontend main app', async ( ) => {
@@ -45,8 +48,8 @@ describe( 'Apps @apps', ( ) => {
       expect( app.scopes ).to.be.a( 'array' )
     } )
 
-    it( 'Should get the mock app', async ( ) => {
-      let app = await getApp( { id: 'mock' } )
+    it( 'Should get the desktop manager app', async ( ) => {
+      let app = await getApp( { id: 'sdm' } )
       expect( app ).to.be.an( 'object' )
       expect( app.redirectUrl ).to.be.a( 'string' )
       expect( app.scopes ).to.be.a( 'array' )
@@ -216,11 +219,9 @@ describe( 'Apps @apps', ( ) => {
 
     before( async ( ) => {
 
-      await knex.migrate.rollback( )
-      await knex.migrate.latest( )
-
       let { app } = await init( )
       let { server } = await startHttp( app )
+
       testServer = server
 
       testUser = {
@@ -245,9 +246,8 @@ describe( 'Apps @apps', ( ) => {
     } )
 
     after( async ( ) => {
-
+      await knex.migrate.rollback( )
       testServer.close( )
-
     } )
 
     let testAppId
@@ -255,7 +255,7 @@ describe( 'Apps @apps', ( ) => {
 
     it( 'Should create an app', async ( ) => {
 
-      const query = `mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } `
+      const query = 'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
       const variables = { myApp: { name: 'Test App', public: true, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
 
       const res = await sendRequest( testToken, { query, variables } )
@@ -313,7 +313,7 @@ describe( 'Apps @apps', ( ) => {
 
     it( 'Should get all the public apps on this server', async ( ) => {
 
-      const query = `query allapps{ apps { name description author { id name } } }`
+      const query = 'query allapps{ apps { name description author { id name } } }'
       const res = await sendRequest( null, { query } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
@@ -366,14 +366,14 @@ describe( 'Apps @apps', ( ) => {
 
     it( 'Should get the apps that i have created', async ( ) => {
 
-      const query = `mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } `
+      const query = 'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
       let variables = { myApp: { name: 'Another Test App', public: false, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
       await sendRequest( testToken, { query, variables } )
 
       variables = { myApp: { name: 'The n-th Test App', public: false, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
       await sendRequest( testToken, { query, variables } )
 
-      const getMyAppsQuery = `query usersApps{ user { createdApps { id name description } } }`
+      const getMyAppsQuery = 'query usersApps{ user { createdApps { id name description } } }'
 
       let res = await sendRequest( testToken, { query: getMyAppsQuery } )
       expect( res.body.errors ).to.not.exist
@@ -392,7 +392,7 @@ describe( 'Apps @apps', ( ) => {
       const response_2 = await createAppTokenFromAccessCode( { appId: 'sdm', appSecret: 'sdm', accessCode: authorizationCode_2, challenge: 'floating points' } )
 
 
-      const query = `query myAuthApps{ user { authorizedApps { id name description termsAndConditionsLink logo author { id name } } } }`
+      const query = 'query myAuthApps{ user { authorizedApps { id name description termsAndConditionsLink logo author { id name } } } }'
 
       let res = await sendRequest( testToken, { query } )
 

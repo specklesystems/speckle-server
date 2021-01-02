@@ -34,6 +34,7 @@ describe( 'Streams @core-streams', ( ) => {
   before( async ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
+    await init()
 
     userOne.id = await createUser( userOne )
   } )

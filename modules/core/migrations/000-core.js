@@ -8,14 +8,16 @@ exports.up = async knex => {
   // Base table holding up some configuration variables for the server. Not really used much.
   await knex.schema.createTable( 'server_config', table => {
     table.integer( 'id' ).notNullable( ).defaultTo( 0 ).index( )
-    table.string( 'name' ).defaultTo( 'My Speckle Server' )
-    table.string( 'company' ).defaultTo( 'Acme. Inc.' )
-    table.string( 'description' ).defaultTo( 'Speckle is the open source data platform for AEC.' )
+    table.string( 'name' ).defaultTo( 'Community Server' )
+    table.string( 'company' ).defaultTo( 'Unknown Company' )
+    table.string( 'description' ).defaultTo( 'This a community deployment of a Speckle Server.' )
     table.string( 'adminContact' ).defaultTo( 'n/a' )
     table.string( 'termsOfService' ).defaultTo( 'n/a' )
     table.string( 'canonicalUrl' )
     table.boolean( 'completed' ).defaultTo( false )
   } )
+
+  await knex( 'server_config' ).insert( { id:0 } )
 
   // Users.
   await knex.schema.createTable( 'users', table => {
@@ -202,6 +204,6 @@ exports.down = async knex => {
   await knex.schema.dropTableIfExists( 'api_tokens' )
   await knex.schema.dropTableIfExists( 'users' )
 
-  await knex.raw( `DROP TYPE IF EXISTS speckle_reference_type ` )
-  await knex.raw( `DROP TYPE IF EXISTS speckle_acl_role_type ` )
+  await knex.raw( 'DROP TYPE IF EXISTS speckle_reference_type ' )
+  await knex.raw( 'DROP TYPE IF EXISTS speckle_acl_role_type ' )
 }

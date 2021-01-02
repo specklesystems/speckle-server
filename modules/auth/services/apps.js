@@ -15,18 +15,17 @@ const Scopes = ( ) => knex( 'scopes' )
 const AuthorizationCodes = ( ) => knex( 'authorization_codes' )
 const RefreshTokens = ( ) => knex( 'refresh_tokens' )
 
-let allScopes = null
-
 module.exports = {
 
   async getApp( { id } ) {
 
-    if ( allScopes === null ) allScopes = await Scopes( ).select( '*' )
+    let allScopes = await Scopes( ).select( '*' )
 
     let app = await ServerApps( ).select( '*' ).where( { id: id } ).first( )
-    if ( !app ) throw new Error( 'App does not exist.' )
+    if ( !app ) return null
 
     let appScopeNames = ( await ServerAppsScopes( ).select( 'scopeName' ).where( { appId: id } ) ).map( s => s.scopeName )
+
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
     app.author = await Users( ).select( 'id', 'name', 'avatar' ).where( { id: app.authorId } ).first( )
     return app
@@ -111,6 +110,7 @@ module.exports = {
     await module.exports.revokeExistingAppCredentials( { appId: app.id } )
 
     if ( app.scopes ) {
+      // console.log( app.scopes, app.id )
       // Flush existing app scopes
       await ServerAppsScopes( ).where( { appId: app.id } ).del( )
       // Update new scopes
@@ -121,6 +121,7 @@ module.exports = {
     delete app.scopes
 
     let [ res ] = await ServerApps( ).returning( 'id' ).where( { id: app.id } ).update( app )
+
     return res
 
   },

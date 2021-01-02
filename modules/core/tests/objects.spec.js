@@ -64,12 +64,14 @@ describe( 'Objects @core-objects', ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
 
+    await init()
+
     userOne.id = await createUser( userOne )
     stream.id = await createStream( { ...stream, isPublic: false, ownerId: userOne.id } )
   } )
 
   after( async ( ) => {
-    // await knex.migrate.rollback( )
+    await knex.migrate.rollback( )
   } )
 
   it( 'Should create objects', async ( ) => {

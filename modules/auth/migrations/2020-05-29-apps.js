@@ -52,15 +52,15 @@ exports.up = async knex => {
     table.string( 'tokenId' ).references( 'id' ).inTable( 'api_tokens' ).notNullable( ).onDelete( 'cascade' ).index( )
   } )
 
-  let appTokenScopes = [ {
-    name: 'apps:read',
-    description: 'See what applications you have created or have authorized.'
-  }, {
-    name: 'apps:write',
-    description: 'Register applications on your behalf.'
-  } ]
+  // let appTokenScopes = [ {
+  //   name: 'apps:read',
+  //   description: 'See what applications you have created or have authorized.'
+  // }, {
+  //   name: 'apps:write',
+  //   description: 'Register applications on your behalf.'
+  // } ]
 
-  await knex( 'scopes' ).insert( appTokenScopes )
+  // await knex( 'scopes' ).insert( appTokenScopes )
 }
 
 exports.down = async knex => {

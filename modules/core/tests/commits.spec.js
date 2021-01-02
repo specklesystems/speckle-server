@@ -63,6 +63,8 @@ describe( 'Commits @core-commits', ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
 
+    await init()
+
     user.id = await createUser( user )
     stream.id = await createStream( { ...stream, ownerId: user.id } )
 
@@ -71,7 +73,9 @@ describe( 'Commits @core-commits', ( ) => {
     testObject3.id = await createObject( testObject3 )
   } )
 
-  after( async ( ) => {} )
+  after( async ( ) => {
+    await knex.migrate.rollback( )
+  } )
 
   let commitId1, commitId2, commitId3
 
@@ -182,7 +186,7 @@ describe( 'Commits @core-commits', ( ) => {
     let { commits: branchCommits } = await getCommitsByBranchName( { streamId: stream.id, branchName: 'main', limit: 2 } )
     let branchCommit = branchCommits[0]
 
-    let idCommit = await getCommitById( {id: commitId3 } )
+    let idCommit = await getCommitById( { id: commitId3 } )
 
     for ( let commit of [ userCommit, serverCommit, branchCommit, idCommit ] ) {
       expect( commit ).to.have.property( 'sourceApplication' )
@@ -202,7 +206,7 @@ describe( 'Commits @core-commits', ( ) => {
   } )
 
   it( 'Should have an array of parents', async() => {
-    let commits = [ await getCommitById( {id: commitId3 } ), await await getCommitById( {id: commitId2 } ) ]
+    let commits = [ await getCommitById( { id: commitId3 } ), await await getCommitById( { id: commitId2 } ) ]
 
     for ( let commit of commits ) {
       expect( commit ).to.have.property( 'parents' )
