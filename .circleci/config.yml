@@ -8,6 +8,7 @@ workflows:
 
 jobs:
   test:
+    working_directory: ~/project/packages/server
     docker:
       - image: 'circleci/node:12'
       - image: 'circleci/redis:6'
@@ -24,17 +25,15 @@ jobs:
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: true
       CANONICAL_URL: 'http://localhost:3000'
-
     steps:
       - checkout
       - restore_cache:
           key: 'deps-{{ checksum "package.json" }}'
       - run: 'npm install'
-      - run: 'lerna bootstrap'
       - save_cache:
           paths:
-            - ./server/node_modules
+            - node_modules
           key: 'deps-{{ checksum "package.json" }}'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
-      - run: 'lerna run test'
+      - run: 'npm run test:server'
       - run: 'bash <(curl -s https://codecov.io/bash)'
