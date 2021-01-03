@@ -35,5 +35,5 @@ jobs:
             - node_modules
           key: 'deps-{{ checksum "package.json" }}'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
-      - run: 'npm run test:server'
+      - run: 'npm run test'
       - run: 'bash <(curl -s https://codecov.io/bash)'
