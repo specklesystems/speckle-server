@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 871 400" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-4531,-5539)">
+        <g id="Artboard1" transform="matrix(1,0,0,1,4187.76,4786.57)">
+            <rect x="0" y="0" width="3840" height="2160" style="fill:none;"/>
+            <g transform="matrix(0.464023,-0.0256584,0,0.465442,142.078,679.424)">
+                <rect x="1294.87" y="614.156" width="204.453" height="204.719" style="fill:rgb(4,126,251);"/>
+            </g>
+            <g transform="matrix(0.459998,-0.0254359,0.24376,0.219132,280.374,798.898)">
+                <rect x="643.94" y="618.105" width="206.242" height="64.29" style="fill:rgb(123,188,255);"/>
+            </g>
+            <g transform="matrix(0.168269,0.151268,0,0.624912,434.991,941.085)">
+                <rect x="1736.88" y="-457.431" width="93.132" height="152.477" style="fill:rgb(49,59,207);"/>
+            </g>
+            <g transform="matrix(0.606506,-0.0335371,0,0.609944,-2858.9,-955.205)">
+                <text x="5970.62px" y="3532.8px" style="font-family:'Iosevka', monospace;font-size:92.552px;fill:white;">S2</text>
+            </g>
+        </g>
+    </g>
+</svg>

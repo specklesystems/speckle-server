@@ -1,8 +1,9 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "@speckle/frontend",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
+    "dev": "vue-cli-service serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "build:setup": "vue-cli-service build",
