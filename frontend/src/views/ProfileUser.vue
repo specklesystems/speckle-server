@@ -9,7 +9,7 @@
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <user-info-card :user="user"></user-info-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="10" class="pt-10">
         <v-card class="mb-3 elevation-0" color="background2">
           <v-card-title>
             {{ user.name }} has {{ user.streams.totalCount }} public streams and

@@ -1,68 +1,78 @@
 <template>
-  <v-container v-if="hasLocalStrategy" fluid>
-    <v-form ref="form">
-      <v-row style="margin-top: -10px" dense>
-        <v-col cols="12">
-          <v-text-field
-            v-model="form.email"
-            label="your email"
-            :rules="validation.emailRules"
-            solo
-          ></v-text-field>
-        </v-col>
-        <v-col cols="12">
-          <v-text-field
-            v-model="form.password"
-            label="password"
-            type="password"
-            :rules="validation.passwordRules"
-            solo
-            style="margin-top: -12px"
-          ></v-text-field>
-          <v-btn
-            block
-            large
-            color="primary"
-            style="top: -22px"
-            @click="loginUser"
-          >
-            Log in
-          </v-btn>
-          <p class="text-center">
-            <v-btn
-              text
-              small
-              block
-              color="primary"
-              :to="{
-                name: 'Register',
-                query: {
-                  appId: $route.query.appId,
-                  challenge: $route.query.challenge,
-                  suuid: $route.query.suuid
-                }
-              }"
-            >
-              Create Account
-            </v-btn>
-          </p>
-        </v-col>
-      </v-row>
-    </v-form>
-    <v-snackbar v-model="registrationError" multi-line>
-      {{ errorMessage }}
-      <v-btn color="red" text @click="registrationError = false">Close</v-btn>
-    </v-snackbar>
-  </v-container>
+  <v-card class="elevation-20" rounded="lg">
+        <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
+      <v-img src="@/assets/logo.svg" max-width="30" />
+    </v-card-title>
+    <v-card-title class="justify-center pt-5 pb-2">
+      <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
+      Interoperability in seconds
+    </v-card-title>
+    <strategies :strategies="strategies" :app-id="appId" :challenge="challenge" :suuid="suuid" />
+    <div v-if="hasLocalStrategy">
+      <v-card-title class="justify-center pb-5 pt-0 body-1 text--secondary">
+        <v-divider class="mx-4"></v-divider>
+        Login with email & password
+        <v-divider class="mx-4"></v-divider>
+      </v-card-title>
+      <v-alert v-model="registrationError" type="error" :icon="null" text multi-line dismissible>
+        <v-row align="center">
+          <v-col class="grow">
+            {{ errorMessage }}
+          </v-col>
+          <v-col v-if="errorMessage.toLowerCase().includes('email taken')" class="shrink">
+            <v-btn color="primary" plain :to="loginRoute">Login</v-btn>
+          </v-col>
+        </v-row>
+      </v-alert>
+      <v-card-text>
+        <v-form ref="form" class="px-3">
+          <v-row style="margin-top: -10px" dense>
+            <v-col cols="12">
+              <v-text-field
+                v-model="form.email"
+                label="your email"
+                :rules="validation.emailRules"
+                filled
+                single-line
+                prepend-icon="mdi-email"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="form.password"
+                label="password"
+                type="password"
+                :rules="validation.passwordRules"
+                filled
+                single-line
+                style="margin-top: -12px"
+                prepend-icon="mdi-form-textbox-password"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-btn block large color="primary" @click="loginUser">Log in</v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card-text>
+      <v-card-title class="justify-center caption">
+        <div class="mx-4 align-self-center">Don't have an account?</div>
+        <div class="mx-4 align-self-center">
+          <v-btn color="primary" plain text :to="registerRoute">Register</v-btn>
+        </div>
+      </v-card-title>
+    </div>
+  </v-card>
 </template>
+
 <script>
-import gql from "graphql-tag"
-import { onLogin } from "../../vue-apollo"
-import debounce from "lodash.debounce"
-import crs from "crypto-random-string"
+import gql from 'graphql-tag'
+import crs from 'crypto-random-string'
+import Strategies from '../../components/auth/Strategies'
 
 export default {
-  name: "Login",
+  name: 'Login',
+  components: { Strategies },
   apollo: {
     serverInfo: {
       query: gql`
@@ -92,38 +102,50 @@ export default {
     serverInfo: { authStrategies: [] },
     form: { email: null, password: null },
     validation: {
-      passwordRules: [(v) => !!v || "Required"],
+      passwordRules: [(v) => !!v || 'Required'],
       emailRules: [
-        (v) => !!v || "E-mail is required",
-        (v) => /.+@.+\..+/.test(v) || "E-mail must be valid"
+        (v) => !!v || 'E-mail is required',
+        (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
       ]
     },
     registrationError: false,
-    errorMessage: "",
-    appId: null,
+    errorMessage: '',
     serverApp: null,
-    suuid: null
+    appId: null,
+    suuid: null,
+    challenge: null
   }),
   computed: {
+    strategies() {
+      return this.serverInfo.authStrategies.filter((s) => s.id !== 'local')
+    },
     hasLocalStrategy() {
-      return (
-        this.serverInfo.authStrategies.findIndex((s) => s.id === "local") !== -1
-      )
+      return this.serverInfo.authStrategies.findIndex((s) => s.id === 'local') !== -1
+    },
+    registerRoute() {
+      return {
+        name: 'Register',
+        query: {
+          appId: this.$route.query.appId,
+          challenge: this.$route.query.challenge,
+          suuid: this.$route.query.suuid
+        }
+      }
     }
   },
   mounted() {
     let urlParams = new URLSearchParams(window.location.search)
-    let appId = urlParams.get("appId")
-    let challenge = urlParams.get("challenge")
-    let suuid = urlParams.get("suuid")
+    let appId = urlParams.get('appId')
+    let challenge = urlParams.get('challenge')
+    let suuid = urlParams.get('suuid')
     this.suuid = suuid
 
-    if (!appId) this.appId = "spklwebapp"
+    if (!appId) this.appId = 'spklwebapp'
     else this.appId = appId
 
-    if (!challenge && this.appId === "spklwebapp") {
+    if (!challenge && this.appId === 'spklwebapp') {
       this.challenge = crs({ length: 10 })
-      localStorage.setItem("appChallenge", this.challenge)
+      localStorage.setItem('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge
     }
@@ -132,7 +154,7 @@ export default {
     async loginUser() {
       try {
         let valid = this.$refs.form.validate()
-        if (!valid) throw new Error("Form validation failed")
+        if (!valid) return
 
         let user = {
           email: this.form.email,
@@ -141,25 +163,21 @@ export default {
 
         if (this.suuid) user.suuid = this.suuid
 
-        let res = await fetch(
-          `/auth/local/login?appId=${this.appId}&challenge=${this.challenge}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            redirect: "follow", // obvs not working
-            body: JSON.stringify(user)
-          }
-        )
+        let res = await fetch(`/auth/local/login?challenge=${this.challenge}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          redirect: 'follow', // obvs not working
+          body: JSON.stringify(user)
+        })
 
         if (res.redirected) {
           window.location = res.url
         }
 
-        if (!res.ok) {
-          throw new Error("Login failed")
-        }
+        let data = await res.json()
+        if (data.err) throw new Error(data.message)
       } catch (err) {
         this.errorMessage = err.message
         this.registrationError = true

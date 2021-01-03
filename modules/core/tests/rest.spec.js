@@ -44,7 +44,6 @@ describe( `Upload/Download Routes @api-rest`, ( ) => {
 
   after( async ( ) => {
     await knex.migrate.rollback( )
-
   } )
 
   it( 'Should not allow upload requests without an authorization token or valid streamId', async ( ) => {

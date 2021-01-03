@@ -4,7 +4,7 @@
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <user-info-card :user="user"></user-info-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="7">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="7" class="pt-10">
         <v-card v-if="user" class="mb-3">
           <v-card-text class="body-1">
             <span>
@@ -19,7 +19,19 @@
             <v-btn icon to="/streams"><v-icon>mdi-arrow-right</v-icon></v-btn>
           </v-card-text>
         </v-card>
-        <v-alert type="info">Heads up! The sections below are intended for developers.</v-alert>
+        <user-authorised-apps />
+        <v-alert type="info" class="my-5 mt-10">
+          Heads up! The sections below are intended for developers.
+        </v-alert>
+        <v-card color="transparent" class="elevation-0 mt-3">
+          <v-card-title>
+            Trying to learn the api?
+            <v-spacer />
+            <v-btn href="/explorer" text color="primary" target="_blank">
+              Checkout the GraphIQL explorer!
+            </v-btn>
+          </v-card-title>
+        </v-card>
         <user-access-tokens />
         <user-apps />
       </v-col>
@@ -27,15 +39,15 @@
   </v-container>
 </template>
 <script>
-import gql from 'graphql-tag'
 import userQuery from '../graphql/user.gql'
 import UserInfoCard from '../components/UserInfoCard'
 import UserAccessTokens from '../components/UserAccessTokens'
 import UserApps from '../components/UserApps'
+import UserAuthorisedApps from '../components/UserAuthorisedApps'
 
 export default {
   name: 'Profile',
-  components: { UserInfoCard, UserAccessTokens, UserApps },
+  components: { UserInfoCard, UserAccessTokens, UserApps, UserAuthorisedApps },
   data: () => ({}),
   apollo: {
     user: {

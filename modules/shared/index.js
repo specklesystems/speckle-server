@@ -1,10 +1,10 @@
 'use strict'
-const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
-const { RedisPubSub } = require( 'graphql-redis-subscriptions' )
 const Redis = require( 'ioredis' )
 const debug = require( 'debug' )( 'speckle:middleware' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
+const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
+const { RedisPubSub } = require( 'graphql-redis-subscriptions' )
 const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
 
 
@@ -13,13 +13,9 @@ let pubsub = new RedisPubSub( {
   subscriber: new Redis( process.env.REDIS_URL ),
 } )
 
-
-/*
-
-    Graphql server context helper
-
+/**
+ * Graphql server context helper: sets req.context to have an auth prop (true/false), userId and server role.
  */
-
 async function contextApiTokenHelper( { req, res, connection } ) {
   let token = null
 
@@ -29,8 +25,8 @@ async function contextApiTokenHelper( { req, res, connection } ) {
     token = req.headers.authorization
   }
 
-  if ( token && token.includes( "Bearer " ) ) {
-    token = token.split( " " )[ 1 ]
+  if ( token && token.includes( 'Bearer ' ) ) {
+    token = token.split( ' ' )[ 1 ]
   }
 
   if ( token === null )
@@ -53,26 +49,24 @@ async function contextApiTokenHelper( { req, res, connection } ) {
   return { auth: false }
 }
 
-// Middleware wrapper around the contextApiTokenHelper to be used in express routes
+/**
+ * Express middleware wrapper around the contextApiTokenHelper function. sets req.context to have an auth prop (true/false), userId and server role.
+ */
 async function contextMiddleware( req, res, next ) {
   let result = await contextApiTokenHelper( { req, res } )
   req.context = result
   next( )
 }
 
-/*
 
-    Keeps track of all the available roles on this server. It's seeded by the methods below.
-
- */
 let roles
 
-/*
-
-    Validates a user's server-bound role (admin, normal user, etc.)
-
+/**
+ * Validates a server role against the req's context object.
+ * @param  {[type]} context      [description]
+ * @param  {[type]} requiredRole [description]
+ * @return {[type]}              [description]
  */
-
 async function validateServerRole( context, requiredRole ) {
   if ( !roles )
     roles = await knex( 'user_roles' ).select( '*' )
@@ -91,12 +85,12 @@ async function validateServerRole( context, requiredRole ) {
     throw new ForbiddenError( 'You do not have the required server role' )
 }
 
-/*
-
-    Graphql scope validator
-
+/**
+ * Validates the scope against a list of scopes of the current session.
+ * @param  {[type]} scopes [description]
+ * @param  {[type]} scope  [description]
+ * @return {[type]}        [description]
  */
-
 async function validateScopes( scopes, scope ) {
   if ( !scopes )
     throw new ForbiddenError( 'You do not have the required privileges.' )
@@ -104,12 +98,13 @@ async function validateScopes( scopes, scope ) {
     throw new ForbiddenError( 'You do not have the required privileges.' )
 }
 
-/*
-
-    Graphql authorization: checks user id against access control lists
-
+/**
+ * Checks the userId against the resource's acl.
+ * @param  {[type]} userId       [description]
+ * @param  {[type]} resourceId   [description]
+ * @param  {[type]} requiredRole [description]
+ * @return {[type]}              [description]
  */
-
 async function authorizeResolver( userId, resourceId, requiredRole ) {
   if ( !roles )
     roles = await knex( 'user_roles' ).select( '*' )
@@ -139,7 +134,22 @@ async function authorizeResolver( userId, resourceId, requiredRole ) {
     throw new ForbiddenError( 'You are not authorized.' )
 }
 
+const Scopes = () => knex( 'scopes' )
+
+async function registerOrUpdateScope( scope ) {
+  await knex.raw( `${Scopes().insert( scope ).toString()} on conflict (name) do update set public = ?, description = ? `, [ scope.public, scope.description ] )
+  return
+}
+
+const Roles = () => knex( 'user_roles' )
+async function registerOrUpdateRole( role ) {
+  await knex.raw( `${Roles().insert( role ).toString()} on conflict (name) do update set weight = ?, description = ?, "resourceTarget" = ? `, [ role.weight, role.description, role.resourceTarget ] )
+  return
+}
+
 module.exports = {
+  registerOrUpdateScope,
+  registerOrUpdateRole,
   contextApiTokenHelper,
   contextMiddleware,
   validateServerRole,

@@ -11,7 +11,7 @@ const { createObjects, createObjectsBatched } = require( '../services/objects' )
 module.exports = ( app ) => {
   app.post( '/objects/:streamId', contextMiddleware, async ( req, res ) => {
 
-    debug( 'speckle:upload-endpoint' )( `booom upload endpoint` )
+    debug( 'speckle:upload-endpoint' )( 'booom upload endpoint' )
 
     if ( !req.context || !req.context.auth ) {
       return res.status( 401 ).end( )
@@ -29,7 +29,7 @@ module.exports = ( app ) => {
       return res.status( 401 ).end( )
     }
 
-    debug( 'speckle:upload-endpoint' )( `Upload started` )
+    debug( 'speckle:upload-endpoint' )( 'Upload started' )
 
     let busboy = new Busboy( { headers: req.headers } )
     let totalProcessed = 0
@@ -57,7 +57,7 @@ module.exports = ( app ) => {
             objs = JSON.parse( gunzipedBuffer )
           } catch ( e ) {
             requestDropped = true
-            return res.status( 400 ).send( `Failed to parse data.` )
+            return res.status( 400 ).send( 'Failed to parse data.' )
           }
 
           last = objs[ objs.length - 1 ]
@@ -82,7 +82,7 @@ module.exports = ( app ) => {
             objs = JSON.parse( buffer )
           } catch ( e ) {
             requestDropped = true
-            return res.status( 400 ).send( `Failed to parse data.` )
+            return res.status( 400 ).send( 'Failed to parse data.' )
           }
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
@@ -94,7 +94,7 @@ module.exports = ( app ) => {
         } )
       } else {
         requestDropped = true
-        return res.status( 400 ).send( `Invalid ContentType header. This route only accepts "application/gzip", "text/plain" or "application/json".` )
+        return res.status( 400 ).send( 'Invalid ContentType header. This route only accepts "application/gzip", "text/plain" or "application/json".' )
       }
     } )
 
@@ -105,7 +105,7 @@ module.exports = ( app ) => {
 
       await Promise.all( promises )
 
-      debug( 'speckle:upload-endpoint' )( `Upload ended` )
+      debug( 'speckle:upload-endpoint' )( 'Upload ended' )
       res.status( 201 ).end( )
     } )
 

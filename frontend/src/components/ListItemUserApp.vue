@@ -1,8 +1,23 @@
 <template>
   <v-list-item class="px-0">
     <v-list-item-content>
-      <v-list-item-title>
-        <v-chip small class="mr-2">{{ app.id }}</v-chip>
+      <v-list-item-title class="mb-2">
+        <v-chip small class="mr-2">
+          <b class="mr-1">Id:</b>
+          {{ app.id }}
+        </v-chip>
+        <v-chip small class="mr-2" @click="showSecret = true">show secret</v-chip>
+        <v-dialog v-model="showSecret" width="500">
+          <v-card class="">
+            <v-card-title>
+              {{ app.name }}
+            </v-card-title>
+            <v-card-text>
+              App secret:
+              <code>{{ app.secret }}</code>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
         <b>{{ app.name }}</b>
       </v-list-item-title>
       <v-list-item-subtitle class="caption pl-1">
@@ -10,12 +25,6 @@
         <a :href="app.redirectUrl" target="_blank">{{ app.redirectUrl }}</a>
       </v-list-item-subtitle>
     </v-list-item-content>
-    <!--     <v-list-item-action>
-      <v-btn small text disabled @click="">
-        <v-icon small class="mr-2">mdi-pencil</v-icon>
-        edit
-      </v-btn>
-    </v-list-item-action> -->
     <v-list-item-action>
       <v-btn small text color="error" @click="showRevokeConfirm = true">
         <v-icon small class="mr-2">mdi-delete</v-icon>
@@ -38,7 +47,7 @@
   </v-list-item>
 </template>
 <script>
-import gql from "graphql-tag"
+import gql from 'graphql-tag'
 
 export default {
   components: {},
@@ -50,7 +59,8 @@ export default {
   },
   data() {
     return {
-      showRevokeConfirm: false
+      showRevokeConfirm: false,
+      showSecret: false
     }
   },
   methods: {
@@ -63,7 +73,7 @@ export default {
             }
           `
         })
-        this.$emit("deleted")
+        this.$emit('deleted')
         this.showRevokeConfirm = false
       } catch (e) {
         console.log(e)

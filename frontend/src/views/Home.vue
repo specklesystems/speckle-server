@@ -29,12 +29,12 @@
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col v-if="$apollo.loading" sm="12" md="8" lg="9" xl="7">
+      <v-col v-if="$apollo.loading" sm="12" md="8" lg="9" xl="7" class="pt-10">
         <v-skeleton-loader type="list-item-two-line, list-item-three-line"></v-skeleton-loader>
       </v-col>
-      <v-col v-if="recentActivity && !$apollo.loading" sm="12" md="8" lg="9" xl="7">
+      <v-col v-if="recentActivity && !$apollo.loading" cols="12" sm="12" md="8" lg="9" xl="7" class="pt-10">
         <v-row>
-          <v-col class="pt-0">
+          <v-col xxxclass="pt-0">
             <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
               <v-subheader class="text-uppercase">Recent activity:</v-subheader>
               <v-chip-group

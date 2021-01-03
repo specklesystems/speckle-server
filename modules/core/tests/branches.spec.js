@@ -45,12 +45,16 @@ describe( 'Branches @core-branches', ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
 
+    await init()
+
     user.id = await createUser( user )
     stream.id = await createStream( { ...stream, ownerId: user.id } )
     testObject.id = await createObject( testObject )
   } )
 
-  after( async ( ) => {} )
+  after( async ( ) => {
+    await knex.migrate.rollback( )
+  } )
 
   let branch = { name: 'dim/dev' }
 

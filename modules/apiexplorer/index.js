@@ -6,12 +6,12 @@ const appRoot = require( 'app-root-path' )
 
 exports.init = ( app, options ) => {
   let port = process.env.PORT || 3000
-  debug( 'speckle:modules' )( '💅 \tInit graphql api explorer module' )
-  if ( process.env.NODE_ENV === 'development' )
-    debug( 'speckle:modules' )( `💅 \tGraphQL Explorer: http://localhost:${port}/explorer` )
+  debug( 'speckle:modules' )( '💅 Init graphql api explorer module' )
 
   // sweet and simple
   app.get( '/explorer', ( req, res ) => {
     res.sendFile( `${appRoot}/modules/apiexplorer/explorer.html` )
   } )
 }
+
+exports.finalize = () => {}

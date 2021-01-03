@@ -75,6 +75,7 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
   } )
 
   after( async ( ) => {
+    await knex.migrate.rollback( )
     serverProcess.kill( )
   } )
 

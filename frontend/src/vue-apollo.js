@@ -9,15 +9,21 @@ Vue.use( VueApollo )
 
 // Name of the localStorage item
 const AUTH_TOKEN = 'AuthToken'
+let hasAuthToken = !!localStorage.getItem(AUTH_TOKEN)
 
 // Http endpoint
-const httpEndpoint = process.env.VUE_APP_GRAPHQL_HTTP || 'http://localhost:3000/graphql'
+const httpEndpoint = process.env.VUE_APP_GRAPHQL_HTTP || `${window.location.origin}/graphql`
 // WS endpoint
-const wsEndpoint = process.env.VUE_APP_GRAPHQL_WS || 'ws://localhost:3000/graphql'
+const wsEndpoint = process.env.VUE_APP_GRAPHQL_WS || `${window.location.origin.replace('http', 'ws')}/graphql`
 
 // Subscription Client
 const subscriptionClient = new SubscriptionClient( wsEndpoint, {
-  reconnect: true
+  reconnect: hasAuthToken,
+  connectionParams:{
+    headers:{
+      'Authorization' : localStorage.getItem(AUTH_TOKEN)
+    }
+  }
 } )
 
 // Config
@@ -26,7 +32,7 @@ const defaultOptions = {
   httpEndpoint,
   // You can use `wss` for secure connection (recommended in production)
   // Use `null` to disable subscriptions
-  wsEndpoint: process.env.VUE_APP_GRAPHQL_WS || 'ws://localhost:3000/graphql',
+  wsEndpoint: hasAuthToken ? wsEndpoint : null,
   // LocalStorage token
   tokenName: AUTH_TOKEN,
   // Enable Automatic Query persisting with Apollo Engine
@@ -65,7 +71,7 @@ export function createProvider( options = {} ) {
     ...defaultOptions,
     ...options,
   } )
-  apolloClient.wsClient = wsClient
+  apolloClient.wsClient = hasAuthToken ? wsClient : null
 
   // Create vue apollo provider
   const apolloProvider = new VueApollo( {
@@ -78,6 +84,11 @@ export function createProvider( options = {} ) {
     errorHandler( error ) {
       // eslint-disable-next-line no-console
       console.log( '%cError', 'background: red; color: white; padding: 2px 4px; border-radius: 3px; font-weight: bold;', error.message )
+      if(error.message.toLowerCase().includes('token')){
+        window.location = `${window.location.origin}/authn/login`
+      } else {
+        window.location = `${window.location.origin}/error?message=${error.message}`
+      }
     },
   } )
 

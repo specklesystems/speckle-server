@@ -4,7 +4,7 @@
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <sidebar-stream :user-role="userRole"></sidebar-stream>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="7">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="7" class="pt-10">
         <router-view :user-role="userRole"></router-view>
       </v-col>
     </v-row>
@@ -30,8 +30,8 @@ export default {
           id: this.$route.params.streamId
         }
       },
-      error() {
-        this.$router.push({ path: '/error' })
+      error(err) {
+        this.$router.push({ path: `/error?message=${err.message}` })
       }
     }
   },

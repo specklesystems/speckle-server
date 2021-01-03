@@ -7,145 +7,184 @@
   <link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
 </head>
 
-<body style="margin: 0; background-color: #262E37">
+<body style="margin: 0; ">
   <div id='speckle-header'>
-    <div class='header'>
+    <div class='header' style="height: 6vh;">
       <span class='header-title'>Speckle GraphQL API</span>
-      <span class='header-text' style='float: right;'>Hello <b><span id='username'>$Name</span> @ <span class='' style='' id='serverDetails'>$ServerDetails</span></b> <button class='logout-button' onclick="logout()">logout</button></span>
+      <span class="hide-loggedout">
+        <span class='header-text' style='float: right;'>Hello <b><span id='username'>$Name</span> @ <span class='' style='' id='serverDetails'>$ServerDetails</span></b>
+        <button class='logout-button' onclick="logout()">logout</button></span>
+      </span>
     </div>
-    <div class='warning'>
+    <div id="warning" class='warning hide-loggedout' style="height: 6vh;">
       <div>
         <span>👋 &nbsp;Heads up! Speckle's GraphQL Explorer makes use of your <b>real, live, production data</b> from this server.</span>
       </div>
     </div>
   </div>
-  <div id="graphiql" style="height: 90vh;"></div>
+  <div class="header-title hide-loggedin" style="height: 20vh; line-height: 20vh; text-align: center;">
+    👋 &nbsp; You need to log in to use the explorer.
+    <button class='login-button' onclick="redirectToAuth()">Log in </button></span>
+  </div>
+  <div id="graphiql" style="height: 88vh;"></div>
   <script crossorigin src="https://unpkg.com/react/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/graphiql/graphiql.min.js"></script>
   <script>
+
   const graphQLFetcher = graphQLParams =>
-    fetch( '/graphql', {
-      method: 'post',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem( 'AuthToken' ) },
-      body: JSON.stringify( graphQLParams ),
-    } )
+  fetch( '/graphql', {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem( TOKEN ) },
+    body: JSON.stringify( graphQLParams ),
+  } )
     .then( response => response.json( ) )
     .catch( ( ) => response.text( ) )
 
 
-  function redirectToAuth( ) {
-    localStorage.setItem( 'challenge', Math.random( ).toString( 36 ).substring( 2, 15 ) + Math.random( ).toString( 36 ).substring( 2, 15 ) )
-    window.location = '/auth?appId=explorer&challenge=' + localStorage.getItem( 'challenge' )
-  }
+const TOKEN='Explorer.AuthToken'
+const REFRESH_TOKEN = 'Explorer.RefreshToken'
 
-  async function accessCodeExchange( accessCode ) {
-    window.history.replaceState( {}, document.title, '/explorer' )
+function redirectToAuth( ) {
+  localStorage.setItem( 'challenge', Math.random( ).toString( 36 ).substring( 2, 15 ) + Math.random( ).toString( 36 ).substring( 2, 15 ) )
+  window.location = `/authn/verify/explorer/${localStorage.getItem( 'challenge' )}`
+}
 
-    let response = await fetch( '/auth/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( {
-        accessCode: accessCode,
-        appId: 'explorer',
-        appSecret: 'explorer',
-        challenge: localStorage.getItem( 'challenge' )
-      } )
+async function accessCodeExchange( accessCode ) {
+  window.history.replaceState( {}, document.title, '/explorer' )
+
+  let response = await fetch( '/auth/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( {
+      accessCode: accessCode,
+      appId: 'explorer',
+      appSecret: 'explorer',
+      challenge: localStorage.getItem( 'challenge' )
     } )
-
-    let data = await response.json( )
-
-    if ( data.hasOwnProperty( 'token' ) ) {
-      localStorage.removeItem( 'challenge' )
-      localStorage.setItem( 'AuthToken', data.token )
-      localStorage.setItem( 'RefreshToken', data.refreshToken )
-      await setUserName( )
-      await initGQL( data.token )
-    }
-
-  }
-
-  async function initGQL( token ) {
-    // GraphQLPlayground.init( document.getElementById( 'root' ), {
-    //   endpointUrl: '/graphql',
-    //   headers: {
-    //     'Authorization': 'Bearer ' + token
-    //   }
-    // } )
-    ReactDOM.render(
-      React.createElement( GraphiQL, { fetcher: graphQLFetcher } ),
-      document.getElementById( 'graphiql' ),
-    )
-    await setServerInfo( )
-  }
-
-  async function setUserName( ) {
-    let testResponse = await fetch( '/graphql', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + localStorage.getItem( 'AuthToken' ),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( { query: `{ user { name } }` } )
-    } )
-
-    let data = ( await testResponse.json( ) ).data
-    document.getElementById( 'username' ).innerHTML = data.user.name
-  }
-
-  async function setServerInfo( ) {
-    let testResponse = await fetch( '/graphql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( { query: `{ serverInfo { name company } }` } )
-    } )
-
-    let data = ( await testResponse.json( ) ).data
-    document.getElementById( 'serverDetails' ).innerHTML = `<b>${data.serverInfo.name}</b> deployed by <b>${data.serverInfo.company}</b>`
-  }
-
-  function logout( ) {
-    localStorage.removeItem( 'AuthToken' )
-    localStorage.removeItem( 'RefreshToken' )
-    window.location = '/explorer'
-  }
-
-  window.addEventListener( 'load', async function ( event ) {
-    let urlParams = new URLSearchParams( window.location.search )
-    let accessCode = urlParams.get( 'access_code' )
-
-    if ( accessCode ) {
-      accessCodeExchange( accessCode )
-    } else {
-      let token = localStorage.getItem( 'AuthToken' )
-      if ( token ) {
-        let testResponse = await fetch( '/graphql', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + token,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify( { query: `{ user { name } }` } )
-        } )
-
-        let data = ( await testResponse.json( ) ).data
-        // if res.data.user is non null, means the ping was ok & token is valid
-        if ( data.user ) {
-          console.log( data.user )
-          document.getElementById( 'username' ).innerHTML = data.user.name
-          await initGQL( token )
-
-        }
-      } else {
-        redirectToAuth( )
-      }
-    }
   } )
-  </script>
+
+  let data = await response.json( )
+
+  if ( data.hasOwnProperty( 'token' ) ) {
+    localStorage.removeItem( 'challenge' )
+    localStorage.setItem( TOKEN, data.token )
+    localStorage.setItem( REFRESH_TOKEN, data.refreshToken )
+    await setUserName( )
+    await initGQL( data.token )
+  }
+
+}
+
+async function initGQL( token ) {
+  // GraphQLPlayground.init( document.getElementById( 'root' ), {
+  //   endpointUrl: '/graphql',
+  //   headers: {
+  //     'Authorization': 'Bearer ' + token
+  //   }
+  // } )
+  ReactDOM.render(
+    React.createElement( GraphiQL, { fetcher: graphQLFetcher } ),
+    document.getElementById( 'graphiql' ),
+  )
+  await setServerInfo( )
+}
+
+async function setUserName( ) {
+  let testResponse = await fetch( '/graphql', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + localStorage.getItem( TOKEN ),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( { query: `{ user { name } }` } )
+  } )
+
+  let data = ( await testResponse.json( ) ).data
+  document.getElementById( 'username' ).innerHTML = data.user.name
+}
+
+async function setServerInfo( ) {
+  let testResponse = await fetch( '/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( { query: `{ serverInfo { name company } }` } )
+  } )
+
+  let data = ( await testResponse.json( ) ).data
+  document.getElementById( 'serverDetails' ).innerHTML = `<b>${data.serverInfo.name}</b> deployed by <b>${data.serverInfo.company}</b>`
+}
+
+function logout( ) {
+   fetch('/auth/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      token: localStorage.getItem(TOKEN),
+      refreshToken: localStorage.getItem(REFRESH_TOKEN)
+    })
+  }).then( res => {
+    localStorage.removeItem( TOKEN )
+    localStorage.removeItem( REFRESH_TOKEN )
+    window.location = '/explorer'
+  })
+}
+
+function hideLoggedOut(){
+  let elems = document.getElementsByClassName("hide-loggedout")
+  for (let i = 0; i< elems.length; i++ ) {
+    elems[i].style.display = "none"
+  }
+}
+
+function hideLoggedin(){
+  let test = document.getElementsByClassName("hide-loggedin")
+  for (let i = 0; i< test.length; i++ ) {
+    test[i].style.display = "none"
+  }
+}
+
+window.addEventListener( 'load', async function ( event ) {
+  let urlParams = new URLSearchParams( window.location.search )
+  let accessCode = urlParams.get( 'access_code' )
+
+  if ( accessCode ) {
+    accessCodeExchange( accessCode )
+    hideLoggedin()
+  } else {
+    let token = localStorage.getItem( TOKEN )
+    if ( token ) {
+      let testResponse = await fetch( '/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( { query: '{ user { name } }' } )
+      } )
+
+      let data = ( await testResponse.json( ) ).data
+      // if res.data.user is non null, means the ping was ok & token is valid
+      if ( data.user ) {
+        console.log( data.user )
+        document.getElementById( 'username' ).innerHTML = data.user.name
+        await initGQL( token )
+        hideLoggedin()
+      } else {
+        logout()
+      }
+    } else {
+      hideLoggedOut()
+    }
+  }
+} )
+</script>
 </body>
 <style>
 #speckle-header {
@@ -165,7 +204,7 @@
   padding: 10px 20px;
   box-sizing: border-box;
   background-color: #0A66FF;
-
+font-family: Roboto, sans-serif;
   color: white;
 }
 
@@ -174,12 +213,14 @@
   font-weight: 500;
   letter-spacing: 0.25px;
   line-height: 40px;
+  font-family: Roboto, sans-serif;
 }
 
 .header-text {
   font-size: small;
   font-weight: 200;
   line-height: 40px;
+  font-family: Roboto, sans-serif;
 }
 
 #serverDetails {

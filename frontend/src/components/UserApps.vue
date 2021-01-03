@@ -40,6 +40,7 @@ export default {
             id
             createdApps {
               id
+              secret
               name
               description
               redirectUrl

@@ -3,13 +3,17 @@
     <template slot="progress">
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
-    <v-card-title class="mr-8">
+    <v-card-title class="mr-8 display-1">
       <router-link v-show="!isHomeRoute" :to="'/streams/' + stream.id" class="text-decoration-none">
         {{ stream.name }}
       </router-link>
       <div v-show="isHomeRoute">
         {{ stream.name }}
       </div>
+      <v-btn v-show="!isHomeRoute" plain small class="mt-3 pa-0" :to="'/streams/' + stream.id">
+        <v-icon small>mdi-chevron-left</v-icon>
+        back to stream
+      </v-btn>
     </v-card-title>
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
@@ -44,14 +48,18 @@
           &nbsp; link sharing off
         </span>
       </p>
+      <v-divider class="pb-2"></v-divider>
       <v-btn
         v-if="userRole === 'owner' && isHomeRoute"
-        block
         small
+        plain
+        color="primary"
+        text
+        class="px-0"
         @click="editStreamDialog = true"
       >
+        <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
         Edit
-        <v-icon small class="ml-3">mdi-cog-outline</v-icon>
       </v-btn>
       <v-dialog v-model="editStreamDialog" max-width="500">
         <edit-stream-dialog
@@ -83,9 +91,18 @@
           </v-col>
         </template>
       </v-row>
-      <v-btn v-if="userRole === 'owner'" block small @click="dialogShare = true">
+      <v-divider class="pb-2 mt-2"></v-divider>
+      <v-btn
+        v-if="userRole === 'owner'"
+        small
+        plain
+        color="primary"
+        text
+        @click="dialogShare = true"
+        class="px-0"
+      >
+        <v-icon small class="mr-2">mdi-account-multiple</v-icon>
         Manage
-        <v-icon small class="ml-3">mdi-account-multiple</v-icon>
       </v-btn>
       <v-dialog v-model="dialogShare" max-width="500">
         <stream-share-dialog
@@ -153,4 +170,3 @@ export default {
   }
 }
 </script>
-<style scoped></style>
