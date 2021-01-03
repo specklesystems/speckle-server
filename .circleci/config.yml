@@ -8,7 +8,6 @@ workflows:
 
 jobs:
   test:
-    working_directory: ~/project/packages/server
     docker:
       - image: 'circleci/node:12'
       - image: 'circleci/redis:6'
@@ -30,11 +29,11 @@ jobs:
       - restore_cache:
           key: 'deps-{{ checksum "package.json" }}'
       - run: 'npm install'
+      - run: 'lerna boostrap'
       - save_cache:
           paths:
             - node_modules
           key: 'deps-{{ checksum "package.json" }}'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
-      - run: 'npm run test'
-      - run: 'cd coverage && ls -lha'
+      - run: 'lerna run test --stream'
       - run: 'bash <(curl -s https://codecov.io/bash) -s ~/project/packages/server/coverage'
