@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development DEBUG=speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
-    "test": "cross-env PORT=3001 NODE_ENV=test nyc nyc --reporter html --reporter lcovonly mocha -s 0 --timeout 10000 --exit"
+    "test": "cross-env PORT=3001 NODE_ENV=test nyc --reporter html --reporter lcov mocha -s 0 --timeout 10000 --exit"
   },
   "dependencies": {
     "@sentry/node": "^5.29.2",
