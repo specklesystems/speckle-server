@@ -27,12 +27,12 @@ jobs:
     steps:
       - checkout
       - run:
-        command: 'npm install'
-        working_directory: 'packages/server'
+          command: 'npm install'
+          working_directory: 'packages/server'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
       - run:
-        command: 'npm run test'
-        working_directory: 'packages/server'
+          command: 'npm run test'
+          working_directory: 'packages/server'
       - run:
-        command: 'bash <(curl -s https://codecov.io/bash)'
-        working_directory: 'packages/server'
+          command: 'bash <(curl -s https://codecov.io/bash)'
+          working_directory: 'packages/server'
