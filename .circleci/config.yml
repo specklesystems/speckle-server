@@ -26,14 +26,13 @@ jobs:
       CANONICAL_URL: 'http://localhost:3000'
     steps:
       - checkout
-      - restore_cache:
-          key: 'deps-{{ checksum "package.json" }}'
-      - run: 'npm install'
-      - run: 'lerna boostrap'
-      - save_cache:
-          paths:
-            - node_modules
-          key: 'deps-{{ checksum "package.json" }}'
+      - run:
+        command: 'npm install'
+        working_directory: 'packages/server'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
-      - run: 'lerna run test --stream'
-      - run: 'bash <(curl -s https://codecov.io/bash) -s ~/project/packages/server/coverage'
+      - run:
+        command: 'npm run test'
+        working_directory: 'packages/server'
+      - run:
+        command: 'bash <(curl -s https://codecov.io/bash)'
+        working_directory: 'packages/server'
