@@ -36,7 +36,7 @@ describe( 'Initialisation Logic @init-logic', ( ) => {
 
     it( 'shoud have some apps', async() => {
       let res = await knex( 'server_apps' ).select()
-      expect( res.length ).to.be.greaterThan( 3 )
+      expect( res.length ).to.be.greaterThan( 2 )
     } )
   } )
 
@@ -61,7 +61,7 @@ describe( 'Initialisation Logic @init-logic', ( ) => {
 
     it( 'shoud have some apps second time rountd', async() => {
       let res = await knex( 'server_apps' ).select()
-      expect( res.length ).to.be.greaterThan( 3 )
+      expect( res.length ).to.be.greaterThan( 2 )
     } )
   } )
 } )
