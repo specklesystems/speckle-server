@@ -112,10 +112,10 @@ exports.startHttp = async ( app ) => {
 
   // Production mode -> serve things statically.
   else {
-    app.use( '/', express.static( `${appRoot}/frontend/dist` ) )
+    app.use( '/', express.static( `${appRoot}/../packages/frontend/dist` ) )
 
     app.all( '*', async ( req, res ) => {
-      res.sendFile( `${appRoot}/frontend/dist/app.html` )
+      res.sendFile( `${appRoot}/../packages/frontend/dist/app.html` )
     } )
   }
 
@@ -128,7 +128,7 @@ exports.startHttp = async ( app ) => {
   app.use( Sentry.Handlers.errorHandler( ) )
 
   server.on( 'listening', ( ) => {
-    debug( 'speckle:startup' )( `     🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
+    debug( 'speckle:startup' )( `🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
   } )
 
   server.listen( port )

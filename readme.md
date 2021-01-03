@@ -1,4 +1,4 @@
-# Server
+# Speckle Web
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Discourse users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fdiscourse.speckle.works&style=flat-square)](https://discourse.speckle.works)
 [![Slack Invite](https://img.shields.io/badge/-slack-grey?style=flat-square&logo=slack)](https://speckle-works.slack.com/join/shared_invite/enQtNjY5Mzk2NTYxNTA4LTU4MWI5ZjdhMjFmMTIxZDIzOTAzMzRmMTZhY2QxMmM1ZjVmNzJmZGMzMDVlZmJjYWQxYWU0MWJkYmY3N2JjNGI) [![website](https://img.shields.io/badge/www-speckle.systems-royalblue?style=flat-square)](https://speckle.systems)
@@ -8,24 +8,29 @@
 [![Speckle-Next](https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg)](https://codecov.io/gh/specklesystems/speckle-server)
 
 ## Disclaimer
-This is an early alpha release, not meant for use in production! We're working to stabilise the 2.0 API, and until then there will be breaking changes. You have been warned!
+We're working to stabilize the 2.0 API, and until then there will be breaking changes.
 
 ## Introduction
 
-This is the Speckle Server 2.0. It consists of two distinct parts:
+This monorepo is the home of the Speckle 2.0 web packages. If you're looking for the desktop connectors, you'll find them [here](https://github.com/specklesystems/speckle-sharp).
 
-- The server application itself, which is a nodejs app,
-- The frontend application, which is a static vuejs app.
+Specifically, this monorepo contains:
 
-For example usage, do check out the tests! We'll be also adding preliminary documentation [on our forum](https://discourse.speckle.works/c/speckle-insider/10).
+### ➡️ [Server](packages/server), the Speckle Server.
+
+The server is a nodejs app. Core external dependencies are a Redis and Postgresql db.
+
+### ➡️ [Frontend](packages/frontend), the Speckle Frontend.
+
+The frontend is a static Vue app.
 
 ## Developing and Debugging
 
-To get started, first clone this repo.
+To get started, first clone this repo & run `npm install`. Next, you'll need to run `lerna boostrap` to initialize the dependencies of all packages (server & frontend).
 
-### Setup
+After these steps are complete, run `lerna run dev --stream`. Alternatively, you can `npm run dev` independently in each separate package (this will make for less spammy output).
 
-#### Server
+#### Server Setup Notes
 
 To run the **Server** in debug mode:
 
@@ -51,7 +56,7 @@ To run both at the same time with one command only, simply run `npm run dev:all`
 
 ### Testing
 
-The Server is quite thoroughly covered by tests. We'll aim to keep it that way. Once you have followed the setup steps above, you can run all the tests by hitting `npm run test:server`.
+The Server is quite thoroughly covered by tests. We'll aim to keep it that way (>90%). Once you have followed the setup steps above, you can run all the tests by hitting `npm run test:server`.
 
 For testing specific functionality, use `NODE_ENV=test mocha --grep ${scope} --watch`. For example, if you want to test the commit services only, you can run `mocha --grep @core-commits --watch`
 
