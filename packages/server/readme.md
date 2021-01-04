@@ -25,7 +25,7 @@ You can customise your local deployment by editing and filling in a `.env` file.
 - copy the `.env-example` file to `.env`
 - open and edit the `.env` file.
 
-## Developing
+## Developing
 
 The server consists of several semi-related components, or modules. These can be found in `/modules`. Module composition:
 - an `index.js` file that exposes two functions, `init` and `finalize` (mandatory)
@@ -33,7 +33,7 @@ The server consists of several semi-related components, or modules. These can be
 
 ## Server & Apps
 
-### Frontend
+### Frontend
 
 - In **development** mode, the Speckle Server will proxy the frontend from `localhost:8080` to `localhost:3000`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
 
