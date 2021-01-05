@@ -1,0 +1,27 @@
+version: "3"
+services:
+
+  server:
+    build:
+      .
+    depends_on:
+      - database
+      - redis
+
+  database:
+    image: "postgres" # use latest official postgres version
+    env_file:
+      - .env # configure postgres
+    volumes:
+      - speckle-postgres-data:/var/lib/postgresql/data/ # persist data even if container shuts down
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # this is the way to add db init script
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: "redis"
+    ports:
+      - "6379:6379" # It is not neccesary to expose the reddis port if running the app with compose 
+
+volumes:
+  speckle-postgres-data: # named volumes can be managed easier using docker-compose
