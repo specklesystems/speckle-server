@@ -1,0 +1,14 @@
+query Stream($streamid: String!, $id: String!) {
+  stream(id: $streamid) {
+    id
+    commit(id: $id) {
+      id
+      message
+      referencedObject
+      authorName
+      authorId
+      authorAvatar
+      createdAt
+    }
+  }
+}

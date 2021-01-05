@@ -1,0 +1,10 @@
+query UserProfile($id: String!) {
+  user(id: $id) {
+    id
+    name
+    bio
+    company
+    avatar
+    verified
+  }
+}

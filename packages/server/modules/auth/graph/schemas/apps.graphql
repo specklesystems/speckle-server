@@ -1,0 +1,111 @@
+extend type Query {
+  """
+  Gets a specific app from the server.
+  """
+  app( id: String! ): ServerApp
+
+  """
+  Returns all the publicly available apps on this server.
+  """
+  apps: [ServerAppListItem]
+}
+
+type ServerApp {
+  id: String!
+  secret: String
+  name: String!
+  description: String
+  termsAndConditionsLink: String
+  logo: String
+  public: Boolean
+  trustByDefault: Boolean
+  author: AppAuthor
+  createdAt: DateTime!
+  redirectUrl: String!
+  scopes: [Scope]!
+}
+
+type ServerAppListItem {
+  id: String!
+  name: String!
+  description: String
+  redirectUrl: String!
+  termsAndConditionsLink: String
+  trustByDefault: Boolean
+  logo: String
+  author: AppAuthor
+}
+
+type AppAuthor {
+  name: String
+  id: String
+  avatar: String
+}
+
+extend type User {
+  """
+  Returns the apps you have authorized.
+  """
+  authorizedApps: [ServerAppListItem]
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:read")
+
+  """
+  Returns the apps you have created.
+  """
+  createdApps: [ServerApp]
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:read")
+}
+
+extend type Mutation {
+  """
+  Register a new third party application.
+  """
+  appCreate(app: AppCreateInput!): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+  """
+  Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.**
+  """
+  appUpdate(app: AppUpdateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+  """
+  Deletes a thirty party application.
+  """
+  appDelete(appId: String!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+  """
+  Revokes (de-authorizes) an application that you have previously authorized.
+  """
+  appRevokeAccess(appId: String!): Boolean
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
+
+}
+
+input AppCreateInput {
+  name: String!
+  description: String!
+  termsAndConditionsLink: String
+  logo: String
+  public: Boolean
+  redirectUrl: String!
+  scopes: [String]!
+}
+
+input AppUpdateInput {
+  id: String!
+  name: String!
+  description: String!
+  termsAndConditionsLink: String
+  logo: String
+  public: Boolean
+  redirectUrl: String!
+  scopes: [String]!
+}

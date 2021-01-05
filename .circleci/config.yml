@@ -1,13 +1,19 @@
 version: 2.1
 
+# TODO:
+# add build workflow for frontend
+# rename server test workflow
+# add linting jobs
+# run jobs/workflows on correct package changes (not all...)
+
 workflows:
   version: 2.1
   build:
     jobs:
-      - test
+      - test_server
 
 jobs:
-  test:
+  test_server:
     docker:
       - image: 'circleci/node:12'
       - image: 'circleci/redis:6'
@@ -24,16 +30,16 @@ jobs:
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: true
       CANONICAL_URL: 'http://localhost:3000'
-
+    # Note: some of these commands need to be run in the server package folder.
     steps:
       - checkout
-      - restore_cache:
-          key: 'deps-{{ checksum "package.json" }}'
-      - run: 'npm install'
-      - save_cache:
-          paths:
-            - node_modules
-          key: 'deps-{{ checksum "package.json" }}'
+      - run:
+          command: 'npm install'
+          working_directory: 'packages/server'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
-      - run: 'npm run test:server'
-      - run: 'bash <(curl -s https://codecov.io/bash)'
+      - run:
+          command: 'npm run test'
+          working_directory: 'packages/server'
+      - run:
+          command: 'bash <(curl -s https://codecov.io/bash)'
+          working_directory: 'packages/server'

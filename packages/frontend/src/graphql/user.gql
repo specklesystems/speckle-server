@@ -1,0 +1,20 @@
+query {
+  user {
+    id
+    email
+    name
+    bio
+    company
+    avatar
+    verified
+    profiles
+    role
+    suuid
+    streams{
+      totalCount
+    }
+    commits{
+      totalCount
+    }
+  }
+}

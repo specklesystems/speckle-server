@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<html>
+
+<head>
+  <title>Speckle GraphQL API</title>
+  <link href="https://unpkg.com/graphiql/graphiql.min.css" rel="stylesheet" />
+</head>
+
+<body style="margin: 0; ">
+  <div id='speckle-header'>
+    <div class='header' style="height: 6vh;">
+      <span class='header-title'>Speckle GraphQL API</span>
+      <span class="hide-loggedout">
+        <span class='header-text' style='float: right;'>Hello <b><span id='username'>$Name</span> @ <span class='' style='' id='serverDetails'>$ServerDetails</span></b>
+        <button class='logout-button' onclick="logout()">logout</button></span>
+      </span>
+    </div>
+    <div id="warning" class='warning hide-loggedout' style="height: 6vh;">
+      <div>
+        <span>👋 &nbsp;Heads up! Speckle's GraphQL Explorer makes use of your <b>real, live, production data</b> from this server.</span>
+      </div>
+    </div>
+  </div>
+  <div class="header-title hide-loggedin" style="height: 20vh; line-height: 20vh; text-align: center;">
+    👋 &nbsp; You need to log in to use the explorer.
+    <button class='login-button' onclick="redirectToAuth()">Log in </button></span>
+  </div>
+  <div id="graphiql" style="height: 88vh;"></div>
+  <script crossorigin src="https://unpkg.com/react/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/graphiql/graphiql.min.js"></script>
+  <script>
+
+  const graphQLFetcher = graphQLParams =>
+  fetch( '/graphql', {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem( TOKEN ) },
+    body: JSON.stringify( graphQLParams ),
+  } )
+    .then( response => response.json( ) )
+    .catch( ( ) => response.text( ) )
+
+
+const TOKEN='Explorer.AuthToken'
+const REFRESH_TOKEN = 'Explorer.RefreshToken'
+
+function redirectToAuth( ) {
+  localStorage.setItem( 'challenge', Math.random( ).toString( 36 ).substring( 2, 15 ) + Math.random( ).toString( 36 ).substring( 2, 15 ) )
+  window.location = `/authn/verify/explorer/${localStorage.getItem( 'challenge' )}`
+}
+
+async function accessCodeExchange( accessCode ) {
+  window.history.replaceState( {}, document.title, '/explorer' )
+
+  let response = await fetch( '/auth/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( {
+      accessCode: accessCode,
+      appId: 'explorer',
+      appSecret: 'explorer',
+      challenge: localStorage.getItem( 'challenge' )
+    } )
+  } )
+
+  let data = await response.json( )
+
+  if ( data.hasOwnProperty( 'token' ) ) {
+    localStorage.removeItem( 'challenge' )
+    localStorage.setItem( TOKEN, data.token )
+    localStorage.setItem( REFRESH_TOKEN, data.refreshToken )
+    await setUserName( )
+    await initGQL( data.token )
+  }
+
+}
+
+async function initGQL( token ) {
+  // GraphQLPlayground.init( document.getElementById( 'root' ), {
+  //   endpointUrl: '/graphql',
+  //   headers: {
+  //     'Authorization': 'Bearer ' + token
+  //   }
+  // } )
+  ReactDOM.render(
+    React.createElement( GraphiQL, { fetcher: graphQLFetcher } ),
+    document.getElementById( 'graphiql' ),
+  )
+  await setServerInfo( )
+}
+
+async function setUserName( ) {
+  let testResponse = await fetch( '/graphql', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + localStorage.getItem( TOKEN ),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( { query: `{ user { name } }` } )
+  } )
+
+  let data = ( await testResponse.json( ) ).data
+  document.getElementById( 'username' ).innerHTML = data.user.name
+}
+
+async function setServerInfo( ) {
+  let testResponse = await fetch( '/graphql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify( { query: `{ serverInfo { name company } }` } )
+  } )
+
+  let data = ( await testResponse.json( ) ).data
+  document.getElementById( 'serverDetails' ).innerHTML = `<b>${data.serverInfo.name}</b> deployed by <b>${data.serverInfo.company}</b>`
+}
+
+function logout( ) {
+   fetch('/auth/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      token: localStorage.getItem(TOKEN),
+      refreshToken: localStorage.getItem(REFRESH_TOKEN)
+    })
+  }).then( res => {
+    localStorage.removeItem( TOKEN )
+    localStorage.removeItem( REFRESH_TOKEN )
+    window.location = '/explorer'
+  })
+}
+
+function hideLoggedOut(){
+  let elems = document.getElementsByClassName("hide-loggedout")
+  for (let i = 0; i< elems.length; i++ ) {
+    elems[i].style.display = "none"
+  }
+}
+
+function hideLoggedin(){
+  let test = document.getElementsByClassName("hide-loggedin")
+  for (let i = 0; i< test.length; i++ ) {
+    test[i].style.display = "none"
+  }
+}
+
+window.addEventListener( 'load', async function ( event ) {
+  let urlParams = new URLSearchParams( window.location.search )
+  let accessCode = urlParams.get( 'access_code' )
+
+  if ( accessCode ) {
+    accessCodeExchange( accessCode )
+    hideLoggedin()
+  } else {
+    let token = localStorage.getItem( TOKEN )
+    if ( token ) {
+      let testResponse = await fetch( '/graphql', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( { query: '{ user { name } }' } )
+      } )
+
+      let data = ( await testResponse.json( ) ).data
+      // if res.data.user is non null, means the ping was ok & token is valid
+      if ( data.user ) {
+        console.log( data.user )
+        document.getElementById( 'username' ).innerHTML = data.user.name
+        await initGQL( token )
+        hideLoggedin()
+      } else {
+        logout()
+      }
+    } else {
+      hideLoggedOut()
+    }
+  }
+} )
+</script>
+</body>
+<style>
+#speckle-header {
+  padding: 0px;
+  box-sizing: border-box;
+  font-family: Roboto, sans-serif;
+}
+
+.warning {
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #262E37;
+  color: white;
+}
+
+.header {
+  padding: 10px 20px;
+  box-sizing: border-box;
+  background-color: #0A66FF;
+font-family: Roboto, sans-serif;
+  color: white;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.25px;
+  line-height: 40px;
+  font-family: Roboto, sans-serif;
+}
+
+.header-text {
+  font-size: small;
+  font-weight: 200;
+  line-height: 40px;
+  font-family: Roboto, sans-serif;
+}
+
+#serverDetails {
+  font-size: small;
+  font-weight: 200;
+}
+
+.logout-button {
+  background-color: #0A66FF;
+  border-radius: 2px;
+  border: 1px solid #FFFFFF;
+  display: inline-block;
+  cursor: pointer;
+  color: #FFFFFF;
+  font-family: Arial;
+  font-size: small;
+  padding: 3px 15px;
+  text-decoration: none;
+  margin-left: 5px;
+  /*text-shadow: 0px 1px 0px #2f6627;*/
+}
+
+.logout-button:hover {
+  background-color: #262E37;
+}
+
+/* GraphiQL One Dark Alt (Dark Mode) theme by Ben Keating[1]
+   * Colors taken from Atom's One Dark theme[2]. Add this file to the end of
+   * your <head> block[3] to override built-in default styling.
+   *
+   * [1]. https://twitter.com/flowpoke
+   * [2]. https://github.com/atom/atom/tree/master/packages/one-dark-ui
+   * [3]. e.g. `.../site-packages/graphene_django/templates/graphene/graphiql.html`
+   */
+
+.CodeMirror {
+  background: #282D34 !important;
+}
+
+.graphiql-container .doc-explorer-contents,
+.graphiql-container .history-contents {
+  background-color: #21262B;
+  border-top: 1px solid #181A1F;
+}
+
+.graphiql-container .toolbar-button {
+  background: #1c2125 !important;
+  box-shadow: none !important;
+  color: #5c626d !important;
+  border: 1px solid #181a1f !important;
+}
+
+.graphiql-container .result-window .CodeMirror-gutters {
+  background: #282D33;
+  border: none !important;
+}
+
+.graphiql-container .resultWrap {
+  border-left: solid 1px #181a1f;
+}
+
+.graphiql-container .variable-editor-title {
+  background: #21262b;
+  border-bottom: 1px solid #181a1f;
+  border-top: 1px solid #181a1f;
+  color: #cacdd3;
+}
+
+.graphiql-container .topBar {
+  background: #21262B;
+  border-color: #181A1F;
+}
+
+.graphiql-container .docExplorerHide {
+  color: #606671;
+}
+
+.graphiql-container .doc-explorer-title,
+.graphiql-container .history-title,
+.doc-explorer-back {
+  color: #CACDD3 !important;
+
+}
+
+.graphiql-container .doc-explorer {
+  background: #21262b;
+}
+
+.graphiql-container .docExplorerWrap,
+.graphiql-container .historyPaneWrap {
+  box-shadow: none;
+}
+
+.graphiql-container .docExplorerShow {
+  border-left: none;
+}
+
+.graphiql-container .docExplorerShow,
+.graphiql-container .historyShow {
+  background: #21262b;
+  border-bottom: 1px solid #181A1E;
+  color: #CACDD3;
+}
+
+.graphiql-container .docExplorerShow:before,
+.graphiql-container .doc-explorer-back:before {
+  border-color: #CACDD3;
+}
+
+.graphiql-container .search-box {
+  margin: auto auto 10px auto;
+  border: none;
+}
+
+.graphiql-container .search-box input {
+  background: #1E2127;
+  padding-left: 28px;
+}
+
+.graphiql-container .search-box .search-box-clear,
+.graphiql-container .search-box .search-box-clear:hover {
+  background: #1d2126;
+}
+
+.graphiql-container .search-box:before {
+  color: #c1c4ca;
+  font-size: 21px;
+  left: 8px;
+}
+
+.graphiql-container,
+.graphiql-container button,
+.graphiql-container input {
+  color: #9299A7;
+}
+
+.CodeMirror-gutters {
+  border: none !important;
+  background-color: #282d33;
+}
+
+.graphiql-container .execute-button {
+  background: #21262b;
+  border: 1px solid rgb(91, 98, 107);
+  box-shadow: none !important;
+  fill: #c9ccd2;
+}
+
+.graphiql-container .history-contents p {
+  border: none;
+}
+
+.graphiql-container .historyPaneWrap {
+  background: #21262b;
+}
+
+.graphiql-container .execute-options>li.selected,
+.graphiql-container .toolbar-menu-items>li.hover,
+.graphiql-container .toolbar-menu-items>li:active,
+.graphiql-container .toolbar-menu-items>li:hover,
+.graphiql-container .toolbar-select-options>li.hover,
+.graphiql-container .toolbar-select-options>li:active,
+.graphiql-container .toolbar-select-options>li:hover,
+.graphiql-container .history-contents>p:hover,
+.graphiql-container .history-contents>p:active {
+  background: #383C41;
+}
+
+.graphiql-container .doc-category-title {
+  border-bottom: 1px solid #181a1f;
+  color: #cacdd3;
+}
+
+.graphiql-container .field-name {
+  color: #9CA3AC;
+}
+
+.graphiql-container .type-name {
+  color: #95be76;
+}
+
+
+.cm-property {
+  color: #A5ACB8;
+}
+
+.cm-string {
+  color: #97BE7B;
+}
+
+.cm-variable {
+  color: #a87f5b;
+}
+
+.cm-attribute {
+  color: #B58860;
+}
+
+.cm-def {
+  color: #CC3932;
+}
+
+.cm-keyword {
+  color: #7cf3ff;
+}
+
+.graphiql-container .keyword {
+  color: #9ea5b0;
+}
+
+.graphiql-container .arg-name {
+  color: #b5875d;
+}
+
+.graphiql-container .doc-category-item {
+  color: #BC6069;
+}
+
+a {
+  color: #7b9ad4;
+}
+
+.CodeMirror-lint-tooltip {
+  background: #1a1e22 !important;
+  color: red;
+}
+
+
+.cm-atom {
+  color: #d27caf;
+}
+
+.CodeMirror-hints {
+  background: #21262a;
+  box-shadow: 0 16px 13px -10px rgba(0, 0, 0, 0.3);
+}
+
+.CodeMirror-hint {
+  border-top: solid 1px #212629;
+  color: #8ab16f;
+}
+
+.CodeMirror-hint-information {
+  border-top: solid 1px #181a1e;
+}
+
+li.CodeMirror-hint-active {
+  background-color: #262c2f;
+  border-top-color: #212629;
+  color: #b8ff87;
+}
+
+.CodeMirror-hint-information .content {
+  color: #a4abb7;
+}
+</style>
+
+</html>

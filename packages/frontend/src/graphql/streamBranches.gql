@@ -1,0 +1,16 @@
+query StreamBranches($id: String!) {
+  stream(id: $id) {
+    id
+    branches {
+      totalCount
+      items{
+        id
+        name
+        description
+        commits {
+          totalCount
+        }
+      }
+    }
+  }
+}

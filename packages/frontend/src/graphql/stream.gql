@@ -1,0 +1,23 @@
+query Stream($id: String!) {
+  stream(id: $id) {
+    id
+    name
+    description
+    isPublic
+    createdAt
+    updatedAt
+    collaborators {
+      id
+      name
+      role
+      company
+      avatar
+    }
+    branches {
+      totalCount
+    }
+    commits {
+      totalCount
+    }
+  }
+}

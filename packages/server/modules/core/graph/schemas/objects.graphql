@@ -1,0 +1,47 @@
+extend type Stream {
+  object( id: String! ): Object
+}
+
+type Object {
+  id: String!
+  speckleType: String
+  applicationId: String
+  createdAt: DateTime
+  totalChildrenCount: Int
+  """
+  The full object, with all its props & other things. **NOTE:** If you're requesting objects for the purpose of recreating & displaying, you probably only want to request this specific field.
+  """
+  data: JSONObject
+  """
+  Get any objects that this object references. In the case of commits, this will give you a commit's constituent objects.
+  **NOTE**: Providing any of the two last arguments ( `query`, `orderBy` ) will trigger a different code branch that executes a much more expensive SQL query. It is not recommended to do so for basic clients that are interested in purely getting all the objects of a given commit.
+  """
+  children(
+    limit: Int! = 100,
+    depth: Int! = 50,
+    select: [String],
+    cursor: String,
+    query: [JSONObject!],
+    orderBy: JSONObject  ): ObjectCollection!
+}
+
+type ObjectCollection {
+  totalCount: Int!
+  cursor: String
+  objects: [Object]!
+}
+
+extend type Mutation {
+  objectCreate( objectInput: ObjectCreateInput! ): [String]!
+}
+
+input ObjectCreateInput {
+  """
+  The stream against which these objects will be created.
+  """
+  streamId: String!
+  """
+  The objects you want to create.
+  """
+  objects: [JSONObject]!
+}
