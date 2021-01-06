@@ -9,6 +9,7 @@ const compression = require( 'compression' )
 const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
+const path = require( 'path' )
 const debug = require( 'debug' )
 
 const Sentry = require( '@sentry/node' )
@@ -112,10 +113,10 @@ exports.startHttp = async ( app ) => {
 
   // Production mode -> serve things statically.
   else {
-    app.use( '/', express.static( `${appRoot}/../packages/frontend/dist` ) )
+    app.use( '/', express.static( path.resolve( `${appRoot}/../frontend/dist` ) ) )
 
     app.all( '*', async ( req, res ) => {
-      res.sendFile( `${appRoot}/../packages/frontend/dist/app.html` )
+      res.sendFile( path.resolve( `${appRoot}/../frontend/dist/app.html` ) )
     } )
   }
 
