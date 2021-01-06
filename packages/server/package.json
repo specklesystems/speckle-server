@@ -53,7 +53,7 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth2": "^0.2.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.5.1",
+    "pg": "^7.18.2",
     "pg-query-stream": "^3.4.2",
     "redis": "^3.0.2",
     "zxcvbn": "^4.4.2"
