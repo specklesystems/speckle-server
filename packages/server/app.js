@@ -113,10 +113,10 @@ exports.startHttp = async ( app ) => {
 
   // Production mode -> serve things statically.
   else {
-    app.use( '/', express.static( path.resolve( `${appRoot}/../packages/frontend/dist` ) ) )
+    app.use( '/', express.static( path.resolve( `${appRoot}/../frontend/dist` ) ) )
 
     app.all( '*', async ( req, res ) => {
-      res.sendFile( path.resolve( `${appRoot}/../packages/frontend/dist/app.html` ) )
+      res.sendFile( path.resolve( `${appRoot}/../frontend/dist/app.html` ) )
     } )
   }
 
