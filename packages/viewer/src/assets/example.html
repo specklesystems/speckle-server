@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+ <html>
+   <head>
+     <meta charset="utf-8" />
+     <title>Speckle Viewer</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <link rel="preconnect" href="https://fonts.gstatic.com">
+      <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" integrity="sha512-EZLkOqwILORob+p0BXZc+Vm3RgJBOe1Iq/0fiI7r/wJgzOFZMlsqTa29UEl6v6U6gsV4uIpsNZoV32YZqrCRCQ==" crossorigin="anonymous" />
+     <style type="text/css">
+      body{
+        font-family: 'Space Mono', monospace !important;
+      }
+      button {
+        font-family: 'Space Mono', monospace !important;
+        border-color: #0A66FF;
+      }
+
+      #renderer{
+        height: 700px;
+        width: 100%;
+        border: 1px dashed;
+        border-color: rgba(100,100,100, 0.1);
+        /*background-color: rgba(100,100,100,0.2);*/
+      }
+    </style>
+   </head>
+   <body>
+    <div class="container">
+      <div class="row" style="padding-top: 20px">
+        <div class="twelve columns">
+          <h2>Speckle Viewer</h2>
+          <p>A quick and dirty example usage of the speckle viewer.</p>
+        </div>
+        <div class="twelve columns">
+          <button onclick="v.sceneManager.zoomExtents()">Zoom Extents</button>
+          <button onclick="v.postprocessing = !v.postprocessing">Postprocessing Toggle</button>
+        </div>
+        <div class="twelve columns">
+          <button onclick="LoadData('cd2d10cafb01a3e76954ae5906d00dfc')">Load Boat</button>
+          <!-- <button onclick="LoadData('f194b566c05c603dce1b3250c4ecf71d')">Load Jet</button> -->
+          <!-- <button onclick="LoadData('431ebaa22946b1bb6f0ae86bf4b2a284')">Load Jet</button> -->
+          <button onclick="LoadData('9a00ad76438d06612968190546552c56')">Load Fuselage</button>
+          <button onclick="LoadData('f4fb19d40a580db6d4fefff2d7e432a4')">Load Strange Thing</button>
+          <button class="u-pull-right" onclick="LoadData()">Load</button>
+          <input id="objectIdInput" type="text" name="objectId" placeholder="Object Id" class="u-pull-right"/>
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">
+          <div id="renderer"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">
+          <button onclick="v.sceneManager.removeAllObjects()">Dispose</button>
+        </div>
+    </div>
+   </body>
+ </html>
