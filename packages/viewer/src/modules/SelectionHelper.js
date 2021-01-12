@@ -2,6 +2,13 @@ import * as THREE from 'three'
 import debounce from 'lodash.debounce'
 import EventEmitter from './EventEmitter'
 
+/**
+ * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
+ * Behaviours:
+ * - Clicking on one object will select it.
+ * - Double clicking on one object will focus on it.
+ * - Double clicking anywhere else will focus the scene.
+ */
 export default class SelectionHelper extends EventEmitter {
 
   constructor( parent ) {
@@ -9,6 +16,7 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
 
+    // Handle clicks during camera moves
     this.orbiting = false
     this.viewer.controls.addEventListener( 'change', debounce( () => { this.orbiting = false }, 100 ) )
     this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
@@ -22,6 +30,7 @@ export default class SelectionHelper extends EventEmitter {
       this.handleSelection( selectionObjects )
     } )
 
+    // TODO: figure out doubleclicks on touch devices
     this.viewer.renderer.domElement.addEventListener( 'dblclick', ( e ) => {
       if ( this.orbiting ) return
 
@@ -80,7 +89,7 @@ export default class SelectionHelper extends EventEmitter {
   getClickedObjects( e ) {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
-    const intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.userObjects.children )
+    const intersectedObjects = this.raycaster.intersectObjects( [ ...this.viewer.sceneManager.solidObjects.children, ... this.viewer.sceneManager.transparentObjects.children ] )
     return intersectedObjects
   }
 

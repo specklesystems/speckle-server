@@ -6,10 +6,11 @@ import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ObjectManager from './ObjectManager'
 import SelectionHelper from './SelectionHelper'
+import SectionPlaneHelper from './SectionPlaneHelper'
 
 export default class Viewer {
 
-  constructor( { container, postprocessing = false } ) {
+  constructor( { container, postprocessing = false, reflections = true } ) {
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()
@@ -23,6 +24,11 @@ export default class Viewer {
     this.renderer.setPixelRatio( window.devicePixelRatio )
     this.renderer.setSize( this.container.offsetWidth, this.container.offsetHeight )
     this.container.appendChild( this.renderer.domElement )
+
+    this.reflections = reflections
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter } )
+    this.cubeCamera = new THREE.CubeCamera( this.camera.near, this.camera.far, cubeRenderTarget )
+    this.scene.add( this.cubeCamera )
 
     this.controls = new OrbitControls( this.camera, this.renderer.domElement )
     this.controls.enableDamping = true // an animation loop is required when either damping or auto-rotation are enabled
@@ -44,6 +50,7 @@ export default class Viewer {
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
 
+    this.sectionPlaneHelper = new SectionPlaneHelper( this )
     this.sceneManager = new ObjectManager( this )
     this.selectionHelper = new SelectionHelper( this )
 
@@ -68,13 +75,13 @@ export default class Viewer {
     this.scene.add( lights[ 1 ] )
     this.scene.add( lights[ 2 ] )
 
-    let sphereSize = 20
-    this.scene.add( new THREE.PointLightHelper( lights[ 0 ] , sphereSize ) )
-    this.scene.add( new THREE.PointLightHelper( lights[ 1 ] , sphereSize ) )
-    this.scene.add( new THREE.PointLightHelper( lights[ 2 ] , sphereSize ) )
+    // let sphereSize = 20
+    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ] , sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ] , sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ] , sphereSize ) )
 
 
-    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.4 )
+    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.3 )
     hemiLight.color.setHSL( 1, 1, 1 )
     hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
     hemiLight.up.set( 0, 0, 1 )
@@ -90,9 +97,13 @@ export default class Viewer {
     const geometry = new THREE.BoxBufferGeometry( 10, 10, 10 )
     const material = new THREE.MeshLambertMaterial( {
       color: 0xD7D7D7,
-      emissive: 0x0
+      emissive: 0x0,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.DoubleSide
     } )
 
+    // random cube seeding (for testing purposes only)
     for ( let i = 0; i < 0; i++ ) {
       const mesh = new THREE.Mesh( geometry, material )
       mesh.position.x = Math.random() * 3
@@ -104,7 +115,6 @@ export default class Viewer {
 
       mesh.scale.setScalar( Math.random() * 0.1 )
       group.add( mesh )
-
     }
   }
 
@@ -124,6 +134,14 @@ export default class Viewer {
   }
 
   render() {
+    // TODO: the reflections map should be updated only when the scene is dirty.
+    if ( this.reflections ) {
+      // Note: this prevents "recurisve" render targets from happening!
+      this.sceneManager.transparentObjects.visible = false
+      this.cubeCamera.update( this.renderer, this.scene )
+      this.sceneManager.transparentObjects.visible = true
+    }
+
     if ( this.postprocessing ){
       this.composer.render( this.scene, this.camera )
     }

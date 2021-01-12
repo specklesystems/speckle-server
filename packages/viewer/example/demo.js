@@ -867,6 +867,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
+/**
+ * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
+ */
 
 var SceneObjectManager = /*#__PURE__*/function () {
   function SceneObjectManager(viewer) {
@@ -875,13 +878,29 @@ var SceneObjectManager = /*#__PURE__*/function () {
     this.viewer = viewer;
     this.scene = viewer.scene;
     this.userObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.solidObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.transparentObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.userObjects.add(this.solidObjects);
+    this.userObjects.add(this.transparentObjects);
     this.scene.add(this.userObjects);
     this.solidMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      color: 0x8D9194,
+      emissive: 0x0,
+      roughness: 1,
+      metalness: 0,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+      clippingPlanes: this.viewer.sectionPlaneHelper.getClippingPlanes()
+    });
+    this.transparentMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       color: 0xA0A4A8,
       emissive: 0x0,
-      roughness: 0.6,
-      metalness: 0.2,
-      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+      roughness: 0.2,
+      metalness: 0.26,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+      transparent: true,
+      opacity: 0.4,
+      envMap: this.viewer.cubeCamera.renderTarget.texture,
+      clippingPlanes: this.viewer.sectionPlaneHelper.getClippingPlanes()
     });
     this.objectIds = [];
     this.zoomExtentsDebounce = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
@@ -890,11 +909,63 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }
 
   _createClass(SceneObjectManager, [{
+    key: "_argbToRGB",
+    value: function _argbToRGB(argb) {
+      return '#' + ('000000' + (argb & 0xFFFFFF).toString(16)).slice(-6);
+    }
+  }, {
+    key: "_normaliseColor",
+    value: function _normaliseColor(color) {
+      var hsl = {};
+      color.getHSL(hsl);
+
+      if (hsl.s + hsl.l > 1) {
+        while (hsl.s + hsl.l > 1) {
+          hsl.s -= 0.05;
+          hsl.l -= 0.05;
+        }
+      }
+
+      if (hsl.l > 0.68) {
+        hsl.l = 0.68;
+      }
+
+      color.setHSL(hsl.h, hsl.s, hsl.l);
+    } // Note: we might switch later down the line from cloning materials to solely
+    // using a few "default" ones and controlling color through vertex colors.
+    // For now a small compromise to speed up dev; it is not the most memory
+    // efficient approach.
+
+  }, {
     key: "addObject",
     value: function addObject(wrapper) {
       switch (wrapper.geometryType) {
         case 'solid':
-          this.addSolid(wrapper);
+          // Do we have a defined material?
+          if (wrapper.meta.renderMaterial) {
+            var renderMat = wrapper.meta.renderMaterial;
+            var color = new three__WEBPACK_IMPORTED_MODULE_0__.Color(this._argbToRGB(renderMat.diffuse));
+
+            this._normaliseColor(color); // Is it a transparent material?
+
+
+            if (renderMat.opacity !== 1) {
+              var material = this.transparentMaterial.clone();
+              material.clippingPlanes = this.viewer.sectionPlaneHelper.getClippingPlanes();
+              material.color = color;
+              this.addTransparentSolid(wrapper, material); // It's not a transparent material!
+            } else {
+              var _material = this.solidMaterial.clone();
+
+              _material.clippingPlanes = this.viewer.sectionPlaneHelper.getClippingPlanes();
+              _material.color = color;
+              this.addSolid(wrapper, _material);
+            }
+          } else {
+            // If we don't have defined material, just use the default
+            this.addSolid(wrapper);
+          }
+
           break;
 
         case 'line':
@@ -907,6 +978,32 @@ var SceneObjectManager = /*#__PURE__*/function () {
       }
 
       this.zoomExtentsDebounce();
+    }
+  }, {
+    key: "addSolid",
+    value: function addSolid(wrapper, material) {
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(wrapper.bufferGeometry, material ? material : this.solidMaterial);
+      mesh.userData = wrapper.meta;
+      mesh.uuid = wrapper.meta.id;
+      this.objectIds.push(mesh.uuid);
+      this.solidObjects.add(mesh);
+    }
+  }, {
+    key: "addTransparentSolid",
+    value: function addTransparentSolid(wrapper, material) {
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(wrapper.bufferGeometry, material ? material : this.transparentMaterial);
+      mesh.userData = wrapper.meta;
+      mesh.uuid = wrapper.meta.id;
+      this.objectIds.push(mesh.uuid);
+      this.transparentObjects.add(mesh);
+    }
+  }, {
+    key: "addLine",
+    value: function addLine(wrapper) {// TODO
+    }
+  }, {
+    key: "addPoint",
+    value: function addPoint(wrapper) {// TODO
     }
   }, {
     key: "removeObject",
@@ -923,13 +1020,14 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "removeAllObjects",
     value: function removeAllObjects() {
-      for (var obj of this.userObjects.children) {
+      for (var obj of [...this.solidObjects.children, ...this.transparentObjects.children]) {
         if (obj.geometry) {
           obj.geometry.dispose();
         }
       }
 
-      this.userObjects.clear();
+      this.solidObjects.clear();
+      this.transparentObjects.clear();
       this.objectIds = [];
     }
   }, {
@@ -966,34 +1064,6 @@ var SceneObjectManager = /*#__PURE__*/function () {
       this.viewer.camera.position.copy(this.viewer.controls.target).sub(direction);
       this.viewer.controls.update();
     }
-  }, {
-    key: "addSolid",
-    value: function addSolid(wrapper) {
-      // TODO: check on wrapper.meta.material and switch to either
-      // - shiny solid
-      // - transparent solid
-      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(wrapper.bufferGeometry, this.solidMaterial);
-      mesh.userData = wrapper.meta;
-      mesh.uuid = wrapper.meta.id;
-      this.objectIds.push(mesh.uuid);
-      this.userObjects.add(mesh);
-    }
-  }, {
-    key: "addShinySolid",
-    value: function addShinySolid(wrapper) {// TODO
-    }
-  }, {
-    key: "addTransparentSolid",
-    value: function addTransparentSolid(wrapper) {// TODO
-    }
-  }, {
-    key: "addLine",
-    value: function addLine(wrapper) {// TODO
-    }
-  }, {
-    key: "addPoint",
-    value: function addPoint(wrapper) {// TODO
-    }
   }]);
 
   return SceneObjectManager;
@@ -1028,6 +1098,128 @@ var ObjectWrapper = function ObjectWrapper(bufferGeometry, meta, geometryType) {
   this.meta = meta;
   this.geometryType = geometryType || 'solid';
 };
+
+
+
+/***/ }),
+
+/***/ "./src/modules/SectionPlaneHelper.js":
+/*!*******************************************!*\
+  !*** ./src/modules/SectionPlaneHelper.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ SectionPlaneHelper
+/* harmony export */ });
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/TransformControls.js */ "./node_modules/three/examples/jsm/controls/TransformControls.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
+/**
+ * WIP: A utility class
+ */
+
+var SectionPlaneHelper = /*#__PURE__*/function () {
+  function SectionPlaneHelper(parent) {
+    _classCallCheck(this, SectionPlaneHelper);
+
+    this.viewer = parent;
+
+    this._createCutter();
+  }
+
+  _createClass(SectionPlaneHelper, [{
+    key: "getClippingPlanes",
+    value: function getClippingPlanes() {
+      return [this.xyPlane];
+    }
+  }, {
+    key: "toggleControls",
+    value: function toggleControls() {
+      if (this.xyControl.mode === 'rotate') return this.xyControl.setMode('translate');
+      this.xyControl.setMode('rotate');
+    }
+  }, {
+    key: "_createCutter",
+    value: function _createCutter() {
+      this.xyVisible = false;
+      this.xyPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1);
+      var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1, 1);
+      this.xyHelper = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
+        color: 0xAFAFAF,
+        transparent: true,
+        opacity: 0.1,
+        side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+      }));
+      this.xyHelper.visible = false;
+      this.viewer.scene.add(this.xyHelper);
+      this.xyControl = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
+      this.xyControl.setSize(0.6);
+      this.xyControl.space = 'local';
+      this.xyControl.addEventListener('change', () => this.viewer.render);
+      this.xyControl.addEventListener('dragging-changed', event => {
+        if (!this.xyVisible) return;
+        this.viewer.controls.enabled = !event.value; // Reference: https://stackoverflow.com/a/52124409
+
+        var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        normal.set(0, 0, -1).applyQuaternion(this.xyHelper.quaternion);
+        point.copy(this.xyHelper.position);
+        this.xyPlane.setFromNormalAndCoplanarPoint(normal, point);
+      });
+      this.xyControl.attach(this.xyHelper);
+      this.xyControl.visible = false;
+      this.viewer.scene.add(this.xyControl);
+    }
+  }, {
+    key: "toggleCutter",
+    value: function toggleCutter() {
+      if (this.xyVisible) this.hideCutter();else this.showCutter();
+    }
+  }, {
+    key: "showCutter",
+    value: function showCutter() {
+      if (this.xyVisible) return; // Scales and translate helper to scene bbox center and origin
+
+      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
+      var sceneSize = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      sceneBox.getSize(sceneSize);
+      var sceneCenter = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      sceneBox.getCenter(sceneCenter);
+      this.xyHelper.scale.set(sceneSize.x, sceneSize.y, sceneSize.z);
+      this.xyHelper.position.set(sceneCenter.x, sceneCenter.y, sceneCenter.z);
+      var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      normal.set(0, 0, -1).applyQuaternion(this.xyHelper.quaternion);
+      point.copy(this.xyHelper.position);
+      this.xyPlane.setFromNormalAndCoplanarPoint(normal, point);
+      this.xyVisible = true;
+      this.xyHelper.visible = true;
+      this.xyControl.visible = true;
+      this.viewer.renderer.localClippingEnabled = true;
+    }
+  }, {
+    key: "hideCutter",
+    value: function hideCutter() {
+      if (!this.xyVisible) return;
+      this.xyVisible = false;
+      this.xyHelper.visible = false;
+      this.xyControl.visible = false;
+      this.viewer.renderer.localClippingEnabled = false;
+    }
+  }]);
+
+  return SectionPlaneHelper;
+}();
 
 
 
@@ -1071,6 +1263,13 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 
 
+/**
+ * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
+ * Behaviours:
+ * - Clicking on one object will select it.
+ * - Double clicking on one object will focus on it.
+ * - Double clicking anywhere else will focus the scene.
+ */
 
 var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
   _inherits(SelectionHelper, _EventEmitter);
@@ -1084,7 +1283,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
     _this = _super.call(this);
     _this.viewer = parent;
-    _this.raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
+    _this.raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster(); // Handle clicks during camera moves
+
     _this.orbiting = false;
 
     _this.viewer.controls.addEventListener('change', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
@@ -1106,7 +1306,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var selectionObjects = _this.getClickedObjects(e);
 
       _this.handleSelection(selectionObjects);
-    });
+    }); // TODO: figure out doubleclicks on touch devices
+
 
     _this.viewer.renderer.domElement.addEventListener('dblclick', e => {
       if (_this.orbiting) return;
@@ -1179,7 +1380,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var normalizedPosition = this._getNormalisedClickPosition(e);
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
-      var intersectedObjects = this.raycaster.intersectObjects(this.viewer.sceneManager.userObjects.children);
+      var intersectedObjects = this.raycaster.intersectObjects([...this.viewer.sceneManager.solidObjects.children, ...this.viewer.sceneManager.transparentObjects.children]);
       return intersectedObjects;
     }
   }, {
@@ -1503,6 +1704,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/libs/stats.module.js */ "./node_modules/three/examples/jsm/libs/stats.module.js");
 /* harmony import */ var _ObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ObjectManager */ "./src/modules/ObjectManager.js");
 /* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
+/* harmony import */ var _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./SectionPlaneHelper */ "./src/modules/SectionPlaneHelper.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1517,11 +1719,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
+
 var Viewer = /*#__PURE__*/function () {
   function Viewer(_ref) {
     var {
       container,
-      postprocessing = false
+      postprocessing = false,
+      reflections = true
     } = _ref;
 
     _classCallCheck(this, Viewer);
@@ -1540,6 +1744,14 @@ var Viewer = /*#__PURE__*/function () {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
     this.container.appendChild(this.renderer.domElement);
+    this.reflections = reflections;
+    var cubeRenderTarget = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLCubeRenderTarget(256, {
+      format: three__WEBPACK_IMPORTED_MODULE_0__.RGBFormat,
+      generateMipmaps: true,
+      minFilter: three__WEBPACK_IMPORTED_MODULE_0__.LinearMipmapLinearFilter
+    });
+    this.cubeCamera = new three__WEBPACK_IMPORTED_MODULE_0__.CubeCamera(this.camera.near, this.camera.far, cubeRenderTarget);
+    this.scene.add(this.cubeCamera);
     this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
 
@@ -1556,6 +1768,7 @@ var Viewer = /*#__PURE__*/function () {
     this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
     this.container.appendChild(this.stats.dom);
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
+    this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(this);
     this.sceneManager = new _ObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(this);
     this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(this);
     this.initScene();
@@ -1576,12 +1789,12 @@ var Viewer = /*#__PURE__*/function () {
       lights[2].position.set(-100, -200, -100);
       this.scene.add(lights[0]);
       this.scene.add(lights[1]);
-      this.scene.add(lights[2]);
-      var sphereSize = 20;
-      this.scene.add(new three__WEBPACK_IMPORTED_MODULE_0__.PointLightHelper(lights[0], sphereSize));
-      this.scene.add(new three__WEBPACK_IMPORTED_MODULE_0__.PointLightHelper(lights[1], sphereSize));
-      this.scene.add(new three__WEBPACK_IMPORTED_MODULE_0__.PointLightHelper(lights[2], sphereSize));
-      var hemiLight = new three__WEBPACK_IMPORTED_MODULE_0__.HemisphereLight(0xffffff, 0x0, 0.4);
+      this.scene.add(lights[2]); // let sphereSize = 20
+      // this.scene.add( new THREE.PointLightHelper( lights[ 0 ] , sphereSize ) )
+      // this.scene.add( new THREE.PointLightHelper( lights[ 1 ] , sphereSize ) )
+      // this.scene.add( new THREE.PointLightHelper( lights[ 2 ] , sphereSize ) )
+
+      var hemiLight = new three__WEBPACK_IMPORTED_MODULE_0__.HemisphereLight(0xffffff, 0x0, 0.3);
       hemiLight.color.setHSL(1, 1, 1);
       hemiLight.groundColor.setHSL(0.095, 1, 0.75);
       hemiLight.up.set(0, 0, 1); // hemiLight.position.set( 0, 50, 0 )
@@ -1594,8 +1807,11 @@ var Viewer = /*#__PURE__*/function () {
       var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry(10, 10, 10);
       var material = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
         color: 0xD7D7D7,
-        emissive: 0x0
-      });
+        emissive: 0x0,
+        transparent: true,
+        opacity: 0.2,
+        side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+      }); // random cube seeding (for testing purposes only)
 
       for (var i = 0; i < 0; i++) {
         var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, material);
@@ -1629,6 +1845,14 @@ var Viewer = /*#__PURE__*/function () {
   }, {
     key: "render",
     value: function render() {
+      // TODO: the reflections map should be updated only when the scene is dirty.
+      if (this.reflections) {
+        // Note: this prevents "recurisve" render targets from happening!
+        this.sceneManager.transparentObjects.visible = false;
+        this.cubeCamera.update(this.renderer, this.scene);
+        this.sceneManager.transparentObjects.visible = true;
+      }
+
       if (this.postprocessing) {
         this.composer.render(this.scene, this.camera);
       } else {
@@ -63078,6 +63302,1691 @@ var MapControls = function ( object, domElement ) {
 
 MapControls.prototype = Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.EventDispatcher.prototype );
 MapControls.prototype.constructor = MapControls;
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/three/examples/jsm/controls/TransformControls.js":
+/*!***********************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/controls/TransformControls.js ***!
+  \***********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "TransformControls": () => /* binding */ TransformControls,
+/* harmony export */   "TransformControlsGizmo": () => /* binding */ TransformControlsGizmo,
+/* harmony export */   "TransformControlsPlane": () => /* binding */ TransformControlsPlane
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
+
+
+var TransformControls = function ( camera, domElement ) {
+
+	if ( domElement === undefined ) {
+
+		console.warn( 'THREE.TransformControls: The second parameter "domElement" is now mandatory.' );
+		domElement = document;
+
+	}
+
+	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.call( this );
+
+	this.visible = false;
+	this.domElement = domElement;
+
+	var _gizmo = new TransformControlsGizmo();
+	this.add( _gizmo );
+
+	var _plane = new TransformControlsPlane();
+	this.add( _plane );
+
+	var scope = this;
+
+	// Define properties with getters/setter
+	// Setting the defined property will automatically trigger change event
+	// Defined properties are passed down to gizmo and plane
+
+	defineProperty( 'camera', camera );
+	defineProperty( 'object', undefined );
+	defineProperty( 'enabled', true );
+	defineProperty( 'axis', null );
+	defineProperty( 'mode', 'translate' );
+	defineProperty( 'translationSnap', null );
+	defineProperty( 'rotationSnap', null );
+	defineProperty( 'scaleSnap', null );
+	defineProperty( 'space', 'world' );
+	defineProperty( 'size', 1 );
+	defineProperty( 'dragging', false );
+	defineProperty( 'showX', true );
+	defineProperty( 'showY', true );
+	defineProperty( 'showZ', true );
+
+	var changeEvent = { type: 'change' };
+	var mouseDownEvent = { type: 'mouseDown' };
+	var mouseUpEvent = { type: 'mouseUp', mode: scope.mode };
+	var objectChangeEvent = { type: 'objectChange' };
+
+	// Reusable utility variables
+
+	var raycaster = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
+
+	function intersectObjectWithRay( object, raycaster, includeInvisible ) {
+
+		var allIntersections = raycaster.intersectObject( object, true );
+
+		for ( var i = 0; i < allIntersections.length; i ++ ) {
+
+			if ( allIntersections[ i ].object.visible || includeInvisible ) {
+
+				return allIntersections[ i ];
+
+			}
+
+		}
+
+		return false;
+
+	}
+
+	var _tempVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var _tempVector2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var _tempQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var _unit = {
+		X: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 ),
+		Y: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 ),
+		Z: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 )
+	};
+
+	var pointStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var pointEnd = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var offset = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var rotationAxis = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var startNorm = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var endNorm = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var rotationAngle = 0;
+
+	var cameraPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var cameraQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var cameraScale = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var parentPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var parentQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var parentQuaternionInv = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var parentScale = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var worldPositionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var worldQuaternionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var worldScaleStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var worldPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var worldQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var worldQuaternionInv = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var worldScale = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var eye = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var positionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var quaternionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var scaleStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	// TODO: remove properties unused in plane and gizmo
+
+	defineProperty( 'worldPosition', worldPosition );
+	defineProperty( 'worldPositionStart', worldPositionStart );
+	defineProperty( 'worldQuaternion', worldQuaternion );
+	defineProperty( 'worldQuaternionStart', worldQuaternionStart );
+	defineProperty( 'cameraPosition', cameraPosition );
+	defineProperty( 'cameraQuaternion', cameraQuaternion );
+	defineProperty( 'pointStart', pointStart );
+	defineProperty( 'pointEnd', pointEnd );
+	defineProperty( 'rotationAxis', rotationAxis );
+	defineProperty( 'rotationAngle', rotationAngle );
+	defineProperty( 'eye', eye );
+
+	{
+
+		domElement.addEventListener( 'pointerdown', onPointerDown, false );
+		domElement.addEventListener( 'pointermove', onPointerHover, false );
+		scope.domElement.ownerDocument.addEventListener( 'pointerup', onPointerUp, false );
+
+	}
+
+	this.dispose = function () {
+
+		domElement.removeEventListener( 'pointerdown', onPointerDown );
+		domElement.removeEventListener( 'pointermove', onPointerHover );
+		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove );
+		scope.domElement.ownerDocument.removeEventListener( 'pointerup', onPointerUp );
+
+		this.traverse( function ( child ) {
+
+			if ( child.geometry ) child.geometry.dispose();
+			if ( child.material ) child.material.dispose();
+
+		} );
+
+	};
+
+	// Set current object
+	this.attach = function ( object ) {
+
+		this.object = object;
+		this.visible = true;
+
+		return this;
+
+	};
+
+	// Detatch from object
+	this.detach = function () {
+
+		this.object = undefined;
+		this.visible = false;
+		this.axis = null;
+
+		return this;
+
+	};
+
+	// Defined getter, setter and store for a property
+	function defineProperty( propName, defaultValue ) {
+
+		var propValue = defaultValue;
+
+		Object.defineProperty( scope, propName, {
+
+			get: function () {
+
+				return propValue !== undefined ? propValue : defaultValue;
+
+			},
+
+			set: function ( value ) {
+
+				if ( propValue !== value ) {
+
+					propValue = value;
+					_plane[ propName ] = value;
+					_gizmo[ propName ] = value;
+
+					scope.dispatchEvent( { type: propName + '-changed', value: value } );
+					scope.dispatchEvent( changeEvent );
+
+				}
+
+			}
+
+		} );
+
+		scope[ propName ] = defaultValue;
+		_plane[ propName ] = defaultValue;
+		_gizmo[ propName ] = defaultValue;
+
+	}
+
+	// updateMatrixWorld  updates key transformation variables
+	this.updateMatrixWorld = function () {
+
+		if ( this.object !== undefined ) {
+
+			this.object.updateMatrixWorld();
+
+			if ( this.object.parent === null ) {
+
+				console.error( 'TransformControls: The attached 3D object must be a part of the scene graph.' );
+
+			} else {
+
+				this.object.parent.matrixWorld.decompose( parentPosition, parentQuaternion, parentScale );
+
+			}
+
+			this.object.matrixWorld.decompose( worldPosition, worldQuaternion, worldScale );
+
+			parentQuaternionInv.copy( parentQuaternion ).invert();
+			worldQuaternionInv.copy( worldQuaternion ).invert();
+
+		}
+
+		this.camera.updateMatrixWorld();
+		this.camera.matrixWorld.decompose( cameraPosition, cameraQuaternion, cameraScale );
+
+		eye.copy( cameraPosition ).sub( worldPosition ).normalize();
+
+		_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call( this );
+
+	};
+
+	this.pointerHover = function ( pointer ) {
+
+		if ( this.object === undefined || this.dragging === true ) return;
+
+		raycaster.setFromCamera( pointer, this.camera );
+
+		var intersect = intersectObjectWithRay( _gizmo.picker[ this.mode ], raycaster );
+
+		if ( intersect ) {
+
+			this.axis = intersect.object.name;
+
+		} else {
+
+			this.axis = null;
+
+		}
+
+	};
+
+	this.pointerDown = function ( pointer ) {
+
+		if ( this.object === undefined || this.dragging === true || pointer.button !== 0 ) return;
+
+		if ( this.axis !== null ) {
+
+			raycaster.setFromCamera( pointer, this.camera );
+
+			var planeIntersect = intersectObjectWithRay( _plane, raycaster, true );
+
+			if ( planeIntersect ) {
+
+				var space = this.space;
+
+				if ( this.mode === 'scale' ) {
+
+					space = 'local';
+
+				} else if ( this.axis === 'E' || this.axis === 'XYZE' || this.axis === 'XYZ' ) {
+
+					space = 'world';
+
+				}
+
+				if ( space === 'local' && this.mode === 'rotate' ) {
+
+					var snap = this.rotationSnap;
+
+					if ( this.axis === 'X' && snap ) this.object.rotation.x = Math.round( this.object.rotation.x / snap ) * snap;
+					if ( this.axis === 'Y' && snap ) this.object.rotation.y = Math.round( this.object.rotation.y / snap ) * snap;
+					if ( this.axis === 'Z' && snap ) this.object.rotation.z = Math.round( this.object.rotation.z / snap ) * snap;
+
+				}
+
+				this.object.updateMatrixWorld();
+				this.object.parent.updateMatrixWorld();
+
+				positionStart.copy( this.object.position );
+				quaternionStart.copy( this.object.quaternion );
+				scaleStart.copy( this.object.scale );
+
+				this.object.matrixWorld.decompose( worldPositionStart, worldQuaternionStart, worldScaleStart );
+
+				pointStart.copy( planeIntersect.point ).sub( worldPositionStart );
+
+			}
+
+			this.dragging = true;
+			mouseDownEvent.mode = this.mode;
+			this.dispatchEvent( mouseDownEvent );
+
+		}
+
+	};
+
+	this.pointerMove = function ( pointer ) {
+
+		var axis = this.axis;
+		var mode = this.mode;
+		var object = this.object;
+		var space = this.space;
+
+		if ( mode === 'scale' ) {
+
+			space = 'local';
+
+		} else if ( axis === 'E' || axis === 'XYZE' || axis === 'XYZ' ) {
+
+			space = 'world';
+
+		}
+
+		if ( object === undefined || axis === null || this.dragging === false || pointer.button !== - 1 ) return;
+
+		raycaster.setFromCamera( pointer, this.camera );
+
+		var planeIntersect = intersectObjectWithRay( _plane, raycaster, true );
+
+		if ( ! planeIntersect ) return;
+
+		pointEnd.copy( planeIntersect.point ).sub( worldPositionStart );
+
+		if ( mode === 'translate' ) {
+
+			// Apply translate
+
+			offset.copy( pointEnd ).sub( pointStart );
+
+			if ( space === 'local' && axis !== 'XYZ' ) {
+
+				offset.applyQuaternion( worldQuaternionInv );
+
+			}
+
+			if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0;
+			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;
+			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;
+
+			if ( space === 'local' && axis !== 'XYZ' ) {
+
+				offset.applyQuaternion( quaternionStart ).divide( parentScale );
+
+			} else {
+
+				offset.applyQuaternion( parentQuaternionInv ).divide( parentScale );
+
+			}
+
+			object.position.copy( offset ).add( positionStart );
+
+			// Apply translation snap
+
+			if ( this.translationSnap ) {
+
+				if ( space === 'local' ) {
+
+					object.position.applyQuaternion( _tempQuaternion.copy( quaternionStart ).invert() );
+
+					if ( axis.search( 'X' ) !== - 1 ) {
+
+						object.position.x = Math.round( object.position.x / this.translationSnap ) * this.translationSnap;
+
+					}
+
+					if ( axis.search( 'Y' ) !== - 1 ) {
+
+						object.position.y = Math.round( object.position.y / this.translationSnap ) * this.translationSnap;
+
+					}
+
+					if ( axis.search( 'Z' ) !== - 1 ) {
+
+						object.position.z = Math.round( object.position.z / this.translationSnap ) * this.translationSnap;
+
+					}
+
+					object.position.applyQuaternion( quaternionStart );
+
+				}
+
+				if ( space === 'world' ) {
+
+					if ( object.parent ) {
+
+						object.position.add( _tempVector.setFromMatrixPosition( object.parent.matrixWorld ) );
+
+					}
+
+					if ( axis.search( 'X' ) !== - 1 ) {
+
+						object.position.x = Math.round( object.position.x / this.translationSnap ) * this.translationSnap;
+
+					}
+
+					if ( axis.search( 'Y' ) !== - 1 ) {
+
+						object.position.y = Math.round( object.position.y / this.translationSnap ) * this.translationSnap;
+
+					}
+
+					if ( axis.search( 'Z' ) !== - 1 ) {
+
+						object.position.z = Math.round( object.position.z / this.translationSnap ) * this.translationSnap;
+
+					}
+
+					if ( object.parent ) {
+
+						object.position.sub( _tempVector.setFromMatrixPosition( object.parent.matrixWorld ) );
+
+					}
+
+				}
+
+			}
+
+		} else if ( mode === 'scale' ) {
+
+			if ( axis.search( 'XYZ' ) !== - 1 ) {
+
+				var d = pointEnd.length() / pointStart.length();
+
+				if ( pointEnd.dot( pointStart ) < 0 ) d *= - 1;
+
+				_tempVector2.set( d, d, d );
+
+			} else {
+
+				_tempVector.copy( pointStart );
+				_tempVector2.copy( pointEnd );
+
+				_tempVector.applyQuaternion( worldQuaternionInv );
+				_tempVector2.applyQuaternion( worldQuaternionInv );
+
+				_tempVector2.divide( _tempVector );
+
+				if ( axis.search( 'X' ) === - 1 ) {
+
+					_tempVector2.x = 1;
+
+				}
+
+				if ( axis.search( 'Y' ) === - 1 ) {
+
+					_tempVector2.y = 1;
+
+				}
+
+				if ( axis.search( 'Z' ) === - 1 ) {
+
+					_tempVector2.z = 1;
+
+				}
+
+			}
+
+			// Apply scale
+
+			object.scale.copy( scaleStart ).multiply( _tempVector2 );
+
+			if ( this.scaleSnap ) {
+
+				if ( axis.search( 'X' ) !== - 1 ) {
+
+					object.scale.x = Math.round( object.scale.x / this.scaleSnap ) * this.scaleSnap || this.scaleSnap;
+
+				}
+
+				if ( axis.search( 'Y' ) !== - 1 ) {
+
+					object.scale.y = Math.round( object.scale.y / this.scaleSnap ) * this.scaleSnap || this.scaleSnap;
+
+				}
+
+				if ( axis.search( 'Z' ) !== - 1 ) {
+
+					object.scale.z = Math.round( object.scale.z / this.scaleSnap ) * this.scaleSnap || this.scaleSnap;
+
+				}
+
+			}
+
+		} else if ( mode === 'rotate' ) {
+
+			offset.copy( pointEnd ).sub( pointStart );
+
+			var ROTATION_SPEED = 20 / worldPosition.distanceTo( _tempVector.setFromMatrixPosition( this.camera.matrixWorld ) );
+
+			if ( axis === 'E' ) {
+
+				rotationAxis.copy( eye );
+				rotationAngle = pointEnd.angleTo( pointStart );
+
+				startNorm.copy( pointStart ).normalize();
+				endNorm.copy( pointEnd ).normalize();
+
+				rotationAngle *= ( endNorm.cross( startNorm ).dot( eye ) < 0 ? 1 : - 1 );
+
+			} else if ( axis === 'XYZE' ) {
+
+				rotationAxis.copy( offset ).cross( eye ).normalize();
+				rotationAngle = offset.dot( _tempVector.copy( rotationAxis ).cross( this.eye ) ) * ROTATION_SPEED;
+
+			} else if ( axis === 'X' || axis === 'Y' || axis === 'Z' ) {
+
+				rotationAxis.copy( _unit[ axis ] );
+
+				_tempVector.copy( _unit[ axis ] );
+
+				if ( space === 'local' ) {
+
+					_tempVector.applyQuaternion( worldQuaternion );
+
+				}
+
+				rotationAngle = offset.dot( _tempVector.cross( eye ).normalize() ) * ROTATION_SPEED;
+
+			}
+
+			// Apply rotation snap
+
+			if ( this.rotationSnap ) rotationAngle = Math.round( rotationAngle / this.rotationSnap ) * this.rotationSnap;
+
+			this.rotationAngle = rotationAngle;
+
+			// Apply rotate
+			if ( space === 'local' && axis !== 'E' && axis !== 'XYZE' ) {
+
+				object.quaternion.copy( quaternionStart );
+				object.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, rotationAngle ) ).normalize();
+
+			} else {
+
+				rotationAxis.applyQuaternion( parentQuaternionInv );
+				object.quaternion.copy( _tempQuaternion.setFromAxisAngle( rotationAxis, rotationAngle ) );
+				object.quaternion.multiply( quaternionStart ).normalize();
+
+			}
+
+		}
+
+		this.dispatchEvent( changeEvent );
+		this.dispatchEvent( objectChangeEvent );
+
+	};
+
+	this.pointerUp = function ( pointer ) {
+
+		if ( pointer.button !== 0 ) return;
+
+		if ( this.dragging && ( this.axis !== null ) ) {
+
+			mouseUpEvent.mode = this.mode;
+			this.dispatchEvent( mouseUpEvent );
+
+		}
+
+		this.dragging = false;
+		this.axis = null;
+
+	};
+
+	// normalize mouse / touch pointer and remap {x,y} to view space.
+
+	function getPointer( event ) {
+
+		if ( scope.domElement.ownerDocument.pointerLockElement ) {
+
+			return {
+				x: 0,
+				y: 0,
+				button: event.button
+			};
+
+		} else {
+
+			var pointer = event.changedTouches ? event.changedTouches[ 0 ] : event;
+
+			var rect = domElement.getBoundingClientRect();
+
+			return {
+				x: ( pointer.clientX - rect.left ) / rect.width * 2 - 1,
+				y: - ( pointer.clientY - rect.top ) / rect.height * 2 + 1,
+				button: event.button
+			};
+
+		}
+
+	}
+
+	// mouse / touch event handlers
+
+	function onPointerHover( event ) {
+
+		if ( ! scope.enabled ) return;
+
+		switch ( event.pointerType ) {
+
+			case 'mouse':
+			case 'pen':
+				scope.pointerHover( getPointer( event ) );
+				break;
+
+		}
+
+	}
+
+	function onPointerDown( event ) {
+
+		if ( ! scope.enabled ) return;
+
+		scope.domElement.style.touchAction = 'none'; // disable touch scroll
+		scope.domElement.ownerDocument.addEventListener( 'pointermove', onPointerMove, false );
+
+		scope.pointerHover( getPointer( event ) );
+		scope.pointerDown( getPointer( event ) );
+
+	}
+
+	function onPointerMove( event ) {
+
+		if ( ! scope.enabled ) return;
+
+		scope.pointerMove( getPointer( event ) );
+
+	}
+
+	function onPointerUp( event ) {
+
+		if ( ! scope.enabled ) return;
+
+		scope.domElement.style.touchAction = '';
+		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove, false );
+
+		scope.pointerUp( getPointer( event ) );
+
+	}
+
+	// TODO: deprecate
+
+	this.getMode = function () {
+
+		return scope.mode;
+
+	};
+
+	this.setMode = function ( mode ) {
+
+		scope.mode = mode;
+
+	};
+
+	this.setTranslationSnap = function ( translationSnap ) {
+
+		scope.translationSnap = translationSnap;
+
+	};
+
+	this.setRotationSnap = function ( rotationSnap ) {
+
+		scope.rotationSnap = rotationSnap;
+
+	};
+
+	this.setScaleSnap = function ( scaleSnap ) {
+
+		scope.scaleSnap = scaleSnap;
+
+	};
+
+	this.setSize = function ( size ) {
+
+		scope.size = size;
+
+	};
+
+	this.setSpace = function ( space ) {
+
+		scope.space = space;
+
+	};
+
+	this.update = function () {
+
+		console.warn( 'THREE.TransformControls: update function has no more functionality and therefore has been deprecated.' );
+
+	};
+
+};
+
+TransformControls.prototype = Object.assign( Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype ), {
+
+	constructor: TransformControls,
+
+	isTransformControls: true
+
+} );
+
+
+var TransformControlsGizmo = function () {
+
+	'use strict';
+
+	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.call( this );
+
+	this.type = 'TransformControlsGizmo';
+
+	// shared materials
+
+	var gizmoMaterial = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial( {
+		depthTest: false,
+		depthWrite: false,
+		transparent: true,
+		side: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+		fog: false,
+		toneMapped: false
+	} );
+
+	var gizmoLineMaterial = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial( {
+		depthTest: false,
+		depthWrite: false,
+		transparent: true,
+		linewidth: 1,
+		fog: false,
+		toneMapped: false
+	} );
+
+	// Make unique material for each axis/color
+
+	var matInvisible = gizmoMaterial.clone();
+	matInvisible.opacity = 0.15;
+
+	var matHelper = gizmoMaterial.clone();
+	matHelper.opacity = 0.33;
+
+	var matRed = gizmoMaterial.clone();
+	matRed.color.set( 0xff0000 );
+
+	var matGreen = gizmoMaterial.clone();
+	matGreen.color.set( 0x00ff00 );
+
+	var matBlue = gizmoMaterial.clone();
+	matBlue.color.set( 0x0000ff );
+
+	var matWhiteTransparent = gizmoMaterial.clone();
+	matWhiteTransparent.opacity = 0.25;
+
+	var matYellowTransparent = matWhiteTransparent.clone();
+	matYellowTransparent.color.set( 0xffff00 );
+
+	var matCyanTransparent = matWhiteTransparent.clone();
+	matCyanTransparent.color.set( 0x00ffff );
+
+	var matMagentaTransparent = matWhiteTransparent.clone();
+	matMagentaTransparent.color.set( 0xff00ff );
+
+	var matYellow = gizmoMaterial.clone();
+	matYellow.color.set( 0xffff00 );
+
+	var matLineRed = gizmoLineMaterial.clone();
+	matLineRed.color.set( 0xff0000 );
+
+	var matLineGreen = gizmoLineMaterial.clone();
+	matLineGreen.color.set( 0x00ff00 );
+
+	var matLineBlue = gizmoLineMaterial.clone();
+	matLineBlue.color.set( 0x0000ff );
+
+	var matLineCyan = gizmoLineMaterial.clone();
+	matLineCyan.color.set( 0x00ffff );
+
+	var matLineMagenta = gizmoLineMaterial.clone();
+	matLineMagenta.color.set( 0xff00ff );
+
+	var matLineYellow = gizmoLineMaterial.clone();
+	matLineYellow.color.set( 0xffff00 );
+
+	var matLineGray = gizmoLineMaterial.clone();
+	matLineGray.color.set( 0x787878 );
+
+	var matLineYellowTransparent = matLineYellow.clone();
+	matLineYellowTransparent.opacity = 0.25;
+
+	// reusable geometry
+
+	var arrowGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0, 0.05, 0.2, 12, 1, false );
+
+	var scaleHandleGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 );
+
+	var lineGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+	lineGeometry.setAttribute( 'position', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( [ 0, 0, 0,	1, 0, 0 ], 3 ) );
+
+	var CircleGeometry = function ( radius, arc ) {
+
+		var geometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry( );
+		var vertices = [];
+
+		for ( var i = 0; i <= 64 * arc; ++ i ) {
+
+			vertices.push( 0, Math.cos( i / 32 * Math.PI ) * radius, Math.sin( i / 32 * Math.PI ) * radius );
+
+		}
+
+		geometry.setAttribute( 'position', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( vertices, 3 ) );
+
+		return geometry;
+
+	};
+
+	// Special geometry for transform helper. If scaled with position vector it spans from [0,0,0] to position
+
+	var TranslateHelperGeometry = function () {
+
+		var geometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+
+		geometry.setAttribute( 'position', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( [ 0, 0, 0, 1, 1, 1 ], 3 ) );
+
+		return geometry;
+
+	};
+
+	// Gizmo definitions - custom hierarchy definitions for setupGizmo() function
+
+	var gizmoTranslate = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matRed ), [ 1, 0, 0 ], [ 0, 0, - Math.PI / 2 ], null, 'fwd' ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matRed ), [ 1, 0, 0 ], [ 0, 0, Math.PI / 2 ], null, 'bwd' ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineRed ) ]
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matGreen ), [ 0, 1, 0 ], null, null, 'fwd' ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matGreen ), [ 0, 1, 0 ], [ Math.PI, 0, 0 ], null, 'bwd' ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineGreen ), null, [ 0, 0, Math.PI / 2 ]]
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matBlue ), [ 0, 0, 1 ], [ Math.PI / 2, 0, 0 ], null, 'fwd' ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matBlue ), [ 0, 0, 1 ], [ - Math.PI / 2, 0, 0 ], null, 'bwd' ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ]]
+		],
+		XYZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.1, 0 ), matWhiteTransparent.clone() ), [ 0, 0, 0 ], [ 0, 0, 0 ]]
+		],
+		XY: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.295, 0.295 ), matYellowTransparent.clone() ), [ 0.15, 0.15, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.18, 0.3, 0 ], null, [ 0.125, 1, 1 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.3, 0.18, 0 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]]
+		],
+		YZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.295, 0.295 ), matCyanTransparent.clone() ), [ 0, 0.15, 0.15 ], [ 0, Math.PI / 2, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.18, 0.3 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.3, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
+		],
+		XZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.295, 0.295 ), matMagentaTransparent.clone() ), [ 0.15, 0, 0.15 ], [ - Math.PI / 2, 0, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.18, 0, 0.3 ], null, [ 0.125, 1, 1 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.3, 0, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
+		]
+	};
+
+	var pickerTranslate = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0, 0.6, 0 ]]
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ]]
+		],
+		XYZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.2, 0 ), matInvisible ) ]
+		],
+		XY: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0.2, 0 ]]
+		],
+		YZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.4, 0.4 ), matInvisible ), [ 0, 0.2, 0.2 ], [ 0, Math.PI / 2, 0 ]]
+		],
+		XZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0, 0.2 ], [ - Math.PI / 2, 0, 0 ]]
+		]
+	};
+
+	var helperTranslate = {
+		START: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.01, 2 ), matHelper ), null, null, null, 'helper' ]
+		],
+		END: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.01, 2 ), matHelper ), null, null, null, 'helper' ]
+		],
+		DELTA: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( TranslateHelperGeometry(), matHelper ), null, null, null, 'helper' ]
+		],
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, - 1e3, 0 ], [ 0, 0, Math.PI / 2 ], [ 1e6, 1, 1 ], 'helper' ]
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, 0, - 1e3 ], [ 0, - Math.PI / 2, 0 ], [ 1e6, 1, 1 ], 'helper' ]
+		]
+	};
+
+	var gizmoRotate = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 0.5 ), matLineRed ) ],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.04, 0 ), matRed ), [ 0, 0, 0.99 ], null, [ 1, 3, 1 ]],
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 0.5 ), matLineGreen ), null, [ 0, 0, - Math.PI / 2 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.04, 0 ), matGreen ), [ 0, 0, 0.99 ], null, [ 3, 1, 1 ]],
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 0.5 ), matLineBlue ), null, [ 0, Math.PI / 2, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.04, 0 ), matBlue ), [ 0.99, 0, 0 ], null, [ 1, 3, 1 ]],
+		],
+		E: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1.25, 1 ), matLineYellowTransparent ), null, [ 0, Math.PI / 2, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 1.17, 0, 0 ], [ 0, 0, - Math.PI / 2 ], [ 1, 1, 0.001 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ - 1.17, 0, 0 ], [ 0, 0, Math.PI / 2 ], [ 1, 1, 0.001 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, - 1.17, 0 ], [ Math.PI, 0, 0 ], [ 1, 1, 0.001 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, 1.17, 0 ], [ 0, 0, 0 ], [ 1, 1, 0.001 ]],
+		],
+		XYZE: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 1 ), matLineGray ), null, [ 0, Math.PI / 2, 0 ]]
+		]
+	};
+
+	var helperRotate = {
+		AXIS: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]
+		]
+	};
+
+	var pickerRotate = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, - Math.PI / 2, - Math.PI / 2 ]],
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ Math.PI / 2, 0, 0 ]],
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, 0, - Math.PI / 2 ]],
+		],
+		E: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1.25, 0.1, 2, 24 ), matInvisible ) ]
+		],
+		XYZE: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.SphereBufferGeometry( 0.7, 10, 8 ), matInvisible ) ]
+		]
+	};
+
+	var gizmoScale = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matRed ), [ 0.8, 0, 0 ], [ 0, 0, - Math.PI / 2 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineRed ), null, null, [ 0.8, 1, 1 ]]
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matGreen ), [ 0, 0.8, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineGreen ), null, [ 0, 0, Math.PI / 2 ], [ 0.8, 1, 1 ]]
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matBlue ), [ 0, 0, 0.8 ], [ Math.PI / 2, 0, 0 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ], [ 0.8, 1, 1 ]]
+		],
+		XY: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matYellowTransparent ), [ 0.85, 0.85, 0 ], null, [ 2, 2, 0.2 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.855, 0.98, 0 ], null, [ 0.125, 1, 1 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.98, 0.855, 0 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]]
+		],
+		YZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matCyanTransparent ), [ 0, 0.85, 0.85 ], null, [ 0.2, 2, 2 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.855, 0.98 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.98, 0.855 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
+		],
+		XZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matMagentaTransparent ), [ 0.85, 0, 0.85 ], null, [ 2, 0.2, 2 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.855, 0, 0.98 ], null, [ 0.125, 1, 1 ]],
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.98, 0, 0.855 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
+		],
+		XYZX: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransparent.clone() ), [ 1.1, 0, 0 ]],
+		],
+		XYZY: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransparent.clone() ), [ 0, 1.1, 0 ]],
+		],
+		XYZZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransparent.clone() ), [ 0, 0, 1.1 ]],
+		]
+	};
+
+	var pickerScale = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0.5, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0, 0.5, 0 ]]
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0, 0, 0.5 ], [ Math.PI / 2, 0, 0 ]]
+		],
+		XY: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matInvisible ), [ 0.85, 0.85, 0 ], null, [ 3, 3, 0.2 ]],
+		],
+		YZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matInvisible ), [ 0, 0.85, 0.85 ], null, [ 0.2, 3, 3 ]],
+		],
+		XZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matInvisible ), [ 0.85, 0, 0.85 ], null, [ 3, 0.2, 3 ]],
+		],
+		XYZX: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 1.1, 0, 0 ]],
+		],
+		XYZY: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 0, 1.1, 0 ]],
+		],
+		XYZZ: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 0, 0, 1.1 ]],
+		]
+	};
+
+	var helperScale = {
+		X: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]
+		],
+		Y: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, - 1e3, 0 ], [ 0, 0, Math.PI / 2 ], [ 1e6, 1, 1 ], 'helper' ]
+		],
+		Z: [
+			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, 0, - 1e3 ], [ 0, - Math.PI / 2, 0 ], [ 1e6, 1, 1 ], 'helper' ]
+		]
+	};
+
+	// Creates an Object3D with gizmos described in custom hierarchy definition.
+
+	var setupGizmo = function ( gizmoMap ) {
+
+		var gizmo = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D();
+
+		for ( var name in gizmoMap ) {
+
+			for ( var i = gizmoMap[ name ].length; i --; ) {
+
+				var object = gizmoMap[ name ][ i ][ 0 ].clone();
+				var position = gizmoMap[ name ][ i ][ 1 ];
+				var rotation = gizmoMap[ name ][ i ][ 2 ];
+				var scale = gizmoMap[ name ][ i ][ 3 ];
+				var tag = gizmoMap[ name ][ i ][ 4 ];
+
+				// name and tag properties are essential for picking and updating logic.
+				object.name = name;
+				object.tag = tag;
+
+				if ( position ) {
+
+					object.position.set( position[ 0 ], position[ 1 ], position[ 2 ] );
+
+				}
+
+				if ( rotation ) {
+
+					object.rotation.set( rotation[ 0 ], rotation[ 1 ], rotation[ 2 ] );
+
+				}
+
+				if ( scale ) {
+
+					object.scale.set( scale[ 0 ], scale[ 1 ], scale[ 2 ] );
+
+				}
+
+				object.updateMatrix();
+
+				var tempGeometry = object.geometry.clone();
+				tempGeometry.applyMatrix4( object.matrix );
+				object.geometry = tempGeometry;
+				object.renderOrder = Infinity;
+
+				object.position.set( 0, 0, 0 );
+				object.rotation.set( 0, 0, 0 );
+				object.scale.set( 1, 1, 1 );
+
+				gizmo.add( object );
+
+			}
+
+		}
+
+		return gizmo;
+
+	};
+
+	// Reusable utility variables
+
+	var tempVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 0 );
+	var tempEuler = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Euler();
+	var alignVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
+	var zeroVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 0 );
+	var lookAtMatrix = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
+	var tempQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var tempQuaternion2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+	var identityQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+
+	var unitX = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 );
+	var unitY = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
+	var unitZ = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 );
+
+	// Gizmo creation
+
+	this.gizmo = {};
+	this.picker = {};
+	this.helper = {};
+
+	this.add( this.gizmo[ 'translate' ] = setupGizmo( gizmoTranslate ) );
+	this.add( this.gizmo[ 'rotate' ] = setupGizmo( gizmoRotate ) );
+	this.add( this.gizmo[ 'scale' ] = setupGizmo( gizmoScale ) );
+	this.add( this.picker[ 'translate' ] = setupGizmo( pickerTranslate ) );
+	this.add( this.picker[ 'rotate' ] = setupGizmo( pickerRotate ) );
+	this.add( this.picker[ 'scale' ] = setupGizmo( pickerScale ) );
+	this.add( this.helper[ 'translate' ] = setupGizmo( helperTranslate ) );
+	this.add( this.helper[ 'rotate' ] = setupGizmo( helperRotate ) );
+	this.add( this.helper[ 'scale' ] = setupGizmo( helperScale ) );
+
+	// Pickers should be hidden always
+
+	this.picker[ 'translate' ].visible = false;
+	this.picker[ 'rotate' ].visible = false;
+	this.picker[ 'scale' ].visible = false;
+
+	// updateMatrixWorld will update transformations and appearance of individual handles
+
+	this.updateMatrixWorld = function () {
+
+		var space = this.space;
+
+		if ( this.mode === 'scale' ) space = 'local'; // scale always oriented to local rotation
+
+		var quaternion = space === 'local' ? this.worldQuaternion : identityQuaternion;
+
+		// Show only gizmos for current transform mode
+
+		this.gizmo[ 'translate' ].visible = this.mode === 'translate';
+		this.gizmo[ 'rotate' ].visible = this.mode === 'rotate';
+		this.gizmo[ 'scale' ].visible = this.mode === 'scale';
+
+		this.helper[ 'translate' ].visible = this.mode === 'translate';
+		this.helper[ 'rotate' ].visible = this.mode === 'rotate';
+		this.helper[ 'scale' ].visible = this.mode === 'scale';
+
+
+		var handles = [];
+		handles = handles.concat( this.picker[ this.mode ].children );
+		handles = handles.concat( this.gizmo[ this.mode ].children );
+		handles = handles.concat( this.helper[ this.mode ].children );
+
+		for ( var i = 0; i < handles.length; i ++ ) {
+
+			var handle = handles[ i ];
+
+			// hide aligned to camera
+
+			handle.visible = true;
+			handle.rotation.set( 0, 0, 0 );
+			handle.position.copy( this.worldPosition );
+
+			var factor;
+
+			if ( this.camera.isOrthographicCamera ) {
+
+				factor = ( this.camera.top - this.camera.bottom ) / this.camera.zoom;
+
+			} else {
+
+				factor = this.worldPosition.distanceTo( this.cameraPosition ) * Math.min( 1.9 * Math.tan( Math.PI * this.camera.fov / 360 ) / this.camera.zoom, 7 );
+
+			}
+
+			handle.scale.set( 1, 1, 1 ).multiplyScalar( factor * this.size / 7 );
+
+			// TODO: simplify helpers and consider decoupling from gizmo
+
+			if ( handle.tag === 'helper' ) {
+
+				handle.visible = false;
+
+				if ( handle.name === 'AXIS' ) {
+
+					handle.position.copy( this.worldPositionStart );
+					handle.visible = !! this.axis;
+
+					if ( this.axis === 'X' ) {
+
+						tempQuaternion.setFromEuler( tempEuler.set( 0, 0, 0 ) );
+						handle.quaternion.copy( quaternion ).multiply( tempQuaternion );
+
+						if ( Math.abs( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) ) > 0.9 ) {
+
+							handle.visible = false;
+
+						}
+
+					}
+
+					if ( this.axis === 'Y' ) {
+
+						tempQuaternion.setFromEuler( tempEuler.set( 0, 0, Math.PI / 2 ) );
+						handle.quaternion.copy( quaternion ).multiply( tempQuaternion );
+
+						if ( Math.abs( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) ) > 0.9 ) {
+
+							handle.visible = false;
+
+						}
+
+					}
+
+					if ( this.axis === 'Z' ) {
+
+						tempQuaternion.setFromEuler( tempEuler.set( 0, Math.PI / 2, 0 ) );
+						handle.quaternion.copy( quaternion ).multiply( tempQuaternion );
+
+						if ( Math.abs( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) ) > 0.9 ) {
+
+							handle.visible = false;
+
+						}
+
+					}
+
+					if ( this.axis === 'XYZE' ) {
+
+						tempQuaternion.setFromEuler( tempEuler.set( 0, Math.PI / 2, 0 ) );
+						alignVector.copy( this.rotationAxis );
+						handle.quaternion.setFromRotationMatrix( lookAtMatrix.lookAt( zeroVector, alignVector, unitY ) );
+						handle.quaternion.multiply( tempQuaternion );
+						handle.visible = this.dragging;
+
+					}
+
+					if ( this.axis === 'E' ) {
+
+						handle.visible = false;
+
+					}
+
+
+				} else if ( handle.name === 'START' ) {
+
+					handle.position.copy( this.worldPositionStart );
+					handle.visible = this.dragging;
+
+				} else if ( handle.name === 'END' ) {
+
+					handle.position.copy( this.worldPosition );
+					handle.visible = this.dragging;
+
+				} else if ( handle.name === 'DELTA' ) {
+
+					handle.position.copy( this.worldPositionStart );
+					handle.quaternion.copy( this.worldQuaternionStart );
+					tempVector.set( 1e-10, 1e-10, 1e-10 ).add( this.worldPositionStart ).sub( this.worldPosition ).multiplyScalar( - 1 );
+					tempVector.applyQuaternion( this.worldQuaternionStart.clone().invert() );
+					handle.scale.copy( tempVector );
+					handle.visible = this.dragging;
+
+				} else {
+
+					handle.quaternion.copy( quaternion );
+
+					if ( this.dragging ) {
+
+						handle.position.copy( this.worldPositionStart );
+
+					} else {
+
+						handle.position.copy( this.worldPosition );
+
+					}
+
+					if ( this.axis ) {
+
+						handle.visible = this.axis.search( handle.name ) !== - 1;
+
+					}
+
+				}
+
+				// If updating helper, skip rest of the loop
+				continue;
+
+			}
+
+			// Align handles to current local or world rotation
+
+			handle.quaternion.copy( quaternion );
+
+			if ( this.mode === 'translate' || this.mode === 'scale' ) {
+
+				// Hide translate and scale axis facing the camera
+
+				var AXIS_HIDE_TRESHOLD = 0.99;
+				var PLANE_HIDE_TRESHOLD = 0.2;
+				var AXIS_FLIP_TRESHOLD = 0.0;
+
+
+				if ( handle.name === 'X' || handle.name === 'XYZX' ) {
+
+					if ( Math.abs( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) ) > AXIS_HIDE_TRESHOLD ) {
+
+						handle.scale.set( 1e-10, 1e-10, 1e-10 );
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name === 'Y' || handle.name === 'XYZY' ) {
+
+					if ( Math.abs( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) ) > AXIS_HIDE_TRESHOLD ) {
+
+						handle.scale.set( 1e-10, 1e-10, 1e-10 );
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name === 'Z' || handle.name === 'XYZZ' ) {
+
+					if ( Math.abs( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) ) > AXIS_HIDE_TRESHOLD ) {
+
+						handle.scale.set( 1e-10, 1e-10, 1e-10 );
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name === 'XY' ) {
+
+					if ( Math.abs( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) ) < PLANE_HIDE_TRESHOLD ) {
+
+						handle.scale.set( 1e-10, 1e-10, 1e-10 );
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name === 'YZ' ) {
+
+					if ( Math.abs( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) ) < PLANE_HIDE_TRESHOLD ) {
+
+						handle.scale.set( 1e-10, 1e-10, 1e-10 );
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name === 'XZ' ) {
+
+					if ( Math.abs( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) ) < PLANE_HIDE_TRESHOLD ) {
+
+						handle.scale.set( 1e-10, 1e-10, 1e-10 );
+						handle.visible = false;
+
+					}
+
+				}
+
+				// Flip translate and scale axis ocluded behind another axis
+
+				if ( handle.name.search( 'X' ) !== - 1 ) {
+
+					if ( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) < AXIS_FLIP_TRESHOLD ) {
+
+						if ( handle.tag === 'fwd' ) {
+
+							handle.visible = false;
+
+						} else {
+
+							handle.scale.x *= - 1;
+
+						}
+
+					} else if ( handle.tag === 'bwd' ) {
+
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name.search( 'Y' ) !== - 1 ) {
+
+					if ( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) < AXIS_FLIP_TRESHOLD ) {
+
+						if ( handle.tag === 'fwd' ) {
+
+							handle.visible = false;
+
+						} else {
+
+							handle.scale.y *= - 1;
+
+						}
+
+					} else if ( handle.tag === 'bwd' ) {
+
+						handle.visible = false;
+
+					}
+
+				}
+
+				if ( handle.name.search( 'Z' ) !== - 1 ) {
+
+					if ( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) < AXIS_FLIP_TRESHOLD ) {
+
+						if ( handle.tag === 'fwd' ) {
+
+							handle.visible = false;
+
+						} else {
+
+							handle.scale.z *= - 1;
+
+						}
+
+					} else if ( handle.tag === 'bwd' ) {
+
+						handle.visible = false;
+
+					}
+
+				}
+
+			} else if ( this.mode === 'rotate' ) {
+
+				// Align handles to current local or world rotation
+
+				tempQuaternion2.copy( quaternion );
+				alignVector.copy( this.eye ).applyQuaternion( tempQuaternion.copy( quaternion ).invert() );
+
+				if ( handle.name.search( 'E' ) !== - 1 ) {
+
+					handle.quaternion.setFromRotationMatrix( lookAtMatrix.lookAt( this.eye, zeroVector, unitY ) );
+
+				}
+
+				if ( handle.name === 'X' ) {
+
+					tempQuaternion.setFromAxisAngle( unitX, Math.atan2( - alignVector.y, alignVector.z ) );
+					tempQuaternion.multiplyQuaternions( tempQuaternion2, tempQuaternion );
+					handle.quaternion.copy( tempQuaternion );
+
+				}
+
+				if ( handle.name === 'Y' ) {
+
+					tempQuaternion.setFromAxisAngle( unitY, Math.atan2( alignVector.x, alignVector.z ) );
+					tempQuaternion.multiplyQuaternions( tempQuaternion2, tempQuaternion );
+					handle.quaternion.copy( tempQuaternion );
+
+				}
+
+				if ( handle.name === 'Z' ) {
+
+					tempQuaternion.setFromAxisAngle( unitZ, Math.atan2( alignVector.y, alignVector.x ) );
+					tempQuaternion.multiplyQuaternions( tempQuaternion2, tempQuaternion );
+					handle.quaternion.copy( tempQuaternion );
+
+				}
+
+			}
+
+			// Hide disabled axes
+			handle.visible = handle.visible && ( handle.name.indexOf( 'X' ) === - 1 || this.showX );
+			handle.visible = handle.visible && ( handle.name.indexOf( 'Y' ) === - 1 || this.showY );
+			handle.visible = handle.visible && ( handle.name.indexOf( 'Z' ) === - 1 || this.showZ );
+			handle.visible = handle.visible && ( handle.name.indexOf( 'E' ) === - 1 || ( this.showX && this.showY && this.showZ ) );
+
+			// highlight selected axis
+
+			handle.material._opacity = handle.material._opacity || handle.material.opacity;
+			handle.material._color = handle.material._color || handle.material.color.clone();
+
+			handle.material.color.copy( handle.material._color );
+			handle.material.opacity = handle.material._opacity;
+
+			if ( ! this.enabled ) {
+
+				handle.material.opacity *= 0.5;
+				handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
+
+			} else if ( this.axis ) {
+
+				if ( handle.name === this.axis ) {
+
+					handle.material.opacity = 1.0;
+					handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
+
+				} else if ( this.axis.split( '' ).some( function ( a ) {
+
+					return handle.name === a;
+
+				} ) ) {
+
+					handle.material.opacity = 1.0;
+					handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
+
+				} else {
+
+					handle.material.opacity *= 0.25;
+					handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
+
+				}
+
+			}
+
+		}
+
+		_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call( this );
+
+	};
+
+};
+
+TransformControlsGizmo.prototype = Object.assign( Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype ), {
+
+	constructor: TransformControlsGizmo,
+
+	isTransformControlsGizmo: true
+
+} );
+
+
+var TransformControlsPlane = function () {
+
+	'use strict';
+
+	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh.call( this,
+		new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 100000, 100000, 2, 2 ),
+		new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial( { visible: false, wireframe: true, side: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.DoubleSide, transparent: true, opacity: 0.1, toneMapped: false } )
+	);
+
+	this.type = 'TransformControlsPlane';
+
+	var unitX = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 );
+	var unitY = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
+	var unitZ = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 );
+
+	var tempVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var dirVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var alignVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+	var tempMatrix = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
+	var identityQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+
+	this.updateMatrixWorld = function () {
+
+		var space = this.space;
+
+		this.position.copy( this.worldPosition );
+
+		if ( this.mode === 'scale' ) space = 'local'; // scale always oriented to local rotation
+
+		unitX.set( 1, 0, 0 ).applyQuaternion( space === 'local' ? this.worldQuaternion : identityQuaternion );
+		unitY.set( 0, 1, 0 ).applyQuaternion( space === 'local' ? this.worldQuaternion : identityQuaternion );
+		unitZ.set( 0, 0, 1 ).applyQuaternion( space === 'local' ? this.worldQuaternion : identityQuaternion );
+
+		// Align the plane for current transform mode, axis and space.
+
+		alignVector.copy( unitY );
+
+		switch ( this.mode ) {
+
+			case 'translate':
+			case 'scale':
+				switch ( this.axis ) {
+
+					case 'X':
+						alignVector.copy( this.eye ).cross( unitX );
+						dirVector.copy( unitX ).cross( alignVector );
+						break;
+					case 'Y':
+						alignVector.copy( this.eye ).cross( unitY );
+						dirVector.copy( unitY ).cross( alignVector );
+						break;
+					case 'Z':
+						alignVector.copy( this.eye ).cross( unitZ );
+						dirVector.copy( unitZ ).cross( alignVector );
+						break;
+					case 'XY':
+						dirVector.copy( unitZ );
+						break;
+					case 'YZ':
+						dirVector.copy( unitX );
+						break;
+					case 'XZ':
+						alignVector.copy( unitZ );
+						dirVector.copy( unitY );
+						break;
+					case 'XYZ':
+					case 'E':
+						dirVector.set( 0, 0, 0 );
+						break;
+
+				}
+
+				break;
+			case 'rotate':
+			default:
+				// special case for rotate
+				dirVector.set( 0, 0, 0 );
+
+		}
+
+		if ( dirVector.length() === 0 ) {
+
+			// If in rotate mode, make the plane parallel to camera
+			this.quaternion.copy( this.cameraQuaternion );
+
+		} else {
+
+			tempMatrix.lookAt( tempVector.set( 0, 0, 0 ), dirVector, alignVector );
+
+			this.quaternion.setFromRotationMatrix( tempMatrix );
+
+		}
+
+		_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call( this );
+
+	};
+
+};
+
+TransformControlsPlane.prototype = Object.assign( Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh.prototype ), {
+
+	constructor: TransformControlsPlane,
+
+	isTransformControlsPlane: true
+
+} );
 
 
 
