@@ -1,4 +1,3 @@
-import debounce from 'lodash.debounce'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
@@ -6,15 +5,14 @@ import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ObjectManager from './ObjectManager'
+import SelectionHelper from './SelectionHelper'
 
 export default class Viewer {
 
-  constructor( { container, postprocessing = true } ) {
+  constructor( { container, postprocessing = false } ) {
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()
-
-    this.sceneManager = new ObjectManager( this )
 
     this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight )
     this.camera.up.set( 0, 0, 1 )
@@ -32,18 +30,6 @@ export default class Viewer {
     this.controls.screenSpacePanning = true
     this.controls.maxPolarAngle = Math.PI / 2
 
-    this.isMovingCamera = false
-    let test = debounce( () => {
-      console.log( 'moving end' )
-    }, 500 )
-
-    this.controls.addEventListener( 'change', test )
-
-    this.controls.addEventListener( 'start', () => {
-      this.isMovingCamera = true
-    } )
-    this.controls.addEventListener( 'end', () => { console.log( 'end' ) /* TODO: debounce 100ms after changes end to "ready for selection/user interaction"*/ } )
-
     this.composer = new EffectComposer( this.renderer )
 
     this.ssaoPass = new SSAOPass( this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight )
@@ -58,6 +44,9 @@ export default class Viewer {
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
 
+    this.sceneManager = new ObjectManager( this )
+    this.selectionHelper = new SelectionHelper( this )
+
     this.initScene()
     this.animate()
   }
@@ -67,9 +56,9 @@ export default class Viewer {
     this.scene.add( ambientLight )
 
     const lights = []
-    lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.31, 0 )
-    lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.31, 0 )
-    lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.31, 0 )
+    lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
 
     lights[ 0 ].position.set( 0, 200, 0 )
     lights[ 1 ].position.set( 100, 200, 100 )
@@ -79,12 +68,18 @@ export default class Viewer {
     this.scene.add( lights[ 1 ] )
     this.scene.add( lights[ 2 ] )
 
-    // const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.1 )
-    // // hemiLight.color.setHSL( 0.6, 1, 0.6 )
-    // // hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
-    // hemiLight.up.set( 0, 0, 1 )
-    // // hemiLight.position.set( 0, 50, 0 )
-    // this.scene.add( hemiLight )
+    let sphereSize = 20
+    this.scene.add( new THREE.PointLightHelper( lights[ 0 ] , sphereSize ) )
+    this.scene.add( new THREE.PointLightHelper( lights[ 1 ] , sphereSize ) )
+    this.scene.add( new THREE.PointLightHelper( lights[ 2 ] , sphereSize ) )
+
+
+    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.4 )
+    hemiLight.color.setHSL( 1, 1, 1 )
+    hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
+    hemiLight.up.set( 0, 0, 1 )
+    // hemiLight.position.set( 0, 50, 0 )
+    this.scene.add( hemiLight )
 
     let axesHelper = new THREE.AxesHelper( 1 )
     this.scene.add( axesHelper )
@@ -137,5 +132,8 @@ export default class Viewer {
     }
   }
 
+  dispose() {
+    // TODO
+  }
 
 }

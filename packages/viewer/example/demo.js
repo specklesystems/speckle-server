@@ -555,6 +555,68 @@ var Coverter = /*#__PURE__*/function () {
 
 /***/ }),
 
+/***/ "./src/modules/EventEmitter.js":
+/*!*************************************!*\
+  !*** ./src/modules/EventEmitter.js ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ EventEmitter
+/* harmony export */ });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var EventEmitter = /*#__PURE__*/function () {
+  function EventEmitter() {
+    _classCallCheck(this, EventEmitter);
+
+    this._events = {};
+  }
+
+  _createClass(EventEmitter, [{
+    key: "on",
+    value: function on(name, listener) {
+      if (!this._events[name]) {
+        this._events[name] = [];
+      }
+
+      this._events[name].push(listener);
+    }
+  }, {
+    key: "removeListener",
+    value: function removeListener(name, listenerToRemove) {
+      if (!this._events[name]) return;
+
+      var filterListeners = listener => listener !== listenerToRemove;
+
+      this._events[name] = this._events[name].filter(filterListeners);
+    }
+  }, {
+    key: "emit",
+    value: function emit(name, data) {
+      if (!this._events[name]) return;
+
+      var fireCallbacks = callback => {
+        callback(data);
+      };
+
+      this._events[name].forEach(fireCallbacks);
+    }
+  }]);
+
+  return EventEmitter;
+}();
+
+
+
+/***/ }),
+
 /***/ "./src/modules/ObjectLoader.js":
 /*!*************************************!*\
   !*** ./src/modules/ObjectLoader.js ***!
@@ -795,11 +857,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => /* binding */ SceneObjectManager
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_1__);
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 
 
 
@@ -811,12 +876,17 @@ var SceneObjectManager = /*#__PURE__*/function () {
     this.scene = viewer.scene;
     this.userObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.scene.add(this.userObjects);
-    this.solidMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
-      color: 0xA1ABB4,
+    this.solidMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      color: 0xA0A4A8,
       emissive: 0x0,
+      roughness: 0.6,
+      metalness: 0.2,
       side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
     });
     this.objectIds = [];
+    this.zoomExtentsDebounce = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+      this.zoomExtents();
+    }, 200);
   }
 
   _createClass(SceneObjectManager, [{
@@ -835,26 +905,51 @@ var SceneObjectManager = /*#__PURE__*/function () {
           this.addPoint(wrapper);
           break;
       }
+
+      this.zoomExtentsDebounce();
     }
   }, {
     key: "removeObject",
-    value: function removeObject(id) {// TODO
+    value: function removeObject(id) {
+      var obj = this.userObjects.children.find(o => o.uuid === id);
+
+      if (obj) {
+        obj.geometry.dispose();
+        this.userObjects.remove(obj);
+      } else {
+        console.warn("Failed to remove object with id: " + id + ": no object found.");
+      }
     }
   }, {
     key: "removeAllObjects",
     value: function removeAllObjects() {
+      for (var obj of this.userObjects.children) {
+        if (obj.geometry) {
+          obj.geometry.dispose();
+        }
+      }
+
       this.userObjects.clear();
+      this.objectIds = [];
     }
   }, {
     key: "zoomToObject",
-    value: function zoomToObject(id) {} // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
-
+    value: function zoomToObject(target) {
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(target);
+      this.zoomToBox(box);
+    }
   }, {
     key: "zoomExtents",
     value: function zoomExtents() {
       var bboxTarget = this.userObjects;
       if (this.userObjects.children.length === 0) bboxTarget = this.scene;
       var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(bboxTarget);
+      this.zoomToBox(box);
+    } // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
+
+  }, {
+    key: "zoomToBox",
+    value: function zoomToBox(box) {
       var fitOffset = 1.2;
       var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       var center = box.getCenter(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
@@ -862,11 +957,11 @@ var SceneObjectManager = /*#__PURE__*/function () {
       var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
       var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
       var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
-      var direction = this.viewer.controls.target.clone().sub(this.viewer.camera.position).normalize().multiplyScalar(distance);
-      this.viewer.controls.maxDistance = distance * 10;
+      var direction = this.viewer.controls.target.clone().sub(this.viewer.camera.position).normalize().multiplyScalar(distance); // this.viewer.controls.maxDistance = distance * 20
+
       this.viewer.controls.target.copy(center);
-      this.viewer.camera.near = distance / 500;
-      this.viewer.camera.far = distance * 500;
+      this.viewer.camera.near = distance / 100;
+      this.viewer.camera.far = distance * 100;
       this.viewer.camera.updateProjectionMatrix();
       this.viewer.camera.position.copy(this.viewer.controls.target).sub(direction);
       this.viewer.controls.update();
@@ -933,6 +1028,188 @@ var ObjectWrapper = function ObjectWrapper(bufferGeometry, meta, geometryType) {
   this.meta = meta;
   this.geometryType = geometryType || 'solid';
 };
+
+
+
+/***/ }),
+
+/***/ "./src/modules/SelectionHelper.js":
+/*!****************************************!*\
+  !*** ./src/modules/SelectionHelper.js ***!
+  \****************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ SelectionHelper
+/* harmony export */ });
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
+/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (typeof call === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+
+
+
+
+var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
+  _inherits(SelectionHelper, _EventEmitter);
+
+  var _super = _createSuper(SelectionHelper);
+
+  function SelectionHelper(parent) {
+    var _this;
+
+    _classCallCheck(this, SelectionHelper);
+
+    _this = _super.call(this);
+    _this.viewer = parent;
+    _this.raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
+    _this.orbiting = false;
+
+    _this.viewer.controls.addEventListener('change', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+      _this.orbiting = false;
+    }, 100));
+
+    _this.viewer.controls.addEventListener('start', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+      _this.orbiting = true;
+    }, 200));
+
+    _this.viewer.controls.addEventListener('end', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+      _this.orbiting = false;
+    }, 200)); // Handle mouseclicks
+
+
+    _this.viewer.renderer.domElement.addEventListener('pointerup', e => {
+      if (_this.orbiting) return;
+
+      var selectionObjects = _this.getClickedObjects(e);
+
+      _this.handleSelection(selectionObjects);
+    });
+
+    _this.viewer.renderer.domElement.addEventListener('dblclick', e => {
+      if (_this.orbiting) return;
+
+      var selectionObjects = _this.getClickedObjects(e);
+
+      _this.emit('object-doubleclicked', selectionObjects);
+
+      _this.handleDoubleClick(selectionObjects);
+    }); // Handle multiple object selection
+
+
+    _this.multiSelect = false;
+    document.addEventListener('keydown', e => {
+      if (e.isComposing || e.keyCode === 229) return;
+      if (e.key === 'Shift') _this.multiSelect = true;
+    });
+    document.addEventListener('keyup', e => {
+      if (e.isComposing || e.keyCode === 229) return;
+      if (e.key === 'Shift') _this.multiSelect = false;
+    });
+    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
+      color: 0x0B55D2,
+      emissive: 0x0B55D2,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+    });
+    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    _this.selectedObjects.renderOrder = 1000;
+
+    _this.viewer.scene.add(_this.selectedObjects);
+
+    _this.originalSelectionObjects = [];
+    return _this;
+  }
+
+  _createClass(SelectionHelper, [{
+    key: "handleSelection",
+    value: function handleSelection(objects) {
+      this.select(objects[0]);
+    }
+  }, {
+    key: "handleDoubleClick",
+    value: function handleDoubleClick(objects) {
+      if (!objects || objects.length === 0) this.viewer.sceneManager.zoomExtents();else this.viewer.sceneManager.zoomToObject(objects[0].object);
+    }
+  }, {
+    key: "select",
+    value: function select(obj) {
+      if (!this.multiSelect) this.unselect();
+
+      if (!obj) {
+        this.emit('object-clicked', this.originalSelectionObjects);
+        return;
+      }
+
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj.object.geometry, this.selectionMaterial);
+      this.selectedObjects.add(mesh);
+      this.originalSelectionObjects.push(obj);
+      this.emit('object-clicked', this.originalSelectionObjects);
+    }
+  }, {
+    key: "unselect",
+    value: function unselect() {
+      this.selectedObjects.clear();
+      this.originalSelectionObjects = [];
+    }
+  }, {
+    key: "getClickedObjects",
+    value: function getClickedObjects(e) {
+      var normalizedPosition = this._getNormalisedClickPosition(e);
+
+      this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
+      var intersectedObjects = this.raycaster.intersectObjects(this.viewer.sceneManager.userObjects.children);
+      return intersectedObjects;
+    }
+  }, {
+    key: "_getNormalisedClickPosition",
+    value: function _getNormalisedClickPosition(e) {
+      // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
+      var canvas = this.viewer.renderer.domElement;
+      var rect = this.viewer.renderer.domElement.getBoundingClientRect();
+      var pos = {
+        x: (e.clientX - rect.left) * canvas.width / rect.width,
+        y: (e.clientY - rect.top) * canvas.height / rect.height
+      };
+      return {
+        x: pos.x / canvas.width * 2 - 1,
+        y: pos.y / canvas.height * -2 + 1
+      };
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this.viewer.scene.remove(this.selectedObjects);
+      this.unselect();
+      this.originalSelectionObjects = null;
+      this.selectionMaterial = null;
+      this.selectedObjects = null;
+    }
+  }]);
+
+  return SelectionHelper;
+}(_EventEmitter__WEBPACK_IMPORTED_MODULE_2__.default);
 
 
 
@@ -1219,14 +1496,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => /* binding */ Viewer
 /* harmony export */ });
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! lodash.debounce */ "./node_modules/lodash.debounce/index.js");
-/* harmony import */ var lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(lodash_debounce__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls.js */ "./node_modules/three/examples/jsm/controls/OrbitControls.js");
-/* harmony import */ var three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/postprocessing/EffectComposer.js */ "./node_modules/three/examples/jsm/postprocessing/EffectComposer.js");
-/* harmony import */ var three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/postprocessing/SSAOPass.js */ "./node_modules/three/examples/jsm/postprocessing/SSAOPass.js");
-/* harmony import */ var three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! three/examples/jsm/libs/stats.module.js */ "./node_modules/three/examples/jsm/libs/stats.module.js");
-/* harmony import */ var _ObjectManager__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ObjectManager */ "./src/modules/ObjectManager.js");
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls.js */ "./node_modules/three/examples/jsm/controls/OrbitControls.js");
+/* harmony import */ var three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/postprocessing/EffectComposer.js */ "./node_modules/three/examples/jsm/postprocessing/EffectComposer.js");
+/* harmony import */ var three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/postprocessing/SSAOPass.js */ "./node_modules/three/examples/jsm/postprocessing/SSAOPass.js");
+/* harmony import */ var three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/libs/stats.module.js */ "./node_modules/three/examples/jsm/libs/stats.module.js");
+/* harmony import */ var _ObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ObjectManager */ "./src/modules/ObjectManager.js");
+/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1245,19 +1521,18 @@ var Viewer = /*#__PURE__*/function () {
   function Viewer(_ref) {
     var {
       container,
-      postprocessing = true
+      postprocessing = false
     } = _ref;
 
     _classCallCheck(this, Viewer);
 
     this.container = container || document.getElementById('renderer');
     this.postprocessing = postprocessing;
-    this.scene = new three__WEBPACK_IMPORTED_MODULE_1__.Scene();
-    this.sceneManager = new _ObjectManager__WEBPACK_IMPORTED_MODULE_6__.default(this);
-    this.camera = new three__WEBPACK_IMPORTED_MODULE_1__.PerspectiveCamera(60, window.innerWidth / window.innerHeight);
+    this.scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
+    this.camera = new three__WEBPACK_IMPORTED_MODULE_0__.PerspectiveCamera(60, window.innerWidth / window.innerHeight);
     this.camera.up.set(0, 0, 1);
     this.camera.position.set(1, 1, 1);
-    this.renderer = new three__WEBPACK_IMPORTED_MODULE_1__.WebGLRenderer({
+    this.renderer = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderer({
       antialias: true,
       alpha: true
     });
@@ -1265,34 +1540,24 @@ var Viewer = /*#__PURE__*/function () {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
     this.container.appendChild(this.renderer.domElement);
-    this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_2__.OrbitControls(this.camera, this.renderer.domElement);
+    this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
 
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = true;
     this.controls.maxPolarAngle = Math.PI / 2;
-    this.isMovingCamera = false;
-    var test = lodash_debounce__WEBPACK_IMPORTED_MODULE_0___default()(() => {
-      console.log('moving end');
-    }, 500);
-    this.controls.addEventListener('change', test);
-    this.controls.addEventListener('start', () => {
-      this.isMovingCamera = true;
-    });
-    this.controls.addEventListener('end', () => {
-      console.log('end');
-      /* TODO: debounce 100ms after changes end to "ready for selection/user interaction"*/
-    });
-    this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_3__.EffectComposer(this.renderer);
-    this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_4__.SSAOPass(this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight);
+    this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(this.renderer);
+    this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight);
     this.ssaoPass.kernelRadius = 3;
     this.ssaoPass.minDistance = 0.0002;
     this.ssaoPass.maxDistance = 0.2;
-    this.ssaoPass.output = three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_4__.SSAOPass.OUTPUT.Default;
+    this.ssaoPass.output = three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass.OUTPUT.Default;
     this.composer.addPass(this.ssaoPass);
-    this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_5__.default();
+    this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
     this.container.appendChild(this.stats.dom);
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
+    this.sceneManager = new _ObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(this);
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(this);
     this.initScene();
     this.animate();
   }
@@ -1300,36 +1565,40 @@ var Viewer = /*#__PURE__*/function () {
   _createClass(Viewer, [{
     key: "initScene",
     value: function initScene() {
-      var ambientLight = new three__WEBPACK_IMPORTED_MODULE_1__.AmbientLight(0xffffff);
+      var ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(0xffffff);
       this.scene.add(ambientLight);
       var lights = [];
-      lights[0] = new three__WEBPACK_IMPORTED_MODULE_1__.PointLight(0xffffff, 0.31, 0);
-      lights[1] = new three__WEBPACK_IMPORTED_MODULE_1__.PointLight(0xffffff, 0.31, 0);
-      lights[2] = new three__WEBPACK_IMPORTED_MODULE_1__.PointLight(0xffffff, 0.31, 0);
+      lights[0] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
+      lights[1] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
+      lights[2] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
       lights[0].position.set(0, 200, 0);
       lights[1].position.set(100, 200, 100);
       lights[2].position.set(-100, -200, -100);
       this.scene.add(lights[0]);
       this.scene.add(lights[1]);
-      this.scene.add(lights[2]); // const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.1 )
-      // // hemiLight.color.setHSL( 0.6, 1, 0.6 )
-      // // hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
-      // hemiLight.up.set( 0, 0, 1 )
-      // // hemiLight.position.set( 0, 50, 0 )
-      // this.scene.add( hemiLight )
+      this.scene.add(lights[2]);
+      var sphereSize = 20;
+      this.scene.add(new three__WEBPACK_IMPORTED_MODULE_0__.PointLightHelper(lights[0], sphereSize));
+      this.scene.add(new three__WEBPACK_IMPORTED_MODULE_0__.PointLightHelper(lights[1], sphereSize));
+      this.scene.add(new three__WEBPACK_IMPORTED_MODULE_0__.PointLightHelper(lights[2], sphereSize));
+      var hemiLight = new three__WEBPACK_IMPORTED_MODULE_0__.HemisphereLight(0xffffff, 0x0, 0.4);
+      hemiLight.color.setHSL(1, 1, 1);
+      hemiLight.groundColor.setHSL(0.095, 1, 0.75);
+      hemiLight.up.set(0, 0, 1); // hemiLight.position.set( 0, 50, 0 )
 
-      var axesHelper = new three__WEBPACK_IMPORTED_MODULE_1__.AxesHelper(1);
+      this.scene.add(hemiLight);
+      var axesHelper = new three__WEBPACK_IMPORTED_MODULE_0__.AxesHelper(1);
       this.scene.add(axesHelper);
-      var group = new three__WEBPACK_IMPORTED_MODULE_1__.Group();
+      var group = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
       this.scene.add(group);
-      var geometry = new three__WEBPACK_IMPORTED_MODULE_1__.BoxBufferGeometry(10, 10, 10);
-      var material = new three__WEBPACK_IMPORTED_MODULE_1__.MeshLambertMaterial({
+      var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry(10, 10, 10);
+      var material = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
         color: 0xD7D7D7,
         emissive: 0x0
       });
 
       for (var i = 0; i < 0; i++) {
-        var mesh = new three__WEBPACK_IMPORTED_MODULE_1__.Mesh(geometry, material);
+        var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, material);
         mesh.position.x = Math.random() * 3;
         mesh.position.y = Math.random() * 3;
         mesh.position.z = Math.random() * 3;
@@ -1365,6 +1634,10 @@ var Viewer = /*#__PURE__*/function () {
       } else {
         this.renderer.render(this.scene, this.camera);
       }
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {// TODO
     }
   }]);
 

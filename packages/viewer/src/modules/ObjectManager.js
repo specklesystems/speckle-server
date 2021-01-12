@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import debounce from 'lodash.debounce'
 
 export default class SceneObjectManager {
 
@@ -9,9 +10,10 @@ export default class SceneObjectManager {
 
     this.scene.add( this.userObjects )
 
-    this.solidMaterial = new THREE.MeshLambertMaterial( { color: 0xA1ABB4, emissive: 0x0, side: THREE.DoubleSide } )
+    this.solidMaterial = new THREE.MeshStandardMaterial( { color: 0xA0A4A8, emissive: 0x0, roughness: 0.6, metalness: 0.2, side: THREE.DoubleSide } )
     this.objectIds = []
 
+    this.zoomExtentsDebounce = debounce( () => { this.zoomExtents() }, 200 )
   }
 
   addObject( wrapper ) {
@@ -26,25 +28,45 @@ export default class SceneObjectManager {
       this.addPoint( wrapper )
       break
     }
+
+    this.zoomExtentsDebounce()
   }
 
   removeObject( id ) {
-    // TODO
+    let obj = this.userObjects.children.find( o => o.uuid === id )
+    if ( obj ){
+      obj.geometry.dispose()
+      this.userObjects.remove( obj )
+    } else {
+      console.warn( `Failed to remove object with id: ${id}: no object found.` )
+    }
   }
 
   removeAllObjects() {
+    for ( let obj of this.userObjects.children ) {
+      if ( obj.geometry ){
+        obj.geometry.dispose()
+      }
+    }
     this.userObjects.clear()
+    this.objectIds = []
   }
 
-  zoomToObject( id ) {
-
+  zoomToObject( target ) {
+    const box = new THREE.Box3().setFromObject( target )
+    this.zoomToBox( box )
   }
-  // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
+
   zoomExtents() {
     let bboxTarget = this.userObjects
     if ( this.userObjects.children.length === 0 ) bboxTarget = this.scene
 
     const box = new THREE.Box3().setFromObject( bboxTarget )
+    this.zoomToBox( box )
+  }
+
+  // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
+  zoomToBox( box ) {
     const fitOffset = 1.2
 
     const size = box.getSize( new THREE.Vector3() )
@@ -60,11 +82,11 @@ export default class SceneObjectManager {
       .normalize()
       .multiplyScalar( distance )
 
-    this.viewer.controls.maxDistance = distance * 10
+    // this.viewer.controls.maxDistance = distance * 20
     this.viewer.controls.target.copy( center )
 
-    this.viewer.camera.near = distance / 500
-    this.viewer.camera.far = distance * 500
+    this.viewer.camera.near = distance / 100
+    this.viewer.camera.far = distance * 100
     this.viewer.camera.updateProjectionMatrix()
 
     this.viewer.camera.position.copy( this.viewer.controls.target ).sub( direction )
