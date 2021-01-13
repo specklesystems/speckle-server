@@ -381,12 +381,19 @@ var Coverter = /*#__PURE__*/function () {
         if (displayValue) {
           displayValue = yield this.resolveReference(displayValue);
           if (!displayValue.units) displayValue.units = obj.units;
-          var {
-            bufferGeometry
-          } = yield this.convert(displayValue);
-          callback(new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj)); // use the parent's metadata!
 
-          return;
+          try {
+            var {
+              bufferGeometry
+            } = yield this.convert(displayValue);
+            callback(new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj)); // use the parent's metadata!
+
+            return;
+          } catch (e) {
+            console.warn("(Traversing) Failed to convert obj with id: " + obj.id);
+            console.warn(obj);
+            throw e;
+          }
         } // Last attempt: iterate through all object keys and see if we can display anything!
         // traverses the object in case there's any sub-objects we can convert.
 
@@ -425,11 +432,17 @@ var Coverter = /*#__PURE__*/function () {
     value: function () {
       var _convert = _asyncToGenerator(function* (obj) {
         if (obj.referencedId) obj = yield this.resolveReference(obj);
-        var type = this.getSpeckleType(obj);
 
-        if (this[type + "ToBufferGeometry"]) {
-          return yield this[type + "ToBufferGeometry"](obj.data || obj);
-        } else return null;
+        try {
+          var type = this.getSpeckleType(obj);
+
+          if (this[type + "ToBufferGeometry"]) {
+            return yield this[type + "ToBufferGeometry"](obj.data || obj);
+          } else return null;
+        } catch (e) {
+          console.warn("(Direct convert) Failed to convert object with id: " + obj.id);
+          throw e;
+        }
       });
 
       function convert(_x3) {
@@ -503,22 +516,27 @@ var Coverter = /*#__PURE__*/function () {
     key: "BrepToBufferGeometry",
     value: function () {
       var _BrepToBufferGeometry = _asyncToGenerator(function* (obj) {
-        if (!obj) return;
-        var {
-          bufferGeometry
-        } = yield this.MeshToBufferGeometry(yield this.resolveReference(obj.displayValue || obj.displayMesh)); // deletes known uneeded fields
+        try {
+          if (!obj) return;
+          var {
+            bufferGeometry
+          } = yield this.MeshToBufferGeometry(yield this.resolveReference(obj.displayValue || obj.displayMesh)); // deletes known uneeded fields
 
-        delete obj.displayMesh;
-        delete obj.displayValue;
-        delete obj.Edges;
-        delete obj.Faces;
-        delete obj.Loops;
-        delete obj.Trims;
-        delete obj.Curve2D;
-        delete obj.Curve3D;
-        delete obj.Surfaces;
-        delete obj.Vertices;
-        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj);
+          delete obj.displayMesh;
+          delete obj.displayValue;
+          delete obj.Edges;
+          delete obj.Faces;
+          delete obj.Loops;
+          delete obj.Trims;
+          delete obj.Curve2D;
+          delete obj.Curve3D;
+          delete obj.Surfaces;
+          delete obj.Vertices;
+          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj);
+        } catch (e) {
+          console.warn("Failed to convert brep id: " + obj.id);
+          throw e;
+        }
       });
 
       function BrepToBufferGeometry(_x6) {
@@ -531,36 +549,41 @@ var Coverter = /*#__PURE__*/function () {
     key: "MeshToBufferGeometry",
     value: function () {
       var _MeshToBufferGeometry = _asyncToGenerator(function* (obj) {
-        if (!obj) return;
-        var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_2__.getConversionFactor)(obj.units); // console.log( conversionFactor )
+        try {
+          if (!obj) return;
+          var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_2__.getConversionFactor)(obj.units); // console.log( conversionFactor )
 
-        var buffer = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-        var indices = [];
-        var vertices = yield this.dechunk(obj.vertices);
-        var faces = yield this.dechunk(obj.faces);
-        var k = 0;
+          var buffer = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+          var indices = [];
+          var vertices = yield this.dechunk(obj.vertices);
+          var faces = yield this.dechunk(obj.faces);
+          var k = 0;
 
-        while (k < faces.length) {
-          if (faces[k] === 1) {
-            // QUAD FACE
-            indices.push(faces[k + 1], faces[k + 2], faces[k + 3]);
-            indices.push(faces[k + 1], faces[k + 3], faces[k + 4]);
-            k += 5;
-          } else if (faces[k] === 0) {
-            // TRIANGLE FACE
-            indices.push(faces[k + 1], faces[k + 2], faces[k + 3]);
-            k += 4;
-          } else throw new Error("Mesh type not supported. Face topology indicator: " + faces[k]);
+          while (k < faces.length) {
+            if (faces[k] === 1) {
+              // QUAD FACE
+              indices.push(faces[k + 1], faces[k + 2], faces[k + 3]);
+              indices.push(faces[k + 1], faces[k + 3], faces[k + 4]);
+              k += 5;
+            } else if (faces[k] === 0) {
+              // TRIANGLE FACE
+              indices.push(faces[k + 1], faces[k + 2], faces[k + 3]);
+              k += 4;
+            } else throw new Error("Mesh type not supported. Face topology indicator: " + faces[k]);
+          }
+
+          buffer.setIndex(indices);
+          buffer.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute(conversionFactor === 1 ? vertices : vertices.map(v => v * conversionFactor), 3));
+          buffer.computeVertexNormals();
+          buffer.computeFaceNormals();
+          buffer.computeBoundingSphere();
+          delete obj.vertices;
+          delete obj.faces;
+          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(buffer, obj);
+        } catch (e) {
+          console.warn("Failed to convert mesh with id: " + obj.id);
+          throw e;
         }
-
-        buffer.setIndex(indices);
-        buffer.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute(conversionFactor === 1 ? vertices : vertices.map(v => v * conversionFactor), 3));
-        buffer.computeVertexNormals();
-        buffer.computeFaceNormals();
-        buffer.computeBoundingSphere();
-        delete obj.vertices;
-        delete obj.faces;
-        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(buffer, obj);
       });
 
       function MeshToBufferGeometry(_x7) {
@@ -899,7 +922,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var ObjectWrapper = function ObjectWrapper(bufferGeometry, meta, geometryType) {
   _classCallCheck(this, ObjectWrapper);
 
-  if (!bufferGeometry) throw new Error('No geometry provided.');
   this.bufferGeometry = bufferGeometry;
   this.meta = meta;
   this.geometryType = geometryType || 'solid';
@@ -978,7 +1000,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
     // For now a small compromise to speed up dev; it is not the most memory
     // efficient approach.
     value: function addObject(wrapper) {
-      if (!wrapper) return;
+      if (!wrapper || !wrapper.bufferGeometry) return;
 
       switch (wrapper.geometryType) {
         case 'solid':
@@ -1222,8 +1244,18 @@ var SectionPlaneHelper = /*#__PURE__*/function () {
     key: "toggleTransformControls",
     value: function toggleTransformControls() {
       this.cutters.forEach(cutter => {
-        if (cutter.control.mode === 'rotate') return cutter.control.setMode('translate');
+        if (cutter.control.mode === 'rotate') {
+          cutter.control.setMode('translate');
+          cutter.control.showX = false;
+          cutter.control.showY = false;
+          cutter.control.showZ = true;
+          return;
+        }
+
         cutter.control.setMode('rotate');
+        cutter.control.showX = true;
+        cutter.control.showY = true;
+        cutter.control.showZ = false;
       });
     }
   }, {
@@ -1244,6 +1276,9 @@ var SectionPlaneHelper = /*#__PURE__*/function () {
       cutter.control = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
       cutter.control.setSize(0.5);
       cutter.control.space = 'local';
+      cutter.control.showX = false;
+      cutter.control.showY = false;
+      cutter.control.setRotationSnap(three__WEBPACK_IMPORTED_MODULE_0__.MathUtils.degToRad(15));
       cutter.control.addEventListener('change', () => this.viewer.render);
       cutter.control.addEventListener('dragging-changed', event => {
         if (!cutter.visible) return;
@@ -1258,7 +1293,8 @@ var SectionPlaneHelper = /*#__PURE__*/function () {
       cutter.control.attach(cutter.helper);
       cutter.control.visible = false;
       this.viewer.scene.add(cutter.control);
-      this.cutters.push(cutter);
+      this.cutters.push(cutter); // adds local clipping planes to all materials
+
       var objs = this.viewer.sceneManager.objects;
       objs.forEach(obj => {
         obj.material.clippingPlanes = this.cutters.map(c => c.plane);
@@ -1824,7 +1860,7 @@ var Viewer = /*#__PURE__*/function () {
   function Viewer(_ref) {
     var {
       container,
-      postprocessing = false,
+      postprocessing = true,
       reflections = true
     } = _ref;
 

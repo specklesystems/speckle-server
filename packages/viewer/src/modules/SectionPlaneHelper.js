@@ -29,8 +29,17 @@ export default class SectionPlaneHelper {
 
   toggleTransformControls() {
     this.cutters.forEach( cutter => {
-      if ( cutter.control.mode === 'rotate' ) return cutter.control.setMode( 'translate' )
+      if ( cutter.control.mode === 'rotate' ) {
+        cutter.control.setMode( 'translate' )
+        cutter.control.showX = false
+        cutter.control.showY = false
+        cutter.control.showZ = true
+        return
+      }
       cutter.control.setMode( 'rotate' )
+      cutter.control.showX = true
+      cutter.control.showY = true
+      cutter.control.showZ = false
     } )
   }
 
@@ -48,6 +57,9 @@ export default class SectionPlaneHelper {
     cutter.control = new TransformControls( this.viewer.camera, this.viewer.renderer.domElement )
     cutter.control.setSize( 0.5 )
     cutter.control.space = 'local'
+    cutter.control.showX = false
+    cutter.control.showY = false
+    cutter.control.setRotationSnap( THREE.MathUtils.degToRad( 15 ) )
 
     cutter.control.addEventListener( 'change', () => this.viewer.render )
     cutter.control.addEventListener( 'dragging-changed', ( event ) => {
@@ -68,6 +80,7 @@ export default class SectionPlaneHelper {
 
     this.cutters.push( cutter )
 
+    // adds local clipping planes to all materials
     let objs = this.viewer.sceneManager.objects
     objs.forEach( obj => {
       obj.material.clippingPlanes = this.cutters.map( c => c.plane )

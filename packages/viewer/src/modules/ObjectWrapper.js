@@ -4,7 +4,6 @@
  */
 export default class ObjectWrapper {
   constructor( bufferGeometry, meta, geometryType ) {
-    if ( !bufferGeometry ) throw new Error( 'No geometry provided.' )
     this.bufferGeometry = bufferGeometry
     this.meta = meta
     this.geometryType = geometryType || 'solid'

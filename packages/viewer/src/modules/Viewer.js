@@ -10,7 +10,7 @@ import SectionPlaneHelper from './SectionPlaneHelper'
 
 export default class Viewer {
 
-  constructor( { container, postprocessing = false, reflections = true } ) {
+  constructor( { container, postprocessing = true, reflections = true } ) {
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()

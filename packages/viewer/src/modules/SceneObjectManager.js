@@ -51,7 +51,7 @@ export default class SceneObjectManager {
   // For now a small compromise to speed up dev; it is not the most memory
   // efficient approach.
   addObject( wrapper ) {
-    if ( !wrapper ) return
+    if ( !wrapper || !wrapper.bufferGeometry ) return
     switch ( wrapper.geometryType ) {
     case 'solid':
       // Do we have a defined material?
