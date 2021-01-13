@@ -4,7 +4,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
-import ObjectManager from './ObjectManager'
+import ObjectManager from './SceneObjectManager'
 import SelectionHelper from './SelectionHelper'
 import SectionPlaneHelper from './SectionPlaneHelper'
 
@@ -26,12 +26,13 @@ export default class Viewer {
     this.container.appendChild( this.renderer.domElement )
 
     this.reflections = reflections
-    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 256, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter } )
-    this.cubeCamera = new THREE.CubeCamera( this.camera.near, this.camera.far, cubeRenderTarget )
+    this.reflectionsNeedUpdate = true
+    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 512, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter } )
+    this.cubeCamera = new THREE.CubeCamera( 0.1, 10_000, cubeRenderTarget )
     this.scene.add( this.cubeCamera )
 
     this.controls = new OrbitControls( this.camera, this.renderer.domElement )
-    this.controls.enableDamping = true // an animation loop is required when either damping or auto-rotation are enabled
+    this.controls.enableDamping = true
     this.controls.dampingFactor = 0.05
     this.controls.screenSpacePanning = true
     this.controls.maxPolarAngle = Math.PI / 2
@@ -53,6 +54,8 @@ export default class Viewer {
     this.sectionPlaneHelper = new SectionPlaneHelper( this )
     this.sceneManager = new ObjectManager( this )
     this.selectionHelper = new SelectionHelper( this )
+
+    this.sectionPlaneHelper.createSectionPlane()
 
     this.initScene()
     this.animate()
@@ -134,14 +137,30 @@ export default class Viewer {
   }
 
   render() {
-    // TODO: the reflections map should be updated only when the scene is dirty.
-    if ( this.reflections ) {
-      // Note: this prevents "recurisve" render targets from happening!
-      this.sceneManager.transparentObjects.visible = false
+    if ( this.reflections && this.reflectionsNeedUpdate ) {
+      // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
+      // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
+      // First remove the env map from all materials
+      for ( let obj of this.sceneManager.objects ) {
+        obj.material.envMap = null
+      }
+
+      // Second, set a scene background color (renderer is transparent by default)
+      // and then finally update the cubemap camera.
+      this.scene.background = new THREE.Color( '#F0F3F8' )
       this.cubeCamera.update( this.renderer, this.scene )
-      this.sceneManager.transparentObjects.visible = true
+      this.scene.background = null
+
+      // Finally, re-set the env maps of all materials
+      for ( let obj of this.sceneManager.objects ) {
+        obj.material.envMap = this.cubeCamera.renderTarget.texture
+      }
+      this.reflectionsNeedUpdate = false
     }
 
+
+    // Render as usual
+    // TODO: post processing SSAO sucks so much currently it's off by default
     if ( this.postprocessing ){
       this.composer.render( this.scene, this.camera )
     }
@@ -153,5 +172,4 @@ export default class Viewer {
   dispose() {
     // TODO
   }
-
 }

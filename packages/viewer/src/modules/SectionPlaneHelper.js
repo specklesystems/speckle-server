@@ -2,63 +2,107 @@ import * as THREE from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 
 /**
- * WIP: A utility class
+ * WIP: A utility class for adding section planes to the scene.
+ * - 'S' shows/hides section planes
+ * - 's' toggles controls from translate to rotate
  */
 export default class SectionPlaneHelper {
 
   constructor( parent ) {
     this.viewer = parent
+    this.cutters = []
+    this.visible = false
 
-    this._createCutter()
+    window.addEventListener( 'keydown', ( event ) => {
+      if ( event.key === 's' ) {
+        this.toggleTransformControls()
+      }
+      if ( event.key === 'S' ) {
+        this.toggleSectionPlanes()
+      }
+    }, false )
   }
 
-  getClippingPlanes() {
-    return [ this.xyPlane ]
+  get planes() {
+    return this.cutters.map( cutter => cutter.plane )
   }
 
-  toggleControls() {
-    if ( this.xyControl.mode === 'rotate' ) return this.xyControl.setMode( 'translate' )
-    this.xyControl.setMode( 'rotate' )
+  toggleTransformControls() {
+    this.cutters.forEach( cutter => {
+      if ( cutter.control.mode === 'rotate' ) return cutter.control.setMode( 'translate' )
+      cutter.control.setMode( 'rotate' )
+    } )
   }
 
-  _createCutter() {
-    this.xyVisible = false
-    this.xyPlane = new THREE.Plane( new THREE.Vector3( 0, 0, -1 ), 1 )
-    const geometry = new THREE.PlaneGeometry( 1, 1, 1 )
-    this.xyHelper = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { color: 0xAFAFAF, transparent: true, opacity: 0.1, side: THREE.DoubleSide } ) )
-    this.xyHelper.visible = false
-    this.viewer.scene.add( this.xyHelper )
+  createSectionPlane() {
+    let cutter = { }
 
-    this.xyControl = new TransformControls( this.viewer.camera, this.viewer.renderer.domElement )
-    this.xyControl.setSize( 0.6 )
-    this.xyControl.space = 'local'
+    cutter.id = this.cutters.length
+    cutter.visible = false
+    cutter.plane = new THREE.Plane( new THREE.Vector3( 0, 0, -1 ), 1 )
 
-    this.xyControl.addEventListener( 'change', () => this.viewer.render )
-    this.xyControl.addEventListener( 'dragging-changed', ( event ) => {
-      if ( !this.xyVisible ) return
+    cutter.helper = new THREE.Mesh( new THREE.PlaneGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0xAFAFAF, transparent: true, opacity: 0.1, side: THREE.DoubleSide } ) )
+    cutter.helper.visible = false
+    this.viewer.scene.add( cutter.helper )
 
+    cutter.control = new TransformControls( this.viewer.camera, this.viewer.renderer.domElement )
+    cutter.control.setSize( 0.5 )
+    cutter.control.space = 'local'
+
+    cutter.control.addEventListener( 'change', () => this.viewer.render )
+    cutter.control.addEventListener( 'dragging-changed', ( event ) => {
+      if ( !cutter.visible ) return
       this.viewer.controls.enabled = !event.value
 
       // Reference: https://stackoverflow.com/a/52124409
       let normal = new THREE.Vector3()
       let point = new THREE.Vector3()
-      normal.set( 0, 0, -1 ).applyQuaternion( this.xyHelper.quaternion )
-      point.copy( this.xyHelper.position )
-      this.xyPlane.setFromNormalAndCoplanarPoint( normal, point )
+      normal.set( 0, 0, -1 ).applyQuaternion( cutter.helper.quaternion )
+      point.copy( cutter.helper.position )
+      cutter.plane.setFromNormalAndCoplanarPoint( normal, point )
     } )
 
-    this.xyControl.attach( this.xyHelper )
-    this.xyControl.visible = false
-    this.viewer.scene.add( this.xyControl )
+    cutter.control.attach( cutter.helper )
+    cutter.control.visible = false
+    this.viewer.scene.add( cutter.control )
+
+    this.cutters.push( cutter )
+
+    let objs = this.viewer.sceneManager.objects
+    objs.forEach( obj => {
+      obj.material.clippingPlanes = this.cutters.map( c => c.plane )
+    } )
   }
 
-  toggleCutter() {
-    if ( this.xyVisible ) this.hideCutter()
-    else this.showCutter()
+  toggleSectionPlanes() {
+    if ( this.visible ) this.hideSectionPlanes()
+    else this.showSectionPlanes()
+
+    this.visible = !this.visible
   }
 
-  showCutter() {
-    if ( this.xyVisible ) return
+  showSectionPlanes() {
+    this._matchSceneSize()
+
+    this.cutters.forEach( cutter => {
+      cutter.visible = true
+      cutter.helper.visible = true
+      cutter.control.visible = true
+    } )
+
+    this.viewer.renderer.localClippingEnabled = true
+  }
+
+  hideSectionPlanes() {
+    this.cutters.forEach( cutter => {
+      cutter.visible = false
+      cutter.helper.visible = false
+      cutter.control.visible = false
+    } )
+    this.viewer.renderer.localClippingEnabled = false
+  }
+
+  _matchSceneSize() {
     // Scales and translate helper to scene bbox center and origin
     const sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
     const sceneSize = new THREE.Vector3()
@@ -66,28 +110,17 @@ export default class SectionPlaneHelper {
     const sceneCenter = new THREE.Vector3()
     sceneBox.getCenter( sceneCenter )
 
-    this.xyHelper.scale.set( sceneSize.x, sceneSize.y, sceneSize.z )
-    this.xyHelper.position.set( sceneCenter.x, sceneCenter.y, sceneCenter.z )
+    this.cutters.forEach( cutter => {
+      cutter.helper.scale.set( sceneSize.x > 0 ? sceneSize.x : 1, sceneSize.y > 0 ? sceneSize.y : 1, sceneSize.z >0 ? sceneSize.z : 1 )
+      cutter.helper.position.set( sceneCenter.x, sceneCenter.y, sceneCenter.z )
 
-    let normal = new THREE.Vector3()
-    let point = new THREE.Vector3()
-    normal.set( 0, 0, -1 ).applyQuaternion( this.xyHelper.quaternion )
-    point.copy( this.xyHelper.position )
-    this.xyPlane.setFromNormalAndCoplanarPoint( normal, point )
+      let normal = new THREE.Vector3()
+      let point = new THREE.Vector3()
+      normal.set( 0, 0, -1 ).applyQuaternion( cutter.helper.quaternion )
+      point.copy( cutter.helper.position )
+      cutter.plane.setFromNormalAndCoplanarPoint( normal, point )
+    } )
 
-    this.xyVisible = true
-    this.xyHelper.visible = true
-    this.xyControl.visible = true
-
-    this.viewer.renderer.localClippingEnabled = true
-  }
-
-  hideCutter() {
-    if ( !this.xyVisible ) return
-    this.xyVisible = false
-    this.xyHelper.visible = false
-    this.xyControl.visible = false
-    this.viewer.renderer.localClippingEnabled = false
   }
 
 }

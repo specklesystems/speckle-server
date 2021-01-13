@@ -658,6 +658,7 @@ function _asyncIterator(iterable) { var method; if (typeof Symbol !== "undefined
 
 /**
  * Simple client that streams object info from a Speckle Server.
+ * TODO: This should be split from the viewer into its own package.
  */
 var ObjectLoader = /*#__PURE__*/function () {
   function ObjectLoader(_ref) {
@@ -845,10 +846,40 @@ var ObjectLoader = /*#__PURE__*/function () {
 
 /***/ }),
 
-/***/ "./src/modules/ObjectManager.js":
+/***/ "./src/modules/ObjectWrapper.js":
 /*!**************************************!*\
-  !*** ./src/modules/ObjectManager.js ***!
+  !*** ./src/modules/ObjectWrapper.js ***!
   \**************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ ObjectWrapper
+/* harmony export */ });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+/**
+ * Class that wraps around a buffer geometry and any remaining speckle object
+ * metadata. Used to match the two in the renderer.
+ */
+var ObjectWrapper = function ObjectWrapper(bufferGeometry, meta, geometryType) {
+  _classCallCheck(this, ObjectWrapper);
+
+  if (!bufferGeometry) throw new Error('No geometry provided.');
+  this.bufferGeometry = bufferGeometry;
+  this.meta = meta;
+  this.geometryType = geometryType || 'solid';
+};
+
+
+
+/***/ }),
+
+/***/ "./src/modules/SceneObjectManager.js":
+/*!*******************************************!*\
+  !*** ./src/modules/SceneObjectManager.js ***!
+  \*******************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -889,55 +920,30 @@ var SceneObjectManager = /*#__PURE__*/function () {
       roughness: 1,
       metalness: 0,
       side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
-      clippingPlanes: this.viewer.sectionPlaneHelper.getClippingPlanes()
+      envMap: this.viewer.cubeCamera.renderTarget.texture
     });
     this.transparentMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       color: 0xA0A4A8,
       emissive: 0x0,
-      roughness: 0.2,
-      metalness: 0.26,
+      roughness: 0,
+      metalness: 0.5,
       side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
       transparent: true,
       opacity: 0.4,
-      envMap: this.viewer.cubeCamera.renderTarget.texture,
-      clippingPlanes: this.viewer.sectionPlaneHelper.getClippingPlanes()
+      envMap: this.viewer.cubeCamera.renderTarget.texture
     });
     this.objectIds = [];
     this.zoomExtentsDebounce = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
-      this.zoomExtents();
+      this._postLoadFunction();
     }, 200);
   }
 
   _createClass(SceneObjectManager, [{
-    key: "_argbToRGB",
-    value: function _argbToRGB(argb) {
-      return '#' + ('000000' + (argb & 0xFFFFFF).toString(16)).slice(-6);
-    }
-  }, {
-    key: "_normaliseColor",
-    value: function _normaliseColor(color) {
-      var hsl = {};
-      color.getHSL(hsl);
-
-      if (hsl.s + hsl.l > 1) {
-        while (hsl.s + hsl.l > 1) {
-          hsl.s -= 0.05;
-          hsl.l -= 0.05;
-        }
-      }
-
-      if (hsl.l > 0.68) {
-        hsl.l = 0.68;
-      }
-
-      color.setHSL(hsl.h, hsl.s, hsl.l);
-    } // Note: we might switch later down the line from cloning materials to solely
+    key: "addObject",
+    // Note: we might switch later down the line from cloning materials to solely
     // using a few "default" ones and controlling color through vertex colors.
     // For now a small compromise to speed up dev; it is not the most memory
     // efficient approach.
-
-  }, {
-    key: "addObject",
     value: function addObject(wrapper) {
       switch (wrapper.geometryType) {
         case 'solid':
@@ -951,19 +957,25 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
             if (renderMat.opacity !== 1) {
               var material = this.transparentMaterial.clone();
-              material.clippingPlanes = this.viewer.sectionPlaneHelper.getClippingPlanes();
+              material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
               material.color = color;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
               var _material = this.solidMaterial.clone();
 
-              _material.clippingPlanes = this.viewer.sectionPlaneHelper.getClippingPlanes();
+              _material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
               _material.color = color;
+              _material.metalness = renderMat.metalness;
+              if (_material.metalness !== 0) _material.roughness = 0.1;
+              if (_material.metalness > 0.5) console.log(color);
               this.addSolid(wrapper, _material);
             }
           } else {
             // If we don't have defined material, just use the default
-            this.addSolid(wrapper);
+            var _material2 = this.solidMaterial.clone();
+
+            _material2.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+            this.addSolid(wrapper, _material2);
           }
 
           break;
@@ -1020,7 +1032,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "removeAllObjects",
     value: function removeAllObjects() {
-      for (var obj of [...this.solidObjects.children, ...this.transparentObjects.children]) {
+      for (var obj of this.objects) {
         if (obj.geometry) {
           obj.geometry.dispose();
         }
@@ -1029,6 +1041,16 @@ var SceneObjectManager = /*#__PURE__*/function () {
       this.solidObjects.clear();
       this.transparentObjects.clear();
       this.objectIds = [];
+
+      this._postLoadFunction();
+    }
+  }, {
+    key: "_postLoadFunction",
+    value: function _postLoadFunction() {
+      this.zoomExtents();
+      this.viewer.reflectionsNeedUpdate = true;
+
+      this.viewer.sectionPlaneHelper._matchSceneSize();
     }
   }, {
     key: "zoomToObject",
@@ -1040,7 +1062,14 @@ var SceneObjectManager = /*#__PURE__*/function () {
     key: "zoomExtents",
     value: function zoomExtents() {
       var bboxTarget = this.userObjects;
-      if (this.userObjects.children.length === 0) bboxTarget = this.scene;
+
+      if (this.objects.length === 0) {
+        var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
+
+        this.zoomToBox(_box);
+        return;
+      }
+
       var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(bboxTarget);
       this.zoomToBox(box);
     } // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
@@ -1064,40 +1093,45 @@ var SceneObjectManager = /*#__PURE__*/function () {
       this.viewer.camera.position.copy(this.viewer.controls.target).sub(direction);
       this.viewer.controls.update();
     }
+  }, {
+    key: "_argbToRGB",
+    value: function _argbToRGB(argb) {
+      return '#' + ('000000' + (argb & 0xFFFFFF).toString(16)).slice(-6);
+    }
+  }, {
+    key: "_normaliseColor",
+    value: function _normaliseColor(color) {
+      // Note: full of magic numbers that will need changing once global scene
+      // is properly set up; also to test with materials coming from other software too...
+      var hsl = {};
+      color.getHSL(hsl);
+
+      if (hsl.s + hsl.l > 1) {
+        while (hsl.s + hsl.l > 1) {
+          hsl.s -= 0.05;
+          hsl.l -= 0.05;
+        }
+      }
+
+      if (hsl.l > 0.6) {
+        hsl.l = 0.6;
+      }
+
+      if (hsl.l < 0.3) {
+        hsl.l = 0.3;
+      }
+
+      color.setHSL(hsl.h, hsl.s, hsl.l);
+    }
+  }, {
+    key: "objects",
+    get: function get() {
+      return [...this.solidObjects.children, ...this.transparentObjects.children];
+    }
   }]);
 
   return SceneObjectManager;
 }();
-
-
-
-/***/ }),
-
-/***/ "./src/modules/ObjectWrapper.js":
-/*!**************************************!*\
-  !*** ./src/modules/ObjectWrapper.js ***!
-  \**************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => /* binding */ ObjectWrapper
-/* harmony export */ });
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Class that wraps around a buffer geometry and any remaining speckle object
- * metadata. Used to match the two in the renderer.
- */
-var ObjectWrapper = function ObjectWrapper(bufferGeometry, meta, geometryType) {
-  _classCallCheck(this, ObjectWrapper);
-
-  if (!bufferGeometry) throw new Error('No geometry provided.');
-  this.bufferGeometry = bufferGeometry;
-  this.meta = meta;
-  this.geometryType = geometryType || 'solid';
-};
 
 
 
@@ -1125,7 +1159,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 /**
- * WIP: A utility class
+ * WIP: A utility class for adding section planes to the scene.
+ * - 'S' shows/hides section planes
+ * - 's' toggles controls from translate to rotate
  */
 
 var SectionPlaneHelper = /*#__PURE__*/function () {
@@ -1133,88 +1169,116 @@ var SectionPlaneHelper = /*#__PURE__*/function () {
     _classCallCheck(this, SectionPlaneHelper);
 
     this.viewer = parent;
+    this.cutters = [];
+    this.visible = false;
+    window.addEventListener('keydown', event => {
+      if (event.key === 's') {
+        this.toggleTransformControls();
+      }
 
-    this._createCutter();
+      if (event.key === 'S') {
+        this.toggleSectionPlanes();
+      }
+    }, false);
   }
 
   _createClass(SectionPlaneHelper, [{
-    key: "getClippingPlanes",
-    value: function getClippingPlanes() {
-      return [this.xyPlane];
+    key: "toggleTransformControls",
+    value: function toggleTransformControls() {
+      this.cutters.forEach(cutter => {
+        if (cutter.control.mode === 'rotate') return cutter.control.setMode('translate');
+        cutter.control.setMode('rotate');
+      });
     }
   }, {
-    key: "toggleControls",
-    value: function toggleControls() {
-      if (this.xyControl.mode === 'rotate') return this.xyControl.setMode('translate');
-      this.xyControl.setMode('rotate');
-    }
-  }, {
-    key: "_createCutter",
-    value: function _createCutter() {
-      this.xyVisible = false;
-      this.xyPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1);
-      var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1, 1);
-      this.xyHelper = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
+    key: "createSectionPlane",
+    value: function createSectionPlane() {
+      var cutter = {};
+      cutter.id = this.cutters.length;
+      cutter.visible = false;
+      cutter.plane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1);
+      cutter.helper = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1, 1), new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
         color: 0xAFAFAF,
         transparent: true,
         opacity: 0.1,
         side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
       }));
-      this.xyHelper.visible = false;
-      this.viewer.scene.add(this.xyHelper);
-      this.xyControl = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
-      this.xyControl.setSize(0.6);
-      this.xyControl.space = 'local';
-      this.xyControl.addEventListener('change', () => this.viewer.render);
-      this.xyControl.addEventListener('dragging-changed', event => {
-        if (!this.xyVisible) return;
+      cutter.helper.visible = false;
+      this.viewer.scene.add(cutter.helper);
+      cutter.control = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
+      cutter.control.setSize(0.5);
+      cutter.control.space = 'local';
+      cutter.control.addEventListener('change', () => this.viewer.render);
+      cutter.control.addEventListener('dragging-changed', event => {
+        if (!cutter.visible) return;
         this.viewer.controls.enabled = !event.value; // Reference: https://stackoverflow.com/a/52124409
 
         var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
         var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        normal.set(0, 0, -1).applyQuaternion(this.xyHelper.quaternion);
-        point.copy(this.xyHelper.position);
-        this.xyPlane.setFromNormalAndCoplanarPoint(normal, point);
+        normal.set(0, 0, -1).applyQuaternion(cutter.helper.quaternion);
+        point.copy(cutter.helper.position);
+        cutter.plane.setFromNormalAndCoplanarPoint(normal, point);
       });
-      this.xyControl.attach(this.xyHelper);
-      this.xyControl.visible = false;
-      this.viewer.scene.add(this.xyControl);
+      cutter.control.attach(cutter.helper);
+      cutter.control.visible = false;
+      this.viewer.scene.add(cutter.control);
+      this.cutters.push(cutter);
+      var objs = this.viewer.sceneManager.objects;
+      objs.forEach(obj => {
+        obj.material.clippingPlanes = this.cutters.map(c => c.plane);
+      });
     }
   }, {
-    key: "toggleCutter",
-    value: function toggleCutter() {
-      if (this.xyVisible) this.hideCutter();else this.showCutter();
+    key: "toggleSectionPlanes",
+    value: function toggleSectionPlanes() {
+      if (this.visible) this.hideSectionPlanes();else this.showSectionPlanes();
+      this.visible = !this.visible;
     }
   }, {
-    key: "showCutter",
-    value: function showCutter() {
-      if (this.xyVisible) return; // Scales and translate helper to scene bbox center and origin
+    key: "showSectionPlanes",
+    value: function showSectionPlanes() {
+      this._matchSceneSize();
 
+      this.cutters.forEach(cutter => {
+        cutter.visible = true;
+        cutter.helper.visible = true;
+        cutter.control.visible = true;
+      });
+      this.viewer.renderer.localClippingEnabled = true;
+    }
+  }, {
+    key: "hideSectionPlanes",
+    value: function hideSectionPlanes() {
+      this.cutters.forEach(cutter => {
+        cutter.visible = false;
+        cutter.helper.visible = false;
+        cutter.control.visible = false;
+      });
+      this.viewer.renderer.localClippingEnabled = false;
+    }
+  }, {
+    key: "_matchSceneSize",
+    value: function _matchSceneSize() {
+      // Scales and translate helper to scene bbox center and origin
       var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
       var sceneSize = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
       sceneBox.getSize(sceneSize);
       var sceneCenter = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
       sceneBox.getCenter(sceneCenter);
-      this.xyHelper.scale.set(sceneSize.x, sceneSize.y, sceneSize.z);
-      this.xyHelper.position.set(sceneCenter.x, sceneCenter.y, sceneCenter.z);
-      var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      normal.set(0, 0, -1).applyQuaternion(this.xyHelper.quaternion);
-      point.copy(this.xyHelper.position);
-      this.xyPlane.setFromNormalAndCoplanarPoint(normal, point);
-      this.xyVisible = true;
-      this.xyHelper.visible = true;
-      this.xyControl.visible = true;
-      this.viewer.renderer.localClippingEnabled = true;
+      this.cutters.forEach(cutter => {
+        cutter.helper.scale.set(sceneSize.x > 0 ? sceneSize.x : 1, sceneSize.y > 0 ? sceneSize.y : 1, sceneSize.z > 0 ? sceneSize.z : 1);
+        cutter.helper.position.set(sceneCenter.x, sceneCenter.y, sceneCenter.z);
+        var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        normal.set(0, 0, -1).applyQuaternion(cutter.helper.quaternion);
+        point.copy(cutter.helper.position);
+        cutter.plane.setFromNormalAndCoplanarPoint(normal, point);
+      });
     }
   }, {
-    key: "hideCutter",
-    value: function hideCutter() {
-      if (!this.xyVisible) return;
-      this.xyVisible = false;
-      this.xyHelper.visible = false;
-      this.xyControl.visible = false;
-      this.viewer.renderer.localClippingEnabled = false;
+    key: "planes",
+    get: function get() {
+      return this.cutters.map(cutter => cutter.plane);
     }
   }]);
 
@@ -1380,7 +1444,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var normalizedPosition = this._getNormalisedClickPosition(e);
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
-      var intersectedObjects = this.raycaster.intersectObjects([...this.viewer.sceneManager.solidObjects.children, ...this.viewer.sceneManager.transparentObjects.children]);
+      var intersectedObjects = this.raycaster.intersectObjects(this.viewer.sceneManager.objects);
       return intersectedObjects;
     }
   }, {
@@ -1702,7 +1766,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/postprocessing/EffectComposer.js */ "./node_modules/three/examples/jsm/postprocessing/EffectComposer.js");
 /* harmony import */ var three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/postprocessing/SSAOPass.js */ "./node_modules/three/examples/jsm/postprocessing/SSAOPass.js");
 /* harmony import */ var three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/libs/stats.module.js */ "./node_modules/three/examples/jsm/libs/stats.module.js");
-/* harmony import */ var _ObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./ObjectManager */ "./src/modules/ObjectManager.js");
+/* harmony import */ var _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./SceneObjectManager */ "./src/modules/SceneObjectManager.js");
 /* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
 /* harmony import */ var _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./SectionPlaneHelper */ "./src/modules/SectionPlaneHelper.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1745,16 +1809,16 @@ var Viewer = /*#__PURE__*/function () {
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
     this.container.appendChild(this.renderer.domElement);
     this.reflections = reflections;
-    var cubeRenderTarget = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLCubeRenderTarget(256, {
+    this.reflectionsNeedUpdate = true;
+    var cubeRenderTarget = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLCubeRenderTarget(512, {
       format: three__WEBPACK_IMPORTED_MODULE_0__.RGBFormat,
       generateMipmaps: true,
       minFilter: three__WEBPACK_IMPORTED_MODULE_0__.LinearMipmapLinearFilter
     });
-    this.cubeCamera = new three__WEBPACK_IMPORTED_MODULE_0__.CubeCamera(this.camera.near, this.camera.far, cubeRenderTarget);
+    this.cubeCamera = new three__WEBPACK_IMPORTED_MODULE_0__.CubeCamera(0.1, 10000, cubeRenderTarget);
     this.scene.add(this.cubeCamera);
     this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-
+    this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = true;
     this.controls.maxPolarAngle = Math.PI / 2;
@@ -1769,8 +1833,9 @@ var Viewer = /*#__PURE__*/function () {
     this.container.appendChild(this.stats.dom);
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
     this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(this);
-    this.sceneManager = new _ObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(this);
+    this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(this);
     this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(this);
+    this.sectionPlaneHelper.createSectionPlane();
     this.initScene();
     this.animate();
   }
@@ -1845,13 +1910,28 @@ var Viewer = /*#__PURE__*/function () {
   }, {
     key: "render",
     value: function render() {
-      // TODO: the reflections map should be updated only when the scene is dirty.
-      if (this.reflections) {
-        // Note: this prevents "recurisve" render targets from happening!
-        this.sceneManager.transparentObjects.visible = false;
+      if (this.reflections && this.reflectionsNeedUpdate) {
+        // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
+        // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
+        // First remove the env map from all materials
+        for (var obj of this.sceneManager.objects) {
+          obj.material.envMap = null;
+        } // Second, set a scene background color (renderer is transparent by default)
+        // and then finally update the cubemap camera.
+
+
+        this.scene.background = new three__WEBPACK_IMPORTED_MODULE_0__.Color('#F0F3F8');
         this.cubeCamera.update(this.renderer, this.scene);
-        this.sceneManager.transparentObjects.visible = true;
-      }
+        this.scene.background = null; // Finally, re-set the env maps of all materials
+
+        for (var _obj of this.sceneManager.objects) {
+          _obj.material.envMap = this.cubeCamera.renderTarget.texture;
+        }
+
+        this.reflectionsNeedUpdate = false;
+      } // Render as usual
+      // TODO: post processing SSAO sucks so much currently it's off by default
+
 
       if (this.postprocessing) {
         this.composer.render(this.scene, this.camera);

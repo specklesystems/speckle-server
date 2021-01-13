@@ -1,5 +1,6 @@
 /**
  * Simple client that streams object info from a Speckle Server.
+ * TODO: This should be split from the viewer into its own package.
  */
 export default class ObjectLoader {
 

@@ -28,15 +28,15 @@
       <div class="row" style="padding-top: 20px">
         <div class="twelve columns">
           <h3>Viewer</h3>
-          <p>Here are some buttons:</p>
+          <p>Click an object to select it. Double click it to focus on it. Here are some extra buttons:</p>
         </div>
         <div class="twelve columns">
           <button onclick="v.sceneManager.zoomExtents()">Zoom Extents</button>
           <button onclick="v.postprocessing = !v.postprocessing">Postprocessing Toggle</button>
-          <button onclick="v.reflections = !v.reflections">Reflections Toggle</button>
+          <!-- <button onclick="v.reflections = !v.reflections">Reflections Toggle</button> -->
           <br>
-          <button onclick="v.sectionPlaneHelper.toggleCutter()">WIP!! Section</button>
-          <button onclick="v.sectionPlaneHelper.toggleControls()">WIP!! Toggle Section Controls</button>
+          <button onclick="v.sectionPlaneHelper.toggleSectionPlanes()">Show Section Plane</button>
+          press 's' to rotate/drag section plane
         </div>
         <div class="twelve columns">
           <input id="objectIdInput" type="text" name="objectId" placeholder="Object Id" class=""/>
@@ -47,8 +47,9 @@
           <!-- <button onclick="LoadData('f194b566c05c603dce1b3250c4ecf71d')">Load Jet</button> -->
           <!-- <button onclick="LoadData('431ebaa22946b1bb6f0ae86bf4b2a284')">Load Jet</button> -->
           <button onclick="LoadData('9a00ad76438d06612968190546552c56')">Load Fuselage</button>
-          <button onclick="LoadData('f4fb19d40a580db6d4fefff2d7e432a4')">Load Strange Thing</button>
+          <button onclick="LoadData('3242eb9db2199b83b7045507917689ae')">Load Strange Thing</button>
           <button onclick="LoadData('dcfab57146c2f90953f6c496727a4864')">Load Other Strange Thing</button>
+          <button onclick="LoadData('edea5eee747042d1318d8bd428724842')">Load Shiny Tube</button>
           <button onclick="v.sceneManager.removeAllObjects()">Dispose Everything</button>
         </div>
       </div>
