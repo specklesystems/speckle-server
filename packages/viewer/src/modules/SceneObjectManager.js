@@ -161,7 +161,7 @@ export default class SceneObjectManager {
 
   // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
   zoomToBox( box ) {
-    const fitOffset = 1.2
+    const fitOffset = 0.9
 
     const size = box.getSize( new THREE.Vector3() )
     const center = box.getCenter( new THREE.Vector3() )

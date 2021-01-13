@@ -33,11 +33,11 @@ export default class Viewer {
 
     this.controls = new OrbitControls( this.camera, this.renderer.domElement )
     this.controls.enableDamping = true
-    this.controls.dampingFactor = 0.05
+    this.controls.dampingFactor = 0.1
     this.controls.screenSpacePanning = true
     this.controls.maxPolarAngle = Math.PI / 2
     this.controls.panSpeed = 0.8
-    this.controls.rotateSpeed = 0.5
+    this.controls.rotateSpeed = 0.8
 
     this.composer = new EffectComposer( this.renderer )
 

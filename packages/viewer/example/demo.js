@@ -1129,7 +1129,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "zoomToBox",
     value: function zoomToBox(box) {
-      var fitOffset = 1.2;
+      var fitOffset = 0.9;
       var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       var center = box.getCenter(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       var maxSize = Math.max(size.x, size.y, size.z);
@@ -1437,7 +1437,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
       _this.handleSelection(selectionObjects);
     }); // Doubleclicks on touch devices
-    // ref: http://jsfiddle.net/brettwp/J4djY/
+    // http://jsfiddle.net/brettwp/J4djY/
 
 
     _this.tapTimeout;
@@ -1448,7 +1448,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       _this.touchLocation = e.targetTouches[0];
     });
 
-    _this.viewer.renderer.domElement.addEventListener('touchend', e => {
+    _this.viewer.renderer.domElement.addEventListener('touchend', event => {
       var currentTime = new Date().getTime();
       var tapLength = currentTime - _this.lastTap;
       clearTimeout(_this.tapTimeout);
@@ -1458,8 +1458,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
         _this.emit('object-doubleclicked', selectionObjects);
 
-        _this.handleDoubleClick(selectionObjects);
-
+        if (!_this.orbiting) _this.handleDoubleClick(selectionObjects);
         event.preventDefault();
       } else {
         _this.tapTimeout = setTimeout(function () {
@@ -1915,11 +1914,11 @@ var Viewer = /*#__PURE__*/function () {
     this.scene.add(this.cubeCamera);
     this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
+    this.controls.dampingFactor = 0.1;
     this.controls.screenSpacePanning = true;
     this.controls.maxPolarAngle = Math.PI / 2;
     this.controls.panSpeed = 0.8;
-    this.controls.rotateSpeed = 0.5;
+    this.controls.rotateSpeed = 0.8;
     this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(this.renderer);
     this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight);
     this.ssaoPass.kernelRadius = 0.03;

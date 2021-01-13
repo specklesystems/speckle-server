@@ -31,19 +31,20 @@ export default class SelectionHelper extends EventEmitter {
     } )
 
     // Doubleclicks on touch devices
-    // ref: http://jsfiddle.net/brettwp/J4djY/
+    // http://jsfiddle.net/brettwp/J4djY/
     this.tapTimeout
     this.lastTap = 0
     this.touchLocation
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
-    this.viewer.renderer.domElement.addEventListener( 'touchend', ( e ) => {
+    this.viewer.renderer.domElement.addEventListener( 'touchend', ( event ) => {
       var currentTime = new Date().getTime()
       var tapLength = currentTime - this.lastTap
       clearTimeout( this.tapTimeout )
       if ( tapLength < 500 && tapLength > 0 ) {
         let selectionObjects = this.getClickedObjects( this.touchLocation )
         this.emit( 'object-doubleclicked', selectionObjects )
-        this.handleDoubleClick( selectionObjects )
+        if ( !this.orbiting )
+          this.handleDoubleClick( selectionObjects )
         event.preventDefault()
       } else {
         this.tapTimeout = setTimeout( function() {
