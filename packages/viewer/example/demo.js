@@ -1001,6 +1001,10 @@ var SceneObjectManager = /*#__PURE__*/function () {
     // using a few "default" ones and controlling color through vertex colors.
     // For now a small compromise to speed up dev; it is not the most memory
     // efficient approach.
+    // To support big models we might need to merge everything in buffer geometries,
+    // and control things separately to squeeze those sweet FPS (esp mobile); but
+    // this conflicts a bit with the interactivity requirements of the viewer, esp.
+    // the TODO ones (colour by property).
     value: function addObject(wrapper) {
       if (!wrapper || !wrapper.bufferGeometry) return;
 
@@ -1125,6 +1129,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
       var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(bboxTarget);
       this.zoomToBox(box);
     } // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
+    // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
+    // look better. Could we do the same thing somehow when controls stop moving?
 
   }, {
     key: "zoomToBox",
