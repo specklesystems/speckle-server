@@ -72,7 +72,7 @@ export default class SceneObjectManager {
           material.color = color
           material.metalness = renderMat.metalness
           if ( material.metalness !== 0 ) material.roughness = 0.1
-          if ( material.metalness > 0.5 ) console.log( color )
+          if ( material.metalness > 0.8 ) material.color = new THREE.Color( '#CDCDCD' ) // hack for rhino metal materials being black FFS
           this.addSolid( wrapper, material )
         }
       } else {

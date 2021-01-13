@@ -967,7 +967,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
               _material.color = color;
               _material.metalness = renderMat.metalness;
               if (_material.metalness !== 0) _material.roughness = 0.1;
-              if (_material.metalness > 0.5) console.log(color);
+              if (_material.metalness > 0.8) _material.color = new three__WEBPACK_IMPORTED_MODULE_0__.Color('#CDCDCD'); // hack for rhino metal materials being black FFS
+
               this.addSolid(wrapper, _material);
             }
           } else {
