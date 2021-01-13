@@ -39,8 +39,12 @@ export default class Coverter {
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
     if ( this[`${type}ToBufferGeometry`] ) {
-      callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )
-      return
+      try {
+        callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )
+        return
+      } catch ( e ) {
+        console.warn( `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}` )
+      }
     }
 
     let target = obj.data || obj
@@ -57,8 +61,6 @@ export default class Coverter {
         return
       } catch ( e ) {
         console.warn( `(Traversing) Failed to convert obj with id: ${obj.id}` )
-        console.warn( obj )
-        throw e
       }
     }
 

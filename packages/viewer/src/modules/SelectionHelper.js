@@ -30,9 +30,31 @@ export default class SelectionHelper extends EventEmitter {
       this.handleSelection( selectionObjects )
     } )
 
-    // TODO: figure out doubleclicks on touch devices
+    // Doubleclicks on touch devices
+    // ref: http://jsfiddle.net/brettwp/J4djY/
+    this.tapTimeout
+    this.lastTap = 0
+    this.touchLocation
+    this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
+    this.viewer.renderer.domElement.addEventListener( 'touchend', ( e ) => {
+      var currentTime = new Date().getTime()
+      var tapLength = currentTime - this.lastTap
+      clearTimeout( this.tapTimeout )
+      if ( tapLength < 500 && tapLength > 0 ) {
+        let selectionObjects = this.getClickedObjects( this.touchLocation )
+        this.emit( 'object-doubleclicked', selectionObjects )
+        this.handleDoubleClick( selectionObjects )
+        event.preventDefault()
+      } else {
+        this.tapTimeout = setTimeout( function() {
+          clearTimeout( this.tapTimeout )
+        }, 500 )
+      }
+      this.lastTap = currentTime
+    } )
+
     this.viewer.renderer.domElement.addEventListener( 'dblclick', ( e ) => {
-      if ( this.orbiting ) return
+      // if ( this.orbiting ) return // not needed for zoom to thing?
 
       let selectionObjects = this.getClickedObjects( e )
 

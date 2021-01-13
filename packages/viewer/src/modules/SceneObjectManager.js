@@ -39,7 +39,7 @@ export default class SceneObjectManager {
 
 
     this.objectIds = []
-    this.zoomExtentsDebounce = debounce( () => { this._postLoadFunction() }, 200 )
+    this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
   }
 
   get objects() {
@@ -52,6 +52,8 @@ export default class SceneObjectManager {
   // efficient approach.
   addObject( wrapper ) {
     if ( !wrapper || !wrapper.bufferGeometry ) return
+
+
     switch ( wrapper.geometryType ) {
     case 'solid':
       // Do we have a defined material?
@@ -91,7 +93,7 @@ export default class SceneObjectManager {
       break
     }
 
-    this.zoomExtentsDebounce()
+    this.postLoad()
   }
 
   addSolid( wrapper, material ) {
@@ -119,13 +121,7 @@ export default class SceneObjectManager {
   }
 
   removeObject( id ) {
-    let obj = this.userObjects.children.find( o => o.uuid === id )
-    if ( obj ){
-      obj.geometry.dispose()
-      this.userObjects.remove( obj )
-    } else {
-      console.warn( `Failed to remove object with id: ${id}: no object found.` )
-    }
+    // TODO
   }
 
   removeAllObjects() {

@@ -8,7 +8,7 @@ window.v = v
 
 window.LoadData = async function LoadData( id ) {
 
-  v.sceneManager.removeAllObjects()
+  // v.sceneManager.removeAllObjects()
 
   id = id || document.getElementById( 'objectIdInput' ).value
   let loader = new ObjectLoader( {

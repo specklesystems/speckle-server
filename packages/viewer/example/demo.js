@@ -230,7 +230,7 @@ window.v = v;
 
 window.LoadData = /*#__PURE__*/function () {
   var _LoadData = _asyncToGenerator(function* (id) {
-    v.sceneManager.removeAllObjects();
+    // v.sceneManager.removeAllObjects()
     id = id || document.getElementById('objectIdInput').value;
     var loader = new _modules_ObjectLoader__WEBPACK_IMPORTED_MODULE_1__.default({
       serverUrl: 'https://staging.speckle.dev',
@@ -370,8 +370,12 @@ var Coverter = /*#__PURE__*/function () {
         var type = this.getSpeckleType(obj);
 
         if (this[type + "ToBufferGeometry"]) {
-          callback(yield this[type + "ToBufferGeometry"](obj.data || obj));
-          return;
+          try {
+            callback(yield this[type + "ToBufferGeometry"](obj.data || obj));
+            return;
+          } catch (e) {
+            console.warn("(Traversing - direct) Failed to convert " + type + " with id: " + obj.id);
+          }
         }
 
         var target = obj.data || obj; // Check if the object has a display value of sorts
@@ -391,8 +395,6 @@ var Coverter = /*#__PURE__*/function () {
             return;
           } catch (e) {
             console.warn("(Traversing) Failed to convert obj with id: " + obj.id);
-            console.warn(obj);
-            throw e;
           }
         } // Last attempt: iterate through all object keys and see if we can display anything!
         // traverses the object in case there's any sub-objects we can convert.
@@ -988,7 +990,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
       envMap: this.viewer.cubeCamera.renderTarget.texture
     });
     this.objectIds = [];
-    this.zoomExtentsDebounce = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+    this.postLoad = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
       this._postLoadFunction();
     }, 200);
   }
@@ -1047,7 +1049,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
           break;
       }
 
-      this.zoomExtentsDebounce();
+      this.postLoad();
     }
   }, {
     key: "addSolid",
@@ -1077,15 +1079,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
     }
   }, {
     key: "removeObject",
-    value: function removeObject(id) {
-      var obj = this.userObjects.children.find(o => o.uuid === id);
-
-      if (obj) {
-        obj.geometry.dispose();
-        this.userObjects.remove(obj);
-      } else {
-        console.warn("Failed to remove object with id: " + id + ": no object found.");
-      }
+    value: function removeObject(id) {// TODO
     }
   }, {
     key: "removeAllObjects",
@@ -1442,12 +1436,42 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var selectionObjects = _this.getClickedObjects(e);
 
       _this.handleSelection(selectionObjects);
-    }); // TODO: figure out doubleclicks on touch devices
+    }); // Doubleclicks on touch devices
+    // ref: http://jsfiddle.net/brettwp/J4djY/
 
+
+    _this.tapTimeout;
+    _this.lastTap = 0;
+    _this.touchLocation;
+
+    _this.viewer.renderer.domElement.addEventListener('touchstart', e => {
+      _this.touchLocation = e.targetTouches[0];
+    });
+
+    _this.viewer.renderer.domElement.addEventListener('touchend', e => {
+      var currentTime = new Date().getTime();
+      var tapLength = currentTime - _this.lastTap;
+      clearTimeout(_this.tapTimeout);
+
+      if (tapLength < 500 && tapLength > 0) {
+        var selectionObjects = _this.getClickedObjects(_this.touchLocation);
+
+        _this.emit('object-doubleclicked', selectionObjects);
+
+        _this.handleDoubleClick(selectionObjects);
+
+        event.preventDefault();
+      } else {
+        _this.tapTimeout = setTimeout(function () {
+          clearTimeout(this.tapTimeout);
+        }, 500);
+      }
+
+      _this.lastTap = currentTime;
+    });
 
     _this.viewer.renderer.domElement.addEventListener('dblclick', e => {
-      if (_this.orbiting) return;
-
+      // if ( this.orbiting ) return // not needed for zoom to thing?
       var selectionObjects = _this.getClickedObjects(e);
 
       _this.emit('object-doubleclicked', selectionObjects);
@@ -1894,6 +1918,8 @@ var Viewer = /*#__PURE__*/function () {
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = true;
     this.controls.maxPolarAngle = Math.PI / 2;
+    this.controls.panSpeed = 0.8;
+    this.controls.rotateSpeed = 0.5;
     this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(this.renderer);
     this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight);
     this.ssaoPass.kernelRadius = 0.03;
