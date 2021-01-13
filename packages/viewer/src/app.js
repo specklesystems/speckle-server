@@ -7,6 +7,9 @@ let v = new Viewer( { container: document.getElementById( 'renderer' ) } )
 window.v = v
 
 window.LoadData = async function LoadData( id ) {
+
+  v.sceneManager.removeAllObjects()
+
   id = id || document.getElementById( 'objectIdInput' ).value
   let loader = new ObjectLoader( {
     serverUrl: 'https://staging.speckle.dev',

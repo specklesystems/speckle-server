@@ -230,6 +230,7 @@ window.v = v;
 
 window.LoadData = /*#__PURE__*/function () {
   var _LoadData = _asyncToGenerator(function* (id) {
+    v.sceneManager.removeAllObjects();
     id = id || document.getElementById('objectIdInput').value;
     var loader = new _modules_ObjectLoader__WEBPACK_IMPORTED_MODULE_1__.default({
       serverUrl: 'https://staging.speckle.dev',
@@ -342,13 +343,16 @@ var Coverter = /*#__PURE__*/function () {
       var _traverseAndConvert = _asyncToGenerator(function* (obj, callback) {
         var _this = this;
 
-        // Handle primitives (string, ints, bools, bigints, etc.)
-        if (typeof obj !== 'object') return; // Populate references
-
-        if (obj.referencedId) obj = yield this.resolveReference(obj); // Traverse arrays
+        // Exit on primitives (string, ints, bools, bigints, etc.)
+        if (typeof obj !== 'object') return;
+        if (obj.referencedId) obj = yield this.resolveReference(obj); // Traverse arrays, and exit early (we don't want to iterate through many numbers)
 
         if (Array.isArray(obj)) {
           var _loop = function _loop(element) {
+            if (typeof element !== 'object') return {
+              v: void 0
+            }; // exit early for non-object based arrays
+
             _asyncToGenerator(function* () {
               return yield _this.traverseAndConvert(element, callback);
             })(); //iife so we don't block
@@ -356,7 +360,9 @@ var Coverter = /*#__PURE__*/function () {
           };
 
           for (var element of obj) {
-            _loop(element);
+            var _ret = _loop(element);
+
+            if (typeof _ret === "object") return _ret.v;
           }
         } // If we can convert it, we should invoke the respective conversion routine.
 
@@ -366,18 +372,38 @@ var Coverter = /*#__PURE__*/function () {
         if (this[type + "ToBufferGeometry"]) {
           callback(yield this[type + "ToBufferGeometry"](obj.data || obj));
           return;
-        } // Otherwise, traverse the object in case there's any sub-objects we can convert.
+        }
+
+        var target = obj.data || obj; // Check if the object has a display value of sorts
+
+        var displayValue = target['displayMesh'] || target['@displayMesh'] || target['displayValue'] || target['@displayValue'];
+
+        if (displayValue) {
+          displayValue = yield this.resolveReference(displayValue);
+          if (!displayValue.units) displayValue.units = obj.units;
+          var {
+            bufferGeometry
+          } = yield this.convert(displayValue);
+          callback(new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj)); // use the parent's metadata!
+
+          return;
+        } // Last attempt: iterate through all object keys and see if we can display anything!
+        // traverses the object in case there's any sub-objects we can convert.
 
 
         var _loop2 = function _loop2(prop) {
+          if (typeof target[prop] !== 'object') return "continue";
+
           _asyncToGenerator(function* () {
-            return yield _this.traverseAndConvert(obj.data[prop], callback);
+            return yield _this.traverseAndConvert(target[prop], callback);
           })(); //iife so we don't block
 
         };
 
-        for (var prop in obj.data) {
-          _loop2(prop);
+        for (var prop in target) {
+          var _ret2 = _loop2(prop);
+
+          if (_ret2 === "continue") continue;
         }
       });
 
@@ -397,12 +423,16 @@ var Coverter = /*#__PURE__*/function () {
   }, {
     key: "convert",
     value: function () {
-      var _convert = _asyncToGenerator(function* (obj, callback) {
+      var _convert = _asyncToGenerator(function* (obj) {
+        if (obj.referencedId) obj = yield this.resolveReference(obj);
         var type = this.getSpeckleType(obj);
-        if (this[type + "ToBufferGeometry"]) callback(yield this[type + "ToBufferGeometry"](obj.data || obj));else return;
+
+        if (this[type + "ToBufferGeometry"]) {
+          return yield this[type + "ToBufferGeometry"](obj.data || obj);
+        } else return null;
       });
 
-      function convert(_x3, _x4) {
+      function convert(_x3) {
         return _convert.apply(this, arguments);
       }
 
@@ -418,7 +448,8 @@ var Coverter = /*#__PURE__*/function () {
     key: "dechunk",
     value: function () {
       var _dechunk = _asyncToGenerator(function* (arr) {
-        // Handles pre-chunking objects, or arrs that have not been chunked
+        if (!arr) return arr; // Handles pre-chunking objects, or arrs that have not been chunked
+
         if (!arr[0].referencedId) return arr;
         var dechunked = [];
 
@@ -430,7 +461,7 @@ var Coverter = /*#__PURE__*/function () {
         return dechunked;
       });
 
-      function dechunk(_x5) {
+      function dechunk(_x4) {
         return _dechunk.apply(this, arguments);
       }
 
@@ -449,7 +480,7 @@ var Coverter = /*#__PURE__*/function () {
         if (obj.referencedId) return yield this.objectLoader.getObject(obj.referencedId);else return obj;
       });
 
-      function resolveReference(_x6) {
+      function resolveReference(_x5) {
         return _resolveReference.apply(this, arguments);
       }
 
@@ -467,17 +498,7 @@ var Coverter = /*#__PURE__*/function () {
       var type = 'Base';
       if (obj.data) type = obj.data.speckle_type ? obj.data.speckle_type.split('.').reverse()[0] : type;else type = obj.speckle_type ? obj.speckle_type.split('.').reverse()[0] : type;
       return type;
-    } // TODOs:
-    // async PointToBufferGeometry( obj ) {}
-    // async LineToBufferGeometry( obj ) {}
-    // async PolylineToBufferGeometry( obj ) {}
-    // async PolycurveToBufferGeometry( obj ) {}
-    // async CurveToBufferGeometry( obj ) {}
-    // async CircleToBufferGeometry( obj ) {}
-    // async ArcToBufferGeometry( obj ) {}
-    // async EllipseToBufferGeometry( obj ) {}
-    // async SurfaceToBufferGeometry( obj ) {}
-
+    }
   }, {
     key: "BrepToBufferGeometry",
     value: function () {
@@ -485,7 +506,8 @@ var Coverter = /*#__PURE__*/function () {
         if (!obj) return;
         var {
           bufferGeometry
-        } = yield this.MeshToBufferGeometry(yield this.resolveReference(obj.displayValue || obj.displayMesh));
+        } = yield this.MeshToBufferGeometry(yield this.resolveReference(obj.displayValue || obj.displayMesh)); // deletes known uneeded fields
+
         delete obj.displayMesh;
         delete obj.displayValue;
         delete obj.Edges;
@@ -499,7 +521,7 @@ var Coverter = /*#__PURE__*/function () {
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj);
       });
 
-      function BrepToBufferGeometry(_x7) {
+      function BrepToBufferGeometry(_x6) {
         return _BrepToBufferGeometry.apply(this, arguments);
       }
 
@@ -510,7 +532,8 @@ var Coverter = /*#__PURE__*/function () {
     value: function () {
       var _MeshToBufferGeometry = _asyncToGenerator(function* (obj) {
         if (!obj) return;
-        var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_2__.getConversionFactor)(obj.units);
+        var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_2__.getConversionFactor)(obj.units); // console.log( conversionFactor )
+
         var buffer = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
         var indices = [];
         var vertices = yield this.dechunk(obj.vertices);
@@ -540,12 +563,22 @@ var Coverter = /*#__PURE__*/function () {
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(buffer, obj);
       });
 
-      function MeshToBufferGeometry(_x8) {
+      function MeshToBufferGeometry(_x7) {
         return _MeshToBufferGeometry.apply(this, arguments);
       }
 
       return MeshToBufferGeometry;
-    }()
+    }() // TODOs:
+    // async PointToBufferGeometry( obj ) {}
+    // async LineToBufferGeometry( obj ) {}
+    // async PolylineToBufferGeometry( obj ) {}
+    // async PolycurveToBufferGeometry( obj ) {}
+    // async CurveToBufferGeometry( obj ) {}
+    // async CircleToBufferGeometry( obj ) {}
+    // async ArcToBufferGeometry( obj ) {}
+    // async EllipseToBufferGeometry( obj ) {}
+    // async SurfaceToBufferGeometry( obj ) {}
+
   }]);
 
   return Coverter;
@@ -945,6 +978,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
     // For now a small compromise to speed up dev; it is not the most memory
     // efficient approach.
     value: function addObject(wrapper) {
+      if (!wrapper) return;
+
       switch (wrapper.geometryType) {
         case 'solid':
           // Do we have a defined material?
@@ -1825,11 +1860,19 @@ var Viewer = /*#__PURE__*/function () {
     this.controls.maxPolarAngle = Math.PI / 2;
     this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(this.renderer);
     this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight);
-    this.ssaoPass.kernelRadius = 3;
+    this.ssaoPass.kernelRadius = 0.03;
+    this.ssaoPass.kernelSize = 16;
     this.ssaoPass.minDistance = 0.0002;
-    this.ssaoPass.maxDistance = 0.2;
+    this.ssaoPass.maxDistance = 10;
     this.ssaoPass.output = three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass.OUTPUT.Default;
     this.composer.addPass(this.ssaoPass);
+    this.pauseSSAO = false;
+    this.controls.addEventListener('start', () => {
+      this.pauseSSAO = true;
+    });
+    this.controls.addEventListener('end', () => {
+      this.pauseSSAO = false;
+    });
     this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
     this.container.appendChild(this.stats.dom);
     window.addEventListener('resize', this.onWindowResize.bind(this), false);
@@ -1837,59 +1880,43 @@ var Viewer = /*#__PURE__*/function () {
     this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(this);
     this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(this);
     this.sectionPlaneHelper.createSectionPlane();
-    this.initScene();
+    this.sceneLights();
     this.animate();
   }
 
   _createClass(Viewer, [{
-    key: "initScene",
-    value: function initScene() {
+    key: "sceneLights",
+    value: function sceneLights() {
       var ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(0xffffff);
       this.scene.add(ambientLight);
       var lights = [];
       lights[0] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
       lights[1] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
       lights[2] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
-      lights[0].position.set(0, 200, 0);
-      lights[1].position.set(100, 200, 100);
-      lights[2].position.set(-100, -200, -100);
+      lights[3] = new three__WEBPACK_IMPORTED_MODULE_0__.PointLight(0xffffff, 0.21, 0);
+      var factor = 1000;
+      lights[0].position.set(1 * factor, 1 * factor, 1 * factor);
+      lights[1].position.set(1 * factor, -1 * factor, 1 * factor);
+      lights[2].position.set(-1 * factor, -1 * factor, 1 * factor);
+      lights[3].position.set(-1 * factor, 1 * factor, 1 * factor);
       this.scene.add(lights[0]);
       this.scene.add(lights[1]);
-      this.scene.add(lights[2]); // let sphereSize = 20
-      // this.scene.add( new THREE.PointLightHelper( lights[ 0 ] , sphereSize ) )
-      // this.scene.add( new THREE.PointLightHelper( lights[ 1 ] , sphereSize ) )
-      // this.scene.add( new THREE.PointLightHelper( lights[ 2 ] , sphereSize ) )
+      this.scene.add(lights[2]);
+      this.scene.add(lights[3]); // let sphereSize = 0.2
+      // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
+      // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
+      // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
+      // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
 
-      var hemiLight = new three__WEBPACK_IMPORTED_MODULE_0__.HemisphereLight(0xffffff, 0x0, 0.3);
+      var hemiLight = new three__WEBPACK_IMPORTED_MODULE_0__.HemisphereLight(0xffffff, 0x0, 0.2);
       hemiLight.color.setHSL(1, 1, 1);
       hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-      hemiLight.up.set(0, 0, 1); // hemiLight.position.set( 0, 50, 0 )
-
+      hemiLight.up.set(0, 0, 1);
       this.scene.add(hemiLight);
       var axesHelper = new three__WEBPACK_IMPORTED_MODULE_0__.AxesHelper(1);
       this.scene.add(axesHelper);
       var group = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
       this.scene.add(group);
-      var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry(10, 10, 10);
-      var material = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
-        color: 0xD7D7D7,
-        emissive: 0x0,
-        transparent: true,
-        opacity: 0.2,
-        side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-      }); // random cube seeding (for testing purposes only)
-
-      for (var i = 0; i < 0; i++) {
-        var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, material);
-        mesh.position.x = Math.random() * 3;
-        mesh.position.y = Math.random() * 3;
-        mesh.position.z = Math.random() * 3;
-        mesh.rotation.x = Math.random();
-        mesh.rotation.y = Math.random();
-        mesh.rotation.z = Math.random();
-        mesh.scale.setScalar(Math.random() * 0.1);
-        group.add(mesh);
-      }
     }
   }, {
     key: "onWindowResize",
@@ -1934,7 +1961,7 @@ var Viewer = /*#__PURE__*/function () {
       // TODO: post processing SSAO sucks so much currently it's off by default
 
 
-      if (this.postprocessing) {
+      if (this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled) {
         this.composer.render(this.scene, this.camera);
       } else {
         this.renderer.render(this.scene, this.camera);

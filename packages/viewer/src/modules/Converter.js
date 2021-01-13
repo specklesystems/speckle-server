@@ -23,15 +23,15 @@ export default class Coverter {
    * @return {[type]}            [description]
    */
   async traverseAndConvert( obj, callback ) {
-    // Handle primitives (string, ints, bools, bigints, etc.)
+    // Exit on primitives (string, ints, bools, bigints, etc.)
     if ( typeof obj !== 'object' ) return
 
-    // Populate references
     if ( obj.referencedId ) obj = await this.resolveReference( obj )
 
-    // Traverse arrays
+    // Traverse arrays, and exit early (we don't want to iterate through many numbers)
     if ( Array.isArray( obj ) ) {
       for ( let element of obj ) {
+        if ( typeof element !== 'object' ) return // exit early for non-object based arrays
         ( async() => await this.traverseAndConvert( element, callback ) )() //iife so we don't block
       }
     }
@@ -43,9 +43,23 @@ export default class Coverter {
       return
     }
 
-    // Otherwise, traverse the object in case there's any sub-objects we can convert.
-    for ( let prop in obj.data ) {
-      ( async() => await this.traverseAndConvert( obj.data[prop], callback ) )() //iife so we don't block
+    let target = obj.data || obj
+
+    // Check if the object has a display value of sorts
+    let displayValue = target['displayMesh'] || target['@displayMesh'] || target['displayValue']|| target['@displayValue']
+    if ( displayValue ) {
+      displayValue = await this.resolveReference( displayValue )
+      if ( !displayValue.units ) displayValue.units = obj.units
+      let { bufferGeometry } = await this.convert( displayValue )
+      callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
+      return
+    }
+
+    // Last attempt: iterate through all object keys and see if we can display anything!
+    // traverses the object in case there's any sub-objects we can convert.
+    for ( let prop in target ) {
+      if ( typeof target[prop] !== 'object' ) continue
+      ( async() => await this.traverseAndConvert( target[prop], callback ) )() //iife so we don't block
     }
   }
 
@@ -55,11 +69,14 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}     [description]
    */
-  async convert( obj, callback ) {
-    let type = this.getSpeckleType( obj )
+  async convert( obj ) {
+    if ( obj.referencedId ) obj = await this.resolveReference( obj )
 
-    if ( this[`${type}ToBufferGeometry`] ) callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )
-    else return
+    let type = this.getSpeckleType( obj )
+    if ( this[`${type}ToBufferGeometry`] ) {
+      return await this[`${type}ToBufferGeometry`]( obj.data || obj )
+    }
+    else return null
   }
 
   /**
@@ -68,6 +85,7 @@ export default class Coverter {
    * @return {[type]}     [description]
    */
   async dechunk( arr ) {
+    if ( !arr ) return arr
     // Handles pre-chunking objects, or arrs that have not been chunked
     if ( !arr[0].referencedId ) return arr
 
@@ -104,21 +122,11 @@ export default class Coverter {
     return type
   }
 
-  // TODOs:
-  // async PointToBufferGeometry( obj ) {}
-  // async LineToBufferGeometry( obj ) {}
-  // async PolylineToBufferGeometry( obj ) {}
-  // async PolycurveToBufferGeometry( obj ) {}
-  // async CurveToBufferGeometry( obj ) {}
-  // async CircleToBufferGeometry( obj ) {}
-  // async ArcToBufferGeometry( obj ) {}
-  // async EllipseToBufferGeometry( obj ) {}
-  // async SurfaceToBufferGeometry( obj ) {}
-
   async BrepToBufferGeometry( obj ) {
     if ( !obj ) return
-    let { bufferGeometry }  = await this.MeshToBufferGeometry( await this.resolveReference( obj.displayValue || obj.displayMesh ) )
+    let { bufferGeometry } = await this.MeshToBufferGeometry( await this.resolveReference( obj.displayValue || obj.displayMesh ) )
 
+    // deletes known uneeded fields
     delete obj.displayMesh
     delete obj.displayValue
     delete obj.Edges
@@ -137,6 +145,7 @@ export default class Coverter {
     if ( !obj ) return
 
     let conversionFactor = getConversionFactor( obj.units )
+    // console.log( conversionFactor )
     let buffer = new THREE.BufferGeometry( )
     let indices = [ ]
 
@@ -170,4 +179,14 @@ export default class Coverter {
     return new ObjectWrapper( buffer, obj )
   }
 
+  // TODOs:
+  // async PointToBufferGeometry( obj ) {}
+  // async LineToBufferGeometry( obj ) {}
+  // async PolylineToBufferGeometry( obj ) {}
+  // async PolycurveToBufferGeometry( obj ) {}
+  // async CurveToBufferGeometry( obj ) {}
+  // async CircleToBufferGeometry( obj ) {}
+  // async ArcToBufferGeometry( obj ) {}
+  // async EllipseToBufferGeometry( obj ) {}
+  // async SurfaceToBufferGeometry( obj ) {}
 }

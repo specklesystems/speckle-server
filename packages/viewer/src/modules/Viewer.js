@@ -40,11 +40,16 @@ export default class Viewer {
     this.composer = new EffectComposer( this.renderer )
 
     this.ssaoPass = new SSAOPass( this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight )
-    this.ssaoPass.kernelRadius = 3
+    this.ssaoPass.kernelRadius = 0.03
+    this.ssaoPass.kernelSize = 16
     this.ssaoPass.minDistance = 0.0002
-    this.ssaoPass.maxDistance = 0.2
+    this.ssaoPass.maxDistance = 10
     this.ssaoPass.output = SSAOPass.OUTPUT.Default
     this.composer.addPass( this.ssaoPass )
+
+    this.pauseSSAO = false
+    this.controls.addEventListener( 'start', () => { this.pauseSSAO = true } )
+    this.controls.addEventListener( 'end', () => { this.pauseSSAO = false } )
 
     this.stats = new Stats()
     this.container.appendChild( this.stats.dom )
@@ -57,11 +62,11 @@ export default class Viewer {
 
     this.sectionPlaneHelper.createSectionPlane()
 
-    this.initScene()
+    this.sceneLights()
     this.animate()
   }
 
-  initScene() {
+  sceneLights() {
     let ambientLight = new THREE.AmbientLight( 0xffffff )
     this.scene.add( ambientLight )
 
@@ -69,26 +74,30 @@ export default class Viewer {
     lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
     lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
     lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    lights[ 3 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
 
-    lights[ 0 ].position.set( 0, 200, 0 )
-    lights[ 1 ].position.set( 100, 200, 100 )
-    lights[ 2 ].position.set( -100, -200, -100 )
+    let factor = 1000
+    lights[ 0 ].position.set( 1 * factor, 1 * factor, 1 * factor )
+    lights[ 1 ].position.set( 1 * factor, -1 * factor, 1 * factor )
+    lights[ 2 ].position.set( -1 * factor, -1 * factor, 1 * factor )
+    lights[ 3 ].position.set( -1 * factor, 1 * factor, 1 * factor )
 
     this.scene.add( lights[ 0 ] )
     this.scene.add( lights[ 1 ] )
     this.scene.add( lights[ 2 ] )
+    this.scene.add( lights[ 3 ] )
 
-    // let sphereSize = 20
-    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ] , sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ] , sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ] , sphereSize ) )
+    // let sphereSize = 0.2
+    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
 
 
-    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.3 )
+    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.2 )
     hemiLight.color.setHSL( 1, 1, 1 )
     hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
     hemiLight.up.set( 0, 0, 1 )
-    // hemiLight.position.set( 0, 50, 0 )
     this.scene.add( hemiLight )
 
     let axesHelper = new THREE.AxesHelper( 1 )
@@ -96,29 +105,6 @@ export default class Viewer {
 
     let group = new THREE.Group()
     this.scene.add( group )
-
-    const geometry = new THREE.BoxBufferGeometry( 10, 10, 10 )
-    const material = new THREE.MeshLambertMaterial( {
-      color: 0xD7D7D7,
-      emissive: 0x0,
-      transparent: true,
-      opacity: 0.2,
-      side: THREE.DoubleSide
-    } )
-
-    // random cube seeding (for testing purposes only)
-    for ( let i = 0; i < 0; i++ ) {
-      const mesh = new THREE.Mesh( geometry, material )
-      mesh.position.x = Math.random() * 3
-      mesh.position.y = Math.random() * 3
-      mesh.position.z = Math.random() * 3
-      mesh.rotation.x = Math.random()
-      mesh.rotation.y = Math.random()
-      mesh.rotation.z = Math.random()
-
-      mesh.scale.setScalar( Math.random() * 0.1 )
-      group.add( mesh )
-    }
   }
 
   onWindowResize() {
@@ -161,7 +147,7 @@ export default class Viewer {
 
     // Render as usual
     // TODO: post processing SSAO sucks so much currently it's off by default
-    if ( this.postprocessing ){
+    if ( this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled ){
       this.composer.render( this.scene, this.camera )
     }
     else {
