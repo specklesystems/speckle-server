@@ -3,12 +3,14 @@ const zlib = require( 'zlib' )
 const Busboy = require( 'busboy' )
 const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
+const cors = require( 'cors' ) 
 
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
 
 module.exports = ( app ) => {
-  app.get( '/objects/:streamId/:objectId', contextMiddleware, async ( req, res ) => {
+  app.options( '/objects/:streamId/:objectId', cors() )
+  app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, async ( req, res ) => {
     if ( !req.context || !req.context.auth ) {
       return res.status( 401 ).end( )
     }
