@@ -22,6 +22,16 @@ services:
     ports:
       - "5432:5432"
 
+  pgadmin:
+    image: dpage/pgadmin4
+    environment: 
+        PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL}"
+        PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
+    ports: 
+        - "16543:80"
+    depends_on: 
+        - database
+
   redis:
     image: "redis"
     ports:
