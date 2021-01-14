@@ -1,20 +1,24 @@
 version: "3"
 services:
 
-  server:
-    build:
-      .
-    depends_on:
-      - database
-      - redis
+  # this could be enabled once the server container is added
+  # server:
+  #   build:
+  #     .
+  #   depends_on:
+  #     - database
+  #     - redis
 
   database:
     image: "postgres" # use latest official postgres version
     env_file:
       - .env # configure postgres
     volumes:
-      - speckle-postgres-data:/var/lib/postgresql/data/ # persist data even if container shuts down
-      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # this is the way to add db init script
+      # persist data even if container shuts down
+      - speckle-postgres-data:/var/lib/postgresql/data/
+      # this mounts the initdb folder to the db container
+      # .sql .sh files are executed from this folder in alphabetical order
+      - ./initdb:/docker-entrypoint-initdb.d  
     ports:
       - "5432:5432"
 

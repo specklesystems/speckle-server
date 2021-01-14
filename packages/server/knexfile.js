@@ -26,6 +26,13 @@ function walk( dir ) {
 
 let migrationDirs = walk( './modules' )
 
+let env = process.env
+let connectionString
+if ( env.SPECKLE_DB_NAME ) {
+  connectionString= `postgres://${env.SPECKLE_DB_USER}:${env.SPECKLE_DB_PASSWORD}` + 
+`@${env.POSTGRES_URL}/${env.SPECKLE_DB_NAME}`
+}
+
 module.exports = {
   test: {
     client: 'pg',
@@ -36,14 +43,14 @@ module.exports = {
   },
   development: {
     client: 'pg',
-    connection: process.env.POSTGRES_URL || 'postgres://localhost/speckle2_dev',
+    connection: connectionString || 'postgres://localhost/speckle2_dev',
     migrations: {
       directory: migrationDirs
     },
   },
   production: {
     client: 'pg',
-    connection: process.env.POSTGRES_URL,
+    connection: connectionString,
     migrations: {
       directory: migrationDirs
     }
