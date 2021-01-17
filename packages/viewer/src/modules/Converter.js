@@ -58,7 +58,8 @@ export default class Coverter {
       try {
         let { bufferGeometry } = await this.convert( displayValue )
         callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
-        return
+
+        // return // returning here is faster but excludes objects that have a display value and displayable children (ie, a wall with windows)
       } catch ( e ) {
         console.warn( `(Traversing) Failed to convert obj with id: ${obj.id}` )
       }

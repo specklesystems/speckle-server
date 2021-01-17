@@ -62,6 +62,7 @@ export default class SceneObjectManager {
     case 'solid':
       // Do we have a defined material?
       if ( wrapper.meta.renderMaterial ) {
+
         let renderMat = wrapper.meta.renderMaterial
         let color = new THREE.Color( this._argbToRGB( renderMat.diffuse ) )
         this._normaliseColor( color )
@@ -70,6 +71,7 @@ export default class SceneObjectManager {
           let material = this.transparentMaterial.clone()
           material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
           material.color = color
+          material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
           this.addTransparentSolid( wrapper, material )
 
         // It's not a transparent material!
@@ -167,7 +169,7 @@ export default class SceneObjectManager {
   // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
   // look better. Could we do the same thing somehow when controls stop moving?
   zoomToBox( box ) {
-    const fitOffset = 0.9
+    const fitOffset = 1.2
 
     const size = box.getSize( new THREE.Vector3() )
     const center = box.getCenter( new THREE.Vector3() )
@@ -199,7 +201,7 @@ export default class SceneObjectManager {
   }
 
   _normaliseColor( color ) {
-    // Note: full of magic numbers that will need changing once global scene
+    // Note: full of **magic numbers** that will need changing once global scene
     // is properly set up; also to test with materials coming from other software too...
     let hsl = {}
     color.getHSL( hsl )

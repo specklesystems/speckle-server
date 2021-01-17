@@ -391,8 +391,7 @@ var Coverter = /*#__PURE__*/function () {
               bufferGeometry
             } = yield this.convert(displayValue);
             callback(new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj)); // use the parent's metadata!
-
-            return;
+            // return // returning here is faster but excludes objects that have a display value and displayable children (ie, a wall with windows)
           } catch (e) {
             console.warn("(Traversing) Failed to convert obj with id: " + obj.id);
           }
@@ -748,7 +747,9 @@ var ObjectLoader = /*#__PURE__*/function () {
 
   _createClass(ObjectLoader, [{
     key: "dispose",
-    value: function dispose() {// TODO
+    value: function dispose() {
+      this.buffer = [];
+      this.intervals.forEach(i => clearInterval(i.interval));
     }
   }, {
     key: "getObject",
@@ -1022,6 +1023,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
               var material = this.transparentMaterial.clone();
               material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
               material.color = color;
+              material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
               var _material = this.solidMaterial.clone();
@@ -1135,7 +1137,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "zoomToBox",
     value: function zoomToBox(box) {
-      var fitOffset = 0.9;
+      var fitOffset = 1.2;
       var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       var center = box.getCenter(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       var maxSize = Math.max(size.x, size.y, size.z);
@@ -1159,7 +1161,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "_normaliseColor",
     value: function _normaliseColor(color) {
-      // Note: full of magic numbers that will need changing once global scene
+      // Note: full of **magic numbers** that will need changing once global scene
       // is properly set up; also to test with materials coming from other software too...
       var hsl = {};
       color.getHSL(hsl);

@@ -23,7 +23,8 @@ export default class ObjectLoader {
   }
 
   dispose() {
-    // TODO
+    this.buffer = []
+    this.intervals.forEach( i => clearInterval( i.interval ) )
   }
 
   async getObject( id ){
