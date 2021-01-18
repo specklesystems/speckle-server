@@ -2,12 +2,18 @@ version: "3"
 services:
 
   # this could be enabled once the server container is added
-  # server:
-  #   build:
-  #     .
-  #   depends_on:
-  #     - database
-  #     - redis
+  server:
+    build:
+      .
+    depends_on:
+      - database
+      - redis
+    ports:
+      - "3000:3000"
+    environment:
+        DEBUG: "*"
+    volumes:
+      - ./packages/server:/app
 
   database:
     image: "postgres" # use latest official postgres version
@@ -36,6 +42,23 @@ services:
     image: "redis"
     ports:
       - "6379:6379" # It is not neccesary to expose the reddis port if running the app with compose 
+    volumes:
+      - redis_volume_data:/data
+    #   - ./redis.conf:/tmp/redis.conf
+    # command: [ "redis-server", "/tmp/redis.conf"]
 
+  redis_insight:
+    image: redislabs/redisinsight:latest
+    container_name: redis_insight
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - 8001:8001
+    volumes:
+      - redis_insight_volume_data:/db
+  
 volumes:
   speckle-postgres-data: # named volumes can be managed easier using docker-compose
+  redis_volume_data:
+  redis_insight_volume_data:
