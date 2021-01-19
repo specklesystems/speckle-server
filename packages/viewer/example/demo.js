@@ -226,10 +226,24 @@ function _asyncIterator(iterable) { var method; if (typeof Symbol !== "undefined
 var v = new _modules_Viewer__WEBPACK_IMPORTED_MODULE_0__.default({
   container: document.getElementById('renderer')
 });
+v.on('load-progress', args => console.log(args));
 window.v = v;
 
 window.LoadData = /*#__PURE__*/function () {
-  var _LoadData = _asyncToGenerator(function* (id) {
+  var _LoadData = _asyncToGenerator(function* (url) {
+    url = url || document.getElementById('objectIdInput').value;
+    yield v.loadObject(url, 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75');
+  });
+
+  function LoadData(_x) {
+    return _LoadData.apply(this, arguments);
+  }
+
+  return LoadData;
+}();
+
+window.LoadDataOld = /*#__PURE__*/function () {
+  var _LoadData2 = _asyncToGenerator(function* (id) {
     // v.sceneManager.removeAllObjects()
     id = id || document.getElementById('objectIdInput').value;
     var loader = new _modules_ObjectLoader__WEBPACK_IMPORTED_MODULE_1__.default({
@@ -278,8 +292,8 @@ window.LoadData = /*#__PURE__*/function () {
     }
   });
 
-  function LoadData(_x) {
-    return _LoadData.apply(this, arguments);
+  function LoadData(_x2) {
+    return _LoadData2.apply(this, arguments);
   }
 
   return LoadData;
@@ -994,6 +1008,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
     this.postLoad = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
       this._postLoadFunction();
     }, 200);
+    this.loaders = [];
   }
 
   _createClass(SceneObjectManager, [{
@@ -1354,6 +1369,11 @@ var SectionPlaneHelper = /*#__PURE__*/function () {
     get: function get() {
       return this.cutters.map(cutter => cutter.plane);
     }
+  }, {
+    key: "activePlanes",
+    get: function get() {
+      return this.cutters.filter(cutter => cutter.visible).map(cutter => cutter.plane);
+    }
   }]);
 
   return SectionPlaneHelper;
@@ -1407,6 +1427,9 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
  * - Clicking on one object will select it.
  * - Double clicking on one object will focus on it.
  * - Double clicking anywhere else will focus the scene.
+ * TODOs:
+ * - Ensure clipped geometry is not selected.
+ * - When objects are disposed, ensure selection is reset.
  */
 
 var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
@@ -1548,6 +1571,12 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
       var intersectedObjects = this.raycaster.intersectObjects(this.viewer.sceneManager.objects);
+      intersectedObjects = intersectedObjects.filter(obj => {
+        // console.log( obj.point )
+        // console.log( plane.distanceToPoint( obj.point ) > 0 )
+        // return
+        return this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0);
+      });
       return intersectedObjects;
     }
   }, {
@@ -1872,12 +1901,31 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./SceneObjectManager */ "./src/modules/SceneObjectManager.js");
 /* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
 /* harmony import */ var _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./SectionPlaneHelper */ "./src/modules/SectionPlaneHelper.js");
+/* harmony import */ var _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ViewerObjectLoader */ "./src/modules/ViewerObjectLoader.js");
+/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (typeof call === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 
 
@@ -1887,8 +1935,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
-var Viewer = /*#__PURE__*/function () {
+
+
+
+var Viewer = /*#__PURE__*/function (_EventEmitter) {
+  _inherits(Viewer, _EventEmitter);
+
+  var _super = _createSuper(Viewer);
+
   function Viewer(_ref) {
+    var _this;
+
     var {
       container,
       postprocessing = true,
@@ -1897,60 +1954,87 @@ var Viewer = /*#__PURE__*/function () {
 
     _classCallCheck(this, Viewer);
 
-    this.container = container || document.getElementById('renderer');
-    this.postprocessing = postprocessing;
-    this.scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
-    this.camera = new three__WEBPACK_IMPORTED_MODULE_0__.PerspectiveCamera(60, window.innerWidth / window.innerHeight);
-    this.camera.up.set(0, 0, 1);
-    this.camera.position.set(1, 1, 1);
-    this.renderer = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderer({
+    _this = _super.call(this);
+    _this.container = container || document.getElementById('renderer');
+    _this.postprocessing = postprocessing;
+    _this.scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
+    _this.camera = new three__WEBPACK_IMPORTED_MODULE_0__.PerspectiveCamera(60, window.innerWidth / window.innerHeight);
+
+    _this.camera.up.set(0, 0, 1);
+
+    _this.camera.position.set(1, 1, 1);
+
+    _this.renderer = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderer({
       antialias: true,
       alpha: true
     });
-    this.renderer.setClearColor(0xcccccc, 0);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
-    this.container.appendChild(this.renderer.domElement);
-    this.reflections = reflections;
-    this.reflectionsNeedUpdate = true;
+
+    _this.renderer.setClearColor(0xcccccc, 0);
+
+    _this.renderer.setPixelRatio(window.devicePixelRatio);
+
+    _this.renderer.setSize(_this.container.offsetWidth, _this.container.offsetHeight);
+
+    _this.container.appendChild(_this.renderer.domElement); // commented out because the ssao flash is annoying
+    // this.renderer.gammaFactor = 2.2
+    // this.renderer.outputEncoding = THREE.sRGBEncoding
+
+
+    _this.reflections = reflections;
+    _this.reflectionsNeedUpdate = true;
     var cubeRenderTarget = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLCubeRenderTarget(512, {
       format: three__WEBPACK_IMPORTED_MODULE_0__.RGBFormat,
       generateMipmaps: true,
       minFilter: three__WEBPACK_IMPORTED_MODULE_0__.LinearMipmapLinearFilter
     });
-    this.cubeCamera = new three__WEBPACK_IMPORTED_MODULE_0__.CubeCamera(0.1, 10000, cubeRenderTarget);
-    this.scene.add(this.cubeCamera);
-    this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.1;
-    this.controls.screenSpacePanning = true;
-    this.controls.maxPolarAngle = Math.PI / 2;
-    this.controls.panSpeed = 0.8;
-    this.controls.rotateSpeed = 0.8;
-    this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(this.renderer);
-    this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight);
-    this.ssaoPass.kernelRadius = 0.03;
-    this.ssaoPass.kernelSize = 16;
-    this.ssaoPass.minDistance = 0.0002;
-    this.ssaoPass.maxDistance = 10;
-    this.ssaoPass.output = three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass.OUTPUT.Default;
-    this.composer.addPass(this.ssaoPass);
-    this.pauseSSAO = false;
-    this.controls.addEventListener('start', () => {
-      this.pauseSSAO = true;
+    _this.cubeCamera = new three__WEBPACK_IMPORTED_MODULE_0__.CubeCamera(0.1, 10000, cubeRenderTarget);
+
+    _this.scene.add(_this.cubeCamera);
+
+    _this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(_this.camera, _this.renderer.domElement);
+    _this.controls.enableDamping = true;
+    _this.controls.dampingFactor = 0.1;
+    _this.controls.screenSpacePanning = true;
+    _this.controls.maxPolarAngle = Math.PI / 2;
+    _this.controls.panSpeed = 0.8;
+    _this.controls.rotateSpeed = 0.8;
+    _this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(_this.renderer);
+    _this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(_this.scene, _this.camera, _this.container.offsetWidth, _this.container.offsetHeight);
+    _this.ssaoPass.kernelRadius = 0.03;
+    _this.ssaoPass.kernelSize = 16;
+    _this.ssaoPass.minDistance = 0.0002;
+    _this.ssaoPass.maxDistance = 10;
+    _this.ssaoPass.output = three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass.OUTPUT.Default;
+
+    _this.composer.addPass(_this.ssaoPass);
+
+    _this.pauseSSAO = false;
+
+    _this.controls.addEventListener('start', () => {
+      _this.pauseSSAO = true;
     });
-    this.controls.addEventListener('end', () => {
-      this.pauseSSAO = false;
+
+    _this.controls.addEventListener('end', () => {
+      _this.pauseSSAO = false;
     });
-    this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
-    this.container.appendChild(this.stats.dom);
-    window.addEventListener('resize', this.onWindowResize.bind(this), false);
-    this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(this);
-    this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(this);
-    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(this);
-    this.sectionPlaneHelper.createSectionPlane();
-    this.sceneLights();
-    this.animate();
+
+    _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
+
+    _this.container.appendChild(_this.stats.dom);
+
+    window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
+    _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
+    _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
+    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this));
+
+    _this.sectionPlaneHelper.createSectionPlane();
+
+    _this.sceneLights();
+
+    _this.animate();
+
+    _this.loaders = [];
+    return _this;
   }
 
   _createClass(Viewer, [{
@@ -2037,12 +2121,158 @@ var Viewer = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "loadObject",
+    value: function () {
+      var _loadObject = _asyncToGenerator(function* (url, token) {
+        var loader = new _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__.default(this, url, token);
+        this.loaders.push(loader);
+        yield loader.load();
+      });
+
+      function loadObject(_x, _x2) {
+        return _loadObject.apply(this, arguments);
+      }
+
+      return loadObject;
+    }()
+  }, {
     key: "dispose",
     value: function dispose() {// TODO
     }
   }]);
 
   return Viewer;
+}(_EventEmitter__WEBPACK_IMPORTED_MODULE_9__.default);
+
+
+
+/***/ }),
+
+/***/ "./src/modules/ViewerObjectLoader.js":
+/*!*******************************************!*\
+  !*** ./src/modules/ViewerObjectLoader.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ ViewerObjectLoader
+/* harmony export */ });
+/* harmony import */ var _ObjectLoader__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ObjectLoader */ "./src/modules/ObjectLoader.js");
+/* harmony import */ var _Converter__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Converter */ "./src/modules/Converter.js");
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
+
+function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _asyncIterator(iterable) { var method; if (typeof Symbol !== "undefined") { if (Symbol.asyncIterator) { method = iterable[Symbol.asyncIterator]; if (method != null) return method.call(iterable); } if (Symbol.iterator) { method = iterable[Symbol.iterator]; if (method != null) return method.call(iterable); } } throw new TypeError("Object is not async iterable"); }
+
+
+
+/**
+ * Helper wrapper around the ObjectLoader class, with some built in assumptions.
+ */
+
+var ViewerObjectLoader = /*#__PURE__*/function () {
+  function ViewerObjectLoader(parent, objectUrl, authToken) {
+    _classCallCheck(this, ViewerObjectLoader);
+
+    this.viewer = parent;
+    this.token = authToken || localStorage.getItem('AuthToken');
+
+    if (!this.token) {
+      throw new Error('No suitable authorization token found.');
+    } // example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
+
+
+    var url = new URL(objectUrl);
+    var segments = url.pathname.split('/');
+
+    if (segments.length < 5 || url.pathname.indexOf('streams') === -1 || url.pathname.indexOf('objects') === -1) {
+      throw new Error('Unexpected object url format.');
+    }
+
+    this.serverUrl = url.origin;
+    this.streamId = segments[2];
+    this.objectId = segments[4];
+    this.loader = new _ObjectLoader__WEBPACK_IMPORTED_MODULE_0__.default({
+      serverUrl: this.serverUrl,
+      token: this.token,
+      streamId: this.streamId,
+      objectId: this.objectId
+    });
+    this.converter = new _Converter__WEBPACK_IMPORTED_MODULE_1__.default(this.loader);
+  }
+
+  _createClass(ViewerObjectLoader, [{
+    key: "load",
+    value: function () {
+      var _load = _asyncToGenerator(function* () {
+        var _this = this;
+
+        var first = true;
+        var current = 0;
+        var total = 0;
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+
+        var _iteratorError;
+
+        try {
+          var _loop = function _loop() {
+            var obj = _value;
+
+            if (first) {
+              _asyncToGenerator(function* () {
+                yield _this.converter.traverseAndConvert(obj, o => _this.viewer.sceneManager.addObject(o));
+              })();
+
+              first = false;
+              total = obj.totalChildrenCount;
+            }
+
+            current++;
+
+            _this.viewer.emit('load-progress', {
+              progress: current / total,
+              id: _this.objectId
+            });
+          };
+
+          for (var _iterator = _asyncIterator(this.loader.getObjectIterator()), _step, _value; _step = yield _iterator.next(), _iteratorNormalCompletion = _step.done, _value = yield _step.value, !_iteratorNormalCompletion; _iteratorNormalCompletion = true) {
+            _loop();
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return != null) {
+              yield _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      });
+
+      function load() {
+        return _load.apply(this, arguments);
+      }
+
+      return load;
+    }()
+  }]);
+
+  return ViewerObjectLoader;
 }();
 
 

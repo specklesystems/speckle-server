@@ -7,10 +7,13 @@ import Stats from 'three/examples/jsm/libs/stats.module.js'
 import ObjectManager from './SceneObjectManager'
 import SelectionHelper from './SelectionHelper'
 import SectionPlaneHelper from './SectionPlaneHelper'
+import ViewerObjectLoader from './ViewerObjectLoader'
+import EventEmitter from './EventEmitter'
 
-export default class Viewer {
+export default class Viewer extends EventEmitter {
 
   constructor( { container, postprocessing = true, reflections = true } ) {
+    super()
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()
@@ -24,6 +27,10 @@ export default class Viewer {
     this.renderer.setPixelRatio( window.devicePixelRatio )
     this.renderer.setSize( this.container.offsetWidth, this.container.offsetHeight )
     this.container.appendChild( this.renderer.domElement )
+
+    // commented out because the ssao flash is annoying
+    // this.renderer.gammaFactor = 2.2
+    // this.renderer.outputEncoding = THREE.sRGBEncoding
 
     this.reflections = reflections
     this.reflectionsNeedUpdate = true
@@ -66,6 +73,8 @@ export default class Viewer {
 
     this.sceneLights()
     this.animate()
+
+    this.loaders = []
   }
 
   sceneLights() {
@@ -155,6 +164,12 @@ export default class Viewer {
     else {
       this.renderer.render( this.scene, this.camera )
     }
+  }
+
+  async loadObject( url, token ) {
+    let loader = new ViewerObjectLoader( this, url, token )
+    this.loaders.push( loader )
+    await loader.load()
   }
 
   dispose() {

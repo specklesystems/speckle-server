@@ -4,9 +4,16 @@ import ObjectLoader from './modules/ObjectLoader'
 import Converter from './modules/Converter'
 
 let v = new Viewer( { container: document.getElementById( 'renderer' ) } )
+v.on( 'load-progress', args => console.log( args ) )
+
 window.v = v
 
-window.LoadData = async function LoadData( id ) {
+window.LoadData = async function LoadData( url ) {
+  url = url || document.getElementById( 'objectIdInput' ).value
+  await v.loadObject( url, 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75' )
+}
+
+window.LoadDataOld = async function LoadData( id ) {
 
   // v.sceneManager.removeAllObjects()
 

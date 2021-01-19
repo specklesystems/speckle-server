@@ -27,6 +27,10 @@ export default class SectionPlaneHelper {
     return this.cutters.map( cutter => cutter.plane )
   }
 
+  get activePlanes() {
+    return this.cutters.filter( cutter => cutter.visible ).map( cutter => cutter.plane )
+  }
+
   toggleTransformControls() {
     this.cutters.forEach( cutter => {
       if ( cutter.control.mode === 'rotate' ) {

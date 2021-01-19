@@ -8,6 +8,9 @@ import EventEmitter from './EventEmitter'
  * - Clicking on one object will select it.
  * - Double clicking on one object will focus on it.
  * - Double clicking anywhere else will focus the scene.
+ * TODOs:
+ * - Ensure clipped geometry is not selected.
+ * - When objects are disposed, ensure selection is reset.
  */
 export default class SelectionHelper extends EventEmitter {
 
@@ -112,7 +115,14 @@ export default class SelectionHelper extends EventEmitter {
   getClickedObjects( e ) {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
-    const intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.objects )
+    let intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.objects )
+
+    intersectedObjects = intersectedObjects.filter( obj => {
+      // console.log( obj.point )
+      // console.log( plane.distanceToPoint( obj.point ) > 0 )
+      // return
+      return this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 )
+    } )
 
     return intersectedObjects
   }

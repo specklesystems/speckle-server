@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
 
+
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -40,6 +41,8 @@ export default class SceneObjectManager {
 
     this.objectIds = []
     this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
+
+    this.loaders = []
   }
 
   get objects() {
