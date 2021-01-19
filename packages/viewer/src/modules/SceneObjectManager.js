@@ -141,6 +141,7 @@ export default class SceneObjectManager {
     }
     this.solidObjects.clear()
     this.transparentObjects.clear()
+    this.viewer.selectionHelper.unselect()
     this.objectIds = []
 
     this._postLoadFunction()

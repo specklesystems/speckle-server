@@ -228,11 +228,12 @@ var v = new _modules_Viewer__WEBPACK_IMPORTED_MODULE_0__.default({
 });
 v.on('load-progress', args => console.log(args));
 window.v = v;
+var token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75';
 
 window.LoadData = /*#__PURE__*/function () {
   var _LoadData = _asyncToGenerator(function* (url) {
-    url = url || document.getElementById('objectIdInput').value;
-    yield v.loadObject(url, 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75');
+    url = url || document.getElementById('objectUrlInput').value;
+    yield v.loadObject(url, token);
   });
 
   function LoadData(_x) {
@@ -249,7 +250,7 @@ window.LoadDataOld = /*#__PURE__*/function () {
     var loader = new _modules_ObjectLoader__WEBPACK_IMPORTED_MODULE_1__.default({
       serverUrl: 'https://staging.speckle.dev',
       streamId: '5486aa9fc7',
-      token: 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75',
+      token,
       objectId: id
     });
     var converter = new _modules_Converter__WEBPACK_IMPORTED_MODULE_2__.default(loader);
@@ -1113,6 +1114,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
       this.solidObjects.clear();
       this.transparentObjects.clear();
+      this.viewer.selectionHelper.unselect();
       this.objectIds = [];
 
       this._postLoadFunction();
