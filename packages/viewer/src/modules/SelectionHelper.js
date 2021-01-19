@@ -8,6 +8,7 @@ import EventEmitter from './EventEmitter'
  * - Clicking on one object will select it.
  * - Double clicking on one object will focus on it.
  * - Double clicking anywhere else will focus the scene.
+ * - Pressing escape will clear any selection present.
  * TODOs:
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
@@ -71,6 +72,7 @@ export default class SelectionHelper extends EventEmitter {
     document.addEventListener( 'keydown', ( e ) => {
       if ( e.isComposing || e.keyCode === 229 ) return
       if ( e.key === 'Shift' ) this.multiSelect = true
+      if ( e.key === 'Escape' ) this.unselect( )
     } )
     document.addEventListener( 'keyup', ( e ) => {
       if ( e.isComposing || e.keyCode === 229 ) return

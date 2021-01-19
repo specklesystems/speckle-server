@@ -1427,6 +1427,7 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
  * - Clicking on one object will select it.
  * - Double clicking on one object will focus on it.
  * - Double clicking anywhere else will focus the scene.
+ * - Pressing escape will clear any selection present.
  * TODOs:
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
@@ -1514,6 +1515,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     document.addEventListener('keydown', e => {
       if (e.isComposing || e.keyCode === 229) return;
       if (e.key === 'Shift') _this.multiSelect = true;
+      if (e.key === 'Escape') _this.unselect();
     });
     document.addEventListener('keyup', e => {
       if (e.isComposing || e.keyCode === 229) return;
