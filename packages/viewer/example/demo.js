@@ -1573,12 +1573,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
       var intersectedObjects = this.raycaster.intersectObjects(this.viewer.sceneManager.objects);
-      intersectedObjects = intersectedObjects.filter(obj => {
-        // console.log( obj.point )
-        // console.log( plane.distanceToPoint( obj.point ) > 0 )
-        // return
-        return this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0);
-      });
+      intersectedObjects = intersectedObjects.filter(obj => this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0));
       return intersectedObjects;
     }
   }, {

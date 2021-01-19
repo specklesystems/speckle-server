@@ -117,14 +117,9 @@ export default class SelectionHelper extends EventEmitter {
   getClickedObjects( e ) {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
-    let intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.objects )
 
-    intersectedObjects = intersectedObjects.filter( obj => {
-      // console.log( obj.point )
-      // console.log( plane.distanceToPoint( obj.point ) > 0 )
-      // return
-      return this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 )
-    } )
+    let intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.objects )
+    intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects
   }
