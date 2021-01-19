@@ -3,7 +3,6 @@
 
 const http = require( 'http' )
 const url = require( 'url' )
-const WebSocket = require( 'ws' )
 const express = require( 'express' )
 const compression = require( 'compression' )
 const appRoot = require( 'app-root-path' )

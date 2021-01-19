@@ -56,7 +56,8 @@
     "pg": "^7.18.2",
     "pg-query-stream": "^3.4.2",
     "redis": "^3.0.2",
-    "zxcvbn": "^4.4.2"
+    "zxcvbn": "^4.4.2",
+    "http-proxy-middleware": "^1.0.6"
   },
   "devDependencies": {
     "@apollo/client": "^3.3.6",
@@ -71,7 +72,6 @@
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.1.0",
     "eslint": "^7.16.0",
-    "http-proxy-middleware": "^1.0.6",
     "lerna": "^3.22.1",
     "mocha": "^7.2.0",
     "node-fetch": "^2.6.1",
