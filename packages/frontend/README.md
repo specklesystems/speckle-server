@@ -32,7 +32,7 @@ npm run build
 
 ## Community
 
-The Speckle Community hangs out on [the forum](https://discourse.speckle.works), do join and introduce yourself & feel free to ask us questions!
+If in trouble, the Speckle Community hangs out on [the forum](https://discourse.speckle.works). Do join and introduce yourself! We're happy to help.
 
 ## License
 
