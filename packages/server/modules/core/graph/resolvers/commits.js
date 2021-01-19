@@ -128,7 +128,6 @@ module.exports = {
       subscribe: withFilter( () => pubsub.asyncIterator( [ COMMIT_CREATED ] ),
         async ( payload, variables, context ) => {
           await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
-
           return payload.streamId === variables.streamId
         } )
     },
