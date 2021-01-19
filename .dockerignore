@@ -1,5 +1,5 @@
 .circleci
-**/node_modules
+node_modules
 test-queries
 .editorconfig
 .gitignore
@@ -14,3 +14,4 @@ package.json
 .eslintrc.json
 .mocharc.js
 readme.md
+.env
