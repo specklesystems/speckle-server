@@ -8,9 +8,11 @@ v.on( 'load-progress', args => console.log( args ) )
 
 window.v = v
 
+const token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75'
+
 window.LoadData = async function LoadData( url ) {
-  url = url || document.getElementById( 'objectIdInput' ).value
-  await v.loadObject( url, 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75' )
+  url = url || document.getElementById( 'objectUrlInput' ).value
+  await v.loadObject( url, token )
 }
 
 window.LoadDataOld = async function LoadData( id ) {
@@ -21,7 +23,7 @@ window.LoadDataOld = async function LoadData( id ) {
   let loader = new ObjectLoader( {
     serverUrl: 'https://staging.speckle.dev',
     streamId: '5486aa9fc7',
-    token: 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75',
+    token,
     objectId: id
   } )
 
