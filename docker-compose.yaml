@@ -11,10 +11,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-        DEBUG: "*"
-    volumes:
-      - ./packages/server:/app
-
+        DEBUG: "speckle:*"
+    env_file:
+      - .env
+    
   database:
     image: "postgres" # use latest official postgres version
     env_file:

@@ -4,8 +4,6 @@
 coverage
 
 **/node_modules
-
-
 npm-debug.log
 Dockerfile*
 docker-compose*
@@ -14,3 +12,13 @@ docker-compose*
 .gitignore
 README.md
 LICENSE
+
+test-queries
+.editorconfig
+Contributing.md
+ISSUE_TEMPLATE.md
+lerna.json
+.env.example
+.eslintrc.json
+.mocharc.js
+readme.md 
