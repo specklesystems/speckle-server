@@ -26,9 +26,7 @@ The frontend is a static Vue app.
 
 ## Developing and Debugging
 
-To get started, first clone this repo & run `npm install`. Next, you'll need to run `lerna bootstrap` to initialize the dependencies of all packages (server & frontend).
-
-After these steps are complete, run `lerna run dev --stream`. Alternatively, you can `npm run dev` independently in each separate package (this will make for less spammy output).
+To get started, first clone this repo. Check out the detailed instructions for each module in their respective folder (see links above). 
 
 ## Contributing
 
