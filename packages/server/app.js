@@ -3,7 +3,6 @@
 
 const http = require( 'http' )
 const url = require( 'url' )
-const WebSocket = require( 'ws' )
 const express = require( 'express' )
 const compression = require( 'compression' )
 const appRoot = require( 'app-root-path' )
@@ -87,7 +86,6 @@ exports.init = async ( ) => {
   return { app, graphqlServer }
 }
 
-const { createProxyMiddleware } = require( 'http-proxy-middleware' )
 
 /**
  * Starts a http server, hoisting the express app to it.
@@ -103,6 +101,7 @@ exports.startHttp = async ( app ) => {
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
   if ( process.env.NODE_ENV === 'development' ) {
+    const { createProxyMiddleware } = require( 'http-proxy-middleware' )
     const frontendProxy = createProxyMiddleware( { target: `http://localhost:${frontendPort}`, changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
 

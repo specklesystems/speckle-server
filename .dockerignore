@@ -1,0 +1,17 @@
+.circleci
+node_modules
+test-queries
+.editorconfig
+.gitignore
+.git
+Contributing.md
+ISSUE_TEMPLATE.md
+lerna.json
+LICENSE
+package-lock.json
+package.json
+.env.example
+.eslintrc.json
+.mocharc.js
+readme.md
+.env
