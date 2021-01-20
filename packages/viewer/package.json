@@ -1,8 +1,9 @@
 {
-  "name": "@speckle/sdk",
+  "name": "@speckle/viewer",
   "version": "2.0.0",
   "description": "Speckle js utilities.",
   "main": "dist/Speckle.js",
+  "files":[ "dist" ],
   "scripts": {
     "serve": "webpack serve --env dev --config webpack.config.example.js",
     "dev": "webpack --progress --watch --env dev",

@@ -1,5 +1,6 @@
 <template>
   <router-view></router-view>
+
 </template>
 <script>
 import gql from 'graphql-tag'

@@ -1,6 +1,9 @@
 <template>
   <v-row v-if="stream">
     <v-col cols="12">
+      <v-card class="pa-0" elevation="0" rounded="lg" color="transparent" style="height: 40vh;">
+        <renderer :object-url="commitObjectUrl"/>
+      </v-card>
       <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
         <v-card-title class="mr-8">
           <v-icon class="mr-2">mdi-source-commit</v-icon>
@@ -70,16 +73,20 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import SidebarStream from '../components/SidebarStream'
 import UserAvatar from '../components/UserAvatar'
 import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
+import Renderer from '../components/Renderer'
 import streamCommitQuery from '../graphql/commit.gql'
 import CommitDialog from '../components/dialogs/CommitDialog'
 
+import { Viewer } from '@speckle/viewer'
+
 export default {
   name: 'Commit',
-  components: { SidebarStream, CommitDialog, UserAvatar, ObjectSpeckleViewer },
-  data: () => ({}),
+  components: { CommitDialog, UserAvatar, ObjectSpeckleViewer, Renderer },
+  data: () => ({
+    loadedModel: false
+  }),
   apollo: {
     stream: {
       prefetch: true,
@@ -106,9 +113,20 @@ export default {
         speckle_type: 'reference',
         referencedId: this.stream.commit.referencedObject
       }
+    },
+    commitObjectUrl(){
+      return `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
     }
   },
   methods: {
+    loadObject() {
+      this.loadedModel = true
+      let v = new Viewer({ container: this.$refs.renderer })
+      // window.v = v
+      // window.v.loadObject(
+      //   `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
+      // )
+    },
     editCommit() {
       this.$refs.commitDialog.open(this.stream.commit, this.stream.id).then((dialog) => {
         if (!dialog.result) return

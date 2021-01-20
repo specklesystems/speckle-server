@@ -1948,7 +1948,8 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     var {
       container,
       postprocessing = true,
-      reflections = true
+      reflections = true,
+      showStats = false
     } = _ref;
 
     _classCallCheck(this, Viewer);
@@ -2017,9 +2018,11 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
       _this.pauseSSAO = false;
     });
 
-    _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
+    if (showStats) {
+      _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
 
-    _this.container.appendChild(_this.stats.dom);
+      _this.container.appendChild(_this.stats.dom);
+    }
 
     window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
     _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
@@ -2083,9 +2086,9 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     value: function animate() {
       requestAnimationFrame(this.animate.bind(this));
       this.controls.update();
-      this.stats.begin();
+      if (this.stats) this.stats.begin();
       this.render();
-      this.stats.end();
+      if (this.stats) this.stats.end();
     }
   }, {
     key: "render",
