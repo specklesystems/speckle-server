@@ -42,6 +42,7 @@
   </v-sheet>
 </template>
 <script>
+import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 
 export default {
@@ -114,9 +115,16 @@ export default {
       if (!this.objectUrl) return
       this.hasLoadedModel = true
       window.__viewer.loadObject(this.objectUrl)
-      window.__viewer.on('load-progress', (args) => {
-        this.loadProgress = args.progress * 100
-      })
+      window.__viewer.on(
+        'load-progress',
+        throttle(
+          function (args) {
+            this.loadProgress = args.progress * 100
+            this.zoomEx()
+          }.bind(this),
+          200
+        )
+      )
     }
   }
 }
