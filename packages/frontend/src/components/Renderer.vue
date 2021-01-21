@@ -2,12 +2,20 @@
   <div id="rendererparent" ref="rendererparent">
     <v-fade-transition>
       <div v-show="!hasLoadedModel" class="overlay cover-all">
-        <v-btn large class="button-load" @click="load()">
+        <v-btn large class="vertical-center" @click="load()">
           <v-icon class="mr-3">mdi-cube-outline</v-icon>
-          load
+          View Data
         </v-btn>
       </div>
     </v-fade-transition>
+    <v-progress-linear
+      v-if="hasLoadedModel && loadProgress < 99"
+      height='4'
+      rounded
+      v-model="loadProgress"
+      class="vertical-center elevation-10"
+      style="position: relative; width: 80%; left:10%;"
+    ></v-progress-linear>
     <v-card
       v-show="hasLoadedModel"
       style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
@@ -41,7 +49,8 @@ export default {
   },
   data() {
     return {
-      hasLoadedModel: false
+      hasLoadedModel: false,
+      loadProgress: 0
     }
   },
   mounted() {
@@ -84,6 +93,9 @@ export default {
       if (!this.objectUrl) return
       this.hasLoadedModel = true
       window.__viewer.loadObject(this.objectUrl)
+      window.__viewer.on('load-progress', (args) => {
+        this.loadProgress = args.progress * 100
+      })
     }
   }
 }
@@ -119,12 +131,14 @@ export default {
     rgba(60, 94, 128, 0.8519782913165266) 0%,
     rgba(63, 123, 135, 0.13489145658263302) 100%
   );
+  text-align: center;
 }
 
-.button-load {
+.vertical-center {
   margin: 0;
   top: 50%;
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
+  z-index: 2;
 }
 </style>
