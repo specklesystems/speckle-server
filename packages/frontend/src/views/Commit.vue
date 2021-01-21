@@ -1,7 +1,7 @@
 <template>
   <v-row v-if="stream">
     <v-col cols="12">
-      <v-card class="pa-0" elevation="0" rounded="lg" color="transparent" style="height: 40vh;">
+      <v-card class="pa-0 mb-3" elevation="0" rounded="lg" color="transparent" style="height: 40vh;">
         <renderer :object-url="commitObjectUrl"/>
       </v-card>
       <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
