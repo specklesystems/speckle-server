@@ -1,36 +1,45 @@
 <template>
-  <div id="rendererparent" ref="rendererparent">
-    <v-fade-transition>
-      <div v-show="!hasLoadedModel" class="overlay cover-all">
-        <v-btn large class="vertical-center" @click="load()">
-          <v-icon class="mr-3">mdi-cube-outline</v-icon>
-          View Data
-        </v-btn>
-      </div>
-    </v-fade-transition>
-    <v-progress-linear
-      v-if="hasLoadedModel && loadProgress < 99"
-      height='4'
-      rounded
-      v-model="loadProgress"
-      class="vertical-center elevation-10"
-      style="position: relative; width: 80%; left:10%;"
-    ></v-progress-linear>
-    <v-card
-      v-show="hasLoadedModel"
-      style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
-      class="pa-0 text-center transparent elevation-0 pb-3"
+  <v-sheet>
+    <div
+      id="rendererparent"
+      ref="rendererparent"
+      :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}`"
     >
-      <v-btn-toggle class="elevation-10">
-        <v-btn small @click="zoomEx()">
-          <v-icon small>mdi-cube-scan</v-icon>
-        </v-btn>
-        <v-btn small @click="sectionToggle()">
-          <v-icon small>mdi-scissors-cutting</v-icon>
-        </v-btn>
-      </v-btn-toggle>
-    </v-card>
-  </div>
+      <v-fade-transition>
+        <div v-show="!hasLoadedModel" class="overlay cover-all">
+          <v-btn large class="vertical-center" @click="load()">
+            <v-icon class="mr-3">mdi-cube-outline</v-icon>
+            View Data
+          </v-btn>
+        </div>
+      </v-fade-transition>
+      <v-progress-linear
+        v-if="hasLoadedModel && loadProgress < 99"
+        v-model="loadProgress"
+        height="4"
+        rounded
+        class="vertical-center elevation-10"
+        style="position: relative; width: 80%; left: 10%"
+      ></v-progress-linear>
+      <v-card
+        v-show="hasLoadedModel"
+        style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
+        class="pa-0 text-center transparent elevation-0 pb-3"
+      >
+        <v-btn-toggle class="elevation-10">
+          <v-btn :small="!fullScreen" @click="zoomEx()">
+            <v-icon small>mdi-cube-scan</v-icon>
+          </v-btn>
+          <v-btn :small="!fullScreen" @click="sectionToggle()">
+            <v-icon small>mdi-scissors-cutting</v-icon>
+          </v-btn>
+          <v-btn :small="!fullScreen" @click="fullScreen = !fullScreen">
+            <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
+          </v-btn>
+        </v-btn-toggle>
+      </v-card>
+    </div>
+  </v-sheet>
 </template>
 <script>
 import { Viewer } from '@speckle/viewer'
@@ -50,7 +59,19 @@ export default {
   data() {
     return {
       hasLoadedModel: false,
-      loadProgress: 0
+      loadProgress: 0,
+      fullScreen: false
+    }
+  },
+  computed: {
+    darkMode() {
+      // return localStorage.getItem('darkModeEnabled') !== 'light'
+      return this.$vuetify.theme.dark
+    }
+  },
+  watch: {
+    fullScreen() {
+      setTimeout(() => window.__viewer.onWindowResize(), 100)
     }
   },
   mounted() {
@@ -106,6 +127,19 @@ export default {
   display: inline-block;
   width: 100%;
   height: 100%;
+}
+
+.fullscreen {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  /*background-color: rgb(58, 59, 60);*/
+  background-color: rgb(238, 238, 238);
+}
+
+.dark {
+  background-color: rgb(58, 59, 60) !important;
 }
 
 #renderer {
