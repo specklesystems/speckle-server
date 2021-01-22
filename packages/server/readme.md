@@ -12,18 +12,22 @@ We're working to stabilize the 2.0 API, and until then there will be breaking ch
 
 ## Introduction
 
-The Speckle Server is a node application. To start it locally, simply:
+The Speckle Server is a node application. To start it locally:
 
-- ensure you have a local instance of postgres & redis running
+First, ensure you have postgres and redis ready and running:
+
+- ensure you have a local instance of postgres running
 - create a postgres db called `speckle2_dev`
-- then run `npm install`
-- finally `npm run dev` will start the server.
+- ensure you have an instance of redis running
+
+Finally, in the `packages/server` folder: 
+
+- copy the `.env-example` file to `.env`,
+- open and edit the `.env` file, filling in the required variables,
+- run `npm install`,
+- finally `npm run dev`,
 - check `localhost:3000/graphql` out!
 
-You can customise your local deployment by editing and filling in a `.env` file. To do so:
-
-- copy the `.env-example` file to `.env`
-- open and edit the `.env` file.
 
 ## Developing
 

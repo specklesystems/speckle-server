@@ -1,45 +1,50 @@
-FROM node:14.15.4-alpine3.10@sha256:fe215d05cdde4b7f2a0f546c88a8ddc4f5fa280a204acdfc2383afe901fd6d84 as build
+FROM node:14.15.4-alpine3.12@sha256:55bf28ea11b18fd914e1242835ea3299ec76f5a034e8c6e42b2ede70064e338c as node
 
-WORKDIR /home/node
-
+FROM node as build
 # Having multiple steps in builder doesn't increase the final image size
 # So having verbose steps for readability and caching should be the target 
 
-# 1. Copy package defs first they are the least likely to change
+WORKDIR /opt
+
+# Copy package defs first they are the least likely to change
 # Keeping this order will least likely trigger full rebuild
 COPY packages/frontend/package*.json frontend/
-COPY packages/server/package*.json server/
-
-# 2. Install packages 
-# Use dev environment to install dev packages for frontend build
-ENV NODE_ENV development
 RUN npm --prefix frontend ci frontend
 
-# Switch to production env for server install
+COPY packages/server/package*.json server/
 ENV NODE_ENV production
 RUN npm --prefix server ci server
 
-# 3. build frontend to static files
-# when testing container build, most propably not the frontend files are the ones
-# that are changing. So having a separate copy and build step speeds up the container
-# build.
+# Copy remaining files across for frontend. Changes to these files 
+# will be more common than changes to the dependencies. This should 
+# speed up rebuilds.
 COPY packages/frontend frontend
-RUN npm --prefix frontend run build
 
-COPY packages/server server
-FROM node:14.15.4-alpine3.10@sha256:fe215d05cdde4b7f2a0f546c88a8ddc4f5fa280a204acdfc2383afe901fd6d84
+WORKDIR /opt/frontend
+RUN npm run build
+
+FROM node as runtime
+
+RUN apk add --no-cache tini=0.19.0-r0
+
+# Use a non-root user for increased security.
+USER node
 
 ENV NODE_ENV production
 
-RUN mkdir -p frontend/dist server
+# Copy dependencies and static files from build layer
+COPY --from=build --chown=node /opt/frontend/dist /home/node/frontend/dist
+COPY --from=build --chown=node /opt/server /home/node/server
 
-# only copy in the build artifacts for the frontend
-COPY --from=build --chown=node /home/node/frontend/dist frontend/dist
-# copy the server with installed modules
-COPY --from=build --chown=node /home/node/server server
+# Run the application from the non root users home directory
+WORKDIR /home/node/server
 
-# change to no root user, node
-USER node
+# Copy remaining files across for the server. Changes to these 
+# files will be more common than changes to the dependencies. 
+# This should speed up rebuilds.
+COPY --chown=node packages/server /home/node/server
 
-WORKDIR /server
+# Init for containers https://github.com/krallin/tini
+ENTRYPOINT [ "/sbin/tini", "--" ]
+
 CMD ["node", "bin/www"]
