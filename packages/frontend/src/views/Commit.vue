@@ -79,8 +79,6 @@ import Renderer from '../components/Renderer'
 import streamCommitQuery from '../graphql/commit.gql'
 import CommitDialog from '../components/dialogs/CommitDialog'
 
-import { Viewer } from '@speckle/viewer'
-
 export default {
   name: 'Commit',
   components: { CommitDialog, UserAvatar, ObjectSpeckleViewer, Renderer },
@@ -119,14 +117,6 @@ export default {
     }
   },
   methods: {
-    loadObject() {
-      this.loadedModel = true
-      let v = new Viewer({ container: this.$refs.renderer })
-      // window.v = v
-      // window.v.loadObject(
-      //   `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
-      // )
-    },
     editCommit() {
       this.$refs.commitDialog.open(this.stream.commit, this.stream.id).then((dialog) => {
         if (!dialog.result) return

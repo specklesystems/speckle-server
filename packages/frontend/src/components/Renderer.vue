@@ -36,6 +36,35 @@
           <v-btn :small="!fullScreen" @click="fullScreen = !fullScreen">
             <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
           </v-btn>
+          <v-btn :small="!fullScreen" @click="showHelp = !showHelp">
+            <v-icon small>mdi-help</v-icon>
+          </v-btn>
+          <v-dialog v-model="showHelp" max-width="290">
+            <v-card>
+              <v-card-text class="pt-7">
+                <v-icon class="mr-2">mdi-rotate-orbit</v-icon>
+                Use your
+                <b>left mouse button</b>
+                to rotate the view.
+                <br />
+                <br />
+                <v-icon class="mr-2">mdi-pan</v-icon>
+                Use your
+                <b>right mouse button</b>
+                to pan the view.
+                <br />
+                <br />
+                <v-icon class="mr-2">mdi-cursor-default-click</v-icon>
+                <b>Double clicking an object</b>
+                focus it in the camera view.
+                <br />
+                <br />
+                <v-icon class="mr-2">mdi-cursor-default-click-outline</v-icon>
+                <b>Double clicking on the background</b>
+                will focus again the entire scene.
+              </v-card-text>
+            </v-card>
+          </v-dialog>
         </v-btn-toggle>
       </v-card>
     </div>
@@ -61,12 +90,12 @@ export default {
     return {
       hasLoadedModel: false,
       loadProgress: 0,
-      fullScreen: false
+      fullScreen: false,
+      showHelp: false
     }
   },
   computed: {
     darkMode() {
-      // return localStorage.getItem('darkModeEnabled') !== 'light'
       return this.$vuetify.theme.dark
     }
   },
