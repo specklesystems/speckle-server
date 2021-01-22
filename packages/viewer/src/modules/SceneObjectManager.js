@@ -12,10 +12,14 @@ export default class SceneObjectManager {
     this.scene = viewer.scene
     this.userObjects = new THREE.Group()
     this.solidObjects = new THREE.Group()
+    this.lineObjects = new THREE.Group()
+    this.pointObjects = new THREE.Group()
     this.transparentObjects = new THREE.Group()
 
     this.userObjects.add( this.solidObjects )
     this.userObjects.add( this.transparentObjects )
+    this.userObjects.add( this.lineObjects )
+    this.userObjects.add( this.pointObjects )
     this.scene.add( this.userObjects )
 
     this.solidMaterial = new THREE.MeshStandardMaterial( {
@@ -37,6 +41,8 @@ export default class SceneObjectManager {
       opacity: 0.4,
       envMap: this.viewer.cubeCamera.renderTarget.texture
     } )
+
+    // this.lineMaterial = new
 
 
     this.objectIds = []
@@ -122,7 +128,7 @@ export default class SceneObjectManager {
   }
 
   addLine( wrapper ) {
-    // TODO
+    const line = new THREE.Line( wrapper.bufferGeometry, this.lineMaterial )
   }
 
   addPoint( wrapper ){

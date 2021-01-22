@@ -19,7 +19,7 @@
         height="4"
         rounded
         class="vertical-center elevation-10"
-        style="position: relative; width: 80%; left: 10%"
+        style="position: relative; width: 80%; left: 10%; opacity: 0.5"
       ></v-progress-linear>
       <v-card
         v-show="hasLoadedModel"
@@ -72,7 +72,7 @@ export default {
   },
   watch: {
     fullScreen() {
-      setTimeout(() => window.__viewer.onWindowResize(), 100)
+      setTimeout(() => window.__viewer.onWindowResize(), 20)
     }
   },
   mounted() {

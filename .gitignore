@@ -4,6 +4,7 @@ packages/frontend/node_modules
 packages/frontend/dist
 packages/viewer/node_modules
 packages/viewer/dist
+*.env
 .nyc_output
 coverage/
 .vscode

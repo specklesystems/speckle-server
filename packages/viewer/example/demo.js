@@ -983,9 +983,13 @@ var SceneObjectManager = /*#__PURE__*/function () {
     this.scene = viewer.scene;
     this.userObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.solidObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.lineObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.pointObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.transparentObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.userObjects.add(this.solidObjects);
     this.userObjects.add(this.transparentObjects);
+    this.userObjects.add(this.lineObjects);
+    this.userObjects.add(this.pointObjects);
     this.scene.add(this.userObjects);
     this.solidMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       color: 0x8D9194,
@@ -1004,7 +1008,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
       transparent: true,
       opacity: 0.4,
       envMap: this.viewer.cubeCamera.renderTarget.texture
-    });
+    }); // this.lineMaterial = new
+
     this.objectIds = [];
     this.postLoad = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
       this._postLoadFunction();
@@ -1093,7 +1098,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
     }
   }, {
     key: "addLine",
-    value: function addLine(wrapper) {// TODO
+    value: function addLine(wrapper) {
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(wrapper.bufferGeometry, this.lineMaterial);
     }
   }, {
     key: "addPoint",
