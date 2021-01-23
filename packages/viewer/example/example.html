@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+ <html>
+   <head>
+     <meta charset="utf-8" />
+     <title>Speckle Viewer</title>
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <link rel="preconnect" href="https://fonts.gstatic.com">
+      <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,700&display=swap" rel="stylesheet">
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" integrity="sha512-EZLkOqwILORob+p0BXZc+Vm3RgJBOe1Iq/0fiI7r/wJgzOFZMlsqTa29UEl6v6U6gsV4uIpsNZoV32YZqrCRCQ==" crossorigin="anonymous" />
+     <style type="text/css">
+      body{
+        font-family: 'Space Mono', monospace !important;
+      }
+      button {
+        font-family: 'Space Mono', monospace !important;
+        border-color: #0A66FF;
+      }
+      #renderer{
+        height: 700px;
+        width: 100%;
+        border: 5px dashed;
+        border-color: rgba(100,100,100, 0.1);
+      }
+    </style>
+   <script defer src="demo.js"></script></head>
+   <body>
+    <div class="container">
+      <div class="row" style="padding-top: 20px">
+        <div class="twelve columns">
+          <h3>Viewer</h3>
+          <h5>Controls summary:</h5>
+          <p>Click an object to select it. Double click it to focus on it. Press `esc` to clear the selection. Press `shift-s` to toggle a section plane. Press `s` while the section plane is active to toggle its control mode. Double click anywhere outside an object to zoom extents to the entire scene.</p>
+        </div>
+        <div class="twelve columns">
+          <button onclick="v.sceneManager.zoomExtents()">Zoom Extents</button>
+          <button onclick="v.postprocessing = !v.postprocessing">Postprocessing Toggle</button>
+          <button onclick="v.sectionPlaneHelper.toggleSectionPlanes()">Show Section Plane</button>
+        </div>
+        <div class="twelve columns">
+          <input id="objectUrlInput" type="text" name="objectId" placeholder="Object Url" style="width:49%" value="https://staging.speckle.dev/streams/a75ab4f10f/objects/a59617590b0bec4e9b5ee487ee75b1a7"/>
+          <button class="" onclick="LoadData()" style="width:49%">Load Object URL</button>
+        </div>
+        <div class="twelve columns">
+          <input id="objectIdInput" type="text" name="objectId" placeholder="Object Id" style="width:49%"/>
+          <button class="" onclick="LoadDataOld()" style="width:49%">Load Object URL</button>
+        </div>
+        <div class="twelve columns">
+          <button onclick="LoadDataOld('cd2d10cafb01a3e76954ae5906d00dfc')">Load Boat</button>
+          <button onclick="LoadDataOld('9a00ad76438d06612968190546552c56')">Load Jet Fuselage</button>
+          <button onclick="LoadDataOld('3242eb9db2199b83b7045507917689ae')">Load Strange Thing</button>
+          <button onclick="LoadDataOld('eb7e163cfe9e8afdbc74bd7451f96096')">Load Lots of Strange Things</button>
+          <button onclick="LoadDataOld('145432210c277bef7e02e0040f70f283')">Load Boring Stuff</button>
+          <button onclick="LoadDataOld('9bdac9ee6c95a809ea7fe7218eb87b48')">Load Revit Thing</button>
+          <button onclick="v.sceneManager.removeAllObjects()">Dispose Everything</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">
+          <div id="renderer"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">
+
+        </div>
+    </div>
+   </body>
+ </html>

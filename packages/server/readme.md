@@ -1,33 +1,38 @@
 # Speckle Server
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Discourse users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fdiscourse.speckle.works&style=flat-square)](https://discourse.speckle.works)
-[![Slack Invite](https://img.shields.io/badge/-slack-grey?style=flat-square&logo=slack)](https://speckle-works.slack.com/join/shared_invite/enQtNjY5Mzk2NTYxNTA4LTU4MWI5ZjdhMjFmMTIxZDIzOTAzMzRmMTZhY2QxMmM1ZjVmNzJmZGMzMDVlZmJjYWQxYWU0MWJkYmY3N2JjNGI) [![website](https://img.shields.io/badge/www-speckle.systems-royalblue?style=flat-square)](https://speckle.systems)
+[![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Discourse users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fdiscourse.speckle.works&style=flat-square)](https://discourse.speckle.works) [![website](https://img.shields.io/badge/www-speckle.systems-royalblue?style=flat-square)](https://speckle.systems)
 
 #### Status
 
 [![Speckle-Next](https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg)](https://codecov.io/gh/specklesystems/speckle-server)
 
 ## Disclaimer
+
 We're working to stabilize the 2.0 API, and until then there will be breaking changes.
 
 ## Introduction
 
-The Speckle Server is a node application. To start it locally, simply:
+The Speckle Server is a node application. To start it locally:
 
-- ensure you have a local instance of postgres & redis running
+First, ensure you have postgres and redis ready and running:
+
+- ensure you have a local instance of postgres running
 - create a postgres db called `speckle2_dev`
-- then run `npm install`
-- finally `npm run dev` will start the server.
+- ensure you have an instance of redis running
+
+Finally, in the `packages/server` folder: 
+
+- copy the `.env-example` file to `.env`,
+- open and edit the `.env` file, filling in the required variables,
+- run `npm install`,
+- finally `npm run dev`,
 - check `localhost:3000/graphql` out!
 
-You can customise your local deployment by editing and filling in a `.env` file. To do so:
-
-- copy the `.env-example` file to `.env`
-- open and edit the `.env` file.
 
 ## Developing
 
 The server consists of several semi-related components, or modules. These can be found in `/modules`. Module composition:
+
 - an `index.js` file that exposes two functions, `init` and `finalize` (mandatory)
 - a `graph` folder, with two subfolders, namely `resolvers` and `schemas` (optional - these will be picked up and merged).
 
@@ -56,13 +61,8 @@ To run all tests, simply run `npm run test`. To run specific tests, use the `moc
 
 ## Community
 
-If in trouble, the Speckle Community hangs out in two main places, usually:
-- on [the forum](https://discourse.speckle.works)
-- on [the chat](https://speckle-works.slack.com/join/shared_invite/enQtNjY5Mzk2NTYxNTA4LTU4MWI5ZjdhMjFmMTIxZDIzOTAzMzRmMTZhY2QxMmM1ZjVmNzJmZGMzMDVlZmJjYWQxYWU0MWJkYmY3N2JjNGI)
-
-Do join and introduce yourself! We're happy to help.
+The Speckle Community hangs out on [the forum](https://discourse.speckle.works), do join and introduce yourself & feel free to ask us questions!
 
 ## License
+
 Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different license file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via [email](mailto:hello@speckle.systems).
-
-

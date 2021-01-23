@@ -10,6 +10,9 @@ query StreamCommits($id: String!) {
         authorAvatar
         createdAt
         message
+        referencedObject
+        branchName
+        sourceApplication
       }
     }
   }
