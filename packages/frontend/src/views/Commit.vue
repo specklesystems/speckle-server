@@ -1,6 +1,9 @@
 <template>
   <v-row v-if="stream">
     <v-col cols="12">
+      <v-card class="pa-0 mb-3" elevation="0" rounded="lg" color="transparent" style="height: 50vh">
+        <renderer :object-url="commitObjectUrl" />
+      </v-card>
       <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
         <v-card-title class="mr-8">
           <v-icon class="mr-2">mdi-source-commit</v-icon>
@@ -18,6 +21,21 @@
             :size="25"
             class="ml-1"
           ></user-avatar>
+        </v-card-text>
+        <v-card-text>
+          Branch:
+          <v-chip
+            small
+            :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(
+              stream.commit.branchName
+            )}`"
+          >
+            <v-icon small class="mr-2">mdi-source-branch</v-icon>
+            {{ stream.commit.branchName }}
+          </v-chip>
+          <br />
+          Source Application:
+          <source-app-avatar :application-name="stream.commit.sourceApplication" />
         </v-card-text>
         <commit-dialog ref="commitDialog"></commit-dialog>
         <v-btn
@@ -70,16 +88,19 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import SidebarStream from '../components/SidebarStream'
 import UserAvatar from '../components/UserAvatar'
 import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
+import Renderer from '../components/Renderer'
 import streamCommitQuery from '../graphql/commit.gql'
 import CommitDialog from '../components/dialogs/CommitDialog'
+import SourceAppAvatar from '../components/SourceAppAvatar'
 
 export default {
   name: 'Commit',
-  components: { SidebarStream, CommitDialog, UserAvatar, ObjectSpeckleViewer },
-  data: () => ({}),
+  components: { CommitDialog, UserAvatar, ObjectSpeckleViewer, Renderer, SourceAppAvatar },
+  data: () => ({
+    loadedModel: false
+  }),
   apollo: {
     stream: {
       prefetch: true,
@@ -106,6 +127,9 @@ export default {
         speckle_type: 'reference',
         referencedId: this.stream.commit.referencedObject
       }
+    },
+    commitObjectUrl() {
+      return `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
     }
   },
   methods: {

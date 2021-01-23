@@ -10,7 +10,7 @@ let outputFile, mode
 
 if ( env === 'build' ) {
   mode = 'production'
-  outputFile = libraryName + '.min.js'
+  outputFile = libraryName + '.js'
 } else {
   mode = 'development'
   outputFile = libraryName + '.js'

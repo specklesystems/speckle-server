@@ -12,7 +12,7 @@ import EventEmitter from './EventEmitter'
 
 export default class Viewer extends EventEmitter {
 
-  constructor( { container, postprocessing = true, reflections = true } ) {
+  constructor( { container, postprocessing = true, reflections = true, showStats = false } ) {
     super()
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
@@ -60,8 +60,10 @@ export default class Viewer extends EventEmitter {
     this.controls.addEventListener( 'start', () => { this.pauseSSAO = true } )
     this.controls.addEventListener( 'end', () => { this.pauseSSAO = false } )
 
-    this.stats = new Stats()
-    this.container.appendChild( this.stats.dom )
+    if ( showStats ) {
+      this.stats = new Stats()
+      this.container.appendChild( this.stats.dom )
+    }
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
 
@@ -128,9 +130,9 @@ export default class Viewer extends EventEmitter {
   animate() {
     requestAnimationFrame( this.animate.bind( this ) )
     this.controls.update()
-    this.stats.begin()
+    if ( this.stats ) this.stats.begin()
     this.render()
-    this.stats.end()
+    if ( this.stats ) this.stats.end()
   }
 
   render() {

@@ -1,8 +1,11 @@
-node_modules
-frontend/node_modules
-frontend/dist
+packages/server/node_modules
+packages/server/.env
+packages/frontend/node_modules
+packages/frontend/dist
+packages/viewer/node_modules
+packages/viewer/dist
+*.env
 .nyc_output
 coverage/
-.env
 .vscode
 test-queries
