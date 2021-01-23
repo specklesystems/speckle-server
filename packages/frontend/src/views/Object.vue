@@ -1,10 +1,10 @@
 <template>
   <v-row>
     <v-col cols="12" sm="12">
-      <v-card class="pa-0 mb-3" elevation="0" rounded="lg" color="transparent" style="height: 40vh">
+      <v-card class="pa-0" elevation="0" rounded="lg" color="transparent" style="height: 50vh">
         <renderer :object-url="commitObjectUrl" />
       </v-card>
-      <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
+      <v-card class="pa-4 mt-3" elevation="0" rounded="lg" color="background2">
         <v-card-title class="mr-8">
           <v-icon class="mr-2">mdi-database</v-icon>
           Object {{ $route.params.objectId }}

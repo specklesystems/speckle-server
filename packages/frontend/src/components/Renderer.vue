@@ -1,5 +1,5 @@
 <template>
-  <v-sheet>
+  <v-sheet style="height: 100%;" class="transparent">
     <div
       id="rendererparent"
       ref="rendererparent"
@@ -19,7 +19,7 @@
         height="4"
         rounded
         class="vertical-center elevation-10"
-        style="position: relative; width: 80%; left: 10%; opacity: 0.5"
+        style="position: absolute; width: 80%; left: 10%; opacity: 0.5"
       ></v-progress-linear>
       <v-card
         v-show="hasLoadedModel"
@@ -160,7 +160,7 @@ export default {
 </script>
 <style>
 #rendererparent {
-  position: absolute;
+  position: relative;
   display: inline-block;
   width: 100%;
   height: 100%;
@@ -194,7 +194,7 @@ export default {
 }
 
 .cover-all {
-  position: absolute;
+  position: relative;
   width: 100%;
   height: 100%;
   background: radial-gradient(
