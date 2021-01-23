@@ -1,5 +1,5 @@
 <template>
-  <v-sheet style="height: 100%;" class="transparent">
+  <v-sheet style="height: 100%" class="transparent">
     <div
       id="rendererparent"
       ref="rendererparent"
@@ -26,19 +26,44 @@
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
-        <v-btn-toggle class="elevation-10">
-          <v-btn :small="!fullScreen" @click="zoomEx()">
-            <v-icon small>mdi-cube-scan</v-icon>
-          </v-btn>
-          <v-btn :small="!fullScreen" @click="sectionToggle()">
-            <v-icon small>mdi-scissors-cutting</v-icon>
-          </v-btn>
-          <v-btn :small="!fullScreen" @click="fullScreen = !fullScreen">
-            <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
-          </v-btn>
-          <v-btn :small="!fullScreen" @click="showHelp = !showHelp">
-            <v-icon small>mdi-help</v-icon>
-          </v-btn>
+        <v-btn-toggle class="elevation-0">
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn :small="!fullScreen" v-bind="attrs" v-on="on" @click="zoomEx()">
+                <v-icon small>mdi-cube-scan</v-icon>
+              </v-btn>
+            </template>
+            Focus entire model
+          </v-tooltip>
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn :small="!fullScreen" v-bind="attrs" @click="sectionToggle()" v-on="on">
+                <v-icon small>mdi-scissors-cutting</v-icon>
+              </v-btn>
+            </template>
+            Show / Hide Section plane
+          </v-tooltip>
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                :small="!fullScreen"
+                v-bind="attrs"
+                @click="fullScreen = !fullScreen"
+                v-on="on"
+              >
+                <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
+              </v-btn>
+            </template>
+            Full screen
+          </v-tooltip>
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn :small="!fullScreen" v-bind="attrs" @click="showHelp = !showHelp" v-on="on">
+                <v-icon small>mdi-help</v-icon>
+              </v-btn>
+            </template>
+            Show viewer help
+          </v-tooltip>
           <v-dialog v-model="showHelp" max-width="290">
             <v-card>
               <v-card-text class="pt-7">
@@ -104,6 +129,7 @@ export default {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
     }
   },
+  // TODO: pause rendering on destroy, reinit on mounted.
   mounted() {
     // NOTE: we're doing some globals and dom shennanigans in here for the purpose
     // of having a unique global renderer and it's container dom element. The principles
@@ -124,13 +150,21 @@ export default {
     this.$refs.rendererparent.appendChild(renderDomElement)
     window.__viewer = window.__viewer || new Viewer({ container: renderDomElement })
     window.__viewer.onWindowResize()
+
+    if (window.__viewerLastLoadedUrl !== this.objectUrl) {
+      window.__viewer.sceneManager.removeAllObjects()
+      window.__viewerLastLoadedUrl = null
+    } else {
+      this.hasLoadedModel = true
+      this.loadProgress = 100
+    }
   },
   beforeDestroy() {
     // NOTE: here's where we juggle the container div out, and do cleanup on the
     // viewer end.
-    window.__viewer.sceneManager.removeAllObjects()
-    // move renderer dom element outside this component so it doesn't get deleted.
+    // hide renderer dom element.
     this.domElement.style.display = 'none'
+    // move renderer dom element outside this component so it doesn't get deleted.
     document.body.appendChild(this.domElement)
   },
   methods: {
@@ -144,6 +178,7 @@ export default {
       if (!this.objectUrl) return
       this.hasLoadedModel = true
       window.__viewer.loadObject(this.objectUrl)
+      window.__viewerLastLoadedUrl = this.objectUrl
       window.__viewer.on(
         'load-progress',
         throttle(
