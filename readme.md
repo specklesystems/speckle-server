@@ -24,6 +24,10 @@ The server is a nodejs app. Core external dependencies are a Redis and Postgresq
 
 The frontend is a static Vue app.
 
+### ➡️ [Viewer](packages/viewer), the Speckle Viewer.
+
+The viewer is a [threejs](https://threejs.org/) extension that allows you to display data from Speckle. 
+
 ## Developing and Debugging
 
 To get started, first clone this repo. Check out the detailed instructions for each module in their respective folder (see links above). 

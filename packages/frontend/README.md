@@ -14,6 +14,17 @@ Notes:
 
 ## Project setup
 
+The frontend now includes the viewer. Until we get to publish it as a separate module, there's a few extra steps:
+
+First, make sure you build the [Speckle Viewer](../viewer). Afterwards, run
+
+```
+lerna bootstrap
+```
+
+to link the viewer package with the frontend. Afterwards, go ahead and run: 
+
+
 ```
 npm install
 ```

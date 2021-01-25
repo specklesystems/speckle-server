@@ -1,6 +1,20 @@
 <template>
   <v-row>
     <v-col sm="12">
+      <v-card class="mb-4 transparent" rounded="lg" elevation="0">
+        <div v-if="latestCommit" style="height: 50vh">
+          <renderer :object-url="latestCommitObjectUrl" />
+        </div>
+        <v-sheet v-if="latestCommit">
+          <list-item-commit
+            :commit="latestCommit"
+            :stream-id="$route.params.streamId"
+          ></list-item-commit>
+        </v-sheet>
+        <v-sheet v-else>
+          <v-card-title>This stream does not have any data yet.</v-card-title>
+        </v-sheet>
+      </v-card>
       <v-card v-if="$apollo.queries.description.loading">
         <v-skeleton-loader type="article"></v-skeleton-loader>
       </v-card>
@@ -109,13 +123,15 @@ import StreamDescriptionDialog from '../components/dialogs/StreamDescriptionDial
 import ListItemCommit from '../components/ListItemCommit'
 import streamCommitsQuery from '../graphql/streamCommits.gql'
 import streamBranchesQuery from '../graphql/streamBranches.gql'
+import Renderer from '../components/Renderer'
 
 export default {
   name: 'StreamMain',
   components: {
     NewBranchDialog,
     ListItemCommit,
-    StreamDescriptionDialog
+    StreamDescriptionDialog,
+    Renderer
   },
   props: {
     stream: {
@@ -182,6 +198,14 @@ export default {
       if (!this.description) return ''
       let md = marked(this.description)
       return DOMPurify.sanitize(md)
+    },
+    latestCommit() {
+      if (!this.commits) return null
+      return this.commits.items[0]
+    },
+    latestCommitObjectUrl() {
+      if (!this.latestCommit) return null
+      return `${window.location.origin}/streams/${this.$route.params.streamId}/objects/${this.latestCommit.referencedObject}`
     }
   },
   mounted() {
