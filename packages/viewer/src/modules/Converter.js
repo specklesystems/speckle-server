@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { BufferGeometry } from 'three'
 import { NURBSCurve } from 'three/examples/jsm/curves/NURBSCurve'
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 
@@ -242,7 +242,30 @@ export default class Coverter {
     return new ObjectWrapper( geometry, obj, 'line' )
   }
 
-  // async PolycurveToBufferGeometry( obj ) {}
+  async PolycurveToBufferGeometry( object ) {
+    let obj = {}
+    Object.assign( obj,object )
+    delete object.value
+    delete object.speckle_type
+    delete object.displayValue
+    delete object.segments
+
+    console.log( 'Polycurve to buffer', obj )
+
+    let buffers = []
+    for ( let i = 0; i < obj.segments.length; i++ ) {
+      const element = obj.segments[i]
+      const conv = await this.convert( element )
+      buffers.push( conv?.bufferGeometry )
+    }
+    let geometry = BufferGeometryUtils.mergeBufferGeometries( buffers )
+    
+    delete obj.segments
+    delete obj.speckle_type
+
+    return new ObjectWrapper( geometry , obj, 'line' )
+  }
+  
   async CurveToBufferGeometry( object ) {
     let obj = {}
     Object.assign( obj,object )
@@ -286,7 +309,7 @@ export default class Coverter {
 
       // Divide the nurbs curve in points
       var pts = curve.getPoints( div )
-      return new ObjectWrapper( new BufferGeometry().setFromPoints( pts ), obj, 'line' )
+      return new ObjectWrapper( new THREE.BufferGeometry().setFromPoints( pts ), obj, 'line' )
 
     } catch ( e ) {
       console.warn( 'Error converting nurbs curve, falling back to displayValue', obj )
