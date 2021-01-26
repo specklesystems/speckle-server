@@ -1,7 +1,5 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
-import { LineBasicMaterial } from 'three'
-
 
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
@@ -54,7 +52,7 @@ export default class SceneObjectManager {
   }
 
   get objects() {
-    return [ ...this.solidObjects.children, ...this.transparentObjects.children ]
+    return [ ...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children ]
   }
 
   // Note: we might switch later down the line from cloning materials to solely
@@ -134,7 +132,7 @@ export default class SceneObjectManager {
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     this.objectIds.push( line.uuid )
-    this.solidObjects.add( line )
+    this.lineObjects.add( line )
   }
 
   addPoint( wrapper ){
@@ -142,7 +140,7 @@ export default class SceneObjectManager {
     dot.userData = wrapper.meta
     dot.uuid = wrapper.meta.id
     this.objectIds.push( dot.uuid )
-    this.solidObjects.add( dot )
+    this.pointObjects.add( dot )
   }
 
   removeObject( id ) {

@@ -1,7 +1,6 @@
 import * as THREE from 'three'
-import { BufferGeometry, Plane, PlaneBufferGeometry } from 'three'
+import { BufferGeometry } from 'three'
 import { NURBSCurve } from 'three/examples/jsm/curves/NURBSCurve'
-import { NURBSUtils } from 'three/examples/jsm/curves/NURBSUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 
@@ -16,6 +15,7 @@ export default class Coverter {
     }
 
     this.objectLoader = objectLoader
+    this.curveSegmentLength = 0.1
   }
 
   /**
@@ -300,33 +300,10 @@ export default class Coverter {
 
       return new ObjectWrapper( poly.bufferGeometry, obj, 'line' )
     }
-
-    
   }
 
   async CircleToBufferGeometry( obj ) {
-    console.log( 'circle to buffer', obj )
-    
-    const center = new THREE.Vector3( obj.plane.origin.value[0],obj.plane.origin.value[1],obj.plane.origin.value[2] )
-    const xAxis = new THREE.Vector3( obj.plane.xdir.value[0],obj.plane.xdir.value[1],obj.plane.xdir.value[2] )
-    const yAxis = new THREE.Vector3( obj.plane.ydir.value[0],obj.plane.ydir.value[1],obj.plane.ydir.value[2] )
-    console.log( center,xAxis,yAxis )
-
-    let resolution = 2 * Math.PI * obj.radius / 0.1
-    resolution = parseInt( resolution.toString() )
-    let points = []
-
-    for ( let index = 0; index <= resolution; index++ ) {
-      let t = index * Math.PI * 2 / resolution
-      let x = Math.cos( t ) * obj.radius
-      let y = Math.sin( t ) * obj.radius
-      const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
-      const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
-  
-      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
-      points.push( pt )
-    }
-    console.log( points )
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.value
@@ -336,16 +313,52 @@ export default class Coverter {
   }
   
 
-  // async ArcToBufferGeometry( obj ) {}
+  async ArcToBufferGeometry( obj ) {
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius, obj.startAngle, obj.endAngle )
+    const geometry = new THREE.BufferGeometry().setFromPoints( points )
+
+    delete obj.speckle_type
+    delete obj.startPoint
+    delete obj.endPoint
+    delete obj.plane
+    delete obj.midPoint
+
+    return new ObjectWrapper( geometry, obj, 'line' )
+  }
+  getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
+
+    // Get alignment vectors
+    const center = new THREE.Vector3( plane.origin.value[0], plane.origin.value[1], plane.origin.value[2] )
+    const xAxis = new THREE.Vector3( plane.xdir.value[0], plane.xdir.value[1], plane.xdir.value[2] )
+    const yAxis = new THREE.Vector3( plane.ydir.value[0], plane.ydir.value[1], plane.ydir.value[2] )
+
+    // Determine resolution
+    let resolution = ( endAngle - startAngle ) * radius / res
+    resolution = parseInt( resolution.toString() )
+
+    let points = []
+
+    for ( let index = 0; index <= resolution; index++ ) {
+      let t = startAngle + index * ( endAngle - startAngle ) / resolution
+      let x = Math.cos( t ) * radius
+      let y = Math.sin( t ) * radius
+      const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
+      const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
+
+      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
+      points.push( pt )
+    }
+    return points
+  }
+
   async EllipseToBufferGeometry( obj ) {
-    console.log( 'ellipse to buffer', obj )
     
     const center = new THREE.Vector3( obj.plane.origin.value[0],obj.plane.origin.value[1],obj.plane.origin.value[2] )
     const xAxis = new THREE.Vector3( obj.plane.xdir.value[0],obj.plane.xdir.value[1],obj.plane.xdir.value[2] )
     const yAxis = new THREE.Vector3( obj.plane.ydir.value[0],obj.plane.ydir.value[1],obj.plane.ydir.value[2] )
     console.log( center,xAxis,yAxis )
 
-    let resolution = 2 * Math.PI * obj.radius / 0.1
+    let resolution = 2 * Math.PI * obj.radius1 / 0.1
     resolution = parseInt( resolution.toString() )
     let points = []
 
