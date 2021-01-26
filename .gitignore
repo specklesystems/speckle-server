@@ -9,3 +9,5 @@ packages/viewer/dist
 coverage/
 .vscode
 test-queries
+
+**/.DS_Store
