@@ -7,4 +7,5 @@ packages/viewer/dist
 coverage/
 .vscode
 test-queries
-*node_modules
+
+**/.DS_Store
