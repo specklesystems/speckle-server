@@ -221,9 +221,16 @@ export default class Coverter {
   async LineToBufferGeometry( obj ) {
     return this.PolylineToBufferGeometry( obj )
   }
-  async PolylineToBufferGeometry( obj ) {
-    let conversionFactor = getConversionFactor( obj.units )
+  async PolylineToBufferGeometry( object ) {
+    let obj = {}
+    Object.assign( obj,object )
+    delete object.value
+    delete object.speckle_type
 
+    let conversionFactor = getConversionFactor( obj.units )
+    
+    obj.value = await this.dechunk( obj.value )
+    
     const points = []
     for ( let i = 0; i < obj.value.length; i+=3 ) {
       points.push( new THREE.Vector3( obj.value[ i ]* conversionFactor,obj.value[i+1]* conversionFactor,obj.value[i+2] * conversionFactor ) )
@@ -231,13 +238,22 @@ export default class Coverter {
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.value
-    delete obj.speckle_type
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
 
   // async PolycurveToBufferGeometry( obj ) {}
-  async CurveToBufferGeometry( obj ) {
+  async CurveToBufferGeometry( object ) {
+    let obj = {}
+    Object.assign( obj,object )
+    delete object.value
+    delete object.speckle_type
+    delete object.displayValue
+    
+    obj.points = await this.dechunk( obj.points )
+    obj.weights = await this.dechunk( obj.weights )
+    obj.knots = await this.dechunk( obj.knots )
+
     try {
       console.log( 'Curve to buffer', obj )
       let conversionFactor = getConversionFactor( obj.units )

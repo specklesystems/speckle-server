@@ -135,7 +135,6 @@ export default class SceneObjectManager {
     line.uuid = wrapper.meta.id
     this.objectIds.push( line.uuid )
     this.solidObjects.add( line )
-    const line = new THREE.Line( wrapper.bufferGeometry, this.lineMaterial )
   }
 
   addPoint( wrapper ){
