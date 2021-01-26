@@ -1,5 +1,6 @@
 .circleci
-node_modules
+**/node_modules
+**/dist
 test-queries
 .editorconfig
 .gitignore
