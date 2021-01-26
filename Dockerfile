@@ -4,13 +4,20 @@ FROM node as build
 # Having multiple steps in builder doesn't increase the final image size
 # So having verbose steps for readability and caching should be the target 
 
-WORKDIR /opt
+WORKDIR /opt/viewer
+COPY packages/viewer/package*.json ./
+RUN npm install
+COPY packages/viewer .
+RUN npm run build
 
+WORKDIR /opt/frontend
 # Copy package defs first they are the least likely to change
 # Keeping this order will least likely trigger full rebuild
-COPY packages/frontend/package*.json frontend/
-RUN npm --prefix frontend ci frontend
+COPY packages/frontend/package*.json ./
+RUN npm install ../viewer
+RUN npm ci
 
+WORKDIR /opt
 COPY packages/server/package*.json server/
 ENV NODE_ENV production
 RUN npm --prefix server ci server
