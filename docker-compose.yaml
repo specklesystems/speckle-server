@@ -1,7 +1,5 @@
 version: "3"
 services:
-
-  # this could be enabled once the server container is added
   server:
     build:
       .
@@ -11,41 +9,38 @@ services:
     ports:
       - "3000:3000"
     environment:
-        DEBUG: "speckle:*"
+      DEBUG: "speckle:*"
     env_file:
       - .env
     
   database:
-    image: "postgres" # use latest official postgres version
-    env_file:
-      - .env # configure postgres
+    image: "postgres:13.1-alpine" # use the current alpine version for smaller image
+    environment:
+      POSTGRES_DB:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
     volumes:
       # persist data even if container shuts down
       - speckle-postgres-data:/var/lib/postgresql/data/
-      # this mounts the initdb folder to the db container
-      # .sql .sh files are executed from this folder in alphabetical order
-      - ./initdb:/docker-entrypoint-initdb.d  
     ports:
       - "5432:5432"
 
   pgadmin:
     image: dpage/pgadmin4
     environment: 
-        PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL}"
-        PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports: 
         - "16543:80"
     depends_on: 
         - database
 
   redis:
-    image: "redis"
+    image: "redis:6.0-alpine"
     ports:
       - "6379:6379" # It is not neccesary to expose the reddis port if running the app with compose 
     volumes:
       - redis_volume_data:/data
-    #   - ./redis.conf:/tmp/redis.conf
-    # command: [ "redis-server", "/tmp/redis.conf"]
 
   redis_insight:
     image: redislabs/redisinsight:latest

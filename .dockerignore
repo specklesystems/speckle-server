@@ -6,7 +6,7 @@ test-queries
 Contributing.md
 ISSUE_TEMPLATE.md
 lerna.json
-.env
+**/.env
 .env.example
 .eslintrc.json
 .mocharc.js
