@@ -1,4 +1,6 @@
-FROM node:12.20.1-alpine3.12@sha256:42998ae4420998ff3255fc2d6884e882bd32f06d45b057f4b042e33bf48a1240 as build
+FROM node:14.15.4-alpine3.12@sha256:55bf28ea11b18fd914e1242835ea3299ec76f5a034e8c6e42b2ede70064e338c as node
+
+FROM node as build
 # Having multiple steps in builder doesn't increase the final image size
 # So having verbose steps for readability and caching should be the target 
 
@@ -28,7 +30,7 @@ COPY packages/frontend frontend
 WORKDIR /opt/frontend
 RUN npm run build
 
-FROM node:12.20.1-alpine3.12@sha256:42998ae4420998ff3255fc2d6884e882bd32f06d45b057f4b042e33bf48a1240
+FROM node as runtime
 
 RUN apk add --no-cache tini=0.19.0-r0
 

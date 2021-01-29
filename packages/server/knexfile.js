@@ -26,24 +26,35 @@ function walk( dir ) {
 
 let migrationDirs = walk( './modules' )
 
+// this is for readability, many users struggle to set the postgres connection uri
+// in the env variables. This way its a bit easier to understand, also backward compatible.
+let env = process.env
+let connectionUri
+if ( env.POSTGRES_USER && env.POSTGRES_PASSWORD ) {
+  connectionUri = `postgres://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}` + 
+`@${env.POSTGRES_URL}/${env.POSTGRES_DB}`
+} else {
+  connectionUri = env.POSTGRES_URL
+}
+
 module.exports = {
   test: {
     client: 'pg',
-    connection: 'postgres://localhost/speckle2_test',
+    connection: connectionUri || 'postgres://localhost/speckle2_test',
     migrations: {
       directory: migrationDirs
     },
   },
   development: {
     client: 'pg',
-    connection: process.env.POSTGRES_URL || 'postgres://localhost/speckle2_dev',
+    connection: connectionUri || 'postgres://localhost/speckle2_dev',
     migrations: {
       directory: migrationDirs
     },
   },
   production: {
     client: 'pg',
-    connection: process.env.POSTGRES_URL,
+    connection: connectionUri,
     migrations: {
       directory: migrationDirs
     }

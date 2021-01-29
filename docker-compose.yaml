@@ -1,0 +1,59 @@
+version: "3"
+services:
+  server:
+    build:
+      .
+    depends_on:
+      - database
+      - redis
+    ports:
+      - "3000:3000"
+    environment:
+      DEBUG: "speckle:*"
+    env_file:
+      - .env
+    
+  database:
+    image: "postgres:13.1-alpine" # use the current alpine version for smaller image
+    environment:
+      POSTGRES_DB:
+      POSTGRES_USER:
+      POSTGRES_PASSWORD:
+    volumes:
+      # persist data even if container shuts down
+      - speckle-postgres-data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment: 
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports: 
+        - "16543:80"
+    depends_on: 
+        - database
+
+  redis:
+    image: "redis:6.0-alpine"
+    ports:
+      - "6379:6379" # It is not neccesary to expose the reddis port if running the app with compose 
+    volumes:
+      - redis_volume_data:/data
+
+  redis_insight:
+    image: redislabs/redisinsight:latest
+    container_name: redis_insight
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - 8001:8001
+    volumes:
+      - redis_insight_volume_data:/db
+  
+volumes:
+  speckle-postgres-data: # named volumes can be managed easier using docker-compose
+  redis_volume_data:
+  redis_insight_volume_data:
