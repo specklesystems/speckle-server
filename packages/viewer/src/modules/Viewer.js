@@ -9,6 +9,7 @@ import SelectionHelper from './SelectionHelper'
 import SectionPlaneHelper from './SectionPlaneHelper'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
+import SectionBox from './SectionBox'
 
 export default class Viewer extends EventEmitter {
 
@@ -60,6 +61,9 @@ export default class Viewer extends EventEmitter {
     this.controls.addEventListener( 'start', () => { this.pauseSSAO = true } )
     this.controls.addEventListener( 'end', () => { this.pauseSSAO = false } )
 
+    // Section Box
+    this.sectionBox = new SectionBox(this)
+
     if ( showStats ) {
       this.stats = new Stats()
       this.container.appendChild( this.stats.dom )
@@ -69,7 +73,10 @@ export default class Viewer extends EventEmitter {
 
     this.sectionPlaneHelper = new SectionPlaneHelper( this )
     this.sceneManager = new ObjectManager( this )
+
     this.selectionHelper = new SelectionHelper( this )
+    // NS: Viewer registers double click event and supplies handler
+    this.selectionHelper.on('object-doubleclicked', this.handleDoubleClick.bind(this))
 
     this.sectionPlaneHelper.createSectionPlane()
 
@@ -77,6 +84,12 @@ export default class Viewer extends EventEmitter {
     this.animate()
 
     this.loaders = []
+  }
+
+  // NS: this is Viewer specific behavior
+  handleDoubleClick( objects ) {
+    if ( !objects || objects.length === 0 ) this.sceneManager.zoomExtents()
+    else this.sceneManager.zoomToObject( objects[0].object )
   }
 
   sceneLights() {

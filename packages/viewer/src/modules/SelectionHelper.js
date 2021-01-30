@@ -13,9 +13,23 @@ import EventEmitter from './EventEmitter'
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
  */
+
+ /*
+  * NS Notes:
+  * -make more configurable with options param
+  * _options = {
+  *             subset: [list of objects]
+  *             hover:  boolean
+  *            }
+  * Proposal to make this more general by putting client specific event handling logic in client
+  * i.e. Viewer implements handleClick and this just emits the event
+  * use cases: selecting section box face, text, tags, dims vs geometry
+  *
+  */
+
 export default class SelectionHelper extends EventEmitter {
 
-  constructor( parent ) {
+  constructor( parent, _options ) {
     super()
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
@@ -25,6 +39,19 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer.controls.addEventListener( 'change', debounce( () => { this.orbiting = false }, 100 ) )
     this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
     this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
+
+    // optional param allows for raycasting against a subset of objects
+    this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
+
+    // optional param allows for hover
+    // these events inside of events are weird if you think about them too much
+    if(typeof _options !== 'undefined' && _options.hover) {
+      // doesn't feel good when debounced, might be necessary tho
+      this.viewer.renderer.domElement.addEventListener( 'pointermove', (e) => {
+        let hovered = this.getClickedObjects(e);
+        if(hovered.length > 0) this.emit('hovered', hovered);
+      })
+    }
 
     // Handle mouseclicks
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
@@ -47,9 +74,10 @@ export default class SelectionHelper extends EventEmitter {
       if ( tapLength < 500 && tapLength > 0 ) {
         let selectionObjects = this.getClickedObjects( this.touchLocation )
         this.emit( 'object-doubleclicked', selectionObjects )
-        if ( !this.orbiting )
-          this.handleDoubleClick( selectionObjects )
-        event.preventDefault()
+        // NS: will need to reimplement this in Viewer
+        // if ( !this.orbiting )
+        //   this.handleDoubleClick( selectionObjects )
+        // event.preventDefault()
       } else {
         this.tapTimeout = setTimeout( function() {
           clearTimeout( this.tapTimeout )
@@ -64,7 +92,7 @@ export default class SelectionHelper extends EventEmitter {
       let selectionObjects = this.getClickedObjects( e )
 
       this.emit( 'object-doubleclicked', selectionObjects )
-      this.handleDoubleClick( selectionObjects )
+      // this.handleDoubleClick( selectionObjects )
     } )
 
     // Handle multiple object selection
@@ -91,10 +119,11 @@ export default class SelectionHelper extends EventEmitter {
     this.select( objects[0] )
   }
 
-  handleDoubleClick( objects ) {
-    if ( !objects || objects.length === 0 ) this.viewer.sceneManager.zoomExtents()
-    else this.viewer.sceneManager.zoomToObject( objects[0].object )
-  }
+  // NS: this should be handled in viewer
+  // handleDoubleClick( objects ) {
+  //   if ( !objects || objects.length === 0 ) this.viewer.sceneManager.zoomExtents()
+  //   else this.viewer.sceneManager.zoomToObject( objects[0].object )
+  // }
 
   select( obj ) {
     if ( !this.multiSelect ) this.unselect()
@@ -118,7 +147,7 @@ export default class SelectionHelper extends EventEmitter {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
-    let intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.objects )
+    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this.subset : this.viewer.sceneManager.objects )
     intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects
