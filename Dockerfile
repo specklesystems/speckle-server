@@ -33,6 +33,8 @@ RUN npm run build
 FROM node as runtime
 
 RUN apk add --no-cache tini=0.19.0-r0
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
 
 # Use a non-root user for increased security.
 USER node
@@ -54,4 +56,4 @@ COPY --chown=node packages/server /home/node/server
 # Init for containers https://github.com/krallin/tini
 ENTRYPOINT [ "/sbin/tini", "--" ]
 
-CMD ["node", "bin/www"]
+CMD /wait && node bin/www
