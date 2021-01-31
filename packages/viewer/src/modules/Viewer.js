@@ -61,8 +61,17 @@ export default class Viewer extends EventEmitter {
     this.controls.addEventListener( 'start', () => { this.pauseSSAO = true } )
     this.controls.addEventListener( 'end', () => { this.pauseSSAO = false } )
 
-    // Section Box
-    this.sectionBox = new SectionBox(this)
+
+    // Selected Objects
+    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
+    this.selectedObjects = new THREE.Group()
+    this.scene.add(this.selectedObjects)
+    this.selectedObjects.renderOrder = 1000
+
+    this.selectionHelper = new SelectionHelper( this )
+    // Viewer registers double click event and supplies handler
+    this.selectionHelper.on('object-doubleclicked', this.handleDoubleClick.bind(this))
+    this.selectionHelper.on('object-clicked', this.handleSelect.bind(this))
 
     if ( showStats ) {
       this.stats = new Stats()
@@ -74,11 +83,10 @@ export default class Viewer extends EventEmitter {
     this.sectionPlaneHelper = new SectionPlaneHelper( this )
     this.sceneManager = new ObjectManager( this )
 
-    this.selectionHelper = new SelectionHelper( this )
-    // NS: Viewer registers double click event and supplies handler
-    this.selectionHelper.on('object-doubleclicked', this.handleDoubleClick.bind(this))
-
     this.sectionPlaneHelper.createSectionPlane()
+
+    // Section Box
+    this.sectionBox = new SectionBox(this)
 
     this.sceneLights()
     this.animate()
@@ -86,10 +94,25 @@ export default class Viewer extends EventEmitter {
     this.loaders = []
   }
 
-  // NS: this is Viewer specific behavior
-  handleDoubleClick( objects ) {
-    if ( !objects || objects.length === 0 ) this.sceneManager.zoomExtents()
-    else this.sceneManager.zoomToObject( objects[0].object )
+  // handleDoubleClick moved from SelectionHelper
+  handleDoubleClick( objs ) {
+    if ( !objs || objs.length === 0 ) this.sceneManager.zoomExtents()
+    else this.sceneManager.zoomToObject( objs[0].object )
+  }
+
+  // handleSelect moved from SelectionHelper
+  handleSelect( obj ) {
+    console.log(obj);
+    if(obj.length === 0) {
+      this.deselect()
+      return
+    }
+    let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
+    this.selectedObjects.add( mesh )
+  }
+
+  deselect(){
+    this.selectedObjects.clear()
   }
 
   sceneLights() {

@@ -1525,6 +1525,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var verts = {};
 
 var SectionBox = function SectionBox(viewer) {
+  var _this = this;
+
   _classCallCheck(this, SectionBox);
 
   this.viewer = viewer; // basic display of the section box
@@ -1534,35 +1536,123 @@ var SectionBox = function SectionBox(viewer) {
     color: 0xffe842,
     opacity: 0.25
   });
-  this.box = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(1, 1, 1);
+  this.box = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
   this.mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.box, this.boxMaterial);
   this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
   this.display.add(this.mesh);
+  this.hover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+  this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(); // normal of plane being hovered
+
+  this.display.add(this.hover);
   this.viewer.scene.add(this.display);
   this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
     subset: [this.mesh],
     hover: true
   });
-  this.selectionHelper.on('hovered', e => {
-    // console.log(e)
-    console.log('hovered!');
-    console.log(e[0].object.geometry.faces.filter(f => f.normal.equals(e[0].face.normal)));
+  this.planes = [new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1), // left
+  new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1), // in
+  new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1), // down
+  new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1), // right
+  new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1), // out
+  new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1) // up
+  ]; // this.planeHelpers = this.planes.map( p => new THREE.PlaneHelper( p, 2, 0x000000 ) );
+  // this.planeHelpers.forEach( ph => {
+  //   // ph.visible = false;
+  //   this.display.add( ph );
+  // } );
+
+  this.viewer.renderer.localClippingEnabled = true;
+  var planeGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(4, 4);
+
+  var _loop = function _loop(i) {
+    var plane = _this.planes[i]; // this.stencilGroup = createPlaneStencilGroup( this.viewer.sceneManager.objects , plane, i + 1 );
+
+    var planeMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      color: 0xE91E63,
+      metalness: 0.1,
+      roughness: 0.75,
+      clippingPlanes: planes.filter(p => p !== plane),
+      stencilWrite: true,
+      stencilRef: 0,
+      stencilFunc: three__WEBPACK_IMPORTED_MODULE_0__.NotEqualStencilFunc,
+      stencilFail: three__WEBPACK_IMPORTED_MODULE_0__.ReplaceStencilOp,
+      stencilZFail: three__WEBPACK_IMPORTED_MODULE_0__.ReplaceStencilOp,
+      stencilZPass: three__WEBPACK_IMPORTED_MODULE_0__.ReplaceStencilOp
+    });
+    var planeObject = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(planeGeometry, planeMat);
+
+    _this.display.add(planeObject); // planeObject.onAfterRender = function ( renderer ) {
+    //   renderer.clearStencil()
+    // }
+    // planeObject.renderOrder = i + 1.1;
+    // object.add( stencilGroup );
+    // poGroup.add( po );
+    // planeObjects.push( po );
+    // scene.add( poGroup );
+
+  };
+
+  for (var i = 0; i < this.planes; i++) {
+    _loop(i);
+  }
+
+  this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+    color: 0xE91E63,
+    metalness: 0.1,
+    roughness: 0.75
+  });
+  this.selectionHelper.on('hovered', obj => {
+    this.hover.clear();
+    if (obj.length === 0) return;
+    var index = this.planes.findIndex(p => p.normal.equals(obj[0].face.normal));
+    var plane = this.planes[index];
+    if (plane.normal.equals(this.hoverPlane)) return;
+    var n = plane.normal;
+    var c = plane.constant; // TODO: set plane geometry size by box size
+
+    var hoverGeo = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(2, 2);
+    hoverGeo.lookAt(n); // add 0.01 to eliminate z fighting
+
+    hoverGeo.translate(n.x * (c + 0.01), n.y * (c + 0.01), n.z * (c + 0.01));
+    var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
+    this.hover.add(hoverMesh);
   });
   this.selectionHelper.on('object-clicked', e => {
     console.log('clicked!');
     console.log(e);
-  }); // these edges are not ordered correctly                              
-  // this.lineMaterial = new THREE.LineBasicMaterial({
-  //                                                   color:0x000000,
-  //                                                   lineWidth:5,
-  //                                                 })
-  // let edgeVerts = this.box.vertices.map((vec, i, arr) => 
-  //                                       [vec.clone(), arr[(i + 1) % arr.length].clone()]);
-  // this.lines = edgeVerts.map(pts => new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), this.lineMaterial));
-}; // ideally you would have a container that could hold many clipping planes
-// so the box would just be a collection of those planes
-// then the caps would be something that gets layered on probably at the Viewer level
-
+  });
+} // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
+// createPlaneStencilGroup( geometry, plane, renderOrder ) {
+//   const group = new THREE.Group()
+//   const baseMat = new THREE.MeshBasicMaterial()
+//   baseMat.depthWrite = false
+//   baseMat.depthTest = false
+//   baseMat.colorWrite = false
+//   baseMat.stencilWrite = true
+//   baseMat.stencilFunc = THREE.AlwaysStencilFunc
+//   // back faces
+//   const mat0 = baseMat.clone()
+//   mat0.side = THREE.BackSide
+//   mat0.clippingPlanes = [ plane ]
+//   mat0.stencilFail = THREE.IncrementWrapStencilOp
+//   mat0.stencilZFail = THREE.IncrementWrapStencilOp
+//   mat0.stencilZPass = THREE.IncrementWrapStencilOp
+//   const mesh0 = new THREE.Mesh( geometry, mat0 )
+//   mesh0.renderOrder = renderOrder
+//   group.add( mesh0 )
+//   // front faces
+//   const mat1 = baseMat.clone()
+//   mat1.side = THREE.FrontSide
+//   mat1.clippingPlanes = [ plane ]
+//   mat1.stencilFail = THREE.DecrementWrapStencilOp
+//   mat1.stencilZFail = THREE.DecrementWrapStencilOp
+//   mat1.stencilZPass = THREE.DecrementWrapStencilOp
+//   const mesh1 = new THREE.Mesh( geometry, mat1 )
+//   mesh1.renderOrder = renderOrder
+//   group.add( mesh1 )
+//   return group
+// }
+;
 
 
 
@@ -1832,14 +1922,13 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
 
     _this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined' ? _options.subset : null; // optional param allows for hover
-    // these events inside of events are weird if you think about them too much
 
     if (typeof _options !== 'undefined' && _options.hover) {
       // doesn't feel good when debounced, might be necessary tho
       _this.viewer.renderer.domElement.addEventListener('pointermove', e => {
         var hovered = _this.getClickedObjects(e);
 
-        if (hovered.length > 0) _this.emit('hovered', hovered);
+        _this.emit('hovered', hovered);
       });
     } // Handle mouseclicks
 
@@ -1902,16 +1991,10 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     document.addEventListener('keyup', e => {
       if (e.isComposing || e.keyCode === 229) return;
       if (e.key === 'Shift') _this.multiSelect = false;
-    });
-    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
-      color: 0x0B55D2,
-      emissive: 0x0B55D2,
-      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-    });
-    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    _this.selectedObjects.renderOrder = 1000;
-
-    _this.viewer.scene.add(_this.selectedObjects);
+    }); // this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
+    // this.selectedObjects = new THREE.Group()
+    // this.selectedObjects.renderOrder = 1000
+    // this.viewer.scene.add( this.selectedObjects )
 
     _this.originalSelectionObjects = [];
     return _this;
@@ -1935,17 +2018,17 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       if (!obj) {
         this.emit('object-clicked', this.originalSelectionObjects);
         return;
-      }
+      } // let mesh = new THREE.Mesh( obj.object.geometry, this.selectionMaterial )
+      // this.selectedObjects.add( mesh )
 
-      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj.object.geometry, this.selectionMaterial);
-      this.selectedObjects.add(mesh);
+
       this.originalSelectionObjects.push(obj);
       this.emit('object-clicked', this.originalSelectionObjects);
     }
   }, {
     key: "unselect",
     value: function unselect() {
-      this.selectedObjects.clear();
+      // this.selectedObjects.clear()
       this.originalSelectionObjects = [];
     }
   }, {
@@ -1976,11 +2059,10 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "dispose",
     value: function dispose() {
-      this.viewer.scene.remove(this.selectedObjects);
+      // this.viewer.scene.remove( this.selectedObjects )
       this.unselect();
-      this.originalSelectionObjects = null;
-      this.selectionMaterial = null;
-      this.selectedObjects = null;
+      this.originalSelectionObjects = null; // this.selectionMaterial = null
+      // this.selectedObjects = null
     }
   }]);
 
@@ -2398,10 +2480,24 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.controls.addEventListener('end', () => {
       _this.pauseSSAO = false;
-    }); // Section Box
+    }); // Selected Objects
 
 
-    _this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_10__.default(_assertThisInitialized(_this));
+    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
+      color: 0x0B55D2,
+      emissive: 0x0B55D2,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+    });
+    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+
+    _this.scene.add(_this.selectedObjects);
+
+    _this.selectedObjects.renderOrder = 1000;
+    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this)); // Viewer registers double click event and supplies handler
+
+    _this.selectionHelper.on('object-doubleclicked', _this.handleDoubleClick.bind(_assertThisInitialized(_this)));
+
+    _this.selectionHelper.on('object-clicked', _this.handleSelect.bind(_assertThisInitialized(_this)));
 
     if (showStats) {
       _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
@@ -2412,11 +2508,11 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
     _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
     _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
-    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this)); // NS: Viewer registers double click event and supplies handler
 
-    _this.selectionHelper.on('object-doubleclicked', _this.handleDoubleClick.bind(_assertThisInitialized(_this)));
+    _this.sectionPlaneHelper.createSectionPlane(); // Section Box
 
-    _this.sectionPlaneHelper.createSectionPlane();
+
+    _this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_10__.default(_assertThisInitialized(_this));
 
     _this.sceneLights();
 
@@ -2424,13 +2520,32 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.loaders = [];
     return _this;
-  } // NS: this is Viewer specific behavior
+  } // handleDoubleClick moved from SelectionHelper
 
 
   _createClass(Viewer, [{
     key: "handleDoubleClick",
-    value: function handleDoubleClick(objects) {
-      if (!objects || objects.length === 0) this.sceneManager.zoomExtents();else this.sceneManager.zoomToObject(objects[0].object);
+    value: function handleDoubleClick(objs) {
+      if (!objs || objs.length === 0) this.sceneManager.zoomExtents();else this.sceneManager.zoomToObject(objs[0].object);
+    } // handleSelect moved from SelectionHelper
+
+  }, {
+    key: "handleSelect",
+    value: function handleSelect(obj) {
+      console.log(obj);
+
+      if (obj.length === 0) {
+        this.deselect();
+        return;
+      }
+
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
+      this.selectedObjects.add(mesh);
+    }
+  }, {
+    key: "deselect",
+    value: function deselect() {
+      this.selectedObjects.clear();
     }
   }, {
     key: "sceneLights",

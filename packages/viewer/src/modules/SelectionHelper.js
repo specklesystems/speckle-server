@@ -44,12 +44,11 @@ export default class SelectionHelper extends EventEmitter {
     this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
 
     // optional param allows for hover
-    // these events inside of events are weird if you think about them too much
     if(typeof _options !== 'undefined' && _options.hover) {
       // doesn't feel good when debounced, might be necessary tho
       this.viewer.renderer.domElement.addEventListener( 'pointermove', (e) => {
         let hovered = this.getClickedObjects(e);
-        if(hovered.length > 0) this.emit('hovered', hovered);
+        this.emit('hovered', hovered);
       })
     }
 
@@ -107,10 +106,10 @@ export default class SelectionHelper extends EventEmitter {
       if ( e.key === 'Shift' ) this.multiSelect = false
     } )
 
-    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectedObjects = new THREE.Group()
-    this.selectedObjects.renderOrder = 1000
-    this.viewer.scene.add( this.selectedObjects )
+    // this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
+    // this.selectedObjects = new THREE.Group()
+    // this.selectedObjects.renderOrder = 1000
+    // this.viewer.scene.add( this.selectedObjects )
 
     this.originalSelectionObjects = []
   }
@@ -131,15 +130,14 @@ export default class SelectionHelper extends EventEmitter {
       this.emit( 'object-clicked', this.originalSelectionObjects )
       return
     }
-
-    let mesh = new THREE.Mesh( obj.object.geometry, this.selectionMaterial )
-    this.selectedObjects.add( mesh )
+    // let mesh = new THREE.Mesh( obj.object.geometry, this.selectionMaterial )
+    // this.selectedObjects.add( mesh )
     this.originalSelectionObjects.push( obj )
     this.emit( 'object-clicked', this.originalSelectionObjects )
   }
 
   unselect() {
-    this.selectedObjects.clear()
+    // this.selectedObjects.clear()
     this.originalSelectionObjects = []
   }
 
@@ -169,11 +167,11 @@ export default class SelectionHelper extends EventEmitter {
   }
 
   dispose() {
-    this.viewer.scene.remove( this.selectedObjects )
+    // this.viewer.scene.remove( this.selectedObjects )
     this.unselect()
     this.originalSelectionObjects = null
-    this.selectionMaterial = null
-    this.selectedObjects = null
+    // this.selectionMaterial = null
+    // this.selectedObjects = null
   }
 
 }
