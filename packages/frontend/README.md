@@ -22,13 +22,6 @@ First, make sure you build the [Speckle Viewer](../viewer). Afterwards, run
 lerna bootstrap
 ```
 
-to link the viewer package with the frontend. Afterwards, go ahead and run: 
-
-
-```
-npm install
-```
-
 ### Compiles and hot-reloads for development
 
 ```
