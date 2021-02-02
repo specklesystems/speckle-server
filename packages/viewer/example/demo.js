@@ -228,7 +228,7 @@ var v = new _modules_Viewer__WEBPACK_IMPORTED_MODULE_0__.default({
 });
 v.on('load-progress', args => console.log(args));
 window.v = v;
-var token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75';
+var token = '72b3da65eb21cb211f9d79fc1d12ef3699fc47e6f0';
 
 window.LoadData = /*#__PURE__*/function () {
   var _LoadData = _asyncToGenerator(function* (url) {
@@ -314,8 +314,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => /* binding */ Coverter
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ObjectWrapper */ "./src/modules/ObjectWrapper.js");
-/* harmony import */ var _Units__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Units */ "./src/modules/Units.js");
+/* harmony import */ var three_examples_jsm_curves_NURBSCurve__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/curves/NURBSCurve */ "./node_modules/three/examples/jsm/curves/NURBSCurve.js");
+/* harmony import */ var three_examples_jsm_curves_NURBSUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/curves/NURBSUtils */ "./node_modules/three/examples/jsm/curves/NURBSUtils.js");
+/* harmony import */ var _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ObjectWrapper */ "./src/modules/ObjectWrapper.js");
+/* harmony import */ var _Units__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Units */ "./src/modules/Units.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -325,6 +327,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
 
 
 
@@ -389,7 +394,7 @@ var Coverter = /*#__PURE__*/function () {
             callback(yield this[type + "ToBufferGeometry"](obj.data || obj));
             return;
           } catch (e) {
-            console.warn("(Traversing - direct) Failed to convert " + type + " with id: " + obj.id);
+            console.warn("(Traversing - direct) Failed to convert " + type + " with id: " + obj.id, e);
           }
         }
 
@@ -405,10 +410,10 @@ var Coverter = /*#__PURE__*/function () {
             var {
               bufferGeometry
             } = yield this.convert(displayValue);
-            callback(new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj)); // use the parent's metadata!
+            callback(new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(bufferGeometry, obj)); // use the parent's metadata!
             // return // returning here is faster but excludes objects that have a display value and displayable children (ie, a wall with windows)
           } catch (e) {
-            console.warn("(Traversing) Failed to convert obj with id: " + obj.id);
+            console.warn("(Traversing) Failed to convert obj with id: " + obj.id + " \u2014 " + e.message);
           }
         } // Last attempt: iterate through all object keys and see if we can display anything!
         // traverses the object in case there's any sub-objects we can convert.
@@ -548,7 +553,7 @@ var Coverter = /*#__PURE__*/function () {
           delete obj.Curve3D;
           delete obj.Surfaces;
           delete obj.Vertices;
-          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(bufferGeometry, obj);
+          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(bufferGeometry, obj);
         } catch (e) {
           console.warn("Failed to convert brep id: " + obj.id);
           throw e;
@@ -567,7 +572,7 @@ var Coverter = /*#__PURE__*/function () {
       var _MeshToBufferGeometry = _asyncToGenerator(function* (obj) {
         try {
           if (!obj) return;
-          var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_2__.getConversionFactor)(obj.units); // console.log( conversionFactor )
+          var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units); // console.log( conversionFactor )
 
           var buffer = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
           var indices = [];
@@ -595,7 +600,7 @@ var Coverter = /*#__PURE__*/function () {
           buffer.computeBoundingSphere();
           delete obj.vertices;
           delete obj.faces;
-          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_1__.default(buffer, obj);
+          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(buffer, obj);
         } catch (e) {
           console.warn("Failed to convert mesh with id: " + obj.id);
           throw e;
@@ -608,15 +613,187 @@ var Coverter = /*#__PURE__*/function () {
 
       return MeshToBufferGeometry;
     }() // TODOs:
-    // async PointToBufferGeometry( obj ) {}
-    // async LineToBufferGeometry( obj ) {}
-    // async PolylineToBufferGeometry( obj ) {}
-    // async PolycurveToBufferGeometry( obj ) {}
-    // async CurveToBufferGeometry( obj ) {}
-    // async CircleToBufferGeometry( obj ) {}
-    // async ArcToBufferGeometry( obj ) {}
-    // async EllipseToBufferGeometry( obj ) {}
-    // async SurfaceToBufferGeometry( obj ) {}
+
+  }, {
+    key: "PointToBufferGeometry",
+    value: function () {
+      var _PointToBufferGeometry = _asyncToGenerator(function* (obj) {
+        var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units);
+        var v = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.value[0] * conversionFactor, obj.value[1] * conversionFactor, obj.value[2] * conversionFactor);
+        var buf = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints([v]);
+        delete obj.value;
+        delete obj.speckle_type;
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(buf, obj, 'point');
+      });
+
+      function PointToBufferGeometry(_x8) {
+        return _PointToBufferGeometry.apply(this, arguments);
+      }
+
+      return PointToBufferGeometry;
+    }()
+  }, {
+    key: "LineToBufferGeometry",
+    value: function () {
+      var _LineToBufferGeometry = _asyncToGenerator(function* (obj) {
+        return this.PolylineToBufferGeometry(obj);
+      });
+
+      function LineToBufferGeometry(_x9) {
+        return _LineToBufferGeometry.apply(this, arguments);
+      }
+
+      return LineToBufferGeometry;
+    }()
+  }, {
+    key: "PolylineToBufferGeometry",
+    value: function () {
+      var _PolylineToBufferGeometry = _asyncToGenerator(function* (obj) {
+        var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units);
+        var points = [];
+
+        for (var i = 0; i < obj.value.length; i += 3) {
+          points.push(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.value[i] * conversionFactor, obj.value[i + 1] * conversionFactor, obj.value[i + 2] * conversionFactor));
+        }
+
+        var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
+        delete obj.value;
+        delete obj.speckle_type;
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
+      });
+
+      function PolylineToBufferGeometry(_x10) {
+        return _PolylineToBufferGeometry.apply(this, arguments);
+      }
+
+      return PolylineToBufferGeometry;
+    }() // async PolycurveToBufferGeometry( obj ) {}
+
+  }, {
+    key: "CurveToBufferGeometry",
+    value: function () {
+      var _CurveToBufferGeometry = _asyncToGenerator(function* (obj) {
+        try {
+          console.log('Curve to buffer', obj);
+          var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units); // Convert points+weights to Vector4
+
+          var points = [];
+
+          for (var i = 0; i < obj.points.length; i += 3) {
+            points.push(new three__WEBPACK_IMPORTED_MODULE_0__.Vector4(obj.points[i] * conversionFactor, obj.points[i + 1] * conversionFactor, obj.points[i + 2] * conversionFactor, obj.weights[i / 3] * conversionFactor));
+          } // Convert knots from rhino compact format to normal format.
+
+
+          var knots = [obj.knots[0]];
+          knots = knots.concat(obj.knots);
+          knots.push(knots[knots.length - 1]); // Create the nurbs curve
+
+          var curve = new three_examples_jsm_curves_NURBSCurve__WEBPACK_IMPORTED_MODULE_1__.NURBSCurve(obj.degree, knots, points, null, null); // Delete everything unnecessary from the metadata object.
+
+          delete obj.speckle_type;
+          delete obj.displayValue;
+          delete obj.points;
+          delete obj.weights;
+          delete obj.knots; // Compute appropriate curve subdivisions
+
+          var div = curve.getLength() / 0.1;
+          div = parseInt(div.toString());
+          if (div < 20) div = 20;
+          if (div > 4000) div = 4000; // Divide the nurbs curve in points
+
+          var pts = curve.getPoints(div);
+          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts), obj, 'line');
+        } catch (e) {
+          console.warn('Error converting nurbs curve, falling back to displayValue', obj);
+          var poly = yield this.PolylineToBufferGeometry(obj.displayValue);
+          delete obj.speckle_type;
+          delete obj.displayValue;
+          delete obj.points;
+          delete obj.weights;
+          delete obj.knots;
+          return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(poly.bufferGeometry, obj, 'line');
+        }
+      });
+
+      function CurveToBufferGeometry(_x11) {
+        return _CurveToBufferGeometry.apply(this, arguments);
+      }
+
+      return CurveToBufferGeometry;
+    }()
+  }, {
+    key: "CircleToBufferGeometry",
+    value: function () {
+      var _CircleToBufferGeometry = _asyncToGenerator(function* (obj) {
+        console.log('circle to buffer', obj);
+        var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.origin.value[0], obj.plane.origin.value[1], obj.plane.origin.value[2]);
+        var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.xdir.value[0], obj.plane.xdir.value[1], obj.plane.xdir.value[2]);
+        var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.ydir.value[0], obj.plane.ydir.value[1], obj.plane.ydir.value[2]);
+        console.log(center, xAxis, yAxis);
+        var resolution = 2 * Math.PI * obj.radius / 0.1;
+        resolution = parseInt(resolution.toString());
+        var points = [];
+
+        for (var index = 0; index <= resolution; index++) {
+          var t = index * Math.PI * 2 / resolution;
+          var x = Math.cos(t) * obj.radius;
+          var y = Math.sin(t) * obj.radius;
+          var xMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(xAxis.x * x, xAxis.y * x, xAxis.z * x);
+          var yMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(yAxis.x * y, yAxis.y * y, yAxis.z * y);
+          var pt = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().addVectors(xMove, yMove).add(center);
+          points.push(pt);
+        }
+
+        console.log(points);
+        var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
+        delete obj.value;
+        delete obj.speckle_type;
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
+      });
+
+      function CircleToBufferGeometry(_x12) {
+        return _CircleToBufferGeometry.apply(this, arguments);
+      }
+
+      return CircleToBufferGeometry;
+    }() // async ArcToBufferGeometry( obj ) {}
+
+  }, {
+    key: "EllipseToBufferGeometry",
+    value: function () {
+      var _EllipseToBufferGeometry = _asyncToGenerator(function* (obj) {
+        console.log('ellipse to buffer', obj);
+        var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.origin.value[0], obj.plane.origin.value[1], obj.plane.origin.value[2]);
+        var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.xdir.value[0], obj.plane.xdir.value[1], obj.plane.xdir.value[2]);
+        var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.ydir.value[0], obj.plane.ydir.value[1], obj.plane.ydir.value[2]);
+        console.log(center, xAxis, yAxis);
+        var resolution = 2 * Math.PI * obj.radius / 0.1;
+        resolution = parseInt(resolution.toString());
+        var points = [];
+
+        for (var index = 0; index <= resolution; index++) {
+          var t = index * Math.PI * 2 / resolution;
+          var x = Math.cos(t) * obj.radius1;
+          var y = Math.sin(t) * obj.radius2;
+          var xMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(xAxis.x * x, xAxis.y * x, xAxis.z * x);
+          var yMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(yAxis.x * y, yAxis.y * y, yAxis.z * y);
+          var pt = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().addVectors(xMove, yMove).add(center);
+          points.push(pt);
+        }
+
+        console.log(points);
+        var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
+        delete obj.value;
+        delete obj.speckle_type;
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
+      });
+
+      function EllipseToBufferGeometry(_x13) {
+        return _EllipseToBufferGeometry.apply(this, arguments);
+      }
+
+      return EllipseToBufferGeometry;
+    }() // async SurfaceToBufferGeometry( obj ) {}
 
   }]);
 
@@ -971,6 +1148,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
+
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -983,9 +1161,13 @@ var SceneObjectManager = /*#__PURE__*/function () {
     this.scene = viewer.scene;
     this.userObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.solidObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.lineObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.pointObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.transparentObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.userObjects.add(this.solidObjects);
     this.userObjects.add(this.transparentObjects);
+    this.userObjects.add(this.lineObjects);
+    this.userObjects.add(this.pointObjects);
     this.scene.add(this.userObjects);
     this.solidMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       color: 0x8D9194,
@@ -1004,6 +1186,14 @@ var SceneObjectManager = /*#__PURE__*/function () {
       transparent: true,
       opacity: 0.4,
       envMap: this.viewer.cubeCamera.renderTarget.texture
+    });
+    this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({
+      color: 0x000000
+    });
+    this.pointMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.PointsMaterial({
+      size: 10,
+      sizeAttenuation: false,
+      color: 0x000000
     });
     this.objectIds = [];
     this.postLoad = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
@@ -1093,11 +1283,21 @@ var SceneObjectManager = /*#__PURE__*/function () {
     }
   }, {
     key: "addLine",
-    value: function addLine(wrapper) {// TODO
+    value: function addLine(wrapper) {
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(wrapper.bufferGeometry, this.lineMaterial);
+      line.userData = wrapper.meta;
+      line.uuid = wrapper.meta.id;
+      this.objectIds.push(line.uuid);
+      this.solidObjects.add(line);
     }
   }, {
     key: "addPoint",
-    value: function addPoint(wrapper) {// TODO
+    value: function addPoint(wrapper) {
+      var dot = new three__WEBPACK_IMPORTED_MODULE_0__.Points(wrapper.bufferGeometry, this.pointMaterial);
+      dot.userData = wrapper.meta;
+      dot.uuid = wrapper.meta.id;
+      this.objectIds.push(dot.uuid);
+      this.solidObjects.add(dot);
     }
   }, {
     key: "removeObject",
@@ -1948,7 +2148,8 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     var {
       container,
       postprocessing = true,
-      reflections = true
+      reflections = true,
+      showStats = false
     } = _ref;
 
     _classCallCheck(this, Viewer);
@@ -2017,9 +2218,11 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
       _this.pauseSSAO = false;
     });
 
-    _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
+    if (showStats) {
+      _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
 
-    _this.container.appendChild(_this.stats.dom);
+      _this.container.appendChild(_this.stats.dom);
+    }
 
     window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
     _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
@@ -2083,9 +2286,9 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     value: function animate() {
       requestAnimationFrame(this.animate.bind(this));
       this.controls.update();
-      this.stats.begin();
+      if (this.stats) this.stats.begin();
       this.render();
-      this.stats.end();
+      if (this.stats) this.stats.end();
     }
   }, {
     key: "render",
@@ -65393,6 +65596,584 @@ TransformControlsPlane.prototype = Object.assign( Object.create( _build_three_mo
 	isTransformControlsPlane: true
 
 } );
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/three/examples/jsm/curves/NURBSCurve.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/curves/NURBSCurve.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "NURBSCurve": () => /* binding */ NURBSCurve
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var _curves_NURBSUtils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../curves/NURBSUtils.js */ "./node_modules/three/examples/jsm/curves/NURBSUtils.js");
+
+
+
+/**
+ * NURBS curve object
+ *
+ * Derives from Curve, overriding getPoint and getTangent.
+ *
+ * Implementation is based on (x, y [, z=0 [, w=1]]) control points with w=weight.
+ *
+ **/
+
+var NURBSCurve = function ( degree, knots /* array of reals */, controlPoints /* array of Vector(2|3|4) */, startKnot /* index in knots */, endKnot /* index in knots */ ) {
+
+	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Curve.call( this );
+
+	this.degree = degree;
+	this.knots = knots;
+	this.controlPoints = [];
+	// Used by periodic NURBS to remove hidden spans
+	this.startKnot = startKnot || 0;
+	this.endKnot = endKnot || ( this.knots.length - 1 );
+	for ( var i = 0; i < controlPoints.length; ++ i ) {
+
+		// ensure Vector4 for control points
+		var point = controlPoints[ i ];
+		this.controlPoints[ i ] = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector4( point.x, point.y, point.z, point.w );
+
+	}
+
+};
+
+
+NURBSCurve.prototype = Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Curve.prototype );
+NURBSCurve.prototype.constructor = NURBSCurve;
+
+
+NURBSCurve.prototype.getPoint = function ( t, optionalTarget ) {
+
+	var point = optionalTarget || new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var u = this.knots[ this.startKnot ] + t * ( this.knots[ this.endKnot ] - this.knots[ this.startKnot ] ); // linear mapping t->u
+
+	// following results in (wx, wy, wz, w) homogeneous point
+	var hpoint = _curves_NURBSUtils_js__WEBPACK_IMPORTED_MODULE_1__.NURBSUtils.calcBSplinePoint( this.degree, this.knots, this.controlPoints, u );
+
+	if ( hpoint.w != 1.0 ) {
+
+		// project to 3D space: (wx, wy, wz, w) -> (x, y, z, 1)
+		hpoint.divideScalar( hpoint.w );
+
+	}
+
+	return point.set( hpoint.x, hpoint.y, hpoint.z );
+
+};
+
+
+NURBSCurve.prototype.getTangent = function ( t, optionalTarget ) {
+
+	var tangent = optionalTarget || new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+	var u = this.knots[ 0 ] + t * ( this.knots[ this.knots.length - 1 ] - this.knots[ 0 ] );
+	var ders = _curves_NURBSUtils_js__WEBPACK_IMPORTED_MODULE_1__.NURBSUtils.calcNURBSDerivatives( this.degree, this.knots, this.controlPoints, u, 1 );
+	tangent.copy( ders[ 1 ] ).normalize();
+
+	return tangent;
+
+};
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/three/examples/jsm/curves/NURBSUtils.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/curves/NURBSUtils.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "NURBSUtils": () => /* binding */ NURBSUtils
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
+
+
+/**
+ * NURBS utils
+ *
+ * See NURBSCurve and NURBSSurface.
+ **/
+
+
+/**************************************************************
+ *	NURBS Utils
+ **************************************************************/
+
+var NURBSUtils = {
+
+	/*
+	Finds knot vector span.
+
+	p : degree
+	u : parametric value
+	U : knot vector
+
+	returns the span
+	*/
+	findSpan: function ( p, u, U ) {
+
+		var n = U.length - p - 1;
+
+		if ( u >= U[ n ] ) {
+
+			return n - 1;
+
+		}
+
+		if ( u <= U[ p ] ) {
+
+			return p;
+
+		}
+
+		var low = p;
+		var high = n;
+		var mid = Math.floor( ( low + high ) / 2 );
+
+		while ( u < U[ mid ] || u >= U[ mid + 1 ] ) {
+
+			if ( u < U[ mid ] ) {
+
+				high = mid;
+
+			} else {
+
+				low = mid;
+
+			}
+
+			mid = Math.floor( ( low + high ) / 2 );
+
+		}
+
+		return mid;
+
+	},
+
+
+	/*
+	Calculate basis functions. See The NURBS Book, page 70, algorithm A2.2
+
+	span : span in which u lies
+	u    : parametric point
+	p    : degree
+	U    : knot vector
+
+	returns array[p+1] with basis functions values.
+	*/
+	calcBasisFunctions: function ( span, u, p, U ) {
+
+		var N = [];
+		var left = [];
+		var right = [];
+		N[ 0 ] = 1.0;
+
+		for ( var j = 1; j <= p; ++ j ) {
+
+			left[ j ] = u - U[ span + 1 - j ];
+			right[ j ] = U[ span + j ] - u;
+
+			var saved = 0.0;
+
+			for ( var r = 0; r < j; ++ r ) {
+
+				var rv = right[ r + 1 ];
+				var lv = left[ j - r ];
+				var temp = N[ r ] / ( rv + lv );
+				N[ r ] = saved + rv * temp;
+				saved = lv * temp;
+
+			 }
+
+			 N[ j ] = saved;
+
+		 }
+
+		 return N;
+
+	},
+
+
+	/*
+	Calculate B-Spline curve points. See The NURBS Book, page 82, algorithm A3.1.
+
+	p : degree of B-Spline
+	U : knot vector
+	P : control points (x, y, z, w)
+	u : parametric point
+
+	returns point for given u
+	*/
+	calcBSplinePoint: function ( p, U, P, u ) {
+
+		var span = this.findSpan( p, u, U );
+		var N = this.calcBasisFunctions( span, u, p, U );
+		var C = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector4( 0, 0, 0, 0 );
+
+		for ( var j = 0; j <= p; ++ j ) {
+
+			var point = P[ span - p + j ];
+			var Nj = N[ j ];
+			var wNj = point.w * Nj;
+			C.x += point.x * wNj;
+			C.y += point.y * wNj;
+			C.z += point.z * wNj;
+			C.w += point.w * Nj;
+
+		}
+
+		return C;
+
+	},
+
+
+	/*
+	Calculate basis functions derivatives. See The NURBS Book, page 72, algorithm A2.3.
+
+	span : span in which u lies
+	u    : parametric point
+	p    : degree
+	n    : number of derivatives to calculate
+	U    : knot vector
+
+	returns array[n+1][p+1] with basis functions derivatives
+	*/
+	calcBasisFunctionDerivatives: function ( span, u, p, n, U ) {
+
+		var zeroArr = [];
+		for ( var i = 0; i <= p; ++ i )
+			zeroArr[ i ] = 0.0;
+
+		var ders = [];
+		for ( var i = 0; i <= n; ++ i )
+			ders[ i ] = zeroArr.slice( 0 );
+
+		var ndu = [];
+		for ( var i = 0; i <= p; ++ i )
+			ndu[ i ] = zeroArr.slice( 0 );
+
+		ndu[ 0 ][ 0 ] = 1.0;
+
+		var left = zeroArr.slice( 0 );
+		var right = zeroArr.slice( 0 );
+
+		for ( var j = 1; j <= p; ++ j ) {
+
+			left[ j ] = u - U[ span + 1 - j ];
+			right[ j ] = U[ span + j ] - u;
+
+			var saved = 0.0;
+
+			for ( var r = 0; r < j; ++ r ) {
+
+				var rv = right[ r + 1 ];
+				var lv = left[ j - r ];
+				ndu[ j ][ r ] = rv + lv;
+
+				var temp = ndu[ r ][ j - 1 ] / ndu[ j ][ r ];
+				ndu[ r ][ j ] = saved + rv * temp;
+				saved = lv * temp;
+
+			}
+
+			ndu[ j ][ j ] = saved;
+
+		}
+
+		for ( var j = 0; j <= p; ++ j ) {
+
+			ders[ 0 ][ j ] = ndu[ j ][ p ];
+
+		}
+
+		for ( var r = 0; r <= p; ++ r ) {
+
+			var s1 = 0;
+			var s2 = 1;
+
+			var a = [];
+			for ( var i = 0; i <= p; ++ i ) {
+
+				a[ i ] = zeroArr.slice( 0 );
+
+			}
+
+			a[ 0 ][ 0 ] = 1.0;
+
+			for ( var k = 1; k <= n; ++ k ) {
+
+				var d = 0.0;
+				var rk = r - k;
+				var pk = p - k;
+
+				if ( r >= k ) {
+
+					a[ s2 ][ 0 ] = a[ s1 ][ 0 ] / ndu[ pk + 1 ][ rk ];
+					d = a[ s2 ][ 0 ] * ndu[ rk ][ pk ];
+
+				}
+
+				var j1 = ( rk >= - 1 ) ? 1 : - rk;
+				var j2 = ( r - 1 <= pk ) ? k - 1 : p - r;
+
+				for ( var j = j1; j <= j2; ++ j ) {
+
+					a[ s2 ][ j ] = ( a[ s1 ][ j ] - a[ s1 ][ j - 1 ] ) / ndu[ pk + 1 ][ rk + j ];
+					d += a[ s2 ][ j ] * ndu[ rk + j ][ pk ];
+
+				}
+
+				if ( r <= pk ) {
+
+					a[ s2 ][ k ] = - a[ s1 ][ k - 1 ] / ndu[ pk + 1 ][ r ];
+					d += a[ s2 ][ k ] * ndu[ r ][ pk ];
+
+				}
+
+				ders[ k ][ r ] = d;
+
+				var j = s1;
+				s1 = s2;
+				s2 = j;
+
+			}
+
+		}
+
+		var r = p;
+
+		for ( var k = 1; k <= n; ++ k ) {
+
+			for ( var j = 0; j <= p; ++ j ) {
+
+				ders[ k ][ j ] *= r;
+
+			}
+
+			r *= p - k;
+
+		}
+
+		return ders;
+
+	},
+
+
+	/*
+		Calculate derivatives of a B-Spline. See The NURBS Book, page 93, algorithm A3.2.
+
+		p  : degree
+		U  : knot vector
+		P  : control points
+		u  : Parametric points
+		nd : number of derivatives
+
+		returns array[d+1] with derivatives
+		*/
+	calcBSplineDerivatives: function ( p, U, P, u, nd ) {
+
+		var du = nd < p ? nd : p;
+		var CK = [];
+		var span = this.findSpan( p, u, U );
+		var nders = this.calcBasisFunctionDerivatives( span, u, p, du, U );
+		var Pw = [];
+
+		for ( var i = 0; i < P.length; ++ i ) {
+
+			var point = P[ i ].clone();
+			var w = point.w;
+
+			point.x *= w;
+			point.y *= w;
+			point.z *= w;
+
+			Pw[ i ] = point;
+
+		}
+
+		for ( var k = 0; k <= du; ++ k ) {
+
+			var point = Pw[ span - p ].clone().multiplyScalar( nders[ k ][ 0 ] );
+
+			for ( var j = 1; j <= p; ++ j ) {
+
+				point.add( Pw[ span - p + j ].clone().multiplyScalar( nders[ k ][ j ] ) );
+
+			}
+
+			CK[ k ] = point;
+
+		}
+
+		for ( var k = du + 1; k <= nd + 1; ++ k ) {
+
+			CK[ k ] = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector4( 0, 0, 0 );
+
+		}
+
+		return CK;
+
+	},
+
+
+	/*
+	Calculate "K over I"
+
+	returns k!/(i!(k-i)!)
+	*/
+	calcKoverI: function ( k, i ) {
+
+		var nom = 1;
+
+		for ( var j = 2; j <= k; ++ j ) {
+
+			nom *= j;
+
+		}
+
+		var denom = 1;
+
+		for ( var j = 2; j <= i; ++ j ) {
+
+			denom *= j;
+
+		}
+
+		for ( var j = 2; j <= k - i; ++ j ) {
+
+			denom *= j;
+
+		}
+
+		return nom / denom;
+
+	},
+
+
+	/*
+	Calculate derivatives (0-nd) of rational curve. See The NURBS Book, page 127, algorithm A4.2.
+
+	Pders : result of function calcBSplineDerivatives
+
+	returns array with derivatives for rational curve.
+	*/
+	calcRationalCurveDerivatives: function ( Pders ) {
+
+		var nd = Pders.length;
+		var Aders = [];
+		var wders = [];
+
+		for ( var i = 0; i < nd; ++ i ) {
+
+			var point = Pders[ i ];
+			Aders[ i ] = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( point.x, point.y, point.z );
+			wders[ i ] = point.w;
+
+		}
+
+		var CK = [];
+
+		for ( var k = 0; k < nd; ++ k ) {
+
+			var v = Aders[ k ].clone();
+
+			for ( var i = 1; i <= k; ++ i ) {
+
+				v.sub( CK[ k - i ].clone().multiplyScalar( this.calcKoverI( k, i ) * wders[ i ] ) );
+
+			}
+
+			CK[ k ] = v.divideScalar( wders[ 0 ] );
+
+		}
+
+		return CK;
+
+	},
+
+
+	/*
+	Calculate NURBS curve derivatives. See The NURBS Book, page 127, algorithm A4.2.
+
+	p  : degree
+	U  : knot vector
+	P  : control points in homogeneous space
+	u  : parametric points
+	nd : number of derivatives
+
+	returns array with derivatives.
+	*/
+	calcNURBSDerivatives: function ( p, U, P, u, nd ) {
+
+		var Pders = this.calcBSplineDerivatives( p, U, P, u, nd );
+		return this.calcRationalCurveDerivatives( Pders );
+
+	},
+
+
+	/*
+	Calculate rational B-Spline surface point. See The NURBS Book, page 134, algorithm A4.3.
+
+	p1, p2 : degrees of B-Spline surface
+	U1, U2 : knot vectors
+	P      : control points (x, y, z, w)
+	u, v   : parametric values
+
+	returns point for given (u, v)
+	*/
+	calcSurfacePoint: function ( p, q, U, V, P, u, v, target ) {
+
+		var uspan = this.findSpan( p, u, U );
+		var vspan = this.findSpan( q, v, V );
+		var Nu = this.calcBasisFunctions( uspan, u, p, U );
+		var Nv = this.calcBasisFunctions( vspan, v, q, V );
+		var temp = [];
+
+		for ( var l = 0; l <= q; ++ l ) {
+
+			temp[ l ] = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector4( 0, 0, 0, 0 );
+			for ( var k = 0; k <= p; ++ k ) {
+
+				var point = P[ uspan - p + k ][ vspan - q + l ].clone();
+				var w = point.w;
+				point.x *= w;
+				point.y *= w;
+				point.z *= w;
+				temp[ l ].add( point.multiplyScalar( Nu[ k ] ) );
+
+			}
+
+		}
+
+		var Sw = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector4( 0, 0, 0, 0 );
+		for ( var l = 0; l <= q; ++ l ) {
+
+			Sw.add( temp[ l ].multiplyScalar( Nv[ l ] ) );
+
+		}
+
+		Sw.divideScalar( Sw.w );
+		target.set( Sw.x, Sw.y, Sw.z );
+
+	}
+
+};
 
 
 

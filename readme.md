@@ -24,9 +24,26 @@ The server is a nodejs app. Core external dependencies are a Redis and Postgresq
 
 The frontend is a static Vue app.
 
+### ➡️ [Viewer](packages/viewer), the Speckle Viewer.
+
+The viewer is a [threejs](https://threejs.org/) extension that allows you to display data from Speckle. 
+
 ## Developing and Debugging
 
 To get started, first clone this repo. Check out the detailed instructions for each module in their respective folder (see links above). 
+
+## Bootsrap local Speckle Server
+
+> prerequisites: [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/)
+
+To get a local Server stack up and running quickly:
+
+- clone this repository
+- copy `.env-example` file from the server module to the project root and rename to `.env`
+- fill out the environment variables in the `.env` file, follow the comment instructions
+- run `$ docker-compose up`
+
+This gets you an empty server running on [localhost:3000](http://localhost:3000)
 
 ## Contributing
 

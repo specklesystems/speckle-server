@@ -12,7 +12,7 @@ We're working to stabilize the 2.0 API, and until then there will be breaking ch
 
 ## Introduction
 
-The Speckle Server is a node application. To start it locally:
+The Speckle Server is a node application tested against v12. To start it locally:
 
 First, ensure you have postgres and redis ready and running:
 
