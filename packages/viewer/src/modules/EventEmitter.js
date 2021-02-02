@@ -22,11 +22,12 @@ export default class EventEmitter {
     this._events[name] = this._events[name].filter( filterListeners )
   }
 
-  emit( name, data ) {
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
+  emit( name, ...args) {
     if ( !this._events[name] ) return
 
     const fireCallbacks = ( callback ) => {
-      callback( data )
+      callback( ...args )
     }
 
     this._events[name].forEach( fireCallbacks )

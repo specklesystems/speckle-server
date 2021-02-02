@@ -42,22 +42,49 @@ export default class SelectionHelper extends EventEmitter {
 
     // optional param allows for raycasting against a subset of objects
     this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
-
+    
+    this.pointerDown = false;
+    // this.hoverObj = null
+    
     // optional param allows for hover
     if(typeof _options !== 'undefined' && _options.hover) {
       // doesn't feel good when debounced, might be necessary tho
       this.viewer.renderer.domElement.addEventListener( 'pointermove', (e) => {
-        let hovered = this.getClickedObjects(e);
-        this.emit('hovered', hovered);
+        let hovered = this.getClickedObjects(e)
+        
+        // dragging event, this shouldn't be under the "hover option"
+        if(this.pointerDown && hovered.length > 0) {
+          console.log("drag!")
+          // changed emit function to allow multiple data args
+          this.emit('object-drag', hovered, this._getNormalisedClickPosition(e))
+          return
+        }
+        
+        this.emit('hovered', hovered, e)
+      })
+    }
+
+    // dragging event, this shouldn't be under the "hover option"
+    if(typeof _options !== 'undefined' && _options.hover) {
+      this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+        this.pointerDown = true
+
+        if ( this.orbiting ) return
+          
+        this.emit( 'mouse-down', this.getClickedObjects(e))
       })
     }
 
     // Handle mouseclicks
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      this.pointerDown = false
+
       if ( this.orbiting ) return
 
       let selectionObjects = this.getClickedObjects( e )
-      this.handleSelection( selectionObjects )
+      // do we need 
+      // if(selectionObjects.legth > 0) this.emit('object-clicked'...)?
+      this.emit('object-clicked', selectionObjects)
     } )
 
     // Doubleclicks on touch devices
@@ -65,6 +92,7 @@ export default class SelectionHelper extends EventEmitter {
     this.tapTimeout
     this.lastTap = 0
     this.touchLocation
+    
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
     this.viewer.renderer.domElement.addEventListener( 'touchend', ( event ) => {
       var currentTime = new Date().getTime()
@@ -73,10 +101,7 @@ export default class SelectionHelper extends EventEmitter {
       if ( tapLength < 500 && tapLength > 0 ) {
         let selectionObjects = this.getClickedObjects( this.touchLocation )
         this.emit( 'object-doubleclicked', selectionObjects )
-        // NS: will need to reimplement this in Viewer
-        // if ( !this.orbiting )
-        //   this.handleDoubleClick( selectionObjects )
-        // event.preventDefault()
+
       } else {
         this.tapTimeout = setTimeout( function() {
           clearTimeout( this.tapTimeout )
@@ -106,11 +131,6 @@ export default class SelectionHelper extends EventEmitter {
       if ( e.key === 'Shift' ) this.multiSelect = false
     } )
 
-    // this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    // this.selectedObjects = new THREE.Group()
-    // this.selectedObjects.renderOrder = 1000
-    // this.viewer.scene.add( this.selectedObjects )
-
     this.originalSelectionObjects = []
   }
 
@@ -118,26 +138,18 @@ export default class SelectionHelper extends EventEmitter {
     this.select( objects[0] )
   }
 
-  // NS: this should be handled in viewer
-  // handleDoubleClick( objects ) {
-  //   if ( !objects || objects.length === 0 ) this.viewer.sceneManager.zoomExtents()
-  //   else this.viewer.sceneManager.zoomToObject( objects[0].object )
-  // }
-
   select( obj ) {
     if ( !this.multiSelect ) this.unselect()
     if ( !obj ) {
       this.emit( 'object-clicked', this.originalSelectionObjects )
       return
     }
-    // let mesh = new THREE.Mesh( obj.object.geometry, this.selectionMaterial )
-    // this.selectedObjects.add( mesh )
+
     this.originalSelectionObjects.push( obj )
     this.emit( 'object-clicked', this.originalSelectionObjects )
   }
 
   unselect() {
-    // this.selectedObjects.clear()
     this.originalSelectionObjects = []
   }
 
@@ -167,11 +179,8 @@ export default class SelectionHelper extends EventEmitter {
   }
 
   dispose() {
-    // this.viewer.scene.remove( this.selectedObjects )
     this.unselect()
     this.originalSelectionObjects = null
-    // this.selectionMaterial = null
-    // this.selectedObjects = null
   }
 
 }
