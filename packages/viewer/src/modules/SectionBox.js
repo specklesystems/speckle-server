@@ -182,7 +182,6 @@ export default class SectionBox {
       this.dragging = true
       
       if(this.mouseDown.equals(new THREE.Vector3())) this.mouseDown = new THREE.Vector3(e.x, e.y, 0.0)
-      console.log("4")
       
       this.viewer.renderer.domElement.style.cursor = 'move';
 
@@ -211,6 +210,7 @@ export default class SectionBox {
       console.log(mD)
 
       // quantity of mD on ssNorm
+      // need a persistent quantity for displacement so it doesn't keep accumulating
       let d = (ssNorm.dot(mD) / ssNorm.lengthSq())
       console.log(d)
       let displacement = new THREE.Vector3(d,d,d).multiply(plane.normal).multiplyScalar(mag)
@@ -222,18 +222,18 @@ export default class SectionBox {
         this.boxMesh.geometry.vertices[i].add(displacement)
       })
       this.boxMesh.geometry.verticesNeedUpdate = true
-      console.log("5")
+
       //https://threejsfundamentals.org/threejs/lessons/threejs-align-html-elements-to-3d.html
-      let ssNormStart = plane.normal.clone().multiplyScalar(plane.constant)
-      let ssNormEnd = ssNormStart.clone().multiplyScalar(2)
-      ssNormStart.project(this.viewer.camera)
+      // let ssNormStart = plane.normal.clone().multiplyScalar(plane.constant)
+      let ssNormEnd = plane.normal.clone().multiplyScalar(plane.constant * 2)
+      // ssNormStart.project(this.viewer.camera)
       ssNormEnd.project(this.viewer.camera)
 
-      let x =  (ssNormStart.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth
-      let y =  (ssNormStart.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight
-      this.elem1.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px)`
-      x = (ssNormEnd.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth
-      y = (ssNormEnd.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight * -1
+      // let x =  (ssNormStart.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth
+      // let y =  (ssNormStart.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight
+      // this.elem1.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px)`
+      let x = (ssNormEnd.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth
+      let y = (ssNormEnd.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight * -1
       this.elem2.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px)`
     })
   }

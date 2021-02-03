@@ -1666,7 +1666,6 @@ var SectionBox = function SectionBox(viewer) {
     this.viewer.controls.enabled = false;
     this.dragging = true;
     if (this.mouseDown.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) this.mouseDown = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
-    console.log("4");
     this.viewer.renderer.domElement.style.cursor = 'move'; // get screen space vector of plane normal
     // project mouse displacement vector onto it
     // move plane by that much
@@ -1688,6 +1687,7 @@ var SectionBox = function SectionBox(viewer) {
     var mag = mD.length();
     mD.normalize();
     console.log(mD); // quantity of mD on ssNorm
+    // need a persistent quantity for displacement so it doesn't keep accumulating
 
     var d = ssNorm.dot(mD) / ssNorm.lengthSq();
     console.log(d);
@@ -1698,18 +1698,17 @@ var SectionBox = function SectionBox(viewer) {
       if (!planeObj.indices.includes(i)) return;
       this.boxMesh.geometry.vertices[i].add(displacement);
     });
-    this.boxMesh.geometry.verticesNeedUpdate = true;
-    console.log("5"); //https://threejsfundamentals.org/threejs/lessons/threejs-align-html-elements-to-3d.html
+    this.boxMesh.geometry.verticesNeedUpdate = true; //https://threejsfundamentals.org/threejs/lessons/threejs-align-html-elements-to-3d.html
+    // let ssNormStart = plane.normal.clone().multiplyScalar(plane.constant)
 
-    var ssNormStart = plane.normal.clone().multiplyScalar(plane.constant);
-    var ssNormEnd = ssNormStart.clone().multiplyScalar(2);
-    ssNormStart.project(this.viewer.camera);
-    ssNormEnd.project(this.viewer.camera);
-    var x = (ssNormStart.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth;
-    var y = (ssNormStart.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight;
-    this.elem1.style.transform = "translate(-50%,-50%) translate(" + x + "px," + y + "px)";
-    x = (ssNormEnd.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth;
-    y = (ssNormEnd.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight * -1;
+    var ssNormEnd = plane.normal.clone().multiplyScalar(plane.constant * 2); // ssNormStart.project(this.viewer.camera)
+
+    ssNormEnd.project(this.viewer.camera); // let x =  (ssNormStart.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth
+    // let y =  (ssNormStart.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight
+    // this.elem1.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px)`
+
+    var x = (ssNormEnd.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth;
+    var y = (ssNormEnd.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight * -1;
     this.elem2.style.transform = "translate(-50%,-50%) translate(" + x + "px," + y + "px)";
   });
 } // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
