@@ -10,6 +10,7 @@ services:
       - "3000:3000"
     environment:
       DEBUG: "speckle:*"
+      WAIT_HOSTS: database:5432, redis:6379
     env_file:
       - .env
     
