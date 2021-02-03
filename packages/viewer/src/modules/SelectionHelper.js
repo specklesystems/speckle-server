@@ -41,6 +41,7 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
 
     // optional param allows for raycasting against a subset of objects
+    // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
     this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
     
     this.pointerDown = false;
@@ -53,7 +54,7 @@ export default class SelectionHelper extends EventEmitter {
         let hovered = this.getClickedObjects(e)
         
         // dragging event, this shouldn't be under the "hover option"
-        if(this.pointerDown && hovered.length > 0) {
+        if(this.pointerDown) {
           console.log("drag!")
           // changed emit function to allow multiple data args
           this.emit('object-drag', hovered, this._getNormalisedClickPosition(e))
@@ -134,20 +135,20 @@ export default class SelectionHelper extends EventEmitter {
     this.originalSelectionObjects = []
   }
 
-  handleSelection( objects ) {
-    this.select( objects[0] )
-  }
+  // handleSelection( objects ) {
+  //   this.select( objects[0] )
+  // }
 
-  select( obj ) {
-    if ( !this.multiSelect ) this.unselect()
-    if ( !obj ) {
-      this.emit( 'object-clicked', this.originalSelectionObjects )
-      return
-    }
+  // select( obj ) {
+  //   if ( !this.multiSelect ) this.unselect()
+  //   if ( !obj ) {
+  //     this.emit( 'object-clicked', this.originalSelectionObjects )
+  //     return
+  //   }
 
-    this.originalSelectionObjects.push( obj )
-    this.emit( 'object-clicked', this.originalSelectionObjects )
-  }
+  //   this.originalSelectionObjects.push( obj )
+  //   this.emit( 'object-clicked', this.originalSelectionObjects )
+  // }
 
   unselect() {
     this.originalSelectionObjects = []
@@ -157,7 +158,7 @@ export default class SelectionHelper extends EventEmitter {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
-    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this.subset : this.viewer.sceneManager.objects )
+    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? [this.viewer.scene.getObjectByName(this.subset)]: this.viewer.sceneManager.objects )
     intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects

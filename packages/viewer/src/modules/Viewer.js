@@ -102,11 +102,20 @@ export default class Viewer extends EventEmitter {
 
   // handleSelect moved from SelectionHelper
   handleSelect( obj ) {
-    console.log(obj);
     if(obj.length === 0) {
       this.deselect()
       return
     }
+
+    // deselect on second click
+    // not sure if this was implemented previously
+    // if(this.selectedObjects.children.includes(obj)) {
+    //   this.deselect()
+    //   return
+    // }
+
+    if ( !this.selectionHelper.multiSelect ) this.deselect()
+
     let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
     this.selectedObjects.add( mesh )
   }
