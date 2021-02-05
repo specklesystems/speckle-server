@@ -78,7 +78,10 @@ export default class SceneObjectManager {
         // Is it a transparent material?
         if ( renderMat.opacity !== 1 ) {
           let material = this.transparentMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+          // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          // material.clipIntersection = true
+
           material.color = color
           material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
           this.addTransparentSolid( wrapper, material )
@@ -86,7 +89,10 @@ export default class SceneObjectManager {
         // It's not a transparent material!
         } else {
           let material = this.solidMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+          // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          // material.clipIntersection = true
+
           material.color = color
           material.metalness = renderMat.metalness
           if ( material.metalness !== 0 ) material.roughness = 0.1
@@ -96,7 +102,10 @@ export default class SceneObjectManager {
       } else {
         // If we don't have defined material, just use the default
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+        // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+        material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+        // material.clipIntersection = true
+
         this.addSolid( wrapper, material )
       }
       break
@@ -165,6 +174,8 @@ export default class SceneObjectManager {
     this.zoomExtents()
     this.viewer.reflectionsNeedUpdate = true
     this.viewer.sectionPlaneHelper._matchSceneSize()
+    let sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
+    this.viewer.sectionBox.setFromBbox(sceneBox)
   }
 
   zoomToObject( target ) {

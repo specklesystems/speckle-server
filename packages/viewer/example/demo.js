@@ -1311,15 +1311,19 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
 
             if (renderMat.opacity !== 1) {
-              var material = this.transparentMaterial.clone();
-              material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+              var material = this.transparentMaterial.clone(); // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
+
+              material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane); // material.clipIntersection = true
+
               material.color = color;
               material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
-              var _material = this.solidMaterial.clone();
+              var _material = this.solidMaterial.clone(); // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
 
-              _material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+
+              _material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane); // material.clipIntersection = true
+
               _material.color = color;
               _material.metalness = renderMat.metalness;
               if (_material.metalness !== 0) _material.roughness = 0.1;
@@ -1329,9 +1333,11 @@ var SceneObjectManager = /*#__PURE__*/function () {
             }
           } else {
             // If we don't have defined material, just use the default
-            var _material2 = this.solidMaterial.clone();
+            var _material2 = this.solidMaterial.clone(); // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
 
-            _material2.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+
+            _material2.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane); // material.clipIntersection = true
+
             this.addSolid(wrapper, _material2);
           }
 
@@ -1411,6 +1417,9 @@ var SceneObjectManager = /*#__PURE__*/function () {
       this.viewer.reflectionsNeedUpdate = true;
 
       this.viewer.sectionPlaneHelper._matchSceneSize();
+
+      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
+      this.viewer.sectionBox.setFromBbox(sceneBox);
     }
   }, {
     key: "zoomToObject",
@@ -1514,6 +1523,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 
 
 /**
@@ -1531,218 +1544,246 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var edges = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 6], [6, 7], [7, 5], [5, 4], [2, 7], [0, 5], [1, 4], [3, 6]];
 
-var SectionBox = function SectionBox(viewer) {
-  _classCallCheck(this, SectionBox);
+var SectionBox = /*#__PURE__*/function () {
+  function SectionBox(viewer) {
+    _classCallCheck(this, SectionBox);
 
-  this.viewer = viewer;
-  this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-  this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-  this.displayEdges = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-  this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-  this.display.add(this.displayBox);
-  this.display.add(this.displayEdges);
-  this.display.add(this.displayHover);
-  this.viewer.scene.add(this.display); // basic display of the section box
+    this.viewer = viewer;
+    this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.displayEdges = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.display.add(this.displayBox);
+    this.display.add(this.displayEdges);
+    this.display.add(this.displayHover);
+    this.viewer.scene.add(this.display); // basic display of the section box
 
-  this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
-    transparent: true,
-    color: 0xffe842,
-    opacity: 0.25
-  }); // the box itself, this might not be displayed as a mesh
+    this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({// transparent:true,
+      // color: 0xffe842, 
+      // opacity: 0.00
+    }); // the box itself
 
-  this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
-  this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
-  this.boxMesh.name = 'section-box';
-  this.displayBox.add(this.boxMesh);
-  this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
-    color: 0x000000,
-    linewidth: 4
-  }); // going to have to do an update edges thing at some point
+    this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
+    this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
+    this.boxMesh.visible = false; // surprised raycasting still works when visible = false
 
-  edges.map(val => {
-    var pts = [this.boxGeo.vertices[val[0]].clone(), this.boxGeo.vertices[val[1]].clone()];
-    var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
-    var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
-    this.displayEdges.add(line);
-  });
-  this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(); // normal of plane being hovered
+    this.boxMesh.name = 'section-box';
+    this.displayBox.add(this.boxMesh);
+    this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
+      color: 0x000000,
+      linewidth: 4
+    }); // show box edges
 
-  this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
-    subset: 'section-box',
-    hover: true
-  });
-  this.mouseDown = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(); // mouseDown on begin drag
+    edges.map(val => {
+      var pts = [this.boxGeo.vertices[val[0]].clone(), this.boxGeo.vertices[val[1]].clone()];
+      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
+      this.displayEdges.add(line);
+    }); // normal of plane being hovered
 
-  this.dragging = false;
-  this.planes = [{
-    // left, x negative
-    plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), -1),
-    indices: [5, 4, 6, 7]
-  }, {
-    // in, y negative
-    plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), -1),
-    indices: [2, 3, 6, 7]
-  }, {
-    // down, z negative
-    plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), -1),
-    indices: [1, 3, 6, 4]
-  }, {
-    // right, x positive
-    plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), -1),
-    indices: [0, 1, 3, 2]
-  }, {
-    // out, y positive
-    plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), -1),
-    indices: [5, 4, 1, 0]
-  }, {
-    // up, z positive
-    plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), -1),
-    indices: [0, 2, 7, 5]
-  }]; // helpers for projection stuff
+    this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
+      subset: 'section-box',
+      hover: true
+    }); // pointer position
 
-  this.elem1 = document.createElement('div');
-  document.querySelector('#renderer').append(this.elem1);
-  this.elem1.style.backgroundColor = 'red';
-  this.elem1.style.width = '10px';
-  this.elem1.style.height = '10px';
-  this.elem1.style.borderRadius = '5px';
-  this.elem1.style.position = 'absolute';
-  this.elem2 = document.createElement('div');
-  document.querySelector('#renderer').append(this.elem2);
-  this.elem2.style.backgroundColor = 'blue';
-  this.elem2.style.width = '10px';
-  this.elem2.style.height = '10px';
-  this.elem2.style.borderRadius = '5px';
-  this.elem2.style.position = 'absolute'; // plane helpers
+    this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+    this.dragging = false; // planes face outwards
+    // indices correspond to vertex indices on the boxGeometry
 
-  this.planeHelpers = this.planes.map(p => this.display.add(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneHelper(p.plane, 2, 0x000000)));
-  this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
-    color: 0xE91E63,
-    metalness: 0.1,
-    roughness: 0.75
-  });
-  this.selectionHelper.on('hovered', (obj, e) => {
-    if (obj.length === 0 && !this.dragging) {
-      this.displayHover.clear();
-      this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(); // need a this.dragging probably
+    this.planes = [{
+      // right, x positive
+      axis: '+x',
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1),
+      indices: [5, 4, 6, 7]
+    }, {
+      // left, x negative
+      axis: '-x',
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1),
+      indices: [0, 1, 3, 2]
+    }, {
+      // out, y positive
+      axis: '+y',
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1),
+      indices: [2, 3, 6, 7]
+    }, {
+      // in, y negative
+      axis: '-y',
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1),
+      indices: [5, 4, 1, 0]
+    }, {
+      // up, z positive
+      axis: '+z',
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1),
+      indices: [1, 3, 6, 4]
+    }, {
+      // down, z negative
+      axis: '-z',
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1),
+      indices: [0, 2, 7, 5]
+    }]; // plane helpers
 
+    this.planeHelpers = this.planes.map(p => this.display.add(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneHelper(p.plane, 2, 0x000000)));
+    this.viewer.renderer.localClippingEnabled = true; // adds local clipping planes to all materials
+
+    var objs = this.viewer.sceneManager.objects;
+    objs.forEach(obj => {
+      obj.material.clippingPlanes = this.planes.map(c => c.plane);
+    });
+    this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      transparent: true,
+      opacity: 0.75,
+      color: 0xE91E63,
+      metalness: 0.1,
+      roughness: 0.75,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+    }); // hovered event handler
+
+    this.selectionHelper.on('hovered', (obj, e) => {
+      if (obj.length === 0 && !this.dragging) {
+        this.displayHover.clear();
+        this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        this.viewer.controls.enabled = true;
+        this.viewer.renderer.domElement.style.cursor = 'default';
+        return;
+      } else if (this.dragging) {
+        return;
+      }
+
+      this.viewer.renderer.domElement.style.cursor = 'pointer'; // console.log(obj[0].face.normal)
+      // console.log(obj[0].face.normal.clone().negate())
+      // console.log(this.planes.find(p => p.plane.normal.equals(obj[0].face.normal.clone().negate())))
+
+      var index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal.clone().negate()));
+      if (index < 0) return; // this should never be the case?
+
+      var planeObj = this.planes[index];
+      var plane = planeObj.plane;
+      if (plane.normal.equals(this.hoverPlane)) return;
+      this.hoverPlane = plane.normal.clone();
+      this.updateHover(planeObj);
+    }); // this.selectionHelper.on('object-clicked', (e) => {
+    //   // console.log("object-clicked")
+    // })
+
+    this.viewer.renderer.domElement.addEventListener('pointerup', e => {
+      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      this.tempVerts = [];
       this.viewer.controls.enabled = true;
-      this.viewer.renderer.domElement.style.cursor = 'default';
-      return;
-    } else if (this.dragging) {
-      return;
-    }
-
-    var index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal));
-    if (index < 0) return; // this should never be the case?
-
-    var plane = this.planes[index].plane;
-    if (plane.normal.equals(this.hoverPlane)) return;
-    this.hoverPlane = plane.normal.clone();
-    this.displayHover.clear();
-    var n = plane.normal.clone();
-    var c = plane.constant * -1; // TODO: set plane geometry size by box size
-
-    var hoverGeo = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(2, 2);
-    hoverGeo.lookAt(n); // add 0.01 to eliminate z fighting
-
-    hoverGeo.translate(n.x * (c + 0.01), n.y * (c + 0.01), n.z * (c + 0.01));
-    var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
-    this.displayHover.add(hoverMesh);
-    this.viewer.renderer.domElement.style.cursor = 'pointer';
-  }); // this.selectionHelper.on('object-clicked', (e) => {
-  //   // console.log("object-clicked")
-  // })
-
-  this.viewer.renderer.domElement.addEventListener('pointerup', e => {
-    this.mouseDown = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-    this.viewer.controls.enabled = true;
-    this.dragging = false;
-  });
-  this.selectionHelper.on('object-drag', (obj, e) => {
-    // exit if we don't have a valide hoverPlane
-    // this shouldn't be happening
-    if (this.hoverPlane.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) return;
-    this.viewer.controls.enabled = false;
-    this.dragging = true;
-    if (this.mouseDown.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) this.mouseDown = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
-    this.viewer.renderer.domElement.style.cursor = 'move'; // get screen space vector of plane normal
+      this.dragging = false;
+    }); // get screen space vector of plane normal
     // project mouse displacement vector onto it
     // move plane by that much
 
-    var index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane));
-    var planeObj = this.planes[index];
-    var plane = planeObj.plane; // this should be a property of viewer
+    this.selectionHelper.on('object-drag', (obj, e) => {
+      // exit if we don't have a valid hoverPlane
+      if (this.hoverPlane.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) return; // exit if we're clicking on nothing
 
-    var resolution = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(this.viewer.renderer.domElement.clientWidth, -1 * this.viewer.renderer.domElement.clientHeight, 0); // screen space normal vector
+      if (!obj.length && !this.dragging) return;
+      this.viewer.controls.enabled = false;
+      this.viewer.renderer.domElement.style.cursor = 'move';
+      this.dragging = true;
+      var index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane));
+      var planeObj = this.planes[index];
+      var plane = planeObj.plane;
+      console.log(plane.normal);
 
-    var ssNorm = plane.normal.clone().multiplyScalar(plane.constant);
-    ssNorm.project(this.viewer.camera); // convert to screen pixel coords
+      if (this.pointer.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) {
+        this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
+      } // screen space normal vector
 
-    ssNorm.multiplyScalar(0.5).addScalar(0.5).multiply(resolution);
-    ssNorm.setComponent(2, 0.0).normalize();
-    console.log(ssNorm); // mouse displacement
 
-    var mD = this.mouseDown.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0));
-    var mag = mD.length();
-    mD.normalize();
-    console.log(mD); // quantity of mD on ssNorm
-    // need a persistent quantity for displacement so it doesn't keep accumulating
+      var ssNorm = plane.normal.clone().project(this.viewer.camera);
+      ssNorm.setComponent(2, 0);
+      ssNorm.normalize().multiplyScalar(-1); // mouse displacement
 
-    var d = ssNorm.dot(mD) / ssNorm.lengthSq();
-    console.log(d);
-    var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal).multiplyScalar(mag);
-    plane.translate(displacement);
-    console.log(displacement);
-    this.boxMesh.geometry.vertices.map((v, i) => {
-      if (!planeObj.indices.includes(i)) return;
-      this.boxMesh.geometry.vertices[i].add(displacement);
+      var mD = this.pointer.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0)); // quantity of mD on ssNorm
+
+      var d = ssNorm.dot(mD) / ssNorm.lengthSq(); // configurable speed
+
+      var zoom = this.viewer.camera.getWorldPosition(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).length();
+      zoom *= 0.75;
+      var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal).multiplyScalar(zoom);
+      plane.translate(displacement);
+      this.boxMesh.geometry.vertices.map((v, i) => {
+        if (!planeObj.indices.includes(i)) return;
+        this.boxMesh.geometry.vertices[i].add(displacement);
+      });
+      this.boxMesh.geometry.verticesNeedUpdate = true;
+      this.boxMesh.geometry.computeBoundingBox();
+      this.boxMesh.geometry.computeBoundingSphere();
+      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
+      this.updateEdges();
+      this.updateHover(planeObj);
     });
-    this.boxMesh.geometry.verticesNeedUpdate = true; //https://threejsfundamentals.org/threejs/lessons/threejs-align-html-elements-to-3d.html
-    // let ssNormStart = plane.normal.clone().multiplyScalar(plane.constant)
+  }
 
-    var ssNormEnd = plane.normal.clone().multiplyScalar(plane.constant * 2); // ssNormStart.project(this.viewer.camera)
+  _createClass(SectionBox, [{
+    key: "setFromBbox",
+    value: function setFromBbox(bbox) {
+      console.log(bbox);
+    }
+  }, {
+    key: "updateEdges",
+    value: function updateEdges() {
+      this.displayEdges.clear();
+      edges.map(val => {
+        var pts = [this.boxMesh.geometry.vertices[val[0]].clone(), this.boxMesh.geometry.vertices[val[1]].clone()];
+        this.drawLine(pts);
+      });
+    }
+  }, {
+    key: "drawLine",
+    value: function drawLine(pts) {
+      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
+      this.displayEdges.add(line);
+    }
+  }, {
+    key: "updateHover",
+    value: function updateHover(planeObj) {
+      this.displayHover.clear();
+      var verts = this.boxMesh.geometry.vertices.filter((v, i) => planeObj.indices.includes(i));
+      var centroid = verts[0].clone().add(verts[1]).add(verts[2]).add(verts[3]);
+      centroid.multiplyScalar(0.25);
+      var dims = verts[0].clone().sub(centroid).multiplyScalar(2).toArray().filter(v => v !== 0);
+      var width = Math.abs(dims[0]);
+      var height = Math.abs(dims[1]);
+      var hoverGeo = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(width, height);
 
-    ssNormEnd.project(this.viewer.camera); // let x =  (ssNormStart.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth
-    // let y =  (ssNormStart.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight
-    // this.elem1.style.transform = `translate(-50%,-50%) translate(${x}px,${y}px)`
+      switch (planeObj.axis) {
+        case '+x':
+          hoverGeo.rotateY(Math.PI / 2);
+          hoverGeo.rotateX(Math.PI / 2);
+          break;
 
-    var x = (ssNormEnd.x * .5 + 0.5) * this.viewer.renderer.domElement.clientWidth;
-    var y = (ssNormEnd.y * .5 + 0.5) * this.viewer.renderer.domElement.clientHeight * -1;
-    this.elem2.style.transform = "translate(-50%,-50%) translate(" + x + "px," + y + "px)";
-  });
-} // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
-// createPlaneStencilGroup( geometry, plane, renderOrder ) {
-//   const group = new THREE.Group()
-//   const baseMat = new THREE.MeshBasicMaterial()
-//   baseMat.depthWrite = false
-//   baseMat.depthTest = false
-//   baseMat.colorWrite = false
-//   baseMat.stencilWrite = true
-//   baseMat.stencilFunc = THREE.AlwaysStencilFunc
-//   // back faces
-//   const mat0 = baseMat.clone()
-//   mat0.side = THREE.BackSide
-//   mat0.clippingPlanes = [ plane ]
-//   mat0.stencilFail = THREE.IncrementWrapStencilOp
-//   mat0.stencilZFail = THREE.IncrementWrapStencilOp
-//   mat0.stencilZPass = THREE.IncrementWrapStencilOp
-//   const mesh0 = new THREE.Mesh( geometry, mat0 )
-//   mesh0.renderOrder = renderOrder
-//   group.add( mesh0 )
-//   // front faces
-//   const mat1 = baseMat.clone()
-//   mat1.side = THREE.FrontSide
-//   mat1.clippingPlanes = [ plane ]
-//   mat1.stencilFail = THREE.DecrementWrapStencilOp
-//   mat1.stencilZFail = THREE.DecrementWrapStencilOp
-//   mat1.stencilZPass = THREE.DecrementWrapStencilOp
-//   const mesh1 = new THREE.Mesh( geometry, mat1 )
-//   mesh1.renderOrder = renderOrder
-//   group.add( mesh1 )
-//   return group
-// }
-;
+        case '-x':
+          hoverGeo.rotateY(-Math.PI / 2);
+          hoverGeo.rotateX(-Math.PI / 2);
+          break;
+
+        case '+y':
+          hoverGeo.rotateX(-Math.PI / 2);
+          break;
+
+        case '-y':
+          hoverGeo.rotateX(Math.PI / 2);
+          break;
+
+        default:
+          break;
+      }
+
+      hoverGeo.translate(centroid.x, centroid.y, centroid.z);
+      var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
+      this.displayHover.add(hoverMesh);
+    } // for caps
+    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
+
+  }]);
+
+  return SectionBox;
+}();
 
 
 
@@ -2018,30 +2059,28 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
     if (typeof _options !== 'undefined' && _options.hover) {
       // doesn't feel good when debounced, might be necessary tho
-      _this.viewer.renderer.domElement.addEventListener('pointermove', e => {
+      _this.viewer.renderer.domElement.addEventListener('pointermove', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(e => {
         var hovered = _this.getClickedObjects(e); // dragging event, this shouldn't be under the "hover option"
 
 
         if (_this.pointerDown) {
-          console.log("drag!"); // changed emit function to allow multiple data args
-
           _this.emit('object-drag', hovered, _this._getNormalisedClickPosition(e));
 
           return;
         }
 
         _this.emit('hovered', hovered, e);
-      });
+      }, 0));
     } // dragging event, this shouldn't be under the "hover option"
 
 
     if (typeof _options !== 'undefined' && _options.hover) {
-      _this.viewer.renderer.domElement.addEventListener('pointerdown', e => {
+      _this.viewer.renderer.domElement.addEventListener('pointerdown', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(e => {
         _this.pointerDown = true;
         if (_this.orbiting) return;
 
         _this.emit('mouse-down', _this.getClickedObjects(e));
-      });
+      }, 100));
     } // Handle mouseclicks
 
 
@@ -2049,9 +2088,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       _this.pointerDown = false;
       if (_this.orbiting) return;
 
-      var selectionObjects = _this.getClickedObjects(e); // do we need 
-      // if(selectionObjects.legth > 0) this.emit('object-clicked'...)?
-
+      var selectionObjects = _this.getClickedObjects(e);
 
       _this.emit('object-clicked', selectionObjects);
     }); // Doubleclicks on touch devices

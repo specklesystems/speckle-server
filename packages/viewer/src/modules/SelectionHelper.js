@@ -50,30 +50,28 @@ export default class SelectionHelper extends EventEmitter {
     // optional param allows for hover
     if(typeof _options !== 'undefined' && _options.hover) {
       // doesn't feel good when debounced, might be necessary tho
-      this.viewer.renderer.domElement.addEventListener( 'pointermove', (e) => {
+      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce((e) => {
         let hovered = this.getClickedObjects(e)
         
         // dragging event, this shouldn't be under the "hover option"
         if(this.pointerDown) {
-          console.log("drag!")
-          // changed emit function to allow multiple data args
           this.emit('object-drag', hovered, this._getNormalisedClickPosition(e))
           return
         }
         
         this.emit('hovered', hovered, e)
-      })
+      },0))
     }
 
     // dragging event, this shouldn't be under the "hover option"
     if(typeof _options !== 'undefined' && _options.hover) {
-      this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+      this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce(( e ) => {
         this.pointerDown = true
 
         if ( this.orbiting ) return
           
         this.emit( 'mouse-down', this.getClickedObjects(e))
-      })
+      },100))
     }
 
     // Handle mouseclicks
@@ -83,8 +81,7 @@ export default class SelectionHelper extends EventEmitter {
       if ( this.orbiting ) return
 
       let selectionObjects = this.getClickedObjects( e )
-      // do we need 
-      // if(selectionObjects.legth > 0) this.emit('object-clicked'...)?
+      
       this.emit('object-clicked', selectionObjects)
     } )
 
