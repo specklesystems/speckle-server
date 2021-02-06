@@ -1414,9 +1414,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
     key: "_postLoadFunction",
     value: function _postLoadFunction() {
       this.zoomExtents();
-      this.viewer.reflectionsNeedUpdate = true;
-
-      this.viewer.sectionPlaneHelper._matchSceneSize();
+      this.viewer.reflectionsNeedUpdate = true; // this.viewer.sectionPlaneHelper._matchSceneSize()
 
       var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
       this.viewer.sectionBox.setFromBbox(sceneBox);
@@ -1442,27 +1440,33 @@ var SceneObjectManager = /*#__PURE__*/function () {
       var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(bboxTarget);
       this.zoomToBox(box);
     } // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
+    // this implementation might be better
+    // https://github.com/donmccurdy/three-gltf-viewer/blob/67bdd2f4bf5ce8ee512805a0b5252d8269b69ca6/src/viewer.js#L213
     // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
     // look better. Could we do the same thing somehow when controls stop moving?
 
   }, {
     key: "zoomToBox",
     value: function zoomToBox(box) {
-      var fitOffset = 1.2;
-      var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
-      var center = box.getCenter(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
-      var maxSize = Math.max(size.x, size.y, size.z);
-      var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
-      var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
-      var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
-      var direction = this.viewer.controls.target.clone().sub(this.viewer.camera.position).normalize().multiplyScalar(distance); // this.viewer.controls.maxDistance = distance * 20
-
-      this.viewer.controls.target.copy(center);
-      this.viewer.camera.near = distance / 100;
-      this.viewer.camera.far = distance * 100;
-      this.viewer.camera.updateProjectionMatrix();
-      this.viewer.camera.position.copy(this.viewer.controls.target).sub(direction);
-      this.viewer.controls.update();
+      var fitOffset = 1.2; // const size = box.getSize( new THREE.Vector3() )
+      // const center = box.getCenter( new THREE.Vector3() )
+      // const maxSize = Math.max( size.x, size.y, size.z )
+      // const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
+      // const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
+      // const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+      // const direction = this.viewer.controls.target.clone()
+      //   .sub( this.viewer.camera.position )
+      //   .normalize()
+      //   .multiplyScalar( distance )
+      // // this.viewer.controls.maxDistance = distance * 20
+      // this.viewer.controls.target.copy( center )
+      // this.viewer.camera.near = distance / 100
+      // this.viewer.camera.far = distance * 100
+      // this.viewer.camera.updateProjectionMatrix()
+      // this.viewer.camera.position.copy( this.viewer.controls.target ).sub( direction )
+      // this.viewer.camera.updateProjectionMatrix()
+      // this.viewer.controls.update()
+      // this.viewer.camera.updateProjectionMatrix()
     }
   }, {
     key: "_argbToRGB",
@@ -1533,16 +1537,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * Class that implements a section box
  * _bbox is optional parameter that sets initial size
  * 
- * 
- * 
- * 
- * 
+ * Manipulating the section box (scale, rotate, translate)
+ * Is all done by maniuplating the vertices
  * 
  */
 // indices to verts in this.box
 // these allow for drawing of box edges
 
-var edges = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 6], [6, 7], [7, 5], [5, 4], [2, 7], [0, 5], [1, 4], [3, 6]];
+var edges = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 6], [6, 7], [7, 5], [5, 4], [2, 7], [0, 5], [1, 4], [3, 6]]; // constants to make code more concise
+
+var X = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0);
+var Y = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0);
+var Z = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1);
 
 var SectionBox = /*#__PURE__*/function () {
   function SectionBox(viewer) {
@@ -1560,7 +1566,7 @@ var SectionBox = /*#__PURE__*/function () {
 
     this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({// transparent:true,
       // color: 0xffe842, 
-      // opacity: 0.00
+      // opacity: 0.5
     }); // the box itself
 
     this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
@@ -1588,42 +1594,42 @@ var SectionBox = /*#__PURE__*/function () {
     }); // pointer position
 
     this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-    this.dragging = false; // planes face outwards
+    this.dragging = false; // planes face inward
     // indices correspond to vertex indices on the boxGeometry
 
     this.planes = [{
-      // right, x positive
       axis: '+x',
+      // right, x positive
       plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1),
       indices: [5, 4, 6, 7]
     }, {
-      // left, x negative
       axis: '-x',
+      // left, x negative
       plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1),
       indices: [0, 1, 3, 2]
     }, {
-      // out, y positive
       axis: '+y',
+      // out, y positive
       plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1),
       indices: [2, 3, 6, 7]
     }, {
-      // in, y negative
       axis: '-y',
+      // in, y negative
       plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1),
       indices: [5, 4, 1, 0]
     }, {
-      // up, z positive
       axis: '+z',
+      // up, z positive
       plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1),
       indices: [1, 3, 6, 4]
     }, {
-      // down, z negative
       axis: '-z',
+      // down, z negative
       plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1),
       indices: [0, 2, 7, 5]
     }]; // plane helpers
+    // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
 
-    this.planeHelpers = this.planes.map(p => this.display.add(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneHelper(p.plane, 2, 0x000000)));
     this.viewer.renderer.localClippingEnabled = true; // adds local clipping planes to all materials
 
     var objs = this.viewer.sceneManager.objects;
@@ -1632,11 +1638,12 @@ var SectionBox = /*#__PURE__*/function () {
     });
     this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       transparent: true,
-      opacity: 0.75,
-      color: 0xE91E63,
+      opacity: 0.6,
+      color: 0xffe842,
+      // color: 0xE91E63,
       metalness: 0.1,
-      roughness: 0.75,
-      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+      roughness: 0.75 // side: THREE.DoubleSide
+
     }); // hovered event handler
 
     this.selectionHelper.on('hovered', (obj, e) => {
@@ -1650,10 +1657,7 @@ var SectionBox = /*#__PURE__*/function () {
         return;
       }
 
-      this.viewer.renderer.domElement.style.cursor = 'pointer'; // console.log(obj[0].face.normal)
-      // console.log(obj[0].face.normal.clone().negate())
-      // console.log(this.planes.find(p => p.plane.normal.equals(obj[0].face.normal.clone().negate())))
-
+      this.viewer.renderer.domElement.style.cursor = 'pointer';
       var index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal.clone().negate()));
       if (index < 0) return; // this should never be the case?
 
@@ -1686,34 +1690,27 @@ var SectionBox = /*#__PURE__*/function () {
       var index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane));
       var planeObj = this.planes[index];
       var plane = planeObj.plane;
-      console.log(plane.normal);
 
       if (this.pointer.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) {
         this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
       } // screen space normal vector
+      // bad transformations of camera can corrupt this
 
 
-      var ssNorm = plane.normal.clone().project(this.viewer.camera);
-      ssNorm.setComponent(2, 0);
-      ssNorm.normalize().multiplyScalar(-1); // mouse displacement
+      var ssNorm = plane.normal.clone();
+      ssNorm.negate().project(this.viewer.camera);
+      ssNorm.setComponent(2, 0).normalize(); // mouse displacement
 
       var mD = this.pointer.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0)); // quantity of mD on ssNorm
 
-      var d = ssNorm.dot(mD) / ssNorm.lengthSq(); // configurable speed
+      var d = ssNorm.dot(mD) / ssNorm.lengthSq(); // configurable drag speed
 
       var zoom = this.viewer.camera.getWorldPosition(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).length();
       zoom *= 0.75;
       var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal).multiplyScalar(zoom);
       plane.translate(displacement);
-      this.boxMesh.geometry.vertices.map((v, i) => {
-        if (!planeObj.indices.includes(i)) return;
-        this.boxMesh.geometry.vertices[i].add(displacement);
-      });
-      this.boxMesh.geometry.verticesNeedUpdate = true;
-      this.boxMesh.geometry.computeBoundingBox();
-      this.boxMesh.geometry.computeBoundingSphere();
+      this.updateBoxFace(planeObj, displacement);
       this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
-      this.updateEdges();
       this.updateHover(planeObj);
     });
   }
@@ -1721,15 +1718,46 @@ var SectionBox = /*#__PURE__*/function () {
   _createClass(SectionBox, [{
     key: "setFromBbox",
     value: function setFromBbox(bbox) {
-      console.log(bbox);
+      for (var p of this.planes) {
+        var c = 0; // planes point in - if negative select max part of bbox
+
+        if (p.plane.normal.dot(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1)) > 0) {
+          c = p.plane.normal.clone().multiply(bbox.min).length();
+        } else {
+          c = p.plane.normal.clone().multiply(bbox.max).length();
+        } // calculate displacement
+
+
+        var d = p.plane.normal.clone().negate().multiplyScalar(c); // update boxMesh
+
+        this.updateBoxFace(p, d); // translate plane
+
+        p.plane.translate(d);
+      }
+    }
+  }, {
+    key: "updateBoxFace",
+    value: function updateBoxFace(planeObj, displacement) {
+      this.boxMesh.geometry.vertices.map((v, i) => {
+        if (!planeObj.indices.includes(i)) return;
+        this.boxMesh.geometry.vertices[i].add(displacement);
+      });
+      this.boxMesh.geometry.verticesNeedUpdate = true;
+      this.boxMesh.geometry.computeBoundingBox();
+      this.boxMesh.geometry.computeBoundingSphere();
+      this.updateEdges();
     }
   }, {
     key: "updateEdges",
     value: function updateEdges() {
       this.displayEdges.clear();
       edges.map(val => {
-        var pts = [this.boxMesh.geometry.vertices[val[0]].clone(), this.boxMesh.geometry.vertices[val[1]].clone()];
-        this.drawLine(pts);
+        var ptA = this.boxMesh.geometry.vertices[val[0]].clone();
+        var ptB = this.boxMesh.geometry.vertices[val[1]].clone(); // translation
+
+        ptA.add(this.boxMesh.position);
+        ptB.add(this.boxMesh.position);
+        this.drawLine([ptA, ptB]);
       });
     }
   }, {
@@ -1752,28 +1780,30 @@ var SectionBox = /*#__PURE__*/function () {
       var hoverGeo = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(width, height);
 
       switch (planeObj.axis) {
-        case '+x':
+        case '-x':
           hoverGeo.rotateY(Math.PI / 2);
           hoverGeo.rotateX(Math.PI / 2);
           break;
 
-        case '-x':
+        case '+x':
           hoverGeo.rotateY(-Math.PI / 2);
           hoverGeo.rotateX(-Math.PI / 2);
           break;
 
-        case '+y':
+        case '-y':
           hoverGeo.rotateX(-Math.PI / 2);
           break;
 
-        case '-y':
+        case '+y':
           hoverGeo.rotateX(Math.PI / 2);
           break;
 
         default:
           break;
-      }
+      } // translation
 
+
+      centroid.add(this.boxMesh.position);
       hoverGeo.translate(centroid.x, centroid.y, centroid.z);
       var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
       this.displayHover.add(hoverMesh);
@@ -2555,6 +2585,8 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     _this.camera.up.set(0, 0, 1);
 
     _this.camera.position.set(1, 1, 1);
+
+    _this.camera.updateProjectionMatrix();
 
     _this.renderer = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderer({
       antialias: true,

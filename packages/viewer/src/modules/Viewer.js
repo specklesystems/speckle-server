@@ -22,7 +22,8 @@ export default class Viewer extends EventEmitter {
     this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight )
     this.camera.up.set( 0, 0, 1 )
     this.camera.position.set( 1, 1, 1 )
-
+    this.camera.updateProjectionMatrix()
+    
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setClearColor( 0xcccccc, 0 )
     this.renderer.setPixelRatio( window.devicePixelRatio )

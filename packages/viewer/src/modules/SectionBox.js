@@ -6,10 +6,8 @@ import SelectionHelper from './SelectionHelper'
  * Class that implements a section box
  * _bbox is optional parameter that sets initial size
  * 
- * 
- * 
- * 
- * 
+ * Manipulating the section box (scale, rotate, translate)
+ * Is all done by maniuplating the vertices
  * 
  */
 
@@ -23,6 +21,12 @@ const edges = [
   [2,7], [0,5],
   [1,4], [3,6]
 ]
+
+// constants to make code more concise
+const X = new THREE.Vector3(1,0,0)
+const Y = new THREE.Vector3(0,1,0)
+const Z = new THREE.Vector3(0,0,1)
+
 
 export default class SectionBox {
   constructor(viewer){
@@ -43,7 +47,7 @@ export default class SectionBox {
     this.boxMaterial = new THREE.MeshBasicMaterial({
                                       // transparent:true,
                                       // color: 0xffe842, 
-                                      // opacity: 0.00
+                                      // opacity: 0.5
                                     })
                   
     // the box itself
@@ -77,45 +81,40 @@ export default class SectionBox {
     this.pointer = new THREE.Vector3()
     this.dragging = false
     
-    // planes face outwards
+    // planes face inward
     // indices correspond to vertex indices on the boxGeometry
     this.planes = [
       {
-        // right, x positive
-        axis: '+x',
+        axis: '+x', // right, x positive
         plane:new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 1 ),
         indices: [5,4,6,7],
       },{
-        // left, x negative
-        axis: '-x',
+        axis: '-x', // left, x negative
         plane: new THREE.Plane( new THREE.Vector3( - 1, 0, 0 ), 1 ),
         indices: [0,1,3,2],
       },{
-        // out, y positive
-        axis: '+y',
+        axis: '+y', // out, y positive
         plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 1 ),   
         indices: [2,3,6,7],
       },{
-        // in, y negative
-        axis: '-y',
+        axis: '-y', // in, y negative
         plane:new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 1 ),
         indices: [5,4,1,0],
       },{
-        // up, z positive
-        axis: '+z',
+        axis: '+z', // up, z positive
         plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 1 ),
         indices: [1,3,6,4],
       },{
-        // down, z negative
-        axis: '-z',
+        axis: '-z', // down, z negative
         plane:new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 1 ),
         indices: [0,2,7,5],
       }];
 
     // plane helpers
-    this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
+    // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
     
     this.viewer.renderer.localClippingEnabled = true
+
     // adds local clipping planes to all materials
     let objs = this.viewer.sceneManager.objects
     objs.forEach( obj => {
@@ -124,11 +123,12 @@ export default class SectionBox {
     
     this.hoverMat = new THREE.MeshStandardMaterial( {
       transparent: true,
-      opacity: 0.75,
-      color: 0xE91E63,
+      opacity: 0.6,
+      color: 0xffe842,
+      // color: 0xE91E63,
       metalness: 0.1,
       roughness: 0.75,
-      side: THREE.DoubleSide
+      // side: THREE.DoubleSide
     } ); 
 
     // hovered event handler
@@ -145,9 +145,7 @@ export default class SectionBox {
       }
 
       this.viewer.renderer.domElement.style.cursor = 'pointer';
-      // console.log(obj[0].face.normal)
-      // console.log(obj[0].face.normal.clone().negate())
-      // console.log(this.planes.find(p => p.plane.normal.equals(obj[0].face.normal.clone().negate())))
+      
       let index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal.clone().negate()))
       if(index < 0) return // this should never be the case?
       let planeObj = this.planes[index]
@@ -188,54 +186,76 @@ export default class SectionBox {
       let index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane))
       let planeObj = this.planes[index]
       let plane = planeObj.plane
-      console.log(plane.normal)
+
       if(this.pointer.equals(new THREE.Vector3())) {
         this.pointer = new THREE.Vector3(e.x, e.y, 0.0)
       }
-
+      
       // screen space normal vector
-      let ssNorm = plane.normal.clone().project(this.viewer.camera)
-      ssNorm.setComponent(2, 0)
-      ssNorm.normalize().multiplyScalar(-1)
+      // bad transformations of camera can corrupt this
+      let ssNorm = plane.normal.clone()
+      ssNorm.negate().project(this.viewer.camera)
+      ssNorm.setComponent(2, 0).normalize()
 
       // mouse displacement
       let mD = this.pointer.clone().sub(new THREE.Vector3(e.x, e.y, 0.0))
 
       // quantity of mD on ssNorm
       let d = (ssNorm.dot(mD) / ssNorm.lengthSq())
-      // configurable speed
+      // configurable drag speed
       let zoom = this.viewer.camera.getWorldPosition(new THREE.Vector3()).sub(new THREE.Vector3()).length()
       zoom *= 0.75
       let displacement = new THREE.Vector3(d,d,d).multiply(plane.normal).multiplyScalar(zoom)
       plane.translate(displacement)
 
-      this.boxMesh.geometry.vertices.map((v,i) => {
-        if(!planeObj.indices.includes(i)) return
-        this.boxMesh.geometry.vertices[i].add(displacement)
-      })
-
-      this.boxMesh.geometry.verticesNeedUpdate = true
-      this.boxMesh.geometry.computeBoundingBox();
-      this.boxMesh.geometry.computeBoundingSphere();
+      this.updateBoxFace(planeObj, displacement)
       
       this.pointer = new THREE.Vector3(e.x, e.y, 0.0)
-      
-      this.updateEdges()
       
       this.updateHover(planeObj)
     })
   }
 
   setFromBbox(bbox){
-    console.log(bbox)
+    for(let p of this.planes) {
+      let c = 0
+      // planes point in - if negative select max part of bbox
+      if(p.plane.normal.dot(new THREE.Vector3(1,1,1)) > 0){
+        c = p.plane.normal.clone().multiply(bbox.min).length()
+      } else {
+        c = p.plane.normal.clone().multiply(bbox.max).length()
+      }
+      // calculate displacement
+      let d = p.plane.normal.clone().negate().multiplyScalar(c)
+      // update boxMesh
+      this.updateBoxFace(p, d)
+      // translate plane
+      p.plane.translate(d)
+    }
+  }
+
+  updateBoxFace(planeObj, displacement){
+    this.boxMesh.geometry.vertices.map((v,i) => {
+      if(!planeObj.indices.includes(i)) return
+      this.boxMesh.geometry.vertices[i].add(displacement)
+    })
+
+    this.boxMesh.geometry.verticesNeedUpdate = true
+    this.boxMesh.geometry.computeBoundingBox();
+    this.boxMesh.geometry.computeBoundingSphere();
+    
+    this.updateEdges()
   }
 
   updateEdges(){
     this.displayEdges.clear()
     edges.map(val => {
-      let pts = [this.boxMesh.geometry.vertices[val[0]].clone(),
-                 this.boxMesh.geometry.vertices[val[1]].clone()]
-      this.drawLine(pts)
+      let ptA = this.boxMesh.geometry.vertices[val[0]].clone()
+      let ptB = this.boxMesh.geometry.vertices[val[1]].clone()
+      // translation
+      ptA.add(this.boxMesh.position)
+      ptB.add(this.boxMesh.position)
+      this.drawLine([ptA, ptB])
     })
   }
 
@@ -255,7 +275,7 @@ export default class SectionBox {
                            .add(verts[3])
 
     centroid.multiplyScalar(0.25)
-
+    
     let dims = verts[0].clone().sub(centroid).multiplyScalar(2).toArray().filter(v=> v !== 0)
     let width = Math.abs(dims[0])
     let height = Math.abs(dims[1])
@@ -263,23 +283,26 @@ export default class SectionBox {
     let hoverGeo = new THREE.PlaneGeometry(width, height)
 
     switch(planeObj.axis){
-      case '+x':
+      case '-x':
         hoverGeo.rotateY(Math.PI / 2)
         hoverGeo.rotateX(Math.PI / 2)
         break
-      case '-x':
+      case '+x':
         hoverGeo.rotateY(-Math.PI / 2)
         hoverGeo.rotateX(-Math.PI / 2)
         break
-      case '+y':
+      case '-y':
         hoverGeo.rotateX(- Math.PI / 2)
         break
-      case '-y':
+      case '+y':
         hoverGeo.rotateX(Math.PI / 2)
         break
       default:
         break
     }
+
+    // translation
+    centroid.add(this.boxMesh.position)
 
     hoverGeo.translate(centroid.x, centroid.y, centroid.z)
 
