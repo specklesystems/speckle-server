@@ -11,7 +11,7 @@ import SelectionHelper from './SelectionHelper'
  * 
  */
 
-// indices to verts in this.box
+// indices to verts in this.boxGeo
 // these allow for drawing of box edges
 const edges = [
   [0,1], [1,3],
@@ -27,12 +27,12 @@ const X = new THREE.Vector3(1,0,0)
 const Y = new THREE.Vector3(0,1,0)
 const Z = new THREE.Vector3(0,0,1)
 
-
 export default class SectionBox {
   constructor(viewer){
     this.viewer = viewer
 
     this.display = new THREE.Group()
+    this.display.name = 'section-box'
     this.displayBox = new THREE.Group()
     this.displayEdges = new THREE.Group()
     this.displayHover = new THREE.Group()
@@ -54,7 +54,7 @@ export default class SectionBox {
     this.boxGeo = new THREE.BoxGeometry(2,2,2)
     this.boxMesh = new THREE.Mesh(this.boxGeo, this.boxMaterial)    
     this.boxMesh.visible = false // surprised raycasting still works when visible = false
-    this.boxMesh.name = 'section-box'
+    // this.boxMesh.name = 'section-box'
 
     this.displayBox.add(this.boxMesh)
     
@@ -75,7 +75,7 @@ export default class SectionBox {
     // normal of plane being hovered
     this.hoverPlane = new THREE.Vector3()
 
-    this.selectionHelper = new SelectionHelper( this.viewer, {subset:'section-box', hover:true} )
+    this.selectionHelper = new SelectionHelper( this.viewer, {subset:this.displayBox, hover:true} )
 
     // pointer position
     this.pointer = new THREE.Vector3()
@@ -115,7 +115,7 @@ export default class SectionBox {
     
     this.viewer.renderer.localClippingEnabled = true
 
-    // adds local clipping planes to all materials
+    // adds clipping planes to all materials
     let objs = this.viewer.sceneManager.objects
     objs.forEach( obj => {
       obj.material.clippingPlanes = this.planes.map( c => c.plane )
@@ -128,7 +128,6 @@ export default class SectionBox {
       // color: 0xE91E63,
       metalness: 0.1,
       roughness: 0.75,
-      // side: THREE.DoubleSide
     } ); 
 
     // hovered event handler

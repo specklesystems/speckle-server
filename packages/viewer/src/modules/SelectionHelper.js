@@ -18,12 +18,9 @@ import EventEmitter from './EventEmitter'
   * NS Notes:
   * -make more configurable with options param
   * _options = {
-  *             subset: [list of objects]
+  *             subset: THREE.Group
   *             hover:  boolean
   *            }
-  * Proposal to make this more general by putting client specific event handling logic in client
-  * i.e. Viewer implements handleClick and this just emits the event
-  * use cases: selecting section box face, text, tags, dims vs geometry
   *
   */
 
@@ -132,21 +129,6 @@ export default class SelectionHelper extends EventEmitter {
     this.originalSelectionObjects = []
   }
 
-  // handleSelection( objects ) {
-  //   this.select( objects[0] )
-  // }
-
-  // select( obj ) {
-  //   if ( !this.multiSelect ) this.unselect()
-  //   if ( !obj ) {
-  //     this.emit( 'object-clicked', this.originalSelectionObjects )
-  //     return
-  //   }
-
-  //   this.originalSelectionObjects.push( obj )
-  //   this.emit( 'object-clicked', this.originalSelectionObjects )
-  // }
-
   unselect() {
     this.originalSelectionObjects = []
   }
@@ -155,10 +137,18 @@ export default class SelectionHelper extends EventEmitter {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
-    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? [this.viewer.scene.getObjectByName(this.subset)]: this.viewer.sceneManager.objects )
+    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects )
     intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects
+  }
+
+  // for getting all children of a subset passed as a THREE.Group
+  _getGroupChildren(group){
+    let children = []
+    if(group.children.length === 0) return [group]
+    group.children.forEach((c,i,a) => children = [...children, ...this._getGroupChildren(c)])
+    return children
   }
 
   _getNormalisedClickPosition( e ) {
@@ -180,5 +170,4 @@ export default class SelectionHelper extends EventEmitter {
     this.unselect()
     this.originalSelectionObjects = null
   }
-
 }

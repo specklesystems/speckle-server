@@ -1541,7 +1541,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * Is all done by maniuplating the vertices
  * 
  */
-// indices to verts in this.box
+// indices to verts in this.boxGeo
 // these allow for drawing of box edges
 
 var edges = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 6], [6, 7], [7, 5], [5, 4], [2, 7], [0, 5], [1, 4], [3, 6]]; // constants to make code more concise
@@ -1556,6 +1556,7 @@ var SectionBox = /*#__PURE__*/function () {
 
     this.viewer = viewer;
     this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.display.name = 'section-box';
     this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.displayEdges = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
@@ -1572,8 +1573,8 @@ var SectionBox = /*#__PURE__*/function () {
     this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
     this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
     this.boxMesh.visible = false; // surprised raycasting still works when visible = false
+    // this.boxMesh.name = 'section-box'
 
-    this.boxMesh.name = 'section-box';
     this.displayBox.add(this.boxMesh);
     this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
       color: 0x000000,
@@ -1589,7 +1590,7 @@ var SectionBox = /*#__PURE__*/function () {
 
     this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
     this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
-      subset: 'section-box',
+      subset: this.displayBox,
       hover: true
     }); // pointer position
 
@@ -1630,7 +1631,7 @@ var SectionBox = /*#__PURE__*/function () {
     }]; // plane helpers
     // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
 
-    this.viewer.renderer.localClippingEnabled = true; // adds local clipping planes to all materials
+    this.viewer.renderer.localClippingEnabled = true; // adds clipping planes to all materials
 
     var objs = this.viewer.sceneManager.objects;
     objs.forEach(obj => {
@@ -1642,8 +1643,7 @@ var SectionBox = /*#__PURE__*/function () {
       color: 0xffe842,
       // color: 0xE91E63,
       metalness: 0.1,
-      roughness: 0.75 // side: THREE.DoubleSide
-
+      roughness: 0.75
     }); // hovered event handler
 
     this.selectionHelper.on('hovered', (obj, e) => {
@@ -2044,12 +2044,9 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
  * NS Notes:
  * -make more configurable with options param
  * _options = {
- *             subset: [list of objects]
+ *             subset: THREE.Group
  *             hover:  boolean
  *            }
- * Proposal to make this more general by putting client specific event handling logic in client
- * i.e. Viewer implements handleClick and this just emits the event
- * use cases: selecting section box face, text, tags, dims vs geometry
  *
  */
 
@@ -2172,19 +2169,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     });
     _this.originalSelectionObjects = [];
     return _this;
-  } // handleSelection( objects ) {
-  //   this.select( objects[0] )
-  // }
-  // select( obj ) {
-  //   if ( !this.multiSelect ) this.unselect()
-  //   if ( !obj ) {
-  //     this.emit( 'object-clicked', this.originalSelectionObjects )
-  //     return
-  //   }
-  //   this.originalSelectionObjects.push( obj )
-  //   this.emit( 'object-clicked', this.originalSelectionObjects )
-  // }
-
+  }
 
   _createClass(SelectionHelper, [{
     key: "unselect",
@@ -2197,9 +2182,18 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var normalizedPosition = this._getNormalisedClickPosition(e);
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
-      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? [this.viewer.scene.getObjectByName(this.subset)] : this.viewer.sceneManager.objects);
+      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects);
       intersectedObjects = intersectedObjects.filter(obj => this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0));
       return intersectedObjects;
+    } // for getting all children of a subset passed as a THREE.Group
+
+  }, {
+    key: "_getGroupChildren",
+    value: function _getGroupChildren(group) {
+      var children = [];
+      if (group.children.length === 0) return [group];
+      group.children.forEach((c, i, a) => children = [...children, ...this._getGroupChildren(c)]);
+      return children;
     }
   }, {
     key: "_getNormalisedClickPosition",
