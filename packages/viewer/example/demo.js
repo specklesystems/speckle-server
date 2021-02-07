@@ -1559,10 +1559,12 @@ var SectionBox = /*#__PURE__*/function () {
     this.display.name = 'section-box';
     this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.displayEdges = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group(); // this.displayStencils = new THREE.Group()
+
     this.display.add(this.displayBox);
     this.display.add(this.displayEdges);
-    this.display.add(this.displayHover);
+    this.display.add(this.displayHover); // this.display.add(this.displayStencils)
+
     this.viewer.scene.add(this.display); // basic display of the section box
 
     this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({// transparent:true,
@@ -1573,8 +1575,9 @@ var SectionBox = /*#__PURE__*/function () {
     this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
     this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
     this.boxMesh.visible = false; // surprised raycasting still works when visible = false
-    // this.boxMesh.name = 'section-box'
 
+    this.boxMesh.geometry.computeBoundingBox();
+    this.boxMesh.geometry.computeBoundingSphere();
     this.displayBox.add(this.boxMesh);
     this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
       color: 0x000000,
@@ -1666,9 +1669,7 @@ var SectionBox = /*#__PURE__*/function () {
       if (plane.normal.equals(this.hoverPlane)) return;
       this.hoverPlane = plane.normal.clone();
       this.updateHover(planeObj);
-    }); // this.selectionHelper.on('object-clicked', (e) => {
-    //   // console.log("object-clicked")
-    // })
+    }); // Selection Helper seems unecessary for this type of thing
 
     this.viewer.renderer.domElement.addEventListener('pointerup', e => {
       this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
@@ -1718,6 +1719,11 @@ var SectionBox = /*#__PURE__*/function () {
   _createClass(SectionBox, [{
     key: "setFromBbox",
     value: function setFromBbox(bbox) {
+      // console.log(this.boxMesh)
+      var bboxCurr = this.boxMesh.geometry.boundingBox.clone();
+      if (bboxCurr.containsBox(bbox)) return; // let bboxExpand = new THREE.Box3(bboxCurr.max.sub(bbox.max),
+      //                                 bboxCurr.min.sub(bbox.min))
+
       for (var p of this.planes) {
         var c = 0; // planes point in - if negative select max part of bbox
 
@@ -1807,9 +1813,40 @@ var SectionBox = /*#__PURE__*/function () {
       hoverGeo.translate(centroid.x, centroid.y, centroid.z);
       var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
       this.displayHover.add(hoverMesh);
-    } // for caps
-    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
+    } // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
 
+  }, {
+    key: "createPlaneStencilGroup",
+    value: function createPlaneStencilGroup(geometry, plane, renderOrder) {
+      var group = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+      var baseMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial();
+      baseMat.depthWrite = false;
+      baseMat.depthTest = false;
+      baseMat.colorWrite = false;
+      baseMat.stencilWrite = true;
+      baseMat.stencilFunc = three__WEBPACK_IMPORTED_MODULE_0__.AlwaysStencilFunc; // back faces
+
+      var mat0 = baseMat.clone();
+      mat0.side = three__WEBPACK_IMPORTED_MODULE_0__.BackSide;
+      mat0.clippingPlanes = [plane];
+      mat0.stencilFail = three__WEBPACK_IMPORTED_MODULE_0__.IncrementWrapStencilOp;
+      mat0.stencilZFail = three__WEBPACK_IMPORTED_MODULE_0__.IncrementWrapStencilOp;
+      mat0.stencilZPass = three__WEBPACK_IMPORTED_MODULE_0__.IncrementWrapStencilOp;
+      var mesh0 = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, mat0);
+      mesh0.renderOrder = renderOrder;
+      group.add(mesh0); // front faces
+
+      var mat1 = baseMat.clone();
+      mat1.side = three__WEBPACK_IMPORTED_MODULE_0__.FrontSide;
+      mat1.clippingPlanes = [plane];
+      mat1.stencilFail = three__WEBPACK_IMPORTED_MODULE_0__.DecrementWrapStencilOp;
+      mat1.stencilZFail = three__WEBPACK_IMPORTED_MODULE_0__.DecrementWrapStencilOp;
+      mat1.stencilZPass = three__WEBPACK_IMPORTED_MODULE_0__.DecrementWrapStencilOp;
+      var mesh1 = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(geometry, mat1);
+      mesh1.renderOrder = renderOrder;
+      group.add(mesh1);
+      return group;
+    }
   }]);
 
   return SectionBox;

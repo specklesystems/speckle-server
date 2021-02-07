@@ -36,10 +36,12 @@ export default class SectionBox {
     this.displayBox = new THREE.Group()
     this.displayEdges = new THREE.Group()
     this.displayHover = new THREE.Group()
+    // this.displayStencils = new THREE.Group()
 
     this.display.add(this.displayBox)
     this.display.add(this.displayEdges)
     this.display.add(this.displayHover)
+    // this.display.add(this.displayStencils)
 
     this.viewer.scene.add(this.display)
 
@@ -54,7 +56,8 @@ export default class SectionBox {
     this.boxGeo = new THREE.BoxGeometry(2,2,2)
     this.boxMesh = new THREE.Mesh(this.boxGeo, this.boxMaterial)    
     this.boxMesh.visible = false // surprised raycasting still works when visible = false
-    // this.boxMesh.name = 'section-box'
+    this.boxMesh.geometry.computeBoundingBox();
+    this.boxMesh.geometry.computeBoundingSphere();
 
     this.displayBox.add(this.boxMesh)
     
@@ -156,11 +159,7 @@ export default class SectionBox {
       this.updateHover(planeObj)
     })
 
-    // this.selectionHelper.on('object-clicked', (e) => {
-    //   // console.log("object-clicked")
-
-    // })
-
+    // Selection Helper seems unecessary for this type of thing
     this.viewer.renderer.domElement.addEventListener('pointerup', (e) => {
       this.pointer = new THREE.Vector3()
       this.tempVerts = []
@@ -216,6 +215,11 @@ export default class SectionBox {
   }
 
   setFromBbox(bbox){
+    // console.log(this.boxMesh)
+    let bboxCurr = this.boxMesh.geometry.boundingBox.clone()
+    if(bboxCurr.containsBox(bbox)) return
+    // let bboxExpand = new THREE.Box3(bboxCurr.max.sub(bbox.max),
+    //                                 bboxCurr.min.sub(bbox.min))
     for(let p of this.planes) {
       let c = 0
       // planes point in - if negative select max part of bbox
@@ -309,6 +313,43 @@ export default class SectionBox {
     this.displayHover.add(hoverMesh)
   }
 
-  // for caps
   // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
+  createPlaneStencilGroup( geometry, plane, renderOrder ) {
+
+    const group = new THREE.Group();
+    const baseMat = new THREE.MeshBasicMaterial();
+    baseMat.depthWrite = false;
+    baseMat.depthTest = false;
+    baseMat.colorWrite = false;
+    baseMat.stencilWrite = true;
+    baseMat.stencilFunc = THREE.AlwaysStencilFunc;
+
+    // back faces
+    const mat0 = baseMat.clone();
+    mat0.side = THREE.BackSide;
+    mat0.clippingPlanes = [ plane ];
+    mat0.stencilFail = THREE.IncrementWrapStencilOp;
+    mat0.stencilZFail = THREE.IncrementWrapStencilOp;
+    mat0.stencilZPass = THREE.IncrementWrapStencilOp;
+
+    const mesh0 = new THREE.Mesh( geometry, mat0 );
+    mesh0.renderOrder = renderOrder;
+    group.add( mesh0 );
+
+    // front faces
+    const mat1 = baseMat.clone();
+    mat1.side = THREE.FrontSide;
+    mat1.clippingPlanes = [ plane ];
+    mat1.stencilFail = THREE.DecrementWrapStencilOp;
+    mat1.stencilZFail = THREE.DecrementWrapStencilOp;
+    mat1.stencilZPass = THREE.DecrementWrapStencilOp;
+
+    const mesh1 = new THREE.Mesh( geometry, mat1 );
+    mesh1.renderOrder = renderOrder;
+
+    group.add( mesh1 );
+
+    return group;
+
+  }
 }
