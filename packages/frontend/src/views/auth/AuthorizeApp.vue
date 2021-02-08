@@ -1,5 +1,8 @@
 <template>
-  <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="py-4 elevation-10">
+  <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="pb-4 elevation-10">
+    <v-card-text class="text-center background2">
+      <user-avatar></user-avatar>
+    </v-card-text>
     <v-card-text class="text-h5 font-weight-regular text-center pt-10">
       <v-icon v-if="app.trustByDefault" class="mr-2 primary--text">mdi-shield-check</v-icon>
       <b class="primary--text">{{ app.name }}</b>
@@ -64,7 +67,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import UserAvatar from '../../components/UserAvatar'
+import UserAvatar from '../../components/UserAvatarAuthoriseApp'
 
 export default {
   name: 'AuthorizeApp',
@@ -107,6 +110,9 @@ export default {
   computed: {
     denyUrl() {
       return `${this.app.redirectUrl}?denied=true`
+    },
+    selfUserId() {
+      return localStorage.getItem('uuid')
     }
   },
   methods: {
