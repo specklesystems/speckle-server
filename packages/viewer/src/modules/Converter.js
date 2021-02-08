@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+import { NURBSCurve } from 'three/examples/jsm/curves/NURBSCurve'
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 
@@ -13,6 +15,7 @@ export default class Coverter {
     }
 
     this.objectLoader = objectLoader
+    this.curveSegmentLength = 0.1
   }
 
   /**
@@ -43,7 +46,7 @@ export default class Coverter {
         callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )
         return
       } catch ( e ) {
-        console.warn( `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}` )
+        console.warn( `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`, e )
       }
     }
 
@@ -61,7 +64,7 @@ export default class Coverter {
 
         // return // returning here is faster but excludes objects that have a display value and displayable children (ie, a wall with windows)
       } catch ( e ) {
-        console.warn( `(Traversing) Failed to convert obj with id: ${obj.id}` )
+        console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
       }
     }
 
@@ -204,13 +207,202 @@ export default class Coverter {
   }
 
   // TODOs:
-  // async PointToBufferGeometry( obj ) {}
-  // async LineToBufferGeometry( obj ) {}
-  // async PolylineToBufferGeometry( obj ) {}
-  // async PolycurveToBufferGeometry( obj ) {}
-  // async CurveToBufferGeometry( obj ) {}
-  // async CircleToBufferGeometry( obj ) {}
-  // async ArcToBufferGeometry( obj ) {}
-  // async EllipseToBufferGeometry( obj ) {}
+  async PointToBufferGeometry( obj ) {
+    let conversionFactor = getConversionFactor( obj.units )
+    const v = new THREE.Vector3( obj.value[0]* conversionFactor,obj.value[1]* conversionFactor,obj.value[2] * conversionFactor )
+    let buf = new THREE.BufferGeometry().setFromPoints( [ v ] )
+    
+    delete obj.value
+    delete obj.speckle_type
+
+    return new ObjectWrapper( buf, obj, 'point' )
+  }
+
+  async LineToBufferGeometry( obj ) {
+    return this.PolylineToBufferGeometry( obj )
+  }
+  async PolylineToBufferGeometry( object ) {
+    let obj = {}
+    Object.assign( obj,object )
+    delete object.value
+    delete object.speckle_type
+
+    let conversionFactor = getConversionFactor( obj.units )
+    
+    obj.value = await this.dechunk( obj.value )
+    
+    const points = []
+    for ( let i = 0; i < obj.value.length; i+=3 ) {
+      points.push( new THREE.Vector3( obj.value[ i ]* conversionFactor,obj.value[i+1]* conversionFactor,obj.value[i+2] * conversionFactor ) )
+    }
+    const geometry = new THREE.BufferGeometry().setFromPoints( points )
+
+    delete obj.value
+
+    return new ObjectWrapper( geometry, obj, 'line' )
+  }
+
+  async PolycurveToBufferGeometry( object ) {
+    let obj = {}
+    Object.assign( obj,object )
+    delete object.value
+    delete object.speckle_type
+    delete object.displayValue
+    delete object.segments
+
+    console.log( 'Polycurve to buffer', obj )
+
+    let buffers = []
+    for ( let i = 0; i < obj.segments.length; i++ ) {
+      const element = obj.segments[i]
+      const conv = await this.convert( element )
+      buffers.push( conv?.bufferGeometry )
+    }
+    let geometry = BufferGeometryUtils.mergeBufferGeometries( buffers )
+    
+    delete obj.segments
+    delete obj.speckle_type
+
+    return new ObjectWrapper( geometry , obj, 'line' )
+  }
+  
+  async CurveToBufferGeometry( object ) {
+    let obj = {}
+    Object.assign( obj,object )
+    delete object.value
+    delete object.speckle_type
+    delete object.displayValue
+    
+    obj.points = await this.dechunk( obj.points )
+    obj.weights = await this.dechunk( obj.weights )
+    obj.knots = await this.dechunk( obj.knots )
+
+    try {
+      console.log( 'Curve to buffer', obj )
+      let conversionFactor = getConversionFactor( obj.units )
+      
+      // Convert points+weights to Vector4
+      const points = []
+      for ( let i = 0; i < obj.points.length; i+=3 ) {
+        points.push( new THREE.Vector4( obj.points[ i ]* conversionFactor,obj.points[i+1]* conversionFactor,obj.points[i+2] * conversionFactor, obj.weights[i/3] * conversionFactor ) )
+      }
+      // Convert knots from rhino compact format to normal format.
+      let knots = [ obj.knots[0] ]
+      knots = knots.concat( obj.knots )
+      knots.push( knots[knots.length -1] )
+  
+      // Create the nurbs curve
+      const curve = new NURBSCurve( obj.degree, knots, points, null, null )
+      
+      // Delete everything unnecessary from the metadata object.
+      delete obj.speckle_type
+      delete obj.displayValue
+      delete obj.points
+      delete obj.weights
+      delete obj.knots
+      
+      // Compute appropriate curve subdivisions
+      let div = curve.getLength() / 0.1
+      div = parseInt( div.toString() ) 
+      if ( div < 20 ) div = 20
+      if ( div > 4000 ) div = 4000
+
+      // Divide the nurbs curve in points
+      var pts = curve.getPoints( div )
+      return new ObjectWrapper( new THREE.BufferGeometry().setFromPoints( pts ), obj, 'line' )
+
+    } catch ( e ) {
+      console.warn( 'Error converting nurbs curve, falling back to displayValue', obj )
+      const poly = await this.PolylineToBufferGeometry( obj.displayValue )
+
+      delete obj.speckle_type
+      delete obj.displayValue
+      delete obj.points
+      delete obj.weights
+      delete obj.knots
+
+      return new ObjectWrapper( poly.bufferGeometry, obj, 'line' )
+    }
+  }
+
+  async CircleToBufferGeometry( obj ) {
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius )
+    const geometry = new THREE.BufferGeometry().setFromPoints( points )
+
+    delete obj.value
+    delete obj.speckle_type
+
+    return new ObjectWrapper( geometry, obj, 'line' )
+  }
+  
+
+  async ArcToBufferGeometry( obj ) {
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius, obj.startAngle, obj.endAngle )
+    const geometry = new THREE.BufferGeometry().setFromPoints( points )
+
+    delete obj.speckle_type
+    delete obj.startPoint
+    delete obj.endPoint
+    delete obj.plane
+    delete obj.midPoint
+
+    return new ObjectWrapper( geometry, obj, 'line' )
+  }
+  getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
+
+    // Get alignment vectors
+    const center = new THREE.Vector3( plane.origin.value[0], plane.origin.value[1], plane.origin.value[2] )
+    const xAxis = new THREE.Vector3( plane.xdir.value[0], plane.xdir.value[1], plane.xdir.value[2] )
+    const yAxis = new THREE.Vector3( plane.ydir.value[0], plane.ydir.value[1], plane.ydir.value[2] )
+
+    // Determine resolution
+    let resolution = ( endAngle - startAngle ) * radius / res
+    resolution = parseInt( resolution.toString() )
+
+    let points = []
+
+    for ( let index = 0; index <= resolution; index++ ) {
+      let t = startAngle + index * ( endAngle - startAngle ) / resolution
+      let x = Math.cos( t ) * radius
+      let y = Math.sin( t ) * radius
+      const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
+      const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
+
+      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
+      points.push( pt )
+    }
+    return points
+  }
+
+  async EllipseToBufferGeometry( obj ) {
+    
+    const center = new THREE.Vector3( obj.plane.origin.value[0],obj.plane.origin.value[1],obj.plane.origin.value[2] )
+    const xAxis = new THREE.Vector3( obj.plane.xdir.value[0],obj.plane.xdir.value[1],obj.plane.xdir.value[2] )
+    const yAxis = new THREE.Vector3( obj.plane.ydir.value[0],obj.plane.ydir.value[1],obj.plane.ydir.value[2] )
+    console.log( center,xAxis,yAxis )
+
+    let resolution = 2 * Math.PI * obj.radius1 / 0.1
+    resolution = parseInt( resolution.toString() )
+    let points = []
+
+    for ( let index = 0; index <= resolution; index++ ) {
+      let t = index * Math.PI * 2 / resolution
+      let x = Math.cos( t ) * obj.radius1
+      let y = Math.sin( t ) * obj.radius2
+      const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
+      const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
+  
+      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
+      points.push( pt )
+    }
+    console.log( points )
+    const geometry = new THREE.BufferGeometry().setFromPoints( points )
+
+    delete obj.value
+    delete obj.speckle_type
+
+    return new ObjectWrapper( geometry, obj, 'line' )
+  }
+  
   // async SurfaceToBufferGeometry( obj ) {}
 }

@@ -128,7 +128,7 @@ exports.startHttp = async ( app ) => {
   app.use( Sentry.Handlers.errorHandler( ) )
 
   server.on( 'listening', ( ) => {
-    debug( 'speckle:startup' )( `🚀 My name is Spockle Server, and I'm running at ${server.address().port}` )
+    debug( 'speckle:startup' )( `🚀 My name is Speckle Server, and I'm running at ${server.address().port}` )
   } )
 
   server.listen( port )

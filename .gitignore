@@ -1,11 +1,12 @@
-packages/server/node_modules
+*node_modules
 packages/server/.env
-packages/frontend/node_modules
 packages/frontend/dist
-packages/viewer/node_modules
 packages/viewer/dist
 *.env
 .nyc_output
 coverage/
 .vscode
 test-queries
+
+**/.DS_Store
+.nvmrc

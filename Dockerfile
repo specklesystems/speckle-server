@@ -1,14 +1,23 @@
-FROM node:12.20.1-alpine3.12@sha256:42998ae4420998ff3255fc2d6884e882bd32f06d45b057f4b042e33bf48a1240 as build
+FROM node:14.15.4-alpine3.12@sha256:55bf28ea11b18fd914e1242835ea3299ec76f5a034e8c6e42b2ede70064e338c as node
+
+FROM node as build
 # Having multiple steps in builder doesn't increase the final image size
 # So having verbose steps for readability and caching should be the target 
 
-WORKDIR /opt
+WORKDIR /opt/viewer
+COPY packages/viewer/package*.json ./
+RUN npm install
+COPY packages/viewer .
+RUN npm run build
 
+WORKDIR /opt/frontend
 # Copy package defs first they are the least likely to change
 # Keeping this order will least likely trigger full rebuild
-COPY packages/frontend/package*.json frontend/
-RUN npm --prefix frontend ci frontend
+COPY packages/frontend/package*.json ./
+RUN npm install ../viewer
+RUN npm ci
 
+WORKDIR /opt
 COPY packages/server/package*.json server/
 ENV NODE_ENV production
 RUN npm --prefix server ci server
@@ -21,9 +30,11 @@ COPY packages/frontend frontend
 WORKDIR /opt/frontend
 RUN npm run build
 
-FROM node:12.20.1-alpine3.12@sha256:42998ae4420998ff3255fc2d6884e882bd32f06d45b057f4b042e33bf48a1240
+FROM node as runtime
 
 RUN apk add --no-cache tini=0.19.0-r0
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
 
 # Use a non-root user for increased security.
 USER node
@@ -45,4 +56,4 @@ COPY --chown=node packages/server /home/node/server
 # Init for containers https://github.com/krallin/tini
 ENTRYPOINT [ "/sbin/tini", "--" ]
 
-CMD ["node", "bin/www"]
+CMD /wait && node bin/www
