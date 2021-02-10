@@ -79,8 +79,7 @@ export default class SceneObjectManager {
         if ( renderMat.opacity !== 1 ) {
           let material = this.transparentMaterial.clone()
           // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
-          // material.clipIntersection = true
+          // material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
 
           material.color = color
           material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -90,8 +89,7 @@ export default class SceneObjectManager {
         } else {
           let material = this.solidMaterial.clone()
           // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
-          // material.clipIntersection = true
+          // material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
 
           material.color = color
           material.metalness = renderMat.metalness
@@ -103,8 +101,7 @@ export default class SceneObjectManager {
         // If we don't have defined material, just use the default
         let material = this.solidMaterial.clone()
         // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
-        material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
-        // material.clipIntersection = true
+        // material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
 
         this.addSolid( wrapper, material )
       }
@@ -195,38 +192,36 @@ export default class SceneObjectManager {
   }
 
   // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
-  // this implementation might be better
-  // https://github.com/donmccurdy/three-gltf-viewer/blob/67bdd2f4bf5ce8ee512805a0b5252d8269b69ca6/src/viewer.js#L213
   // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
   // look better. Could we do the same thing somehow when controls stop moving?
   zoomToBox( box ) {
     const fitOffset = 1.2
 
-    // const size = box.getSize( new THREE.Vector3() )
-    // const center = box.getCenter( new THREE.Vector3() )
+    const size = box.getSize( new THREE.Vector3() )
+    const center = box.getCenter( new THREE.Vector3() )
 
-    // const maxSize = Math.max( size.x, size.y, size.z )
-    // const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
-    // const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
-    // const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+    const maxSize = Math.max( size.x, size.y, size.z )
+    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
+    const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
+    const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
 
-    // const direction = this.viewer.controls.target.clone()
-    //   .sub( this.viewer.camera.position )
-    //   .normalize()
-    //   .multiplyScalar( distance )
+    const direction = this.viewer.controls.target.clone()
+      .sub( this.viewer.camera.position )
+      .normalize()
+      .multiplyScalar( distance )
 
-    // // this.viewer.controls.maxDistance = distance * 20
+    this.viewer.controls.maxDistance = distance * 20
+
+    // Changing the contol's target causes 
+    // projection math @ SectionBox on('object-drag') to fail
     // this.viewer.controls.target.copy( center )
 
-    // this.viewer.camera.near = distance / 100
-    // this.viewer.camera.far = distance * 100
-    // this.viewer.camera.updateProjectionMatrix()
+    this.viewer.camera.near = distance / 100
+    this.viewer.camera.far = distance * 100
+    this.viewer.camera.position.copy( this.viewer.controls.target ).sub( direction )
 
-    // this.viewer.camera.position.copy( this.viewer.controls.target ).sub( direction )
-    // this.viewer.camera.updateProjectionMatrix()
-
-    // this.viewer.controls.update()
-    // this.viewer.camera.updateProjectionMatrix()
+    this.viewer.controls.update()
+    this.viewer.camera.updateProjectionMatrix()
   }
 
   _argbToRGB( argb ) {

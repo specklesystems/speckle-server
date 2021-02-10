@@ -3,16 +3,11 @@ import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
 
 /**
- * Class that implements a section box
- * _bbox is optional parameter that sets initial size
- * 
- * Manipulating the section box (scale, rotate, translate)
- * Is all done by maniuplating the vertices
+ * Section box helper for Speckle Viewer
  * 
  */
 
-// indices to verts in this.boxGeo
-// these allow for drawing of box edges
+// indices to verts in this.boxGeo - box edges
 const edges = [
   [0,1], [1,3],
   [3,2], [2,0],
@@ -22,26 +17,23 @@ const edges = [
   [1,4], [3,6]
 ]
 
-// constants to make code more concise
-const X = new THREE.Vector3(1,0,0)
-const Y = new THREE.Vector3(0,1,0)
-const Z = new THREE.Vector3(0,0,1)
-
 export default class SectionBox {
-  constructor(viewer){
-    this.viewer = viewer
+  constructor(viewer, _vis){
+    //defaults to invisible
+    let vis = _vis || false
 
+    this.viewer = viewer
+    
     this.display = new THREE.Group()
-    this.display.name = 'section-box'
+    this.display.visible = vis
+
     this.displayBox = new THREE.Group()
     this.displayEdges = new THREE.Group()
     this.displayHover = new THREE.Group()
-    // this.displayStencils = new THREE.Group()
 
     this.display.add(this.displayBox)
     this.display.add(this.displayEdges)
     this.display.add(this.displayHover)
-    // this.display.add(this.displayStencils)
 
     this.viewer.scene.add(this.display)
 
@@ -55,7 +47,7 @@ export default class SectionBox {
     // the box itself
     this.boxGeo = new THREE.BoxGeometry(2,2,2)
     this.boxMesh = new THREE.Mesh(this.boxGeo, this.boxMaterial)    
-    this.boxMesh.visible = false // surprised raycasting still works when visible = false
+    this.boxMesh.visible = false
     this.boxMesh.geometry.computeBoundingBox();
     this.boxMesh.geometry.computeBoundingSphere();
 
@@ -86,43 +78,44 @@ export default class SectionBox {
     
     // planes face inward
     // indices correspond to vertex indices on the boxGeometry
+    // constant is set to 1 + epsilon to prevent planes from clipping section box display
     this.planes = [
       {
         axis: '+x', // right, x positive
-        plane:new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 1.01 ),
         indices: [5,4,6,7],
       },{
         axis: '-x', // left, x negative
-        plane: new THREE.Plane( new THREE.Vector3( - 1, 0, 0 ), 1 ),
+        plane: new THREE.Plane( new THREE.Vector3( - 1, 0, 0 ), 1.01 ),
         indices: [0,1,3,2],
       },{
         axis: '+y', // out, y positive
-        plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 1 ),   
+        plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 1.01 ),   
         indices: [2,3,6,7],
       },{
         axis: '-y', // in, y negative
-        plane:new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 1.01 ),
         indices: [5,4,1,0],
       },{
         axis: '+z', // up, z positive
-        plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 1.01 ),
         indices: [1,3,6,4],
       },{
         axis: '-z', // down, z negative
-        plane:new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 1.01 ),
         indices: [0,2,7,5],
       }];
 
     // plane helpers
     // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
     
-    this.viewer.renderer.localClippingEnabled = true
-
     // adds clipping planes to all materials
-    let objs = this.viewer.sceneManager.objects
-    objs.forEach( obj => {
-      obj.material.clippingPlanes = this.planes.map( c => c.plane )
-    } )
+    // better to add clipping planes to renderer
+    // this.viewer.renderer.localClippingEnabled = true
+    // let objs = this.viewer.sceneManager.objects
+    // objs.forEach( obj => {
+    //   obj.material.clippingPlanes = this.planes.map( c => c.plane )
+    // } )
     
     this.hoverMat = new THREE.MeshStandardMaterial( {
       transparent: true,
@@ -214,15 +207,13 @@ export default class SectionBox {
     })
   }
 
+  // boxMesh = bbox
   setFromBbox(bbox){
-    // console.log(this.boxMesh)
-    let bboxCurr = this.boxMesh.geometry.boundingBox.clone()
-    if(bboxCurr.containsBox(bbox)) return
-    // let bboxExpand = new THREE.Box3(bboxCurr.max.sub(bbox.max),
-    //                                 bboxCurr.min.sub(bbox.min))
     for(let p of this.planes) {
+      // reset plane
+      p.plane.set(p.plane.normal, 1.01)
       let c = 0
-      // planes point in - if negative select max part of bbox
+      // planes point inwards - if negative select max part of bbox
       if(p.plane.normal.dot(new THREE.Vector3(1,1,1)) > 0){
         c = p.plane.normal.clone().multiply(bbox.min).length()
       } else {
@@ -285,6 +276,7 @@ export default class SectionBox {
 
     let hoverGeo = new THREE.PlaneGeometry(width, height)
 
+    // orients hover geometry to box face
     switch(planeObj.axis){
       case '-x':
         hoverGeo.rotateY(Math.PI / 2)
@@ -313,43 +305,10 @@ export default class SectionBox {
     this.displayHover.add(hoverMesh)
   }
 
-  // https://github.com/mrdoob/three.js/blob/master/examples/webgl_clipping_stencil.html
-  createPlaneStencilGroup( geometry, plane, renderOrder ) {
-
-    const group = new THREE.Group();
-    const baseMat = new THREE.MeshBasicMaterial();
-    baseMat.depthWrite = false;
-    baseMat.depthTest = false;
-    baseMat.colorWrite = false;
-    baseMat.stencilWrite = true;
-    baseMat.stencilFunc = THREE.AlwaysStencilFunc;
-
-    // back faces
-    const mat0 = baseMat.clone();
-    mat0.side = THREE.BackSide;
-    mat0.clippingPlanes = [ plane ];
-    mat0.stencilFail = THREE.IncrementWrapStencilOp;
-    mat0.stencilZFail = THREE.IncrementWrapStencilOp;
-    mat0.stencilZPass = THREE.IncrementWrapStencilOp;
-
-    const mesh0 = new THREE.Mesh( geometry, mat0 );
-    mesh0.renderOrder = renderOrder;
-    group.add( mesh0 );
-
-    // front faces
-    const mat1 = baseMat.clone();
-    mat1.side = THREE.FrontSide;
-    mat1.clippingPlanes = [ plane ];
-    mat1.stencilFail = THREE.DecrementWrapStencilOp;
-    mat1.stencilZFail = THREE.DecrementWrapStencilOp;
-    mat1.stencilZPass = THREE.DecrementWrapStencilOp;
-
-    const mesh1 = new THREE.Mesh( geometry, mat1 );
-    mesh1.renderOrder = renderOrder;
-
-    group.add( mesh1 );
-
-    return group;
-
+  toggleSectionBox(_bool){
+    let bool = _bool || !this.visible
+    this.visible = bool
+    this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
+    this.display.visible = bool
   }
 }

@@ -12,17 +12,13 @@ import EventEmitter from './EventEmitter'
  * TODOs:
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
+ * 
+ * optional param to configure SelectionHelper
+ * _options = {
+ *             subset: THREE.Group
+ *             hover:  boolean
+ *            }
  */
-
- /*
-  * NS Notes:
-  * -make more configurable with options param
-  * _options = {
-  *             subset: THREE.Group
-  *             hover:  boolean
-  *            }
-  *
-  */
 
 export default class SelectionHelper extends EventEmitter {
 
@@ -143,7 +139,7 @@ export default class SelectionHelper extends EventEmitter {
     return intersectedObjects
   }
 
-  // for getting all children of a subset passed as a THREE.Group
+  // get all children of a subset passed as a THREE.Group
   _getGroupChildren(group){
     let children = []
     if(group.children.length === 0) return [group]
