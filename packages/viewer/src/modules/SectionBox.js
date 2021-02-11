@@ -50,7 +50,6 @@ export default class SectionBox {
     this.boxMesh.visible = false
     this.boxMesh.geometry.computeBoundingBox();
     this.boxMesh.geometry.computeBoundingSphere();
-
     this.displayBox.add(this.boxMesh)
     
     this.lineMaterial = new THREE.LineDashedMaterial({
@@ -213,7 +212,7 @@ export default class SectionBox {
 
       // if displacement + padding is greater than limit,
       // and we're moving towards the limiting plane
-      if(dist < (d + 10) && dot > 0) {
+      if(dist < d && dot > 0) {
         d = dist * 0.001
         displacement = new THREE.Vector3(d,d,d).multiply(plane.normal)
       }
@@ -227,22 +226,25 @@ export default class SectionBox {
 
   // boxMesh = bbox
   setFromBbox(bbox){
-    console.log("hi")
+    // add a little padding to the box
+    bbox.max.addScalar(10)
+    bbox.min.subScalar(10)
     for(let p of this.planes) {
       // reset plane
-      p.plane.set(p.plane.normal, 1)
+      // p.plane.set(p.plane.normal, 1)
       let c = 0
       // planes point inwards - if negative select max part of bbox
-      if(p.plane.normal.dot(new THREE.Vector3(1,1,1)) > 0){
-        c = p.plane.normal.clone().multiply(bbox.min).length()
+      if ( p.plane.normal.dot(new THREE.Vector3(1,1,1)) > 0 ) {
+        c = p.plane.normal.clone().multiply(bbox.min)
       } else {
-        c = p.plane.normal.clone().multiply(bbox.max).length()
+        c = p.plane.normal.clone().multiply(bbox.max)
       }
-      // calculate displacement
-      let d = p.plane.normal.clone().negate().multiplyScalar(c)
-      // update boxMesh
+      let diff = c.length() - p.plane.constant
+
+      // displacement
+      let d = p.plane.normal.clone().negate().multiplyScalar(diff)
+
       this.updateBoxFace(p, d)
-      // translate plane
       p.plane.translate(d)
     }
   }
@@ -256,7 +258,7 @@ export default class SectionBox {
     this.boxMesh.geometry.verticesNeedUpdate = true
     this.boxMesh.geometry.computeBoundingBox();
     this.boxMesh.geometry.computeBoundingSphere();
-    
+
     this.updateEdges()
   }
 
@@ -328,7 +330,7 @@ export default class SectionBox {
     let bool = _bool || !this.visible
     this.visible = bool
     this.display.visible = bool
-    
+
     // what's the tradeoff for having the clipping planes in material vs in the renderer?
     // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
   }

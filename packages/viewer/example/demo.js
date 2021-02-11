@@ -1408,8 +1408,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
     key: "_postLoadFunction",
     value: function _postLoadFunction() {
       this.zoomExtents();
-      this.viewer.reflectionsNeedUpdate = true; // this.viewer.sectionPlaneHelper._matchSceneSize()
-
+      this.viewer.reflectionsNeedUpdate = true;
       var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
       this.viewer.sectionBox.setFromBbox(sceneBox);
     }
@@ -1702,7 +1701,7 @@ var SectionBox = /*#__PURE__*/function () {
       var dot = displacement.clone().normalize().dot(plane.normal); // if displacement + padding is greater than limit,
       // and we're moving towards the limiting plane
 
-      if (dist < d + 10 && dot > 0) {
+      if (dist < d && dot > 0) {
         d = dist * 0.001;
         displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal);
       }
@@ -1717,24 +1716,25 @@ var SectionBox = /*#__PURE__*/function () {
   _createClass(SectionBox, [{
     key: "setFromBbox",
     value: function setFromBbox(bbox) {
-      console.log("hi");
+      // add a little padding to the box
+      bbox.max.addScalar(10);
+      bbox.min.subScalar(10);
 
       for (var p of this.planes) {
         // reset plane
-        p.plane.set(p.plane.normal, 1);
+        // p.plane.set(p.plane.normal, 1)
         var c = 0; // planes point inwards - if negative select max part of bbox
 
         if (p.plane.normal.dot(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1)) > 0) {
-          c = p.plane.normal.clone().multiply(bbox.min).length();
+          c = p.plane.normal.clone().multiply(bbox.min);
         } else {
-          c = p.plane.normal.clone().multiply(bbox.max).length();
-        } // calculate displacement
+          c = p.plane.normal.clone().multiply(bbox.max);
+        }
 
+        var diff = c.length() - p.plane.constant; // displacement
 
-        var d = p.plane.normal.clone().negate().multiplyScalar(c); // update boxMesh
-
-        this.updateBoxFace(p, d); // translate plane
-
+        var d = p.plane.normal.clone().negate().multiplyScalar(diff);
+        this.updateBoxFace(p, d);
         p.plane.translate(d);
       }
     }

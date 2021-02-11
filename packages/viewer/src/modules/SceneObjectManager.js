@@ -167,8 +167,9 @@ export default class SceneObjectManager {
   _postLoadFunction() {
     this.zoomExtents()
     this.viewer.reflectionsNeedUpdate = true
-    // this.viewer.sectionPlaneHelper._matchSceneSize()
+
     let sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
+
     this.viewer.sectionBox.setFromBbox(sceneBox)
   }
 
