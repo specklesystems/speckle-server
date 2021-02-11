@@ -1687,16 +1687,31 @@ var SectionBox = /*#__PURE__*/function () {
       ssNorm.negate().project(this.viewer.camera);
       ssNorm.setComponent(2, 0).normalize(); // mouse displacement
 
-      var mD = this.pointer.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0)); // quantity of mD on ssNorm
+      var mD = this.pointer.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0));
+      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0); // quantity of mD on ssNorm
 
       var d = ssNorm.dot(mD) / ssNorm.lengthSq(); // configurable drag speed
 
       var zoom = this.viewer.camera.getWorldPosition(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).length();
       zoom *= 0.75;
-      var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal).multiplyScalar(zoom);
+      d = d * zoom; // limit plane from crossing it's pair
+
+      var hoverOpp = this.hoverPlane.clone().negate();
+      var indexOpp = this.planes.findIndex(p => p.plane.normal.equals(hoverOpp));
+      var planeObjOpp = this.planes[indexOpp];
+      var dist = planeObj.plane.constant + planeObjOpp.plane.constant;
+      var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal); // are we moving towards the limiting plane?
+
+      var dot = displacement.clone().normalize().dot(plane.normal); // if displacement + padding is greater than limit,
+      // and we're moving towards the limiting plane
+
+      if (dist < d + 10 && dot > 0) {
+        d = dist * 0.001;
+        displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal);
+      }
+
       plane.translate(displacement);
       this.updateBoxFace(planeObj, displacement);
-      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
       this.updateHover(planeObj);
     });
   } // boxMesh = bbox

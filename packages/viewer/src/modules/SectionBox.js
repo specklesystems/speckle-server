@@ -190,20 +190,37 @@ export default class SectionBox {
 
       // mouse displacement
       let mD = this.pointer.clone().sub(new THREE.Vector3(e.x, e.y, 0.0))
+      this.pointer = new THREE.Vector3(e.x, e.y, 0.0)
 
       // quantity of mD on ssNorm
       let d = (ssNorm.dot(mD) / ssNorm.lengthSq())
+
       // configurable drag speed
       let zoom = this.viewer.camera.getWorldPosition(new THREE.Vector3()).sub(new THREE.Vector3()).length()
       zoom *= 0.75
-      let displacement = new THREE.Vector3(d,d,d).multiply(plane.normal).multiplyScalar(zoom)
-      plane.translate(displacement)
+      d = d * zoom
+      
+      // limit plane from crossing it's pair
+      let hoverOpp = this.hoverPlane.clone().negate()
+      let indexOpp = this.planes.findIndex(p => p.plane.normal.equals(hoverOpp))
+      let planeObjOpp = this.planes[indexOpp]
+      let dist = planeObj.plane.constant + planeObjOpp.plane.constant
 
+      let displacement = new THREE.Vector3(d,d,d).multiply(plane.normal)
+      // are we moving towards the limiting plane?
+      let dot = displacement.clone().normalize().dot(plane.normal)
+
+      // if displacement + padding is greater than limit,
+      // and we're moving towards the limiting plane
+      if(dist < (d + 10) && dot > 0) {
+        d = dist * 0.001
+        displacement = new THREE.Vector3(d,d,d).multiply(plane.normal)
+      }
+
+      plane.translate(displacement)
       this.updateBoxFace(planeObj, displacement)
-      
-      this.pointer = new THREE.Vector3(e.x, e.y, 0.0)
-      
       this.updateHover(planeObj)
+
     })
   }
 
