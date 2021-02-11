@@ -33,6 +33,8 @@ module.exports = ( app ) => {
       return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
     }
 
+    obj = obj.data
+
     let simpleText = req.headers.accept === 'text/plain'
 
     let dbStream = await getObjectChildrenStream( { objectId: req.params.objectId } )
