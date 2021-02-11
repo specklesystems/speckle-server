@@ -12,10 +12,17 @@ import EventEmitter from './EventEmitter'
  * TODOs:
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
+ * 
+ * optional param to configure SelectionHelper
+ * _options = {
+ *             subset: THREE.Group
+ *             hover:  boolean
+ *            }
  */
+
 export default class SelectionHelper extends EventEmitter {
 
-  constructor( parent ) {
+  constructor( parent, _options ) {
     super()
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
@@ -26,12 +33,49 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
     this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
 
+    // optional param allows for raycasting against a subset of objects
+    // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
+    this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
+    
+    this.pointerDown = false;
+    // this.hoverObj = null
+    
+    // optional param allows for hover
+    if(typeof _options !== 'undefined' && _options.hover) {
+      // doesn't feel good when debounced, might be necessary tho
+      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce((e) => {
+        let hovered = this.getClickedObjects(e)
+        
+        // dragging event, this shouldn't be under the "hover option"
+        if(this.pointerDown) {
+          this.emit('object-drag', hovered, this._getNormalisedClickPosition(e))
+          return
+        }
+        
+        this.emit('hovered', hovered, e)
+      },0))
+    }
+
+    // dragging event, this shouldn't be under the "hover option"
+    if(typeof _options !== 'undefined' && _options.hover) {
+      this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce(( e ) => {
+        this.pointerDown = true
+
+        if ( this.orbiting ) return
+          
+        this.emit( 'mouse-down', this.getClickedObjects(e))
+      },100))
+    }
+
     // Handle mouseclicks
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      this.pointerDown = false
+
       if ( this.orbiting ) return
 
       let selectionObjects = this.getClickedObjects( e )
-      this.handleSelection( selectionObjects )
+      
+      this.emit('object-clicked', selectionObjects)
     } )
 
     // Doubleclicks on touch devices
@@ -39,6 +83,7 @@ export default class SelectionHelper extends EventEmitter {
     this.tapTimeout
     this.lastTap = 0
     this.touchLocation
+    
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
     this.viewer.renderer.domElement.addEventListener( 'touchend', ( event ) => {
       var currentTime = new Date().getTime()
@@ -47,9 +92,7 @@ export default class SelectionHelper extends EventEmitter {
       if ( tapLength < 500 && tapLength > 0 ) {
         let selectionObjects = this.getClickedObjects( this.touchLocation )
         this.emit( 'object-doubleclicked', selectionObjects )
-        if ( !this.orbiting )
-          this.handleDoubleClick( selectionObjects )
-        event.preventDefault()
+
       } else {
         this.tapTimeout = setTimeout( function() {
           clearTimeout( this.tapTimeout )
@@ -64,7 +107,7 @@ export default class SelectionHelper extends EventEmitter {
       let selectionObjects = this.getClickedObjects( e )
 
       this.emit( 'object-doubleclicked', selectionObjects )
-      this.handleDoubleClick( selectionObjects )
+      // this.handleDoubleClick( selectionObjects )
     } )
 
     // Handle multiple object selection
@@ -79,38 +122,10 @@ export default class SelectionHelper extends EventEmitter {
       if ( e.key === 'Shift' ) this.multiSelect = false
     } )
 
-    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectedObjects = new THREE.Group()
-    this.selectedObjects.renderOrder = 1000
-    this.viewer.scene.add( this.selectedObjects )
-
     this.originalSelectionObjects = []
   }
 
-  handleSelection( objects ) {
-    this.select( objects[0] )
-  }
-
-  handleDoubleClick( objects ) {
-    if ( !objects || objects.length === 0 ) this.viewer.sceneManager.zoomExtents()
-    else this.viewer.sceneManager.zoomToObject( objects[0].object )
-  }
-
-  select( obj ) {
-    if ( !this.multiSelect ) this.unselect()
-    if ( !obj ) {
-      this.emit( 'object-clicked', this.originalSelectionObjects )
-      return
-    }
-
-    let mesh = new THREE.Mesh( obj.object.geometry, this.selectionMaterial )
-    this.selectedObjects.add( mesh )
-    this.originalSelectionObjects.push( obj )
-    this.emit( 'object-clicked', this.originalSelectionObjects )
-  }
-
   unselect() {
-    this.selectedObjects.clear()
     this.originalSelectionObjects = []
   }
 
@@ -118,10 +133,18 @@ export default class SelectionHelper extends EventEmitter {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
-    let intersectedObjects = this.raycaster.intersectObjects( this.viewer.sceneManager.objects )
+    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects )
     intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects
+  }
+
+  // get all children of a subset passed as a THREE.Group
+  _getGroupChildren(group){
+    let children = []
+    if(group.children.length === 0) return [group]
+    group.children.forEach((c,i,a) => children = [...children, ...this._getGroupChildren(c)])
+    return children
   }
 
   _getNormalisedClickPosition( e ) {
@@ -140,11 +163,7 @@ export default class SelectionHelper extends EventEmitter {
   }
 
   dispose() {
-    this.viewer.scene.remove( this.selectedObjects )
     this.unselect()
     this.originalSelectionObjects = null
-    this.selectionMaterial = null
-    this.selectedObjects = null
   }
-
 }

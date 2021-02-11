@@ -228,7 +228,7 @@ var v = new _modules_Viewer__WEBPACK_IMPORTED_MODULE_0__.default({
 });
 v.on('load-progress', args => console.log(args));
 window.v = v;
-var token = '72b3da65eb21cb211f9d79fc1d12ef3699fc47e6f0';
+var token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75';
 
 window.LoadData = /*#__PURE__*/function () {
   var _LoadData = _asyncToGenerator(function* (url) {
@@ -315,7 +315,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
 /* harmony import */ var three_examples_jsm_curves_NURBSCurve__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/curves/NURBSCurve */ "./node_modules/three/examples/jsm/curves/NURBSCurve.js");
-/* harmony import */ var three_examples_jsm_curves_NURBSUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/curves/NURBSUtils */ "./node_modules/three/examples/jsm/curves/NURBSUtils.js");
+/* harmony import */ var three_examples_jsm_utils_BufferGeometryUtils__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/utils/BufferGeometryUtils */ "./node_modules/three/examples/jsm/utils/BufferGeometryUtils.js");
 /* harmony import */ var _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ObjectWrapper */ "./src/modules/ObjectWrapper.js");
 /* harmony import */ var _Units__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Units */ "./src/modules/Units.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
@@ -327,7 +327,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
 
 
 
@@ -347,6 +346,7 @@ var Coverter = /*#__PURE__*/function () {
     }
 
     this.objectLoader = objectLoader;
+    this.curveSegmentLength = 0.1;
   }
   /**
    * If the object is convertable (there is a direct conversion routine), it will invoke the callback with the conversion result.
@@ -648,8 +648,13 @@ var Coverter = /*#__PURE__*/function () {
   }, {
     key: "PolylineToBufferGeometry",
     value: function () {
-      var _PolylineToBufferGeometry = _asyncToGenerator(function* (obj) {
+      var _PolylineToBufferGeometry = _asyncToGenerator(function* (object) {
+        var obj = {};
+        Object.assign(obj, object);
+        delete object.value;
+        delete object.speckle_type;
         var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units);
+        obj.value = yield this.dechunk(obj.value);
         var points = [];
 
         for (var i = 0; i < obj.value.length; i += 3) {
@@ -658,7 +663,6 @@ var Coverter = /*#__PURE__*/function () {
 
         var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
         delete obj.value;
-        delete obj.speckle_type;
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
       });
 
@@ -667,12 +671,51 @@ var Coverter = /*#__PURE__*/function () {
       }
 
       return PolylineToBufferGeometry;
-    }() // async PolycurveToBufferGeometry( obj ) {}
+    }()
+  }, {
+    key: "PolycurveToBufferGeometry",
+    value: function () {
+      var _PolycurveToBufferGeometry = _asyncToGenerator(function* (object) {
+        var obj = {};
+        Object.assign(obj, object);
+        delete object.value;
+        delete object.speckle_type;
+        delete object.displayValue;
+        delete object.segments;
+        console.log('Polycurve to buffer', obj);
+        var buffers = [];
 
+        for (var i = 0; i < obj.segments.length; i++) {
+          var element = obj.segments[i];
+          var conv = yield this.convert(element);
+          buffers.push(conv == null ? void 0 : conv.bufferGeometry);
+        }
+
+        var geometry = three_examples_jsm_utils_BufferGeometryUtils__WEBPACK_IMPORTED_MODULE_2__.BufferGeometryUtils.mergeBufferGeometries(buffers);
+        delete obj.segments;
+        delete obj.speckle_type;
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
+      });
+
+      function PolycurveToBufferGeometry(_x11) {
+        return _PolycurveToBufferGeometry.apply(this, arguments);
+      }
+
+      return PolycurveToBufferGeometry;
+    }()
   }, {
     key: "CurveToBufferGeometry",
     value: function () {
-      var _CurveToBufferGeometry = _asyncToGenerator(function* (obj) {
+      var _CurveToBufferGeometry = _asyncToGenerator(function* (object) {
+        var obj = {};
+        Object.assign(obj, object);
+        delete object.value;
+        delete object.speckle_type;
+        delete object.displayValue;
+        obj.points = yield this.dechunk(obj.points);
+        obj.weights = yield this.dechunk(obj.weights);
+        obj.knots = yield this.dechunk(obj.knots);
+
         try {
           console.log('Curve to buffer', obj);
           var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units); // Convert points+weights to Vector4
@@ -715,7 +758,7 @@ var Coverter = /*#__PURE__*/function () {
         }
       });
 
-      function CurveToBufferGeometry(_x11) {
+      function CurveToBufferGeometry(_x12) {
         return _CurveToBufferGeometry.apply(this, arguments);
       }
 
@@ -725,49 +768,84 @@ var Coverter = /*#__PURE__*/function () {
     key: "CircleToBufferGeometry",
     value: function () {
       var _CircleToBufferGeometry = _asyncToGenerator(function* (obj) {
-        console.log('circle to buffer', obj);
-        var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.origin.value[0], obj.plane.origin.value[1], obj.plane.origin.value[2]);
-        var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.xdir.value[0], obj.plane.xdir.value[1], obj.plane.xdir.value[2]);
-        var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.ydir.value[0], obj.plane.ydir.value[1], obj.plane.ydir.value[2]);
-        console.log(center, xAxis, yAxis);
-        var resolution = 2 * Math.PI * obj.radius / 0.1;
-        resolution = parseInt(resolution.toString());
-        var points = [];
-
-        for (var index = 0; index <= resolution; index++) {
-          var t = index * Math.PI * 2 / resolution;
-          var x = Math.cos(t) * obj.radius;
-          var y = Math.sin(t) * obj.radius;
-          var xMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(xAxis.x * x, xAxis.y * x, xAxis.z * x);
-          var yMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(yAxis.x * y, yAxis.y * y, yAxis.z * y);
-          var pt = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().addVectors(xMove, yMove).add(center);
-          points.push(pt);
-        }
-
-        console.log(points);
+        var points = this.getCircularCurvePoints(obj.plane, obj.radius);
         var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
         delete obj.value;
         delete obj.speckle_type;
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
       });
 
-      function CircleToBufferGeometry(_x12) {
+      function CircleToBufferGeometry(_x13) {
         return _CircleToBufferGeometry.apply(this, arguments);
       }
 
       return CircleToBufferGeometry;
-    }() // async ArcToBufferGeometry( obj ) {}
+    }()
+  }, {
+    key: "ArcToBufferGeometry",
+    value: function () {
+      var _ArcToBufferGeometry = _asyncToGenerator(function* (obj) {
+        var points = this.getCircularCurvePoints(obj.plane, obj.radius, obj.startAngle, obj.endAngle);
+        var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
+        delete obj.speckle_type;
+        delete obj.startPoint;
+        delete obj.endPoint;
+        delete obj.plane;
+        delete obj.midPoint;
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
+      });
 
+      function ArcToBufferGeometry(_x14) {
+        return _ArcToBufferGeometry.apply(this, arguments);
+      }
+
+      return ArcToBufferGeometry;
+    }()
+  }, {
+    key: "getCircularCurvePoints",
+    value: function getCircularCurvePoints(plane, radius, startAngle, endAngle, res) {
+      if (startAngle === void 0) {
+        startAngle = 0;
+      }
+
+      if (endAngle === void 0) {
+        endAngle = 2 * Math.PI;
+      }
+
+      if (res === void 0) {
+        res = this.curveSegmentLength;
+      }
+
+      // Get alignment vectors
+      var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(plane.origin.value[0], plane.origin.value[1], plane.origin.value[2]);
+      var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(plane.xdir.value[0], plane.xdir.value[1], plane.xdir.value[2]);
+      var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(plane.ydir.value[0], plane.ydir.value[1], plane.ydir.value[2]); // Determine resolution
+
+      var resolution = (endAngle - startAngle) * radius / res;
+      resolution = parseInt(resolution.toString());
+      var points = [];
+
+      for (var index = 0; index <= resolution; index++) {
+        var t = startAngle + index * (endAngle - startAngle) / resolution;
+        var x = Math.cos(t) * radius;
+        var y = Math.sin(t) * radius;
+        var xMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(xAxis.x * x, xAxis.y * x, xAxis.z * x);
+        var yMove = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(yAxis.x * y, yAxis.y * y, yAxis.z * y);
+        var pt = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().addVectors(xMove, yMove).add(center);
+        points.push(pt);
+      }
+
+      return points;
+    }
   }, {
     key: "EllipseToBufferGeometry",
     value: function () {
       var _EllipseToBufferGeometry = _asyncToGenerator(function* (obj) {
-        console.log('ellipse to buffer', obj);
         var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.origin.value[0], obj.plane.origin.value[1], obj.plane.origin.value[2]);
         var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.xdir.value[0], obj.plane.xdir.value[1], obj.plane.xdir.value[2]);
         var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.ydir.value[0], obj.plane.ydir.value[1], obj.plane.ydir.value[2]);
         console.log(center, xAxis, yAxis);
-        var resolution = 2 * Math.PI * obj.radius / 0.1;
+        var resolution = 2 * Math.PI * obj.radius1 / 0.1;
         resolution = parseInt(resolution.toString());
         var points = [];
 
@@ -788,7 +866,7 @@ var Coverter = /*#__PURE__*/function () {
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
       });
 
-      function EllipseToBufferGeometry(_x13) {
+      function EllipseToBufferGeometry(_x15) {
         return _EllipseToBufferGeometry.apply(this, arguments);
       }
 
@@ -821,6 +899,9 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+/*
+ * https://medium.com/better-programming/how-to-create-your-own-event-emitter-in-javascript-fbd5db2447c4
+ */
 var EventEmitter = /*#__PURE__*/function () {
   function EventEmitter() {
     _classCallCheck(this, EventEmitter);
@@ -845,14 +926,19 @@ var EventEmitter = /*#__PURE__*/function () {
       var filterListeners = listener => listener !== listenerToRemove;
 
       this._events[name] = this._events[name].filter(filterListeners);
-    }
+    } // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
+
   }, {
     key: "emit",
-    value: function emit(name, data) {
+    value: function emit(name) {
+      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        args[_key - 1] = arguments[_key];
+      }
+
       if (!this._events[name]) return;
 
       var fireCallbacks = callback => {
-        callback(data);
+        callback(...args);
       };
 
       this._events[name].forEach(fireCallbacks);
@@ -1148,7 +1234,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
-
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -1227,14 +1312,14 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
             if (renderMat.opacity !== 1) {
               var material = this.transparentMaterial.clone();
-              material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+              material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
               material.color = color;
               material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
               var _material = this.solidMaterial.clone();
 
-              _material.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+              _material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
               _material.color = color;
               _material.metalness = renderMat.metalness;
               if (_material.metalness !== 0) _material.roughness = 0.1;
@@ -1246,7 +1331,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
             // If we don't have defined material, just use the default
             var _material2 = this.solidMaterial.clone();
 
-            _material2.clippingPlanes = this.viewer.sectionPlaneHelper.planes;
+            _material2.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
             this.addSolid(wrapper, _material2);
           }
 
@@ -1288,7 +1373,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
       line.userData = wrapper.meta;
       line.uuid = wrapper.meta.id;
       this.objectIds.push(line.uuid);
-      this.solidObjects.add(line);
+      this.lineObjects.add(line);
     }
   }, {
     key: "addPoint",
@@ -1297,7 +1382,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
       dot.userData = wrapper.meta;
       dot.uuid = wrapper.meta.id;
       this.objectIds.push(dot.uuid);
-      this.solidObjects.add(dot);
+      this.pointObjects.add(dot);
     }
   }, {
     key: "removeObject",
@@ -1324,8 +1409,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
     value: function _postLoadFunction() {
       this.zoomExtents();
       this.viewer.reflectionsNeedUpdate = true;
-
-      this.viewer.sectionPlaneHelper._matchSceneSize();
+      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
+      this.viewer.sectionBox.setFromBbox(sceneBox);
     }
   }, {
     key: "zoomToObject",
@@ -1361,14 +1446,16 @@ var SceneObjectManager = /*#__PURE__*/function () {
       var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
       var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
       var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
-      var direction = this.viewer.controls.target.clone().sub(this.viewer.camera.position).normalize().multiplyScalar(distance); // this.viewer.controls.maxDistance = distance * 20
+      var direction = this.viewer.controls.target.clone().sub(this.viewer.camera.position).normalize().multiplyScalar(distance);
+      this.viewer.controls.maxDistance = distance * 20; // Changing the contol's target causes 
+      // projection math @ SectionBox on('object-drag') to fail
+      // this.viewer.controls.target.copy( center )
 
-      this.viewer.controls.target.copy(center);
       this.viewer.camera.near = distance / 100;
       this.viewer.camera.far = distance * 100;
-      this.viewer.camera.updateProjectionMatrix();
       this.viewer.camera.position.copy(this.viewer.controls.target).sub(direction);
       this.viewer.controls.update();
+      this.viewer.camera.updateProjectionMatrix();
     }
   }, {
     key: "_argbToRGB",
@@ -1403,11 +1490,338 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "objects",
     get: function get() {
-      return [...this.solidObjects.children, ...this.transparentObjects.children];
+      return [...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children];
     }
   }]);
 
   return SceneObjectManager;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/modules/SectionBox.js":
+/*!***********************************!*\
+  !*** ./src/modules/SectionBox.js ***!
+  \***********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ SectionBox
+/* harmony export */ });
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
+/**
+ * Section box helper for Speckle Viewer
+ * 
+ */
+// indices to verts in this.boxGeo - box edges
+
+var edges = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 6], [6, 7], [7, 5], [5, 4], [2, 7], [0, 5], [1, 4], [3, 6]];
+
+var SectionBox = /*#__PURE__*/function () {
+  function SectionBox(viewer, _vis) {
+    _classCallCheck(this, SectionBox);
+
+    //defaults to invisible
+    var vis = _vis || false;
+    this.viewer = viewer;
+    this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.display.visible = vis;
+    this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.displayEdges = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.display.add(this.displayBox);
+    this.display.add(this.displayEdges);
+    this.display.add(this.displayHover);
+    this.viewer.scene.add(this.display); // basic display of the section box
+
+    this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({// transparent:true,
+      // color: 0xffe842, 
+      // opacity: 0.5
+    }); // the box itself
+
+    this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
+    this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
+    this.boxMesh.visible = false;
+    this.boxMesh.geometry.computeBoundingBox();
+    this.boxMesh.geometry.computeBoundingSphere();
+    this.displayBox.add(this.boxMesh);
+    this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
+      color: 0x000000,
+      linewidth: 4
+    }); // show box edges
+
+    edges.map(val => {
+      var pts = [this.boxGeo.vertices[val[0]].clone(), this.boxGeo.vertices[val[1]].clone()];
+      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
+      this.displayEdges.add(line);
+    }); // normal of plane being hovered
+
+    this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
+      subset: this.displayBox,
+      hover: true
+    }); // pointer position
+
+    this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+    this.dragging = false; // planes face inward
+    // indices correspond to vertex indices on the boxGeometry
+    // constant is set to 1 + epsilon to prevent planes from clipping section box display
+
+    this.planes = [{
+      axis: '+x',
+      // right, x positive
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1),
+      indices: [5, 4, 6, 7]
+    }, {
+      axis: '-x',
+      // left, x negative
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1),
+      indices: [0, 1, 3, 2]
+    }, {
+      axis: '+y',
+      // out, y positive
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1),
+      indices: [2, 3, 6, 7]
+    }, {
+      axis: '-y',
+      // in, y negative
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1),
+      indices: [5, 4, 1, 0]
+    }, {
+      axis: '+z',
+      // up, z positive
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1),
+      indices: [1, 3, 6, 4]
+    }, {
+      axis: '-z',
+      // down, z negative
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1),
+      indices: [0, 2, 7, 5]
+    }]; // plane helpers
+    // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
+    // adds clipping planes to all materials
+    // better to add clipping planes to renderer
+
+    this.viewer.renderer.localClippingEnabled = true;
+    var objs = this.viewer.sceneManager.objects;
+    objs.forEach(obj => {
+      obj.material.clippingPlanes = this.planes.map(c => c.plane);
+    });
+    this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      transparent: true,
+      opacity: 0.6,
+      color: 0xffe842,
+      // color: 0xE91E63,
+      metalness: 0.1,
+      roughness: 0.75
+    }); // hovered event handler
+
+    this.selectionHelper.on('hovered', (obj, e) => {
+      if (obj.length === 0 && !this.dragging) {
+        this.displayHover.clear();
+        this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+        this.viewer.controls.enabled = true;
+        this.viewer.renderer.domElement.style.cursor = 'default';
+        return;
+      } else if (this.dragging) {
+        return;
+      }
+
+      this.viewer.renderer.domElement.style.cursor = 'pointer';
+      var index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal.clone().negate()));
+      if (index < 0) return; // this should never be the case?
+
+      var planeObj = this.planes[index];
+      var plane = planeObj.plane;
+      if (plane.normal.equals(this.hoverPlane)) return;
+      this.hoverPlane = plane.normal.clone();
+      this.updateHover(planeObj);
+    }); // Selection Helper seems unecessary for this type of thing
+
+    this.viewer.renderer.domElement.addEventListener('pointerup', e => {
+      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      this.tempVerts = [];
+      this.viewer.controls.enabled = true;
+      this.dragging = false;
+    }); // get screen space vector of plane normal
+    // project mouse displacement vector onto it
+    // move plane by that much
+
+    this.selectionHelper.on('object-drag', (obj, e) => {
+      // exit if we don't have a valid hoverPlane
+      if (this.hoverPlane.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) return; // exit if we're clicking on nothing
+
+      if (!obj.length && !this.dragging) return;
+      this.viewer.controls.enabled = false;
+      this.viewer.renderer.domElement.style.cursor = 'move';
+      this.dragging = true;
+      var index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane));
+      var planeObj = this.planes[index];
+      var plane = planeObj.plane;
+
+      if (this.pointer.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) {
+        this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
+      } // screen space normal vector
+      // bad transformations of camera can corrupt this
+
+
+      var ssNorm = plane.normal.clone();
+      ssNorm.negate().project(this.viewer.camera);
+      ssNorm.setComponent(2, 0).normalize(); // mouse displacement
+
+      var mD = this.pointer.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0));
+      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0); // quantity of mD on ssNorm
+
+      var d = ssNorm.dot(mD) / ssNorm.lengthSq(); // configurable drag speed
+
+      var zoom = this.viewer.camera.getWorldPosition(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).length();
+      zoom *= 0.75;
+      d = d * zoom; // limit plane from crossing it's pair
+
+      var hoverOpp = this.hoverPlane.clone().negate();
+      var indexOpp = this.planes.findIndex(p => p.plane.normal.equals(hoverOpp));
+      var planeObjOpp = this.planes[indexOpp];
+      var dist = planeObj.plane.constant + planeObjOpp.plane.constant;
+      var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal); // are we moving towards the limiting plane?
+
+      var dot = displacement.clone().normalize().dot(plane.normal); // if displacement + padding is greater than limit,
+      // and we're moving towards the limiting plane
+
+      if (dist < d && dot > 0) {
+        d = dist * 0.001;
+        displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal);
+      }
+
+      plane.translate(displacement);
+      this.updateBoxFace(planeObj, displacement);
+      this.updateHover(planeObj);
+    });
+  } // boxMesh = bbox
+
+
+  _createClass(SectionBox, [{
+    key: "setFromBbox",
+    value: function setFromBbox(bbox) {
+      // add a little padding to the box
+      bbox.max.addScalar(10);
+      bbox.min.subScalar(10);
+
+      for (var p of this.planes) {
+        // reset plane
+        // p.plane.set(p.plane.normal, 1)
+        var c = 0; // planes point inwards - if negative select max part of bbox
+
+        if (p.plane.normal.dot(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1)) > 0) {
+          c = p.plane.normal.clone().multiply(bbox.min);
+        } else {
+          c = p.plane.normal.clone().multiply(bbox.max);
+        }
+
+        var diff = c.length() - p.plane.constant; // displacement
+
+        var d = p.plane.normal.clone().negate().multiplyScalar(diff);
+        this.updateBoxFace(p, d);
+        p.plane.translate(d);
+      }
+    }
+  }, {
+    key: "updateBoxFace",
+    value: function updateBoxFace(planeObj, displacement) {
+      this.boxMesh.geometry.vertices.map((v, i) => {
+        if (!planeObj.indices.includes(i)) return;
+        this.boxMesh.geometry.vertices[i].add(displacement);
+      });
+      this.boxMesh.geometry.verticesNeedUpdate = true;
+      this.boxMesh.geometry.computeBoundingBox();
+      this.boxMesh.geometry.computeBoundingSphere();
+      this.updateEdges();
+    }
+  }, {
+    key: "updateEdges",
+    value: function updateEdges() {
+      this.displayEdges.clear();
+      edges.map(val => {
+        var ptA = this.boxMesh.geometry.vertices[val[0]].clone();
+        var ptB = this.boxMesh.geometry.vertices[val[1]].clone(); // translation
+
+        ptA.add(this.boxMesh.position);
+        ptB.add(this.boxMesh.position);
+        this.drawLine([ptA, ptB]);
+      });
+    }
+  }, {
+    key: "drawLine",
+    value: function drawLine(pts) {
+      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
+      this.displayEdges.add(line);
+    }
+  }, {
+    key: "updateHover",
+    value: function updateHover(planeObj) {
+      this.displayHover.clear();
+      var verts = this.boxMesh.geometry.vertices.filter((v, i) => planeObj.indices.includes(i));
+      var centroid = verts[0].clone().add(verts[1]).add(verts[2]).add(verts[3]);
+      centroid.multiplyScalar(0.25);
+      var dims = verts[0].clone().sub(centroid).multiplyScalar(2).toArray().filter(v => v !== 0);
+      var width = Math.abs(dims[0]);
+      var height = Math.abs(dims[1]);
+      var hoverGeo = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(width, height); // orients hover geometry to box face
+
+      switch (planeObj.axis) {
+        case '-x':
+          hoverGeo.rotateY(Math.PI / 2);
+          hoverGeo.rotateX(Math.PI / 2);
+          break;
+
+        case '+x':
+          hoverGeo.rotateY(-Math.PI / 2);
+          hoverGeo.rotateX(-Math.PI / 2);
+          break;
+
+        case '-y':
+          hoverGeo.rotateX(-Math.PI / 2);
+          break;
+
+        case '+y':
+          hoverGeo.rotateX(Math.PI / 2);
+          break;
+
+        default:
+          break;
+      } // translation
+
+
+      centroid.add(this.boxMesh.position);
+      hoverGeo.translate(centroid.x, centroid.y, centroid.z);
+      var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
+      this.displayHover.add(hoverMesh);
+    }
+  }, {
+    key: "toggleSectionBox",
+    value: function toggleSectionBox(_bool) {
+      var bool = _bool || !this.visible;
+      this.visible = bool;
+      this.display.visible = bool; // what's the tradeoff for having the clipping planes in material vs in the renderer?
+      // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
+    }
+  }]);
+
+  return SectionBox;
 }();
 
 
@@ -1633,6 +2047,12 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
  * TODOs:
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
+ * 
+ * optional param to configure SelectionHelper
+ * _options = {
+ *             subset: THREE.Group
+ *             hover:  boolean
+ *            }
  */
 
 var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
@@ -1640,7 +2060,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
   var _super = _createSuper(SelectionHelper);
 
-  function SelectionHelper(parent) {
+  function SelectionHelper(parent, _options) {
     var _this;
 
     _classCallCheck(this, SelectionHelper);
@@ -1661,15 +2081,48 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
     _this.viewer.controls.addEventListener('end', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
       _this.orbiting = false;
-    }, 200)); // Handle mouseclicks
+    }, 200)); // optional param allows for raycasting against a subset of objects
+    // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
+
+
+    _this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined' ? _options.subset : null;
+    _this.pointerDown = false; // this.hoverObj = null
+    // optional param allows for hover
+
+    if (typeof _options !== 'undefined' && _options.hover) {
+      // doesn't feel good when debounced, might be necessary tho
+      _this.viewer.renderer.domElement.addEventListener('pointermove', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(e => {
+        var hovered = _this.getClickedObjects(e); // dragging event, this shouldn't be under the "hover option"
+
+
+        if (_this.pointerDown) {
+          _this.emit('object-drag', hovered, _this._getNormalisedClickPosition(e));
+
+          return;
+        }
+
+        _this.emit('hovered', hovered, e);
+      }, 0));
+    } // dragging event, this shouldn't be under the "hover option"
+
+
+    if (typeof _options !== 'undefined' && _options.hover) {
+      _this.viewer.renderer.domElement.addEventListener('pointerdown', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(e => {
+        _this.pointerDown = true;
+        if (_this.orbiting) return;
+
+        _this.emit('mouse-down', _this.getClickedObjects(e));
+      }, 100));
+    } // Handle mouseclicks
 
 
     _this.viewer.renderer.domElement.addEventListener('pointerup', e => {
+      _this.pointerDown = false;
       if (_this.orbiting) return;
 
       var selectionObjects = _this.getClickedObjects(e);
 
-      _this.handleSelection(selectionObjects);
+      _this.emit('object-clicked', selectionObjects);
     }); // Doubleclicks on touch devices
     // http://jsfiddle.net/brettwp/J4djY/
 
@@ -1691,9 +2144,6 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
         var selectionObjects = _this.getClickedObjects(_this.touchLocation);
 
         _this.emit('object-doubleclicked', selectionObjects);
-
-        if (!_this.orbiting) _this.handleDoubleClick(selectionObjects);
-        event.preventDefault();
       } else {
         _this.tapTimeout = setTimeout(function () {
           clearTimeout(this.tapTimeout);
@@ -1707,9 +2157,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       // if ( this.orbiting ) return // not needed for zoom to thing?
       var selectionObjects = _this.getClickedObjects(e);
 
-      _this.emit('object-doubleclicked', selectionObjects);
+      _this.emit('object-doubleclicked', selectionObjects); // this.handleDoubleClick( selectionObjects )
 
-      _this.handleDoubleClick(selectionObjects);
     }); // Handle multiple object selection
 
 
@@ -1723,49 +2172,13 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       if (e.isComposing || e.keyCode === 229) return;
       if (e.key === 'Shift') _this.multiSelect = false;
     });
-    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
-      color: 0x0B55D2,
-      emissive: 0x0B55D2,
-      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-    });
-    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    _this.selectedObjects.renderOrder = 1000;
-
-    _this.viewer.scene.add(_this.selectedObjects);
-
     _this.originalSelectionObjects = [];
     return _this;
   }
 
   _createClass(SelectionHelper, [{
-    key: "handleSelection",
-    value: function handleSelection(objects) {
-      this.select(objects[0]);
-    }
-  }, {
-    key: "handleDoubleClick",
-    value: function handleDoubleClick(objects) {
-      if (!objects || objects.length === 0) this.viewer.sceneManager.zoomExtents();else this.viewer.sceneManager.zoomToObject(objects[0].object);
-    }
-  }, {
-    key: "select",
-    value: function select(obj) {
-      if (!this.multiSelect) this.unselect();
-
-      if (!obj) {
-        this.emit('object-clicked', this.originalSelectionObjects);
-        return;
-      }
-
-      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj.object.geometry, this.selectionMaterial);
-      this.selectedObjects.add(mesh);
-      this.originalSelectionObjects.push(obj);
-      this.emit('object-clicked', this.originalSelectionObjects);
-    }
-  }, {
     key: "unselect",
     value: function unselect() {
-      this.selectedObjects.clear();
       this.originalSelectionObjects = [];
     }
   }, {
@@ -1774,9 +2187,18 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var normalizedPosition = this._getNormalisedClickPosition(e);
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
-      var intersectedObjects = this.raycaster.intersectObjects(this.viewer.sceneManager.objects);
+      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects);
       intersectedObjects = intersectedObjects.filter(obj => this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0));
       return intersectedObjects;
+    } // get all children of a subset passed as a THREE.Group
+
+  }, {
+    key: "_getGroupChildren",
+    value: function _getGroupChildren(group) {
+      var children = [];
+      if (group.children.length === 0) return [group];
+      group.children.forEach((c, i, a) => children = [...children, ...this._getGroupChildren(c)]);
+      return children;
     }
   }, {
     key: "_getNormalisedClickPosition",
@@ -1796,11 +2218,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "dispose",
     value: function dispose() {
-      this.viewer.scene.remove(this.selectedObjects);
       this.unselect();
       this.originalSelectionObjects = null;
-      this.selectionMaterial = null;
-      this.selectedObjects = null;
     }
   }]);
 
@@ -2102,6 +2521,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./SectionPlaneHelper */ "./src/modules/SectionPlaneHelper.js");
 /* harmony import */ var _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ViewerObjectLoader */ "./src/modules/ViewerObjectLoader.js");
 /* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
+/* harmony import */ var _SectionBox__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./SectionBox */ "./src/modules/SectionBox.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -2125,6 +2545,7 @@ function _assertThisInitialized(self) { if (self === void 0) { throw new Referen
 function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
 
 
 
@@ -2163,6 +2584,8 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     _this.camera.up.set(0, 0, 1);
 
     _this.camera.position.set(1, 1, 1);
+
+    _this.camera.updateProjectionMatrix();
 
     _this.renderer = new three__WEBPACK_IMPORTED_MODULE_0__.WebGLRenderer({
       antialias: true,
@@ -2216,7 +2639,24 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.controls.addEventListener('end', () => {
       _this.pauseSSAO = false;
+    }); // Selected Objects
+
+
+    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
+      color: 0x0B55D2,
+      emissive: 0x0B55D2,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
     });
+    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+
+    _this.scene.add(_this.selectedObjects);
+
+    _this.selectedObjects.renderOrder = 1000;
+    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this)); // Viewer registers double click event and supplies handler
+
+    _this.selectionHelper.on('object-doubleclicked', _this.handleDoubleClick.bind(_assertThisInitialized(_this)));
+
+    _this.selectionHelper.on('object-clicked', _this.handleSelect.bind(_assertThisInitialized(_this)));
 
     if (showStats) {
       _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
@@ -2227,9 +2667,11 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
     _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
     _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
-    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this));
 
-    _this.sectionPlaneHelper.createSectionPlane();
+    _this.sectionPlaneHelper.createSectionPlane(); // Section Box
+
+
+    _this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_10__.default(_assertThisInitialized(_this));
 
     _this.sceneLights();
 
@@ -2237,9 +2679,39 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.loaders = [];
     return _this;
-  }
+  } // handleDoubleClick moved from SelectionHelper
+
 
   _createClass(Viewer, [{
+    key: "handleDoubleClick",
+    value: function handleDoubleClick(objs) {
+      if (!objs || objs.length === 0) this.sceneManager.zoomExtents();else this.sceneManager.zoomToObject(objs[0].object);
+    } // handleSelect moved from SelectionHelper
+
+  }, {
+    key: "handleSelect",
+    value: function handleSelect(obj) {
+      if (obj.length === 0) {
+        this.deselect();
+        return;
+      } // deselect on second click
+      // not sure if this was implemented previously
+      // if(this.selectedObjects.children.includes(obj)) {
+      //   this.deselect()
+      //   return
+      // }
+
+
+      if (!this.selectionHelper.multiSelect) this.deselect();
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
+      this.selectedObjects.add(mesh);
+    }
+  }, {
+    key: "deselect",
+    value: function deselect() {
+      this.selectedObjects.clear();
+    }
+  }, {
     key: "sceneLights",
     value: function sceneLights() {
       var ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(0xffffff);
@@ -2442,7 +2914,7 @@ var ViewerObjectLoader = /*#__PURE__*/function () {
             current++;
 
             _this.viewer.emit('load-progress', {
-              progress: current / total,
+              progress: current / (total + 1),
               id: _this.objectId
             });
           };
@@ -68273,6 +68745,809 @@ var SSAOBlurShader = {
 		'}'
 
 	].join( '\n' )
+
+};
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/three/examples/jsm/utils/BufferGeometryUtils.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/utils/BufferGeometryUtils.js ***!
+  \**********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "BufferGeometryUtils": () => /* binding */ BufferGeometryUtils
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
+
+
+var BufferGeometryUtils = {
+
+	computeTangents: function ( geometry ) {
+
+		var index = geometry.index;
+		var attributes = geometry.attributes;
+
+		// based on http://www.terathon.com/code/tangent.html
+		// (per vertex tangents)
+
+		if ( index === null ||
+			 attributes.position === undefined ||
+			 attributes.normal === undefined ||
+			 attributes.uv === undefined ) {
+
+			console.error( 'THREE.BufferGeometryUtils: .computeTangents() failed. Missing required attributes (index, position, normal or uv)' );
+			return;
+
+		}
+
+		var indices = index.array;
+		var positions = attributes.position.array;
+		var normals = attributes.normal.array;
+		var uvs = attributes.uv.array;
+
+		var nVertices = positions.length / 3;
+
+		if ( attributes.tangent === undefined ) {
+
+			geometry.setAttribute( 'tangent', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute( new Float32Array( 4 * nVertices ), 4 ) );
+
+		}
+
+		var tangents = attributes.tangent.array;
+
+		var tan1 = [], tan2 = [];
+
+		for ( var i = 0; i < nVertices; i ++ ) {
+
+			tan1[ i ] = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+			tan2[ i ] = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+		}
+
+		var vA = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3(),
+			vB = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3(),
+			vC = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3(),
+
+			uvA = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2(),
+			uvB = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2(),
+			uvC = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2(),
+
+			sdir = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3(),
+			tdir = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+		function handleTriangle( a, b, c ) {
+
+			vA.fromArray( positions, a * 3 );
+			vB.fromArray( positions, b * 3 );
+			vC.fromArray( positions, c * 3 );
+
+			uvA.fromArray( uvs, a * 2 );
+			uvB.fromArray( uvs, b * 2 );
+			uvC.fromArray( uvs, c * 2 );
+
+			vB.sub( vA );
+			vC.sub( vA );
+
+			uvB.sub( uvA );
+			uvC.sub( uvA );
+
+			var r = 1.0 / ( uvB.x * uvC.y - uvC.x * uvB.y );
+
+			// silently ignore degenerate uv triangles having coincident or colinear vertices
+
+			if ( ! isFinite( r ) ) return;
+
+			sdir.copy( vB ).multiplyScalar( uvC.y ).addScaledVector( vC, - uvB.y ).multiplyScalar( r );
+			tdir.copy( vC ).multiplyScalar( uvB.x ).addScaledVector( vB, - uvC.x ).multiplyScalar( r );
+
+			tan1[ a ].add( sdir );
+			tan1[ b ].add( sdir );
+			tan1[ c ].add( sdir );
+
+			tan2[ a ].add( tdir );
+			tan2[ b ].add( tdir );
+			tan2[ c ].add( tdir );
+
+		}
+
+		var groups = geometry.groups;
+
+		if ( groups.length === 0 ) {
+
+			groups = [ {
+				start: 0,
+				count: indices.length
+			} ];
+
+		}
+
+		for ( var i = 0, il = groups.length; i < il; ++ i ) {
+
+			var group = groups[ i ];
+
+			var start = group.start;
+			var count = group.count;
+
+			for ( var j = start, jl = start + count; j < jl; j += 3 ) {
+
+				handleTriangle(
+					indices[ j + 0 ],
+					indices[ j + 1 ],
+					indices[ j + 2 ]
+				);
+
+			}
+
+		}
+
+		var tmp = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3(), tmp2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+		var n = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3(), n2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+		var w, t, test;
+
+		function handleVertex( v ) {
+
+			n.fromArray( normals, v * 3 );
+			n2.copy( n );
+
+			t = tan1[ v ];
+
+			// Gram-Schmidt orthogonalize
+
+			tmp.copy( t );
+			tmp.sub( n.multiplyScalar( n.dot( t ) ) ).normalize();
+
+			// Calculate handedness
+
+			tmp2.crossVectors( n2, t );
+			test = tmp2.dot( tan2[ v ] );
+			w = ( test < 0.0 ) ? - 1.0 : 1.0;
+
+			tangents[ v * 4 ] = tmp.x;
+			tangents[ v * 4 + 1 ] = tmp.y;
+			tangents[ v * 4 + 2 ] = tmp.z;
+			tangents[ v * 4 + 3 ] = w;
+
+		}
+
+		for ( var i = 0, il = groups.length; i < il; ++ i ) {
+
+			var group = groups[ i ];
+
+			var start = group.start;
+			var count = group.count;
+
+			for ( var j = start, jl = start + count; j < jl; j += 3 ) {
+
+				handleVertex( indices[ j + 0 ] );
+				handleVertex( indices[ j + 1 ] );
+				handleVertex( indices[ j + 2 ] );
+
+			}
+
+		}
+
+	},
+
+	/**
+	 * @param  {Array<BufferGeometry>} geometries
+	 * @param  {Boolean} useGroups
+	 * @return {BufferGeometry}
+	 */
+	mergeBufferGeometries: function ( geometries, useGroups ) {
+
+		var isIndexed = geometries[ 0 ].index !== null;
+
+		var attributesUsed = new Set( Object.keys( geometries[ 0 ].attributes ) );
+		var morphAttributesUsed = new Set( Object.keys( geometries[ 0 ].morphAttributes ) );
+
+		var attributes = {};
+		var morphAttributes = {};
+
+		var morphTargetsRelative = geometries[ 0 ].morphTargetsRelative;
+
+		var mergedGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+
+		var offset = 0;
+
+		for ( var i = 0; i < geometries.length; ++ i ) {
+
+			var geometry = geometries[ i ];
+			var attributesCount = 0;
+
+			// ensure that all geometries are indexed, or none
+
+			if ( isIndexed !== ( geometry.index !== null ) ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed with geometry at index ' + i + '. All geometries must have compatible attributes; make sure index attribute exists among all geometries, or in none of them.' );
+				return null;
+
+			}
+
+			// gather attributes, exit early if they're different
+
+			for ( var name in geometry.attributes ) {
+
+				if ( ! attributesUsed.has( name ) ) {
+
+					console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed with geometry at index ' + i + '. All geometries must have compatible attributes; make sure "' + name + '" attribute exists among all geometries, or in none of them.' );
+					return null;
+
+				}
+
+				if ( attributes[ name ] === undefined ) attributes[ name ] = [];
+
+				attributes[ name ].push( geometry.attributes[ name ] );
+
+				attributesCount ++;
+
+			}
+
+			// ensure geometries have the same number of attributes
+
+			if ( attributesCount !== attributesUsed.size ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed with geometry at index ' + i + '. Make sure all geometries have the same number of attributes.' );
+				return null;
+
+			}
+
+			// gather morph attributes, exit early if they're different
+
+			if ( morphTargetsRelative !== geometry.morphTargetsRelative ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed with geometry at index ' + i + '. .morphTargetsRelative must be consistent throughout all geometries.' );
+				return null;
+
+			}
+
+			for ( var name in geometry.morphAttributes ) {
+
+				if ( ! morphAttributesUsed.has( name ) ) {
+
+					console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed with geometry at index ' + i + '.  .morphAttributes must be consistent throughout all geometries.' );
+					return null;
+
+				}
+
+				if ( morphAttributes[ name ] === undefined ) morphAttributes[ name ] = [];
+
+				morphAttributes[ name ].push( geometry.morphAttributes[ name ] );
+
+			}
+
+			// gather .userData
+
+			mergedGeometry.userData.mergedUserData = mergedGeometry.userData.mergedUserData || [];
+			mergedGeometry.userData.mergedUserData.push( geometry.userData );
+
+			if ( useGroups ) {
+
+				var count;
+
+				if ( isIndexed ) {
+
+					count = geometry.index.count;
+
+				} else if ( geometry.attributes.position !== undefined ) {
+
+					count = geometry.attributes.position.count;
+
+				} else {
+
+					console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed with geometry at index ' + i + '. The geometry must have either an index or a position attribute' );
+					return null;
+
+				}
+
+				mergedGeometry.addGroup( offset, count, i );
+
+				offset += count;
+
+			}
+
+		}
+
+		// merge indices
+
+		if ( isIndexed ) {
+
+			var indexOffset = 0;
+			var mergedIndex = [];
+
+			for ( var i = 0; i < geometries.length; ++ i ) {
+
+				var index = geometries[ i ].index;
+
+				for ( var j = 0; j < index.count; ++ j ) {
+
+					mergedIndex.push( index.getX( j ) + indexOffset );
+
+				}
+
+				indexOffset += geometries[ i ].attributes.position.count;
+
+			}
+
+			mergedGeometry.setIndex( mergedIndex );
+
+		}
+
+		// merge attributes
+
+		for ( var name in attributes ) {
+
+			var mergedAttribute = this.mergeBufferAttributes( attributes[ name ] );
+
+			if ( ! mergedAttribute ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed while trying to merge the ' + name + ' attribute.' );
+				return null;
+
+			}
+
+			mergedGeometry.setAttribute( name, mergedAttribute );
+
+		}
+
+		// merge morph attributes
+
+		for ( var name in morphAttributes ) {
+
+			var numMorphTargets = morphAttributes[ name ][ 0 ].length;
+
+			if ( numMorphTargets === 0 ) break;
+
+			mergedGeometry.morphAttributes = mergedGeometry.morphAttributes || {};
+			mergedGeometry.morphAttributes[ name ] = [];
+
+			for ( var i = 0; i < numMorphTargets; ++ i ) {
+
+				var morphAttributesToMerge = [];
+
+				for ( var j = 0; j < morphAttributes[ name ].length; ++ j ) {
+
+					morphAttributesToMerge.push( morphAttributes[ name ][ j ][ i ] );
+
+				}
+
+				var mergedMorphAttribute = this.mergeBufferAttributes( morphAttributesToMerge );
+
+				if ( ! mergedMorphAttribute ) {
+
+					console.error( 'THREE.BufferGeometryUtils: .mergeBufferGeometries() failed while trying to merge the ' + name + ' morphAttribute.' );
+					return null;
+
+				}
+
+				mergedGeometry.morphAttributes[ name ].push( mergedMorphAttribute );
+
+			}
+
+		}
+
+		return mergedGeometry;
+
+	},
+
+	/**
+	 * @param {Array<BufferAttribute>} attributes
+	 * @return {BufferAttribute}
+	 */
+	mergeBufferAttributes: function ( attributes ) {
+
+		var TypedArray;
+		var itemSize;
+		var normalized;
+		var arrayLength = 0;
+
+		for ( var i = 0; i < attributes.length; ++ i ) {
+
+			var attribute = attributes[ i ];
+
+			if ( attribute.isInterleavedBufferAttribute ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferAttributes() failed. InterleavedBufferAttributes are not supported.' );
+				return null;
+
+			}
+
+			if ( TypedArray === undefined ) TypedArray = attribute.array.constructor;
+			if ( TypedArray !== attribute.array.constructor ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferAttributes() failed. BufferAttribute.array must be of consistent array types across matching attributes.' );
+				return null;
+
+			}
+
+			if ( itemSize === undefined ) itemSize = attribute.itemSize;
+			if ( itemSize !== attribute.itemSize ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferAttributes() failed. BufferAttribute.itemSize must be consistent across matching attributes.' );
+				return null;
+
+			}
+
+			if ( normalized === undefined ) normalized = attribute.normalized;
+			if ( normalized !== attribute.normalized ) {
+
+				console.error( 'THREE.BufferGeometryUtils: .mergeBufferAttributes() failed. BufferAttribute.normalized must be consistent across matching attributes.' );
+				return null;
+
+			}
+
+			arrayLength += attribute.array.length;
+
+		}
+
+		var array = new TypedArray( arrayLength );
+		var offset = 0;
+
+		for ( var i = 0; i < attributes.length; ++ i ) {
+
+			array.set( attributes[ i ].array, offset );
+
+			offset += attributes[ i ].array.length;
+
+		}
+
+		return new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute( array, itemSize, normalized );
+
+	},
+
+	/**
+	 * @param {Array<BufferAttribute>} attributes
+	 * @return {Array<InterleavedBufferAttribute>}
+	 */
+	interleaveAttributes: function ( attributes ) {
+
+		// Interleaves the provided attributes into an InterleavedBuffer and returns
+		// a set of InterleavedBufferAttributes for each attribute
+		var TypedArray;
+		var arrayLength = 0;
+		var stride = 0;
+
+		// calculate the the length and type of the interleavedBuffer
+		for ( var i = 0, l = attributes.length; i < l; ++ i ) {
+
+			var attribute = attributes[ i ];
+
+			if ( TypedArray === undefined ) TypedArray = attribute.array.constructor;
+			if ( TypedArray !== attribute.array.constructor ) {
+
+				console.error( 'AttributeBuffers of different types cannot be interleaved' );
+				return null;
+
+			}
+
+			arrayLength += attribute.array.length;
+			stride += attribute.itemSize;
+
+		}
+
+		// Create the set of buffer attributes
+		var interleavedBuffer = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.InterleavedBuffer( new TypedArray( arrayLength ), stride );
+		var offset = 0;
+		var res = [];
+		var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
+		var setters = [ 'setX', 'setY', 'setZ', 'setW' ];
+
+		for ( var j = 0, l = attributes.length; j < l; j ++ ) {
+
+			var attribute = attributes[ j ];
+			var itemSize = attribute.itemSize;
+			var count = attribute.count;
+			var iba = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.InterleavedBufferAttribute( interleavedBuffer, itemSize, offset, attribute.normalized );
+			res.push( iba );
+
+			offset += itemSize;
+
+			// Move the data for each attribute into the new interleavedBuffer
+			// at the appropriate offset
+			for ( var c = 0; c < count; c ++ ) {
+
+				for ( var k = 0; k < itemSize; k ++ ) {
+
+					iba[ setters[ k ] ]( c, attribute[ getters[ k ] ]( c ) );
+
+				}
+
+			}
+
+		}
+
+		return res;
+
+	},
+
+	/**
+	 * @param {Array<BufferGeometry>} geometry
+	 * @return {number}
+	 */
+	estimateBytesUsed: function ( geometry ) {
+
+		// Return the estimated memory used by this geometry in bytes
+		// Calculate using itemSize, count, and BYTES_PER_ELEMENT to account
+		// for InterleavedBufferAttributes.
+		var mem = 0;
+		for ( var name in geometry.attributes ) {
+
+			var attr = geometry.getAttribute( name );
+			mem += attr.count * attr.itemSize * attr.array.BYTES_PER_ELEMENT;
+
+		}
+
+		var indices = geometry.getIndex();
+		mem += indices ? indices.count * indices.itemSize * indices.array.BYTES_PER_ELEMENT : 0;
+		return mem;
+
+	},
+
+	/**
+	 * @param {BufferGeometry} geometry
+	 * @param {number} tolerance
+	 * @return {BufferGeometry>}
+	 */
+	mergeVertices: function ( geometry, tolerance = 1e-4 ) {
+
+		tolerance = Math.max( tolerance, Number.EPSILON );
+
+		// Generate an index buffer if the geometry doesn't have one, or optimize it
+		// if it's already available.
+		var hashToIndex = {};
+		var indices = geometry.getIndex();
+		var positions = geometry.getAttribute( 'position' );
+		var vertexCount = indices ? indices.count : positions.count;
+
+		// next value for triangle indices
+		var nextIndex = 0;
+
+		// attributes and new attribute arrays
+		var attributeNames = Object.keys( geometry.attributes );
+		var attrArrays = {};
+		var morphAttrsArrays = {};
+		var newIndices = [];
+		var getters = [ 'getX', 'getY', 'getZ', 'getW' ];
+
+		// initialize the arrays
+		for ( var i = 0, l = attributeNames.length; i < l; i ++ ) {
+
+			var name = attributeNames[ i ];
+
+			attrArrays[ name ] = [];
+
+			var morphAttr = geometry.morphAttributes[ name ];
+			if ( morphAttr ) {
+
+				morphAttrsArrays[ name ] = new Array( morphAttr.length ).fill().map( () => [] );
+
+			}
+
+		}
+
+		// convert the error tolerance to an amount of decimal places to truncate to
+		var decimalShift = Math.log10( 1 / tolerance );
+		var shiftMultiplier = Math.pow( 10, decimalShift );
+		for ( var i = 0; i < vertexCount; i ++ ) {
+
+			var index = indices ? indices.getX( i ) : i;
+
+			// Generate a hash for the vertex attributes at the current index 'i'
+			var hash = '';
+			for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
+
+				var name = attributeNames[ j ];
+				var attribute = geometry.getAttribute( name );
+				var itemSize = attribute.itemSize;
+
+				for ( var k = 0; k < itemSize; k ++ ) {
+
+					// double tilde truncates the decimal value
+					hash += `${ ~ ~ ( attribute[ getters[ k ] ]( index ) * shiftMultiplier ) },`;
+
+				}
+
+			}
+
+			// Add another reference to the vertex if it's already
+			// used by another index
+			if ( hash in hashToIndex ) {
+
+				newIndices.push( hashToIndex[ hash ] );
+
+			} else {
+
+				// copy data to the new index in the attribute arrays
+				for ( var j = 0, l = attributeNames.length; j < l; j ++ ) {
+
+					var name = attributeNames[ j ];
+					var attribute = geometry.getAttribute( name );
+					var morphAttr = geometry.morphAttributes[ name ];
+					var itemSize = attribute.itemSize;
+					var newarray = attrArrays[ name ];
+					var newMorphArrays = morphAttrsArrays[ name ];
+
+					for ( var k = 0; k < itemSize; k ++ ) {
+
+						var getterFunc = getters[ k ];
+						newarray.push( attribute[ getterFunc ]( index ) );
+
+						if ( morphAttr ) {
+
+							for ( var m = 0, ml = morphAttr.length; m < ml; m ++ ) {
+
+								newMorphArrays[ m ].push( morphAttr[ m ][ getterFunc ]( index ) );
+
+							}
+
+						}
+
+					}
+
+				}
+
+				hashToIndex[ hash ] = nextIndex;
+				newIndices.push( nextIndex );
+				nextIndex ++;
+
+			}
+
+		}
+
+		// Generate typed arrays from new attribute arrays and update
+		// the attributeBuffers
+		const result = geometry.clone();
+		for ( var i = 0, l = attributeNames.length; i < l; i ++ ) {
+
+			var name = attributeNames[ i ];
+			var oldAttribute = geometry.getAttribute( name );
+
+			var buffer = new oldAttribute.array.constructor( attrArrays[ name ] );
+			var attribute = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute( buffer, oldAttribute.itemSize, oldAttribute.normalized );
+
+			result.setAttribute( name, attribute );
+
+			// Update the attribute arrays
+			if ( name in morphAttrsArrays ) {
+
+				for ( var j = 0; j < morphAttrsArrays[ name ].length; j ++ ) {
+
+					var oldMorphAttribute = geometry.morphAttributes[ name ][ j ];
+
+					var buffer = new oldMorphAttribute.array.constructor( morphAttrsArrays[ name ][ j ] );
+					var morphAttribute = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferAttribute( buffer, oldMorphAttribute.itemSize, oldMorphAttribute.normalized );
+					result.morphAttributes[ name ][ j ] = morphAttribute;
+
+				}
+
+			}
+
+		}
+
+		// indices
+
+		result.setIndex( newIndices );
+
+		return result;
+
+	},
+
+	/**
+	 * @param {BufferGeometry} geometry
+	 * @param {number} drawMode
+	 * @return {BufferGeometry>}
+	 */
+	toTrianglesDrawMode: function ( geometry, drawMode ) {
+
+		if ( drawMode === _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TrianglesDrawMode ) {
+
+			console.warn( 'THREE.BufferGeometryUtils.toTrianglesDrawMode(): Geometry already defined as triangles.' );
+			return geometry;
+
+		}
+
+		if ( drawMode === _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TriangleFanDrawMode || drawMode === _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TriangleStripDrawMode ) {
+
+			var index = geometry.getIndex();
+
+			// generate index if not present
+
+			if ( index === null ) {
+
+				var indices = [];
+
+				var position = geometry.getAttribute( 'position' );
+
+				if ( position !== undefined ) {
+
+					for ( var i = 0; i < position.count; i ++ ) {
+
+						indices.push( i );
+
+					}
+
+					geometry.setIndex( indices );
+					index = geometry.getIndex();
+
+				} else {
+
+					console.error( 'THREE.BufferGeometryUtils.toTrianglesDrawMode(): Undefined position attribute. Processing not possible.' );
+					return geometry;
+
+				}
+
+			}
+
+			//
+
+			var numberOfTriangles = index.count - 2;
+			var newIndices = [];
+
+			if ( drawMode === _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TriangleFanDrawMode ) {
+
+				// gl.TRIANGLE_FAN
+
+				for ( var i = 1; i <= numberOfTriangles; i ++ ) {
+
+					newIndices.push( index.getX( 0 ) );
+					newIndices.push( index.getX( i ) );
+					newIndices.push( index.getX( i + 1 ) );
+
+				}
+
+			} else {
+
+				// gl.TRIANGLE_STRIP
+
+				for ( var i = 0; i < numberOfTriangles; i ++ ) {
+
+					if ( i % 2 === 0 ) {
+
+						newIndices.push( index.getX( i ) );
+						newIndices.push( index.getX( i + 1 ) );
+						newIndices.push( index.getX( i + 2 ) );
+
+
+					} else {
+
+						newIndices.push( index.getX( i + 2 ) );
+						newIndices.push( index.getX( i + 1 ) );
+						newIndices.push( index.getX( i ) );
+
+					}
+
+				}
+
+			}
+
+			if ( ( newIndices.length / 3 ) !== numberOfTriangles ) {
+
+				console.error( 'THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unable to generate correct amount of triangles.' );
+
+			}
+
+			// build final geometry
+
+			var newGeometry = geometry.clone();
+			newGeometry.setIndex( newIndices );
+			newGeometry.clearGroups();
+
+			return newGeometry;
+
+		} else {
+
+			console.error( 'THREE.BufferGeometryUtils.toTrianglesDrawMode(): Unknown draw mode:', drawMode );
+			return geometry;
+
+		}
+
+	}
 
 };
 

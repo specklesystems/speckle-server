@@ -9,6 +9,7 @@ import SelectionHelper from './SelectionHelper'
 import SectionPlaneHelper from './SectionPlaneHelper'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
+import SectionBox from './SectionBox'
 
 export default class Viewer extends EventEmitter {
 
@@ -21,7 +22,8 @@ export default class Viewer extends EventEmitter {
     this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight )
     this.camera.up.set( 0, 0, 1 )
     this.camera.position.set( 1, 1, 1 )
-
+    this.camera.updateProjectionMatrix()
+    
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setClearColor( 0xcccccc, 0 )
     this.renderer.setPixelRatio( window.devicePixelRatio )
@@ -60,6 +62,18 @@ export default class Viewer extends EventEmitter {
     this.controls.addEventListener( 'start', () => { this.pauseSSAO = true } )
     this.controls.addEventListener( 'end', () => { this.pauseSSAO = false } )
 
+
+    // Selected Objects
+    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
+    this.selectedObjects = new THREE.Group()
+    this.scene.add(this.selectedObjects)
+    this.selectedObjects.renderOrder = 1000
+
+    this.selectionHelper = new SelectionHelper( this )
+    // Viewer registers double click event and supplies handler
+    this.selectionHelper.on('object-doubleclicked', this.handleDoubleClick.bind(this))
+    this.selectionHelper.on('object-clicked', this.handleSelect.bind(this))
+
     if ( showStats ) {
       this.stats = new Stats()
       this.container.appendChild( this.stats.dom )
@@ -69,14 +83,46 @@ export default class Viewer extends EventEmitter {
 
     this.sectionPlaneHelper = new SectionPlaneHelper( this )
     this.sceneManager = new ObjectManager( this )
-    this.selectionHelper = new SelectionHelper( this )
 
     this.sectionPlaneHelper.createSectionPlane()
+
+    // Section Box
+    this.sectionBox = new SectionBox(this)
 
     this.sceneLights()
     this.animate()
 
     this.loaders = []
+  }
+
+  // handleDoubleClick moved from SelectionHelper
+  handleDoubleClick( objs ) {
+    if ( !objs || objs.length === 0 ) this.sceneManager.zoomExtents()
+    else this.sceneManager.zoomToObject( objs[0].object )
+  }
+
+  // handleSelect moved from SelectionHelper
+  handleSelect( obj ) {
+    if(obj.length === 0) {
+      this.deselect()
+      return
+    }
+
+    // deselect on second click
+    // not sure if this was implemented previously
+    // if(this.selectedObjects.children.includes(obj)) {
+    //   this.deselect()
+    //   return
+    // }
+
+    if ( !this.selectionHelper.multiSelect ) this.deselect()
+
+    let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
+    this.selectedObjects.add( mesh )
+  }
+
+  deselect(){
+    this.selectedObjects.clear()
   }
 
   sceneLights() {
