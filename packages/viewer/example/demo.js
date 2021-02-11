@@ -1311,17 +1311,15 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
 
             if (renderMat.opacity !== 1) {
-              var material = this.transparentMaterial.clone(); // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
-              // material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
-
+              var material = this.transparentMaterial.clone();
+              material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
               material.color = color;
               material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
-              var _material = this.solidMaterial.clone(); // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
-              // material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+              var _material = this.solidMaterial.clone();
 
-
+              _material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
               _material.color = color;
               _material.metalness = renderMat.metalness;
               if (_material.metalness !== 0) _material.roughness = 0.1;
@@ -1331,10 +1329,9 @@ var SceneObjectManager = /*#__PURE__*/function () {
             }
           } else {
             // If we don't have defined material, just use the default
-            var _material2 = this.solidMaterial.clone(); // material.clippingPlanes = this.viewer.sectionPlaneHelper.planes
-            // material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+            var _material2 = this.solidMaterial.clone();
 
-
+            _material2.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
             this.addSolid(wrapper, _material2);
           }
 
@@ -1588,43 +1585,43 @@ var SectionBox = /*#__PURE__*/function () {
     this.planes = [{
       axis: '+x',
       // right, x positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1.01),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1),
       indices: [5, 4, 6, 7]
     }, {
       axis: '-x',
       // left, x negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1.01),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1),
       indices: [0, 1, 3, 2]
     }, {
       axis: '+y',
       // out, y positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1.01),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1),
       indices: [2, 3, 6, 7]
     }, {
       axis: '-y',
       // in, y negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1.01),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1),
       indices: [5, 4, 1, 0]
     }, {
       axis: '+z',
       // up, z positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1.01),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1),
       indices: [1, 3, 6, 4]
     }, {
       axis: '-z',
       // down, z negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1.01),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1),
       indices: [0, 2, 7, 5]
     }]; // plane helpers
     // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
     // adds clipping planes to all materials
     // better to add clipping planes to renderer
-    // this.viewer.renderer.localClippingEnabled = true
-    // let objs = this.viewer.sceneManager.objects
-    // objs.forEach( obj => {
-    //   obj.material.clippingPlanes = this.planes.map( c => c.plane )
-    // } )
 
+    this.viewer.renderer.localClippingEnabled = true;
+    var objs = this.viewer.sceneManager.objects;
+    objs.forEach(obj => {
+      obj.material.clippingPlanes = this.planes.map(c => c.plane);
+    });
     this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       transparent: true,
       opacity: 0.6,
@@ -1720,9 +1717,11 @@ var SectionBox = /*#__PURE__*/function () {
   _createClass(SectionBox, [{
     key: "setFromBbox",
     value: function setFromBbox(bbox) {
+      console.log("hi");
+
       for (var p of this.planes) {
         // reset plane
-        p.plane.set(p.plane.normal, 1.01);
+        p.plane.set(p.plane.normal, 1);
         var c = 0; // planes point inwards - if negative select max part of bbox
 
         if (p.plane.normal.dot(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1)) > 0) {
@@ -1817,8 +1816,8 @@ var SectionBox = /*#__PURE__*/function () {
     value: function toggleSectionBox(_bool) {
       var bool = _bool || !this.visible;
       this.visible = bool;
-      this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p, c) => [...p, c.plane], []) : [];
-      this.display.visible = bool;
+      this.display.visible = bool; // what's the tradeoff for having the clipping planes in material vs in the renderer?
+      // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
     }
   }]);
 

@@ -82,27 +82,27 @@ export default class SectionBox {
     this.planes = [
       {
         axis: '+x', // right, x positive
-        plane:new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 1.01 ),
+        plane:new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 1 ),
         indices: [5,4,6,7],
       },{
         axis: '-x', // left, x negative
-        plane: new THREE.Plane( new THREE.Vector3( - 1, 0, 0 ), 1.01 ),
+        plane: new THREE.Plane( new THREE.Vector3( - 1, 0, 0 ), 1 ),
         indices: [0,1,3,2],
       },{
         axis: '+y', // out, y positive
-        plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 1.01 ),   
+        plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 1 ),   
         indices: [2,3,6,7],
       },{
         axis: '-y', // in, y negative
-        plane:new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 1.01 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, - 1, 0 ), 1 ),
         indices: [5,4,1,0],
       },{
         axis: '+z', // up, z positive
-        plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 1.01 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 1 ),
         indices: [1,3,6,4],
       },{
         axis: '-z', // down, z negative
-        plane:new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 1.01 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 0, - 1 ), 1 ),
         indices: [0,2,7,5],
       }];
 
@@ -111,11 +111,12 @@ export default class SectionBox {
     
     // adds clipping planes to all materials
     // better to add clipping planes to renderer
-    // this.viewer.renderer.localClippingEnabled = true
-    // let objs = this.viewer.sceneManager.objects
-    // objs.forEach( obj => {
-    //   obj.material.clippingPlanes = this.planes.map( c => c.plane )
-    // } )
+    this.viewer.renderer.localClippingEnabled = true
+
+    let objs = this.viewer.sceneManager.objects
+    objs.forEach( obj => {
+      obj.material.clippingPlanes = this.planes.map( c => c.plane )
+    } )
     
     this.hoverMat = new THREE.MeshStandardMaterial( {
       transparent: true,
@@ -226,9 +227,10 @@ export default class SectionBox {
 
   // boxMesh = bbox
   setFromBbox(bbox){
+    console.log("hi")
     for(let p of this.planes) {
       // reset plane
-      p.plane.set(p.plane.normal, 1.01)
+      p.plane.set(p.plane.normal, 1)
       let c = 0
       // planes point inwards - if negative select max part of bbox
       if(p.plane.normal.dot(new THREE.Vector3(1,1,1)) > 0){
@@ -325,7 +327,9 @@ export default class SectionBox {
   toggleSectionBox(_bool){
     let bool = _bool || !this.visible
     this.visible = bool
-    this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
     this.display.visible = bool
+    
+    // what's the tradeoff for having the clipping planes in material vs in the renderer?
+    // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
   }
 }
