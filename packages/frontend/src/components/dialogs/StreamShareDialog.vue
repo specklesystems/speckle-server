@@ -160,6 +160,7 @@ export default {
   methods: {
     async removeUser(user) {
       this.loading = true
+      this.$matomo && this.$matomo.trackPageView('stream/remove-collaborator')
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -201,6 +202,7 @@ export default {
       this.$apollo.queries.stream.refetch()
     },
     async grantPermissionUser(user) {
+      this.$matomo && this.$matomo.trackPageView('stream/add-collaborator')
       try {
         await this.$apollo.mutate({
           mutation: gql`

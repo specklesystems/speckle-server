@@ -99,6 +99,7 @@ export default {
   methods: {
     async deleteStream() {
       this.isLoading = true
+      this.$matomo && this.$matomo.trackPageView('stream/delete')
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -121,6 +122,7 @@ export default {
         return
       }
       this.isLoading = true
+      this.$matomo && this.$matomo.trackPageView('stream/update')
       try {
         await this.$apollo.mutate({
           mutation: gql`

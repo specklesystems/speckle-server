@@ -65,6 +65,7 @@ export default {
   watch: {},
   methods: {
     async updateUser() {
+      this.$matomo && this.$matomo.trackPageView('user/update')
       try {
         this.isLoading = true
         await this.$apollo.mutate({

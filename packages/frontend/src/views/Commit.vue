@@ -137,6 +137,7 @@ export default {
       this.$refs.commitDialog.open(this.stream.commit, this.stream.id).then((dialog) => {
         if (!dialog.result) return
 
+        this.$matomo && this.$matomo.trackPageView('commit/update')
         this.$apollo
           .mutate({
             mutation: gql`

@@ -75,7 +75,7 @@ export default {
           (v && this.allBranchNames.findIndex((e) => e === v) === -1) ||
           'A branch with this name already exists',
         (v) => (v && v.length <= 25) || 'Name must be less than 25 characters',
-        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters',
+        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
       description: this.branch.description,
       isEdit: false,
@@ -113,6 +113,7 @@ export default {
   methods: {
     async deleteBranch() {
       this.loading = true
+      this.$matomo && this.$matomo.trackPageView('branch/delete')
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -135,6 +136,7 @@ export default {
     },
     async updateBranch() {
       this.loading = true
+      this.$matomo && this.$matomo.trackPageView('branch/update')
       await this.$apollo.mutate({
         mutation: gql`
           mutation branchUpdate($params: BranchUpdateInput!) {

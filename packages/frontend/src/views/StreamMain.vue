@@ -209,7 +209,6 @@ export default {
     }
   },
   mounted() {
-    this.$matomo && this.$matomo.trackPageView('streams/single')
     this.$apollo.queries.branches.refetch()
     this.$apollo.queries.description.refetch()
     this.$apollo.queries.commits.refetch()
