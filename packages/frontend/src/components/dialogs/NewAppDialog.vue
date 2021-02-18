@@ -167,6 +167,7 @@ export default {
       this.$emit('close')
     },
     async createApp() {
+      this.$matomo && this.$matomo.trackPageView('user/app/create')
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`
