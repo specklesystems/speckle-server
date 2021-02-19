@@ -168,7 +168,6 @@ export default class Coverter {
       if ( !obj ) return
 
       let conversionFactor = getConversionFactor( obj.units )
-      // console.log( conversionFactor )
       let buffer = new THREE.BufferGeometry( )
       let indices = [ ]
 
@@ -250,8 +249,6 @@ export default class Coverter {
     delete object.displayValue
     delete object.segments
 
-    console.log( 'Polycurve to buffer', obj )
-
     let buffers = []
     for ( let i = 0; i < obj.segments.length; i++ ) {
       const element = obj.segments[i]
@@ -278,7 +275,6 @@ export default class Coverter {
     obj.knots = await this.dechunk( obj.knots )
 
     try {
-      console.log( 'Curve to buffer', obj )
       let conversionFactor = getConversionFactor( obj.units )
       
       // Convert points+weights to Vector4
@@ -379,7 +375,6 @@ export default class Coverter {
     const center = new THREE.Vector3( obj.plane.origin.value[0],obj.plane.origin.value[1],obj.plane.origin.value[2] )
     const xAxis = new THREE.Vector3( obj.plane.xdir.value[0],obj.plane.xdir.value[1],obj.plane.xdir.value[2] )
     const yAxis = new THREE.Vector3( obj.plane.ydir.value[0],obj.plane.ydir.value[1],obj.plane.ydir.value[2] )
-    console.log( center,xAxis,yAxis )
 
     let resolution = 2 * Math.PI * obj.radius1 / 0.1
     resolution = parseInt( resolution.toString() )
@@ -395,7 +390,7 @@ export default class Coverter {
       let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
       points.push( pt )
     }
-    console.log( points )
+
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.value
@@ -403,6 +398,4 @@ export default class Coverter {
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
-  
-  // async SurfaceToBufferGeometry( obj ) {}
 }

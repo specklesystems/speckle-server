@@ -41,9 +41,9 @@ export default class SceneObjectManager {
       envMap: this.viewer.cubeCamera.renderTarget.texture
     } )
 
-    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x000000 } )
+    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
 
-    this.pointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, color: 0x000000 } )
+    this.pointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, color: 0x7F7F7F } )
 
     this.objectIds = []
     this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
@@ -78,7 +78,7 @@ export default class SceneObjectManager {
         // Is it a transparent material?
         if ( renderMat.opacity !== 1 ) {
           let material = this.transparentMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
 
           material.color = color
           material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -87,7 +87,7 @@ export default class SceneObjectManager {
         // It's not a transparent material!
         } else {
           let material = this.solidMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
 
           material.color = color
           material.metalness = renderMat.metalness
@@ -98,7 +98,7 @@ export default class SceneObjectManager {
       } else {
         // If we don't have defined material, just use the default
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+        material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
 
         this.addSolid( wrapper, material )
       }
@@ -158,6 +158,9 @@ export default class SceneObjectManager {
     }
     this.solidObjects.clear()
     this.transparentObjects.clear()
+    this.lineObjects.clear()
+    this.pointObjects.clear()
+
     this.viewer.selectionHelper.unselect()
     this.objectIds = []
 
@@ -170,7 +173,7 @@ export default class SceneObjectManager {
 
     let sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
 
-    this.viewer.sectionBox.setFromBbox(sceneBox)
+    this.viewer.sectionBox.setFromBbox( sceneBox )
   }
 
   zoomToObject( target ) {
@@ -189,37 +192,23 @@ export default class SceneObjectManager {
     this.zoomToBox( box )
   }
 
-  // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
-  // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
-  // look better. Could we do the same thing somehow when controls stop moving?
   zoomToBox( box ) {
     const fitOffset = 1.2
 
     const size = box.getSize( new THREE.Vector3() )
-    const center = box.getCenter( new THREE.Vector3() )
+    let target = new THREE.Sphere()
+    box.getBoundingSphere( target )
+
+    this.viewer.controls.fitToSphere( target, true )
 
     const maxSize = Math.max( size.x, size.y, size.z )
     const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
     const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
     const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
 
-    const direction = this.viewer.controls.target.clone()
-      .sub( this.viewer.camera.position )
-      .normalize()
-      .multiplyScalar( distance )
+    this.viewer.controls.minDistance = distance / 10
+    this.viewer.controls.maxDistance = distance * 10
 
-    this.viewer.controls.maxDistance = distance * 20
-
-    // Changing the contol's target causes 
-    // projection math @ SectionBox on('object-drag') to fail
-    // this.viewer.controls.target.copy( center )
-
-    this.viewer.camera.near = distance / 100
-    this.viewer.camera.far = distance * 100
-    this.viewer.camera.position.copy( this.viewer.controls.target ).sub( direction )
-
-    this.viewer.controls.update()
-    this.viewer.camera.updateProjectionMatrix()
   }
 
   _argbToRGB( argb ) {

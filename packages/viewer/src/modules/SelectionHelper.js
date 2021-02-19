@@ -12,7 +12,7 @@ import EventEmitter from './EventEmitter'
  * TODOs:
  * - Ensure clipped geometry is not selected.
  * - When objects are disposed, ensure selection is reset.
- * 
+ *
  * optional param to configure SelectionHelper
  * _options = {
  *             subset: THREE.Group
@@ -29,53 +29,65 @@ export default class SelectionHelper extends EventEmitter {
 
     // Handle clicks during camera moves
     this.orbiting = false
-    this.viewer.controls.addEventListener( 'change', debounce( () => { this.orbiting = false }, 100 ) )
-    this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
-    this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
+    // this.viewer.controls.addEventListener( 'control', debounce( () => { this.orbiting = false; console.log( 'ctrlstart '+  this.orbiting ) }, 200 ) )
+    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true; console.log( 'wake' ) } )
+    // this.viewer.controls.addEventListener( 'controlend', () => { this.orbiting = false; console.log( 'controlend' ) } )
+    this.viewer.controls.addEventListener( 'sleep', () => { this.orbiting = false; console.log( 'sleep' ) } )
+
+    // this.viewer.controls.addEventListener( 'change', debounce( () => { this.orbiting = false }, 100 ) )
+    // this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
+    // this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
-    this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
-    
-    this.pointerDown = false;
+    this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null
+
+    this.pointerDown = false
     // this.hoverObj = null
-    
+
     // optional param allows for hover
-    if(typeof _options !== 'undefined' && _options.hover) {
+    if ( typeof _options !== 'undefined' && _options.hover ) {
       // doesn't feel good when debounced, might be necessary tho
-      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce((e) => {
-        let hovered = this.getClickedObjects(e)
-        
+      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
+        let hovered = this.getClickedObjects( e )
+
         // dragging event, this shouldn't be under the "hover option"
-        if(this.pointerDown) {
-          this.emit('object-drag', hovered, this._getNormalisedClickPosition(e))
+        if ( this.pointerDown ) {
+          this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
           return
         }
-        
-        this.emit('hovered', hovered, e)
-      },0))
+
+        this.emit( 'hovered', hovered, e )
+      },0 ) )
     }
 
     // dragging event, this shouldn't be under the "hover option"
-    if(typeof _options !== 'undefined' && _options.hover) {
-      this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce(( e ) => {
+    if ( typeof _options !== 'undefined' && _options.hover ) {
+      this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce( ( e ) => {
         this.pointerDown = true
 
         if ( this.orbiting ) return
-          
-        this.emit( 'mouse-down', this.getClickedObjects(e))
-      },100))
+
+        this.emit( 'mouse-down', this.getClickedObjects( e ) )
+      }, 100 ) )
     }
 
     // Handle mouseclicks
-    this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
-      this.pointerDown = false
+    let mdTime
+    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+      mdTime = new Date().getTime()
+    } )
 
-      if ( this.orbiting ) return
+    this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      let delta = new Date().getTime() - mdTime
+      console.log( delta )
+      this.pointerDown = false
+      console.log( 'pointerup: ' + this.orbiting )
+      if ( this.orbiting && delta > 250 ) return
 
       let selectionObjects = this.getClickedObjects( e )
-      
-      this.emit('object-clicked', selectionObjects)
+
+      this.emit( 'object-clicked', selectionObjects )
     } )
 
     // Doubleclicks on touch devices
@@ -83,7 +95,7 @@ export default class SelectionHelper extends EventEmitter {
     this.tapTimeout
     this.lastTap = 0
     this.touchLocation
-    
+
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
     this.viewer.renderer.domElement.addEventListener( 'touchend', ( event ) => {
       var currentTime = new Date().getTime()
@@ -133,17 +145,17 @@ export default class SelectionHelper extends EventEmitter {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
-    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects )
+    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren( this.subset ) : this.viewer.sceneManager.objects )
     intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects
   }
 
   // get all children of a subset passed as a THREE.Group
-  _getGroupChildren(group){
+  _getGroupChildren( group ){
     let children = []
-    if(group.children.length === 0) return [group]
-    group.children.forEach((c,i,a) => children = [...children, ...this._getGroupChildren(c)])
+    if ( group.children.length === 0 ) return [ group ]
+    group.children.forEach( ( c,i,a ) => children = [ ...children, ...this._getGroupChildren( c ) ] )
     return children
   }
 
