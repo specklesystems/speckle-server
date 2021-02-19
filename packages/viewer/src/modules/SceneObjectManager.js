@@ -68,6 +68,7 @@ export default class SceneObjectManager {
 
 
     switch ( wrapper.geometryType ) {
+
     case 'solid':
       // Do we have a defined material?
       if ( wrapper.meta.renderMaterial ) {
@@ -103,9 +104,11 @@ export default class SceneObjectManager {
         this.addSolid( wrapper, material )
       }
       break
+
     case 'line':
       this.addLine( wrapper )
       break
+
     case 'point':
       this.addPoint( wrapper )
       break
@@ -206,9 +209,11 @@ export default class SceneObjectManager {
     const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
     const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
 
-    this.viewer.controls.minDistance = distance / 10
-    this.viewer.controls.maxDistance = distance * 10
-
+    this.viewer.controls.minDistance = distance / 100
+    this.viewer.controls.maxDistance = distance * 100
+    this.viewer.camera.near = distance / 100
+    this.viewer.camera.far = distance * 100
+    this.viewer.camera.updateProjectionMatrix()
   }
 
   _argbToRGB( argb ) {

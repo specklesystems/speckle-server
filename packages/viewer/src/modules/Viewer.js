@@ -47,7 +47,7 @@ export default class Viewer extends EventEmitter {
     CameraControls.install( { THREE: THREE } )
     this.controls = new CameraControls( this.camera, this.renderer.domElement )
     this.controls.maxPolarAngle = Math.PI / 2
-    this.controls.dampingFactor = 0.1
+    // this.controls.dampingFactor = 0.1
 
     this.composer = new EffectComposer( this.renderer )
 
@@ -61,7 +61,7 @@ export default class Viewer extends EventEmitter {
 
     this.pauseSSAO = false
     this.controls.addEventListener( 'wake', () => { this.pauseSSAO = true } )
-    this.controls.addEventListener( 'controlend', () => { this.pauseSSAO = false } )
+    this.controls.addEventListener( 'sleep', () => { this.pauseSSAO = false; this.needsRender = true } )
 
     // Selected Objects
     this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )

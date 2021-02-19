@@ -3,7 +3,7 @@ import Viewer from './modules/Viewer'
 import ObjectLoader from './modules/ObjectLoader'
 import Converter from './modules/Converter'
 
-let v = new Viewer( { container: document.getElementById( 'renderer' ) } )
+let v = new Viewer( { container: document.getElementById( 'renderer' ), showStats: true } )
 v.on( 'load-progress', args => console.log( args ) )
 
 window.v = v
