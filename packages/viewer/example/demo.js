@@ -224,7 +224,8 @@ function _asyncIterator(iterable) { var method; if (typeof Symbol !== "undefined
 
 
 var v = new _modules_Viewer__WEBPACK_IMPORTED_MODULE_0__.default({
-  container: document.getElementById('renderer')
+  container: document.getElementById('renderer'),
+  showStats: true
 });
 v.on('load-progress', args => console.log(args));
 window.v = v;
@@ -937,9 +938,150 @@ var EventEmitter = /*#__PURE__*/function () {
 
       this._events[name].forEach(fireCallbacks);
     }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this._events = null;
+    }
   }]);
 
   return EventEmitter;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/modules/InteractionHandler.js":
+/*!*******************************************!*\
+  !*** ./src/modules/InteractionHandler.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ InteractionHandler
+/* harmony export */ });
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var _SectionBox__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SectionBox */ "./src/modules/SectionBox.js");
+/* harmony import */ var _SectionBox2__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./SectionBox2 */ "./src/modules/SectionBox2.js");
+/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
+
+
+
+var InteractionHandler = /*#__PURE__*/function () {
+  function InteractionHandler(viewer) {
+    _classCallCheck(this, InteractionHandler);
+
+    this.viewer = viewer; // this.sectionBox = new SectionBox( this.viewer )
+
+    this.sectionBoxEnabled = false;
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_3__.default(this.viewer, this.viewer.sceneManager.userObjects);
+    this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
+      color: 0x0B55D2,
+      emissive: 0x0B55D2,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+    }); // this.selectionMaterial.clippingPlanes = this.sectionBox.planes.map( c => c.plane )
+
+    this.selectionEdgesMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({
+      color: 0x23F3BD
+    }); // this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes.map( c => c.plane )
+
+    this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.viewer.scene.add(this.selectedObjects);
+    this.selectedObjects.renderOrder = 1000;
+    this.selectionHelper.on('object-doubleclicked', this._handleDoubleClick.bind(this));
+    this.selectionHelper.on('object-clicked', this._handleSelect.bind(this));
+  }
+
+  _createClass(InteractionHandler, [{
+    key: "_handleDoubleClick",
+    value: function _handleDoubleClick(objs) {
+      if (!objs || objs.length === 0) this.viewer.sceneManager.zoomExtents();else this.viewer.sceneManager.zoomToObject(objs[0].object);
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "_handleSelect",
+    value: function _handleSelect(obj) {
+      if (obj.length === 0) {
+        this.deselectObjects();
+        return;
+      }
+
+      if (!this.selectionHelper.multiSelect) this.deselectObjects();
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
+      this.selectedObjects.add(mesh);
+      var bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(mesh);
+      var size = bbox.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
+      bbox.expandByVector(size.multiplyScalar(0.1));
+      var helper = new three__WEBPACK_IMPORTED_MODULE_0__.Box3Helper(bbox, 0x29308C);
+      helper.material = this.selectionEdgesMaterial; // TODO: if selection box is active, add planes to helper material clipping
+
+      this.selectedObjects.add(helper);
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "deselectObjects",
+    value: function deselectObjects() {
+      this.selectedObjects.clear();
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "toggleSectionBox",
+    value: function toggleSectionBox() {
+      this.sectionBoxEnabled = !this.sectionBoxEnabled;
+
+      if (this.sectionBoxEnabled) {
+        this.showSelectionBox();
+      } else {
+        this.hideSelectionBox();
+      }
+    }
+  }, {
+    key: "showSelectionBox",
+    value: function showSelectionBox() {
+      this.viewer.renderer.localClippingEnabled = true;
+      var bbox = null;
+      var setFromSelection = false;
+
+      if (this.selectedObjects.children.length > 0) {
+        bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.selectedObjects.children[0]);
+        setFromSelection = true;
+      } else {
+        bbox = this.viewer.sceneManager.getSceneBoundingBox();
+      }
+
+      this.viewer.sceneManager.zoomToBox(bbox);
+      this.sectionBox.setFromBbox(bbox, setFromSelection ? 0.3 : 0.1);
+      this.sectionBox.display.visible = true;
+      this.viewer.needsRender = true;
+      this.sectionBoxEnabled = true;
+    }
+  }, {
+    key: "hideSelectionBox",
+    value: function hideSelectionBox() {
+      this.viewer.renderer.localClippingEnabled = false;
+      this.sectionBox.display.visible = false;
+      this.viewer.needsRender = true;
+      this.sectionBoxEnabled = false;
+    }
+  }, {
+    key: "test",
+    value: function test() {
+      var tt = new _SectionBox2__WEBPACK_IMPORTED_MODULE_2__.default(this.viewer);
+    }
+  }]);
+
+  return InteractionHandler;
 }();
 
 
@@ -1305,15 +1447,15 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
 
             if (renderMat.opacity !== 1) {
-              var material = this.transparentMaterial.clone();
-              material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
+              var material = this.transparentMaterial.clone(); // material.clippingPlanes = this.viewer.interactions.sectionBox.planes.map( p => p.plane )
+
               material.color = color;
               material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
-              var _material = this.solidMaterial.clone();
+              var _material = this.solidMaterial.clone(); // material.clippingPlanes = this.viewer.interactions.sectionBox.planes.map( p => p.plane )
 
-              _material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
+
               _material.color = color;
               _material.metalness = renderMat.metalness;
               if (_material.metalness !== 0) _material.roughness = 0.1;
@@ -1323,9 +1465,9 @@ var SceneObjectManager = /*#__PURE__*/function () {
             }
           } else {
             // If we don't have defined material, just use the default
-            var _material2 = this.solidMaterial.clone();
+            var _material2 = this.solidMaterial.clone(); // material.clippingPlanes = this.viewer.interactions.sectionBox.planes.map( p => p.plane )
 
-            _material2.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
+
             this.addSolid(wrapper, _material2);
           }
 
@@ -1395,7 +1537,8 @@ var SceneObjectManager = /*#__PURE__*/function () {
       this.transparentObjects.clear();
       this.lineObjects.clear();
       this.pointObjects.clear();
-      this.viewer.selectionHelper.unselect();
+      this.viewer.interactions.deselectObjects();
+      this.viewer.interactions.hideSelectionBox();
       this.objectIds = [];
 
       this._postLoadFunction();
@@ -1405,8 +1548,18 @@ var SceneObjectManager = /*#__PURE__*/function () {
     value: function _postLoadFunction() {
       this.zoomExtents();
       this.viewer.reflectionsNeedUpdate = true;
-      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
-      this.viewer.sectionBox.setFromBbox(sceneBox);
+    }
+  }, {
+    key: "getSceneBoundingBox",
+    value: function getSceneBoundingBox() {
+      if (this.objects.length === 0) {
+        var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
+
+        return _box;
+      }
+
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.userObjects);
+      return box;
     }
   }, {
     key: "zoomToObject",
@@ -1417,17 +1570,17 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "zoomExtents",
     value: function zoomExtents() {
-      var bboxTarget = this.userObjects;
-
       if (this.objects.length === 0) {
-        var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
+        var _box2 = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
 
-        this.zoomToBox(_box);
+        this.zoomToBox(_box2);
+        this.viewer.controls.setBoundary(_box2);
         return;
       }
 
-      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(bboxTarget);
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.userObjects);
       this.zoomToBox(box);
+      this.viewer.controls.setBoundary(box);
     }
   }, {
     key: "zoomToBox",
@@ -1436,13 +1589,17 @@ var SceneObjectManager = /*#__PURE__*/function () {
       var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       var target = new three__WEBPACK_IMPORTED_MODULE_0__.Sphere();
       box.getBoundingSphere(target);
+      target.radius = target.radius * fitOffset;
       this.viewer.controls.fitToSphere(target, true);
       var maxSize = Math.max(size.x, size.y, size.z);
       var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
       var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
       var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
-      this.viewer.controls.minDistance = distance / 10;
-      this.viewer.controls.maxDistance = distance * 10;
+      this.viewer.controls.minDistance = distance / 100;
+      this.viewer.controls.maxDistance = distance * 100;
+      this.viewer.camera.near = distance / 100;
+      this.viewer.camera.far = distance * 100;
+      this.viewer.camera.updateProjectionMatrix();
     }
   }, {
     key: "_argbToRGB",
@@ -1525,6 +1682,13 @@ var SectionBox = /*#__PURE__*/function () {
     //defaults to invisible
     var vis = _vis || false;
     this.viewer = viewer;
+    this.orbiting = false;
+    this.viewer.controls.addEventListener('wake', () => {
+      this.orbiting = true;
+    });
+    this.viewer.controls.addEventListener('controlend', () => {
+      this.orbiting = false;
+    });
     this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
     this.display.visible = vis;
     this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
@@ -1535,25 +1699,22 @@ var SectionBox = /*#__PURE__*/function () {
     this.display.add(this.displayHover);
     this.viewer.scene.add(this.display); // basic display of the section box
 
-    this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial(); // the box itself
+    this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      transparent: true,
+      opacity: 0.1,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+      color: 0x0A66FF,
+      metalness: 0.01,
+      roughness: 0.75
+    }); // the box itself
 
     this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
     this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
-    this.boxMesh.visible = false;
     this.boxMesh.geometry.computeBoundingBox();
     this.boxMesh.geometry.computeBoundingSphere();
-    this.displayBox.add(this.boxMesh);
-    this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
-      color: 0x0A66FF,
-      linewidth: 4
-    }); // show box edges
-
-    edges.map(val => {
-      var pts = [this.boxGeo.vertices[val[0]].clone(), this.boxGeo.vertices[val[1]].clone()];
-      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
-      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
-      this.displayEdges.add(line);
-    }); // normal of plane being hovered
+    this.displayBox.add(this.boxMesh); // const edges = new THREE.EdgesGeometry( this.boxGeo )
+    // this.line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xDF66FF } ) )
+    // normal of plane being hovered
 
     this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
     this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
@@ -1569,39 +1730,38 @@ var SectionBox = /*#__PURE__*/function () {
     this.planes = [{
       axis: '+x',
       // right, x positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 0),
       indices: [5, 4, 6, 7]
     }, {
       axis: '-x',
       // left, x negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 0),
       indices: [0, 1, 3, 2]
     }, {
       axis: '+y',
       // out, y positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 0),
       indices: [2, 3, 6, 7]
     }, {
       axis: '-y',
       // in, y negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 0),
       indices: [5, 4, 1, 0]
     }, {
       axis: '+z',
       // up, z positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 0),
       indices: [1, 3, 6, 4]
     }, {
       axis: '-z',
       // down, z negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1),
+      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 0),
       indices: [0, 2, 7, 5]
-    }]; // plane helpers
-    // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
-    // adds clipping planes to all materials
-    // better to add clipping planes to renderer
+    }]; // this.planes.forEach( p => {
+    //   const helper = new THREE.PlaneHelper( p.plane, 1, 0xffff00 )
+    //   this.display.add( helper )
+    // } )
 
-    this.viewer.renderer.localClippingEnabled = true;
     this.viewer.sceneManager.objects.forEach(obj => {
       obj.material.clippingPlanes = this.planes.map(c => c.plane);
     });
@@ -1609,15 +1769,24 @@ var SectionBox = /*#__PURE__*/function () {
       transparent: true,
       opacity: 0.1,
       color: 0x0A66FF,
-      // color: 0xE91E63,
       metalness: 0.1,
       roughness: 0.75
-    }); // hovered event handler
+    }); // Selection Helper seems unecessary for this type of thing
+
+    this.viewer.renderer.domElement.addEventListener('pointerup', e => {
+      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+      this.tempVerts = [];
+      this.viewer.controls.enabled = true;
+      this.dragging = false;
+    });
+    var cuttingPlane = null;
+    var hoverPlane = null; // hovered event handler
 
     this.selectionHelper.on('hovered', (obj, e) => {
-      if (!this.display.visible) return;
+      if (this.orbiting) return;
 
       if (obj.length === 0 && !this.dragging) {
+        this.viewer.controls.enabled = true;
         this.displayHover.clear();
         this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
         this.viewer.controls.enabled = true;
@@ -1627,38 +1796,64 @@ var SectionBox = /*#__PURE__*/function () {
         return;
       }
 
+      this.viewer.controls.enabled = false;
       this.viewer.renderer.domElement.style.cursor = 'pointer';
-      var index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal.clone().negate()));
-      if (index < 0) return; // this should never be the case?
 
-      var planeObj = this.planes[index];
-      var plane = planeObj.plane;
-      if (plane.normal.equals(this.hoverPlane)) return;
-      this.hoverPlane = plane.normal.clone();
-      this.updateHover(planeObj);
-    }); // Selection Helper seems unecessary for this type of thing
+      switch (obj[0].faceIndex) {
+        case 0:
+        case 1:
+          cuttingPlane = this.planes[0];
+          hoverPlane = this.planes[1];
+          break;
 
-    this.viewer.renderer.domElement.addEventListener('pointerup', e => {
-      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      this.tempVerts = [];
-      this.viewer.controls.enabled = true;
-      this.dragging = false;
+        case 2:
+        case 3:
+          cuttingPlane = this.planes[1];
+          hoverPlane = this.planes[0];
+          break;
+
+        case 4:
+        case 5:
+          cuttingPlane = this.planes[2];
+          hoverPlane = this.planes[3];
+          break;
+
+        case 6:
+        case 7:
+          cuttingPlane = this.planes[3];
+          hoverPlane = this.planes[2];
+          break;
+
+        case 8:
+        case 9:
+          cuttingPlane = this.planes[4];
+          hoverPlane = this.planes[5];
+          break;
+
+        case 10:
+        case 11:
+          cuttingPlane = this.planes[5];
+          hoverPlane = this.planes[4];
+          break;
+      } // this.hoverPlane = plane.normal.clone()
+
+
+      this.updateHover(hoverPlane);
     }); // get screen space vector of plane normal
     // project mouse displacement vector onto it
     // move plane by that much
 
     this.selectionHelper.on('object-drag', (obj, e) => {
+      if (this.orbiting) return;
       if (!this.display.visible) return; // exit if we don't have a valid hoverPlane
-
-      if (this.hoverPlane.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) return; // exit if we're clicking on nothing
+      // if ( this.hoverPlane.equals( new THREE.Vector3() ) ) return
+      // exit if we're clicking on nothing
 
       if (!obj.length && !this.dragging) return;
       this.viewer.controls.enabled = false;
       this.viewer.renderer.domElement.style.cursor = 'move';
       this.dragging = true;
-      var index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane));
-      var planeObj = this.planes[index];
-      var plane = planeObj.plane;
+      var plane = hoverPlane.plane;
 
       if (this.pointer.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) {
         this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
@@ -1679,23 +1874,15 @@ var SectionBox = /*#__PURE__*/function () {
       zoom *= 0.75;
       d = d * zoom; // limit plane from crossing it's pair
 
-      var hoverOpp = this.hoverPlane.clone().negate();
-      var indexOpp = this.planes.findIndex(p => p.plane.normal.equals(hoverOpp));
-      var planeObjOpp = this.planes[indexOpp];
-      var dist = planeObj.plane.constant + planeObjOpp.plane.constant;
+      var planeObjOpp = cuttingPlane;
+      var dist = hoverPlane.plane.constant + planeObjOpp.plane.constant;
       var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal); // are we moving towards the limiting plane?
 
-      var dot = displacement.clone().normalize().dot(plane.normal); // if displacement + padding is greater than limit,
-      // and we're moving towards the limiting plane
-
-      if (dist < d && dot > 0) {
-        d = dist * 0.001;
-        displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal);
-      }
-
-      plane.translate(displacement);
-      this.updateBoxFace(planeObj, displacement);
-      this.updateHover(planeObj);
+      var dot = displacement.clone().normalize().dot(plane.normal);
+      if (dist < 0.1 && dot < 0) return;
+      cuttingPlane.plane.translate(displacement);
+      this.updateBoxFace(hoverPlane, displacement);
+      this.updateHover(hoverPlane);
       this.viewer.needsRender = true;
     });
   } // boxMesh = bbox
@@ -1703,28 +1890,39 @@ var SectionBox = /*#__PURE__*/function () {
 
   _createClass(SectionBox, [{
     key: "setFromBbox",
-    value: function setFromBbox(bbox) {
-      // add a little padding to the box
-      bbox.max.addScalar(10);
-      bbox.min.subScalar(10);
+    value: function setFromBbox(bbox, offset) {
+      bbox = bbox.clone(); // add a little padding to the box
 
-      for (var p of this.planes) {
-        // reset plane
-        // p.plane.set(p.plane.normal, 1)
-        var c = 0; // planes point inwards - if negative select max part of bbox
+      var size = bbox.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
+      if (offset) bbox.expandByVector(size.multiplyScalar(offset));
+      var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(bbox.max, bbox.min);
+      var boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
+      var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(bbox.min, bbox.max).multiplyScalar(0.5));
+      boxGeo.applyMatrix4(matrix);
+      var k = 0;
 
-        if (p.plane.normal.dot(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1)) > 0) {
-          c = p.plane.normal.clone().multiply(bbox.min);
-        } else {
-          c = p.plane.normal.clone().multiply(bbox.max);
-        }
+      for (var i = 0; i < boxGeo.faces.length; i += 2) {
+        var plane = this.planes[k];
+        var face = boxGeo.faces[i];
+        plane.plane.setFromCoplanarPoints(boxGeo.vertices[face.c], boxGeo.vertices[face.b], boxGeo.vertices[face.a]);
+        k++;
+      } // update box geometry
 
-        var diff = c.length() - p.plane.constant; // displacement
 
-        var d = p.plane.normal.clone().negate().multiplyScalar(diff);
-        this.updateBoxFace(p, d);
-        p.plane.translate(d);
+      for (var _i = 0; _i < boxGeo.vertices.length; _i++) {
+        var vert = boxGeo.vertices[_i];
+
+        this.boxMesh.geometry.vertices[_i].set(vert.x, vert.y, vert.z);
       }
+
+      this.boxMesh.geometry.verticesNeedUpdate = true;
+      this.boxMesh.geometry.computeBoundingBox();
+      this.boxMesh.geometry.computeBoundingSphere();
+      var edges = new three__WEBPACK_IMPORTED_MODULE_0__.EdgesGeometry(this.boxMesh.geometry);
+      var line = new three__WEBPACK_IMPORTED_MODULE_0__.LineSegments(edges, new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({
+        color: 0xffffff
+      }));
+      this.displayEdges.add(line);
     }
   }, {
     key: "updateBoxFace",
@@ -1735,28 +1933,7 @@ var SectionBox = /*#__PURE__*/function () {
       });
       this.boxMesh.geometry.verticesNeedUpdate = true;
       this.boxMesh.geometry.computeBoundingBox();
-      this.boxMesh.geometry.computeBoundingSphere();
-      this.updateEdges();
-    }
-  }, {
-    key: "updateEdges",
-    value: function updateEdges() {
-      this.displayEdges.clear();
-      edges.map(val => {
-        var ptA = this.boxMesh.geometry.vertices[val[0]].clone();
-        var ptB = this.boxMesh.geometry.vertices[val[1]].clone(); // translation
-
-        ptA.add(this.boxMesh.position);
-        ptB.add(this.boxMesh.position);
-        this.drawLine([ptA, ptB]);
-      });
-    }
-  }, {
-    key: "drawLine",
-    value: function drawLine(pts) {
-      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
-      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
-      this.displayEdges.add(line);
+      this.boxMesh.geometry.computeBoundingSphere(); // this.updateEdges()
     }
   }, {
     key: "updateHover",
@@ -1798,6 +1975,7 @@ var SectionBox = /*#__PURE__*/function () {
       hoverGeo.translate(centroid.x, centroid.y, centroid.z);
       var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
       this.displayHover.add(hoverMesh);
+      this.viewer.needsRender = true;
     }
   }, {
     key: "toggleSectionBox",
@@ -1805,8 +1983,7 @@ var SectionBox = /*#__PURE__*/function () {
       var bool = _bool || !this.visible;
       this.visible = bool;
       this.display.visible = bool;
-      this.viewer.needsRender = true; // what's the tradeoff for having the clipping planes in material vs in the renderer?
-      // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
+      this.viewer.needsRender = true;
     }
   }]);
 
@@ -1817,19 +1994,21 @@ var SectionBox = /*#__PURE__*/function () {
 
 /***/ }),
 
-/***/ "./src/modules/SectionPlaneHelper.js":
-/*!*******************************************!*\
-  !*** ./src/modules/SectionPlaneHelper.js ***!
-  \*******************************************/
+/***/ "./src/modules/SectionBox2.js":
+/*!************************************!*\
+  !*** ./src/modules/SectionBox2.js ***!
+  \************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => /* binding */ SectionPlaneHelper
+/* harmony export */   "default": () => /* binding */ SectionBox
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/TransformControls.js */ "./node_modules/three/examples/jsm/controls/TransformControls.js");
+/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
+/* harmony import */ var three_examples_jsm_helpers_FaceNormalsHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/helpers/FaceNormalsHelper.js */ "./node_modules/three/examples/jsm/helpers/FaceNormalsHelper.js");
+/* harmony import */ var three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/controls/TransformControls.js */ "./node_modules/three/examples/jsm/controls/TransformControls.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1838,150 +2017,232 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
-/**
- * WIP: A utility class for adding section planes to the scene.
- * - 'S' shows/hides section planes
- * - 's' toggles controls from translate to rotate
- */
 
-var SectionPlaneHelper = /*#__PURE__*/function () {
-  function SectionPlaneHelper(parent) {
-    _classCallCheck(this, SectionPlaneHelper);
 
-    this.viewer = parent;
-    this.cutters = [];
-    this.visible = false;
-    window.addEventListener('keydown', event => {
-      if (event.key === 's') {
-        this.toggleTransformControls();
+
+var SectionBox = /*#__PURE__*/function () {
+  function SectionBox(viewer, bbox) {
+    _classCallCheck(this, SectionBox);
+
+    this.viewer = viewer;
+    this.orbiting = false;
+    this.viewer.controls.addEventListener('wake', () => {
+      this.orbiting = true;
+    });
+    this.viewer.controls.addEventListener('controlend', () => {
+      this.orbiting = false;
+    });
+    this.box = bbox || this.viewer.sceneManager.getSceneBoundingBox();
+    var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(this.box.max, this.box.min);
+    this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
+    var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(this.box.min, this.box.max).multiplyScalar(0.5));
+    this.boxGeo.applyMatrix4(matrix);
+    this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0.31,
+      wireframe: true,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+      color: 0x0A66FF
+    }));
+    var plane = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1);
+    this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(plane, new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+      transparent: true,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+      opacity: 0.3,
+      color: 0x23F3BD,
+      metalness: 0.1,
+      roughness: 0.75
+    }));
+    this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.display.add(this.boxMesh);
+    this.boxMesh.attach(this.hoverPlane);
+    this.display.add(this.hoverPlane);
+    this.viewer.scene.add(this.display);
+    var vertex = this.boxGeo.vertices[5].clone().addScalar(0.1); // vertex.addScalar( 0.1 )
+
+    var sphereG = new three__WEBPACK_IMPORTED_MODULE_0__.SphereGeometry(0.001);
+    this.gizmoSphere = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(sphereG, new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial(0x29308C));
+    this.gizmoSphere.position.copy(vertex);
+    this.display.add(this.gizmoSphere);
+    this.boxMesh.userData.planes = [];
+    this.boxMesh.userData.indices = [];
+    this.planes = []; // this.normalHelper = new FaceNormalsHelper( this.boxMesh, 2, 0x00ff00, 1 )
+    // this.display.add( this.normalHelper )
+
+    this.controls = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_3__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
+    this.controls.setSize(0.5);
+    this.controls.attach(this.gizmoSphere);
+    this.display.add(this.controls);
+    this.planeControls = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_3__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement); // this.planeControls.attach( this.hoverPlane )
+    // this.planeControls.visible = false
+
+    this.display.add(this.planeControls);
+    var prevGizmoPos = this.gizmoSphere.position.clone();
+    this.controls.addEventListener('change', event => {
+      prevGizmoPos.sub(this.gizmoSphere.position);
+      this.boxMesh.translateX(-prevGizmoPos.x);
+      this.boxMesh.translateY(-prevGizmoPos.y);
+      this.boxMesh.translateZ(-prevGizmoPos.z);
+      prevGizmoPos = this.gizmoSphere.position.clone();
+      this.setFromBox(new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.boxMesh));
+      this.viewer.render();
+    });
+    this.controls.addEventListener('dragging-changed', event => {
+      this.viewer.controls.enabled = !event.value; // if ( this.viewer.controls.enabled ) this.viewer.sceneManager.zoomToObject( this.boxMesh )
+    });
+
+    for (var i = 0; i < this.boxGeo.faces.length; i += 2) {
+      var face = this.boxGeo.faces[i];
+      var pairFace = this.boxGeo.faces[i + 1];
+
+      var _plane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane();
+
+      _plane.setFromCoplanarPoints(this.boxGeo.vertices[face.c], this.boxGeo.vertices[face.b], this.boxGeo.vertices[face.a]); // invert pts
+
+
+      var helper = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneHelper(_plane, 1, 0xffff00);
+      this.display.add(helper); // adding it twice for ease of use
+
+      this.boxMesh.userData.planes.push(_plane);
+      this.boxMesh.userData.planes.push(_plane);
+      this.boxMesh.userData.indices.push([face.a, face.b, face.c, pairFace.b]);
+      this.boxMesh.userData.indices.push([face.a, face.b, face.c, pairFace.b]);
+      this.planes.push(_plane);
+    }
+
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
+      subset: this.boxMesh,
+      hover: true
+    });
+    var prevIndex = -1;
+    var prevPointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+    document.addEventListener('pointerup', e => {
+      this.viewer.controls.enabled = true;
+
+      if (this.dragging) {
+        this.viewer.sceneManager.zoomToObject(this.boxMesh);
       }
 
-      if (event.key === 'S') {
-        this.toggleSectionPlanes();
+      this.dragging = false;
+      this.viewer.renderer.domElement.style.cursor = 'default';
+      prevIndex = -1;
+      prevPointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+    }); // let faceIndex
+
+    this.selectionHelper.on('hovered', (obj, e) => {
+      if (obj.length === 0 && !this.dragging) {
+        this.viewer.renderer.domElement.style.cursor = 'default';
+        this.hoverPlane.visible = false;
+        this.planeControls.detach();
+        this.viewer.controls.enabled = true;
+        this.viewer.needsRender = true;
+        prevIndex = -1;
+        return;
       }
-    }, false);
+
+      if (this.orbiting) return;
+      if (this.dragging) return;
+      this.hoverPlane.visible = true;
+      this.viewer.renderer.domElement.style.cursor = 'pointer';
+      var centre = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+      for (var _i = 0; _i < 4; _i++) {
+        var _vertex = this.boxGeo.vertices[obj[0].object.userData.indices[obj[0].faceIndex][_i]].clone();
+
+        var vertexClone = _vertex.clone();
+
+        _vertex.applyMatrix4(this.boxMesh.matrixWorld);
+
+        centre.add(_vertex);
+
+        this.hoverPlane.geometry.vertices[_i].set(vertexClone.x / 4, vertexClone.y / 4, vertexClone.z / 4);
+      }
+
+      centre.multiplyScalar(0.25);
+      this.hoverPlane.position.copy(centre);
+      this.hoverPlane.geometry.verticesNeedUpdate = true;
+      this.hoverPlane.geometry.computeBoundingBox();
+      this.hoverPlane.geometry.computeBoundingSphere();
+      this.planeControls.attach(this.hoverPlane);
+
+      if (obj[0].faceIndex !== prevIndex) {
+        this.viewer.needsRender = true;
+        prevIndex = obj[0].faceIndex;
+      }
+    });
+    this.selectionHelper.on('object-drag', (obj, e) => {
+      if (this.orbiting || !this.display.visible) return;
+      if (prevIndex === -1) return;
+      this.dragging = true;
+      this.viewer.renderer.domElement.style.cursor = 'move';
+      this.viewer.controls.enabled = false;
+      var plane = this.boxMesh.userData.planes[prevIndex];
+      var normal = plane.normal.clone();
+      this.viewer.camera.updateMatrixWorld();
+      normal.negate().project(this.viewer.camera);
+      normal.setComponent(2, 0).normalize();
+      if (prevPointer.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) prevPointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0);
+      var currentPointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0);
+      var mouseDeltaVector = prevPointer.clone().sub(currentPointer);
+      var dot = normal.dot(mouseDeltaVector);
+      var bbox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.boxMesh);
+      var dims = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(bbox.max, bbox.min);
+      if (dot > 0 && (dims.x < 0.2 || dims.y < 0.2 || dims.z < 0.2)) return;
+      var zoom = this.viewer.camera.getWorldPosition(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).length();
+      zoom *= 0.5;
+      dot *= zoom;
+      var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(dot, dot, dot).multiply(plane.normal);
+      plane.translate(displacement);
+      var indices = this.boxMesh.userData.indices[prevIndex];
+
+      for (var _i2 = 0; _i2 < 4; _i2++) {
+        var index = indices[_i2];
+        this.boxMesh.geometry.vertices[index].add(displacement);
+
+        this.hoverPlane.geometry.vertices[_i2].add(displacement);
+      }
+
+      this.boxMesh.geometry.verticesNeedUpdate = true;
+      this.boxMesh.geometry.computeBoundingBox();
+      this.boxMesh.geometry.computeBoundingSphere();
+      this.hoverPlane.geometry.verticesNeedUpdate = true;
+      this.hoverPlane.geometry.computeBoundingBox();
+      this.hoverPlane.geometry.computeBoundingSphere();
+      var gizmoPos = this.boxGeo.vertices[5].clone();
+      gizmoPos.addScalar(0.1);
+      gizmoPos.applyMatrix4(this.boxMesh.matrixWorld);
+      this.gizmoSphere.position.copy(gizmoPos);
+      prevGizmoPos = gizmoPos;
+      this.viewer.needsRender = true;
+      prevPointer = currentPointer.clone();
+    });
   }
 
-  _createClass(SectionPlaneHelper, [{
-    key: "toggleTransformControls",
-    value: function toggleTransformControls() {
-      this.cutters.forEach(cutter => {
-        if (cutter.control.mode === 'rotate') {
-          cutter.control.setMode('translate');
-          cutter.control.showX = false;
-          cutter.control.showY = false;
-          cutter.control.showZ = true;
-          return;
-        }
+  _createClass(SectionBox, [{
+    key: "setFromBox",
+    value: function setFromBox(box) {
+      var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(box.max, box.min);
+      var boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
+      var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(box.min, box.max).multiplyScalar(0.5));
+      boxGeo.applyMatrix4(matrix);
 
-        cutter.control.setMode('rotate');
-        cutter.control.showX = true;
-        cutter.control.showY = true;
-        cutter.control.showZ = false;
-      });
-    }
-  }, {
-    key: "createSectionPlane",
-    value: function createSectionPlane() {
-      var cutter = {};
-      cutter.id = this.cutters.length;
-      cutter.visible = false;
-      cutter.plane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1);
-      cutter.helper = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1, 1), new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
-        color: 0xAFAFAF,
-        transparent: true,
-        opacity: 0.1,
-        side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-      }));
-      cutter.helper.visible = false;
-      this.viewer.scene.add(cutter.helper);
-      cutter.control = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
-      cutter.control.setSize(0.5);
-      cutter.control.space = 'local';
-      cutter.control.showX = false;
-      cutter.control.showY = false;
-      cutter.control.setRotationSnap(three__WEBPACK_IMPORTED_MODULE_0__.MathUtils.degToRad(15));
-      cutter.control.addEventListener('change', () => this.viewer.render);
-      cutter.control.addEventListener('dragging-changed', event => {
-        if (!cutter.visible) return;
-        this.viewer.controls.enabled = !event.value; // Reference: https://stackoverflow.com/a/52124409
+      for (var i = 0; i < this.boxGeo.faces.length; i += 2) {
+        var face = boxGeo.faces[i];
+        var plane = this.boxMesh.userData.planes[i];
+        plane.setFromCoplanarPoints(boxGeo.vertices[face.c], boxGeo.vertices[face.b], boxGeo.vertices[face.a]); // invert pts
+      }
 
-        var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        normal.set(0, 0, -1).applyQuaternion(cutter.helper.quaternion);
-        point.copy(cutter.helper.position);
-        cutter.plane.setFromNormalAndCoplanarPoint(normal, point);
-      });
-      cutter.control.attach(cutter.helper);
-      cutter.control.visible = false;
-      this.viewer.scene.add(cutter.control);
-      this.cutters.push(cutter); // adds local clipping planes to all materials
-
-      var objs = this.viewer.sceneManager.objects;
-      objs.forEach(obj => {
-        obj.material.clippingPlanes = this.cutters.map(c => c.plane);
-      });
+      this.boxMesh.geometry.verticesNeedUpdate = true; // TODO: gizmo moving
     }
   }, {
-    key: "toggleSectionPlanes",
-    value: function toggleSectionPlanes() {
-      if (this.visible) this.hideSectionPlanes();else this.showSectionPlanes();
-      this.visible = !this.visible;
-    }
-  }, {
-    key: "showSectionPlanes",
-    value: function showSectionPlanes() {
-      this._matchSceneSize();
-
-      this.cutters.forEach(cutter => {
-        cutter.visible = true;
-        cutter.helper.visible = true;
-        cutter.control.visible = true;
-      });
-      this.viewer.renderer.localClippingEnabled = true;
-    }
-  }, {
-    key: "hideSectionPlanes",
-    value: function hideSectionPlanes() {
-      this.cutters.forEach(cutter => {
-        cutter.visible = false;
-        cutter.helper.visible = false;
-        cutter.control.visible = false;
-      });
-      this.viewer.renderer.localClippingEnabled = false;
-    }
-  }, {
-    key: "_matchSceneSize",
-    value: function _matchSceneSize() {
-      // Scales and translate helper to scene bbox center and origin
-      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
-      var sceneSize = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      sceneBox.getSize(sceneSize);
-      var sceneCenter = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      sceneBox.getCenter(sceneCenter);
-      this.cutters.forEach(cutter => {
-        cutter.helper.scale.set(sceneSize.x > 0 ? sceneSize.x : 1, sceneSize.y > 0 ? sceneSize.y : 1, sceneSize.z > 0 ? sceneSize.z : 1);
-        cutter.helper.position.set(sceneCenter.x, sceneCenter.y, sceneCenter.z);
-        var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        normal.set(0, 0, -1).applyQuaternion(cutter.helper.quaternion);
-        point.copy(cutter.helper.position);
-        cutter.plane.setFromNormalAndCoplanarPoint(normal, point);
-      });
-    }
-  }, {
-    key: "planes",
-    get: function get() {
-      return this.cutters.map(cutter => cutter.plane);
-    }
-  }, {
-    key: "activePlanes",
-    get: function get() {
-      return this.cutters.filter(cutter => cutter.visible).map(cutter => cutter.plane);
+    key: "dispose",
+    value: function dispose() {
+      this.selectionHelper.dispose();
+      this.display.clear();
     }
   }]);
 
-  return SectionPlaneHelper;
+  return SectionBox;
 }();
 
 
@@ -2008,6 +2269,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _get(target, property, receiver) { if (typeof Reflect !== "undefined" && Reflect.get) { _get = Reflect.get; } else { _get = function _get(target, property, receiver) { var base = _superPropBase(target, property); if (!base) return; var desc = Object.getOwnPropertyDescriptor(base, property); if (desc.get) { return desc.get.call(receiver); } return desc.value; }; } return _get(target, property, receiver || target); }
+
+function _superPropBase(object, property) { while (!Object.prototype.hasOwnProperty.call(object, property)) { object = _getPrototypeOf(object); if (object === null) break; } return object; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
@@ -2058,21 +2323,15 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     _this.viewer = parent;
     _this.raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster(); // Handle clicks during camera moves
 
-    _this.orbiting = false; // this.viewer.controls.addEventListener( 'control', debounce( () => { this.orbiting = false; console.log( 'ctrlstart '+  this.orbiting ) }, 200 ) )
+    _this.orbiting = false;
 
     _this.viewer.controls.addEventListener('wake', () => {
       _this.orbiting = true;
-      console.log('wake');
-    }); // this.viewer.controls.addEventListener( 'controlend', () => { this.orbiting = false; console.log( 'controlend' ) } )
-
+    });
 
     _this.viewer.controls.addEventListener('sleep', () => {
       _this.orbiting = false;
-      console.log('sleep');
-    }); // this.viewer.controls.addEventListener( 'change', debounce( () => { this.orbiting = false }, 100 ) )
-    // this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
-    // this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
-    // optional param allows for raycasting against a subset of objects
+    }); // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
 
 
@@ -2109,15 +2368,13 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
     var mdTime;
 
-    _this.viewer.renderer.domElement.addEventListener('pointerdown', e => {
+    _this.viewer.renderer.domElement.addEventListener('pointerdown', () => {
       mdTime = new Date().getTime();
     });
 
     _this.viewer.renderer.domElement.addEventListener('pointerup', e => {
       var delta = new Date().getTime() - mdTime;
-      console.log(delta);
       _this.pointerDown = false;
-      console.log('pointerup: ' + _this.orbiting);
       if (_this.orbiting && delta > 250) return;
 
       var selectionObjects = _this.getClickedObjects(e);
@@ -2154,11 +2411,9 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     });
 
     _this.viewer.renderer.domElement.addEventListener('dblclick', e => {
-      // if ( this.orbiting ) return // not needed for zoom to thing?
       var selectionObjects = _this.getClickedObjects(e);
 
-      _this.emit('object-doubleclicked', selectionObjects); // this.handleDoubleClick( selectionObjects )
-
+      _this.emit('object-doubleclicked', selectionObjects);
     }); // Handle multiple object selection
 
 
@@ -2187,8 +2442,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var normalizedPosition = this._getNormalisedClickPosition(e);
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
-      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects);
-      intersectedObjects = intersectedObjects.filter(obj => this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0));
+      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects); // intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
+
       return intersectedObjects;
     } // get all children of a subset passed as a THREE.Group
 
@@ -2218,6 +2473,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "dispose",
     value: function dispose() {
+      _get(_getPrototypeOf(SelectionHelper.prototype), "dispose", this).call(this);
+
       this.unselect();
       this.originalSelectionObjects = null;
     }
@@ -2517,11 +2774,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/postprocessing/SSAOPass.js */ "./node_modules/three/examples/jsm/postprocessing/SSAOPass.js");
 /* harmony import */ var three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/libs/stats.module.js */ "./node_modules/three/examples/jsm/libs/stats.module.js");
 /* harmony import */ var _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./SceneObjectManager */ "./src/modules/SceneObjectManager.js");
-/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
-/* harmony import */ var _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./SectionPlaneHelper */ "./src/modules/SectionPlaneHelper.js");
-/* harmony import */ var _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ViewerObjectLoader */ "./src/modules/ViewerObjectLoader.js");
-/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
-/* harmony import */ var _SectionBox__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./SectionBox */ "./src/modules/SectionBox.js");
+/* harmony import */ var _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ViewerObjectLoader */ "./src/modules/ViewerObjectLoader.js");
+/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
+/* harmony import */ var _InteractionHandler__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./InteractionHandler */ "./src/modules/InteractionHandler.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -2545,8 +2800,6 @@ function _assertThisInitialized(self) { if (self === void 0) { throw new Referen
 function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-
 
 
 
@@ -2618,9 +2871,8 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     camera_controls__WEBPACK_IMPORTED_MODULE_1__.default.install({
       THREE: three__WEBPACK_IMPORTED_MODULE_0__
     });
-    _this.controls = new camera_controls__WEBPACK_IMPORTED_MODULE_1__.default(_this.camera, _this.renderer.domElement);
-    _this.controls.maxPolarAngle = Math.PI / 2;
-    _this.controls.dampingFactor = 0.1;
+    _this.controls = new camera_controls__WEBPACK_IMPORTED_MODULE_1__.default(_this.camera, _this.renderer.domElement); // this.controls.maxPolarAngle = Math.PI / 2
+
     _this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(_this.renderer);
     _this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(_this.scene, _this.camera, _this.container.offsetWidth, _this.container.offsetHeight);
     _this.ssaoPass.kernelRadius = 0.03;
@@ -2637,26 +2889,13 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
       _this.pauseSSAO = true;
     });
 
-    _this.controls.addEventListener('controlend', () => {
+    _this.controls.addEventListener('sleep', () => {
       _this.pauseSSAO = false;
-    }); // Selected Objects
+      _this.needsRender = true;
+    }); // Keeps track of loaded objects
 
 
-    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
-      color: 0x0B55D2,
-      emissive: 0x0B55D2,
-      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-    });
-    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-
-    _this.scene.add(_this.selectedObjects);
-
-    _this.selectedObjects.renderOrder = 1000;
-    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this)); // Viewer registers double click event and supplies handler
-
-    _this.selectionHelper.on('object-doubleclicked', _this.handleDoubleClick.bind(_assertThisInitialized(_this)));
-
-    _this.selectionHelper.on('object-clicked', _this.handleSelect.bind(_assertThisInitialized(_this)));
+    _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
 
     if (showStats) {
       _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
@@ -2665,13 +2904,7 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     }
 
     window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
-    _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
-    _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
-
-    _this.sectionPlaneHelper.createSectionPlane(); // Section Box
-
-
-    _this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_10__.default(_assertThisInitialized(_this));
+    _this.interactions = new _InteractionHandler__WEBPACK_IMPORTED_MODULE_8__.default(_assertThisInitialized(_this));
     _this.needsRender = true;
 
     _this.sceneLights();
@@ -2680,36 +2913,9 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.loaders = [];
     return _this;
-  } // handleDoubleClick moved from SelectionHelper
-
+  }
 
   _createClass(Viewer, [{
-    key: "handleDoubleClick",
-    value: function handleDoubleClick(objs) {
-      if (!objs || objs.length === 0) this.sceneManager.zoomExtents();else this.sceneManager.zoomToObject(objs[0].object);
-      this.needsRender = true;
-    } // handleSelect moved from SelectionHelper
-
-  }, {
-    key: "handleSelect",
-    value: function handleSelect(obj) {
-      if (obj.length === 0) {
-        this.deselect();
-        return;
-      }
-
-      if (!this.selectionHelper.multiSelect) this.deselect();
-      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
-      this.selectedObjects.add(mesh);
-      this.needsRender = true;
-    }
-  }, {
-    key: "deselect",
-    value: function deselect() {
-      this.selectedObjects.clear();
-      this.needsRender = true;
-    }
-  }, {
     key: "sceneLights",
     value: function sceneLights() {
       var ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(0xffffff);
@@ -2807,7 +3013,7 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     key: "loadObject",
     value: function () {
       var _loadObject = _asyncToGenerator(function* (url, token) {
-        var loader = new _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__.default(this, url, token);
+        var loader = new _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_6__.default(this, url, token);
         this.loaders.push(loader);
         yield loader.load();
       });
@@ -2825,7 +3031,7 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
   }]);
 
   return Viewer;
-}(_EventEmitter__WEBPACK_IMPORTED_MODULE_9__.default);
+}(_EventEmitter__WEBPACK_IMPORTED_MODULE_7__.default);
 
 
 
@@ -66680,6 +66886,128 @@ var NURBSUtils = {
 	}
 
 };
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/three/examples/jsm/helpers/FaceNormalsHelper.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/three/examples/jsm/helpers/FaceNormalsHelper.js ***!
+  \**********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "FaceNormalsHelper": () => /* binding */ FaceNormalsHelper
+/* harmony export */ });
+/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
+
+
+var _v1 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+var _v2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+var _normalMatrix = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Matrix3();
+
+function FaceNormalsHelper( object, size, hex, linewidth ) {
+
+	// FaceNormalsHelper only supports THREE.Geometry
+
+	this.object = object;
+
+	this.size = ( size !== undefined ) ? size : 1;
+
+	var color = ( hex !== undefined ) ? hex : 0xffff00;
+
+	var width = ( linewidth !== undefined ) ? linewidth : 1;
+
+	//
+
+	var nNormals = 0;
+
+	var objGeometry = this.object.geometry;
+
+	if ( objGeometry && objGeometry.isGeometry ) {
+
+		nNormals = objGeometry.faces.length;
+
+	} else {
+
+		console.warn( 'THREE.FaceNormalsHelper: only THREE.Geometry is supported. Use THREE.VertexNormalsHelper, instead.' );
+
+	}
+
+	//
+
+	var geometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+
+	var positions = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( nNormals * 2 * 3, 3 );
+
+	geometry.setAttribute( 'position', positions );
+
+	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.LineSegments.call( this, geometry, new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial( { color: color, linewidth: width } ) );
+
+	this.type = 'FaceNormalsHelper';
+
+	//
+
+	this.matrixAutoUpdate = false;
+	this.update();
+
+}
+
+FaceNormalsHelper.prototype = Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.LineSegments.prototype );
+FaceNormalsHelper.prototype.constructor = FaceNormalsHelper;
+
+FaceNormalsHelper.prototype.update = function () {
+
+	this.object.updateMatrixWorld( true );
+
+	_normalMatrix.getNormalMatrix( this.object.matrixWorld );
+
+	var matrixWorld = this.object.matrixWorld;
+
+	var position = this.geometry.attributes.position;
+
+	//
+
+	var objGeometry = this.object.geometry;
+
+	var vertices = objGeometry.vertices;
+
+	var faces = objGeometry.faces;
+
+	var idx = 0;
+
+	for ( var i = 0, l = faces.length; i < l; i ++ ) {
+
+		var face = faces[ i ];
+
+		var normal = face.normal;
+
+		_v1.copy( vertices[ face.a ] )
+			.add( vertices[ face.b ] )
+			.add( vertices[ face.c ] )
+			.divideScalar( 3 )
+			.applyMatrix4( matrixWorld );
+
+		_v2.copy( normal ).applyMatrix3( _normalMatrix ).normalize().multiplyScalar( this.size ).add( _v1 );
+
+		position.setXYZ( idx, _v1.x, _v1.y, _v1.z );
+
+		idx = idx + 1;
+
+		position.setXYZ( idx, _v2.x, _v2.y, _v2.z );
+
+		idx = idx + 1;
+
+	}
+
+	position.needsUpdate = true;
+
+};
+
 
 
 

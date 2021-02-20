@@ -19,11 +19,14 @@ const edges = [
 ]
 
 export default class SectionBox {
-  constructor( viewer, _vis ){
+  constructor( viewer, _vis ) {
     //defaults to invisible
     let vis = _vis || false
 
     this.viewer = viewer
+    this.orbiting = false
+    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true } )
+    this.viewer.controls.addEventListener( 'controlend', () => { this.orbiting = false } )
 
     this.display = new THREE.Group()
     this.display.visible = vis
@@ -39,34 +42,31 @@ export default class SectionBox {
     this.viewer.scene.add( this.display )
 
     // basic display of the section box
-    this.boxMaterial = new THREE.MeshBasicMaterial( )
+    this.boxMaterial = new THREE.MeshStandardMaterial( {
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.DoubleSide,
+      color: 0x0A66FF,
+      metalness: 0.01,
+      roughness: 0.75,
+    } )
 
     // the box itself
     this.boxGeo = new THREE.BoxGeometry( 2,2,2 )
     this.boxMesh = new THREE.Mesh( this.boxGeo, this.boxMaterial )
-    this.boxMesh.visible = false
+
     this.boxMesh.geometry.computeBoundingBox()
     this.boxMesh.geometry.computeBoundingSphere()
     this.displayBox.add( this.boxMesh )
 
-    this.lineMaterial = new THREE.LineDashedMaterial( {
-      color: 0x0A66FF,
-      linewidth: 4,
-    } )
+    // const edges = new THREE.EdgesGeometry( this.boxGeo )
+    // this.line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xDF66FF } ) )
 
-    // show box edges
-    edges.map( val => {
-      let pts = [ this.boxGeo.vertices[val[0]].clone(),
-        this.boxGeo.vertices[val[1]].clone() ]
-      let geo = new THREE.BufferGeometry().setFromPoints( pts )
-      let line = new THREE.Line( geo, this.lineMaterial )
-      this.displayEdges.add( line )
-    } )
 
     // normal of plane being hovered
     this.hoverPlane = new THREE.Vector3()
 
-    this.selectionHelper = new SelectionHelper( this.viewer, { subset:this.displayBox, hover:true } )
+    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.displayBox, hover:true } )
 
     // pointer position
     this.pointer = new THREE.Vector3()
@@ -78,36 +78,34 @@ export default class SectionBox {
     this.planes = [
       {
         axis: '+x', // right, x positive
-        plane:new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 1 ),
+        plane: new THREE.Plane( new THREE.Vector3( 1, 0, 0 ), 0 ),
         indices: [ 5,4,6,7 ],
       },{
         axis: '-x', // left, x negative
-        plane: new THREE.Plane( new THREE.Vector3( -1, 0, 0 ), 1 ),
+        plane: new THREE.Plane( new THREE.Vector3( -1, 0, 0 ), 0 ),
         indices: [ 0,1,3,2 ],
       },{
         axis: '+y', // out, y positive
-        plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 1, 0 ), 0 ),
         indices: [ 2,3,6,7 ],
       },{
         axis: '-y', // in, y negative
-        plane:new THREE.Plane( new THREE.Vector3( 0, -1, 0 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, -1, 0 ), 0 ),
         indices: [ 5,4,1,0 ],
       },{
         axis: '+z', // up, z positive
-        plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 0, 1 ), 0 ),
         indices: [ 1,3,6,4 ],
       },{
         axis: '-z', // down, z negative
-        plane:new THREE.Plane( new THREE.Vector3( 0, 0, -1 ), 1 ),
+        plane:new THREE.Plane( new THREE.Vector3( 0, 0, -1 ), 0 ),
         indices: [ 0,2,7,5 ],
       } ]
 
-    // plane helpers
-    // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
-
-    // adds clipping planes to all materials
-    // better to add clipping planes to renderer
-    this.viewer.renderer.localClippingEnabled = true
+    // this.planes.forEach( p => {
+    //   const helper = new THREE.PlaneHelper( p.plane, 1, 0xffff00 )
+    //   this.display.add( helper )
+    // } )
 
     this.viewer.sceneManager.objects.forEach( obj => {
       obj.material.clippingPlanes = this.planes.map( c => c.plane )
@@ -117,35 +115,8 @@ export default class SectionBox {
       transparent: true,
       opacity: 0.1,
       color: 0x0A66FF,
-      // color: 0xE91E63,
       metalness: 0.1,
       roughness: 0.75,
-    } )
-
-    // hovered event handler
-    this.selectionHelper.on( 'hovered', ( obj, e ) => {
-      if ( !this.display.visible ) return
-      if ( obj.length === 0 && !this.dragging ) {
-        this.displayHover.clear()
-        this.hoverPlane = new THREE.Vector3()
-        this.viewer.controls.enabled = true
-        this.viewer.renderer.domElement.style.cursor = 'default'
-        return
-      } else if ( this.dragging ){
-        return
-      }
-
-      this.viewer.renderer.domElement.style.cursor = 'pointer'
-
-      let index = this.planes.findIndex( p => p.plane.normal.equals( obj[0].face.normal.clone().negate() ) )
-      if ( index < 0 ) return // this should never be the case?
-      let planeObj = this.planes[index]
-      let plane = planeObj.plane
-
-      if ( plane.normal.equals( this.hoverPlane ) ) return
-      this.hoverPlane = plane.normal.clone()
-
-      this.updateHover( planeObj )
     } )
 
     // Selection Helper seems unecessary for this type of thing
@@ -156,14 +127,67 @@ export default class SectionBox {
       this.dragging = false
     } )
 
+    let cuttingPlane = null
+    let hoverPlane = null
+
+    // hovered event handler
+    this.selectionHelper.on( 'hovered', ( obj, e ) => {
+      if ( this.orbiting ) return
+
+      if ( obj.length === 0 && !this.dragging ) {
+        this.viewer.controls.enabled = true
+        this.displayHover.clear()
+        this.hoverPlane = new THREE.Vector3()
+        this.viewer.controls.enabled = true
+        this.viewer.renderer.domElement.style.cursor = 'default'
+        return
+      } else if ( this.dragging ) {
+        return
+      }
+
+      this.viewer.controls.enabled = false
+      this.viewer.renderer.domElement.style.cursor = 'pointer'
+
+      switch ( obj[0].faceIndex ) {
+      case 0: case 1:
+        cuttingPlane = this.planes[0]
+        hoverPlane = this.planes[1]
+        break
+      case 2: case 3:
+        cuttingPlane = this.planes[1]
+        hoverPlane = this.planes[0]
+        break
+      case 4: case 5:
+        cuttingPlane = this.planes[2]
+        hoverPlane = this.planes[3]
+        break
+      case 6: case 7:
+        cuttingPlane = this.planes[3]
+        hoverPlane = this.planes[2]
+        break
+      case 8: case 9:
+        cuttingPlane = this.planes[4]
+        hoverPlane = this.planes[5]
+        break
+      case 10: case 11:
+        cuttingPlane = this.planes[5]
+        hoverPlane = this.planes[4]
+        break
+      }
+
+      // this.hoverPlane = plane.normal.clone()
+      this.updateHover( hoverPlane )
+    } )
+
     // get screen space vector of plane normal
     // project mouse displacement vector onto it
     // move plane by that much
     this.selectionHelper.on( 'object-drag', ( obj, e ) => {
+      if ( this.orbiting ) return
       if ( !this.display.visible ) return
 
       // exit if we don't have a valid hoverPlane
-      if ( this.hoverPlane.equals( new THREE.Vector3() ) ) return
+      // if ( this.hoverPlane.equals( new THREE.Vector3() ) ) return
       // exit if we're clicking on nothing
       if ( !obj.length && !this.dragging ) return
 
@@ -172,9 +196,7 @@ export default class SectionBox {
 
       this.dragging = true
 
-      let index = this.planes.findIndex( p => p.plane.normal.equals( this.hoverPlane ) )
-      let planeObj = this.planes[index]
-      let plane = planeObj.plane
+      let plane = hoverPlane.plane
 
       if ( this.pointer.equals( new THREE.Vector3() ) ) {
         this.pointer = new THREE.Vector3( e.x, e.y, 0.0 )
@@ -199,54 +221,60 @@ export default class SectionBox {
       d = d * zoom
 
       // limit plane from crossing it's pair
-      let hoverOpp = this.hoverPlane.clone().negate()
-      let indexOpp = this.planes.findIndex( p => p.plane.normal.equals( hoverOpp ) )
-      let planeObjOpp = this.planes[indexOpp]
-      let dist = planeObj.plane.constant + planeObjOpp.plane.constant
-
+      let planeObjOpp = cuttingPlane
+      let dist = hoverPlane.plane.constant + planeObjOpp.plane.constant
       let displacement = new THREE.Vector3( d,d,d ).multiply( plane.normal )
       // are we moving towards the limiting plane?
       let dot = displacement.clone().normalize().dot( plane.normal )
+      if ( dist < 0.1 && dot < 0 ) return
 
-      // if displacement + padding is greater than limit,
-      // and we're moving towards the limiting plane
-      if ( dist < d && dot > 0 ) {
-        d = dist * 0.001
-        displacement = new THREE.Vector3( d,d,d ).multiply( plane.normal )
-      }
 
-      plane.translate( displacement )
-      this.updateBoxFace( planeObj, displacement )
-      this.updateHover( planeObj )
+      cuttingPlane.plane.translate( displacement )
+      this.updateBoxFace( hoverPlane, displacement )
+      this.updateHover( hoverPlane )
 
       this.viewer.needsRender = true
     } )
   }
 
   // boxMesh = bbox
-  setFromBbox( bbox ){
+  setFromBbox( bbox, offset ){
+    bbox = bbox.clone()
+
     // add a little padding to the box
-    bbox.max.addScalar( 10 )
-    bbox.min.subScalar( 10 )
-    for ( let p of this.planes ) {
-      // reset plane
-      // p.plane.set(p.plane.normal, 1)
-      let c = 0
-      // planes point inwards - if negative select max part of bbox
-      if ( p.plane.normal.dot( new THREE.Vector3( 1,1,1 ) ) > 0 ) {
-        c = p.plane.normal.clone().multiply( bbox.min )
-      } else {
-        c = p.plane.normal.clone().multiply( bbox.max )
-      }
-      let diff = c.length() - p.plane.constant
+    const size = bbox.getSize( new THREE.Vector3() )
+    if ( offset )
+      bbox.expandByVector( size.multiplyScalar( offset ) )
 
-      // displacement
-      let d = p.plane.normal.clone().negate().multiplyScalar( diff )
+    const dimensions = new THREE.Vector3().subVectors( bbox.max, bbox.min )
+    const boxGeo = new THREE.BoxGeometry( dimensions.x, dimensions.y, dimensions.z )
+    const matrix = new THREE.Matrix4().setPosition( dimensions.addVectors( bbox.min, bbox.max ).multiplyScalar( 0.5 ) )
+    boxGeo.applyMatrix4( matrix )
 
-      this.updateBoxFace( p, d )
-      p.plane.translate( d )
+    let k = 0
+    for ( let i = 0; i < boxGeo.faces.length; i += 2 ) {
+      let plane = this.planes[k]
+      let face = boxGeo.faces[i]
+
+      plane.plane.setFromCoplanarPoints( boxGeo.vertices[face.c], boxGeo.vertices[face.b], boxGeo.vertices[face.a] )
+      k++
     }
+
+    // update box geometry
+    for ( let i = 0; i< boxGeo.vertices.length; i++ ) {
+      let vert = boxGeo.vertices[i]
+      this.boxMesh.geometry.vertices[i].set( vert.x, vert.y, vert.z )
+    }
+
+    this.boxMesh.geometry.verticesNeedUpdate = true
+    this.boxMesh.geometry.computeBoundingBox()
+    this.boxMesh.geometry.computeBoundingSphere()
+
+    const edges = new THREE.EdgesGeometry( this.boxMesh.geometry )
+    const line = new THREE.LineSegments( edges, new THREE.LineBasicMaterial( { color: 0xffffff } ) )
+    this.displayEdges.add( line )
   }
+
 
   updateBoxFace( planeObj, displacement ){
     this.boxMesh.geometry.vertices.map( ( v,i ) => {
@@ -258,25 +286,7 @@ export default class SectionBox {
     this.boxMesh.geometry.computeBoundingBox()
     this.boxMesh.geometry.computeBoundingSphere()
 
-    this.updateEdges()
-  }
-
-  updateEdges(){
-    this.displayEdges.clear()
-    edges.map( val => {
-      let ptA = this.boxMesh.geometry.vertices[val[0]].clone()
-      let ptB = this.boxMesh.geometry.vertices[val[1]].clone()
-      // translation
-      ptA.add( this.boxMesh.position )
-      ptB.add( this.boxMesh.position )
-      this.drawLine( [ ptA, ptB ] )
-    } )
-  }
-
-  drawLine( pts ){
-    let geo = new THREE.BufferGeometry().setFromPoints( pts )
-    let line = new THREE.Line( geo, this.lineMaterial )
-    this.displayEdges.add( line )
+    // this.updateEdges()
   }
 
   updateHover( planeObj ){
@@ -323,6 +333,7 @@ export default class SectionBox {
 
     let hoverMesh = new THREE.Mesh( hoverGeo, this.hoverMat )
     this.displayHover.add( hoverMesh )
+    this.viewer.needsRender = true
   }
 
   toggleSectionBox( _bool ){
@@ -330,8 +341,5 @@ export default class SectionBox {
     this.visible = bool
     this.display.visible = bool
     this.viewer.needsRender = true
-
-    // what's the tradeoff for having the clipping planes in material vs in the renderer?
-    // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
   }
 }

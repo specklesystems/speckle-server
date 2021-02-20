@@ -6,11 +6,9 @@ import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ObjectManager from './SceneObjectManager'
-import SelectionHelper from './SelectionHelper'
-import SectionPlaneHelper from './SectionPlaneHelper'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
-import SectionBox from './SectionBox'
+import InteractionHandler from './InteractionHandler'
 
 export default class Viewer extends EventEmitter {
 
@@ -46,8 +44,7 @@ export default class Viewer extends EventEmitter {
 
     CameraControls.install( { THREE: THREE } )
     this.controls = new CameraControls( this.camera, this.renderer.domElement )
-    this.controls.maxPolarAngle = Math.PI / 2
-    // this.controls.dampingFactor = 0.1
+    // this.controls.maxPolarAngle = Math.PI / 2
 
     this.composer = new EffectComposer( this.renderer )
 
@@ -63,16 +60,8 @@ export default class Viewer extends EventEmitter {
     this.controls.addEventListener( 'wake', () => { this.pauseSSAO = true } )
     this.controls.addEventListener( 'sleep', () => { this.pauseSSAO = false; this.needsRender = true } )
 
-    // Selected Objects
-    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectedObjects = new THREE.Group()
-    this.scene.add( this.selectedObjects )
-    this.selectedObjects.renderOrder = 1000
-
-    this.selectionHelper = new SelectionHelper( this )
-    // Viewer registers double click event and supplies handler
-    this.selectionHelper.on( 'object-doubleclicked', this.handleDoubleClick.bind( this ) )
-    this.selectionHelper.on( 'object-clicked', this.handleSelect.bind( this ) )
+    // Keeps track of loaded objects
+    this.sceneManager = new ObjectManager( this )
 
     if ( showStats ) {
       this.stats = new Stats()
@@ -81,45 +70,13 @@ export default class Viewer extends EventEmitter {
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
 
-    this.sectionPlaneHelper = new SectionPlaneHelper( this )
-    this.sceneManager = new ObjectManager( this )
-
-    this.sectionPlaneHelper.createSectionPlane()
-
-    // Section Box
-    this.sectionBox = new SectionBox( this )
+    this.interactions = new InteractionHandler( this )
 
     this.needsRender = true
     this.sceneLights()
     this.animate()
 
     this.loaders = []
-  }
-
-  // handleDoubleClick moved from SelectionHelper
-  handleDoubleClick( objs ) {
-    if ( !objs || objs.length === 0 ) this.sceneManager.zoomExtents()
-    else this.sceneManager.zoomToObject( objs[0].object )
-    this.needsRender = true
-  }
-
-  // handleSelect moved from SelectionHelper
-  handleSelect( obj ) {
-    if ( obj.length === 0 ) {
-      this.deselect()
-      return
-    }
-
-    if ( !this.selectionHelper.multiSelect ) this.deselect()
-
-    let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
-    this.selectedObjects.add( mesh )
-    this.needsRender = true
-  }
-
-  deselect(){
-    this.selectedObjects.clear()
-    this.needsRender = true
   }
 
   sceneLights() {

@@ -79,7 +79,7 @@ export default class SceneObjectManager {
         // Is it a transparent material?
         if ( renderMat.opacity !== 1 ) {
           let material = this.transparentMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
+          // material.clippingPlanes = this.viewer.interactions.sectionBox.planes.map( p => p.plane )
 
           material.color = color
           material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -88,7 +88,7 @@ export default class SceneObjectManager {
         // It's not a transparent material!
         } else {
           let material = this.solidMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
+          // material.clippingPlanes = this.viewer.interactions.sectionBox.planes.map( p => p.plane )
 
           material.color = color
           material.metalness = renderMat.metalness
@@ -99,7 +99,7 @@ export default class SceneObjectManager {
       } else {
         // If we don't have defined material, just use the default
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
+        // material.clippingPlanes = this.viewer.interactions.sectionBox.planes.map( p => p.plane )
 
         this.addSolid( wrapper, material )
       }
@@ -164,7 +164,8 @@ export default class SceneObjectManager {
     this.lineObjects.clear()
     this.pointObjects.clear()
 
-    this.viewer.selectionHelper.unselect()
+    this.viewer.interactions.deselectObjects()
+    this.viewer.interactions.hideSelectionBox()
     this.objectIds = []
 
     this._postLoadFunction()
@@ -173,10 +174,15 @@ export default class SceneObjectManager {
   _postLoadFunction() {
     this.zoomExtents()
     this.viewer.reflectionsNeedUpdate = true
+  }
 
-    let sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
-
-    this.viewer.sectionBox.setFromBbox( sceneBox )
+  getSceneBoundingBox() {
+    if ( this.objects.length === 0 )  {
+      let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+      return box
+    }
+    let box = new THREE.Box3().setFromObject( this.userObjects )
+    return box
   }
 
   zoomToObject( target ) {
@@ -185,14 +191,16 @@ export default class SceneObjectManager {
   }
 
   zoomExtents() {
-    let bboxTarget = this.userObjects
     if ( this.objects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box )
+      this.viewer.controls.setBoundary( box )
       return
     }
-    let box = new THREE.Box3().setFromObject( bboxTarget )
+
+    let box = new THREE.Box3().setFromObject( this.userObjects )
     this.zoomToBox( box )
+    this.viewer.controls.setBoundary( box )
   }
 
   zoomToBox( box ) {
@@ -201,6 +209,7 @@ export default class SceneObjectManager {
     const size = box.getSize( new THREE.Vector3() )
     let target = new THREE.Sphere()
     box.getBoundingSphere( target )
+    target.radius = target.radius * fitOffset
 
     this.viewer.controls.fitToSphere( target, true )
 

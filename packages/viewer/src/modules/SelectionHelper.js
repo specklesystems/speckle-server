@@ -29,14 +29,9 @@ export default class SelectionHelper extends EventEmitter {
 
     // Handle clicks during camera moves
     this.orbiting = false
-    // this.viewer.controls.addEventListener( 'control', debounce( () => { this.orbiting = false; console.log( 'ctrlstart '+  this.orbiting ) }, 200 ) )
-    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true; console.log( 'wake' ) } )
-    // this.viewer.controls.addEventListener( 'controlend', () => { this.orbiting = false; console.log( 'controlend' ) } )
-    this.viewer.controls.addEventListener( 'sleep', () => { this.orbiting = false; console.log( 'sleep' ) } )
 
-    // this.viewer.controls.addEventListener( 'change', debounce( () => { this.orbiting = false }, 100 ) )
-    // this.viewer.controls.addEventListener( 'start', debounce( () => { this.orbiting = true }, 200 )  )
-    // this.viewer.controls.addEventListener( 'end', debounce( () => { this.orbiting = false }, 200 )  )
+    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true } )
+    this.viewer.controls.addEventListener( 'sleep', () => { this.orbiting = false } )
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
@@ -73,16 +68,15 @@ export default class SelectionHelper extends EventEmitter {
     }
 
     // Handle mouseclicks
+
     let mdTime
-    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( ) => {
       mdTime = new Date().getTime()
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
       let delta = new Date().getTime() - mdTime
-      console.log( delta )
       this.pointerDown = false
-      console.log( 'pointerup: ' + this.orbiting )
       if ( this.orbiting && delta > 250 ) return
 
       let selectionObjects = this.getClickedObjects( e )
@@ -114,21 +108,19 @@ export default class SelectionHelper extends EventEmitter {
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'dblclick', ( e ) => {
-      // if ( this.orbiting ) return // not needed for zoom to thing?
-
       let selectionObjects = this.getClickedObjects( e )
-
       this.emit( 'object-doubleclicked', selectionObjects )
-      // this.handleDoubleClick( selectionObjects )
     } )
 
     // Handle multiple object selection
     this.multiSelect = false
+
     document.addEventListener( 'keydown', ( e ) => {
       if ( e.isComposing || e.keyCode === 229 ) return
       if ( e.key === 'Shift' ) this.multiSelect = true
       if ( e.key === 'Escape' ) this.unselect( )
     } )
+
     document.addEventListener( 'keyup', ( e ) => {
       if ( e.isComposing || e.keyCode === 229 ) return
       if ( e.key === 'Shift' ) this.multiSelect = false
@@ -146,7 +138,7 @@ export default class SelectionHelper extends EventEmitter {
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
     let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren( this.subset ) : this.viewer.sceneManager.objects )
-    intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
+    // intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
 
     return intersectedObjects
   }
@@ -175,6 +167,7 @@ export default class SelectionHelper extends EventEmitter {
   }
 
   dispose() {
+    super.dispose()
     this.unselect()
     this.originalSelectionObjects = null
   }
