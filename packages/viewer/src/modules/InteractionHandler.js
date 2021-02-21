@@ -62,10 +62,12 @@ export default class InteractionHandler {
     if ( this.sectionBox.display.visible ) {
       if ( this.selectedObjects.children.length === 0 ) {
         this.sectionBox.setBox( this.viewer.sceneManager.getSceneBoundingBox() )
+        this.zoomExtents()
       }
       else {
         let box = new THREE.Box3().setFromObject( this.selectedObjects )
         this.sectionBox.setBox( box )
+        this.zoomToBox( box )
       }
     } else {
       this.preventSelection = false
