@@ -169,10 +169,10 @@ export default {
   },
   methods: {
     zoomEx() {
-      window.__viewer.sceneManager.zoomExtents()
+      window.__viewer.interactions.zoomExtents()
     },
     sectionToggle() {
-      window.__viewer.sectionPlaneHelper.toggleSectionPlanes()
+      window.__viewer.interactions.toggleSectionBox()
     },
     load() {
       if (!this.objectUrl) return
