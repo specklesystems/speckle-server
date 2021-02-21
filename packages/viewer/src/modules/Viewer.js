@@ -1,20 +1,22 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
+import CameraControls from 'camera-controls'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ObjectManager from './SceneObjectManager'
-import SelectionHelper from './SelectionHelper'
-import SectionPlaneHelper from './SectionPlaneHelper'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
-import SectionBox from './SectionBox'
+import InteractionHandler from './InteractionHandler'
 
 export default class Viewer extends EventEmitter {
 
   constructor( { container, postprocessing = true, reflections = true, showStats = false } ) {
     super()
+
+    this.clock = new THREE.Clock()
+
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()
@@ -23,7 +25,7 @@ export default class Viewer extends EventEmitter {
     this.camera.up.set( 0, 0, 1 )
     this.camera.position.set( 1, 1, 1 )
     this.camera.updateProjectionMatrix()
-    
+
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
     this.renderer.setClearColor( 0xcccccc, 0 )
     this.renderer.setPixelRatio( window.devicePixelRatio )
@@ -40,13 +42,9 @@ export default class Viewer extends EventEmitter {
     this.cubeCamera = new THREE.CubeCamera( 0.1, 10_000, cubeRenderTarget )
     this.scene.add( this.cubeCamera )
 
-    this.controls = new OrbitControls( this.camera, this.renderer.domElement )
-    this.controls.enableDamping = true
-    this.controls.dampingFactor = 0.1
-    this.controls.screenSpacePanning = true
-    this.controls.maxPolarAngle = Math.PI / 2
-    this.controls.panSpeed = 0.8
-    this.controls.rotateSpeed = 0.8
+    CameraControls.install( { THREE: THREE } )
+    this.controls = new CameraControls( this.camera, this.renderer.domElement )
+    // this.controls.maxPolarAngle = Math.PI / 2
 
     this.composer = new EffectComposer( this.renderer )
 
@@ -59,20 +57,11 @@ export default class Viewer extends EventEmitter {
     this.composer.addPass( this.ssaoPass )
 
     this.pauseSSAO = false
-    this.controls.addEventListener( 'start', () => { this.pauseSSAO = true } )
-    this.controls.addEventListener( 'end', () => { this.pauseSSAO = false } )
+    this.controls.addEventListener( 'wake', () => { this.pauseSSAO = true } )
+    this.controls.addEventListener( 'sleep', () => { this.pauseSSAO = false; this.needsRender = true } )
 
-
-    // Selected Objects
-    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectedObjects = new THREE.Group()
-    this.scene.add(this.selectedObjects)
-    this.selectedObjects.renderOrder = 1000
-
-    this.selectionHelper = new SelectionHelper( this )
-    // Viewer registers double click event and supplies handler
-    this.selectionHelper.on('object-doubleclicked', this.handleDoubleClick.bind(this))
-    this.selectionHelper.on('object-clicked', this.handleSelect.bind(this))
+    // Keeps track of loaded objects
+    this.sceneManager = new ObjectManager( this )
 
     if ( showStats ) {
       this.stats = new Stats()
@@ -81,48 +70,13 @@ export default class Viewer extends EventEmitter {
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
 
-    this.sectionPlaneHelper = new SectionPlaneHelper( this )
-    this.sceneManager = new ObjectManager( this )
+    this.interactions = new InteractionHandler( this )
 
-    this.sectionPlaneHelper.createSectionPlane()
-
-    // Section Box
-    this.sectionBox = new SectionBox(this)
-
+    this.needsRender = true
     this.sceneLights()
     this.animate()
 
     this.loaders = []
-  }
-
-  // handleDoubleClick moved from SelectionHelper
-  handleDoubleClick( objs ) {
-    if ( !objs || objs.length === 0 ) this.sceneManager.zoomExtents()
-    else this.sceneManager.zoomToObject( objs[0].object )
-  }
-
-  // handleSelect moved from SelectionHelper
-  handleSelect( obj ) {
-    if(obj.length === 0) {
-      this.deselect()
-      return
-    }
-
-    // deselect on second click
-    // not sure if this was implemented previously
-    // if(this.selectedObjects.children.includes(obj)) {
-    //   this.deselect()
-    //   return
-    // }
-
-    if ( !this.selectionHelper.multiSelect ) this.deselect()
-
-    let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
-    this.selectedObjects.add( mesh )
-  }
-
-  deselect(){
-    this.selectedObjects.clear()
   }
 
   sceneLights() {
@@ -174,11 +128,22 @@ export default class Viewer extends EventEmitter {
   }
 
   animate() {
+    // requestAnimationFrame( this.animate.bind( this ) )
+    // this.controls.update()
+    //
+    const delta = this.clock.getDelta()
+    const hasControlsUpdated = this.controls.update( delta )
+
     requestAnimationFrame( this.animate.bind( this ) )
-    this.controls.update()
-    if ( this.stats ) this.stats.begin()
-    this.render()
-    if ( this.stats ) this.stats.end()
+
+    // you can skip this condition to render though
+    if ( hasControlsUpdated || this.needsRender ) {
+      this.needsRender = false
+      if ( this.stats ) this.stats.begin()
+      this.render()
+      if ( this.stats ) this.stats.end()
+    }
+
   }
 
   render() {
@@ -203,13 +168,15 @@ export default class Viewer extends EventEmitter {
       this.reflectionsNeedUpdate = false
     }
 
-
     // Render as usual
     // TODO: post processing SSAO sucks so much currently it's off by default
-    if ( this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled ){
+    // if ( this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled ){
+    if ( this.postprocessing && !this.pauseSSAO ){
+      // console.log('composer')
       this.composer.render( this.scene, this.camera )
     }
     else {
+      // console.log('renderer')
       this.renderer.render( this.scene, this.camera )
     }
   }

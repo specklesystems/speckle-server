@@ -41,9 +41,8 @@ export default class SceneObjectManager {
       envMap: this.viewer.cubeCamera.renderTarget.texture
     } )
 
-    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x000000 } )
-
-    this.pointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, color: 0x000000 } )
+    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
+    this.pointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, color: 0x7F7F7F } )
 
     this.objectIds = []
     this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
@@ -53,6 +52,10 @@ export default class SceneObjectManager {
 
   get objects() {
     return [ ...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children ]
+  }
+
+  get materials() {
+    return [ this.lineMaterial, this.pointMaterial, this.transparentMaterial, this.solidMaterial ]
   }
 
   // Note: we might switch later down the line from cloning materials to solely
@@ -68,6 +71,7 @@ export default class SceneObjectManager {
 
 
     switch ( wrapper.geometryType ) {
+
     case 'solid':
       // Do we have a defined material?
       if ( wrapper.meta.renderMaterial ) {
@@ -78,7 +82,7 @@ export default class SceneObjectManager {
         // Is it a transparent material?
         if ( renderMat.opacity !== 1 ) {
           let material = this.transparentMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
           material.color = color
           material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -87,7 +91,7 @@ export default class SceneObjectManager {
         // It's not a transparent material!
         } else {
           let material = this.solidMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
           material.color = color
           material.metalness = renderMat.metalness
@@ -98,14 +102,16 @@ export default class SceneObjectManager {
       } else {
         // If we don't have defined material, just use the default
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
         this.addSolid( wrapper, material )
       }
       break
+
     case 'line':
       this.addLine( wrapper )
       break
+
     case 'point':
       this.addPoint( wrapper )
       break
@@ -158,68 +164,29 @@ export default class SceneObjectManager {
     }
     this.solidObjects.clear()
     this.transparentObjects.clear()
-    this.viewer.selectionHelper.unselect()
+    this.lineObjects.clear()
+    this.pointObjects.clear()
+
+    this.viewer.interactions.deselectObjects()
+    this.viewer.interactions.hideSectionBox()
     this.objectIds = []
 
     this._postLoadFunction()
   }
 
   _postLoadFunction() {
-    this.zoomExtents()
+    this.viewer.interactions.zoomExtents()
+    this.viewer.interactions.hideSectionBox()
     this.viewer.reflectionsNeedUpdate = true
-
-    let sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
-
-    this.viewer.sectionBox.setFromBbox(sceneBox)
   }
 
-  zoomToObject( target ) {
-    const box = new THREE.Box3().setFromObject( target )
-    this.zoomToBox( box )
-  }
-
-  zoomExtents() {
-    let bboxTarget = this.userObjects
+  getSceneBoundingBox() {
     if ( this.objects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
-      this.zoomToBox( box )
-      return
+      return box
     }
-    let box = new THREE.Box3().setFromObject( bboxTarget )
-    this.zoomToBox( box )
-  }
-
-  // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
-  // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
-  // look better. Could we do the same thing somehow when controls stop moving?
-  zoomToBox( box ) {
-    const fitOffset = 1.2
-
-    const size = box.getSize( new THREE.Vector3() )
-    const center = box.getCenter( new THREE.Vector3() )
-
-    const maxSize = Math.max( size.x, size.y, size.z )
-    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
-    const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
-    const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
-
-    const direction = this.viewer.controls.target.clone()
-      .sub( this.viewer.camera.position )
-      .normalize()
-      .multiplyScalar( distance )
-
-    this.viewer.controls.maxDistance = distance * 20
-
-    // Changing the contol's target causes 
-    // projection math @ SectionBox on('object-drag') to fail
-    // this.viewer.controls.target.copy( center )
-
-    this.viewer.camera.near = distance / 100
-    this.viewer.camera.far = distance * 100
-    this.viewer.camera.position.copy( this.viewer.controls.target ).sub( direction )
-
-    this.viewer.controls.update()
-    this.viewer.camera.updateProjectionMatrix()
+    let box = new THREE.Box3().setFromObject( this.userObjects )
+    return box
   }
 
   _argbToRGB( argb ) {
