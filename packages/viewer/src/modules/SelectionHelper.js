@@ -4,19 +4,11 @@ import EventEmitter from './EventEmitter'
 
 /**
  * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
- * Behaviours:
- * - Clicking on one object will select it.
- * - Double clicking on one object will focus on it.
- * - Double clicking anywhere else will focus the scene.
- * - Pressing escape will clear any selection present.
- * TODOs:
- * - Ensure clipped geometry is not selected.
- * - When objects are disposed, ensure selection is reset.
- *
  * optional param to configure SelectionHelper
  * _options = {
  *             subset: THREE.Group
- *             hover:  boolean
+ *             hover:  boolean.
+ *             sectionBox: if present, will test for inclusion
  *            }
  */
 
@@ -65,6 +57,11 @@ export default class SelectionHelper extends EventEmitter {
 
         this.emit( 'mouse-down', this.getClickedObjects( e ) )
       }, 100 ) )
+    }
+
+    this.sectionBox = null
+    if ( typeof _options !== 'undefined' && _options.sectionBox ) {
+      this.sectionBox = _options.sectionBox
     }
 
     // Handle mouseclicks
@@ -138,7 +135,14 @@ export default class SelectionHelper extends EventEmitter {
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
     let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren( this.subset ) : this.viewer.sceneManager.objects )
-    // intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
+
+
+    if ( this.sectionBox && this.sectionBox.display.visible ) {
+      let box = new THREE.Box3().setFromObject( this.sectionBox.boxMesh )
+      intersectedObjects = intersectedObjects.filter( obj => {
+        return box.containsPoint( obj.point )
+      } )
+    }
 
     return intersectedObjects
   }
@@ -147,7 +151,7 @@ export default class SelectionHelper extends EventEmitter {
   _getGroupChildren( group ){
     let children = []
     if ( group.children.length === 0 ) return [ group ]
-    group.children.forEach( ( c,i,a ) => children = [ ...children, ...this._getGroupChildren( c ) ] )
+    group.children.forEach( ( c ) => children = [ ...children, ...this._getGroupChildren( c ) ] )
     return children
   }
 

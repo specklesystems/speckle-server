@@ -985,7 +985,10 @@ var InteractionHandler = /*#__PURE__*/function () {
     this.sectionBox.toggle(); // switch off
 
     this.preventSelection = false;
-    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_2__.default(this.viewer, this.viewer.sceneManager.userObjects);
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_2__.default(this.viewer, {
+      subset: this.viewer.sceneManager.userObjects,
+      sectionBox: this.sectionBox
+    });
     this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
       color: 0x0B55D2,
       emissive: 0x0B55D2,
@@ -1955,19 +1958,11 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 /**
  * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
- * Behaviours:
- * - Clicking on one object will select it.
- * - Double clicking on one object will focus on it.
- * - Double clicking anywhere else will focus the scene.
- * - Pressing escape will clear any selection present.
- * TODOs:
- * - Ensure clipped geometry is not selected.
- * - When objects are disposed, ensure selection is reset.
- *
  * optional param to configure SelectionHelper
  * _options = {
  *             subset: THREE.Group
- *             hover:  boolean
+ *             hover:  boolean.
+ *             sectionBox: if present, will test for inclusion
  *            }
  */
 
@@ -2025,6 +2020,12 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
         _this.emit('mouse-down', _this.getClickedObjects(e));
       }, 100));
+    }
+
+    _this.sectionBox = null;
+
+    if (typeof _options !== 'undefined' && _options.sectionBox) {
+      _this.sectionBox = _options.sectionBox;
     } // Handle mouseclicks
 
 
@@ -2104,7 +2105,14 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
       var normalizedPosition = this._getNormalisedClickPosition(e);
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
-      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects); // intersectedObjects = intersectedObjects.filter( obj => this.viewer.sectionPlaneHelper.activePlanes.every( pl => pl.distanceToPoint( obj.point ) > 0 ) )
+      var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects);
+
+      if (this.sectionBox && this.sectionBox.display.visible) {
+        var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.sectionBox.boxMesh);
+        intersectedObjects = intersectedObjects.filter(obj => {
+          return box.containsPoint(obj.point);
+        });
+      }
 
       return intersectedObjects;
     } // get all children of a subset passed as a THREE.Group
@@ -2114,7 +2122,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     value: function _getGroupChildren(group) {
       var children = [];
       if (group.children.length === 0) return [group];
-      group.children.forEach((c, i, a) => children = [...children, ...this._getGroupChildren(c)]);
+      group.children.forEach(c => children = [...children, ...this._getGroupChildren(c)]);
       return children;
     }
   }, {

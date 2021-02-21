@@ -12,7 +12,7 @@ export default class InteractionHandler {
 
     this.preventSelection = false
 
-    this.selectionHelper = new SelectionHelper( this.viewer, this.viewer.sceneManager.userObjects )
+    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.viewer.sceneManager.userObjects, sectionBox: this.sectionBox } )
     this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
     this.selectionMaterial.clippingPlanes = this.sectionBox.planes
     this.selectionEdgesMaterial = new THREE.LineBasicMaterial( { color: 0x23F3BD } )
