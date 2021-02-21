@@ -1001,6 +1001,7 @@ var InteractionHandler = /*#__PURE__*/function () {
     this.selectedObjects.renderOrder = 1000;
     this.selectionHelper.on('object-doubleclicked', this._handleDoubleClick.bind(this));
     this.selectionHelper.on('object-clicked', this._handleSelect.bind(this));
+    this.viewer.sceneManager.materials.forEach(mat => mat.clippingPlanes = this.sectionBox.planes);
   }
 
   _createClass(InteractionHandler, [{
@@ -1021,7 +1022,10 @@ var InteractionHandler = /*#__PURE__*/function () {
 
       if (!this.selectionHelper.multiSelect) this.deselectObjects();
       var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.BoxHelper(mesh, 0x23F3BD);
+      box.material = this.selectionEdgesMaterial;
       this.selectedObjects.add(mesh);
+      this.selectedObjects.add(box);
       this.viewer.needsRender = true;
     }
   }, {
@@ -1036,15 +1040,29 @@ var InteractionHandler = /*#__PURE__*/function () {
       this.sectionBox.toggle();
 
       if (this.sectionBox.display.visible) {
-        this.sectionBox.setBox(this.viewer.sceneManager.getSceneBoundingBox());
+        if (this.selectedObjects.children.length === 0) {
+          this.sectionBox.setBox(this.viewer.sceneManager.getSceneBoundingBox());
+        } else {
+          var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.selectedObjects);
+          this.sectionBox.setBox(box);
+        }
+      } else {
+        this.preventSelection = false;
       }
 
       this.viewer.needsRender = true;
     }
   }, {
-    key: "test",
-    value: function test() {
-      this.toggleSectionBox(); // let tt = new SectionBox2( this.viewer )
+    key: "hideSectionBox",
+    value: function hideSectionBox() {
+      if (!this.sectionBox.display.visible) return;
+      this.toggleSectionBox();
+    }
+  }, {
+    key: "showSectionBox",
+    value: function showSectionBox() {
+      if (this.sectionBox.display.visible) return;
+      this.toggleSectionBox();
     }
   }]);
 
@@ -1603,6 +1621,11 @@ var SceneObjectManager = /*#__PURE__*/function () {
     get: function get() {
       return [...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children];
     }
+  }, {
+    key: "materials",
+    get: function get() {
+      return [this.lineMaterial, this.pointMaterial, this.transparentMaterial, this.solidMaterial];
+    }
   }]);
 
   return SceneObjectManager;
@@ -1687,6 +1710,7 @@ var SectionBox = /*#__PURE__*/function () {
         this.controls.visible = true;
         this.planeControls.detach();
         this.viewer.controls.enabled = true;
+        this.viewer.interactions.preventSelection = false;
         this.viewer.needsRender = true;
         targetFaceIndex = -1;
         return;
@@ -1749,6 +1773,7 @@ var SectionBox = /*#__PURE__*/function () {
     this.controls.addEventListener('dragging-changed', event => {
       this.viewer.controls.enabled = !event.value;
       this.viewer.interactions.preventSelection = !event.value;
+      if (!event.value) this.viewer.sceneManager.zoomToObject(this.boxMesh);
     });
     var prevPlaneGizmoPos = null;
     this.planeControls.addEventListener('change', () => {
@@ -1829,6 +1854,7 @@ var SectionBox = /*#__PURE__*/function () {
   }, {
     key: "setBox",
     value: function setBox(box) {
+      box = box.clone().expandByScalar(1.1);
       var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(box.max, box.min);
       var boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
       var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(box.min, box.max).multiplyScalar(0.5));

@@ -42,7 +42,6 @@ export default class SceneObjectManager {
     } )
 
     this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
-
     this.pointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, color: 0x7F7F7F } )
 
     this.objectIds = []
@@ -53,6 +52,10 @@ export default class SceneObjectManager {
 
   get objects() {
     return [ ...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children ]
+  }
+
+  get materials() {
+    return [ this.lineMaterial, this.pointMaterial, this.transparentMaterial, this.solidMaterial ]
   }
 
   // Note: we might switch later down the line from cloning materials to solely

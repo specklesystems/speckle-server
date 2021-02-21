@@ -55,6 +55,7 @@ export default class SectionBox {
         this.controls.visible = true
         this.planeControls.detach()
         this.viewer.controls.enabled = true
+        this.viewer.interactions.preventSelection = false
         this.viewer.needsRender = true
         targetFaceIndex = -1
         return
@@ -121,6 +122,8 @@ export default class SectionBox {
     this.controls.addEventListener( 'dragging-changed', ( event ) => {
       this.viewer.controls.enabled = !event.value
       this.viewer.interactions.preventSelection = !event.value
+      if ( !event.value )
+        this.viewer.sceneManager.zoomToObject( this.boxMesh )
     } )
 
     let prevPlaneGizmoPos = null
@@ -201,6 +204,7 @@ export default class SectionBox {
   }
 
   setBox( box ) {
+    box = box.clone().expandByScalar( 1.1 )
     const dimensions = new THREE.Vector3().subVectors( box.max, box.min )
     let boxGeo = new THREE.BoxGeometry( dimensions.x, dimensions.y, dimensions.z )
 

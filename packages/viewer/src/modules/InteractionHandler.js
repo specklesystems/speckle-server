@@ -25,6 +25,7 @@ export default class InteractionHandler {
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
 
+    this.viewer.sceneManager.materials.forEach( mat => mat.clippingPlanes = this.sectionBox.planes )
   }
 
   _handleDoubleClick( objs ) {
@@ -44,7 +45,10 @@ export default class InteractionHandler {
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
 
     let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
+    let box = new THREE.BoxHelper( mesh, 0x23F3BD )
+    box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( mesh )
+    this.selectedObjects.add( box )
     this.viewer.needsRender = true
   }
 
@@ -56,13 +60,26 @@ export default class InteractionHandler {
   toggleSectionBox() {
     this.sectionBox.toggle()
     if ( this.sectionBox.display.visible ) {
-      this.sectionBox.setBox( this.viewer.sceneManager.getSceneBoundingBox() )
+      if ( this.selectedObjects.children.length === 0 ) {
+        this.sectionBox.setBox( this.viewer.sceneManager.getSceneBoundingBox() )
+      }
+      else {
+        let box = new THREE.Box3().setFromObject( this.selectedObjects )
+        this.sectionBox.setBox( box )
+      }
+    } else {
+      this.preventSelection = false
     }
     this.viewer.needsRender = true
   }
 
-  test() {
-    this.toggleSectionBox()
-    // let tt = new SectionBox2( this.viewer )
+  hideSectionBox() {
+    if ( !this.sectionBox.display.visible ) return
+      this.toggleSectionBox( )
+  }
+
+  showSectionBox() {
+    if ( this.sectionBox.display.visible ) return
+    this.toggleSectionBox( )
   }
 }
