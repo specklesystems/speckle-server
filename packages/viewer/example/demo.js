@@ -1007,7 +1007,7 @@ var InteractionHandler = /*#__PURE__*/function () {
   _createClass(InteractionHandler, [{
     key: "_handleDoubleClick",
     value: function _handleDoubleClick(objs) {
-      if (!objs || objs.length === 0) this.viewer.sceneManager.zoomExtents();else this.viewer.sceneManager.zoomToObject(objs[0].object);
+      if (!objs || objs.length === 0) this.zoomExtents();else this.zoomToObject(objs[0].object);
       this.viewer.needsRender = true;
     }
   }, {
@@ -1063,6 +1063,46 @@ var InteractionHandler = /*#__PURE__*/function () {
     value: function showSectionBox() {
       if (this.sectionBox.display.visible) return;
       this.toggleSectionBox();
+    }
+  }, {
+    key: "zoomToObject",
+    value: function zoomToObject(target) {
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(target);
+      this.zoomToBox(box);
+    }
+  }, {
+    key: "zoomExtents",
+    value: function zoomExtents() {
+      if (this.viewer.sceneManager.objects.length === 0) {
+        var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
+
+        this.zoomToBox(_box);
+        this.viewer.controls.setBoundary(_box);
+        return;
+      }
+
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
+      this.zoomToBox(box);
+      this.viewer.controls.setBoundary(box);
+    }
+  }, {
+    key: "zoomToBox",
+    value: function zoomToBox(box) {
+      var fitOffset = 1.2;
+      var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
+      var target = new three__WEBPACK_IMPORTED_MODULE_0__.Sphere();
+      box.getBoundingSphere(target);
+      target.radius = target.radius * fitOffset;
+      this.viewer.controls.fitToSphere(target, true);
+      var maxSize = Math.max(size.x, size.y, size.z);
+      var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
+      var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
+      var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
+      this.viewer.controls.minDistance = distance / 100;
+      this.viewer.controls.maxDistance = distance * 100;
+      this.viewer.camera.near = distance / 100;
+      this.viewer.camera.far = distance * 100;
+      this.viewer.camera.updateProjectionMatrix();
     }
   }]);
 
@@ -1523,7 +1563,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
       this.lineObjects.clear();
       this.pointObjects.clear();
       this.viewer.interactions.deselectObjects();
-      this.viewer.interactions.hideSelectionBox();
+      this.viewer.interactions.hideSectionBox();
       this.objectIds = [];
 
       this._postLoadFunction();
@@ -1531,7 +1571,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "_postLoadFunction",
     value: function _postLoadFunction() {
-      this.zoomExtents();
+      this.viewer.interactions.zoomExtents();
       this.viewer.reflectionsNeedUpdate = true;
     }
   }, {
@@ -1545,46 +1585,6 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
       var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.userObjects);
       return box;
-    }
-  }, {
-    key: "zoomToObject",
-    value: function zoomToObject(target) {
-      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(target);
-      this.zoomToBox(box);
-    }
-  }, {
-    key: "zoomExtents",
-    value: function zoomExtents() {
-      if (this.objects.length === 0) {
-        var _box2 = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
-
-        this.zoomToBox(_box2);
-        this.viewer.controls.setBoundary(_box2);
-        return;
-      }
-
-      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.userObjects);
-      this.zoomToBox(box);
-      this.viewer.controls.setBoundary(box);
-    }
-  }, {
-    key: "zoomToBox",
-    value: function zoomToBox(box) {
-      var fitOffset = 1.2;
-      var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
-      var target = new three__WEBPACK_IMPORTED_MODULE_0__.Sphere();
-      box.getBoundingSphere(target);
-      target.radius = target.radius * fitOffset;
-      this.viewer.controls.fitToSphere(target, true);
-      var maxSize = Math.max(size.x, size.y, size.z);
-      var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
-      var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
-      var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
-      this.viewer.controls.minDistance = distance / 100;
-      this.viewer.controls.maxDistance = distance * 100;
-      this.viewer.camera.near = distance / 100;
-      this.viewer.camera.far = distance * 100;
-      this.viewer.camera.updateProjectionMatrix();
     }
   }, {
     key: "_argbToRGB",
@@ -1773,7 +1773,7 @@ var SectionBox = /*#__PURE__*/function () {
     this.controls.addEventListener('dragging-changed', event => {
       this.viewer.controls.enabled = !event.value;
       this.viewer.interactions.preventSelection = !event.value;
-      if (!event.value) this.viewer.sceneManager.zoomToObject(this.boxMesh);
+      if (!event.value) this.viewer.interactions.zoomToObject(this.boxMesh);
     });
     var prevPlaneGizmoPos = null;
     this.planeControls.addEventListener('change', () => {
@@ -1812,7 +1812,7 @@ var SectionBox = /*#__PURE__*/function () {
 
       if (!this.dragging) {
         prevPlaneGizmoPos = null;
-        this.viewer.sceneManager.zoomToObject(this.boxMesh);
+        this.viewer.interactions.zoomToObject(this.boxMesh);
         targetFaceIndex = -1;
       }
 

@@ -29,8 +29,8 @@ export default class InteractionHandler {
   }
 
   _handleDoubleClick( objs ) {
-    if ( !objs || objs.length === 0 ) this.viewer.sceneManager.zoomExtents()
-    else this.viewer.sceneManager.zoomToObject( objs[0].object )
+    if ( !objs || objs.length === 0 ) this.zoomExtents()
+    else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
   }
 
@@ -75,11 +75,51 @@ export default class InteractionHandler {
 
   hideSectionBox() {
     if ( !this.sectionBox.display.visible ) return
-      this.toggleSectionBox( )
+    this.toggleSectionBox( )
   }
 
   showSectionBox() {
     if ( this.sectionBox.display.visible ) return
     this.toggleSectionBox( )
+  }
+
+  zoomToObject( target ) {
+    const box = new THREE.Box3().setFromObject( target )
+    this.zoomToBox( box )
+  }
+
+  zoomExtents() {
+    if ( this.viewer.sceneManager.objects.length === 0 )  {
+      let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+      this.zoomToBox( box )
+      this.viewer.controls.setBoundary( box )
+      return
+    }
+
+    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
+    this.zoomToBox( box )
+    this.viewer.controls.setBoundary( box )
+  }
+
+  zoomToBox( box ) {
+    const fitOffset = 1.2
+
+    const size = box.getSize( new THREE.Vector3() )
+    let target = new THREE.Sphere()
+    box.getBoundingSphere( target )
+    target.radius = target.radius * fitOffset
+
+    this.viewer.controls.fitToSphere( target, true )
+
+    const maxSize = Math.max( size.x, size.y, size.z )
+    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
+    const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
+    const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+
+    this.viewer.controls.minDistance = distance / 100
+    this.viewer.controls.maxDistance = distance * 100
+    this.viewer.camera.near = distance / 100
+    this.viewer.camera.far = distance * 100
+    this.viewer.camera.updateProjectionMatrix()
   }
 }

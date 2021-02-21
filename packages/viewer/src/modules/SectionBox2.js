@@ -123,7 +123,7 @@ export default class SectionBox {
       this.viewer.controls.enabled = !event.value
       this.viewer.interactions.preventSelection = !event.value
       if ( !event.value )
-        this.viewer.sceneManager.zoomToObject( this.boxMesh )
+        this.viewer.interactions.zoomToObject( this.boxMesh )
     } )
 
     let prevPlaneGizmoPos = null
@@ -162,7 +162,7 @@ export default class SectionBox {
       this.dragging = !!event.value
       if ( !this.dragging ) {
         prevPlaneGizmoPos = null
-        this.viewer.sceneManager.zoomToObject( this.boxMesh )
+        this.viewer.interactions.zoomToObject( this.boxMesh )
         targetFaceIndex = -1
 
       }
