@@ -964,7 +964,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => /* binding */ InteractionHandler
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var _SectionBox2__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SectionBox2 */ "./src/modules/SectionBox2.js");
+/* harmony import */ var _SectionBox__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SectionBox */ "./src/modules/SectionBox.js");
 /* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -981,7 +981,7 @@ var InteractionHandler = /*#__PURE__*/function () {
     _classCallCheck(this, InteractionHandler);
 
     this.viewer = viewer;
-    this.sectionBox = new _SectionBox2__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer);
+    this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer);
     this.sectionBox.toggle(); // switch off
 
     this.preventSelection = false;
@@ -1012,16 +1012,16 @@ var InteractionHandler = /*#__PURE__*/function () {
     }
   }, {
     key: "_handleSelect",
-    value: function _handleSelect(obj) {
+    value: function _handleSelect(objs) {
       if (this.preventSelection) return;
 
-      if (obj.length === 0) {
+      if (objs.length === 0) {
         this.deselectObjects();
         return;
       }
 
       if (!this.selectionHelper.multiSelect) this.deselectObjects();
-      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(objs[0].object.geometry, this.selectionMaterial);
       var box = new three__WEBPACK_IMPORTED_MODULE_0__.BoxHelper(mesh, 0x23F3BD);
       box.material = this.selectionEdgesMaterial;
       this.selectedObjects.add(mesh);
@@ -1042,9 +1042,11 @@ var InteractionHandler = /*#__PURE__*/function () {
       if (this.sectionBox.display.visible) {
         if (this.selectedObjects.children.length === 0) {
           this.sectionBox.setBox(this.viewer.sceneManager.getSceneBoundingBox());
+          this.zoomExtents();
         } else {
           var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.selectedObjects);
           this.sectionBox.setBox(box);
+          this.zoomToBox(box);
         }
       } else {
         this.preventSelection = false;
@@ -1073,6 +1075,11 @@ var InteractionHandler = /*#__PURE__*/function () {
   }, {
     key: "zoomExtents",
     value: function zoomExtents() {
+      if (this.sectionBox.display.visible) {
+        this.zoomToObject(this.sectionBox.boxMesh);
+        return;
+      }
+
       if (this.viewer.sceneManager.objects.length === 0) {
         var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
 
@@ -1572,6 +1579,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
     key: "_postLoadFunction",
     value: function _postLoadFunction() {
       this.viewer.interactions.zoomExtents();
+      this.viewer.interactions.hideSectionBox();
       this.viewer.reflectionsNeedUpdate = true;
     }
   }, {
@@ -1635,10 +1643,10 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
 /***/ }),
 
-/***/ "./src/modules/SectionBox2.js":
-/*!************************************!*\
-  !*** ./src/modules/SectionBox2.js ***!
-  \************************************/
+/***/ "./src/modules/SectionBox.js":
+/*!***********************************!*\
+  !*** ./src/modules/SectionBox.js ***!
+  \***********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -1854,7 +1862,7 @@ var SectionBox = /*#__PURE__*/function () {
   }, {
     key: "setBox",
     value: function setBox(box) {
-      box = box.clone().expandByScalar(1.1);
+      box = box.clone().expandByScalar(0.5);
       var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(box.max, box.min);
       var boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
       var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(box.min, box.max).multiplyScalar(0.5));

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import SectionBox2 from './SectionBox2'
+import SectionBox from './SectionBox'
 import SelectionHelper from './SelectionHelper'
 
 export default class InteractionHandler {
@@ -7,7 +7,7 @@ export default class InteractionHandler {
   constructor( viewer ) {
     this.viewer = viewer
 
-    this.sectionBox = new SectionBox2( this.viewer )
+    this.sectionBox = new SectionBox( this.viewer )
     this.sectionBox.toggle() // switch off
 
     this.preventSelection = false
@@ -34,17 +34,17 @@ export default class InteractionHandler {
     this.viewer.needsRender = true
   }
 
-  _handleSelect( obj ) {
+  _handleSelect( objs ) {
     if ( this.preventSelection ) return
 
-    if ( obj.length === 0 ) {
+    if ( objs.length === 0 ) {
       this.deselectObjects()
       return
     }
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
 
-    let mesh = new THREE.Mesh( obj[0].object.geometry, this.selectionMaterial )
+    let mesh = new THREE.Mesh( objs[0].object.geometry, this.selectionMaterial )
     let box = new THREE.BoxHelper( mesh, 0x23F3BD )
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( mesh )
@@ -91,6 +91,10 @@ export default class InteractionHandler {
   }
 
   zoomExtents() {
+    if ( this.sectionBox.display.visible ) {
+      this.zoomToObject( this.sectionBox.boxMesh )
+      return
+    }
     if ( this.viewer.sceneManager.objects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box )
