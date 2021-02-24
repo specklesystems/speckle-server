@@ -20,13 +20,17 @@ const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createStream } = require( '../services/streams' )
 
-describe( `Upload/Download Routes @api-rest`, ( ) => {
+describe( 'Upload/Download Routes @api-rest', ( ) => {
 
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
+  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
+
   let testStream = {
     name: 'Test Stream 01',
     description: 'wonderful test stream'
   }
+
+  let privateTestStream = { name: 'Private Test Stream', isPublic: false }
 
   let expressApp
   before( async ( ) => {
@@ -39,31 +43,58 @@ describe( `Upload/Download Routes @api-rest`, ( ) => {
     userA.id = await createUser( userA )
     userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
 
+    userB.id = await createUser( userB )
+    userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
+
     testStream.id = await createStream( { ...testStream, ownerId: userA.id } )
+    privateTestStream.id = await createStream( { ...privateTestStream, ownerId: userA.id } )
   } )
 
   after( async ( ) => {
     await knex.migrate.rollback( )
   } )
 
-  it( 'Should not allow upload requests without an authorization token or valid streamId', async ( ) => {
+  it( 'Should not allow download requests without an authorization token or valid streamId', async ( ) => {
 
     // invalid token and streamId
-    let res = await chai.request( expressApp ).get( `/objects/wow_hack/null` ).set( 'Authorization', 'this is a hoax' )
-    expect( res ).to.have.status( 401 )
+    let res = await chai.request( expressApp ).get( '/objects/wow_hack/null' ).set( 'Authorization', 'this is a hoax' )
+    expect( res ).to.have.status( 404 )
 
     // invalid token
     res = await chai.request( expressApp ).get( `/objects/${testStream.id}/null` ).set( 'Authorization', 'this is a hoax' )
-    expect( res ).to.have.status( 401 )
+    expect( res ).to.have.status( 404 )
 
     // invalid streamid
     res = await chai.request( expressApp ).get( `/objects/${'thisDoesNotExist'}/null` ).set( 'Authorization', userA.token )
+    expect( res ).to.have.status( 404 )
+
+    // create some objects
+    let objBatches = [ createManyObjects( 20 ), createManyObjects( 20 ) ]
+
+    await request( expressApp )
+      .post( `/objects/${testStream.id}` )
+      .set( 'Authorization', userA.token )
+      .set( 'Content-type', 'multipart/form-data' )
+      .attach( 'batch1', Buffer.from( JSON.stringify( objBatches[ 0 ] ), 'utf8' ) )
+      .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
+
+    // should allow invalid tokens (treat them the same as no tokens?)
+    res = await chai.request( expressApp ).get( `/objects/${testStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', 'this is a hoax' )
+    expect( res ).to.have.status( 200 )
+
+    // should not allow invalid tokens on private streams
+    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
+
+    // should not allow user b to access user a's private stream
+    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', userB.token )
+    expect( res ).to.have.status( 401 )
+
   } )
 
-  it( 'Should not allow download requests without an authorization token or valid streamId', async ( ) => {
+  it( 'Should not allow upload requests without an authorization token or valid streamId', async ( ) => {
     // invalid token and streamId
-    let res = await chai.request( expressApp ).post( `/objects/wow_hack` ).set( 'Authorization', 'this is a hoax' )
+    let res = await chai.request( expressApp ).post( '/objects/wow_hack' ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
     // invalid token
@@ -84,12 +115,12 @@ describe( `Upload/Download Routes @api-rest`, ( ) => {
 
     let res =
       await request( expressApp )
-      .post( `/objects/${testStream.id}` )
-      .set( 'Authorization', userA.token )
-      .set( 'Content-type', 'multipart/form-data' )
-      .attach( 'batch1', Buffer.from( JSON.stringify( objBatches[ 0 ] ), 'utf8' ) )
-      .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
-      .attach( 'batch3', Buffer.from( JSON.stringify( objBatches[ 2 ] ), 'utf8' ) )
+        .post( `/objects/${testStream.id}` )
+        .set( 'Authorization', userA.token )
+        .set( 'Content-type', 'multipart/form-data' )
+        .attach( 'batch1', Buffer.from( JSON.stringify( objBatches[ 0 ] ), 'utf8' ) )
+        .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
+        .attach( 'batch3', Buffer.from( JSON.stringify( objBatches[ 2 ] ), 'utf8' ) )
 
     // TODO: test gziped uploads. They work. Current blocker: cannot set content-type for each part in the 'multipart' request.
     // .attach( 'batch1', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 0 ] ) ), 'utf8' ) )
