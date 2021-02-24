@@ -612,14 +612,29 @@ var Coverter = /*#__PURE__*/function () {
       }
 
       return MeshToBufferGeometry;
-    }() // TODOs:
+    }()
+  }, {
+    key: "PointToVector3",
+    value: function PointToVector3(obj) {
+      var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units);
+      var v = null;
+
+      if (obj.value) {
+        // Old point format based on value list
+        v = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.value[0] * conversionFactor, obj.value[1] * conversionFactor, obj.value[2] * conversionFactor);
+      } else {
+        // New point format based on cartesian coords
+        v = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.x * conversionFactor, obj.y * conversionFactor, obj.z * conversionFactor);
+      }
+
+      return v;
+    } // TODOs:
 
   }, {
     key: "PointToBufferGeometry",
     value: function () {
       var _PointToBufferGeometry = _asyncToGenerator(function* (obj) {
-        var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units);
-        var v = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.value[0] * conversionFactor, obj.value[1] * conversionFactor, obj.value[2] * conversionFactor);
+        var v = this.PointToVector3(obj);
         var buf = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints([v]);
         delete obj.value;
         delete obj.speckle_type;
@@ -635,8 +650,21 @@ var Coverter = /*#__PURE__*/function () {
   }, {
     key: "LineToBufferGeometry",
     value: function () {
-      var _LineToBufferGeometry = _asyncToGenerator(function* (obj) {
-        return this.PolylineToBufferGeometry(obj);
+      var _LineToBufferGeometry = _asyncToGenerator(function* (object) {
+        console.log('Line conversion', object);
+
+        if (object.value) {
+          //Old line format, treat as polyline
+          return this.PolylineToBufferGeometry(object);
+        }
+
+        var obj = {};
+        Object.assign(obj, object);
+        delete object.start;
+        delete object.end;
+        delete object.speckle_type;
+        var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints([this.PointToVector3(obj.start), this.PointToVector3(obj.end)]);
+        return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
       });
 
       function LineToBufferGeometry(_x9) {
@@ -661,6 +689,7 @@ var Coverter = /*#__PURE__*/function () {
           points.push(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.value[i] * conversionFactor, obj.value[i + 1] * conversionFactor, obj.value[i + 2] * conversionFactor));
         }
 
+        if (obj.closed) points.push(points[0]);
         var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
         delete obj.value;
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
@@ -712,24 +741,36 @@ var Coverter = /*#__PURE__*/function () {
         delete object.value;
         delete object.speckle_type;
         delete object.displayValue;
-        obj.points = yield this.dechunk(obj.points);
-        obj.weights = yield this.dechunk(obj.weights);
-        obj.knots = yield this.dechunk(obj.knots);
+        var pt = yield this.dechunk(object.points);
+        var k = yield this.dechunk(object.knots);
+        var w = yield this.dechunk(object.weights);
+        obj.weights = w;
+        obj.knots = k;
+        obj.points = pt;
 
         try {
-          console.log('Curve to buffer', obj);
+          console.log('Curve to buffer', object, obj);
+          throw new Error("Skipping nurbs for displayValue due to lack of support in THREE.js of some nurbs types");
           var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units); // Convert points+weights to Vector4
 
           var points = [];
 
           for (var i = 0; i < obj.points.length; i += 3) {
-            points.push(new three__WEBPACK_IMPORTED_MODULE_0__.Vector4(obj.points[i] * conversionFactor, obj.points[i + 1] * conversionFactor, obj.points[i + 2] * conversionFactor, obj.weights[i / 3] * conversionFactor));
-          } // Convert knots from rhino compact format to normal format.
+            points.push(new three__WEBPACK_IMPORTED_MODULE_0__.Vector4(obj.points[i] * conversionFactor, obj.points[i + 1] * conversionFactor, obj.points[i + 2] * conversionFactor, obj.weights[i / 3]));
+          }
 
+          var knots = [];
 
-          var knots = [obj.knots[0]];
-          knots = knots.concat(obj.knots);
-          knots.push(knots[knots.length - 1]); // Create the nurbs curve
+          if (obj.knots.length != obj.points.length / 3 + obj.degree + 1) {
+            // Convert knots from rhino compact format to normal format.
+            var _knots = [obj.knots[0]];
+            _knots = _knots.concat(obj.knots);
+
+            _knots.push(_knots[_knots.length - 1]);
+          } else {
+            knots = obj.knots;
+          } // Create the nurbs curve
+
 
           var curve = new three_examples_jsm_curves_NURBSCurve__WEBPACK_IMPORTED_MODULE_1__.NURBSCurve(obj.degree, knots, points, null, null); // Delete everything unnecessary from the metadata object.
 
@@ -770,6 +811,7 @@ var Coverter = /*#__PURE__*/function () {
       var _CircleToBufferGeometry = _asyncToGenerator(function* (obj) {
         var points = this.getCircularCurvePoints(obj.plane, obj.radius);
         var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
+        delete obj.plane;
         delete obj.value;
         delete obj.speckle_type;
         return new _ObjectWrapper__WEBPACK_IMPORTED_MODULE_3__.default(geometry, obj, 'line');
@@ -817,9 +859,9 @@ var Coverter = /*#__PURE__*/function () {
       }
 
       // Get alignment vectors
-      var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(plane.origin.value[0], plane.origin.value[1], plane.origin.value[2]);
-      var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(plane.xdir.value[0], plane.xdir.value[1], plane.xdir.value[2]);
-      var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(plane.ydir.value[0], plane.ydir.value[1], plane.ydir.value[2]); // Determine resolution
+      var center = this.PointToVector3(plane.origin);
+      var xAxis = this.PointToVector3(plane.xdir);
+      var yAxis = this.PointToVector3(plane.ydir); // Determine resolution
 
       var resolution = (endAngle - startAngle) * radius / res;
       resolution = parseInt(resolution.toString());

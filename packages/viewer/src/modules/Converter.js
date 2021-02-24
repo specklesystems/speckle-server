@@ -206,10 +206,23 @@ export default class Coverter {
     }
   }
 
+  PointToVector3( obj ) {
+    let conversionFactor = getConversionFactor( obj.units )
+    let v = null
+    if ( obj.value ) {
+      // Old point format based on value list
+      v = new THREE.Vector3( obj.value[0]* conversionFactor,obj.value[1]* conversionFactor,obj.value[2] * conversionFactor )
+    } else {
+      // New point format based on cartesian coords
+      v = new THREE.Vector3( obj.x * conversionFactor, obj.y * conversionFactor, obj.z * conversionFactor )
+    }
+    return v
+  }
+
   // TODOs:
   async PointToBufferGeometry( obj ) {
-    let conversionFactor = getConversionFactor( obj.units )
-    const v = new THREE.Vector3( obj.value[0]* conversionFactor,obj.value[1]* conversionFactor,obj.value[2] * conversionFactor )
+    let v = this.PointToVector3( obj )
+
     let buf = new THREE.BufferGeometry().setFromPoints( [ v ] )
     
     delete obj.value
@@ -218,9 +231,24 @@ export default class Coverter {
     return new ObjectWrapper( buf, obj, 'point' )
   }
 
-  async LineToBufferGeometry( obj ) {
-    return this.PolylineToBufferGeometry( obj )
+  async LineToBufferGeometry( object ) {
+    console.log( 'Line conversion', object )
+    if ( object.value ){
+      //Old line format, treat as polyline
+      return this.PolylineToBufferGeometry( object )
+    }
+    let obj = {}
+    Object.assign( obj,object )
+
+    delete object.start
+    delete object.end
+    delete object.speckle_type
+
+    const geometry = new THREE.BufferGeometry().setFromPoints( [ this.PointToVector3( obj.start ), this.PointToVector3( obj.end ) ] )
+
+    return new ObjectWrapper( geometry, obj, 'line' )
   }
+
   async PolylineToBufferGeometry( object ) {
     let obj = {}
     Object.assign( obj,object )
@@ -235,6 +263,9 @@ export default class Coverter {
     for ( let i = 0; i < obj.value.length; i+=3 ) {
       points.push( new THREE.Vector3( obj.value[ i ]* conversionFactor,obj.value[i+1]* conversionFactor,obj.value[i+2] * conversionFactor ) )
     }
+    if ( obj.closed )
+      points.push( points[0] )
+    
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.value
@@ -245,6 +276,7 @@ export default class Coverter {
   async PolycurveToBufferGeometry( object ) {
     let obj = {}
     Object.assign( obj,object )
+    
     delete object.value
     delete object.speckle_type
     delete object.displayValue
@@ -267,30 +299,44 @@ export default class Coverter {
   }
   
   async CurveToBufferGeometry( object ) {
+    
     let obj = {}
     Object.assign( obj,object )
     delete object.value
     delete object.speckle_type
     delete object.displayValue
     
-    obj.points = await this.dechunk( obj.points )
-    obj.weights = await this.dechunk( obj.weights )
-    obj.knots = await this.dechunk( obj.knots )
+    let pt = await this.dechunk( object.points )
+    let k = await this.dechunk( object.knots )
+    let w = await this.dechunk( object.weights )
+
+    obj.weights = w
+    obj.knots = k
+    obj.points = pt
 
     try {
-      console.log( 'Curve to buffer', obj )
+      console.log( 'Curve to buffer', object, obj )
+      throw new Error("Skipping nurbs for displayValue due to lack of support in THREE.js of some nurbs types")
+      
       let conversionFactor = getConversionFactor( obj.units )
       
       // Convert points+weights to Vector4
       const points = []
       for ( let i = 0; i < obj.points.length; i+=3 ) {
-        points.push( new THREE.Vector4( obj.points[ i ]* conversionFactor,obj.points[i+1]* conversionFactor,obj.points[i+2] * conversionFactor, obj.weights[i/3] * conversionFactor ) )
+        points.push( new THREE.Vector4( obj.points[ i ]* conversionFactor,obj.points[i+1]* conversionFactor,obj.points[i+2] * conversionFactor, obj.weights[i/3] ) )
       }
-      // Convert knots from rhino compact format to normal format.
-      let knots = [ obj.knots[0] ]
-      knots = knots.concat( obj.knots )
-      knots.push( knots[knots.length -1] )
-  
+
+      let knots = []
+      if ( obj.knots.length != ( obj.points.length/3 + obj.degree + 1 ) ) {
+        // Convert knots from rhino compact format to normal format.
+        let knots = [ obj.knots[0] ]
+        knots = knots.concat( obj.knots )
+        knots.push( knots[knots.length -1] )
+      }
+      else {
+        knots = obj.knots
+      }
+
       // Create the nurbs curve
       const curve = new NURBSCurve( obj.degree, knots, points, null, null )
       
@@ -329,6 +375,7 @@ export default class Coverter {
     const points = this.getCircularCurvePoints( obj.plane, obj.radius )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
+    delete obj.plane
     delete obj.value
     delete obj.speckle_type
 
@@ -351,9 +398,9 @@ export default class Coverter {
   getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
 
     // Get alignment vectors
-    const center = new THREE.Vector3( plane.origin.value[0], plane.origin.value[1], plane.origin.value[2] )
-    const xAxis = new THREE.Vector3( plane.xdir.value[0], plane.xdir.value[1], plane.xdir.value[2] )
-    const yAxis = new THREE.Vector3( plane.ydir.value[0], plane.ydir.value[1], plane.ydir.value[2] )
+    const center = this.PointToVector3( plane.origin )
+    const xAxis = this.PointToVector3( plane.xdir )
+    const yAxis = this.PointToVector3( plane.ydir )
 
     // Determine resolution
     let resolution = ( endAngle - startAngle ) * radius / res
