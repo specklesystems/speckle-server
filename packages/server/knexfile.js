@@ -31,8 +31,7 @@ let migrationDirs = walk( './modules' )
 let env = process.env
 let connectionUri
 if ( env.POSTGRES_USER && env.POSTGRES_PASSWORD ) {
-  connectionUri = `postgres://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}` + 
-`@${env.POSTGRES_URL}/${env.POSTGRES_DB}`
+  connectionUri = `postgres://${env.POSTGRES_USER}:${env.POSTGRES_PASSWORD}@${env.POSTGRES_URL}/${env.POSTGRES_DB}`
 } else {
   connectionUri = env.POSTGRES_URL
 }
