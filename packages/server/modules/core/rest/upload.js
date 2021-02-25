@@ -4,12 +4,13 @@ const Busboy = require( 'busboy' )
 const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 
+const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 const { createObjects, createObjectsBatched } = require( '../services/objects' )
 
 module.exports = ( app ) => {
-  app.post( '/objects/:streamId', contextMiddleware, async ( req, res ) => {
+  app.post( '/objects/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
 
     debug( 'speckle:upload-endpoint' )( 'booom upload endpoint' )
 

@@ -14,6 +14,7 @@ const debug = require( 'debug' )
 const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
 const Logging = require( `${appRoot}/logging` )
+const { startup: MatStartup } = require( `${appRoot}/logging/matomoHelper` )
 
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
@@ -32,6 +33,7 @@ exports.init = async ( ) => {
   const app = express( )
 
   Logging( app )
+  MatStartup()
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?

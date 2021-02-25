@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
-const Matomo = require ( 'matomo-tracker' )
 const { machineIdSync } = require( 'node-machine-id' )
 
 module.exports = function ( app ) {
@@ -21,34 +20,5 @@ module.exports = function ( app ) {
 
     app.use( Sentry.Handlers.requestHandler( ) )
     app.use( Sentry.Handlers.tracingHandler( ) )
-  }
-
-  if ( process.env.DISABLE_TRACKING !== 'true' ) {
-
-    let mat = new Matomo( 7, 'https://speckle.matomo.cloud/matomo.php' )
-    let token = '8402f0bdd767c74cce86f710fe830a2c'
-    mat.track( {
-      url: 'http://speckle.server',
-      action_name: 'startup',
-      uid: id,
-      cip: id,
-      token_auth: token
-    } )
-
-    let middleware = ( req, res, next ) => {
-      mat.track( {
-        url: req.url,
-        action_name: 'api call',
-        cip: id,
-        uid: id,
-        cvar: JSON.stringify( {
-          '1': [ 'HTTP method', req.method ]
-        } ),
-        token_auth: token
-      } )
-      next()
-    }
-
-    app.use( middleware )
   }
 }
