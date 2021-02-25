@@ -221,11 +221,12 @@ export default class Coverter {
   // TODOs:
   async PointToBufferGeometry( obj ) {
     let v = this.PointToVector3( obj )
-
+    console.log( 'Point to buffer', obj )
     let buf = new THREE.BufferGeometry().setFromPoints( [ v ] )
     
     delete obj.value
     delete obj.speckle_type
+    delete obj.bbox
 
     return new ObjectWrapper( buf, obj, 'point' )
   }
@@ -254,6 +255,7 @@ export default class Coverter {
     
     delete object.value
     delete object.speckle_type
+    delete object.bbox
 
     let conversionFactor = getConversionFactor( obj.units )
     
@@ -269,6 +271,7 @@ export default class Coverter {
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.value
+    delete obj.bbox
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
@@ -281,6 +284,7 @@ export default class Coverter {
     delete object.speckle_type
     delete object.displayValue
     delete object.segments
+    delete object.bbox
 
     let buffers = []
     for ( let i = 0; i < obj.segments.length; i++ ) {
@@ -292,6 +296,7 @@ export default class Coverter {
     
     delete obj.segments
     delete obj.speckle_type
+    delete obj.bbox
 
     return new ObjectWrapper( geometry , obj, 'line' )
   }
@@ -300,10 +305,12 @@ export default class Coverter {
     
     let obj = {}
     Object.assign( obj,object )
+
     delete object.value
     delete object.speckle_type
     delete object.displayValue
-    
+    delete object.bbox
+
     obj.weights = await this.dechunk( object.weights )
     obj.knots = await this.dechunk( object.knots )
     obj.points = await this.dechunk( object.points )
@@ -362,7 +369,8 @@ export default class Coverter {
       delete obj.points
       delete obj.weights
       delete obj.knots
-
+      delete obj.bbox
+      
       return new ObjectWrapper( poly.bufferGeometry, obj, 'line' )
     }
   }
@@ -374,6 +382,7 @@ export default class Coverter {
     delete obj.plane
     delete obj.value
     delete obj.speckle_type
+    delete obj.bbox
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
@@ -388,6 +397,7 @@ export default class Coverter {
     delete obj.endPoint
     delete obj.plane
     delete obj.midPoint
+    delete obj.bbox
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
