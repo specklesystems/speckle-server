@@ -78,7 +78,7 @@ export default class SceneObjectManager {
         // Is it a transparent material?
         if ( renderMat.opacity !== 1 ) {
           let material = this.transparentMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
 
           material.color = color
           material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -87,7 +87,7 @@ export default class SceneObjectManager {
         // It's not a transparent material!
         } else {
           let material = this.solidMaterial.clone()
-          material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+          material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
 
           material.color = color
           material.metalness = renderMat.metalness
@@ -98,7 +98,7 @@ export default class SceneObjectManager {
       } else {
         // If we don't have defined material, just use the default
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane)
+        material.clippingPlanes = this.viewer.sectionBox.planes.map( p => p.plane )
 
         this.addSolid( wrapper, material )
       }
@@ -158,6 +158,8 @@ export default class SceneObjectManager {
     }
     this.solidObjects.clear()
     this.transparentObjects.clear()
+    this.pointObjects.clear()
+    this.lineObjects.clear()
     this.viewer.selectionHelper.unselect()
     this.objectIds = []
 
@@ -170,7 +172,7 @@ export default class SceneObjectManager {
 
     let sceneBox = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
 
-    this.viewer.sectionBox.setFromBbox(sceneBox)
+    this.viewer.sectionBox.setFromBbox( sceneBox )
   }
 
   zoomToObject( target ) {

@@ -252,6 +252,7 @@ export default class Coverter {
   async PolylineToBufferGeometry( object ) {
     let obj = {}
     Object.assign( obj,object )
+    
     delete object.value
     delete object.speckle_type
 
@@ -261,7 +262,7 @@ export default class Coverter {
     
     const points = []
     for ( let i = 0; i < obj.value.length; i+=3 ) {
-      points.push( new THREE.Vector3( obj.value[ i ]* conversionFactor,obj.value[i+1]* conversionFactor,obj.value[i+2] * conversionFactor ) )
+      points.push( new THREE.Vector3( obj.value[i]* conversionFactor,obj.value[i+1]* conversionFactor,obj.value[i+2] * conversionFactor ) )
     }
     if ( obj.closed )
       points.push( points[0] )
@@ -306,17 +307,15 @@ export default class Coverter {
     delete object.speckle_type
     delete object.displayValue
     
-    let pt = await this.dechunk( object.points )
-    let k = await this.dechunk( object.knots )
-    let w = await this.dechunk( object.weights )
-
-    obj.weights = w
-    obj.knots = k
-    obj.points = pt
+    obj.weights = await this.dechunk( object.weights )
+    obj.knots = await this.dechunk( object.knots )
+    obj.points = await this.dechunk( object.points )
 
     try {
       console.log( 'Curve to buffer', object, obj )
-      throw new Error("Skipping nurbs for displayValue due to lack of support in THREE.js of some nurbs types")
+
+      //TODO: This should be removed when we improve the nurbs curve's in THREE.js (or make our own).
+      throw new Error( 'Skipping nurbs for displayValue due to lack of support in THREE.js of some nurbs types' )
       
       let conversionFactor = getConversionFactor( obj.units )
       
