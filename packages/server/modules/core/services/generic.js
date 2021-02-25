@@ -14,9 +14,15 @@ module.exports = {
 
   },
 
-  async getAvailableScopes( ) {
+  async getAllScopes( ) {
 
     return await Scopes( ).select( '*' )
+
+  },
+
+  async getPublicScopes() {
+
+    return await Scopes( ).select( '*' ).where( { public: true } )
 
   },
 

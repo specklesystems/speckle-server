@@ -1,7 +1,7 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
-const { updateServerInfo, getServerInfo, getAvailableScopes, getAvailableRoles } = require( '../../services/generic' )
+const { updateServerInfo, getServerInfo, getPublicScopes, getAvailableRoles } = require( '../../services/generic' )
 
 module.exports = {
   Query: {
@@ -24,7 +24,7 @@ module.exports = {
 
     async scopes( parent, args, context, info ) {
 
-      return await getAvailableScopes( )
+      return await getPublicScopes( )
 
     }
   },
