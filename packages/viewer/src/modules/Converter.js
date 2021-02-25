@@ -243,7 +243,8 @@ export default class Coverter {
     delete object.start
     delete object.end
     delete object.speckle_type
-
+    delete object.bbox
+    
     const geometry = new THREE.BufferGeometry().setFromPoints( [ this.PointToVector3( obj.start ), this.PointToVector3( obj.end ) ] )
 
     return new ObjectWrapper( geometry, obj, 'line' )
