@@ -10,3 +10,6 @@ test-queries
 
 **/.DS_Store
 .nvmrc
+
+packages/viewer/example/*.js
+packages/viewer/example/*.js.map

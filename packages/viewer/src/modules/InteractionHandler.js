@@ -13,8 +13,12 @@ export default class InteractionHandler {
     this.preventSelection = false
 
     this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.viewer.sceneManager.userObjects, sectionBox: this.sectionBox } )
-    this.selectionMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectionMaterial.clippingPlanes = this.sectionBox.planes
+    this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
+    this.selectionMeshMaterial.clippingPlanes = this.sectionBox.planes
+
+    this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
+    this.selectionLineMaterial.clippingPlanes = this.sectionBox.planes
+
     this.selectionEdgesMaterial = new THREE.LineBasicMaterial( { color: 0x23F3BD } )
     this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes
 
@@ -44,10 +48,22 @@ export default class InteractionHandler {
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
 
-    let mesh = new THREE.Mesh( objs[0].object.geometry, this.selectionMaterial )
-    let box = new THREE.BoxHelper( mesh, 0x23F3BD )
+    // console.log(objs[0].object.geometry.type)
+    const selType = objs[0].object.type
+    switch ( selType ) {
+    case 'Mesh':
+      this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
+      break
+    case 'Line':
+      this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
+      break
+    case 'Point':
+      console.warn( 'Point selection not implemented.' )
+      return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
+    }
+
+    let box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     box.material = this.selectionEdgesMaterial
-    this.selectedObjects.add( mesh )
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
   }
