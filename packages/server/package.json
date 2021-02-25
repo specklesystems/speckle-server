@@ -1,6 +1,6 @@
 {
   "name": "@speckle/server",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "",
   "homepage": "https://github.com/specklesystems/server",
@@ -46,6 +46,7 @@
     "lodash.merge": "^4.6.2",
     "lodash.set": "^4.3.2",
     "lodash.values": "^4.3.0",
+    "matomo-tracker": "^2.2.4",
     "morgan": "^1.10.0",
     "morgan-debug": "^2.0.0",
     "node-machine-id": "^1.1.12",

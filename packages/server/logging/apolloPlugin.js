@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 const Sentry = require( '@sentry/node' )
 const { ApolloError } = require( 'apollo-server-express' )
+const { apolloHelper } = require( './matomoHelper' )
 
 module.exports = {
   requestDidStart( ctx ) {
@@ -14,6 +15,12 @@ module.exports = {
           op: `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`,
           name: `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
         } )
+
+        try {
+          apolloHelper( `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}` )
+        } catch ( e ) {
+          Sentry.captureException( e )
+        }
 
         Sentry.configureScope( scope => scope.setSpan( transaction ) )
         ctx.request.transaction = transaction
@@ -33,8 +40,8 @@ module.exports = {
             if ( err.path ) {
               // We can also add the path as breadcrumb
               scope.addBreadcrumb( {
-                category: "query-path",
-                message: err.path.join( " > " ),
+                category: 'query-path',
+                message: err.path.join( ' > ' ),
                 level: Sentry.Severity.Debug
               } )
             }

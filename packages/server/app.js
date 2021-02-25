@@ -13,7 +13,8 @@ const debug = require( 'debug' )
 
 const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
-const SentryInit = require( `${appRoot}/logging` )
+const Logging = require( `${appRoot}/logging` )
+const { startup: MatStartup } = require( `${appRoot}/logging/matomoHelper` )
 
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
@@ -31,7 +32,8 @@ let graphqlServer
 exports.init = async ( ) => {
   const app = express( )
 
-  SentryInit( app )
+  Logging( app )
+  MatStartup()
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?

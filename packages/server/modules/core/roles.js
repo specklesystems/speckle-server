@@ -9,14 +9,16 @@ module.exports = [
     description: 'Holds supreme autocratic authority, not restricted by written laws, legislature, or customs.',
     resourceTarget: 'server',
     aclTableName: 'server_acl',
-    weight: 1000
+    weight: 1000,
+    public: false
   },
   {
     name: 'server:user',
     description: 'Has normal access to the server.',
     resourceTarget: 'server',
     aclTableName: 'server_acl',
-    weight: 100
+    weight: 100,
+    public: false
   },
   /**
    * Roles for streams.
@@ -26,18 +28,21 @@ module.exports = [
     description: 'Owners have full access, including deletion rights & access control.',
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 1000
+    weight: 1000,
+    public: true
   }, {
     name: 'stream:contributor',
     description: 'Contributors can create new branches and commits, but they cannot edit stream details or manage collaborators.',
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 500
+    weight: 500,
+    public: true
   }, {
     name: 'stream:reviewer',
     description: 'Reviewers can only view (read) the data from this stream.',
     resourceTarget: 'streams',
     aclTableName: 'stream_acl',
-    weight: 100
+    weight: 100,
+    public: true
   }
 ]

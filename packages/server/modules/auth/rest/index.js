@@ -8,6 +8,7 @@ const passport = require( 'passport' )
 const debug = require( 'debug' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
+const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
 const { getApp, getAllAppsAuthorizedByUser, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( '../services/apps' )
 const { createPersonalAccessToken, validateToken, revokeTokenById } = require( `${appRoot}/modules/core/services/tokens` )
 const { revokeRefreshToken } = require( `${appRoot}/modules/auth/services/apps` )
@@ -48,7 +49,7 @@ module.exports = ( app ) => {
   /*
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
-  app.post( '/auth/token', async ( req, res, next ) => {
+  app.post( '/auth/token', matomoMiddleware, async ( req, res, next ) => {
     try {
       // Token refresh
       if ( req.body.refreshToken ) {
@@ -74,7 +75,7 @@ module.exports = ( app ) => {
   /*
   Ensures a user is logged out by invalidating their token and refresh token.
    */
-  app.post( '/auth/logout', async ( req, res, next ) => {
+  app.post( '/auth/logout', matomoMiddleware, async ( req, res, next ) => {
     try {
       let token = req.body.token
       let refreshToken = req.body.refreshToken

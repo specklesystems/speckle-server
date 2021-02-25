@@ -14,15 +14,27 @@ module.exports = {
 
   },
 
-  async getAvailableScopes( ) {
+  async getAllScopes( ) {
 
     return await Scopes( ).select( '*' )
 
   },
 
-  async getAvailableRoles( ) {
+  async getPublicScopes() {
+
+    return await Scopes( ).select( '*' ).where( { public: true } )
+
+  },
+
+  async getAllRoles( ) {
 
     return await Roles( ).select( '*' )
+
+  },
+
+  async getPublicRoles() {
+
+    return await Roles( ).select( '*' ).where( { public: true } )
 
   },
 

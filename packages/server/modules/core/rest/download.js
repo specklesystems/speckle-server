@@ -3,8 +3,9 @@ const zlib = require( 'zlib' )
 const Busboy = require( 'busboy' )
 const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
-const cors = require( 'cors' ) 
+const cors = require( 'cors' )
 
+const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
 const { getStream } = require( '../services/streams' )
@@ -13,7 +14,7 @@ module.exports = ( app ) => {
 
   app.options( '/objects/:streamId/:objectId', cors() )
 
-  app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, async ( req, res ) => {
+  app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
 
     const stream = await getStream( { streamId: req.params.streamId, userId: req.context.userId } )
 
@@ -41,7 +42,7 @@ module.exports = ( app ) => {
 
     // Populate first object (the "commit")
     let obj = await getObject( { objectId: req.params.objectId } )
-    
+
     if ( !obj ) {
       return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
     }
