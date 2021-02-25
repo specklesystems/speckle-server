@@ -221,7 +221,6 @@ export default class Coverter {
   // TODOs:
   async PointToBufferGeometry( obj ) {
     let v = this.PointToVector3( obj )
-    console.log( 'Point to buffer', obj )
     let buf = new THREE.BufferGeometry().setFromPoints( [ v ] )
 
     delete obj.value
@@ -232,7 +231,6 @@ export default class Coverter {
   }
 
   async LineToBufferGeometry( object ) {
-    console.log( 'Line conversion', object )
     if ( object.value ){
       //Old line format, treat as polyline
       return this.PolylineToBufferGeometry( object )
