@@ -26,9 +26,15 @@ module.exports = {
 
   },
 
-  async getAvailableRoles( ) {
+  async getAllRoles( ) {
 
     return await Roles( ).select( '*' )
+
+  },
+
+  async getPublicRoles() {
+
+    return await Roles( ).select( '*' ).where( { public: true } )
 
   },
 
