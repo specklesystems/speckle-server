@@ -58,6 +58,7 @@ export default {
   methods: {
     async createBranch() {
       this.loading = true
+      this.$matomo && this.$matomo.trackPageView('branch/create')
       await this.$apollo.mutate({
         mutation: gql`
           mutation branchCreate($params: BranchCreateInput!) {

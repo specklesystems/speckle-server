@@ -73,6 +73,7 @@ export default {
   methods: {
     async save() {
       this.loading = true
+      this.$matomo && this.$matomo.trackPageView('stream/update')
       try {
         await this.$apollo.mutate({
           mutation: gql`

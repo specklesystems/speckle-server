@@ -51,6 +51,7 @@ export default {
       this.$refs.editServerDialog.open(this.serverInfo).then((dialog) => {
         if (!dialog.result) return
         console.log(dialog)
+        this.$matomo && this.$matomo.trackPageView('server/update')
         this.$apollo
           .mutate({
             mutation: gql`

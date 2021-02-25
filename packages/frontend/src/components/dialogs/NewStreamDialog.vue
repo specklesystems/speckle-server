@@ -153,6 +153,7 @@ export default {
         return
       }
       this.isLoading = true
+      this.$matomo && this.$matomo.trackPageView('stream/create')
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`

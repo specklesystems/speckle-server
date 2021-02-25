@@ -32,4 +32,8 @@ export default class EventEmitter {
 
     this._events[name].forEach( fireCallbacks )
   }
+
+  dispose(){
+    this._events = null
+  }
 }

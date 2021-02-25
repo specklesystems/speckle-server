@@ -7,9 +7,9 @@
       </v-list-item-title>
       <v-list-item-subtitle class="caption">
         <b>Created:</b>
-        {{ token.createdAt | dateParse() | dateFormat("DD MMM YYYY") }}
+        {{ token.createdAt | dateParse() | dateFormat('DD MMM YYYY') }}
         <b>Last Used:</b>
-        {{ token.lastUsed | dateParse() | dateFormat("DD MMM YYYY") }}
+        {{ token.lastUsed | dateParse() | dateFormat('DD MMM YYYY') }}
         <b>Scopes:</b>
         {{ token.scopes }}
       </v-list-item-subtitle>
@@ -37,7 +37,7 @@
   </v-list-item>
 </template>
 <script>
-import gql from "graphql-tag"
+import gql from 'graphql-tag'
 
 export default {
   components: {},
@@ -54,6 +54,7 @@ export default {
   },
   methods: {
     async revokeToken() {
+      this.$matomo && this.$matomo.trackPageView('user/token/revoke')
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -62,7 +63,7 @@ export default {
             }
           `
         })
-        this.$emit("deleted")
+        this.$emit('deleted')
         this.showRevokeConfirm = false
       } catch (e) {
         console.log(e)

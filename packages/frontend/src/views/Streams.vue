@@ -64,9 +64,6 @@ export default {
   }),
   computed: {},
   watch: {},
-  mounted() {
-    this.$matomo && this.$matomo.trackPageView('streams')
-  },
   methods: {
     infiniteHandler($state) {
       this.$apollo.queries.streams.fetchMore({
@@ -96,6 +93,7 @@ export default {
     newStream() {
       this.$refs.streamDialog.open().then((dialog) => {
         if (!dialog.result) return
+        this.$matomo && this.$matomo.trackPageView('stream/create')
         this.$apollo
           .mutate({
             mutation: gql`

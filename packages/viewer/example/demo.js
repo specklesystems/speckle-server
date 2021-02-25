@@ -224,7 +224,8 @@ function _asyncIterator(iterable) { var method; if (typeof Symbol !== "undefined
 
 
 var v = new _modules_Viewer__WEBPACK_IMPORTED_MODULE_0__.default({
-  container: document.getElementById('renderer')
+  container: document.getElementById('renderer'),
+  showStats: true
 });
 v.on('load-progress', args => console.log(args));
 window.v = v;
@@ -572,8 +573,7 @@ var Coverter = /*#__PURE__*/function () {
       var _MeshToBufferGeometry = _asyncToGenerator(function* (obj) {
         try {
           if (!obj) return;
-          var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units); // console.log( conversionFactor )
-
+          var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units);
           var buffer = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
           var indices = [];
           var vertices = yield this.dechunk(obj.vertices);
@@ -711,7 +711,6 @@ var Coverter = /*#__PURE__*/function () {
         delete object.speckle_type;
         delete object.displayValue;
         delete object.segments;
-        console.log('Polycurve to buffer', obj);
         var buffers = [];
 
         for (var i = 0; i < obj.segments.length; i++) {
@@ -749,8 +748,6 @@ var Coverter = /*#__PURE__*/function () {
         obj.points = pt;
 
         try {
-          console.log('Curve to buffer', object, obj);
-          throw new Error("Skipping nurbs for displayValue due to lack of support in THREE.js of some nurbs types");
           var conversionFactor = (0,_Units__WEBPACK_IMPORTED_MODULE_4__.getConversionFactor)(obj.units); // Convert points+weights to Vector4
 
           var points = [];
@@ -886,7 +883,6 @@ var Coverter = /*#__PURE__*/function () {
         var center = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.origin.value[0], obj.plane.origin.value[1], obj.plane.origin.value[2]);
         var xAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.xdir.value[0], obj.plane.xdir.value[1], obj.plane.xdir.value[2]);
         var yAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(obj.plane.ydir.value[0], obj.plane.ydir.value[1], obj.plane.ydir.value[2]);
-        console.log(center, xAxis, yAxis);
         var resolution = 2 * Math.PI * obj.radius1 / 0.1;
         resolution = parseInt(resolution.toString());
         var points = [];
@@ -901,7 +897,6 @@ var Coverter = /*#__PURE__*/function () {
           points.push(pt);
         }
 
-        console.log(points);
         var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(points);
         delete obj.value;
         delete obj.speckle_type;
@@ -913,8 +908,7 @@ var Coverter = /*#__PURE__*/function () {
       }
 
       return EllipseToBufferGeometry;
-    }() // async SurfaceToBufferGeometry( obj ) {}
-
+    }()
   }]);
 
   return Coverter;
@@ -985,9 +979,185 @@ var EventEmitter = /*#__PURE__*/function () {
 
       this._events[name].forEach(fireCallbacks);
     }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this._events = null;
+    }
   }]);
 
   return EventEmitter;
+}();
+
+
+
+/***/ }),
+
+/***/ "./src/modules/InteractionHandler.js":
+/*!*******************************************!*\
+  !*** ./src/modules/InteractionHandler.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => /* binding */ InteractionHandler
+/* harmony export */ });
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* harmony import */ var _SectionBox__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SectionBox */ "./src/modules/SectionBox.js");
+/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+
+
+
+
+var InteractionHandler = /*#__PURE__*/function () {
+  function InteractionHandler(viewer) {
+    _classCallCheck(this, InteractionHandler);
+
+    this.viewer = viewer;
+    this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer);
+    this.sectionBox.toggle(); // switch off
+
+    this.preventSelection = false;
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_2__.default(this.viewer, {
+      subset: this.viewer.sceneManager.userObjects,
+      sectionBox: this.sectionBox
+    });
+    this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
+      color: 0x0B55D2,
+      emissive: 0x0B55D2,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
+    });
+    this.selectionMaterial.clippingPlanes = this.sectionBox.planes;
+    this.selectionEdgesMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({
+      color: 0x23F3BD
+    });
+    this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes;
+    this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
+    this.viewer.scene.add(this.selectedObjects);
+    this.selectedObjects.renderOrder = 1000;
+    this.selectionHelper.on('object-doubleclicked', this._handleDoubleClick.bind(this));
+    this.selectionHelper.on('object-clicked', this._handleSelect.bind(this));
+    this.viewer.sceneManager.materials.forEach(mat => mat.clippingPlanes = this.sectionBox.planes);
+  }
+
+  _createClass(InteractionHandler, [{
+    key: "_handleDoubleClick",
+    value: function _handleDoubleClick(objs) {
+      if (!objs || objs.length === 0) this.zoomExtents();else this.zoomToObject(objs[0].object);
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "_handleSelect",
+    value: function _handleSelect(objs) {
+      if (this.preventSelection) return;
+
+      if (objs.length === 0) {
+        this.deselectObjects();
+        return;
+      }
+
+      if (!this.selectionHelper.multiSelect) this.deselectObjects();
+      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(objs[0].object.geometry, this.selectionMaterial);
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.BoxHelper(mesh, 0x23F3BD);
+      box.material = this.selectionEdgesMaterial;
+      this.selectedObjects.add(mesh);
+      this.selectedObjects.add(box);
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "deselectObjects",
+    value: function deselectObjects() {
+      this.selectedObjects.clear();
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "toggleSectionBox",
+    value: function toggleSectionBox() {
+      this.sectionBox.toggle();
+
+      if (this.sectionBox.display.visible) {
+        if (this.selectedObjects.children.length === 0) {
+          this.sectionBox.setBox(this.viewer.sceneManager.getSceneBoundingBox());
+          this.zoomExtents();
+        } else {
+          var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.selectedObjects);
+          this.sectionBox.setBox(box);
+          this.zoomToBox(box);
+        }
+      } else {
+        this.preventSelection = false;
+      }
+
+      this.viewer.needsRender = true;
+    }
+  }, {
+    key: "hideSectionBox",
+    value: function hideSectionBox() {
+      if (!this.sectionBox.display.visible) return;
+      this.toggleSectionBox();
+    }
+  }, {
+    key: "showSectionBox",
+    value: function showSectionBox() {
+      if (this.sectionBox.display.visible) return;
+      this.toggleSectionBox();
+    }
+  }, {
+    key: "zoomToObject",
+    value: function zoomToObject(target) {
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(target);
+      this.zoomToBox(box);
+    }
+  }, {
+    key: "zoomExtents",
+    value: function zoomExtents() {
+      if (this.sectionBox.display.visible) {
+        this.zoomToObject(this.sectionBox.boxMesh);
+        return;
+      }
+
+      if (this.viewer.sceneManager.objects.length === 0) {
+        var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
+
+        this.zoomToBox(_box);
+        this.viewer.controls.setBoundary(_box);
+        return;
+      }
+
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
+      this.zoomToBox(box);
+      this.viewer.controls.setBoundary(box);
+    }
+  }, {
+    key: "zoomToBox",
+    value: function zoomToBox(box) {
+      var fitOffset = 1.2;
+      var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
+      var target = new three__WEBPACK_IMPORTED_MODULE_0__.Sphere();
+      box.getBoundingSphere(target);
+      target.radius = target.radius * fitOffset;
+      this.viewer.controls.fitToSphere(target, true);
+      var maxSize = Math.max(size.x, size.y, size.z);
+      var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
+      var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
+      var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
+      this.viewer.controls.minDistance = distance / 100;
+      this.viewer.controls.maxDistance = distance * 100;
+      this.viewer.camera.near = distance / 100;
+      this.viewer.camera.far = distance * 100;
+      this.viewer.camera.updateProjectionMatrix();
+    }
+  }]);
+
+  return InteractionHandler;
 }();
 
 
@@ -1315,12 +1485,12 @@ var SceneObjectManager = /*#__PURE__*/function () {
       envMap: this.viewer.cubeCamera.renderTarget.texture
     });
     this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({
-      color: 0x000000
+      color: 0x7F7F7F
     });
     this.pointMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.PointsMaterial({
       size: 10,
       sizeAttenuation: false,
-      color: 0x000000
+      color: 0x7F7F7F
     });
     this.objectIds = [];
     this.postLoad = lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
@@ -1354,14 +1524,14 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
             if (renderMat.opacity !== 1) {
               var material = this.transparentMaterial.clone();
-              material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
+              material.clippingPlanes = this.viewer.interactions.sectionBox.planes;
               material.color = color;
               material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2;
               this.addTransparentSolid(wrapper, material); // It's not a transparent material!
             } else {
               var _material = this.solidMaterial.clone();
 
-              _material.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
+              _material.clippingPlanes = this.viewer.interactions.sectionBox.planes;
               _material.color = color;
               _material.metalness = renderMat.metalness;
               if (_material.metalness !== 0) _material.roughness = 0.1;
@@ -1373,7 +1543,7 @@ var SceneObjectManager = /*#__PURE__*/function () {
             // If we don't have defined material, just use the default
             var _material2 = this.solidMaterial.clone();
 
-            _material2.clippingPlanes = this.viewer.sectionBox.planes.map(p => p.plane);
+            _material2.clippingPlanes = this.viewer.interactions.sectionBox.planes;
             this.addSolid(wrapper, _material2);
           }
 
@@ -1441,7 +1611,10 @@ var SceneObjectManager = /*#__PURE__*/function () {
 
       this.solidObjects.clear();
       this.transparentObjects.clear();
-      this.viewer.selectionHelper.unselect();
+      this.lineObjects.clear();
+      this.pointObjects.clear();
+      this.viewer.interactions.deselectObjects();
+      this.viewer.interactions.hideSectionBox();
       this.objectIds = [];
 
       this._postLoadFunction();
@@ -1449,55 +1622,21 @@ var SceneObjectManager = /*#__PURE__*/function () {
   }, {
     key: "_postLoadFunction",
     value: function _postLoadFunction() {
-      this.zoomExtents();
+      this.viewer.interactions.zoomExtents();
+      this.viewer.interactions.hideSectionBox();
       this.viewer.reflectionsNeedUpdate = true;
-      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
-      this.viewer.sectionBox.setFromBbox(sceneBox);
     }
   }, {
-    key: "zoomToObject",
-    value: function zoomToObject(target) {
-      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(target);
-      this.zoomToBox(box);
-    }
-  }, {
-    key: "zoomExtents",
-    value: function zoomExtents() {
-      var bboxTarget = this.userObjects;
-
+    key: "getSceneBoundingBox",
+    value: function getSceneBoundingBox() {
       if (this.objects.length === 0) {
         var _box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, -1, -1), new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1));
 
-        this.zoomToBox(_box);
-        return;
+        return _box;
       }
 
-      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(bboxTarget);
-      this.zoomToBox(box);
-    } // see this discussion: https://github.com/mrdoob/three.js/pull/14526#issuecomment-497254491
-    // Notes: seems that zooming in to a box 'rescales' the SSAO pass somehow and makes it
-    // look better. Could we do the same thing somehow when controls stop moving?
-
-  }, {
-    key: "zoomToBox",
-    value: function zoomToBox(box) {
-      var fitOffset = 1.2;
-      var size = box.getSize(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
-      var center = box.getCenter(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
-      var maxSize = Math.max(size.x, size.y, size.z);
-      var fitHeightDistance = maxSize / (2 * Math.atan(Math.PI * this.viewer.camera.fov / 360));
-      var fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect;
-      var distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
-      var direction = this.viewer.controls.target.clone().sub(this.viewer.camera.position).normalize().multiplyScalar(distance);
-      this.viewer.controls.maxDistance = distance * 20; // Changing the contol's target causes 
-      // projection math @ SectionBox on('object-drag') to fail
-      // this.viewer.controls.target.copy( center )
-
-      this.viewer.camera.near = distance / 100;
-      this.viewer.camera.far = distance * 100;
-      this.viewer.camera.position.copy(this.viewer.controls.target).sub(direction);
-      this.viewer.controls.update();
-      this.viewer.camera.updateProjectionMatrix();
+      var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.userObjects);
+      return box;
     }
   }, {
     key: "_argbToRGB",
@@ -1534,6 +1673,11 @@ var SceneObjectManager = /*#__PURE__*/function () {
     get: function get() {
       return [...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children];
     }
+  }, {
+    key: "materials",
+    get: function get() {
+      return [this.lineMaterial, this.pointMaterial, this.transparentMaterial, this.solidMaterial];
+    }
   }]);
 
   return SceneObjectManager;
@@ -1556,6 +1700,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
 /* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
+/* harmony import */ var _external_TransformControls_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./external/TransformControls.js */ "./src/modules/external/TransformControls.js");
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
@@ -1564,477 +1709,246 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 
 
-/**
- * Section box helper for Speckle Viewer
- * 
- */
-// indices to verts in this.boxGeo - box edges
 
-var edges = [[0, 1], [1, 3], [3, 2], [2, 0], [4, 6], [6, 7], [7, 5], [5, 4], [2, 7], [0, 5], [1, 4], [3, 6]];
 
 var SectionBox = /*#__PURE__*/function () {
-  function SectionBox(viewer, _vis) {
+  function SectionBox(viewer, bbox) {
     _classCallCheck(this, SectionBox);
 
-    //defaults to invisible
-    var vis = _vis || false;
     this.viewer = viewer;
+    this.orbiting = false;
+    this.dragging = false;
     this.display = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    this.display.visible = vis;
-    this.displayBox = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    this.displayEdges = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    this.displayHover = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-    this.display.add(this.displayBox);
-    this.display.add(this.displayEdges);
-    this.display.add(this.displayHover);
-    this.viewer.scene.add(this.display); // basic display of the section box
-
-    this.boxMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({// transparent:true,
-      // color: 0xffe842, 
-      // opacity: 0.5
-    }); // the box itself
-
-    this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(2, 2, 2);
-    this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, this.boxMaterial);
-    this.boxMesh.visible = false;
-    this.boxMesh.geometry.computeBoundingBox();
-    this.boxMesh.geometry.computeBoundingSphere();
-    this.displayBox.add(this.boxMesh);
-    this.lineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineDashedMaterial({
-      color: 0x000000,
-      linewidth: 4
-    }); // show box edges
-
-    edges.map(val => {
-      var pts = [this.boxGeo.vertices[val[0]].clone(), this.boxGeo.vertices[val[1]].clone()];
-      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
-      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
-      this.displayEdges.add(line);
-    }); // normal of plane being hovered
-
-    this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
-      subset: this.displayBox,
-      hover: true
-    }); // pointer position
-
-    this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-    this.dragging = false; // planes face inward
-    // indices correspond to vertex indices on the boxGeometry
-    // constant is set to 1 + epsilon to prevent planes from clipping section box display
-
-    this.planes = [{
-      axis: '+x',
-      // right, x positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0), 1),
-      indices: [5, 4, 6, 7]
-    }, {
-      axis: '-x',
-      // left, x negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(-1, 0, 0), 1),
-      indices: [0, 1, 3, 2]
-    }, {
-      axis: '+y',
-      // out, y positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0), 1),
-      indices: [2, 3, 6, 7]
-    }, {
-      axis: '-y',
-      // in, y negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, -1, 0), 1),
-      indices: [5, 4, 1, 0]
-    }, {
-      axis: '+z',
-      // up, z positive
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1), 1),
-      indices: [1, 3, 6, 4]
-    }, {
-      axis: '-z',
-      // down, z negative
-      plane: new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1),
-      indices: [0, 2, 7, 5]
-    }]; // plane helpers
-    // this.planeHelpers = this.planes.map( p => this.display.add(new THREE.PlaneHelper( p.plane, 2, 0x000000 ) ));
-    // adds clipping planes to all materials
-    // better to add clipping planes to renderer
-
-    this.viewer.renderer.localClippingEnabled = true;
-    var objs = this.viewer.sceneManager.objects;
-    objs.forEach(obj => {
-      obj.material.clippingPlanes = this.planes.map(c => c.plane);
+    this.viewer.controls.addEventListener('wake', () => {
+      this.orbiting = true;
     });
-    this.hoverMat = new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
+    this.viewer.controls.addEventListener('controlend', () => {
+      this.orbiting = false;
+    });
+    this.box = bbox || this.viewer.sceneManager.getSceneBoundingBox();
+    var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(this.box.max, this.box.min);
+    this.boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
+    var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(this.box.min, this.box.max).multiplyScalar(0.5));
+    this.boxGeo.applyMatrix4(matrix);
+    this.boxMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(this.boxGeo, new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial());
+    this.boxHelper = new three__WEBPACK_IMPORTED_MODULE_0__.BoxHelper(this.boxMesh, 0x0A66FF);
+    var plane = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1);
+    this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(plane, new three__WEBPACK_IMPORTED_MODULE_0__.MeshStandardMaterial({
       transparent: true,
-      opacity: 0.6,
-      color: 0xffe842,
-      // color: 0xE91E63,
+      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+      opacity: 0.05,
+      color: 0x0A66FF,
       metalness: 0.1,
       roughness: 0.75
-    }); // hovered event handler
+    }));
+    this.display.add(this.boxHelper);
+    this.display.add(this.hoverPlane);
+    this.viewer.scene.add(this.display);
+    this.boxMesh.userData.planes = [];
+    this.boxMesh.userData.indices = [];
+    this.planes = []; // Gen box and planes
 
-    this.selectionHelper.on('hovered', (obj, e) => {
-      if (obj.length === 0 && !this.dragging) {
-        this.displayHover.clear();
-        this.hoverPlane = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        this.viewer.controls.enabled = true;
-        this.viewer.renderer.domElement.style.cursor = 'default';
-        return;
-      } else if (this.dragging) {
-        return;
-      }
-
-      this.viewer.renderer.domElement.style.cursor = 'pointer';
-      var index = this.planes.findIndex(p => p.plane.normal.equals(obj[0].face.normal.clone().negate()));
-      if (index < 0) return; // this should never be the case?
-
-      var planeObj = this.planes[index];
-      var plane = planeObj.plane;
-      if (plane.normal.equals(this.hoverPlane)) return;
-      this.hoverPlane = plane.normal.clone();
-      this.updateHover(planeObj);
-    }); // Selection Helper seems unecessary for this type of thing
-
-    this.viewer.renderer.domElement.addEventListener('pointerup', e => {
-      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      this.tempVerts = [];
-      this.viewer.controls.enabled = true;
-      this.dragging = false;
-    }); // get screen space vector of plane normal
-    // project mouse displacement vector onto it
-    // move plane by that much
-
-    this.selectionHelper.on('object-drag', (obj, e) => {
-      // exit if we don't have a valid hoverPlane
-      if (this.hoverPlane.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) return; // exit if we're clicking on nothing
-
-      if (!obj.length && !this.dragging) return;
-      this.viewer.controls.enabled = false;
-      this.viewer.renderer.domElement.style.cursor = 'move';
-      this.dragging = true;
-      var index = this.planes.findIndex(p => p.plane.normal.equals(this.hoverPlane));
-      var planeObj = this.planes[index];
-      var plane = planeObj.plane;
-
-      if (this.pointer.equals(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3())) {
-        this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0);
-      } // screen space normal vector
-      // bad transformations of camera can corrupt this
+    this._generatePlanes(); // Box face selection controls
 
 
-      var ssNorm = plane.normal.clone();
-      ssNorm.negate().project(this.viewer.camera);
-      ssNorm.setComponent(2, 0).normalize(); // mouse displacement
-
-      var mD = this.pointer.clone().sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0));
-      this.pointer = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(e.x, e.y, 0.0); // quantity of mD on ssNorm
-
-      var d = ssNorm.dot(mD) / ssNorm.lengthSq(); // configurable drag speed
-
-      var zoom = this.viewer.camera.getWorldPosition(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).sub(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3()).length();
-      zoom *= 0.75;
-      d = d * zoom; // limit plane from crossing it's pair
-
-      var hoverOpp = this.hoverPlane.clone().negate();
-      var indexOpp = this.planes.findIndex(p => p.plane.normal.equals(hoverOpp));
-      var planeObjOpp = this.planes[indexOpp];
-      var dist = planeObj.plane.constant + planeObjOpp.plane.constant;
-      var displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal); // are we moving towards the limiting plane?
-
-      var dot = displacement.clone().normalize().dot(plane.normal); // if displacement + padding is greater than limit,
-      // and we're moving towards the limiting plane
-
-      if (dist < d && dot > 0) {
-        d = dist * 0.001;
-        displacement = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(d, d, d).multiply(plane.normal);
-      }
-
-      plane.translate(displacement);
-      this.updateBoxFace(planeObj, displacement);
-      this.updateHover(planeObj);
+    this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_1__.default(this.viewer, {
+      subset: this.boxMesh,
+      hover: true
     });
-  } // boxMesh = bbox
+    var targetFaceIndex = -1;
+    this.selectionHelper.on('hovered', obj => {
+      if (obj.length === 0 && !this.dragging) {
+        this.hoverPlane.visible = false;
+        this.controls.visible = true;
+        this.planeControls.detach();
+        this.viewer.controls.enabled = true;
+        this.viewer.interactions.preventSelection = false;
+        this.viewer.needsRender = true;
+        targetFaceIndex = -1;
+        return;
+      }
 
+      if (this.orbiting || this.dragging) return;
+      this.controls.visible = false;
+      this.hoverPlane.visible = true;
+      var centre = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+      for (var i = 0; i < 4; i++) {
+        centre.add(this.boxGeo.vertices[obj[0].object.userData.indices[obj[0].faceIndex][i]].clone().applyMatrix4(this.boxMesh.matrixWorld));
+      }
+
+      centre.multiplyScalar(0.25);
+      this.hoverPlane.position.copy(centre);
+
+      for (var _i = 0; _i < 4; _i++) {
+        var vertex = this.boxGeo.vertices[obj[0].object.userData.indices[obj[0].faceIndex][_i]].clone().applyMatrix4(this.boxMesh.matrixWorld);
+
+        this.hoverPlane.geometry.vertices[_i].set(vertex.x - centre.x, vertex.y - centre.y, vertex.z - centre.z);
+      }
+
+      this.hoverPlane.geometry.verticesNeedUpdate = true;
+      var normal = obj[0].face.normal;
+      this.planeControls.showX = normal.x !== 0;
+      this.planeControls.showY = normal.y !== 0;
+      this.planeControls.showZ = normal.z !== 0;
+      this.planeControls.attach(this.hoverPlane);
+
+      if (obj[0].faceIndex !== targetFaceIndex) {
+        this.viewer.needsRender = true;
+        targetFaceIndex = obj[0].faceIndex;
+      }
+    }); // Whole box controls
+
+    this._globalControlsTarget = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.SphereGeometry(0.0001), new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial());
+
+    this._globalControlsTarget.position.copy(this.boxGeo.vertices[5].clone().multiplyScalar(1.1));
+
+    this.display.add(this._globalControlsTarget);
+    this.controls = new _external_TransformControls_js__WEBPACK_IMPORTED_MODULE_2__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
+    this.controls.setSize(0.5);
+    this.controls.attach(this._globalControlsTarget);
+    this.display.add(this.controls); // Section plane controls
+
+    this.planeControls = new _external_TransformControls_js__WEBPACK_IMPORTED_MODULE_2__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement, true);
+    this.display.add(this.planeControls);
+    this.prevGizmoPos = this._globalControlsTarget.position.clone();
+    this.controls.addEventListener('change', () => {
+      this.prevGizmoPos.sub(this._globalControlsTarget.position);
+      this.boxMesh.translateX(-this.prevGizmoPos.x);
+      this.boxMesh.translateY(-this.prevGizmoPos.y);
+      this.boxMesh.translateZ(-this.prevGizmoPos.z);
+      this.prevGizmoPos = this._globalControlsTarget.position.clone();
+      this.setPlanesFromBox(new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.boxMesh));
+      this.boxHelper.update();
+      this.viewer.needsRender = true;
+    });
+    this.controls.addEventListener('dragging-changed', event => {
+      this.viewer.controls.enabled = !event.value;
+      this.viewer.interactions.preventSelection = !event.value;
+      if (!event.value) this.viewer.interactions.zoomToObject(this.boxMesh);
+    });
+    var prevPlaneGizmoPos = null;
+    this.planeControls.addEventListener('change', () => {
+      if (!this.dragging) return;
+      if (targetFaceIndex === -1) return;
+      if (prevPlaneGizmoPos === null) prevPlaneGizmoPos = this.hoverPlane.position.clone();
+      prevPlaneGizmoPos.sub(this.hoverPlane.position);
+      var plane = this.boxMesh.userData.planes[targetFaceIndex];
+      prevPlaneGizmoPos.negate();
+      plane.translate(prevPlaneGizmoPos);
+      var indices = this.boxMesh.userData.indices[targetFaceIndex];
+
+      for (var i = 0; i < 4; i++) {
+        var index = indices[i];
+        this.boxGeo.vertices[index].add(prevPlaneGizmoPos);
+      }
+
+      this.boxGeo.verticesNeedUpdate = true;
+      this.boxMesh.geometry.computeBoundingBox();
+      this.boxMesh.geometry.computeBoundingSphere();
+      var gizmoPos = this.boxGeo.vertices[5].clone();
+      gizmoPos.multiplyScalar(1.1);
+      gizmoPos.applyMatrix4(this.boxMesh.matrixWorld);
+
+      this._globalControlsTarget.position.copy(gizmoPos);
+
+      this.prevGizmoPos = gizmoPos;
+      prevPlaneGizmoPos = this.hoverPlane.position.clone();
+      this.boxHelper.update();
+      this.viewer.needsRender = true;
+    });
+    this.planeControls.addEventListener('dragging-changed', event => {
+      this.viewer.controls.enabled = !event.value;
+      this.viewer.interactions.preventSelection = !event.value;
+      this.dragging = !!event.value;
+
+      if (!this.dragging) {
+        prevPlaneGizmoPos = null;
+        this.viewer.interactions.zoomToObject(this.boxMesh);
+        targetFaceIndex = -1;
+      }
+
+      this.viewer.needsRender = true;
+    });
+  }
 
   _createClass(SectionBox, [{
-    key: "setFromBbox",
-    value: function setFromBbox(bbox) {
-      // add a little padding to the box
-      bbox.max.addScalar(10);
-      bbox.min.subScalar(10);
+    key: "_generatePlanes",
+    value: function _generatePlanes() {
+      for (var i = 0; i < this.boxGeo.faces.length; i += 2) {
+        var face = this.boxGeo.faces[i];
+        var pairFace = this.boxGeo.faces[i + 1];
+        var plane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane(); // inverting points so plane
 
-      for (var p of this.planes) {
-        // reset plane
-        // p.plane.set(p.plane.normal, 1)
-        var c = 0; // planes point inwards - if negative select max part of bbox
+        plane.setFromCoplanarPoints(this.boxGeo.vertices[face.c], this.boxGeo.vertices[face.b], this.boxGeo.vertices[face.a]); // adding it twice for ease of use
 
-        if (p.plane.normal.dot(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 1, 1)) > 0) {
-          c = p.plane.normal.clone().multiply(bbox.min);
-        } else {
-          c = p.plane.normal.clone().multiply(bbox.max);
-        }
-
-        var diff = c.length() - p.plane.constant; // displacement
-
-        var d = p.plane.normal.clone().negate().multiplyScalar(diff);
-        this.updateBoxFace(p, d);
-        p.plane.translate(d);
+        this.boxMesh.userData.planes.push(plane);
+        this.boxMesh.userData.planes.push(plane);
+        this.boxMesh.userData.indices.push([face.a, face.b, face.c, pairFace.b]);
+        this.boxMesh.userData.indices.push([face.a, face.b, face.c, pairFace.b]);
+        this.planes.push(plane);
       }
     }
   }, {
-    key: "updateBoxFace",
-    value: function updateBoxFace(planeObj, displacement) {
-      this.boxMesh.geometry.vertices.map((v, i) => {
-        if (!planeObj.indices.includes(i)) return;
-        this.boxMesh.geometry.vertices[i].add(displacement);
-      });
+    key: "setPlanesFromBox",
+    value: function setPlanesFromBox(box) {
+      var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(box.max, box.min);
+      var boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
+      var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(box.min, box.max).multiplyScalar(0.5));
+      boxGeo.applyMatrix4(matrix);
+
+      for (var i = 0; i < this.boxGeo.faces.length; i += 2) {
+        var face = boxGeo.faces[i];
+        var plane = this.boxMesh.userData.planes[i];
+        plane.setFromCoplanarPoints(boxGeo.vertices[face.c], boxGeo.vertices[face.b], boxGeo.vertices[face.a]); // invert pts
+      }
+    }
+  }, {
+    key: "setBox",
+    value: function setBox(box) {
+      box = box.clone().expandByScalar(0.5);
+      var dimensions = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3().subVectors(box.max, box.min);
+      var boxGeo = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(dimensions.x, dimensions.y, dimensions.z);
+      var matrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4().setPosition(dimensions.addVectors(box.min, box.max).multiplyScalar(0.5));
+      boxGeo.applyMatrix4(matrix);
+
+      for (var i = 0; i < this.boxGeo.vertices.length; i++) {
+        this.boxGeo.vertices[i].copy(boxGeo.vertices[i]);
+      }
+
+      this._globalControlsTarget.position.copy(this.boxGeo.vertices[5].clone().multiplyScalar(1.1));
+
+      this.prevGizmoPos = this._globalControlsTarget.position.clone();
+      this.boxMesh.position.copy(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3());
       this.boxMesh.geometry.verticesNeedUpdate = true;
       this.boxMesh.geometry.computeBoundingBox();
       this.boxMesh.geometry.computeBoundingSphere();
-      this.updateEdges();
+      this.boxHelper.update();
+      this.setPlanesFromBox(box);
+      this.viewer.needsRender = true;
     }
   }, {
-    key: "updateEdges",
-    value: function updateEdges() {
-      this.displayEdges.clear();
-      edges.map(val => {
-        var ptA = this.boxMesh.geometry.vertices[val[0]].clone();
-        var ptB = this.boxMesh.geometry.vertices[val[1]].clone(); // translation
-
-        ptA.add(this.boxMesh.position);
-        ptB.add(this.boxMesh.position);
-        this.drawLine([ptA, ptB]);
-      });
+    key: "toggle",
+    value: function toggle() {
+      if (this.display.visible) {
+        this.viewer.renderer.localClippingEnabled = false;
+        this.display.visible = false;
+      } else {
+        this.viewer.renderer.localClippingEnabled = true;
+        this.display.visible = true;
+      }
     }
   }, {
-    key: "drawLine",
-    value: function drawLine(pts) {
-      var geo = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry().setFromPoints(pts);
-      var line = new three__WEBPACK_IMPORTED_MODULE_0__.Line(geo, this.lineMaterial);
-      this.displayEdges.add(line);
-    }
-  }, {
-    key: "updateHover",
-    value: function updateHover(planeObj) {
-      this.displayHover.clear();
-      var verts = this.boxMesh.geometry.vertices.filter((v, i) => planeObj.indices.includes(i));
-      var centroid = verts[0].clone().add(verts[1]).add(verts[2]).add(verts[3]);
-      centroid.multiplyScalar(0.25);
-      var dims = verts[0].clone().sub(centroid).multiplyScalar(2).toArray().filter(v => v !== 0);
-      var width = Math.abs(dims[0]);
-      var height = Math.abs(dims[1]);
-      var hoverGeo = new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(width, height); // orients hover geometry to box face
-
-      switch (planeObj.axis) {
-        case '-x':
-          hoverGeo.rotateY(Math.PI / 2);
-          hoverGeo.rotateX(Math.PI / 2);
-          break;
-
-        case '+x':
-          hoverGeo.rotateY(-Math.PI / 2);
-          hoverGeo.rotateX(-Math.PI / 2);
-          break;
-
-        case '-y':
-          hoverGeo.rotateX(-Math.PI / 2);
-          break;
-
-        case '+y':
-          hoverGeo.rotateX(Math.PI / 2);
-          break;
-
-        default:
-          break;
-      } // translation
-
-
-      centroid.add(this.boxMesh.position);
-      hoverGeo.translate(centroid.x, centroid.y, centroid.z);
-      var hoverMesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(hoverGeo, this.hoverMat);
-      this.displayHover.add(hoverMesh);
-    }
-  }, {
-    key: "toggleSectionBox",
-    value: function toggleSectionBox(_bool) {
-      var bool = _bool || !this.visible;
-      this.visible = bool;
-      this.display.visible = bool; // what's the tradeoff for having the clipping planes in material vs in the renderer?
-      // this.viewer.renderer.clippingPlanes = bool ? this.planes.reduce((p,c) => [...p,c.plane],[]) : []
+    key: "dispose",
+    value: function dispose() {
+      this.selectionHelper.dispose();
+      this.controls.dispose();
+      this.planeControls.dispose();
+      this.display.clear();
     }
   }]);
 
   return SectionBox;
-}();
-
-
-
-/***/ }),
-
-/***/ "./src/modules/SectionPlaneHelper.js":
-/*!*******************************************!*\
-  !*** ./src/modules/SectionPlaneHelper.js ***!
-  \*******************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => /* binding */ SectionPlaneHelper
-/* harmony export */ });
-/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/TransformControls.js */ "./node_modules/three/examples/jsm/controls/TransformControls.js");
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-
-
-/**
- * WIP: A utility class for adding section planes to the scene.
- * - 'S' shows/hides section planes
- * - 's' toggles controls from translate to rotate
- */
-
-var SectionPlaneHelper = /*#__PURE__*/function () {
-  function SectionPlaneHelper(parent) {
-    _classCallCheck(this, SectionPlaneHelper);
-
-    this.viewer = parent;
-    this.cutters = [];
-    this.visible = false;
-    window.addEventListener('keydown', event => {
-      if (event.key === 's') {
-        this.toggleTransformControls();
-      }
-
-      if (event.key === 'S') {
-        this.toggleSectionPlanes();
-      }
-    }, false);
-  }
-
-  _createClass(SectionPlaneHelper, [{
-    key: "toggleTransformControls",
-    value: function toggleTransformControls() {
-      this.cutters.forEach(cutter => {
-        if (cutter.control.mode === 'rotate') {
-          cutter.control.setMode('translate');
-          cutter.control.showX = false;
-          cutter.control.showY = false;
-          cutter.control.showZ = true;
-          return;
-        }
-
-        cutter.control.setMode('rotate');
-        cutter.control.showX = true;
-        cutter.control.showY = true;
-        cutter.control.showZ = false;
-      });
-    }
-  }, {
-    key: "createSectionPlane",
-    value: function createSectionPlane() {
-      var cutter = {};
-      cutter.id = this.cutters.length;
-      cutter.visible = false;
-      cutter.plane = new three__WEBPACK_IMPORTED_MODULE_0__.Plane(new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, -1), 1);
-      cutter.helper = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(1, 1, 1), new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
-        color: 0xAFAFAF,
-        transparent: true,
-        opacity: 0.1,
-        side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-      }));
-      cutter.helper.visible = false;
-      this.viewer.scene.add(cutter.helper);
-      cutter.control = new three_examples_jsm_controls_TransformControls_js__WEBPACK_IMPORTED_MODULE_1__.TransformControls(this.viewer.camera, this.viewer.renderer.domElement);
-      cutter.control.setSize(0.5);
-      cutter.control.space = 'local';
-      cutter.control.showX = false;
-      cutter.control.showY = false;
-      cutter.control.setRotationSnap(three__WEBPACK_IMPORTED_MODULE_0__.MathUtils.degToRad(15));
-      cutter.control.addEventListener('change', () => this.viewer.render);
-      cutter.control.addEventListener('dragging-changed', event => {
-        if (!cutter.visible) return;
-        this.viewer.controls.enabled = !event.value; // Reference: https://stackoverflow.com/a/52124409
-
-        var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        normal.set(0, 0, -1).applyQuaternion(cutter.helper.quaternion);
-        point.copy(cutter.helper.position);
-        cutter.plane.setFromNormalAndCoplanarPoint(normal, point);
-      });
-      cutter.control.attach(cutter.helper);
-      cutter.control.visible = false;
-      this.viewer.scene.add(cutter.control);
-      this.cutters.push(cutter); // adds local clipping planes to all materials
-
-      var objs = this.viewer.sceneManager.objects;
-      objs.forEach(obj => {
-        obj.material.clippingPlanes = this.cutters.map(c => c.plane);
-      });
-    }
-  }, {
-    key: "toggleSectionPlanes",
-    value: function toggleSectionPlanes() {
-      if (this.visible) this.hideSectionPlanes();else this.showSectionPlanes();
-      this.visible = !this.visible;
-    }
-  }, {
-    key: "showSectionPlanes",
-    value: function showSectionPlanes() {
-      this._matchSceneSize();
-
-      this.cutters.forEach(cutter => {
-        cutter.visible = true;
-        cutter.helper.visible = true;
-        cutter.control.visible = true;
-      });
-      this.viewer.renderer.localClippingEnabled = true;
-    }
-  }, {
-    key: "hideSectionPlanes",
-    value: function hideSectionPlanes() {
-      this.cutters.forEach(cutter => {
-        cutter.visible = false;
-        cutter.helper.visible = false;
-        cutter.control.visible = false;
-      });
-      this.viewer.renderer.localClippingEnabled = false;
-    }
-  }, {
-    key: "_matchSceneSize",
-    value: function _matchSceneSize() {
-      // Scales and translate helper to scene bbox center and origin
-      var sceneBox = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.viewer.sceneManager.userObjects);
-      var sceneSize = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      sceneBox.getSize(sceneSize);
-      var sceneCenter = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-      sceneBox.getCenter(sceneCenter);
-      this.cutters.forEach(cutter => {
-        cutter.helper.scale.set(sceneSize.x > 0 ? sceneSize.x : 1, sceneSize.y > 0 ? sceneSize.y : 1, sceneSize.z > 0 ? sceneSize.z : 1);
-        cutter.helper.position.set(sceneCenter.x, sceneCenter.y, sceneCenter.z);
-        var normal = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        var point = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-        normal.set(0, 0, -1).applyQuaternion(cutter.helper.quaternion);
-        point.copy(cutter.helper.position);
-        cutter.plane.setFromNormalAndCoplanarPoint(normal, point);
-      });
-    }
-  }, {
-    key: "planes",
-    get: function get() {
-      return this.cutters.map(cutter => cutter.plane);
-    }
-  }, {
-    key: "activePlanes",
-    get: function get() {
-      return this.cutters.filter(cutter => cutter.visible).map(cutter => cutter.plane);
-    }
-  }]);
-
-  return SectionPlaneHelper;
 }();
 
 
@@ -2062,6 +1976,10 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _get(target, property, receiver) { if (typeof Reflect !== "undefined" && Reflect.get) { _get = Reflect.get; } else { _get = function _get(target, property, receiver) { var base = _superPropBase(target, property); if (!base) return; var desc = Object.getOwnPropertyDescriptor(base, property); if (desc.get) { return desc.get.call(receiver); } return desc.value; }; } return _get(target, property, receiver || target); }
+
+function _superPropBase(object, property) { while (!Object.prototype.hasOwnProperty.call(object, property)) { object = _getPrototypeOf(object); if (object === null) break; } return object; }
+
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
@@ -2081,19 +1999,11 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 /**
  * Selects and deselects user added objects in the scene. Emits the array of all intersected objects on click.
- * Behaviours:
- * - Clicking on one object will select it.
- * - Double clicking on one object will focus on it.
- * - Double clicking anywhere else will focus the scene.
- * - Pressing escape will clear any selection present.
- * TODOs:
- * - Ensure clipped geometry is not selected.
- * - When objects are disposed, ensure selection is reset.
- * 
  * optional param to configure SelectionHelper
  * _options = {
  *             subset: THREE.Group
- *             hover:  boolean
+ *             hover:  boolean.
+ *             sectionBox: if present, will test for inclusion
  *            }
  */
 
@@ -2113,17 +2023,13 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
     _this.orbiting = false;
 
-    _this.viewer.controls.addEventListener('change', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
-      _this.orbiting = false;
-    }, 100));
-
-    _this.viewer.controls.addEventListener('start', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+    _this.viewer.controls.addEventListener('wake', () => {
       _this.orbiting = true;
-    }, 200));
+    });
 
-    _this.viewer.controls.addEventListener('end', lodash_debounce__WEBPACK_IMPORTED_MODULE_1___default()(() => {
+    _this.viewer.controls.addEventListener('sleep', () => {
       _this.orbiting = false;
-    }, 200)); // optional param allows for raycasting against a subset of objects
+    }); // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
 
 
@@ -2155,12 +2061,25 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
         _this.emit('mouse-down', _this.getClickedObjects(e));
       }, 100));
+    }
+
+    _this.sectionBox = null;
+
+    if (typeof _options !== 'undefined' && _options.sectionBox) {
+      _this.sectionBox = _options.sectionBox;
     } // Handle mouseclicks
 
 
+    var mdTime;
+
+    _this.viewer.renderer.domElement.addEventListener('pointerdown', () => {
+      mdTime = new Date().getTime();
+    });
+
     _this.viewer.renderer.domElement.addEventListener('pointerup', e => {
+      var delta = new Date().getTime() - mdTime;
       _this.pointerDown = false;
-      if (_this.orbiting) return;
+      if (_this.orbiting && delta > 250) return;
 
       var selectionObjects = _this.getClickedObjects(e);
 
@@ -2196,11 +2115,9 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     });
 
     _this.viewer.renderer.domElement.addEventListener('dblclick', e => {
-      // if ( this.orbiting ) return // not needed for zoom to thing?
       var selectionObjects = _this.getClickedObjects(e);
 
-      _this.emit('object-doubleclicked', selectionObjects); // this.handleDoubleClick( selectionObjects )
-
+      _this.emit('object-doubleclicked', selectionObjects);
     }); // Handle multiple object selection
 
 
@@ -2230,7 +2147,14 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
 
       this.raycaster.setFromCamera(normalizedPosition, this.viewer.camera);
       var intersectedObjects = this.raycaster.intersectObjects(this.subset ? this._getGroupChildren(this.subset) : this.viewer.sceneManager.objects);
-      intersectedObjects = intersectedObjects.filter(obj => this.viewer.sectionPlaneHelper.activePlanes.every(pl => pl.distanceToPoint(obj.point) > 0));
+
+      if (this.sectionBox && this.sectionBox.display.visible) {
+        var box = new three__WEBPACK_IMPORTED_MODULE_0__.Box3().setFromObject(this.sectionBox.boxMesh);
+        intersectedObjects = intersectedObjects.filter(obj => {
+          return box.containsPoint(obj.point);
+        });
+      }
+
       return intersectedObjects;
     } // get all children of a subset passed as a THREE.Group
 
@@ -2239,7 +2163,7 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
     value: function _getGroupChildren(group) {
       var children = [];
       if (group.children.length === 0) return [group];
-      group.children.forEach((c, i, a) => children = [...children, ...this._getGroupChildren(c)]);
+      group.children.forEach(c => children = [...children, ...this._getGroupChildren(c)]);
       return children;
     }
   }, {
@@ -2260,6 +2184,8 @@ var SelectionHelper = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "dispose",
     value: function dispose() {
+      _get(_getPrototypeOf(SelectionHelper.prototype), "dispose", this).call(this);
+
       this.unselect();
       this.originalSelectionObjects = null;
     }
@@ -2554,16 +2480,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => /* binding */ Viewer
 /* harmony export */ });
 /* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
-/* harmony import */ var three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! three/examples/jsm/controls/OrbitControls.js */ "./node_modules/three/examples/jsm/controls/OrbitControls.js");
+/* harmony import */ var camera_controls__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! camera-controls */ "./node_modules/camera-controls/dist/camera-controls.module.js");
 /* harmony import */ var three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! three/examples/jsm/postprocessing/EffectComposer.js */ "./node_modules/three/examples/jsm/postprocessing/EffectComposer.js");
 /* harmony import */ var three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! three/examples/jsm/postprocessing/SSAOPass.js */ "./node_modules/three/examples/jsm/postprocessing/SSAOPass.js");
 /* harmony import */ var three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! three/examples/jsm/libs/stats.module.js */ "./node_modules/three/examples/jsm/libs/stats.module.js");
 /* harmony import */ var _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./SceneObjectManager */ "./src/modules/SceneObjectManager.js");
-/* harmony import */ var _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./SelectionHelper */ "./src/modules/SelectionHelper.js");
-/* harmony import */ var _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./SectionPlaneHelper */ "./src/modules/SectionPlaneHelper.js");
-/* harmony import */ var _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ViewerObjectLoader */ "./src/modules/ViewerObjectLoader.js");
-/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
-/* harmony import */ var _SectionBox__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./SectionBox */ "./src/modules/SectionBox.js");
+/* harmony import */ var _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./ViewerObjectLoader */ "./src/modules/ViewerObjectLoader.js");
+/* harmony import */ var _EventEmitter__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./EventEmitter */ "./src/modules/EventEmitter.js");
+/* harmony import */ var _InteractionHandler__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./InteractionHandler */ "./src/modules/InteractionHandler.js");
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
@@ -2598,8 +2522,6 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 
 
-
-
 var Viewer = /*#__PURE__*/function (_EventEmitter) {
   _inherits(Viewer, _EventEmitter);
 
@@ -2618,6 +2540,7 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     _classCallCheck(this, Viewer);
 
     _this = _super.call(this);
+    _this.clock = new three__WEBPACK_IMPORTED_MODULE_0__.Clock();
     _this.container = container || document.getElementById('renderer');
     _this.postprocessing = postprocessing;
     _this.scene = new three__WEBPACK_IMPORTED_MODULE_0__.Scene();
@@ -2656,13 +2579,11 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.scene.add(_this.cubeCamera);
 
-    _this.controls = new three_examples_jsm_controls_OrbitControls_js__WEBPACK_IMPORTED_MODULE_1__.OrbitControls(_this.camera, _this.renderer.domElement);
-    _this.controls.enableDamping = true;
-    _this.controls.dampingFactor = 0.1;
-    _this.controls.screenSpacePanning = true;
-    _this.controls.maxPolarAngle = Math.PI / 2;
-    _this.controls.panSpeed = 0.8;
-    _this.controls.rotateSpeed = 0.8;
+    camera_controls__WEBPACK_IMPORTED_MODULE_1__.default.install({
+      THREE: three__WEBPACK_IMPORTED_MODULE_0__
+    });
+    _this.controls = new camera_controls__WEBPACK_IMPORTED_MODULE_1__.default(_this.camera, _this.renderer.domElement); // this.controls.maxPolarAngle = Math.PI / 2
+
     _this.composer = new three_examples_jsm_postprocessing_EffectComposer_js__WEBPACK_IMPORTED_MODULE_2__.EffectComposer(_this.renderer);
     _this.ssaoPass = new three_examples_jsm_postprocessing_SSAOPass_js__WEBPACK_IMPORTED_MODULE_3__.SSAOPass(_this.scene, _this.camera, _this.container.offsetWidth, _this.container.offsetHeight);
     _this.ssaoPass.kernelRadius = 0.03;
@@ -2675,30 +2596,17 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.pauseSSAO = false;
 
-    _this.controls.addEventListener('start', () => {
+    _this.controls.addEventListener('wake', () => {
       _this.pauseSSAO = true;
     });
 
-    _this.controls.addEventListener('end', () => {
+    _this.controls.addEventListener('sleep', () => {
       _this.pauseSSAO = false;
-    }); // Selected Objects
+      _this.needsRender = true;
+    }); // Keeps track of loaded objects
 
 
-    _this.selectionMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshLambertMaterial({
-      color: 0x0B55D2,
-      emissive: 0x0B55D2,
-      side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide
-    });
-    _this.selectedObjects = new three__WEBPACK_IMPORTED_MODULE_0__.Group();
-
-    _this.scene.add(_this.selectedObjects);
-
-    _this.selectedObjects.renderOrder = 1000;
-    _this.selectionHelper = new _SelectionHelper__WEBPACK_IMPORTED_MODULE_6__.default(_assertThisInitialized(_this)); // Viewer registers double click event and supplies handler
-
-    _this.selectionHelper.on('object-doubleclicked', _this.handleDoubleClick.bind(_assertThisInitialized(_this)));
-
-    _this.selectionHelper.on('object-clicked', _this.handleSelect.bind(_assertThisInitialized(_this)));
+    _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
 
     if (showStats) {
       _this.stats = new three_examples_jsm_libs_stats_module_js__WEBPACK_IMPORTED_MODULE_4__.default();
@@ -2707,13 +2615,8 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     }
 
     window.addEventListener('resize', _this.onWindowResize.bind(_assertThisInitialized(_this)), false);
-    _this.sectionPlaneHelper = new _SectionPlaneHelper__WEBPACK_IMPORTED_MODULE_7__.default(_assertThisInitialized(_this));
-    _this.sceneManager = new _SceneObjectManager__WEBPACK_IMPORTED_MODULE_5__.default(_assertThisInitialized(_this));
-
-    _this.sectionPlaneHelper.createSectionPlane(); // Section Box
-
-
-    _this.sectionBox = new _SectionBox__WEBPACK_IMPORTED_MODULE_10__.default(_assertThisInitialized(_this));
+    _this.interactions = new _InteractionHandler__WEBPACK_IMPORTED_MODULE_8__.default(_assertThisInitialized(_this));
+    _this.needsRender = true;
 
     _this.sceneLights();
 
@@ -2721,39 +2624,9 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
 
     _this.loaders = [];
     return _this;
-  } // handleDoubleClick moved from SelectionHelper
-
+  }
 
   _createClass(Viewer, [{
-    key: "handleDoubleClick",
-    value: function handleDoubleClick(objs) {
-      if (!objs || objs.length === 0) this.sceneManager.zoomExtents();else this.sceneManager.zoomToObject(objs[0].object);
-    } // handleSelect moved from SelectionHelper
-
-  }, {
-    key: "handleSelect",
-    value: function handleSelect(obj) {
-      if (obj.length === 0) {
-        this.deselect();
-        return;
-      } // deselect on second click
-      // not sure if this was implemented previously
-      // if(this.selectedObjects.children.includes(obj)) {
-      //   this.deselect()
-      //   return
-      // }
-
-
-      if (!this.selectionHelper.multiSelect) this.deselect();
-      var mesh = new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(obj[0].object.geometry, this.selectionMaterial);
-      this.selectedObjects.add(mesh);
-    }
-  }, {
-    key: "deselect",
-    value: function deselect() {
-      this.selectedObjects.clear();
-    }
-  }, {
     key: "sceneLights",
     value: function sceneLights() {
       var ambientLight = new three__WEBPACK_IMPORTED_MODULE_0__.AmbientLight(0xffffff);
@@ -2798,11 +2671,19 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
   }, {
     key: "animate",
     value: function animate() {
-      requestAnimationFrame(this.animate.bind(this));
-      this.controls.update();
-      if (this.stats) this.stats.begin();
-      this.render();
-      if (this.stats) this.stats.end();
+      // requestAnimationFrame( this.animate.bind( this ) )
+      // this.controls.update()
+      //
+      var delta = this.clock.getDelta();
+      var hasControlsUpdated = this.controls.update(delta);
+      requestAnimationFrame(this.animate.bind(this)); // you can skip this condition to render though
+
+      if (hasControlsUpdated || this.needsRender) {
+        this.needsRender = false;
+        if (this.stats) this.stats.begin();
+        this.render();
+        if (this.stats) this.stats.end();
+      }
     }
   }, {
     key: "render",
@@ -2828,11 +2709,14 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
         this.reflectionsNeedUpdate = false;
       } // Render as usual
       // TODO: post processing SSAO sucks so much currently it's off by default
+      // if ( this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled ){
 
 
-      if (this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled) {
+      if (this.postprocessing && !this.pauseSSAO) {
+        // console.log('composer')
         this.composer.render(this.scene, this.camera);
       } else {
+        // console.log('renderer')
         this.renderer.render(this.scene, this.camera);
       }
     }
@@ -2840,7 +2724,7 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
     key: "loadObject",
     value: function () {
       var _loadObject = _asyncToGenerator(function* (url, token) {
-        var loader = new _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_8__.default(this, url, token);
+        var loader = new _ViewerObjectLoader__WEBPACK_IMPORTED_MODULE_6__.default(this, url, token);
         this.loaders.push(loader);
         yield loader.load();
       });
@@ -2858,7 +2742,7 @@ var Viewer = /*#__PURE__*/function (_EventEmitter) {
   }]);
 
   return Viewer;
-}(_EventEmitter__WEBPACK_IMPORTED_MODULE_9__.default);
+}(_EventEmitter__WEBPACK_IMPORTED_MODULE_7__.default);
 
 
 
@@ -2991,6 +2875,2394 @@ var ViewerObjectLoader = /*#__PURE__*/function () {
   return ViewerObjectLoader;
 }();
 
+
+
+/***/ }),
+
+/***/ "./src/modules/external/TransformControls.js":
+/*!***************************************************!*\
+  !*** ./src/modules/external/TransformControls.js ***!
+  \***************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "TransformControls": () => /* binding */ TransformControls,
+/* harmony export */   "TransformControlsGizmo": () => /* binding */ TransformControlsGizmo,
+/* harmony export */   "TransformControlsPlane": () => /* binding */ TransformControlsPlane
+/* harmony export */ });
+/* harmony import */ var three__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! three */ "./node_modules/three/build/three.module.js");
+/* eslint-disable */
+// src: https://github.com/mrdoob/three.js/blob/master/examples/jsm/controls/TransformControls.js
+// Note: customisations:
+// - cosmetic blues for materials
+// - added "hover" event
+// - added "translationDotsOnly" prop for box face manipulation
+
+
+var TransformControls = function TransformControls(camera, domElement, translationDotsOnly) {
+  if (domElement === undefined) {
+    console.warn('THREE.TransformControls: The second parameter "domElement" is now mandatory.');
+    domElement = document;
+  }
+
+  three__WEBPACK_IMPORTED_MODULE_0__.Object3D.call(this);
+  this.visible = false;
+  this.domElement = domElement;
+
+  var _gizmo = new TransformControlsGizmo(translationDotsOnly);
+
+  this.add(_gizmo);
+
+  var _plane = new TransformControlsPlane();
+
+  this.add(_plane);
+  var scope = this; // Define properties with getters/setter
+  // Setting the defined property will automatically trigger change event
+  // Defined properties are passed down to gizmo and plane
+
+  defineProperty('camera', camera);
+  defineProperty('object', undefined);
+  defineProperty('enabled', true);
+  defineProperty('axis', null);
+  defineProperty('mode', 'translate');
+  defineProperty('translationSnap', null);
+  defineProperty('rotationSnap', null);
+  defineProperty('scaleSnap', null);
+  defineProperty('space', 'world');
+  defineProperty('size', 1);
+  defineProperty('dragging', false);
+  defineProperty('showX', true);
+  defineProperty('showY', true);
+  defineProperty('showZ', true);
+  var changeEvent = {
+    type: 'change'
+  };
+  var mouseDownEvent = {
+    type: 'mouseDown'
+  };
+  var mouseUpEvent = {
+    type: 'mouseUp',
+    mode: scope.mode
+  };
+  var objectChangeEvent = {
+    type: 'objectChange'
+  }; // Reusable utility variables
+
+  var raycaster = new three__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
+
+  function intersectObjectWithRay(object, raycaster, includeInvisible) {
+    var allIntersections = raycaster.intersectObject(object, true);
+
+    for (var i = 0; i < allIntersections.length; i++) {
+      if (allIntersections[i].object.visible || includeInvisible) {
+        return allIntersections[i];
+      }
+    }
+
+    return false;
+  }
+
+  var _tempVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+  var _tempVector2 = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+
+  var _tempQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+
+  var _unit = {
+    X: new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0),
+    Y: new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0),
+    Z: new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1)
+  };
+  var pointStart = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var pointEnd = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var offset = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var rotationAxis = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var startNorm = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var endNorm = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var rotationAngle = 0;
+  var cameraPosition = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var cameraQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var cameraScale = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var parentPosition = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var parentQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var parentQuaternionInv = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var parentScale = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var worldPositionStart = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var worldQuaternionStart = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var worldScaleStart = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var worldPosition = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var worldQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var worldQuaternionInv = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var worldScale = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var eye = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var positionStart = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var quaternionStart = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var scaleStart = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(); // TODO: remove properties unused in plane and gizmo
+
+  defineProperty('worldPosition', worldPosition);
+  defineProperty('worldPositionStart', worldPositionStart);
+  defineProperty('worldQuaternion', worldQuaternion);
+  defineProperty('worldQuaternionStart', worldQuaternionStart);
+  defineProperty('cameraPosition', cameraPosition);
+  defineProperty('cameraQuaternion', cameraQuaternion);
+  defineProperty('pointStart', pointStart);
+  defineProperty('pointEnd', pointEnd);
+  defineProperty('rotationAxis', rotationAxis);
+  defineProperty('rotationAngle', rotationAngle);
+  defineProperty('eye', eye);
+  {
+    domElement.addEventListener('pointerdown', onPointerDown);
+    domElement.addEventListener('pointermove', onPointerHover);
+    scope.domElement.ownerDocument.addEventListener('pointerup', onPointerUp);
+  }
+
+  this.dispose = function () {
+    domElement.removeEventListener('pointerdown', onPointerDown);
+    domElement.removeEventListener('pointermove', onPointerHover);
+    scope.domElement.ownerDocument.removeEventListener('pointermove', onPointerMove);
+    scope.domElement.ownerDocument.removeEventListener('pointerup', onPointerUp);
+    this.traverse(function (child) {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    });
+  }; // Set current object
+
+
+  this.attach = function (object) {
+    this.object = object;
+    this.visible = true;
+    return this;
+  }; // Detatch from object
+
+
+  this.detach = function () {
+    this.object = undefined;
+    this.visible = false;
+    this.axis = null;
+    return this;
+  }; // Defined getter, setter and store for a property
+
+
+  function defineProperty(propName, defaultValue) {
+    var propValue = defaultValue;
+    Object.defineProperty(scope, propName, {
+      get: function get() {
+        return propValue !== undefined ? propValue : defaultValue;
+      },
+      set: function set(value) {
+        if (propValue !== value) {
+          propValue = value;
+          _plane[propName] = value;
+          _gizmo[propName] = value;
+          scope.dispatchEvent({
+            type: propName + '-changed',
+            value: value
+          });
+          scope.dispatchEvent(changeEvent);
+        }
+      }
+    });
+    scope[propName] = defaultValue;
+    _plane[propName] = defaultValue;
+    _gizmo[propName] = defaultValue;
+  } // updateMatrixWorld  updates key transformation variables
+
+
+  this.updateMatrixWorld = function () {
+    if (this.object !== undefined) {
+      this.object.updateMatrixWorld();
+
+      if (this.object.parent === null) {
+        console.error('TransformControls: The attached 3D object must be a part of the scene graph.');
+      } else {
+        this.object.parent.matrixWorld.decompose(parentPosition, parentQuaternion, parentScale);
+      }
+
+      this.object.matrixWorld.decompose(worldPosition, worldQuaternion, worldScale);
+      parentQuaternionInv.copy(parentQuaternion).invert();
+      worldQuaternionInv.copy(worldQuaternion).invert();
+    }
+
+    this.camera.updateMatrixWorld();
+    this.camera.matrixWorld.decompose(cameraPosition, cameraQuaternion, cameraScale);
+    eye.copy(cameraPosition).sub(worldPosition).normalize();
+    three__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call(this);
+  };
+
+  this.pointerHover = function (pointer) {
+    if (this.object === undefined || this.dragging === true) return;
+    raycaster.setFromCamera(pointer, this.camera);
+    var intersect = intersectObjectWithRay(_gizmo.picker[this.mode], raycaster);
+
+    if (intersect) {
+      this.axis = intersect.object.name;
+      this.dispatchEvent({
+        type: 'hover',
+        value: true
+      });
+    } else {
+      this.axis = null;
+      this.dispatchEvent({
+        type: 'hover',
+        value: false
+      });
+    }
+  };
+
+  this.pointerDown = function (pointer) {
+    if (this.object === undefined || this.dragging === true || pointer.button !== 0) return;
+
+    if (this.axis !== null) {
+      raycaster.setFromCamera(pointer, this.camera);
+      var planeIntersect = intersectObjectWithRay(_plane, raycaster, true);
+
+      if (planeIntersect) {
+        var space = this.space;
+
+        if (this.mode === 'scale') {
+          space = 'local';
+        } else if (this.axis === 'E' || this.axis === 'XYZE' || this.axis === 'XYZ') {
+          space = 'world';
+        }
+
+        if (space === 'local' && this.mode === 'rotate') {
+          var snap = this.rotationSnap;
+          if (this.axis === 'X' && snap) this.object.rotation.x = Math.round(this.object.rotation.x / snap) * snap;
+          if (this.axis === 'Y' && snap) this.object.rotation.y = Math.round(this.object.rotation.y / snap) * snap;
+          if (this.axis === 'Z' && snap) this.object.rotation.z = Math.round(this.object.rotation.z / snap) * snap;
+        }
+
+        this.object.updateMatrixWorld();
+        this.object.parent.updateMatrixWorld();
+        positionStart.copy(this.object.position);
+        quaternionStart.copy(this.object.quaternion);
+        scaleStart.copy(this.object.scale);
+        this.object.matrixWorld.decompose(worldPositionStart, worldQuaternionStart, worldScaleStart);
+        pointStart.copy(planeIntersect.point).sub(worldPositionStart);
+      }
+
+      this.dragging = true;
+      mouseDownEvent.mode = this.mode;
+      this.dispatchEvent(mouseDownEvent);
+    }
+  };
+
+  this.pointerMove = function (pointer) {
+    var axis = this.axis;
+    var mode = this.mode;
+    var object = this.object;
+    var space = this.space;
+
+    if (mode === 'scale') {
+      space = 'local';
+    } else if (axis === 'E' || axis === 'XYZE' || axis === 'XYZ') {
+      space = 'world';
+    }
+
+    if (object === undefined || axis === null || this.dragging === false || pointer.button !== -1) return;
+    raycaster.setFromCamera(pointer, this.camera);
+    var planeIntersect = intersectObjectWithRay(_plane, raycaster, true);
+    if (!planeIntersect) return;
+    pointEnd.copy(planeIntersect.point).sub(worldPositionStart);
+
+    if (mode === 'translate') {
+      // Apply translate
+      offset.copy(pointEnd).sub(pointStart);
+
+      if (space === 'local' && axis !== 'XYZ') {
+        offset.applyQuaternion(worldQuaternionInv);
+      }
+
+      if (axis.indexOf('X') === -1) offset.x = 0;
+      if (axis.indexOf('Y') === -1) offset.y = 0;
+      if (axis.indexOf('Z') === -1) offset.z = 0;
+
+      if (space === 'local' && axis !== 'XYZ') {
+        offset.applyQuaternion(quaternionStart).divide(parentScale);
+      } else {
+        offset.applyQuaternion(parentQuaternionInv).divide(parentScale);
+      }
+
+      object.position.copy(offset).add(positionStart); // Apply translation snap
+
+      if (this.translationSnap) {
+        if (space === 'local') {
+          object.position.applyQuaternion(_tempQuaternion.copy(quaternionStart).invert());
+
+          if (axis.search('X') !== -1) {
+            object.position.x = Math.round(object.position.x / this.translationSnap) * this.translationSnap;
+          }
+
+          if (axis.search('Y') !== -1) {
+            object.position.y = Math.round(object.position.y / this.translationSnap) * this.translationSnap;
+          }
+
+          if (axis.search('Z') !== -1) {
+            object.position.z = Math.round(object.position.z / this.translationSnap) * this.translationSnap;
+          }
+
+          object.position.applyQuaternion(quaternionStart);
+        }
+
+        if (space === 'world') {
+          if (object.parent) {
+            object.position.add(_tempVector.setFromMatrixPosition(object.parent.matrixWorld));
+          }
+
+          if (axis.search('X') !== -1) {
+            object.position.x = Math.round(object.position.x / this.translationSnap) * this.translationSnap;
+          }
+
+          if (axis.search('Y') !== -1) {
+            object.position.y = Math.round(object.position.y / this.translationSnap) * this.translationSnap;
+          }
+
+          if (axis.search('Z') !== -1) {
+            object.position.z = Math.round(object.position.z / this.translationSnap) * this.translationSnap;
+          }
+
+          if (object.parent) {
+            object.position.sub(_tempVector.setFromMatrixPosition(object.parent.matrixWorld));
+          }
+        }
+      }
+    } else if (mode === 'scale') {
+      if (axis.search('XYZ') !== -1) {
+        var d = pointEnd.length() / pointStart.length();
+        if (pointEnd.dot(pointStart) < 0) d *= -1;
+
+        _tempVector2.set(d, d, d);
+      } else {
+        _tempVector.copy(pointStart);
+
+        _tempVector2.copy(pointEnd);
+
+        _tempVector.applyQuaternion(worldQuaternionInv);
+
+        _tempVector2.applyQuaternion(worldQuaternionInv);
+
+        _tempVector2.divide(_tempVector);
+
+        if (axis.search('X') === -1) {
+          _tempVector2.x = 1;
+        }
+
+        if (axis.search('Y') === -1) {
+          _tempVector2.y = 1;
+        }
+
+        if (axis.search('Z') === -1) {
+          _tempVector2.z = 1;
+        }
+      } // Apply scale
+
+
+      object.scale.copy(scaleStart).multiply(_tempVector2);
+
+      if (this.scaleSnap) {
+        if (axis.search('X') !== -1) {
+          object.scale.x = Math.round(object.scale.x / this.scaleSnap) * this.scaleSnap || this.scaleSnap;
+        }
+
+        if (axis.search('Y') !== -1) {
+          object.scale.y = Math.round(object.scale.y / this.scaleSnap) * this.scaleSnap || this.scaleSnap;
+        }
+
+        if (axis.search('Z') !== -1) {
+          object.scale.z = Math.round(object.scale.z / this.scaleSnap) * this.scaleSnap || this.scaleSnap;
+        }
+      }
+    } else if (mode === 'rotate') {
+      offset.copy(pointEnd).sub(pointStart);
+      var ROTATION_SPEED = 20 / worldPosition.distanceTo(_tempVector.setFromMatrixPosition(this.camera.matrixWorld));
+
+      if (axis === 'E') {
+        rotationAxis.copy(eye);
+        rotationAngle = pointEnd.angleTo(pointStart);
+        startNorm.copy(pointStart).normalize();
+        endNorm.copy(pointEnd).normalize();
+        rotationAngle *= endNorm.cross(startNorm).dot(eye) < 0 ? 1 : -1;
+      } else if (axis === 'XYZE') {
+        rotationAxis.copy(offset).cross(eye).normalize();
+        rotationAngle = offset.dot(_tempVector.copy(rotationAxis).cross(this.eye)) * ROTATION_SPEED;
+      } else if (axis === 'X' || axis === 'Y' || axis === 'Z') {
+        rotationAxis.copy(_unit[axis]);
+
+        _tempVector.copy(_unit[axis]);
+
+        if (space === 'local') {
+          _tempVector.applyQuaternion(worldQuaternion);
+        }
+
+        rotationAngle = offset.dot(_tempVector.cross(eye).normalize()) * ROTATION_SPEED;
+      } // Apply rotation snap
+
+
+      if (this.rotationSnap) rotationAngle = Math.round(rotationAngle / this.rotationSnap) * this.rotationSnap;
+      this.rotationAngle = rotationAngle; // Apply rotate
+
+      if (space === 'local' && axis !== 'E' && axis !== 'XYZE') {
+        object.quaternion.copy(quaternionStart);
+        object.quaternion.multiply(_tempQuaternion.setFromAxisAngle(rotationAxis, rotationAngle)).normalize();
+      } else {
+        rotationAxis.applyQuaternion(parentQuaternionInv);
+        object.quaternion.copy(_tempQuaternion.setFromAxisAngle(rotationAxis, rotationAngle));
+        object.quaternion.multiply(quaternionStart).normalize();
+      }
+    }
+
+    this.dispatchEvent(changeEvent);
+    this.dispatchEvent(objectChangeEvent);
+  };
+
+  this.pointerUp = function (pointer) {
+    if (pointer.button !== 0) return;
+
+    if (this.dragging && this.axis !== null) {
+      mouseUpEvent.mode = this.mode;
+      this.dispatchEvent(mouseUpEvent);
+    }
+
+    this.dragging = false;
+    this.axis = null;
+  }; // normalize mouse / touch pointer and remap {x,y} to view space.
+
+
+  function getPointer(event) {
+    if (scope.domElement.ownerDocument.pointerLockElement) {
+      return {
+        x: 0,
+        y: 0,
+        button: event.button
+      };
+    } else {
+      var pointer = event.changedTouches ? event.changedTouches[0] : event;
+      var rect = domElement.getBoundingClientRect();
+      return {
+        x: (pointer.clientX - rect.left) / rect.width * 2 - 1,
+        y: -(pointer.clientY - rect.top) / rect.height * 2 + 1,
+        button: event.button
+      };
+    }
+  } // mouse / touch event handlers
+
+
+  function onPointerHover(event) {
+    if (!scope.enabled) return;
+
+    switch (event.pointerType) {
+      case 'mouse':
+      case 'pen':
+        scope.pointerHover(getPointer(event));
+        break;
+    }
+  }
+
+  function onPointerDown(event) {
+    if (!scope.enabled) return;
+    scope.domElement.style.touchAction = 'none'; // disable touch scroll
+
+    scope.domElement.ownerDocument.addEventListener('pointermove', onPointerMove);
+    scope.pointerHover(getPointer(event));
+    scope.pointerDown(getPointer(event));
+  }
+
+  function onPointerMove(event) {
+    if (!scope.enabled) return;
+    scope.pointerMove(getPointer(event));
+  }
+
+  function onPointerUp(event) {
+    if (!scope.enabled) return;
+    scope.domElement.style.touchAction = '';
+    scope.domElement.ownerDocument.removeEventListener('pointermove', onPointerMove);
+    scope.pointerUp(getPointer(event));
+  } // TODO: deprecate
+
+
+  this.getMode = function () {
+    return scope.mode;
+  };
+
+  this.setMode = function (mode) {
+    scope.mode = mode;
+  };
+
+  this.setTranslationSnap = function (translationSnap) {
+    scope.translationSnap = translationSnap;
+  };
+
+  this.setRotationSnap = function (rotationSnap) {
+    scope.rotationSnap = rotationSnap;
+  };
+
+  this.setScaleSnap = function (scaleSnap) {
+    scope.scaleSnap = scaleSnap;
+  };
+
+  this.setSize = function (size) {
+    scope.size = size;
+  };
+
+  this.setSpace = function (space) {
+    scope.space = space;
+  };
+
+  this.update = function () {
+    console.warn('THREE.TransformControls: update function has no more functionality and therefore has been deprecated.');
+  };
+};
+
+TransformControls.prototype = Object.assign(Object.create(three__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype), {
+  constructor: TransformControls,
+  isTransformControls: true
+});
+
+var TransformControlsGizmo = function TransformControlsGizmo(translationDotsOnly) {
+  'use strict';
+
+  three__WEBPACK_IMPORTED_MODULE_0__.Object3D.call(this);
+  this.type = 'TransformControlsGizmo'; // shared materials
+
+  var gizmoMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
+    depthTest: false,
+    depthWrite: false,
+    transparent: true,
+    side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+    fog: false,
+    toneMapped: false
+  });
+  var gizmoLineMaterial = new three__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial({
+    depthTest: false,
+    depthWrite: false,
+    transparent: true,
+    linewidth: 1,
+    fog: false,
+    toneMapped: false
+  }); // Make unique material for each axis/color
+
+  var matInvisible = gizmoMaterial.clone();
+  matInvisible.opacity = 0.15;
+  var matHelper = gizmoMaterial.clone();
+  matHelper.opacity = 0.33;
+  var matRed = gizmoMaterial.clone();
+  matRed.color.set(0x0A66FF);
+  var matGreen = gizmoMaterial.clone();
+  matGreen.color.set(0x0A66FF);
+  var matBlue = gizmoMaterial.clone();
+  matBlue.color.set(0x0A66FF);
+  var matWhiteTransparent = gizmoMaterial.clone();
+  matWhiteTransparent.opacity = 0.25;
+  var matYellowTransparent = matWhiteTransparent.clone();
+  matYellowTransparent.color.set(0x0A66FF);
+  var matCyanTransparent = matWhiteTransparent.clone();
+  matCyanTransparent.color.set(0x0A66FF);
+  var matMagentaTransparent = matWhiteTransparent.clone();
+  matMagentaTransparent.color.set(0x0A66FF);
+  var matYellow = gizmoMaterial.clone();
+  matYellow.color.set(0x0A66FF);
+  var matLineRed = gizmoLineMaterial.clone();
+  matLineRed.color.set(0x0A66FF);
+  var matLineGreen = gizmoLineMaterial.clone();
+  matLineGreen.color.set(0x0A66FF);
+  var matLineBlue = gizmoLineMaterial.clone();
+  matLineBlue.color.set(0x0A66FF);
+  var matLineCyan = gizmoLineMaterial.clone();
+  matLineCyan.color.set(0x0A66FF);
+  var matLineMagenta = gizmoLineMaterial.clone();
+  matLineMagenta.color.set(0x0A66FF);
+  var matLineYellow = gizmoLineMaterial.clone();
+  matLineYellow.color.set(0x0A66FF);
+  var matLineGray = gizmoLineMaterial.clone();
+  matLineGray.color.set(0x787878);
+  var matLineYellowTransparent = matLineYellow.clone();
+  matLineYellowTransparent.opacity = 0.25; // reusable geometry
+
+  var arrowGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0, 0.1, 0.2, 12, 1, false);
+  var sphereGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.SphereGeometry(0.075, 10, 10);
+  var scaleHandleGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.125, 0.125, 0.125);
+  var lineGeometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+  lineGeometry.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute([0, 0, 0, 1, 0, 0], 3));
+
+  var CircleGeometry = function CircleGeometry(radius, arc) {
+    var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+    var vertices = [];
+
+    for (var i = 0; i <= 64 * arc; ++i) {
+      vertices.push(0, Math.cos(i / 32 * Math.PI) * radius, Math.sin(i / 32 * Math.PI) * radius);
+    }
+
+    geometry.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute(vertices, 3));
+    return geometry;
+  }; // Special geometry for transform helper. If scaled with position vector it spans from [0,0,0] to position
+
+
+  var TranslateHelperGeometry = function TranslateHelperGeometry() {
+    var geometry = new three__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
+    geometry.setAttribute('position', new three__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute([0, 0, 0, 1, 1, 1], 3));
+    return geometry;
+  }; // Gizmo definitions - custom hierarchy definitions for setupGizmo() function
+
+
+  var gizmoTranslate = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(translationDotsOnly ? sphereGeometry : arrowGeometry, matRed), [1, 0, 0], [0, 0, -Math.PI / 2], null, 'fwd'], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(translationDotsOnly ? sphereGeometry : arrowGeometry, matRed), [1, 0, 0], [0, 0, Math.PI / 2], null, 'bwd'], [translationDotsOnly ? null : new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineRed)]],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(translationDotsOnly ? sphereGeometry : arrowGeometry, matGreen), [0, 1, 0], null, null, 'fwd'], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(translationDotsOnly ? sphereGeometry : arrowGeometry, matGreen), [0, 1, 0], [Math.PI, 0, 0], null, 'bwd'], [translationDotsOnly ? null : new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineGreen), null, [0, 0, Math.PI / 2]]],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(translationDotsOnly ? sphereGeometry : arrowGeometry, matBlue), [0, 0, 1], [Math.PI / 2, 0, 0], null, 'fwd'], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(translationDotsOnly ? sphereGeometry : arrowGeometry, matBlue), [0, 0, 1], [-Math.PI / 2, 0, 0], null, 'bwd'], [translationDotsOnly ? null : new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineBlue), null, [0, -Math.PI / 2, 0]]],
+    XYZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.1, 0), matWhiteTransparent.clone()), [0, 0, 0], [0, 0, 0]]],
+    XY: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(0.295, 0.295), matYellowTransparent.clone()), [0.15, 0.15, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineYellow), [0.18, 0.3, 0], null, [0.125, 1, 1]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineYellow), [0.3, 0.18, 0], [0, 0, Math.PI / 2], [0.125, 1, 1]]],
+    YZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(0.295, 0.295), matCyanTransparent.clone()), [0, 0.15, 0.15], [0, Math.PI / 2, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineCyan), [0, 0.18, 0.3], [0, 0, Math.PI / 2], [0.125, 1, 1]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineCyan), [0, 0.3, 0.18], [0, -Math.PI / 2, 0], [0.125, 1, 1]]],
+    XZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(0.295, 0.295), matMagentaTransparent.clone()), [0.15, 0, 0.15], [-Math.PI / 2, 0, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineMagenta), [0.18, 0, 0.3], null, [0.125, 1, 1]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineMagenta), [0.3, 0, 0.18], [0, -Math.PI / 2, 0], [0.125, 1, 1]]]
+  };
+  var pickerTranslate = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.2, 0, 1, 4, 1, false), matInvisible), [0.6, 0, 0], [0, 0, -Math.PI / 2]]],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.2, 0, 1, 4, 1, false), matInvisible), [0, 0.6, 0]]],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.2, 0, 1, 4, 1, false), matInvisible), [0, 0, 0.6], [Math.PI / 2, 0, 0]]],
+    XYZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.2, 0), matInvisible)]],
+    XY: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(0.4, 0.4), matInvisible), [0.2, 0.2, 0]]],
+    YZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(0.4, 0.4), matInvisible), [0, 0.2, 0.2], [0, Math.PI / 2, 0]]],
+    XZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(0.4, 0.4), matInvisible), [0.2, 0, 0.2], [-Math.PI / 2, 0, 0]]]
+  };
+  var helperTranslate = {
+    START: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.01, 2), matHelper), null, null, null, 'helper']],
+    END: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.01, 2), matHelper), null, null, null, 'helper']],
+    DELTA: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(TranslateHelperGeometry(), matHelper), null, null, null, 'helper']],
+    X: [[translationDotsOnly ? null : new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [-1e3, 0, 0], null, [1e6, 1, 1], 'helper']],
+    Y: [[translationDotsOnly ? null : new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [0, -1e3, 0], [0, 0, Math.PI / 2], [1e6, 1, 1], 'helper']],
+    Z: [[translationDotsOnly ? null : new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [0, 0, -1e3], [0, -Math.PI / 2, 0], [1e6, 1, 1], 'helper']]
+  };
+  var gizmoRotate = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(CircleGeometry(1, 0.5), matLineRed)], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.04, 0), matRed), [0, 0, 0.99], null, [1, 3, 1]]],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(CircleGeometry(1, 0.5), matLineGreen), null, [0, 0, -Math.PI / 2]], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.04, 0), matGreen), [0, 0, 0.99], null, [3, 1, 1]]],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(CircleGeometry(1, 0.5), matLineBlue), null, [0, Math.PI / 2, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.OctahedronGeometry(0.04, 0), matBlue), [0.99, 0, 0], null, [1, 3, 1]]],
+    E: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(CircleGeometry(1.25, 1), matLineYellowTransparent), null, [0, Math.PI / 2, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.03, 0, 0.15, 4, 1, false), matLineYellowTransparent), [1.17, 0, 0], [0, 0, -Math.PI / 2], [1, 1, 0.001]], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.03, 0, 0.15, 4, 1, false), matLineYellowTransparent), [-1.17, 0, 0], [0, 0, Math.PI / 2], [1, 1, 0.001]], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.03, 0, 0.15, 4, 1, false), matLineYellowTransparent), [0, -1.17, 0], [Math.PI, 0, 0], [1, 1, 0.001]], [new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.03, 0, 0.15, 4, 1, false), matLineYellowTransparent), [0, 1.17, 0], [0, 0, 0], [1, 1, 0.001]]],
+    XYZE: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(CircleGeometry(1, 1), matLineGray), null, [0, Math.PI / 2, 0]]]
+  };
+  var helperRotate = {
+    AXIS: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [-1e3, 0, 0], null, [1e6, 1, 1], 'helper']]
+  };
+  var pickerRotate = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.TorusGeometry(1, 0.1, 4, 24), matInvisible), [0, 0, 0], [0, -Math.PI / 2, -Math.PI / 2]]],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.TorusGeometry(1, 0.1, 4, 24), matInvisible), [0, 0, 0], [Math.PI / 2, 0, 0]]],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.TorusGeometry(1, 0.1, 4, 24), matInvisible), [0, 0, 0], [0, 0, -Math.PI / 2]]],
+    E: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.TorusGeometry(1.25, 0.1, 2, 24), matInvisible)]],
+    XYZE: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.SphereGeometry(0.7, 10, 8), matInvisible)]]
+  };
+  var gizmoScale = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matRed), [0.8, 0, 0], [0, 0, -Math.PI / 2]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineRed), null, null, [0.8, 1, 1]]],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matGreen), [0, 0.8, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineGreen), null, [0, 0, Math.PI / 2], [0.8, 1, 1]]],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matBlue), [0, 0, 0.8], [Math.PI / 2, 0, 0]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineBlue), null, [0, -Math.PI / 2, 0], [0.8, 1, 1]]],
+    XY: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matYellowTransparent), [0.85, 0.85, 0], null, [2, 2, 0.2]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineYellow), [0.855, 0.98, 0], null, [0.125, 1, 1]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineYellow), [0.98, 0.855, 0], [0, 0, Math.PI / 2], [0.125, 1, 1]]],
+    YZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matCyanTransparent), [0, 0.85, 0.85], null, [0.2, 2, 2]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineCyan), [0, 0.855, 0.98], [0, 0, Math.PI / 2], [0.125, 1, 1]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineCyan), [0, 0.98, 0.855], [0, -Math.PI / 2, 0], [0.125, 1, 1]]],
+    XZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matMagentaTransparent), [0.85, 0, 0.85], null, [2, 0.2, 2]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineMagenta), [0.855, 0, 0.98], null, [0.125, 1, 1]], [new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matLineMagenta), [0.98, 0, 0.855], [0, -Math.PI / 2, 0], [0.125, 1, 1]]],
+    XYZX: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.125, 0.125, 0.125), matWhiteTransparent.clone()), [1.1, 0, 0]]],
+    XYZY: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.125, 0.125, 0.125), matWhiteTransparent.clone()), [0, 1.1, 0]]],
+    XYZZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.125, 0.125, 0.125), matWhiteTransparent.clone()), [0, 0, 1.1]]]
+  };
+  var pickerScale = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.2, 0, 0.8, 4, 1, false), matInvisible), [0.5, 0, 0], [0, 0, -Math.PI / 2]]],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.2, 0, 0.8, 4, 1, false), matInvisible), [0, 0.5, 0]]],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.CylinderGeometry(0.2, 0, 0.8, 4, 1, false), matInvisible), [0, 0, 0.5], [Math.PI / 2, 0, 0]]],
+    XY: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matInvisible), [0.85, 0.85, 0], null, [3, 3, 0.2]]],
+    YZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matInvisible), [0, 0.85, 0.85], null, [0.2, 3, 3]]],
+    XZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(scaleHandleGeometry, matInvisible), [0.85, 0, 0.85], null, [3, 0.2, 3]]],
+    XYZX: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.2, 0.2, 0.2), matInvisible), [1.1, 0, 0]]],
+    XYZY: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.2, 0.2, 0.2), matInvisible), [0, 1.1, 0]]],
+    XYZZ: [[new three__WEBPACK_IMPORTED_MODULE_0__.Mesh(new three__WEBPACK_IMPORTED_MODULE_0__.BoxGeometry(0.2, 0.2, 0.2), matInvisible), [0, 0, 1.1]]]
+  };
+  var helperScale = {
+    X: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [-1e3, 0, 0], null, [1e6, 1, 1], 'helper']],
+    Y: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [0, -1e3, 0], [0, 0, Math.PI / 2], [1e6, 1, 1], 'helper']],
+    Z: [[new three__WEBPACK_IMPORTED_MODULE_0__.Line(lineGeometry, matHelper.clone()), [0, 0, -1e3], [0, -Math.PI / 2, 0], [1e6, 1, 1], 'helper']]
+  }; // Creates an Object3D with gizmos described in custom hierarchy definition.
+
+  var setupGizmo = function setupGizmo(gizmoMap) {
+    var gizmo = new three__WEBPACK_IMPORTED_MODULE_0__.Object3D();
+
+    for (var name in gizmoMap) {
+      for (var i = gizmoMap[name].length; i--;) {
+        var object = gizmoMap[name][i][0];
+        if (object) object = object.clone();else continue;
+        var position = gizmoMap[name][i][1];
+        var rotation = gizmoMap[name][i][2];
+        var scale = gizmoMap[name][i][3];
+        var tag = gizmoMap[name][i][4]; // name and tag properties are essential for picking and updating logic.
+
+        object.name = name;
+        object.tag = tag;
+
+        if (position) {
+          object.position.set(position[0], position[1], position[2]);
+        }
+
+        if (rotation) {
+          object.rotation.set(rotation[0], rotation[1], rotation[2]);
+        }
+
+        if (scale) {
+          object.scale.set(scale[0], scale[1], scale[2]);
+        }
+
+        object.updateMatrix();
+
+        if (!translationDotsOnly) {
+          var tempGeometry = object.geometry.clone();
+          tempGeometry.applyMatrix4(object.matrix);
+          object.geometry = tempGeometry;
+        }
+
+        object.renderOrder = Infinity;
+        object.position.set(0, 0, 0);
+        object.rotation.set(0, 0, 0);
+        object.scale.set(1, 1, 1);
+        gizmo.add(object);
+      }
+    }
+
+    return gizmo;
+  }; // Reusable utility variables
+
+
+  var tempVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 0);
+  var tempEuler = new three__WEBPACK_IMPORTED_MODULE_0__.Euler();
+  var alignVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0);
+  var zeroVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 0);
+  var lookAtMatrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
+  var tempQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var tempQuaternion2 = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var identityQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+  var unitX = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0);
+  var unitY = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0);
+  var unitZ = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1); // Gizmo creation
+
+  this.gizmo = {};
+  this.picker = {};
+  this.helper = {};
+  this.add(this.gizmo['translate'] = setupGizmo(gizmoTranslate));
+  this.add(this.gizmo['rotate'] = setupGizmo(gizmoRotate));
+  this.add(this.gizmo['scale'] = setupGizmo(gizmoScale));
+  this.add(this.picker['translate'] = setupGizmo(pickerTranslate));
+  this.add(this.picker['rotate'] = setupGizmo(pickerRotate));
+  this.add(this.picker['scale'] = setupGizmo(pickerScale));
+  this.add(this.helper['translate'] = setupGizmo(helperTranslate));
+  this.add(this.helper['rotate'] = setupGizmo(helperRotate));
+  this.add(this.helper['scale'] = setupGizmo(helperScale)); // Pickers should be hidden always
+
+  this.picker['translate'].visible = false;
+  this.picker['rotate'].visible = false;
+  this.picker['scale'].visible = false; // updateMatrixWorld will update transformations and appearance of individual handles
+
+  this.updateMatrixWorld = function () {
+    var space = this.space;
+    if (this.mode === 'scale') space = 'local'; // scale always oriented to local rotation
+
+    var quaternion = space === 'local' ? this.worldQuaternion : identityQuaternion; // Show only gizmos for current transform mode
+
+    this.gizmo['translate'].visible = this.mode === 'translate';
+    this.gizmo['rotate'].visible = this.mode === 'rotate';
+    this.gizmo['scale'].visible = this.mode === 'scale';
+    this.helper['translate'].visible = this.mode === 'translate';
+    this.helper['rotate'].visible = this.mode === 'rotate';
+    this.helper['scale'].visible = this.mode === 'scale';
+    var handles = [];
+    handles = handles.concat(this.picker[this.mode].children);
+    handles = handles.concat(this.gizmo[this.mode].children);
+    handles = handles.concat(this.helper[this.mode].children);
+
+    for (var i = 0; i < handles.length; i++) {
+      var handle = handles[i]; // hide aligned to camera
+
+      handle.visible = true;
+      handle.rotation.set(0, 0, 0);
+      handle.position.copy(this.worldPosition);
+      var factor;
+
+      if (this.camera.isOrthographicCamera) {
+        factor = (this.camera.top - this.camera.bottom) / this.camera.zoom;
+      } else {
+        factor = this.worldPosition.distanceTo(this.cameraPosition) * Math.min(1.9 * Math.tan(Math.PI * this.camera.fov / 360) / this.camera.zoom, 7);
+      }
+
+      handle.scale.set(1, 1, 1).multiplyScalar(factor * this.size / 7); // TODO: simplify helpers and consider decoupling from gizmo
+
+      if (handle.tag === 'helper') {
+        handle.visible = false;
+
+        if (handle.name === 'AXIS') {
+          handle.position.copy(this.worldPositionStart);
+          handle.visible = !!this.axis;
+
+          if (this.axis === 'X') {
+            tempQuaternion.setFromEuler(tempEuler.set(0, 0, 0));
+            handle.quaternion.copy(quaternion).multiply(tempQuaternion);
+
+            if (Math.abs(alignVector.copy(unitX).applyQuaternion(quaternion).dot(this.eye)) > 0.9) {
+              handle.visible = false;
+            }
+          }
+
+          if (this.axis === 'Y') {
+            tempQuaternion.setFromEuler(tempEuler.set(0, 0, Math.PI / 2));
+            handle.quaternion.copy(quaternion).multiply(tempQuaternion);
+
+            if (Math.abs(alignVector.copy(unitY).applyQuaternion(quaternion).dot(this.eye)) > 0.9) {
+              handle.visible = false;
+            }
+          }
+
+          if (this.axis === 'Z') {
+            tempQuaternion.setFromEuler(tempEuler.set(0, Math.PI / 2, 0));
+            handle.quaternion.copy(quaternion).multiply(tempQuaternion);
+
+            if (Math.abs(alignVector.copy(unitZ).applyQuaternion(quaternion).dot(this.eye)) > 0.9) {
+              handle.visible = false;
+            }
+          }
+
+          if (this.axis === 'XYZE') {
+            tempQuaternion.setFromEuler(tempEuler.set(0, Math.PI / 2, 0));
+            alignVector.copy(this.rotationAxis);
+            handle.quaternion.setFromRotationMatrix(lookAtMatrix.lookAt(zeroVector, alignVector, unitY));
+            handle.quaternion.multiply(tempQuaternion);
+            handle.visible = this.dragging;
+          }
+
+          if (this.axis === 'E') {
+            handle.visible = false;
+          }
+        } else if (handle.name === 'START') {
+          handle.position.copy(this.worldPositionStart);
+          handle.visible = this.dragging;
+        } else if (handle.name === 'END') {
+          handle.position.copy(this.worldPosition);
+          handle.visible = this.dragging;
+        } else if (handle.name === 'DELTA') {
+          handle.position.copy(this.worldPositionStart);
+          handle.quaternion.copy(this.worldQuaternionStart);
+          tempVector.set(1e-10, 1e-10, 1e-10).add(this.worldPositionStart).sub(this.worldPosition).multiplyScalar(-1);
+          tempVector.applyQuaternion(this.worldQuaternionStart.clone().invert());
+          handle.scale.copy(tempVector);
+          handle.visible = this.dragging;
+        } else {
+          handle.quaternion.copy(quaternion);
+
+          if (this.dragging) {
+            handle.position.copy(this.worldPositionStart);
+          } else {
+            handle.position.copy(this.worldPosition);
+          }
+
+          if (this.axis) {
+            handle.visible = this.axis.search(handle.name) !== -1;
+          }
+        } // If updating helper, skip rest of the loop
+
+
+        continue;
+      } // Align handles to current local or world rotation
+
+
+      handle.quaternion.copy(quaternion);
+
+      if (this.mode === 'translate' || this.mode === 'scale') {
+        // Hide translate and scale axis facing the camera
+        var AXIS_HIDE_TRESHOLD = 0.99;
+        var PLANE_HIDE_TRESHOLD = 0.2;
+        var AXIS_FLIP_TRESHOLD = 0.0;
+
+        if (handle.name === 'X' || handle.name === 'XYZX') {
+          if (Math.abs(alignVector.copy(unitX).applyQuaternion(quaternion).dot(this.eye)) > AXIS_HIDE_TRESHOLD) {
+            handle.scale.set(1e-10, 1e-10, 1e-10);
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name === 'Y' || handle.name === 'XYZY') {
+          if (Math.abs(alignVector.copy(unitY).applyQuaternion(quaternion).dot(this.eye)) > AXIS_HIDE_TRESHOLD) {
+            handle.scale.set(1e-10, 1e-10, 1e-10);
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name === 'Z' || handle.name === 'XYZZ') {
+          if (Math.abs(alignVector.copy(unitZ).applyQuaternion(quaternion).dot(this.eye)) > AXIS_HIDE_TRESHOLD) {
+            handle.scale.set(1e-10, 1e-10, 1e-10);
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name === 'XY') {
+          if (Math.abs(alignVector.copy(unitZ).applyQuaternion(quaternion).dot(this.eye)) < PLANE_HIDE_TRESHOLD) {
+            handle.scale.set(1e-10, 1e-10, 1e-10);
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name === 'YZ') {
+          if (Math.abs(alignVector.copy(unitX).applyQuaternion(quaternion).dot(this.eye)) < PLANE_HIDE_TRESHOLD) {
+            handle.scale.set(1e-10, 1e-10, 1e-10);
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name === 'XZ') {
+          if (Math.abs(alignVector.copy(unitY).applyQuaternion(quaternion).dot(this.eye)) < PLANE_HIDE_TRESHOLD) {
+            handle.scale.set(1e-10, 1e-10, 1e-10);
+            handle.visible = false;
+          }
+        } // Flip translate and scale axis ocluded behind another axis
+
+
+        if (handle.name.search('X') !== -1) {
+          if (alignVector.copy(unitX).applyQuaternion(quaternion).dot(this.eye) < AXIS_FLIP_TRESHOLD) {
+            if (handle.tag === 'fwd') {
+              handle.visible = false;
+            } else {
+              handle.scale.x *= -1;
+            }
+          } else if (handle.tag === 'bwd') {
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name.search('Y') !== -1) {
+          if (alignVector.copy(unitY).applyQuaternion(quaternion).dot(this.eye) < AXIS_FLIP_TRESHOLD) {
+            if (handle.tag === 'fwd') {
+              handle.visible = false;
+            } else {
+              handle.scale.y *= -1;
+            }
+          } else if (handle.tag === 'bwd') {
+            handle.visible = false;
+          }
+        }
+
+        if (handle.name.search('Z') !== -1) {
+          if (alignVector.copy(unitZ).applyQuaternion(quaternion).dot(this.eye) < AXIS_FLIP_TRESHOLD) {
+            if (handle.tag === 'fwd') {
+              handle.visible = false;
+            } else {
+              handle.scale.z *= -1;
+            }
+          } else if (handle.tag === 'bwd') {
+            handle.visible = false;
+          }
+        }
+      } else if (this.mode === 'rotate') {
+        // Align handles to current local or world rotation
+        tempQuaternion2.copy(quaternion);
+        alignVector.copy(this.eye).applyQuaternion(tempQuaternion.copy(quaternion).invert());
+
+        if (handle.name.search('E') !== -1) {
+          handle.quaternion.setFromRotationMatrix(lookAtMatrix.lookAt(this.eye, zeroVector, unitY));
+        }
+
+        if (handle.name === 'X') {
+          tempQuaternion.setFromAxisAngle(unitX, Math.atan2(-alignVector.y, alignVector.z));
+          tempQuaternion.multiplyQuaternions(tempQuaternion2, tempQuaternion);
+          handle.quaternion.copy(tempQuaternion);
+        }
+
+        if (handle.name === 'Y') {
+          tempQuaternion.setFromAxisAngle(unitY, Math.atan2(alignVector.x, alignVector.z));
+          tempQuaternion.multiplyQuaternions(tempQuaternion2, tempQuaternion);
+          handle.quaternion.copy(tempQuaternion);
+        }
+
+        if (handle.name === 'Z') {
+          tempQuaternion.setFromAxisAngle(unitZ, Math.atan2(alignVector.y, alignVector.x));
+          tempQuaternion.multiplyQuaternions(tempQuaternion2, tempQuaternion);
+          handle.quaternion.copy(tempQuaternion);
+        }
+      } // Hide disabled axes
+
+
+      handle.visible = handle.visible && (handle.name.indexOf('X') === -1 || this.showX);
+      handle.visible = handle.visible && (handle.name.indexOf('Y') === -1 || this.showY);
+      handle.visible = handle.visible && (handle.name.indexOf('Z') === -1 || this.showZ);
+      handle.visible = handle.visible && (handle.name.indexOf('E') === -1 || this.showX && this.showY && this.showZ); // highlight selected axis
+
+      handle.material._opacity = handle.material._opacity || handle.material.opacity;
+      handle.material._color = handle.material._color || handle.material.color.clone();
+      handle.material.color.copy(handle.material._color);
+      handle.material.opacity = handle.material._opacity;
+
+      if (!this.enabled) {
+        handle.material.opacity *= 0.5;
+        handle.material.color.lerp(new three__WEBPACK_IMPORTED_MODULE_0__.Color(1, 1, 1), 0.5);
+      } else if (this.axis) {
+        if (handle.name === this.axis) {
+          handle.material.opacity = 1.0;
+          handle.material.color.lerp(new three__WEBPACK_IMPORTED_MODULE_0__.Color(1, 1, 1), 0.5);
+        } else if (this.axis.split('').some(function (a) {
+          return handle.name === a;
+        })) {
+          handle.material.opacity = 1.0;
+          handle.material.color.lerp(new three__WEBPACK_IMPORTED_MODULE_0__.Color(1, 1, 1), 0.5);
+        } else {
+          handle.material.opacity *= 0.25;
+          handle.material.color.lerp(new three__WEBPACK_IMPORTED_MODULE_0__.Color(1, 1, 1), 0.5);
+        }
+      }
+    }
+
+    three__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call(this);
+  };
+};
+
+TransformControlsGizmo.prototype = Object.assign(Object.create(three__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype), {
+  constructor: TransformControlsGizmo,
+  isTransformControlsGizmo: true
+});
+
+var TransformControlsPlane = function TransformControlsPlane() {
+  'use strict';
+
+  three__WEBPACK_IMPORTED_MODULE_0__.Mesh.call(this, new three__WEBPACK_IMPORTED_MODULE_0__.PlaneGeometry(100000, 100000, 2, 2), new three__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial({
+    visible: false,
+    wireframe: true,
+    side: three__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
+    transparent: true,
+    opacity: 0.1,
+    toneMapped: false
+  }));
+  this.type = 'TransformControlsPlane';
+  var unitX = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(1, 0, 0);
+  var unitY = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 1, 0);
+  var unitZ = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3(0, 0, 1);
+  var tempVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var dirVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var alignVector = new three__WEBPACK_IMPORTED_MODULE_0__.Vector3();
+  var tempMatrix = new three__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
+  var identityQuaternion = new three__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
+
+  this.updateMatrixWorld = function () {
+    var space = this.space;
+    this.position.copy(this.worldPosition);
+    if (this.mode === 'scale') space = 'local'; // scale always oriented to local rotation
+
+    unitX.set(1, 0, 0).applyQuaternion(space === 'local' ? this.worldQuaternion : identityQuaternion);
+    unitY.set(0, 1, 0).applyQuaternion(space === 'local' ? this.worldQuaternion : identityQuaternion);
+    unitZ.set(0, 0, 1).applyQuaternion(space === 'local' ? this.worldQuaternion : identityQuaternion); // Align the plane for current transform mode, axis and space.
+
+    alignVector.copy(unitY);
+
+    switch (this.mode) {
+      case 'translate':
+      case 'scale':
+        switch (this.axis) {
+          case 'X':
+            alignVector.copy(this.eye).cross(unitX);
+            dirVector.copy(unitX).cross(alignVector);
+            break;
+
+          case 'Y':
+            alignVector.copy(this.eye).cross(unitY);
+            dirVector.copy(unitY).cross(alignVector);
+            break;
+
+          case 'Z':
+            alignVector.copy(this.eye).cross(unitZ);
+            dirVector.copy(unitZ).cross(alignVector);
+            break;
+
+          case 'XY':
+            dirVector.copy(unitZ);
+            break;
+
+          case 'YZ':
+            dirVector.copy(unitX);
+            break;
+
+          case 'XZ':
+            alignVector.copy(unitZ);
+            dirVector.copy(unitY);
+            break;
+
+          case 'XYZ':
+          case 'E':
+            dirVector.set(0, 0, 0);
+            break;
+        }
+
+        break;
+
+      case 'rotate':
+      default:
+        // special case for rotate
+        dirVector.set(0, 0, 0);
+    }
+
+    if (dirVector.length() === 0) {
+      // If in rotate mode, make the plane parallel to camera
+      this.quaternion.copy(this.cameraQuaternion);
+    } else {
+      tempMatrix.lookAt(tempVector.set(0, 0, 0), dirVector, alignVector);
+      this.quaternion.setFromRotationMatrix(tempMatrix);
+    }
+
+    three__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call(this);
+  };
+};
+
+TransformControlsPlane.prototype = Object.assign(Object.create(three__WEBPACK_IMPORTED_MODULE_0__.Mesh.prototype), {
+  constructor: TransformControlsPlane,
+  isTransformControlsPlane: true
+});
+
+
+/***/ }),
+
+/***/ "./node_modules/camera-controls/dist/camera-controls.module.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/camera-controls/dist/camera-controls.module.js ***!
+  \*********************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => __WEBPACK_DEFAULT_EXPORT__
+/* harmony export */ });
+/*!
+ * camera-controls
+ * https://github.com/yomotsu/camera-controls
+ * (c) 2017 @yomotsu
+ * Released under the MIT License.
+ */
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+    return extendStatics(d, b);
+};
+
+function __extends(d, b) {
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+
+var ACTION;
+(function (ACTION) {
+    ACTION[ACTION["NONE"] = 0] = "NONE";
+    ACTION[ACTION["ROTATE"] = 1] = "ROTATE";
+    ACTION[ACTION["TRUCK"] = 2] = "TRUCK";
+    ACTION[ACTION["OFFSET"] = 3] = "OFFSET";
+    ACTION[ACTION["DOLLY"] = 4] = "DOLLY";
+    ACTION[ACTION["ZOOM"] = 5] = "ZOOM";
+    ACTION[ACTION["TOUCH_ROTATE"] = 6] = "TOUCH_ROTATE";
+    ACTION[ACTION["TOUCH_TRUCK"] = 7] = "TOUCH_TRUCK";
+    ACTION[ACTION["TOUCH_OFFSET"] = 8] = "TOUCH_OFFSET";
+    ACTION[ACTION["TOUCH_DOLLY"] = 9] = "TOUCH_DOLLY";
+    ACTION[ACTION["TOUCH_ZOOM"] = 10] = "TOUCH_ZOOM";
+    ACTION[ACTION["TOUCH_DOLLY_TRUCK"] = 11] = "TOUCH_DOLLY_TRUCK";
+    ACTION[ACTION["TOUCH_DOLLY_OFFSET"] = 12] = "TOUCH_DOLLY_OFFSET";
+    ACTION[ACTION["TOUCH_ZOOM_TRUCK"] = 13] = "TOUCH_ZOOM_TRUCK";
+    ACTION[ACTION["TOUCH_ZOOM_OFFSET"] = 14] = "TOUCH_ZOOM_OFFSET";
+})(ACTION || (ACTION = {}));
+
+var PI_2 = Math.PI * 2;
+var PI_HALF = Math.PI / 2;
+var FPS_60 = 1 / 0.016;
+
+var EPSILON = 1e-5;
+function approxZero(number) {
+    return Math.abs(number) < EPSILON;
+}
+function approxEquals(a, b) {
+    return approxZero(a - b);
+}
+function roundToStep(value, step) {
+    return Math.round(value / step) * step;
+}
+function infinityToMaxNumber(value) {
+    if (isFinite(value))
+        return value;
+    if (value < 0)
+        return -Number.MAX_VALUE;
+    return Number.MAX_VALUE;
+}
+function maxNumberToInfinity(value) {
+    if (Math.abs(value) < Number.MAX_VALUE)
+        return value;
+    return value * Infinity;
+}
+
+function isTouchEvent(event) {
+    return 'TouchEvent' in window && event instanceof TouchEvent;
+}
+
+function extractClientCoordFromEvent(event, out) {
+    out.set(0, 0);
+    if (isTouchEvent(event)) {
+        var touchEvent = event;
+        for (var i = 0; i < touchEvent.touches.length; i++) {
+            out.x += touchEvent.touches[i].clientX;
+            out.y += touchEvent.touches[i].clientY;
+        }
+        out.x /= touchEvent.touches.length;
+        out.y /= touchEvent.touches.length;
+        return out;
+    }
+    else {
+        var mouseEvent = event;
+        out.set(mouseEvent.clientX, mouseEvent.clientY);
+        return out;
+    }
+}
+
+function notSupportedInOrthographicCamera(camera, message) {
+    if (!camera.isPerspectiveCamera) {
+        console.warn(message + " is not supported in OrthographicCamera");
+        return true;
+    }
+    return false;
+}
+
+function quatInvertCompat(target) {
+    if (target.invert) {
+        target.invert();
+    }
+    else {
+        target.inverse();
+    }
+    return target;
+}
+
+var EventDispatcher = (function () {
+    function EventDispatcher() {
+        this._listeners = {};
+    }
+    EventDispatcher.prototype.addEventListener = function (type, listener) {
+        var listeners = this._listeners;
+        if (listeners[type] === undefined)
+            listeners[type] = [];
+        if (listeners[type].indexOf(listener) === -1)
+            listeners[type].push(listener);
+    };
+    EventDispatcher.prototype.removeEventListener = function (type, listener) {
+        var listeners = this._listeners;
+        var listenerArray = listeners[type];
+        if (listenerArray !== undefined) {
+            var index = listenerArray.indexOf(listener);
+            if (index !== -1)
+                listenerArray.splice(index, 1);
+        }
+    };
+    EventDispatcher.prototype.removeAllEventListeners = function (type) {
+        if (!type) {
+            this._listeners = {};
+            return;
+        }
+        if (Array.isArray(this._listeners[type]))
+            this._listeners[type].length = 0;
+    };
+    EventDispatcher.prototype.dispatchEvent = function (event) {
+        var listeners = this._listeners;
+        var listenerArray = listeners[event.type];
+        if (listenerArray !== undefined) {
+            event.target = this;
+            var array = listenerArray.slice(0);
+            for (var i = 0, l = array.length; i < l; i++) {
+                array[i].call(this, event);
+            }
+        }
+    };
+    return EventDispatcher;
+}());
+
+var isBrowser = typeof window !== 'undefined';
+var isMac = isBrowser && /Mac/.test(navigator.platform);
+var readonlyACTION = Object.freeze(ACTION);
+var TOUCH_DOLLY_FACTOR = 1 / 8;
+var THREE;
+var _ORIGIN;
+var _AXIS_Y;
+var _AXIS_Z;
+var _v2;
+var _v3A;
+var _v3B;
+var _v3C;
+var _xColumn;
+var _yColumn;
+var _zColumn;
+var _sphericalA;
+var _sphericalB;
+var _box3A;
+var _box3B;
+var _sphere;
+var _quaternionA;
+var _quaternionB;
+var _rotationMatrix;
+var _raycaster;
+var CameraControls = (function (_super) {
+    __extends(CameraControls, _super);
+    function CameraControls(camera, domElement) {
+        var _this = _super.call(this) || this;
+        _this.minPolarAngle = 0;
+        _this.maxPolarAngle = Math.PI;
+        _this.minAzimuthAngle = -Infinity;
+        _this.maxAzimuthAngle = Infinity;
+        _this.minDistance = 0;
+        _this.maxDistance = Infinity;
+        _this.infinityDolly = false;
+        _this.minZoom = 0.01;
+        _this.maxZoom = Infinity;
+        _this.dampingFactor = 0.05;
+        _this.draggingDampingFactor = 0.25;
+        _this.azimuthRotateSpeed = 1.0;
+        _this.polarRotateSpeed = 1.0;
+        _this.dollySpeed = 1.0;
+        _this.truckSpeed = 2.0;
+        _this.dollyToCursor = false;
+        _this.dragToOffset = false;
+        _this.verticalDragToForward = false;
+        _this.boundaryFriction = 0.0;
+        _this.colliderMeshes = [];
+        _this.cancel = function () { };
+        _this._enabled = true;
+        _this._state = ACTION.NONE;
+        _this._viewport = null;
+        _this._dollyControlAmount = 0;
+        _this._boundaryEnclosesCamera = false;
+        _this._needsUpdate = true;
+        _this._updatedLastTime = false;
+        if (typeof THREE === 'undefined') {
+            console.error('camera-controls: `THREE` is undefined. You must first run `CameraControls.install( { THREE: THREE } )`. Check the docs for further information.');
+        }
+        _this._camera = camera;
+        _this._yAxisUpSpace = new THREE.Quaternion().setFromUnitVectors(_this._camera.up, _AXIS_Y);
+        _this._yAxisUpSpaceInverse = quatInvertCompat(_this._yAxisUpSpace.clone());
+        _this._state = ACTION.NONE;
+        _this._domElement = domElement;
+        _this._target = new THREE.Vector3();
+        _this._targetEnd = _this._target.clone();
+        _this._focalOffset = new THREE.Vector3();
+        _this._focalOffsetEnd = _this._focalOffset.clone();
+        _this._spherical = new THREE.Spherical().setFromVector3(_v3A.copy(_this._camera.position).applyQuaternion(_this._yAxisUpSpace));
+        _this._sphericalEnd = _this._spherical.clone();
+        _this._zoom = _this._camera.zoom;
+        _this._zoomEnd = _this._zoom;
+        _this._nearPlaneCorners = [
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+            new THREE.Vector3(),
+        ];
+        _this._updateNearPlaneCorners();
+        _this._boundary = new THREE.Box3(new THREE.Vector3(-Infinity, -Infinity, -Infinity), new THREE.Vector3(Infinity, Infinity, Infinity));
+        _this._target0 = _this._target.clone();
+        _this._position0 = _this._camera.position.clone();
+        _this._zoom0 = _this._zoom;
+        _this._focalOffset0 = _this._focalOffset.clone();
+        _this._dollyControlAmount = 0;
+        _this._dollyControlCoord = new THREE.Vector2();
+        _this.mouseButtons = {
+            left: ACTION.ROTATE,
+            middle: ACTION.DOLLY,
+            right: ACTION.TRUCK,
+            wheel: _this._camera.isPerspectiveCamera ? ACTION.DOLLY :
+                _this._camera.isOrthographicCamera ? ACTION.ZOOM :
+                    ACTION.NONE,
+        };
+        _this.touches = {
+            one: ACTION.TOUCH_ROTATE,
+            two: _this._camera.isPerspectiveCamera ? ACTION.TOUCH_DOLLY_TRUCK :
+                _this._camera.isOrthographicCamera ? ACTION.TOUCH_ZOOM_TRUCK :
+                    ACTION.NONE,
+            three: ACTION.TOUCH_TRUCK,
+        };
+        if (_this._domElement) {
+            var dragStartPosition_1 = new THREE.Vector2();
+            var lastDragPosition_1 = new THREE.Vector2();
+            var dollyStart_1 = new THREE.Vector2();
+            var elementRect_1 = new THREE.Vector4();
+            var truckInternal_1 = function (deltaX, deltaY, dragToOffset) {
+                if (_this._camera.isPerspectiveCamera) {
+                    var camera_1 = _this._camera;
+                    var offset = _v3A.copy(camera_1.position).sub(_this._target);
+                    var fov = camera_1.getEffectiveFOV() * THREE.MathUtils.DEG2RAD;
+                    var targetDistance = offset.length() * Math.tan(fov * 0.5);
+                    var truckX = (_this.truckSpeed * deltaX * targetDistance / elementRect_1.w);
+                    var pedestalY = (_this.truckSpeed * deltaY * targetDistance / elementRect_1.w);
+                    if (_this.verticalDragToForward) {
+                        dragToOffset ?
+                            _this.setFocalOffset(_this._focalOffsetEnd.x + truckX, _this._focalOffsetEnd.y, _this._focalOffsetEnd.z, true) :
+                            _this.truck(truckX, 0, true);
+                        _this.forward(-pedestalY, true);
+                    }
+                    else {
+                        dragToOffset ?
+                            _this.setFocalOffset(_this._focalOffsetEnd.x + truckX, _this._focalOffsetEnd.y + pedestalY, _this._focalOffsetEnd.z, true) :
+                            _this.truck(truckX, pedestalY, true);
+                    }
+                }
+                else if (_this._camera.isOrthographicCamera) {
+                    var camera_2 = _this._camera;
+                    var truckX = deltaX * (camera_2.right - camera_2.left) / camera_2.zoom / elementRect_1.z;
+                    var pedestalY = deltaY * (camera_2.top - camera_2.bottom) / camera_2.zoom / elementRect_1.w;
+                    dragToOffset ?
+                        _this.setFocalOffset(_this._focalOffsetEnd.x + truckX, _this._focalOffsetEnd.y + pedestalY, _this._focalOffsetEnd.z, true) :
+                        _this.truck(truckX, pedestalY, true);
+                }
+            };
+            var rotateInternal_1 = function (deltaX, deltaY) {
+                var theta = PI_2 * _this.azimuthRotateSpeed * deltaX / elementRect_1.w;
+                var phi = PI_2 * _this.polarRotateSpeed * deltaY / elementRect_1.w;
+                _this.rotate(theta, phi, true);
+            };
+            var dollyInternal_1 = function (delta, x, y) {
+                var dollyScale = Math.pow(0.95, -delta * _this.dollySpeed);
+                var distance = _this._sphericalEnd.radius * dollyScale;
+                var prevRadius = _this._sphericalEnd.radius;
+                _this.dollyTo(distance);
+                if (_this.infinityDolly && distance < _this.minDistance) {
+                    _this._camera.getWorldDirection(_v3A);
+                    _this._targetEnd.add(_v3A.normalize().multiplyScalar(prevRadius));
+                    _this._target.add(_v3A.normalize().multiplyScalar(prevRadius));
+                }
+                if (_this.dollyToCursor) {
+                    _this._dollyControlAmount += _this._sphericalEnd.radius - prevRadius;
+                    _this._dollyControlCoord.set(x, y);
+                }
+                return;
+            };
+            var zoomInternal_1 = function (delta) {
+                var zoomScale = Math.pow(0.95, delta * _this.dollySpeed);
+                _this.zoomTo(_this._zoom * zoomScale);
+                return;
+            };
+            var cancelDragging_1 = function () {
+                _this._state = ACTION.NONE;
+                document.removeEventListener('mousemove', dragging_1);
+                document.removeEventListener('touchmove', dragging_1, { passive: false });
+                document.removeEventListener('mouseup', endDragging_1);
+                document.removeEventListener('touchend', endDragging_1);
+            };
+            var onMouseDown_1 = function (event) {
+                if (!_this._enabled)
+                    return;
+                cancelDragging_1();
+                switch (event.button) {
+                    case THREE.MOUSE.LEFT:
+                        _this._state = _this.mouseButtons.left;
+                        break;
+                    case THREE.MOUSE.MIDDLE:
+                        _this._state = _this.mouseButtons.middle;
+                        break;
+                    case THREE.MOUSE.RIGHT:
+                        _this._state = _this.mouseButtons.right;
+                        break;
+                }
+                startDragging_1(event);
+            };
+            var onTouchStart_1 = function (event) {
+                if (!_this._enabled)
+                    return;
+                cancelDragging_1();
+                switch (event.touches.length) {
+                    case 1:
+                        _this._state = _this.touches.one;
+                        break;
+                    case 2:
+                        _this._state = _this.touches.two;
+                        break;
+                    case 3:
+                        _this._state = _this.touches.three;
+                        break;
+                }
+                startDragging_1(event);
+            };
+            var lastScrollTimeStamp_1 = -1;
+            var onMouseWheel_1 = function (event) {
+                if (!_this._enabled || _this.mouseButtons.wheel === ACTION.NONE)
+                    return;
+                event.preventDefault();
+                if (_this.dollyToCursor ||
+                    _this.mouseButtons.wheel === ACTION.ROTATE ||
+                    _this.mouseButtons.wheel === ACTION.TRUCK) {
+                    var now = performance.now();
+                    if (lastScrollTimeStamp_1 - now < 1000)
+                        _this._getClientRect(elementRect_1);
+                    lastScrollTimeStamp_1 = now;
+                }
+                var deltaYFactor = isMac ? -1 : -3;
+                var delta = (event.deltaMode === 1) ? event.deltaY / deltaYFactor : event.deltaY / (deltaYFactor * 10);
+                var x = _this.dollyToCursor ? (event.clientX - elementRect_1.x) / elementRect_1.z * 2 - 1 : 0;
+                var y = _this.dollyToCursor ? (event.clientY - elementRect_1.y) / elementRect_1.w * -2 + 1 : 0;
+                switch (_this.mouseButtons.wheel) {
+                    case ACTION.ROTATE: {
+                        rotateInternal_1(event.deltaX, event.deltaY);
+                        break;
+                    }
+                    case ACTION.TRUCK: {
+                        truckInternal_1(event.deltaX, event.deltaY, false);
+                        break;
+                    }
+                    case ACTION.OFFSET: {
+                        truckInternal_1(event.deltaX, event.deltaY, true);
+                        break;
+                    }
+                    case ACTION.DOLLY: {
+                        dollyInternal_1(-delta, x, y);
+                        break;
+                    }
+                    case ACTION.ZOOM: {
+                        zoomInternal_1(-delta);
+                        break;
+                    }
+                }
+                _this.dispatchEvent({
+                    type: 'control',
+                    originalEvent: event,
+                });
+            };
+            var onContextMenu_1 = function (event) {
+                if (!_this._enabled)
+                    return;
+                event.preventDefault();
+            };
+            var startDragging_1 = function (event) {
+                if (!_this._enabled)
+                    return;
+                extractClientCoordFromEvent(event, _v2);
+                _this._getClientRect(elementRect_1);
+                dragStartPosition_1.copy(_v2);
+                lastDragPosition_1.copy(_v2);
+                var isMultiTouch = isTouchEvent(event) && event.touches.length >= 2;
+                if (isMultiTouch) {
+                    var touchEvent = event;
+                    var dx = _v2.x - touchEvent.touches[1].clientX;
+                    var dy = _v2.y - touchEvent.touches[1].clientY;
+                    var distance = Math.sqrt(dx * dx + dy * dy);
+                    dollyStart_1.set(0, distance);
+                    var x = (touchEvent.touches[0].clientX + touchEvent.touches[1].clientX) * 0.5;
+                    var y = (touchEvent.touches[0].clientY + touchEvent.touches[1].clientY) * 0.5;
+                    lastDragPosition_1.set(x, y);
+                }
+                document.addEventListener('mousemove', dragging_1);
+                document.addEventListener('touchmove', dragging_1, { passive: false });
+                document.addEventListener('mouseup', endDragging_1);
+                document.addEventListener('touchend', endDragging_1);
+                _this.dispatchEvent({
+                    type: 'controlstart',
+                    originalEvent: event,
+                });
+            };
+            var dragging_1 = function (event) {
+                if (!_this._enabled)
+                    return;
+                event.preventDefault();
+                extractClientCoordFromEvent(event, _v2);
+                var deltaX = lastDragPosition_1.x - _v2.x;
+                var deltaY = lastDragPosition_1.y - _v2.y;
+                lastDragPosition_1.copy(_v2);
+                switch (_this._state) {
+                    case ACTION.ROTATE:
+                    case ACTION.TOUCH_ROTATE: {
+                        rotateInternal_1(deltaX, deltaY);
+                        break;
+                    }
+                    case ACTION.DOLLY:
+                    case ACTION.ZOOM: {
+                        var dollyX = _this.dollyToCursor ? (dragStartPosition_1.x - elementRect_1.x) / elementRect_1.z * 2 - 1 : 0;
+                        var dollyY = _this.dollyToCursor ? (dragStartPosition_1.y - elementRect_1.y) / elementRect_1.w * -2 + 1 : 0;
+                        _this._state === ACTION.DOLLY ?
+                            dollyInternal_1(deltaY * TOUCH_DOLLY_FACTOR, dollyX, dollyY) :
+                            zoomInternal_1(deltaY * TOUCH_DOLLY_FACTOR);
+                        break;
+                    }
+                    case ACTION.TOUCH_DOLLY:
+                    case ACTION.TOUCH_ZOOM:
+                    case ACTION.TOUCH_DOLLY_TRUCK:
+                    case ACTION.TOUCH_ZOOM_TRUCK:
+                    case ACTION.TOUCH_DOLLY_OFFSET:
+                    case ACTION.TOUCH_ZOOM_OFFSET: {
+                        var touchEvent = event;
+                        var dx = _v2.x - touchEvent.touches[1].clientX;
+                        var dy = _v2.y - touchEvent.touches[1].clientY;
+                        var distance = Math.sqrt(dx * dx + dy * dy);
+                        var dollyDelta = dollyStart_1.y - distance;
+                        dollyStart_1.set(0, distance);
+                        var dollyX = _this.dollyToCursor ? (lastDragPosition_1.x - elementRect_1.x) / elementRect_1.z * 2 - 1 : 0;
+                        var dollyY = _this.dollyToCursor ? (lastDragPosition_1.y - elementRect_1.y) / elementRect_1.w * -2 + 1 : 0;
+                        _this._state === ACTION.TOUCH_DOLLY ||
+                            _this._state === ACTION.TOUCH_DOLLY_TRUCK ?
+                            dollyInternal_1(dollyDelta * TOUCH_DOLLY_FACTOR, dollyX, dollyY) :
+                            zoomInternal_1(dollyDelta * TOUCH_DOLLY_FACTOR);
+                        if (_this._state === ACTION.TOUCH_DOLLY_TRUCK ||
+                            _this._state === ACTION.TOUCH_ZOOM_TRUCK) {
+                            truckInternal_1(deltaX, deltaY, false);
+                        }
+                        else if (_this._state === ACTION.TOUCH_DOLLY_OFFSET ||
+                            _this._state === ACTION.TOUCH_ZOOM_OFFSET) {
+                            truckInternal_1(deltaX, deltaY, true);
+                        }
+                        break;
+                    }
+                    case ACTION.TRUCK:
+                    case ACTION.TOUCH_TRUCK: {
+                        truckInternal_1(deltaX, deltaY, false);
+                        break;
+                    }
+                    case ACTION.OFFSET:
+                    case ACTION.TOUCH_OFFSET: {
+                        truckInternal_1(deltaX, deltaY, true);
+                        break;
+                    }
+                }
+                _this.dispatchEvent({
+                    type: 'control',
+                    originalEvent: event,
+                });
+            };
+            var endDragging_1 = function (event) {
+                if (!_this._enabled)
+                    return;
+                cancelDragging_1();
+                _this.dispatchEvent({
+                    type: 'controlend',
+                    originalEvent: event,
+                });
+            };
+            _this._domElement.addEventListener('mousedown', onMouseDown_1);
+            _this._domElement.addEventListener('touchstart', onTouchStart_1);
+            _this._domElement.addEventListener('wheel', onMouseWheel_1);
+            _this._domElement.addEventListener('contextmenu', onContextMenu_1);
+            _this._removeAllEventListeners = function () {
+                _this._domElement.removeEventListener('mousedown', onMouseDown_1);
+                _this._domElement.removeEventListener('touchstart', onTouchStart_1);
+                _this._domElement.removeEventListener('wheel', onMouseWheel_1);
+                _this._domElement.removeEventListener('contextmenu', onContextMenu_1);
+                document.removeEventListener('mousemove', dragging_1);
+                document.removeEventListener('touchmove', dragging_1, { passive: false });
+                document.removeEventListener('mouseup', endDragging_1);
+                document.removeEventListener('touchend', endDragging_1);
+            };
+            _this.cancel = function () {
+                cancelDragging_1();
+                _this.dispatchEvent({
+                    type: 'controlend',
+                    originalEvent: null,
+                });
+            };
+        }
+        _this.update(0);
+        return _this;
+    }
+    CameraControls.install = function (libs) {
+        THREE = libs.THREE;
+        _ORIGIN = Object.freeze(new THREE.Vector3(0, 0, 0));
+        _AXIS_Y = Object.freeze(new THREE.Vector3(0, 1, 0));
+        _AXIS_Z = Object.freeze(new THREE.Vector3(0, 0, 1));
+        _v2 = new THREE.Vector2();
+        _v3A = new THREE.Vector3();
+        _v3B = new THREE.Vector3();
+        _v3C = new THREE.Vector3();
+        _xColumn = new THREE.Vector3();
+        _yColumn = new THREE.Vector3();
+        _zColumn = new THREE.Vector3();
+        _sphericalA = new THREE.Spherical();
+        _sphericalB = new THREE.Spherical();
+        _box3A = new THREE.Box3();
+        _box3B = new THREE.Box3();
+        _sphere = new THREE.Sphere();
+        _quaternionA = new THREE.Quaternion();
+        _quaternionB = new THREE.Quaternion();
+        _rotationMatrix = new THREE.Matrix4();
+        _raycaster = new THREE.Raycaster();
+    };
+    Object.defineProperty(CameraControls, "ACTION", {
+        get: function () {
+            return readonlyACTION;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "enabled", {
+        get: function () {
+            return this._enabled;
+        },
+        set: function (enabled) {
+            this._enabled = enabled;
+            if (!enabled)
+                this.cancel();
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "currentAction", {
+        get: function () {
+            return this._state;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "distance", {
+        get: function () {
+            return this._spherical.radius;
+        },
+        set: function (distance) {
+            if (this._spherical.radius === distance &&
+                this._sphericalEnd.radius === distance)
+                return;
+            this._spherical.radius = distance;
+            this._sphericalEnd.radius = distance;
+            this._needsUpdate = true;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "azimuthAngle", {
+        get: function () {
+            return this._spherical.theta;
+        },
+        set: function (azimuthAngle) {
+            if (this._spherical.theta === azimuthAngle &&
+                this._sphericalEnd.theta === azimuthAngle)
+                return;
+            this._spherical.theta = azimuthAngle;
+            this._sphericalEnd.theta = azimuthAngle;
+            this._needsUpdate = true;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "polarAngle", {
+        get: function () {
+            return this._spherical.phi;
+        },
+        set: function (polarAngle) {
+            if (this._spherical.phi === polarAngle &&
+                this._sphericalEnd.phi === polarAngle)
+                return;
+            this._spherical.phi = polarAngle;
+            this._sphericalEnd.phi = polarAngle;
+            this._needsUpdate = true;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "phiSpeed", {
+        set: function (speed) {
+            console.warn('phiSpeed was renamed. use azimuthRotateSpeed instead');
+            this.azimuthRotateSpeed = speed;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "thetaSpeed", {
+        set: function (speed) {
+            console.warn('thetaSpeed was renamed. use polarRotateSpeed instead');
+            this.polarRotateSpeed = speed;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(CameraControls.prototype, "boundaryEnclosesCamera", {
+        get: function () {
+            return this._boundaryEnclosesCamera;
+        },
+        set: function (boundaryEnclosesCamera) {
+            this._boundaryEnclosesCamera = boundaryEnclosesCamera;
+            this._needsUpdate = true;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    CameraControls.prototype.addEventListener = function (type, listener) {
+        _super.prototype.addEventListener.call(this, type, listener);
+    };
+    CameraControls.prototype.removeEventListener = function (type, listener) {
+        _super.prototype.removeEventListener.call(this, type, listener);
+    };
+    CameraControls.prototype.rotate = function (azimuthAngle, polarAngle, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this.rotateTo(this._sphericalEnd.theta + azimuthAngle, this._sphericalEnd.phi + polarAngle, enableTransition);
+    };
+    CameraControls.prototype.rotateTo = function (azimuthAngle, polarAngle, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        var theta = THREE.MathUtils.clamp(azimuthAngle, this.minAzimuthAngle, this.maxAzimuthAngle);
+        var phi = THREE.MathUtils.clamp(polarAngle, this.minPolarAngle, this.maxPolarAngle);
+        this._sphericalEnd.theta = theta;
+        this._sphericalEnd.phi = phi;
+        this._sphericalEnd.makeSafe();
+        if (!enableTransition) {
+            this._spherical.theta = this._sphericalEnd.theta;
+            this._spherical.phi = this._sphericalEnd.phi;
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.dolly = function (distance, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this.dollyTo(this._sphericalEnd.radius - distance, enableTransition);
+    };
+    CameraControls.prototype.dollyTo = function (distance, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        if (notSupportedInOrthographicCamera(this._camera, 'dolly'))
+            return;
+        this._sphericalEnd.radius = THREE.MathUtils.clamp(distance, this.minDistance, this.maxDistance);
+        if (!enableTransition) {
+            this._spherical.radius = this._sphericalEnd.radius;
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.zoom = function (zoomStep, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this.zoomTo(this._zoomEnd + zoomStep, enableTransition);
+    };
+    CameraControls.prototype.zoomTo = function (zoom, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this._zoomEnd = THREE.MathUtils.clamp(zoom, this.minZoom, this.maxZoom);
+        if (!enableTransition) {
+            this._zoom = this._zoomEnd;
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.pan = function (x, y, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        console.log('`pan` has been renamed to `truck`');
+        this.truck(x, y, enableTransition);
+    };
+    CameraControls.prototype.truck = function (x, y, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this._camera.updateMatrix();
+        _xColumn.setFromMatrixColumn(this._camera.matrix, 0);
+        _yColumn.setFromMatrixColumn(this._camera.matrix, 1);
+        _xColumn.multiplyScalar(x);
+        _yColumn.multiplyScalar(-y);
+        var offset = _v3A.copy(_xColumn).add(_yColumn);
+        this._encloseToBoundary(this._targetEnd, offset, this.boundaryFriction);
+        if (!enableTransition) {
+            this._target.copy(this._targetEnd);
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.forward = function (distance, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        _v3A.setFromMatrixColumn(this._camera.matrix, 0);
+        _v3A.crossVectors(this._camera.up, _v3A);
+        _v3A.multiplyScalar(distance);
+        this._encloseToBoundary(this._targetEnd, _v3A, this.boundaryFriction);
+        if (!enableTransition) {
+            this._target.copy(this._targetEnd);
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.moveTo = function (x, y, z, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this._targetEnd.set(x, y, z);
+        if (!enableTransition) {
+            this._target.copy(this._targetEnd);
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.fitToBox = function (box3OrObject, enableTransition, _a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.paddingLeft, paddingLeft = _c === void 0 ? 0 : _c, _d = _b.paddingRight, paddingRight = _d === void 0 ? 0 : _d, _e = _b.paddingBottom, paddingBottom = _e === void 0 ? 0 : _e, _f = _b.paddingTop, paddingTop = _f === void 0 ? 0 : _f;
+        var aabb = box3OrObject.isBox3
+            ? _box3A.copy(box3OrObject)
+            : _box3A.setFromObject(box3OrObject);
+        if (aabb.isEmpty()) {
+            console.warn('camera-controls: fitTo() cannot be used with an empty box. Aborting');
+            return;
+        }
+        var theta = roundToStep(this._sphericalEnd.theta, PI_HALF);
+        var phi = roundToStep(this._sphericalEnd.phi, PI_HALF);
+        this.rotateTo(theta, phi, enableTransition);
+        var normal = _v3A.setFromSpherical(this._sphericalEnd).normalize();
+        var rotation = _quaternionA.setFromUnitVectors(normal, _AXIS_Z);
+        var viewFromPolar = approxEquals(Math.abs(normal.y), 1);
+        if (viewFromPolar) {
+            rotation.multiply(_quaternionB.setFromAxisAngle(_AXIS_Y, theta));
+        }
+        var bb = _box3B.makeEmpty();
+        _v3B.copy(aabb.min).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.min).setX(aabb.max.x).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.min).setY(aabb.max.y).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.max).setZ(aabb.min.z).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.min).setZ(aabb.max.z).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.max).setY(aabb.min.y).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.max).setX(aabb.min.x).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        _v3B.copy(aabb.max).applyQuaternion(rotation);
+        bb.expandByPoint(_v3B);
+        rotation.setFromUnitVectors(_AXIS_Z, normal);
+        bb.min.x -= paddingLeft;
+        bb.min.y -= paddingBottom;
+        bb.max.x += paddingRight;
+        bb.max.y += paddingTop;
+        var bbSize = bb.getSize(_v3A);
+        var center = bb.getCenter(_v3B).applyQuaternion(rotation);
+        var isPerspectiveCamera = this._camera.isPerspectiveCamera;
+        var isOrthographicCamera = this._camera.isOrthographicCamera;
+        if (isPerspectiveCamera) {
+            var distance = this.getDistanceToFitBox(bbSize.x, bbSize.y, bbSize.z);
+            this.moveTo(center.x, center.y, center.z, enableTransition);
+            this.dollyTo(distance, enableTransition);
+            this.setFocalOffset(0, 0, 0, enableTransition);
+            return;
+        }
+        else if (isOrthographicCamera) {
+            var camera = this._camera;
+            var width = camera.right - camera.left;
+            var height = camera.top - camera.bottom;
+            var zoom = Math.min(width / bbSize.x, height / bbSize.y);
+            this.moveTo(center.x, center.y, center.z, enableTransition);
+            this.zoomTo(zoom, enableTransition);
+            this.setFocalOffset(0, 0, 0, enableTransition);
+            return;
+        }
+    };
+    CameraControls.prototype.fitTo = function (box3OrObject, enableTransition, fitToOptions) {
+        if (fitToOptions === void 0) { fitToOptions = {}; }
+        console.warn('camera-controls: fitTo() has been renamed to fitToBox()');
+        this.fitToBox(box3OrObject, enableTransition, fitToOptions);
+    };
+    CameraControls.prototype.fitToSphere = function (sphereOrMesh, enableTransition) {
+        var isSphere = sphereOrMesh instanceof THREE.Sphere;
+        var boundingSphere = isSphere ?
+            _sphere.copy(sphereOrMesh) :
+            createBoundingSphere(sphereOrMesh, _sphere);
+        var distanceToFit = this.getDistanceToFitSphere(boundingSphere.radius);
+        this.moveTo(boundingSphere.center.x, boundingSphere.center.y, boundingSphere.center.z, enableTransition);
+        this.dollyTo(distanceToFit, enableTransition);
+        this.setFocalOffset(0, 0, 0, enableTransition);
+    };
+    CameraControls.prototype.setLookAt = function (positionX, positionY, positionZ, targetX, targetY, targetZ, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        var position = _v3A.set(positionX, positionY, positionZ);
+        var target = _v3B.set(targetX, targetY, targetZ);
+        this._targetEnd.copy(target);
+        this._sphericalEnd.setFromVector3(position.sub(target).applyQuaternion(this._yAxisUpSpace));
+        this.normalizeRotations();
+        if (!enableTransition) {
+            this._target.copy(this._targetEnd);
+            this._spherical.copy(this._sphericalEnd);
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.lerpLookAt = function (positionAX, positionAY, positionAZ, targetAX, targetAY, targetAZ, positionBX, positionBY, positionBZ, targetBX, targetBY, targetBZ, t, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        var positionA = _v3A.set(positionAX, positionAY, positionAZ);
+        var targetA = _v3B.set(targetAX, targetAY, targetAZ);
+        _sphericalA.setFromVector3(positionA.sub(targetA).applyQuaternion(this._yAxisUpSpace));
+        var targetB = _v3A.set(targetBX, targetBY, targetBZ);
+        this._targetEnd.copy(targetA).lerp(targetB, t);
+        var positionB = _v3B.set(positionBX, positionBY, positionBZ);
+        _sphericalB.setFromVector3(positionB.sub(targetB).applyQuaternion(this._yAxisUpSpace));
+        var deltaTheta = _sphericalB.theta - _sphericalA.theta;
+        var deltaPhi = _sphericalB.phi - _sphericalA.phi;
+        var deltaRadius = _sphericalB.radius - _sphericalA.radius;
+        this._sphericalEnd.set(_sphericalA.radius + deltaRadius * t, _sphericalA.phi + deltaPhi * t, _sphericalA.theta + deltaTheta * t);
+        this.normalizeRotations();
+        if (!enableTransition) {
+            this._target.copy(this._targetEnd);
+            this._spherical.copy(this._sphericalEnd);
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.setPosition = function (positionX, positionY, positionZ, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this.setLookAt(positionX, positionY, positionZ, this._targetEnd.x, this._targetEnd.y, this._targetEnd.z, enableTransition);
+    };
+    CameraControls.prototype.setTarget = function (targetX, targetY, targetZ, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        var pos = this.getPosition(_v3A);
+        this.setLookAt(pos.x, pos.y, pos.z, targetX, targetY, targetZ, enableTransition);
+    };
+    CameraControls.prototype.setFocalOffset = function (x, y, z, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this._focalOffsetEnd.set(x, y, z);
+        if (!enableTransition) {
+            this._focalOffset.copy(this._focalOffsetEnd);
+        }
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.setBoundary = function (box3) {
+        if (!box3) {
+            this._boundary.min.set(-Infinity, -Infinity, -Infinity);
+            this._boundary.max.set(Infinity, Infinity, Infinity);
+            this._needsUpdate = true;
+            return;
+        }
+        this._boundary.copy(box3);
+        this._boundary.clampPoint(this._targetEnd, this._targetEnd);
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.setViewport = function (viewportOrX, y, width, height) {
+        if (viewportOrX === null) {
+            this._viewport = null;
+            return;
+        }
+        this._viewport = this._viewport || new THREE.Vector4();
+        if (typeof viewportOrX === 'number') {
+            this._viewport.set(viewportOrX, y, width, height);
+        }
+        else {
+            this._viewport.copy(viewportOrX);
+        }
+    };
+    CameraControls.prototype.getDistanceToFitBox = function (width, height, depth) {
+        if (notSupportedInOrthographicCamera(this._camera, 'getDistanceToFit'))
+            return this._spherical.radius;
+        var camera = this._camera;
+        var boundingRectAspect = width / height;
+        var fov = camera.getEffectiveFOV() * THREE.MathUtils.DEG2RAD;
+        var aspect = camera.aspect;
+        var heightToFit = boundingRectAspect < aspect ? height : width / aspect;
+        return heightToFit * 0.5 / Math.tan(fov * 0.5) + depth * 0.5;
+    };
+    CameraControls.prototype.getDistanceToFit = function (width, height, depth) {
+        console.warn('camera-controls: getDistanceToFit() has been renamed to getDistanceToFitBox()');
+        return this.getDistanceToFitBox(width, height, depth);
+    };
+    CameraControls.prototype.getDistanceToFitSphere = function (radius) {
+        if (notSupportedInOrthographicCamera(this._camera, 'getDistanceToFitSphere'))
+            return this._spherical.radius;
+        var camera = this._camera;
+        var vFOV = camera.getEffectiveFOV() * THREE.MathUtils.DEG2RAD;
+        var hFOV = Math.atan(Math.tan(vFOV * 0.5) * camera.aspect) * 2;
+        var fov = 1 < camera.aspect ? vFOV : hFOV;
+        return radius / (Math.sin(fov * 0.5));
+    };
+    CameraControls.prototype.getTarget = function (out) {
+        var _out = !!out && out.isVector3 ? out : new THREE.Vector3();
+        return _out.copy(this._targetEnd);
+    };
+    CameraControls.prototype.getPosition = function (out) {
+        var _out = !!out && out.isVector3 ? out : new THREE.Vector3();
+        return _out.setFromSpherical(this._sphericalEnd).applyQuaternion(this._yAxisUpSpaceInverse).add(this._targetEnd);
+    };
+    CameraControls.prototype.getFocalOffset = function (out) {
+        var _out = !!out && out.isVector3 ? out : new THREE.Vector3();
+        return _out.copy(this._focalOffsetEnd);
+    };
+    CameraControls.prototype.normalizeRotations = function () {
+        this._sphericalEnd.theta = this._sphericalEnd.theta % PI_2;
+        if (this._sphericalEnd.theta < 0)
+            this._sphericalEnd.theta += PI_2;
+        this._spherical.theta += PI_2 * Math.round((this._sphericalEnd.theta - this._spherical.theta) / PI_2);
+    };
+    CameraControls.prototype.reset = function (enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        this.setLookAt(this._position0.x, this._position0.y, this._position0.z, this._target0.x, this._target0.y, this._target0.z, enableTransition);
+        this.setFocalOffset(this._focalOffset0.x, this._focalOffset0.y, this._focalOffset0.z, enableTransition);
+        this.zoomTo(this._zoom0, enableTransition);
+    };
+    CameraControls.prototype.saveState = function () {
+        this._target0.copy(this._target);
+        this._position0.copy(this._camera.position);
+        this._zoom0 = this._zoom;
+    };
+    CameraControls.prototype.updateCameraUp = function () {
+        this._yAxisUpSpace.setFromUnitVectors(this._camera.up, _AXIS_Y);
+        quatInvertCompat(this._yAxisUpSpaceInverse.copy(this._yAxisUpSpace));
+    };
+    CameraControls.prototype.update = function (delta) {
+        var dampingFactor = this._state === ACTION.NONE ? this.dampingFactor : this.draggingDampingFactor;
+        var lerpRatio = 1.0 - Math.exp(-dampingFactor * delta * FPS_60);
+        var deltaTheta = this._sphericalEnd.theta - this._spherical.theta;
+        var deltaPhi = this._sphericalEnd.phi - this._spherical.phi;
+        var deltaRadius = this._sphericalEnd.radius - this._spherical.radius;
+        var deltaTarget = _v3A.subVectors(this._targetEnd, this._target);
+        var deltaOffset = _v3B.subVectors(this._focalOffsetEnd, this._focalOffset);
+        if (!approxZero(deltaTheta) ||
+            !approxZero(deltaPhi) ||
+            !approxZero(deltaRadius) ||
+            !approxZero(deltaTarget.x) ||
+            !approxZero(deltaTarget.y) ||
+            !approxZero(deltaTarget.z) ||
+            !approxZero(deltaOffset.x) ||
+            !approxZero(deltaOffset.y) ||
+            !approxZero(deltaOffset.z)) {
+            this._spherical.set(this._spherical.radius + deltaRadius * lerpRatio, this._spherical.phi + deltaPhi * lerpRatio, this._spherical.theta + deltaTheta * lerpRatio);
+            this._target.add(deltaTarget.multiplyScalar(lerpRatio));
+            this._focalOffset.add(deltaOffset.multiplyScalar(lerpRatio));
+            this._needsUpdate = true;
+        }
+        else {
+            this._spherical.copy(this._sphericalEnd);
+            this._target.copy(this._targetEnd);
+            this._focalOffset.copy(this._focalOffsetEnd);
+        }
+        if (this._dollyControlAmount !== 0) {
+            if (this._camera.isPerspectiveCamera) {
+                var camera = this._camera;
+                var direction = _v3A.setFromSpherical(this._sphericalEnd).applyQuaternion(this._yAxisUpSpaceInverse).normalize().negate();
+                var planeX = _v3B.copy(direction).cross(camera.up).normalize();
+                if (planeX.lengthSq() === 0)
+                    planeX.x = 1.0;
+                var planeY = _v3C.crossVectors(planeX, direction);
+                var worldToScreen = this._sphericalEnd.radius * Math.tan(camera.getEffectiveFOV() * THREE.MathUtils.DEG2RAD * 0.5);
+                var prevRadius = this._sphericalEnd.radius - this._dollyControlAmount;
+                var lerpRatio_1 = (prevRadius - this._sphericalEnd.radius) / this._sphericalEnd.radius;
+                var cursor = _v3A.copy(this._targetEnd)
+                    .add(planeX.multiplyScalar(this._dollyControlCoord.x * worldToScreen * camera.aspect))
+                    .add(planeY.multiplyScalar(this._dollyControlCoord.y * worldToScreen));
+                this._targetEnd.lerp(cursor, lerpRatio_1);
+                this._target.copy(this._targetEnd);
+            }
+            this._dollyControlAmount = 0;
+        }
+        var maxDistance = this._collisionTest();
+        this._spherical.radius = Math.min(this._spherical.radius, maxDistance);
+        this._spherical.makeSafe();
+        this._camera.position.setFromSpherical(this._spherical).applyQuaternion(this._yAxisUpSpaceInverse).add(this._target);
+        this._camera.lookAt(this._target);
+        var affectOffset = !approxZero(this._focalOffset.x) ||
+            !approxZero(this._focalOffset.y) ||
+            !approxZero(this._focalOffset.z);
+        if (affectOffset) {
+            this._camera.updateMatrix();
+            _xColumn.setFromMatrixColumn(this._camera.matrix, 0);
+            _yColumn.setFromMatrixColumn(this._camera.matrix, 1);
+            _zColumn.setFromMatrixColumn(this._camera.matrix, 2);
+            _xColumn.multiplyScalar(this._focalOffset.x);
+            _yColumn.multiplyScalar(-this._focalOffset.y);
+            _zColumn.multiplyScalar(this._focalOffset.z);
+            _v3A.copy(_xColumn).add(_yColumn).add(_zColumn);
+            this._camera.position.add(_v3A);
+        }
+        if (this._boundaryEnclosesCamera) {
+            this._encloseToBoundary(this._camera.position.copy(this._target), _v3A.setFromSpherical(this._spherical).applyQuaternion(this._yAxisUpSpaceInverse), 1.0);
+        }
+        var zoomDelta = this._zoomEnd - this._zoom;
+        this._zoom += zoomDelta * lerpRatio;
+        if (this._camera.zoom !== this._zoom) {
+            if (approxZero(zoomDelta))
+                this._zoom = this._zoomEnd;
+            this._camera.zoom = this._zoom;
+            this._camera.updateProjectionMatrix();
+            this._updateNearPlaneCorners();
+            this._needsUpdate = true;
+        }
+        var updated = this._needsUpdate;
+        if (updated && !this._updatedLastTime) {
+            this.dispatchEvent({ type: 'wake' });
+            this.dispatchEvent({ type: 'update' });
+        }
+        else if (updated) {
+            this.dispatchEvent({ type: 'update' });
+        }
+        else if (!updated && this._updatedLastTime) {
+            this.dispatchEvent({ type: 'sleep' });
+        }
+        this._updatedLastTime = updated;
+        this._needsUpdate = false;
+        return updated;
+    };
+    CameraControls.prototype.toJSON = function () {
+        return JSON.stringify({
+            enabled: this._enabled,
+            minDistance: this.minDistance,
+            maxDistance: infinityToMaxNumber(this.maxDistance),
+            minZoom: this.minZoom,
+            maxZoom: infinityToMaxNumber(this.maxZoom),
+            minPolarAngle: this.minPolarAngle,
+            maxPolarAngle: infinityToMaxNumber(this.maxPolarAngle),
+            minAzimuthAngle: infinityToMaxNumber(this.minAzimuthAngle),
+            maxAzimuthAngle: infinityToMaxNumber(this.maxAzimuthAngle),
+            dampingFactor: this.dampingFactor,
+            draggingDampingFactor: this.draggingDampingFactor,
+            dollySpeed: this.dollySpeed,
+            truckSpeed: this.truckSpeed,
+            dollyToCursor: this.dollyToCursor,
+            verticalDragToForward: this.verticalDragToForward,
+            target: this._targetEnd.toArray(),
+            position: _v3A.setFromSpherical(this._sphericalEnd).add(this._targetEnd).toArray(),
+            zoom: this._zoomEnd,
+            focalOffset: this._focalOffsetEnd.toArray(),
+            target0: this._target0.toArray(),
+            position0: this._position0.toArray(),
+            zoom0: this._zoom0,
+            focalOffset0: this._focalOffset0.toArray(),
+        });
+    };
+    CameraControls.prototype.fromJSON = function (json, enableTransition) {
+        if (enableTransition === void 0) { enableTransition = false; }
+        var obj = JSON.parse(json);
+        var position = _v3A.fromArray(obj.position);
+        this.enabled = obj.enabled;
+        this.minDistance = obj.minDistance;
+        this.maxDistance = maxNumberToInfinity(obj.maxDistance);
+        this.minZoom = obj.minZoom;
+        this.maxZoom = maxNumberToInfinity(obj.maxZoom);
+        this.minPolarAngle = obj.minPolarAngle;
+        this.maxPolarAngle = maxNumberToInfinity(obj.maxPolarAngle);
+        this.minAzimuthAngle = maxNumberToInfinity(obj.minAzimuthAngle);
+        this.maxAzimuthAngle = maxNumberToInfinity(obj.maxAzimuthAngle);
+        this.dampingFactor = obj.dampingFactor;
+        this.draggingDampingFactor = obj.draggingDampingFactor;
+        this.dollySpeed = obj.dollySpeed;
+        this.truckSpeed = obj.truckSpeed;
+        this.dollyToCursor = obj.dollyToCursor;
+        this.verticalDragToForward = obj.verticalDragToForward;
+        this._target0.fromArray(obj.target0);
+        this._position0.fromArray(obj.position0);
+        this._zoom0 = obj.zoom0;
+        this._focalOffset0.fromArray(obj.focalOffset0);
+        this.moveTo(obj.target[0], obj.target[1], obj.target[2], enableTransition);
+        _sphericalA.setFromVector3(position.sub(this._targetEnd).applyQuaternion(this._yAxisUpSpace));
+        this.rotateTo(_sphericalA.theta, _sphericalA.phi, enableTransition);
+        this.zoomTo(obj.zoom, enableTransition);
+        this.setFocalOffset(obj.focalOffset[0], obj.focalOffset[1], obj.focalOffset[2], enableTransition);
+        this._needsUpdate = true;
+    };
+    CameraControls.prototype.dispose = function () {
+        this._removeAllEventListeners();
+    };
+    CameraControls.prototype._encloseToBoundary = function (position, offset, friction) {
+        var offsetLength2 = offset.lengthSq();
+        if (offsetLength2 === 0.0) {
+            return position;
+        }
+        var newTarget = _v3B.copy(offset).add(position);
+        var clampedTarget = this._boundary.clampPoint(newTarget, _v3C);
+        var deltaClampedTarget = clampedTarget.sub(newTarget);
+        var deltaClampedTargetLength2 = deltaClampedTarget.lengthSq();
+        if (deltaClampedTargetLength2 === 0.0) {
+            return position.add(offset);
+        }
+        else if (deltaClampedTargetLength2 === offsetLength2) {
+            return position;
+        }
+        else if (friction === 0.0) {
+            return position.add(offset).add(deltaClampedTarget);
+        }
+        else {
+            var offsetFactor = 1.0 + friction * deltaClampedTargetLength2 / offset.dot(deltaClampedTarget);
+            return position
+                .add(_v3B.copy(offset).multiplyScalar(offsetFactor))
+                .add(deltaClampedTarget.multiplyScalar(1.0 - friction));
+        }
+    };
+    CameraControls.prototype._updateNearPlaneCorners = function () {
+        if (this._camera.isPerspectiveCamera) {
+            var camera = this._camera;
+            var near = camera.near;
+            var fov = camera.getEffectiveFOV() * THREE.MathUtils.DEG2RAD;
+            var heightHalf = Math.tan(fov * 0.5) * near;
+            var widthHalf = heightHalf * camera.aspect;
+            this._nearPlaneCorners[0].set(-widthHalf, -heightHalf, 0);
+            this._nearPlaneCorners[1].set(widthHalf, -heightHalf, 0);
+            this._nearPlaneCorners[2].set(widthHalf, heightHalf, 0);
+            this._nearPlaneCorners[3].set(-widthHalf, heightHalf, 0);
+        }
+        else if (this._camera.isOrthographicCamera) {
+            var camera = this._camera;
+            var zoomInv = 1 / camera.zoom;
+            var left = camera.left * zoomInv;
+            var right = camera.right * zoomInv;
+            var top_1 = camera.top * zoomInv;
+            var bottom = camera.bottom * zoomInv;
+            this._nearPlaneCorners[0].set(left, top_1, 0);
+            this._nearPlaneCorners[1].set(right, top_1, 0);
+            this._nearPlaneCorners[2].set(right, bottom, 0);
+            this._nearPlaneCorners[3].set(left, bottom, 0);
+        }
+    };
+    CameraControls.prototype._collisionTest = function () {
+        var distance = Infinity;
+        var hasCollider = this.colliderMeshes.length >= 1;
+        if (!hasCollider)
+            return distance;
+        if (notSupportedInOrthographicCamera(this._camera, '_collisionTest'))
+            return distance;
+        distance = this._spherical.radius;
+        var direction = _v3A.setFromSpherical(this._spherical).divideScalar(distance);
+        _rotationMatrix.lookAt(_ORIGIN, direction, this._camera.up);
+        for (var i = 0; i < 4; i++) {
+            var nearPlaneCorner = _v3B.copy(this._nearPlaneCorners[i]);
+            nearPlaneCorner.applyMatrix4(_rotationMatrix);
+            var origin_1 = _v3C.addVectors(this._target, nearPlaneCorner);
+            _raycaster.set(origin_1, direction);
+            _raycaster.far = distance;
+            var intersects = _raycaster.intersectObjects(this.colliderMeshes);
+            if (intersects.length !== 0 && intersects[0].distance < distance) {
+                distance = intersects[0].distance;
+            }
+        }
+        return distance;
+    };
+    CameraControls.prototype._getClientRect = function (target) {
+        var rect = this._domElement.getBoundingClientRect();
+        target.x = rect.left;
+        target.y = rect.top;
+        if (this._viewport) {
+            target.x += this._viewport.x;
+            target.y += rect.height - this._viewport.w - this._viewport.y;
+            target.z = this._viewport.z;
+            target.w = this._viewport.w;
+        }
+        else {
+            target.z = rect.width;
+            target.w = rect.height;
+        }
+        return target;
+    };
+    CameraControls.prototype._removeAllEventListeners = function () { };
+    return CameraControls;
+}(EventDispatcher));
+function createBoundingSphere(object3d, out) {
+    var boundingSphere = out;
+    var center = boundingSphere.center;
+    object3d.traverse(function (object) {
+        if (!object.isMesh)
+            return;
+        _box3A.expandByObject(object);
+    });
+    _box3A.getCenter(center);
+    var maxRadiusSq = 0;
+    object3d.traverse(function (object) {
+        if (!object.isMesh)
+            return;
+        var mesh = object;
+        var geometry = mesh.geometry.clone();
+        geometry.applyMatrix4(mesh.matrixWorld);
+        if (mesh.geometry.isBufferGeometry) {
+            var bufferGeometry = geometry;
+            var position = bufferGeometry.attributes.position;
+            for (var i = 0, l = position.count; i < l; i++) {
+                _v3A.fromBufferAttribute(position, i);
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(_v3A));
+            }
+        }
+        else {
+            var vertices = geometry.vertices;
+            for (var i = 0, l = vertices.length; i < l; i++) {
+                maxRadiusSq = Math.max(maxRadiusSq, center.distanceToSquared(vertices[i]));
+            }
+        }
+    });
+    boundingSphere.radius = Math.sqrt(maxRadiusSq);
+    return boundingSphere;
+}
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (CameraControls);
 
 
 /***/ }),
@@ -63197,2919 +65469,6 @@ if ( typeof __THREE_DEVTOOLS__ !== 'undefined' ) {
 	/* eslint-enable no-undef */
 
 }
-
-
-
-
-/***/ }),
-
-/***/ "./node_modules/three/examples/jsm/controls/OrbitControls.js":
-/*!*******************************************************************!*\
-  !*** ./node_modules/three/examples/jsm/controls/OrbitControls.js ***!
-  \*******************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "OrbitControls": () => /* binding */ OrbitControls,
-/* harmony export */   "MapControls": () => /* binding */ MapControls
-/* harmony export */ });
-/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
-
-
-// This set of controls performs orbiting, dollying (zooming), and panning.
-// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
-//
-//    Orbit - left mouse / touch: one-finger move
-//    Zoom - middle mouse, or mousewheel / touch: two-finger spread or squish
-//    Pan - right mouse, or left mouse + ctrl/meta/shiftKey, or arrow keys / touch: two-finger move
-
-var OrbitControls = function ( object, domElement ) {
-
-	if ( domElement === undefined ) console.warn( 'THREE.OrbitControls: The second parameter "domElement" is now mandatory.' );
-	if ( domElement === document ) console.error( 'THREE.OrbitControls: "document" should not be used as the target "domElement". Please use "renderer.domElement" instead.' );
-
-	this.object = object;
-	this.domElement = domElement;
-
-	// Set to false to disable this control
-	this.enabled = true;
-
-	// "target" sets the location of focus, where the object orbits around
-	this.target = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	// How far you can dolly in and out ( PerspectiveCamera only )
-	this.minDistance = 0;
-	this.maxDistance = Infinity;
-
-	// How far you can zoom in and out ( OrthographicCamera only )
-	this.minZoom = 0;
-	this.maxZoom = Infinity;
-
-	// How far you can orbit vertically, upper and lower limits.
-	// Range is 0 to Math.PI radians.
-	this.minPolarAngle = 0; // radians
-	this.maxPolarAngle = Math.PI; // radians
-
-	// How far you can orbit horizontally, upper and lower limits.
-	// If set, the interval [ min, max ] must be a sub-interval of [ - 2 PI, 2 PI ], with ( max - min < 2 PI )
-	this.minAzimuthAngle = - Infinity; // radians
-	this.maxAzimuthAngle = Infinity; // radians
-
-	// Set to true to enable damping (inertia)
-	// If damping is enabled, you must call controls.update() in your animation loop
-	this.enableDamping = false;
-	this.dampingFactor = 0.05;
-
-	// This option actually enables dollying in and out; left as "zoom" for backwards compatibility.
-	// Set to false to disable zooming
-	this.enableZoom = true;
-	this.zoomSpeed = 1.0;
-
-	// Set to false to disable rotating
-	this.enableRotate = true;
-	this.rotateSpeed = 1.0;
-
-	// Set to false to disable panning
-	this.enablePan = true;
-	this.panSpeed = 1.0;
-	this.screenSpacePanning = true; // if false, pan orthogonal to world-space direction camera.up
-	this.keyPanSpeed = 7.0;	// pixels moved per arrow key push
-
-	// Set to true to automatically rotate around the target
-	// If auto-rotate is enabled, you must call controls.update() in your animation loop
-	this.autoRotate = false;
-	this.autoRotateSpeed = 2.0; // 30 seconds per round when fps is 60
-
-	// Set to false to disable use of the keys
-	this.enableKeys = true;
-
-	// The four arrow keys
-	this.keys = { LEFT: 37, UP: 38, RIGHT: 39, BOTTOM: 40 };
-
-	// Mouse buttons
-	this.mouseButtons = { LEFT: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.ROTATE, MIDDLE: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.DOLLY, RIGHT: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.PAN };
-
-	// Touch fingers
-	this.touches = { ONE: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.ROTATE, TWO: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.DOLLY_PAN };
-
-	// for reset
-	this.target0 = this.target.clone();
-	this.position0 = this.object.position.clone();
-	this.zoom0 = this.object.zoom;
-
-	//
-	// public methods
-	//
-
-	this.getPolarAngle = function () {
-
-		return spherical.phi;
-
-	};
-
-	this.getAzimuthalAngle = function () {
-
-		return spherical.theta;
-
-	};
-
-	this.saveState = function () {
-
-		scope.target0.copy( scope.target );
-		scope.position0.copy( scope.object.position );
-		scope.zoom0 = scope.object.zoom;
-
-	};
-
-	this.reset = function () {
-
-		scope.target.copy( scope.target0 );
-		scope.object.position.copy( scope.position0 );
-		scope.object.zoom = scope.zoom0;
-
-		scope.object.updateProjectionMatrix();
-		scope.dispatchEvent( changeEvent );
-
-		scope.update();
-
-		state = STATE.NONE;
-
-	};
-
-	// this method is exposed, but perhaps it would be better if we can make it private...
-	this.update = function () {
-
-		var offset = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-		// so camera.up is the orbit axis
-		var quat = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion().setFromUnitVectors( object.up, new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 ) );
-		var quatInverse = quat.clone().invert();
-
-		var lastPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-		var lastQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-
-		var twoPI = 2 * Math.PI;
-
-		return function update() {
-
-			var position = scope.object.position;
-
-			offset.copy( position ).sub( scope.target );
-
-			// rotate offset to "y-axis-is-up" space
-			offset.applyQuaternion( quat );
-
-			// angle from z-axis around y-axis
-			spherical.setFromVector3( offset );
-
-			if ( scope.autoRotate && state === STATE.NONE ) {
-
-				rotateLeft( getAutoRotationAngle() );
-
-			}
-
-			if ( scope.enableDamping ) {
-
-				spherical.theta += sphericalDelta.theta * scope.dampingFactor;
-				spherical.phi += sphericalDelta.phi * scope.dampingFactor;
-
-			} else {
-
-				spherical.theta += sphericalDelta.theta;
-				spherical.phi += sphericalDelta.phi;
-
-			}
-
-			// restrict theta to be between desired limits
-
-			var min = scope.minAzimuthAngle;
-			var max = scope.maxAzimuthAngle;
-
-			if ( isFinite( min ) && isFinite( max ) ) {
-
-				if ( min < - Math.PI ) min += twoPI; else if ( min > Math.PI ) min -= twoPI;
-
-				if ( max < - Math.PI ) max += twoPI; else if ( max > Math.PI ) max -= twoPI;
-
-				if ( min <= max ) {
-
-					spherical.theta = Math.max( min, Math.min( max, spherical.theta ) );
-
-				} else {
-
-					spherical.theta = ( spherical.theta > ( min + max ) / 2 ) ?
-						Math.max( min, spherical.theta ) :
-						Math.min( max, spherical.theta );
-
-				}
-
-			}
-
-			// restrict phi to be between desired limits
-			spherical.phi = Math.max( scope.minPolarAngle, Math.min( scope.maxPolarAngle, spherical.phi ) );
-
-			spherical.makeSafe();
-
-
-			spherical.radius *= scale;
-
-			// restrict radius to be between desired limits
-			spherical.radius = Math.max( scope.minDistance, Math.min( scope.maxDistance, spherical.radius ) );
-
-			// move target to panned location
-
-			if ( scope.enableDamping === true ) {
-
-				scope.target.addScaledVector( panOffset, scope.dampingFactor );
-
-			} else {
-
-				scope.target.add( panOffset );
-
-			}
-
-			offset.setFromSpherical( spherical );
-
-			// rotate offset back to "camera-up-vector-is-up" space
-			offset.applyQuaternion( quatInverse );
-
-			position.copy( scope.target ).add( offset );
-
-			scope.object.lookAt( scope.target );
-
-			if ( scope.enableDamping === true ) {
-
-				sphericalDelta.theta *= ( 1 - scope.dampingFactor );
-				sphericalDelta.phi *= ( 1 - scope.dampingFactor );
-
-				panOffset.multiplyScalar( 1 - scope.dampingFactor );
-
-			} else {
-
-				sphericalDelta.set( 0, 0, 0 );
-
-				panOffset.set( 0, 0, 0 );
-
-			}
-
-			scale = 1;
-
-			// update condition is:
-			// min(camera displacement, camera rotation in radians)^2 > EPS
-			// using small-angle approximation cos(x/2) = 1 - x^2 / 8
-
-			if ( zoomChanged ||
-				lastPosition.distanceToSquared( scope.object.position ) > EPS ||
-				8 * ( 1 - lastQuaternion.dot( scope.object.quaternion ) ) > EPS ) {
-
-				scope.dispatchEvent( changeEvent );
-
-				lastPosition.copy( scope.object.position );
-				lastQuaternion.copy( scope.object.quaternion );
-				zoomChanged = false;
-
-				return true;
-
-			}
-
-			return false;
-
-		};
-
-	}();
-
-	this.dispose = function () {
-
-		scope.domElement.removeEventListener( 'contextmenu', onContextMenu, false );
-
-		scope.domElement.removeEventListener( 'pointerdown', onPointerDown, false );
-		scope.domElement.removeEventListener( 'wheel', onMouseWheel, false );
-
-		scope.domElement.removeEventListener( 'touchstart', onTouchStart, false );
-		scope.domElement.removeEventListener( 'touchend', onTouchEnd, false );
-		scope.domElement.removeEventListener( 'touchmove', onTouchMove, false );
-
-		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove, false );
-		scope.domElement.ownerDocument.removeEventListener( 'pointerup', onPointerUp, false );
-
-		scope.domElement.removeEventListener( 'keydown', onKeyDown, false );
-
-		//scope.dispatchEvent( { type: 'dispose' } ); // should this be added here?
-
-	};
-
-	//
-	// internals
-	//
-
-	var scope = this;
-
-	var changeEvent = { type: 'change' };
-	var startEvent = { type: 'start' };
-	var endEvent = { type: 'end' };
-
-	var STATE = {
-		NONE: - 1,
-		ROTATE: 0,
-		DOLLY: 1,
-		PAN: 2,
-		TOUCH_ROTATE: 3,
-		TOUCH_PAN: 4,
-		TOUCH_DOLLY_PAN: 5,
-		TOUCH_DOLLY_ROTATE: 6
-	};
-
-	var state = STATE.NONE;
-
-	var EPS = 0.000001;
-
-	// current position in spherical coordinates
-	var spherical = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Spherical();
-	var sphericalDelta = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Spherical();
-
-	var scale = 1;
-	var panOffset = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var zoomChanged = false;
-
-	var rotateStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-	var rotateEnd = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-	var rotateDelta = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-
-	var panStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-	var panEnd = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-	var panDelta = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-
-	var dollyStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-	var dollyEnd = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-	var dollyDelta = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector2();
-
-	function getAutoRotationAngle() {
-
-		return 2 * Math.PI / 60 / 60 * scope.autoRotateSpeed;
-
-	}
-
-	function getZoomScale() {
-
-		return Math.pow( 0.95, scope.zoomSpeed );
-
-	}
-
-	function rotateLeft( angle ) {
-
-		sphericalDelta.theta -= angle;
-
-	}
-
-	function rotateUp( angle ) {
-
-		sphericalDelta.phi -= angle;
-
-	}
-
-	var panLeft = function () {
-
-		var v = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-		return function panLeft( distance, objectMatrix ) {
-
-			v.setFromMatrixColumn( objectMatrix, 0 ); // get X column of objectMatrix
-			v.multiplyScalar( - distance );
-
-			panOffset.add( v );
-
-		};
-
-	}();
-
-	var panUp = function () {
-
-		var v = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-		return function panUp( distance, objectMatrix ) {
-
-			if ( scope.screenSpacePanning === true ) {
-
-				v.setFromMatrixColumn( objectMatrix, 1 );
-
-			} else {
-
-				v.setFromMatrixColumn( objectMatrix, 0 );
-				v.crossVectors( scope.object.up, v );
-
-			}
-
-			v.multiplyScalar( distance );
-
-			panOffset.add( v );
-
-		};
-
-	}();
-
-	// deltaX and deltaY are in pixels; right and down are positive
-	var pan = function () {
-
-		var offset = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-		return function pan( deltaX, deltaY ) {
-
-			var element = scope.domElement;
-
-			if ( scope.object.isPerspectiveCamera ) {
-
-				// perspective
-				var position = scope.object.position;
-				offset.copy( position ).sub( scope.target );
-				var targetDistance = offset.length();
-
-				// half of the fov is center to top of screen
-				targetDistance *= Math.tan( ( scope.object.fov / 2 ) * Math.PI / 180.0 );
-
-				// we use only clientHeight here so aspect ratio does not distort speed
-				panLeft( 2 * deltaX * targetDistance / element.clientHeight, scope.object.matrix );
-				panUp( 2 * deltaY * targetDistance / element.clientHeight, scope.object.matrix );
-
-			} else if ( scope.object.isOrthographicCamera ) {
-
-				// orthographic
-				panLeft( deltaX * ( scope.object.right - scope.object.left ) / scope.object.zoom / element.clientWidth, scope.object.matrix );
-				panUp( deltaY * ( scope.object.top - scope.object.bottom ) / scope.object.zoom / element.clientHeight, scope.object.matrix );
-
-			} else {
-
-				// camera neither orthographic nor perspective
-				console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.' );
-				scope.enablePan = false;
-
-			}
-
-		};
-
-	}();
-
-	function dollyOut( dollyScale ) {
-
-		if ( scope.object.isPerspectiveCamera ) {
-
-			scale /= dollyScale;
-
-		} else if ( scope.object.isOrthographicCamera ) {
-
-			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom * dollyScale ) );
-			scope.object.updateProjectionMatrix();
-			zoomChanged = true;
-
-		} else {
-
-			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
-			scope.enableZoom = false;
-
-		}
-
-	}
-
-	function dollyIn( dollyScale ) {
-
-		if ( scope.object.isPerspectiveCamera ) {
-
-			scale *= dollyScale;
-
-		} else if ( scope.object.isOrthographicCamera ) {
-
-			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom / dollyScale ) );
-			scope.object.updateProjectionMatrix();
-			zoomChanged = true;
-
-		} else {
-
-			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
-			scope.enableZoom = false;
-
-		}
-
-	}
-
-	//
-	// event callbacks - update the object state
-	//
-
-	function handleMouseDownRotate( event ) {
-
-		rotateStart.set( event.clientX, event.clientY );
-
-	}
-
-	function handleMouseDownDolly( event ) {
-
-		dollyStart.set( event.clientX, event.clientY );
-
-	}
-
-	function handleMouseDownPan( event ) {
-
-		panStart.set( event.clientX, event.clientY );
-
-	}
-
-	function handleMouseMoveRotate( event ) {
-
-		rotateEnd.set( event.clientX, event.clientY );
-
-		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar( scope.rotateSpeed );
-
-		var element = scope.domElement;
-
-		rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientHeight ); // yes, height
-
-		rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight );
-
-		rotateStart.copy( rotateEnd );
-
-		scope.update();
-
-	}
-
-	function handleMouseMoveDolly( event ) {
-
-		dollyEnd.set( event.clientX, event.clientY );
-
-		dollyDelta.subVectors( dollyEnd, dollyStart );
-
-		if ( dollyDelta.y > 0 ) {
-
-			dollyOut( getZoomScale() );
-
-		} else if ( dollyDelta.y < 0 ) {
-
-			dollyIn( getZoomScale() );
-
-		}
-
-		dollyStart.copy( dollyEnd );
-
-		scope.update();
-
-	}
-
-	function handleMouseMovePan( event ) {
-
-		panEnd.set( event.clientX, event.clientY );
-
-		panDelta.subVectors( panEnd, panStart ).multiplyScalar( scope.panSpeed );
-
-		pan( panDelta.x, panDelta.y );
-
-		panStart.copy( panEnd );
-
-		scope.update();
-
-	}
-
-	function handleMouseUp( /*event*/ ) {
-
-		// no-op
-
-	}
-
-	function handleMouseWheel( event ) {
-
-		if ( event.deltaY < 0 ) {
-
-			dollyIn( getZoomScale() );
-
-		} else if ( event.deltaY > 0 ) {
-
-			dollyOut( getZoomScale() );
-
-		}
-
-		scope.update();
-
-	}
-
-	function handleKeyDown( event ) {
-
-		var needsUpdate = false;
-
-		switch ( event.keyCode ) {
-
-			case scope.keys.UP:
-				pan( 0, scope.keyPanSpeed );
-				needsUpdate = true;
-				break;
-
-			case scope.keys.BOTTOM:
-				pan( 0, - scope.keyPanSpeed );
-				needsUpdate = true;
-				break;
-
-			case scope.keys.LEFT:
-				pan( scope.keyPanSpeed, 0 );
-				needsUpdate = true;
-				break;
-
-			case scope.keys.RIGHT:
-				pan( - scope.keyPanSpeed, 0 );
-				needsUpdate = true;
-				break;
-
-		}
-
-		if ( needsUpdate ) {
-
-			// prevent the browser from scrolling on cursor keys
-			event.preventDefault();
-
-			scope.update();
-
-		}
-
-
-	}
-
-	function handleTouchStartRotate( event ) {
-
-		if ( event.touches.length == 1 ) {
-
-			rotateStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
-
-		} else {
-
-			var x = 0.5 * ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX );
-			var y = 0.5 * ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY );
-
-			rotateStart.set( x, y );
-
-		}
-
-	}
-
-	function handleTouchStartPan( event ) {
-
-		if ( event.touches.length == 1 ) {
-
-			panStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
-
-		} else {
-
-			var x = 0.5 * ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX );
-			var y = 0.5 * ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY );
-
-			panStart.set( x, y );
-
-		}
-
-	}
-
-	function handleTouchStartDolly( event ) {
-
-		var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-		var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-
-		var distance = Math.sqrt( dx * dx + dy * dy );
-
-		dollyStart.set( 0, distance );
-
-	}
-
-	function handleTouchStartDollyPan( event ) {
-
-		if ( scope.enableZoom ) handleTouchStartDolly( event );
-
-		if ( scope.enablePan ) handleTouchStartPan( event );
-
-	}
-
-	function handleTouchStartDollyRotate( event ) {
-
-		if ( scope.enableZoom ) handleTouchStartDolly( event );
-
-		if ( scope.enableRotate ) handleTouchStartRotate( event );
-
-	}
-
-	function handleTouchMoveRotate( event ) {
-
-		if ( event.touches.length == 1 ) {
-
-			rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
-
-		} else {
-
-			var x = 0.5 * ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX );
-			var y = 0.5 * ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY );
-
-			rotateEnd.set( x, y );
-
-		}
-
-		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar( scope.rotateSpeed );
-
-		var element = scope.domElement;
-
-		rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientHeight ); // yes, height
-
-		rotateUp( 2 * Math.PI * rotateDelta.y / element.clientHeight );
-
-		rotateStart.copy( rotateEnd );
-
-	}
-
-	function handleTouchMovePan( event ) {
-
-		if ( event.touches.length == 1 ) {
-
-			panEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
-
-		} else {
-
-			var x = 0.5 * ( event.touches[ 0 ].pageX + event.touches[ 1 ].pageX );
-			var y = 0.5 * ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY );
-
-			panEnd.set( x, y );
-
-		}
-
-		panDelta.subVectors( panEnd, panStart ).multiplyScalar( scope.panSpeed );
-
-		pan( panDelta.x, panDelta.y );
-
-		panStart.copy( panEnd );
-
-	}
-
-	function handleTouchMoveDolly( event ) {
-
-		var dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
-		var dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
-
-		var distance = Math.sqrt( dx * dx + dy * dy );
-
-		dollyEnd.set( 0, distance );
-
-		dollyDelta.set( 0, Math.pow( dollyEnd.y / dollyStart.y, scope.zoomSpeed ) );
-
-		dollyOut( dollyDelta.y );
-
-		dollyStart.copy( dollyEnd );
-
-	}
-
-	function handleTouchMoveDollyPan( event ) {
-
-		if ( scope.enableZoom ) handleTouchMoveDolly( event );
-
-		if ( scope.enablePan ) handleTouchMovePan( event );
-
-	}
-
-	function handleTouchMoveDollyRotate( event ) {
-
-		if ( scope.enableZoom ) handleTouchMoveDolly( event );
-
-		if ( scope.enableRotate ) handleTouchMoveRotate( event );
-
-	}
-
-	function handleTouchEnd( /*event*/ ) {
-
-		// no-op
-
-	}
-
-	//
-	// event handlers - FSM: listen for events and reset state
-	//
-
-	function onPointerDown( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		switch ( event.pointerType ) {
-
-			case 'mouse':
-			case 'pen':
-				onMouseDown( event );
-				break;
-
-			// TODO touch
-
-		}
-
-	}
-
-	function onPointerMove( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		switch ( event.pointerType ) {
-
-			case 'mouse':
-			case 'pen':
-				onMouseMove( event );
-				break;
-
-			// TODO touch
-
-		}
-
-	}
-
-	function onPointerUp( event ) {
-
-		switch ( event.pointerType ) {
-
-			case 'mouse':
-			case 'pen':
-				onMouseUp( event );
-				break;
-
-			// TODO touch
-
-		}
-
-	}
-
-	function onMouseDown( event ) {
-
-		// Prevent the browser from scrolling.
-		event.preventDefault();
-
-		// Manually set the focus since calling preventDefault above
-		// prevents the browser from setting it automatically.
-
-		scope.domElement.focus ? scope.domElement.focus() : window.focus();
-
-		var mouseAction;
-
-		switch ( event.button ) {
-
-			case 0:
-
-				mouseAction = scope.mouseButtons.LEFT;
-				break;
-
-			case 1:
-
-				mouseAction = scope.mouseButtons.MIDDLE;
-				break;
-
-			case 2:
-
-				mouseAction = scope.mouseButtons.RIGHT;
-				break;
-
-			default:
-
-				mouseAction = - 1;
-
-		}
-
-		switch ( mouseAction ) {
-
-			case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.DOLLY:
-
-				if ( scope.enableZoom === false ) return;
-
-				handleMouseDownDolly( event );
-
-				state = STATE.DOLLY;
-
-				break;
-
-			case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.ROTATE:
-
-				if ( event.ctrlKey || event.metaKey || event.shiftKey ) {
-
-					if ( scope.enablePan === false ) return;
-
-					handleMouseDownPan( event );
-
-					state = STATE.PAN;
-
-				} else {
-
-					if ( scope.enableRotate === false ) return;
-
-					handleMouseDownRotate( event );
-
-					state = STATE.ROTATE;
-
-				}
-
-				break;
-
-			case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.PAN:
-
-				if ( event.ctrlKey || event.metaKey || event.shiftKey ) {
-
-					if ( scope.enableRotate === false ) return;
-
-					handleMouseDownRotate( event );
-
-					state = STATE.ROTATE;
-
-				} else {
-
-					if ( scope.enablePan === false ) return;
-
-					handleMouseDownPan( event );
-
-					state = STATE.PAN;
-
-				}
-
-				break;
-
-			default:
-
-				state = STATE.NONE;
-
-		}
-
-		if ( state !== STATE.NONE ) {
-
-			scope.domElement.ownerDocument.addEventListener( 'pointermove', onPointerMove, false );
-			scope.domElement.ownerDocument.addEventListener( 'pointerup', onPointerUp, false );
-
-			scope.dispatchEvent( startEvent );
-
-		}
-
-	}
-
-	function onMouseMove( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		event.preventDefault();
-
-		switch ( state ) {
-
-			case STATE.ROTATE:
-
-				if ( scope.enableRotate === false ) return;
-
-				handleMouseMoveRotate( event );
-
-				break;
-
-			case STATE.DOLLY:
-
-				if ( scope.enableZoom === false ) return;
-
-				handleMouseMoveDolly( event );
-
-				break;
-
-			case STATE.PAN:
-
-				if ( scope.enablePan === false ) return;
-
-				handleMouseMovePan( event );
-
-				break;
-
-		}
-
-	}
-
-	function onMouseUp( event ) {
-
-		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove, false );
-		scope.domElement.ownerDocument.removeEventListener( 'pointerup', onPointerUp, false );
-
-		if ( scope.enabled === false ) return;
-
-		handleMouseUp( event );
-
-		scope.dispatchEvent( endEvent );
-
-		state = STATE.NONE;
-
-	}
-
-	function onMouseWheel( event ) {
-
-		if ( scope.enabled === false || scope.enableZoom === false || ( state !== STATE.NONE && state !== STATE.ROTATE ) ) return;
-
-		event.preventDefault();
-		event.stopPropagation();
-
-		scope.dispatchEvent( startEvent );
-
-		handleMouseWheel( event );
-
-		scope.dispatchEvent( endEvent );
-
-	}
-
-	function onKeyDown( event ) {
-
-		if ( scope.enabled === false || scope.enableKeys === false || scope.enablePan === false ) return;
-
-		handleKeyDown( event );
-
-	}
-
-	function onTouchStart( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		event.preventDefault(); // prevent scrolling
-
-		switch ( event.touches.length ) {
-
-			case 1:
-
-				switch ( scope.touches.ONE ) {
-
-					case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.ROTATE:
-
-						if ( scope.enableRotate === false ) return;
-
-						handleTouchStartRotate( event );
-
-						state = STATE.TOUCH_ROTATE;
-
-						break;
-
-					case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.PAN:
-
-						if ( scope.enablePan === false ) return;
-
-						handleTouchStartPan( event );
-
-						state = STATE.TOUCH_PAN;
-
-						break;
-
-					default:
-
-						state = STATE.NONE;
-
-				}
-
-				break;
-
-			case 2:
-
-				switch ( scope.touches.TWO ) {
-
-					case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.DOLLY_PAN:
-
-						if ( scope.enableZoom === false && scope.enablePan === false ) return;
-
-						handleTouchStartDollyPan( event );
-
-						state = STATE.TOUCH_DOLLY_PAN;
-
-						break;
-
-					case _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.DOLLY_ROTATE:
-
-						if ( scope.enableZoom === false && scope.enableRotate === false ) return;
-
-						handleTouchStartDollyRotate( event );
-
-						state = STATE.TOUCH_DOLLY_ROTATE;
-
-						break;
-
-					default:
-
-						state = STATE.NONE;
-
-				}
-
-				break;
-
-			default:
-
-				state = STATE.NONE;
-
-		}
-
-		if ( state !== STATE.NONE ) {
-
-			scope.dispatchEvent( startEvent );
-
-		}
-
-	}
-
-	function onTouchMove( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		event.preventDefault(); // prevent scrolling
-		event.stopPropagation();
-
-		switch ( state ) {
-
-			case STATE.TOUCH_ROTATE:
-
-				if ( scope.enableRotate === false ) return;
-
-				handleTouchMoveRotate( event );
-
-				scope.update();
-
-				break;
-
-			case STATE.TOUCH_PAN:
-
-				if ( scope.enablePan === false ) return;
-
-				handleTouchMovePan( event );
-
-				scope.update();
-
-				break;
-
-			case STATE.TOUCH_DOLLY_PAN:
-
-				if ( scope.enableZoom === false && scope.enablePan === false ) return;
-
-				handleTouchMoveDollyPan( event );
-
-				scope.update();
-
-				break;
-
-			case STATE.TOUCH_DOLLY_ROTATE:
-
-				if ( scope.enableZoom === false && scope.enableRotate === false ) return;
-
-				handleTouchMoveDollyRotate( event );
-
-				scope.update();
-
-				break;
-
-			default:
-
-				state = STATE.NONE;
-
-		}
-
-	}
-
-	function onTouchEnd( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		handleTouchEnd( event );
-
-		scope.dispatchEvent( endEvent );
-
-		state = STATE.NONE;
-
-	}
-
-	function onContextMenu( event ) {
-
-		if ( scope.enabled === false ) return;
-
-		event.preventDefault();
-
-	}
-
-	//
-
-	scope.domElement.addEventListener( 'contextmenu', onContextMenu, false );
-
-	scope.domElement.addEventListener( 'pointerdown', onPointerDown, false );
-	scope.domElement.addEventListener( 'wheel', onMouseWheel, false );
-
-	scope.domElement.addEventListener( 'touchstart', onTouchStart, false );
-	scope.domElement.addEventListener( 'touchend', onTouchEnd, false );
-	scope.domElement.addEventListener( 'touchmove', onTouchMove, false );
-
-	scope.domElement.addEventListener( 'keydown', onKeyDown, false );
-
-	// force an update at start
-
-	this.update();
-
-};
-
-OrbitControls.prototype = Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.EventDispatcher.prototype );
-OrbitControls.prototype.constructor = OrbitControls;
-
-
-// This set of controls performs orbiting, dollying (zooming), and panning.
-// Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
-// This is very similar to OrbitControls, another set of touch behavior
-//
-//    Orbit - right mouse, or left mouse + ctrl/meta/shiftKey / touch: two-finger rotate
-//    Zoom - middle mouse, or mousewheel / touch: two-finger spread or squish
-//    Pan - left mouse, or arrow keys / touch: one-finger move
-
-var MapControls = function ( object, domElement ) {
-
-	OrbitControls.call( this, object, domElement );
-
-	this.screenSpacePanning = false; // pan orthogonal to world-space direction camera.up
-
-	this.mouseButtons.LEFT = _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.PAN;
-	this.mouseButtons.RIGHT = _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MOUSE.ROTATE;
-
-	this.touches.ONE = _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.PAN;
-	this.touches.TWO = _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TOUCH.DOLLY_ROTATE;
-
-};
-
-MapControls.prototype = Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.EventDispatcher.prototype );
-MapControls.prototype.constructor = MapControls;
-
-
-
-
-/***/ }),
-
-/***/ "./node_modules/three/examples/jsm/controls/TransformControls.js":
-/*!***********************************************************************!*\
-  !*** ./node_modules/three/examples/jsm/controls/TransformControls.js ***!
-  \***********************************************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "TransformControls": () => /* binding */ TransformControls,
-/* harmony export */   "TransformControlsGizmo": () => /* binding */ TransformControlsGizmo,
-/* harmony export */   "TransformControlsPlane": () => /* binding */ TransformControlsPlane
-/* harmony export */ });
-/* harmony import */ var _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../build/three.module.js */ "./node_modules/three/build/three.module.js");
-
-
-var TransformControls = function ( camera, domElement ) {
-
-	if ( domElement === undefined ) {
-
-		console.warn( 'THREE.TransformControls: The second parameter "domElement" is now mandatory.' );
-		domElement = document;
-
-	}
-
-	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.call( this );
-
-	this.visible = false;
-	this.domElement = domElement;
-
-	var _gizmo = new TransformControlsGizmo();
-	this.add( _gizmo );
-
-	var _plane = new TransformControlsPlane();
-	this.add( _plane );
-
-	var scope = this;
-
-	// Define properties with getters/setter
-	// Setting the defined property will automatically trigger change event
-	// Defined properties are passed down to gizmo and plane
-
-	defineProperty( 'camera', camera );
-	defineProperty( 'object', undefined );
-	defineProperty( 'enabled', true );
-	defineProperty( 'axis', null );
-	defineProperty( 'mode', 'translate' );
-	defineProperty( 'translationSnap', null );
-	defineProperty( 'rotationSnap', null );
-	defineProperty( 'scaleSnap', null );
-	defineProperty( 'space', 'world' );
-	defineProperty( 'size', 1 );
-	defineProperty( 'dragging', false );
-	defineProperty( 'showX', true );
-	defineProperty( 'showY', true );
-	defineProperty( 'showZ', true );
-
-	var changeEvent = { type: 'change' };
-	var mouseDownEvent = { type: 'mouseDown' };
-	var mouseUpEvent = { type: 'mouseUp', mode: scope.mode };
-	var objectChangeEvent = { type: 'objectChange' };
-
-	// Reusable utility variables
-
-	var raycaster = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Raycaster();
-
-	function intersectObjectWithRay( object, raycaster, includeInvisible ) {
-
-		var allIntersections = raycaster.intersectObject( object, true );
-
-		for ( var i = 0; i < allIntersections.length; i ++ ) {
-
-			if ( allIntersections[ i ].object.visible || includeInvisible ) {
-
-				return allIntersections[ i ];
-
-			}
-
-		}
-
-		return false;
-
-	}
-
-	var _tempVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var _tempVector2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var _tempQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var _unit = {
-		X: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 ),
-		Y: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 ),
-		Z: new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 )
-	};
-
-	var pointStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var pointEnd = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var offset = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var rotationAxis = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var startNorm = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var endNorm = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var rotationAngle = 0;
-
-	var cameraPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var cameraQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var cameraScale = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	var parentPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var parentQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var parentQuaternionInv = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var parentScale = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	var worldPositionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var worldQuaternionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var worldScaleStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	var worldPosition = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var worldQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var worldQuaternionInv = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var worldScale = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	var eye = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	var positionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var quaternionStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var scaleStart = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-
-	// TODO: remove properties unused in plane and gizmo
-
-	defineProperty( 'worldPosition', worldPosition );
-	defineProperty( 'worldPositionStart', worldPositionStart );
-	defineProperty( 'worldQuaternion', worldQuaternion );
-	defineProperty( 'worldQuaternionStart', worldQuaternionStart );
-	defineProperty( 'cameraPosition', cameraPosition );
-	defineProperty( 'cameraQuaternion', cameraQuaternion );
-	defineProperty( 'pointStart', pointStart );
-	defineProperty( 'pointEnd', pointEnd );
-	defineProperty( 'rotationAxis', rotationAxis );
-	defineProperty( 'rotationAngle', rotationAngle );
-	defineProperty( 'eye', eye );
-
-	{
-
-		domElement.addEventListener( 'pointerdown', onPointerDown, false );
-		domElement.addEventListener( 'pointermove', onPointerHover, false );
-		scope.domElement.ownerDocument.addEventListener( 'pointerup', onPointerUp, false );
-
-	}
-
-	this.dispose = function () {
-
-		domElement.removeEventListener( 'pointerdown', onPointerDown );
-		domElement.removeEventListener( 'pointermove', onPointerHover );
-		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove );
-		scope.domElement.ownerDocument.removeEventListener( 'pointerup', onPointerUp );
-
-		this.traverse( function ( child ) {
-
-			if ( child.geometry ) child.geometry.dispose();
-			if ( child.material ) child.material.dispose();
-
-		} );
-
-	};
-
-	// Set current object
-	this.attach = function ( object ) {
-
-		this.object = object;
-		this.visible = true;
-
-		return this;
-
-	};
-
-	// Detatch from object
-	this.detach = function () {
-
-		this.object = undefined;
-		this.visible = false;
-		this.axis = null;
-
-		return this;
-
-	};
-
-	// Defined getter, setter and store for a property
-	function defineProperty( propName, defaultValue ) {
-
-		var propValue = defaultValue;
-
-		Object.defineProperty( scope, propName, {
-
-			get: function () {
-
-				return propValue !== undefined ? propValue : defaultValue;
-
-			},
-
-			set: function ( value ) {
-
-				if ( propValue !== value ) {
-
-					propValue = value;
-					_plane[ propName ] = value;
-					_gizmo[ propName ] = value;
-
-					scope.dispatchEvent( { type: propName + '-changed', value: value } );
-					scope.dispatchEvent( changeEvent );
-
-				}
-
-			}
-
-		} );
-
-		scope[ propName ] = defaultValue;
-		_plane[ propName ] = defaultValue;
-		_gizmo[ propName ] = defaultValue;
-
-	}
-
-	// updateMatrixWorld  updates key transformation variables
-	this.updateMatrixWorld = function () {
-
-		if ( this.object !== undefined ) {
-
-			this.object.updateMatrixWorld();
-
-			if ( this.object.parent === null ) {
-
-				console.error( 'TransformControls: The attached 3D object must be a part of the scene graph.' );
-
-			} else {
-
-				this.object.parent.matrixWorld.decompose( parentPosition, parentQuaternion, parentScale );
-
-			}
-
-			this.object.matrixWorld.decompose( worldPosition, worldQuaternion, worldScale );
-
-			parentQuaternionInv.copy( parentQuaternion ).invert();
-			worldQuaternionInv.copy( worldQuaternion ).invert();
-
-		}
-
-		this.camera.updateMatrixWorld();
-		this.camera.matrixWorld.decompose( cameraPosition, cameraQuaternion, cameraScale );
-
-		eye.copy( cameraPosition ).sub( worldPosition ).normalize();
-
-		_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call( this );
-
-	};
-
-	this.pointerHover = function ( pointer ) {
-
-		if ( this.object === undefined || this.dragging === true ) return;
-
-		raycaster.setFromCamera( pointer, this.camera );
-
-		var intersect = intersectObjectWithRay( _gizmo.picker[ this.mode ], raycaster );
-
-		if ( intersect ) {
-
-			this.axis = intersect.object.name;
-
-		} else {
-
-			this.axis = null;
-
-		}
-
-	};
-
-	this.pointerDown = function ( pointer ) {
-
-		if ( this.object === undefined || this.dragging === true || pointer.button !== 0 ) return;
-
-		if ( this.axis !== null ) {
-
-			raycaster.setFromCamera( pointer, this.camera );
-
-			var planeIntersect = intersectObjectWithRay( _plane, raycaster, true );
-
-			if ( planeIntersect ) {
-
-				var space = this.space;
-
-				if ( this.mode === 'scale' ) {
-
-					space = 'local';
-
-				} else if ( this.axis === 'E' || this.axis === 'XYZE' || this.axis === 'XYZ' ) {
-
-					space = 'world';
-
-				}
-
-				if ( space === 'local' && this.mode === 'rotate' ) {
-
-					var snap = this.rotationSnap;
-
-					if ( this.axis === 'X' && snap ) this.object.rotation.x = Math.round( this.object.rotation.x / snap ) * snap;
-					if ( this.axis === 'Y' && snap ) this.object.rotation.y = Math.round( this.object.rotation.y / snap ) * snap;
-					if ( this.axis === 'Z' && snap ) this.object.rotation.z = Math.round( this.object.rotation.z / snap ) * snap;
-
-				}
-
-				this.object.updateMatrixWorld();
-				this.object.parent.updateMatrixWorld();
-
-				positionStart.copy( this.object.position );
-				quaternionStart.copy( this.object.quaternion );
-				scaleStart.copy( this.object.scale );
-
-				this.object.matrixWorld.decompose( worldPositionStart, worldQuaternionStart, worldScaleStart );
-
-				pointStart.copy( planeIntersect.point ).sub( worldPositionStart );
-
-			}
-
-			this.dragging = true;
-			mouseDownEvent.mode = this.mode;
-			this.dispatchEvent( mouseDownEvent );
-
-		}
-
-	};
-
-	this.pointerMove = function ( pointer ) {
-
-		var axis = this.axis;
-		var mode = this.mode;
-		var object = this.object;
-		var space = this.space;
-
-		if ( mode === 'scale' ) {
-
-			space = 'local';
-
-		} else if ( axis === 'E' || axis === 'XYZE' || axis === 'XYZ' ) {
-
-			space = 'world';
-
-		}
-
-		if ( object === undefined || axis === null || this.dragging === false || pointer.button !== - 1 ) return;
-
-		raycaster.setFromCamera( pointer, this.camera );
-
-		var planeIntersect = intersectObjectWithRay( _plane, raycaster, true );
-
-		if ( ! planeIntersect ) return;
-
-		pointEnd.copy( planeIntersect.point ).sub( worldPositionStart );
-
-		if ( mode === 'translate' ) {
-
-			// Apply translate
-
-			offset.copy( pointEnd ).sub( pointStart );
-
-			if ( space === 'local' && axis !== 'XYZ' ) {
-
-				offset.applyQuaternion( worldQuaternionInv );
-
-			}
-
-			if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0;
-			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;
-			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;
-
-			if ( space === 'local' && axis !== 'XYZ' ) {
-
-				offset.applyQuaternion( quaternionStart ).divide( parentScale );
-
-			} else {
-
-				offset.applyQuaternion( parentQuaternionInv ).divide( parentScale );
-
-			}
-
-			object.position.copy( offset ).add( positionStart );
-
-			// Apply translation snap
-
-			if ( this.translationSnap ) {
-
-				if ( space === 'local' ) {
-
-					object.position.applyQuaternion( _tempQuaternion.copy( quaternionStart ).invert() );
-
-					if ( axis.search( 'X' ) !== - 1 ) {
-
-						object.position.x = Math.round( object.position.x / this.translationSnap ) * this.translationSnap;
-
-					}
-
-					if ( axis.search( 'Y' ) !== - 1 ) {
-
-						object.position.y = Math.round( object.position.y / this.translationSnap ) * this.translationSnap;
-
-					}
-
-					if ( axis.search( 'Z' ) !== - 1 ) {
-
-						object.position.z = Math.round( object.position.z / this.translationSnap ) * this.translationSnap;
-
-					}
-
-					object.position.applyQuaternion( quaternionStart );
-
-				}
-
-				if ( space === 'world' ) {
-
-					if ( object.parent ) {
-
-						object.position.add( _tempVector.setFromMatrixPosition( object.parent.matrixWorld ) );
-
-					}
-
-					if ( axis.search( 'X' ) !== - 1 ) {
-
-						object.position.x = Math.round( object.position.x / this.translationSnap ) * this.translationSnap;
-
-					}
-
-					if ( axis.search( 'Y' ) !== - 1 ) {
-
-						object.position.y = Math.round( object.position.y / this.translationSnap ) * this.translationSnap;
-
-					}
-
-					if ( axis.search( 'Z' ) !== - 1 ) {
-
-						object.position.z = Math.round( object.position.z / this.translationSnap ) * this.translationSnap;
-
-					}
-
-					if ( object.parent ) {
-
-						object.position.sub( _tempVector.setFromMatrixPosition( object.parent.matrixWorld ) );
-
-					}
-
-				}
-
-			}
-
-		} else if ( mode === 'scale' ) {
-
-			if ( axis.search( 'XYZ' ) !== - 1 ) {
-
-				var d = pointEnd.length() / pointStart.length();
-
-				if ( pointEnd.dot( pointStart ) < 0 ) d *= - 1;
-
-				_tempVector2.set( d, d, d );
-
-			} else {
-
-				_tempVector.copy( pointStart );
-				_tempVector2.copy( pointEnd );
-
-				_tempVector.applyQuaternion( worldQuaternionInv );
-				_tempVector2.applyQuaternion( worldQuaternionInv );
-
-				_tempVector2.divide( _tempVector );
-
-				if ( axis.search( 'X' ) === - 1 ) {
-
-					_tempVector2.x = 1;
-
-				}
-
-				if ( axis.search( 'Y' ) === - 1 ) {
-
-					_tempVector2.y = 1;
-
-				}
-
-				if ( axis.search( 'Z' ) === - 1 ) {
-
-					_tempVector2.z = 1;
-
-				}
-
-			}
-
-			// Apply scale
-
-			object.scale.copy( scaleStart ).multiply( _tempVector2 );
-
-			if ( this.scaleSnap ) {
-
-				if ( axis.search( 'X' ) !== - 1 ) {
-
-					object.scale.x = Math.round( object.scale.x / this.scaleSnap ) * this.scaleSnap || this.scaleSnap;
-
-				}
-
-				if ( axis.search( 'Y' ) !== - 1 ) {
-
-					object.scale.y = Math.round( object.scale.y / this.scaleSnap ) * this.scaleSnap || this.scaleSnap;
-
-				}
-
-				if ( axis.search( 'Z' ) !== - 1 ) {
-
-					object.scale.z = Math.round( object.scale.z / this.scaleSnap ) * this.scaleSnap || this.scaleSnap;
-
-				}
-
-			}
-
-		} else if ( mode === 'rotate' ) {
-
-			offset.copy( pointEnd ).sub( pointStart );
-
-			var ROTATION_SPEED = 20 / worldPosition.distanceTo( _tempVector.setFromMatrixPosition( this.camera.matrixWorld ) );
-
-			if ( axis === 'E' ) {
-
-				rotationAxis.copy( eye );
-				rotationAngle = pointEnd.angleTo( pointStart );
-
-				startNorm.copy( pointStart ).normalize();
-				endNorm.copy( pointEnd ).normalize();
-
-				rotationAngle *= ( endNorm.cross( startNorm ).dot( eye ) < 0 ? 1 : - 1 );
-
-			} else if ( axis === 'XYZE' ) {
-
-				rotationAxis.copy( offset ).cross( eye ).normalize();
-				rotationAngle = offset.dot( _tempVector.copy( rotationAxis ).cross( this.eye ) ) * ROTATION_SPEED;
-
-			} else if ( axis === 'X' || axis === 'Y' || axis === 'Z' ) {
-
-				rotationAxis.copy( _unit[ axis ] );
-
-				_tempVector.copy( _unit[ axis ] );
-
-				if ( space === 'local' ) {
-
-					_tempVector.applyQuaternion( worldQuaternion );
-
-				}
-
-				rotationAngle = offset.dot( _tempVector.cross( eye ).normalize() ) * ROTATION_SPEED;
-
-			}
-
-			// Apply rotation snap
-
-			if ( this.rotationSnap ) rotationAngle = Math.round( rotationAngle / this.rotationSnap ) * this.rotationSnap;
-
-			this.rotationAngle = rotationAngle;
-
-			// Apply rotate
-			if ( space === 'local' && axis !== 'E' && axis !== 'XYZE' ) {
-
-				object.quaternion.copy( quaternionStart );
-				object.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, rotationAngle ) ).normalize();
-
-			} else {
-
-				rotationAxis.applyQuaternion( parentQuaternionInv );
-				object.quaternion.copy( _tempQuaternion.setFromAxisAngle( rotationAxis, rotationAngle ) );
-				object.quaternion.multiply( quaternionStart ).normalize();
-
-			}
-
-		}
-
-		this.dispatchEvent( changeEvent );
-		this.dispatchEvent( objectChangeEvent );
-
-	};
-
-	this.pointerUp = function ( pointer ) {
-
-		if ( pointer.button !== 0 ) return;
-
-		if ( this.dragging && ( this.axis !== null ) ) {
-
-			mouseUpEvent.mode = this.mode;
-			this.dispatchEvent( mouseUpEvent );
-
-		}
-
-		this.dragging = false;
-		this.axis = null;
-
-	};
-
-	// normalize mouse / touch pointer and remap {x,y} to view space.
-
-	function getPointer( event ) {
-
-		if ( scope.domElement.ownerDocument.pointerLockElement ) {
-
-			return {
-				x: 0,
-				y: 0,
-				button: event.button
-			};
-
-		} else {
-
-			var pointer = event.changedTouches ? event.changedTouches[ 0 ] : event;
-
-			var rect = domElement.getBoundingClientRect();
-
-			return {
-				x: ( pointer.clientX - rect.left ) / rect.width * 2 - 1,
-				y: - ( pointer.clientY - rect.top ) / rect.height * 2 + 1,
-				button: event.button
-			};
-
-		}
-
-	}
-
-	// mouse / touch event handlers
-
-	function onPointerHover( event ) {
-
-		if ( ! scope.enabled ) return;
-
-		switch ( event.pointerType ) {
-
-			case 'mouse':
-			case 'pen':
-				scope.pointerHover( getPointer( event ) );
-				break;
-
-		}
-
-	}
-
-	function onPointerDown( event ) {
-
-		if ( ! scope.enabled ) return;
-
-		scope.domElement.style.touchAction = 'none'; // disable touch scroll
-		scope.domElement.ownerDocument.addEventListener( 'pointermove', onPointerMove, false );
-
-		scope.pointerHover( getPointer( event ) );
-		scope.pointerDown( getPointer( event ) );
-
-	}
-
-	function onPointerMove( event ) {
-
-		if ( ! scope.enabled ) return;
-
-		scope.pointerMove( getPointer( event ) );
-
-	}
-
-	function onPointerUp( event ) {
-
-		if ( ! scope.enabled ) return;
-
-		scope.domElement.style.touchAction = '';
-		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove, false );
-
-		scope.pointerUp( getPointer( event ) );
-
-	}
-
-	// TODO: deprecate
-
-	this.getMode = function () {
-
-		return scope.mode;
-
-	};
-
-	this.setMode = function ( mode ) {
-
-		scope.mode = mode;
-
-	};
-
-	this.setTranslationSnap = function ( translationSnap ) {
-
-		scope.translationSnap = translationSnap;
-
-	};
-
-	this.setRotationSnap = function ( rotationSnap ) {
-
-		scope.rotationSnap = rotationSnap;
-
-	};
-
-	this.setScaleSnap = function ( scaleSnap ) {
-
-		scope.scaleSnap = scaleSnap;
-
-	};
-
-	this.setSize = function ( size ) {
-
-		scope.size = size;
-
-	};
-
-	this.setSpace = function ( space ) {
-
-		scope.space = space;
-
-	};
-
-	this.update = function () {
-
-		console.warn( 'THREE.TransformControls: update function has no more functionality and therefore has been deprecated.' );
-
-	};
-
-};
-
-TransformControls.prototype = Object.assign( Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype ), {
-
-	constructor: TransformControls,
-
-	isTransformControls: true
-
-} );
-
-
-var TransformControlsGizmo = function () {
-
-	'use strict';
-
-	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.call( this );
-
-	this.type = 'TransformControlsGizmo';
-
-	// shared materials
-
-	var gizmoMaterial = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial( {
-		depthTest: false,
-		depthWrite: false,
-		transparent: true,
-		side: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.DoubleSide,
-		fog: false,
-		toneMapped: false
-	} );
-
-	var gizmoLineMaterial = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.LineBasicMaterial( {
-		depthTest: false,
-		depthWrite: false,
-		transparent: true,
-		linewidth: 1,
-		fog: false,
-		toneMapped: false
-	} );
-
-	// Make unique material for each axis/color
-
-	var matInvisible = gizmoMaterial.clone();
-	matInvisible.opacity = 0.15;
-
-	var matHelper = gizmoMaterial.clone();
-	matHelper.opacity = 0.33;
-
-	var matRed = gizmoMaterial.clone();
-	matRed.color.set( 0xff0000 );
-
-	var matGreen = gizmoMaterial.clone();
-	matGreen.color.set( 0x00ff00 );
-
-	var matBlue = gizmoMaterial.clone();
-	matBlue.color.set( 0x0000ff );
-
-	var matWhiteTransparent = gizmoMaterial.clone();
-	matWhiteTransparent.opacity = 0.25;
-
-	var matYellowTransparent = matWhiteTransparent.clone();
-	matYellowTransparent.color.set( 0xffff00 );
-
-	var matCyanTransparent = matWhiteTransparent.clone();
-	matCyanTransparent.color.set( 0x00ffff );
-
-	var matMagentaTransparent = matWhiteTransparent.clone();
-	matMagentaTransparent.color.set( 0xff00ff );
-
-	var matYellow = gizmoMaterial.clone();
-	matYellow.color.set( 0xffff00 );
-
-	var matLineRed = gizmoLineMaterial.clone();
-	matLineRed.color.set( 0xff0000 );
-
-	var matLineGreen = gizmoLineMaterial.clone();
-	matLineGreen.color.set( 0x00ff00 );
-
-	var matLineBlue = gizmoLineMaterial.clone();
-	matLineBlue.color.set( 0x0000ff );
-
-	var matLineCyan = gizmoLineMaterial.clone();
-	matLineCyan.color.set( 0x00ffff );
-
-	var matLineMagenta = gizmoLineMaterial.clone();
-	matLineMagenta.color.set( 0xff00ff );
-
-	var matLineYellow = gizmoLineMaterial.clone();
-	matLineYellow.color.set( 0xffff00 );
-
-	var matLineGray = gizmoLineMaterial.clone();
-	matLineGray.color.set( 0x787878 );
-
-	var matLineYellowTransparent = matLineYellow.clone();
-	matLineYellowTransparent.opacity = 0.25;
-
-	// reusable geometry
-
-	var arrowGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0, 0.05, 0.2, 12, 1, false );
-
-	var scaleHandleGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 );
-
-	var lineGeometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-	lineGeometry.setAttribute( 'position', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( [ 0, 0, 0,	1, 0, 0 ], 3 ) );
-
-	var CircleGeometry = function ( radius, arc ) {
-
-		var geometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry( );
-		var vertices = [];
-
-		for ( var i = 0; i <= 64 * arc; ++ i ) {
-
-			vertices.push( 0, Math.cos( i / 32 * Math.PI ) * radius, Math.sin( i / 32 * Math.PI ) * radius );
-
-		}
-
-		geometry.setAttribute( 'position', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( vertices, 3 ) );
-
-		return geometry;
-
-	};
-
-	// Special geometry for transform helper. If scaled with position vector it spans from [0,0,0] to position
-
-	var TranslateHelperGeometry = function () {
-
-		var geometry = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BufferGeometry();
-
-		geometry.setAttribute( 'position', new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Float32BufferAttribute( [ 0, 0, 0, 1, 1, 1 ], 3 ) );
-
-		return geometry;
-
-	};
-
-	// Gizmo definitions - custom hierarchy definitions for setupGizmo() function
-
-	var gizmoTranslate = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matRed ), [ 1, 0, 0 ], [ 0, 0, - Math.PI / 2 ], null, 'fwd' ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matRed ), [ 1, 0, 0 ], [ 0, 0, Math.PI / 2 ], null, 'bwd' ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineRed ) ]
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matGreen ), [ 0, 1, 0 ], null, null, 'fwd' ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matGreen ), [ 0, 1, 0 ], [ Math.PI, 0, 0 ], null, 'bwd' ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineGreen ), null, [ 0, 0, Math.PI / 2 ]]
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matBlue ), [ 0, 0, 1 ], [ Math.PI / 2, 0, 0 ], null, 'fwd' ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( arrowGeometry, matBlue ), [ 0, 0, 1 ], [ - Math.PI / 2, 0, 0 ], null, 'bwd' ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ]]
-		],
-		XYZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.1, 0 ), matWhiteTransparent.clone() ), [ 0, 0, 0 ], [ 0, 0, 0 ]]
-		],
-		XY: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.295, 0.295 ), matYellowTransparent.clone() ), [ 0.15, 0.15, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.18, 0.3, 0 ], null, [ 0.125, 1, 1 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.3, 0.18, 0 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]]
-		],
-		YZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.295, 0.295 ), matCyanTransparent.clone() ), [ 0, 0.15, 0.15 ], [ 0, Math.PI / 2, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.18, 0.3 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.3, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
-		],
-		XZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.295, 0.295 ), matMagentaTransparent.clone() ), [ 0.15, 0, 0.15 ], [ - Math.PI / 2, 0, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.18, 0, 0.3 ], null, [ 0.125, 1, 1 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.3, 0, 0.18 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
-		]
-	};
-
-	var pickerTranslate = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0.6, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0, 0.6, 0 ]]
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 1, 4, 1, false ), matInvisible ), [ 0, 0, 0.6 ], [ Math.PI / 2, 0, 0 ]]
-		],
-		XYZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.2, 0 ), matInvisible ) ]
-		],
-		XY: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0.2, 0 ]]
-		],
-		YZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.4, 0.4 ), matInvisible ), [ 0, 0.2, 0.2 ], [ 0, Math.PI / 2, 0 ]]
-		],
-		XZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 0.4, 0.4 ), matInvisible ), [ 0.2, 0, 0.2 ], [ - Math.PI / 2, 0, 0 ]]
-		]
-	};
-
-	var helperTranslate = {
-		START: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.01, 2 ), matHelper ), null, null, null, 'helper' ]
-		],
-		END: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.01, 2 ), matHelper ), null, null, null, 'helper' ]
-		],
-		DELTA: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( TranslateHelperGeometry(), matHelper ), null, null, null, 'helper' ]
-		],
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, - 1e3, 0 ], [ 0, 0, Math.PI / 2 ], [ 1e6, 1, 1 ], 'helper' ]
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, 0, - 1e3 ], [ 0, - Math.PI / 2, 0 ], [ 1e6, 1, 1 ], 'helper' ]
-		]
-	};
-
-	var gizmoRotate = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 0.5 ), matLineRed ) ],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.04, 0 ), matRed ), [ 0, 0, 0.99 ], null, [ 1, 3, 1 ]],
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 0.5 ), matLineGreen ), null, [ 0, 0, - Math.PI / 2 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.04, 0 ), matGreen ), [ 0, 0, 0.99 ], null, [ 3, 1, 1 ]],
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 0.5 ), matLineBlue ), null, [ 0, Math.PI / 2, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.OctahedronBufferGeometry( 0.04, 0 ), matBlue ), [ 0.99, 0, 0 ], null, [ 1, 3, 1 ]],
-		],
-		E: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1.25, 1 ), matLineYellowTransparent ), null, [ 0, Math.PI / 2, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 1.17, 0, 0 ], [ 0, 0, - Math.PI / 2 ], [ 1, 1, 0.001 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ - 1.17, 0, 0 ], [ 0, 0, Math.PI / 2 ], [ 1, 1, 0.001 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, - 1.17, 0 ], [ Math.PI, 0, 0 ], [ 1, 1, 0.001 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 0, 1.17, 0 ], [ 0, 0, 0 ], [ 1, 1, 0.001 ]],
-		],
-		XYZE: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( CircleGeometry( 1, 1 ), matLineGray ), null, [ 0, Math.PI / 2, 0 ]]
-		]
-	};
-
-	var helperRotate = {
-		AXIS: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]
-		]
-	};
-
-	var pickerRotate = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, - Math.PI / 2, - Math.PI / 2 ]],
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ Math.PI / 2, 0, 0 ]],
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1, 0.1, 4, 24 ), matInvisible ), [ 0, 0, 0 ], [ 0, 0, - Math.PI / 2 ]],
-		],
-		E: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.TorusBufferGeometry( 1.25, 0.1, 2, 24 ), matInvisible ) ]
-		],
-		XYZE: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.SphereBufferGeometry( 0.7, 10, 8 ), matInvisible ) ]
-		]
-	};
-
-	var gizmoScale = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matRed ), [ 0.8, 0, 0 ], [ 0, 0, - Math.PI / 2 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineRed ), null, null, [ 0.8, 1, 1 ]]
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matGreen ), [ 0, 0.8, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineGreen ), null, [ 0, 0, Math.PI / 2 ], [ 0.8, 1, 1 ]]
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matBlue ), [ 0, 0, 0.8 ], [ Math.PI / 2, 0, 0 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ], [ 0.8, 1, 1 ]]
-		],
-		XY: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matYellowTransparent ), [ 0.85, 0.85, 0 ], null, [ 2, 2, 0.2 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.855, 0.98, 0 ], null, [ 0.125, 1, 1 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineYellow ), [ 0.98, 0.855, 0 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]]
-		],
-		YZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matCyanTransparent ), [ 0, 0.85, 0.85 ], null, [ 0.2, 2, 2 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.855, 0.98 ], [ 0, 0, Math.PI / 2 ], [ 0.125, 1, 1 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineCyan ), [ 0, 0.98, 0.855 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
-		],
-		XZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matMagentaTransparent ), [ 0.85, 0, 0.85 ], null, [ 2, 0.2, 2 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.855, 0, 0.98 ], null, [ 0.125, 1, 1 ]],
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matLineMagenta ), [ 0.98, 0, 0.855 ], [ 0, - Math.PI / 2, 0 ], [ 0.125, 1, 1 ]]
-		],
-		XYZX: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransparent.clone() ), [ 1.1, 0, 0 ]],
-		],
-		XYZY: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransparent.clone() ), [ 0, 1.1, 0 ]],
-		],
-		XYZZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransparent.clone() ), [ 0, 0, 1.1 ]],
-		]
-	};
-
-	var pickerScale = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0.5, 0, 0 ], [ 0, 0, - Math.PI / 2 ]]
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0, 0.5, 0 ]]
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0, 0, 0.5 ], [ Math.PI / 2, 0, 0 ]]
-		],
-		XY: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matInvisible ), [ 0.85, 0.85, 0 ], null, [ 3, 3, 0.2 ]],
-		],
-		YZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matInvisible ), [ 0, 0.85, 0.85 ], null, [ 0.2, 3, 3 ]],
-		],
-		XZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( scaleHandleGeometry, matInvisible ), [ 0.85, 0, 0.85 ], null, [ 3, 0.2, 3 ]],
-		],
-		XYZX: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 1.1, 0, 0 ]],
-		],
-		XYZY: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 0, 1.1, 0 ]],
-		],
-		XYZZ: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 0, 0, 1.1 ]],
-		]
-	};
-
-	var helperScale = {
-		X: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ - 1e3, 0, 0 ], null, [ 1e6, 1, 1 ], 'helper' ]
-		],
-		Y: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, - 1e3, 0 ], [ 0, 0, Math.PI / 2 ], [ 1e6, 1, 1 ], 'helper' ]
-		],
-		Z: [
-			[ new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Line( lineGeometry, matHelper.clone() ), [ 0, 0, - 1e3 ], [ 0, - Math.PI / 2, 0 ], [ 1e6, 1, 1 ], 'helper' ]
-		]
-	};
-
-	// Creates an Object3D with gizmos described in custom hierarchy definition.
-
-	var setupGizmo = function ( gizmoMap ) {
-
-		var gizmo = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D();
-
-		for ( var name in gizmoMap ) {
-
-			for ( var i = gizmoMap[ name ].length; i --; ) {
-
-				var object = gizmoMap[ name ][ i ][ 0 ].clone();
-				var position = gizmoMap[ name ][ i ][ 1 ];
-				var rotation = gizmoMap[ name ][ i ][ 2 ];
-				var scale = gizmoMap[ name ][ i ][ 3 ];
-				var tag = gizmoMap[ name ][ i ][ 4 ];
-
-				// name and tag properties are essential for picking and updating logic.
-				object.name = name;
-				object.tag = tag;
-
-				if ( position ) {
-
-					object.position.set( position[ 0 ], position[ 1 ], position[ 2 ] );
-
-				}
-
-				if ( rotation ) {
-
-					object.rotation.set( rotation[ 0 ], rotation[ 1 ], rotation[ 2 ] );
-
-				}
-
-				if ( scale ) {
-
-					object.scale.set( scale[ 0 ], scale[ 1 ], scale[ 2 ] );
-
-				}
-
-				object.updateMatrix();
-
-				var tempGeometry = object.geometry.clone();
-				tempGeometry.applyMatrix4( object.matrix );
-				object.geometry = tempGeometry;
-				object.renderOrder = Infinity;
-
-				object.position.set( 0, 0, 0 );
-				object.rotation.set( 0, 0, 0 );
-				object.scale.set( 1, 1, 1 );
-
-				gizmo.add( object );
-
-			}
-
-		}
-
-		return gizmo;
-
-	};
-
-	// Reusable utility variables
-
-	var tempVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 0 );
-	var tempEuler = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Euler();
-	var alignVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
-	var zeroVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 0 );
-	var lookAtMatrix = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
-	var tempQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var tempQuaternion2 = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-	var identityQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-
-	var unitX = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 );
-	var unitY = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
-	var unitZ = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 );
-
-	// Gizmo creation
-
-	this.gizmo = {};
-	this.picker = {};
-	this.helper = {};
-
-	this.add( this.gizmo[ 'translate' ] = setupGizmo( gizmoTranslate ) );
-	this.add( this.gizmo[ 'rotate' ] = setupGizmo( gizmoRotate ) );
-	this.add( this.gizmo[ 'scale' ] = setupGizmo( gizmoScale ) );
-	this.add( this.picker[ 'translate' ] = setupGizmo( pickerTranslate ) );
-	this.add( this.picker[ 'rotate' ] = setupGizmo( pickerRotate ) );
-	this.add( this.picker[ 'scale' ] = setupGizmo( pickerScale ) );
-	this.add( this.helper[ 'translate' ] = setupGizmo( helperTranslate ) );
-	this.add( this.helper[ 'rotate' ] = setupGizmo( helperRotate ) );
-	this.add( this.helper[ 'scale' ] = setupGizmo( helperScale ) );
-
-	// Pickers should be hidden always
-
-	this.picker[ 'translate' ].visible = false;
-	this.picker[ 'rotate' ].visible = false;
-	this.picker[ 'scale' ].visible = false;
-
-	// updateMatrixWorld will update transformations and appearance of individual handles
-
-	this.updateMatrixWorld = function () {
-
-		var space = this.space;
-
-		if ( this.mode === 'scale' ) space = 'local'; // scale always oriented to local rotation
-
-		var quaternion = space === 'local' ? this.worldQuaternion : identityQuaternion;
-
-		// Show only gizmos for current transform mode
-
-		this.gizmo[ 'translate' ].visible = this.mode === 'translate';
-		this.gizmo[ 'rotate' ].visible = this.mode === 'rotate';
-		this.gizmo[ 'scale' ].visible = this.mode === 'scale';
-
-		this.helper[ 'translate' ].visible = this.mode === 'translate';
-		this.helper[ 'rotate' ].visible = this.mode === 'rotate';
-		this.helper[ 'scale' ].visible = this.mode === 'scale';
-
-
-		var handles = [];
-		handles = handles.concat( this.picker[ this.mode ].children );
-		handles = handles.concat( this.gizmo[ this.mode ].children );
-		handles = handles.concat( this.helper[ this.mode ].children );
-
-		for ( var i = 0; i < handles.length; i ++ ) {
-
-			var handle = handles[ i ];
-
-			// hide aligned to camera
-
-			handle.visible = true;
-			handle.rotation.set( 0, 0, 0 );
-			handle.position.copy( this.worldPosition );
-
-			var factor;
-
-			if ( this.camera.isOrthographicCamera ) {
-
-				factor = ( this.camera.top - this.camera.bottom ) / this.camera.zoom;
-
-			} else {
-
-				factor = this.worldPosition.distanceTo( this.cameraPosition ) * Math.min( 1.9 * Math.tan( Math.PI * this.camera.fov / 360 ) / this.camera.zoom, 7 );
-
-			}
-
-			handle.scale.set( 1, 1, 1 ).multiplyScalar( factor * this.size / 7 );
-
-			// TODO: simplify helpers and consider decoupling from gizmo
-
-			if ( handle.tag === 'helper' ) {
-
-				handle.visible = false;
-
-				if ( handle.name === 'AXIS' ) {
-
-					handle.position.copy( this.worldPositionStart );
-					handle.visible = !! this.axis;
-
-					if ( this.axis === 'X' ) {
-
-						tempQuaternion.setFromEuler( tempEuler.set( 0, 0, 0 ) );
-						handle.quaternion.copy( quaternion ).multiply( tempQuaternion );
-
-						if ( Math.abs( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) ) > 0.9 ) {
-
-							handle.visible = false;
-
-						}
-
-					}
-
-					if ( this.axis === 'Y' ) {
-
-						tempQuaternion.setFromEuler( tempEuler.set( 0, 0, Math.PI / 2 ) );
-						handle.quaternion.copy( quaternion ).multiply( tempQuaternion );
-
-						if ( Math.abs( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) ) > 0.9 ) {
-
-							handle.visible = false;
-
-						}
-
-					}
-
-					if ( this.axis === 'Z' ) {
-
-						tempQuaternion.setFromEuler( tempEuler.set( 0, Math.PI / 2, 0 ) );
-						handle.quaternion.copy( quaternion ).multiply( tempQuaternion );
-
-						if ( Math.abs( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) ) > 0.9 ) {
-
-							handle.visible = false;
-
-						}
-
-					}
-
-					if ( this.axis === 'XYZE' ) {
-
-						tempQuaternion.setFromEuler( tempEuler.set( 0, Math.PI / 2, 0 ) );
-						alignVector.copy( this.rotationAxis );
-						handle.quaternion.setFromRotationMatrix( lookAtMatrix.lookAt( zeroVector, alignVector, unitY ) );
-						handle.quaternion.multiply( tempQuaternion );
-						handle.visible = this.dragging;
-
-					}
-
-					if ( this.axis === 'E' ) {
-
-						handle.visible = false;
-
-					}
-
-
-				} else if ( handle.name === 'START' ) {
-
-					handle.position.copy( this.worldPositionStart );
-					handle.visible = this.dragging;
-
-				} else if ( handle.name === 'END' ) {
-
-					handle.position.copy( this.worldPosition );
-					handle.visible = this.dragging;
-
-				} else if ( handle.name === 'DELTA' ) {
-
-					handle.position.copy( this.worldPositionStart );
-					handle.quaternion.copy( this.worldQuaternionStart );
-					tempVector.set( 1e-10, 1e-10, 1e-10 ).add( this.worldPositionStart ).sub( this.worldPosition ).multiplyScalar( - 1 );
-					tempVector.applyQuaternion( this.worldQuaternionStart.clone().invert() );
-					handle.scale.copy( tempVector );
-					handle.visible = this.dragging;
-
-				} else {
-
-					handle.quaternion.copy( quaternion );
-
-					if ( this.dragging ) {
-
-						handle.position.copy( this.worldPositionStart );
-
-					} else {
-
-						handle.position.copy( this.worldPosition );
-
-					}
-
-					if ( this.axis ) {
-
-						handle.visible = this.axis.search( handle.name ) !== - 1;
-
-					}
-
-				}
-
-				// If updating helper, skip rest of the loop
-				continue;
-
-			}
-
-			// Align handles to current local or world rotation
-
-			handle.quaternion.copy( quaternion );
-
-			if ( this.mode === 'translate' || this.mode === 'scale' ) {
-
-				// Hide translate and scale axis facing the camera
-
-				var AXIS_HIDE_TRESHOLD = 0.99;
-				var PLANE_HIDE_TRESHOLD = 0.2;
-				var AXIS_FLIP_TRESHOLD = 0.0;
-
-
-				if ( handle.name === 'X' || handle.name === 'XYZX' ) {
-
-					if ( Math.abs( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) ) > AXIS_HIDE_TRESHOLD ) {
-
-						handle.scale.set( 1e-10, 1e-10, 1e-10 );
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name === 'Y' || handle.name === 'XYZY' ) {
-
-					if ( Math.abs( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) ) > AXIS_HIDE_TRESHOLD ) {
-
-						handle.scale.set( 1e-10, 1e-10, 1e-10 );
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name === 'Z' || handle.name === 'XYZZ' ) {
-
-					if ( Math.abs( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) ) > AXIS_HIDE_TRESHOLD ) {
-
-						handle.scale.set( 1e-10, 1e-10, 1e-10 );
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name === 'XY' ) {
-
-					if ( Math.abs( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) ) < PLANE_HIDE_TRESHOLD ) {
-
-						handle.scale.set( 1e-10, 1e-10, 1e-10 );
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name === 'YZ' ) {
-
-					if ( Math.abs( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) ) < PLANE_HIDE_TRESHOLD ) {
-
-						handle.scale.set( 1e-10, 1e-10, 1e-10 );
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name === 'XZ' ) {
-
-					if ( Math.abs( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) ) < PLANE_HIDE_TRESHOLD ) {
-
-						handle.scale.set( 1e-10, 1e-10, 1e-10 );
-						handle.visible = false;
-
-					}
-
-				}
-
-				// Flip translate and scale axis ocluded behind another axis
-
-				if ( handle.name.search( 'X' ) !== - 1 ) {
-
-					if ( alignVector.copy( unitX ).applyQuaternion( quaternion ).dot( this.eye ) < AXIS_FLIP_TRESHOLD ) {
-
-						if ( handle.tag === 'fwd' ) {
-
-							handle.visible = false;
-
-						} else {
-
-							handle.scale.x *= - 1;
-
-						}
-
-					} else if ( handle.tag === 'bwd' ) {
-
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name.search( 'Y' ) !== - 1 ) {
-
-					if ( alignVector.copy( unitY ).applyQuaternion( quaternion ).dot( this.eye ) < AXIS_FLIP_TRESHOLD ) {
-
-						if ( handle.tag === 'fwd' ) {
-
-							handle.visible = false;
-
-						} else {
-
-							handle.scale.y *= - 1;
-
-						}
-
-					} else if ( handle.tag === 'bwd' ) {
-
-						handle.visible = false;
-
-					}
-
-				}
-
-				if ( handle.name.search( 'Z' ) !== - 1 ) {
-
-					if ( alignVector.copy( unitZ ).applyQuaternion( quaternion ).dot( this.eye ) < AXIS_FLIP_TRESHOLD ) {
-
-						if ( handle.tag === 'fwd' ) {
-
-							handle.visible = false;
-
-						} else {
-
-							handle.scale.z *= - 1;
-
-						}
-
-					} else if ( handle.tag === 'bwd' ) {
-
-						handle.visible = false;
-
-					}
-
-				}
-
-			} else if ( this.mode === 'rotate' ) {
-
-				// Align handles to current local or world rotation
-
-				tempQuaternion2.copy( quaternion );
-				alignVector.copy( this.eye ).applyQuaternion( tempQuaternion.copy( quaternion ).invert() );
-
-				if ( handle.name.search( 'E' ) !== - 1 ) {
-
-					handle.quaternion.setFromRotationMatrix( lookAtMatrix.lookAt( this.eye, zeroVector, unitY ) );
-
-				}
-
-				if ( handle.name === 'X' ) {
-
-					tempQuaternion.setFromAxisAngle( unitX, Math.atan2( - alignVector.y, alignVector.z ) );
-					tempQuaternion.multiplyQuaternions( tempQuaternion2, tempQuaternion );
-					handle.quaternion.copy( tempQuaternion );
-
-				}
-
-				if ( handle.name === 'Y' ) {
-
-					tempQuaternion.setFromAxisAngle( unitY, Math.atan2( alignVector.x, alignVector.z ) );
-					tempQuaternion.multiplyQuaternions( tempQuaternion2, tempQuaternion );
-					handle.quaternion.copy( tempQuaternion );
-
-				}
-
-				if ( handle.name === 'Z' ) {
-
-					tempQuaternion.setFromAxisAngle( unitZ, Math.atan2( alignVector.y, alignVector.x ) );
-					tempQuaternion.multiplyQuaternions( tempQuaternion2, tempQuaternion );
-					handle.quaternion.copy( tempQuaternion );
-
-				}
-
-			}
-
-			// Hide disabled axes
-			handle.visible = handle.visible && ( handle.name.indexOf( 'X' ) === - 1 || this.showX );
-			handle.visible = handle.visible && ( handle.name.indexOf( 'Y' ) === - 1 || this.showY );
-			handle.visible = handle.visible && ( handle.name.indexOf( 'Z' ) === - 1 || this.showZ );
-			handle.visible = handle.visible && ( handle.name.indexOf( 'E' ) === - 1 || ( this.showX && this.showY && this.showZ ) );
-
-			// highlight selected axis
-
-			handle.material._opacity = handle.material._opacity || handle.material.opacity;
-			handle.material._color = handle.material._color || handle.material.color.clone();
-
-			handle.material.color.copy( handle.material._color );
-			handle.material.opacity = handle.material._opacity;
-
-			if ( ! this.enabled ) {
-
-				handle.material.opacity *= 0.5;
-				handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
-
-			} else if ( this.axis ) {
-
-				if ( handle.name === this.axis ) {
-
-					handle.material.opacity = 1.0;
-					handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
-
-				} else if ( this.axis.split( '' ).some( function ( a ) {
-
-					return handle.name === a;
-
-				} ) ) {
-
-					handle.material.opacity = 1.0;
-					handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
-
-				} else {
-
-					handle.material.opacity *= 0.25;
-					handle.material.color.lerp( new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Color( 1, 1, 1 ), 0.5 );
-
-				}
-
-			}
-
-		}
-
-		_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call( this );
-
-	};
-
-};
-
-TransformControlsGizmo.prototype = Object.assign( Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype ), {
-
-	constructor: TransformControlsGizmo,
-
-	isTransformControlsGizmo: true
-
-} );
-
-
-var TransformControlsPlane = function () {
-
-	'use strict';
-
-	_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh.call( this,
-		new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.PlaneBufferGeometry( 100000, 100000, 2, 2 ),
-		new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.MeshBasicMaterial( { visible: false, wireframe: true, side: _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.DoubleSide, transparent: true, opacity: 0.1, toneMapped: false } )
-	);
-
-	this.type = 'TransformControlsPlane';
-
-	var unitX = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 1, 0, 0 );
-	var unitY = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 1, 0 );
-	var unitZ = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3( 0, 0, 1 );
-
-	var tempVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var dirVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var alignVector = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Vector3();
-	var tempMatrix = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Matrix4();
-	var identityQuaternion = new _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Quaternion();
-
-	this.updateMatrixWorld = function () {
-
-		var space = this.space;
-
-		this.position.copy( this.worldPosition );
-
-		if ( this.mode === 'scale' ) space = 'local'; // scale always oriented to local rotation
-
-		unitX.set( 1, 0, 0 ).applyQuaternion( space === 'local' ? this.worldQuaternion : identityQuaternion );
-		unitY.set( 0, 1, 0 ).applyQuaternion( space === 'local' ? this.worldQuaternion : identityQuaternion );
-		unitZ.set( 0, 0, 1 ).applyQuaternion( space === 'local' ? this.worldQuaternion : identityQuaternion );
-
-		// Align the plane for current transform mode, axis and space.
-
-		alignVector.copy( unitY );
-
-		switch ( this.mode ) {
-
-			case 'translate':
-			case 'scale':
-				switch ( this.axis ) {
-
-					case 'X':
-						alignVector.copy( this.eye ).cross( unitX );
-						dirVector.copy( unitX ).cross( alignVector );
-						break;
-					case 'Y':
-						alignVector.copy( this.eye ).cross( unitY );
-						dirVector.copy( unitY ).cross( alignVector );
-						break;
-					case 'Z':
-						alignVector.copy( this.eye ).cross( unitZ );
-						dirVector.copy( unitZ ).cross( alignVector );
-						break;
-					case 'XY':
-						dirVector.copy( unitZ );
-						break;
-					case 'YZ':
-						dirVector.copy( unitX );
-						break;
-					case 'XZ':
-						alignVector.copy( unitZ );
-						dirVector.copy( unitY );
-						break;
-					case 'XYZ':
-					case 'E':
-						dirVector.set( 0, 0, 0 );
-						break;
-
-				}
-
-				break;
-			case 'rotate':
-			default:
-				// special case for rotate
-				dirVector.set( 0, 0, 0 );
-
-		}
-
-		if ( dirVector.length() === 0 ) {
-
-			// If in rotate mode, make the plane parallel to camera
-			this.quaternion.copy( this.cameraQuaternion );
-
-		} else {
-
-			tempMatrix.lookAt( tempVector.set( 0, 0, 0 ), dirVector, alignVector );
-
-			this.quaternion.setFromRotationMatrix( tempMatrix );
-
-		}
-
-		_build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Object3D.prototype.updateMatrixWorld.call( this );
-
-	};
-
-};
-
-TransformControlsPlane.prototype = Object.assign( Object.create( _build_three_module_js__WEBPACK_IMPORTED_MODULE_0__.Mesh.prototype ), {
-
-	constructor: TransformControlsPlane,
-
-	isTransformControlsPlane: true
-
-} );
 
 
 

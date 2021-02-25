@@ -32,9 +32,9 @@
           <p>Click an object to select it. Double click it to focus on it. Press `esc` to clear the selection. Press `shift-s` to toggle a section plane. Press `s` while the section plane is active to toggle its control mode. Double click anywhere outside an object to zoom extents to the entire scene.</p>
         </div>
         <div class="twelve columns">
-          <button onclick="v.sceneManager.zoomExtents()">Zoom Extents</button>
           <button onclick="v.postprocessing = !v.postprocessing">Postprocessing Toggle</button>
-          <button onclick="v.sectionBox.toggleSectionBox()">Show Section Box</button>
+          <button onclick="v.interactions.zoomExtents()">Zoom Extents</button>
+          <button onclick="v.interactions.toggleSectionBox()">Toggle Section Box</button>
         </div>
         <div class="twelve columns">
           <input id="objectUrlInput" type="text" name="objectId" placeholder="Object Url" style="width:49%" value="https://staging.speckle.dev/streams/a75ab4f10f/objects/a59617590b0bec4e9b5ee487ee75b1a7"/>

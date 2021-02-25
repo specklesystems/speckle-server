@@ -7,28 +7,41 @@ const cors = require( 'cors' )
 
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
+const { getStream } = require( '../services/streams' )
 
 module.exports = ( app ) => {
+
   app.options( '/objects/:streamId/:objectId', cors() )
+
   app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, async ( req, res ) => {
-    if ( !req.context || !req.context.auth ) {
+
+    const stream = await getStream( { streamId: req.params.streamId, userId: req.context.userId } )
+
+    if ( !stream ) {
+      return res.status( 404 ).end()
+    }
+
+    if ( !stream.isPublic && req.context.auth === false ) {
       return res.status( 401 ).end( )
     }
 
-    try {
-      await validateScopes( req.context.scopes, 'streams:read' )
-    } catch ( err ) {
-      return res.status( 401 ).end( )
-    }
+    if ( !stream.isPublic ) {
+      try {
+        await validateScopes( req.context.scopes, 'streams:read' )
+      } catch ( err ) {
+        return res.status( 401 ).end( )
+      }
 
-    try {
-      await authorizeResolver( req.context.userId, req.params.streamId, 'stream:reviewer' )
-    } catch ( err ) {
-      return res.status( 401 ).end( )
+      try {
+        await authorizeResolver( req.context.userId, req.params.streamId, 'stream:reviewer' )
+      } catch ( err ) {
+        return res.status( 401 ).end( )
+      }
     }
 
     // Populate first object (the "commit")
     let obj = await getObject( { objectId: req.params.objectId } )
+    
     if ( !obj ) {
       return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
     }

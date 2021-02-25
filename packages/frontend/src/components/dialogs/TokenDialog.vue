@@ -113,6 +113,7 @@ export default {
       this.$emit('close')
     },
     async createToken() {
+      this.$matomo && this.$matomo.trackPageView('user/token/create')
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`

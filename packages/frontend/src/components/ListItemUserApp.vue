@@ -65,6 +65,7 @@ export default {
   },
   methods: {
     async revokeApp() {
+      this.$matomo && this.$matomo.trackPageView('user/app/revoke')
       try {
         await this.$apollo.mutate({
           mutation: gql`
