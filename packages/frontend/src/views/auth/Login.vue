@@ -58,9 +58,18 @@
       <v-card-title class="justify-center caption">
         <div class="mx-4 align-self-center">Don't have an account?</div>
         <div class="mx-4 align-self-center">
-          <v-btn color="primary" plain text :to="registerRoute">Register</v-btn>
+          <v-btn color="primary" text :to="registerRoute">Register</v-btn>
         </div>
       </v-card-title>
+      <div class="justify-center caption text-center pb-5">
+        <div class="mx-4 align-self-center">
+        <a href="/authn/resetpassword">Forgot your password?</a>
+
+        </div>
+        <!-- <div class="mx-4 align-self-center">
+          <v-btn color="primary" plain text to="/authn/resetpassword">Reset your password</v-btn>
+        </div> -->
+      </div>
     </div>
   </v-card>
 </template>

@@ -27,6 +27,22 @@ const routes = [
         component: () => import('../views/auth/Registration.vue')
       },
       {
+        path: 'resetpassword',
+        name: 'Reset Password',
+        meta: {
+          title: 'Register | Speckle'
+        },
+        component: () => import('../views/auth/ResetPasswordRequest.vue')
+      },
+      {
+        path: 'resetpassword/finalize',
+        name: 'Reset Password Finalization',
+        meta: {
+          title: 'Register | Speckle'
+        },
+        component: () => import('../views/auth/ResetPasswordFinalization.vue')
+      },
+      {
         path: 'verify/:appId/:challenge',
         name: 'Authorize App',
         meta: {
@@ -154,7 +170,14 @@ router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
 
-  if (!uuid && to.name !== 'Login' && to.name !== 'Register' && to.name !== 'Error') {
+  if (
+    !uuid &&
+    to.name !== 'Login' &&
+    to.name !== 'Register' &&
+    to.name !== 'Error' &&
+    to.name !== 'Reset Password' &&
+    to.name !== 'Reset Password Finalization'
+  ) {
     localStorage.setItem('shouldRedirectTo', to.path)
 
     return next({ name: 'Login' })
