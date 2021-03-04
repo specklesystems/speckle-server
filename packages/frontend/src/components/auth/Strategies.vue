@@ -2,7 +2,7 @@
   <div v-if="strategies && strategies.length !== 0">
     <v-card-title class="justify-center py-2 body-1 text--secondary">
       <v-divider class="mx-4"></v-divider>
-      Sign in with
+      Login with
       <v-divider class="mx-4"></v-divider>
     </v-card-title>
     <v-card-text class="pb-5">

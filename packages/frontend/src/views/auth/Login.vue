@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-20" rounded="lg">
-        <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
+    <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
       <v-img src="@/assets/logo.svg" max-width="30" />
     </v-card-title>
     <v-card-title class="justify-center pt-5 pb-2">
@@ -50,7 +50,7 @@
               />
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" @click="loginUser">Log in</v-btn>
+              <v-btn block large color="primary" @click="loginUser">Login</v-btn>
             </v-col>
           </v-row>
         </v-form>
