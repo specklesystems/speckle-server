@@ -10,11 +10,21 @@ query {
     profiles
     role
     suuid
-    streams{
+    streams {
       totalCount
     }
-    commits{
+    commits {
       totalCount
+      items {
+        id
+        streamId
+        streamName
+        authorId
+        authorName
+        authorAvatar
+        message
+        branchName
+      }
     }
   }
 }
