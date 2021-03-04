@@ -3,12 +3,14 @@
     <v-app-bar app color="background2">
       <v-container class="py-0 fill-height hidden-sm-and-down">
         <v-btn text to="/" active-class="no-active">
-          <v-img contain max-height="30" max-width="30" src="@/assets/logo.svg" />
-          <div class="mt-1">
-            <span class="primary--text"><b></b></span>
+          <v-img class="" contain max-height="30" max-width="30" src="@/assets/logo.svg" />
+          <div class="logo">
+            <span><b>Speckle</b></span>
           </div>
         </v-btn>
-        <v-btn
+        <span class="mr-5">|</span>
+        <span class="subtitle-2">{{ serverInfo.name }}</span>
+        <!-- <v-btn
           v-for="link in navLinks"
           :key="link.name"
           text
@@ -16,7 +18,7 @@
           :to="link.link"
         >
           {{ link.name }}
-        </v-btn>
+        </v-btn> -->
         <v-spacer></v-spacer>
         <v-responsive max-width="300">
           <search-bar />
@@ -84,12 +86,12 @@ export default {
       search: '',
       showMobileMenu: false,
       streams: { items: [] },
-      selectedSearchResult: null,
-      navLinks: [
-        { link: '/streams', name: 'streams' },
-        { link: '/profile', name: 'profile' },
-        { link: '/help', name: 'help' }
-      ]
+      selectedSearchResult: null
+      // navLinks: [
+      //   { link: '/streams', name: 'streams' },
+      //   { link: '/profile', name: 'profile' },
+      //   { link: '/help', name: 'help' }
+      // ]
     }
   },
   apollo: {
@@ -123,3 +125,12 @@ export default {
   methods: {}
 }
 </script>
+<style scoped>
+.logo {
+  font-family: Space Grotesk, sans-serif;
+  text-transform: none;
+  color: rgb(37, 99, 235);
+  font-weight: 500;
+  font-size: 1rem;
+}
+</style>

@@ -49,16 +49,16 @@ const routes = [
         meta: {
           title: 'Streams | Speckle'
         },
-        component: () => import('../views/Home.vue')
-      },
-      {
-        path: 'streams',
-        name: 'streams',
-        meta: {
-          title: 'Streams | Speckle'
-        },
         component: () => import('../views/Streams.vue')
       },
+      // {
+      //   path: 'streams',
+      //   name: 'streams',
+      //   meta: {
+      //     title: 'Streams | Speckle'
+      //   },
+      //   component: () => import('../views/Streams.vue')
+      // },
       {
         path: 'streams/:streamId',
         meta: {
