@@ -41,6 +41,9 @@ type CommitCollectionUserNode {
   parents: [String]
   streamId: String
   streamName: String
+  authorName: String
+  authorId: String
+  authorAvatar: String
   createdAt: DateTime
 }
 
