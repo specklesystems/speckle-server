@@ -13,7 +13,7 @@
             </v-btn>
             <br class="d-none d-md-flex" />
             <v-dialog v-model="newStreamDialog" max-width="500">
-              <new-stream-dialog :open="newStreamDialog" />
+              <stream-new-dialog :open="newStreamDialog" />
             </v-dialog>
 
             <v-btn
@@ -32,7 +32,15 @@
       <v-col v-if="$apollo.loading" sm="12" md="8" lg="9" xl="7" class="pt-10">
         <v-skeleton-loader type="list-item-two-line, list-item-three-line"></v-skeleton-loader>
       </v-col>
-      <v-col v-if="recentActivity && !$apollo.loading" cols="12" sm="12" md="8" lg="9" xl="7" class="pt-10">
+      <v-col
+        v-if="recentActivity && !$apollo.loading"
+        cols="12"
+        sm="12"
+        md="8"
+        lg="9"
+        xl="7"
+        class="pt-10"
+      >
         <v-row>
           <v-col xxxclass="pt-0">
             <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
@@ -76,11 +84,11 @@ import ServerInfoCard from '../components/ServerInfoCard'
 import FeedStream from '../components/FeedStream'
 import FeedCommit from '../components/FeedCommit'
 import userFeedQuery from '../graphql/userFeed.gql'
-import NewStreamDialog from '../components/dialogs/NewStreamDialog'
+import StreamNewDialog from '../components/dialogs/StreamNewDialog'
 
 export default {
   name: 'Home',
-  components: { ServerInfoCard, FeedStream, FeedCommit, NewStreamDialog },
+  components: { ServerInfoCard, FeedStream, FeedCommit, StreamNewDialog },
   apollo: {
     user: {
       prefetch: true,

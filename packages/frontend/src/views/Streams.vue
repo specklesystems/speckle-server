@@ -48,7 +48,7 @@
           </v-list>
           <v-card-actions></v-card-actions>
           <v-dialog v-model="newStreamDialog" max-width="500">
-            <new-stream-dialog :open="newStreamDialog" />
+            <stream-new-dialog :open="newStreamDialog" />
           </v-dialog>
         </v-card>
       </v-col>
@@ -90,7 +90,7 @@
 <script>
 import gql from 'graphql-tag'
 import ListItemStream from '../components/ListItemStream'
-import NewStreamDialog from '../components/dialogs/NewStreamDialog'
+import StreamNewDialog from '../components/dialogs/StreamNewDialog'
 import UserAvatar from '../components/UserAvatar'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
@@ -98,7 +98,7 @@ import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'Streams',
-  components: { ListItemStream, NewStreamDialog, InfiniteLoading, UserAvatar },
+  components: { ListItemStream, StreamNewDialog, InfiniteLoading, UserAvatar },
   apollo: {
     streams: {
       prefetch: true,

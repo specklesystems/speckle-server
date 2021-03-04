@@ -37,7 +37,7 @@
       </v-row>
     </v-card-text>
     <v-card-actions class="pb-10">
-      <v-btn block @click.native="save">Save & Close</v-btn>
+      <v-btn block @click.native="save">Save</v-btn>
     </v-card-actions>
   </v-card>
 </template>

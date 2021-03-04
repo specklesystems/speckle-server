@@ -15,7 +15,7 @@
     <v-card-text>
       <v-btn class="mb-5" @click="appDialog = true">new app</v-btn>
       <v-dialog v-model="appDialog" width="500">
-        <new-app-dialog @app-added="refreshList" @close="appDialog = false" />
+        <app-new-dialog @app-added="refreshList" @close="appDialog = false" />
       </v-dialog>
     </v-card-text>
   </v-card>
@@ -23,10 +23,10 @@
 <script>
 import gql from 'graphql-tag'
 import ListItemUserApp from './ListItemUserApp'
-import NewAppDialog from './dialogs/NewAppDialog'
+import AppNewDialog from './dialogs/AppNewDialog'
 
 export default {
-  components: { ListItemUserApp, NewAppDialog },
+  components: { ListItemUserApp, AppNewDialog },
   data() {
     return {
       appDialog: false

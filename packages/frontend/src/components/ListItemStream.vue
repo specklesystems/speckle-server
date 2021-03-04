@@ -6,7 +6,7 @@
       :class="{ 'on-hover': hover }"
       color="background2"
       :to="'/streams/' + stream.id"
-      style="transition: all .2s;"
+      style="transition: all 0.2s"
     >
       <v-row>
         <v-col cols="12" sm="8" class="align-self-center">

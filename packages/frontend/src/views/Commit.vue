@@ -37,15 +37,19 @@
           Source Application:
           <source-app-avatar :application-name="stream.commit.sourceApplication" />
         </v-card-text>
-        <commit-dialog ref="commitDialog"></commit-dialog>
+        <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
         <v-btn
           v-tooltip="'Edit commit details'"
           small
-          icon
+          plain
+          color="primary"
+          text
+          class="px-0"
           style="position: absolute; right: 15px; top: 15px"
           @click="editCommit"
         >
-          <v-icon small>mdi-pencil-outline</v-icon>
+          <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
+          Edit
         </v-btn>
       </v-card>
       <v-card>
@@ -92,12 +96,12 @@ import UserAvatar from '../components/UserAvatar'
 import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
 import Renderer from '../components/Renderer'
 import streamCommitQuery from '../graphql/commit.gql'
-import CommitDialog from '../components/dialogs/CommitDialog'
+import CommitEditDialog from '../components/dialogs/CommitEditDialog'
 import SourceAppAvatar from '../components/SourceAppAvatar'
 
 export default {
   name: 'Commit',
-  components: { CommitDialog, UserAvatar, ObjectSpeckleViewer, Renderer, SourceAppAvatar },
+  components: { CommitEditDialog, UserAvatar, ObjectSpeckleViewer, Renderer, SourceAppAvatar },
   data: () => ({
     loadedModel: false
   }),

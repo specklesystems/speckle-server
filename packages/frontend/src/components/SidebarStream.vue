@@ -62,7 +62,7 @@
         Edit
       </v-btn>
       <v-dialog v-model="editStreamDialog" max-width="500">
-        <edit-stream-dialog
+        <stream-edit-dialog
           :stream-id="stream.id"
           :name="stream.name"
           :is-public="stream.isPublic"
@@ -98,8 +98,8 @@
         plain
         color="primary"
         text
-        @click="dialogShare = true"
         class="px-0"
+        @click="dialogShare = true"
       >
         <v-icon small class="mr-2">mdi-account-multiple</v-icon>
         Manage
@@ -117,13 +117,13 @@
 </template>
 <script>
 import streamQuery from '../graphql/stream.gql'
-import EditStreamDialog from '../components/dialogs/EditStreamDialog'
+import StreamEditDialog from '../components/dialogs/StreamEditDialog'
 import StreamShareDialog from '../components/dialogs/StreamShareDialog'
 import UserAvatar from '../components/UserAvatar'
 
 export default {
   components: {
-    EditStreamDialog,
+    StreamEditDialog,
     StreamShareDialog,
     UserAvatar
   },

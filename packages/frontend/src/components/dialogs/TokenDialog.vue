@@ -1,59 +1,53 @@
 <template>
   <v-card class="pa-4" color="background2">
-    <v-card-title>
-      Create a New Personal Access Token
-      <v-spacer></v-spacer>
-      <v-btn text color="error" icon @click="clearAndClose">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-    </v-card-title>
-    <v-card-text>
-      <v-form v-show="!fullTokenResult">
-        <h3 class="mt-3">Token Scopes</h3>
-        <p>
-          It's good practice to limit the scopes of your token to the absolute minimum. For example,
-          if your application or script will only read and write streams, select just those scopes.
-        </p>
-        <v-select
-          v-model="selectedScopes"
-          label="Scopes"
-          multiple
-          required
-          :items="parsedScopes"
-          chips
-          :menu-props="{ maxWidth: 420 }"
-        ></v-select>
-        <p v-if="selectedScopes.length === 0" class="error--text">Please select some scopes.</p>
-        <br />
-        <h3 class="mt-3">Token Name</h3>
-        <p>
-          A name to remember this token by - can be the name of the script or application you're
-          planning to use it in!
-        </p>
+    <v-card-title>Create a New Personal Access Token</v-card-title>
+    <v-form v-show="!fullTokenResult" ref="form" v-model="valid" @submit.prevent="createToken">
+      <v-card-text>
         <v-text-field
           v-model="name"
           label="Token Name"
           :rules="nameRules"
+          hint="A name to remember this token by. For example, the name of the script or application you're
+          planning to use it in!"
+          persistent-hint
+          validate-on-blur
           required
           filled
           autofocus
         ></v-text-field>
-        <br />
-        <v-btn @click="createToken">Save</v-btn>
-        <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
-      </v-form>
-      <div v-show="fullTokenResult">
-        <div class="text-center my-5">
-          <h2 class="mb-5 font-weight-normal">Your new token:</h2>
-          <code class="subtitle-1 pa-3 my-4">{{ fullTokenResult }}</code>
-        </div>
-        <v-alert type="info">
-          <b>Note:</b>
-          This is the first and last time you will be able to see the full token. Please copy paste
-          it somewhere safe now.
-        </v-alert>
-        <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
+
+        <v-select
+          v-model="selectedScopes"
+          label="Scopes"
+          multiple
+          hint="It's good practice to limit the scopes of your token to the absolute minimum. For example,
+          if your application or script will only read and write streams, select just those scopes."
+          persistent-hint
+          validate-on-blur
+          required
+          :rules="selectedScopesRules"
+          :items="parsedScopes"
+          chips
+          :menu-props="{ maxWidth: 420 }"
+        ></v-select>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
+          <v-btn type="submit">Save</v-btn>
+        </v-card-actions>
+      </v-card-text>
+    </v-form>
+    <v-card-text v-show="fullTokenResult">
+      <div class="text-center my-5">
+        <h2 class="mb-5 font-weight-normal">Your new token:</h2>
+        <code class="subtitle-1 pa-3 my-4">{{ fullTokenResult }}</code>
       </div>
+      <v-alert type="info">
+        <b>Note:</b>
+        This is the first and last time you will be able to see the full token. Please copy paste it
+        somewhere safe now.
+      </v-alert>
+      <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
     </v-card-text>
   </v-card>
 </template>
@@ -85,11 +79,16 @@ export default {
   data() {
     return {
       name: null,
+      valid: false,
       nameRules: [
         (v) => !!v || 'Name is required',
         (v) => (v && v.length <= 60) || 'Name must be less than 60 characters'
       ],
       selectedScopes: [],
+      selectedScopesRules: [
+        (v) => !!v || 'Scopes are required',
+        (v) => (v && v.length >= 1) || 'Scopes are required'
+      ],
       fullTokenResult: null
     }
   },
@@ -113,6 +112,8 @@ export default {
       this.$emit('close')
     },
     async createToken() {
+      if (!this.$refs.form.validate()) return
+
       this.$matomo && this.$matomo.trackPageView('user/token/create')
       try {
         let res = await this.$apollo.mutate({

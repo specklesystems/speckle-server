@@ -3,8 +3,8 @@
     <v-card class="pa-4" color="background2">
       <v-card-title class="subtitle-1">Edit Server Info</v-card-title>
 
-      <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-        <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
+      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
+        <v-card-text class="pl-2 pr-2 pt-0 pb-0">
           <v-container>
             <v-row>
               <v-col cols="12" class="pb-0">
@@ -12,6 +12,7 @@
                   v-model="server.name"
                   label="Name"
                   :rules="nameRules"
+                  validate-on-blur
                   required
                   filled
                   autofocus
@@ -53,12 +54,12 @@
               </v-col>
             </v-row>
           </v-container>
-        </v-form>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn :disabled="!valid" color="primary" text @click.native="agree">Save</v-btn>
-      </v-card-actions>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn :disabled="!valid" color="primary" text type="submit">Save</v-btn>
+        </v-card-actions>
+      </v-form>
     </v-card>
   </v-dialog>
 </template>

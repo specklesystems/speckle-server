@@ -1,78 +1,77 @@
 <template>
   <v-card class="pa-4" color="background2">
-    <v-card-title>
-      Create a New App
-      <v-spacer></v-spacer>
-      <v-btn text color="error" icon @click="clearAndClose">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-    </v-card-title>
-    <v-card-text>
-      <v-form v-show="!appCreateResult">
-        <h3 class="mt-3">App Name</h3>
+    <v-card-title>Create a New App</v-card-title>
+
+    <v-form v-show="!appCreateResult" ref="form" v-model="valid" @submit.prevent="createApp">
+      <v-card-text>
         <v-text-field
           v-model="name"
           label="App Name"
+          persistent-hint
+          hint="The name of your app"
           :rules="nameRules"
+          validate-on-blur
           required
           autofocus
         ></v-text-field>
-        <br />
-        <h3 class="mt-3">App Scopes</h3>
-        <p>It's good practice to limit the scopes to the absolute minimum.</p>
         <v-select
           v-model="selectedScopes"
+          persistent-hint
+          hint="It's good practice to limit the scopes to the absolute minimum."
           label="Scopes"
           multiple
           required
+          validate-on-blur
+          :rules="selectedScopesRules"
           :items="parsedScopes"
           chips
           :menu-props="{ maxWidth: 420 }"
         ></v-select>
-        <br />
-        <h3 class="mt-3">Redirect URL</h3>
-        <p>
-          After authentication, the users will be redirected (together with an access token) to this
-          url.
-        </p>
         <v-text-field
           v-model="redirectUrl"
-          label="App redirect url"
+          persistent-hint
+          validate-on-blur
+          hint="
+            After authentication, the users will be redirected (together with an access token) to this url.
+          "
+          label="Redirect url"
           :rules="redirectUrlRules"
           required
         ></v-text-field>
-        <br />
-        <h3 class="mt-3">App Description</h3>
         <v-textarea
           v-model="description"
-          label="A short description of your applicaiton."
+          label="Description"
+          persistent-hint
+          hint="A short description of your applicaiton."
         ></v-textarea>
-        <v-btn @click="createApp">Save</v-btn>
-        <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
-      </v-form>
-      <div v-show="appCreateResult">
-        <div v-if="app" class="text-center my-5">
-          <h2 class="mb-5 font-weight-normal">Your new app's details:</h2>
-          App Id:
-          <code class="subtitle-1 pa-3 my-4">{{ app.id }}</code>
-          <v-divider class="mt-5 pt-5" />
-          App Secret:
-          <code class="subtitle-1 pa-3 my-4">{{ app.secret }}</code>
-        </div>
-        <v-alert type="info">
-          <p>
-            <b>Note:</b>
-            To authenticate users inside your app, direct them to
-            <code style="word-break: break-all">
-              {{ rootUrl }}/authn/verify/{appId}/{challenge}
-            </code>
-            , where
-            <code>challenge</code>
-            is an OAuth2 plain code challenge.
-          </p>
-        </v-alert>
-        <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+
+          <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
+          <v-btn type="submit" :disabled="!valid">Save</v-btn>
+        </v-card-actions>
+      </v-card-text>
+    </v-form>
+    <v-card-text v-show="appCreateResult">
+      <div v-if="app" class="text-center my-5">
+        <h2 class="mb-5 font-weight-normal">Your new app's details:</h2>
+        App Id:
+        <code class="subtitle-1 pa-3 my-4">{{ app.id }}</code>
+        <v-divider class="mt-5 pt-5" />
+        App Secret:
+        <code class="subtitle-1 pa-3 my-4">{{ app.secret }}</code>
       </div>
+      <v-alert type="info">
+        <p>
+          <b>Note:</b>
+          To authenticate users inside your app, direct them to
+          <code style="word-break: break-all">{{ rootUrl }}/authn/verify/{appId}/{challenge}</code>
+          , where
+          <code>challenge</code>
+          is an OAuth2 plain code challenge.
+        </p>
+      </v-alert>
+      <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
     </v-card-text>
   </v-card>
 </template>
@@ -121,21 +120,28 @@ export default {
   },
   data() {
     return {
+      valid: false,
       name: null,
       nameRules: [
         (v) => !!v || 'Name is required',
-        (v) => (v && v.length <= 60) || 'Name must be less than 60 characters'
+        (v) => (v && v.length <= 60) || 'Name must be less than 60 characters',
+        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
       selectedScopes: [],
+      selectedScopesRules: [
+        (v) => !!v || 'Scopes are required',
+        (v) => (v && v.length >= 1) || 'Scopes are required'
+      ],
       redirectUrl: null,
       redirectUrlRules: [
         (v) => !!v || 'Redirect url is required',
         (v) => {
           try {
-            var x = new URL(v)
+            // eslint-disable-next-line no-unused-vars
+            let x = new URL(v)
             return true
           } catch {
-            return 'url must be valid'
+            return 'Url must be valid'
           }
         }
       ],
@@ -167,6 +173,8 @@ export default {
       this.$emit('close')
     },
     async createApp() {
+      if (!this.$refs.form.validate()) return
+
       this.$matomo && this.$matomo.trackPageView('user/app/create')
       try {
         let res = await this.$apollo.mutate({

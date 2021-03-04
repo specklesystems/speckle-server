@@ -1,13 +1,20 @@
 <template>
   <v-card class="pb-5">
-    <v-form ref="form" v-model="valid" lazy-validation v-show="!showDelete">
+    <v-form
+      v-show="!showDelete"
+      ref="form"
+      v-model="valid"
+      lazy-validation
+      @submit.prevent="updateStream"
+    >
       <v-card-title>Edit Stream</v-card-title>
       <v-card-text>
         <v-text-field
           v-model="internalName"
           :rules="nameRules"
-          lazy-validation
+          validate-on-blur
           required
+          autofocus
           label="Stream Name"
         />
         <v-switch
@@ -27,13 +34,13 @@
           :loading="isLoading"
           elevation="0"
           block
-          @click="updateStream"
+          type="submit"
         >
           Save
         </v-btn>
       </v-card-actions>
     </v-form>
-    <v-divider class="my-5" v-show="!showDelete" />
+    <v-divider v-show="!showDelete" class="my-5" />
     <v-card-title v-show="!showDelete" class="error--text body-2 pa-2">
       <v-btn block x-small text color="error" @click="showDelete = true">Delete Stream</v-btn>
     </v-card-title>
@@ -116,11 +123,8 @@ export default {
       this.$router.push({ path: '/streams' })
     },
     async updateStream() {
-      this.$refs.form.validate()
-      if (this.name === null) {
-        this.valid = false
-        return
-      }
+      if (!this.$refs.form.validate()) return
+
       this.isLoading = true
       this.$matomo && this.$matomo.trackPageView('stream/update')
       try {
