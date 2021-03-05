@@ -86,8 +86,9 @@ exports.init = async ( ) => {
 
   graphqlServer.applyMiddleware( { app: app } )
 
+  // Expose prometheus metrics
+  prometheusClient.register.clear()
   prometheusClient.collectDefaultMetrics()
-
   app.get('/metrics', async (req, res) => {
     try {
       res.set('Content-Type', prometheusClient.register.contentType);
@@ -95,7 +96,8 @@ exports.init = async ( ) => {
     } catch (ex) {
       res.status(500).end(ex);
     }
-  });
+  })
+
   return { app, graphqlServer }
 }
 
