@@ -23,7 +23,7 @@ module.exports = ( app ) => {
       let existingToken = await ResetTokens().select( '*' ).where( { email: req.body.email } ).first()
       if ( existingToken ) {
         const timeDiff = Math.abs( Date.now( ) - new Date( existingToken.createdAt ) )
-        if ( timeDiff / 36e5 < 1 ) throw new Error( 'Password reset already requested. Please try again later.' )
+        if ( timeDiff / 36e5 < 1 ) throw new Error( 'Password reset already requested. Please try again in 1h, or check your email for the instructions we have sent.' )
       }
 
       // delete any previous pwd requests
@@ -31,7 +31,7 @@ module.exports = ( app ) => {
 
       // create a new token
       let token = {
-        id: crs( { length:10 } ),
+        id: crs( { length: 10 } ),
         email: req.body.email
       }
 

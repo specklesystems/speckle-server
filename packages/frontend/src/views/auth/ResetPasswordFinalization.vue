@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-20" rounded="lg">
-    <v-card-title class="justify-center pt-5 pb-2 mb-10" v-if="!success">
+    <v-card-title v-if="!success" class="justify-center pt-5 pb-2 mb-10">
       One step closer to resetting your password.
     </v-card-title>
     <v-alert v-model="errors" type="error" :icon="null" text multi-line dismissible>
@@ -15,16 +15,14 @@
     </v-alert>
     <v-alert v-model="success" :icon="null" text>
       <v-row align="center">
-        <v-col class="grow">
-          Done! You can now log in with your new password.
-        </v-col>
+        <v-col class="grow">Done! You can now log in with your new password.</v-col>
         <v-col class="shrink">
           <v-btn color="primary" to="/authn/login">Login</v-btn>
         </v-col>
       </v-row>
     </v-alert>
     <v-card-text v-if="!success">
-      <v-form ref="form" class="px-0">
+      <v-form ref="form" class="px-0" @submit.prevent="resetPassword()">
         <v-row dense>
           <v-col cols="12">
             <v-text-field
@@ -80,7 +78,7 @@
             </v-row>
           </v-col>
           <v-col cols="12">
-            <v-btn block large color="primary" @click="resetPassword()">Save new password</v-btn>
+            <v-btn type="submit" block large color="primary" @click="resetPassword()">Save new password</v-btn>
           </v-col>
         </v-row>
       </v-form>
@@ -136,7 +134,7 @@ export default {
       tokenId: null,
       errors: false,
       errorMessage: null,
-      success: true
+      success: false
     }
   },
   computed: {

@@ -1,32 +1,22 @@
 <template>
   <v-card class="elevation-20" rounded="lg">
-    <v-card-title class="justify-center pt-5 pb-2" v-if="!success">
+    <v-card-title v-if="!success" class="justify-center pt-5 pb-2">
       Account password reset
     </v-card-title>
     <v-alert v-model="errors" type="error" :icon="null" text multi-line dismissible>
-      <v-row align="center">
-        <v-col class="grow">
-          {{ errorMessage }}
-        </v-col>
-        <v-col class="shrink">
-          <v-btn color="primary" plain to="/authn/login">Login</v-btn>
-        </v-col>
-      </v-row>
+      {{ errorMessage }}
     </v-alert>
     <v-alert v-model="success" :icon="null" text>
       <v-row align="center">
-        <v-col class="grow">Done! You can now log in with your new password.</v-col>
-        <v-col class="shrink">
-          <v-btn color="primary" to="/authn/login">Login</v-btn>
-        </v-col>
+        <v-col class="grow">Done! We've sent you instructions on how to reset your password at {{ form.email }}.</v-col>
       </v-row>
     </v-alert>
-    <v-card-text class="pb-7" v-if="!success">
+    <v-card-text v-if="!success" class="pb-7">
       <p class="body-1">
         Type in the email address you used, so we can verify your account. We will send you
         instructions on how to reset your password.
       </p>
-      <v-form ref="form" class="">
+      <v-form ref="form" class="" @submit.prevent="sendResetEmail()">
         <v-row dense>
           <v-col cols="12">
             <v-text-field
@@ -104,7 +94,11 @@ export default {
   mounted() {},
   methods: {
     async sendResetEmail() {
-      //TODO
+      this.success = false
+      this.errors = false
+      this.errorMessage = null
+      let valid = this.$refs.form.validate()
+      if (!valid) return
       let res = await fetch(`/auth/pwdreset/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
