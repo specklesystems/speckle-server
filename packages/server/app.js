@@ -98,6 +98,9 @@ exports.init = async ( ) => {
     }
   })
 
+  // Trust X-Forwarded-* headers (for https protocol detection)
+  app.enable("trust proxy")
+
   return { app, graphqlServer }
 }
 
