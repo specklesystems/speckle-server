@@ -15,6 +15,7 @@ const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
 const Logging = require( `${appRoot}/logging` )
 const { startup: MatStartup } = require( `${appRoot}/logging/matomoHelper` )
+const prometheusClient = require('prom-client')
 
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
@@ -84,6 +85,18 @@ exports.init = async ( ) => {
   } )
 
   graphqlServer.applyMiddleware( { app: app } )
+
+  // Expose prometheus metrics
+  prometheusClient.register.clear()
+  prometheusClient.collectDefaultMetrics()
+  app.get('/metrics', async (req, res) => {
+    try {
+      res.set('Content-Type', prometheusClient.register.contentType);
+      res.end(await prometheusClient.register.metrics());
+    } catch (ex) {
+      res.status(500).end(ex);
+    }
+  })
 
   return { app, graphqlServer }
 }
