@@ -4,12 +4,17 @@
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
     <v-card-title class="mr-8 display-1">
-      <router-link v-show="!isHomeRoute" :to="'/streams/' + stream.id" class="text-decoration-none">
+      <router-link
+        v-show="!isHomeRoute"
+        :to="'/streams/' + stream.id"
+        class="text-decoration-none"
+        style="width: 100%"
+      >
         {{ stream.name }}
       </router-link>
-      <div v-show="isHomeRoute">
+      <span v-show="isHomeRoute" style="width: 100%">
         {{ stream.name }}
-      </div>
+      </span>
       <v-btn v-show="!isHomeRoute" plain small class="mt-3 pa-0" :to="'/streams/' + stream.id">
         <v-icon small>mdi-chevron-left</v-icon>
         back to stream
@@ -17,11 +22,15 @@
     </v-card-title>
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
-      <p class="caption grey--text mt-0 pb-0">
-        Created
-        <timeago :datetime="stream.createdAt"></timeago>
-        ({{ streamDate }})
+      <p>
+        Updated
+        <timeago v-tooltip="formatDate(stream.updatedAt)" :datetime="stream.updatedAt"></timeago>
       </p>
+      <p>
+        Created
+        <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
+      </p>
+
       <p>
         <v-icon small>mdi-source-branch</v-icon>
         &nbsp;
@@ -31,7 +40,7 @@
         </span>
       </p>
       <p>
-        <v-icon small>mdi-history</v-icon>
+        <v-icon small>mdi-source-commit</v-icon>
         &nbsp;
         <span>
           {{ stream.commits.totalCount }}
@@ -153,19 +162,19 @@ export default {
     },
     userId() {
       return localStorage.getItem('uuid')
-    },
-    streamDate() {
-      if (!this.stream) return null
-      let date = new Date(this.stream.createdAt)
-      let options = { year: 'numeric', month: 'short', day: 'numeric' }
-
-      return date.toLocaleString(undefined, options)
     }
   },
   methods: {
     editClosed() {
       this.editStreamDialog = false
       this.$apollo.queries.stream.refetch()
+    },
+    formatDate(d) {
+      if (!this.stream) return null
+      let date = new Date(d)
+      let options = { year: 'numeric', month: 'short', day: 'numeric' }
+
+      return date.toLocaleString(undefined, options)
     }
   }
 }

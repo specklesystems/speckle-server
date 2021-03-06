@@ -40,7 +40,7 @@
                   "
                   small
                 >
-                  mdi-history
+                  mdi-source-commit
                 </v-icon>
                 <span class="mr-2">{{ stream.commits.totalCount }}</span>
                 <v-icon

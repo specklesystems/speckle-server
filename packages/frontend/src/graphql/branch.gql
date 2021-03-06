@@ -1,14 +1,15 @@
 query Stream($streamId: String!, $branchName: String!) {
   stream(id: $streamId) {
     id
+    name
     branch(name: $branchName) {
       id
       name
       description
-      commits{
+      commits {
         totalCount
         cursor
-        items{
+        items {
           id
           authorName
           authorId

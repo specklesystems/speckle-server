@@ -14,7 +14,7 @@
       />
       <div v-if="$apollo.loading">Searching.</div>
       <v-list
-        v-if="search.length >= 3 && userSearch && userSearch.items"
+        v-if="search && search.length >= 3 && userSearch && userSearch.items"
         dense
         one-line
         class="px-0 mx-0"
@@ -116,7 +116,6 @@ export default {
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    user: {},
     loading: false
   }),
   apollo: {
@@ -149,7 +148,6 @@ export default {
   },
   computed: {
     roles() {
-      console.log(this.serverInfo.roles)
       return this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams').reverse()
     },
     collaborators() {
@@ -199,7 +197,6 @@ export default {
       this.loading = false
     },
     async setUserPermissions(user) {
-      console.log(user.role)
       this.loading = true
       await this.grantPermissionUser(user)
       this.loading = false

@@ -28,7 +28,7 @@
       <v-container class="hidden-md-and-up">
         <v-row>
           <v-col>
-            <v-menu
+            <!--  <v-menu
               :value="showMobileMenu"
               transition="slide-y-transition"
               bottom
@@ -43,21 +43,21 @@
               </template>
               <v-card class="background2">
                 <v-row>
-                  <!-- <v-col v-for="link in navLinks" :key="link.name" cols="12">
+                  <v-col v-for="link in navLinks" :key="link.name" cols="12">
                     <v-btn text block :to="link.link">
                       {{ link.name }}
                     </v-btn>
-                  </v-col> -->
+                  </v-col> 
                   <v-col cols="12" class="px-10 pb-7">
                     <v-divider class="mb-5"></v-divider>
                     <search-bar />
                   </v-col>
                 </v-row>
               </v-card>
-            </v-menu>
+            </v-menu>-->
           </v-col>
           <v-col class="text-center">
-            <v-btn text to="/" active-class="no-active" icon>
+            <v-btn text to="/" active-class="no-active" large icon>
               <v-img contain max-height="40" max-width="40" src="@/assets/logo.svg" />
             </v-btn>
           </v-col>

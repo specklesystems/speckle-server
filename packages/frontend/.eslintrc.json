@@ -35,7 +35,7 @@
     // "space-in-parens": [2, "always"],
     "keyword-spacing": 2,
     "semi": "off",
-    "indent": ["error", 2],
+    "indent": ["error", 2, { "SwitchCase": 1 }],
     "space-unary-ops": [
       2,
       {

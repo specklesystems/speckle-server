@@ -19,7 +19,13 @@
           </v-dialog>
         </v-card>
 
-        <v-card v-if="user" rounded="lg" class="mx-5 mt-3" elevation="0" color="background">
+        <v-card
+          v-if="user"
+          rounded="lg"
+          class="mx-5 mt-3 d-none d-md-block"
+          elevation="0"
+          color="background"
+        >
           <v-card-title class="subtitle-1 pb-0">Recent Commits</v-card-title>
           <v-list color="transparent" two-lines class="recent-commits">
             <v-list-item v-for="(commit, i) in user.commits.items" :key="i">
@@ -52,8 +58,8 @@
           </v-dialog>
         </v-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="7">
-        <v-card class="mt-5 mb-3 mx-4">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="8">
+        <v-card v-if="user" class="mt-5 mb-3 mx-4" color="background2" flat>
           <v-card-text class="body-1">
             <span>
               You have
@@ -67,7 +73,7 @@
           </v-card-text>
         </v-card>
         <v-card elevation="0" color="transparent">
-          <div v-if="$apollo.loading">
+          <div v-if="$apollo.loading" class="mx-5">
             <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
           </div>
           <v-card-text v-if="streams && streams.items">
