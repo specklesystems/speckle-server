@@ -13,5 +13,5 @@ exports.up = async ( knex ) => {
 }
 
 exports.down = async ( knex ) => {
-  knex.schema.dropTableIfExists( 'invites' )
+  await knex.schema.dropTableIfExists( 'invites' )
 }

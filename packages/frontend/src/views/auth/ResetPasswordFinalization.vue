@@ -4,14 +4,7 @@
       One step closer to resetting your password.
     </v-card-title>
     <v-alert v-model="errors" type="error" :icon="null" text multi-line dismissible>
-      <v-row align="center">
-        <v-col class="grow">
-          {{ errorMessage }}
-        </v-col>
-        <v-col class="shrink">
-          <v-btn color="primary" plain to="/authn/login">Login</v-btn>
-        </v-col>
-      </v-row>
+      {{ errorMessage }}
     </v-alert>
     <v-alert v-model="success" :icon="null" text>
       <v-row align="center">
@@ -78,7 +71,9 @@
             </v-row>
           </v-col>
           <v-col cols="12">
-            <v-btn type="submit" block large color="primary" @click="resetPassword()">Save new password</v-btn>
+            <v-btn type="submit" block large color="primary" @click="resetPassword()">
+              Save new password
+            </v-btn>
           </v-col>
         </v-row>
       </v-form>
@@ -126,10 +121,7 @@ export default {
       },
 
       validation: {
-        emailRules: [
-          (v) => !!v || 'E-mail is required',
-          (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
-        ]
+        passwordRules: [(v) => !!v || 'Required']
       },
       tokenId: null,
       errors: false,
@@ -158,6 +150,9 @@ export default {
     }, 1000),
     async resetPassword() {
       try {
+        this.success = false
+        this.errors = false
+        this.errorMessage = null
         let valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf) throw new Error('Passwords do not match')

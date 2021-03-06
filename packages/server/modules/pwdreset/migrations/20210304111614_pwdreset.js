@@ -8,5 +8,5 @@ exports.up = async ( knex ) => {
 }
 
 exports.down = async ( knex ) => {
-  knex.schema.dropTableIfExists( 'pwdreset_tokens' )
+  await knex.schema.dropTableIfExists( 'pwdreset_tokens' )
 }
