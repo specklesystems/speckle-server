@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 'use strict'
 let debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
@@ -22,7 +23,7 @@ exports.init = async ( app, options ) => {
 }
 
 exports.finalize = async () => {
-
+  // Nothing to do here.
 }
 
 exports.account = account
@@ -41,6 +42,4 @@ exports.sendEmail = async( { from, to, subject, text, html } ) => {
     text,
     html
   } )
-
-  console.log( nodemailer.getTestMessageUrl( info ) )
 }

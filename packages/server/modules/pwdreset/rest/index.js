@@ -97,11 +97,11 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
       if ( !req.body.tokenId || !req.body.password ) throw new Error( 'Invalid request.' )
 
       let token = await ResetTokens().where( { id: req.body.tokenId } ).select( '*' ).first()
-      if ( !token ) throw new Error( 'Invalid request' )
+      if ( !token ) throw new Error( 'Invalid request.' )
 
       const timeDiff = Math.abs( Date.now( ) - new Date( token.createdAt ) )
       if ( timeDiff / 36e5 > 1 ) {
-        await ResetTokens().where( { id: req.body.tokenId } ).del()
+
         throw new Error( 'Link expired.' )
       }
 
