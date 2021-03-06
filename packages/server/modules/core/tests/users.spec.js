@@ -38,7 +38,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
   } )
 
 
-  describe( 'Users', ( ) => {
+  describe( 'Users @core-users', ( ) => {
 
     it( 'First created user should be a server admin', async ( ) => {
 
@@ -146,7 +146,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
     } )
   } )
 
-  describe( 'API Tokens', ( ) => {
+  describe( 'API Tokens @core-apitokens', ( ) => {
     let myFirstToken
     let pregeneratedToken
     let revokedToken

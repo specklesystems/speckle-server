@@ -20,9 +20,9 @@ let addr
 let wsAddr
 
 describe( 'GraphQL API Core @core-api', ( ) => {
-  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow' }
-  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow' }
-  let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow' }
+  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wowwowwowwowwow' }
+  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wowwowwowwowwow' }
+  let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wowwowwowwowwow' }
   let testServer
 
   // set up app & two basic users to ping pong permissions around
@@ -530,7 +530,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
           await createUser( {
             name: `Master ${ i <= 2 ? 'Baker' : 'Miller' } Matteo The ${i}${ i === 1 ? 'st' : i === 2 ? 'nd' : i === 3 ? 'rd' : 'th'} of His Name`,
             email: `matteo_${i}@tomato.com`,
-            password: `${ i % 2 === 0 ? 'Baker' : 'Tomato' }`
+            password: `${ i % 2 === 0 ? 'BakerBakerBakerBaker' : 'TomatoTomatoTomatoTomato' }`
           } )
         }
 
