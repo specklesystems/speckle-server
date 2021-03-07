@@ -3,7 +3,7 @@ let debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 
 exports.init = async ( app, options ) => {
-  debug( 'speckle:modules' )( '♻️ Init pwd reset module' )
+  debug( 'speckle:modules' )( '♻️  Init pwd reset module' )
 
   require( './rest' )( app )
 }
