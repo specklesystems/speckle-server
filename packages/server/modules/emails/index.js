@@ -9,37 +9,65 @@ let account, transporter
 exports.init = async ( app, options ) => {
   debug( 'speckle:modules' )( '📧 Init emails module' )
 
-  // TODO: check env variables and init transporter with those
-  account = await nodemailer.createTestAccount()
-  transporter = nodemailer.createTransport( {
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
-    auth: {
-      user: account.user,
-      pass: account.pass
+  if ( process.env.NODE_ENV === 'test' ) {
+    account = await nodemailer.createTestAccount()
+    transporter = nodemailer.createTransport( {
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: account.user,
+        pass: account.pass
+      }
+    } )
+
+    return
+  }
+
+  if ( process.env.EMAIL === 'true' ) {
+    try {
+      transporter = nodemailer.createTransport( {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT || 587,
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: {
+          user: process.env.EMAIL_USERNAME,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      } )
+    } catch ( e ) {
+      debug( 'speckle:modules' )( '📧 Failed to initialise email provider.' )
     }
-  } )
+  } else {
+    debug( 'speckle:modules' )( '📧 Failed to initialise email provider. Server functionality will be limited.' )
+  }
+
 }
 
 exports.finalize = async () => {
   // Nothing to do here.
 }
 
-exports.account = account
 exports.transporter = transporter
 
 exports.sendEmail = async( { from, to, subject, text, html } ) => {
   if ( !transporter ) {
-    debug( 'speckle:errors' )( 'No email transport present. Aborting.' )
+    debug( 'speckle:errors' )( 'No email transport present. Cannot send emails.' )
     return false
   }
 
-  let info = await transporter.sendMail( {
-    from: from || 'hello@speckle.systems',
-    to,
-    subject,
-    text,
-    html
-  } )
+  try {
+    let info = await transporter.sendMail( {
+      from: from || '"Speckle" <hello@speckle.systems>',
+      to,
+      subject,
+      text,
+      html
+    } )
+    if ( process.env.NODE_ENV === 'test' ) {
+      debug( 'speckle:test' )( nodemailer.getTestMessageUrl( info ) )
+    }
+  } catch ( e ) {
+
+  }
 }

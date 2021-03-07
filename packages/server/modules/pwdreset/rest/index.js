@@ -59,11 +59,11 @@ Speckle
 Hi ${user.name},
 <br>
 <br>
-You've requested a password reset for your Speckle account at <b>${process.env.CANONICAL_URL}</b>.
-If this wasn't you, you can safely ignore this email. Otherwise, click <b><a href="${resetLink}">here to reset your password</a></b>.
+You've requested a password reset for your Speckle account. If this wasn't you, you can safely ignore this email. Otherwise, click <b><a href="${resetLink}">here to reset your password</a></b>.
+The link is <b>valid for one hour</b> only.
 <br>
 <br>
-The link above is <b>valid for one hour</b> only. If you continue to have problems, please get in touch!
+If you continue to have problems, please get in touch!
 <br>
 <br>
 Warm regards,
@@ -71,10 +71,10 @@ Warm regards,
 Speckle
 <br>
 <br>
-<img src="https://speckle.systems/content/images/2021/02/logo_big-1.png" style="width:40px; height:40px;">
+<img src="https://speckle.systems/content/images/2021/02/logo_big-1.png" style="width:30px; height:30px;">
 <br>
 <br>
-<caption style="size:10px; color:#7F7F7F;">
+<caption style="size:8px; color:#7F7F7F; width:400px; text-align: left;">
 This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, deployed and managed by ${serverInfo.company}. Your admin contact is ${serverInfo.adminContact ? serverInfo.adminContact : '[not provided]'}.
 </caption>
 `
