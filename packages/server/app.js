@@ -125,7 +125,7 @@ exports.startHttp = async ( app ) => {
 
     debug( 'speckle:startup' )( '✨ Proxying frontend (dev mode):' )
     debug( 'speckle:startup' )( `👉 main application: http://localhost:${port}/` )
-    debug( 'speckle:hint' )( 'ℹ️  Don\'t forget to run "npm run dev:frontend" in a different terminal to start the vue application.' )
+
   }
 
   // Production mode -> serve things statically.

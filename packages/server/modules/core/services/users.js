@@ -21,6 +21,7 @@ module.exports = {
     user.id = crs( { length: 10 } )
 
     if ( user.password ) {
+      if ( user.password.length < 8 ) throw new Error( 'Password to short; needs to be 8 characters or longer.' )
       user.passwordDigest = await bcrypt.hash( user.password, 10 )
     }
     delete user.password
@@ -72,6 +73,7 @@ module.exports = {
 
   async getUserByEmail( { email } ) {
     let user = await Users( ).where( { email: email } ).select( '*' ).first( )
+    if ( !user ) throw new Error( 'User not found' )
     delete user.passwordDigest
     return user
   },
@@ -87,6 +89,12 @@ module.exports = {
     delete user.password
     delete user.email
     await Users( ).where( { id: id } ).update( user )
+  },
+
+  async updateUserPassword( { id, newPassword } ) {
+    if ( newPassword.length < 8 ) throw new Error( 'Password to short; needs to be 8 characters or longer.' )
+    let passwordDigest = await bcrypt.hash( newPassword, 10 )
+    await Users().where( { id:id } ).update( { passwordDigest } )
   },
 
   async searchUsers( searchQuery, limit, cursor ) {

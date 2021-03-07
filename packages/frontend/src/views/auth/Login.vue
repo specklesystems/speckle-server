@@ -1,6 +1,6 @@
 <template>
   <v-card class="elevation-20" rounded="lg">
-        <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
+    <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
       <v-img src="@/assets/logo.svg" max-width="30" />
     </v-card-title>
     <v-card-title class="justify-center pt-5 pb-2">
@@ -25,7 +25,7 @@
         </v-row>
       </v-alert>
       <v-card-text>
-        <v-form ref="form" class="px-3">
+        <v-form ref="form" class="px-3" @submit.prevent="loginUser()">
           <v-row style="margin-top: -10px" dense>
             <v-col cols="12">
               <v-text-field
@@ -50,7 +50,7 @@
               />
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" @click="loginUser">Log in</v-btn>
+              <v-btn block large color="primary" @click="loginUser()" type="submit">Log in</v-btn>
             </v-col>
           </v-row>
         </v-form>
@@ -58,9 +58,17 @@
       <v-card-title class="justify-center caption">
         <div class="mx-4 align-self-center">Don't have an account?</div>
         <div class="mx-4 align-self-center">
-          <v-btn color="primary" plain text :to="registerRoute">Register</v-btn>
+          <v-btn color="primary" text :to="registerRoute">Register</v-btn>
         </div>
       </v-card-title>
+      <div class="justify-center caption text-center pb-5">
+        <div class="mx-4 align-self-center">
+          <a href="/authn/resetpassword" class="text-decoration-none">Forgot your password?</a>
+        </div>
+        <!-- <div class="mx-4 align-self-center">
+          <v-btn color="primary" plain text to="/authn/resetpassword">Reset your password</v-btn>
+        </div> -->
+      </div>
     </div>
   </v-card>
 </template>
