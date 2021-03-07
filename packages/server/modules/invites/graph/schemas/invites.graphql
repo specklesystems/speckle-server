@@ -1,34 +1,34 @@
 
-extend type Query {
-  """
-  Checks wether an invite exists.
-  """
-  inviteValidate(id: String): Boolean
-}
+# extend type Query {
+#   """
+#   Checks wether an invite exists.
+#   """
+#   inviteValidate(id: String): Boolean
+# }
 
-extend type Mutation {
-  inviteUser(invite: InviteCreateInput!): Boolean @hasRole(role: "server:user") @hasScope(scope: "users:invite")
+# extend type Mutation {
+#   inviteUser(invite: InviteCreateInput!): Boolean @hasRole(role: "server:user") @hasScope(scope: "users:invite")
 
-  inviteAccept(invite: InviteAcceptInput ): Boolean
-}
+#   inviteAccept(invite: InviteAcceptInput ): Boolean
+# }
 
-input InviteCreateInput {
-  email: String!
-  """
-  Optional, the type of resource this user will be granted access to (e.g., 'stream') once they register.
-  """
-  resourceTarget: String
-  """
-  Optional, the id of the resource this user will be granted access to once they register.
-  """
-  resourceId: String
-  """
-  Optional, the role this user will be granted once they register.
-  """
-  role: String
-}
+# input InviteCreateInput {
+#   email: String!
+#   """
+#   Optional, the type of resource this user will be granted access to (e.g., 'stream') once they register.
+#   """
+#   resourceTarget: String
+#   """
+#   Optional, the id of the resource this user will be granted access to once they register.
+#   """
+#   resourceId: String
+#   """
+#   Optional, the role this user will be granted once they register.
+#   """
+#   role: String
+# }
 
-input InviteAcceptInput {
-  email: String!
-  inviteId: String!
-}
+# input InviteAcceptInput {
+#   email: String!
+#   inviteId: String!
+# }
