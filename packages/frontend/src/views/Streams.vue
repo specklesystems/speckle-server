@@ -77,7 +77,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8">
-        <v-card v-if="user" class="mt-5 mb-3 mx-4" color="background2" flat>
+        <v-card v-if="user" class="mt-5 mx-4" color="background2" flat>
           <v-card-text class="body-1">
             <span>
               You have
@@ -94,7 +94,7 @@
           <div v-if="$apollo.loading" class="mx-5">
             <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
           </div>
-          <v-card-text v-if="streams && streams.items">
+          <v-card-text v-if="streams && streams.items" class="mt-0 pt-3">
             <div v-for="(stream, i) in streams.items" :key="i">
               <list-item-stream :stream="stream"></list-item-stream>
             </div>

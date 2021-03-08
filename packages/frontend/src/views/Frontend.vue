@@ -28,7 +28,7 @@
       <v-container class="hidden-md-and-up">
         <v-row>
           <v-col>
-            <!--  <v-menu
+            <v-menu
               :value="showMobileMenu"
               transition="slide-y-transition"
               bottom
@@ -38,23 +38,23 @@
             >
               <template #activator="{ on, attrs }">
                 <v-btn icon v-bind="attrs" v-on="on" @click="showMobileMenu = true">
-                  <v-icon>mdi-menu</v-icon>
+                  <v-icon>mdi-magnify</v-icon>
                 </v-btn>
               </template>
               <v-card class="background2">
                 <v-row>
-                  <v-col v-for="link in navLinks" :key="link.name" cols="12">
+                  <!-- <v-col v-for="link in navLinks" :key="link.name" cols="12">
                     <v-btn text block :to="link.link">
                       {{ link.name }}
                     </v-btn>
-                  </v-col> 
+                  </v-col> -->
                   <v-col cols="12" class="px-10 pb-7">
                     <v-divider class="mb-5"></v-divider>
                     <search-bar />
                   </v-col>
                 </v-row>
               </v-card>
-            </v-menu>-->
+            </v-menu>
           </v-col>
           <v-col class="text-center">
             <v-btn text to="/" active-class="no-active" large icon>

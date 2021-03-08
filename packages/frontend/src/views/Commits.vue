@@ -38,17 +38,11 @@
         <v-subheader class="text-uppercase">
           Commits ({{ stream.branch.commits.totalCount }})
         </v-subheader>
-        <v-card-text v-if="stream.branch.commits.totalCount === 0">
-          <i>
-            It's a bit lonely here,
-            <b>{{ stream.branch.name }}</b>
-            has no data yet.
-            <br />
-            Check out our 📚
-            <a href="https://speckle.guide">User Guide</a>
-            on how to send data to this branch!
-          </i>
-        </v-card-text>
+        <no-data-placeholder
+          v-if="stream.branch.commits.totalCount === 0"
+          :name="stream.branch.name"
+        />
+
         <v-card-text>
           <list-item-commit
             v-for="item in stream.branch.commits.items"
@@ -66,10 +60,11 @@ import gql from 'graphql-tag'
 import branchQuery from '../graphql/branch.gql'
 import ListItemCommit from '../components/ListItemCommit'
 import BranchEditDialog from '../components/dialogs/BranchEditDialog'
+import NoDataPlaceholder from '../components/NoDataPlaceholder'
 
 export default {
   name: 'Branch',
-  components: { ListItemCommit, BranchEditDialog },
+  components: { ListItemCommit, BranchEditDialog, NoDataPlaceholder },
   props: {
     userRole: {
       type: String,

@@ -42,26 +42,6 @@
             <v-icon class="mr-2 float-left">mdi-source-branch</v-icon>
             {{ branches.totalCount }} branch{{ branches.totalCount > 1 ? 'es' : '' }}
           </v-btn>
-
-          <v-btn
-            v-if="selectedBranch"
-            class="mx-2 mb-2"
-            color="primary"
-            text
-            plain
-            :to="
-              '/streams/' +
-              $route.params.streamId +
-              '/branches/' +
-              encodeURIComponent(selectedBranch.name) +
-              '/commits'
-            "
-          >
-            <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
-            {{ selectedBranch.commits.totalCount }} commit{{
-              selectedBranch.commits.totalCount > 1 ? 's' : ''
-            }}
-          </v-btn>
         </v-sheet>
 
         <div v-if="latestCommit" style="height: 50vh">
@@ -69,6 +49,7 @@
         </div>
 
         <v-sheet v-if="latestCommit" color="background2">
+          <!-- LAST COMMIT -->
           <v-list-item>
             <v-list-item-icon class="mt-5 mr-4">
               <user-avatar
@@ -93,31 +74,68 @@
                 <timeago :datetime="latestCommit.createdAt"></timeago>
               </v-list-item-subtitle>
             </v-list-item-content>
-            <v-list-item-action class="mr-4">
-              <v-row align="center" justify="center">
-                <v-chip small class="mr-2">
-                  <v-icon small class="mr-2">mdi-source-branch</v-icon>
-                  {{ latestCommit.branchName }}
-                </v-chip>
-                <source-app-avatar :application-name="latestCommit.sourceApplication" />
-              </v-row>
+            <v-list-item-action>
+              <source-app-avatar :application-name="latestCommit.sourceApplication" />
             </v-list-item-action>
           </v-list-item>
+          <!-- LAST 2 COMMITS -->
+          <v-list dense color="transparent" class="mb-0 pb-0">
+            <div v-for="(commit, i) in selectedBranch.commits.items" :key="commit.id">
+              <v-list-item v-if="i > 0">
+                <v-list-item-icon class="mt-3 mr-4">
+                  <user-avatar
+                    :id="commit.authorId"
+                    :avatar="commit.authorAvatar"
+                    :name="commit.authorName"
+                    :size="30"
+                  />
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title class="mb-2 pt-1">
+                    <router-link
+                      :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id"
+                    >
+                      {{ commit.message }}
+                    </router-link>
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    <b>{{ commit.authorName }}</b>
+                    &nbsp;
+                    <timeago :datetime="commit.createdAt"></timeago>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+                <v-list-item-action>
+                  <source-app-avatar :application-name="latestCommit.sourceApplication" />
+                </v-list-item-action>
+              </v-list-item>
+              <v-divider />
+            </div>
+            <v-list-item>
+              <v-list-item-content>
+                <v-btn
+                  v-if="selectedBranch"
+                  color="primary"
+                  text
+                  :to="
+                    '/streams/' +
+                    $route.params.streamId +
+                    '/branches/' +
+                    encodeURIComponent(selectedBranch.name) +
+                    '/commits'
+                  "
+                >
+                  <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
+                  SEE {{ selectedBranch.commits.totalCount > 1 ? 'ALL' : '' }}
+                  {{ selectedBranch.commits.totalCount }} commit{{
+                    selectedBranch.commits.totalCount > 1 ? 's' : ''
+                  }}
+                </v-btn>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
         </v-sheet>
 
-        <v-sheet v-else-if="selectedBranch" color="background2">
-          <v-card-text class="pb-7 px-7">
-            <i>
-              It's a bit lonely here,
-              <b>{{ selectedBranch.name }}</b>
-              has no data yet.
-              <br />
-              Check out our 📚
-              <a href="https://speckle.guide">User Guide</a>
-              on how to send data to this branch!
-            </i>
-          </v-card-text>
-        </v-sheet>
+        <no-data-placeholder v-else-if="selectedBranch" :name="selectedBranch.name" />
       </v-card>
 
       <v-card
@@ -166,8 +184,8 @@ import marked from 'marked'
 import DOMPurify from 'dompurify'
 import gql from 'graphql-tag'
 import StreamDescriptionDialog from '../components/dialogs/StreamDescriptionDialog'
+import NoDataPlaceholder from '../components/NoDataPlaceholder'
 import SourceAppAvatar from '../components/SourceAppAvatar'
-import streamCommitsQuery from '../graphql/streamCommits.gql'
 import streamBranchesQuery from '../graphql/streamBranches.gql'
 import Renderer from '../components/Renderer'
 import UserAvatar from '../components/UserAvatar'
@@ -178,6 +196,7 @@ export default {
     UserAvatar,
     StreamDescriptionDialog,
     SourceAppAvatar,
+    NoDataPlaceholder,
     Renderer
   },
   props: {
@@ -194,15 +213,6 @@ export default {
     }
   },
   apollo: {
-    commits: {
-      query: streamCommitsQuery,
-      variables() {
-        return {
-          id: this.$route.params.streamId
-        }
-      },
-      update: (data) => data.stream.commits
-    },
     branches: {
       query: streamBranchesQuery,
       variables() {
@@ -270,7 +280,6 @@ export default {
   mounted() {
     this.$apollo.queries.branches.refetch()
     this.$apollo.queries.description.refetch()
-    this.$apollo.queries.commits.refetch()
   },
   methods: {
     closeDescription() {

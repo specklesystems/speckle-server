@@ -57,7 +57,7 @@
 
         <span v-if="isSelf" class="caption">ID: {{ user.id }}</span>
       </v-card-text>
-      <v-divider class="pb-2"></v-divider>
+      <v-divider v-if="isSelf" class="pb-2"></v-divider>
       <v-card-actions>
         <v-btn v-if="isSelf" small plain color="primary" text block @click="userDialog = true">
           <v-icon small class="mr-2">mdi-cog-outline</v-icon>
@@ -72,23 +72,22 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import userQuery from '../graphql/user.gql'
 import UserEditDialog from '../components/dialogs/UserEditDialog'
 import VImageInput from 'vuetify-image-input/a-la-carte'
 
 export default {
   components: { UserEditDialog, VImageInput },
-
+  props: {
+    user: {
+      type: Object,
+      default: null
+    }
+  },
   data() {
     return {
       userDialog: false,
       avatarDialog: false,
       imageData: null
-    }
-  },
-  apollo: {
-    user: {
-      query: userQuery
     }
   },
   computed: {

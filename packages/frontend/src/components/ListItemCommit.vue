@@ -5,11 +5,11 @@
         :id="commit.authorId"
         :avatar="commit.authorAvatar"
         :name="commit.authorName"
-        :size="30"
+        :size="40"
       />
     </v-list-item-icon>
     <v-list-item-content>
-      <v-list-item-title class="my-2 py-1">
+      <v-list-item-title class="mt-0 pt-0 py-1">
         {{ commit.message }}
         <span v-if="commit.branchName" class="caption">
           <v-chip small style="top: -3px">
