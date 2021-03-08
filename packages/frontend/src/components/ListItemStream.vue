@@ -22,7 +22,9 @@
           </v-chip>
           <v-btn
             v-tooltip="
-              stream.branches.totalCount + ' branch' + (stream.branches.totalCount > 1 ? 'es' : '')
+              stream.branches.totalCount +
+              ' branch' +
+              (stream.branches.totalCount === 1 ? '' : 'es')
             "
             plain
             color="primary"
@@ -37,7 +39,7 @@
 
           <v-btn
             v-tooltip="
-              stream.commits.totalCount + ' commit' + (stream.commits.totalCount > 1 ? 's' : '')
+              stream.commits.totalCount + ' commit' + (stream.commits.totalCount === 1 ? '' : 's')
             "
             plain
             color="primary"

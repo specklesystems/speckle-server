@@ -127,7 +127,7 @@
                   <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
                   SEE {{ selectedBranch.commits.totalCount > 1 ? 'ALL' : '' }}
                   {{ selectedBranch.commits.totalCount }} commit{{
-                    selectedBranch.commits.totalCount > 1 ? 's' : ''
+                    selectedBranch.commits.totalCount === 1 ? '' : 's'
                   }}
                 </v-btn>
               </v-list-item-content>
