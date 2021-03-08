@@ -20,37 +20,55 @@
         </v-card>
 
         <v-card
-          v-if="user"
+          v-if="recentActivity"
           rounded="lg"
           class="mx-5 mt-3 d-none d-md-block"
           elevation="0"
           color="background"
         >
-          <v-card-title class="subtitle-1 pb-0">Recent Commits</v-card-title>
+          <v-card-title class="subtitle-1 pb-0">Recent Activity</v-card-title>
           <v-list color="transparent" two-lines class="recent-commits">
-            <v-list-item v-for="(commit, i) in user.commits.items" :key="i">
-              <v-list-item-avatar size="30" class="mr-2">
-                <user-avatar
-                  :id="commit.authorId"
-                  :avatar="commit.authorAvatar"
-                  :size="30"
-                  :name="commit.authorName"
-                />
-              </v-list-item-avatar>
-              <v-list-item-content>
-                <v-list-item-title class="subtitle-2">
-                  <router-link :to="'streams/' + commit.streamId + '/commits/' + commit.id">
-                    {{ commit.message }}
-                  </router-link>
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  in
-                  <router-link :to="'streams/' + commit.streamId">
-                    {{ commit.streamName }}
-                  </router-link>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
+            <div v-for="(a, i) in recentActivity" :key="i">
+              <v-list-item v-if="a.__typename === 'Commit'">
+                <v-list-item-avatar size="30" class="mr-2">
+                  <user-avatar
+                    :id="a.authorId"
+                    :avatar="a.authorAvatar"
+                    :size="30"
+                    :name="a.authorName"
+                  />
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title class="subtitle-2">
+                    <router-link :to="'streams/' + a.streamId + '/commits/' + a.id">
+                      {{ a.message }}
+                    </router-link>
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    <i>
+                      Sent to
+                      <router-link :to="'streams/' + a.streamId">
+                        {{ a.streamName }}
+                      </router-link>
+                    </i>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item v-if="a.__typename === 'Stream'">
+                <v-list-item-content>
+                  <v-list-item-title class="subtitle-2">
+                    <router-link :to="'streams/' + a.id">
+                      {{ a.name }}
+                    </router-link>
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    <i>A new stream was created</i>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+              <v-divider v-if="i < recentActivity.length - 1" />
+            </div>
           </v-list>
           <v-card-actions></v-card-actions>
           <v-dialog v-model="newStreamDialog" max-width="500">
@@ -119,7 +137,24 @@ export default {
     streams: [],
     newStreamDialog: false
   }),
-  computed: {},
+  computed: {
+    recentActivity() {
+      let activity = []
+
+      if (this.streams && this.streams.items) {
+        this.streams.items.forEach((x) =>
+          x.commits.items.forEach((y) => {
+            y.streamName = x.name
+            activity.push(y)
+          })
+        )
+        activity.push(...this.streams.items)
+      }
+
+      activity.sort(this.compareUpdates)
+      return activity
+    }
+  },
   watch: {},
   methods: {
     infiniteHandler($state) {
@@ -177,6 +212,15 @@ export default {
             console.error(error)
           })
       })
+    },
+    compareUpdates(a, b) {
+      if (a.createdAt < b.createdAt) {
+        return 1
+      }
+      if (a.createdAt > b.createdAt) {
+        return -1
+      }
+      return 0
     }
   }
 }

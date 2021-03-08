@@ -15,16 +15,6 @@ query {
     }
     commits {
       totalCount
-      items {
-        id
-        streamId
-        streamName
-        authorId
-        authorName
-        authorAvatar
-        message
-        branchName
-      }
     }
   }
 }
