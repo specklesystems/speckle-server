@@ -20,7 +20,7 @@ module.exports = {
     // If no total children count is passed in, get it from the original object
     // that this commit references.
     if ( !totalChildrenCount ){
-      let { totalChildrenCount: tc } = await getObject( { objectId } )
+      let { totalChildrenCount: tc } = await getObject( {objectId} )
       totalChildrenCount = tc || 1
     }
 
@@ -36,12 +36,12 @@ module.exports = {
     } )
 
     // Link it to a branch
-    await BranchCommits( ).insert( { branchId: branchId, commitId: id } )
+    await BranchCommits( ).insert( {branchId: branchId, commitId: id} )
     // Link it to a stream
-    await StreamCommits( ).insert( { streamId: streamId,commitId: id } )
+    await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
 
     // update stream updated at
-    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
+    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
     return id
   },
 
@@ -153,13 +153,12 @@ module.exports = {
 
     let query =
       Commits( )
-        .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' }, { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] )
+        .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { streamId: 'stream_commits.streamId' }, { streamName: 'streams.name' } ] )
         .select( )
         .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
         .join( 'streams', 'stream_commits.streamId', 'streams.id' )
         .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
         .join( 'branches', 'branches.id', 'branch_commits.branchId' )
-        .join( 'users', 'commits.author', 'users.id' )
         .where( 'author', userId )
 
     if ( publicOnly )
