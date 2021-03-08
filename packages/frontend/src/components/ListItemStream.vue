@@ -29,6 +29,7 @@
             text
             class="px-0 ml-3"
             small
+            :to="'/streams/' + stream.id + '/branches'"
           >
             <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
             {{ stream.branches.totalCount }}
@@ -43,6 +44,7 @@
             text
             class="px-0"
             small
+            :to="'/streams/' + stream.id + '/branches/main/commits'"
           >
             <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
             {{ stream.commits.totalCount }}
