@@ -50,7 +50,11 @@
             text
             plain
             :to="
-              '/streams/' + $route.params.streamId + '/branches/' + selectedBranch.name + '/commits'
+              '/streams/' +
+              $route.params.streamId +
+              '/branches/' +
+              encodeURIComponent(selectedBranch.name) +
+              '/commits'
             "
           >
             <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
@@ -285,7 +289,11 @@ export default {
     },
     changeBranch() {
       this.$router.push({
-        path: '/streams/' + this.$route.params.streamId + '/branches/' + this.selectedBranch.name
+        path:
+          '/streams/' +
+          this.$route.params.streamId +
+          '/branches/' +
+          encodeURIComponent(this.selectedBranch.name)
       })
     }
   }

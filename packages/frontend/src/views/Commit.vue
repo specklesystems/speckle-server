@@ -140,7 +140,11 @@ export default {
           disabled: false,
           exact: true,
           to:
-            '/streams/' + this.stream.id + '/branches/' + this.stream.commit.branchName + '/commits'
+            '/streams/' +
+            this.stream.id +
+            '/branches/' +
+            encodeURIComponent(this.stream.commit.branchName) +
+            '/commits'
         },
         {
           text: this.stream.commit.message,

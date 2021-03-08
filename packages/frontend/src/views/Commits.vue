@@ -117,7 +117,11 @@ export default {
           text: this.stream.branch.name,
           disabled: true,
           exact: true,
-          to: '/streams/' + this.stream.id + '/branches/' + this.stream.branch.name
+          to:
+            '/streams/' +
+            this.stream.id +
+            '/branches/' +
+            encodeURIComponent(this.stream.branch.name)
         }
       ]
     }
