@@ -17,7 +17,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: cristi/cicd-for-main
+              only: main
 
 
 jobs:
