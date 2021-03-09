@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword } = require( '../services/users' )
+const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 
 describe( 'Actors & Tokens @user-services', ( ) => {
@@ -38,13 +38,13 @@ describe( 'Actors & Tokens @user-services', ( ) => {
   } )
 
 
-  describe( 'Users', ( ) => {
+  describe( 'Users @core-users', ( ) => {
 
     it( 'First created user should be a server admin', async ( ) => {
 
     } )
 
-    it( 'Should create an actor', async ( ) => {
+    it( 'Should create an user', async ( ) => {
       let newUser = { ...myTestActor }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
@@ -57,7 +57,15 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( actorId ).to.be.a( 'string' )
     } )
 
-    it( 'Should not create an actor with the same email', async ( ) => {
+    it( 'Should not create a user with a too small password', async () => {
+      try {
+        await createUser( { name: 'Dim Sum', email: 'dim@gmail.com', password: '1234567' } )
+      } catch ( e ) {
+        // pass
+      }
+    } )
+
+    it( 'Should not create an user with the same email', async ( ) => {
 
       let newUser = { ...myTestActor }
       newUser.name = 'Bill Gates'
@@ -98,18 +106,18 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
     } )
 
-    it( 'Should get an actor', async ( ) => {
+    it( 'Should get an user', async ( ) => {
       let actor = await getUser( myTestActor.id )
       expect( actor ).to.not.have.property( 'passwordDigest' )
     } )
 
     it( 'Should search and get an users', async ( ) => {
-      let { users } = await searchUsers( "gates", 20, null )
+      let { users } = await searchUsers( 'gates', 20, null )
       expect( users ).to.have.lengthOf( 1 )
-      expect( users[ 0 ].name ).to.equal( "Bill Gates" )
+      expect( users[ 0 ].name ).to.equal( 'Bill Gates' )
     } )
 
-    it( 'Should update an actor', async ( ) => {
+    it( 'Should update an user', async ( ) => {
       let updatedActor = { ...myTestActor }
       updatedActor.name = 'didimitrie'
 
@@ -122,7 +130,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
     it( 'Should not update password', async ( ) => {
       let updatedActor = { ...myTestActor }
-      updatedActor.password = "failwhale"
+      updatedActor.password = 'failwhale'
 
       await updateUser( myTestActor.id, updatedActor )
 
@@ -144,9 +152,17 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( match_wrong ).to.equal( false )
 
     } )
+
+    it( 'Should update the password of a user', async() => {
+      let id = await createUser( { name: 'D', email:'tester@mcbester.com', password:'H4!b5at+kWls-8yh4Guq' } ) // https://mostsecure.pw
+      await updateUserPassword( { id, newPassword: 'Hello Dogs and Cats' } )
+
+      let match = await validatePasssword( { email: 'tester@mcbester.com', password: 'Hello Dogs and Cats' } )
+      expect( match ).to.equal( true )
+    } )
   } )
 
-  describe( 'API Tokens', ( ) => {
+  describe( 'API Tokens @core-apitokens', ( ) => {
     let myFirstToken
     let pregeneratedToken
     let revokedToken

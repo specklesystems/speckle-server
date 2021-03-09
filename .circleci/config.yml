@@ -8,9 +8,17 @@ version: 2.1
 
 workflows:
   version: 2.1
-  build:
+  test:
     jobs:
       - test_server
+  deploy:
+    jobs:
+      - docker_build_and_deploy:
+          context: main-builds
+          filters:
+            branches:
+              only: main
+
 
 jobs:
   test_server:
@@ -43,3 +51,19 @@ jobs:
       - run:
           command: 'bash <(curl -s https://codecov.io/bash)'
           working_directory: 'packages/server'
+
+  docker_build_and_deploy:
+    docker:
+      - image: circleci/golang:1.15
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod u+x ./kubectl
+      - run:
+          name: Create and Deploy Docker image
+          command: ./.circleci/ci-build-and-deploy.sh

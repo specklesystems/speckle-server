@@ -11,7 +11,7 @@ const { scalarResolvers, scalarSchemas } = require( './core/graph/scalars' )
 exports.init = async ( app ) => {
   let dirs = fs.readdirSync( `${appRoot}/modules` )
 
-  let moduleDirs = [ './core', './auth', './apiexplorer' ]
+  let moduleDirs = [ './core', './auth', './apiexplorer', './emails', './pwdreset' ] // TODO: add './invites'
 
   // Stage 1: initialise all modules
   for ( let dir of moduleDirs ){
