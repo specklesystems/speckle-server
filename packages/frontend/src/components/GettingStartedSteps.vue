@@ -6,7 +6,7 @@
       </v-img>
       <v-window v-model="onboarding" class="py-3">
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent" zzzheight="200">
+          <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Welcome!</v-card-title>
             <v-card-text>
               <p>
@@ -29,7 +29,7 @@
           </v-card>
         </v-window-item>
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent" zzzheight="200">
+          <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Speckle Manager Installation</v-card-title>
             <v-card-text>
               <p>
@@ -37,13 +37,7 @@
                 (Rhino, Revit, etc.) on your machine. Once you have downloaded Speckle Manager, go
                 ahead and install it. Once you're done, go to the next step!
               </p>
-              <v-btn
-                block
-                depressed
-                class="mb-4"
-                href="https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe"
-                target="_blank"
-              >
+              <v-btn block depressed class="mb-4" @click="downloadManager">
                 <v-icon small class="mr-4">mdi-download</v-icon>
                 Download Speckle Manager
               </v-btn>
@@ -62,7 +56,7 @@
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent" zzzheight="200">
+          <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Account Linking</v-card-title>
             <v-card-text>
               <p>
@@ -75,13 +69,9 @@
                 process your account should be safely stored on your computer - and usable from
                 within all the connectors.
               </p>
-              <v-btn
-                block
-                depressed
-                class="mb-4"
-                :href="`speckle://accounts?add_server_account=${rootUrl}`"
-              >
-                <v-icon small class="mr-4">mdi-account-plus</v-icon> Add Account Speckle Manager
+              <v-btn block depressed class="mb-4" @click="addAccount">
+                <v-icon small class="mr-4">mdi-account-plus</v-icon>
+                Add Account Speckle Manager
               </v-btn>
             </v-card-text>
             <v-card-actions class="justify-space-between">
@@ -98,7 +88,7 @@
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent" zzzheight="200">
+          <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Your First Stream</v-card-title>
             <v-card-text>
               <p>
@@ -154,17 +144,28 @@ export default {
   },
   methods: {
     skip() {
+      this.$matomo && this.$matomo.trackPageView(`onboarding/skip`)
       localStorage.setItem('onboarding', 'skipped')
     },
     finish() {
-      console.log('finish')
+      this.$matomo && this.$matomo.trackPageView(`onboarding/done`)
       localStorage.setItem('onboarding', 'complete')
     },
     prev() {
       this.onboarding--
+      this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
     },
     next() {
       this.onboarding++
+      this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
+    },
+    downloadManager() {
+      this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`)
+      window.open('https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe', '_blank')
+    },
+    addAccount() {
+      this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`)
+      window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, '_blank')
     }
   }
 }
