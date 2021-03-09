@@ -145,6 +145,7 @@ export default {
         this.streams.items.forEach((x) =>
           x.commits.items.forEach((y) => {
             y.streamName = x.name
+            y.streamId = x.id
             activity.push(y)
           })
         )
