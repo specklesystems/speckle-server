@@ -114,7 +114,6 @@
   </v-container>
 </template>
 <script>
-import gql from 'graphql-tag'
 import ListItemStream from '../components/ListItemStream'
 import StreamNewDialog from '../components/dialogs/StreamNewDialog'
 import NoDataPlaceholder from '../components/NoDataPlaceholder'
