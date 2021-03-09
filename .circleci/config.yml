@@ -11,14 +11,22 @@ workflows:
   test:
     jobs:
       - test_server
-  deploy:
+  deploy-latest:
     jobs:
       - docker_build_and_deploy:
           context: main-builds
           filters:
             branches:
               only: main
-
+  deploy-prod:
+    jobs:
+      - docker_build_and_deploy:
+          context: main-builds
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
 
 jobs:
   test_server:
