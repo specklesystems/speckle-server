@@ -167,6 +167,14 @@ const routes = [
     component: () => import('../views/Error.vue')
   },
   {
+    path: '/onboarding',
+    name: 'Onboarding | Speckle',
+    meta: {
+      title: 'Getting Started | Speckle'
+    },
+    component: () => import('../views/GettingStartedView.vue')
+  },
+  {
     path: '*',
     name: 'notfound',
     meta: {
