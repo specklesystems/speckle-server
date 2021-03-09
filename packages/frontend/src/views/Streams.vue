@@ -74,7 +74,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8">
-        <div v-if="!$apollo.loading && streams.length === 0" class="pa-4">
+        <div v-if="!$apollo.loading && streams.totalCount === 0" class="pa-4">
           <no-data-placeholder
             :message="`Hello there! It seems like you have no created streams yet. Here's a handful of useful links to help you getting started:`"
           />
