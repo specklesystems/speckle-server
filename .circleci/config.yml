@@ -21,6 +21,7 @@ workflows:
   deploy-prod:
     jobs:
       - docker_build_and_deploy:
+          context: main-builds
           filters:
             tags:
               only: /^v.*/
