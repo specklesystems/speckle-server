@@ -1,8 +1,29 @@
 <template>
-  <v-card flat background="transparent" class="pb-7 px-7">
-    <v-card-text class="headline">{{ message }} Here's how to get started:</v-card-text>
+  <v-card flat  class="transparent pb-7 ">
+    <v-card-text v-if="showMessage" class="headline">
+      {{ message }}
+    </v-card-text>
     <v-card-actions>
       <v-row justify-space-between>
+        <v-col cols="12" class="pa-2">
+          <v-hover>
+            <v-card
+              slot-scope="{ hover }"
+              height="100%"
+              href="https://speckle.guide/user/manager.html#installing-connectors"
+              tile
+              target="_blank"
+              :class="`pt-4  ${hover ? 'elevation-5' : 'elevation-0'} rounded-lg`"
+              style="transition: all 0.15s; min-height: 130px"
+            >
+              <v-card-title class="">🔌 Connectors</v-card-title>
+              <v-card-text>
+                Install connectors for some of the most popular AEC software and start sending and
+                receivng data right away!
+              </v-card-text>
+            </v-card>
+          </v-hover>
+        </v-col>
         <v-col cols="12" class="pa-2">
           <v-hover>
             <v-card
@@ -27,16 +48,15 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              href="https://speckle.guide/user/connectors.html"
+              href="http://speckle.community"
               tile
               target="_blank"
               :class="`pt-4  ${hover ? 'elevation-5' : 'elevation-0'} rounded-lg`"
               style="transition: all 0.15s; min-height: 130px"
             >
-              <v-card-title class="">🔌 Connectors</v-card-title>
+              <v-card-title class="">👪 Community</v-card-title>
               <v-card-text>
-                Install connectors for some of the most popular AEC software and start sending and
-                receivng data right away!
+                Join our community to get answers to your questions and provide feedback!
               </v-card-text>
             </v-card>
           </v-hover>
@@ -46,15 +66,15 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              href="http://speckle.community"
+              href="https://speckle.xyz/streams/3073b96e86"
               tile
               target="_blank"
               :class="`pt-4  ${hover ? 'elevation-5' : 'elevation-0'} rounded-lg`"
               style="transition: all 0.15s; min-height: 130px"
             >
-              <v-card-title class="">👪 Community</v-card-title>
+              <v-card-title class="">🏗 Sample Stream</v-card-title>
               <v-card-text>
-                Join our community to get answers to your questoins and provide feedback!
+                Confused? Check out a sample stream of the famous Speckle Haus, designed by our one and only Claire!
               </v-card-text>
             </v-card>
           </v-hover>
@@ -66,6 +86,10 @@
 <script>
 export default {
   props: {
+    showMessage: {
+      type: Boolean,
+      default: true
+    },
     message: {
       type: String,
       default: "It's a bit quiet here."

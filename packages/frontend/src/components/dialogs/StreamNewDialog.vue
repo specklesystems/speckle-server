@@ -1,8 +1,12 @@
 <template>
   <v-card>
     <v-card-title>New Stream</v-card-title>
-    <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="createStream">
+    <v-form ref="form" v-model="valid" lazy-validation class="px-2" @submit.prevent="createStream">
       <v-card-text>
+        <p class="">
+          <b>Stream Info:</b>
+          Name & Description
+        </p>
         <v-text-field
           v-model="name"
           :rules="nameRules"
@@ -11,11 +15,15 @@
           autofocus
           label="Stream Name"
         />
-        <v-textarea v-model="description" label="Description (optional)" />
+        <v-textarea v-model="description" rows="1" row-height="15" label="Description (optional)" />
+        <p>
+          <b>Collaborators:</b>
+          Share this stream with your colleagues!
+        </p>
         <v-text-field
           v-model="search"
-          label="Collaborators (optional)"
-          placeholder="Type to search..."
+          label="Search"
+          placeholder="Search by name or by email"
         />
         <div v-if="$apollo.loading">Searching.</div>
         <v-list v-if="userSearch && userSearch.items" one-line>
@@ -98,6 +106,7 @@ export default {
   data() {
     return {
       name: null,
+      description: null,
       valid: false,
       search: null,
       nameRules: [],
@@ -173,7 +182,7 @@ export default {
             })
           }
         }
-
+        this.$emit('created')
         this.$router.push({ path: `/streams/${res.data.streamCreate}` })
       } catch (e) {
         console.log(e)

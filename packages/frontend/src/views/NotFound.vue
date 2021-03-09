@@ -16,8 +16,6 @@
               <br />
               <router-link to="/">Home</router-link>
               <br />
-              <router-link to="/streams">Streams</router-link>
-              <br />
               <router-link to="/profile">Your Profile</router-link>
             </p>
           </v-sheet>

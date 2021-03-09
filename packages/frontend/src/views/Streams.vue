@@ -9,13 +9,13 @@
             in total.
           </v-card-text> -->
           <v-card-actions>
-            <v-btn color="primary" elevation="0" block @click="newStreamDialog = true">
+            <v-btn large rounded color="primary" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
               new stream
             </v-btn>
           </v-card-actions>
           <v-dialog v-model="newStreamDialog" max-width="500">
-            <new-stream-dialog :open="newStreamDialog" />
+            <stream-new-dialog :open="newStreamDialog" />
           </v-dialog>
         </v-card>
 
@@ -71,12 +71,14 @@
             </div>
           </v-list>
           <v-card-actions></v-card-actions>
-          <v-dialog v-model="newStreamDialog" max-width="500">
-            <stream-new-dialog :open="newStreamDialog" />
-          </v-dialog>
         </v-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8">
+        <div v-if="!$apollo.loading && streams.length === 0" class="pa-4">
+          <no-data-placeholder
+            :message="`Hello there! It seems like you have no created streams yet. Here's a handful of useful links to help you getting started:`"
+          />
+        </div>
         <v-card v-if="user" class="mt-5 mx-4" color="background2" flat>
           <v-card-text class="body-1">
             <span>
@@ -115,6 +117,7 @@
 import gql from 'graphql-tag'
 import ListItemStream from '../components/ListItemStream'
 import StreamNewDialog from '../components/dialogs/StreamNewDialog'
+import NoDataPlaceholder from '../components/NoDataPlaceholder'
 import UserAvatar from '../components/UserAvatar'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
@@ -122,7 +125,7 @@ import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'Streams',
-  components: { ListItemStream, StreamNewDialog, InfiniteLoading, UserAvatar },
+  components: { ListItemStream, StreamNewDialog, InfiniteLoading, UserAvatar, NoDataPlaceholder },
   apollo: {
     streams: {
       prefetch: true,
@@ -156,7 +159,14 @@ export default {
       return activity
     }
   },
-  watch: {},
+  watch: {
+    streams(val, old) {
+      console.log(val.items.length)
+      if (val.items.length !== 0 && !localStorage.getItem('onboarding')) {
+        this.$router.push('/onboarding')
+      }
+    }
+  },
   methods: {
     infiniteHandler($state) {
       this.$apollo.queries.streams.fetchMore({
@@ -181,37 +191,6 @@ export default {
             }
           }
         }
-      })
-    },
-    newStream() {
-      this.$refs.streamDialog.open().then((dialog) => {
-        if (!dialog.result) return
-        this.$matomo && this.$matomo.trackPageView('stream/create')
-        this.$apollo
-          .mutate({
-            mutation: gql`
-              mutation streamCreate($myStream: StreamCreateInput!) {
-                streamCreate(stream: $myStream)
-              }
-            `,
-            variables: {
-              myStream: {
-                name: dialog.stream.name,
-                description: dialog.stream.description,
-                isPublic: dialog.stream.isPublic
-              }
-            }
-          })
-          .then((data) => {
-            // Result
-            console.log(data)
-
-            this.$apollo.queries.streams.refetch()
-          })
-          .catch((error) => {
-            // Error
-            console.error(error)
-          })
       })
     },
     compareUpdates(a, b) {

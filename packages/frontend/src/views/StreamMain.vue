@@ -133,7 +133,7 @@
 
         <no-data-placeholder
           v-else-if="selectedBranch"
-          :message="`Branch ${selectedBranch.name} has no data.`"
+          :message="`No data here! Here's how to get started:`"
         />
       </v-card>
 
