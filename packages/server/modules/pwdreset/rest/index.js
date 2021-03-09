@@ -41,7 +41,8 @@ module.exports = ( app ) => {
       let serverInfo = await getServerInfo()
 
       // send the reset link email
-      let resetLink = `${process.env.CANONICAL_URL}/authn/resetpassword/finalize?t=${token.id}`
+
+      let resetLink = new URL( `/authn/resetpassword/finalize?t=${token.id}`, process.env.CANONICAL_URL )
       let emailText = `
 Hi ${user.name},
 
@@ -59,7 +60,7 @@ Speckle
 Hi ${user.name},
 <br>
 <br>
-You've requested a password reset for your Speckle account. If this wasn't you, you can safely ignore this email. Otherwise, click <b><a href="${resetLink}">here to reset your password</a></b>.
+You've requested a password reset for your Speckle account. If this wasn't you, you can safely ignore this email. Otherwise, click <b><a href="${resetLink}" rel="notrack">here to reset your password</a></b>.
 The link is <b>valid for one hour</b> only.
 <br>
 <br>
