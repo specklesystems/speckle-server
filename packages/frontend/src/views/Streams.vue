@@ -161,7 +161,7 @@ export default {
   },
   watch: {
     streams(val) {
-      if (val.items.length !== 0 && !localStorage.getItem('onboarding')) {
+      if (val.items.length === 0 && !localStorage.getItem('onboarding')) {
         this.$router.push('/onboarding')
       }
     }
