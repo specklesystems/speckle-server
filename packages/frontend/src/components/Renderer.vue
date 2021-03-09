@@ -109,6 +109,10 @@ export default {
     objectUrl: {
       type: String,
       default: null
+    },
+    unloadTrigger: {
+      type: Number,
+      default: 0
     }
   },
   data() {
@@ -124,7 +128,11 @@ export default {
       return this.$vuetify.theme.dark
     }
   },
+
   watch: {
+    unloadTrigger() {
+      this.unloadData()
+    },
     fullScreen() {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
     }
@@ -189,6 +197,11 @@ export default {
           200
         )
       )
+    },
+    unloadData() {
+      window.__viewer.sceneManager.removeAllObjects()
+      this.hasLoadedModel = false
+      this.loadProgress = 0
     }
   }
 }

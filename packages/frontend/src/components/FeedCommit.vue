@@ -6,7 +6,7 @@
     <div class="ml-12">
       <v-row class="caption py-3">
         <v-col class="pb-2">
-          <v-icon small>mdi-history</v-icon>
+          <v-icon small>mdi-source-commit</v-icon>
           &nbsp; You have
           <strong>
             <span v-if="commit.items">{{ commit.items.length }} new commits</span>

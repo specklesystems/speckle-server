@@ -1,4 +1,4 @@
-query User($id: String!){
+query User($id: String!) {
   user(id: $id) {
     id
     email
@@ -11,10 +11,11 @@ query User($id: String!){
       items {
         id
         name
+        role
         isPublic
         createdAt
         updatedAt
-        collaborators{
+        collaborators {
           id
           name
           avatar

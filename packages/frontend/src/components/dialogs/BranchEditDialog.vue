@@ -5,21 +5,22 @@
     </template>
     <div v-if="branch.name !== 'main'">
       <v-card-title>Edit Branch</v-card-title>
-      <v-card-text>
-        <v-form ref="form" v-model="valid" lazy-validation>
+      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="updateBranch">
+        <v-card-text>
           <v-text-field
             v-model="name"
             label="Name"
             :rules="nameRules"
+            validate-on-blur
             required
             autofocus
           ></v-text-field>
           <v-textarea v-model="description" rows="2" label="Description"></v-textarea>
-        </v-form>
-      </v-card-text>
-      <v-card-actions>
-        <v-btn color="primary" block :disabled="!valid" @click="updateBranch">Save</v-btn>
-      </v-card-actions>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" block :disabled="!valid" type="submit">Save</v-btn>
+        </v-card-actions>
+      </v-form>
       <v-card-actions class="error--text body-2 pa-2">
         <v-btn block x-small text color="error" @click="showDelete = true">Delete Branch</v-btn>
         <v-dialog v-model="showDelete" max-width="500">
@@ -135,6 +136,8 @@ export default {
       this.loading = false
     },
     async updateBranch() {
+      if (!this.$refs.form.validate()) return
+
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('branch/update')
       await this.$apollo.mutate({

@@ -2,12 +2,12 @@
   <v-container>
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <v-card rounded="lg" class="pa-5" elevation="0" color="background">
-          <v-card-title>Streams</v-card-title>
-          <v-card-text>
+        <v-card rounded="lg" class="mt-5 mx-5" elevation="0" color="background">
+          <!-- <v-card-title>Streams</v-card-title> -->
+          <!-- <v-card-text>
             You have {{ streams.totalCount }} stream{{ streams.totalCount == 1 ? `` : `s` }}
             in total.
-          </v-card-text>
+          </v-card-text> -->
           <v-card-actions>
             <v-btn color="primary" elevation="0" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
@@ -18,13 +18,83 @@
             <new-stream-dialog :open="newStreamDialog" />
           </v-dialog>
         </v-card>
+
+        <v-card
+          v-if="recentActivity"
+          rounded="lg"
+          class="mx-5 mt-3 d-none d-md-block"
+          elevation="0"
+          color="background"
+        >
+          <v-card-title class="subtitle-1 pb-0">Recent Activity</v-card-title>
+          <v-list color="transparent" two-lines class="recent-commits">
+            <div v-for="(a, i) in recentActivity" :key="i">
+              <v-list-item v-if="a.__typename === 'Commit'">
+                <v-list-item-avatar size="30" class="mr-2">
+                  <user-avatar
+                    :id="a.authorId"
+                    :avatar="a.authorAvatar"
+                    :size="30"
+                    :name="a.authorName"
+                  />
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title class="subtitle-2">
+                    <router-link :to="'streams/' + a.streamId + '/commits/' + a.id">
+                      {{ a.message }}
+                    </router-link>
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    <i>
+                      Sent to
+                      <router-link :to="'streams/' + a.streamId">
+                        {{ a.streamName }}
+                      </router-link>
+                    </i>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item v-if="a.__typename === 'Stream'">
+                <v-list-item-content>
+                  <v-list-item-title class="subtitle-2">
+                    <router-link :to="'streams/' + a.id">
+                      {{ a.name }}
+                    </router-link>
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    <i>A new stream was created</i>
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+              <v-divider v-if="i < recentActivity.length - 1" />
+            </div>
+          </v-list>
+          <v-card-actions></v-card-actions>
+          <v-dialog v-model="newStreamDialog" max-width="500">
+            <stream-new-dialog :open="newStreamDialog" />
+          </v-dialog>
+        </v-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="7">
-        <v-card class="mt-4" elevation="0" color="transparent">
-          <div v-if="$apollo.loading">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="8">
+        <v-card v-if="user" class="mt-5 mx-4" color="background2" flat>
+          <v-card-text class="body-1">
+            <span>
+              You have
+              <v-icon small>mdi-compare-vertical</v-icon>
+              <b>{{ user.streams.totalCount }}</b>
+              streams and
+              <v-icon small>mdi-source-commit</v-icon>
+              <b>{{ user.commits.totalCount }}</b>
+              commits.
+            </span>
+          </v-card-text>
+        </v-card>
+        <v-card elevation="0" color="transparent">
+          <div v-if="$apollo.loading" class="mx-5">
             <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
           </div>
-          <v-card-text v-if="streams && streams.items">
+          <v-card-text v-if="streams && streams.items" class="mt-0 pt-3">
             <div v-for="(stream, i) in streams.items" :key="i">
               <list-item-stream :stream="stream"></list-item-stream>
             </div>
@@ -44,25 +114,47 @@
 <script>
 import gql from 'graphql-tag'
 import ListItemStream from '../components/ListItemStream'
-import NewStreamDialog from '../components/dialogs/NewStreamDialog'
+import StreamNewDialog from '../components/dialogs/StreamNewDialog'
+import UserAvatar from '../components/UserAvatar'
 import streamsQuery from '../graphql/streams.gql'
+import userQuery from '../graphql/user.gql'
 import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'Streams',
-  components: { ListItemStream, NewStreamDialog, InfiniteLoading },
+  components: { ListItemStream, StreamNewDialog, InfiniteLoading, UserAvatar },
   apollo: {
     streams: {
       prefetch: true,
       query: streamsQuery,
       fetchPolicy: 'cache-and-network' //https://www.apollographql.com/docs/react/data/queries/
+    },
+    user: {
+      query: userQuery
     }
   },
   data: () => ({
     streams: [],
     newStreamDialog: false
   }),
-  computed: {},
+  computed: {
+    recentActivity() {
+      let activity = []
+
+      if (this.streams && this.streams.items) {
+        this.streams.items.forEach((x) =>
+          x.commits.items.forEach((y) => {
+            y.streamName = x.name
+            activity.push(y)
+          })
+        )
+        activity.push(...this.streams.items)
+      }
+
+      activity.sort(this.compareUpdates)
+      return activity
+    }
+  },
   watch: {},
   methods: {
     infiniteHandler($state) {
@@ -120,8 +212,27 @@ export default {
             console.error(error)
           })
       })
+    },
+    compareUpdates(a, b) {
+      if (a.createdAt < b.createdAt) {
+        return 1
+      }
+      if (a.createdAt > b.createdAt) {
+        return -1
+      }
+      return 0
     }
   }
 }
 </script>
-<style></style>
+<style scoped>
+.recent-commits a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.recent-commits a:hover {
+  text-decoration: underline;
+}
+</style>

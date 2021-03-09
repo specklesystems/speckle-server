@@ -1,8 +1,8 @@
 <template>
   <v-card class="pa-4" color="background2">
     <v-card-title class="subtitle-1">Edit Profile</v-card-title>
-    <v-card-text class="pl-2 pr-2 pt-0 pb-0">
-      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
+    <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="updateUser">
+      <v-card-text class="pl-2 pr-2 pt-0 pb-0">
         <v-container>
           <v-row>
             <v-col cols="12" class="pb-0">
@@ -10,6 +10,7 @@
                 v-model="name"
                 label="Name"
                 :rules="nameRules"
+                validate-on-blur
                 required
                 filled
                 autofocus
@@ -27,13 +28,13 @@
             </v-col>
           </v-row>
         </v-container>
-      </v-form>
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn text @click="$emit('close')">cancel</v-btn>
-      <v-btn :disabled="!valid" :loading="isLoading" @click.native="updateUser">Save</v-btn>
-    </v-card-actions>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn text @click="$emit('close')">cancel</v-btn>
+        <v-btn :disabled="!valid" :loading="isLoading" type="submit">Save</v-btn>
+      </v-card-actions>
+    </v-form>
   </v-card>
 </template>
 <script>
@@ -57,7 +58,7 @@ export default {
         (v) => !!v || 'Name is required',
         (v) => (v && v.length <= 60) || 'Name must be less than 60 characters.'
       ],
-      bioRules: [(v) => (v && v.length <= 500) || 'Bio must be less than 500 characters.'],
+      bioRules: [(v) => !v || (v && v.length <= 500) || 'Bio must be less than 500 characters.'],
       valid: true
     }
   },

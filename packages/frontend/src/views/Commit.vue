@@ -1,87 +1,77 @@
 <template>
-  <v-row v-if="stream">
-    <v-col cols="12">
-      <v-card class="pa-0 mb-3" elevation="0" rounded="lg" color="transparent" style="height: 50vh">
-        <renderer :object-url="commitObjectUrl" />
-      </v-card>
-      <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
-        <v-card-title class="mr-8">
-          <v-icon class="mr-2">mdi-source-commit</v-icon>
-          {{ stream.commit.message }}
-        </v-card-title>
-        <v-card-text>
-          on
-          <b>{{ commitDate }}</b>
-          by
-          <b>{{ stream.commit.authorName }}</b>
-          <user-avatar
-            :id="stream.commit.authorId"
-            :name="stream.commit.authorName"
-            :avatar="stream.commit.authorAvatar"
-            :size="25"
-            class="ml-1"
-          ></user-avatar>
-        </v-card-text>
-        <v-card-text>
-          Branch:
-          <v-chip
-            small
-            :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(
-              stream.commit.branchName
-            )}`"
-          >
-            <v-icon small class="mr-2">mdi-source-branch</v-icon>
-            {{ stream.commit.branchName }}
-          </v-chip>
-          <br />
-          Source Application:
-          <source-app-avatar :application-name="stream.commit.sourceApplication" />
-        </v-card-text>
-        <commit-dialog ref="commitDialog"></commit-dialog>
-        <v-btn
-          v-tooltip="'Edit commit details'"
-          small
-          icon
-          style="position: absolute; right: 15px; top: 15px"
-          @click="editCommit"
-        >
-          <v-icon small>mdi-pencil-outline</v-icon>
-        </v-btn>
-      </v-card>
+  <v-row>
+    <v-col v-if="$apollo.queries.stream.loading" cols="12">
       <v-card>
-        <v-expansion-panels flat focusable>
-          <v-expansion-panel>
-            <v-expansion-panel-header>
-              <span>How to get the data from this commit</span>
-            </v-expansion-panel-header>
-            <v-expansion-panel-content>
-              <p class="caption mt-4">
-                <b>Grasshopper & Dynamo:</b>
-                Copy and paste this page's url into a text panel and connect that to the "Stream"
-                input of a receiver component.
-              </p>
-              <p class="caption">
-                <b>Other clients:</b>
-                Switch to this commit's branch, and then select it from commits the dropdown.
-              </p>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
-        </v-expansion-panels>
+        <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
       </v-card>
-      <v-card class="pa-4 mt-4" elevation="0" rounded="lg" color="background2">
-        <v-card-title class="mr-8">
-          <v-icon class="mr-2">mdi-database</v-icon>
-          Data
-        </v-card-title>
-        <v-card-text class="pa-0">
-          <object-speckle-viewer
-            class="mt-4"
-            :stream-id="stream.id"
-            :object-id="stream.commit.referencedObject"
-            :value="commitObject"
-            :expand="true"
-          ></object-speckle-viewer>
-        </v-card-text>
+    </v-col>
+    <v-col v-else cols="12">
+      <v-card elevation="0" rounded="lg" color="background2">
+        <v-sheet class="pa-4" color="transparent">
+          <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
+          <v-card-title>
+            <v-icon class="mr-2">mdi-source-commit</v-icon>
+            {{ stream.commit.message }}
+            <v-spacer />
+            <v-btn
+              v-tooltip="'Edit commit details'"
+              small
+              plain
+              color="primary"
+              text
+              class="px-0"
+              @click="editCommit"
+            >
+              <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
+              Edit
+            </v-btn>
+          </v-card-title>
+          <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
+          <v-list-item dense>
+            <v-list-item-icon class="mr-2 mt-1">
+              <user-avatar
+                :id="stream.commit.authorId"
+                :avatar="stream.commit.authorAvatar"
+                :name="stream.commit.authorName"
+                :size="25"
+              />
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-subtitle class="caption">
+                <b>{{ stream.commit.authorName }}</b>
+                &nbsp;
+                <timeago :datetime="stream.commit.createdAt"></timeago>
+              </v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-row align="center" justify="center">
+                <v-chip small class="mr-2">
+                  <v-icon small class="mr-2">mdi-source-branch</v-icon>
+                  {{ stream.commit.branchName }}
+                </v-chip>
+                <source-app-avatar :application-name="stream.commit.sourceApplication" />
+              </v-row>
+            </v-list-item-action>
+          </v-list-item>
+        </v-sheet>
+        <div style="height: 50vh">
+          <renderer :object-url="commitObjectUrl" />
+        </div>
+        <v-sheet class="pa-4" color="transparent">
+          <v-card-title class="mr-8">
+            <v-icon class="mr-2">mdi-database</v-icon>
+            Data
+          </v-card-title>
+          <v-card-text class="pa-0">
+            <object-speckle-viewer
+              class="mt-4"
+              :stream-id="stream.id"
+              :object-id="stream.commit.referencedObject"
+              :value="commitObject"
+              :expand="true"
+            ></object-speckle-viewer>
+          </v-card-text>
+        </v-sheet>
       </v-card>
     </v-col>
   </v-row>
@@ -92,12 +82,12 @@ import UserAvatar from '../components/UserAvatar'
 import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
 import Renderer from '../components/Renderer'
 import streamCommitQuery from '../graphql/commit.gql'
-import CommitDialog from '../components/dialogs/CommitDialog'
+import CommitEditDialog from '../components/dialogs/CommitEditDialog'
 import SourceAppAvatar from '../components/SourceAppAvatar'
 
 export default {
   name: 'Commit',
-  components: { CommitDialog, UserAvatar, ObjectSpeckleViewer, Renderer, SourceAppAvatar },
+  components: { CommitEditDialog, UserAvatar, ObjectSpeckleViewer, Renderer, SourceAppAvatar },
   data: () => ({
     loadedModel: false
   }),
@@ -130,6 +120,37 @@ export default {
     },
     commitObjectUrl() {
       return `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
+    },
+    breadcrumbs() {
+      return [
+        {
+          text: this.stream.name,
+          disabled: false,
+          exact: true,
+          to: '/streams/' + this.stream.id
+        },
+        {
+          text: 'branches',
+          disabled: false,
+          exact: true,
+          to: '/streams/' + this.stream.id + '/branches/'
+        },
+        {
+          text: this.stream.commit.branchName,
+          disabled: false,
+          exact: true,
+          to:
+            '/streams/' +
+            this.stream.id +
+            '/branches/' +
+            encodeURIComponent(this.stream.commit.branchName) +
+            '/commits'
+        },
+        {
+          text: this.stream.commit.message,
+          disabled: true
+        }
+      ]
     }
   },
   methods: {

@@ -17,16 +17,16 @@
       <p>{{ serverInfo.description }}</p>
       <p v-if="serverInfo.adminContact" class="caption">Contact: {{ serverInfo.adminContact }}</p>
     </v-card-text>
-    <server-dialog ref="editServerDialog"></server-dialog>
+    <server-edit-dialog ref="editServerDialog"></server-edit-dialog>
   </v-card>
 </template>
 <script>
 import gql from 'graphql-tag'
 import serverQuery from '../graphql/server.gql'
-import ServerDialog from '../components/dialogs/ServerDialog'
+import ServerEditDialog from '../components/dialogs/ServerEditDialog'
 
 export default {
-  components: { ServerDialog },
+  components: { ServerEditDialog },
   data() {
     return { serverInfo: {} }
   },

@@ -4,22 +4,23 @@
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
     <v-card-title>New Branch</v-card-title>
-    <v-card-text>
-      <v-form ref="form" v-model="valid" lazy-validation>
+    <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="createBranch">
+      <v-card-text>
         <v-text-field
           v-model="name"
           label="Name"
           :rules="nameRules"
+          validate-on-blur
           required
           autofocus
         ></v-text-field>
         <v-textarea v-model="description" rows="2" label="Description"></v-textarea>
-      </v-form>
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="primary" text :disabled="!valid" @click="createBranch">Save</v-btn>
-    </v-card-actions>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" text :disabled="!valid" type="submit">Save</v-btn>
+      </v-card-actions>
+    </v-form>
   </v-card>
 </template>
 <script>
@@ -38,7 +39,7 @@ export default {
   },
   data() {
     return {
-      valid: true,
+      valid: false,
       loading: false,
       name: null,
       nameRules: [
@@ -57,6 +58,8 @@ export default {
   computed: {},
   methods: {
     async createBranch() {
+      if (!this.$refs.form.validate()) return
+
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('branch/create')
       await this.$apollo.mutate({

@@ -2,7 +2,7 @@
   <v-card class="elevation-0 transparent pa-5 pb-0">
     <v-card-text class="text-h3 text-sm-h4 text-md-h3 primary--text">
       <span class="primary--text"><b>Speckle</b></span>
-      <span class="font-weight-light">, the data platform for the built environment.</span>
+      <span class="font-weight-light">, empowering your design and construction data.</span>
     </v-card-text>
     <div class="">
       <v-card-text class="text-h6 font-weight-regular">

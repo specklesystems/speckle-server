@@ -5,14 +5,14 @@
         :id="commit.authorId"
         :avatar="commit.authorAvatar"
         :name="commit.authorName"
-        :size="30"
+        :size="40"
       />
     </v-list-item-icon>
     <v-list-item-content>
-      <v-list-item-title class="my-2 py-1">
+      <v-list-item-title class="mt-0 pt-0 py-1">
         {{ commit.message }}
-        <span class="caption" v-if="commit.branchName">
-          <v-chip small style="top:-3px">
+        <span v-if="commit.branchName" class="caption">
+          <v-chip small style="top: -3px">
             <v-icon small class="mr-2">mdi-source-branch</v-icon>
             {{ commit.branchName }}
           </v-chip>
@@ -47,7 +47,9 @@ export default {
     },
     branchUrl() {
       if (!this.commit) return null
-      return `${window.location.origin}/streams/${this.$route.params.streamId}/branches/${this.commit.branchName}`
+      return `${window.location.origin}/streams/${
+        this.$route.params.streamId
+      }/branches/${encodeURIComponent(this.commit.branchName)}`
     }
   },
   methods: {

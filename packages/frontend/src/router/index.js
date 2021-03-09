@@ -65,16 +65,16 @@ const routes = [
         meta: {
           title: 'Streams | Speckle'
         },
-        component: () => import('../views/Home.vue')
-      },
-      {
-        path: 'streams',
-        name: 'streams',
-        meta: {
-          title: 'Streams | Speckle'
-        },
         component: () => import('../views/Streams.vue')
       },
+      // {
+      //   path: 'streams',
+      //   name: 'streams',
+      //   meta: {
+      //     title: 'Streams | Speckle'
+      //   },
+      //   component: () => import('../views/Streams.vue')
+      // },
       {
         path: 'streams/:streamId',
         meta: {
@@ -91,12 +91,28 @@ const routes = [
             component: () => import('../views/StreamMain.vue')
           },
           {
+            path: 'branches/',
+            name: 'branchs',
+            meta: {
+              title: 'Branches | Speckle'
+            },
+            component: () => import('../views/Branches.vue')
+          },
+          {
             path: 'branches/:branchName',
             name: 'branch',
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('../views/Branch.vue')
+            component: () => import('../views/StreamMain.vue')
+          },
+          {
+            path: 'branches/:branchName/commits',
+            name: 'commits',
+            meta: {
+              title: 'Commits | Speckle'
+            },
+            component: () => import('../views/Commits.vue')
           },
           {
             path: 'commits/:commitId',

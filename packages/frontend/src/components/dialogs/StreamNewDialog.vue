@@ -1,86 +1,75 @@
 <template>
   <v-card>
     <v-card-title>New Stream</v-card-title>
-    <v-card-text>
-      <v-form ref="form" v-model="valid" lazy-validation>
+    <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="createStream">
+      <v-card-text>
         <v-text-field
           v-model="name"
           :rules="nameRules"
-          lazy-validation
+          validate-on-blur
           required
+          autofocus
           label="Stream Name"
         />
-      </v-form>
-    </v-card-text>
-    <v-card-text>
-      <v-expansion-panels color="background2">
-        <v-expansion-panel>
-          <v-expansion-panel-header color="background2">
-            Add Contributors (optional)
-          </v-expansion-panel-header>
-          <v-expansion-panel-content color="background2">
-            <v-text-field v-model="search" label="Search for a user" />
-            <div v-if="$apollo.loading">Searching.</div>
-            <v-list v-if="userSearch && userSearch.items" one-line>
-              <v-list-item v-if="userSearch.items.length === 0">
-                <v-list-item-content>
-                  <v-list-item-title>No users found.</v-list-item-title>
-                  <v-list-item-subtitle>Try a different search query.</v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-              <v-list-item v-for="item in userSearch.items" :key="item.id" @click="addCollab(item)">
-                <v-list-item-avatar>
-                  <user-avatar
-                    :id="item.id"
-                    :name="item.name"
-                    :avatar="item.avatar"
-                    :size="25"
-                    class="ml-1"
-                  ></user-avatar>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title>{{ item.name }}</v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ item.company ? item.company : 'no company info' }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-                <v-list-item-action>
-                  <v-icon>mdi-plus</v-icon>
-                </v-list-item-action>
-              </v-list-item>
-            </v-list>
-            <v-chip
-              v-for="user in collabs"
-              :key="user.id"
-              close
-              class="ma-2"
-              @click:close="removeCollab(user)"
-            >
+        <v-textarea v-model="description" label="Description (optional)" />
+        <v-text-field
+          v-model="search"
+          label="Collaborators (optional)"
+          placeholder="Type to search..."
+        />
+        <div v-if="$apollo.loading">Searching.</div>
+        <v-list v-if="userSearch && userSearch.items" one-line>
+          <v-list-item v-if="userSearch.items.length === 0">
+            <v-list-item-content>
+              <v-list-item-title>No users found.</v-list-item-title>
+              <v-list-item-subtitle>Try a different search query.</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item v-for="item in userSearch.items" :key="item.id" @click="addCollab(item)">
+            <v-list-item-avatar>
               <user-avatar
-                :id="user.id"
-                :name="user.name"
-                :avatar="user.avatar"
+                :id="item.id"
+                :name="item.name"
+                :avatar="item.avatar"
                 :size="25"
-                left
+                class="ml-1"
               ></user-avatar>
-              <span class="caption">{{ user.name }}</span>
-            </v-chip>
-          </v-expansion-panel-content>
-        </v-expansion-panel>
-      </v-expansion-panels>
-    </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn
-        color="primary"
-        :disabled="!valid"
-        :loading="isLoading"
-        elevation="0"
-        @click="createStream"
-      >
-        Create
-      </v-btn>
-    </v-card-actions>
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>{{ item.name }}</v-list-item-title>
+              <v-list-item-subtitle>
+                {{ item.company ? item.company : 'no company info' }}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon>mdi-plus</v-icon>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+        <v-chip
+          v-for="user in collabs"
+          :key="user.id"
+          close
+          class="ma-2"
+          @click:close="removeCollab(user)"
+        >
+          <user-avatar
+            :id="user.id"
+            :name="user.name"
+            :avatar="user.avatar"
+            :size="25"
+            left
+          ></user-avatar>
+          <span class="caption">{{ user.name }}</span>
+        </v-chip>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" :disabled="!valid" :loading="isLoading" elevation="0" type="submit">
+          Create
+        </v-btn>
+      </v-card-actions>
+    </v-form>
   </v-card>
 </template>
 <script>
@@ -147,11 +136,8 @@ export default {
       this.collabs.splice(indx, 1)
     },
     async createStream() {
-      this.$refs.form.validate()
-      if (this.name === null) {
-        this.valid = false
-        return
-      }
+      if (!this.$refs.form.validate()) return
+
       this.isLoading = true
       this.$matomo && this.$matomo.trackPageView('stream/create')
       try {

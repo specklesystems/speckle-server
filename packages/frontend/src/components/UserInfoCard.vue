@@ -47,36 +47,36 @@
       </v-card-title>
       <v-card-text>
         <p v-if="user.company" class="subtitle-1">{{ user.company }}</p>
+        <p v-if="user.email && isSelf">
+          {{ user.email }}
+        </p>
         <p v-if="user.bio">
-          <b>Bio:</b>
           {{ user.bio }}
         </p>
         <p v-else>This user keeps an air of mystery around themselves.</p>
-        <p v-if="user.email && isSelf">
-          <b>Email:</b>
-          {{ user.email }}
-        </p>
-        <span v-if="isSelf" class="caption">Your id: {{ user.id }}</span>
+
+        <span v-if="isSelf" class="caption">ID: {{ user.id }}</span>
       </v-card-text>
+      <v-divider v-if="isSelf" class="pb-2"></v-divider>
       <v-card-actions>
         <v-btn v-if="isSelf" small plain color="primary" text block @click="userDialog = true">
-          <v-icon small class="mr-2">mdi-pencil-outline</v-icon>
+          <v-icon small class="mr-2">mdi-cog-outline</v-icon>
           Edit
         </v-btn>
       </v-card-actions>
       <v-dialog v-model="userDialog" max-width="600">
-        <user-dialog :user="user" @close="userDialog = false"></user-dialog>
+        <user-edit-dialog :user="user" @close="editClosed"></user-edit-dialog>
       </v-dialog>
     </div>
   </v-card>
 </template>
 <script>
 import gql from 'graphql-tag'
-import UserDialog from '../components/dialogs/UserDialog'
+import UserEditDialog from '../components/dialogs/UserEditDialog'
 import VImageInput from 'vuetify-image-input/a-la-carte'
 
 export default {
-  components: { UserDialog, VImageInput },
+  components: { UserEditDialog, VImageInput },
   props: {
     user: {
       type: Object,
@@ -117,6 +117,10 @@ export default {
       }
 
       this.avatarDialog = false
+    },
+    editClosed() {
+      this.userDialog = false
+      this.$apollo.queries.user.refetch()
     }
   }
 }

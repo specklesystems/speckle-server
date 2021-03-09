@@ -5,9 +5,20 @@
     </template>
     <v-card-title class="pt-10">Add collaborators</v-card-title>
     <v-card-text>
-      <v-text-field v-model="search" label="Search for a user" />
+      <v-text-field
+        v-model="search"
+        autofocus
+        label="Search for a user"
+        hint="You will be able to set their roles once they have been added"
+        persistent-hint
+      />
       <div v-if="$apollo.loading">Searching.</div>
-      <v-list v-if="userSearch && userSearch.items" dense one-line class="px-0 mx-0">
+      <v-list
+        v-if="search && search.length >= 3 && userSearch && userSearch.items"
+        dense
+        one-line
+        class="px-0 mx-0"
+      >
         <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
           <v-list-item-content>
             <v-list-item-title>No users found.</v-list-item-title>
@@ -46,7 +57,7 @@
     <v-card-title>Existing collaborators</v-card-title>
     <v-card-text class="px-0">
       <v-list>
-        <v-list-item v-for="user in collaborators" :key="user.id">
+        <v-list-item v-for="user in collaborators" :key="user.id" two-lines>
           <v-list-item-icon>
             <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="42" />
           </v-list-item-icon>
@@ -56,14 +67,25 @@
               <!-- Role: {{ user.role.replace('stream:', '') }} -->
               <v-select
                 v-model="user.role"
-                :items="roleSelectValues"
-                :disabled="user.id === myId"
+                item-value="name"
+                :items="roles"
                 class="py-0 my-0"
                 @change="setUserPermissions(user)"
-              ></v-select>
+              >
+                <template #selection="{ item }">
+                  {{ item.name }}
+                </template>
+                <template #item="{ item }">
+                  <div class="pa-2">
+                    <p class="pa-0 ma-0">{{ item.name }}</p>
+                    <p class="caption pa-0 ma-0 grey--text" style="max-width: 300px">
+                      {{ item.description }}
+                    </p>
+                  </div>
+                </template>
+              </v-select>
             </v-list-item-subtitle>
           </v-list-item-content>
-          <v-list-item-action></v-list-item-action>
           <v-list-item-action>
             <v-btn icon small color="error" @click="removeUser(user)">
               <v-icon>mdi-close</v-icon>
@@ -94,7 +116,6 @@ export default {
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    user: {},
     loading: false
   }),
   apollo: {
@@ -126,16 +147,6 @@ export default {
     }
   },
   computed: {
-    roleSelectValues() {
-      if (!this.roles) return []
-      let arr = []
-      for (let role of this.roles) {
-        arr.push({ text: role.name, value: role.name })
-        arr.push({ header: `${role.description}` })
-        arr.push({ divider: true })
-      }
-      return arr
-    },
     roles() {
       return this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams').reverse()
     },

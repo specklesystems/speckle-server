@@ -10,10 +10,10 @@ query {
     profiles
     role
     suuid
-    streams{
+    streams {
       totalCount
     }
-    commits{
+    commits {
       totalCount
     }
   }

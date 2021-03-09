@@ -1,14 +1,26 @@
 query StreamBranches($id: String!) {
   stream(id: $id) {
     id
+    name
     branches {
       totalCount
-      items{
+      items {
         id
         name
         description
-        commits {
+        commits(limit: 5) {
           totalCount
+          items {
+            id
+            authorId
+            authorName
+            authorAvatar
+            createdAt
+            message
+            referencedObject
+            branchName
+            sourceApplication
+          }
         }
       }
     }

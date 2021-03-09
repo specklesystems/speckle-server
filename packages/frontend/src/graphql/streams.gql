@@ -6,6 +6,7 @@ query Streams($cursor: String) {
       id
       name
       description
+      role
       isPublic
       createdAt
       updatedAt
@@ -16,8 +17,16 @@ query Streams($cursor: String) {
         avatar
         role
       }
-      commits {
+      commits(limit: 1) {
         totalCount
+        items {
+          id
+          createdAt
+          message
+          authorId
+          authorName
+          authorAvatar
+        }
       }
       branches {
         totalCount
