@@ -45,44 +45,44 @@
         </v-sheet>
 
         <div v-if="latestCommit" style="height: 50vh">
-          <renderer :object-url="latestCommitObjectUrl" />
+          <renderer :object-url="latestCommitObjectUrl" :unload-trigger="clearRendererTrigger" />
         </div>
 
         <v-sheet v-if="latestCommit" color="background2">
           <!-- LAST COMMIT -->
-          <v-list-item>
-            <v-list-item-icon class="mt-5 mr-4">
-              <user-avatar
-                :id="latestCommit.authorId"
-                :avatar="latestCommit.authorAvatar"
-                :name="latestCommit.authorName"
-                :size="40"
-              />
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title class="mb-2 pt-1">
-                Last commit:
-                <router-link
-                  :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id"
-                >
-                  {{ latestCommit.message }}
-                </router-link>
-              </v-list-item-title>
-              <v-list-item-subtitle class="caption">
-                <b>{{ latestCommit.authorName }}</b>
-                &nbsp;
-                <timeago :datetime="latestCommit.createdAt"></timeago>
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <source-app-avatar :application-name="latestCommit.sourceApplication" />
-            </v-list-item-action>
-          </v-list-item>
+          <v-list two-line class="pa-0">
+            <v-list-item :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id">
+              <v-list-item-icon>
+                <user-avatar
+                  :id="latestCommit.authorId"
+                  :avatar="latestCommit.authorAvatar"
+                  :name="latestCommit.authorName"
+                  :size="30"
+                />
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title class="mb-2 pt-1">
+                  <b>Latest commit: {{ latestCommit.message }}</b>
+                </v-list-item-title>
+                <v-list-item-subtitle class="caption">
+                  <b>{{ latestCommit.authorName }}</b>
+                  &nbsp;
+                  <timeago :datetime="latestCommit.createdAt"></timeago>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+              <v-list-item-action>
+                <source-app-avatar :application-name="latestCommit.sourceApplication" />
+              </v-list-item-action>
+            </v-list-item>
+          </v-list>
           <!-- LAST 2 COMMITS -->
-          <v-list dense color="transparent" class="mb-0 pb-0">
+          <v-list dense color="transparent" class="mb-0 pa-0">
             <div v-for="(commit, i) in selectedBranch.commits.items" :key="commit.id">
-              <v-list-item v-if="i > 0">
-                <v-list-item-icon class="mt-3 mr-4">
+              <v-list-item
+                v-if="i > 0"
+                :to="'/streams/' + $route.params.streamId + '/commits/' + commit.id"
+              >
+                <v-list-item-icon>
                   <user-avatar
                     :id="commit.authorId"
                     :avatar="commit.authorAvatar"
@@ -92,11 +92,7 @@
                 </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title class="mb-2 pt-1">
-                    <router-link
-                      :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id"
-                    >
-                      {{ commit.message }}
-                    </router-link>
+                    {{ commit.message }}
                   </v-list-item-title>
                   <v-list-item-subtitle class="caption">
                     <b>{{ commit.authorName }}</b>
@@ -135,7 +131,10 @@
           </v-list>
         </v-sheet>
 
-        <no-data-placeholder v-else-if="selectedBranch" :name="selectedBranch.name" />
+        <no-data-placeholder
+          v-else-if="selectedBranch"
+          :message="`Branch ${selectedBranch.name} has no data.`"
+        />
       </v-card>
 
       <v-card
@@ -209,7 +208,8 @@ export default {
     return {
       dialogDescription: false,
       dialogBranch: false,
-      selectedBranch: null
+      selectedBranch: null,
+      clearRendererTrigger: 0
     }
   },
   apollo: {
@@ -297,6 +297,7 @@ export default {
       if (index > -1) this.selectedBranch = this.branches.items[index]
     },
     changeBranch() {
+      this.clearRendererTrigger += 42
       this.$router.push({
         path:
           '/streams/' +
