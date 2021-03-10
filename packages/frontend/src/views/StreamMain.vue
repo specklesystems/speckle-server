@@ -5,7 +5,11 @@
         <v-skeleton-loader type="card-heading, card-avatar, article"></v-skeleton-loader>
       </v-card>
       <v-card v-else class="mb-4 transparent" rounded="lg" elevation="0">
-        <v-sheet class="px-5 pt-5 align-center justify-center" color="background2">
+        <v-sheet
+          class="px-5 pt-5 align-center justify-center"
+          :class="latestCommit ? '' : 'rounded-b-lg'"
+          color="background2"
+        >
           <v-select
             v-if="branches"
             v-model="selectedBranch"
@@ -132,7 +136,7 @@
         </v-sheet>
 
         <no-data-placeholder
-          v-else-if="selectedBranch"
+          v-if="!latestCommit"
           :message="`No data here! Here's how to get started:`"
         />
       </v-card>

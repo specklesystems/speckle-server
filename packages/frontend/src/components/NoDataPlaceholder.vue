@@ -1,5 +1,5 @@
 <template>
-  <v-card flat  class="transparent pb-7 ">
+  <v-card flat class="transparent pb-7">
     <v-card-text v-if="showMessage" class="headline">
       {{ message }}
     </v-card-text>
@@ -10,16 +10,17 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              href="https://speckle.guide/user/manager.html#installing-connectors"
+              href="https://speckle.guide/user/quickstart.html"
               tile
+              color="background2"
               target="_blank"
               :class="`pt-4  ${hover ? 'elevation-5' : 'elevation-0'} rounded-lg`"
               style="transition: all 0.15s; min-height: 130px"
             >
-              <v-card-title class="">🔌 Connectors</v-card-title>
+              <v-card-title class="">🏃‍♀️ Quickstart</v-card-title>
               <v-card-text>
-                Install connectors for some of the most popular AEC software and start sending and
-                receivng data right away!
+                Get started as fast as humanly possible by following our "Zero to Speckle ASAP"
+                guide!
               </v-card-text>
             </v-card>
           </v-hover>
@@ -29,6 +30,7 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
+              color="background2"
               href="https://speckle.guide/"
               target="_blank"
               tile
@@ -48,6 +50,7 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
+              color="background2"
               href="http://speckle.community"
               tile
               target="_blank"
@@ -66,6 +69,7 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
+              color="background2"
               href="https://speckle.xyz/streams/3073b96e86"
               tile
               target="_blank"
@@ -74,7 +78,8 @@
             >
               <v-card-title class="">🏗 Sample Stream</v-card-title>
               <v-card-text>
-                Confused? Check out a sample stream of the famous Speckle Haus, designed by our one and only Claire!
+                Confused? Check out a sample stream of the famous Speckle Haus, designed by our one
+                and only Claire!
               </v-card-text>
             </v-card>
           </v-hover>

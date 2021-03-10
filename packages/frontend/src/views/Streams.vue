@@ -26,7 +26,9 @@
           elevation="0"
           color="background"
         >
-          <v-card-title class="subtitle-1 pb-0">Recent Activity</v-card-title>
+          <v-card-title v-if="recentActivity.length > 0" class="subtitle-1 pb-0">
+            Recent Activity
+          </v-card-title>
           <v-list color="transparent" two-lines class="recent-commits">
             <div v-for="(a, i) in recentActivity" :key="i">
               <v-list-item v-if="a.__typename === 'Commit'">
@@ -76,10 +78,15 @@
       <v-col cols="12" sm="12" md="8" lg="9" xl="8">
         <div v-if="!$apollo.loading && streams.totalCount === 0" class="pa-4">
           <no-data-placeholder
-            :message="`Hello there! It seems like you have no created streams yet. Here's a handful of useful links to help you getting started:`"
+            :message="`Hello there! It seems like you don't have any streams yet. Here's a handful of useful links to help you get started:`"
           />
         </div>
-        <v-card v-if="user" class="mt-5 mx-4" color="background2" flat>
+        <v-card
+          v-if="user && user.streams.totalCount > 0"
+          class="mt-5 mx-4"
+          color="background2"
+          flat
+        >
           <v-card-text class="body-1">
             <span>
               You have
