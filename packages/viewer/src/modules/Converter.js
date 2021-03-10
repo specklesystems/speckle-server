@@ -369,7 +369,8 @@ export default class Coverter {
   }
 
   async CircleToBufferGeometry( obj ) {
-    const points = this.getCircularCurvePoints( obj.plane, obj.radius )
+    let conversionFactor = getConversionFactor( obj.units )
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.plane
@@ -382,7 +383,9 @@ export default class Coverter {
 
 
   async ArcToBufferGeometry( obj ) {
-    const points = this.getCircularCurvePoints( obj.plane, obj.radius, obj.startAngle, obj.endAngle )
+    let conversionFactor = getConversionFactor( obj.units )
+    console.warn( 'arc conversion factor', conversionFactor )
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor, obj.startAngle, obj.endAngle )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.speckle_type
