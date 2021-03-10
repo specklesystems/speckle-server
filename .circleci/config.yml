@@ -74,4 +74,5 @@ jobs:
             chmod u+x ./kubectl
       - run:
           name: Create and Deploy Docker image
+          no_output_timeout: 30m
           command: ./.circleci/ci-build-and-deploy.sh
