@@ -8,19 +8,28 @@
         <router-view :user-role="userRole"></router-view>
       </v-col>
     </v-row>
+    <v-row v-else-if="error" justify="center">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">
+        <error-block :message="error" />
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script>
 import SidebarStream from '../components/SidebarStream'
+import ErrorBlock from '../components/ErrorBlock'
 import streamQuery from '../graphql/stream.gql'
 
 export default {
   name: 'Stream',
   components: {
-    SidebarStream
+    SidebarStream,
+    ErrorBlock
   },
   data() {
-    return {}
+    return {
+      error: ''
+    }
   },
   apollo: {
     stream: {
@@ -31,7 +40,7 @@ export default {
         }
       },
       error(err) {
-        this.$router.push({ path: `/error?message=${err.message}` })
+        this.error = err.message.replace('GraphQL error: ', '')
       }
     }
   },
