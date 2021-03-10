@@ -1,6 +1,6 @@
 # Speckle Web
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Community forum users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fdiscourse.speckle.works&style=flat-square&logo=discourse&logoColor=white)](https://discourse.speckle.works) [![website](https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
+[![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Community forum users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&style=flat-square&logo=discourse&logoColor=white)](https://speckle.community) [![website](https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
 
 #### Status
 
@@ -26,7 +26,7 @@ The frontend is a static Vue app.
 
 ### ➡️ [Viewer](packages/viewer), the Speckle Viewer.
 
-The viewer is a [threejs](https://threejs.org/) extension that allows you to display data from Speckle. 
+The viewer is a [threejs](https://threejs.org/) extension that allows you to display data from Speckle.
 
 ## Documentation
 
@@ -36,7 +36,7 @@ Comprehensive developer and user documentation can be found in our:
 
 ## Developing and Debugging
 
-To get started, first clone this repo. Check out the detailed instructions for each module in their respective folder (see links above). 
+To get started, first clone this repo. Check out the detailed instructions for each module in their respective folder (see links above).
 
 ## Bootsrap local Speckle Server
 
@@ -63,7 +63,7 @@ When pushing commits to this repo, please follow the following guidelines:
 
 ## Community
 
-The Speckle Community hangs out on [the forum](https://discourse.speckle.works), do join and introduce yourself & feel free to ask us questions!
+The Speckle Community hangs out on [the forum](https://speckle.community), do join and introduce yourself & feel free to ask us questions!
 
 ## License
 
