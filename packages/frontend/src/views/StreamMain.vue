@@ -1,5 +1,5 @@
 <template>
-  <v-row>
+  <v-row v-if="!error">
     <v-col sm="12">
       <v-card v-if="$apollo.queries.branches.loading">
         <v-skeleton-loader type="card-heading, card-avatar, article"></v-skeleton-loader>
@@ -180,6 +180,11 @@
       </v-card>
     </v-col>
   </v-row>
+  <v-row v-else justify="center">
+    <v-col cols="12" class="pt-10">
+      <error-block :message="error" />
+    </v-col>
+  </v-row>
 </template>
 <script>
 import marked from 'marked'
@@ -191,6 +196,7 @@ import SourceAppAvatar from '../components/SourceAppAvatar'
 import streamBranchesQuery from '../graphql/streamBranches.gql'
 import Renderer from '../components/Renderer'
 import UserAvatar from '../components/UserAvatar'
+import ErrorBlock from '../components/ErrorBlock'
 
 export default {
   name: 'StreamMain',
@@ -199,7 +205,8 @@ export default {
     StreamDescriptionDialog,
     SourceAppAvatar,
     NoDataPlaceholder,
-    Renderer
+    Renderer,
+    ErrorBlock
   },
   props: {
     userRole: {
@@ -212,7 +219,8 @@ export default {
       dialogDescription: false,
       dialogBranch: false,
       selectedBranch: null,
-      clearRendererTrigger: 0
+      clearRendererTrigger: 0,
+      error: ''
     }
   },
   apollo: {
@@ -298,6 +306,7 @@ export default {
       let branchName = this.$route.params.branchName ? this.$route.params.branchName : 'main'
       let index = this.branches.items.findIndex((x) => x.name === branchName)
       if (index > -1) this.selectedBranch = this.branches.items[index]
+      else this.error = 'Branch ' + branchName + ' does not exist'
     },
     changeBranch() {
       this.clearRendererTrigger += 42

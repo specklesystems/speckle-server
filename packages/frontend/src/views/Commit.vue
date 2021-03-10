@@ -1,80 +1,87 @@
 <template>
-  <v-row>
-    <v-col v-if="$apollo.queries.stream.loading" cols="12">
-      <v-card>
-        <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
-      </v-card>
-    </v-col>
-    <v-col v-else cols="12">
-      <v-card elevation="0" rounded="lg">
-        <v-sheet class="pa-4" color="transparent">
-          <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
-          <v-card-title>
-            <v-icon class="mr-2">mdi-source-commit</v-icon>
-            {{ stream.commit.message }}
-            <v-spacer />
-            <v-btn
-              v-tooltip="'Edit commit details'"
-              small
-              plain
-              color="primary"
-              text
-              class="px-0"
-              @click="editCommit"
-            >
-              <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
-              Edit
-            </v-btn>
-          </v-card-title>
-          <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
-          <v-list-item dense>
-            <v-list-item-icon class="mr-2 mt-1">
-              <user-avatar
-                :id="stream.commit.authorId"
-                :avatar="stream.commit.authorAvatar"
-                :name="stream.commit.authorName"
-                :size="25"
-              />
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-subtitle class="caption">
-                <b>{{ stream.commit.authorName }}</b>
-                &nbsp;
-                <timeago :datetime="stream.commit.createdAt"></timeago>
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-row align="center" justify="center">
-                <v-chip small class="mr-2">
-                  <v-icon small class="mr-2">mdi-source-branch</v-icon>
-                  {{ stream.commit.branchName }}
-                </v-chip>
-                <source-app-avatar :application-name="stream.commit.sourceApplication" />
-              </v-row>
-            </v-list-item-action>
-          </v-list-item>
-        </v-sheet>
-        <div style="height: 50vh">
-          <renderer :object-url="commitObjectUrl" />
-        </div>
-        <v-sheet class="pa-4" color="transparent">
-          <v-card-title class="mr-8">
-            <v-icon class="mr-2">mdi-database</v-icon>
-            Data
-          </v-card-title>
-          <v-card-text class="pa-0">
-            <object-speckle-viewer
-              class="mt-4"
-              :stream-id="stream.id"
-              :object-id="stream.commit.referencedObject"
-              :value="commitObject"
-              :expand="true"
-            ></object-speckle-viewer>
-          </v-card-text>
-        </v-sheet>
-      </v-card>
-    </v-col>
-  </v-row>
+  <div>
+    <v-row>
+      <v-col v-if="$apollo.queries.stream.loading" cols="12">
+        <v-card>
+          <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
+        </v-card>
+      </v-col>
+      <v-col v-else-if="stream.commit" cols="12">
+        <v-card elevation="0" rounded="lg">
+          <v-sheet class="pa-4" color="transparent">
+            <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
+            <v-card-title>
+              <v-icon class="mr-2">mdi-source-commit</v-icon>
+              {{ stream.commit.message }}
+              <v-spacer />
+              <v-btn
+                v-tooltip="'Edit commit details'"
+                small
+                plain
+                color="primary"
+                text
+                class="px-0"
+                @click="editCommit"
+              >
+                <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
+                Edit
+              </v-btn>
+            </v-card-title>
+            <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
+            <v-list-item dense>
+              <v-list-item-icon class="mr-2 mt-1">
+                <user-avatar
+                  :id="stream.commit.authorId"
+                  :avatar="stream.commit.authorAvatar"
+                  :name="stream.commit.authorName"
+                  :size="25"
+                />
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-subtitle class="caption">
+                  <b>{{ stream.commit.authorName }}</b>
+                  &nbsp;
+                  <timeago :datetime="stream.commit.createdAt"></timeago>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+              <v-list-item-action>
+                <v-row align="center" justify="center">
+                  <v-chip small class="mr-2">
+                    <v-icon small class="mr-2">mdi-source-branch</v-icon>
+                    {{ stream.commit.branchName }}
+                  </v-chip>
+                  <source-app-avatar :application-name="stream.commit.sourceApplication" />
+                </v-row>
+              </v-list-item-action>
+            </v-list-item>
+          </v-sheet>
+          <div style="height: 50vh">
+            <renderer :object-url="commitObjectUrl" />
+          </div>
+          <v-sheet class="pa-4" color="transparent">
+            <v-card-title class="mr-8">
+              <v-icon class="mr-2">mdi-database</v-icon>
+              Data
+            </v-card-title>
+            <v-card-text class="pa-0">
+              <object-speckle-viewer
+                class="mt-4"
+                :stream-id="stream.id"
+                :object-id="stream.commit.referencedObject"
+                :value="commitObject"
+                :expand="true"
+              ></object-speckle-viewer>
+            </v-card-text>
+          </v-sheet>
+        </v-card>
+      </v-col>
+    </v-row>
+    <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
+      <v-col cols="12" class="pt-10">
+        <error-block :message="'Commit not found'" />
+      </v-col>
+    </v-row>
+  </div>
 </template>
 <script>
 import gql from 'graphql-tag'
@@ -84,10 +91,18 @@ import Renderer from '../components/Renderer'
 import streamCommitQuery from '../graphql/commit.gql'
 import CommitEditDialog from '../components/dialogs/CommitEditDialog'
 import SourceAppAvatar from '../components/SourceAppAvatar'
+import ErrorBlock from '../components/ErrorBlock'
 
 export default {
   name: 'Commit',
-  components: { CommitEditDialog, UserAvatar, ObjectSpeckleViewer, Renderer, SourceAppAvatar },
+  components: {
+    CommitEditDialog,
+    UserAvatar,
+    ObjectSpeckleViewer,
+    Renderer,
+    SourceAppAvatar,
+    ErrorBlock
+  },
   data: () => ({
     loadedModel: false
   }),
@@ -170,7 +185,7 @@ export default {
               myCommit: { ...dialog.commit }
             }
           })
-          .then((data) => {
+          .then(() => {
             this.$apollo.queries.stream.refetch()
           })
           .catch((error) => {
