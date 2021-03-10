@@ -1,17 +1,12 @@
 <template>
-  <v-card
-    :class="`my-1 mb-0 pa-0 pb-2 ${
-      localExpand ? 'elevation-3' : 'elevation-0'
-    } my-0`"
-    color="background2"
-  >
+  <v-card :class="`my-1 mb-0 pa-0 pb-2 ${localExpand ? 'elevation-3' : 'elevation-0'} my-0`">
     <v-card-title>
       <v-chip @click="toggleLoadExpand">
         <v-icon small class="mr-2">mdi-code-array</v-icon>
         {{ keyName }}
         <span class="caption ml-2">List ({{ value.length }} elements)</span>
         <v-icon class="ml-2" small>
-          {{ localExpand ? "mdi-minus" : "mdi-plus" }}
+          {{ localExpand ? 'mdi-minus' : 'mdi-plus' }}
         </v-icon>
       </v-chip>
     </v-card-title>
@@ -32,11 +27,11 @@
 </template>
 <script>
 export default {
-  name: "ObjectListViewer",
+  name: 'ObjectListViewer',
   components: {
-    ObjectSpeckleViewer: () => import("./ObjectSpeckleViewer"),
-    ObjectSimpleViewer: () => import("./ObjectSimpleViewer"),
-    ObjectValueViewer: () => import("./ObjectValueViewer")
+    ObjectSpeckleViewer: () => import('./ObjectSpeckleViewer'),
+    ObjectSimpleViewer: () => import('./ObjectSimpleViewer'),
+    ObjectValueViewer: () => import('./ObjectValueViewer')
   },
   props: {
     value: {
@@ -69,34 +64,34 @@ export default {
           arr.push({
             key: `${index}`,
             value: val,
-            type: "ObjectListViewer"
+            type: 'ObjectListViewer'
           })
-        } else if (typeof val === "object" && val !== null) {
-          if (val.speckle_type && val.speckle_type === "reference") {
+        } else if (typeof val === 'object' && val !== null) {
+          if (val.speckle_type && val.speckle_type === 'reference') {
             arr.push({
               key: `${index}`,
               value: val,
-              type: "ObjectSpeckleViewer"
+              type: 'ObjectSpeckleViewer'
             })
           } else {
             arr.push({
               key: `${index}`,
               value: val,
-              type: "ObjectSimpleViewer"
+              type: 'ObjectSimpleViewer'
             })
           }
         } else {
           arr.push({
             key: `${index}`,
             value: val,
-            type: "ObjectValueViewer"
+            type: 'ObjectValueViewer'
           })
         }
       }
 
       arr.sort((a, b) => {
         if (a.type === b.type) return 0
-        if (a.type === "ObjectValueViewer") return -1
+        if (a.type === 'ObjectValueViewer') return -1
         return 0
       })
       return arr

@@ -8,7 +8,6 @@
         <v-sheet
           class="px-5 pt-5 align-center justify-center"
           :class="latestCommit ? '' : 'rounded-b-lg'"
-          color="background2"
         >
           <v-select
             v-if="branches"
@@ -52,7 +51,7 @@
           <renderer :object-url="latestCommitObjectUrl" :unload-trigger="clearRendererTrigger" />
         </div>
 
-        <v-sheet v-if="latestCommit" color="background2">
+        <v-sheet v-if="latestCommit">
           <!-- LAST COMMIT -->
           <v-list two-line class="pa-0">
             <v-list-item :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id">
@@ -148,7 +147,7 @@
         <v-skeleton-loader type="article"></v-skeleton-loader>
       </v-card>
 
-      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
+      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0">
         <v-dialog v-model="dialogDescription">
           <stream-description-dialog
             :id="$route.params.streamId"

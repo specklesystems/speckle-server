@@ -13,7 +13,7 @@
           <timeago :datetime="stream.createdAt"></timeago>
         </v-col>
       </v-row>
-      <v-card class="mb-3" elevation="0" rounded="lg" color="background2">
+      <v-card class="mb-3" elevation="0" rounded="lg">
         <v-row justify-center>
           <v-col cols="12">
             <v-card-title class="subtitle-2">

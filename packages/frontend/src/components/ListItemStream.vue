@@ -1,5 +1,5 @@
 <template>
-  <v-card class="pa-5 mb-3" color="background2" style="transition: all 0.2s" flat>
+  <v-card class="pa-5 mb-3" style="transition: all 0.2s" flat>
     <v-row>
       <v-col cols="12" sm="8" class="align-self-center">
         <div class="subtitle-1 stream-link">

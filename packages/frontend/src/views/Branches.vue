@@ -4,7 +4,7 @@
       <v-card v-if="$apollo.queries.stream.loading">
         <v-skeleton-loader type="article"></v-skeleton-loader>
       </v-card>
-      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0" color="background2">
+      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0">
         <v-dialog v-model="dialogBranch" max-width="500">
           <new-branch-dialog
             :branch-names="branches.items.map((b) => b.name)"
@@ -39,13 +39,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card
-        v-if="!$apollo.queries.stream.loading"
-        class="mt-5 pa-4"
-        elevation="0"
-        rounded="lg"
-        color="background2"
-      >
+      <v-card v-if="!$apollo.queries.stream.loading" class="mt-5 pa-4" elevation="0" rounded="lg">
         <v-subheader class="text-uppercase">Branches ({{ branches.items.length }})</v-subheader>
         <v-card-text>
           <v-list two-line color="transparent">

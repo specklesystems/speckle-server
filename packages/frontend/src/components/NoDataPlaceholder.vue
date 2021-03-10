@@ -12,7 +12,6 @@
               height="100%"
               href="https://speckle.guide/user/quickstart.html"
               tile
-              color="background2"
               target="_blank"
               :class="`pt-4  ${hover ? 'elevation-5' : 'elevation-0'} rounded-lg`"
               style="transition: all 0.15s; min-height: 130px"
@@ -30,7 +29,6 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              color="background2"
               href="https://speckle.guide/"
               target="_blank"
               tile
@@ -50,7 +48,6 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              color="background2"
               href="http://speckle.community"
               tile
               target="_blank"
@@ -69,7 +66,6 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              color="background2"
               href="https://speckle.xyz/streams/3073b96e86"
               tile
               target="_blank"

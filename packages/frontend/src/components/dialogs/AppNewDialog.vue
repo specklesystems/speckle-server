@@ -1,5 +1,5 @@
 <template>
-  <v-card class="pa-4" color="background2">
+  <v-card class="pa-4">
     <v-card-title>Create a New App</v-card-title>
 
     <v-form v-show="!appCreateResult" ref="form" v-model="valid" @submit.prevent="createApp">

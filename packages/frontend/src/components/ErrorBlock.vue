@@ -1,5 +1,5 @@
 <template>
-  <v-sheet rounded="lg" class="pa-15" color="background2">
+  <v-sheet rounded="lg" class="pa-15">
     <h1>
       <v-icon large>mdi-bug</v-icon>
       Oups...

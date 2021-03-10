@@ -1,5 +1,5 @@
 <template>
-  <v-card xxxcolor="background2" class="elevation-0 mt-3 mb-5 transparent">
+  <v-card class="elevation-0 mt-3 mb-5 transparent">
     <v-card-title>Your Apps</v-card-title>
     <v-card-text class="">
       Here you can review the apps that you have granted access to.
@@ -23,7 +23,7 @@
           class="d-flex"
           style="flex-direction: column"
         >
-          <v-card class="background2 flex-grow-1 d-flex flex-column">
+          <v-card flex-grow-1 d-flex flex-column>
             <v-card-text>
               <h3 class="mb-3">
                 <v-icon v-if="app.trustByDefault" class="mr-1 primary--text" small>

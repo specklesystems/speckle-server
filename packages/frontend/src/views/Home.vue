@@ -43,7 +43,7 @@
       >
         <v-row>
           <v-col xxxclass="pt-0">
-            <v-card class="pa-5" elevation="0" rounded="lg" color="background2">
+            <v-card class="pa-5" elevation="0" rounded="lg">
               <v-subheader class="text-uppercase">Recent activity:</v-subheader>
               <v-chip-group
                 v-model="selectedActivity"

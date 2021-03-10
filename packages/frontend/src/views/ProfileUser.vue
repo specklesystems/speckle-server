@@ -10,7 +10,7 @@
         <user-info-card :user="user"></user-info-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">
-        <v-card class="mb-3 elevation-0" color="background2">
+        <v-card class="mb-3 elevation-0">
           <v-card-title>
             {{ user.name }} and you share {{ user.streams.totalCount }}
             {{ user.streams.totalCount === 1 ? 'stream' : 'streams' }} and

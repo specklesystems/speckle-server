@@ -4,7 +4,7 @@
       <v-skeleton-loader type="article, article"></v-skeleton-loader>
     </v-col>
     <v-col v-else cols="12">
-      <v-card class="pa-4" elevation="0" rounded="lg" color="background2">
+      <v-card class="pa-4" elevation="0" rounded="lg">
         <v-dialog v-model="dialogEdit" max-width="500">
           <branch-edit-dialog :branch="stream.branch" @close="closeEdit" />
         </v-dialog>
@@ -34,7 +34,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="mt-5 pa-4" elevation="0" rounded="lg" color="background2">
+      <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
         <v-subheader class="text-uppercase">
           Commits ({{ stream.branch.commits.totalCount }})
         </v-subheader>

@@ -1,5 +1,5 @@
 <template>
-  <v-card class="pa-4" color="background2">
+  <v-card class="pa-4">
     <v-card-title>Create a New Personal Access Token</v-card-title>
     <v-form v-show="!fullTokenResult" ref="form" v-model="valid" @submit.prevent="createToken">
       <v-card-text>

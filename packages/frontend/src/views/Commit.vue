@@ -6,7 +6,7 @@
       </v-card>
     </v-col>
     <v-col v-else cols="12">
-      <v-card elevation="0" rounded="lg" color="background2">
+      <v-card elevation="0" rounded="lg">
         <v-sheet class="pa-4" color="transparent">
           <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
           <v-card-title>
