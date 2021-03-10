@@ -16,13 +16,13 @@
           label="Stream Name"
         />
         <v-textarea v-model="description" rows="1" row-height="15" label="Description (optional)" />
-        <p>
+        <p class="mt-5">
           <b>Collaborators:</b>
           Share this stream with your colleagues!
         </p>
         <v-text-field
           v-model="search"
-          label="Search"
+          label="Search users..."
           placeholder="Search by name or by email"
         />
         <div v-if="$apollo.loading">Searching.</div>
