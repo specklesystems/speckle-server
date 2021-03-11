@@ -421,9 +421,7 @@ export default class Coverter {
       const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
       const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
 
-      const v = new THREE.Vector3().addVectors( xMove, yMove )
-      console.warn( 'Radius vs Length', v.length(), radius, x, y )
-      let pt = v.add( center )
+      const pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
       points.push( pt )
     }
     return points
