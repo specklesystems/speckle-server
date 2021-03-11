@@ -369,7 +369,8 @@ export default class Coverter {
   }
 
   async CircleToBufferGeometry( obj ) {
-    const points = this.getCircularCurvePoints( obj.plane, obj.radius )
+    let conversionFactor = getConversionFactor( obj.units )
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.plane
@@ -382,7 +383,9 @@ export default class Coverter {
 
 
   async ArcToBufferGeometry( obj ) {
-    const points = this.getCircularCurvePoints( obj.plane, obj.radius, obj.startAngle, obj.endAngle )
+    let conversionFactor = getConversionFactor( obj.units )
+    console.warn( 'arc conversion factor', conversionFactor )
+    const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor, obj.startAngle, obj.endAngle )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
     delete obj.speckle_type
@@ -401,6 +404,10 @@ export default class Coverter {
     const xAxis = this.PointToVector3( plane.xdir )
     const yAxis = this.PointToVector3( plane.ydir )
 
+    // Make sure plane axis are unit lenght!!!!
+    xAxis.normalize()
+    yAxis.normalize()
+    
     // Determine resolution
     let resolution = ( endAngle - startAngle ) * radius / res
     resolution = parseInt( resolution.toString() )
@@ -414,7 +421,7 @@ export default class Coverter {
       const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
       const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
 
-      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
+      const pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
       points.push( pt )
     }
     return points
