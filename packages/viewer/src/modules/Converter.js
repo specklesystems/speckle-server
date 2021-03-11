@@ -404,6 +404,10 @@ export default class Coverter {
     const xAxis = this.PointToVector3( plane.xdir )
     const yAxis = this.PointToVector3( plane.ydir )
 
+    // Make sure plane axis are unit lenght!!!!
+    xAxis.normalize()
+    yAxis.normalize()
+    
     // Determine resolution
     let resolution = ( endAngle - startAngle ) * radius / res
     resolution = parseInt( resolution.toString() )
@@ -417,7 +421,9 @@ export default class Coverter {
       const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
       const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
 
-      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
+      const v = new THREE.Vector3().addVectors( xMove, yMove )
+      console.warn( 'Radius vs Length', v.length(), radius, x, y )
+      let pt = v.add( center )
       points.push( pt )
     }
     return points
