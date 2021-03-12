@@ -1,14 +1,14 @@
 <template>
   <div>
     <v-card class="elevation-10 rounded-lg">
-      <v-img class="white--text align-end" height="300px" src="@/assets/onboardingsplash.png">
+      <v-img class="white--text align-end" height="200px" src="@/assets/onboardingsplash.png">
         <v-card-title class="">Speckle Onboarding {{ onboarding + 1 }} / 4</v-card-title>
       </v-img>
       <v-window v-model="onboarding" class="py-3">
         <v-window-item>
           <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Welcome!</v-card-title>
-            <v-card-text>
+            <v-card-text class="body-1">
               <p>
                 Next, we will guide you through setting up Speckle on your computer. If you've done
                 this before, feel free to skip this wizard!
@@ -20,7 +20,7 @@
                 <li>Creating your first stream</li>
               </ul>
             </v-card-text>
-            <v-card-actions class="justify-space-between">
+            <v-card-actions class="justify-center">
               <v-btn block color="primary" @click="next">
                 Let's go
                 <v-icon>mdi-chevron-right</v-icon>
@@ -31,21 +31,22 @@
         <v-window-item>
           <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Speckle Manager Installation</v-card-title>
-            <v-card-text>
+            <v-card-text class="body-1">
               <p>
                 Speckle Manager is a desktop application that handles accounts and connectors
                 (Rhino, Revit, etc.) on your machine. Once you have downloaded Speckle Manager, go
                 ahead and install it. Once you're done, go to the next step!
               </p>
+              <p>Note: Currently, we only support Windows.</p>
               <v-btn block depressed class="mb-4" @click="downloadManager">
                 <v-icon small class="mr-4">mdi-download</v-icon>
-                Download Speckle Manager
+                Download Speckle Manager (WIN)
               </v-btn>
             </v-card-text>
-            <v-card-actions class="justify-space-between">
-              <v-btn small text color="grey" @click="prev">
+            <v-card-actions class="justify-center">
+              <!--               <v-btn small text color="grey" @click="prev">
                 <v-icon small>mdi-chevron-left</v-icon>
-              </v-btn>
+              </v-btn> -->
 
               <v-btn color="primary" @click="next">
                 Next Step: Accounts
@@ -58,7 +59,7 @@
         <v-window-item>
           <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Account Linking</v-card-title>
-            <v-card-text>
+            <v-card-text class="body-1">
               <p>
                 In order to use the desktop connectors with Speckle, you need to add this account to
                 the Speckle Manager. Click the button below to do so. NOTE: You need to have Speckle
@@ -74,10 +75,10 @@
                 Add Account Speckle Manager
               </v-btn>
             </v-card-text>
-            <v-card-actions class="justify-space-between">
-              <v-btn small text color="grey" @click="prev">
+            <v-card-actions class="justify-center">
+              <!--              <v-btn small text color="grey" @click="prev">
                 <v-icon small>mdi-chevron-left</v-icon>
-              </v-btn>
+              </v-btn> -->
 
               <v-btn color="primary" @click="next">
                 Your first stream
@@ -90,7 +91,7 @@
         <v-window-item>
           <v-card class="transparent elevation-0" color="transparent">
             <v-card-title>Your First Stream</v-card-title>
-            <v-card-text>
+            <v-card-text class="body-1">
               <p>
                 Streams are the primary way Speckle organizes data. You can see them as a file, a
                 part of a file, or a repository. Ultimately, a stream is simply a collection of
@@ -105,22 +106,19 @@
                 Create Your First Stream
               </v-btn>
             </v-card-text>
-            <v-card-actions class="justify-space-between">
-              <v-btn small text color="grey" @click="prev">
-                <v-icon small>mdi-chevron-left</v-icon>
-              </v-btn>
-              <!-- <span class="caption mr-4">Done!</span> -->
-              <!--               <v-btn color="primary" @click="next">
-                Next
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn> -->
-            </v-card-actions>
           </v-card>
         </v-window-item>
       </v-window>
     </v-card>
     <div class="text-center py-4">
-      <v-btn small text to="/" @click="skip">Skip Onboarding</v-btn>
+      <v-btn small text color="grey" @click="prev" v-show="onboarding!==0">
+        <v-icon small>mdi-chevron-left</v-icon>
+      </v-btn>
+      <v-btn small text @click="skip">
+        Skip Onboarding
+        <v-icon small style="opacity: 0.5" class="ml-1">mdi-fast-forward</v-icon>
+        <!-- <v-icon small>mdi-chevron-right</v-icon> -->
+      </v-btn>
     </div>
     <v-dialog v-model="newStreamDialog" max-width="500">
       <stream-new-dialog @created="finish" />
@@ -146,6 +144,7 @@ export default {
     skip() {
       this.$matomo && this.$matomo.trackPageView(`onboarding/skip`)
       localStorage.setItem('onboarding', 'skipped')
+      this.$router.push('/')
     },
     finish() {
       this.$matomo && this.$matomo.trackPageView(`onboarding/done`)
