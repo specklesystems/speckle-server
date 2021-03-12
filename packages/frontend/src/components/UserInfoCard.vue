@@ -21,8 +21,8 @@
         </v-btn>
         <v-dialog v-model="avatarDialog" max-width="400">
           <v-card>
-            <v-card-title class="text-center">Choose a new profile picture</v-card-title>
-            <v-card-text class="text-center pa-0 ma-0 mt-5">
+            <v-card-title>Choose a new profile picture</v-card-title>
+            <v-card-text class="pa-0 ma-0 mt-5">
               <v-image-input
                 v-model="imageData"
                 :image-quality="0.85"
