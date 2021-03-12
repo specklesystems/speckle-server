@@ -1,6 +1,6 @@
 <template>
   <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="pb-4 elevation-10">
-    <v-card-text class="text-center background2">
+    <v-card-text class="text-center">
       <user-avatar></user-avatar>
     </v-card-text>
     <v-card-text class="text-h5 font-weight-regular text-center pt-10">

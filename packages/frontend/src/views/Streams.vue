@@ -81,12 +81,7 @@
             :message="`Hello there! It seems like you don't have any streams yet. Here's a handful of useful links to help you get started:`"
           />
         </div>
-        <v-card
-          v-if="user && user.streams.totalCount > 0"
-          class="mt-5 mx-4"
-          color="background2"
-          flat
-        >
+        <v-card v-if="user && user.streams.totalCount > 0" class="mt-5 mx-4" flat>
           <v-card-text class="body-1">
             <span>
               You have

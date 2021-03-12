@@ -86,9 +86,7 @@ export function createProvider( options = {} ) {
       console.log( '%cError', 'background: red; color: white; padding: 2px 4px; border-radius: 3px; font-weight: bold;', error.message )
       if(error.message.toLowerCase().includes('token')){
         window.location = `${window.location.origin}/authn/login`
-      } else {
-        window.location = `${window.location.origin}/error?message=${error.message}`
-      }
+      } 
     },
   } )
 

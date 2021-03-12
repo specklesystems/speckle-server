@@ -36,13 +36,14 @@ export async function prefetchUserAndSetSuuid() {
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query: `{ user { id suuid } }` })
+      body: JSON.stringify({ query: `{ user { id suuid streams { totalCount } } }` })
     })
 
     let data = (await testResponse.json()).data
     if (data.user) {
       localStorage.setItem('suuid', data.user.suuid)
       localStorage.setItem('uuid', data.user.id)
+      localStorage.setItem('stcount', data.user.streams.totalCount)
       return data
     } else {
       await signOut()
@@ -89,6 +90,7 @@ export async function signOut() {
   localStorage.removeItem('RefreshToken')
   localStorage.removeItem('suuid')
   localStorage.removeItem('uuid')
+  localStorage.removeItem('onboarding')
 
   window.location.reload()
 }

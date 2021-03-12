@@ -1,5 +1,5 @@
 <template>
-  <v-card color="background2" class="elevation-0 mt-3 mb-5">
+  <v-card class="elevation-0 mt-3 mb-5">
     <v-card-title>Applications</v-card-title>
     <v-card-text>
       Register and manage third-party Speckle Apps that, once authorised by a user on this server,

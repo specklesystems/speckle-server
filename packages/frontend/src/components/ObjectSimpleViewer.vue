@@ -1,17 +1,14 @@
 <template>
-  <v-card
-    :class="`my-1 pa-0 ${localExpand ? 'elevation-3' : 'elevation-0'} my-0`"
-    color="background2"
-  >
+  <v-card :class="`my-1 pa-0 ${localExpand ? 'elevation-3' : 'elevation-0'} my-0`">
     <v-card-title>
       <v-chip color="" @click="toggleLoadExpand">
         <v-icon class="mr-2" small>mdi-code-braces</v-icon>
         {{ keyName }}
         <span class="caption ml-2">
-          {{ value.speckle_type ? value.speckle_type : "Object" }}
+          {{ value.speckle_type ? value.speckle_type : 'Object' }}
         </span>
         <v-icon small class="ml-2">
-          {{ localExpand ? "mdi-minus" : "mdi-plus" }}
+          {{ localExpand ? 'mdi-minus' : 'mdi-plus' }}
         </v-icon>
       </v-chip>
     </v-card-title>
@@ -29,11 +26,11 @@
 </template>
 <script>
 export default {
-  name: "ObjectSimpleViewer",
+  name: 'ObjectSimpleViewer',
   components: {
-    ObjectListViewer: () => import("./ObjectListViewer"),
-    ObjectSpeckleViewer: () => import("./ObjectSpeckleViewer"),
-    ObjectValueViewer: () => import("./ObjectValueViewer")
+    ObjectListViewer: () => import('./ObjectListViewer'),
+    ObjectSpeckleViewer: () => import('./ObjectSpeckleViewer'),
+    ObjectValueViewer: () => import('./ObjectValueViewer')
   },
   props: {
     value: {
@@ -60,44 +57,44 @@ export default {
       let entries = Object.entries(this.value)
       let arr = []
       for (let [key, val] of entries) {
-        if (key.startsWith("__")) continue
-        if (key[0] === "@") key = key.substring(1)
-        if (key === "totalChildrenCount") key = "total children count"
-        if (key === "speckle_type") key = "speckle type"
+        if (key.startsWith('__')) continue
+        if (key[0] === '@') key = key.substring(1)
+        if (key === 'totalChildrenCount') key = 'total children count'
+        if (key === 'speckle_type') key = 'speckle type'
 
         if (Array.isArray(val)) {
           arr.push({
             key,
             value: val,
-            type: "ObjectListViewer",
+            type: 'ObjectListViewer',
             description: `List (${val.length} elements)`
           })
           // TODO -> list value template displayer
-        } else if (typeof val === "object" && val !== null) {
-          if (val.speckle_type && val.speckle_type === "reference") {
+        } else if (typeof val === 'object' && val !== null) {
+          if (val.speckle_type && val.speckle_type === 'reference') {
             arr.push({
               key,
               value: val,
-              type: "ObjectSpeckleViewer"
+              type: 'ObjectSpeckleViewer'
             })
           } else {
             arr.push({
               key,
               value: val,
-              type: "ObjectSimpleViewer"
+              type: 'ObjectSimpleViewer'
             })
           }
         } else {
           arr.push({
             key,
             value: val,
-            type: "ObjectValueViewer"
+            type: 'ObjectValueViewer'
           })
         }
       }
       arr.sort((a, b) => {
         if (a.type === b.type) return 0
-        if (a.type === "ObjectValueViewer") return -1
+        if (a.type === 'ObjectValueViewer') return -1
         return 0
       })
       return arr

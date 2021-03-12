@@ -45,6 +45,6 @@ Why? However trivial the changes might seem, there might be subtle reasons for t
 
 ## Wrap up
 
-Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion on our community [forum](https://discourse.speckle.works).
+Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion on our community [forum](https://speckle.community).
 
 🙌❤️💙💚💜🙌

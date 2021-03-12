@@ -1,6 +1,6 @@
 <template>
   <v-app id="speckle">
-    <v-app-bar app color="background2">
+    <v-app-bar app>
       <v-container class="py-0 fill-height hidden-sm-and-down">
         <v-btn text to="/" active-class="no-active">
           <v-img class="" contain max-height="30" max-width="30" src="@/assets/logo.svg" />
@@ -41,7 +41,7 @@
                   <v-icon>mdi-magnify</v-icon>
                 </v-btn>
               </template>
-              <v-card class="background2">
+              <v-card>
                 <v-row>
                   <!-- <v-col v-for="link in navLinks" :key="link.name" cols="12">
                     <v-btn text block :to="link.link">

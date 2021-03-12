@@ -8,7 +8,7 @@
         </v-avatar>
       </v-btn>
     </template>
-    <v-list color="background2" class="py-0 my-0">
+    <v-list class="py-0 my-0">
       <v-list-item to="/profile">
         <v-list-item-content>
           <v-list-item-title>

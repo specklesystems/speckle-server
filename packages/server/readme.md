@@ -1,6 +1,6 @@
 # Speckle Server
 
-[![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Community forum users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fdiscourse.speckle.works&style=flat-square&logo=discourse&logoColor=white)](https://discourse.speckle.works) [![website](https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
+[![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Community forum users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&style=flat-square&logo=discourse&logoColor=white)](https://speckle.community) [![website](https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
 
 #### Status
 
@@ -26,14 +26,13 @@ First, ensure you have postgres and redis ready and running:
 - create a postgres db called `speckle2_dev`
 - ensure you have an instance of redis running
 
-Finally, in the `packages/server` folder: 
+Finally, in the `packages/server` folder:
 
 - copy the `.env-example` file to `.env`,
 - open and edit the `.env` file, filling in the required variables,
 - run `npm install`,
 - finally `npm run dev`,
 - check `localhost:3000/graphql` out!
-
 
 ## Developing
 
@@ -67,7 +66,7 @@ To run all tests, simply run `npm run test`. To run specific tests, use the `moc
 
 ## Community
 
-The Speckle Community hangs out on [the forum](https://discourse.speckle.works), do join and introduce yourself & feel free to ask us questions!
+The Speckle Community hangs out on [the forum](https://speckle.community), do join and introduce yourself & feel free to ask us questions!
 
 ## License
 
