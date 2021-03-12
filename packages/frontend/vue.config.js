@@ -1,6 +1,5 @@
-const TerserPlugin = require('terser-webpack-plugin')
-
 module.exports = {
+  productionSourceMap: false,
   pages: {
     app: {
       entry: 'src/app.js',
@@ -17,15 +16,5 @@ module.exports = {
       ]
     }
   },
-  transpileDependencies: ['vuetify'],
-  configureWebpack: {
-    optimization: {
-      minimize: process.env.NODE_ENV === 'production',
-      minimizer: [
-        new TerserPlugin({
-          exclude: /(Speckle.js\.). /
-        })
-      ]
-    }
-  }
+  transpileDependencies: ['vuetify']
 }
