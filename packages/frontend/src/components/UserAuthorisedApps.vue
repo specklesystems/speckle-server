@@ -93,7 +93,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.user.authorizedApps.reverse()
+      update: (data) => data.user.authorizedApps
     }
   },
   computed: {
