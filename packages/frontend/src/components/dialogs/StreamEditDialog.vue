@@ -52,7 +52,7 @@
       </span>
       <v-text-field
         v-model="streamNameConfirm"
-        label="confirm stream name"
+        label="Confirm stream name"
         class="pr-5"
       ></v-text-field>
     </v-card-text>
@@ -120,7 +120,7 @@ export default {
       }
       this.isLoading = false
       this.$emit('close')
-      this.$router.push({ path: '/streams' })
+      this.$router.push({ path: '/' })
     },
     async updateStream() {
       if (!this.$refs.form.validate()) return

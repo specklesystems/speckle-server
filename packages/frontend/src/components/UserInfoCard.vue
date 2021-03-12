@@ -59,14 +59,13 @@
       </v-card-text>
       <v-divider v-if="isSelf" class="pb-2"></v-divider>
       <v-card-actions>
-        <v-btn v-if="isSelf" small plain color="primary" text block @click="userDialog = true">
+        <v-btn v-if="isSelf" small plain color="primary" text block @click="editUser">
           <v-icon small class="mr-2">mdi-cog-outline</v-icon>
           Edit
         </v-btn>
       </v-card-actions>
-      <v-dialog v-model="userDialog" max-width="600">
-        <user-edit-dialog :user="user" @close="editClosed"></user-edit-dialog>
-      </v-dialog>
+
+      <user-edit-dialog ref="userDialog" :user="user"></user-edit-dialog>
     </div>
   </v-card>
 </template>
@@ -85,7 +84,6 @@ export default {
   },
   data() {
     return {
-      userDialog: false,
       avatarDialog: false,
       imageData: null
     }
@@ -111,16 +109,41 @@ export default {
             }
           }
         })
-        this.user.avatar = this.imageData
+        this.$emit('update')
       } catch (e) {
         console.log(e)
       }
 
       this.avatarDialog = false
     },
-    editClosed() {
-      this.userDialog = false
-      this.$apollo.queries.user.refetch()
+    //using vue dialogs just like .net modals
+    async editUser() {
+      this.$refs.userDialog.open(this.user).then((dialog) => {
+        if (!dialog.result) return
+
+        this.$matomo && this.$matomo.trackPageView('user/update')
+
+        this.isLoading = true
+        this.$apollo
+          .mutate({
+            mutation: gql`
+              mutation userUpdate($myUser: UserUpdateInput!) {
+                userUpdate(user: $myUser)
+              }
+            `,
+            variables: {
+              myUser: {
+                name: dialog.user.name,
+                bio: dialog.user.bio,
+                company: dialog.user.company
+              }
+            }
+          })
+          .then(() => {
+            this.isLoading = false
+            this.$emit('update')
+          })
+      })
     }
   }
 }

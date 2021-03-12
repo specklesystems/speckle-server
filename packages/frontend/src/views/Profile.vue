@@ -2,7 +2,7 @@
   <v-container>
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <user-info-card :user="user"></user-info-card>
+        <user-info-card :user="user" @update="update"></user-info-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">
         <!-- <v-card v-if="user" class="mb-3">
@@ -54,7 +54,12 @@ export default {
       query: userQuery
     }
   },
-  computed: {}
+  computed: {},
+  methods: {
+    update() {
+      this.$apollo.queries.user.refetch()
+    }
+  }
 }
 </script>
 <style scoped>
