@@ -101,7 +101,6 @@ export default {
         }
       },
       update(data) {
-        //data.stream.branches.items = data.stream.branches.items.reverse()
         return data.stream
       }
     }

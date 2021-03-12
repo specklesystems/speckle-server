@@ -1,22 +1,29 @@
 <template>
-  <v-card color="transparent" class="elevation-0">
-    <v-card-title v-if="user" class="text-wrap">
+  <v-card color="transparent" class="text-center elevation-0">
+    <v-card-title v-if="user" class="text-center text-wrap justify-center">
       {{ serverInfo.name }}
-      <v-btn
-        v-if="user.role === `server:admin`"
-        v-tooltip="'Edit server information'"
-        small
-        icon
-        @click="editServer"
-      >
-        <v-icon small>mdi-pencil-outline</v-icon>
-      </v-btn>
     </v-card-title>
     <v-card-text>
       <p class="subtitle-1">{{ serverInfo.company }}</p>
       <p>{{ serverInfo.description }}</p>
       <p v-if="serverInfo.adminContact" class="caption">Contact: {{ serverInfo.adminContact }}</p>
     </v-card-text>
+    <v-card-actions>
+      <v-btn
+        v-if="user && user.role === `server:admin`"
+        v-tooltip="'Edit server information'"
+        small
+        plain
+        color="primary"
+        text
+        block
+        @click="editServer"
+      >
+        <v-icon small class="mr-2">mdi-cog-outline</v-icon>
+        Edit
+      </v-btn>
+    </v-card-actions>
+
     <server-edit-dialog ref="editServerDialog"></server-edit-dialog>
   </v-card>
 </template>
@@ -27,20 +34,16 @@ import ServerEditDialog from '../components/dialogs/ServerEditDialog'
 
 export default {
   components: { ServerEditDialog },
+  props: {
+    user: {
+      type: Object,
+      default: null
+    }
+  },
   data() {
     return { serverInfo: {} }
   },
   apollo: {
-    user: {
-      query: gql`
-        query {
-          user {
-            id
-            role
-          }
-        }
-      `
-    },
     serverInfo: {
       prefetch: true,
       query: serverQuery

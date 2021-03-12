@@ -1,9 +1,10 @@
 <template>
-  <v-card color="transparent" class="elevation-0 text-center">
+  <div>
     <div v-if="!user">
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
-    <div v-else>
+
+    <v-card v-else color="transparent" class="elevation-0 text-center">
       <v-card-title class="text-center mb-5 mt-5 pt-15 pb-10">
         <v-btn
           v-tooltip="'Change your profile picture.'"
@@ -57,7 +58,7 @@
 
         <span v-if="isSelf" class="caption">ID: {{ user.id }}</span>
       </v-card-text>
-      <v-divider v-if="isSelf" class="pb-2"></v-divider>
+
       <v-card-actions>
         <v-btn v-if="isSelf" small plain color="primary" text block @click="editUser">
           <v-icon small class="mr-2">mdi-cog-outline</v-icon>
@@ -66,8 +67,8 @@
       </v-card-actions>
 
       <user-edit-dialog ref="userDialog" :user="user"></user-edit-dialog>
-    </div>
-  </v-card>
+    </v-card>
+  </div>
 </template>
 <script>
 import gql from 'graphql-tag'

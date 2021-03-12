@@ -18,9 +18,13 @@
             <stream-new-dialog :open="newStreamDialog" />
           </v-dialog>
         </v-card>
-
+        <div v-if="$apollo.loading" class="mx-5 mt-5">
+          <v-skeleton-loader
+            type="list-item-avatar, list-item-three-line, list-item-avatar,list-item-three-line"
+          ></v-skeleton-loader>
+        </div>
         <v-card
-          v-if="recentActivity"
+          v-else-if="recentActivity"
           rounded="lg"
           class="mx-5 mt-3 d-none d-md-block"
           elevation="0"

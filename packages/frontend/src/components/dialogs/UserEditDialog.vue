@@ -75,11 +75,10 @@ export default {
   },
   watch: {},
   methods: {
+    //using vue dialogs just like .net modals
     open(user) {
       this.dialog = true
       if (this.$refs.form) this.$refs.form.resetValidation()
-
-      console.log(user)
       this.user = {
         name: user.name,
         bio: user.bio,
