@@ -20,7 +20,7 @@ module.exports = {
   transpileDependencies: ['vuetify'],
   configureWebpack: {
     optimization: {
-      minimize: true,
+      minimize: process.env.NODE_ENV === 'production',
       minimizer: [
         new TerserPlugin({
           exclude: /(Speckle.js\.). /
