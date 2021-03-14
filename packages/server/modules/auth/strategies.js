@@ -9,9 +9,11 @@ const debug = require( 'debug' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
 const { getApp, createAuthorizationCode } = require( './services/apps' )
+const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
 
-module.exports = ( app ) => {
+module.exports = async ( app ) => {
 
+  let serverInfo = await getServerInfo( )
   let authStrategies = []
 
   passport.serializeUser( ( user, done ) => done( null, user ) )
@@ -30,10 +32,19 @@ module.exports = ( app ) => {
     if ( !req.query.challenge )
       return res.status( 400 ).send( 'Invalid request: no challenge detected.' )
 
+    if ( !req.query.inviteId && serverInfo.inviteOnly )
+      return res.status( 400 ).send( 'No invite detected; this server is invite only.' )
+
     req.session.challenge = req.query.challenge
+
     if ( req.query.suuid ) {
       req.session.suuid = req.query.suuid
     }
+
+    if ( req.query.inviteId ) {
+      req.session.inviteId = req.query.inviteId
+    }
+
     next( )
   }
 
