@@ -10,10 +10,7 @@ workflows:
   version: 2.1
   test:
     jobs:
-      - test_server:
-          filters:
-            branches:
-              ignore: cristi/fe-be-separation
+      - test_server
   deploy-latest:
     jobs:
       - docker_build_and_deploy:
@@ -30,13 +27,6 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-  test-separation:
-    jobs:
-      - docker_build_and_deploy:
-          context: main-builds
-          filters:
-            branches:
-              only: cristi/fe-be-separation
 
 jobs:
   test_server:
