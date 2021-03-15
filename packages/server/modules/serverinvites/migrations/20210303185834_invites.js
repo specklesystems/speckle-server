@@ -6,9 +6,11 @@ exports.up = async ( knex ) => {
     table.string( 'inviterId', 256 ).notNullable()
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.bool( 'used' ).defaultTo( false )
-    table.string( 'resourceTarget', 256 )
-    table.string( 'resourceId', 256 )
-    table.string( 'role', 256 )
+    table.string( 'message', 1024 )
+    // TODO: implement these in the future
+    // table.string( 'resourceTarget', 256 )
+    // table.string( 'resourceId', 256 )
+    // table.string( 'role', 256 )
   } )
 }
 
