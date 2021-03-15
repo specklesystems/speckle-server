@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
 ENV NODE_ENV=production
 WORKDIR /app
 
-COPY packages/server/package*.json .
+COPY packages/server/package*.json ./
 RUN npm ci
 
 COPY packages/server .
