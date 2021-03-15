@@ -19,19 +19,19 @@ echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $D
 docker push $DOCKER_IMAGE_TAG:latest
 docker push $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
 
-# echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
+echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
 
 
-#./kubectl \
-#  --kubeconfig=/dev/null \
-#  --server=$K8S_SERVER \
-#  --certificate-authority=k8s_cert.crt \
-#  --token=$K8S_TOKEN \
-#  set image deployment/$TARGET_SPECKLE_DEPLOYMENT main=$DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
+./kubectl \
+  --kubeconfig=/dev/null \
+  --server=$K8S_SERVER \
+  --certificate-authority=k8s_cert.crt \
+  --token=$K8S_TOKEN \
+  set image deployment/$TARGET_SPECKLE_DEPLOYMENT main=$DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
 
-#./kubectl \
-#  --kubeconfig=/dev/null \
-#  --server=$K8S_SERVER \
-#  --certificate-authority=k8s_cert.crt \
-#  --token=$K8S_TOKEN \
-#  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT --timeout=1m
+./kubectl \
+  --kubeconfig=/dev/null \
+  --server=$K8S_SERVER \
+  --certificate-authority=k8s_cert.crt \
+  --token=$K8S_TOKEN \
+  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT --timeout=1m
