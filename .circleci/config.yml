@@ -23,7 +23,7 @@ workflows:
               only: main
   deploy-prod:
     jobs:
-      - docker_build_and_deploy:
+      - test_sep_build:
           context: main-builds
           filters:
             tags:
