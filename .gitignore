@@ -6,6 +6,7 @@ packages/viewer/dist
 .nyc_output
 coverage/
 .vscode
+.idea
 test-queries
 
 **/.DS_Store

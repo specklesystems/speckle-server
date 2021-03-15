@@ -1,4 +1,5 @@
 .circleci
+.git
 **/node_modules
 **/dist
 test-queries
@@ -10,4 +11,4 @@ lerna.json
 .env.example
 .eslintrc.json
 .mocharc.js
-readme.md 
+readme.md

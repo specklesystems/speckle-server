@@ -27,6 +27,13 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
+  test-separation:
+    jobs:
+      - test_sep_build:
+          context: main-builds
+          filters:
+            branches:
+              only: cristi/fe-be-separation
 
 jobs:
   test_server:
@@ -76,3 +83,22 @@ jobs:
           name: Create and Deploy Docker image
           no_output_timeout: 30m
           command: ./.circleci/ci-build-and-deploy.sh
+
+  test_sep_build:
+    docker:
+      - image: circleci/golang:1.15
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod u+x ./kubectl
+      - run:
+          name: Build and Deploy Frontend
+          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build-and-deploy.sh
+      - run:
+          name: Build and Deploy Server
+          command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build-and-deploy.sh
