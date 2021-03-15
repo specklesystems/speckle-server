@@ -73,6 +73,8 @@ jobs:
             curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod u+x ./kubectl
       - run:
-          name: Create and Deploy Docker image
-          no_output_timeout: 30m
-          command: ./.circleci/ci-build-and-deploy.sh
+          name: Build and Deploy Frontend
+          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build-and-deploy.sh
+      - run:
+          name: Build and Deploy Server
+          command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build-and-deploy.sh
