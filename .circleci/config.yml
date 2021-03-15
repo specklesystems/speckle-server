@@ -23,7 +23,7 @@ workflows:
               only: main
   deploy-prod:
     jobs:
-      - test_sep_build:
+      - docker_build_and_deploy:
           context: main-builds
           filters:
             tags:
@@ -32,7 +32,7 @@ workflows:
               ignore: /.*/
   test-separation:
     jobs:
-      - test_sep_build:
+      - docker_build_and_deploy:
           context: main-builds
           filters:
             branches:
@@ -71,23 +71,6 @@ jobs:
           working_directory: 'packages/server'
 
   docker_build_and_deploy:
-    docker:
-      - image: circleci/golang:1.15
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Install kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod u+x ./kubectl
-      - run:
-          name: Create and Deploy Docker image
-          no_output_timeout: 30m
-          command: ./.circleci/ci-build-and-deploy.sh
-
-  test_sep_build:
     docker:
       - image: circleci/golang:1.15
     steps:
