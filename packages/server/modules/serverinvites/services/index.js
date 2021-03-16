@@ -21,25 +21,25 @@ module.exports = {
     let existingInvite = await module.exports.getInviteByEmail( { email } )
     if ( existingInvite ) throw new Error( 'Already invited!' )
 
-    let hasTarget = resourceTarget || resourceId || role
-    if ( hasTarget ) {
-      if ( !resourceTarget || !resourceId || !role ) throw new Error( 'Invalid invite resource targets' )
-      // TODO: Check permissions on resource.
-      // Only resource owners should be able to invite others and grant them permissions
-    }
+    // TODO: currently disabled, to do in the future
+    // let hasTarget = resourceTarget || resourceId || role
+    // if ( hasTarget ) {
+    //   if ( !resourceTarget || !resourceId || !role ) throw new Error( 'Invalid invite resource targets' )
+    //   // TODO: Check permissions on resource.
+    //   // Only resource owners should be able to invite others and grant them permissions
+    // }
 
     let inviter = await getUserById( { id: inviterId } )
     let invite = {
       id: crs( { length:20 } ),
       email,
       inviterId: inviterId,
-      message,
-      resourceTarget,
-      resourceId,
-      role
+      message
     }
 
     // insert into table
+
+    await Invites().insert( invite )
 
     // send email with correct link
   },
@@ -52,13 +52,16 @@ module.exports = {
     return await Invites().where( { email: email } ).select( '*' ).first()
   },
 
-  async useInvite( { id } ) {
+  async useInvite( { id, email } ) {
     // TODO
     // send email to inviter that their invite was accepted?
     // add the new user to the respective resource ACL
     let invite = await module.exports.getInviteById( { id } )
     if ( !invite ) throw new Error( 'Invite not found' )
+    if ( invite.email !== email ) throw new Error( 'Invalid request' )
 
     // TODO: update invite 'used' -> true
   }
 }
+
+
