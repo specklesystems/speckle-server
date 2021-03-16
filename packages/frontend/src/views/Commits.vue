@@ -11,7 +11,7 @@
           </v-dialog>
           <v-card-title class="mr-8">
             <v-icon class="mr-2">mdi-source-branch</v-icon>
-            {{ stream.branch.name }}
+            <span class="d-inline-block">{{ stream.branch.name }}</span>
             <v-spacer />
             <v-btn
               v-if="userRole === 'contributor' || userRole === 'owner'"

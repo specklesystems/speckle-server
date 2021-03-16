@@ -75,7 +75,7 @@ export default {
         (v) =>
           (v && this.allBranchNames.findIndex((e) => e === v) === -1) ||
           'A branch with this name already exists',
-        (v) => (v && v.length <= 25) || 'Name must be less than 25 characters',
+        (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',
         (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
       description: this.branch.description,
