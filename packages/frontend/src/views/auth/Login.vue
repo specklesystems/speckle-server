@@ -65,9 +65,6 @@
         <div class="mx-4 align-self-center">
           <a href="/authn/resetpassword" class="text-decoration-none">Forgot your password?</a>
         </div>
-        <!-- <div class="mx-4 align-self-center">
-          <v-btn color="primary" plain text to="/authn/resetpassword">Reset your password</v-btn>
-        </div> -->
       </div>
     </div>
   </v-card>

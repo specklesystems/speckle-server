@@ -1,7 +1,11 @@
 <template>
   <v-card class="elevation-0 transparent pa-5 pb-0">
     <v-card-text class="text-h3 text-sm-h4 text-md-h3 primary--text">
-      <span class="primary--text"><b>Speckle</b></span>
+      <span class="primary--text">
+        <b>
+          <a class="text-decoration-none" href="https://speckle.systems" target="_blank">Speckle</a>
+        </b>
+      </span>
       <span class="font-weight-light">, empowering your design and construction data.</span>
     </v-card-text>
     <div class="">
@@ -14,7 +18,6 @@
         </span>
       </v-card-text>
     </div>
-    <v-card-text v-if="serverInfo">{{ serverInfo.name }} @ {{ serverInfo.company }}</v-card-text>
   </v-card>
 </template>
 <script>
