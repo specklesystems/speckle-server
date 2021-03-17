@@ -79,7 +79,7 @@ let SpeckleApiExplorer = {
   description: 'GraphiQL Playground with authentication.',
   trustByDefault: true,
   public: true,
-  redirectUrl: `${process.env.CANONICAL_URL}/explorer`,
+  redirectUrl: ( new URL( '/explorer', process.env.CANONICAL_URL ) ).toString(),
   scopes: 'all'
 }
 
