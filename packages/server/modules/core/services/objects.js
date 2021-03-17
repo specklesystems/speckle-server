@@ -91,6 +91,7 @@ module.exports = {
     if ( objsToInsert.length > 0 ) {
       let batches = chunk( objsToInsert, objectsBatchSize )
       for ( const batch of batches ) {
+        prepInsertionObjectBatch( batch )
         await knex.transaction( async trx => {
           let q = Objects( ).insert( batch ).toString( ) + ' on conflict do nothing'
           const inserts = await trx.raw( q )
@@ -104,6 +105,7 @@ module.exports = {
       let batches = chunk( closures, closureBatchSize )
 
       for ( const batch of batches ) {
+        prepInsertionClosureBatch( batch )
         await knex.transaction( async trx => {
           let q = Closures( ).insert( batch ).toString( ) + ' on conflict do nothing'
           const inserts = await trx.raw( q )
@@ -445,4 +447,13 @@ function prepInsertionObject( obj ) {
     id: obj.id,
     speckleType: obj.speckleType
   }
+}
+
+// Batches need to be inserted ordered by id to avoid deadlocks
+function prepInsertionObjectBatch( batch ) {
+  batch.sort( ( a, b ) => ( a.id > b.id ) ? 1 : -1 )
+}
+
+function prepInsertionClosureBatch( batch ) {
+  batch.sort( ( a, b ) => ( a.parent > b.parent ) ? 1 : ( a.parent === b.parent ) ? ( ( a.child > b.child ) ? 1 : -1 ) : -1 )
 }
