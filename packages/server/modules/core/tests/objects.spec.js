@@ -108,10 +108,10 @@ describe( 'Objects @core-objects', ( ) => {
         z: i * 0.23432,
         random: { blargh: 'A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.Lorem ipsum dolor sit amet, lorem scelerisque curabitur elementum eligendi, sed ut nibh. Nullam ac ut proin tortor tortor, ultrices odio litora eu, at lectus. Nulla et est, donec at, rutrum massa eros elit nisl sed, integer amet fusce tempus phasellus aliquam posuere, molestie adipiscing quas magnis convallis tellus. Exercitation purus aliquam, tortor pellentesque. Consequat arcu quis eros, turpis ultrices tempor elementum, platea cursus dignissim nulla. Ultrices vestibulum sit et taciti ut, nunc interdum. In eleifend amet sed a tortor, sed condimentum pede nam magna, nisl nam tristique pede ut at, eleifend sit ac vitae orci, nec wisi vestibulum tortor facilisis. Cras nunc debitis duis placerat curabitur, conubia vel ullamcorper vestibulum morbi donec, molestie rutrum.Cras elit ut, quis diam sed sollicitudin morbi rhoncus, ante velit, at ipsum debitis. Ut ipsum, et sed morbi odio libero viverra eget, nihil blandit nonummy mauris. Et sed nisl fermentum nunc sapien erat, dolor mattis pellentesque nec sapien faucibus, praesent lectus odio rhoncus id dolor, velit at lorem iaculis condimentum. Id suscipit amet nec rutrum, erat magnis amet id, lacus tristique. Neque id mauris dapibus consectetuer ut scelerisque, tincidunt fringilla quis dolores, praesent ipsum, nec tortor ultricies, posuere a fusce et magna.' },
         __tree: [
-          "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723",
-          "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67" + i / 2.0,
-          "79eb41764cc2c065de752bd704asdf4aa." + i + "." + i * i,
-          "79eb41764cc2c065de752bd704bfc4aa." + i + "." + i * i + 3,
+          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723',
+          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67' + i / 2.0,
+          '79eb41764cc2c065de752bd704asdf4aa.' + i + '.' + i * i,
+          '79eb41764cc2c065de752bd704bfc4aa.' + i + '.' + i * i + 3,
         ]
       } )
     }
@@ -409,7 +409,7 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'should batch create objects', async ( ) => {
     let objs = createManyObjects( 3333, 'perlin merlin magic' )
     commitId = objs[ 0 ].id
-
+    
     await createObjectsBatched( objs )
 
     let parent = await getObject( { objectId: commitId } )
@@ -428,6 +428,37 @@ describe( 'Objects @core-objects', ( ) => {
           done( )
         } )
       } )
+  } )
+
+  it( 'should not deadlock when batch inserting in random order', async function( )  {
+    this.timeout( 5000 )
+    let objs = createManyObjects( 5000, 'perlin merlin magic' )
+
+    function shuffleArray( array ) {
+      for ( let i = array.length - 1; i > 0; i-- ) {
+        const j = Math.floor( Math.random() * ( i + 1 ) );
+        [ array[i], array[j] ] = [ array[j], array[i] ]
+      }
+    }
+
+    let shuffledVersions = []
+    for ( let i = 0; i < 3; i++ ) {
+      let shuffledVersion = objs.slice()
+      shuffleArray( shuffledVersion )
+      shuffledVersions.push( shuffledVersion )
+    }
+
+    let promisses = []
+    for ( let i = 0; i < shuffledVersions.length; i++ ) {
+      let promise = createObjectsBatched( shuffledVersions[i] )
+      promise.catch( ( e ) => { } )
+      promisses.push( promise )
+    }
+
+    for ( let i = 0; i < promisses.length; i++ ) {
+      await promisses[i]
+    }
+
   } )
 } )
 
