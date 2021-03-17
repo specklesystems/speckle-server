@@ -3,9 +3,14 @@ module.exports = {
 
     async serverInviteCreate( parent, args, context, info ) {
 
+      // TODO
       return true
-      // return await getServerInfo()
+    },
 
+    async streamInviteCreate( parent, args, context, info ) {
+      // TODO
+      // NOTE: check that user is stream owner
+      return true
     }
 
   }

@@ -32,9 +32,6 @@ module.exports = async ( app ) => {
     if ( !req.query.challenge )
       return res.status( 400 ).send( 'Invalid request: no challenge detected.' )
 
-    if ( !req.query.inviteId && serverInfo.inviteOnly )
-      return res.status( 400 ).send( 'No invite detected; this server is invite only.' )
-
     req.session.challenge = req.query.challenge
 
     if ( req.query.suuid ) {

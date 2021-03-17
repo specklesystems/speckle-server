@@ -8,11 +8,19 @@ extend type Mutation {
   serverInviteCreate( input: ServerInviteCreateInput! ): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "users:invite")
+
+  streamInviteCreate( input: StreamInviteCreateInput! ): Boolean
+    @hasRole(role: "server:user" )
+    @hasScope(scope: "users:invite")
 }
 
 input ServerInviteCreateInput {
   email: String!
-  resourceTarget: String
-  resourceId: String
-  role: String
+  message: String
+}
+
+input StreamInviteCreateInput {
+  email: String!
+  message: String
+  streamId: String
 }
