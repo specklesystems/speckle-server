@@ -4,6 +4,7 @@
 const passport = require( 'passport' )
 const GithubStrategy = require( 'passport-github2' )
 const URL = require( 'url' ).URL
+const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 const { findOrCreateUser, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
@@ -57,14 +58,14 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
       return done( null, myUser )
     } catch ( err ) {
       debug( 'speckle:errors' )( err )
-      return res.status( 400 ).send( { err: err.message } )
+      return done( null, false, { message: err.message } )
     }
   } )
 
   passport.use( myStrategy )
 
-  app.get( strategy.url, session, sessionStorage, passport.authenticate( 'github', { failureRedirect: '/auth/error' } ) )
-  app.get( '/auth/gh/callback', session, passport.authenticate( 'github', { failureRedirect: '/auth/error' } ), finalizeAuth )
+  app.get( strategy.url, session, sessionStorage, passport.authenticate( 'github' ) )
+  app.get( '/auth/gh/callback', session, passport.authenticate( 'github', { failureRedirect: '/error?message=Failed to authenticate.' } ), finalizeAuth )
 
   return strategy
 }

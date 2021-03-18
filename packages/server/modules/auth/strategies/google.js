@@ -3,6 +3,7 @@
 const passport = require( 'passport' )
 const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy
 const URL = require( 'url' ).URL
+const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 const { findOrCreateUser, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
@@ -34,9 +35,9 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
 
       let user = { email, name, avatar: profile._json.picture }
 
-      if ( req.session.suuid ) {
+      if ( req.session.suuid )
         user.suuid = req.session.suuid
-      }
+
 
       if ( serverInfo.inviteOnly ) {
         try {
@@ -57,14 +58,14 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
       return done( null, myUser )
     } catch ( err ) {
       debug( 'speckle:errors' )( err )
-      return res.status( 400 ).send( { err: err.message } )
+      return done( null, false, { message: err.message } )
     }
   } )
 
   passport.use( myStrategy )
 
   app.get( strategy.url, session, sessionStorage, passport.authenticate( 'google' ) )
-  app.get( '/auth/goog/callback', session, passport.authenticate( 'google', { failureRedirect: '/auth/error' } ), finalizeAuth )
+  app.get( '/auth/goog/callback', session, passport.authenticate( 'google', { failureRedirect: '/error?message=Failed to authenticate.' } ), finalizeAuth )
 
   return strategy
 }
