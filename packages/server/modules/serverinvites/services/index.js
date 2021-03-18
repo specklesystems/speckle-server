@@ -96,7 +96,7 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
   async useInvite( { id, email } ) {
     // TODO
     // send email to inviter that their invite was accepted?
-    // add the new user to the respective resource ACL
+
     let invite = await module.exports.getInviteById( { id } )
     if ( !invite ) throw new Error( 'Invite not found' )
     if ( invite.email !== email ) throw new Error( 'Invalid request' )
