@@ -93,13 +93,19 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
     return await Invites().where( { email: email } ).select( '*' ).first()
   },
 
+  async validateInvite( { email, id } ) {
+    const invite = await module.exports.getInviteById( { id } )
+    return invite.email === email
+  },
+
   async useInvite( { id, email } ) {
     // TODO
     // send email to inviter that their invite was accepted?
 
     let invite = await module.exports.getInviteById( { id } )
     if ( !invite ) throw new Error( 'Invite not found' )
-    if ( invite.email !== email ) throw new Error( 'Invalid request' )
+    if ( invite.used ) throw new Error( 'Invite has been used' )
+    if ( invite.email !== email ) throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
 
     if ( invite.resourceId && invite.resourceTarget && invite.role ) {
       let user = await getUserByEmail( { email: invite.email } )
@@ -113,7 +119,7 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
       }
     }
 
-    await Invites().where( { id: id } ).update( { used:true } )
+    await Invites().where( { id: id } ).update( { used: true } )
     return true
   }
 }

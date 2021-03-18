@@ -10,6 +10,7 @@ const debug = require( 'debug' )
 const sentry = require( `${appRoot}/logging/sentryHelper` )
 const { getApp, createAuthorizationCode } = require( './services/apps' )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
+const { useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
 module.exports = async ( app ) => {
 
@@ -53,12 +54,16 @@ module.exports = async ( app ) => {
       let app = await getApp( { id: 'spklwebapp' } )
       let ac = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: req.session.challenge } )
 
+      if ( req.session.inviteId ) {
+        await useInvite( { id: req.session.inviteId, email: req.user.email } )
+      }
+
       if ( req.session ) req.session.destroy( )
       return res.redirect( `${app.redirectUrl}?access_code=${ac}` )
     } catch ( err ) {
       sentry( { err } )
       if ( req.session ) req.session.destroy( )
-      return res.status( 401 ).send( 'Invalid request.' )
+      return res.status( 401 ).send( { err: err.message } )
     }
   }
 
@@ -69,13 +74,13 @@ module.exports = async ( app ) => {
   let strategyCount = 0
 
   if ( process.env.STRATEGY_GOOGLE === 'true' ) {
-    let googStrategy = require( './strategies/google' )( app, session, sessionStorage, finalizeAuth )
+    let googStrategy = await require( './strategies/google' )( app, session, sessionStorage, finalizeAuth )
     authStrategies.push( googStrategy )
     strategyCount++
   }
 
   if ( process.env.STRATEGY_GITHUB === 'true' ) {
-    let githubStrategy = require( './strategies/github' )( app, session, sessionStorage, finalizeAuth )
+    let githubStrategy = await require( './strategies/github' )( app, session, sessionStorage, finalizeAuth )
     authStrategies.push( githubStrategy )
     strategyCount++
   }
@@ -83,7 +88,7 @@ module.exports = async ( app ) => {
   // Note: always leave the local strategy init for last so as to be able to
   // force enable it in case no others are present.
   if ( process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0 ) {
-    let localStrategy = require( './strategies/local' )( app, session, sessionStorage, finalizeAuth )
+    let localStrategy = await require( './strategies/local' )( app, session, sessionStorage, finalizeAuth )
     authStrategies.push( localStrategy )
   }
 

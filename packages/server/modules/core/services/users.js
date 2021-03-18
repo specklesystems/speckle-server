@@ -55,7 +55,7 @@ module.exports = {
 
     user.password = crs( { length: 20 } )
     user.verified = true // because we trust the external identity provider, no?
-    return { id: await module.exports.createUser( user ) }
+    return { id: await module.exports.createUser( user ), email: user.email }
   },
 
   async getUserById( { userId } ) {

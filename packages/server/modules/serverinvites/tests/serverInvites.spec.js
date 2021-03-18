@@ -11,7 +11,7 @@ const expect = chai.expect
 const knex = require( `${appRoot}/db/knex` )
 const { createUser } = require( `${appRoot}/modules/core/services/users` )
 
-const { createAndSendInvite, getInviteById, getInviteByEmail, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
+const { createAndSendInvite, getInviteById, getInviteByEmail, validateInvite, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 const { createStream, getStream, getStreamUsers, getUserStreams } = require( `${appRoot}/modules/core/services/streams` )
 const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 
@@ -99,6 +99,16 @@ describe( 'Server Invites @server-invites', ( ) => {
       expect( invite.inviterId ).to.equal( actor.id )
     } )
 
+    it( 'should validate an invite', async() => {
+      let inviteId = await createAndSendInvite( { email:'raven@speckle.systems', inviterId: actor.id, message: 'Hey, join!' } )
+
+      const valid = await validateInvite( { email: 'raven@speckle.systems', id: inviteId } )
+      const invalid = await validateInvite( { email: 'bunny@speckle.systems', id: inviteId } )
+
+      expect( valid ).to.equal( true )
+      expect( invalid ).to.equal( false )
+    } )
+
     it( 'should use an invite', async() => {
       let inviteId = await createAndSendInvite( { email:'crow@speckle.systems', inviterId: actor.id, message: 'Hey, join!' } )
 
@@ -109,11 +119,18 @@ describe( 'Server Invites @server-invites', ( ) => {
       // pass
       }
 
-      let result =  await useInvite( { id:inviteId, email:'crow@speckle.systems' } )
+      let result =  await useInvite( { id: inviteId, email:'crow@speckle.systems' } )
 
       let invite = await getInviteByEmail( { email: 'crow@speckle.systems' } )
       expect( result ).equals( true )
       expect( invite.used ).equals( true )
+
+      try {
+        await useInvite( { id: inviteId, email:'crow@speckle.systems' } )
+        assert.fail( 'Should not be able to use an already used invite.' )
+      } catch ( e ) {
+        //pass
+      }
     } )
 
     it( 'should create a stream invite and use it', async() => {
