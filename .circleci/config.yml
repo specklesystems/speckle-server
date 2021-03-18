@@ -27,6 +27,13 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
+  test-test:
+    jobs:
+      - docker_build_and_deploy:
+          context: main-builds
+          filters:
+            branches:
+              only: cristi/ci-improvements
 
 jobs:
   test_server:
@@ -73,8 +80,11 @@ jobs:
             curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod u+x ./kubectl
       - run:
-          name: Build and Deploy Frontend
-          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build-and-deploy.sh
+          name: Build Frontend
+          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
       - run:
-          name: Build and Deploy Server
-          command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build-and-deploy.sh
+          name: Build Server
+          command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
+      - run:
+          name: Deploy Frontend and Server
+          command: ./.circleci/deploy.sh
