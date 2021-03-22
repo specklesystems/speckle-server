@@ -38,7 +38,7 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     after( async() => {
-    // await knex.migrate.rollback( )
+      await knex.migrate.rollback( )
     } )
 
     it( 'should create an invite', async() => {
@@ -170,16 +170,20 @@ describe( 'Server Invites @server-invites', ( ) => {
       await knex.migrate.latest( )
 
       // let { app } = await init()
-      let { server } = await startHttp( myApp )
-      testServer = server
+      try {
+        let { server } = await startHttp( myApp )
+        testServer = server
+      } catch ( e ) {}
+
       actor.id = await createUser( actor )
 
       testToken = `Bearer ${( await createPersonalAccessToken( actor.id, 'test token', [ 'users:invite' ] ) )}`
     } )
 
     after( async() => {
-    // await knex.migrate.rollback( )
-      testServer.close()
+      await knex.migrate.rollback( )
+      if ( testServer )
+        testServer.close()
     } )
 
     it( 'should create a server invite', async() => {
