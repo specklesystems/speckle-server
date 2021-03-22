@@ -7,7 +7,7 @@ exports.init = async ( app, options ) => {
   debug( 'speckle:modules' )( '🔑 Init auth module' )
 
   // Initialise authn strategies
-  exports.authStrategies = require( './strategies' )( app )
+  exports.authStrategies = await require( './strategies' )( app )
 
   // Hoist auth routes
   require( './rest' )( app )

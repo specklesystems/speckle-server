@@ -6,6 +6,10 @@ const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 const { init, startHttp } = require( `${appRoot}/app` )
 
+const { updateServerInfo } = require( `${appRoot}/modules/core/services/generic` )
+const { getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
+const { createAndSendInvite } = require( `${appRoot}/modules/serverinvites/services` )
+
 const expect = chai.expect
 
 const knex = require( `${appRoot}/db/knex` )
@@ -14,6 +18,7 @@ describe( 'Auth @auth', ( ) => {
 
   describe( 'Local authN & authZ (token endpoints)', ( ) => {
     let expressApp, testServer
+    let userId
 
     before( async ( ) => {
       await knex.migrate.rollback( )
@@ -36,8 +41,6 @@ describe( 'Auth @auth', ( ) => {
           .post( '/auth/local/register?challenge=test&suuid=test' )
           .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
           .expect( 302 )
-      // console.log( res.body )
-      expect( res.body.id ).to.be.a.string
     } )
 
     it( 'Should fail to register a new user w/o password (speckle frontend)', async ( ) => {
@@ -46,6 +49,35 @@ describe( 'Auth @auth', ( ) => {
           .post( '/auth/local/register?challenge=test' )
           .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu' } )
           .expect( 400 )
+    } )
+
+    it( 'Should not register a new user without an invite id in an invite id only server', async() => {
+
+      await updateServerInfo( { inviteOnly: true } )
+
+      // No invite
+      let res =
+        await request( expressApp )
+          .post( '/auth/local/register?challenge=test&suuid=test' )
+          .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
+          .expect( 400 )
+
+      let user = await getUserByEmail( { email: 'spam@speckle.systems' } )
+      let inviteId = await createAndSendInvite( { email: 'bunny@speckle.systems', inviterId: user.id  } )
+
+      // Mismatched invite
+      res = await request( expressApp )
+        .post( '/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId )
+        .send( { email: 'spam-super@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
+        .expect( 400 )
+
+      // finally correct
+      res = await request( expressApp )
+        .post( '/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId )
+        .send( { email: 'bunny@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
+        .expect( 302 )
+
+      await updateServerInfo( { inviteOnly: false } )
     } )
 
     it( 'Should log in (speckle frontend)', async ( ) => {

@@ -55,7 +55,7 @@ module.exports = {
 
     user.password = crs( { length: 20 } )
     user.verified = true // because we trust the external identity provider, no?
-    return { id: await module.exports.createUser( user ) }
+    return { id: await module.exports.createUser( user ), email: user.email }
   },
 
   async getUserById( { userId } ) {
@@ -73,7 +73,7 @@ module.exports = {
 
   async getUserByEmail( { email } ) {
     let user = await Users( ).where( { email: email } ).select( '*' ).first( )
-    if ( !user ) throw new Error( 'User not found' )
+    if ( !user ) return null
     delete user.passwordDigest
     return user
   },

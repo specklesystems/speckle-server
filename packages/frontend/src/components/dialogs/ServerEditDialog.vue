@@ -2,7 +2,6 @@
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
     <v-card class="pa-4">
       <v-card-title class="subtitle-1">Edit Server Info</v-card-title>
-
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
         <v-card-text class="pl-2 pr-2 pt-0 pb-0">
           <v-container>
@@ -53,6 +52,14 @@
                 ></v-text-field>
               </v-col>
             </v-row>
+            <v-row>
+              <v-col cols="12" class="pt-0 pb-0">
+                <v-switch
+                  v-model="server.inviteOnly"
+                  :label="`Invite only: ${server.inviteOnly.toString()}`"
+                ></v-switch>
+              </v-col>
+            </v-row>
           </v-container>
         </v-card-text>
         <v-card-actions>
@@ -67,7 +74,14 @@
 export default {
   data: () => ({
     dialog: false,
-    server: {},
+    server: {
+      name: null,
+      company: null,
+      description: null,
+      termsOfService: null,
+      adminContact: null,
+      inviteOnly: false
+    },
     nameRules: [],
     valid: true
   }),
@@ -99,7 +113,8 @@ export default {
         company: server.company,
         description: server.description,
         termsOfService: server.termsOfService,
-        adminContact: server.adminContact
+        adminContact: server.adminContact,
+        inviteOnly: server.inviteOnly
       }
 
       return new Promise((resolve, reject) => {

@@ -4,9 +4,10 @@ const URL = require( 'url' ).URL
 const appRoot = require( 'app-root-path' )
 const debug = require( 'debug' )
 const { createUser, updateUser, findOrCreateUser, validatePasssword, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
-const { getApp, createAuthorizationCode, createAppTokenFromAccessCode } = require( '../services/apps' )
+const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
+const { validateInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
-module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
+module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
   const strategy = {
     id: 'local',
     name: 'Local',
@@ -14,6 +15,8 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
     color: 'accent',
     url: '/auth/local'
   }
+
+  const serverInfo = await getServerInfo()
 
   app.post( '/auth/local/login', session, sessionAppId, async ( req, res, next ) => {
     try {
@@ -44,8 +47,19 @@ module.exports = ( app, session, sessionAppId, finalizeAuth ) => {
 
       let user = req.body
 
+      if ( serverInfo.inviteOnly && !req.session.inviteId ){
+        throw new Error( 'This server is invite only. Please provide an invite id.' )
+
+      }
+
+      if ( req.session.inviteId ) {
+        const valid = await validateInvite( { id:req.session.inviteId, email: user.email } )
+        if ( !valid )
+          throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
+      }
+
       let userId = await createUser( user )
-      req.user = { id: userId }
+      req.user = { id: userId, email: user.email }
 
       return next( )
 
