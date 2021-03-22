@@ -15,10 +15,7 @@ const Invites = () => knex( 'server_invites' )
 module.exports = {
   async createAndSendInvite( { email, inviterId, message, resourceTarget, resourceId, role } ) {
     // check if email is already registered as a user
-    let existingUser
-    try {
-      existingUser = await getUserByEmail( { email } )
-    } catch ( e ) {}
+    let existingUser = await getUserByEmail( { email } )
 
     if ( existingUser ) throw new Error( 'This email is already associated with an account on this server!' )
 
@@ -42,7 +39,9 @@ module.exports = {
     let serverInfo = await getServerInfo()
     let inviteLink = new URL( `/authn/register?invite=${invite.id}`, process.env.CANONICAL_URL )
 
-    let emailText = `
+    let emailText, emailHtml, subject
+
+    emailText = `
 Hello!
 
 ${inviter.name} has just sent you this invitation to join the ${serverInfo.name} Speckle Server (${process.env.CANONICAL_URL})! To accept their invitation, just click on the following link:
@@ -56,7 +55,7 @@ Speckle
 This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, deployed and managed by ${serverInfo.company}. Your admin contact is ${serverInfo.adminContact ? serverInfo.adminContact : '[not provided]'}.
       `
 
-    let emailHtml = `
+    emailHtml = `
 Hello!
 <br>
 <br>
@@ -65,11 +64,11 @@ To accept the invitation, <a href="${inviteLink}" rel="notrack">click here</a>!
 
 <br>
 <br>
-${message ? inviter.name + ' said: "' + message + '"<br><br>': ''}
+${message ? 'They said: "' + message + '"<br><br>': ''}
 
 Warm regards,
 <br>
-Speckle
+Speckle (on behalf of ${inviter.name})
 <br>
 <br>
 <img src="https://speckle.systems/content/images/2021/02/logo_big-1.png" style="width:30px; height:30px;">
@@ -80,7 +79,13 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
 </caption>
 `
 
-    await sendEmail( { to: email, subject:'Speckle Server Invitation', text: emailText, html: emailHtml } )
+    if ( !resourceId ) {
+      subject = 'Speckle Invitation from ' + inviter.name
+    } else if ( resourceTarget === 'streams' ) {
+      subject = `${inviter.name} wants to share a stream on Speckle with you!`
+    }
+
+    await sendEmail( { to: email, subject: subject, text: emailText, html: emailHtml } )
 
     return invite.id
   },

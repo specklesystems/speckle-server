@@ -38,15 +38,11 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
       if ( req.session.suuid )
         user.suuid = req.session.suuid
 
+      let existingUser
+      existingUser = await getUserByEmail( { email: user.email } )
 
-      if ( serverInfo.inviteOnly ) {
-        try {
-          let existingUser = getUserByEmail( { email: user.email } )
-        } catch ( e ) {
-          if ( !req.session.inviteId )
-            throw new Error( 'This server is invite only. Please provide an invite id.' )
-        }
-      }
+      if ( !existingUser && serverInfo.inviteOnly )
+        throw new Error( 'This server is invite only. Please provide an invite id.' )
 
       if ( req.session.inviteId ) {
         const valid = await validateInvite( { id:req.session.inviteId, email: user.email } )

@@ -58,7 +58,7 @@ exports.sendEmail = async( { from, to, subject, text, html } ) => {
 
   try {
     let info = await transporter.sendMail( {
-      from: from || '"Speckle" <hello@speckle.systems>',
+      from: from || '"Speckle" <no-reply@speckle.systems>',
       to,
       subject,
       text,

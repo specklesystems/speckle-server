@@ -73,7 +73,7 @@ module.exports = {
 
   async getUserByEmail( { email } ) {
     let user = await Users( ).where( { email: email } ).select( '*' ).first( )
-    if ( !user ) throw new Error( 'User not found' )
+    if ( !user ) return null
     delete user.passwordDigest
     return user
   },
