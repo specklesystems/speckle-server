@@ -19,6 +19,8 @@ const serverAddress = `http://localhost:${process.env.PORT || 3000}`
 
 describe( 'Server Invites @server-invites', ( ) => {
 
+  let myApp
+
   describe( 'Services @server-invites-services', () => {
     let actor = {
       name: 'Dimitrie Stefanescu',
@@ -30,7 +32,8 @@ describe( 'Server Invites @server-invites', ( ) => {
       await knex.migrate.rollback( )
       await knex.migrate.latest( )
 
-      app = await init()
+      let { app } = await init()
+      myApp = app
       actor.id = await createUser( actor )
     } )
 
@@ -156,18 +159,18 @@ describe( 'Server Invites @server-invites', ( ) => {
   describe( 'API @server-invites-api', () => {
     let actor = {
       name: 'Dimitrie Stefanescu',
-      email: 'didimitrie-100@gmail.com',
+      email: 'didimitrie-10000@gmail.com',
       password: 'wtfwtfwtf'
     }
 
     let testServer, testToken
 
     before( async() => {
-      await knex.migrate.rollback( )
+      // await knex.migrate.rollback( )
       await knex.migrate.latest( )
 
-      let { app } = await init()
-      let { server } = await startHttp( app )
+      // let { app } = await init()
+      let { server } = await startHttp( myApp )
       testServer = server
       actor.id = await createUser( actor )
 
@@ -183,7 +186,7 @@ describe( 'Server Invites @server-invites', ( ) => {
 
       const res = await sendRequest( testToken, {
         query: 'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
-        variables: { input: { email: 'd@speckle.systems', message: 'wow!' } }
+        variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
       } )
 
       expect( res.body.errors ).to.not.exist
