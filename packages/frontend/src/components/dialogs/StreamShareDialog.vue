@@ -21,10 +21,15 @@
       >
         <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
           <v-list-item-content>
-            <v-list-item-title>No users found.</v-list-item-title>
+            <v-list-item-title>No users found. Note: you can search by name and email.</v-list-item-title>
             <v-list-item-subtitle>
-              Note: you can search by name as well as email.
+               Hint: use the button below to send an invite!
             </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
+          <v-list-item-content>
+            <v-btn block color="primary" @click="inviteDialog++">Invite {{ search }}</v-btn>
           </v-list-item-content>
         </v-list-item>
         <v-list-item
@@ -54,6 +59,7 @@
         </v-list-item>
       </v-list>
     </v-card-text>
+    <stream-invite-dialog :show="inviteDialog" :streamId="stream.id"/>
     <v-card-title>Existing collaborators</v-card-title>
     <v-card-text class="px-0">
       <v-list>
@@ -106,9 +112,10 @@ import serverQuery from '../../graphql/server.gql'
 import streamCollaboratorsQuery from '../../graphql/streamCollaborators.gql'
 import userSearchQuery from '../../graphql/userSearch.gql'
 import UserAvatar from '../UserAvatar'
+import StreamInviteDialog from './StreamInviteDialog'
 
 export default {
-  components: { UserAvatar },
+  components: { UserAvatar, StreamInviteDialog },
   props: ['streamId', 'userId'],
   data: () => ({
     search: '',
@@ -116,7 +123,8 @@ export default {
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    loading: false
+    loading: false,
+    inviteDialog: 0
   }),
   apollo: {
     stream: {
