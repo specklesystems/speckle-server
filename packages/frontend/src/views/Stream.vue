@@ -13,22 +13,27 @@
         <error-block :message="error" />
       </v-col>
     </v-row>
+    <stream-invite-dialog v-if="stream" :show="inviteDialog" :stream-id="stream.id" />
   </v-container>
 </template>
 <script>
 import SidebarStream from '../components/SidebarStream'
 import ErrorBlock from '../components/ErrorBlock'
 import streamQuery from '../graphql/stream.gql'
+import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
 export default {
   name: 'Stream',
   components: {
     SidebarStream,
-    ErrorBlock
+    ErrorBlock,
+    StreamInviteDialog
   },
   data() {
     return {
-      error: ''
+      error: '',
+      inviteDialog: 1,
+      shouldOpenInvite: false
     }
   },
   apollo: {
@@ -52,6 +57,20 @@ export default {
       let contrib = this.stream.collaborators.find((u) => u.id === uuid)
       if (contrib) return contrib.role.split(':')[1]
       else return null
+    }
+  },
+  watch: {
+    '$apollo.loading'(newVal) {
+      if (!newVal && this.shouldOpenInvite) {
+        setTimeout(() => {
+          this.inviteDialog++
+        }, 500)
+      }
+    }
+  },
+  mounted() {
+    if (this.$route.query.invite) {
+      this.shouldOpenInvite = true
     }
   }
 }
