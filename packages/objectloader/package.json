@@ -3,10 +3,16 @@
   "version": "2.0.0",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "index.js",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/objectloader"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["speckle", "aec", "speckle api"],
   "author": "AEC Systems",
-  "license": "SEE LICENSE NOTE IN readme.md"
+  "license": "Apache-2.0"
 }
