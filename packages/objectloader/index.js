@@ -2,6 +2,7 @@
  * Simple client that streams object info from a Speckle Server.
  * TODO: This should be split from the viewer into its own package.
  */
+
 export default class ObjectLoader {
 
   constructor( { serverUrl, streamId, token, objectId } ) {
@@ -12,10 +13,15 @@ export default class ObjectLoader {
     this.streamId = streamId
     this.objectId = objectId
     this.token = token || localStorage.getItem( 'AuthToken' )
+
     this.headers = {
-      'Authorization': `Bearer ${this.token}`,
       'Accept': 'text/plain'
     }
+
+    if( token ) {
+      this.headers['Authorization'] = `Bearer ${this.token}`
+    }
+
     this.requestUrl = `${this.serverUrl}/objects/${this.streamId}/${this.objectId}`
     this.promises = []
     this.intervals = {}
