@@ -10,7 +10,31 @@ Comprehensive developer and user documentation can be found in our:
 
 ## Getting started
 
-TODO: Docs
+This is a small utility class that helps you stream an object and all its sub-components from the Speckle Server API. It is inteded to be used in contexts where you want to "download" the whole object, or iteratively traverse its whole tree.
+
+Here's a sample way on how to use it, pfilfered from the [3d viewer package](../viewer):
+
+```js
+
+
+async load( { serverUrl, token, streamId, objectId } ) {
+
+  const loader = new ObjectLoader( { serverUrl, token, streamId, objectId } )
+
+  let total = null
+  let count = 0
+
+  for await ( let obj of loader.getObjectIterator() ) {
+
+    if( !total ) total = obj.totalChildrenCount
+
+    console.log( obj, `Progress: ${count++}/${total}` )
+
+  }
+
+}
+
+```
 
 ## Community
 
