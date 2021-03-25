@@ -1,10 +1,6 @@
-# The Speckle Viewer
+# The Speckle Object Loader
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/SpeckleSystems?style=social)](https://twitter.com/SpeckleSystems) [![Community forum users](https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&style=flat-square&logo=discourse&logoColor=white)](https://speckle.community) [![website](https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
-
-## Disclaimer
-
-We're working to stabilize the 2.0 API, and until then there will be breaking changes.
 
 ## Documentation
 
@@ -14,20 +10,30 @@ Comprehensive developer and user documentation can be found in our:
 
 ## Getting started
 
-Note, these are WIP instructions. More details coming soon!
+This is a small utility class that helps you stream an object and all its sub-components from the Speckle Server API. It is inteded to be used in contexts where you want to "download" the whole object, or iteratively traverse its whole tree.
 
-For development purposes, to start a webpack live reload server run:
+Here's a sample way on how to use it, pfilfered from the [3d viewer package](../viewer):
 
-```
-npm run serve
-```
+```js
 
-You can now access the example at [http://localhost:9000/example.html](http://localhost:9000/example.html).
 
-To build the library, you should run:
+async load( { serverUrl, token, streamId, objectId } ) {
 
-```
-npm run build
+  const loader = new ObjectLoader( { serverUrl, token, streamId, objectId } )
+
+  let total = null
+  let count = 0
+
+  for await ( let obj of loader.getObjectIterator() ) {
+
+    if( !total ) total = obj.totalChildrenCount
+
+    console.log( obj, `Progress: ${count++}/${total}` )
+
+  }
+
+}
+
 ```
 
 ## Community

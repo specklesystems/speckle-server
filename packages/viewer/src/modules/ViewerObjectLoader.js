@@ -1,4 +1,4 @@
-import ObjectLoader from './ObjectLoader'
+import ObjectLoader from '@speckle/objectloader'
 import Converter from './Converter'
 
 /**

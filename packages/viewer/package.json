@@ -1,7 +1,13 @@
 {
   "name": "@speckle/viewer",
   "version": "2.0.0",
-  "description": "Speckle js utilities.",
+  "description": "A 3d viewer for Speckle, based on threejs.",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/viewer"
+  },
   "main": "dist/Speckle.js",
   "files": [
     "dist"
@@ -9,10 +15,12 @@
   "scripts": {
     "serve": "webpack serve --env dev --config webpack.config.example.js",
     "dev": "webpack --progress --watch --env dev",
-    "build": "webpack --env dev && webpack --env build"
+    "build": "webpack --env dev && webpack --env build",
+    "prepublishOnly": "npm run build"
   },
   "author": "AEC Systems",
-  "license": "SEE LICENSE NOTE IN readme.md",
+  "license": "Apache-2.0",
+  "keywords": ["speckle", "aec", "3d", "3d viewer", "threejs"],
   "devDependencies": {
     "@babel/cli": "7.12.10",
     "@babel/core": "7.12.10",
@@ -34,7 +42,8 @@
     "webpack": "5.11.0",
     "webpack-cli": "^4.3.1",
     "webpack-dev-server": "^3.11.1",
-    "yargs": "^10.0.3"
+    "yargs": "^10.0.3",
+    "@speckle/objectloader": "^2.0.0"
   },
   "dependencies": {
     "camera-controls": "^1.26.0",
