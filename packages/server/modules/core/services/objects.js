@@ -19,14 +19,14 @@ const StreamCommits = ( ) => knex( 'stream_commits' )
 
 module.exports = {
 
-  async createObject( object ) {
-    let insertionObject = prepInsertionObject( object )
+  async createObject( streamId, object ) {
+    let insertionObject = prepInsertionObject( streamId, object )
 
     let closures = [ ]
     let totalChildrenCountByDepth = {}
     if ( object.__closure !== null ) {
       for ( const prop in object.__closure ) {
-        closures.push( { parent: insertionObject.id, child: prop, minDepth: object.__closure[ prop ] } )
+        closures.push( { streamId: streamId, parent: insertionObject.id, child: prop, minDepth: object.__closure[ prop ] } )
 
         if ( totalChildrenCountByDepth[ object.__closure[ prop ].toString( ) ] )
           totalChildrenCountByDepth[ object.__closure[ prop ].toString( ) ]++
@@ -52,20 +52,20 @@ module.exports = {
     return insertionObject.id
   },
 
-  async createObjectsBatched( objects ) {
+  async createObjectsBatched( streamId, objects ) {
     let closures = [ ]
     let objsToInsert = [ ]
     let ids = [ ]
 
     // Prep objects up
     objects.forEach( obj => {
-      let insertionObject = prepInsertionObject( obj )
+      let insertionObject = prepInsertionObject( streamId, obj )
       let totalChildrenCountGlobal = 0
       let totalChildrenCountByDepth = {}
 
       if ( obj.__closure !== null ) {
         for ( const prop in obj.__closure ) {
-          closures.push( { parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
+          closures.push( { streamId: streamId, parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
           totalChildrenCountGlobal++
           if ( totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ] )
             totalChildrenCountByDepth[ obj.__closure[ prop ].toString( ) ]++
@@ -116,7 +116,7 @@ module.exports = {
     return true
   },
 
-  async createObjects( objects ) {
+  async createObjects( streamId, objects ) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
     let batches = [ ]
@@ -138,12 +138,12 @@ module.exports = {
       let t0 = performance.now( )
 
       batch.forEach( obj => {
-        let insertionObject = prepInsertionObject( obj )
+        let insertionObject = prepInsertionObject( streamId, obj )
         let totalChildrenCountByDepth = {}
         let totalChildrenCountGlobal = 0
         if ( obj.__closure !== null ) {
           for ( const prop in obj.__closure ) {
-            closures.push( { parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
+            closures.push( { streamId: streamId, parent: insertionObject.id, child: prop, minDepth: obj.__closure[ prop ] } )
 
             totalChildrenCountGlobal++
 
@@ -163,7 +163,7 @@ module.exports = {
         objsToInsert.push( insertionObject )
         ids.push( insertionObject.id )
       } )
-
+       
       if ( objsToInsert.length > 0 ) {
         let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
         await knex.raw( queryObjs )
@@ -185,24 +185,28 @@ module.exports = {
     return ids
   },
 
-  async getObject( { objectId } ) {
-    let res = await Objects( ).where( { id: objectId } ).select( '*' ).first( )
+  async getObject( { streamId, objectId } ) {
+    let res = await Objects( ).where( { streamId: streamId, id: objectId } ).select( '*' ).first( )
     if ( !res ) return null
     res.data.totalChildrenCount = res.totalChildrenCount // move this back
+    delete res.streamId // backwards compatibility
     return res
   },
 
-  async getObjectChildrenStream( { objectId } ) {
+  async getObjectChildrenStream( { streamId, objectId } ) {
     let q = Closures( )
     q.select( 'id' )
     q.select( 'data' )
-    q.rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
-      .where( knex.raw( 'parent = ?', [ objectId ] ) )
+    q.rightJoin( 'objects', function() {
+      this.on( 'objects.streamId', '=', 'object_children_closure.streamId' )
+        .andOn( 'objects.id', '=', 'object_children_closure.child' )
+    } )
+      .where( knex.raw( 'object_children_closure."streamId" = ? AND parent = ?', [ streamId, objectId ] ) )
       .orderBy( 'objects.id' )
     return q.stream( )
   },
 
-  async getObjectChildren( { objectId, limit, depth, select, cursor } ) {
+  async getObjectChildren( { streamId, objectId, limit, depth, select, cursor } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
 
@@ -224,8 +228,11 @@ module.exports = {
       q.select( 'data' )
     }
 
-    q.rightJoin( 'objects', 'objects.id', 'object_children_closure.child' )
-      .where( knex.raw( 'parent = ?', [ objectId ] ) )
+    q.rightJoin( 'objects', function() {
+      this.on( 'objects.streamId', '=', 'object_children_closure.streamId' )
+        .andOn( 'objects.id', '=', 'object_children_closure.child' )
+    } )
+      .where( knex.raw( 'object_children_closure."streamId" = ? AND parent = ?', [ streamId, objectId ] ) )
       .andWhere( knex.raw( '"minDepth" < ?', [ depth ] ) )
       .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
       .orderBy( 'objects.id' )
@@ -253,7 +260,7 @@ module.exports = {
 
   // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects.
   // A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result.
-  async getObjectChildrenQuery( { objectId, limit, depth, select, cursor, query, orderBy } ) {
+  async getObjectChildrenQuery( { streamId, objectId, limit, depth, select, cursor, query, orderBy } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
     orderBy = orderBy || { field: 'id', direction: 'asc' }
@@ -298,8 +305,12 @@ module.exports = {
       }
 
       // join on objects table
-      cteInnerQuery.join( 'objects', 'child', '=', 'objects.id' )
-        .where( 'parent', objectId )
+      cteInnerQuery.join( 'objects',  function() {
+        this.on( 'objects.streamId', '=', 'object_children_closure.streamId' )
+          .andOn( 'objects.id', '=', 'object_children_closure.child' )
+      } )
+        .where( 'object_children_closure.streamId', streamId )
+        .andWhere( 'parent', objectId )
         .andWhere( 'minDepth', '<', depth )
 
       // Add user provided filters/queries.
@@ -417,8 +428,11 @@ module.exports = {
     return { totalCount, objects: rows, cursor: rows.length === limit ? cursorEncoded : null }
   },
 
-  async getObjects( objectIds ) {
-    let res = await Objects( ).whereIn( 'id', objectIds ).select( '*' )
+  async getObjects( streamId, objectIds ) {
+    let res = await Objects( )
+      .whereIn( 'id', objectIds )
+      .andWhere( 'streamId', streamId )
+      .select( 'id', 'speckleType', 'totalChildrenCount', 'totalChildrenCountByDepth', 'createdAt', 'data' )
     return res
   },
 
@@ -431,7 +445,7 @@ module.exports = {
 // Note: we're generating the hash here, rather than on the db side, as there are
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
-function prepInsertionObject( obj ) {
+function prepInsertionObject( streamId, obj ) {
   let memNow = process.memoryUsage( ).heapUsed / 1024 / 1024
 
   if ( obj.hash )
@@ -444,6 +458,7 @@ function prepInsertionObject( obj ) {
 
   return {
     data: stringifiedObj, // stored in jsonb column
+    streamId: streamId,
     id: obj.id,
     speckleType: obj.speckleType
   }

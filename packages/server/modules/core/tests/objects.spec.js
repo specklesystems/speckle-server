@@ -75,8 +75,8 @@ describe( 'Objects @core-objects', ( ) => {
   } )
 
   it( 'Should create objects', async ( ) => {
-    sampleObject.id = await createObject( sampleObject )
-    sampleCommit.id = await createObject( sampleCommit )
+    sampleObject.id = await createObject( stream.id, sampleObject )
+    sampleCommit.id = await createObject( stream.id, sampleCommit )
   } )
 
   let objCount_1 = 10
@@ -92,7 +92,7 @@ describe( 'Objects @core-objects', ( ) => {
       } )
     }
 
-    let ids = await createObjects( objs )
+    let ids = await createObjects( stream.id, objs )
 
     expect( ids ).to.have.lengthOf( objCount_1 )
 
@@ -116,7 +116,7 @@ describe( 'Objects @core-objects', ( ) => {
       } )
     }
 
-    let myIds = await createObjects( objs2 )
+    let myIds = await createObjects( stream.id, objs2 )
 
     myIds.forEach( ( h, i ) => objs2[ i ].id = h )
 
@@ -125,12 +125,12 @@ describe( 'Objects @core-objects', ( ) => {
   } ).timeout( 30000 )
 
   it( 'Should get a single object', async ( ) => {
-    let obj = await getObject( { objectId: sampleCommit.id } )
+    let obj = await getObject( { streamId: stream.id, objectId: sampleCommit.id } )
     expect( obj ).to.not.be.null
   } )
 
   it( 'Should get more objects', async ( ) => {
-    let myObjs = await getObjects( objs.map( o => o.id ) )
+    let myObjs = await getObjects( stream.id, objs.map( o => o.id ) )
     expect( myObjs ).to.have.lengthOf( objs.length )
 
     let match1 = myObjs.find( o => o.id === objs[ 0 ].id )
@@ -147,7 +147,7 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'Should get object children', async ( ) => {
 
     let objs_1 = createManyObjects( 100, 'noise__' )
-    let ids = await createObjects( objs_1 )
+    let ids = await createObjects( stream.id, objs_1 )
     // console.log( ids )
     // console.log(ids[ 0 ])
 
@@ -162,7 +162,7 @@ describe( 'Objects @core-objects', ( ) => {
     // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
 
     let limit = 50
-    let { objects: rows_1, cursor: cursor_1 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
+    let { objects: rows_1, cursor: cursor_1 } = await getObjectChildren( { streamId: stream.id, limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
 
     expect( rows_1.length ).to.equal( limit )
     expect( rows_1[ 0 ] ).to.be.an( 'object' )
@@ -172,7 +172,7 @@ describe( 'Objects @core-objects', ( ) => {
 
     expect( cursor_1 ).to.be.a( 'string' )
 
-    let { objects: rows_2, cursor: cursor_2 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
+    let { objects: rows_2, cursor: cursor_2 } = await getObjectChildren( { streamId: stream.id, limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
 
     expect( rows_2.length ).to.equal( 50 )
     expect( rows_2[ 0 ] ).to.be.an( 'object' )
@@ -181,7 +181,7 @@ describe( 'Objects @core-objects', ( ) => {
     expect( rows_2[ 0 ] ).to.have.nested.property( 'data.nest.mallard' )
 
 
-    let { objects, cursor } = await getObjectChildren( { objectId: ids[ 0 ], limit: 1000 } )
+    let { objects, cursor } = await getObjectChildren( { streamId: stream.id, objectId: ids[ 0 ], limit: 1000 } )
     expect( objects.length ).to.equal( 100 )
 
     parentObjectId = ids[ 0 ]
@@ -192,6 +192,7 @@ describe( 'Objects @core-objects', ( ) => {
     // we're assuming the prev test objects exist
 
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       select: [ 'id', 'test.value' ],
       limit: 3,
@@ -200,6 +201,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       select: [ 'id', 'test.value', 'nest.duck' ],
       limit: 40,
@@ -237,6 +239,7 @@ describe( 'Objects @core-objects', ( ) => {
 
     // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc.
     let test3 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
       query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
@@ -245,6 +248,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test4 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
       query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
@@ -276,6 +280,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   it( 'should query object children with no results ', async ( ) => {
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 9 } ],
       orderBy: { field: 'test.value', direction: 'desc' }
@@ -288,6 +293,7 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'should not allow invalid query operators ', async ( ) => {
     try {
       let test = await getObjectChildrenQuery( {
+        streamId: stream.id,
         objectId: parentObjectId,
         query: [ { field: 'test.value', operator: '> 0; BOBBY DROPPPPED MY TABLES; -- and the bass?', value: 10 }, { field: 'test.value', operator: '<', value: 9 } ],
         orderBy: { field: 'test.value', direction: 'desc' }
@@ -301,6 +307,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   it( 'should query childern and sort them by a boolean value ', async ( ) => {
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       select: [ 'test.value', 'nest.duck' ],
@@ -309,6 +316,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       select: [ 'test.value', 'nest.duck' ],
@@ -326,6 +334,7 @@ describe( 'Objects @core-objects', ( ) => {
     let limVal = 20
 
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       query: [ { field: 'test.value', operator: '<', value: limVal } ],
@@ -333,6 +342,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       query: [ { field: 'test.value', operator: '<', value: limVal } ],
@@ -353,6 +363,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   it( 'should query childern and sort them by id by default ', async ( ) => {
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 3,
       query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 100 } ],
@@ -361,6 +372,7 @@ describe( 'Objects @core-objects', ( ) => {
     expect( test.totalCount ).to.equal( 90 )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 3,
       query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 100 } ],
@@ -373,12 +385,14 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'should just order results by something', async ( ) => {
 
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 2,
       orderBy: { field: 'test.value', direction: 'desc' }
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 2,
       orderBy: { field: 'test.value', direction: 'desc' },
@@ -388,12 +402,14 @@ describe( 'Objects @core-objects', ( ) => {
     expect( test.objects[ 1 ].data.test.value ).to.equal( test2.objects[ 0 ].data.test.value + 1 ) // continuity check
 
     let test3 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 50,
       orderBy: { field: 'nest.duck', direction: 'desc' }
     } )
 
     let test4 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 50,
       orderBy: { field: 'nest.duck', direction: 'desc' },
@@ -410,17 +426,17 @@ describe( 'Objects @core-objects', ( ) => {
     let objs = createManyObjects( 3333, 'perlin merlin magic' )
     commitId = objs[ 0 ].id
     
-    await createObjectsBatched( objs )
+    await createObjectsBatched( stream.id, objs )
 
-    let parent = await getObject( { objectId: commitId } )
+    let parent = await getObject( { streamId: stream.id, objectId: commitId } )
     expect( parent.totalChildrenCount ).to.equal( 3333 )
-    let commitChildren = await getObjectChildren( { objectId: commitId, limit: 2 } )
+    let commitChildren = await getObjectChildren( { streamId: stream.id, objectId: commitId, limit: 2 } )
     expect( commitChildren.objects.length ).to.equal( 2 )
   } )
 
   it( 'should stream objects back', ( done ) => {
     let tcount = 0
-    getObjectChildrenStream( { objectId: commitId } )
+    getObjectChildrenStream( { streamId: stream.id, objectId: commitId } )
       .then( stream => {
         stream.on( 'data', row => tcount++ )
         stream.on( 'end', ( ) => {
@@ -450,7 +466,7 @@ describe( 'Objects @core-objects', ( ) => {
 
     let promisses = []
     for ( let i = 0; i < shuffledVersions.length; i++ ) {
-      let promise = createObjectsBatched( shuffledVersions[i] )
+      let promise = createObjectsBatched( stream.id, shuffledVersions[i] )
       promise.catch( ( e ) => { } )
       promisses.push( promise )
     }

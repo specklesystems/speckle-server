@@ -64,7 +64,7 @@ module.exports = ( app ) => {
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
 
-          let promise = createObjectsBatched( objs )
+          let promise = createObjectsBatched( req.params.streamId, objs )
           promises.push( promise )
 
           await promise
@@ -88,7 +88,7 @@ module.exports = ( app ) => {
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
 
-          let promise = createObjectsBatched( objs )
+          let promise = createObjectsBatched( req.params.streamId, objs )
           promises.push( promise )
 
           await promise
