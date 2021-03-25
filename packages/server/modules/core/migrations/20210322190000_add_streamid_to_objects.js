@@ -57,6 +57,7 @@ exports.up = async ( knex ) => {
       commits
       INNER JOIN stream_commits on "id" = "commitId"
       INNER JOIN objects O on "referencedObject" = O."id"
+    ON CONFLICT DO NOTHING
    ` )
 
   await knex.raw( `

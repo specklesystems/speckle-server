@@ -194,7 +194,7 @@ describe( 'Streams @core-streams', ( ) => {
 
       await sleep( 100 )
       let testObject = { foo: 'bar', baz: 'qux' }
-      testObject.id = await createObject( testObject )
+      testObject.id = await createObject( s.id, testObject )
       commitId1 = await createCommitByBranchName( { streamId: s.id, branchName: 'main', message: 'first commit', objectId: testObject.id, authorId: userOne.id, sourceApplication: 'tests' } )
 
       su = await getStream( { streamId: s.id } )

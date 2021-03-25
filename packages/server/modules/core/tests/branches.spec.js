@@ -49,7 +49,7 @@ describe( 'Branches @core-branches', ( ) => {
 
     user.id = await createUser( user )
     stream.id = await createStream( { ...stream, ownerId: user.id } )
-    testObject.id = await createObject( testObject )
+    testObject.id = await createObject( stream.id, testObject )
   } )
 
   after( async ( ) => {
