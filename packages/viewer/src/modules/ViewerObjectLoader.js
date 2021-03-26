@@ -61,7 +61,7 @@ export default class ViewerObjectLoader {
 
     if ( viewerLoads === 0 ) {
       console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )
-      this.viewer.emit( 'load-warning', { message: 'Viewer: no 3d objects found.' } )
+      this.viewer.emit( 'load-warning', { message: `No displayable objects found in object ${this.objectId}.` } )
     }
   }
 }
