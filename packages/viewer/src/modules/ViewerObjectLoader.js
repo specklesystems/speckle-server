@@ -43,16 +43,25 @@ export default class ViewerObjectLoader {
     let first = true
     let current = 0
     let total = 0
+    let viewerLoads = 0
     for await ( let obj of this.loader.getObjectIterator() ) {
       if ( first ) {
         ( async() => {
-          await this.converter.traverseAndConvert( obj, ( o ) => this.viewer.sceneManager.addObject( o ) )
+          await this.converter.traverseAndConvert( obj, ( o ) => {
+            this.viewer.sceneManager.addObject( o )
+            viewerLoads++
+          } )
         } )()
         first = false
         total = obj.totalChildrenCount
       }
       current++
       this.viewer.emit( 'load-progress', { progress: current/( total+1 ), id: this.objectId } )
+    }
+
+    if ( viewerLoads === 0 ) {
+      console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )
+      this.viewer.emit( 'load-warning', { message: 'Viewer: no 3d objects found.' } )
     }
   }
 }
