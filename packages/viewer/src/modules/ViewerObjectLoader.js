@@ -13,7 +13,8 @@ export default class ViewerObjectLoader {
     this.token = authToken || localStorage.getItem( 'AuthToken' )
 
     if ( !this.token ) {
-      throw new Error( 'No suitable authorization token found.' )
+      // throw new Error( 'No suitable authorization token found.' )
+      console.warn( 'Viewer: no auth token present. Requests to non-public stream objects will fail.' )
     }
 
     // example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
