@@ -1,5 +1,16 @@
 <template>
   <v-sheet style="height: 100%" class="transparent">
+    <v-alert
+      v-show="showAlert"
+      text
+      type="warning"
+      dismissible
+      dense
+      style="position: absolute; z-index: 20; width: 100%"
+      class="caption"
+    >
+      {{ alertMessage }}
+    </v-alert>
     <div
       id="rendererparent"
       ref="rendererparent"
@@ -120,7 +131,9 @@ export default {
       hasLoadedModel: false,
       loadProgress: 0,
       fullScreen: false,
-      showHelp: false
+      showHelp: false,
+      alertMessage: null,
+      showAlert: false
     }
   },
   computed: {
@@ -156,7 +169,11 @@ export default {
     this.domElement = renderDomElement
     this.domElement.style.display = 'inline-block'
     this.$refs.rendererparent.appendChild(renderDomElement)
-    window.__viewer = window.__viewer || new Viewer({ container: renderDomElement })
+
+    if (!window.__viewer) {
+      window.__viewer = new Viewer({ container: renderDomElement })
+    }
+
     window.__viewer.onWindowResize()
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
@@ -187,6 +204,11 @@ export default {
       this.hasLoadedModel = true
       window.__viewer.loadObject(this.objectUrl)
       window.__viewerLastLoadedUrl = this.objectUrl
+
+      window.__viewer.on('load-warning', ({ message }) => {
+        this.alertMessage = message
+        this.showAlert = true
+      })
       window.__viewer.on(
         'load-progress',
         throttle(
