@@ -15,7 +15,7 @@ services:
         NODE_ENV: development
     restart: always
     environment:
-      CANONICAL_URL: "http://mypc:3000"
+      CANONICAL_URL: "http://localhost:3000"
       SESSION_SECRET: "-local-"
       STRATEGY_LOCAL: "true"
       DEBUG: "speckle:*"
