@@ -8,9 +8,9 @@ We're working to stabilize the 2.0 API, and until then there will be breaking ch
 
 Notes:
 
-- In **development** mode, the Speckle Server will proxy the frontend from `localhost:8080` to `localhost:3000`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
+- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
 
-- In **production** mode, the Speckle Server will statically serve the frontend app from `/dist`. You will need to run `npm run build` to populate this folder.
+- In **production** mode, the Speckle Frontend will be statically served by nginx (see the Dockerfile in the current directory).
 
 ## Documentation
 

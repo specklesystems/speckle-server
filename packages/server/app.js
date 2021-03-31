@@ -114,13 +114,14 @@ exports.startHttp = async ( app ) => {
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
+  let frontendHost = process.env.FRONTEND_HOST || 'localhost'
   let frontendPort = process.env.FRONTEND_PORT || 8080
 
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
   if ( process.env.NODE_ENV === 'development' ) {
     const { createProxyMiddleware } = require( 'http-proxy-middleware' )
-    const frontendProxy = createProxyMiddleware( { target: `http://localhost:${frontendPort}`, changeOrigin: true, ws: false, logLevel: 'silent' } )
+    const frontendProxy = createProxyMiddleware( { target: `http://${frontendHost}:${frontendPort}`, changeOrigin: true, ws: false, logLevel: 'silent' } )
     app.use( '/', frontendProxy )
 
     debug( 'speckle:startup' )( '✨ Proxying frontend (dev mode):' )
