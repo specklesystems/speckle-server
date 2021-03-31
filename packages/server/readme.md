@@ -20,19 +20,18 @@ Comprehensive developer and user documentation can be found in our:
 
 The Speckle Server is a node application tested against v12. To start it locally:
 
-First, ensure you have postgres and redis ready and running:
-
-- ensure you have a local instance of postgres running
-- create a postgres db called `speckle2_dev`
-- ensure you have an instance of redis running
+First, ensure you have postgres and redis ready and running (check the [readme.md](../../readme.md) from the root of the git repo)
 
 Finally, in the `packages/server` folder:
 
 - copy the `.env-example` file to `.env`,
-- open and edit the `.env` file, filling in the required variables,
+- If you have a custom setup, open and edit the `.env` file, filling in the required variables,
 - run `npm install`,
 - finally `npm run dev`,
 - check `localhost:3000/graphql` out!
+
+For more setup details and options, check out our [Server Setup Docs](https://speckle.guide/dev/server-setup.html)
+
 
 ## Developing
 
@@ -45,9 +44,9 @@ The server consists of several semi-related components, or modules. These can be
 
 ### Frontend
 
-- In **development** mode, the Speckle Server will proxy the frontend from `localhost:8080` to `localhost:3000`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
+- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
 
-- In **production** mode, the Speckle Server will statically serve the frontend app from `../packages/frontend/dist`.
+- In **production** mode, a load balancer should send requests either to the frontend nginx container or the server container, depending on the requested path
 
 ### GraphIQL
 

@@ -44,12 +44,27 @@ To get started, first clone this repo. Check out the detailed instructions for e
 
 To get a local Server stack up and running quickly:
 
-- clone this repository
-- copy `.env-example` file from the server module to the project root and rename to `.env`
-- fill out the environment variables in the `.env` file, follow the comment instructions
-- run `$ docker-compose up`
+- Clone this repository and cd into the repository root:
+  ```console
+  git clone https://github.com/specklesystems/speckle-server.git
+  cd speckle-server
+  ```
+- Start dependencies (postgres and redis)  by running:
+  ```console
+  docker-compose -f docker-compose-deps.yml up -d
+  ```
+- You have 2 options for running the speckle server (frontend + backend):
+  - (useful for development) With local development tools (check the Readme.md file in the `frontend` and `server` packages)
+  - (useful for getting the server running without having local development tools) by starting them inside docker containers:
+    ```console
+    docker-compose -f docker-compose-speckle.yml up -d
+    ```
 
 This gets you an empty server running on [localhost:3000](http://localhost:3000)
+
+Note: the docker containers will automatically restart at startup. To shut them down, you can use `docker-compose -f [yml_file_name] down` command
+
+For more details and options, check out our [Server Setup Docs](https://speckle.guide/dev/server-setup.html)
 
 ## Contributing
 
