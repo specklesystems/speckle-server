@@ -79,7 +79,7 @@
               Having trouble adding your account to the Speckle Manager? Read a
               <a
                 _target="_blank"
-                href="http://speckle.docs/user/FAQs.html#i-cannot-add-an-account-in-speckle-manager"
+                href="http://speckle.guide/user/FAQs.html#i-cannot-add-an-account-in-speckle-manager"
               >
                 quick help article on this
               </a>
