@@ -75,11 +75,17 @@
                 Add Account Speckle Manager
               </v-btn>
             </v-card-text>
+            <v-alert type="info" text>
+              Having trouble adding your account to the Speckle Manager? Read a
+              <a
+                _target="_blank"
+                href="http://speckle.docs/user/FAQs.html#i-cannot-add-an-account-in-speckle-manager"
+              >
+                quick help article on this
+              </a>
+              !
+            </v-alert>
             <v-card-actions class="justify-center">
-              <!--              <v-btn small text color="grey" @click="prev">
-                <v-icon small>mdi-chevron-left</v-icon>
-              </v-btn> -->
-
               <v-btn color="primary" @click="next">
                 Your first stream
                 <v-icon>mdi-chevron-right</v-icon>
@@ -111,7 +117,7 @@
       </v-window>
     </v-card>
     <div class="text-center py-4">
-      <v-btn small text color="grey" @click="prev" v-show="onboarding!==0">
+      <v-btn v-show="onboarding !== 0" small text color="grey" @click="prev">
         <v-icon small>mdi-chevron-left</v-icon>
       </v-btn>
       <v-btn small text @click="skip">
