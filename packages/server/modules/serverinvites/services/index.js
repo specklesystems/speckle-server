@@ -37,7 +37,7 @@ module.exports = {
     await Invites().insert( invite )
 
     let serverInfo = await getServerInfo()
-    let inviteLink = new URL( `/authn/register?invite=${invite.id}`, process.env.CANONICAL_URL )
+    let inviteLink = new URL( `/authn/register?inviteId=${invite.id}`, process.env.CANONICAL_URL )
 
     let emailText, emailHtml, subject
 
