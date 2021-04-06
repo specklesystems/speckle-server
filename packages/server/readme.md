@@ -20,7 +20,17 @@ Comprehensive developer and user documentation can be found in our:
 
 The Speckle Server is a node application tested against v12. To start it locally:
 
-First, ensure you have postgres and redis ready and running (check the [readme.md](../../readme.md) from the root of the git repo)
+First, ensure you have postgres and redis ready and running (check the [readme.md](../../readme.md) from the root of the git repo).
+
+> **_NOTE:_** If you install PostgreSQL yourself or use an existing PostgreSQL instance, make sure to create a database for speckle and a user that can access it.
+>
+> You can set it up with:
+> ```
+> create user speckle with encrypted password ‘speckle’;
+> CREATE DATABASE speckle;
+> grant all privileges on database speckle to speckle;
+> ```
+> If you use a network-accessible PostgreSQL instance, make sure to secure it with a stronger password and to configure the .env file accordingly
 
 Finally, in the `packages/server` folder:
 
