@@ -69,6 +69,24 @@
     </v-app-bar>
     <v-main :style="background">
       <router-view></router-view>
+      <v-snackbar v-model="streamSnackbar" :timeout="5000" color="primary" absolute right top>
+        New stream
+        <i v-if="streamSnackbarInfo.name">{{ streamSnackbarInfo.name }}</i>
+        <span v-else>available</span>
+        <template #action="{ attrs }">
+          <v-btn
+            text
+            v-bind="attrs"
+            :to="'/streams/' + streamSnackbarInfo.id"
+            @click="streamSnackbar = false"
+          >
+            see
+          </v-btn>
+          <v-btn icon v-bind="attrs" @click="streamSnackbar = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </template>
+      </v-snackbar>
     </v-main>
   </v-app>
 </template>
@@ -84,6 +102,8 @@ export default {
     return {
       loggedIn: null,
       search: '',
+      streamSnackbar: false,
+      streamSnackbarInfo: {},
       showMobileMenu: false,
       streams: { items: [] },
       selectedSearchResult: null
@@ -109,6 +129,20 @@ export default {
     },
     user: {
       query: userQuery
+    },
+
+    $subscribe: {
+      userStreamAdded: {
+        query: gql`
+          subscription {
+            userStreamAdded
+          }
+        `,
+        result(streamInfo) {
+          this.streamSnackbar = true
+          this.streamSnackbarInfo = streamInfo.data.userStreamAdded
+        }
+      }
     }
   },
   computed: {

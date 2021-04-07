@@ -13,6 +13,25 @@
         <error-block :message="error" />
       </v-col>
     </v-row>
+    <v-snackbar v-model="commitSnackbar" :timeout="5000" color="primary" absolute right top>
+      New commit
+      <i>{{ commitSnackbarInfo.message }}</i>
+      on
+      <i>{{ commitSnackbarInfo.branchName }}</i>
+      <template #action="{ attrs }">
+        <v-btn
+          text
+          v-bind="attrs"
+          :to="'/streams/' + $route.params.streamId + '/commits/' + commitSnackbarInfo.id"
+          @click="commitSnackbar = false"
+        >
+          see
+        </v-btn>
+        <v-btn icon v-bind="attrs" @click="commitSnackbar = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
     <stream-invite-dialog v-if="stream" :show="inviteDialog" :stream-id="stream.id" />
   </v-container>
 </template>
@@ -21,6 +40,7 @@ import SidebarStream from '../components/SidebarStream'
 import ErrorBlock from '../components/ErrorBlock'
 import streamQuery from '../graphql/stream.gql'
 import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
+import gql from 'graphql-tag'
 
 export default {
   name: 'Stream',
@@ -32,6 +52,8 @@ export default {
   data() {
     return {
       error: '',
+      commitSnackbar: false,
+      commitSnackbarInfo: {},
       inviteDialog: 1,
       shouldOpenInvite: false
     }
@@ -46,6 +68,39 @@ export default {
       },
       error(err) {
         this.error = err.message.replace('GraphQL error: ', '')
+      }
+    },
+    $subscribe: {
+      streamUpdated: {
+        query: gql`
+          subscription($id: String!) {
+            streamUpdated(streamId: $id)
+          }
+        `,
+        variables() {
+          return {
+            id: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        }
+      },
+      commitCreated: {
+        query: gql`
+          subscription($streamId: String!) {
+            commitCreated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result(commitInfo) {
+          this.commitSnackbar = true
+          this.commitSnackbarInfo = commitInfo.data.commitCreated
+        }
       }
     }
   },

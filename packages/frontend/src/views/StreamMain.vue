@@ -5,10 +5,7 @@
         <v-skeleton-loader type="card-heading, card-avatar, article"></v-skeleton-loader>
       </v-card>
       <v-card v-else class="mb-4 transparent" rounded="lg" elevation="0">
-        <v-sheet
-          class="px-5 pt-5 align-center justify-center"
-          :class="latestCommit ? '' : 'rounded-b-lg'"
-        >
+        <v-sheet class="px-5 pt-5 align-center justify-center">
           <v-select
             v-if="branches"
             v-model="selectedBranch"
@@ -52,9 +49,9 @@
           <renderer :object-url="latestCommitObjectUrl" :unload-trigger="clearRendererTrigger" />
         </div>
 
-        <v-sheet v-if="latestCommit">
+        <v-sheet :class="latestCommit ? '' : 'rounded-b-lg'">
           <!-- LAST COMMIT -->
-          <v-list two-line class="pa-0">
+          <v-list v-if="latestCommit" two-line class="pa-0">
             <v-list-item :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id">
               <v-list-item-icon>
                 <user-avatar
@@ -110,6 +107,7 @@
               </v-list-item>
               <v-divider />
             </div>
+            <v-divider v-if="!latestCommit" />
             <v-list-item>
               <v-list-item-content>
                 <v-btn
@@ -125,10 +123,7 @@
                   "
                 >
                   <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
-                  SEE {{ selectedBranch.commits.totalCount > 1 ? 'ALL' : '' }}
-                  {{ selectedBranch.commits.totalCount }} commit{{
-                    selectedBranch.commits.totalCount === 1 ? '' : 's'
-                  }}
+                  {{ commitsPageText }}
                 </v-btn>
               </v-list-item-content>
             </v-list-item>
@@ -251,9 +246,49 @@ export default {
         }
       },
       update: (data) => data.stream.description
+    },
+    $subscribe: {
+      branchCreated: {
+        query: gql`
+          subscription($streamId: String!) {
+            branchCreated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.branches.refetch()
+        }
+      },
+      branchDeleted: {
+        query: gql`
+          subscription($streamId: String!) {
+            branchDeleted(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.branches.refetch()
+        }
+      }
     }
   },
   computed: {
+    commitsPageText() {
+      if (this.selectedBranch.commits.totalCount > 1)
+        return `SEE ALL ${this.selectedBranch.commits.totalCount} COMMITS`
+
+      if (this.selectedBranch.commits.totalCount === 1) return `SEE 1 COMMIT`
+
+      return `SEE BRANCH DETAILS`
+    },
     branchNames() {
       if (!this.branches) return []
       return this.branches.items.map((b) => b.name)

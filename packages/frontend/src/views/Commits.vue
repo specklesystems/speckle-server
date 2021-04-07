@@ -89,8 +89,25 @@ export default {
       query: branchQuery,
       variables() {
         return {
-          streamId: this.$route.params.streamId,
+          streamId: this.streamId,
           branchName: this.$route.params.branchName
+        }
+      }
+    },
+    $subscribe: {
+      commitCreated: {
+        query: gql`
+          subscription($streamId: String!) {
+            commitCreated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
         }
       }
     }
@@ -135,36 +152,11 @@ export default {
       }
       if (name !== this.$route.params.branchName) {
         this.$router.push({
-          path: `/streams/${this.streamId}/branches/${encodeURIComponent(name)}`
+          path: `/streams/${this.streamId}/branches/${encodeURIComponent(name)}/commits`
         })
         return
       }
       this.$apollo.queries.stream.refetch()
-    },
-    editBranch() {
-      this.$refs.commitDialog.open(this.stream.commit, this.stream.id).then((dialog) => {
-        if (!dialog.result) return
-
-        this.$matomo && this.$matomo.trackPageView('branch/update')
-        this.$apollo
-          .mutate({
-            mutation: gql`
-              mutation commitUpdate($myCommit: CommitUpdateInput!) {
-                commitUpdate(commit: $myCommit)
-              }
-            `,
-            variables: {
-              myCommit: { ...dialog.commit }
-            }
-          })
-          .then((data) => {
-            this.$apollo.queries.stream.refetch()
-          })
-          .catch((error) => {
-            // Error
-            console.error(error)
-          })
-      })
     }
   }
 }
