@@ -7,7 +7,11 @@
         </v-col>
         <v-col cols="12" md="6" lg="4" xl="3">
           <router-view></router-view>
-          <p class="caption text-center mt-2" v-html="serverInfo.termsOfService"></p>
+          <p
+            v-if="serverInfo"
+            class="caption text-center mt-2"
+            v-html="serverInfo.termsOfService"
+          ></p>
         </v-col>
       </v-row>
     </v-container>

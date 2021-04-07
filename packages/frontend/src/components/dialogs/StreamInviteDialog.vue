@@ -2,26 +2,19 @@
   <div>
     <v-dialog v-model="showDialog" max-width="400">
       <v-card>
-        <v-card-title v-show="!success">Send a stream invite</v-card-title>
+        <v-card-title>Send a stream invite</v-card-title>
         <v-alert v-model="showError" dismissible type="error" :class="`${success ? 'mb-0' : ''}`">
           {{ error }}
         </v-alert>
         <v-alert v-model="success" dismissible type="success">
           Great! An invite link has been sent.
-          <br />
-          Send another one?
         </v-alert>
-        <v-form
-          v-show="!success"
-          ref="form"
-          v-model="valid"
-          class="px-2"
-          @submit.prevent="sendInvite"
-        >
+        <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="sendInvite">
           <v-card-text class="pb-0 mb-0">
             We will send an invite link for this server to the email below and once your guest will
-            accept the invite, <b>they will be granted access to this stream</b>. You can also add a
-            personal message if you want to.
+            accept the invite,
+            <b>they will be granted access to this stream</b>
+            . You can also add a personal message if you want to.
           </v-card-text>
           <v-card-text class="pt-0 mt-0">
             <v-text-field
@@ -77,15 +70,16 @@ export default {
     },
     showDialog() {
       this.clear()
+      this.email = null
+      this.message = 'Hey, I want to share this stream with you!'
     }
   },
   methods: {
     clear() {
       this.error = null
       this.showError = false
-      this.email = null
       this.success = false
-      this.message = 'Hey, I want to share this stream with you!'
+      this.$refs.form.resetValidation()
     },
     async sendInvite() {
       if (!this.$refs.form.validate()) return
