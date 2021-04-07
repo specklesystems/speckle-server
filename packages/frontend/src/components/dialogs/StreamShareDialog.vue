@@ -21,10 +21,9 @@
       >
         <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
           <v-list-item-content>
-            <v-list-item-title>No users found. Note: you can search by name and email.</v-list-item-title>
-            <v-list-item-subtitle>
-               Hint: use the button below to send an invite!
-            </v-list-item-subtitle>
+            <v-list-item-title>
+              No users found. Note: you can search by name and email.
+            </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
         <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
@@ -59,10 +58,11 @@
         </v-list-item>
       </v-list>
     </v-card-text>
-    <stream-invite-dialog :show="inviteDialog" :streamId="stream.id"/>
+    <stream-invite-dialog :show="inviteDialog" :stream-id="stream.id" />
     <v-card-title>Existing collaborators</v-card-title>
     <v-card-text class="px-0">
-      <v-list>
+      <p v-if="collaborators.length === 0" class="ml-6">This stream has no collaborators.</p>
+      <v-list v-else>
         <v-list-item v-for="user in collaborators" :key="user.id" two-lines>
           <v-list-item-icon>
             <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name" :size="42" />
