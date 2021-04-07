@@ -18,30 +18,20 @@ Comprehensive developer and user documentation can be found in our:
 
 ## Introduction
 
-The Speckle Server is a node application tested against v12. To start it locally:
+The Speckle Server is a node application tested against v12.
 
-First, ensure you have postgres and redis ready and running (check the [readme.md](../../readme.md) from the root of the git repo).
+The external dependencies are **PostgreSQL** and **Redis**. To get the dependencies running without any hassle, you can run them in docker containers as described in our [Server deployment instructions](https://speckle.guide/dev/server-setup.html#step-1-set-up-dependencies) (chapter `Run your speckle-server fork`, step 1)
 
-> **_NOTE:_** If you install PostgreSQL yourself or use an existing PostgreSQL instance, make sure to create a database for speckle and a user that can access it.
->
-> You can set it up with:
-> ```
-> create user speckle with encrypted password ‘speckle’;
-> CREATE DATABASE speckle;
-> grant all privileges on database speckle to speckle;
-> ```
-> If you use a network-accessible PostgreSQL instance, make sure to secure it with a stronger password and to configure the .env file accordingly
 
-Finally, in the `packages/server` folder:
+> **_NOTE:_** If you install PostgreSQL yourself or use an existing PostgreSQL instance, make sure to create a database and a user that can access it
+
+After you have PostgreSQL and Redis running, in the `packages/server` folder:
 
 - copy the `.env-example` file to `.env`,
 - If you have a custom setup, open and edit the `.env` file, filling in the required variables,
 - run `npm install`,
 - finally `npm run dev`,
 - check `localhost:3000/graphql` out!
-
-For more setup details and options, check out our [Server Setup Docs](https://speckle.guide/dev/server-setup.html)
-
 
 ## Developing
 
@@ -56,7 +46,7 @@ The server consists of several semi-related components, or modules. These can be
 
 - In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
 
-- In **production** mode, a load balancer should send requests either to the frontend nginx container or the server container, depending on the requested path
+- In **production** mode, the frontend is served by an `nginx` container that proxy server requests to the server (depending on the requested path). For more information about making a production deployment, check out [our detailed guide](https://speckle.guide/dev/server-setup.html)
 
 ### GraphIQL
 

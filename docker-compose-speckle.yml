@@ -6,21 +6,23 @@ services:
       context: .
       dockerfile: packages/frontend/Dockerfile
     restart: always
+    ports:
+      - "0.0.0.0:80:80"
 
   speckle-server:
     build:
       context: .
       dockerfile: packages/server/Dockerfile
-      args:
-        NODE_ENV: development
     restart: always
     environment:
-      CANONICAL_URL: "http://localhost:3000"
-      SESSION_SECRET: "-local-"
+      # TODO: Change this to the URL of the speckle server, as accessed from the network
+      CANONICAL_URL: "http://localhost"
+
+      # TODO: Change this to a unique secret for this server
+      SESSION_SECRET: "TODO:Replace"
+
       STRATEGY_LOCAL: "true"
       DEBUG: "speckle:*"
-      FRONTEND_HOST: "speckle-frontend"
-      FRONTEND_PORT: 80
 
       POSTGRES_URL: "postgres"
       POSTGRES_USER: "speckle"
@@ -28,5 +30,3 @@ services:
       POSTGRES_DB: "speckle"
 
       REDIS_URL: "redis://redis"
-    ports:
-      - "127.0.0.1:3000:3000"
