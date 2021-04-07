@@ -19,11 +19,12 @@
             return-object
             background-color="background"
             class="d-inline-block mt-2 mr-4 mb-0 pb-0"
+            style="max-width: 50%"
             @change="changeBranch"
           >
             <template #selection="{ item }">
               <v-icon class="mr-2">mdi-source-branch</v-icon>
-              {{ item.name }}
+              <span class="text-truncate">{{ item.name }}</span>
             </template>
             <template #item="{ item }">
               <div class="pa-2">
