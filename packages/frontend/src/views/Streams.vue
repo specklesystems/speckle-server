@@ -127,6 +127,7 @@ import UserAvatar from '../components/UserAvatar'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
 import InfiniteLoading from 'vue-infinite-loading'
+import gql from 'graphql-tag'
 
 export default {
   name: 'Streams',
@@ -139,6 +140,28 @@ export default {
     },
     user: {
       query: userQuery
+    },
+    $subscribe: {
+      userStreamAdded: {
+        query: gql`
+          subscription {
+            userStreamAdded
+          }
+        `,
+        result() {
+          this.$apollo.queries.streams.refetch()
+        }
+      },
+      userStreamRemoved: {
+        query: gql`
+          subscription {
+            userStreamRemoved
+          }
+        `,
+        result() {
+          this.$apollo.queries.streams.refetch()
+        }
+      }
     }
   },
   data: () => ({

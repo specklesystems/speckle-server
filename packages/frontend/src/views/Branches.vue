@@ -46,9 +46,7 @@
             <template v-for="item in branches.items">
               <v-list-item
                 :key="item.id"
-                :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(
-                  item.name
-                )}`"
+                :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(item.name)}`"
               >
                 <v-list-item-content>
                   <v-list-item-title>
@@ -75,6 +73,7 @@
 <script>
 import NewBranchDialog from '../components/dialogs/BranchNewDialog'
 import streamBranchesQuery from '../graphql/streamBranches.gql'
+import gql from 'graphql-tag'
 
 export default {
   name: 'StreamMain',
@@ -102,6 +101,38 @@ export default {
       },
       update(data) {
         return data.stream
+      }
+    },
+    $subscribe: {
+      branchCreated: {
+        query: gql`
+          subscription($streamId: String!) {
+            branchCreated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        }
+      },
+      branchDeleted: {
+        query: gql`
+          subscription($streamId: String!) {
+            branchDeleted(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        }
       }
     }
   },
