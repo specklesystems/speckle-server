@@ -68,9 +68,9 @@ describe( 'Commits @core-commits', ( ) => {
     user.id = await createUser( user )
     stream.id = await createStream( { ...stream, ownerId: user.id } )
 
-    testObject.id = await createObject( testObject )
-    testObject2.id = await createObject( testObject2 )
-    testObject3.id = await createObject( testObject3 )
+    testObject.id = await createObject( stream.id, testObject )
+    testObject2.id = await createObject( stream.id, testObject2 )
+    testObject3.id = await createObject( stream.id, testObject3 )
   } )
 
   after( async ( ) => {
@@ -115,7 +115,7 @@ describe( 'Commits @core-commits', ( ) => {
   it( 'Should get the commits from a branch', async ( ) => {
     for ( let i = 0; i < 10; i++ ) {
       let t = { qux: i }
-      t.id = await createObject( t )
+      t.id = await createObject( stream.id, t )
       await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: `commit # ${i+3}`, sourceApplication: 'tests', objectId: t.id, authorId: user.id } )
     }
 
@@ -138,7 +138,7 @@ describe( 'Commits @core-commits', ( ) => {
     let prevId
     for ( let i = 0; i < 10; i++ ) {
       let t = { thud: i }
-      t.id = await createObject( t )
+      t.id = await createObject( stream.id, t )
       await createCommitByBranchName( { streamId: stream.id, branchName: 'dim/dev', message: `pushed something # ${i+3}`, sourceApplication: 'tests', objectId: t.id, authorId: user.id } )
     }
 
@@ -165,7 +165,8 @@ describe( 'Commits @core-commits', ( ) => {
 
   it( 'Should get the public commits of an user only', async ( ) => {
     let privateStreamId = await createStream( { name: 'private', isPublic: false, ownerId: user.id } )
-    let commitId = await createCommitByBranchName( { streamId: privateStreamId, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject.id, authorId: user.id } )
+    let objectId = await createObject( privateStreamId, testObject )
+    let commitId = await createCommitByBranchName( { streamId: privateStreamId, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId, authorId: user.id } )
 
     let { commits, cursor } = await getCommitsByUserId( { userId: user.id, limit: 1000 } )
     expect( commits.length ).to.equal( 23 )

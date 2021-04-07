@@ -1,0 +1,59 @@
+version: "3"
+services:
+
+  # Actual Speckle Server dependencies
+
+  postgres:
+    image: "postgres:13.1-alpine"
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    image: "redis:6.0-alpine"
+    restart: always
+    volumes:
+      - redis-data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+
+
+  # Useful for debugging / exploring local databases
+
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@localhost
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+        - "127.0.0.1:16543:80"
+    depends_on:
+        - postgres
+
+  redis_insight:
+    image: redislabs/redisinsight:latest
+    restart: always
+    volumes:
+      - redis_insight-data:/db
+    ports:
+      - "127.0.0.1:8001:8001"
+    depends_on:
+      - redis
+
+
+# Storage persistency
+
+volumes:
+  postgres-data:
+  redis-data:
+  pgadmin-data:
+  redis_insight-data:

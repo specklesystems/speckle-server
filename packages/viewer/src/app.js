@@ -1,6 +1,6 @@
 
 import Viewer from './modules/Viewer'
-import ObjectLoader from './modules/ObjectLoader'
+import ObjectLoader from '@speckle/objectloader'
 import Converter from './modules/Converter'
 
 let v = new Viewer( { container: document.getElementById( 'renderer' ), showStats: true } )

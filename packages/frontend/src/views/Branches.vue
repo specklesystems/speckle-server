@@ -48,7 +48,7 @@
                 :key="item.id"
                 :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(
                   item.name
-                )}/commits`"
+                )}`"
               >
                 <v-list-item-content>
                   <v-list-item-title>

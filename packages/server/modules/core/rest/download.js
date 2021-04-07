@@ -41,7 +41,7 @@ module.exports = ( app ) => {
     }
 
     // Populate first object (the "commit")
-    let obj = await getObject( { objectId: req.params.objectId } )
+    let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
     if ( !obj ) {
       return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
@@ -51,7 +51,7 @@ module.exports = ( app ) => {
 
     let simpleText = req.headers.accept === 'text/plain'
 
-    let dbStream = await getObjectChildrenStream( { objectId: req.params.objectId } )
+    let dbStream = await getObjectChildrenStream( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
     let currentChunkSize = 0
     let maxChunkSize = 50000
@@ -106,14 +106,15 @@ module.exports = ( app ) => {
         k++
       } catch ( e ) {
         requestDropped = true
-        res.status( 400 ).send( 'Failed to find object, or object is corrupted.' )
+        debug( 'speckle:error' )( `'Failed to find object, or object is corrupted.' ${req.params.objectId}` )
+        return
       }
     } )
 
     dbStream.on( 'error', err => {
-      debug( 'speckle:error' )( `Error in streaming object children for ${req.params.objectId}` )
+      debug( 'speckle:error' )( `Error in streaming object children for ${req.params.objectId}: ${err}` )
       requestDropped = true
-      res.status( 400 ).send( 'Failed to find object, or object is corrupted.' )
+      return
     } )
 
     dbStream.on( 'end', ( ) => {
@@ -132,7 +133,7 @@ module.exports = ( app ) => {
   app.get( '/objects/:streamId/:objectId/single', async ( req, res ) => {
     // TODO: authN & authZ checks
 
-    let obj = await getObject( req.params.objectId )
+    let obj = await getObject( req.params.streamId, req.params.objectId )
 
     res.send( obj )
   } )

@@ -121,6 +121,4 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
     }
   } )
 
-
-
 }

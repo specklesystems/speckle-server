@@ -20,7 +20,7 @@ module.exports = {
     // If no total children count is passed in, get it from the original object
     // that this commit references.
     if ( !totalChildrenCount ){
-      let { totalChildrenCount: tc } = await getObject( {objectId} )
+      let { totalChildrenCount: tc } = await getObject( { streamId, objectId } )
       totalChildrenCount = tc || 1
     }
 

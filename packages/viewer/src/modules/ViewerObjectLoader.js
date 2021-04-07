@@ -1,4 +1,4 @@
-import ObjectLoader from './ObjectLoader'
+import ObjectLoader from '@speckle/objectloader'
 import Converter from './Converter'
 
 /**
@@ -13,7 +13,8 @@ export default class ViewerObjectLoader {
     this.token = authToken || localStorage.getItem( 'AuthToken' )
 
     if ( !this.token ) {
-      throw new Error( 'No suitable authorization token found.' )
+      // throw new Error( 'No suitable authorization token found.' )
+      console.warn( 'Viewer: no auth token present. Requests to non-public stream objects will fail.' )
     }
 
     // example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
@@ -42,16 +43,25 @@ export default class ViewerObjectLoader {
     let first = true
     let current = 0
     let total = 0
+    let viewerLoads = 0
     for await ( let obj of this.loader.getObjectIterator() ) {
       if ( first ) {
         ( async() => {
-          await this.converter.traverseAndConvert( obj, ( o ) => this.viewer.sceneManager.addObject( o ) )
+          await this.converter.traverseAndConvert( obj, ( o ) => {
+            this.viewer.sceneManager.addObject( o )
+            viewerLoads++
+          } )
         } )()
         first = false
         total = obj.totalChildrenCount
       }
       current++
       this.viewer.emit( 'load-progress', { progress: current/( total+1 ), id: this.objectId } )
+    }
+
+    if ( viewerLoads === 0 ) {
+      console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )
+      this.viewer.emit( 'load-warning', { message: `No displayable objects found in object ${this.objectId}.` } )
     }
   }
 }

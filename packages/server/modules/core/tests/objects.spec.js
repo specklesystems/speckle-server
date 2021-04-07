@@ -75,8 +75,8 @@ describe( 'Objects @core-objects', ( ) => {
   } )
 
   it( 'Should create objects', async ( ) => {
-    sampleObject.id = await createObject( sampleObject )
-    sampleCommit.id = await createObject( sampleCommit )
+    sampleObject.id = await createObject( stream.id, sampleObject )
+    sampleCommit.id = await createObject( stream.id, sampleCommit )
   } )
 
   let objCount_1 = 10
@@ -92,7 +92,7 @@ describe( 'Objects @core-objects', ( ) => {
       } )
     }
 
-    let ids = await createObjects( objs )
+    let ids = await createObjects( stream.id, objs )
 
     expect( ids ).to.have.lengthOf( objCount_1 )
 
@@ -108,15 +108,15 @@ describe( 'Objects @core-objects', ( ) => {
         z: i * 0.23432,
         random: { blargh: 'A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.A a auctor arcu id enim felis, luctus sed sit lacus enim phasellus ultricies, quis fermentum, platea placerat vel integer. Enim urna natoque eros id volutpat voluptatum, vitae pede nec in nam. In libero nullam, habitasse auctor a laoreet justo. Vestibulum enim laoreet quis magna in. Non pharetra sit semper vitae ac fusce, non nisl molestie porttitor leo sed, quam vulputate, suscipit sed elit fringilla justo viverra, mattis dignissim ullamcorper a in. Pellentesque velit posuere ipsum, eu pharetra. Magna ac orci sit, malesuada lacinia mauris sed sunt ac neque. Mollis volutpat cras a, donec ac, etiam commodo id fringilla et tempor mi, pellentesque lacus ac morbi ultrices. Diam amet felis aliquam nibh nunc sed. Rhoncus malesuada in malesuada proin sed nam, viverra ante sollicitudin eu augue risus nisl, velit interdum vivamus dictumst. Phasellus fusce wisi non ipsum elit gravida. Nunc scelerisque, interdum adipiscing quam integer commodo, modi tempor sociis sociosqu dui nullam.Lorem ipsum dolor sit amet, lorem scelerisque curabitur elementum eligendi, sed ut nibh. Nullam ac ut proin tortor tortor, ultrices odio litora eu, at lectus. Nulla et est, donec at, rutrum massa eros elit nisl sed, integer amet fusce tempus phasellus aliquam posuere, molestie adipiscing quas magnis convallis tellus. Exercitation purus aliquam, tortor pellentesque. Consequat arcu quis eros, turpis ultrices tempor elementum, platea cursus dignissim nulla. Ultrices vestibulum sit et taciti ut, nunc interdum. In eleifend amet sed a tortor, sed condimentum pede nam magna, nisl nam tristique pede ut at, eleifend sit ac vitae orci, nec wisi vestibulum tortor facilisis. Cras nunc debitis duis placerat curabitur, conubia vel ullamcorper vestibulum morbi donec, molestie rutrum.Cras elit ut, quis diam sed sollicitudin morbi rhoncus, ante velit, at ipsum debitis. Ut ipsum, et sed morbi odio libero viverra eget, nihil blandit nonummy mauris. Et sed nisl fermentum nunc sapien erat, dolor mattis pellentesque nec sapien faucibus, praesent lectus odio rhoncus id dolor, velit at lorem iaculis condimentum. Id suscipit amet nec rutrum, erat magnis amet id, lacus tristique. Neque id mauris dapibus consectetuer ut scelerisque, tincidunt fringilla quis dolores, praesent ipsum, nec tortor ultricies, posuere a fusce et magna.' },
         __tree: [
-          "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723",
-          "79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67" + i / 2.0,
-          "79eb41764cc2c065de752bd704asdf4aa." + i + "." + i * i,
-          "79eb41764cc2c065de752bd704bfc4aa." + i + "." + i * i + 3,
+          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723',
+          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67' + i / 2.0,
+          '79eb41764cc2c065de752bd704asdf4aa.' + i + '.' + i * i,
+          '79eb41764cc2c065de752bd704bfc4aa.' + i + '.' + i * i + 3,
         ]
       } )
     }
 
-    let myIds = await createObjects( objs2 )
+    let myIds = await createObjects( stream.id, objs2 )
 
     myIds.forEach( ( h, i ) => objs2[ i ].id = h )
 
@@ -125,12 +125,12 @@ describe( 'Objects @core-objects', ( ) => {
   } ).timeout( 30000 )
 
   it( 'Should get a single object', async ( ) => {
-    let obj = await getObject( { objectId: sampleCommit.id } )
+    let obj = await getObject( { streamId: stream.id, objectId: sampleCommit.id } )
     expect( obj ).to.not.be.null
   } )
 
   it( 'Should get more objects', async ( ) => {
-    let myObjs = await getObjects( objs.map( o => o.id ) )
+    let myObjs = await getObjects( stream.id, objs.map( o => o.id ) )
     expect( myObjs ).to.have.lengthOf( objs.length )
 
     let match1 = myObjs.find( o => o.id === objs[ 0 ].id )
@@ -147,7 +147,7 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'Should get object children', async ( ) => {
 
     let objs_1 = createManyObjects( 100, 'noise__' )
-    let ids = await createObjects( objs_1 )
+    let ids = await createObjects( stream.id, objs_1 )
     // console.log( ids )
     // console.log(ids[ 0 ])
 
@@ -162,7 +162,7 @@ describe( 'Objects @core-objects', ( ) => {
     // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
 
     let limit = 50
-    let { objects: rows_1, cursor: cursor_1 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
+    let { objects: rows_1, cursor: cursor_1 } = await getObjectChildren( { streamId: stream.id, limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ] } )
 
     expect( rows_1.length ).to.equal( limit )
     expect( rows_1[ 0 ] ).to.be.an( 'object' )
@@ -172,7 +172,7 @@ describe( 'Objects @core-objects', ( ) => {
 
     expect( cursor_1 ).to.be.a( 'string' )
 
-    let { objects: rows_2, cursor: cursor_2 } = await getObjectChildren( { limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
+    let { objects: rows_2, cursor: cursor_2 } = await getObjectChildren( { streamId: stream.id, limit, objectId: ids[ 0 ], select: [ 'nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]' ], cursor: cursor_1 } )
 
     expect( rows_2.length ).to.equal( 50 )
     expect( rows_2[ 0 ] ).to.be.an( 'object' )
@@ -181,7 +181,7 @@ describe( 'Objects @core-objects', ( ) => {
     expect( rows_2[ 0 ] ).to.have.nested.property( 'data.nest.mallard' )
 
 
-    let { objects, cursor } = await getObjectChildren( { objectId: ids[ 0 ], limit: 1000 } )
+    let { objects, cursor } = await getObjectChildren( { streamId: stream.id, objectId: ids[ 0 ], limit: 1000 } )
     expect( objects.length ).to.equal( 100 )
 
     parentObjectId = ids[ 0 ]
@@ -192,6 +192,7 @@ describe( 'Objects @core-objects', ( ) => {
     // we're assuming the prev test objects exist
 
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       select: [ 'id', 'test.value' ],
       limit: 3,
@@ -200,6 +201,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       select: [ 'id', 'test.value', 'nest.duck' ],
       limit: 40,
@@ -237,6 +239,7 @@ describe( 'Objects @core-objects', ( ) => {
 
     // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc.
     let test3 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
       query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
@@ -245,6 +248,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test4 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
       query: [ { field: 'similar', operator: '>=', value: 0 }, { field: 'similar', operator: '<', value: 100 } ],
@@ -276,6 +280,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   it( 'should query object children with no results ', async ( ) => {
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 9 } ],
       orderBy: { field: 'test.value', direction: 'desc' }
@@ -288,6 +293,7 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'should not allow invalid query operators ', async ( ) => {
     try {
       let test = await getObjectChildrenQuery( {
+        streamId: stream.id,
         objectId: parentObjectId,
         query: [ { field: 'test.value', operator: '> 0; BOBBY DROPPPPED MY TABLES; -- and the bass?', value: 10 }, { field: 'test.value', operator: '<', value: 9 } ],
         orderBy: { field: 'test.value', direction: 'desc' }
@@ -301,6 +307,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   it( 'should query childern and sort them by a boolean value ', async ( ) => {
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       select: [ 'test.value', 'nest.duck' ],
@@ -309,6 +316,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       select: [ 'test.value', 'nest.duck' ],
@@ -326,6 +334,7 @@ describe( 'Objects @core-objects', ( ) => {
     let limVal = 20
 
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       query: [ { field: 'test.value', operator: '<', value: limVal } ],
@@ -333,6 +342,7 @@ describe( 'Objects @core-objects', ( ) => {
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
       query: [ { field: 'test.value', operator: '<', value: limVal } ],
@@ -353,6 +363,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   it( 'should query childern and sort them by id by default ', async ( ) => {
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 3,
       query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 100 } ],
@@ -361,6 +372,7 @@ describe( 'Objects @core-objects', ( ) => {
     expect( test.totalCount ).to.equal( 90 )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 3,
       query: [ { field: 'test.value', operator: '>=', value: 10 }, { field: 'test.value', operator: '<', value: 100 } ],
@@ -373,12 +385,14 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'should just order results by something', async ( ) => {
 
     let test = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 2,
       orderBy: { field: 'test.value', direction: 'desc' }
     } )
 
     let test2 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 2,
       orderBy: { field: 'test.value', direction: 'desc' },
@@ -388,12 +402,14 @@ describe( 'Objects @core-objects', ( ) => {
     expect( test.objects[ 1 ].data.test.value ).to.equal( test2.objects[ 0 ].data.test.value + 1 ) // continuity check
 
     let test3 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 50,
       orderBy: { field: 'nest.duck', direction: 'desc' }
     } )
 
     let test4 = await getObjectChildrenQuery( {
+      streamId: stream.id,
       objectId: parentObjectId,
       limit: 50,
       orderBy: { field: 'nest.duck', direction: 'desc' },
@@ -409,18 +425,18 @@ describe( 'Objects @core-objects', ( ) => {
   it( 'should batch create objects', async ( ) => {
     let objs = createManyObjects( 3333, 'perlin merlin magic' )
     commitId = objs[ 0 ].id
+    
+    await createObjectsBatched( stream.id, objs )
 
-    await createObjectsBatched( objs )
-
-    let parent = await getObject( { objectId: commitId } )
+    let parent = await getObject( { streamId: stream.id, objectId: commitId } )
     expect( parent.totalChildrenCount ).to.equal( 3333 )
-    let commitChildren = await getObjectChildren( { objectId: commitId, limit: 2 } )
+    let commitChildren = await getObjectChildren( { streamId: stream.id, objectId: commitId, limit: 2 } )
     expect( commitChildren.objects.length ).to.equal( 2 )
   } )
 
   it( 'should stream objects back', ( done ) => {
     let tcount = 0
-    getObjectChildrenStream( { objectId: commitId } )
+    getObjectChildrenStream( { streamId: stream.id, objectId: commitId } )
       .then( stream => {
         stream.on( 'data', row => tcount++ )
         stream.on( 'end', ( ) => {
@@ -428,6 +444,37 @@ describe( 'Objects @core-objects', ( ) => {
           done( )
         } )
       } )
+  } )
+
+  it( 'should not deadlock when batch inserting in random order', async function( )  {
+    this.timeout( 5000 )
+    let objs = createManyObjects( 5000, 'perlin merlin magic' )
+
+    function shuffleArray( array ) {
+      for ( let i = array.length - 1; i > 0; i-- ) {
+        const j = Math.floor( Math.random() * ( i + 1 ) );
+        [ array[i], array[j] ] = [ array[j], array[i] ]
+      }
+    }
+
+    let shuffledVersions = []
+    for ( let i = 0; i < 3; i++ ) {
+      let shuffledVersion = objs.slice()
+      shuffleArray( shuffledVersion )
+      shuffledVersions.push( shuffledVersion )
+    }
+
+    let promisses = []
+    for ( let i = 0; i < shuffledVersions.length; i++ ) {
+      let promise = createObjectsBatched( stream.id, shuffledVersions[i] )
+      promise.catch( ( e ) => { } )
+      promisses.push( promise )
+    }
+
+    for ( let i = 0; i < promisses.length; i++ ) {
+      await promisses[i]
+    }
+
   } )
 } )
 

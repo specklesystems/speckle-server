@@ -147,14 +147,6 @@ const routes = [
           title: 'User Profile | Speckle'
         },
         component: () => import('../views/ProfileUser.vue')
-      },
-      {
-        path: 'help',
-        name: 'help',
-        meta: {
-          title: 'Help | Speckle'
-        },
-        component: () => import('../views/Help.vue')
       }
     ]
   },

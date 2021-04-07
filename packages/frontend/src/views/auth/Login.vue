@@ -1,5 +1,16 @@
 <template>
-  <v-card class="elevation-20" rounded="lg">
+  <v-card
+    class="elevation-20"
+    :style="`${serverInfo.inviteOnly ? 'border: 2px solid #047EFB' : ''}`"
+    rounded="lg"
+  >
+    <div v-show="serverInfo.inviteOnly" class="caption text-center" style="background: #047EFB">
+      <v-icon small>mdi-shield-alert-outline</v-icon>
+      This Speckle server is invite only.
+    </div>
+<!--     <v-alert type="error" v-if="">
+
+    </v-alert> -->
     <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
       <v-img src="@/assets/logo.svg" max-width="30" />
     </v-card-title>
@@ -50,7 +61,7 @@
               />
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" @click="loginUser()" type="submit">Log in</v-btn>
+              <v-btn block large color="primary" type="submit" @click="loginUser()">Log in</v-btn>
             </v-col>
           </v-row>
         </v-form>
@@ -87,6 +98,7 @@ export default {
             company
             adminContact
             termsOfService
+            inviteOnly
             scopes {
               name
               description
@@ -118,7 +130,8 @@ export default {
     serverApp: null,
     appId: null,
     suuid: null,
-    challenge: null
+    challenge: null,
+    inviteId: null
   }),
   computed: {
     strategies() {
@@ -144,6 +157,8 @@ export default {
     let challenge = urlParams.get('challenge')
     let suuid = urlParams.get('suuid')
     this.suuid = suuid
+    let inviteId = urlParams.get('inviteId')
+    this.inviteId = inviteId
 
     if (!appId) this.appId = 'spklwebapp'
     else this.appId = appId

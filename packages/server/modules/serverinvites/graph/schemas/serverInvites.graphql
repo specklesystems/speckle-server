@@ -1,0 +1,26 @@
+
+type ServerInvite {
+  id: String!
+  createdAt: DateTime!
+}
+
+extend type Mutation {
+  serverInviteCreate( input: ServerInviteCreateInput! ): Boolean
+    @hasRole(role: "server:user")
+    @hasScope(scope: "users:invite")
+
+  streamInviteCreate( input: StreamInviteCreateInput! ): Boolean
+    @hasRole(role: "server:user" )
+    @hasScope(scope: "users:invite")
+}
+
+input ServerInviteCreateInput {
+  email: String!
+  message: String
+}
+
+input StreamInviteCreateInput {
+  email: String!
+  message: String
+  streamId: String
+}

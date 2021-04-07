@@ -38,6 +38,7 @@ export default {
             description
             adminContact
             termsOfService
+            inviteOnly
           }
         }
       `

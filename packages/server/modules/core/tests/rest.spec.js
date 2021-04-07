@@ -92,6 +92,24 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
 
   } )
 
+  it( 'Should not allow getting an object that is not part of the stream', async ( ) => {
+    let objBatch = createManyObjects( 20 )
+
+    await request( expressApp )
+      .post( `/objects/${privateTestStream.id}` )
+      .set( 'Authorization', userA.token )
+      .set( 'Content-type', 'multipart/form-data' )
+      .attach( 'batch1', Buffer.from( JSON.stringify( objBatch ), 'utf8' ) )
+
+    // should allow userA to access privateTestStream object
+    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatch[0].id}` ).set( 'Authorization', userA.token )
+    expect( res ).to.have.status( 200 )
+  
+    // should not allow userB to access privateTestStream object by pretending it's in public stream
+    res = await chai.request( expressApp ).get( `/objects/${testStream.id}/${objBatch[0].id}` ).set( 'Authorization', userB.token )
+    expect( res ).to.have.status( 404 )
+  } )
+
   it( 'Should not allow upload requests without an authorization token or valid streamId', async ( ) => {
     // invalid token and streamId
     let res = await chai.request( expressApp ).post( '/objects/wow_hack' ).set( 'Authorization', 'this is a hoax' )

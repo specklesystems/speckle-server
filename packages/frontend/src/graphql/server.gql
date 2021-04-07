@@ -5,6 +5,8 @@ query {
     description
     adminContact
     canonicalUrl
+    inviteOnly
+    termsOfService
     roles {
       name
       description
