@@ -14,7 +14,6 @@
             We will send an invite link for this server to the email below and once your guest will
             accept the invite,
             <b>they will be granted access to this stream</b>
-            . You can also add a personal message if you want to.
           </v-card-text>
           <v-card-text class="pt-0 mt-0">
             <v-text-field
@@ -36,12 +35,8 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'ServerInviteDialog',
+  name: 'StreamInviteDialog',
   props: {
-    show: {
-      type: Number,
-      default: 0
-    },
     streamId: {
       type: String,
       default: null
@@ -65,9 +60,6 @@ export default {
     }
   },
   watch: {
-    show() {
-      this.showDialog = true
-    },
     showDialog() {
       this.clear()
       this.email = null
@@ -75,16 +67,20 @@ export default {
     }
   },
   methods: {
+    show() {
+      this.showDialog = true
+    },
     clear() {
       this.error = null
       this.showError = false
       this.success = false
-      this.$refs.form.resetValidation()
+      if (this.$refs.form) this.$refs.form.resetValidation()
     },
     async sendInvite() {
       if (!this.$refs.form.validate()) return
 
       this.$matomo && this.$matomo.trackPageView('invite/stream/create')
+      this.$matomo && this.$matomo.trackEvent('invite', 'stream')
       try {
         await this.$apollo.mutate({
           mutation: gql`

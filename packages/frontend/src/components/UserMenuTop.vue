@@ -21,7 +21,7 @@
             <v-icon>mdi-account</v-icon>
           </v-list-item-action>
         </v-list-item>
-        <v-list-item @click="inviteDialog++">
+        <v-list-item @click="showServerInviteDialog">
           <v-list-item-content>
             <v-list-item-title>
               <b>Send an invite</b>
@@ -60,7 +60,7 @@
       </v-list>
     </v-menu>
 
-    <server-invite-dialog :show="inviteDialog" />
+    <server-invite-dialog ref="serverInviteDialog" />
   </div>
 </template>
 <script>
@@ -83,11 +83,12 @@ export default {
     }
   },
   data() {
-    return {
-      inviteDialog: 1
-    }
+    return {}
   },
   methods: {
+    showServerInviteDialog() {
+      this.$refs.serverInviteDialog.show()
+    },
     signOut() {
       signOut()
     },

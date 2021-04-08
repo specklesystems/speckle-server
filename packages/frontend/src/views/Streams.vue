@@ -73,10 +73,14 @@
                   </v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
-              <v-divider v-if="i < recentActivity.length - 1" />
+              <v-divider />
             </div>
           </v-list>
-          <v-card-actions></v-card-actions>
+          <v-btn small plain color="primary" text class="d-block" @click="showServerInviteDialog">
+            <v-icon small class="mr-2">mdi-email-send-outline</v-icon>
+            Send an invite
+          </v-btn>
+          <server-invite-dialog ref="serverInviteDialog" />
         </v-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8">
@@ -127,11 +131,19 @@ import UserAvatar from '../components/UserAvatar'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
 import InfiniteLoading from 'vue-infinite-loading'
+import ServerInviteDialog from '../components/dialogs/ServerInviteDialog.vue'
 import gql from 'graphql-tag'
 
 export default {
   name: 'Streams',
-  components: { ListItemStream, StreamNewDialog, InfiniteLoading, UserAvatar, NoDataPlaceholder },
+  components: {
+    ListItemStream,
+    StreamNewDialog,
+    InfiniteLoading,
+    UserAvatar,
+    NoDataPlaceholder,
+    ServerInviteDialog
+  },
   apollo: {
     streams: {
       prefetch: true,
@@ -228,6 +240,9 @@ export default {
         return -1
       }
       return 0
+    },
+    showServerInviteDialog() {
+      this.$refs.serverInviteDialog.show()
     }
   }
 }

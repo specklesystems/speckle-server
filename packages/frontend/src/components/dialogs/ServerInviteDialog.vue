@@ -35,12 +35,6 @@ import gql from 'graphql-tag'
 
 export default {
   name: 'ServerInviteDialog',
-  props: {
-    show: {
-      type: Number,
-      default: 0
-    }
-  },
   data() {
     return {
       showDialog: false,
@@ -59,9 +53,6 @@ export default {
     }
   },
   watch: {
-    show() {
-      this.showDialog = true
-    },
     showDialog() {
       this.clear()
       this.email = null
@@ -69,16 +60,20 @@ export default {
     }
   },
   methods: {
+    show() {
+      this.showDialog = true
+    },
     clear() {
       this.error = null
       this.showError = false
       this.success = false
-      this.$refs.form.resetValidation()
+      if (this.$refs.form) this.$refs.form.resetValidation()
     },
     async sendInvite() {
       if (!this.$refs.form.validate()) return
 
       this.$matomo && this.$matomo.trackPageView('invite/create')
+      this.$matomo && this.$matomo.trackEvent('invite', 'server')
       try {
         await this.$apollo.mutate({
           mutation: gql`

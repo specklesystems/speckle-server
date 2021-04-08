@@ -146,6 +146,9 @@ export default {
       return window.location.origin
     }
   },
+  mounted() {
+    this.$matomo && this.$matomo.trackEvent('onboarding', 'start')
+  },
   methods: {
     skip() {
       this.$matomo && this.$matomo.trackPageView(`onboarding/skip`)
@@ -166,10 +169,12 @@ export default {
     },
     downloadManager() {
       this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`)
+      this.$matomo && this.$matomo.trackEvent('onboarding', 'managerdownload')
       window.open('https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe', '_blank')
     },
     addAccount() {
       this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`)
+      this.$matomo && this.$matomo.trackEvent('onboarding', 'accountadd')
       window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, '_blank')
     }
   }
