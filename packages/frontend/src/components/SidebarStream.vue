@@ -101,18 +101,32 @@
         </template>
       </v-row>
       <v-divider class="pb-2 mt-2"></v-divider>
+
       <v-btn
         v-if="userRole === 'owner'"
         small
         plain
         color="primary"
         text
-        class="px-0"
+        class="px-0 d-block"
         @click="dialogShare = true"
       >
         <v-icon small class="mr-2">mdi-account-multiple</v-icon>
         Manage
       </v-btn>
+      <v-btn
+        v-if="userRole === 'owner'"
+        small
+        plain
+        color="primary"
+        text
+        class="px-0 d-block"
+        @click="showStreamInviteDialog"
+      >
+        <v-icon small class="mr-2">mdi-email-send-outline</v-icon>
+        Send an invite
+      </v-btn>
+      <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
       <v-dialog v-model="dialogShare" max-width="500">
         <stream-share-dialog
           :users="stream.collaborators"
@@ -129,12 +143,14 @@ import streamQuery from '../graphql/stream.gql'
 import StreamEditDialog from '../components/dialogs/StreamEditDialog'
 import StreamShareDialog from '../components/dialogs/StreamShareDialog'
 import UserAvatar from '../components/UserAvatar'
+import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
 export default {
   components: {
     StreamEditDialog,
     StreamShareDialog,
-    UserAvatar
+    UserAvatar,
+    StreamInviteDialog
   },
   props: {
     userRole: {
@@ -175,6 +191,9 @@ export default {
       let options = { year: 'numeric', month: 'short', day: 'numeric' }
 
       return date.toLocaleString(undefined, options)
+    },
+    showStreamInviteDialog() {
+      this.$refs.streamInviteDialog.show()
     }
   }
 }

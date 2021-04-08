@@ -28,7 +28,7 @@
         </v-list-item>
         <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
           <v-list-item-content>
-            <v-btn block color="primary" @click="inviteDialog++">Invite {{ search }}</v-btn>
+            <v-btn block color="primary" @click="showStreamInviteDialog">Invite {{ search }}</v-btn>
           </v-list-item-content>
         </v-list-item>
         <v-list-item
@@ -58,7 +58,7 @@
         </v-list-item>
       </v-list>
     </v-card-text>
-    <stream-invite-dialog :show="inviteDialog" :stream-id="stream.id" />
+    <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
     <v-card-title>Existing collaborators</v-card-title>
     <v-card-text class="px-0">
       <p v-if="collaborators.length === 0" class="ml-6">This stream has no collaborators.</p>
@@ -123,8 +123,7 @@ export default {
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    loading: false,
-    inviteDialog: 0
+    loading: false
   }),
   apollo: {
     stream: {
@@ -240,6 +239,9 @@ export default {
       } catch (e) {
         console.log(e)
       }
+    },
+    showStreamInviteDialog() {
+      this.$refs.streamInviteDialog.show()
     }
   }
 }

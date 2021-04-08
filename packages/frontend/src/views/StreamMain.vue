@@ -77,7 +77,7 @@
             </v-list-item>
           </v-list>
           <!-- LAST 2 COMMITS -->
-          <v-list dense color="transparent" class="mb-0 pa-0">
+          <v-list v-if="selectedBranch" dense color="transparent" class="mb-0 pa-0">
             <div v-for="(commit, i) in selectedBranch.commits.items" :key="commit.id">
               <v-list-item
                 v-if="i > 0"
