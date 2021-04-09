@@ -32,6 +32,7 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <stream-invite-dialog v-if="stream" ref="streamInviteDialog" :stream-id="stream.id" />
   </v-container>
 </template>
 <script>
@@ -39,19 +40,20 @@ import SidebarStream from '../components/SidebarStream'
 import ErrorBlock from '../components/ErrorBlock'
 import streamQuery from '../graphql/stream.gql'
 import gql from 'graphql-tag'
+import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
 export default {
   name: 'Stream',
   components: {
     SidebarStream,
-    ErrorBlock
+    ErrorBlock,
+    StreamInviteDialog
   },
   data() {
     return {
       error: '',
       commitSnackbar: false,
-      commitSnackbarInfo: {},
-      shouldOpenInvite: false
+      commitSnackbarInfo: {}
     }
   },
   apollo: {
@@ -111,8 +113,12 @@ export default {
     }
   },
   mounted() {
-    if (this.$route.query.invite) {
-      this.shouldOpenInvite = true
+    //open stream invite dialog if ?invite=true
+    //used by desktop connectors
+    if (this.$route.query.invite && this.$route.query.invite === 'true') {
+      setTimeout(() => {
+        this.$refs.streamInviteDialog.show()
+      }, 500)
     }
   }
 }
