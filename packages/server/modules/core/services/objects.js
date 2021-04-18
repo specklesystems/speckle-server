@@ -163,7 +163,7 @@ module.exports = {
         objsToInsert.push( insertionObject )
         ids.push( insertionObject.id )
       } )
-       
+
       if ( objsToInsert.length > 0 ) {
         let queryObjs = Objects( ).insert( objsToInsert ).toString( ) + ' on conflict do nothing'
         await knex.raw( queryObjs )
@@ -333,7 +333,7 @@ module.exports = {
 
             // Note: castType is generated from the statement's value and operators are matched against a whitelist.
             // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value.
-            nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ?? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
+            nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
           } )
         } )
       }
