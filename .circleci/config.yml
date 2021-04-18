@@ -92,8 +92,8 @@ jobs:
           name: Test deployment
           command: |
             ./test-deployment/install_prerequisites.sh
-            SPECKLE_SERVER=latest.speckle.dev
+            SPECKLE_SERVER=https://latest.speckle.dev
             if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
-              SPECKLE_SERVER=speckle.xyz
+              SPECKLE_SERVER=https://speckle.xyz
             fi
             ./test-deployment/run_tests.py $SPECKLE_SERVER
