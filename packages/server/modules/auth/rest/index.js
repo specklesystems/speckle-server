@@ -6,6 +6,7 @@ const ExpressSession = require( 'express-session' )
 const RedisStore = require( 'connect-redis' )( ExpressSession )
 const passport = require( 'passport' )
 const debug = require( 'debug' )
+const cors = require( 'cors' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
 const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
@@ -49,7 +50,8 @@ module.exports = ( app ) => {
   /*
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
-  app.post( '/auth/token', matomoMiddleware, async ( req, res, next ) => {
+  app.options( '/auth/token', cors() )
+  app.post( '/auth/token', cors(), matomoMiddleware, async ( req, res, next ) => {
     try {
       // Token refresh
       if ( req.body.refreshToken ) {
