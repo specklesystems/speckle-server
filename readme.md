@@ -6,10 +6,6 @@
 
 [![Speckle-Next](https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg)](https://codecov.io/gh/specklesystems/speckle-server)
 
-## Disclaimer
-
-We're working to stabilize the 2.0 API, and until then there will be breaking changes.
-
 ## Introduction
 
 This monorepo is the home of the Speckle 2.0 web packages. If you're looking for the desktop connectors, you'll find them [here](https://github.com/specklesystems/speckle-sharp).
@@ -35,19 +31,11 @@ Comprehensive developer and user documentation can be found in our:
 #### 📚 [Speckle Docs website](https://speckle.guide/dev/)
 
 ## Usage
-We offer a free server that you can use straight away (create accounts, etc.).
-
-We can also help you manage your Server deployments (setting things up securely, automatic upgrades, support, etc)
-
-See [https://speckle.systems/getstarted/](https://speckle.systems/getstarted/) for more details on our offerings.
-
-If you want to deploy the Server, we have a detailed guide on how to do so:
-
-### ➡️ [Server deployment instructions](https://speckle.guide/dev/server-setup.html)
+To start using Speckle, it's not necessary to deploy it yourself. The easiest way is to register a free account on speckle.xyz, our general availability offering. Check [https://speckle.systems/getstarted/](https://speckle.systems/getstarted/) for more information. 
 
 ## Developing and Debugging
 
-To get started, you can read the [Run in development mode](https://speckle.guide/dev/server-setup.html#run-in-development-mode) chapter of our deployment guide
+If you want to deploy the Server, we have a detailed [guide on how to do so](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can read the [run in development mode](https://speckle.guide/dev/server-setup.html#run-in-development-mode) chapter of our deployment guide.
 
 ## Contributing
 
