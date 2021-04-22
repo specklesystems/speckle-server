@@ -31,12 +31,17 @@ export default class Coverter {
 
     if ( obj.referencedId ) obj = await this.resolveReference( obj )
 
+    let childrenConversionPromisses = []
+
     // Traverse arrays, and exit early (we don't want to iterate through many numbers)
     if ( Array.isArray( obj ) ) {
       for ( let element of obj ) {
-        if ( typeof element !== 'object' ) return // exit early for non-object based arrays
-        ( async() => await this.traverseAndConvert( element, callback ) )() //iife so we don't block
+        if ( typeof element !== 'object' ) break // exit early for non-object based arrays
+        let childPromise = this.traverseAndConvert( element, callback )
+        childrenConversionPromisses.push( childPromise )
       }
+      await Promise.all( childrenConversionPromisses )
+      return 
     }
 
     // If we can convert it, we should invoke the respective conversion routine.
@@ -72,8 +77,10 @@ export default class Coverter {
     // traverses the object in case there's any sub-objects we can convert.
     for ( let prop in target ) {
       if ( typeof target[prop] !== 'object' ) continue
-      ( async() => await this.traverseAndConvert( target[prop], callback ) )() //iife so we don't block
+      let childPromise = this.traverseAndConvert( target[prop], callback )
+      childrenConversionPromisses.push( childPromise )
     }
+    await Promise.all( childrenConversionPromisses )
   }
 
   /**

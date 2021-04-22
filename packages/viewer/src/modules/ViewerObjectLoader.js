@@ -44,19 +44,22 @@ export default class ViewerObjectLoader {
     let current = 0
     let total = 0
     let viewerLoads = 0
+    let firstObjectPromise = null
     for await ( let obj of this.loader.getObjectIterator() ) {
       if ( first ) {
-        ( async() => {
-          await this.converter.traverseAndConvert( obj, ( o ) => {
-            this.viewer.sceneManager.addObject( o )
-            viewerLoads++
-          } )
-        } )()
+        firstObjectPromise = this.converter.traverseAndConvert( obj, ( o ) => {
+          this.viewer.sceneManager.addObject( o )
+          viewerLoads++
+        } )
         first = false
         total = obj.totalChildrenCount
       }
       current++
       this.viewer.emit( 'load-progress', { progress: current/( total+1 ), id: this.objectId } )
+    }
+
+    if ( firstObjectPromise ) {
+      await firstObjectPromise
     }
 
     if ( viewerLoads === 0 ) {
