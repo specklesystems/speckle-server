@@ -80,7 +80,7 @@ export default {
             id: this.$route.params.streamId
           }
         },
-        result() {
+        result(info) {
           this.$apollo.queries.stream.refetch()
         }
       },
@@ -96,6 +96,7 @@ export default {
           }
         },
         result(commitInfo) {
+          if (!commitInfo.data.commitCreated) return
           this.commitSnackbar = true
           this.commitSnackbarInfo = commitInfo.data.commitCreated
         }
