@@ -3,6 +3,7 @@ packages/server/.env
 packages/frontend/dist
 packages/viewer/dist
 *.env
+*.crt
 .nyc_output
 coverage/
 .vscode

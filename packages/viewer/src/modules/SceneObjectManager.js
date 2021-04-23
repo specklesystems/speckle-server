@@ -6,7 +6,7 @@ import debounce from 'lodash.debounce'
  */
 export default class SceneObjectManager {
 
-  constructor( viewer ) {
+  constructor( viewer, skipPostLoad = false ) {
     this.viewer = viewer
     this.scene = viewer.scene
     this.userObjects = new THREE.Group()
@@ -46,6 +46,7 @@ export default class SceneObjectManager {
 
     this.objectIds = []
     this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
+    this.skipPostLoad = skipPostLoad
 
     this.loaders = []
   }
@@ -175,6 +176,7 @@ export default class SceneObjectManager {
   }
 
   _postLoadFunction() {
+    if ( this.skipPostLoad ) return
     this.viewer.interactions.zoomExtents()
     this.viewer.interactions.hideSectionBox()
     this.viewer.reflectionsNeedUpdate = true

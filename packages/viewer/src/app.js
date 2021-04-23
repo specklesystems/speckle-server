@@ -1,41 +1,33 @@
 
 import Viewer from './modules/Viewer'
-import ObjectLoader from '@speckle/objectloader'
-import Converter from './modules/Converter'
 
 let v = new Viewer( { container: document.getElementById( 'renderer' ), showStats: true } )
-v.on( 'load-progress', args => console.log( args ) )
+v.on( 'load-progress', args => console.log( `Load progress ${args.progress} (on object ${args.id})` ) )
 
 window.v = v
+window.addEventListener( 'load', () => {
+  v.onWindowResize()
+} )
 
 const token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75'
 
-window.LoadData = async function LoadData( url ) {
+window.loadData = async function LoadData( url ) {
   url = url || document.getElementById( 'objectUrlInput' ).value
   await v.loadObject( url, token )
 }
 
-window.LoadDataOld = async function LoadData( id ) {
+window.viewerScreenshot = function() {
+  let data = v.interactions.screenshot() // transparent png.
 
-  // v.sceneManager.removeAllObjects()
+  let pop = window.open()
+  pop.document.title = 'super screenshot'
+  pop.document.body.style.backgroundColor = 'grey'
 
-  id = id || document.getElementById( 'objectIdInput' ).value
-  let loader = new ObjectLoader( {
-    serverUrl: 'https://staging.speckle.dev',
-    streamId: '5486aa9fc7',
-    token,
-    objectId: id
-  } )
+  let img = new Image()
+  img.src = data
+  pop.document.body.appendChild( img )
+}
 
-  let converter = new Converter( loader )
-  let first = true
-  // Note: it's important the loop continues to load.
-  for await ( let obj of loader.getObjectIterator() ) {
-    if ( first ) {
-      ( async() => {
-        await converter.traverseAndConvert( obj, ( o ) => v.sceneManager.addObject( o ) )
-      } )()
-      first = false
-    }
-  }
+window.zoomFast = function(){
+  v.interactions.zoomExtents( 0.95, false )
 }

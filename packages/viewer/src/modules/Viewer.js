@@ -26,7 +26,7 @@ export default class Viewer extends EventEmitter {
     this.camera.position.set( 1, 1, 1 )
     this.camera.updateProjectionMatrix()
 
-    this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } )
+    this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, preserveDrawingBuffer: true } )
     this.renderer.setClearColor( 0xcccccc, 0 )
     this.renderer.setPixelRatio( window.devicePixelRatio )
     this.renderer.setSize( this.container.offsetWidth, this.container.offsetHeight )
@@ -44,7 +44,7 @@ export default class Viewer extends EventEmitter {
 
     CameraControls.install( { THREE: THREE } )
     this.controls = new CameraControls( this.camera, this.renderer.domElement )
-    // this.controls.maxPolarAngle = Math.PI / 2
+    this.controls.maxPolarAngle = Math.PI / 2
 
     this.composer = new EffectComposer( this.renderer )
 
