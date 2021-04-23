@@ -140,10 +140,9 @@ export default {
           }
         `,
         result(streamInfo) {
-          if (streamInfo.data.userStreamAdded) {
-            this.streamSnackbar = true
-            this.streamSnackbarInfo = streamInfo.data.userStreamAdded
-          }
+          if (!streamInfo.data.userStreamAdded) return
+          this.streamSnackbar = true
+          this.streamSnackbarInfo = streamInfo.data.userStreamAdded
         }
       }
     }
