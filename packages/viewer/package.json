@@ -20,7 +20,13 @@
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",
-  "keywords": ["speckle", "aec", "3d", "3d viewer", "threejs"],
+  "keywords": [
+    "speckle",
+    "aec",
+    "3d",
+    "3d viewer",
+    "threejs"
+  ],
   "devDependencies": {
     "@babel/cli": "7.12.10",
     "@babel/core": "7.12.10",
@@ -46,8 +52,8 @@
     "@speckle/objectloader": "^2.0.0"
   },
   "dependencies": {
-    "camera-controls": "^1.26.0",
+    "camera-controls": "^1.28.0",
     "lodash.debounce": "^4.0.8",
-    "three": "^0.124.0"
+    "three": "0.124.0"
   }
 }

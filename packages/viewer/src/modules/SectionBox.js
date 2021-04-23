@@ -27,7 +27,7 @@ export default class SectionBox {
     this.hoverPlane = new THREE.Mesh( plane, new THREE.MeshStandardMaterial( {
       transparent: true,
       side: THREE.DoubleSide,
-      opacity: 0.05,
+      opacity: 0.02,
       color: 0x0A66FF,
       metalness: 0.1,
       roughness: 0.75,

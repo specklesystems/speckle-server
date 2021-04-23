@@ -13,7 +13,6 @@ export default class ViewerObjectLoader {
     this.token = authToken || localStorage.getItem( 'AuthToken' )
 
     if ( !this.token ) {
-      // throw new Error( 'No suitable authorization token found.' )
       console.warn( 'Viewer: no auth token present. Requests to non-public stream objects will fail.' )
     }
 
