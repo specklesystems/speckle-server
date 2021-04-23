@@ -114,7 +114,6 @@ export default class InteractionHandler {
     if ( this.viewer.sceneManager.objects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box, fit, transition )
-      this.viewer.controls.setBoundary( box )
       return
     }
 
@@ -151,5 +150,60 @@ export default class InteractionHandler {
 
   screenshot() {
     return this.viewer.renderer.domElement.toDataURL( 'image/png' )
+  }
+
+  /**
+   * Rotates camera to some canonical views
+   * @param  {string}  side       Can be any of front, back, up, down, right, left.
+   * @param  {Number}  fit        [description]
+   * @param  {Boolean} transition [description]
+   * @return {[type]}             [description]
+   */
+  rotateTo( side, fit = 1.2, transition = true ) {
+    const DEG90 = Math.PI * 0.5
+    const DEG180 = Math.PI
+
+    switch ( side ) {
+    case 'front':
+      this.viewer.controls.rotateTo( 0, DEG90, transition )
+      break
+
+    case 'back':
+      this.viewer.controls.rotateTo( DEG180, DEG90, transition )
+      break
+
+    case 'up':
+      this.viewer.controls.rotateTo( 0, 0, transition )
+      break
+
+    case 'down':
+      this.viewer.controls.rotateTo( 0, DEG180, transition )
+      break
+
+    case 'right':
+      this.viewer.controls.rotateTo( DEG90, DEG90, transition )
+      break
+
+    case 'left':
+      this.viewer.controls.rotateTo( -DEG90, DEG90, transition )
+      break
+    }
+
+    if ( this.sectionBox.display.visible ) {
+      const box = new THREE.Box3().setFromObject( this.sectionBox.boxMesh )
+      this.viewer.controls.zoomToBox( box, fit, transition )
+      return
+    }
+
+    if ( this.viewer.sceneManager.objects.length === 0 )  {
+      let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+      this.viewer.controls.fitToBox( box, fit, transition )
+      return
+    }
+
+    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
+    this.viewer.controls.fitToBox( box, fit, transition )
+    this.viewer.controls.setBoundary( box )
+
   }
 }
