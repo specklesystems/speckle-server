@@ -150,6 +150,6 @@ export default class InteractionHandler {
   }
 
   screenshot() {
-    return this.viewer.renderer.domElement.toDataUrl()
+    return this.viewer.renderer.domElement.toDataURL( 'image/png' )
   }
 }

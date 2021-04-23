@@ -28,10 +28,11 @@
           <button onclick="v.interactions.zoomExtents()">Zoom Extents</button>
           <button onclick="v.interactions.toggleSectionBox()">Toggle Section Box</button>
           <button onclick="v.interactions.rotateCamera(undefined, undefined, false)">Rotate</button>
+          <button onclick="viewerScreenshot()">Screenshot</button>
         </div>
         <div class="twelve columns">
           <input id="objectUrlInput" type="text" name="objectId" placeholder="Object Url" style="width:49%" value="https://staging.speckle.dev/streams/a75ab4f10f/objects/a59617590b0bec4e9b5ee487ee75b1a7"/>
-          <button class="" onclick="LoadData()" style="width:49%">Load Object URL</button>
+          <button class="" onclick="loadData()" style="width:49%">Load Object URL</button>
         </div>
         <div class="twelve columns">
           <button onclick="v.sceneManager.removeAllObjects()">Dispose Everything</button>
