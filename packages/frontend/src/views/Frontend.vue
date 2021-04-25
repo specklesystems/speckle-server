@@ -71,10 +71,11 @@
       <router-view></router-view>
       <v-snackbar v-model="streamSnackbar" :timeout="5000" color="primary" absolute right top>
         New stream
-        <i v-if="streamSnackbarInfo.name">{{ streamSnackbarInfo.name }}</i>
+        <i v-if="streamSnackbarInfo && streamSnackbarInfo.name">{{ streamSnackbarInfo.name }}</i>
         <span v-else>available</span>
         <template #action="{ attrs }">
           <v-btn
+            v-if="streamSnackbarInfo"
             text
             v-bind="attrs"
             :to="'/streams/' + streamSnackbarInfo.id"
@@ -139,6 +140,7 @@ export default {
           }
         `,
         result(streamInfo) {
+          if (!streamInfo.data.userStreamAdded) return
           this.streamSnackbar = true
           this.streamSnackbarInfo = streamInfo.data.userStreamAdded
         }
