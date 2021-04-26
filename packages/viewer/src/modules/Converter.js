@@ -6,6 +6,7 @@ import { getConversionFactor } from './Units'
 
 /**
  * Utility class providing some top level conversion methods.
+ * Warning: HIC SVNT DRACONES.
  */
 export default class Coverter {
 
@@ -100,6 +101,7 @@ export default class Coverter {
 
   /**
    * Directly converts an object and invokes the callback with the the conversion result.
+   * If you don't know what you're doing, use traverseAndConvert() instead.
    * @param  {[type]} obj [description]
    * @param  {Function} callback [description]
    * @return {[type]}     [description]

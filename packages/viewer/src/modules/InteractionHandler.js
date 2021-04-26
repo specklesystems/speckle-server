@@ -36,6 +36,7 @@ export default class InteractionHandler {
     if ( !objs || objs.length === 0 ) this.zoomExtents()
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
+    this.viewer.emit( 'object-doubleclicked', objs[0].object )
   }
 
   _handleSelect( objs ) {
@@ -66,11 +67,13 @@ export default class InteractionHandler {
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
+    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
   }
 
   deselectObjects() {
     this.selectedObjects.clear()
     this.viewer.needsRender = true
+    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
   }
 
   toggleSectionBox() {

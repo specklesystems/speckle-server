@@ -17,6 +17,16 @@ window.loadData = async function LoadData( url ) {
   await v.loadObject( url, token )
 }
 
+v.on( 'select', objects => {
+  console.info( `Selection event. Current selection count: ${objects.length}.` )
+  console.log( objects )
+} )
+
+v.on( 'object-doubleclicked', obj => {
+  console.info( 'Object double click event.' )
+  console.log( obj )
+} )
+
 window.viewerScreenshot = function() {
   let data = v.interactions.screenshot() // transparent png.
 
@@ -32,3 +42,4 @@ window.viewerScreenshot = function() {
 window.zoomFast = function(){
   v.interactions.zoomExtents( 0.95, false )
 }
+
