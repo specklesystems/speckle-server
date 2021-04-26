@@ -24,7 +24,7 @@ v.on( 'select', objects => {
 
 v.on( 'object-doubleclicked', obj => {
   console.info( 'Object double click event.' )
-  console.log( obj )
+  console.log( obj ? obj : 'nothing was doubleckicked.' )
 } )
 
 window.viewerScreenshot = function() {

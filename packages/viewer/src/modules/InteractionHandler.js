@@ -36,7 +36,7 @@ export default class InteractionHandler {
     if ( !objs || objs.length === 0 ) this.zoomExtents()
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
-    this.viewer.emit( 'object-doubleclicked', objs[0].object )
+    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null )
   }
 
   _handleSelect( objs ) {
