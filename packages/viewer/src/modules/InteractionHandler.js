@@ -36,6 +36,7 @@ export default class InteractionHandler {
     if ( !objs || objs.length === 0 ) this.zoomExtents()
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
+    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null )
   }
 
   _handleSelect( objs ) {
@@ -66,11 +67,13 @@ export default class InteractionHandler {
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
+    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
   }
 
   deselectObjects() {
     this.selectedObjects.clear()
     this.viewer.needsRender = true
+    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
   }
 
   toggleSectionBox() {
@@ -142,6 +145,15 @@ export default class InteractionHandler {
     this.viewer.camera.near = distance / 100
     this.viewer.camera.far = distance * 100
     this.viewer.camera.updateProjectionMatrix()
+  }
+
+  /**
+   * Allows camera to go "underneath" or not. By default, this function will set
+   * the max polar angle to Pi, allowing the camera to look from down upwards.
+   * @param {[type]} angle [description]
+   */
+  setMaxPolarAngle( angle = Math.PI ) {
+    this.viewer.controls.maxPolarAngle = angle
   }
 
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {

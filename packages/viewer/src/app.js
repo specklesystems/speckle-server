@@ -9,12 +9,27 @@ window.addEventListener( 'load', () => {
   v.onWindowResize()
 } )
 
-const token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75'
+// const token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75'
+const token = '076c3a33baf823b31de5d8400459d6fe57962f7966'
 
 window.loadData = async function LoadData( url ) {
   url = url || document.getElementById( 'objectUrlInput' ).value
   await v.loadObject( url, token )
 }
+
+v.on( 'select', objects => {
+  console.info( `Selection event. Current selection count: ${objects.length}.` )
+  console.log( objects )
+} )
+
+v.on( 'object-doubleclicked', obj => {
+  console.info( 'Object double click event.' )
+  console.log( obj ? obj : 'nothing was doubleckicked.' )
+} )
+
+v.on( 'section-box', status => {
+  console.info( `Section box is now ${status ? 'on' : 'off'}.` )
+} )
 
 window.viewerScreenshot = function() {
   let data = v.interactions.screenshot() // transparent png.
@@ -31,3 +46,4 @@ window.viewerScreenshot = function() {
 window.zoomFast = function(){
   v.interactions.zoomExtents( 0.95, false )
 }
+
