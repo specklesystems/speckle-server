@@ -9,7 +9,8 @@ window.addEventListener( 'load', () => {
   v.onWindowResize()
 } )
 
-const token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75'
+// const token = 'e844747dc6f6b0b5c7d5fbd82d66de6e9529531d75'
+const token = '076c3a33baf823b31de5d8400459d6fe57962f7966'
 
 window.loadData = async function LoadData( url ) {
   url = url || document.getElementById( 'objectUrlInput' ).value

@@ -41,7 +41,7 @@ export default class Coverter {
         childrenConversionPromisses.push( childPromise )
       }
       await Promise.all( childrenConversionPromisses )
-      return 
+      return
     }
 
     // If we can convert it, we should invoke the respective conversion routine.
@@ -60,17 +60,32 @@ export default class Coverter {
     // Check if the object has a display value of sorts
     let displayValue = target['displayMesh'] || target['@displayMesh'] || target['displayValue']|| target['@displayValue']
     if ( displayValue ) {
-      displayValue = await this.resolveReference( displayValue )
-      if ( !displayValue.units ) displayValue.units = obj.units
-
-      try {
-        let { bufferGeometry } = await this.convert( displayValue )
-        callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
-
-        // return // returning here is faster but excludes objects that have a display value and displayable children (ie, a wall with windows)
-      } catch ( e ) {
-        console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
+      if ( !Array.isArray( displayValue ) ) {
+        displayValue = await this.resolveReference( displayValue )
+        if ( !displayValue.units ) displayValue.units = obj.units
+        try {
+          let { bufferGeometry } = await this.convert( displayValue )
+          callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
+        } catch ( e ) {
+          console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
+        }
+      } else {
+        for ( let element of displayValue ) {
+          let val = await this.resolveReference( element )
+          if ( !val.units ) val.units = obj.units
+          let { bufferGeometry } = await this.convert( val )
+          callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial } ) )
+        }
       }
+    }
+
+    // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
+    if ( displayValue && obj.speckle_type.toLowerCase().includes( 'builtelements' ) ) {
+      if ( obj['elements'] ) {
+        childrenConversionPromisses.push( this.traverseAndConvert( obj['elements'], callback ) )
+        await Promise.all( childrenConversionPromisses )
+      }
+      return
     }
 
     // Last attempt: iterate through all object keys and see if we can display anything!
@@ -98,6 +113,7 @@ export default class Coverter {
       }
       else return null
     } catch ( e ) {
+      console.log( obj )
       console.warn( `(Direct convert) Failed to convert object with id: ${obj.id}` )
       throw e
     }
@@ -243,7 +259,7 @@ export default class Coverter {
       return this.PolylineToBufferGeometry( object )
     }
     let obj = {}
-    Object.assign( obj,object )
+    Object.assign( obj, object )
 
     delete object.start
     delete object.end
@@ -257,7 +273,7 @@ export default class Coverter {
 
   async PolylineToBufferGeometry( object ) {
     let obj = {}
-    Object.assign( obj,object )
+    Object.assign( obj, object )
 
     delete object.value
     delete object.speckle_type
@@ -284,7 +300,7 @@ export default class Coverter {
 
   async PolycurveToBufferGeometry( object ) {
     let obj = {}
-    Object.assign( obj,object )
+    Object.assign( obj, object )
 
     delete object.value
     delete object.speckle_type
@@ -310,7 +326,7 @@ export default class Coverter {
   async CurveToBufferGeometry( object ) {
 
     let obj = {}
-    Object.assign( obj,object )
+    Object.assign( obj, object )
 
     delete object.value
     delete object.speckle_type
@@ -320,48 +336,6 @@ export default class Coverter {
     obj.weights = await this.dechunk( object.weights )
     obj.knots = await this.dechunk( object.knots )
     obj.points = await this.dechunk( object.points )
-
-    // NOTE: We're currently falling back on the
-    // throw new Error( 'Skipping nurbs for displayValue due to lack of support in THREE.js of some nurbs types' )
-
-    // let conversionFactor = getConversionFactor( obj.units )
-
-    // // Convert points+weights to Vector4
-    // const points = []
-    // for ( let i = 0; i < obj.points.length; i+=3 ) {
-    //   points.push( new THREE.Vector4( obj.points[ i ]* conversionFactor,obj.points[i+1]* conversionFactor,obj.points[i+2] * conversionFactor, obj.weights[i/3] ) )
-    // }
-
-    // let knots = []
-    // if ( obj.knots.length != ( obj.points.length/3 + obj.degree + 1 ) ) {
-    //   // Convert knots from rhino compact format to normal format.
-    //   let knots = [ obj.knots[0] ]
-    //   knots = knots.concat( obj.knots )
-    //   knots.push( knots[knots.length -1] )
-    // }
-    // else {
-    //   knots = obj.knots
-    // }
-
-    // // Create the nurbs curve
-    // const curve = new NURBSCurve( obj.degree, knots, points, null, null )
-
-    // // Delete everything unnecessary from the metadata object.
-    // delete obj.speckle_type
-    // delete obj.displayValue
-    // delete obj.points
-    // delete obj.weights
-    // delete obj.knots
-
-    // // Compute appropriate curve subdivisions
-    // let div = curve.getLength() / 0.1
-    // div = parseInt( div.toString() )
-    // if ( div < 20 ) div = 20
-    // if ( div > 4000 ) div = 4000
-
-    // // Divide the nurbs curve in points
-    // var pts = curve.getPoints( div )
-    // return new ObjectWrapper( new THREE.BufferGeometry().setFromPoints( pts ), obj, 'line' )
 
     const poly = await this.PolylineToBufferGeometry( obj.displayValue )
 
@@ -414,7 +388,7 @@ export default class Coverter {
     // Make sure plane axis are unit lenght!!!!
     xAxis.normalize()
     yAxis.normalize()
-    
+
     // Determine resolution
     let resolution = ( endAngle - startAngle ) * radius / res
     resolution = parseInt( resolution.toString() )
