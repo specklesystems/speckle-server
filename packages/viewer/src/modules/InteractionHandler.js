@@ -147,6 +147,15 @@ export default class InteractionHandler {
     this.viewer.camera.updateProjectionMatrix()
   }
 
+  /**
+   * Allows camera to go "underneath" or not. By default, this function will set
+   * the max polar angle to Pi, allowing the camera to look from down upwards.
+   * @param {[type]} angle [description]
+   */
+  setMaxPolarAngle( angle = Math.PI ) {
+    this.viewer.controls.maxPolarAngle = angle
+  }
+
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {
     this.viewer.controls.rotate( azimuthAngle, polarAngle, transition )
   }
