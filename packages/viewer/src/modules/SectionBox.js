@@ -229,9 +229,11 @@ export default class SectionBox {
     if ( this.display.visible ) {
       this.viewer.renderer.localClippingEnabled = false
       this.display.visible = false
+      this.viewer.emit( 'section-box', false )
     } else {
       this.viewer.renderer.localClippingEnabled = true
       this.display.visible = true
+      this.viewer.emit( 'section-box', true )
     }
   }
 

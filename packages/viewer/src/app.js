@@ -27,6 +27,10 @@ v.on( 'object-doubleclicked', obj => {
   console.log( obj ? obj : 'nothing was doubleckicked.' )
 } )
 
+v.on( 'section-box', status => {
+  console.info( `Section box is now ${status ? 'on' : 'off'}.` )
+} )
+
 window.viewerScreenshot = function() {
   let data = v.interactions.screenshot() // transparent png.
 
