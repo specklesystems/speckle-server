@@ -1,0 +1,41 @@
+{
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es2020": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 11
+  },
+  "ignorePatterns": ["node_modules/*"],
+  "rules": {
+    "arrow-spacing": [
+      2,
+      {
+        "before": true,
+        "after": true
+      }
+    ],
+    "array-bracket-spacing": [2, "always"],
+    "object-curly-spacing": [1, "always"],
+    "block-spacing": [2, "always"],
+    "camelcase": [
+      1,
+      {
+        "properties": "always"
+      }
+    ],
+    "space-in-parens": [2, "always"],
+    "keyword-spacing": 2,
+    "semi": [1, "never"],
+    "quotes": [1, "single"],
+    "indent": ["error", 2],
+    "space-unary-ops": [
+      2,
+      {
+        "words": true,
+        "nonwords": false
+      }
+    ]
+  }
+}

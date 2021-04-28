@@ -1,0 +1,44 @@
+{
+  "name": "@speckle/preview-service",
+  "version": "2.0.0",
+  "description": "Generate PNG previews of Speckle objects by using a headless viewer",
+  "main": "index.js",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/preview-service"
+  },
+  "scripts": {
+    "dev": "DEBUG='preview-service:*' nodemon ./bin/www",
+    "build-fe": "webpack --env dev --config webpack.config.render_page.js && webpack --env build --config webpack.config.render_page.js"
+  },
+  "dependencies": {
+    "@speckle/objectloader": "file:../objectloader",
+    "@speckle/viewer": "file:../viewer",
+    "cookie-parser": "~1.4.4",
+    "crypto": "^1.0.1",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "file-type": "^16.3.0",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "knex": "^0.95.4",
+    "morgan": "~1.9.1",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.6.0",
+    "pg-query-stream": "^4.1.0",
+    "puppeteer": "^9.0.0",
+    "zlib": "^1.0.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.13.16",
+    "babel-loader": "^8.2.2",
+    "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "html-webpack-plugin": "^5.3.1",
+    "nodemon": "^2.0.7",
+    "webpack": "^5.35.0",
+    "webpack-cli": "^4.6.0",
+    "webpack-dev-server": "^3.11.2"
+  }
+}
