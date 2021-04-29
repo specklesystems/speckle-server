@@ -56,6 +56,7 @@ module.exports = {
     connection: connectionUri,
     migrations: {
       directory: migrationDirs
-    }
+    },
+    pool: { min: 2, max: 4 }
   }
 }

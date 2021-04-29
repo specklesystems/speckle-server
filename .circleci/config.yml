@@ -27,13 +27,13 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-  test-test:
+  cristi-ci-test:
     jobs:
       - docker_build_and_deploy:
           context: main-builds
           filters:
             branches:
-              only: cristi/ci-test-deployment
+              only: cristi/ci-test
 
 jobs:
   test_server:
@@ -86,7 +86,10 @@ jobs:
           name: Build Server
           command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
       - run:
-          name: Deploy Frontend and Server
+          name: Build Object Preview Service
+          command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
+      - run:
+          name: Deploy
           command: ./.circleci/deploy.sh
       - run:
           name: Test deployment
