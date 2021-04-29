@@ -27,13 +27,13 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-  test-test:
+  cristi-ci-test:
     jobs:
       - docker_build_and_deploy:
           context: main-builds
           filters:
             branches:
-              only: cristi/preview-service
+              only: cristi/ci-test
 
 jobs:
   test_server:
