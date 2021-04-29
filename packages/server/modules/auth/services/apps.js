@@ -190,6 +190,9 @@ module.exports = {
 
     let code = await AuthorizationCodes( ).select( ).where( { id: accessCode } ).first( )
 
+    if ( !code ) throw new Error( 'Access code not found.' )
+    if ( code.appId !== appId )  throw new Error( 'Invalid request: application id does not match.' )
+
     await AuthorizationCodes( ).where( { id: accessCode } ).del( )
 
     const timeDiff = Math.abs( Date.now( ) - new Date( code.createdAt ) )
