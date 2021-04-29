@@ -62,14 +62,22 @@
             </v-btn>
           </v-col>
           <v-col class="text-right" style="margin-top: 5px">
-            <user-menu-top :user="user" />
+            <user-menu-top v-if="user" :user="user" />
           </v-col>
         </v-row>
       </v-container>
     </v-app-bar>
     <v-main :style="background">
       <router-view></router-view>
-      <v-snackbar v-model="streamSnackbar" :timeout="5000" color="primary" absolute right top>
+      <v-snackbar
+        v-if="streamSnackbarInfo"
+        v-model="streamSnackbar"
+        :timeout="5000"
+        color="primary"
+        absolute
+        right
+        top
+      >
         New stream
         <i v-if="streamSnackbarInfo.name">{{ streamSnackbarInfo.name }}</i>
         <span v-else>available</span>
