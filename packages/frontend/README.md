@@ -8,7 +8,7 @@ We're working to stabilize the 2.0 API, and until then there will be breaking ch
 
 Notes:
 
-- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
+- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run serve` in the frontend package.
 
 - In **production** mode, the Speckle Frontend will be statically served by nginx (see the Dockerfile in the current directory).
 
@@ -23,7 +23,10 @@ Comprehensive developer and user documentation can be found in our:
 The frontend now includes the viewer. Until we get to publish it as a separate module, there's a few extra steps:
 
 - make sure you build the [Speckle Viewer](../viewer)
-- afterwards, run `lerna bootstrap`
+- afterwards, run
+  ```
+  lerna bootstrap
+  ```
 
 ### Compiles and hot-reloads for development
 
@@ -31,11 +34,8 @@ The frontend now includes the viewer. Until we get to publish it as a separate m
 npm run serve
 ```
 
-### Compiles and minifies for production
-
-```
-npm run build
-```
+### Packaging for production
+If you plan to package the frontend to use in a production setting, see our [Server deployment instructions](https://speckle.guide/dev/server-setup.html) (chapter `Run your speckle-server fork`)
 
 ## Community
 

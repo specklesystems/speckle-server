@@ -33,7 +33,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: cristi/ci-improvements
+              only: cristi/ci-test-deployment
 
 jobs:
   test_server:
@@ -69,7 +69,7 @@ jobs:
 
   docker_build_and_deploy:
     docker:
-      - image: circleci/golang:1.15
+      - image: circleci/python:3.6-buster
     steps:
       - checkout
       - setup_remote_docker:
@@ -88,3 +88,12 @@ jobs:
       - run:
           name: Deploy Frontend and Server
           command: ./.circleci/deploy.sh
+      - run:
+          name: Test deployment
+          command: |
+            ./test-deployment/install_prerequisites.sh
+            SPECKLE_SERVER=https://latest.speckle.dev
+            if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
+              SPECKLE_SERVER=https://speckle.xyz
+            fi
+            ./test-deployment/run_tests.py $SPECKLE_SERVER

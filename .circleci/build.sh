@@ -16,3 +16,8 @@ docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
 echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $DOCKER_REG_URL
 docker push $DOCKER_IMAGE_TAG:latest
 docker push $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
+
+if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
+  docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:2
+  docker push $DOCKER_IMAGE_TAG:2
+fi

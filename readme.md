@@ -6,10 +6,6 @@
 
 [![Speckle-Next](https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg)](https://codecov.io/gh/specklesystems/speckle-server)
 
-## Disclaimer
-
-We're working to stabilize the 2.0 API, and until then there will be breaking changes.
-
 ## Introduction
 
 This monorepo is the home of the Speckle 2.0 web packages. If you're looking for the desktop connectors, you'll find them [here](https://github.com/specklesystems/speckle-sharp).
@@ -34,37 +30,12 @@ Comprehensive developer and user documentation can be found in our:
 
 #### 📚 [Speckle Docs website](https://speckle.guide/dev/)
 
+## Usage
+To start using Speckle, it's not necessary to deploy it yourself. The easiest way is to register a free account on speckle.xyz, our general availability offering. Check [https://speckle.systems/getstarted/](https://speckle.systems/getstarted/) for more information. 
+
 ## Developing and Debugging
 
-To get started, first clone this repo. Check out the detailed instructions for each module in their respective folder (see links above).
-
-## Bootsrap local Speckle Server
-
-> prerequisites: [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/)
-
-To get a local Server stack up and running quickly:
-
-- Clone this repository and cd into the repository root:
-  ```console
-  git clone https://github.com/specklesystems/speckle-server.git
-  cd speckle-server
-  ```
-- Start dependencies (postgres and redis)  by running:
-  ```console
-  docker-compose -f docker-compose-deps.yml up -d
-  ```
-- You have 2 options for running the speckle server (frontend + backend):
-  - (useful for development) With local development tools (check the Readme.md file in the `frontend` and `server` packages)
-  - (useful for getting the server running without having local development tools) by starting them inside docker containers:
-    ```console
-    docker-compose -f docker-compose-speckle.yml up -d
-    ```
-
-This gets you an empty server running on [localhost:3000](http://localhost:3000)
-
-Note: the docker containers will automatically restart at startup. To shut them down, you can use `docker-compose -f [yml_file_name] down` command
-
-For more details and options, check out our [Server Setup Docs](https://speckle.guide/dev/server-setup.html)
+If you want to deploy the Server, we have a detailed [guide on how to do so](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can read the [run in development mode](https://speckle.guide/dev/server-setup.html#run-in-development-mode) chapter of our deployment guide.
 
 ## Contributing
 

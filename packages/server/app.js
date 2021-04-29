@@ -111,6 +111,7 @@ exports.init = async ( ) => {
  * @return {[type]}     [description]
  */
 exports.startHttp = async ( app ) => {
+  let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT || 3000
   app.set( 'port', port )
 
@@ -129,13 +130,9 @@ exports.startHttp = async ( app ) => {
 
   }
 
-  // Production mode -> serve things statically.
+  // Production mode
   else {
-    app.use( '/', express.static( path.resolve( `${appRoot}/../frontend/dist` ) ) )
-
-    app.all( '*', async ( req, res ) => {
-      res.sendFile( path.resolve( `${appRoot}/../frontend/dist/app.html` ) )
-    } )
+    bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'
   }
 
   let server = http.createServer( app )
@@ -147,9 +144,9 @@ exports.startHttp = async ( app ) => {
   app.use( Sentry.Handlers.errorHandler( ) )
 
   server.on( 'listening', ( ) => {
-    debug( 'speckle:startup' )( `🚀 My name is Speckle Server, and I'm running at ${server.address().port}` )
+    debug( 'speckle:startup' )( `🚀 My name is Speckle Server, and I'm running at ${server.address().address}:${server.address().port}` )
   } )
 
-  server.listen( port )
+  server.listen( port, bindAddress )
   return { server }
 }

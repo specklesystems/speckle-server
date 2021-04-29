@@ -36,6 +36,7 @@ export default class InteractionHandler {
     if ( !objs || objs.length === 0 ) this.zoomExtents()
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
+    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null )
   }
 
   _handleSelect( objs ) {
@@ -66,11 +67,13 @@ export default class InteractionHandler {
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
+    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
   }
 
   deselectObjects() {
     this.selectedObjects.clear()
     this.viewer.needsRender = true
+    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
   }
 
   toggleSectionBox() {
@@ -101,37 +104,36 @@ export default class InteractionHandler {
     this.toggleSectionBox( )
   }
 
-  zoomToObject( target ) {
+  zoomToObject( target, fit = 1.2, transition = true ) {
     const box = new THREE.Box3().setFromObject( target )
-    this.zoomToBox( box )
+    this.zoomToBox( box, fit, transition )
   }
 
-  zoomExtents() {
+  zoomExtents( fit = 1.2, transition = true ) {
     if ( this.sectionBox.display.visible ) {
       this.zoomToObject( this.sectionBox.boxMesh )
       return
     }
     if ( this.viewer.sceneManager.objects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
-      this.zoomToBox( box )
-      this.viewer.controls.setBoundary( box )
+      this.zoomToBox( box, fit, transition )
       return
     }
 
     let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
-    this.zoomToBox( box )
+    this.zoomToBox( box, fit, transition )
     this.viewer.controls.setBoundary( box )
   }
 
-  zoomToBox( box ) {
-    const fitOffset = 1.2
+  zoomToBox( box, fit = 1.2, transition = true ) {
+    const fitOffset = fit
 
     const size = box.getSize( new THREE.Vector3() )
     let target = new THREE.Sphere()
     box.getBoundingSphere( target )
     target.radius = target.radius * fitOffset
 
-    this.viewer.controls.fitToSphere( target, true )
+    this.viewer.controls.fitToSphere( target, transition )
 
     const maxSize = Math.max( size.x, size.y, size.z )
     const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
@@ -143,5 +145,63 @@ export default class InteractionHandler {
     this.viewer.camera.near = distance / 100
     this.viewer.camera.far = distance * 100
     this.viewer.camera.updateProjectionMatrix()
+  }
+
+  /**
+   * Allows camera to go "underneath" or not. By default, this function will set
+   * the max polar angle to Pi, allowing the camera to look from down upwards.
+   * @param {[type]} angle [description]
+   */
+  setMaxPolarAngle( angle = Math.PI ) {
+    this.viewer.controls.maxPolarAngle = angle
+  }
+
+  rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {
+    this.viewer.controls.rotate( azimuthAngle, polarAngle, transition )
+  }
+
+  screenshot() {
+    return this.viewer.renderer.domElement.toDataURL( 'image/png' )
+  }
+
+  /**
+   * Rotates camera to some canonical views
+   * @param  {string}  side       Can be any of front, back, up (top), down (bottom), right, left.
+   * @param  {Number}  fit        [description]
+   * @param  {Boolean} transition [description]
+   * @return {[type]}             [description]
+   */
+  rotateTo( side, transition = true ) {
+    const DEG90 = Math.PI * 0.5
+    const DEG180 = Math.PI
+
+    switch ( side ) {
+    case 'front':
+      this.viewer.controls.rotateTo( 0, DEG90, transition )
+      break
+
+    case 'back':
+      this.viewer.controls.rotateTo( DEG180, DEG90, transition )
+      break
+
+    case 'up':
+    case 'top':
+      this.viewer.controls.rotateTo( 0, 0, transition )
+      break
+
+    case 'down':
+    case 'bottom':
+      this.viewer.controls.rotateTo( 0, DEG180, transition )
+      break
+
+    case 'right':
+      this.viewer.controls.rotateTo( DEG90, DEG90, transition )
+      break
+
+    case 'left':
+      this.viewer.controls.rotateTo( -DEG90, DEG90, transition )
+      break
+    }
+
   }
 }

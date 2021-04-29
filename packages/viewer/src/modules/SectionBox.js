@@ -27,7 +27,7 @@ export default class SectionBox {
     this.hoverPlane = new THREE.Mesh( plane, new THREE.MeshStandardMaterial( {
       transparent: true,
       side: THREE.DoubleSide,
-      opacity: 0.05,
+      opacity: 0.02,
       color: 0x0A66FF,
       metalness: 0.1,
       roughness: 0.75,
@@ -229,9 +229,11 @@ export default class SectionBox {
     if ( this.display.visible ) {
       this.viewer.renderer.localClippingEnabled = false
       this.display.visible = false
+      this.viewer.emit( 'section-box', false )
     } else {
       this.viewer.renderer.localClippingEnabled = true
       this.display.visible = true
+      this.viewer.emit( 'section-box', true )
     }
   }
 
