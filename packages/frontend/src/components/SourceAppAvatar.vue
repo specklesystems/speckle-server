@@ -31,39 +31,30 @@ export default {
     color() {
       if (!this.applicationName) return 'grey'
 
-      switch (this.applicationName.toLowerCase()) {
-        case 'revit2020':
-        case 'revit2021':
-        case 'revit2022':
-        case 'revit2023':
-          return 'blue darken-1'
-        case 'rhino':
-          return 'black'
-        case 'grasshopper':
-          return 'green darken-2'
-        case 'dynamo':
-          return 'purple darken-1'
-        default:
-          return 'grey'
-      }
+      let appname = this.applicationName.toLowerCase()
+
+      if (appname.includes('dynamo')) return 'purple darken-1'
+      if (appname.includes('revit')) return 'blue darken-1'
+      if (appname.includes('autocad')) return 'red lighten-1'
+      if (appname.includes('civil')) return 'blue lighten-1'
+      if (appname.includes('blender')) return 'orange'
+      if (appname.includes('rhino')) return 'black'
+      if (appname.includes('grasshopper')) return 'green darken-2'
+      return 'grey'
     },
     shortName() {
       if (!this.applicationName) return '?'
-      switch (this.applicationName.toLowerCase()) {
-        case 'revit2020':
-        case 'revit2021':
-        case 'revit2022':
-        case 'revit2023':
-          return 'RVT'
-        case 'rhino':
-          return 'RH'
-        case 'grasshopper':
-          return 'GH'
-        case 'dynamo':
-          return 'DYN'
-        default:
-          return '?'
-      }
+
+      let appname = this.applicationName.toLowerCase()
+
+      if (appname.includes('dynamo')) return 'DYN'
+      if (appname.includes('revit')) return 'RVT'
+      if (appname.includes('autocad')) return 'ACAD'
+      if (appname.includes('civil')) return 'C3D'
+      if (appname.includes('blender')) return 'BLEND'
+      if (appname.includes('rhino')) return 'RH'
+      if (appname.includes('grasshopper')) return 'GH'
+      return '?'
     }
   }
 }
