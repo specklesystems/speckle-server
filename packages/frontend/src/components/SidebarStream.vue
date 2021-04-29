@@ -127,7 +127,7 @@
         Send an invite
       </v-btn>
       <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
-      <v-dialog v-model="dialogShare" max-width="500">
+      <v-dialog v-if="userId" v-model="dialogShare" max-width="500">
         <stream-share-dialog
           :users="stream.collaborators"
           :stream-id="stream.id"

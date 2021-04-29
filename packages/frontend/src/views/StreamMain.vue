@@ -261,6 +261,9 @@ export default {
         },
         result() {
           this.$apollo.queries.branches.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       },
       branchDeleted: {
@@ -276,6 +279,9 @@ export default {
         },
         result() {
           this.$apollo.queries.branches.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }
@@ -305,6 +311,9 @@ export default {
     latestCommitObjectUrl() {
       if (!this.latestCommit) return null
       return `${window.location.origin}/streams/${this.$route.params.streamId}/objects/${this.latestCommit.referencedObject}`
+    },
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
     }
   },
   watch: {

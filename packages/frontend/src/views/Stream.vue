@@ -91,6 +91,9 @@ export default {
         },
         result(info) {
           this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       },
       commitCreated: {
@@ -108,6 +111,9 @@ export default {
           if (!commitInfo.data.commitCreated) return
           this.commitSnackbar = true
           this.commitSnackbarInfo = commitInfo.data.commitCreated
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }
@@ -130,6 +136,9 @@ export default {
         this.$refs.streamInviteDialog.show()
       }, 500)
     }
+  },
+  loggedIn() {
+    return localStorage.getItem('uuid') !== null
   }
 }
 </script>

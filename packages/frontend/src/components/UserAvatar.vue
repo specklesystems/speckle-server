@@ -1,6 +1,6 @@
 <template>
   <div style="display: inline-block">
-    <v-menu offset-x open-on-hover>
+    <v-menu v-if="loggedIn" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
         <v-avatar class="ma-1" color="grey lighten-3" :size="size" v-bind="attrs" v-on="on">
           <v-img v-if="avatar" :src="avatar" />
@@ -25,6 +25,10 @@
         </v-card-text>
       </v-card>
     </v-menu>
+    <v-avatar v-else class="ma-1" color="grey lighten-3" :size="size">
+      <v-img v-if="avatar" :src="avatar" />
+      <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
+    </v-avatar>
   </div>
 </template>
 <script>
@@ -47,8 +51,8 @@ export default {
     isSelf() {
       return this.id === localStorage.getItem('uuid')
     },
-    loggedInUserId() {
-      return localStorage.getItem('uuid')
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
     }
   },
   apollo: {
@@ -58,6 +62,9 @@ export default {
         return {
           id: this.id
         }
+      },
+      skip() {
+        return !this.loggedIn
       }
     }
   }

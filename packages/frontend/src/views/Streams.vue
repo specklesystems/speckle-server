@@ -151,7 +151,10 @@ export default {
       fetchPolicy: 'cache-and-network' //https://www.apollographql.com/docs/react/data/queries/
     },
     user: {
-      query: userQuery
+      query: userQuery,
+      skip() {
+        return !this.loggedIn
+      }
     },
     $subscribe: {
       userStreamAdded: {
@@ -162,6 +165,9 @@ export default {
         `,
         result() {
           this.$apollo.queries.streams.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       },
       userStreamRemoved: {
@@ -172,6 +178,9 @@ export default {
         `,
         result() {
           this.$apollo.queries.streams.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }
@@ -197,6 +206,9 @@ export default {
 
       activity.sort(this.compareUpdates)
       return activity
+    },
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
     }
   },
   watch: {

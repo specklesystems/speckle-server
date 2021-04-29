@@ -117,6 +117,9 @@ export default {
         },
         result() {
           this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       },
       branchDeleted: {
@@ -132,6 +135,9 @@ export default {
         },
         result() {
           this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }
@@ -155,6 +161,9 @@ export default {
           to: '/streams/' + this.stream.id + '/branches/'
         }
       ]
+    },
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
     }
   },
   mounted() {
