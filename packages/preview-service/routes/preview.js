@@ -19,7 +19,7 @@ async function getScreenshot( objectUrl ) {
 
   console.time( 'lo' )
   const scr = await page.evaluate( async ( objectUrl ) => {
-    waitForAnimation = async ( ms=300 ) => await new Promise( ( resolve ) => {
+    waitForAnimation = async ( ms=70 ) => await new Promise( ( resolve ) => {
       setTimeout( resolve, ms )
     } )
     let scr = {}
@@ -32,14 +32,14 @@ async function getScreenshot( objectUrl ) {
     scr['0'] = v.interactions.screenshot()
 
     for ( let i = 1; i < 3; i++ ) {
-      v.interactions.rotateCamera( stepAngle, transition=false )
+      v.interactions.rotateCamera( stepAngle, undefined, false )
       await waitForAnimation()
       scr[( -1 * i ) + ''] = v.interactions.screenshot()
     }
-    v.interactions.rotateCamera( -2 * stepAngle, transition=false )
-    await waitForAnimation( 500 )
+    v.interactions.rotateCamera( -2 * stepAngle, undefined, false )
+    await waitForAnimation()
     for ( let i = 1; i < 3; i++ ) {
-      v.interactions.rotateCamera( -1 * stepAngle, transition=false )
+      v.interactions.rotateCamera( -1 * stepAngle, undefined, false )
       await waitForAnimation()
       scr[i + ''] = v.interactions.screenshot()
     }

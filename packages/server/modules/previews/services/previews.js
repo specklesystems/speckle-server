@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 'use strict'
 
 const appRoot = require( 'app-root-path' )
