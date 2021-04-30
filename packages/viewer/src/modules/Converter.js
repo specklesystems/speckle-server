@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { NURBSCurve } from 'three/examples/jsm/curves/NURBSCurve'
 import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
@@ -29,7 +28,6 @@ export default class Coverter {
   async traverseAndConvert( obj, callback ) {
     // Exit on primitives (string, ints, bools, bigints, etc.)
     if ( typeof obj !== 'object' ) return
-
     if ( obj.referencedId ) obj = await this.resolveReference( obj )
 
     let childrenConversionPromisses = []
@@ -364,13 +362,32 @@ export default class Coverter {
     return new ObjectWrapper( geometry, obj, 'line' )
   }
 
+  PlaneToMatrix4( plane ){
+    const m = new THREE.Matrix4()
+    console.warn( 'plane', plane )
+    let conversionFactor = getConversionFactor( plane.units )
 
+    m.makeBasis( this.PointToVector3( plane.xdir ).normalize(), this.PointToVector3( plane.ydir ).normalize(), this.PointToVector3( plane.normal ).normalize() )
+    m.setPosition( this.PointToVector3( plane.origin ) )
+    m.scale( new THREE.Vector3( conversionFactor,conversionFactor,conversionFactor ) )
+    return m
+  }
+  
   async ArcToBufferGeometry( obj ) {
     let conversionFactor = getConversionFactor( obj.units )
-    console.warn( 'arc conversion factor', conversionFactor )
-    const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor, obj.startAngle, obj.endAngle )
-    const geometry = new THREE.BufferGeometry().setFromPoints( points )
-
+    // const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor, obj.startAngle, obj.endAngle )
+    //const geometry = new THREE.BufferGeometry().setFromPoints( points )
+    const radius = obj.radius
+    console.warn( 'factor', conversionFactor, radius, radius*conversionFactor )
+    const curve = new THREE.EllipseCurve(
+      0,0,            // ax, aY
+      radius, radius,           // xRadius, yRadius
+      obj.startAngle, obj.endAngle,  // aStartAngle, aEndAngle
+      false,            // aClockwise
+      0                 // aRotation
+    )
+    const points = curve.getPoints( 50 )
+    const geometry = new THREE.BufferGeometry().setFromPoints( points ).applyMatrix4( this.PlaneToMatrix4( obj.plane ) )
     delete obj.speckle_type
     delete obj.startPoint
     delete obj.endPoint
@@ -391,6 +408,7 @@ export default class Coverter {
     xAxis.normalize()
     yAxis.normalize()
 
+    
     // Determine resolution
     let resolution = ( endAngle - startAngle ) * radius / res
     resolution = parseInt( resolution.toString() )
@@ -411,19 +429,21 @@ export default class Coverter {
   }
 
   async EllipseToBufferGeometry( obj ) {
+    const conversionFactor = getConversionFactor( obj.units )
 
-    const center = new THREE.Vector3( obj.plane.origin.value[0],obj.plane.origin.value[1],obj.plane.origin.value[2] )
-    const xAxis = new THREE.Vector3( obj.plane.xdir.value[0],obj.plane.xdir.value[1],obj.plane.xdir.value[2] )
-    const yAxis = new THREE.Vector3( obj.plane.ydir.value[0],obj.plane.ydir.value[1],obj.plane.ydir.value[2] )
+    const center = new THREE.Vector3( obj.plane.origin.x  ,obj.plane.origin.y ,obj.plane.origin.z   ).multiplyScalar( conversionFactor )
+    const xAxis = new THREE.Vector3( obj.plane.xdir.x,obj.plane.xdir.y,obj.plane.xdir.z ).normalize()
+    const yAxis = new THREE.Vector3( obj.plane.ydir.x ,obj.plane.ydir.y,obj.plane.ydir.z  ).normalize()
+    
 
-    let resolution = 2 * Math.PI * obj.radius1 / 0.1
+    let resolution = 2 * Math.PI * obj.firstRadius * conversionFactor * 10
     resolution = parseInt( resolution.toString() )
     let points = []
 
     for ( let index = 0; index <= resolution; index++ ) {
       let t = index * Math.PI * 2 / resolution
-      let x = Math.cos( t ) * obj.radius1
-      let y = Math.sin( t ) * obj.radius2
+      let x = Math.cos( t ) * obj.firstRadius * conversionFactor
+      let y = Math.sin( t ) * obj.secondRadius * conversionFactor
       const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
       const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
 
@@ -435,6 +455,7 @@ export default class Coverter {
 
     delete obj.value
     delete obj.speckle_type
+    delete obj.plane
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
