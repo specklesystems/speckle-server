@@ -37,11 +37,11 @@
   </v-autocomplete>
 </template>
 <script>
-import gql from "graphql-tag"
+import gql from 'graphql-tag'
 
 export default {
   data: () => ({
-    search: "",
+    search: '',
     streams: { items: [] },
     selectedSearchResult: null
   }),
@@ -73,10 +73,9 @@ export default {
   },
   watch: {
     selectedSearchResult(val) {
-      this.search = ""
+      this.search = ''
       this.streams.items = []
-      if (val)
-        this.$router.push({ name: "stream", params: { streamId: val.id } })
+      if (val) this.$router.push({ name: 'stream', params: { streamId: val.id } })
     }
   },
   methods: {}

@@ -13,7 +13,15 @@
         <error-block :message="error" />
       </v-col>
     </v-row>
-    <v-snackbar v-model="commitSnackbar" :timeout="5000" color="primary" absolute right top>
+    <v-snackbar
+      v-if="commitSnackbarInfo"
+      v-model="commitSnackbar"
+      :timeout="5000"
+      color="primary"
+      absolute
+      right
+      top
+    >
       New commit
       <i>{{ commitSnackbarInfo.message }}</i>
       on
@@ -65,7 +73,8 @@ export default {
         }
       },
       error(err) {
-        this.error = err.message.replace('GraphQL error: ', '')
+        if (err.message) this.error = err.message.replace('GraphQL error: ', '')
+        else this.error = err
       }
     },
     $subscribe: {
@@ -82,6 +91,9 @@ export default {
         },
         result(info) {
           this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       },
       commitCreated: {
@@ -99,6 +111,9 @@ export default {
           if (!commitInfo.data.commitCreated) return
           this.commitSnackbar = true
           this.commitSnackbarInfo = commitInfo.data.commitCreated
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }
@@ -121,6 +136,9 @@ export default {
         this.$refs.streamInviteDialog.show()
       }, 500)
     }
+  },
+  loggedIn() {
+    return localStorage.getItem('uuid') !== null
   }
 }
 </script>

@@ -20,10 +20,14 @@
           {{ link.name }}
         </v-btn> -->
         <v-spacer></v-spacer>
-        <v-responsive max-width="300">
+        <v-responsive v-if="user" max-width="300">
           <search-bar />
         </v-responsive>
-        <user-menu-top :user="user" />
+        <user-menu-top v-if="user" :user="user" />
+        <v-btn v-else color="primary" to="/authn/login">
+          <v-icon left>mdi-account-arrow-right</v-icon>
+          Logn in / Register
+        </v-btn>
       </v-container>
       <v-container class="hidden-md-and-up">
         <v-row>
@@ -62,14 +66,22 @@
             </v-btn>
           </v-col>
           <v-col class="text-right" style="margin-top: 5px">
-            <user-menu-top :user="user" />
+            <user-menu-top v-if="user" :user="user" />
           </v-col>
         </v-row>
       </v-container>
     </v-app-bar>
     <v-main :style="background">
       <router-view></router-view>
-      <v-snackbar v-model="streamSnackbar" :timeout="5000" color="primary" absolute right top>
+      <v-snackbar
+        v-if="streamSnackbarInfo"
+        v-model="streamSnackbar"
+        :timeout="5000"
+        color="primary"
+        absolute
+        right
+        top
+      >
         New stream
         <i v-if="streamSnackbarInfo && streamSnackbarInfo.name">{{ streamSnackbarInfo.name }}</i>
         <span v-else>available</span>
@@ -101,7 +113,6 @@ export default {
   components: { UserMenuTop, SearchBar },
   data() {
     return {
-      loggedIn: null,
       search: '',
       streamSnackbar: false,
       streamSnackbarInfo: {},
@@ -129,7 +140,10 @@ export default {
       `
     },
     user: {
-      query: userQuery
+      query: userQuery,
+      skip() {
+        return !this.loggedIn
+      }
     },
 
     $subscribe: {
@@ -143,6 +157,9 @@ export default {
           if (!streamInfo.data.userStreamAdded) return
           this.streamSnackbar = true
           this.streamSnackbarInfo = streamInfo.data.userStreamAdded
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }
@@ -151,6 +168,9 @@ export default {
     background() {
       let theme = this.$vuetify.theme.dark ? 'dark' : 'light'
       return `background-color: ${this.$vuetify.theme.themes[theme].background};`
+    },
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
     }
   },
   watch: {

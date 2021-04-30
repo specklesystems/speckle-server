@@ -15,6 +15,7 @@
               {{ stream.commit.message }}
               <v-spacer />
               <v-btn
+                v-if="userRole === 'contributor' || userRole === 'owner'"
                 v-tooltip="'Edit commit details'"
                 small
                 plain
@@ -102,6 +103,12 @@ export default {
     Renderer,
     SourceAppAvatar,
     ErrorBlock
+  },
+  props: {
+    userRole: {
+      type: String,
+      default: null
+    }
   },
   data: () => ({
     loadedModel: false

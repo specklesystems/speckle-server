@@ -77,6 +77,7 @@ const routes = [
       // },
       {
         path: 'streams/:streamId',
+        name: 'streams',
         meta: {
           title: 'Stream | Speckle'
         },
@@ -188,6 +189,7 @@ router.beforeEach((to, from, next) => {
 
   if (
     !uuid &&
+    !to.matched.some(({ name }) => name === 'streams') && //allow public streams to be viewed
     to.name !== 'Login' &&
     to.name !== 'Register' &&
     to.name !== 'Error' &&
