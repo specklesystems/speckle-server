@@ -6,11 +6,11 @@ const { machineIdSync } = require( 'node-machine-id' )
 module.exports = function ( app ) {
   const id = machineIdSync( )
 
-  if ( process.env.DISABLE_TRACING !== 'true' ) {
+  if ( process.env.DISABLE_TRACING !== 'true' && process.env.SENTRY_DSN ) {
     Sentry.setUser( { id: id } )
 
     Sentry.init( {
-      dsn: process.env.SENTRY_DSN || 'https://84171d4d992f43a5bc867a6694934b01@o436188.ingest.sentry.io/5416515',
+      dsn: process.env.SENTRY_DSN,
       integrations: [
         new Sentry.Integrations.Http( { tracing: true } ),
         new Tracing.Integrations.Express( { app } )
