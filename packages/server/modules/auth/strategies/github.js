@@ -8,7 +8,7 @@ const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 const { findOrCreateUser, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
-const { validateInvite } = require( `${appRoot}/modules/serverinvites/services` )
+const { validateInvite, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
 module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
   const strategy = {
