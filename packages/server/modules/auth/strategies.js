@@ -9,12 +9,9 @@ const debug = require( 'debug' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
 const { getApp, createAuthorizationCode } = require( './services/apps' )
-const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
-const { useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
 module.exports = async ( app ) => {
 
-  let serverInfo = await getServerInfo( )
   let authStrategies = []
 
   passport.serializeUser( ( user, done ) => done( null, user ) )
