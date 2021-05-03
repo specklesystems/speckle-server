@@ -61,3 +61,10 @@ services:
       EMAIL_FROM: "TODO"
 
       EMAIL_SECURE: "false"
+
+  speckle-preview-service:
+    image: speckle/speckle-preview-service:2
+    restart: always
+    environment:
+      DEBUG: "preview-service:*"
+      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
