@@ -1,0 +1,70 @@
+version: "3"
+services:
+  ####
+  # Speckle Server dependencies
+  #######
+  postgres:
+    image: "postgres:13.1-alpine"
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data/
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  redis:
+    image: "redis:6.0-alpine"
+    restart: always
+    volumes:
+      - ./redis-data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  ####
+  # Speckle Server
+  #######
+  speckle-frontend:
+    image: speckle/speckle-frontend:2
+    restart: always
+    ports:
+      - "127.0.0.1:8000:80"
+
+  speckle-server:
+    image: speckle/speckle-server:2
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
+    command: ["bash", "-c", "/wait && node bin/www"]
+    environment:
+      CANONICAL_URL: "TODO: change"
+      SESSION_SECRET: "TODO: change"
+
+      STRATEGY_LOCAL: "true"
+      DEBUG: "speckle:*"
+
+      POSTGRES_URL: "postgres"
+      POSTGRES_USER: "speckle"
+      POSTGRES_PASSWORD: "speckle"
+      POSTGRES_DB: "speckle"
+
+      REDIS_URL: "redis://redis"
+      WAIT_HOSTS: "postgres:5432, redis:6379"
+
+      EMAIL: "false"
+      EMAIL_HOST: "TODO"
+      EMAIL_PORT: "TODO"
+      EMAIL_USERNAME: "TODO"
+      EMAIL_PASSWORD: "TODO"
+      EMAIL_FROM: "TODO"
+
+      EMAIL_SECURE: "false"
+
+  speckle-preview-service:
+    image: speckle/speckle-preview-service:2
+    restart: always
+    environment:
+      DEBUG: "preview-service:*"
+      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
