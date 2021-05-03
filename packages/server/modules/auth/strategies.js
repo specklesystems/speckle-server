@@ -78,6 +78,12 @@ module.exports = async ( app ) => {
     strategyCount++
   }
 
+  if ( process.env.STRATEGY_AZURE_AD === 'true' || strategyCount === 0 ) {
+    let azureAdStrategy = await require( './strategies/azure-ad' )( app, session, sessionStorage, finalizeAuth )
+    authStrategies.push( azureAdStrategy )
+    strategyCount++
+  }
+
   // Note: always leave the local strategy init for last so as to be able to
   // force enable it in case no others are present.
   if ( process.env.STRATEGY_LOCAL === 'true' || strategyCount === 0 ) {
