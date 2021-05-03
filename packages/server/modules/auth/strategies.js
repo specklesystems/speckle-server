@@ -78,7 +78,7 @@ module.exports = async ( app ) => {
     strategyCount++
   }
 
-  if ( process.env.STRATEGY_AZURE_AD === 'true' || strategyCount === 0 ) {
+  if ( process.env.STRATEGY_AZURE_AD === 'true' ) {
     let azureAdStrategy = await require( './strategies/azure-ad' )( app, session, sessionStorage, finalizeAuth )
     authStrategies.push( azureAdStrategy )
     strategyCount++
