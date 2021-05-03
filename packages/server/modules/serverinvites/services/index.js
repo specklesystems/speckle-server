@@ -100,7 +100,7 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
 
   async validateInvite( { email, id } ) {
     const invite = await module.exports.getInviteById( { id } )
-    return invite && invite.email === email
+    return invite && invite.email === email && !invite.used
   },
 
   async useInvite( { id, email } ) {

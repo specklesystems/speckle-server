@@ -9,12 +9,9 @@ const debug = require( 'debug' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
 const { getApp, createAuthorizationCode } = require( './services/apps' )
-const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
-const { useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
 module.exports = async ( app ) => {
 
-  let serverInfo = await getServerInfo( )
   let authStrategies = []
 
   passport.serializeUser( ( user, done ) => done( null, user ) )
@@ -53,10 +50,6 @@ module.exports = async ( app ) => {
     try {
       let app = await getApp( { id: 'spklwebapp' } )
       let ac = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: req.session.challenge } )
-
-      if ( req.session.inviteId ) {
-        await useInvite( { id: req.session.inviteId, email: req.user.email } )
-      }
 
       if ( req.session ) req.session.destroy( )
       return res.redirect( `${app.redirectUrl}?access_code=${ac}` )

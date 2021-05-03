@@ -7,7 +7,7 @@ const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 const { findOrCreateUser, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
-const { validateInvite } = require( `${appRoot}/modules/serverinvites/services` )
+const { validateInvite, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
 module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
   const strategy = {
@@ -19,8 +19,6 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
     callbackUrl: '/auth/goog/callback'
   }
 
-  const serverInfo = await getServerInfo()
-
   let myStrategy = new GoogleStrategy( {
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -28,6 +26,8 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
     scope: [ 'profile', 'email' ],
     passReqToCallback: true
   }, async ( req, accessToken, refreshToken, profile, done ) => {
+
+    const serverInfo = await getServerInfo()
 
     try {
       let email = profile.emails[ 0 ].value
@@ -41,20 +41,43 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
       let existingUser
       existingUser = await getUserByEmail( { email: user.email } )
 
-      if ( !existingUser && serverInfo.inviteOnly )
-        throw new Error( 'This server is invite only. Please provide an invite id.' )
-
-      if ( req.session.inviteId ) {
-        const valid = await validateInvite( { id:req.session.inviteId, email: user.email } )
-        if ( !valid )
-          throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
+      // if there is an existing user, go ahead and log them in (regardless of
+      // wether the server is invite only or not).
+      if ( existingUser ) {
+        let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
+        return done( null, myUser )
       }
 
+      // if the server is not invite only, go ahead and log the user in.
+      if ( !serverInfo.inviteOnly ) {
+        let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
+        return done( null, myUser )
+      }
+
+      // if the server is invite only and we have no invite id, throw.
+      if ( serverInfo.inviteOnly && !req.session.inviteId ) {
+        throw new Error( 'This server is invite only. Please provide an invite id.' )
+      }
+
+      // validate the invite
+      const validInvite = await validateInvite( { id:req.session.inviteId, email: user.email } )
+      if ( !validInvite )
+        throw new Error( 'Invalid invite.' )
+
+      // create the user
       let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
+
+      // use the invite
+      await useInvite( { id: req.session.inviteId, email: user.email } )
+
+      // return to the auth flow
       return done( null, myUser )
+
     } catch ( err ) {
+
       debug( 'speckle:errors' )( err )
       return done( null, false, { message: err.message } )
+
     }
   } )
 
