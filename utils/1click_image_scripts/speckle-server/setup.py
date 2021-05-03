@@ -10,14 +10,14 @@ from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 LOGO_STR = '''
- _____                 _    _      _____                          
-/  ___|               | |  | |    /  ___|                         
-\ `--. _ __   ___  ___| | _| | ___\ `--.  ___ _ ____   _____ _ __ 
+ _____                 _    _      _____
+/  ___|               | |  | |    /  ___|
+\ `--. _ __   ___  ___| | _| | ___\ `--.  ___ _ ____   _____ _ __
  `--. \ '_ \ / _ \/ __| |/ / |/ _ \`--. \/ _ \ '__\ \ / / _ \ '__|
-/\__/ / |_) |  __/ (__|   <| |  __/\__/ /  __/ |   \ V /  __/ |   
-\____/| .__/ \___|\___|_|\_\_|\___\____/ \___|_|    \_/ \___|_|   
-      | |                                                         
-      |_|                                                         
+/\__/ / |_) |  __/ (__|   <| |  __/\__/ /  __/ |   \ V /  __/ |
+\____/| .__/ \___|\___|_|\_\_|\___\____/ \___|_|    \_/ \___|_|
+      | |
+      |_|
 '''
 
 def get_local_ip():
@@ -52,7 +52,7 @@ def read_domain(ip):
         return domain
 
 
-def read_email_settings():
+def read_email_settings(domain):
     print("\nYou should configure an email provider to allow the Speckle Server to send emails.")
     print("Supported vendors: Any email provider that can provide SMTP connection details (mailjet, mailgun, etc).")
     print("Important: If you don't configure email details, some features that require sending emails will not work, nevertheless the server should be functional.")
@@ -84,7 +84,15 @@ def read_email_settings():
         smtp_user = input("SMTP Username: ").strip()
         smtp_pass = input("SMTP Password: ").strip()
 
-        if not smtp_host or not smtp_port or not smtp_user or not smtp_pass:
+        if domain:
+            default_from_email = 'no-reply@' + domain
+        else:
+            default_from_email = ''
+        email_from = input(f"Email address to send email as [{default_from_email}]: ")
+        if not email_from.strip():
+            email_from = default_from_email
+
+        if not smtp_host or not smtp_port or not smtp_user or not smtp_pass or not email_from:
             print("Error: One or more fields were empty. Retrying...")
             continue
 
@@ -92,7 +100,8 @@ def read_email_settings():
             'host': smtp_host,
             'port': smtp_port,
             'user': smtp_user,
-            'pass': smtp_pass
+            'pass': smtp_pass,
+            'from': email_from
         }
 
 
@@ -109,7 +118,7 @@ def main():
     else:
         canonical_url = f'http://{ip}'
 
-    email = read_email_settings()
+    email = read_email_settings(domain)
 
     ###
     ### Create docker-compose.yml from the template
@@ -129,6 +138,7 @@ def main():
         env['EMAIL_PORT'] = DoubleQuotedScalarString(email['port'])
         env['EMAIL_USERNAME'] = DoubleQuotedScalarString(email['user'])
         env['EMAIL_PASSWORD'] = DoubleQuotedScalarString(email['pass'])
+        env['EMAIL_FROM'] = DoubleQuotedScalarString(email['from'])
     else:
         env['EMAIL'] = DoubleQuotedScalarString('false')
 
