@@ -57,8 +57,9 @@ exports.sendEmail = async( { from, to, subject, text, html } ) => {
   }
 
   try {
+    let email_from = process.env.EMAIL_FROM || 'no-reply@speckle.systems'
     let info = await transporter.sendMail( {
-      from: from || '"Speckle" <no-reply@speckle.systems>',
+      from: from || `"Speckle" <${email_from}>`,
       to,
       subject,
       text,
@@ -68,6 +69,6 @@ exports.sendEmail = async( { from, to, subject, text, html } ) => {
       debug( 'speckle:test' )( nodemailer.getTestMessageUrl( info ) )
     }
   } catch ( e ) {
-
+    debug( 'speckle:errors' )( e )
   }
 }
