@@ -54,10 +54,6 @@ module.exports = async ( app ) => {
       let app = await getApp( { id: 'spklwebapp' } )
       let ac = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: req.session.challenge } )
 
-      // if ( req.session.inviteId ) {
-      //   await useInvite( { id: req.session.inviteId, email: req.user.email } )
-      // }
-
       if ( req.session ) req.session.destroy( )
       return res.redirect( `${app.redirectUrl}?access_code=${ac}` )
     } catch ( err ) {
