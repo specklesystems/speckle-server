@@ -22,7 +22,7 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
     allowHttpForRedirectUrl: true,
     clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
     scope: [ 'profile', 'email', 'openid' ],
-    loggingLevel: process.env.NODE_ENV === 'adsf' ? 'info' : 'error',
+    loggingLevel: process.env.NODE_ENV === 'development' ? 'info' : 'error',
     passReqToCallback: true
   }, async ( req, iss, sub, profile, accessToken, refreshToken, done ) => {
     done( null, profile )
