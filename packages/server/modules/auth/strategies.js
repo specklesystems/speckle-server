@@ -48,15 +48,17 @@ module.exports = async ( app ) => {
    */
   let finalizeAuth = async ( req, res, next ) => {
     try {
-      let app = await getApp( { id: 'spklwebapp' } )
-      let ac = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: req.session.challenge } )
 
+      let ac = await createAuthorizationCode( { appId: 'spklwebapp', userId: req.user.id, challenge: req.session.challenge } )
       if ( req.session ) req.session.destroy( )
-      return res.redirect( `${app.redirectUrl}?access_code=${ac}` )
+      return res.redirect( `${process.env.CANONICAL_URL}?access_code=${ac}` )
+
     } catch ( err ) {
+
       sentry( { err } )
       if ( req.session ) req.session.destroy( )
       return res.status( 401 ).send( { err: err.message } )
+
     }
   }
 
