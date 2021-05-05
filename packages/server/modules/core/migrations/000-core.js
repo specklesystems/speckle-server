@@ -13,7 +13,7 @@ exports.up = async knex => {
     table.string( 'description' ).defaultTo( 'This a community deployment of a Speckle Server.' )
     table.string( 'adminContact' ).defaultTo( 'n/a' )
     table.string( 'termsOfService' ).defaultTo( 'n/a' )
-    table.string( 'canonicalUrl' )
+    table.string( 'canonicalUrl' ) // TODO: to be removed, it's not used anymore
     table.boolean( 'completed' ).defaultTo( false )
   } )
 
