@@ -37,7 +37,35 @@
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
+        <!-- <v-btn v-show="selectedObjects.length !== 0" :small="!fullScreen" dark text color="primary">
+          Objects Details ({{ selectedObjects.length }})
+        </v-btn> -->
         <v-btn-toggle class="elevation-0">
+          <v-menu top close-on-click offset-y style="z-index: 100">
+            <template #activator="{ on, attrs }">
+              <v-btn :small="!fullScreen" dark text color="primary" v-bind="attrs" v-on="on">
+                Set View
+              </v-btn>
+            </template>
+            <v-list dense>
+              <v-list-item @click="setView('top')">
+                <v-list-item-title>Top</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="setView('front')">
+                <v-list-item-title>Front</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="setView('back')">
+                <v-list-item-title>Back</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="setView('left')">
+                <v-list-item-title>Left</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="setView('right')">
+                <v-list-item-title>Right</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
           <v-tooltip top>
             <template #activator="{ on, attrs }">
               <v-btn :small="!fullScreen" v-bind="attrs" v-on="on" @click="zoomEx()">
@@ -133,7 +161,8 @@ export default {
       fullScreen: false,
       showHelp: false,
       alertMessage: null,
-      showAlert: false
+      showAlert: false,
+      selectedObjects: []
     }
   },
   computed: {
@@ -196,12 +225,16 @@ export default {
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
     },
+    setView(view) {
+      window.__viewer.interactions.rotateTo(view)
+    },
     sectionToggle() {
       window.__viewer.interactions.toggleSectionBox()
     },
     load() {
       if (!this.objectUrl) return
       this.hasLoadedModel = true
+
       window.__viewer.loadObject(this.objectUrl)
       window.__viewerLastLoadedUrl = this.objectUrl
 
@@ -209,6 +242,7 @@ export default {
         this.alertMessage = message
         this.showAlert = true
       })
+
       window.__viewer.on(
         'load-progress',
         throttle(
@@ -219,6 +253,12 @@ export default {
           200
         )
       )
+
+      window.__viewer.on('select', (objects) => {
+        // console.log(objects)
+        this.selectedObjects.splice(0, this.selectedObjects.length)
+        this.selectedObjects.push(...objects)
+      })
     },
     unloadData() {
       window.__viewer.sceneManager.removeAllObjects()
