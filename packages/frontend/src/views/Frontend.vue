@@ -181,12 +181,19 @@ export default {
   methods: {}
 }
 </script>
-<style scoped>
+<style>
 .logo {
   font-family: Space Grotesk, sans-serif;
   text-transform: none;
   color: rgb(37, 99, 235);
   font-weight: 500;
   font-size: 1rem;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 1s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
 </style>

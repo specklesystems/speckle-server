@@ -18,9 +18,9 @@
     >
       <v-fade-transition>
         <div v-show="!hasLoadedModel" class="overlay cover-all">
-          <v-fade-transition>
+          <transition name="fade">
             <div ref="cover" class="overlay-abs bg-img" v-show="hasImg"></div>
-          </v-fade-transition>
+          </transition>
           <div class="overlay-abs radial-bg"></div>
           <div class="overlay-abs" style="pointer-events: none">
             <v-btn

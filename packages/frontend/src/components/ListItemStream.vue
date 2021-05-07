@@ -1,6 +1,9 @@
 <template>
-  <v-card class="pa-5 mb-3" style="transition: all 0.2s" flat>
+  <v-card class="pa-5 " style="transition: all 0.2s" >
     <v-row>
+      <v-col cols="12" sm="8" class="align-self-center">
+        <p>Hello</p>
+      </v-col>
       <v-col cols="12" sm="8" class="align-self-center">
         <div class="subtitle-1 stream-link">
           <router-link :to="'/streams/' + stream.id">
