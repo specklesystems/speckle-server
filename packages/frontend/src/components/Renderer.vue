@@ -37,10 +37,18 @@
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
-        <!-- <v-btn v-show="selectedObjects.length !== 0" :small="!fullScreen" dark text color="primary">
-          Objects Details ({{ selectedObjects.length }})
-        </v-btn> -->
+        <!--  -->
         <v-btn-toggle class="elevation-0">
+          <v-btn
+            v-show="selectedObjects.length !== 0 && showSelectionHelper"
+            :small="!fullScreen"
+            dark
+            text
+            color="primary"
+            @click="showObjectDetails = !showObjectDetails"
+          >
+            Objects Details ({{ selectedObjects.length }})
+          </v-btn>
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on, attrs }">
               <v-btn :small="!fullScreen" dark text color="primary" v-bind="attrs" v-on="on">
@@ -103,6 +111,22 @@
             </template>
             Show viewer help
           </v-tooltip>
+          <v-dialog v-model="showObjectDetails" width="500">
+            <v-card>
+              <v-card-title>Selection Details</v-card-title>
+              <v-sheet>
+                <div v-if="selectedObjects.length !== 0">
+                  <object-simple-viewer
+                    v-for="(obj, ind) in selectedObjects"
+                    :key="obj.id + ind"
+                    :value="obj"
+                    :stream-id="$route.params.streamId"
+                    :key-name="`Selected Object ${ind + 1}`"
+                  />
+                </div>
+              </v-sheet>
+            </v-card>
+          </v-dialog>
           <v-dialog v-model="showHelp" max-width="290">
             <v-card>
               <v-card-text class="pt-7">
@@ -137,9 +161,10 @@
 <script>
 import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
+import ObjectSimpleViewer from './ObjectSimpleViewer'
 
 export default {
-  components: {},
+  components: { ObjectSimpleViewer },
   props: {
     autoLoad: {
       type: Boolean,
@@ -152,6 +177,10 @@ export default {
     unloadTrigger: {
       type: Number,
       default: 0
+    },
+    showSelectionHelper: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -162,7 +191,8 @@ export default {
       showHelp: false,
       alertMessage: null,
       showAlert: false,
-      selectedObjects: []
+      selectedObjects: [],
+      showObjectDetails: false
     }
   },
   computed: {
@@ -211,6 +241,7 @@ export default {
     } else {
       this.hasLoadedModel = true
       this.loadProgress = 100
+      this.setupEvents()
     }
   },
   beforeDestroy() {
@@ -231,13 +262,7 @@ export default {
     sectionToggle() {
       window.__viewer.interactions.toggleSectionBox()
     },
-    load() {
-      if (!this.objectUrl) return
-      this.hasLoadedModel = true
-
-      window.__viewer.loadObject(this.objectUrl)
-      window.__viewerLastLoadedUrl = this.objectUrl
-
+    setupEvents() {
       window.__viewer.on('load-warning', ({ message }) => {
         this.alertMessage = message
         this.showAlert = true
@@ -258,7 +283,17 @@ export default {
         // console.log(objects)
         this.selectedObjects.splice(0, this.selectedObjects.length)
         this.selectedObjects.push(...objects)
+        this.$emit('selection', this.selectedObjects)
       })
+    },
+    load() {
+      if (!this.objectUrl) return
+      this.hasLoadedModel = true
+
+      window.__viewer.loadObject(this.objectUrl)
+      window.__viewerLastLoadedUrl = this.objectUrl
+
+      this.setupEvents()
     },
     unloadData() {
       window.__viewer.sceneManager.removeAllObjects()
