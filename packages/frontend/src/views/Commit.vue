@@ -63,7 +63,7 @@
             <v-sheet v-show="selectionData.length !== 0" class="pa-4" color="transparent">
               <v-card-title class="mr-8">
                 <v-badge inline :content="selectionData.length">
-                <v-icon class="mr-2">mdi-cube</v-icon>
+                  <v-icon class="mr-2">mdi-cube</v-icon>
                   Selection
                 </v-badge>
               </v-card-title>
@@ -82,7 +82,7 @@
                   :key="obj.id + ind"
                   :value="obj"
                   :stream-id="stream.id"
-                  :key-name="`Selected Object ${ind+1}`"
+                  :key-name="`Selected Object ${ind + 1}`"
                 />
               </div>
             </v-sheet>
