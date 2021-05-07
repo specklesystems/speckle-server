@@ -18,7 +18,9 @@
     >
       <v-fade-transition>
         <div v-show="!hasLoadedModel" class="overlay cover-all">
-          <div ref="cover" class="overlay-abs bg-img"></div>
+          <v-fade-transition>
+            <div ref="cover" class="overlay-abs bg-img" v-show="hasImg"></div>
+          </v-fade-transition>
           <div class="overlay-abs radial-bg"></div>
           <div class="overlay-abs" style="pointer-events: none">
             <v-btn
@@ -202,7 +204,8 @@ export default {
       alertMessage: null,
       showAlert: false,
       selectedObjects: [],
-      showObjectDetails: false
+      showObjectDetails: false,
+      hasImg: false
     }
   },
   computed: {
@@ -271,6 +274,7 @@ export default {
       const blob = await res.blob()
       const imgUrl = URL.createObjectURL(blob)
       if (this.$refs.cover) this.$refs.cover.style.backgroundImage = `url('${imgUrl}')`
+      this.hasImg = true
     },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
