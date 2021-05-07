@@ -50,8 +50,8 @@ export default {
   data() {
     return {
       localExpand: false,
-      itemsPerLoad: 3,
-      currentLimit: 3
+      itemsPerLoad: 5,
+      currentLimit: 5
     }
   },
   computed: {

@@ -5,7 +5,7 @@
         <v-icon class="mr-2" small>mdi-code-braces</v-icon>
         {{ keyName }}
         <span class="caption ml-2">
-          {{ value.speckle_type ? value.speckle_type : 'Object' }}
+          {{ value.speckle_type ? parsedType : 'Object' }}
         </span>
         <v-icon small class="ml-2">
           {{ localExpand ? 'mdi-minus' : 'mdi-plus' }}
@@ -98,6 +98,11 @@ export default {
         return 0
       })
       return arr
+    },
+    parsedType() {
+      if (!this.value.speckle_type) return 'Object'
+      let sections = this.value.speckle_type.split(':').map((s) => s.split('.').reverse()[0])
+      return sections.join('/')
     }
   },
   methods: {

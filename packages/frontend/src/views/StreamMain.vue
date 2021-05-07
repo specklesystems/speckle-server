@@ -46,7 +46,11 @@
         </v-sheet>
 
         <div v-if="latestCommit" style="height: 50vh">
-          <renderer :object-url="latestCommitObjectUrl" :unload-trigger="clearRendererTrigger" />
+          <renderer
+            :object-url="latestCommitObjectUrl"
+            :unload-trigger="clearRendererTrigger"
+            show-selection-helper
+          />
         </div>
 
         <v-sheet :class="latestCommit ? '' : 'rounded-b-lg'">
