@@ -26,6 +26,8 @@ export default class InteractionHandler {
     this.viewer.scene.add( this.selectedObjects )
     this.selectedObjects.renderOrder = 1000
 
+    this.selectedObjectsUserData = []
+
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
 
@@ -63,17 +65,20 @@ export default class InteractionHandler {
       return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
     }
 
+    this.selectedObjectsUserData.push( objs[0].object.userData )
+
     let box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
-    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
+    this.viewer.emit( 'select', this.selectedObjectsUserData )
   }
 
   deselectObjects() {
     this.selectedObjects.clear()
+    this.selectedObjectsUserData = []
     this.viewer.needsRender = true
-    this.viewer.emit( 'select', this.selectedObjects.children.filter( o => o.type !== 'BoxHelper' ) )
+    this.viewer.emit( 'select', this.selectedObjectsUserData )
   }
 
   toggleSectionBox() {
