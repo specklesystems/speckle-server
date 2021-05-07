@@ -18,10 +18,20 @@
     >
       <v-fade-transition>
         <div v-show="!hasLoadedModel" class="overlay cover-all">
-          <v-btn large class="vertical-center" @click="load()">
-            <v-icon class="mr-3">mdi-cube-outline</v-icon>
-            View Data
-          </v-btn>
+          <div ref="cover" class="overlay-abs bg-img"></div>
+          <div class="overlay-abs radial-bg"></div>
+          <div class="overlay-abs" style="pointer-events: none">
+            <v-btn
+              dense
+              color="primary"
+              class="vertical-center"
+              style="pointer-events: all"
+              @click="load()"
+            >
+              <v-icon class="mr-3">mdi-cube-outline</v-icon>
+              Load Model
+            </v-btn>
+          </div>
         </div>
       </v-fade-transition>
       <v-progress-linear
@@ -210,7 +220,7 @@ export default {
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
-  mounted() {
+  async mounted() {
     // NOTE: we're doing some globals and dom shennanigans in here for the purpose
     // of having a unique global renderer and it's container dom element. The principles
     // are simple enough:
@@ -238,6 +248,7 @@ export default {
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
       window.__viewer.sceneManager.removeAllObjects()
       window.__viewerLastLoadedUrl = null
+      this.getPreviewImage().then().catch()
     } else {
       this.hasLoadedModel = true
       this.loadProgress = 100
@@ -253,6 +264,14 @@ export default {
     document.body.appendChild(this.domElement)
   },
   methods: {
+    async getPreviewImage(angle) {
+      angle = angle || 0
+      let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      const res = await fetch(previewUrl)
+      const blob = await res.blob()
+      const imgUrl = URL.createObjectURL(blob)
+      if (this.$refs.cover) this.$refs.cover.style.backgroundImage = `url('${imgUrl}')`
+    },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
     },
@@ -338,16 +357,44 @@ export default {
   text-align: center;
 }
 
+.overlay-abs {
+  position: absolute;
+  z-index: 2;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+
+.bg-img {
+  background-position: center;
+  background-repeat: no-repeat;
+  /*background-attachment: fixed;*/
+}
+
 .cover-all {
   position: relative;
   width: 100%;
   height: 100%;
+  text-align: center;
+}
+
+.radial-bg {
+  transition: all 0.5s ease-out;
   background: radial-gradient(
     circle,
     rgba(60, 94, 128, 0.8519782913165266) 0%,
     rgba(63, 123, 135, 0.13489145658263302) 100%
   );
-  text-align: center;
+  opacity: 1;
+}
+
+.radial-bg:hover {
+  background: radial-gradient(
+    circle,
+    rgba(60, 94, 128, 0.8519782913165266) 0%,
+    rgba(63, 123, 135, 0.13489145658263302) 100%
+  );
+  opacity: 0.8;
 }
 
 .vertical-center {
