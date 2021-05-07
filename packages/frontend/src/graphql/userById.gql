@@ -20,8 +20,12 @@ query User($id: String!) {
           name
           avatar
         }
-        commits {
+        commits(limit: 1) {
           totalCount
+          items{
+            id
+            referencedObject
+          }
         }
         branches {
           totalCount

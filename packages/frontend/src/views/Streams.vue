@@ -13,9 +13,9 @@
             <stream-new-dialog :open="newStreamDialog" />
           </v-dialog>
         </v-card>
-        <div v-if="$apollo.loading" class="mx-5 mt-5">
+        <div v-if="$apollo.loading" class="pa-3 mx-5 mt-5">
           <v-skeleton-loader
-            type="list-item-avatar, list-item-three-line, list-item-avatar,list-item-three-line"
+            type="list-item-three-line"
           ></v-skeleton-loader>
         </div>
         <v-card
@@ -84,7 +84,7 @@
             :message="`Hello there! It seems like you don't have any streams yet. Here's a handful of useful links to help you get started:`"
           />
         </div>
-        <v-card v-if="user && user.streams.totalCount > 0" class="mt-5 mx-4" flat>
+        <v-card v-if="user && user.streams.totalCount > 0" class="my-5" flat>
           <v-card-text class="body-1">
             <span>
               You have
@@ -98,8 +98,8 @@
           </v-card-text>
         </v-card>
         <v-card elevation="0" color="transparent">
-          <div v-if="$apollo.loading" class="mx-5">
-            <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
+          <div v-if="$apollo.loading" class="my-5">
+            <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
           </div>
         </v-card>
         <v-row v-if="streams && streams.items">

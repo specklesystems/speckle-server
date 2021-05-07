@@ -26,6 +26,7 @@ query Streams($cursor: String) {
           authorId
           authorName
           authorAvatar
+          referencedObject
         }
       }
       branches {

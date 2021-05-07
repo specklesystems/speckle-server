@@ -270,7 +270,9 @@ export default {
     async getPreviewImage(angle) {
       angle = angle || 0
       let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
-      const res = await fetch(previewUrl)
+      const res = await fetch(previewUrl, {
+        headers: localStorage.getItem('AuthToken') ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` } : {}
+      })
       const blob = await res.blob()
       const imgUrl = URL.createObjectURL(blob)
       if (this.$refs.cover) this.$refs.cover.style.backgroundImage = `url('${imgUrl}')`
