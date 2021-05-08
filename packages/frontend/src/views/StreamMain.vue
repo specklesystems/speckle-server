@@ -133,11 +133,7 @@
             </v-list-item>
           </v-list>
         </v-sheet>
-
-        <no-data-placeholder
-          v-if="!latestCommit"
-          :message="`No data here! Here's how to get started:`"
-        />
+        <no-data-placeholder v-if="!latestCommit" :message="`This branch has no commits.`" />
       </v-card>
 
       <v-card

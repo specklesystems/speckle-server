@@ -67,17 +67,9 @@ const routes = [
         },
         component: () => import('../views/Streams.vue')
       },
-      // {
-      //   path: 'streams',
-      //   name: 'streams',
-      //   meta: {
-      //     title: 'Streams | Speckle'
-      //   },
-      //   component: () => import('../views/Streams.vue')
-      // },
       {
         path: 'streams/:streamId',
-        name: 'streams',
+        // name: 'streams',
         meta: {
           title: 'Stream | Speckle'
         },
@@ -214,7 +206,7 @@ router.beforeEach((to, from, next) => {
 })
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
-router.afterEach((to, from) => {
+router.afterEach((to) => {
   if (localStorage.getItem('shouldRedirectTo') === to.path)
     localStorage.removeItem('shouldRedirectTo')
 

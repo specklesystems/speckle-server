@@ -3,11 +3,6 @@
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <v-card rounded="lg" class="mt-5 mx-5" elevation="0" color="background">
-          <!-- <v-card-title>Streams</v-card-title> -->
-          <!-- <v-card-text>
-            You have {{ streams.totalCount }} stream{{ streams.totalCount == 1 ? `` : `s` }}
-            in total.
-          </v-card-text> -->
           <v-card-actions>
             <v-btn large rounded color="primary" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
@@ -18,10 +13,8 @@
             <stream-new-dialog :open="newStreamDialog" />
           </v-dialog>
         </v-card>
-        <div v-if="$apollo.loading" class="mx-5 mt-5">
-          <v-skeleton-loader
-            type="list-item-avatar, list-item-three-line, list-item-avatar,list-item-three-line"
-          ></v-skeleton-loader>
+        <div v-if="$apollo.loading" class="pa-3 mx-5 mt-5">
+          <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
         </div>
         <v-card
           v-else-if="recentActivity"
@@ -83,13 +76,13 @@
           <server-invite-dialog ref="serverInviteDialog" />
         </v-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="8">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
         <div v-if="!$apollo.loading && streams.totalCount === 0" class="pa-4">
           <no-data-placeholder
             :message="`Hello there! It seems like you don't have any streams yet. Here's a handful of useful links to help you get started:`"
           />
         </div>
-        <v-card v-if="user && user.streams.totalCount > 0" class="mt-5 mx-4" flat>
+        <v-card v-if="user && user.streams.totalCount > 0" class="my-5" flat>
           <v-card-text class="body-1">
             <span>
               You have
@@ -103,22 +96,30 @@
           </v-card-text>
         </v-card>
         <v-card elevation="0" color="transparent">
-          <div v-if="$apollo.loading" class="mx-5">
-            <v-skeleton-loader type="card, article, article"></v-skeleton-loader>
+          <div v-if="$apollo.loading" class="my-5">
+            <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
           </div>
-          <v-card-text v-if="streams && streams.items" class="mt-0 pt-3">
-            <div v-for="(stream, i) in streams.items" :key="i">
-              <list-item-stream :stream="stream"></list-item-stream>
-            </div>
-            <infinite-loading
-              v-if="streams.items.length < streams.totalCount"
-              @infinite="infiniteHandler"
-            >
-              <div slot="no-more">These are all your streams!</div>
-              <div slot="no-results">There are no streams to load</div>
-            </infinite-loading>
-          </v-card-text>
         </v-card>
+        <v-row v-if="streams && streams.items">
+          <v-col
+            v-for="(stream, i) in streams.items"
+            :key="i"
+            cols="12"
+            sm="12"
+            md="12"
+            lg="6"
+            xl="4"
+          >
+            <list-item-stream :stream="stream"></list-item-stream>
+          </v-col>
+          <infinite-loading
+            v-if="streams.items.length < streams.totalCount"
+            @infinite="infiniteHandler"
+          >
+            <div slot="no-more">These are all your streams!</div>
+            <div slot="no-results">There are no streams to load</div>
+          </infinite-loading>
+        </v-row>
       </v-col>
     </v-row>
   </v-container>

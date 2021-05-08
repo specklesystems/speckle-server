@@ -21,11 +21,35 @@
       </v-btn>
     </v-card-title>
     <v-divider class="mx-4"></v-divider>
+    <v-card-text v-if="isHomeRoute && stream.commits.items.length !== 0">
+      <p class="mb-2">
+        Latest update:
+        <timeago :datetime="stream.commits.items[0].createdAt"></timeago>
+      </p>
+      <v-chip
+        small
+        color="primary"
+        class="pa-2"
+        :to="`/streams/${stream.id}/commits/${stream.commits.items[0].id}`"
+      >
+        <v-icon small class="mr-1">mdi-source-commit</v-icon>
+        {{ stream.commits.items[0].id }}
+      </v-chip>
+      on
+      <router-link
+        class="text-decoration-none"
+        :to="`/streams/${stream.id}/branches/${stream.commits.items[0].branchName}`"
+      >
+        <v-icon small color="primary">mdi-source-branch</v-icon>
+        {{ stream.commits.items[0].branchName }}
+      </router-link>
+    </v-card-text>
+    <v-divider class="mx-4"></v-divider>
     <v-card-text>
-      <p>
+      <!--       <p>
         Updated
         <timeago v-tooltip="formatDate(stream.updatedAt)" :datetime="stream.updatedAt"></timeago>
-      </p>
+      </p> -->
       <p>
         Created
         <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>

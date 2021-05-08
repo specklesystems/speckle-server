@@ -67,15 +67,6 @@
                   Selection
                 </v-badge>
               </v-card-title>
-
-              <!--               <object-speckle-viewer
-                v-if="selectionData.length !== 0"
-                class="mt-4"
-                :stream-id="stream.id"
-                :object-id="selectionData[0].id"
-                :value="{ referencedId: selectionData[0].id, speckle_type: 'reference' }"
-                :expand="true"
-              ></object-speckle-viewer> -->
               <div v-if="selectionData.length !== 0">
                 <object-simple-viewer
                   v-for="(obj, ind) in selectionData"

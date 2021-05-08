@@ -13,7 +13,7 @@
       </v-btn>
     </v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
-    <div v-if="authorizedApps && authorizedApps.length !== 0">
+    <v-card-text v-if="authorizedApps && authorizedApps.length !== 0">
       <v-row>
         <v-col
           v-for="app in authorizedApps"
@@ -31,7 +31,7 @@
                 </v-icon>
                 {{ app.name }}
               </h3>
-              <p>
+              <p class="text-truncate">
                 {{ app.description }}
                 <span v-show="app.id === 'spklwebapp'" class="caption">
                   (This is the app your're currently using!)
@@ -62,7 +62,7 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-    </div>
+    </v-card-text>
   </v-card>
 </template>
 <script>
@@ -93,7 +93,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.user.authorizedApps
+      update: (data) => data.user.authorizedApps.filter(app => app.id !== 'spklwebapp')
     }
   },
   computed: {

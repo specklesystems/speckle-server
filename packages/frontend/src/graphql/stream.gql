@@ -16,8 +16,13 @@ query Stream($id: String!) {
     branches {
       totalCount
     }
-    commits {
+    commits(limit: 1) {
       totalCount
+      items {
+        id
+        branchName
+        createdAt
+      }
     }
   }
 }

@@ -1,79 +1,74 @@
 <template>
-  <v-card class="pa-5 mb-3" style="transition: all 0.2s" flat>
-    <v-row>
-      <v-col cols="12" sm="8" class="align-self-center">
-        <div class="subtitle-1 stream-link">
-          <router-link :to="'/streams/' + stream.id">
-            {{ stream.name }}
-          </router-link>
-        </div>
-        <div class="caption mb-2 mt-1 text-truncate">
+  <v-hover v-slot="{ hover }">
+    <v-card
+      :to="'/streams/' + stream.id"
+      color=""
+      :elevation="hover ? 5 : 1"
+      style="transition: all 0.2s ease-in-out"
+    >
+      <img
+        ref="cover"
+        :class="`${hover ? '' : 'grasycale-img'} preview-img`"
+        :src="currentPreviewImg"
+      />
+      <v-card-title class="">{{ stream.name }}</v-card-title>
+      <v-card-text>
+        <span class="caption mb-2 font-italic">
+          Updated
+          <timeago :datetime="stream.updatedAt"></timeago>
+        </span>
+        <v-chip small outlined class="ml-3">
+          <v-icon small left>mdi-account-key-outline</v-icon>
+          {{ stream.role.split(':')[1] }}
+        </v-chip>
+        <v-btn
+          v-tooltip="
+            stream.branches.totalCount + ' branch' + (stream.branches.totalCount === 1 ? '' : 'es')
+          "
+          plain
+          color="primary"
+          text
+          class="px-0 ml-3"
+          small
+          :to="'/streams/' + stream.id + '/branches'"
+        >
+          <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
+          {{ stream.branches.totalCount }}
+        </v-btn>
+
+        <v-btn
+          v-tooltip="
+            stream.commits.totalCount + ' commit' + (stream.commits.totalCount === 1 ? '' : 's')
+          "
+          plain
+          color="primary"
+          text
+          class="px-0"
+          small
+          :to="'/streams/' + stream.id + '/branches/main/commits'"
+        >
+          <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
+          {{ stream.commits.totalCount }}
+        </v-btn>
+        <div class="mt-3 caption text-truncate">
           {{ stream.description }}
         </div>
-
-        <div>
-          <span class="caption mb-2 font-italic">
-            Updated
-            <timeago :datetime="stream.updatedAt"></timeago>
-          </span>
-          <v-chip small outlined class="ml-3">
-            <v-icon small left>mdi-account-key-outline</v-icon>
-            {{ role }}
-          </v-chip>
-          <v-btn
-            v-tooltip="
-              stream.branches.totalCount +
-              ' branch' +
-              (stream.branches.totalCount === 1 ? '' : 'es')
-            "
-            plain
-            color="primary"
-            text
-            class="px-0 ml-3"
-            small
-            :to="'/streams/' + stream.id + '/branches'"
-          >
-            <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
-            {{ stream.branches.totalCount }}
-          </v-btn>
-
-          <v-btn
-            v-tooltip="
-              stream.commits.totalCount + ' commit' + (stream.commits.totalCount === 1 ? '' : 's')
-            "
-            plain
-            color="primary"
-            text
-            class="px-0"
-            small
-            :to="'/streams/' + stream.id + '/branches/main/commits'"
-          >
-            <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
-            {{ stream.commits.totalCount }}
-          </v-btn>
-        </div>
-        <!-- <v-icon v-if="stream.isPublic" v-tooltip="`Link sharing on`" small>mdi-link</v-icon>
-        <v-icon v-else v-tooltip="`Link sharing off`" small>mdi-shield-lock</v-icon> -->
-      </v-col>
-      <v-col cols="12" sm="4" class="text-sm-center text-md-right align-self-center">
-        <div>
-          <user-avatar
-            v-for="user in collaboratorsSlice"
-            :id="user.id"
-            :key="user.id"
-            :avatar="user.avatar"
-            :size="30"
-            :name="user.name"
-          />
-          <div v-if="stream.collaborators.length > collaboratorsSlice.length" class="d-inline">
-            <v-avatar class="ma-1 grey--text text--darken-2" color="grey lighten-3" size="30">
-              <b>+{{ stream.collaborators.length - collaboratorsSlice.length }}</b>
-            </v-avatar>
-          </div>
-        </div>
-      </v-col>
-    </v-row>
-  </v-card>
+      </v-card-text>
+      <v-card-text class="pt-0">
+        <user-avatar
+          v-for="user in stream.collaborators.slice(0, 4)"
+          :id="user.id"
+          :key="user.id"
+          :avatar="user.avatar"
+          :size="30"
+          :name="user.name"
+        />
+        <v-avatar v-if="stream.collaborators.length > 4" size="30" color="grey">
+          <span class="white--text">+{{ stream.collaborators.length - 4 }}</span>
+        </v-avatar>
+      </v-card-text>
+    </v-card>
+  </v-hover>
 </template>
 <script>
 import UserAvatar from '../components/UserAvatar'
@@ -88,38 +83,48 @@ export default {
       }
     }
   },
-  computed: {
-    collaboratorsSlice() {
-      let limit = 18
-      switch (this.$vuetify.breakpoint.name) {
-        case 'xs':
-          limit = 10
-          break
-        case 'sm':
-          limit = 9
-          break
-        case 'md':
-          limit = 8
-          break
-        case 'lg':
-          limit = 12
-          break
-        case 'xl':
-          limit = 18
-          break
+  data() {
+    return {
+      previewImgUrls: [],
+      currentPreviewImg: '/loadingImage.png'
+    }
+  },
+  mounted() {
+    this.getPreviewImages().then().catch()
+  },
+  methods: {
+    async getPreviewImages() {
+      if (this.stream.commits.items.length === 0) return
+      // let angles = [-2, -1, 0, 1, 2]
+      let angles = [0]
+      for (let ang of angles) {
+        let previewUrl = `/preview/${this.stream.id}/objects/${this.stream.commits.items[0].referencedObject}/${ang}`
+        const res = await fetch(previewUrl, {
+          headers: localStorage.getItem('AuthToken')
+            ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
+            : {}
+        })
+        const blob = await res.blob()
+        const imgUrl = URL.createObjectURL(blob)
+        this.previewImgUrls.push(imgUrl)
+        if (ang === 0) this.currentPreviewImg = imgUrl
       }
-
-      if (this.stream.collaborators.length > limit)
-        return this.stream.collaborators.slice(0, limit - 1)
-      return this.stream.collaborators
-    },
-    role() {
-      return this.stream.role.replace('stream:', '')
     }
   }
 }
 </script>
 <style scoped>
+.grasycale-img {
+  transition: all 0.3s;
+  filter: grayscale(100%);
+}
+
+.preview-img {
+  height: 180px;
+  width: 100%;
+  object-fit: cover;
+}
+
 .stream-link a {
   /* color: inherit; */
   text-decoration: none;

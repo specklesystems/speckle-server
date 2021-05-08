@@ -13,7 +13,6 @@
     "@speckle/viewer": "^2.0.0",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
-    "core-js": "^3.8.1",
     "crypto-random-string": "^3.3.0",
     "dompurify": "^2.2.4",
     "lodash.debounce": "^4.0.8",
