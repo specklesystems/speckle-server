@@ -6,16 +6,12 @@
       :elevation="hover ? 5 : 1"
       style="transition: all 0.2s ease-in-out"
     >
-      <v-img
+      <img
         ref="cover"
+        :class="`${hover ? '' : 'grasycale-img'} preview-img`"
         :src="currentPreviewImg"
-        height="150px"
-        gradient="to bottom left, rgba(100,115,201,.10), rgba(25,32,72,0)"
-        class="align-end"
-      >
-      </v-img>
-        <v-card-title>{{ stream.name }}</v-card-title>
-
+      />
+      <v-card-title class="">{{ stream.name }}</v-card-title>
       <v-card-text>
         <span class="caption mb-2 font-italic">
           Updated
@@ -54,9 +50,9 @@
           <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
           {{ stream.commits.totalCount }}
         </v-btn>
-<!--         <div class="mt-3 caption text-truncate">
+        <div class="mt-3 caption text-truncate">
           {{ stream.description }}
-        </div> -->
+        </div>
       </v-card-text>
       <v-card-text class="pt-0">
         <user-avatar
@@ -67,7 +63,7 @@
           :size="30"
           :name="user.name"
         />
-        <v-avatar v-if="stream.collaborators.length > 4" size="30" color="primary">
+        <v-avatar v-if="stream.collaborators.length > 4" size="30" color="grey">
           <span class="white--text">+{{ stream.collaborators.length - 4 }}</span>
         </v-avatar>
       </v-card-text>
@@ -118,6 +114,17 @@ export default {
 }
 </script>
 <style scoped>
+.grasycale-img {
+  transition: all 0.3s;
+  filter: grayscale(100%);
+}
+
+.preview-img {
+  height: 180px;
+  width: 100%;
+  object-fit: cover;
+}
+
 .stream-link a {
   /* color: inherit; */
   text-decoration: none;
