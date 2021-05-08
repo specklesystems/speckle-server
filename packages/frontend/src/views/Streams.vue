@@ -14,9 +14,7 @@
           </v-dialog>
         </v-card>
         <div v-if="$apollo.loading" class="pa-3 mx-5 mt-5">
-          <v-skeleton-loader
-            type="list-item-three-line"
-          ></v-skeleton-loader>
+          <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
         </div>
         <v-card
           v-else-if="recentActivity"
@@ -103,7 +101,15 @@
           </div>
         </v-card>
         <v-row v-if="streams && streams.items">
-          <v-col cols="12" sm="12" md="12" lg="6" xl="4" v-for="(stream, i) in streams.items" :key="i">
+          <v-col
+            v-for="(stream, i) in streams.items"
+            :key="i"
+            cols="12"
+            sm="12"
+            md="12"
+            lg="6"
+            xl="4"
+          >
             <list-item-stream :stream="stream"></list-item-stream>
           </v-col>
           <infinite-loading

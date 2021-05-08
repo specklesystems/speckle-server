@@ -24,14 +24,15 @@
           <div class="overlay-abs radial-bg"></div>
           <div class="overlay-abs" style="pointer-events: none">
             <v-btn
-              dense
               color="primary"
               class="vertical-center"
               style="pointer-events: all"
               @click="load()"
+              fab
+              small
             >
-              <v-icon class="mr-3">mdi-cube-outline</v-icon>
-              Load Model
+              <v-icon>mdi-play</v-icon>
+
             </v-btn>
           </div>
         </div>
@@ -400,7 +401,7 @@ export default {
     rgba(60, 94, 128, 0.8519782913165266) 0%,
     rgba(63, 123, 135, 0.13489145658263302) 100%
   );
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
 .vertical-center {
