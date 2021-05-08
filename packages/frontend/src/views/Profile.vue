@@ -8,7 +8,7 @@
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">
         <user-authorised-apps />
-        <v-alert type="info" class="my-5 mt-10">
+        <v-alert type="info" class="my-5 mt-10 mx-4">
           Heads up! The sections below are intended for developers.
         </v-alert>
         <v-card color="transparent" class="elevation-0 mt-3">
@@ -20,8 +20,14 @@
             </v-btn>
           </v-card-title>
         </v-card>
-        <user-access-tokens />
-        <user-apps />
+        <v-card color="transparent" flat>
+          <v-card-text>
+            <user-access-tokens />
+          </v-card-text>
+          <v-card-text>
+            <user-apps />
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
