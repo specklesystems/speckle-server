@@ -1,7 +1,7 @@
 <template>
   <v-app id="speckle">
     <v-app-bar app>
-      <v-container class="py-0 fill-height hidden-sm-and-down">
+      <v-container fluid class="py-0 fill-height hidden-sm-and-down">
         <v-btn text to="/" active-class="no-active">
           <v-img class="" contain max-height="30" max-width="30" src="@/assets/logo.svg" />
           <div class="logo">

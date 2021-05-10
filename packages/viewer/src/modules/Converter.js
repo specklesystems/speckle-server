@@ -45,6 +45,7 @@ export default class Coverter {
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
+
     if ( this[`${type}ToBufferGeometry`] ) {
       try {
         callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )
@@ -184,6 +185,16 @@ export default class Coverter {
       console.warn( `Failed to convert brep id: ${obj.id}` )
       throw e
     }
+  }
+
+  async View3DToBufferGeometry( obj ) {
+    obj.origin.units = obj.units
+    obj.target.units = obj.units
+    let origin = this.PointToVector3( obj.origin )
+    let target = this.PointToVector3( obj.target )
+    obj.origin = origin
+    obj.target = target
+    return new ObjectWrapper( obj, obj, 'View' )
   }
 
   async MeshToBufferGeometry( obj ) {
@@ -364,7 +375,6 @@ export default class Coverter {
 
   PlaneToMatrix4( plane ){
     const m = new THREE.Matrix4()
-    console.warn( 'plane', plane )
     let conversionFactor = getConversionFactor( plane.units )
 
     m.makeBasis( this.PointToVector3( plane.xdir ).normalize(), this.PointToVector3( plane.ydir ).normalize(), this.PointToVector3( plane.normal ).normalize() )
@@ -372,13 +382,13 @@ export default class Coverter {
     m.scale( new THREE.Vector3( conversionFactor,conversionFactor,conversionFactor ) )
     return m
   }
-  
+
   async ArcToBufferGeometry( obj ) {
-    let conversionFactor = getConversionFactor( obj.units )
+    // let conversionFactor = getConversionFactor( obj.units )
     // const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor, obj.startAngle, obj.endAngle )
     //const geometry = new THREE.BufferGeometry().setFromPoints( points )
     const radius = obj.radius
-    console.warn( 'factor', conversionFactor, radius, radius*conversionFactor )
+
     const curve = new THREE.EllipseCurve(
       0,0,            // ax, aY
       radius, radius,           // xRadius, yRadius
@@ -408,7 +418,7 @@ export default class Coverter {
     xAxis.normalize()
     yAxis.normalize()
 
-    
+
     // Determine resolution
     let resolution = ( endAngle - startAngle ) * radius / res
     resolution = parseInt( resolution.toString() )
@@ -434,7 +444,7 @@ export default class Coverter {
     const center = new THREE.Vector3( obj.plane.origin.x  ,obj.plane.origin.y ,obj.plane.origin.z   ).multiplyScalar( conversionFactor )
     const xAxis = new THREE.Vector3( obj.plane.xdir.x,obj.plane.xdir.y,obj.plane.xdir.z ).normalize()
     const yAxis = new THREE.Vector3( obj.plane.ydir.x ,obj.plane.ydir.y,obj.plane.ydir.z  ).normalize()
-    
+
 
     let resolution = 2 * Math.PI * obj.firstRadius * conversionFactor * 10
     resolution = parseInt( resolution.toString() )

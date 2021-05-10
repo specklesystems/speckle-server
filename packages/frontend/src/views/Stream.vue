@@ -1,7 +1,7 @@
 <template>
-  <v-container>
+  <v-container fluid>
     <v-row v-if="stream">
-      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
+      <v-col cols="12" sm="12" md="4" lg="3" xl="4">
         <sidebar-stream :user-role="userRole"></sidebar-stream>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">

@@ -207,6 +207,25 @@ export default class InteractionHandler {
       this.viewer.controls.rotateTo( -DEG90, DEG90, transition )
       break
     }
+  }
+
+  getViews() {
+    return this.viewer.sceneManager.views.map( v => { return { name: v.applicationId, id: v.id } } )
+  }
+
+  setView( id, transition = true  ) {
+    if ( !id ) return
+    let view = this.viewer.sceneManager.views.find( v => v.id === id )
+    if ( !view ) {
+      console.warn( `View id ${id} not found.` )
+      return
+    }
+
+    let target = view.target
+    let position = view.origin
+
+    this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
+    // this.viewer.controls.setPosition( position.x, position.y, position.z, transition )
 
   }
 }

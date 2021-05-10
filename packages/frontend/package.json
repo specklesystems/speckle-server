@@ -10,7 +10,7 @@
     "serve:setup": "vue-cli-service serve"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.0.0",
+    "@speckle/viewer": "^2.0.5",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
     "crypto-random-string": "^3.3.0",

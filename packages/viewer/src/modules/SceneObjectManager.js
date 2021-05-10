@@ -14,6 +14,7 @@ export default class SceneObjectManager {
     this.lineObjects = new THREE.Group()
     this.pointObjects = new THREE.Group()
     this.transparentObjects = new THREE.Group()
+    this.views = []
 
     this.userObjects.add( this.solidObjects )
     this.userObjects.add( this.transparentObjects )
@@ -73,6 +74,9 @@ export default class SceneObjectManager {
 
     switch ( wrapper.geometryType ) {
 
+    case 'View':
+      this.views.push( wrapper.meta )
+      break
     case 'solid':
       // Do we have a defined material?
       if ( wrapper.meta.renderMaterial ) {
@@ -171,6 +175,7 @@ export default class SceneObjectManager {
     this.viewer.interactions.deselectObjects()
     this.viewer.interactions.hideSectionBox()
     this.objectIds = []
+    this.views = []
 
     this._postLoadFunction()
   }
