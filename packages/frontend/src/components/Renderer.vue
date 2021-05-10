@@ -19,7 +19,7 @@
       <v-fade-transition>
         <div v-show="!hasLoadedModel" class="overlay cover-all">
           <transition name="fade">
-            <div ref="cover" class="overlay-abs bg-img" v-show="hasImg"></div>
+            <div v-show="hasImg" ref="cover" class="overlay-abs bg-img"></div>
           </transition>
           <div class="overlay-abs radial-bg"></div>
           <div class="overlay-abs" style="pointer-events: none">
@@ -27,12 +27,11 @@
               color="primary"
               class="vertical-center"
               style="pointer-events: all"
-              @click="load()"
               fab
               small
+              @click="load()"
             >
               <v-icon>mdi-play</v-icon>
-
             </v-btn>
           </div>
         </div>
@@ -53,19 +52,20 @@
         <!--  -->
         <v-btn-toggle class="elevation-0">
           <v-btn
-            v-show="selectedObjects.length !== 0 && showSelectionHelper"
+            v-show="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen) "
             :small="!fullScreen"
             dark
             text
             color="primary"
             @click="showObjectDetails = !showObjectDetails"
           >
-            Objects Details ({{ selectedObjects.length }})
+            Selection Details ({{ selectedObjects.length }})
           </v-btn>
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on, attrs }">
               <v-btn :small="!fullScreen" dark text color="primary" v-bind="attrs" v-on="on">
-                Set View
+                <v-icon small class="mr-1">mdi-camera-outline</v-icon>
+                Views
               </v-btn>
             </template>
             <v-list dense>
@@ -84,6 +84,15 @@
               <v-list-item @click="setView('right')">
                 <v-list-item-title>Right</v-list-item-title>
               </v-list-item>
+              <v-divider v-if="namedViews.length!==0"></v-divider>
+              <v-list-item
+                v-for="view in namedViews"
+                :key="view.id"
+                @click="setNamedView(view.id)"
+              >
+                <v-list-item-title>{{ view.name }}</v-list-item-title>
+              </v-list-item>
+              <!-- </div> -->
             </v-list>
           </v-menu>
 
@@ -206,7 +215,8 @@ export default {
       showAlert: false,
       selectedObjects: [],
       showObjectDetails: false,
-      hasImg: false
+      hasImg: false,
+      namedViews: []
     }
   },
   computed: {
@@ -214,13 +224,18 @@ export default {
       return this.$vuetify.theme.dark
     }
   },
-
   watch: {
     unloadTrigger() {
       this.unloadData()
     },
     fullScreen() {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
+    },
+    loadProgress(newVal) {
+      if (newVal >= 99) {
+        let views = window.__viewer.interactions.getViews()
+        this.namedViews.push(...views)
+      }
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
@@ -272,7 +287,9 @@ export default {
       angle = angle || 0
       let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
       const res = await fetch(previewUrl, {
-        headers: localStorage.getItem('AuthToken') ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` } : {}
+        headers: localStorage.getItem('AuthToken')
+          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
+          : {}
       })
       const blob = await res.blob()
       const imgUrl = URL.createObjectURL(blob)
@@ -284,6 +301,9 @@ export default {
     },
     setView(view) {
       window.__viewer.interactions.rotateTo(view)
+    },
+    setNamedView(id) {
+      window.__viewer.interactions.setView(id)
     },
     sectionToggle() {
       window.__viewer.interactions.toggleSectionBox()
@@ -325,6 +345,7 @@ export default {
       window.__viewer.sceneManager.removeAllObjects()
       this.hasLoadedModel = false
       this.loadProgress = 0
+      this.namedViews.splice(0, this.namedViews.length)
     }
   }
 }
