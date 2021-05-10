@@ -228,13 +228,14 @@ export default class Coverter {
         'position',
         new THREE.Float32BufferAttribute( conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
 
-
-
       let colorsRaw = await this.dechunk( obj.colors )
-      // console.log( colorsRaw )
 
       if ( colorsRaw && colorsRaw.length !== 0 ) {
-        let rgbs = []
+
+        if ( colorsRaw.length !== buffer.attributes.position.count ) {
+          console.warn( `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.` )
+        }
+
         buffer.setAttribute( 'color', new THREE.BufferAttribute( new Float32Array( buffer.attributes.position.count * 3 ), 3 ) )
 
         for ( let i = 0; i < buffer.attributes.position.count; i++ ) {
@@ -244,16 +245,6 @@ export default class Coverter {
           let b = color & 0xFF
           buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
         }
-        // colorsRaw.forEach( color => {
-        //   rgbs.push( color >> 16 & 0xFF )
-        //   rgbs.push( color >> 8 & 0xFF )
-        //   rgbs.push( color & 0xFF )
-        //   // rgbs.push( 150 )
-        //   // rgbs.push( 150 )
-        //   // rgbs.push( 150 )
-        // } )
-
-        // buffer.addAttribute( 'color', new THREE.BufferAttribute( new THREE.Uint8BufferAttribute( rgbs ), 3, true ) )
       }
 
       buffer.computeVertexNormals( )
@@ -439,6 +430,7 @@ export default class Coverter {
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
+
   getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
 
     // Get alignment vectors
