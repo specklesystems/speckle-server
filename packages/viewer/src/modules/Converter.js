@@ -114,7 +114,7 @@ export default class Coverter {
       }
       else return null
     } catch ( e ) {
-      console.log( obj )
+      // console.log( obj )
       console.warn( `(Direct convert) Failed to convert object with id: ${obj.id}` )
       throw e
     }
@@ -205,6 +205,9 @@ export default class Coverter {
       let buffer = new THREE.BufferGeometry( )
       let indices = [ ]
 
+      if ( !obj.vertices ) return
+      if ( !obj.faces ) return
+
       let vertices = await this.dechunk( obj.vertices )
       let faces = await this.dechunk( obj.faces )
 
@@ -225,12 +228,41 @@ export default class Coverter {
         'position',
         new THREE.Float32BufferAttribute( conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
 
+
+
+      let colorsRaw = await this.dechunk( obj.colors )
+      // console.log( colorsRaw )
+
+      if ( colorsRaw && colorsRaw.length !== 0 ) {
+        let rgbs = []
+        buffer.setAttribute( 'color', new THREE.BufferAttribute( new Float32Array( buffer.attributes.position.count * 3 ), 3 ) )
+
+        for ( let i = 0; i < buffer.attributes.position.count; i++ ) {
+          let color = colorsRaw[i]
+          let r = color >> 16 & 0xFF
+          let g = color >> 8 & 0xFF
+          let b = color & 0xFF
+          buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
+        }
+        // colorsRaw.forEach( color => {
+        //   rgbs.push( color >> 16 & 0xFF )
+        //   rgbs.push( color >> 8 & 0xFF )
+        //   rgbs.push( color & 0xFF )
+        //   // rgbs.push( 150 )
+        //   // rgbs.push( 150 )
+        //   // rgbs.push( 150 )
+        // } )
+
+        // buffer.addAttribute( 'color', new THREE.BufferAttribute( new THREE.Uint8BufferAttribute( rgbs ), 3, true ) )
+      }
+
       buffer.computeVertexNormals( )
       buffer.computeFaceNormals( )
       buffer.computeBoundingSphere( )
 
       delete obj.vertices
       delete obj.faces
+      delete obj.colors
 
       return new ObjectWrapper( buffer, obj )
     } catch ( e ) {
