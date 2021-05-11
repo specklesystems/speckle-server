@@ -46,10 +46,6 @@
     </v-card-text>
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
-      <!--       <p>
-        Updated
-        <timeago v-tooltip="formatDate(stream.updatedAt)" :datetime="stream.updatedAt"></timeago>
-      </p> -->
       <p>
         Created
         <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
@@ -74,11 +70,11 @@
       <p>
         <span v-if="stream.isPublic">
           <v-icon small>mdi-link</v-icon>
-          &nbsp; link sharing on
+          &nbsp; link sharing on (public)
         </span>
         <span v-else>
           <v-icon small>mdi-shield-lock</v-icon>
-          &nbsp; link sharing off
+          &nbsp; link sharing off (private)
         </span>
       </p>
       <v-divider class="pb-2"></v-divider>
