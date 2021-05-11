@@ -1,10 +1,10 @@
 <template>
-  <v-container fluid>
+  <v-container :fluid="$vuetify.breakpoint.lgAndDown">
     <v-row v-if="stream">
-      <v-col cols="12" sm="12" md="4" lg="3" xl="4">
+      <v-col cols="12" sm="12" md="4" lg="3" xl="3">
         <sidebar-stream :user-role="userRole"></sidebar-stream>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">
+      <v-col cols="12" sm="12" md="8" lg="9" xl="9" class="pt-10">
         <router-view :user-role="userRole"></router-view>
       </v-col>
     </v-row>
