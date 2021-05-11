@@ -10,7 +10,7 @@ if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
     IMAGE_VERSION_TAG=$CIRCLE_TAG
 fi
 
-docker build -t $DOCKER_IMAGE_TAG:latest . -f packages/$SPECKLE_SERVER_PACKAGE/Dockerfile
+docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_VERSION_TAG -t $DOCKER_IMAGE_TAG:latest . -f packages/$SPECKLE_SERVER_PACKAGE/Dockerfile
 docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
 
 echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $DOCKER_REG_URL

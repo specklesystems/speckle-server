@@ -6,33 +6,25 @@ const appRoot = require( 'app-root-path' )
 const cors = require( 'cors' )
 
 const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
-const { contextMiddleware } = require( `${appRoot}/modules/shared` )
+const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { validatePermissionsReadStream } = require( './authUtils' )
 
-const { getObject, getObjectChildrenStream } = require( '../services/objects' )
+const { getObjectsStream } = require( '../services/objects' )
 
 module.exports = ( app ) => {
 
-  app.options( '/objects/:streamId/:objectId', cors() )
-
-  app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
+  app.options( '/api/getobjects/:streamId', cors() )
+  app.post( '/api/getobjects/:streamId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsReadStream( req.params.streamId, req )
     if ( !hasStreamAccess ) {
       return res.status( 401 ).end()
     }
 
-    // Populate first object (the "commit")
-    let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
-
-    if ( !obj ) {
-      return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
-    }
-
-    obj = obj.data
+    let childrenList = JSON.parse( req.body.children )
 
     let simpleText = req.headers.accept === 'text/plain'
 
-    let dbStream = await getObjectChildrenStream( { streamId: req.params.streamId, objectId: req.params.objectId } )
+    let dbStream = await getObjectsStream( req.params.streamId, childrenList )
 
     let currentChunkSize = 0
     let maxChunkSize = 50000
@@ -60,14 +52,6 @@ module.exports = ( app ) => {
       gzip.flush( )
       chunk = simpleText ? '' : [ ]
     }
-
-    var objString = JSON.stringify( obj )
-    if ( simpleText ) {
-      chunk += `${obj.id}\t${objString}\n`
-    } else {
-      chunk.push( objString )
-    }
-    writeBuffer( true )
 
     let k = 0
     let requestDropped = false
@@ -108,17 +92,5 @@ module.exports = ( app ) => {
 
     // 🚬
     gzip.pipe( res )
-  } )
-
-  app.options( '/objects/:streamId/:objectId/single', cors() )
-  app.get( '/objects/:streamId/:objectId/single', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
-    let hasStreamAccess = await validatePermissionsReadStream( req.params.streamId, req )
-    if ( !hasStreamAccess ) {
-      return res.status( 401 ).end()
-    }
-
-    let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
-
-    res.send( obj.data )
   } )
 }

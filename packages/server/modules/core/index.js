@@ -11,6 +11,10 @@ exports.init = async ( app, options ) => {
   require( './rest/upload' )( app )
   require( './rest/download' )( app )
 
+  // Initialises the two diff-based upload/download endpoints
+  require( './rest/diffUpload' )( app )
+  require( './rest/diffDownload' )( app )
+  
   // Register core-based scoeps
   const scopes = require( './scopes.js' )
   for ( let scope of scopes ) {

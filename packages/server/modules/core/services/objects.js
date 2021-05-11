@@ -206,6 +206,15 @@ module.exports = {
     return q.stream( )
   },
 
+  async getObjectChildrenIds( { streamId, objectId } ) {
+    let q = Closures( )
+    q.select( 'child as id' )
+    q.where( knex.raw( '"streamId" = ? AND parent = ?', [ streamId, objectId ] ) )
+      .orderBy( 'child' )
+    let childrenIds = await q
+    return childrenIds
+  },
+
   async getObjectChildren( { streamId, objectId, limit, depth, select, cursor } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
@@ -436,6 +445,31 @@ module.exports = {
     return res
   },
 
+  async getObjectsStream( streamId, objectIds ) {
+    let res = Objects( )
+      .whereIn( 'id', objectIds )
+      .andWhere( 'streamId', streamId )
+      .orderBy( 'id' )
+      .select( 'id', 'speckleType', 'totalChildrenCount', 'totalChildrenCountByDepth', 'createdAt', 'data' )
+    return res.stream( )
+  },
+
+  async hasObjects( streamId, objectIds ) {
+    let dbRes = await Objects( )
+      .whereIn( 'id', objectIds )
+      .andWhere( 'streamId', streamId )
+      .select( 'id' )
+
+    let res = {}
+    for ( let i in objectIds ) {
+      res[ objectIds[ i ] ] = false
+    }
+    for ( let i in dbRes ) {
+      res [ dbRes[ i ].id ] = true
+    }
+    return res
+  },
+  
   // NOTE: Derive Object
   async updateObject( ) {
     throw new Error( 'not implemeneted' )
