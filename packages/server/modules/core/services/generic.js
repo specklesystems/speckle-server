@@ -9,9 +9,9 @@ const Info = ( ) => knex( 'server_config' )
 module.exports = {
 
   async getServerInfo( ) {
-
-    return await Info( ).select( '*' ).first( )
-
+    let serverInfo = await Info( ).select( '*' ).first( )
+    serverInfo.version = process.env.SPECKLE_SERVER_VERSION || 'dev'
+    return serverInfo
   },
 
   async getAllScopes( ) {

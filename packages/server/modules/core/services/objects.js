@@ -436,6 +436,31 @@ module.exports = {
     return res
   },
 
+  async getObjectsStream( { streamId, objectIds } ) {
+    let res = Objects( )
+      .whereIn( 'id', objectIds )
+      .andWhere( 'streamId', streamId )
+      .orderBy( 'id' )
+      .select( 'id', 'speckleType', 'totalChildrenCount', 'totalChildrenCountByDepth', 'createdAt', 'data' )
+    return res.stream( )
+  },
+
+  async hasObjects( { streamId, objectIds } ) {
+    let dbRes = await Objects( )
+      .whereIn( 'id', objectIds )
+      .andWhere( 'streamId', streamId )
+      .select( 'id' )
+
+    let res = {}
+    for ( let i in objectIds ) {
+      res[ objectIds[ i ] ] = false
+    }
+    for ( let i in dbRes ) {
+      res [ dbRes[ i ].id ] = true
+    }
+    return res
+  },
+  
   // NOTE: Derive Object
   async updateObject( ) {
     throw new Error( 'not implemeneted' )

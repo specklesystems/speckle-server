@@ -15,6 +15,7 @@ type ServerInfo {
   roles: [Role]!
   scopes: [Scope]!
   inviteOnly: Boolean
+  version: String
 }
 
 """

@@ -126,9 +126,9 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
 
   let parentId
   let numObjs = 5000
+  let objBatches = [ createManyObjects( numObjs ), createManyObjects( numObjs ), createManyObjects( numObjs ) ]
 
   it( 'Should properly upload a bunch of objects', async ( ) => {
-    let objBatches = [ createManyObjects( numObjs ), createManyObjects( numObjs ), createManyObjects( numObjs ) ]
     parentId = objBatches[ 0 ][ 0 ].id
 
     let res =
@@ -206,6 +206,83 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
         }
       } )
 
+  } )
+
+  it( 'Should properly download a list of objects', ( done ) => {
+    let objectIds = []
+    for ( let i = 0; i < objBatches[0].length; i++ ) {
+      objectIds.push( objBatches[0][i].id )
+    }
+    let res = request( expressApp )
+      .post( `/api/getobjects/${testStream.id}` )
+      .set( 'Authorization', userA.token )
+      .set( 'Accept', 'text/plain' )
+      .send( { objects: JSON.stringify( objectIds ) } )
+      .buffer( )
+      .parse( ( res, cb ) => {
+        res.data = ''
+        res.on( 'data', chunk => {
+          res.data += chunk.toString( )
+        } )
+        res.on( 'end', ( ) => {
+          cb( null, res.data )
+        } )
+      } )
+      .end( ( err, res ) => {
+        if ( err ) done( err )
+        try {
+          let o = res.body.split( '\n' ).filter( l => l !== '' )
+          expect( o.length ).to.equal( objectIds.length )
+          expect( res ).to.be.text
+          done( )
+        } catch ( err ) {
+          done( err )
+        }
+      } )
+  } )
+
+  it( 'Should properly check if the server has a list of objects', ( done ) => {
+    let objectIds = []
+    for ( let i = 0; i < objBatches[0].length; i++ ) {
+      objectIds.push( objBatches[0][i].id )
+    }
+    let fakeIds = []
+    for ( let i = 0; i < 100; i++ ) {
+      let fakeId = crypto.createHash( 'md5' ).update( 'fakefake' + i ).digest( 'hex' )
+      fakeIds.push( fakeId )
+      objectIds.push( fakeId )
+    }
+
+    let res = request( expressApp )
+      .post( `/api/diff/${testStream.id}` )
+      .set( 'Authorization', userA.token )
+      .send( { objects: JSON.stringify( objectIds ) } )
+      .buffer( )
+      .parse( ( res, cb ) => {
+        res.data = ''
+        res.on( 'data', chunk => {
+          res.data += chunk.toString( )
+        } )
+        res.on( 'end', ( ) => {
+          cb( null, res.data )
+        } )
+      } )
+      .end( ( err, res ) => {
+        if ( err ) done( err )
+        try {
+          let o = JSON.parse( res.body )
+          expect( Object.keys(o).length ).to.equal( objectIds.length )
+          for ( let i = 0; i < objBatches[0].length; i++ ) {
+            assert( o[objBatches[0][i].id] === true, 'Server is missing an object' )
+          }
+          for ( let i = 0; i < fakeIds.length; i++ ) {
+            assert( o[fakeIds[i]] === false, 'Server wrongly reports it has an extra object' )
+          }
+          done( )
+        } catch ( err ) {
+          done( err )
+        }
+      } )
   } )
 
 } )

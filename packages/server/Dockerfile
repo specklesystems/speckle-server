@@ -9,6 +9,9 @@ RUN chmod +x /wait
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
+
+ARG SPECKLE_SERVER_VERSION=custom
+ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 WORKDIR /app
 
 COPY packages/server/package*.json ./

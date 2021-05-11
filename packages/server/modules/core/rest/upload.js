@@ -5,29 +5,17 @@ const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 
 const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
-const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+const { contextMiddleware } = require( `${appRoot}/modules/shared` )
+const { validatePermissionsWriteStream } = require( './authUtils' )
 
 const { createObjects, createObjectsBatched } = require( '../services/objects' )
 
+
 module.exports = ( app ) => {
   app.post( '/objects/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
-
-    debug( 'speckle:upload-endpoint' )( 'booom upload endpoint' )
-
-    if ( !req.context || !req.context.auth ) {
-      return res.status( 401 ).end( )
-    }
-
-    try {
-      await validateScopes( req.context.scopes, 'streams:write' )
-    } catch ( err ) {
-      return res.status( 401 ).end( )
-    }
-
-    try {
-      await authorizeResolver( req.context.userId, req.params.streamId, 'stream:contributor' )
-    } catch ( err ) {
-      return res.status( 401 ).end( )
+    let hasStreamAccess = await validatePermissionsWriteStream( req.params.streamId, req )
+    if ( !hasStreamAccess.result ) {
+      return res.status( hasStreamAccess.status ).end()
     }
 
     debug( 'speckle:upload-endpoint' )( 'Upload started' )
