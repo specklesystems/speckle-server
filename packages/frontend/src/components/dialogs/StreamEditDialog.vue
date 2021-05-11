@@ -24,7 +24,10 @@
         <p v-if="!internalIsPublic" class="caption">
           Only collaborators will be able to access this stream.
         </p>
-        <p v-else class="caption">Anyone with this link will be able to read this stream.</p>
+        <p v-else class="caption">
+          Anyone with this link will be able to read this stream. It will also be visible on your
+          profile page.
+        </p>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>

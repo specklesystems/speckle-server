@@ -45,14 +45,14 @@
         style="position: absolute; width: 80%; left: 10%; opacity: 0.5"
       ></v-progress-linear>
       <v-card
-        v-show="hasLoadedModel"
+        v-show="hasLoadedModel && loadProgress >= 99"
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
         <!--  -->
         <v-btn-toggle class="elevation-0">
           <v-btn
-            v-show="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen) "
+            v-show="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
             :small="!fullScreen"
             dark
             text
@@ -84,12 +84,8 @@
               <v-list-item @click="setView('right')">
                 <v-list-item-title>Right</v-list-item-title>
               </v-list-item>
-              <v-divider v-if="namedViews.length!==0"></v-divider>
-              <v-list-item
-                v-for="view in namedViews"
-                :key="view.id"
-                @click="setNamedView(view.id)"
-              >
+              <v-divider v-if="namedViews.length !== 0"></v-divider>
+              <v-list-item v-for="view in namedViews" :key="view.id" @click="setNamedView(view.id)">
                 <v-list-item-title>{{ view.name }}</v-list-item-title>
               </v-list-item>
               <!-- </div> -->

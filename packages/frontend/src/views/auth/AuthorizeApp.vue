@@ -1,9 +1,9 @@
 <template>
-  <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="pb-4 elevation-10">
+  <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="py-4 elevation-10">
     <v-card-text class="text-center">
       <user-avatar></user-avatar>
     </v-card-text>
-    <v-card-text class="text-h5 font-weight-regular text-center pt-10">
+    <v-card-text class="text-h5 font-weight-regular text-center pt-4">
       <v-icon v-if="app.trustByDefault" class="mr-2 primary--text">mdi-shield-check</v-icon>
       <b class="primary--text">{{ app.name }}</b>
       is requesting access to your Speckle account.
@@ -21,13 +21,10 @@
             <p>
               <b>Author:</b>
               {{ app.author.name }}
-              <user-avatar
-                :id="app.author.id"
-                :name="app.author.name"
-                :avatar="app.author.avatar"
-                :size="20"
-                class="ml-1"
-              ></user-avatar>
+              <v-avatar class="ma-1 ml-2" color="grey lighten-3" :size="20">
+                <v-img v-if="app.author.avatar" :src="app.author.avatar" />
+                <v-img v-else :src="`https://robohash.org/` + app.author.id + `.png?size=40x40`" />
+              </v-avatar>
             </p>
             <p>
               <b>Description:</b>

@@ -114,7 +114,7 @@ export default class Coverter {
       }
       else return null
     } catch ( e ) {
-      console.log( obj )
+      // console.log( obj )
       console.warn( `(Direct convert) Failed to convert object with id: ${obj.id}` )
       throw e
     }
@@ -205,6 +205,9 @@ export default class Coverter {
       let buffer = new THREE.BufferGeometry( )
       let indices = [ ]
 
+      if ( !obj.vertices ) return
+      if ( !obj.faces ) return
+
       let vertices = await this.dechunk( obj.vertices )
       let faces = await this.dechunk( obj.faces )
 
@@ -225,12 +228,32 @@ export default class Coverter {
         'position',
         new THREE.Float32BufferAttribute( conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
 
+      let colorsRaw = await this.dechunk( obj.colors )
+
+      if ( colorsRaw && colorsRaw.length !== 0 ) {
+
+        if ( colorsRaw.length !== buffer.attributes.position.count ) {
+          console.warn( `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.` )
+        }
+
+        buffer.setAttribute( 'color', new THREE.BufferAttribute( new Float32Array( buffer.attributes.position.count * 3 ), 3 ) )
+
+        for ( let i = 0; i < buffer.attributes.position.count; i++ ) {
+          let color = colorsRaw[i]
+          let r = color >> 16 & 0xFF
+          let g = color >> 8 & 0xFF
+          let b = color & 0xFF
+          buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
+        }
+      }
+
       buffer.computeVertexNormals( )
       buffer.computeFaceNormals( )
       buffer.computeBoundingSphere( )
 
       delete obj.vertices
       delete obj.faces
+      delete obj.colors
 
       return new ObjectWrapper( buffer, obj )
     } catch ( e ) {
@@ -407,6 +430,7 @@ export default class Coverter {
 
     return new ObjectWrapper( geometry, obj, 'line' )
   }
+
   getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
 
     // Get alignment vectors

@@ -225,7 +225,10 @@ export default class InteractionHandler {
     let position = view.origin
 
     this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
-    // this.viewer.controls.setPosition( position.x, position.y, position.z, transition )
+  }
 
+  setLookAt( position, target, transition = true ) {
+    if( !position || !target ) return
+    this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
   }
 }
