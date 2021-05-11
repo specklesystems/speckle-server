@@ -966,6 +966,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
             adminContact
             termsOfService
             description
+            version
             roles{
               name
               description

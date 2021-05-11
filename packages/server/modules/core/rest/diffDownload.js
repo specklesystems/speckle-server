@@ -20,7 +20,7 @@ module.exports = ( app ) => {
       return res.status( hasStreamAccess.status ).end()
     }
 
-    let childrenList = JSON.parse( req.body.children )
+    let childrenList = JSON.parse( req.body.objects )
 
     let simpleText = req.headers.accept === 'text/plain'
 
