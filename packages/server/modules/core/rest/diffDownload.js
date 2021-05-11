@@ -16,15 +16,15 @@ module.exports = ( app ) => {
   app.options( '/api/getobjects/:streamId', cors() )
   app.post( '/api/getobjects/:streamId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsReadStream( req.params.streamId, req )
-    if ( !hasStreamAccess ) {
-      return res.status( 401 ).end()
+    if ( !hasStreamAccess.result ) {
+      return res.status( hasStreamAccess.status ).end()
     }
 
     let childrenList = JSON.parse( req.body.children )
 
     let simpleText = req.headers.accept === 'text/plain'
 
-    let dbStream = await getObjectsStream( req.params.streamId, childrenList )
+    let dbStream = await getObjectsStream( { streamId: req.params.streamId, objectIds: childrenList } )
 
     let currentChunkSize = 0
     let maxChunkSize = 50000

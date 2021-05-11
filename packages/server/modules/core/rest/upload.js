@@ -14,8 +14,8 @@ const { createObjects, createObjectsBatched } = require( '../services/objects' )
 module.exports = ( app ) => {
   app.post( '/objects/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsWriteStream( req.params.streamId, req )
-    if ( !hasStreamAccess ) {
-      return res.status( 401 ).end()
+    if ( !hasStreamAccess.result ) {
+      return res.status( hasStreamAccess.status ).end()
     }
 
     debug( 'speckle:upload-endpoint' )( 'Upload started' )

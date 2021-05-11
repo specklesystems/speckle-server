@@ -5,32 +5,21 @@ const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 
 const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
-const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+const { contextMiddleware } = require( `${appRoot}/modules/shared` )
+const { validatePermissionsWriteStream } = require( './authUtils' )
 
 const { hasObjects } = require( '../services/objects' )
 
 module.exports = ( app ) => {
   app.post( '/api/diff/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
-
-    if ( !req.context || !req.context.auth ) {
-      return res.status( 401 ).end( )
+    let hasStreamAccess = await validatePermissionsWriteStream( req.params.streamId, req )
+    if ( !hasStreamAccess.result ) {
+      return res.status( hasStreamAccess.status ).end()
     }
-
-    try {
-      await validateScopes( req.context.scopes, 'streams:write' )
-    } catch ( err ) {
-      return res.status( 401 ).end( )
-    }
-
-    try {
-      await authorizeResolver( req.context.userId, req.params.streamId, 'stream:contributor' )
-    } catch ( err ) {
-      return res.status( 401 ).end( )
-    }
-
+    
     let objectList = JSON.parse( req.body.objects )
 
-    let response = await hasObjects( req.params.streamId, objectList )
+    let response = await hasObjects( { streamId: req.params.streamId, objectIds: objectList } )
     // console.log(response)
     res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': 'application/json' } )
     const gzip = zlib.createGzip( )

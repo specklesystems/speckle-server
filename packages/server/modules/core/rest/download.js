@@ -113,8 +113,8 @@ module.exports = ( app ) => {
   app.options( '/objects/:streamId/:objectId/single', cors() )
   app.get( '/objects/:streamId/:objectId/single', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsReadStream( req.params.streamId, req )
-    if ( !hasStreamAccess ) {
-      return res.status( 401 ).end()
+    if ( !hasStreamAccess.result ) {
+      return res.status( hasStreamAccess.status ).end()
     }
 
     let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )

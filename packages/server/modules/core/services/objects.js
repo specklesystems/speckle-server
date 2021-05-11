@@ -206,15 +206,6 @@ module.exports = {
     return q.stream( )
   },
 
-  async getObjectChildrenIds( { streamId, objectId } ) {
-    let q = Closures( )
-    q.select( 'child as id' )
-    q.where( knex.raw( '"streamId" = ? AND parent = ?', [ streamId, objectId ] ) )
-      .orderBy( 'child' )
-    let childrenIds = await q
-    return childrenIds
-  },
-
   async getObjectChildren( { streamId, objectId, limit, depth, select, cursor } ) {
     limit = parseInt( limit ) || 50
     depth = parseInt( depth ) || 1000
@@ -445,7 +436,7 @@ module.exports = {
     return res
   },
 
-  async getObjectsStream( streamId, objectIds ) {
+  async getObjectsStream( { streamId, objectIds } ) {
     let res = Objects( )
       .whereIn( 'id', objectIds )
       .andWhere( 'streamId', streamId )
@@ -454,7 +445,7 @@ module.exports = {
     return res.stream( )
   },
 
-  async hasObjects( streamId, objectIds ) {
+  async hasObjects( { streamId, objectIds } ) {
     let dbRes = await Objects( )
       .whereIn( 'id', objectIds )
       .andWhere( 'streamId', streamId )
