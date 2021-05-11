@@ -17,8 +17,8 @@ module.exports = ( app ) => {
 
   app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsReadStream( req.params.streamId, req )
-    if ( !hasStreamAccess ) {
-      return res.status( 401 ).end()
+    if ( !hasStreamAccess.result ) {
+      return res.status( hasStreamAccess.status ).end()
     }
 
     // Populate first object (the "commit")
