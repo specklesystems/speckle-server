@@ -26,7 +26,13 @@ async function getScreenshot( objectUrl ) {
     let stepAngle = 0.261799
     v.postprocessing = false
     v.sceneManager.skipPostLoad = true
-    await v.loadObject( objectUrl, '' )
+    try {
+      await v.loadObject( objectUrl, '' )
+    } catch ( error ) {
+      // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
+      await waitForAnimation( 1000 )
+    }
+    
     v.interactions.zoomExtents( 0.95, false )
     await waitForAnimation()
     scr['0'] = v.interactions.screenshot()
@@ -59,6 +65,9 @@ async function getScreenshot( objectUrl ) {
   }, objectUrl )
 
   
+  // Don't await for cleanup
+  browser.close()
+
   return scr
 
   return `
@@ -80,9 +89,6 @@ async function getScreenshot( objectUrl ) {
   //  type: 'png',
   //  clip: {x: 0, y: 0, width: 800, height: 800}
   //});
-
-  // Don't await for cleanup
-  browser.close()
 
   return imageBuffer
 };
