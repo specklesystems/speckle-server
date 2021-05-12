@@ -288,9 +288,10 @@ export default {
       this.setupEvents()
     }
     if (this.$route.query.embed) {
-      console.warn('EMBED MODE!!')
       this.fullScreen = true
       this.embeded = true
+      //TODO: Remove overflow from window
+      document.body.classList.add('no-scrollbar')
     }
   },
   beforeDestroy() {
@@ -377,6 +378,10 @@ export default {
 }
 </script>
 <style>
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 #rendererparent {
   position: relative;
   display: inline-block;
