@@ -1,4 +1,4 @@
-<template>
+<template lang="html">
   <v-sheet style="height: 100%" class="transparent">
     <v-alert
       v-show="showAlert"
@@ -64,8 +64,22 @@
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on, attrs }">
               <v-btn :small="!fullScreen" dark text color="primary" v-bind="attrs" v-on="on">
-                <v-icon small class="mr-1">mdi-camera-outline</v-icon>
-                Views
+                Share
+              </v-btn>
+            </template>
+            <v-list dense>
+              <v-list-item @click="copyIFrame">
+                <v-list-item-title>Copy iframe</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="copyEmbedUrl">
+                <v-list-item-title>Copy URL</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-menu top close-on-click offset-y style="z-index: 100">
+            <template #activator="{ on, attrs }">
+              <v-btn :small="!fullScreen" dark text color="primary" v-bind="attrs" v-on="on">
+                Set View
               </v-btn>
             </template>
             <v-list dense>
@@ -108,7 +122,7 @@
             </template>
             Show / Hide Section plane
           </v-tooltip>
-          <v-tooltip top>
+          <v-tooltip top v-if="!embeded">
             <template #activator="{ on, attrs }">
               <v-btn
                 :small="!fullScreen"
@@ -206,6 +220,7 @@ export default {
       hasLoadedModel: false,
       loadProgress: 0,
       fullScreen: false,
+      embeded: false,
       showHelp: false,
       alertMessage: null,
       showAlert: false,
@@ -218,6 +233,9 @@ export default {
   computed: {
     darkMode() {
       return this.$vuetify.theme.dark
+    },
+    embedUrl() {
+      return window.location.href + '?embed=true'
     }
   },
   watch: {
@@ -268,6 +286,11 @@ export default {
       this.hasLoadedModel = true
       this.loadProgress = 100
       this.setupEvents()
+    }
+    if (this.$route.query.embed) {
+      console.warn('EMBED MODE!!')
+      this.fullScreen = true
+      this.embeded = true
     }
   },
   beforeDestroy() {
@@ -342,6 +365,13 @@ export default {
       this.hasLoadedModel = false
       this.loadProgress = 0
       this.namedViews.splice(0, this.namedViews.length)
+    },
+    copyEmbedUrl() {
+      navigator.clipboard.writeText(this.embedUrl).then(() => console.log('Copied embed URL'))
+    },
+    copyIFrame() {
+      var frameCode = `<iframe src="${this.embedUrl}" title=""></iframe>`
+      navigator.clipboard.writeText(frameCode).then(() => console.log('Copied embed URL'))
     }
   }
 }
