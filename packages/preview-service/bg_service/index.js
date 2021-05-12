@@ -67,7 +67,7 @@ async function tick() {
       return
     }
 
-    doTask( task )
+    await doTask( task )
 
     // Check for another task very soon
     setTimeout( tick, 10 )
