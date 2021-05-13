@@ -1,5 +1,7 @@
 <template>
   <v-row v-if="!error">
+    <!-- Only show loading component when embeded to prevent showing page -->
+    <speckle-loading v-if="$route.query.embed && $apollo.queries.branches.loading" />
     <v-col sm="12">
       <v-card v-if="$apollo.queries.branches.loading">
         <v-skeleton-loader type="card-heading, card-avatar, article"></v-skeleton-loader>
@@ -193,7 +195,7 @@ import streamBranchesQuery from '../graphql/streamBranches.gql'
 import Renderer from '../components/Renderer'
 import UserAvatar from '../components/UserAvatar'
 import ErrorBlock from '../components/ErrorBlock'
-
+import SpeckleLoading from '../components/SpeckleLoading.vue'
 export default {
   name: 'StreamMain',
   components: {
@@ -202,7 +204,8 @@ export default {
     SourceAppAvatar,
     NoDataPlaceholder,
     Renderer,
-    ErrorBlock
+    ErrorBlock,
+    SpeckleLoading
   },
   props: {
     userRole: {

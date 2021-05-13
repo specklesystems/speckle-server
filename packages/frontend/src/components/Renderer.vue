@@ -59,7 +59,23 @@
           Speckle
         </v-btn>
       </div>
-      <div v-if="embeded" class="top-right ma-2">
+
+      <div v-if="embeded" class="top-right ma-2 d-flex">
+        <ApolloQuery :query="streamQuery" :variables="{ id: $route.params.streamId }" class="">
+          <template v-slot="{ result: { loading, error, data } }">
+            <!-- Loading -->
+            <div v-if="loading" class="loading apollo">Loading...</div>
+
+            <!-- Error -->
+            <div v-else-if="error" class="error apollo">An error occurred</div>
+
+            <!-- Result -->
+            <div v-else-if="data" class="result apollo">{{ data.stream.name }}</div>
+
+            <!-- No result -->
+            <div v-else class="no-result apollo">No result :(</div>
+          </template>
+        </ApolloQuery>
         <v-btn color="primary" small :href="url" target="blank">View in Speckle.xyz</v-btn>
       </div>
 
@@ -227,6 +243,7 @@
 import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 import ObjectSimpleViewer from './ObjectSimpleViewer'
+import StreamQuery from '../graphql/stream.gql'
 
 export default {
   components: { ObjectSimpleViewer },
@@ -250,6 +267,7 @@ export default {
   },
   data() {
     return {
+      streamQuery: StreamQuery,
       hasLoadedModel: false,
       loadProgress: 0,
       fullScreen: false,
