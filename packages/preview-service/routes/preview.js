@@ -11,7 +11,11 @@ function sleep( ms ) {
 }
 
 async function getScreenshot( objectUrl ) {
-  const browser = await puppeteer.launch( { args: [ '--no-sandbox', '--disable-setuid-sandbox' ] } )
+  let launchParams = { args: [ '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage' ] }
+  // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
+  //   launchParams.executablePath = 'chromium'
+  // }
+  const browser = await puppeteer.launch( launchParams )
   const page = await browser.newPage()
   await page.goto( 'http://127.0.0.1:3001/render/' )
 
