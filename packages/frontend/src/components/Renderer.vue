@@ -389,7 +389,6 @@ export default {
     load() {
       if (!this.objectUrl) return
       this.hasLoadedModel = true
-      console.log('loading model', this.objectUrl)
       window.__viewer.loadObject(this.objectUrl)
       window.__viewerLastLoadedUrl = this.objectUrl
 
@@ -405,7 +404,7 @@ export default {
       navigator.clipboard.writeText(this.embedUrl).then(() => console.log('Copied embed URL'))
     },
     copyIFrame() {
-      var frameCode = `<iframe src="${this.embedUrl}" title=""></iframe>`
+      var frameCode = `<iframe src="${this.embedUrl}" width=600 height=400></iframe>`
       navigator.clipboard.writeText(frameCode).then(() => console.log('Copied embed URL'))
     }
   }

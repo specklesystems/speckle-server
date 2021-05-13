@@ -19,21 +19,32 @@
 
       <div class="top-right ma-2 d-flex">
         <v-btn
-          v-if="$apollo.data.stream && $apollo.data.serverInfo"
+          small
+          class="mr-5"
+          :class="{
+            success: displayType == 'commit',
+            error: displayType == 'branch',
+            warning: displayType == 'stream',
+            teal: displayType == 'object'
+          }"
+        >
+          {{ displayType }}
+        </v-btn>
+        <v-btn
+          v-if="stream && serverInfo"
           color="primary"
           small
-          href=""
+          :href="goToServerUrl"
           target="blank"
         >
           View
           <em class="pl-1 pr-1">
             <b>
-              {{ $apollo.data.stream.name }}
+              {{ stream.name }}
             </b>
-            ({{ $apollo.data.stream.id }})
           </em>
           in
-          <em>{{ $apollo.data.serverInfo.name }}</em>
+          <em>{{ serverInfo.name }}</em>
         </v-btn>
       </div>
       <renderer v-if="stream" :object-url="objectUrl" embeded show-selection-helper></renderer>
@@ -54,12 +65,13 @@ export default {
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
-        branch: this.$route.query.branch
+        branch: this.$route.query.branch,
+        commit: this.$route.query.commit
       }
     }
   },
   apollo: {
-    stream: {
+    lastCommit: {
       query: gql`
         query Stream($id: String!, $branch: String!) {
           stream(id: $id) {
@@ -89,13 +101,53 @@ export default {
         this.error = err.message
       },
       update(data) {
-        var latestCommit = data.stream.branch.commits.items[0]
+        var latestCommit = data.stream.branch.commits.items[0] || data.stream.branch.commit
         if (!latestCommit) {
           this.error = 'No commit for this branch'
           return data.stream
         }
         if (this.input.object == undefined) this.input.object = latestCommit.referencedObject
         return data.stream
+      },
+      skip() {
+        return this.displayType === 'commit'
+      }
+    },
+    specificCommit: {
+      query: gql`
+        query Stream($id: String!, $commit: String!) {
+          stream(id: $id) {
+            id
+            name
+            description
+            isPublic
+            commit(id: $commit) {
+              referencedObject
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.input.stream,
+          commit: this.input.commit
+        }
+      },
+      error(err) {
+        console.log(err.message)
+        this.error = err.message
+      },
+      update(data) {
+        var latestCommit = data.stream.commit || data.stream.branch.commits.items[0]
+        if (!latestCommit) {
+          this.error = 'No commit for this branch'
+          return data.stream
+        }
+        if (this.input.object == undefined) this.input.object = latestCommit.referencedObject
+        return data.stream
+      },
+      skip() {
+        return this.displayType !== 'commit'
       }
     },
     serverInfo: {
@@ -117,15 +169,32 @@ export default {
       if (!this.input.stream) {
         return 'error'
       }
-      if (this.input.object) return 'object'
+
       if (this.input.branch) return 'branch'
+      if (this.input.commit) return 'commit'
+      if (this.input.object) return 'object'
+
       return 'stream'
     },
-
+    stream() {
+      return this.lastCommit || this.specificCommit
+    },
     objectUrl() {
-      var objId = this.input.object || this.stream?.branch?.commits?.items[0]?.referencedObject
+      return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.input.object}`
+    },
+    goToServerUrl() {
+      var stream = this.input.stream
+      var base = `${window.location.origin}/streams/${stream}/`
 
-      return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${objId}`
+      var branch = this.input.branch
+      if (branch) return base + `branches/${encodeURI(branch)}`
+
+      var commit = this.input.commit
+      if (commit) return base + `commits/${commit}`
+
+      var object = this.input.object
+      if (object) return base + `objects/${object}`
+      return base
     }
   },
   watch: {
