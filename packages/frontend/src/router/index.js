@@ -69,7 +69,7 @@ const routes = [
       },
       {
         path: 'streams/:streamId',
-        // name: 'streams',
+        name: 'streams',
         meta: {
           title: 'Stream | Speckle'
         },
