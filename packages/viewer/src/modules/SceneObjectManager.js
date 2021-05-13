@@ -118,7 +118,6 @@ export default class SceneObjectManager {
           this.addSolid( wrapper, material )
         }
       } else if ( wrapper.bufferGeometry.attributes.color ){
-        console.log( wrapper.bufferGeometry )
         this.addSolid( wrapper, this.solidVertexMaterial )
       } else {
         // If we don't have defined material, just use the default

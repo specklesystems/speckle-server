@@ -114,7 +114,6 @@ export default class Coverter {
       }
       else return null
     } catch ( e ) {
-      // console.log( obj )
       console.warn( `(Direct convert) Failed to convert object with id: ${obj.id}` )
       throw e
     }
@@ -165,7 +164,6 @@ export default class Coverter {
 
   async PointcloudToBufferGeometry( obj ) {
 
-    console.log( obj )
     let conversionFactor = getConversionFactor( obj.units )
     let buffer = new THREE.BufferGeometry( )
 
