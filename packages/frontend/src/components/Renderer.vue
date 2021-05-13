@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <v-sheet style="height: 100%" class="transparent">
     <v-alert
       v-show="showAlert"
@@ -44,25 +44,6 @@
         class="vertical-center elevation-10"
         style="position: absolute; width: 80%; left: 10%; opacity: 0.5"
       ></v-progress-linear>
-
-      <div v-if="embeded" class="top-left ma-2">
-        <v-btn
-          text
-          small
-          color="primary"
-          elevation="0"
-          href="http://speckle.systems"
-          target="blank"
-        >
-          Powered by
-          <img src="@/assets/logo.svg" height="16" />
-          Speckle
-        </v-btn>
-      </div>
-      <div v-if="embeded" class="top-right ma-2">
-        <v-btn color="primary" small :href="url" target="blank">View in Speckle.xyz</v-btn>
-      </div>
-
       <v-card
         v-show="hasLoadedModel && loadProgress >= 99"
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
@@ -70,56 +51,23 @@
       >
         <!--  -->
         <v-btn-toggle class="elevation-0">
-          <v-menu v-if="!embeded" top close-on-click offset-y style="z-index: 100">
-            <template #activator="{ on: onMenu, attrs: menuAttrs }">
-              <v-tooltip top>
-                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn
-                    small
-                    v-bind="{ ...tooltipAttrs, ...menuAttrs }"
-                    v-on="{ ...onTooltip, ...onMenu }"
-                    @click="zoomEx()"
-                  >
-                    <v-icon small>mdi-share-variant</v-icon>
-                  </v-btn>
-                </template>
-                Embed 3D Viewer
-              </v-tooltip>
-            </template>
-            <v-list dense>
-              <v-list-item @click="copyIFrame">
-                <v-list-item-title>Copy iframe</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="copyEmbedUrl">
-                <v-list-item-title>Copy URL</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
           <v-btn
             v-show="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
-            small
+            :small="!fullScreen"
+            dark
+            text
             color="primary"
             @click="showObjectDetails = !showObjectDetails"
           >
             Selection Details ({{ selectedObjects.length }})
           </v-btn>
           <v-menu top close-on-click offset-y style="z-index: 100">
-            <template #activator="{ on: onMenu, attrs: menuAttrs }">
-              <v-tooltip top>
-                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn
-                    small
-                    v-bind="{ ...tooltipAttrs, ...menuAttrs }"
-                    v-on="{ ...onTooltip, ...onMenu }"
-                    @click="zoomEx()"
-                  >
-                    <v-icon small>mdi-camera</v-icon>
-                  </v-btn>
-                </template>
-                Select view
-              </v-tooltip>
+            <template #activator="{ on, attrs }">
+              <v-btn :small="!fullScreen" dark text color="primary" v-bind="attrs" v-on="on">
+                <v-icon small class="mr-1">mdi-camera-outline</v-icon>
+                Views
+              </v-btn>
             </template>
-
             <v-list dense>
               <v-list-item @click="setView('top')">
                 <v-list-item-title>Top</v-list-item-title>
@@ -146,7 +94,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" v-on="on" small @click="zoomEx()">
+              <v-btn :small="!fullScreen" v-bind="attrs" v-on="on" @click="zoomEx()">
                 <v-icon small>mdi-cube-scan</v-icon>
               </v-btn>
             </template>
@@ -154,15 +102,20 @@
           </v-tooltip>
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="sectionToggle()" v-on="on">
+              <v-btn :small="!fullScreen" v-bind="attrs" @click="sectionToggle()" v-on="on">
                 <v-icon small>mdi-scissors-cutting</v-icon>
               </v-btn>
             </template>
             Show / Hide Section plane
           </v-tooltip>
-          <v-tooltip v-if="!embeded" top>
+          <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn small v-bind="attrs" @click="fullScreen = !fullScreen" v-on="on">
+              <v-btn
+                :small="!fullScreen"
+                v-bind="attrs"
+                @click="fullScreen = !fullScreen"
+                v-on="on"
+              >
                 <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
               </v-btn>
             </template>
@@ -170,7 +123,7 @@
           </v-tooltip>
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" @click="showHelp = !showHelp" v-on="on" small>
+              <v-btn :small="!fullScreen" v-bind="attrs" @click="showHelp = !showHelp" v-on="on">
                 <v-icon small>mdi-help</v-icon>
               </v-btn>
             </template>
@@ -253,7 +206,6 @@ export default {
       hasLoadedModel: false,
       loadProgress: 0,
       fullScreen: false,
-      embeded: false,
       showHelp: false,
       alertMessage: null,
       showAlert: false,
@@ -266,12 +218,6 @@ export default {
   computed: {
     darkMode() {
       return this.$vuetify.theme.dark
-    },
-    url() {
-      return window.location.origin + this.$route.path
-    },
-    embedUrl() {
-      return this.url + '?embed=true'
     }
   },
   watch: {
@@ -322,12 +268,6 @@ export default {
       this.hasLoadedModel = true
       this.loadProgress = 100
       this.setupEvents()
-    }
-    if (this.$route.query.embed) {
-      this.fullScreen = true
-      this.embeded = true
-      //TODO: Remove overflow from window
-      document.body.classList.add('no-scrollbar')
     }
   },
   beforeDestroy() {
@@ -402,36 +342,11 @@ export default {
       this.hasLoadedModel = false
       this.loadProgress = 0
       this.namedViews.splice(0, this.namedViews.length)
-    },
-    copyEmbedUrl() {
-      navigator.clipboard.writeText(this.embedUrl).then(() => console.log('Copied embed URL'))
-    },
-    copyIFrame() {
-      var frameCode = `<iframe src="${this.embedUrl}" title=""></iframe>`
-      navigator.clipboard.writeText(frameCode).then(() => console.log('Copied embed URL'))
     }
   }
 }
 </script>
 <style>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.top-left {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 3;
-}
-
-.top-right {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 3;
-}
-
 #rendererparent {
   position: relative;
   display: inline-block;
