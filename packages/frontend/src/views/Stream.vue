@@ -44,6 +44,7 @@
     <stream-invite-dialog v-if="stream" ref="streamInviteDialog" :stream-id="stream.id" />
   </v-container>
 </template>
+
 <script>
 import SidebarStream from '../components/SidebarStream'
 import ErrorBlock from '../components/ErrorBlock'

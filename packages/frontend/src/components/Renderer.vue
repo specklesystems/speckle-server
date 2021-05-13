@@ -45,40 +45,6 @@
         style="position: absolute; width: 80%; left: 10%; opacity: 0.5"
       ></v-progress-linear>
 
-      <div v-if="embeded" class="top-left ma-2">
-        <v-btn
-          text
-          small
-          color="primary"
-          elevation="0"
-          href="http://speckle.systems"
-          target="blank"
-        >
-          Powered by
-          <img src="@/assets/logo.svg" height="16" />
-          Speckle
-        </v-btn>
-      </div>
-
-      <div v-if="embeded" class="top-right ma-2 d-flex">
-        <ApolloQuery :query="streamQuery" :variables="{ id: $route.params.streamId }" class="">
-          <template v-slot="{ result: { loading, error, data } }">
-            <!-- Loading -->
-            <div v-if="loading" class="loading apollo">Loading...</div>
-
-            <!-- Error -->
-            <div v-else-if="error" class="error apollo">An error occurred</div>
-
-            <!-- Result -->
-            <div v-else-if="data" class="result apollo">{{ data.stream.name }}</div>
-
-            <!-- No result -->
-            <div v-else class="no-result apollo">No result :(</div>
-          </template>
-        </ApolloQuery>
-        <v-btn color="primary" small :href="url" target="blank">View in Speckle.xyz</v-btn>
-      </div>
-
       <v-card
         v-show="hasLoadedModel && loadProgress >= 99"
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
@@ -263,6 +229,10 @@ export default {
     showSelectionHelper: {
       type: Boolean,
       default: false
+    },
+    embeded: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -271,7 +241,6 @@ export default {
       hasLoadedModel: false,
       loadProgress: 0,
       fullScreen: false,
-      embeded: false,
       showHelp: false,
       alertMessage: null,
       showAlert: false,
@@ -343,7 +312,6 @@ export default {
     }
     if (this.$route.query.embed) {
       this.fullScreen = true
-      this.embeded = true
       //TODO: Remove overflow from window
       document.body.classList.add('no-scrollbar')
     }
@@ -409,7 +377,7 @@ export default {
     load() {
       if (!this.objectUrl) return
       this.hasLoadedModel = true
-
+      console.log('loading model', this.objectUrl)
       window.__viewer.loadObject(this.objectUrl)
       window.__viewerLastLoadedUrl = this.objectUrl
 
@@ -432,10 +400,6 @@ export default {
 }
 </script>
 <style>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 .top-left {
   position: absolute;
   top: 0;
