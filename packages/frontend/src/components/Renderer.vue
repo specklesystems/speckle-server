@@ -255,10 +255,22 @@ export default {
       return this.$vuetify.theme.dark
     },
     url() {
-      return window.location.origin + this.$route.path
+      var stream = this.$route.params.streamId
+      var base = `${window.location.origin}/embed?stream=${stream}`
+
+      var object = this.$route.params.objectId
+      if (object) return base + `&object=${object}`
+
+      var commit = this.$route.params.commitId
+      if (commit) return base + `&commit=${commit}`
+
+      var branch = this.$route.params.branchName
+      if (branch) return base + `&branch=${encodeURI(branch)}`
+
+      return base
     },
     embedUrl() {
-      return this.url + '?embed=true'
+      return this.url
     }
   },
   watch: {

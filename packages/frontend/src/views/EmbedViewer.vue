@@ -1,7 +1,7 @@
 <template lang="html">
   <v-app class="no-scrollbar">
-    <speckle-loading v-if="$apollo.queries.loading || error" :error="error" style="z-index: 101" />
-    <div v-else class="no-scrollbar embed-view">
+    <speckle-loading v-if="!stream || error" :error="error" style="z-index: 101" />
+    <div v-if="!error" class="no-scrollbar embed-view">
       <div class="top-left ma-2">
         <v-btn
           small
@@ -36,12 +36,7 @@
           <em>{{ $apollo.data.serverInfo.name }}</em>
         </v-btn>
       </div>
-      <renderer
-        v-if="input.stream"
-        :object-url="objectUrl"
-        embeded
-        show-selection-helper
-      ></renderer>
+      <renderer v-if="stream" :object-url="objectUrl" embeded show-selection-helper></renderer>
     </div>
   </v-app>
 </template>
@@ -59,7 +54,7 @@ export default {
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
-        branch: this.$route.query.branch || 'main'
+        branch: this.$route.query.branch
       }
     }
   },
@@ -86,12 +81,21 @@ export default {
       variables() {
         return {
           id: this.input.stream,
-          branch: this.input.branch
+          branch: this.input.branch || 'main'
         }
       },
       error(err) {
-        console.error(err)
-        this.error = err
+        console.log(err.message)
+        this.error = err.message
+      },
+      update(data) {
+        var latestCommit = data.stream.branch.commits.items[0]
+        if (!latestCommit) {
+          this.error = 'No commit for this branch'
+          return data.stream
+        }
+        if (this.input.object == undefined) this.input.object = latestCommit.referencedObject
+        return data.stream
       }
     },
     serverInfo: {
@@ -104,7 +108,7 @@ export default {
       `,
       error(err) {
         console.error(err)
-        this.error = err
+        this.error = err.message
       }
     }
   },
@@ -126,7 +130,6 @@ export default {
   },
   watch: {
     displayType(oldVal, newVal) {
-      console.log(oldVal, newVal)
       if (newVal == 'error') this.error = 'Provided details were invalid'
       else {
         this.error = null

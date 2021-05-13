@@ -1,6 +1,5 @@
 <template>
   <v-container :fluid="$vuetify.breakpoint.lgAndDown">
-    <speckle-loading v-if="$route.query.embed && !stream" />
     <v-row v-if="stream">
       <v-col cols="12" sm="12" md="4" lg="3" xl="3">
         <sidebar-stream :user-role="userRole"></sidebar-stream>
@@ -51,15 +50,13 @@ import ErrorBlock from '../components/ErrorBlock'
 import streamQuery from '../graphql/stream.gql'
 import gql from 'graphql-tag'
 import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
-import SpeckleLoading from '../components/SpeckleLoading.vue'
 
 export default {
   name: 'Stream',
   components: {
     SidebarStream,
     ErrorBlock,
-    StreamInviteDialog,
-    SpeckleLoading
+    StreamInviteDialog
   },
   data() {
     return {

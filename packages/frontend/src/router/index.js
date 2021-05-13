@@ -187,6 +187,7 @@ router.beforeEach((to, from, next) => {
   if (
     !uuid &&
     !to.matched.some(({ name }) => name === 'streams') && //allow public streams to be viewed
+    to.name !== 'Embeded Viewer' &&
     to.name !== 'Login' &&
     to.name !== 'Register' &&
     to.name !== 'Error' &&
