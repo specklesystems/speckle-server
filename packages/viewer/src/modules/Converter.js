@@ -163,6 +163,45 @@ export default class Coverter {
     return type
   }
 
+  async PointcloudToBufferGeometry( obj ) {
+
+    console.log( obj )
+    let conversionFactor = getConversionFactor( obj.units )
+    let buffer = new THREE.BufferGeometry( )
+
+    let vertices = await this.dechunk( obj.points )
+
+    buffer.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute( conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
+
+    // TODO: checkout colours
+    let colorsRaw = await this.dechunk( obj.colors )
+
+    if ( colorsRaw && colorsRaw.length !== 0 ) {
+
+      if ( colorsRaw.length !== buffer.attributes.position.count ) {
+        console.warn( `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.` )
+      }
+
+      buffer.setAttribute( 'color', new THREE.BufferAttribute( new Float32Array( buffer.attributes.position.count * 3 ), 3 ) )
+
+      for ( let i = 0; i < buffer.attributes.position.count; i++ ) {
+        let color = colorsRaw[i]
+        let r = color >> 16 & 0xFF
+        let g = color >> 8 & 0xFF
+        let b = color & 0xFF
+        buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
+      }
+    }
+
+    delete obj.points
+    delete obj.colors
+    delete obj.sizes // note, these might be used in the future
+
+    return new ObjectWrapper( buffer, obj, 'pointcloud' )
+  }
+
   async BrepToBufferGeometry( obj ) {
     try {
       if ( !obj ) return
