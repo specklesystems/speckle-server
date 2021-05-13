@@ -7,10 +7,15 @@ v.on( 'load-progress', args => console.log( `Load progress ${args.progress} (on 
 window.v = v
 window.addEventListener( 'load', () => {
   v.onWindowResize()
+  const prevLoadUrl = localStorage.getItem( 'prevLoadUrl' )
+  console.log( prevLoadUrl )
+  if ( prevLoadUrl )
+    document.getElementById( 'objectUrlInput' ).value = prevLoadUrl
 } )
 
 window.loadData = async function LoadData( url ) {
   url = url || document.getElementById( 'objectUrlInput' ).value
+  localStorage.setItem( 'prevLoadUrl', url )
   await v.loadObject( url )
 }
 
