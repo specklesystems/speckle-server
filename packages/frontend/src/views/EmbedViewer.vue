@@ -2,9 +2,9 @@
   <v-app class="no-scrollbar">
     <speckle-loading v-if="!stream || error" :error="error" style="z-index: 101" />
     <div v-if="!error" class="no-scrollbar embed-view">
-      <div class="top-left ma-2">
+      <div class="top-left ma-2 d-flex">
         <v-btn
-          small
+          x-small
           outlined
           color="primary"
           elevation="0"
@@ -12,38 +12,20 @@
           target="blank"
         >
           Powered by
-          <img src="@/assets/logo.svg" height="16" />
+          <img src="@/assets/logo.svg" height="10" />
           Speckle
         </v-btn>
       </div>
 
-      <div class="top-right ma-2 d-flex flex-column justify-end">
-        <div class="d-flex justify-end">
-          <v-btn
-            v-if="stream && serverInfo"
-            color="primary"
-            small
-            :href="goToServerUrl"
-            target="blank"
-          >
-            View
-            <em class="pl-1 pr-1">
-              <b>
-                {{ stream.name | truncate }}
-              </b>
-            </em>
-            in
-            <em>{{ serverInfo.name }}</em>
-          </v-btn>
-        </div>
+      <div v-if="stream" class="top-right ma-2 d-flex flex-column justify-end">
         <div class="d-flex">
-          <v-btn-toggle class="pt-2 pr-2 transparent justify-end">
+          <v-btn-toggle class="pb-2 pr-2 transparent justify-end">
             <v-btn x-small class="primary">Stream</v-btn>
             <v-btn x-small>
-              {{ input.stream }}
+              {{ stream.name }}
             </v-btn>
           </v-btn-toggle>
-          <v-btn-toggle class="pt-2 transparent justify-end">
+          <v-btn-toggle v-if="displayType != 'stream'" class="pb-2 pr-2 transparent justify-end">
             <v-btn x-small class="success">
               {{ displayType }}
             </v-btn>
@@ -51,7 +33,24 @@
               {{ input[displayType] | truncate }}
             </v-btn>
           </v-btn-toggle>
+          <v-tooltip bottom max-width="600">
+            <template #activator="{ on, attrs }">
+              <v-btn
+                v-if="stream && serverInfo"
+                color="primary"
+                x-small
+                :href="goToServerUrl"
+                target="blank"
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon small>mdi-open-in-new</v-icon>
+              </v-btn>
+            </template>
+            <span>View stream in {{ serverInfo.name }}</span>
+          </v-tooltip>
         </div>
+        <div class="d-flex justify-end"></div>
       </div>
       <renderer v-if="stream" :object-url="objectUrl" embeded show-selection-helper></renderer>
     </div>
@@ -73,10 +72,11 @@ export default {
   data() {
     return {
       error: null,
+      objectId: this.$route.query.object,
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
-        branch: this.$route.query.branch,
+        branch: this.$route.query.branch || 'main',
         commit: this.$route.query.commit
       }
     }
@@ -104,7 +104,7 @@ export default {
       variables() {
         return {
           id: this.input.stream,
-          branch: this.input.branch || 'main'
+          branch: this.input.branch
         }
       },
       error(err) {
@@ -117,7 +117,8 @@ export default {
           this.error = 'No commit for this branch'
           return data.stream
         }
-        if (this.input.object == undefined) this.input.object = latestCommit.referencedObject
+        if (this.input.object == undefined) this.objectId = latestCommit.referencedObject
+        else this.objectId = this.input.object
         return data.stream
       },
       skip() {
@@ -149,12 +150,9 @@ export default {
         this.error = err.message
       },
       update(data) {
-        var latestCommit = data.stream.commit || data.stream.branch.commits.items[0]
-        if (!latestCommit) {
-          this.error = 'No commit for this branch'
-          return data.stream
-        }
-        if (this.input.object == undefined) this.input.object = latestCommit.referencedObject
+        console.log('received specific comit', data, this.input.object)
+        var latestCommit = data.stream.commit
+        if (this.input.object === undefined) this.objectId = latestCommit.referencedObject
         return data.stream
       },
       skip() {
@@ -181,9 +179,9 @@ export default {
         return 'error'
       }
 
-      if (this.input.branch) return 'branch'
       if (this.input.commit) return 'commit'
       if (this.input.object) return 'object'
+      if (this.input.branch) return 'branch'
 
       return 'stream'
     },
@@ -191,20 +189,21 @@ export default {
       return this.lastCommit || this.specificCommit
     },
     objectUrl() {
-      return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.input.object}`
+      return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.objectId}`
     },
     goToServerUrl() {
       var stream = this.input.stream
       var base = `${window.location.origin}/streams/${stream}/`
 
-      var branch = this.input.branch
-      if (branch) return base + `branches/${encodeURI(branch)}`
-
       var commit = this.input.commit
       if (commit) return base + `commits/${commit}`
 
-      var object = this.input.object
+      var object = this.objectId
       if (object) return base + `objects/${object}`
+
+      var branch = this.input.branch
+      if (branch) return base + `branches/${encodeURI(branch)}`
+
       return base
     }
   },
