@@ -50,7 +50,13 @@ export default class SceneObjectManager {
     } )
 
     this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
-    this.pointMaterial = new THREE.PointsMaterial( { size: 10, sizeAttenuation: false, color: 0x7F7F7F } )
+    this.pointMaterial = new THREE.PointsMaterial(
+      { size: 2, sizeAttenuation: false, color: 0x7F7F7F }
+    )
+
+    this.pointVertexColorsMaterial = new THREE.PointsMaterial( {
+      size: 2, sizeAttenuation: false, vertexColors: true
+    } )
 
     this.objectIds = []
     this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
@@ -64,7 +70,7 @@ export default class SceneObjectManager {
   }
 
   get materials() {
-    return [ this.lineMaterial, this.pointMaterial, this.transparentMaterial, this.solidMaterial, this.solidVertexMaterial ]
+    return [ this.lineMaterial, this.pointMaterial, this.transparentMaterial, this.solidMaterial, this.solidVertexMaterial, this.pointVertexColorsMaterial ]
   }
 
   // Note: we might switch later down the line from cloning materials to solely
@@ -112,7 +118,6 @@ export default class SceneObjectManager {
           this.addSolid( wrapper, material )
         }
       } else if ( wrapper.bufferGeometry.attributes.color ){
-        console.log( wrapper.bufferGeometry )
         this.addSolid( wrapper, this.solidVertexMaterial )
       } else {
         // If we don't have defined material, just use the default
@@ -129,6 +134,10 @@ export default class SceneObjectManager {
 
     case 'point':
       this.addPoint( wrapper )
+      break
+
+    case 'pointcloud':
+      this.addPointCloud( wrapper )
       break
     }
 
@@ -160,11 +169,40 @@ export default class SceneObjectManager {
   }
 
   addPoint( wrapper ){
-    var dot = new THREE.Points( wrapper.bufferGeometry, this.pointMaterial )
+    let dot = new THREE.Points( wrapper.bufferGeometry, this.pointMaterial )
     dot.userData = wrapper.meta
     dot.uuid = wrapper.meta.id
     this.objectIds.push( dot.uuid )
     this.pointObjects.add( dot )
+  }
+
+  addPointCloud( wrapper ) {
+
+    let clouds
+
+    if ( wrapper.bufferGeometry.attributes.color ) {
+
+      clouds = new THREE.Points( wrapper.bufferGeometry, this.pointVertexColorsMaterial )
+    } else if (  wrapper.meta.renderMaterial ) {
+      let renderMat = wrapper.meta.renderMaterial
+      let color = new THREE.Color( this._argbToRGB( renderMat.diffuse ) )
+
+      this._normaliseColor( color )
+      let material = this.pointMaterial.clone()
+      material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+
+      material.color = color
+
+      clouds = new THREE.Points( wrapper.bufferGeometry, material )
+    } else {
+      clouds = new THREE.Points( wrapper.bufferGeometry, this.pointMaterial )
+    }
+
+
+    clouds.userData = wrapper.meta
+    clouds.uuid = wrapper.meta.id
+    this.objectIds.push( clouds.uuid )
+    this.pointObjects.add( clouds )
   }
 
   removeObject( id ) {
