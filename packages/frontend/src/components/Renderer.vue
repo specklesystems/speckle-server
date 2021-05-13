@@ -401,11 +401,15 @@ export default {
       this.namedViews.splice(0, this.namedViews.length)
     },
     copyEmbedUrl() {
-      navigator.clipboard.writeText(this.embedUrl).then(() => console.log('Copied embed URL'))
+      navigator.clipboard.writeText(this.embedUrl).then(() => {
+        //TODO: Show vuetify notification
+      })
     },
     copyIFrame() {
       var frameCode = `<iframe src="${this.embedUrl}" width=600 height=400></iframe>`
-      navigator.clipboard.writeText(frameCode).then(() => console.log('Copied embed URL'))
+      navigator.clipboard.writeText(frameCode).then(() => {
+        //TODO: Show vuetify notification
+      })
     }
   }
 }

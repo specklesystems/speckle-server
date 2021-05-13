@@ -108,7 +108,6 @@ export default {
         }
       },
       error(err) {
-        console.log(err.message)
         this.error = err.message
       },
       update(data) {
@@ -146,11 +145,9 @@ export default {
         }
       },
       error(err) {
-        console.log(err.message)
         this.error = err.message
       },
       update(data) {
-        console.log('received specific comit', data, this.input.object)
         var latestCommit = data.stream.commit
         if (this.input.object === undefined) this.objectId = latestCommit.referencedObject
         return data.stream
@@ -168,7 +165,6 @@ export default {
         }
       `,
       error(err) {
-        console.error(err)
         this.error = err.message
       }
     }
