@@ -17,35 +17,41 @@
         </v-btn>
       </div>
 
-      <div class="top-right ma-2 d-flex">
-        <v-btn
-          small
-          class="mr-5"
-          :class="{
-            success: displayType == 'commit',
-            error: displayType == 'branch',
-            warning: displayType == 'stream',
-            teal: displayType == 'object'
-          }"
-        >
-          {{ displayType }}
-        </v-btn>
-        <v-btn
-          v-if="stream && serverInfo"
-          color="primary"
-          small
-          :href="goToServerUrl"
-          target="blank"
-        >
-          View
-          <em class="pl-1 pr-1">
-            <b>
-              {{ stream.name }}
-            </b>
-          </em>
-          in
-          <em>{{ serverInfo.name }}</em>
-        </v-btn>
+      <div class="top-right ma-2 d-flex flex-column justify-end">
+        <div class="d-flex justify-end">
+          <v-btn
+            v-if="stream && serverInfo"
+            color="primary"
+            small
+            :href="goToServerUrl"
+            target="blank"
+          >
+            View
+            <em class="pl-1 pr-1">
+              <b>
+                {{ stream.name | truncate }}
+              </b>
+            </em>
+            in
+            <em>{{ serverInfo.name }}</em>
+          </v-btn>
+        </div>
+        <div class="d-flex">
+          <v-btn-toggle class="pt-2 pr-2 transparent justify-end">
+            <v-btn x-small class="primary">Stream</v-btn>
+            <v-btn x-small>
+              {{ input.stream }}
+            </v-btn>
+          </v-btn-toggle>
+          <v-btn-toggle class="pt-2 transparent justify-end">
+            <v-btn x-small class="success">
+              {{ displayType }}
+            </v-btn>
+            <v-btn x-small>
+              {{ input[displayType] | truncate }}
+            </v-btn>
+          </v-btn-toggle>
+        </div>
       </div>
       <renderer v-if="stream" :object-url="objectUrl" embeded show-selection-helper></renderer>
     </div>
@@ -59,6 +65,11 @@ import SpeckleLoading from '../components/SpeckleLoading.vue'
 export default {
   name: 'EmbedViewer',
   components: { Renderer, SpeckleLoading },
+  filters: {
+    truncate: function (str, n = 20) {
+      return str.length > n ? str.substr(0, n - 3) + '...' : str
+    }
+  },
   data() {
     return {
       error: null,
