@@ -69,8 +69,8 @@
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
         <!--  -->
-        <v-btn-toggle class="elevation-0">
-          <v-menu v-if="!embeded" top close-on-click offset-y style="z-index: 100">
+        <v-btn-toggle class="elevation-0" style="z-index: 100">
+          <v-menu v-if="!embeded" top close-on-click offset-y>
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
