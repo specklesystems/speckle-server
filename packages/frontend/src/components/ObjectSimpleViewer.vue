@@ -12,10 +12,11 @@
         </v-icon>
       </v-chip>
       <v-btn
+        v-show="forceShowOpenInNew || value.referencedId"
         v-tooltip="`open in a new tab`"
         icon
         small
-        :to="`/streams/${streamId}/objects/${value.referencedId}`"
+        :to="`/streams/${streamId}/objects/${value.id || value.referencedId}`"
       >
         <v-icon small>mdi-open-in-new</v-icon>
       </v-btn>
@@ -52,11 +53,19 @@ export default {
     keyName: {
       type: String,
       default: null
+    },
+    forceShowOpenInNew: {
+      type: Boolean,
+      default: false
+    },
+    forceExpand: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      localExpand: false
+      localExpand: this.forceExpand
     }
   },
   computed: {

@@ -60,7 +60,6 @@
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
                     v-on="{ ...onTooltip, ...onMenu }"
-                    @click="zoomEx()"
                   >
                     <v-icon small>mdi-share-variant</v-icon>
                   </v-btn>
@@ -93,7 +92,6 @@
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
                     v-on="{ ...onTooltip, ...onMenu }"
-                    @click="zoomEx()"
                   >
                     <v-icon small>mdi-camera</v-icon>
                   </v-btn>
@@ -128,7 +126,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" v-on="on" small @click="zoomEx()">
+              <v-btn v-bind="attrs" small v-on="on" @click="zoomEx()">
                 <v-icon small>mdi-cube-scan</v-icon>
               </v-btn>
             </template>
@@ -152,7 +150,7 @@
           </v-tooltip>
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" @click="showHelp = !showHelp" v-on="on" small>
+              <v-btn v-bind="attrs" small @click="showHelp = !showHelp" v-on="on">
                 <v-icon small>mdi-help</v-icon>
               </v-btn>
             </template>
@@ -169,6 +167,8 @@
                     :value="obj"
                     :stream-id="$route.params.streamId"
                     :key-name="`Selected Object ${ind + 1}`"
+                    force-show-open-in-new
+                    force-expand
                   />
                 </div>
               </v-sheet>

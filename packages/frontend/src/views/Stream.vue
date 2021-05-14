@@ -1,5 +1,5 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.lgAndDown">
+  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row v-if="stream">
       <v-col cols="12" sm="12" md="4" lg="3" xl="3">
         <sidebar-stream :user-role="userRole"></sidebar-stream>

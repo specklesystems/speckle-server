@@ -1,5 +1,5 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.lgAndDown">
+  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <user-info-card :user="user" @update="update"></user-info-card>
