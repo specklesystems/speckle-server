@@ -12,17 +12,29 @@ This monorepo is the home of the Speckle 2.0 web packages. If you're looking for
 
 Specifically, this monorepo contains:
 
-### ➡️ [Server](packages/server), the Speckle Server.
+### ➡️ [Server](packages/server), the Speckle Server
 
 The server is a nodejs app. Core external dependencies are a Redis and Postgresql db.
 
-### ➡️ [Frontend](packages/frontend), the Speckle Frontend.
+### ➡️ [Frontend](packages/frontend), the Speckle Frontend
 
 The frontend is a static Vue app.
 
-### ➡️ [Viewer](packages/viewer), the Speckle Viewer.
+### ➡️ [Viewer](packages/viewer), the Speckle Viewer
+
+[![npm version](https://badge.fury.io/js/%40speckle%2Fviewer.svg)](https://www.npmjs.com/package/@speckle/viewer)
 
 The viewer is a [threejs](https://threejs.org/) extension that allows you to display data from Speckle.
+
+### ➡️ [Object Loader](packages/objectloader), a JS helper module 
+
+[![npm version](https://badge.fury.io/js/%40speckle%2Fobjectloader.svg)](https://www.npmjs.com/package/@speckle/objectloader)
+
+A small utility class that helps you stream an object and all its sub-components from the Speckle Server API.
+
+### ➡️ [Preview Service](packages/preview-service), for headlessly generating images for 3d objects
+
+Generates object previews for Speckle Objects. This package is meant to be called on by the server.
 
 ## Documentation
 
