@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <v-card rounded="lg" class="mt-5 mx-5" elevation="0" color="background">

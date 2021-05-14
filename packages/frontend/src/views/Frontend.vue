@@ -1,7 +1,10 @@
 <template>
   <v-app id="speckle">
     <v-app-bar app>
-      <v-container fluid class="py-0 fill-height hidden-sm-and-down">
+      <v-container
+        :fluid="$vuetify.breakpoint.mdAndDown"
+        class="py-0 fill-height hidden-sm-and-down"
+      >
         <v-btn text to="/" active-class="no-active">
           <v-img class="" contain max-height="30" max-width="30" src="@/assets/logo.svg" />
           <div class="logo">
@@ -190,7 +193,8 @@ export default {
   font-size: 1rem;
 }
 
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 1s;
 }
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
