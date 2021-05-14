@@ -60,7 +60,6 @@
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
                     v-on="{ ...onTooltip, ...onMenu }"
-                    @click="zoomEx()"
                   >
                     <v-icon small>mdi-share-variant</v-icon>
                   </v-btn>
@@ -93,7 +92,6 @@
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
                     v-on="{ ...onTooltip, ...onMenu }"
-                    @click="zoomEx()"
                   >
                     <v-icon small>mdi-camera</v-icon>
                   </v-btn>
