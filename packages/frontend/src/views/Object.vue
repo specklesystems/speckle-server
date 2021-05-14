@@ -20,6 +20,8 @@
                 :value="obj"
                 :stream-id="$route.params.streamId"
                 :key-name="`Selected Object ${ind + 1}`"
+                force-show-open-in-new
+                force-expand
               />
             </div>
           </v-sheet>

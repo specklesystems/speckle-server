@@ -57,11 +57,15 @@ export default {
     forceShowOpenInNew: {
       type: Boolean,
       default: false
+    },
+    forceExpand: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      localExpand: false
+      localExpand: this.forceExpand
     }
   },
   computed: {
