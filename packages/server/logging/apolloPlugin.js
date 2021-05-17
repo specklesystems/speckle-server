@@ -17,8 +17,7 @@ module.exports = {
         } )
 
         try {
-          console.log( ctx.operation.operation )
-          console.log( ctx.operation.selectionSet[0] )
+          // console.log( ctx.operation.operation )
           // Filter out subscription ops
           if ( !ctx.operation.operation.toLowerCase().includes( 'subscription' ) ) {
             apolloHelper( `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}` )
