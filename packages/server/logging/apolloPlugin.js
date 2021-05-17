@@ -17,7 +17,11 @@ module.exports = {
         } )
 
         try {
-          apolloHelper( `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}` )
+          // console.log( ctx.operation.operation )
+          // Filter out subscription ops
+          if ( !ctx.operation.operation.toLowerCase().includes( 'subscription' ) ) {
+            apolloHelper( `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}` )
+          }
         } catch ( e ) {
           Sentry.captureException( e )
         }
