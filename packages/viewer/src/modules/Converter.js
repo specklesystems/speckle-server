@@ -125,7 +125,7 @@ export default class Coverter {
    * @return {[type]}     [description]
    */
   async dechunk( arr ) {
-    if ( !arr ) return arr
+    if ( !arr || arr.length === 0 ) return arr
     // Handles pre-chunking objects, or arrs that have not been chunked
     if ( !arr[0].referencedId ) return arr
 
@@ -265,6 +265,7 @@ export default class Coverter {
         'position',
         new THREE.Float32BufferAttribute( conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
 
+
       let colorsRaw = await this.dechunk( obj.colors )
 
       if ( colorsRaw && colorsRaw.length !== 0 ) {
@@ -283,6 +284,7 @@ export default class Coverter {
           buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
         }
       }
+
 
       buffer.computeVertexNormals( )
       buffer.computeFaceNormals( )
