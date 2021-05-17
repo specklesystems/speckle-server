@@ -52,8 +52,8 @@ exports.init = async ( ) => {
     app.use( compression( ) )
   }
 
-  app.use( bodyParser.json( { limit: '10mb' } ) )
-  app.use( bodyParser.urlencoded( { extended: false } ) )
+  app.use( bodyParser.json( { limit: '100mb' } ) )
+  app.use( bodyParser.urlencoded( { limit: '100mb', extended: false } ) )
 
   const { init, graph } = require( './modules' )
 
