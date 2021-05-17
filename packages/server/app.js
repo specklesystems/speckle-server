@@ -36,6 +36,10 @@ exports.init = async ( ) => {
   Logging( app )
   MatStartup()
 
+  // Initialise prometheus metrics
+  prometheusClient.register.clear()
+  prometheusClient.collectDefaultMetrics()
+
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
   await knex.migrate.latest( )
@@ -57,11 +61,15 @@ exports.init = async ( ) => {
   await init( app )
 
   // Initialise graphql server
+  const metricConnectCounter = new prometheusClient.Counter( { name: 'speckle_server_apollo_connect', help: 'Number of connects' } )
+  const metricConnectedClients = new prometheusClient.Gauge( { name: 'speckle_server_apollo_clients', help: 'Number of currently connected clients' } )
   graphqlServer = new ApolloServer( {
     ...graph( ),
     context: contextApiTokenHelper,
     subscriptions: {
       onConnect: ( connectionParams, webSocket, context ) => {
+        metricConnectCounter.inc()
+        metricConnectedClients.inc()
         try {
           if ( connectionParams.Authorization || connectionParams.authorization || connectionParams.headers.Authorization ) {
             let header = connectionParams.Authorization || connectionParams.authorization || connectionParams.headers.Authorization
@@ -73,6 +81,7 @@ exports.init = async ( ) => {
         }
       },
       onDisconnect: ( webSocket, context ) => {
+        metricConnectedClients.dec()
         // debug( `speckle:debug` )( 'ws on disconnect connect event' )
       },
     },
@@ -87,8 +96,6 @@ exports.init = async ( ) => {
   graphqlServer.applyMiddleware( { app: app } )
 
   // Expose prometheus metrics
-  prometheusClient.register.clear()
-  prometheusClient.collectDefaultMetrics()
   app.get( '/metrics', async ( req, res ) => {
     try {
       res.set( 'Content-Type', prometheusClient.register.contentType )
