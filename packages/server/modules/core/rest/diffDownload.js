@@ -29,8 +29,7 @@ module.exports = ( app ) => {
     let currentChunkSize = 0
     let maxChunkSize = 50000
     let chunk = simpleText ? '' : [ ]
-    let isFirst = true
-
+    let isFirstBuffer = true
 
     res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': simpleText ? 'text/plain' : 'application/json' } )
 
@@ -39,18 +38,18 @@ module.exports = ( app ) => {
     if ( !simpleText ) gzip.write( '[' )
 
     // helper func to flush the gzip buffer
-    const writeBuffer = ( addTrailingComma ) => {
-      // console.log( `writing buff ${currentChunkSize}` )
+    const writeBuffer = () => {
       if ( simpleText ) {
         gzip.write( chunk )
       } else {
-        gzip.write( chunk.join( ',' ) )
-        if ( addTrailingComma ) {
+        if ( !isFirstBuffer ) {
           gzip.write( ',' )
         }
+        gzip.write( chunk.join( ',' ) )
       }
       gzip.flush( )
       chunk = simpleText ? '' : [ ]
+      isFirstBuffer = false
     }
 
     let k = 0
@@ -66,7 +65,7 @@ module.exports = ( app ) => {
         }
         if ( currentChunkSize >= maxChunkSize ) {
           currentChunkSize = 0
-          writeBuffer( true )
+          writeBuffer()
         }
         k++
       } catch ( e ) {
@@ -84,9 +83,9 @@ module.exports = ( app ) => {
 
     dbStream.on( 'end', ( ) => {
       if ( currentChunkSize !== 0 ) {
-        writeBuffer( false )
-        if ( !simpleText ) gzip.write( ']' )
+        writeBuffer()
       }
+      if ( !simpleText ) gzip.write( ']' )
       gzip.end( )
     } )
 

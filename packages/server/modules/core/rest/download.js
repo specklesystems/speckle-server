@@ -47,15 +47,14 @@ module.exports = ( app ) => {
     if ( !simpleText ) gzip.write( '[' )
 
     // helper func to flush the gzip buffer
-    const writeBuffer = ( addTrailingComma ) => {
-      // console.log( `writing buff ${currentChunkSize}` )
+    const writeBuffer = ( addStartingComma ) => {
       if ( simpleText ) {
         gzip.write( chunk )
       } else {
-        gzip.write( chunk.join( ',' ) )
-        if ( addTrailingComma ) {
+        if ( addStartingComma ) {
           gzip.write( ',' )
         }
+        gzip.write( chunk.join( ',' ) )
       }
       gzip.flush( )
       chunk = simpleText ? '' : [ ]
@@ -67,7 +66,7 @@ module.exports = ( app ) => {
     } else {
       chunk.push( objString )
     }
-    writeBuffer( true )
+    writeBuffer( false )
 
     let k = 0
     let requestDropped = false
@@ -100,9 +99,9 @@ module.exports = ( app ) => {
 
     dbStream.on( 'end', ( ) => {
       if ( currentChunkSize !== 0 ) {
-        writeBuffer( false )
-        if ( !simpleText ) gzip.write( ']' )
+        writeBuffer( true )
       }
+      if ( !simpleText ) gzip.write( ']' )
       gzip.end( )
     } )
 
