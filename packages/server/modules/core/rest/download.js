@@ -118,6 +118,10 @@ module.exports = ( app ) => {
 
     let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
+    if ( !obj ) {
+      return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+    }
+
     res.send( obj.data )
   } )
 }
