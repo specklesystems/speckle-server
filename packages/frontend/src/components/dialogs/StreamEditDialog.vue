@@ -19,14 +19,12 @@
         />
         <v-switch
           v-model="internalIsPublic"
-          :label="`Link sharing ${internalIsPublic ? 'on' : 'off'}`"
+          :label="`${internalIsPublic ? 'Public stream' : 'Private stream'}`"
         />
-        <p v-if="!internalIsPublic" class="caption">
-          Only collaborators will be able to access this stream.
-        </p>
+        <p v-if="!internalIsPublic" class="caption">Only collaborators can access this stream.</p>
         <p v-else class="caption">
-          Anyone with this link will be able to read this stream. It will also be visible on your
-          profile page.
+          Anyone can view this stream. It is also visible on your profile page. Only collaborators
+          can edit it.
         </p>
       </v-card-text>
       <v-card-actions>

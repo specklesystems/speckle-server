@@ -9,7 +9,7 @@ module.exports = {
     }
   },
   devServer: {
-    host: "localhost",
+    host: 'localhost',
     historyApiFallback: {
       rewrites: [
         { from: /^\/$/, to: '/app.html' },
