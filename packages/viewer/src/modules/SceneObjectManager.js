@@ -81,107 +81,117 @@ export default class SceneObjectManager {
   // and control things separately to squeeze those sweet FPS (esp mobile); but
   // this conflicts a bit with the interactivity requirements of the viewer, esp.
   // the TODO ones (colour by property).
-  addObject( wrapper ) {
+  addObject( wrapper, addToScene = true ) {
     if ( !wrapper || !wrapper.bufferGeometry ) return
 
-
     switch ( wrapper.geometryType ) {
-
     case 'View':
       this.views.push( wrapper.meta )
-      break
+      return null
+    
     case 'solid':
-      // Do we have a defined material?
-      if ( wrapper.meta.renderMaterial ) {
-
-        let renderMat = wrapper.meta.renderMaterial
-        let color = new THREE.Color( this._argbToRGB( renderMat.diffuse ) )
-        this._normaliseColor( color )
-        // Is it a transparent material?
-        if ( renderMat.opacity !== 1 ) {
-          let material = this.transparentMaterial.clone()
-          material.clippingPlanes = this.viewer.interactions.sectionBox.planes
-
-          material.color = color
-          material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
-          this.addTransparentSolid( wrapper, material )
-
-        // It's not a transparent material!
-        } else {
-          let material = this.solidMaterial.clone()
-          material.clippingPlanes = this.viewer.interactions.sectionBox.planes
-
-          material.color = color
-          material.metalness = renderMat.metalness
-          if ( material.metalness !== 0 ) material.roughness = 0.1
-          if ( material.metalness > 0.8 ) material.color = new THREE.Color( '#CDCDCD' ) // hack for rhino metal materials being black FFS
-          this.addSolid( wrapper, material )
-        }
-      } else if ( wrapper.bufferGeometry.attributes.color ){
-        this.addSolid( wrapper, this.solidVertexMaterial )
-      } else {
-        // If we don't have defined material, just use the default
-        let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
-
-        this.addSolid( wrapper, material )
-      }
-      break
+      return this.addSolid( wrapper, addToScene )
 
     case 'line':
-      this.addLine( wrapper )
-      break
+      return this.addLine( wrapper, addToScene )
 
     case 'point':
-      this.addPoint( wrapper )
-      break
+      return this.addPoint( wrapper, addToScene )
 
     case 'pointcloud':
-      this.addPointCloud( wrapper )
-      break
+      return this.addPointCloud( wrapper, addToScene )
+    
+    case 'block':
+      return this.addBlock( wrapper, addToScene )
     }
 
     this.postLoad()
   }
 
-  addSolid( wrapper, material ) {
+  addSolid( wrapper, addToScene = true ) {
+    // Do we have a defined material?
+    if ( wrapper.meta.renderMaterial ) {
+      let renderMat = wrapper.meta.renderMaterial
+      let color = new THREE.Color( this._argbToRGB( renderMat.diffuse ) )
+      this._normaliseColor( color )
+      // Is it a transparent material?
+      if ( renderMat.opacity !== 1 ) {
+        let material = this.transparentMaterial.clone()
+        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+
+        material.color = color
+        material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
+        return this.addSingleTransparentSolid( wrapper, material )
+
+      // It's not a transparent material!
+      } else {
+        let material = this.solidMaterial.clone()
+        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+
+        material.color = color
+        material.metalness = renderMat.metalness
+        if ( material.metalness !== 0 ) material.roughness = 0.1
+        if ( material.metalness > 0.8 ) material.color = new THREE.Color( '#CDCDCD' ) // hack for rhino metal materials being black FFS
+        return this.addSingleSolid( wrapper, material )
+      }
+    } else if ( wrapper.bufferGeometry.attributes.color ){
+      return this.addSingleSolid( wrapper, this.solidVertexMaterial )
+    } else {
+      // If we don't have defined material, just use the default
+      let material = this.solidMaterial.clone()
+      material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+
+      return this.addSingleSolid( wrapper, material )
+    }
+  }
+
+  addSingleSolid( wrapper, material, addToScene = true ) {
     const mesh = new THREE.Mesh( wrapper.bufferGeometry, material ? material : this.solidMaterial )
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
-    this.objectIds.push( mesh.uuid )
-    this.solidObjects.add( mesh )
+    if ( addToScene ) {
+      this.objectIds.push( mesh.uuid )
+      this.solidObjects.add( mesh )
+    }
+    return mesh
   }
 
-  addTransparentSolid( wrapper, material ) {
+  addSingleTransparentSolid( wrapper, material, addToScene = true ) {
     const mesh = new THREE.Mesh( wrapper.bufferGeometry, material ? material : this.transparentMaterial )
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
-    this.objectIds.push( mesh.uuid )
-    this.transparentObjects.add( mesh )
+    if ( addToScene ) {
+      this.objectIds.push( mesh.uuid )
+      this.transparentObjects.add( mesh )
+    }
+    return mesh
   }
 
-  addLine( wrapper ) {
+  addLine( wrapper, addToScene = true ) {
     const line = new THREE.Line( wrapper.bufferGeometry, this.lineMaterial )
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
-    this.objectIds.push( line.uuid )
-    this.lineObjects.add( line )
+    if ( addToScene ) {
+      this.objectIds.push( line.uuid )
+      this.lineObjects.add( line )
+    }
+    return line
   }
 
-  addPoint( wrapper ){
+  addPoint( wrapper, addToScene = true ) {
     let dot = new THREE.Points( wrapper.bufferGeometry, this.pointMaterial )
     dot.userData = wrapper.meta
     dot.uuid = wrapper.meta.id
-    this.objectIds.push( dot.uuid )
-    this.pointObjects.add( dot )
+    if ( addToScene ) {
+      this.objectIds.push( dot.uuid )
+      this.pointObjects.add( dot )
+    }
+    return dot
   }
 
-  addPointCloud( wrapper ) {
-
+  addPointCloud( wrapper, addToScene = true ) {
     let clouds
-
     if ( wrapper.bufferGeometry.attributes.color ) {
-
       clouds = new THREE.Points( wrapper.bufferGeometry, this.pointVertexColorsMaterial )
     } else if (  wrapper.meta.renderMaterial ) {
       let renderMat = wrapper.meta.renderMaterial
@@ -201,8 +211,30 @@ export default class SceneObjectManager {
 
     clouds.userData = wrapper.meta
     clouds.uuid = wrapper.meta.id
-    this.objectIds.push( clouds.uuid )
-    this.pointObjects.add( clouds )
+    if ( addToScene ) {
+      this.objectIds.push( clouds.uuid )
+      this.pointObjects.add( clouds )
+    }
+    return clouds
+  }
+
+  addBlock( wrapper, addToScene = true ) {
+    console.log( wrapper )
+    let group = new THREE.Group()
+    
+    wrapper.bufferGeometry.forEach( g => {
+      let res = this.addObject( g, false )
+      group.add( res ) 
+    } )
+
+    group.applyMatrix4( wrapper.extras.transformMatrix )
+    console.log( group )
+    
+    if ( addToScene ) {
+      this.solidObjects.add( group )
+    }
+
+    return group
   }
 
   removeObject( id ) {

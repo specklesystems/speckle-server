@@ -45,7 +45,7 @@ export default class Coverter {
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
-
+    console.log( type )
     if ( this[`${type}ToBufferGeometry`] ) {
       try {
         callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )
@@ -162,6 +162,31 @@ export default class Coverter {
     return type
   }
 
+  async View3DToBufferGeometry( obj ) {
+    obj.origin.units = obj.units
+    obj.target.units = obj.units
+    let origin = this.PointToVector3( obj.origin )
+    let target = this.PointToVector3( obj.target )
+    obj.origin = origin
+    obj.target = target
+    return new ObjectWrapper( obj, obj, 'View' )
+  }
+
+  async BlockInstanceToBufferGeometry( obj ) {
+    let definition = await this.resolveReference( obj.blockDefinition )
+    const matrix = new THREE.Matrix4().set( ...obj.transform )
+    // matrix.scale() // TODO: scale matrix (account for conversion factor )
+    let geoms = []
+    
+    for ( let obj of definition.geometry ) {
+      let res = await this.convert ( await this.resolveReference( obj ) ) 
+      // res.bufferGeometry.applyMatrix4( matrix ) // bake the matrix transform in the vertices
+      geoms.push( res )
+    }
+
+    return new ObjectWrapper( geoms, null, 'block', { transformMatrix: matrix } )
+  }
+
   async PointcloudToBufferGeometry( obj ) {
 
     let conversionFactor = getConversionFactor( obj.units )
@@ -193,9 +218,9 @@ export default class Coverter {
       }
     }
 
-    delete obj.points
-    delete obj.colors
-    delete obj.sizes // note, these might be used in the future
+    // delete obj.points
+    // delete obj.colors
+    // delete obj.sizes // note, these might be used in the future
 
     return new ObjectWrapper( buffer, obj, 'pointcloud' )
   }
@@ -206,8 +231,8 @@ export default class Coverter {
       let { bufferGeometry } = await this.MeshToBufferGeometry( await this.resolveReference( obj.displayValue || obj.displayMesh ) )
 
       // deletes known uneeded fields
-      delete obj.displayMesh
-      delete obj.displayValue
+      // delete obj.displayMesh
+      // delete obj.displayValue
       delete obj.Edges
       delete obj.Faces
       delete obj.Loops
@@ -222,16 +247,6 @@ export default class Coverter {
       console.warn( `Failed to convert brep id: ${obj.id}` )
       throw e
     }
-  }
-
-  async View3DToBufferGeometry( obj ) {
-    obj.origin.units = obj.units
-    obj.target.units = obj.units
-    let origin = this.PointToVector3( obj.origin )
-    let target = this.PointToVector3( obj.target )
-    obj.origin = origin
-    obj.target = target
-    return new ObjectWrapper( obj, obj, 'View' )
   }
 
   async MeshToBufferGeometry( obj ) {
@@ -290,9 +305,9 @@ export default class Coverter {
       buffer.computeFaceNormals( )
       buffer.computeBoundingSphere( )
 
-      delete obj.vertices
-      delete obj.faces
-      delete obj.colors
+      // delete obj.vertices
+      // delete obj.faces
+      // delete obj.colors
 
       return new ObjectWrapper( buffer, obj )
     } catch ( e ) {
@@ -301,27 +316,13 @@ export default class Coverter {
     }
   }
 
-  PointToVector3( obj ) {
-    let conversionFactor = getConversionFactor( obj.units )
-    let v = null
-    if ( obj.value ) {
-      // Old point format based on value list
-      v = new THREE.Vector3( obj.value[0]* conversionFactor,obj.value[1]* conversionFactor,obj.value[2] * conversionFactor )
-    } else {
-      // New point format based on cartesian coords
-      v = new THREE.Vector3( obj.x * conversionFactor, obj.y * conversionFactor, obj.z * conversionFactor )
-    }
-    return v
-  }
-
-  // TODOs:
   async PointToBufferGeometry( obj ) {
     let v = this.PointToVector3( obj )
     let buf = new THREE.BufferGeometry().setFromPoints( [ v ] )
 
-    delete obj.value
-    delete obj.speckle_type
-    delete obj.bbox
+    // delete obj.value
+    // delete obj.speckle_type
+    // delete obj.bbox
 
     return new ObjectWrapper( buf, obj, 'point' )
   }
@@ -334,10 +335,10 @@ export default class Coverter {
     let obj = {}
     Object.assign( obj, object )
 
-    delete object.start
-    delete object.end
-    delete object.speckle_type
-    delete object.bbox
+    // delete object.start
+    // delete object.end
+    // delete object.speckle_type
+    // delete object.bbox
 
     const geometry = new THREE.BufferGeometry().setFromPoints( [ this.PointToVector3( obj.start ), this.PointToVector3( obj.end ) ] )
 
@@ -348,9 +349,9 @@ export default class Coverter {
     let obj = {}
     Object.assign( obj, object )
 
-    delete object.value
-    delete object.speckle_type
-    delete object.bbox
+    // delete object.value
+    // delete object.speckle_type
+    // delete object.bbox
 
     let conversionFactor = getConversionFactor( obj.units )
 
@@ -375,11 +376,11 @@ export default class Coverter {
     let obj = {}
     Object.assign( obj, object )
 
-    delete object.value
-    delete object.speckle_type
-    delete object.displayValue
-    delete object.segments
-    delete object.bbox
+    // delete object.value
+    // delete object.speckle_type
+    // delete object.displayValue
+    // delete object.segments
+    // delete object.bbox
 
     let buffers = []
     for ( let i = 0; i < obj.segments.length; i++ ) {
@@ -389,9 +390,9 @@ export default class Coverter {
     }
     let geometry = BufferGeometryUtils.mergeBufferGeometries( buffers )
 
-    delete obj.segments
-    delete obj.speckle_type
-    delete obj.bbox
+    // delete obj.segments
+    // delete obj.speckle_type
+    // delete obj.bbox
 
     return new ObjectWrapper( geometry , obj, 'line' )
   }
@@ -401,10 +402,10 @@ export default class Coverter {
     let obj = {}
     Object.assign( obj, object )
 
-    delete object.value
-    delete object.speckle_type
-    delete object.displayValue
-    delete object.bbox
+    // delete object.value
+    // delete object.speckle_type
+    // delete object.displayValue
+    // delete object.bbox
 
     obj.weights = await this.dechunk( object.weights )
     obj.knots = await this.dechunk( object.knots )
@@ -412,12 +413,12 @@ export default class Coverter {
 
     const poly = await this.PolylineToBufferGeometry( obj.displayValue )
 
-    delete obj.speckle_type
-    delete obj.displayValue
-    delete obj.points
-    delete obj.weights
-    delete obj.knots
-    delete obj.bbox
+    // delete obj.speckle_type
+    // delete obj.displayValue
+    // delete obj.points
+    // delete obj.weights
+    // delete obj.knots
+    // delete obj.bbox
 
     return new ObjectWrapper( poly.bufferGeometry, obj, 'line' )
   }
@@ -427,22 +428,12 @@ export default class Coverter {
     const points = this.getCircularCurvePoints( obj.plane, obj.radius * conversionFactor )
     const geometry = new THREE.BufferGeometry().setFromPoints( points )
 
-    delete obj.plane
-    delete obj.value
-    delete obj.speckle_type
-    delete obj.bbox
+    // delete obj.plane
+    // delete obj.value
+    // delete obj.speckle_type
+    // delete obj.bbox
 
     return new ObjectWrapper( geometry, obj, 'line' )
-  }
-
-  PlaneToMatrix4( plane ){
-    const m = new THREE.Matrix4()
-    let conversionFactor = getConversionFactor( plane.units )
-
-    m.makeBasis( this.PointToVector3( plane.xdir ).normalize(), this.PointToVector3( plane.ydir ).normalize(), this.PointToVector3( plane.normal ).normalize() )
-    m.setPosition( this.PointToVector3( plane.origin ) )
-    m.scale( new THREE.Vector3( conversionFactor,conversionFactor,conversionFactor ) )
-    return m
   }
 
   async ArcToBufferGeometry( obj ) {
@@ -460,14 +451,57 @@ export default class Coverter {
     )
     const points = curve.getPoints( 50 )
     const geometry = new THREE.BufferGeometry().setFromPoints( points ).applyMatrix4( this.PlaneToMatrix4( obj.plane ) )
-    delete obj.speckle_type
-    delete obj.startPoint
-    delete obj.endPoint
-    delete obj.plane
-    delete obj.midPoint
-    delete obj.bbox
+
+    // delete obj.speckle_type
+    // delete obj.startPoint
+    // delete obj.endPoint
+    // delete obj.plane
+    // delete obj.midPoint
+    // delete obj.bbox
 
     return new ObjectWrapper( geometry, obj, 'line' )
+  }
+
+  async EllipseToBufferGeometry( obj ) {
+    const conversionFactor = getConversionFactor( obj.units )
+
+    const center = new THREE.Vector3( obj.plane.origin.x  ,obj.plane.origin.y ,obj.plane.origin.z   ).multiplyScalar( conversionFactor )
+    const xAxis = new THREE.Vector3( obj.plane.xdir.x,obj.plane.xdir.y,obj.plane.xdir.z ).normalize()
+    const yAxis = new THREE.Vector3( obj.plane.ydir.x ,obj.plane.ydir.y,obj.plane.ydir.z  ).normalize()
+
+
+    let resolution = 2 * Math.PI * obj.firstRadius * conversionFactor * 10
+    resolution = parseInt( resolution.toString() )
+    let points = []
+
+    for ( let index = 0; index <= resolution; index++ ) {
+      let t = index * Math.PI * 2 / resolution
+      let x = Math.cos( t ) * obj.firstRadius * conversionFactor
+      let y = Math.sin( t ) * obj.secondRadius * conversionFactor
+      const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
+      const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
+
+      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
+      points.push( pt )
+    }
+
+    const geometry = new THREE.BufferGeometry().setFromPoints( points )
+
+    // delete obj.value
+    // delete obj.speckle_type
+    // delete obj.plane
+
+    return new ObjectWrapper( geometry, obj, 'line' )
+  }
+
+  PlaneToMatrix4( plane ){
+    const m = new THREE.Matrix4()
+    let conversionFactor = getConversionFactor( plane.units )
+
+    m.makeBasis( this.PointToVector3( plane.xdir ).normalize(), this.PointToVector3( plane.ydir ).normalize(), this.PointToVector3( plane.normal ).normalize() )
+    m.setPosition( this.PointToVector3( plane.origin ) )
+    m.scale( new THREE.Vector3( conversionFactor, conversionFactor, conversionFactor ) )
+    return m
   }
 
   getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
@@ -501,35 +535,17 @@ export default class Coverter {
     return points
   }
 
-  async EllipseToBufferGeometry( obj ) {
-    const conversionFactor = getConversionFactor( obj.units )
-
-    const center = new THREE.Vector3( obj.plane.origin.x  ,obj.plane.origin.y ,obj.plane.origin.z   ).multiplyScalar( conversionFactor )
-    const xAxis = new THREE.Vector3( obj.plane.xdir.x,obj.plane.xdir.y,obj.plane.xdir.z ).normalize()
-    const yAxis = new THREE.Vector3( obj.plane.ydir.x ,obj.plane.ydir.y,obj.plane.ydir.z  ).normalize()
-
-
-    let resolution = 2 * Math.PI * obj.firstRadius * conversionFactor * 10
-    resolution = parseInt( resolution.toString() )
-    let points = []
-
-    for ( let index = 0; index <= resolution; index++ ) {
-      let t = index * Math.PI * 2 / resolution
-      let x = Math.cos( t ) * obj.firstRadius * conversionFactor
-      let y = Math.sin( t ) * obj.secondRadius * conversionFactor
-      const xMove = new THREE.Vector3( xAxis.x * x, xAxis.y * x, xAxis.z * x )
-      const yMove = new THREE.Vector3( yAxis.x * y, yAxis.y * y, yAxis.z * y )
-
-      let pt = new THREE.Vector3().addVectors( xMove, yMove ).add( center )
-      points.push( pt )
+  PointToVector3( obj ) {
+    let conversionFactor = getConversionFactor( obj.units )
+    let v = null
+    if ( obj.value ) {
+      // Old point format based on value list
+      v = new THREE.Vector3( obj.value[0]* conversionFactor,obj.value[1]* conversionFactor,obj.value[2] * conversionFactor )
+    } else {
+      // New point format based on cartesian coords
+      v = new THREE.Vector3( obj.x * conversionFactor, obj.y * conversionFactor, obj.z * conversionFactor )
     }
-
-    const geometry = new THREE.BufferGeometry().setFromPoints( points )
-
-    delete obj.value
-    delete obj.speckle_type
-    delete obj.plane
-
-    return new ObjectWrapper( geometry, obj, 'line' )
+    return v
   }
+
 }
