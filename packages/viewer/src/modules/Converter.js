@@ -381,11 +381,7 @@ export default class Coverter {
   async CurveToBufferGeometry( object, scale = true ) {
     let obj = {}
     Object.assign( obj, object )
-
-    obj.weights = await this.dechunk( object.weights )
-    obj.knots = await this.dechunk( object.knots )
-    obj.points = await this.dechunk( object.points )
-
+    obj.displayValue.units = obj.displayValue.units || obj.units
     const poly = await this.PolylineToBufferGeometry( obj.displayValue, scale )
 
     return new ObjectWrapper( poly.bufferGeometry, obj, 'line' )
