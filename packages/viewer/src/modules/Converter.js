@@ -45,7 +45,7 @@ export default class Coverter {
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
-    console.log( type )
+    
     if ( this[`${type}ToBufferGeometry`] ) {
       try {
         callback( await this[`${type}ToBufferGeometry`]( obj.data || obj ) )

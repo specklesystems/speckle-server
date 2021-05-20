@@ -50,13 +50,11 @@ export default class InteractionHandler {
     }
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
-    console.log( objs )
+
     
     let selType = objs[0].object.type
     
     if ( objs[0].object.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
-      // TODO: handle block selection
-      console.log( 'IT\'S A BLOCK SELECTION!' )
       selType = 'Block'
     }
 
