@@ -208,7 +208,6 @@ export default class SceneObjectManager {
       clouds = new THREE.Points( wrapper.bufferGeometry, this.pointMaterial )
     }
 
-
     clouds.userData = wrapper.meta
     clouds.uuid = wrapper.meta.id
     if ( addToScene ) {
@@ -220,6 +219,7 @@ export default class SceneObjectManager {
 
   addBlock( wrapper, addToScene = true ) {
     console.log( wrapper )
+    
     let group = new THREE.Group()
     
     wrapper.bufferGeometry.forEach( g => {
@@ -228,9 +228,11 @@ export default class SceneObjectManager {
     } )
 
     group.applyMatrix4( wrapper.extras.transformMatrix )
-    console.log( group )
+    group.uuid = wrapper.meta.id
+    group.userData = wrapper.meta
     
     if ( addToScene ) {
+      this.objectIds.push()
       this.solidObjects.add( group )
     }
 

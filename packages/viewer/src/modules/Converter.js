@@ -180,11 +180,13 @@ export default class Coverter {
     
     for ( let obj of definition.geometry ) {
       let res = await this.convert ( await this.resolveReference( obj ) ) 
-      // res.bufferGeometry.applyMatrix4( matrix ) // bake the matrix transform in the vertices
+      // We are not baking the matrix transform in the vertices so as to allow
+      // for easy composed transforms coming in at nested block levels
+      // res.bufferGeometry.applyMatrix4( matrix ) 
       geoms.push( res )
     }
 
-    return new ObjectWrapper( geoms, null, 'block', { transformMatrix: matrix } )
+    return new ObjectWrapper( geoms, obj, 'block', { transformMatrix: matrix } )
   }
 
   async PointcloudToBufferGeometry( obj ) {
