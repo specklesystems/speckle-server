@@ -230,6 +230,8 @@ export default class SceneObjectManager {
     group.userData = wrapper.meta
 
     if ( addToScene ) {
+      // Note: only apply the scale transform if this block is going to be added to the scene. otherwise it means it's a child of a nested block.
+      group.applyMatrix4( wrapper.extras.scaleMatrix )
       this.objectIds.push()
       this.solidObjects.add( group )
     }
