@@ -16,7 +16,7 @@ window.addEventListener( 'load', () => {
 window.loadData = async function LoadData( url ) {
   url = url || document.getElementById( 'objectUrlInput' ).value
   localStorage.setItem( 'prevLoadUrl', url )
-  await v.loadObject( url, 'e27b62caf71be9852c35983b6a58b264cad5301ba3' )
+  await v.loadObject( url )
 }
 
 v.on( 'select', objects => {
