@@ -25,17 +25,17 @@
                 <template #activator="{ on, attrs }">
                   <v-btn
                     v-if="stream && serverInfo"
-                    color="primary"
+                    color="secondary"
                     x-small
                     v-bind="attrs"
+                    class="mr-2"
                     @click="hideDetails = !hideDetails"
                     v-on="on"
-                    class="mr-2"
                   >
-                    <v-icon small>mdi-eye</v-icon>
+                    <v-icon small>{{ hideDetails ? 'mdi-eye-off' : 'mdi-eye' }}</v-icon>
                   </v-btn>
                 </template>
-                <span>Show stream details</span>
+                <span>{{ hideDetails ? 'Show' : 'Hide' }} stream details</span>
               </v-tooltip>
             </div>
             <div
