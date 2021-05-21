@@ -75,7 +75,7 @@
           <v-icon small>mdi-lock-open-variant-outline</v-icon>
           &nbsp; public
         </span>
-        <span v-else v-tooltip="`Only you and collaborators can access this stream.`">
+        <span v-else v-tooltip="`Only collaborators can access this stream.`">
           <v-icon small>mdi-lock-outline</v-icon>
           &nbsp; private
         </span>
