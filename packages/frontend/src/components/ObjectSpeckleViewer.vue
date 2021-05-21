@@ -11,7 +11,13 @@
           {{ localExpand ? 'mdi-minus' : 'mdi-plus' }}
         </v-icon>
       </v-chip>
-      <v-btn icon small :to="`/streams/${streamId}/objects/${value.referencedId}`" v-tooltip="`open in a new tab`">
+      <v-btn
+        v-tooltip="`open in a new tab`"
+        icon
+        small
+        :to="`/streams/${streamId}/objects/${value.referencedId}`"
+        target="_blank"
+      >
         <v-icon small>mdi-open-in-new</v-icon>
       </v-btn>
     </v-card-title>
@@ -24,7 +30,13 @@
           {{ localExpand ? 'mdi-minus' : 'mdi-plus' }}
         </v-icon>
       </v-chip>
-      <v-btn icon small :to="`/streams/${streamId}/objects/${value.referencedId}`" v-tooltip="`open in a new tab`">
+      <v-btn
+        v-tooltip="`open in a new tab`"
+        icon
+        small
+        target="_blank"
+        :to="`/streams/${streamId}/objects/${value.referencedId}`"
+      >
         <v-icon small>mdi-open-in-new</v-icon>
       </v-btn>
     </v-card-title>

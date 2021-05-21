@@ -16,6 +16,7 @@
         v-tooltip="`open in a new tab`"
         icon
         small
+        target="_blank"
         :to="`/streams/${streamId}/objects/${value.id || value.referencedId}`"
       >
         <v-icon small>mdi-open-in-new</v-icon>
