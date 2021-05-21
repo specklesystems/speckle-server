@@ -19,20 +19,49 @@
 
       <div v-if="stream" class="top-right ma-2 d-flex flex-column justify-end">
         <div class="d-flex">
-          <v-btn-toggle class="pb-2 pr-2 transparent justify-end">
-            <v-btn x-small class="primary">Stream</v-btn>
-            <v-btn x-small>
-              {{ stream.name }}
-            </v-btn>
-          </v-btn-toggle>
-          <v-btn-toggle v-if="displayType != 'stream'" class="pb-2 pr-2 transparent justify-end">
-            <v-btn x-small class="success">
-              {{ displayType }}
-            </v-btn>
-            <v-btn x-small>
-              {{ input[displayType] | truncate }}
-            </v-btn>
-          </v-btn-toggle>
+          <div class="d-flex" :class="{ 'flex-column': isSmall, 'flex-row-reverse': !isSmall }">
+            <div class="d-flex justify-end">
+              <v-tooltip bottom max-width="600">
+                <template #activator="{ on, attrs }">
+                  <v-btn
+                    v-if="stream && serverInfo"
+                    color="primary"
+                    x-small
+                    v-bind="attrs"
+                    @click="hideDetails = !hideDetails"
+                    v-on="on"
+                    class="mr-2"
+                  >
+                    <v-icon small>mdi-eye</v-icon>
+                  </v-btn>
+                </template>
+                <span>Show stream details</span>
+              </v-tooltip>
+            </div>
+            <div
+              v-if="!hideDetails"
+              class="d-flex"
+              :class="isSmall ? 'flex-column align-start mt-2' : null"
+            >
+              <v-btn-toggle class="pb-2 pr-2 transparent justify-end no-events">
+                <v-btn x-small class="primary">Stream</v-btn>
+                <v-btn x-small>
+                  {{ stream.name | truncate }}
+                </v-btn>
+              </v-btn-toggle>
+              <v-btn-toggle
+                v-if="displayType != 'stream'"
+                class="pb-2 pr-2 transparent justify-end no-events"
+              >
+                <v-btn x-small class="success">
+                  {{ displayType }}
+                </v-btn>
+                <v-btn x-small>
+                  {{ input[displayType] | truncate }}
+                </v-btn>
+              </v-btn-toggle>
+            </div>
+          </div>
           <v-tooltip bottom max-width="600">
             <template #activator="{ on, attrs }">
               <v-btn
@@ -71,6 +100,7 @@ export default {
   },
   data() {
     return {
+      hideDetails: false,
       error: null,
       objectId: this.$route.query.object,
       input: {
@@ -170,6 +200,9 @@ export default {
     }
   },
   computed: {
+    isSmall() {
+      return this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
+    },
     displayType() {
       if (!this.input.stream) {
         return 'error'
@@ -211,6 +244,10 @@ export default {
       }
     }
   },
+  mounted() {
+    // Hide details by default if screen is small or tiny
+    if (this.isSmall) this.hideDetails = true
+  },
   methods: {}
 }
 </script>
@@ -233,5 +270,9 @@ body::-webkit-scrollbar {
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+.no-events {
+  pointer-events: none;
 }
 </style>
