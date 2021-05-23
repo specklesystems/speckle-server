@@ -47,6 +47,10 @@ Please make sure you read the [contribution guidelines](.github/CONTRIBUTING.md)
 
 The Speckle Community hangs out on [the forum](https://discourse.speckle.works), do join and introduce yourself & feel free to ask us questions!
 
+## Security
+
+For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems. 
+
 ## License
 
 Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different license file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via [email](mailto:hello@speckle.systems).
