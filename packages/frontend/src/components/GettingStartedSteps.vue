@@ -40,7 +40,7 @@
               <p>Note: Currently, we only support Windows.</p>
               <v-btn
                 block
-                x-large
+                :x-large="!hasClickedDownload"
                 elevation="10"
                 class="mb-4"
                 :color="hasClickedDownload ? '' : 'primary'"
@@ -76,7 +76,7 @@
               </p>
               <v-btn
                 block
-                x-large
+                :x-large="hasClickedAddAccount === 0"
                 class="mb-4"
                 elevation="10"
                 :color="hasClickedAddAccount !== 0 ? '' : 'primary'"
