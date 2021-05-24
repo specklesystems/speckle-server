@@ -2,7 +2,7 @@ const Matomo = require ( 'matomo-tracker' )
 const { machineIdSync } = require( 'node-machine-id' )
 
 const id = machineIdSync( )
-const mat = new Matomo( 7, 'https://speckle.matomo.cloud/matomo.php' )
+const mat = new Matomo( 1, 'https://arupdt.matomo.cloud/matomo.php' )
 
 module.exports = {
   startup() {
@@ -12,7 +12,7 @@ module.exports = {
         action_name: 'startup',
         uid: id,
         cip: id,
-        token_auth: '8402f0bdd767c74cce86f710fe830a2c'
+        token_auth: process.env.TOKEN_AUTH
       } )
     }
   },
@@ -23,7 +23,7 @@ module.exports = {
         action_name: actionName || 'gql api call',
         cip: id,
         uid: id,
-        token_auth: '8402f0bdd767c74cce86f710fe830a2c'
+        token_auth: process.env.TOKEN_AUTH
       } )
     }
   },
@@ -37,7 +37,7 @@ module.exports = {
         cvar: JSON.stringify( {
           '1': [ 'HTTP method', req.method ]
         } ),
-        token_auth: '8402f0bdd767c74cce86f710fe830a2c'
+        token_auth: process.env.TOKEN_AUTH
       } )
     }
     next()
