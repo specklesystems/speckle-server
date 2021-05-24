@@ -24,7 +24,7 @@ Vue.use(VTooltip, { defaultDelay: 300 })
 import VueMatomo from 'vue-matomo'
 
 Vue.use(VueMatomo, {
-  host: 'https://speckle.matomo.cloud',
+  host: 'https://arupdt.matomo.cloud',
   siteId: 4,
   router: router,
   userId: localStorage.getItem('suuid')
