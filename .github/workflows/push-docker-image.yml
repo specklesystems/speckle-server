@@ -1,0 +1,47 @@
+
+name: Push Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ['server', 'frontend', 'preview-service']
+        include:
+          - package: 'server'
+            cxName: 'spec-cx-server'
+          - package: 'frontend'
+            cxName: 'spec-cx-frontend'
+          - package: 'preview-service'
+            cxName: 'spec-cx-preview'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ matrix.cxName }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f packages/${{ matrix.package }}/Dockerfile .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
