@@ -90,6 +90,7 @@
         <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
         Edit
       </v-btn>
+
       <v-dialog v-model="editStreamDialog" max-width="500">
         <stream-edit-dialog
           :stream-id="stream.id"
@@ -99,6 +100,10 @@
           @close="editClosed"
         />
       </v-dialog>
+    </v-card-text>
+
+    <v-card-text v-show="isHomeRoute">
+      <v-btn :to="`/streams/${stream.id}/globals`">Globals</v-btn>
     </v-card-text>
 
     <v-card-title v-show="isHomeRoute"><h5>Collaborators</h5></v-card-title>

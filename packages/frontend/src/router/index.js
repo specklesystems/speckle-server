@@ -84,8 +84,16 @@ const routes = [
             component: () => import('../views/StreamMain.vue')
           },
           {
+            path: 'globals/',
+            name: 'globals',
+            meta: {
+              title: 'Globals | Speckle'
+            },
+            component: () => import('../views/Globals.vue')
+          },
+          {
             path: 'branches/',
-            name: 'branchs',
+            name: 'branches',
             meta: {
               title: 'Branches | Speckle'
             },
