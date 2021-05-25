@@ -26,11 +26,62 @@ export default class ObjectLoader {
     this.promises = []
     this.intervals = {}
     this.buffer = []
+    this.isLoading = false
+    this.totalChildrenCount = 0
+    this.traversedReferencesCount = 0
   }
 
   dispose() {
     this.buffer = []
     this.intervals.forEach( i => clearInterval( i.interval ) )
+  }
+
+  async getAndConstructObject( onProgress ) {
+    
+    ;( await this.downloadObjectsInBuffer( onProgress ) ) // Fire and forget
+    
+    let rootObject = await this.getObject( this.objectId )
+
+    return this.traverseAndConstruct( rootObject, onProgress )
+  }
+
+  async downloadObjectsInBuffer( onProgress ) {
+    let first = true
+    let downloadNum = 0
+    
+    for await ( let obj of this.getObjectIterator() ) {
+      if( first ) {
+        this.totalChildrenCount = obj.totalChildrenCount
+        first = false
+        this.isLoading = true
+      }
+      downloadNum++
+      if( onProgress ) onProgress( { stage: 'download', current: downloadNum, total: this.totalChildrenCount } )
+    }
+    this.isLoading = false
+  }
+
+  async traverseAndConstruct( obj, onProgress ) {
+    if( !obj ) return
+     
+    if ( Array.isArray( obj ) &&  obj.length !== 0 ) { 
+       // TODO: traverse array
+     }
+
+    for( let prop in obj ) {
+      
+      if ( typeof obj[prop] !== 'object' ) continue
+      
+      if( obj[prop].referencedId ) {
+        obj[prop] = await this.getObject( obj[prop].referencedId )
+        this.traversedReferencesCount++
+        if(onProgress) onProgress({ stage: 'construction', current: this.traversedReferencesCount, total: this.totalChildrenCount })
+      }
+
+      obj[prop] = await this.traverseAndConstruct( obj[prop], onProgress )
+    }
+
+     return obj
   }
 
   async getObject( id ){
@@ -97,8 +148,8 @@ export default class ObjectLoader {
       let result = re.exec( chunk )
       if ( !result ) {
         if ( readerDone ) break
-        let remainder = chunk.substr( startIndex );
-        ( { value: chunk, done: readerDone } = await reader.read() )
+        let remainder = chunk.substr( startIndex ) 
+        ;( { value: chunk, done: readerDone } = await reader.read() ) // semicolon of doom
         chunk = remainder + ( chunk ? decoder.decode( chunk ) : '' )
         startIndex = re.lastIndex = 0
         continue
