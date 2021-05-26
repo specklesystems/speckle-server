@@ -36,7 +36,6 @@ export default class ObjectLoader {
     this.totalChildrenCount = 0
     this.traversedReferencesCount = 0
     this.options = options
-    console.log(options)
   }
 
   dispose() {
