@@ -56,7 +56,7 @@ export default {
       if (appname.includes('rhino')) return 'RH'
       if (appname.includes('grasshopper')) return 'GH'
       if (appname.includes('excel')) return 'XLSX'
-      return '?'
+      return appname
     }
   }
 }
