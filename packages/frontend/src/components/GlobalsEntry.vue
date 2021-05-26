@@ -2,33 +2,31 @@
   <v-container>
     <draggable :list="entries" class="dragArea" tag="ul" group="globals" @change="log">
       <div v-for="(entry, index) in entries" :key="index">
-        <div v-if="!entry.globals">
-          <v-row>
-            <v-col cols="12" sm="3">
-              <v-text-field v-model="entry.key" filled rounded />
-            </v-col>
-            <v-col cols="12" sm="8">
-              <v-text-field v-model="entry.value" />
-            </v-col>
-            <v-col cols="12" sm="1">
-              <v-btn icon x-small @click="fieldToObject(index, entry)">
-                <v-icon>mdi-cube-outline</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </div>
+        <v-row v-if="!entry.globals">
+          <v-col cols="12" sm="4">
+            <v-text-field v-model="entry.key" filled rounded />
+          </v-col>
+          <v-col cols="12" sm="7">
+            <v-text-field v-model="entry.value" />
+          </v-col>
+          <v-col cols="12" sm="1">
+            <v-btn icon x-small @click="emitFieldToObject(entry, index)">
+              <v-icon>mdi-cube-outline</v-icon>
+            </v-btn>
+          </v-col>
+        </v-row>
         <v-card v-if="entry.globals" rounded="lg" class="pa-4 mb-4" elevation="4">
           <v-row>
             <v-col>
               <b>{{ entry.key }}</b>
             </v-col>
             <v-col cols="auto">
-              <v-btn icon x-small @click="objectToField(entry)">
+              <v-btn icon x-small @click="emitObjectToField(entry, index)">
                 <v-icon>mdi-compare-horizontal</v-icon>
               </v-btn>
             </v-col>
           </v-row>
-          <globals-entry :entries="entry.globals" />
+          <globals-entry :entries="entry.globals" :path="[...path, entry.key]" v-on="$listeners" />
         </v-card>
       </div>
     </draggable>
@@ -39,7 +37,7 @@
       aria-label="Basic example"
       key="footer"
     >
-      <v-btn color="primary" rounded @click="addProp">Add</v-btn>
+      <v-btn color="primary" rounded @click="emitAddProp">Add</v-btn>
     </div>
   </v-container>
 </template>
@@ -54,6 +52,10 @@ export default {
       type: Array,
       default: null
     },
+    path: {
+      type: Array,
+      default: null
+    },
     streamId: {
       type: String,
       default: null
@@ -64,18 +66,19 @@ export default {
     log(evt) {
       window.console.log(evt)
     },
-    //TODO: do thi with `emit` bc this is bad tsk tsk i was just experimenting soz 🥺
-    addProp() {
-      this.entries.push({
+    emitAddProp() {
+      let field = {
         key: `placeholder ${~~(Math.random() * 100)}`,
         type: 'field',
         value: 'random stuff'
-      })
+      }
+      this.$emit('add-prop', { field: field, path: this.path })
     },
-    removeAt(index) {
-      this.entries.splice(index, 1)
+    emitRemoveAt(index) {
+      this.$emit('remove-prop', { path: this.path, index: index })
     },
-    fieldToObject(index, entry) {
+    emitFieldToObject(entry, index) {
+      console.log('in field to obj')
       let obj = {
         key: entry.key,
         type: 'object',
@@ -83,9 +86,12 @@ export default {
           { key: `placeholder ${~~(Math.random() * 100)}`, type: 'field', value: entry.value }
         ]
       }
-      this.entries[index] = obj
+      this.$emit('field-to-object', { obj: obj, path: this.path, index: index })
     },
-    objectToField(entry) {}
+    emitObjectToField(entry, index) {
+      let fields = entry.globals
+      this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
+    }
   }
 }
 </script>
