@@ -7,6 +7,10 @@
 
 export default class ObjectLoader {
 
+  /**
+   * Creates a new object loader instance.
+   * @param {*} param0 
+   */
   constructor( { serverUrl, streamId, token, objectId, options = { fullyTraverseArrays: false, excludeProps: [ ] } } ) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
@@ -40,6 +44,11 @@ export default class ObjectLoader {
     this.intervals.forEach( i => clearInterval( i.interval ) )
   }
 
+  /**
+   * Use this method to receive and construct the object. It will return the full, de-referenced and de-chunked original object.
+   * @param {*} onProgress 
+   * @returns 
+   */
   async getAndConstructObject( onProgress ) {
     
     ;( await this.downloadObjectsInBuffer( onProgress ) ) // Fire and forget; PS: semicolon of doom
@@ -48,6 +57,10 @@ export default class ObjectLoader {
     return this.traverseAndConstruct( rootObject, onProgress )
   }
 
+  /**
+   * Internal function used to download all the objects in a local buffer.
+   * @param {*} onProgress 
+   */
   async downloadObjectsInBuffer( onProgress ) {
     let first = true
     let downloadNum = 0
@@ -64,6 +77,12 @@ export default class ObjectLoader {
     this.isLoading = false
   }
 
+  /**
+   * Internal function used to recursively traverse an object and populate its references and dechunk any arrays.
+   * @param {*} obj 
+   * @param {*} onProgress 
+   * @returns 
+   */
   async traverseAndConstruct( obj, onProgress ) {
     if( !obj ) return
     if ( typeof obj !== 'object' ) return obj
@@ -111,6 +130,11 @@ export default class ObjectLoader {
      return obj
   }
 
+  /**
+   * Internal function. Returns a promise that is resolved when the object id is loaded into the internal buffer.
+   * @param {*} id 
+   * @returns 
+   */
   async getObject( id ){
     if ( this.buffer[id] ) return this.buffer[id]
 

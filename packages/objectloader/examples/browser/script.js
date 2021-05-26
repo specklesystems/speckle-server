@@ -23,9 +23,11 @@ let loader = new ObjectLoader({
 
 
 window.loadData = async function loadData() {
+  
   let obj = await loader.getAndConstructObject((e) =>{
-    console.log(e)
+    console.log(e) // log progress!
   })
+
   console.log('Done!')
   console.log( obj )
 }
