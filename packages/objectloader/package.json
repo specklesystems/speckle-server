@@ -4,6 +4,7 @@
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "index.js",
   "homepage": "https://speckle.systems",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/specklesystems/speckle-server.git",
