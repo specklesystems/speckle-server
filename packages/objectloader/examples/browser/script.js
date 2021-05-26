@@ -1,4 +1,4 @@
-import ObjectLoader from './index.js'
+import ObjectLoader from '../../index.js'
 window.ObjectLoader = ObjectLoader
 
 // let loader = new ObjectLoader({serverUrl:"https://latest.speckle.dev", streamId:"16d73b756a", objectId:"99b20746460c4369f25e08e92c988a9d"})
@@ -23,10 +23,6 @@ let loader = new ObjectLoader({
 
 
 window.loadData = async function loadData() {
-  // let test = await loader.downloadObjectsInBuffer((e) =>{
-  //   console.log(e)
-  // })
-
   let obj = await loader.getAndConstructObject((e) =>{
     console.log(e)
   })

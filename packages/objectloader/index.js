@@ -3,6 +3,8 @@
  * TODO: Object construction progress reporting is weird.
  */
 
+
+
 export default class ObjectLoader {
 
   constructor( { serverUrl, streamId, token, objectId, options = { fullyTraverseArrays: false, excludeProps: [ ] } } ) {
