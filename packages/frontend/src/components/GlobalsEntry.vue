@@ -1,11 +1,27 @@
 <template>
   <v-container>
-    <draggable :list="entries" class="dragArea" tag="ul" group="globals" @change="log">
-      <div v-for="(entry, index) in entries" :key="index">
-        <div v-if="!entry.globals">
+    <draggable
+      :list="entries"
+      class="dragArea"
+      tag="ul"
+      group="globals"
+      v-bind="dragOptions"
+      @start="drag = true"
+      @end="drag = false"
+    >
+      <transition-group type="transition" :name="!drag ? 'flip-list' : null">
+        <div v-for="(entry, index) in entries" :key="index">
+          <div v-if="!entry.globals">
             <v-row align="center">
               <v-col cols="12" sm="4">
-                <v-text-field class="entry-key" v-model="entry.key" hint="property name" filled dense rounded/>
+                <v-text-field
+                  v-model="entry.key"
+                  class="entry-key"
+                  hint="property name"
+                  filled
+                  dense
+                  rounded
+                />
               </v-col>
               <v-col cols="12" sm="7">
                 <v-text-field v-model="entry.value" hint="property value" />
@@ -16,28 +32,33 @@
                 </v-btn>
               </v-col>
             </v-row>
+          </div>
+          <v-card v-if="entry.globals" rounded="lg" class="pa-3 my-6" elevation="4">
+            <v-row align="center">
+              <v-col>
+                <v-card-title>{{ entry.key }}</v-card-title>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn icon small @click="emitObjectToField(entry, index)">
+                  <v-icon color="primary">mdi-compare-horizontal</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+            <globals-entry
+              :entries="entry.globals"
+              :path="[...path, entry.key]"
+              v-on="$listeners"
+            />
+          </v-card>
         </div>
-        <v-card v-if="entry.globals" rounded="lg" class="pa-3 my-6" elevation="4">
-          <v-row align="center">
-            <v-col>
-               <v-card-title>{{ entry.key }}</v-card-title>
-            </v-col>
-            <v-col cols="auto">
-              <v-btn icon small @click="emitObjectToField(entry, index)">
-                <v-icon color="primary">mdi-compare-horizontal</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-          <globals-entry :entries="entry.globals" :path="[...path, entry.key]" v-on="$listeners" />
-        </v-card>
-      </div>
+      </transition-group>
     </draggable>
     <div
       slot="footer"
+      key="footer"
       class="btn-group list-group-item ml-6 mt-3"
       role="group"
       aria-label="Basic example"
-      key="footer"
     >
       <v-btn color="primary" rounded fab small @click="emitAddProp">
         <v-icon>mdi-plus</v-icon>
@@ -65,11 +86,21 @@ export default {
       default: null
     }
   },
-  computed: {},
+  data() {
+    return {
+      drag: false
+    }
+  },
+  computed: {
+    dragOptions() {
+      return {
+        animation: 150,
+        disabled: false,
+        ghostClass: 'ghost'
+      }
+    }
+  },
   methods: {
-    log(evt) {
-      window.console.log(evt)
-    },
     emitAddProp() {
       let field = {
         key: `placeholder ${~~(Math.random() * 100)}`,
@@ -100,7 +131,7 @@ export default {
 }
 </script>
 <style scoped>
-.v-card{
+.v-card {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -111,14 +142,25 @@ export default {
   text-transform: uppercase;
 }
 
-.v-text-field{
-font-weight: 300;
+.v-text-field {
+  font-weight: 300;
 }
 
-.entry-key{
-font-weight: 500;
-position: relative;
-top: 0.6rem;
+.entry-key {
+  font-weight: 500;
+  position: relative;
+  top: 0.6rem;
 }
 
+.dragArea {
+  min-height: 50px;
+}
+
+.ghost {
+  opacity: 0.5;
+}
+
+.flip-list-move {
+  transition: transform 0.5s;
+}
 </style>

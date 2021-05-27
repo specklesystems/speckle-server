@@ -55,11 +55,6 @@ export default {
     }
   },
   computed: {},
-  watch: {
-    object(newVal, oldVal) {
-      console.log()
-    }
-  },
   mounted() {
     //?: how to run this only once but after apollo query is finished loading
     this.globalsArray = this.nestedGlobals(this.object.data)
@@ -154,5 +149,4 @@ export default {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
