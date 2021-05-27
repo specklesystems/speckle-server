@@ -39,9 +39,7 @@ export default {
         }
       },
       update(data) {
-        // console.log( data.stream.object.data )
         delete data.stream.object.data.__closure
-
         this.globalsArray = this.nestedGlobals(data.stream.object.data)
         return data.stream.object
       }
