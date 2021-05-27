@@ -3,9 +3,7 @@
     <h1>wow globals</h1>
     <v-row>
       <v-col>
-        <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
-          <globals-builder v-if="stream" :stream-id="streamId" :commit-id="commitId" />
-        </v-card>
+        <globals-builder v-if="stream" :stream-id="streamId" :commit-id="commitId" />
       </v-col>
     </v-row>
   </v-container>

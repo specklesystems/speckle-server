@@ -11,7 +11,7 @@
                 <v-text-field v-model="entry.value" hint="property value" />
               </v-col>
               <v-col cols="12" sm="1">
-                <v-btn icon small @click="fieldToObject(index, entry)">
+                <v-btn icon small @click="emitFieldToObject(entry, index)">
                   <v-icon color="primary">mdi-cube-outline</v-icon>
                 </v-btn>
               </v-col>
@@ -23,12 +23,12 @@
                <v-card-title>{{ entry.key }}</v-card-title>
             </v-col>
             <v-col cols="auto">
-              <v-btn icon small @click="objectToField(entry)">
+              <v-btn icon small @click="emitObjectToField(entry, index)">
                 <v-icon color="primary">mdi-compare-horizontal</v-icon>
               </v-btn>
             </v-col>
           </v-row>
-          <globals-entry :entries="entry.globals" />
+          <globals-entry :entries="entry.globals" :path="[...path, entry.key]" v-on="$listeners" />
         </v-card>
       </div>
     </draggable>
@@ -39,7 +39,7 @@
       aria-label="Basic example"
       key="footer"
     >
-      <v-btn color="primary" rounded fab small @click="addProp">
+      <v-btn color="primary" rounded fab small @click="emitAddProp">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </div>
@@ -56,6 +56,10 @@ export default {
       type: Array,
       default: null
     },
+    path: {
+      type: Array,
+      default: null
+    },
     streamId: {
       type: String,
       default: null
@@ -66,18 +70,19 @@ export default {
     log(evt) {
       window.console.log(evt)
     },
-    //TODO: do thi with `emit` bc this is bad tsk tsk i was just experimenting soz 🥺
-    addProp() {
-      this.entries.push({
+    emitAddProp() {
+      let field = {
         key: `placeholder ${~~(Math.random() * 100)}`,
         type: 'field',
         value: 'random stuff'
-      })
+      }
+      this.$emit('add-prop', { field: field, path: this.path })
     },
-    removeAt(index) {
-      this.entries.splice(index, 1)
+    emitRemoveAt(index) {
+      this.$emit('remove-prop', { path: this.path, index: index })
     },
-    fieldToObject(index, entry) {
+    emitFieldToObject(entry, index) {
+      console.log('in field to obj')
       let obj = {
         key: entry.key,
         type: 'object',
@@ -85,9 +90,12 @@ export default {
           { key: `placeholder ${~~(Math.random() * 100)}`, type: 'field', value: entry.value }
         ]
       }
-      this.entries[index] = obj
+      this.$emit('field-to-object', { obj: obj, path: this.path, index: index })
     },
-    objectToField(entry) {}
+    emitObjectToField(entry, index) {
+      let fields = entry.globals
+      this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
+    }
   }
 }
 </script>
