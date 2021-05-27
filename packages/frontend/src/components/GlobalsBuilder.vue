@@ -1,17 +1,23 @@
 <template>
-  <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
-    <v-row justify="end">
+  <v-card rounded="lg" class="py-4 px-0 mb-4" elevation="0">
+    <v-card-actions>
+      <v-spacer />
       <v-btn color="primary" small @click="resetGlobals">reset globals</v-btn>
-    </v-row>
-    <globals-entry
-      v-if="!$apollo.loading"
-      :entries="globalsArray"
-      :path="[]"
-      @add-prop="addProp"
-      @remove-prop="removeProp"
-      @field-to-object="fieldToObject"
-      @object-to-field="objectToField"
-    />
+    </v-card-actions>
+    <v-card-text>
+      <globals-entry
+        v-if="!$apollo.loading"
+        :entries="globalsArray"
+        :path="[]"
+        @add-prop="addProp"
+        @remove-prop="removeProp"
+        @field-to-object="fieldToObject"
+        @object-to-field="objectToField"
+      />
+      <div v-else>
+        <v-skeleton-loader type="list-item-three-line" />
+      </div>
+    </v-card-text>
   </v-card>
 </template>
 
@@ -32,8 +38,9 @@ export default {
           id: this.commitId
         }
       },
-      update: (data) => {
+      update(data) {
         delete data.stream.object.data.__closure
+        this.globalsArray = this.nestedGlobals(data.stream.object.data)
         return data.stream.object
       }
     }
@@ -57,7 +64,7 @@ export default {
   computed: {},
   mounted() {
     //?: how to run this only once but after apollo query is finished loading
-    this.globalsArray = this.nestedGlobals(this.object.data)
+    // this.globalsArray = this.nestedGlobals(this.object.data)
   },
   methods: {
     nestedGlobals(data) {
