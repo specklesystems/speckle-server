@@ -3,28 +3,28 @@
     <draggable :list="entries" class="dragArea" tag="ul" group="globals" @change="log">
       <div v-for="(entry, index) in entries" :key="index">
         <div v-if="!entry.globals">
-          <v-row>
-            <v-col cols="12" sm="3">
-              <v-text-field v-model="entry.key" filled rounded />
-            </v-col>
-            <v-col cols="12" sm="8">
-              <v-text-field v-model="entry.value" />
-            </v-col>
-            <v-col cols="12" sm="1">
-              <v-btn icon x-small @click="fieldToObject(index, entry)">
-                <v-icon>mdi-cube-outline</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
+            <v-row align="center">
+              <v-col cols="12" sm="4">
+                <v-text-field class="entry-key" v-model="entry.key" hint="property name" filled dense rounded/>
+              </v-col>
+              <v-col cols="12" sm="7">
+                <v-text-field v-model="entry.value" hint="property value" />
+              </v-col>
+              <v-col cols="12" sm="1">
+                <v-btn icon small @click="fieldToObject(index, entry)">
+                  <v-icon color="primary">mdi-cube-outline</v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
         </div>
-        <v-card v-if="entry.globals" rounded="lg" class="pa-4 mb-4" elevation="4">
-          <v-row>
+        <v-card v-if="entry.globals" rounded="lg" class="pa-3 my-6" elevation="4">
+          <v-row align="center">
             <v-col>
-              <b>{{ entry.key }}</b>
+               <v-card-title>{{ entry.key }}</v-card-title>
             </v-col>
             <v-col cols="auto">
-              <v-btn icon x-small @click="objectToField(entry)">
-                <v-icon>mdi-compare-horizontal</v-icon>
+              <v-btn icon small @click="objectToField(entry)">
+                <v-icon color="primary">mdi-compare-horizontal</v-icon>
               </v-btn>
             </v-col>
           </v-row>
@@ -34,12 +34,14 @@
     </draggable>
     <div
       slot="footer"
-      class="btn-group list-group-item"
+      class="btn-group list-group-item ml-6 mt-3"
       role="group"
       aria-label="Basic example"
       key="footer"
     >
-      <v-btn color="primary" rounded @click="addProp">Add</v-btn>
+      <v-btn color="primary" rounded fab small @click="addProp">
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
     </div>
   </v-container>
 </template>
@@ -89,4 +91,26 @@ export default {
   }
 }
 </script>
-<style scoped></style>
+<style scoped>
+.v-card{
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.v-card__title {
+  font-weight: 500;
+  font-size: large;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.v-text-field{
+font-weight: 300;
+}
+
+.entry-key{
+font-weight: 500;
+position: relative;
+top: 0.6rem;
+}
+
+</style>

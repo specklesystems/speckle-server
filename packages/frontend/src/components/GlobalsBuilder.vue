@@ -1,7 +1,7 @@
 <template>
   <v-container>
-    <v-row>
-      <v-btn color="primary" small rounded @click="resetGlobals">reset</v-btn>
+    <v-row justify="end" class="ma-3">
+      <v-btn color="primary" small  @click="resetGlobals">reset globals</v-btn>
     </v-row>
     <globals-entry v-if="!$apollo.loading" :entries="globalsArray" />
   </v-container>
@@ -115,4 +115,5 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+</style>
