@@ -54,7 +54,13 @@ export default {
       object: null
     }
   },
-  computed: {},
+  computed: {
+    globalsCommit() {
+      let base = this.globalsToBase(this.globalsArray)
+      console.log(base)
+      return base
+    }
+  },
   mounted() {
     //?: how to run this only once but after apollo query is finished loading
     this.globalsArray = this.nestedGlobals(this.object.data)
@@ -100,6 +106,26 @@ export default {
       }
 
       return arr
+    },
+    globalsToBase(arr) {
+      let base = {
+        speckle_type: 'Base',
+        id: null
+      }
+      arr.forEach((entry) => {
+        if (entry.value) return
+
+        if (Array.isArray(entry.value)) base[entry.key] = entry.value
+        else if (entry.value.includes(',')) {
+          base[entry.key] = entry.value
+            .replace(/\s/g, '')
+            .split(',')
+            .map((el) => (isNaN(el) ? el : parseFloat(el)))
+        } else if (entry.type == 'object') {
+          base[entry.key] = this.globalsToBase(entry.globals)
+        }
+      })
+      return base
     },
     resetGlobals() {
       if (!this.object.data) return

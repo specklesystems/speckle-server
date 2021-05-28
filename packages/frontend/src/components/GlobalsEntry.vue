@@ -9,18 +9,21 @@
       @start="drag = true"
       @end="drag = false"
     >
-      <transition-group type="transition" :name="!drag ? 'flip-list' : null">
-        <div v-for="(entry, index) in entries" :key="index">
+      <div v-for="(entry, index) in entries" :key="entry.key">
+        <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
             <v-row align="center">
               <v-col cols="12" sm="4">
                 <v-text-field
-                  v-model="entry.key"
+                  ref="keyInput"
+                  :value="entry.key"
+                  :rules="rules.keys(index, entries)"
                   class="entry-key"
                   hint="property name"
                   filled
                   dense
                   rounded
+                  @change="updateKey($event, entry, index)"
                 />
               </v-col>
               <v-col cols="12" sm="7">
@@ -33,7 +36,7 @@
               </v-col>
             </v-row>
           </div>
-          <v-card v-if="entry.globals" rounded="lg" class="pa-3 my-6" elevation="4">
+          <v-card v-else rounded="lg" class="pa-3 my-6" elevation="4">
             <v-row align="center">
               <v-col>
                 <v-card-title>{{ entry.key }}</v-card-title>
@@ -50,8 +53,8 @@
               v-on="$listeners"
             />
           </v-card>
-        </div>
-      </transition-group>
+        </transition>
+      </div>
     </draggable>
     <div
       slot="footer"
@@ -88,7 +91,20 @@ export default {
   },
   data() {
     return {
-      drag: false
+      drag: false,
+      valid: true,
+      rules: {
+        keys(index, entries) {
+          return [
+            (v) => !!v || 'Properties need to have a name!',
+            (v) => {
+              let filtered = entries.filter((_, i) => i != index)
+              if (filtered.findIndex((e) => e.key === v) === -1) return true
+              else return 'A property with this name already exists'
+            }
+          ]
+        }
+      }
     }
   },
   computed: {
@@ -113,7 +129,6 @@ export default {
       this.$emit('remove-prop', { path: this.path, index: index })
     },
     emitFieldToObject(entry, index) {
-      console.log('in field to obj')
       let obj = {
         key: entry.key,
         type: 'object',
@@ -126,6 +141,11 @@ export default {
     emitObjectToField(entry, index) {
       let fields = entry.globals
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
+    },
+    updateKey(input, entry, index) {
+      //?: issues with this not working consistently!! sometimes validation returns false positive?
+      if (this.$refs.keyInput[index].validate()) entry.key = input
+      else if (input) entry.key = input + ' 2'
     }
   }
 }

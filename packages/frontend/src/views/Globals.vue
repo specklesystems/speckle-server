@@ -1,9 +1,14 @@
 <template>
   <v-container>
-    <h1>wow globals</h1>
+    <!-- TODO: dropdown to choose diff globals branches? -->
     <v-row>
       <v-col>
-        <globals-builder v-if="stream" :stream-id="streamId" :commit-id="commitId" />
+        <globals-builder
+          v-if="stream"
+          :stream-id="streamId"
+          :commit-id="commitId"
+          :user-role="$attrs['user-role']"
+        />
       </v-col>
     </v-row>
   </v-container>
