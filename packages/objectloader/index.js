@@ -1,11 +1,17 @@
 /**
- * Simple client that streams object info from a Speckle Server.
- * TODO: This should be split from the viewer into its own package.
+ * Simple client that streams object info from a Speckle Server. 
+ * TODO: Object construction progress reporting is weird.
  */
+
+
 
 export default class ObjectLoader {
 
-  constructor( { serverUrl, streamId, token, objectId } ) {
+  /**
+   * Creates a new object loader instance.
+   * @param {*} param0 
+   */
+  constructor( { serverUrl, streamId, token, objectId, options = { fullyTraverseArrays: false, excludeProps: [ ] } } ) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
@@ -26,6 +32,10 @@ export default class ObjectLoader {
     this.promises = []
     this.intervals = {}
     this.buffer = []
+    this.isLoading = false
+    this.totalChildrenCount = 0
+    this.traversedReferencesCount = 0
+    this.options = options
   }
 
   dispose() {
@@ -33,6 +43,97 @@ export default class ObjectLoader {
     this.intervals.forEach( i => clearInterval( i.interval ) )
   }
 
+  /**
+   * Use this method to receive and construct the object. It will return the full, de-referenced and de-chunked original object.
+   * @param {*} onProgress 
+   * @returns 
+   */
+  async getAndConstructObject( onProgress ) {
+    
+    ;( await this.downloadObjectsInBuffer( onProgress ) ) // Fire and forget; PS: semicolon of doom
+    
+    let rootObject = await this.getObject( this.objectId )
+    return this.traverseAndConstruct( rootObject, onProgress )
+  }
+
+  /**
+   * Internal function used to download all the objects in a local buffer.
+   * @param {*} onProgress 
+   */
+  async downloadObjectsInBuffer( onProgress ) {
+    let first = true
+    let downloadNum = 0
+    
+    for await ( let obj of this.getObjectIterator() ) {
+      if( first ) {
+        this.totalChildrenCount = obj.totalChildrenCount
+        first = false
+        this.isLoading = true
+      }
+      downloadNum++
+      if( onProgress ) onProgress( { stage: 'download', current: downloadNum, total: this.totalChildrenCount } )
+    }
+    this.isLoading = false
+  }
+
+  /**
+   * Internal function used to recursively traverse an object and populate its references and dechunk any arrays.
+   * @param {*} obj 
+   * @param {*} onProgress 
+   * @returns 
+   */
+  async traverseAndConstruct( obj, onProgress ) {
+    if( !obj ) return
+    if ( typeof obj !== 'object' ) return obj
+
+    // Handle arrays
+    if ( Array.isArray( obj ) &&  obj.length !== 0 ) {
+      let arr = []
+      for ( let element of obj ) {
+        if ( typeof element !== 'object' && ! this.options.fullyTraverseArrays ) return obj
+        
+        // Dereference element if needed
+        let deRef = element.referencedId ? await this.getObject( element.referencedId ) : element
+        if( element.referencedId && onProgress ) onProgress( { stage: 'construction', current: ++this.traversedReferencesCount > this.totalChildrenCount ? this.totalChildrenCount : this.traversedReferencesCount, total: this.totalChildrenCount } ) 
+        
+        // Push the traversed object in the array
+        arr.push( await this.traverseAndConstruct( deRef, onProgress ) )
+      }
+      
+      // De-chunk
+      if( arr[0]?.speckle_type?.toLowerCase().includes('datachunk') ) { 
+        return arr.reduce( ( prev, curr ) => prev.concat( curr.data ), [] )
+      }
+      
+      return arr
+     }
+
+    // Handle objects
+    // 1) Purge ignored props
+    for( let ignoredProp of this.options.excludeProps ) {
+      delete obj[ ignoredProp ]
+    }
+    
+    // 2) Iterate through obj
+    for( let prop in obj ) {      
+      if( typeof obj[prop] !== 'object' ) continue // leave alone primitive props
+      
+      if( obj[prop].referencedId ) {
+        obj[prop] = await this.getObject( obj[prop].referencedId )
+        if( onProgress ) onProgress( { stage: 'construction', current: ++this.traversedReferencesCount > this.totalChildrenCount ? this.totalChildrenCount : this.traversedReferencesCount, total: this.totalChildrenCount } )
+      }
+
+      obj[prop] = await this.traverseAndConstruct( obj[prop], onProgress )
+    }
+
+     return obj
+  }
+
+  /**
+   * Internal function. Returns a promise that is resolved when the object id is loaded into the internal buffer.
+   * @param {*} id 
+   * @returns 
+   */
   async getObject( id ){
     if ( this.buffer[id] ) return this.buffer[id]
 
@@ -97,8 +198,8 @@ export default class ObjectLoader {
       let result = re.exec( chunk )
       if ( !result ) {
         if ( readerDone ) break
-        let remainder = chunk.substr( startIndex );
-        ( { value: chunk, done: readerDone } = await reader.read() )
+        let remainder = chunk.substr( startIndex ) 
+        ;( { value: chunk, done: readerDone } = await reader.read() ) // PS: semicolon of doom
         chunk = remainder + ( chunk ? decoder.decode( chunk ) : '' )
         startIndex = re.lastIndex = 0
         continue
