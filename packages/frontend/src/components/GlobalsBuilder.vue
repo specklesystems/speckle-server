@@ -1,11 +1,12 @@
 <template>
-  <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
+  <v-card rounded="lg" class="py-4 px-0 mb-4" elevation="0">
     <v-dialog v-model="saveDialog" max-width="500">
       <globals-save-dialog :stream-id="$route.params.streamId" @close="closeSaveDialog" />
     </v-dialog>
     <v-card-title>Globals</v-card-title>
-    <v-row justify="end">
-      <v-btn small @click="resetGlobals">reset globals</v-btn>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn color="primary" small @click="resetGlobals">reset globals</v-btn>
       <v-btn
         v-if="userRole === 'contributor' || userRole === 'owner'"
         v-tooltip="'Save your changes with a message'"
@@ -15,16 +16,21 @@
       >
         save
       </v-btn>
-    </v-row>
-    <globals-entry
-      v-if="!$apollo.loading"
-      :entries="globalsArray"
-      :path="[]"
-      @add-prop="addProp"
-      @remove-prop="removeProp"
-      @field-to-object="fieldToObject"
-      @object-to-field="objectToField"
-    />
+    </v-card-actions>
+    <v-card-text>
+      <globals-entry
+        v-if="!$apollo.loading"
+        :entries="globalsArray"
+        :path="[]"
+        @add-prop="addProp"
+        @remove-prop="removeProp"
+        @field-to-object="fieldToObject"
+        @object-to-field="objectToField"
+      />
+      <div v-else>
+        <v-skeleton-loader type="list-item-three-line" />
+      </div>
+    </v-card-text>
   </v-card>
 </template>
 
@@ -46,8 +52,9 @@ export default {
           id: this.commitId
         }
       },
-      update: (data) => {
+      update(data) {
         delete data.stream.object.data.__closure
+        this.globalsArray = this.nestedGlobals(data.stream.object.data)
         return data.stream.object
       }
     }
@@ -81,7 +88,7 @@ export default {
   },
   mounted() {
     //?: how to run this only once but after apollo query is finished loading
-    this.globalsArray = this.nestedGlobals(this.object.data)
+    // this.globalsArray = this.nestedGlobals(this.object.data)
   },
   methods: {
     nestedGlobals(data) {
