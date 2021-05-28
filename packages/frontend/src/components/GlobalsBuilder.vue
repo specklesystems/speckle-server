@@ -1,7 +1,20 @@
 <template>
   <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
+    <v-dialog v-model="saveDialog" max-width="500">
+      <globals-save-dialog :stream-id="$route.params.streamId" @close="closeSaveDialog" />
+    </v-dialog>
+    <v-card-title>Globals</v-card-title>
     <v-row justify="end">
-      <v-btn color="primary" small @click="resetGlobals">reset globals</v-btn>
+      <v-btn small @click="resetGlobals">reset globals</v-btn>
+      <v-btn
+        v-if="userRole === 'contributor' || userRole === 'owner'"
+        v-tooltip="'Save your changes with a message'"
+        small
+        color="primary"
+        @click="saveDialog = true"
+      >
+        save
+      </v-btn>
     </v-row>
     <globals-entry
       v-if="!$apollo.loading"
@@ -21,7 +34,8 @@ import objectQuery from '../graphql/objectSingle.gql'
 export default {
   name: 'GlobalsBuilder',
   components: {
-    GlobalsEntry: () => import('../components/GlobalsEntry')
+    GlobalsEntry: () => import('../components/GlobalsEntry'),
+    GlobalsSaveDialog: () => import('../components/dialogs/GlobalsSaveDialog')
   },
   apollo: {
     object: {
@@ -39,6 +53,10 @@ export default {
     }
   },
   props: {
+    userRole: {
+      type: String,
+      default: null
+    },
     commitId: {
       type: String,
       default: null
@@ -51,7 +69,7 @@ export default {
   data() {
     return {
       globalsArray: [],
-      object: null
+      saveDialog: false
     }
   },
   computed: {
@@ -86,7 +104,7 @@ export default {
               key,
               value: val,
               globals: this.nestedGlobals(val),
-              type: 'ref_object'
+              type: 'object' //TODO: handle references
             })
           } else {
             arr.push({
@@ -170,6 +188,10 @@ export default {
       if (!Array.isArray(entry)) entry = entry.globals
 
       return entry
+    },
+    closeSaveDialog() {
+      this.dialogBranch = false
+      this.$apollo.queries.object.refetch()
     }
   }
 }
