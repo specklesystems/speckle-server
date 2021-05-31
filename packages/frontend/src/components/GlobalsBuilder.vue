@@ -1,12 +1,18 @@
 <template>
-  <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
-    <v-row justify="end">
-      <v-btn color="primary" small @click="resetGlobals">reset globals</v-btn>
+  <v-card rounded="lg" class="pa-3 mb-3" elevation="0">
+    <v-row class="ma-3">
+      <v-col>
+        <v-switch dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
+      </v-col>
+      <v-col>
+        <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
+      </v-col>
     </v-row>
     <globals-entry
       v-if="!$apollo.loading"
       :entries="globalsArray"
       :path="[]"
+      :remove="deleteEntries"
       @add-prop="addProp"
       @remove-prop="removeProp"
       @field-to-object="fieldToObject"
@@ -51,7 +57,8 @@ export default {
   data() {
     return {
       globalsArray: [],
-      object: null
+      object: null,
+      deleteEntries: false,
     }
   },
   computed: {},

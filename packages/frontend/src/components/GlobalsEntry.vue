@@ -1,34 +1,43 @@
 <template>
   <v-container>
-    <draggable :list="entries" class="dragArea" tag="ul" group="globals" @change="log">
+    <draggable :list="entries" class="dragArea pl-0" tag="ul" group="globals" @change="log">
       <div v-for="(entry, index) in entries" :key="index">
         <div v-if="!entry.globals">
-            <v-row align="center">
-              <v-col cols="12" sm="4">
-                <v-text-field class="entry-key" v-model="entry.key" hint="property name" filled dense rounded/>
-              </v-col>
-              <v-col cols="12" sm="7">
-                <v-text-field v-model="entry.value" hint="property value" />
-              </v-col>
-              <v-col cols="12" sm="1">
-                <v-btn icon small @click="emitFieldToObject(entry, index)">
-                  <v-icon color="primary">mdi-cube-outline</v-icon>
-                </v-btn>
-              </v-col>
-            </v-row>
+            <div class="d-flex align-center" @mouseover="hoverEffect">
+              <v-btn v-if="remove" class="entry-delete mr-5" fab rounded x-small color="error" @click="emitRemoveAt(index)">
+                <v-icon>mdi-minus</v-icon>
+              </v-btn>
+              <v-text-field class="entry-key mr-5" v-model="entry.key" hint="property name" filled dense rounded/>
+              <v-text-field class="entry-value mr-5" v-model="entry.value" hint="property value" />
+              <v-btn v-if="!remove" icon small @click="emitFieldToObject(entry, index)">
+                <v-icon color="primary">mdi-cube-outline</v-icon>
+              </v-btn>
+            </div>
         </div>
         <v-card v-if="entry.globals" rounded="lg" class="pa-3 my-6" elevation="4">
           <v-row align="center">
             <v-col>
-               <v-card-title>{{ entry.key }}</v-card-title>
+               <v-card-title v-if="!editTitle" @mouseenter="mouseOver = true" @mouseleave="mouseOver = false">
+                 {{ entry.key }}
+                 <v-btn v-if="mouseOver" @click="editTitle = true" icon color="primary">
+                   <v-icon small>mdi-pencil</v-icon>
+                 </v-btn>
+                </v-card-title>
+                <v-card-title v-else>
+                 <v-text-field v-model="entry.key">
+                 </v-text-field>
+                 <v-btn @click="editTitle = false" icon color="primary">
+                   <v-icon small>mdi-check</v-icon>
+                 </v-btn>
+                </v-card-title>
             </v-col>
             <v-col cols="auto">
               <v-btn icon small @click="emitObjectToField(entry, index)">
-                <v-icon color="primary">mdi-compare-horizontal</v-icon>
+                <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
               </v-btn>
             </v-col>
           </v-row>
-          <globals-entry :entries="entry.globals" :path="[...path, entry.key]" v-on="$listeners" />
+          <globals-entry :entries="entry.globals" :path="[...path, entry.key]" :remove="remove" v-on="$listeners" />
         </v-card>
       </div>
     </draggable>
@@ -38,6 +47,7 @@
       role="group"
       aria-label="Basic example"
       key="footer"
+      v-if="!remove"
     >
       <v-btn color="primary" rounded fab small @click="emitAddProp">
         <v-icon>mdi-plus</v-icon>
@@ -63,6 +73,16 @@ export default {
     streamId: {
       type: String,
       default: null
+    },
+    remove:{
+      type: Boolean,
+      default: false
+    }
+  },
+  data(){
+    return {
+      editTitle: false,
+      mouseOver: false,
     }
   },
   computed: {},
@@ -95,6 +115,9 @@ export default {
     emitObjectToField(entry, index) {
       let fields = entry.globals
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
+    },
+    hoverEffect(event){
+      console.log('mouse here')
     }
   }
 }
@@ -116,9 +139,17 @@ font-weight: 300;
 }
 
 .entry-key{
-font-weight: 500;
-position: relative;
-top: 0.6rem;
+  font-weight: 500;
+  position: relative;
+  top: 0.6rem;
+}
+
+.entry-value{
+}
+
+.entry-delete{
+  position: relative;
+  top: -0.2rem;
 }
 
 </style>
