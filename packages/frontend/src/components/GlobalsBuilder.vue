@@ -1,23 +1,37 @@
 <template>
   <v-card rounded="lg" class="pa-3 mb-3" elevation="0">
-    <v-row class="ma-3">
-      <v-col>
-        <v-switch dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
-      </v-col>
-      <v-col>
-        <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
-      </v-col>
-    </v-row>
-    <globals-entry
-      v-if="!$apollo.loading"
-      :entries="globalsArray"
-      :path="[]"
-      :remove="deleteEntries"
-      @add-prop="addProp"
-      @remove-prop="removeProp"
-      @field-to-object="fieldToObject"
-      @object-to-field="objectToField"
-    />
+    <v-dialog v-model="saveDialog" max-width="500">
+      <globals-save-dialog :stream-id="$route.params.streamId" @close="closeSaveDialog" />
+    </v-dialog>
+    <v-card-title>Globals</v-card-title>
+    <v-card-actions>
+      <v-spacer />
+      <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
+      <v-btn
+        v-if="userRole === 'contributor' || userRole === 'owner'"
+        v-tooltip="'Save your changes with a message'"
+        small
+        color="primary"
+        @click="saveDialog = true"
+      >
+        save
+      </v-btn>
+      <v-switch dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
+    </v-card-actions>
+    <v-card-text>
+      <globals-entry
+        v-if="!$apollo.loading"
+        :entries="globalsArray"
+        :path="[]"
+        @add-prop="addProp"
+        @remove-prop="removeProp"
+        @field-to-object="fieldToObject"
+        @object-to-field="objectToField"
+      />
+      <div v-else>
+        <v-skeleton-loader type="list-item-three-line" />
+      </div>
+    </v-card-text>
   </v-card>
 </template>
 
@@ -27,7 +41,8 @@ import objectQuery from '../graphql/objectSingle.gql'
 export default {
   name: 'GlobalsBuilder',
   components: {
-    GlobalsEntry: () => import('../components/GlobalsEntry')
+    GlobalsEntry: () => import('../components/GlobalsEntry'),
+    GlobalsSaveDialog: () => import('../components/dialogs/GlobalsSaveDialog')
   },
   apollo: {
     object: {
@@ -38,13 +53,18 @@ export default {
           id: this.commitId
         }
       },
-      update: (data) => {
+      update(data) {
         delete data.stream.object.data.__closure
+        this.globalsArray = this.nestedGlobals(data.stream.object.data)
         return data.stream.object
       }
     }
   },
   props: {
+    userRole: {
+      type: String,
+      default: null
+    },
     commitId: {
       type: String,
       default: null
@@ -57,19 +77,20 @@ export default {
   data() {
     return {
       globalsArray: [],
-      object: null,
-      deleteEntries: false,
+      saveDialog: false,
+      deleteEntries: false
     }
   },
-  computed: {},
-  watch: {
-    object(newVal, oldVal) {
-      console.log()
+  computed: {
+    globalsCommit() {
+      let base = this.globalsToBase(this.globalsArray)
+      console.log(base)
+      return base
     }
   },
   mounted() {
     //?: how to run this only once but after apollo query is finished loading
-    this.globalsArray = this.nestedGlobals(this.object.data)
+    // this.globalsArray = this.nestedGlobals(this.object.data)
   },
   methods: {
     nestedGlobals(data) {
@@ -92,7 +113,7 @@ export default {
               key,
               value: val,
               globals: this.nestedGlobals(val),
-              type: 'ref_object'
+              type: 'object' //TODO: handle references
             })
           } else {
             arr.push({
@@ -112,6 +133,26 @@ export default {
       }
 
       return arr
+    },
+    globalsToBase(arr) {
+      let base = {
+        speckle_type: 'Base',
+        id: null
+      }
+      arr.forEach((entry) => {
+        if (entry.value) return
+
+        if (Array.isArray(entry.value)) base[entry.key] = entry.value
+        else if (entry.value.includes(',')) {
+          base[entry.key] = entry.value
+            .replace(/\s/g, '')
+            .split(',')
+            .map((el) => (isNaN(el) ? el : parseFloat(el)))
+        } else if (entry.type == 'object') {
+          base[entry.key] = this.globalsToBase(entry.globals)
+        }
+      })
+      return base
     },
     resetGlobals() {
       if (!this.object.data) return
@@ -156,10 +197,13 @@ export default {
       if (!Array.isArray(entry)) entry = entry.globals
 
       return entry
+    },
+    closeSaveDialog() {
+      this.dialogBranch = false
+      this.$apollo.queries.object.refetch()
     }
   }
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
