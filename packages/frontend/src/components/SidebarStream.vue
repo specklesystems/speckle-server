@@ -67,14 +67,17 @@
           commit{{ stream.commits.totalCount === 1 ? '' : 's' }}
         </span>
       </p>
-      <p>
-        <span v-if="stream.isPublic">
-          <v-icon small>mdi-link</v-icon>
-          &nbsp; link sharing on (public)
+      <p class="font-weight-bold">
+        <span
+          v-if="stream.isPublic"
+          v-tooltip="`Anyone can view this stream. Only you and collaborators can edit it.`"
+        >
+          <v-icon small>mdi-lock-open-variant-outline</v-icon>
+          &nbsp; public
         </span>
-        <span v-else>
-          <v-icon small>mdi-shield-lock</v-icon>
-          &nbsp; link sharing off (private)
+        <span v-else v-tooltip="`Only collaborators can access this stream.`">
+          <v-icon small>mdi-lock-outline</v-icon>
+          &nbsp; private
         </span>
       </p>
       <v-divider class="pb-2"></v-divider>

@@ -2,7 +2,7 @@
   <v-container>
     <draggable
       :list="entries"
-      class="dragArea"
+      class="dragArea pl-0"
       tag="ul"
       group="globals"
       v-bind="dragOptions"
@@ -12,44 +12,54 @@
       <div v-for="(entry, index) in entries" :key="entry.key">
         <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
-            <v-row align="center">
-              <v-col cols="12" sm="4">
-                <v-text-field
+            <div class="d-flex align-center" @mouseover="hoverEffect">
+              <v-btn v-if="remove" class="entry-delete mr-5" fab rounded x-small color="error" @click="emitRemoveAt(index)">
+                <v-icon>mdi-minus</v-icon>
+              </v-btn>
+              <v-text-field
                   ref="keyInput"
                   :value="entry.key"
                   :rules="rules.keys(index, entries)"
-                  class="entry-key"
+                  class="entry-key mr-5"
                   hint="property name"
                   filled
                   dense
                   rounded
                   @change="updateKey($event, entry, index)"
                 />
-              </v-col>
-              <v-col cols="12" sm="7">
-                <v-text-field v-model="entry.value" hint="property value" />
-              </v-col>
-              <v-col cols="12" sm="1">
-                <v-btn icon small @click="emitFieldToObject(entry, index)">
-                  <v-icon color="primary">mdi-cube-outline</v-icon>
-                </v-btn>
-              </v-col>
-            </v-row>
+              <v-text-field class="entry-value mr-5" v-model="entry.value" hint="property value" />
+              <v-btn v-if="!remove" icon small @click="emitFieldToObject(entry, index)">
+                <v-icon color="primary">mdi-cube-outline</v-icon>
+              </v-btn>
+            </div>
           </div>
           <v-card v-else rounded="lg" class="pa-3 my-6" elevation="4">
             <v-row align="center">
               <v-col>
-                <v-card-title>{{ entry.key }}</v-card-title>
-              </v-col>
-              <v-col cols="auto">
-                <v-btn icon small @click="emitObjectToField(entry, index)">
-                  <v-icon color="primary">mdi-compare-horizontal</v-icon>
-                </v-btn>
-              </v-col>
+               <v-card-title v-if="!editTitle" @mouseenter="mouseOver = true" @mouseleave="mouseOver = false">
+                 {{ entry.key }}
+                 <v-btn v-if="mouseOver" @click="editTitle = true" icon color="primary">
+                   <v-icon small>mdi-pencil</v-icon>
+                 </v-btn>
+                </v-card-title>
+                <v-card-title v-else>
+                 <v-text-field v-model="entry.key">
+                 </v-text-field>
+                 <v-btn @click="editTitle = false" icon color="primary">
+                   <v-icon small>mdi-check</v-icon>
+                 </v-btn>
+                </v-card-title>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn icon small @click="emitObjectToField(entry, index)">
+                <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
+              </v-btn>
+            </v-col>
             </v-row>
             <globals-entry
               :entries="entry.globals"
               :path="[...path, entry.key]"
+              :remove="remove"
               v-on="$listeners"
             />
           </v-card>
@@ -62,6 +72,7 @@
       class="btn-group list-group-item ml-6 mt-3"
       role="group"
       aria-label="Basic example"
+      v-if="!remove"
     >
       <v-btn color="primary" rounded fab small @click="emitAddProp">
         <v-icon>mdi-plus</v-icon>
@@ -87,10 +98,16 @@ export default {
     streamId: {
       type: String,
       default: null
+    },
+    remove:{
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
+      editTitle: false,
+      mouseOver: false,
       drag: false,
       valid: true,
       rules: {
@@ -142,6 +159,8 @@ export default {
       let fields = entry.globals
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
     },
+    hoverEffect(event){
+    },
     updateKey(input, entry, index) {
       //?: issues with this not working consistently!! sometimes validation returns false positive?
       if (this.$refs.keyInput[index].validate()) entry.key = input
@@ -166,10 +185,18 @@ export default {
   font-weight: 300;
 }
 
-.entry-key {
+.entry-key{
   font-weight: 500;
   position: relative;
   top: 0.6rem;
+}
+
+.entry-value{
+}
+
+.entry-delete{
+  position: relative;
+  top: -0.2rem;
 }
 
 .dragArea {

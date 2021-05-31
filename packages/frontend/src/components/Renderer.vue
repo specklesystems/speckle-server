@@ -82,7 +82,9 @@
             color="primary"
             @click="showObjectDetails = !showObjectDetails"
           >
-            Selection Details ({{ selectedObjects.length }})
+            <span v-if="!isSmall">Selection Details</span>
+            <v-icon v-else small>mdi-cube</v-icon>
+            ({{ selectedObjects.length }})
           </v-btn>
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
@@ -251,6 +253,9 @@ export default {
     }
   },
   computed: {
+    isSmall() {
+      return this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
+    },
     darkMode() {
       return this.$vuetify.theme.dark
     },

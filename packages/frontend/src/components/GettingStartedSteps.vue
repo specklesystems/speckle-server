@@ -38,17 +38,21 @@
                 ahead and install it. Once you're done, go to the next step!
               </p>
               <p>Note: Currently, we only support Windows.</p>
-              <v-btn block depressed class="mb-4" @click="downloadManager">
+              <v-btn
+                block
+                :x-large="!hasClickedDownload"
+                elevation="10"
+                class="mb-4"
+                :color="hasClickedDownload ? '' : 'primary'"
+                @click="downloadManager"
+              >
                 <v-icon small class="mr-4">mdi-download</v-icon>
                 Download Speckle Manager (WIN)
               </v-btn>
+              <p>If you already have installed Speckle Manager, proceed to the next step.</p>
             </v-card-text>
             <v-card-actions class="justify-center">
-              <!--               <v-btn small text color="grey" @click="prev">
-                <v-icon small>mdi-chevron-left</v-icon>
-              </v-btn> -->
-
-              <v-btn color="primary" @click="next">
+              <v-btn block :color="hasClickedDownload ? 'primary' : ''" @click="next">
                 Next Step: Accounts
                 <v-icon>mdi-chevron-right</v-icon>
               </v-btn>
@@ -70,12 +74,19 @@
                 process your account should be safely stored on your computer - and usable from
                 within all the connectors.
               </p>
-              <v-btn block depressed class="mb-4" @click="addAccount">
+              <v-btn
+                block
+                :x-large="hasClickedAddAccount === 0"
+                class="mb-4"
+                elevation="10"
+                :color="hasClickedAddAccount !== 0 ? '' : 'primary'"
+                @click="addAccount"
+              >
                 <v-icon small class="mr-4">mdi-account-plus</v-icon>
                 Add Account Speckle Manager
               </v-btn>
             </v-card-text>
-            <v-alert type="info" text>
+            <v-alert type="info" color="blue" text class="mx-4" v-show="hasClickedAddAccount >= 2">
               Having trouble adding your account to the Speckle Manager? Read a
               <a
                 _target="_blank"
@@ -86,7 +97,7 @@
               !
             </v-alert>
             <v-card-actions class="justify-center">
-              <v-btn color="primary" @click="next">
+              <v-btn block :color="hasClickedAddAccount !== 0 ? 'primary' : ''" @click="next">
                 Your first stream
                 <v-icon>mdi-chevron-right</v-icon>
               </v-btn>
@@ -139,7 +150,9 @@ export default {
   data: () => ({
     length: 3,
     onboarding: 0,
-    newStreamDialog: false
+    newStreamDialog: false,
+    hasClickedDownload: false,
+    hasClickedAddAccount: 0
   }),
   computed: {
     rootUrl() {
@@ -168,11 +181,13 @@ export default {
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
     },
     downloadManager() {
+      this.hasClickedDownload = true
       this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`)
       this.$matomo && this.$matomo.trackEvent('onboarding', 'managerdownload')
       window.open('https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe', '_blank')
     },
     addAccount() {
+      this.hasClickedAddAccount++
       this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`)
       this.$matomo && this.$matomo.trackEvent('onboarding', 'accountadd')
       window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, '_blank')

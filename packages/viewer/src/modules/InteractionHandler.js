@@ -51,9 +51,17 @@ export default class InteractionHandler {
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
 
-    // console.log(objs[0].object.geometry.type)
-    const selType = objs[0].object.type
+    
+    let selType = objs[0].object.type
+    
+    if ( objs[0].object.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
+      selType = 'Block'
+    }
+
     switch ( selType ) {
+    case 'Block': 
+      // TODO: maybe just leave the bounding box for now
+      break
     case 'Mesh':
       this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
       break
@@ -67,7 +75,12 @@ export default class InteractionHandler {
 
     this.selectedObjectsUserData.push( objs[0].object.userData )
 
-    let box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
+    let box 
+    if ( selType==='Block' ) {
+      box = new THREE.BoxHelper( objs[0].object.parent, 0x23F3BD )
+    } else {
+      box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
+    }
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
@@ -228,7 +241,7 @@ export default class InteractionHandler {
   }
 
   setLookAt( position, target, transition = true ) {
-    if( !position || !target ) return
+    if ( !position || !target ) return
     this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
   }
 }

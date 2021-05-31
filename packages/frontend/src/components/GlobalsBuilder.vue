@@ -1,12 +1,12 @@
 <template>
-  <v-card rounded="lg" class="py-4 px-0 mb-4" elevation="0">
+  <v-card rounded="lg" class="pa-3 mb-3" elevation="0">
     <v-dialog v-model="saveDialog" max-width="500">
       <globals-save-dialog :stream-id="$route.params.streamId" @close="closeSaveDialog" />
     </v-dialog>
     <v-card-title>Globals</v-card-title>
     <v-card-actions>
       <v-spacer />
-      <v-btn color="primary" small @click="resetGlobals">reset globals</v-btn>
+      <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
       <v-btn
         v-if="userRole === 'contributor' || userRole === 'owner'"
         v-tooltip="'Save your changes with a message'"
@@ -16,12 +16,14 @@
       >
         save
       </v-btn>
+      <v-switch class="ml-3" dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
     </v-card-actions>
     <v-card-text>
       <globals-entry
         v-if="!$apollo.loading"
         :entries="globalsArray"
         :path="[]"
+        :remove="deleteEntries"
         @add-prop="addProp"
         @remove-prop="removeProp"
         @field-to-object="fieldToObject"
@@ -76,7 +78,8 @@ export default {
   data() {
     return {
       globalsArray: [],
-      saveDialog: false
+      saveDialog: false,
+      deleteEntries: false,
     }
   },
   computed: {
