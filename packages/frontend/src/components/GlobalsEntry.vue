@@ -51,7 +51,7 @@
                 </v-card-title>
             </v-col>
             <v-col cols="auto">
-              <v-btn icon small @click="emitObjectToField(entry, index)">
+              <v-btn class="mr-3" icon small @click="emitObjectToField(entry, index)">
                 <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
               </v-btn>
             </v-col>
@@ -69,7 +69,7 @@
     <div
       slot="footer"
       key="footer"
-      class="btn-group list-group-item ml-6 mt-3"
+      class="btn-group list-group-item mt-3"
       role="group"
       aria-label="Basic example"
       v-if="!remove"

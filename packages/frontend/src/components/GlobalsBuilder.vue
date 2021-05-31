@@ -5,6 +5,7 @@
     </v-dialog>
     <v-card-title>Globals</v-card-title>
     <v-card-actions>
+      <v-switch class="ml-3" dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
       <v-spacer />
       <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
       <v-btn
@@ -16,7 +17,6 @@
       >
         save
       </v-btn>
-      <v-switch class="ml-3" dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
     </v-card-actions>
     <v-card-text>
       <globals-entry
