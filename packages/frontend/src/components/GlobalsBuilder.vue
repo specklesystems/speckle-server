@@ -16,13 +16,14 @@
       >
         save
       </v-btn>
-      <v-switch dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
+      <v-switch class="ml-3" dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
     </v-card-actions>
     <v-card-text>
       <globals-entry
         v-if="!$apollo.loading"
         :entries="globalsArray"
         :path="[]"
+        :remove="deleteEntries"
         @add-prop="addProp"
         @remove-prop="removeProp"
         @field-to-object="fieldToObject"
@@ -78,7 +79,7 @@ export default {
     return {
       globalsArray: [],
       saveDialog: false,
-      deleteEntries: false
+      deleteEntries: false,
     }
   },
   computed: {

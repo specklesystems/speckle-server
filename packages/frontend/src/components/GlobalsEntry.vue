@@ -2,7 +2,7 @@
   <v-container>
     <draggable
       :list="entries"
-      class="dragArea"
+      class="dragArea pl-0"
       tag="ul"
       group="globals"
       v-bind="dragOptions"
@@ -59,6 +59,7 @@
             <globals-entry
               :entries="entry.globals"
               :path="[...path, entry.key]"
+              :remove="remove"
               v-on="$listeners"
             />
           </v-card>
@@ -103,14 +104,10 @@ export default {
       default: false
     }
   },
-  data(){
+  data() {
     return {
       editTitle: false,
       mouseOver: false,
-    }
-  },
-  data() {
-    return {
       drag: false,
       valid: true,
       rules: {
@@ -163,7 +160,6 @@ export default {
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
     },
     hoverEffect(event){
-      console.log('mouse here')
     },
     updateKey(input, entry, index) {
       //?: issues with this not working consistently!! sometimes validation returns false positive?
