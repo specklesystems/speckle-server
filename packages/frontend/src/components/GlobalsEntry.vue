@@ -164,6 +164,7 @@ export default {
     },
     hoverEffect(event){
       console.log('mouse here')
+    },
     updateKey(input, entry, index) {
       //?: issues with this not working consistently!! sometimes validation returns false positive?
       if (this.$refs.keyInput[index].validate()) entry.key = input
