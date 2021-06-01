@@ -135,10 +135,14 @@ export default {
   },
   methods: {
     emitAddProp() {
+      var bimNouns = ['parameter', 'BIM', 'triple O', 'digital twin', 'LOD 9000', 'automation'];
+      var bimAdjs = ['parametric', 'chonky', '3D']
+      var bimExclamations = ['wow','much']
+      var randomPhrase = bimExclamations[Math.floor(Math.random() * bimExclamations.length)] + ' ' + bimAdjs[Math.floor(Math.random() * bimAdjs.length)] + ' ' + bimNouns[Math.floor(Math.random() * bimNouns.length)];
       let field = {
-        key: `placeholder ${~~(Math.random() * 100)}`,
+        key: `parameter ${~~(Math.random() * 100)}`,
         type: 'field',
-        value: 'random stuff'
+        value: randomPhrase
       }
       this.$emit('add-prop', { field: field, path: this.path })
     },
