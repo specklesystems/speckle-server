@@ -13,20 +13,28 @@
         <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
             <div class="d-flex align-center" @mouseover="hoverEffect">
-              <v-btn v-if="remove" class="entry-delete mr-5" fab rounded x-small color="error" @click="emitRemoveAt(index)">
+              <v-btn
+                v-if="remove"
+                class="entry-delete mr-5"
+                fab
+                rounded
+                x-small
+                color="error"
+                @click="emitRemoveAt(index)"
+              >
                 <v-icon>mdi-minus</v-icon>
               </v-btn>
               <v-text-field
-                  ref="keyInput"
-                  :value="entry.key"
-                  :rules="rules.keys(index, entries)"
-                  class="entry-key mr-5"
-                  hint="property name"
-                  filled
-                  dense
-                  rounded
-                  @change="updateKey($event, entry, index)"
-                />
+                ref="keyInput"
+                :value="entry.key"
+                :rules="rules.keys(index, entries)"
+                class="entry-key mr-5"
+                hint="property name"
+                filled
+                dense
+                rounded
+                @change="updateKey($event, entry, index)"
+              />
               <v-text-field class="entry-value mr-5" v-model="entry.value" hint="property value" />
               <v-btn v-if="!remove" icon small @click="emitFieldToObject(entry, index)">
                 <v-icon color="primary">mdi-cube-outline</v-icon>
@@ -36,25 +44,28 @@
           <v-card v-else rounded="lg" class="pa-3 my-6" elevation="4">
             <v-row align="center">
               <v-col>
-               <v-card-title v-if="!editTitle" @mouseenter="mouseOver = true" @mouseleave="mouseOver = false">
-                 {{ entry.key }}
-                 <v-btn v-if="mouseOver" @click="editTitle = true" icon color="primary">
-                   <v-icon small>mdi-pencil</v-icon>
-                 </v-btn>
+                <v-card-title
+                  v-if="!editTitle"
+                  @mouseenter="mouseOver = true"
+                  @mouseleave="mouseOver = false"
+                >
+                  {{ entry.key }}
+                  <v-btn v-if="mouseOver" icon small color="primary" @click="editTitle = true">
+                    <v-icon small>mdi-pencil</v-icon>
+                  </v-btn>
                 </v-card-title>
                 <v-card-title v-else>
-                 <v-text-field v-model="entry.key">
-                 </v-text-field>
-                 <v-btn @click="editTitle = false" icon color="primary">
-                   <v-icon small>mdi-check</v-icon>
-                 </v-btn>
+                  <v-text-field v-model="entry.key"></v-text-field>
+                  <v-btn @click="editTitle = false" icon color="primary">
+                    <v-icon small>mdi-check</v-icon>
+                  </v-btn>
                 </v-card-title>
-            </v-col>
-            <v-col cols="auto">
-              <v-btn class="mr-3" icon small @click="emitObjectToField(entry, index)">
-                <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
-              </v-btn>
-            </v-col>
+              </v-col>
+              <v-col cols="auto">
+                <v-btn class="mr-3" icon small @click="emitObjectToField(entry, index)">
+                  <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
+                </v-btn>
+              </v-col>
             </v-row>
             <globals-entry
               :entries="entry.globals"
@@ -99,7 +110,7 @@ export default {
       type: String,
       default: null
     },
-    remove:{
+    remove: {
       type: Boolean,
       default: false
     }
@@ -135,10 +146,15 @@ export default {
   },
   methods: {
     emitAddProp() {
-      var bimNouns = ['parameter', 'BIM', 'triple O', 'digital twin', 'LOD 9000', 'automation'];
+      var bimNouns = ['parameter', 'BIM', 'triple O', 'digital twin', 'LOD 9000', 'automation']
       var bimAdjs = ['parametric', 'chonky', '3D']
-      var bimExclamations = ['wow','much']
-      var randomPhrase = bimExclamations[Math.floor(Math.random() * bimExclamations.length)] + ' ' + bimAdjs[Math.floor(Math.random() * bimAdjs.length)] + ' ' + bimNouns[Math.floor(Math.random() * bimNouns.length)];
+      var bimExclamations = ['wow', 'much']
+      var randomPhrase =
+        bimExclamations[Math.floor(Math.random() * bimExclamations.length)] +
+        ' ' +
+        bimAdjs[Math.floor(Math.random() * bimAdjs.length)] +
+        ' ' +
+        bimNouns[Math.floor(Math.random() * bimNouns.length)]
       let field = {
         key: `parameter ${~~(Math.random() * 100)}`,
         type: 'field',
@@ -162,8 +178,6 @@ export default {
     emitObjectToField(entry, index) {
       let fields = entry.globals
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
-    },
-    hoverEffect(event){
     },
     updateKey(input, entry, index) {
       //?: issues with this not working consistently!! sometimes validation returns false positive?
@@ -189,16 +203,13 @@ export default {
   font-weight: 300;
 }
 
-.entry-key{
+.entry-key {
   font-weight: 500;
   position: relative;
   top: 0.6rem;
 }
 
-.entry-value{
-}
-
-.entry-delete{
+.entry-delete {
   position: relative;
   top: -0.2rem;
 }
