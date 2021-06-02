@@ -28,6 +28,8 @@
             <user-apps />
           </v-card-text>
         </v-card>
+
+        <user-delete-card :user="user" />
       </v-col>
     </v-row>
   </v-container>
@@ -39,10 +41,18 @@ import ServerInfoCard from '../components/ServerInfoCard'
 import UserAccessTokens from '../components/UserAccessTokens'
 import UserApps from '../components/UserApps'
 import UserAuthorisedApps from '../components/UserAuthorisedApps'
+import UserDeleteCard from '../components/UserDeleteCard'
 
 export default {
   name: 'Profile',
-  components: { UserInfoCard, ServerInfoCard, UserAccessTokens, UserApps, UserAuthorisedApps },
+  components: {
+    UserInfoCard,
+    ServerInfoCard,
+    UserAccessTokens,
+    UserApps,
+    UserAuthorisedApps,
+    UserDeleteCard
+  },
   data: () => ({}),
   apollo: {
     user: {

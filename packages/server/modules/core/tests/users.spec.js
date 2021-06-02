@@ -60,6 +60,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
     it( 'Should not create a user with a too small password', async () => {
       try {
         await createUser( { name: 'Dim Sum', email: 'dim@gmail.com', password: '1234567' } )
+        assert.fail( 'short pwd' )
       } catch ( e ) {
         // pass
       }
@@ -81,6 +82,8 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
     } )
 
+    let ballmerUserId = null
+
     it( 'Find or create should create a user', async ( ) => {
 
       let newUser = { ...myTestActor }
@@ -89,6 +92,7 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       newUser.password = 'testthebest'
 
       let { id } = await findOrCreateUser( { user: newUser } )
+      ballmerUserId = id
       expect( id ).to.be.a( 'string' )
 
     } )
@@ -102,22 +106,32 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       newUser.suuid = 'really it does not matter'
 
       let { id } = await findOrCreateUser( { user: newUser } )
-      expect( id ).to.be.a( 'string' )
+      expect( id ).to.equal( ballmerUserId )
 
     } )
 
-    it( 'Should get an user', async ( ) => {
+    it( 'Should delete a user', async ( ) => {
+      await deleteUser( ballmerUserId )
+      try {
+        let user = await getUser( ballmerUserId )
+        assert.fail( 'user not deleted' )
+      } catch ( e ) {
+        // pass
+      }
+    } )
+
+    it( 'Should get a user', async ( ) => {
       let actor = await getUser( myTestActor.id )
       expect( actor ).to.not.have.property( 'passwordDigest' )
     } )
 
-    it( 'Should search and get an users', async ( ) => {
+    it( 'Should search and get users', async ( ) => {
       let { users } = await searchUsers( 'gates', 20, null )
       expect( users ).to.have.lengthOf( 1 )
       expect( users[ 0 ].name ).to.equal( 'Bill Gates' )
     } )
 
-    it( 'Should update an user', async ( ) => {
+    it( 'Should update a user', async ( ) => {
       let updatedActor = { ...myTestActor }
       updatedActor.name = 'didimitrie'
 

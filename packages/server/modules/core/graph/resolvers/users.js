@@ -83,6 +83,17 @@ module.exports = {
       await validateServerRole( context, 'server:user' )
       await updateUser( context.userId, args.user )
       return true
+    },
+
+    async userDelete( parent, args, context, info ) {
+      let user = await getUser( context.userId )
+
+      if ( args.userConfirmation.email !== user.email ) {
+        return false
+      }
+      await validateServerRole( context, 'server:user' )
+      await deleteUser( context.userId, args.user )
+      return true
     }
   }
 }
