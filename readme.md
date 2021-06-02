@@ -14,7 +14,9 @@ Specifically, this monorepo contains:
 
 ### ➡️ [Server](packages/server), the Speckle Server
 
-The server is a nodejs app. Core external dependencies are a Redis and Postgresql db.
+The server is a nodejs app. Core external dependencies are a Redis and Postgresql db. Deploy one in a minute on Digital Ocean using the button below!
+
+[![do-btn-blue-re](https://user-images.githubusercontent.com/7696515/120513666-69be0800-c3c4-11eb-9d50-7b9811b8e0f1.png)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1)
 
 ### ➡️ [Frontend](packages/frontend), the Speckle Frontend
 
