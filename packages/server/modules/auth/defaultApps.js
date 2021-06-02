@@ -12,9 +12,11 @@ let allScopes = []
 module.exports = async () => {
   allScopes = await Scopes( ).select( '*' )
 
+  // Note: shallow cloning of app objs so as to not interfere with the original objects.
   await registerOrUpdateApp( { ...SpeckleWebApp } )
   await registerOrUpdateApp( { ...SpeckleApiExplorer } )
   await registerOrUpdateApp( { ...SpeckleDesktopApp } )
+  await registerOrUpdateApp( { ...SpeckleExcel } )
 
 }
 
@@ -91,6 +93,17 @@ let SpeckleDesktopApp = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'speckle://account',
+  scopes: [ 'streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read' ]
+}
+
+let SpeckleExcel = {
+  id: 'spklexcel',
+  secret: 'spklexcel',
+  name: 'Speckle Connector For Excel',
+  description: 'The Speckle Connector For Excel. For more info, check the docs here: https://speckle.guide/user/excel.',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'https://speckle-excel.netlify.app',
   scopes: [ 'streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read' ]
 }
 
