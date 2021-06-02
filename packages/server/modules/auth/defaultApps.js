@@ -99,8 +99,8 @@ let SpeckleDesktopApp = {
 let SpeckleExcel = {
   id: 'spklexcel',
   secret: 'spklexcel',
-  name: 'Speckle Excel',
-  description: 'The Speckle Connector For Excel. For more info, check the docs here: https://speckle.guide/user/excel.html.',
+  name: 'Speckle Connector For Excel',
+  description: 'The Speckle Connector For Excel. For more info, check the docs here: https://speckle.guide/user/excel.',
   trustByDefault: true,
   public: true,
   redirectUrl: 'https://speckle-excel.netlify.app',
