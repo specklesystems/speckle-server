@@ -55,6 +55,20 @@ describe( 'Apps @apps', ( ) => {
       expect( app.scopes ).to.be.a( 'array' )
     } )
 
+    it( 'Should get the explorer app', async ( ) => {
+      let app = await getApp( { id: 'explorer' } )
+      expect( app ).to.be.an( 'object' )
+      expect( app.redirectUrl ).to.be.a( 'string' )
+      expect( app.scopes ).to.be.a( 'array' )
+    } )
+
+    it( 'Should get the excel app', async ( ) => {
+      let app = await getApp( { id: 'spklexcel' } )
+      expect( app ).to.be.an( 'object' )
+      expect( app.redirectUrl ).to.be.a( 'string' )
+      expect( app.scopes ).to.be.a( 'array' )
+    } )
+
     let myTestApp = null
 
     it( 'Should register an app', async ( ) => {
@@ -74,7 +88,7 @@ describe( 'Apps @apps', ( ) => {
     it( 'Should get all the public apps on this server', async ( ) => {
       let apps = await getAllPublicApps( )
       expect( apps ).to.be.an( 'array' )
-      expect( apps.length ).to.equal( 4 )
+      expect( apps.length ).to.equal( 5 )
     } )
 
     it( 'Should fail to register an app with no scopes', async ( ) => {
@@ -318,7 +332,7 @@ describe( 'Apps @apps', ( ) => {
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.apps ).to.be.an( 'array' )
-      expect( res.body.data.apps.length ).to.equal( 4 )
+      expect( res.body.data.apps.length ).to.equal( 5 )
 
     } )
 
