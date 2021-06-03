@@ -87,7 +87,7 @@ export default {
         }
       })
       this.loading = false
-      this.$emit('close', res.data.objectCreate[0])
+      this.$emit('close')
     }
   }
 }

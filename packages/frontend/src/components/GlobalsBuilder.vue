@@ -9,6 +9,17 @@
       />
     </v-dialog>
     <v-card-title>Globals</v-card-title>
+    <v-card-text>
+      These global variables can be used for storing design values, project requirements, notes, or
+      any info you want to keep track of alongside your geometry. These values can be text, numbers,
+      lists, or booleans. Click the box icon next to any field to turn it into a nested group of
+      fields. You can drag and drop fields in and out of groups as you please. Note that field order
+      may not always be preserved.
+    </v-card-text>
+    <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">
+      You are free to play around with the globals here, but you do not have the required stream
+      permission to save your changes.
+    </v-card-text>
     <v-card-actions>
       <v-switch
         v-model="deleteEntries"
@@ -37,17 +48,6 @@
       </v-btn>
     </v-card-actions>
     <v-card-text>
-      <v-card-text>
-        These global variables can be used for storing design values, project requirements, notes,
-        or any info you want to keep track of alongside your geometry. These values can be text,
-        numbers, lists, or booleans. Click the box icon next to any field to turn it into a nested
-        group of fields. You can drag and drop fields in and out of groups as you please. Note that
-        field order may not always be preserved.
-      </v-card-text>
-      <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">
-        You are free to play around with the globals here, but you do not have the required stream
-        permission to save your changes.
-      </v-card-text>
       <globals-entry
         v-if="!$apollo.loading"
         :entries="globalsArray"
@@ -87,6 +87,9 @@ export default {
         delete data.stream.object.data.__closure
         this.globalsArray = this.nestedGlobals(data.stream.object.data)
         return data.stream.object
+      },
+      skip() {
+        return this.objectId == null
       }
     }
   },
@@ -113,7 +116,10 @@ export default {
       globalsArray: [],
       newObjectHash: null,
       saveDialog: false,
-      deleteEntries: false
+      deleteEntries: false,
+      sample: {
+        text: 'here are some words'
+      }
     }
   },
   computed: {
@@ -123,6 +129,11 @@ export default {
     },
     validObject() {
       return this.checkValidKeys(this.globalsArray)
+    }
+  },
+  mounted() {
+    if (!this.objectId) {
+      this.globalsArray = this.nestedGlobals(this.sample)
     }
   },
   methods: {
@@ -190,10 +201,10 @@ export default {
       return base
     },
     resetGlobals() {
-      if (!this.object.data) return
-
       this.deleteEntries = false
-      this.globalsArray = this.nestedGlobals(this.object.data)
+      this.globalsArray = this.object?.data
+        ? this.nestedGlobals(this.object.data)
+        : this.nestedGlobals(this.sample)
     },
     addProp(kwargs) {
       let globals = this.getNestedGlobals(kwargs.path)
@@ -234,10 +245,9 @@ export default {
 
       return entry
     },
-    closeSaveDialog(hash) {
-      this.newObjectHash = hash
+    closeSaveDialog() {
       this.saveDialog = false
-      this.$apollo.queries.object.refetch()
+      this.$emit('new-commit')
     },
     checkValidKeys(arr) {
       if (!arr) return false
