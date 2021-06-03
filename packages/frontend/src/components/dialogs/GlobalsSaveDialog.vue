@@ -23,9 +23,19 @@
   </v-card>
 </template>
 <script>
+import gql from 'graphql-tag'
+
 export default {
   props: {
     streamId: {
+      type: String,
+      default: null
+    },
+    commitObj: {
+      type: Object,
+      default: null
+    },
+    branchName: {
       type: String,
       default: null
     }
@@ -46,22 +56,38 @@ export default {
 
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('globals/save')
-      // await this.$apollo.mutate({
-      //   mutation: gql`
-      //     mutation branchCreate($params: BranchCreateInput!) {
-      //       branchCreate(branch: $params)
-      //     }
-      //   `,
-      //   variables: {
-      //     params: {
-      //       streamId: this.streamId,
-      //       name: this.name,
-      //       description: this.description
-      //     }
-      //   }
-      // })
+      let res = await this.$apollo.mutate({
+        mutation: gql`
+          mutation ObjectCreate($params: ObjectCreateInput!) {
+            objectCreate(objectInput: $params)
+          }
+        `,
+        variables: {
+          params: {
+            streamId: this.streamId,
+            objects: [this.commitObj]
+          }
+        }
+      })
+
+      await this.$apollo.mutate({
+        mutation: gql`
+          mutation CommitCreate($commit: CommitCreateInput!) {
+            commitCreate(commit: $commit)
+          }
+        `,
+        variables: {
+          commit: {
+            streamId: this.streamId,
+            branchName: this.branchName,
+            objectId: res.data.objectCreate[0],
+            message: this.message,
+            sourceApplication: 'web'
+          }
+        }
+      })
       this.loading = false
-      this.$emit('close')
+      this.$emit('close', res.data.objectCreate[0])
     }
   }
 }

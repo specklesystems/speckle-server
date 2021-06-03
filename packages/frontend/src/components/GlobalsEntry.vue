@@ -12,7 +12,7 @@
       <div v-for="(entry, index) in entries" :key="entry.key">
         <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
-            <div class="d-flex align-center" @mouseover="hoverEffect">
+            <div class="d-flex align-center">
               <v-btn
                 v-if="remove"
                 class="entry-delete mr-5"
@@ -34,8 +34,9 @@
                 dense
                 rounded
                 @change="updateKey($event, entry, index)"
+                @update:error="invalidKey($event, entry, index)"
               />
-              <v-text-field class="entry-value mr-5" v-model="entry.value" hint="property value" />
+              <v-text-field v-model="entry.value" class="entry-value mr-5" hint="property value" />
               <v-btn v-if="!remove" icon small @click="emitFieldToObject(entry, index)">
                 <v-icon color="primary">mdi-cube-outline</v-icon>
               </v-btn>
@@ -49,14 +50,30 @@
                   @mouseenter="mouseOver = true"
                   @mouseleave="mouseOver = false"
                 >
+                  <v-btn
+                    v-if="remove"
+                    class="entry-delete mr-5"
+                    fab
+                    rounded
+                    x-small
+                    color="error"
+                    @click="emitRemoveAt(index)"
+                  >
+                    <v-icon>mdi-minus</v-icon>
+                  </v-btn>
                   {{ entry.key }}
                   <v-btn v-if="mouseOver" icon small color="primary" @click="editTitle = true">
                     <v-icon small>mdi-pencil</v-icon>
                   </v-btn>
                 </v-card-title>
                 <v-card-title v-else>
-                  <v-text-field v-model="entry.key"></v-text-field>
-                  <v-btn @click="editTitle = false" icon color="primary">
+                  <v-text-field
+                    ref="keyInput"
+                    :value="entry.key"
+                    :rules="rules.keys(index, entries)"
+                    @change="updateKey($event, entry, index)"
+                  ></v-text-field>
+                  <v-btn icon color="primary" @click="editTitle = false">
                     <v-icon small>mdi-check</v-icon>
                   </v-btn>
                 </v-card-title>
@@ -78,12 +95,12 @@
       </div>
     </draggable>
     <div
+      v-if="!remove"
       slot="footer"
       key="footer"
       class="btn-group list-group-item mt-3"
       role="group"
       aria-label="Basic example"
-      v-if="!remove"
     >
       <v-btn color="primary" rounded fab small @click="emitAddProp">
         <v-icon>mdi-plus</v-icon>
@@ -127,12 +144,19 @@ export default {
             (v) => !!v || 'Properties need to have a name!',
             (v) => {
               let filtered = entries.filter((_, i) => i != index)
-              if (filtered.findIndex((e) => e.key === v) === -1) return true
-              else return 'A property with this name already exists'
+              if (filtered.findIndex((e) => e.key === v) === -1) {
+                // this.entries[index].$set('isValid', true)
+                entries[index].isValid = true
+                return true
+              } else {
+                entries[index].isValid = false
+                return 'A property with this name already exists'
+              }
             }
           ]
         }
-      }
+      },
+      errors: []
     }
   },
   computed: {
@@ -180,9 +204,17 @@ export default {
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
     },
     updateKey(input, entry, index) {
-      //?: issues with this not working consistently!! sometimes validation returns false positive?
       if (this.$refs.keyInput[index].validate()) entry.key = input
-      else if (input) entry.key = input + ' 2'
+      else if (input) {
+        console.log(`UPDATE KEY >>> current key: ${entry.key}, event value: ${input}`)
+      }
+    },
+    invalidKey(event, entry, index) {
+      if (!event) return
+      console.log(`validate result: ${this.$refs.keyInput[index].validate()}`)
+      console.log(
+        `INVALID KEY >>> current key: ${entry.key}, field value: ${this.$refs.keyInput[index].value}`
+      )
     }
   }
 }

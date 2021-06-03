@@ -1,11 +1,23 @@
 <template>
   <v-card rounded="lg" class="pa-3 mb-3" elevation="0">
     <v-dialog v-model="saveDialog" max-width="500">
-      <globals-save-dialog :stream-id="$route.params.streamId" @close="closeSaveDialog" />
+      <globals-save-dialog
+        :branch-name="branchName"
+        :stream-id="$route.params.streamId"
+        :commit-obj="globalsCommit"
+        @close="closeSaveDialog"
+      />
     </v-dialog>
     <v-card-title>Globals</v-card-title>
     <v-card-actions>
-      <v-switch class="ml-3" dense inset color="error" v-model="deleteEntries" :label="`DELETE`"></v-switch>
+      <v-switch
+        v-model="deleteEntries"
+        class="ml-3"
+        dense
+        inset
+        color="error"
+        :label="`DELETE`"
+      ></v-switch>
       <v-spacer />
       <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
       <v-btn
@@ -51,7 +63,7 @@ export default {
       variables() {
         return {
           streamId: this.streamId,
-          id: this.commitId
+          id: this.newObjectHash ?? this.objectId
         }
       },
       update(data) {
@@ -66,7 +78,11 @@ export default {
       type: String,
       default: null
     },
-    commitId: {
+    branchName: {
+      type: String,
+      default: null
+    },
+    objectId: {
       type: String,
       default: null
     },
@@ -78,20 +94,19 @@ export default {
   data() {
     return {
       globalsArray: [],
+      newObjectHash: null,
       saveDialog: false,
-      deleteEntries: false,
+      deleteEntries: false
     }
   },
   computed: {
     globalsCommit() {
       let base = this.globalsToBase(this.globalsArray)
-      console.log(base)
       return base
+    },
+    validObject() {
+      return this.checkValidKeys(this.globalsArray)
     }
-  },
-  mounted() {
-    //?: how to run this only once but after apollo query is finished loading
-    // this.globalsArray = this.nestedGlobals(this.object.data)
   },
   methods: {
     nestedGlobals(data) {
@@ -102,33 +117,30 @@ export default {
         if (key.startsWith('__')) continue
         if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
 
-        if (Array.isArray(val)) {
-          arr.push({
-            key,
-            value: val,
-            type: 'array'
-          })
-        } else if (typeof val === 'object' && val !== null) {
+        if (!Array.isArray(val) && typeof val === 'object' && val !== null) {
           if (val.speckle_type && val.speckle_type === 'reference') {
             arr.push({
               key,
               value: val,
               globals: this.nestedGlobals(val),
-              type: 'object' //TODO: handle references
+              type: 'object', //TODO: handle references
+              isValid: true
             })
           } else {
             arr.push({
               key,
               value: val,
               globals: this.nestedGlobals(val),
-              type: 'object'
+              type: 'object',
+              isValid: true
             })
           }
         } else {
           arr.push({
             key,
             value: val,
-            type: 'field'
+            type: 'field',
+            isValid: true
           })
         }
       }
@@ -141,16 +153,20 @@ export default {
         id: null
       }
       arr.forEach((entry) => {
-        if (entry.value) return
+        if (!entry.value && !entry.globals) return
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
-        else if (entry.value.includes(',')) {
+        else if (entry.type == 'object') {
+          base[entry.key] = this.globalsToBase(entry.globals)
+        } else if (typeof entry.value === 'string' && entry.value.includes(',')) {
           base[entry.key] = entry.value
             .replace(/\s/g, '')
             .split(',')
             .map((el) => (isNaN(el) ? el : parseFloat(el)))
-        } else if (entry.type == 'object') {
-          base[entry.key] = this.globalsToBase(entry.globals)
+        } else if (typeof entry.value === 'boolean') {
+          base[entry.key] = entry.value
+        } else {
+          base[entry.key] = isNaN(entry.value) ? entry.value : parseFloat(entry.value)
         }
       })
       return base
@@ -162,7 +178,7 @@ export default {
     },
     addProp(kwargs) {
       let globals = this.getNestedGlobals(kwargs.path)
-      globals.push(kwargs.field)
+      globals.splice(globals.length, 0, kwargs.field)
     },
     removeProp(kwargs) {
       let globals = this.getNestedGlobals(kwargs.path)
@@ -199,9 +215,25 @@ export default {
 
       return entry
     },
-    closeSaveDialog() {
-      this.dialogBranch = false
+    closeSaveDialog(hash) {
+      this.newObjectHash = hash
+      this.saveDialog = false
       this.$apollo.queries.object.refetch()
+    },
+    checkValidKeys(arr) {
+      if (!arr) return false
+      let valid = true
+      arr.forEach((o) => {
+        if (o.type == 'object') {
+          valid = this.checkValidKeys(o.globals)
+        }
+
+        if (!valid) return false
+
+        if (!o.isValid) return false
+      })
+
+      return true
     }
   }
 }

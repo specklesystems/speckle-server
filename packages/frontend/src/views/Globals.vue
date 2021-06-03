@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <div v-if="!commitId && !$apollo.loading">
+    <div v-if="!objectId && !$apollo.loading">
       <h1>Empty State</h1>
       <p>TODO: Help, there's no globals branch and/or no commits on it!</p>
     </div>
@@ -10,8 +10,9 @@
         <v-col>
           <globals-builder
             v-if="stream"
+            :branch-name="branchName"
             :stream-id="streamId"
-            :commit-id="commitId"
+            :object-id="objectId"
             :user-role="$attrs['user-role']"
           />
         </v-col>
@@ -37,16 +38,21 @@ export default {
       variables() {
         return {
           streamId: this.streamId,
-          branchName: 'globals' //TODO: handle multipile globals branches
+          branchName: this.branchName
         }
       }
+    }
+  },
+  data() {
+    return {
+      branchName: 'globals' //TODO: handle multipile globals branches
     }
   },
   computed: {
     streamId() {
       return this.$route.params.streamId
     },
-    commitId() {
+    objectId() {
       return this.stream?.branch?.commits?.items[0].referencedObject
     }
   }
