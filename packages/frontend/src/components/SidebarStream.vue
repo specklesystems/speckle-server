@@ -30,7 +30,11 @@
         small
         color="primary"
         class="pa-2"
-        :to="`/streams/${stream.id}/commits/${stream.commits.items[0].id}`"
+        :to="
+          stream.commits.items[0].branchName.startsWith('globals')
+            ? `/streams/${stream.id}/${stream.commits.items[0].branchName}`
+            : `/streams/${stream.id}/commits/${stream.commits.items[0].id}`
+        "
       >
         <v-icon small class="mr-1">mdi-source-commit</v-icon>
         {{ stream.commits.items[0].id }}
@@ -40,7 +44,7 @@
         class="text-decoration-none"
         :to="
           stream.commits.items[0].branchName.startsWith('globals')
-            ? `/streams/${stream.id}/globals`
+            ? `/streams/${stream.id}/${stream.commits.items[0].branchName}`
             : `/streams/${stream.id}/branches/${stream.commits.items[0].branchName}`
         "
       >

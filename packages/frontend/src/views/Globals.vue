@@ -55,7 +55,7 @@ export default {
       return this.$route.params.streamId
     },
     objectId() {
-      return this.stream?.branch?.commits?.items[0].referencedObject
+      return this.stream?.branch?.commits?.items[0]?.referencedObject
     }
   }
 }

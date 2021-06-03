@@ -37,7 +37,13 @@
                 @update:error="invalidKey($event, entry, index)"
               />
               <v-text-field v-model="entry.value" class="entry-value mr-5" hint="property value" />
-              <v-btn v-if="!remove" icon small @click="emitFieldToObject(entry, index)">
+              <v-btn
+                v-if="!remove"
+                v-tooltip="'Transform this field into an object'"
+                icon
+                small
+                @click="emitFieldToObject(entry, index)"
+              >
                 <v-icon color="primary">mdi-cube-outline</v-icon>
               </v-btn>
             </div>
@@ -79,7 +85,13 @@
                 </v-card-title>
               </v-col>
               <v-col cols="auto">
-                <v-btn class="mr-3" icon small @click="emitObjectToField(entry, index)">
+                <v-btn
+                  v-tooltip="'Flatten this object into fields'"
+                  class="mr-3"
+                  icon
+                  small
+                  @click="emitObjectToField(entry, index)"
+                >
                   <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
                 </v-btn>
               </v-col>
@@ -102,7 +114,14 @@
       role="group"
       aria-label="Basic example"
     >
-      <v-btn color="primary" rounded fab small @click="emitAddProp">
+      <v-btn
+        v-tooltip="'Add a new field to this object'"
+        color="primary"
+        rounded
+        fab
+        small
+        @click="emitAddProp"
+      >
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </div>

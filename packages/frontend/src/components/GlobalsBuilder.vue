@@ -12,6 +12,7 @@
     <v-card-actions>
       <v-switch
         v-model="deleteEntries"
+        v-tooltip="'Toggle delete mode'"
         class="ml-3"
         dense
         inset
@@ -19,18 +20,34 @@
         :label="`DELETE`"
       ></v-switch>
       <v-spacer />
-      <v-btn color="primary" small @click="resetGlobals">reset all</v-btn>
+      <v-btn v-tooltip="'Undo any changes'" color="primary" small @click="resetGlobals">
+        reset all
+      </v-btn>
       <v-btn
         v-if="userRole === 'contributor' || userRole === 'owner'"
         v-tooltip="'Save your changes with a message'"
         small
         color="primary"
-        @click="saveDialog = true"
+        @click="
+          saveDialog = true
+          deleteEntries = false
+        "
       >
         save
       </v-btn>
     </v-card-actions>
     <v-card-text>
+      <v-card-text>
+        These global variables can be used for storing design values, project requirements, notes,
+        or any info you want to keep track of alongside your geometry. These values can be text,
+        numbers, lists, or booleans. Click the box icon next to any field to turn it into a nested
+        group of fields. You can drag and drop fields in and out of groups as you please. Note that
+        field order may not always be preserved.
+      </v-card-text>
+      <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">
+        You are free to play around with the globals here, but you do not have the required stream
+        permission to save your changes.
+      </v-card-text>
       <globals-entry
         v-if="!$apollo.loading"
         :entries="globalsArray"
@@ -149,6 +166,7 @@ export default {
     },
     globalsToBase(arr) {
       let base = {
+        // eslint-disable-next-line camelcase
         speckle_type: 'Base',
         id: null
       }
@@ -174,6 +192,7 @@ export default {
     resetGlobals() {
       if (!this.object.data) return
 
+      this.deleteEntries = false
       this.globalsArray = this.nestedGlobals(this.object.data)
     },
     addProp(kwargs) {
