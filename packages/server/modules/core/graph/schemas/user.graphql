@@ -51,6 +51,8 @@ extend type Mutation {
   Delete a user's account.
   """
   userDelete(userConfirmation: UserDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:delete")
 }
 
 input UserUpdateInput {

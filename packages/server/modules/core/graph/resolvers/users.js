@@ -89,9 +89,15 @@ module.exports = {
       let user = await getUser( context.userId )
 
       if ( args.userConfirmation.email !== user.email ) {
-        return false
+        throw new UserInputError( 'Malformed input: emails do not match.' )
       }
+
+      // The below are not really needed anymore as we've added the hasRole and hasScope
+      // directives in the graphql schema itself. 
+      // Since I am paranoid, I'll leave them here too. 
       await validateServerRole( context, 'server:user' )
+      await validateScopes( context.scopes, 'profile:delete' )
+
       await deleteUser( context.userId, args.user )
       return true
     }
