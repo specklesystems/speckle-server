@@ -150,8 +150,6 @@ module.exports = {
     for ( let i in streams.rows ) {
       await deleteStream( { streamId: streams.rows[i].id } )
     }
-    await knex.raw( 'DELETE FROM commits WHERE author = ?', [ id ] )
-    await knex.raw( 'DELETE FROM branches WHERE "authorId" = ?', [ id ] )
     
     return await Users( ).where( { id: id } ).del( )
   }
