@@ -46,6 +46,13 @@ extend type Mutation {
   Edits a user's profile.
   """
   userUpdate(user: UserUpdateInput!): Boolean!
+  
+  """
+  Delete a user's account.
+  """
+  userDelete(userConfirmation: UserDeleteInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "profile:delete")
 }
 
 input UserUpdateInput {
@@ -53,4 +60,8 @@ input UserUpdateInput {
   company: String
   bio: String
   avatar: String
+}
+
+input UserDeleteInput {
+  email: String
 }

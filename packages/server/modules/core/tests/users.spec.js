@@ -13,6 +13,7 @@ const knex = require( `${appRoot}/db/knex` )
 
 const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
+const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
 describe( 'Actors & Tokens @user-services', ( ) => {
   let myTestActor = {
@@ -61,63 +62,91 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       try {
         await createUser( { name: 'Dim Sum', email: 'dim@gmail.com', password: '1234567' } )
       } catch ( e ) {
-        // pass
+        return
       }
+      assert.fail( 'short pwd' )
     } )
 
     it( 'Should not create an user with the same email', async ( ) => {
 
-      let newUser = { ...myTestActor }
+      let newUser = { }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
       newUser.password = 'testthebest'
 
       try {
         let actorId = await createUser( newUser )
-        assert.fail( 'dupe email' )
       } catch ( e ) {
-        // pass
+        return
       }
-
+      assert.fail( 'dupe email' )
     } )
+
+    let ballmerUserId = null
 
     it( 'Find or create should create a user', async ( ) => {
 
-      let newUser = { ...myTestActor }
+      let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
 
       let { id } = await findOrCreateUser( { user: newUser } )
+      ballmerUserId = id
       expect( id ).to.be.a( 'string' )
 
     } )
 
     it( 'Find or create should NOT create a user', async ( ) => {
 
-      let newUser = { ...myTestActor }
+      let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
       newUser.suuid = 'really it does not matter'
 
       let { id } = await findOrCreateUser( { user: newUser } )
-      expect( id ).to.be.a( 'string' )
+      expect( id ).to.equal( ballmerUserId )
 
     } )
 
-    it( 'Should get an user', async ( ) => {
+    it( 'Should delete a user', async ( ) => {
+      let soloOwnerStream = { name: 'Test Stream 01', description: 'wonderful test stream', isPublic: true }
+      let multiOwnerStream = { name: 'Test Stream 02', description: 'another test stream', isPublic: true }
+      soloOwnerStream.id = await createStream( { ...soloOwnerStream, ownerId: ballmerUserId } )
+      multiOwnerStream.id = await createStream( { ...multiOwnerStream, ownerId: ballmerUserId } )
+      await grantPermissionsStream( { streamId: multiOwnerStream.id, userId: myTestActor.id, role: 'stream:owner' } )
+      
+      await deleteUser( ballmerUserId )
+
+      if ( await getStream( { streamId: soloOwnerStream.id } ) !== undefined ) {
+        assert.fail( 'user stream not deleted' )
+      }
+      let multiOwnerStreamCopy = await getStream( { streamId: multiOwnerStream.id } )
+      if ( !multiOwnerStreamCopy || multiOwnerStreamCopy.id != multiOwnerStream.id ) {
+        assert.fail( 'shared stream deleted' )
+      }
+
+      try {
+        let user = await getUser( ballmerUserId )
+      } catch ( e ) {
+        return
+      }
+      assert.fail( 'user not deleted' )
+    } )
+
+    it( 'Should get a user', async ( ) => {
       let actor = await getUser( myTestActor.id )
       expect( actor ).to.not.have.property( 'passwordDigest' )
     } )
 
-    it( 'Should search and get an users', async ( ) => {
+    it( 'Should search and get users', async ( ) => {
       let { users } = await searchUsers( 'gates', 20, null )
       expect( users ).to.have.lengthOf( 1 )
       expect( users[ 0 ].name ).to.equal( 'Bill Gates' )
     } )
 
-    it( 'Should update an user', async ( ) => {
+    it( 'Should update a user', async ( ) => {
       let updatedActor = { ...myTestActor }
       updatedActor.name = 'didimitrie'
 

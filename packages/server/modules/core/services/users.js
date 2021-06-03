@@ -7,6 +7,9 @@ const knex = require( `${appRoot}/db/knex` )
 const Users = ( ) => knex( 'users' )
 const Acl = ( ) => knex( 'server_acl' )
 
+const debug = require( 'debug' )
+const { deleteStream } = require( './streams' )
+
 module.exports = {
 
   /*
@@ -122,6 +125,34 @@ module.exports = {
   },
 
   async deleteUser( id ) {
-    throw new Error( 'not implemented' )
+    debug( 'speckle:db' )( 'Deleting user ' + id )
+    let streams = await knex.raw(
+      `
+      -- Get the stream ids with only this user as owner
+      SELECT "resourceId" as id
+      FROM (
+        -- Compute (streamId, ownerCount) table for streams on which the user is owner
+        SELECT acl."resourceId", count(*) as cnt
+        FROM stream_acl acl
+        INNER JOIN 
+          (
+          -- Get streams ids on which the user is owner
+          SELECT "resourceId" FROM stream_acl
+          WHERE role = 'stream:owner' AND "userId" = ?
+          ) AS us ON acl."resourceId" = us."resourceId"
+        WHERE acl.role = 'stream:owner'
+        GROUP BY (acl."resourceId")
+      ) AS soc
+      WHERE cnt = 1
+      `,
+      [ id ]
+    )
+    for ( let i in streams.rows ) {
+      await deleteStream( { streamId: streams.rows[i].id } )
+    }
+    await knex.raw( 'DELETE FROM commits WHERE author = ?', [ id ] )
+    await knex.raw( 'DELETE FROM branches WHERE "authorId" = ?', [ id ] )
+    
+    return await Users( ).where( { id: id } ).del( )
   }
 }
