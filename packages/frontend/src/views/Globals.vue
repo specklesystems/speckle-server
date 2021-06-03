@@ -1,11 +1,13 @@
 <template>
   <v-container>
     <div v-if="!objectId && !$apollo.loading">
+      <v-card>
+        <v-card-title>Globals</v-card-title>
+      </v-card>
       <h1>Empty State</h1>
       <p>TODO: Help, there's no globals branch and/or no commits on it!</p>
     </div>
     <div v-else>
-      <h1>wow globals</h1>
       <v-row>
         <v-col>
           <globals-builder

@@ -38,7 +38,11 @@
       on
       <router-link
         class="text-decoration-none"
-        :to="`/streams/${stream.id}/branches/${stream.commits.items[0].branchName}`"
+        :to="
+          stream.commits.items[0].branchName.startsWith('globals')
+            ? `/streams/${stream.id}/globals`
+            : `/streams/${stream.id}/branches/${stream.commits.items[0].branchName}`
+        "
       >
         <v-icon small color="primary">mdi-source-branch</v-icon>
         {{ stream.commits.items[0].branchName }}
