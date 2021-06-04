@@ -21,7 +21,7 @@
         :branch-name="branchName"
         :stream-id="streamId"
         :object-id="objectId"
-        :commit-message="commit.message"
+        :commit-message="commit ? commit.message : null"
         :user-role="$attrs['user-role']"
         @new-commit="newCommit"
       />
