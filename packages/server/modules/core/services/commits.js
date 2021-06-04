@@ -132,9 +132,9 @@ module.exports = {
       .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
       .select( )
       .join( 'commits', 'commits.id', 'stream_commits.commitId' )
-      .join( 'users', 'commits.author', 'users.id' )
       .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'branches', 'branches.id', 'branch_commits.branchId' )
+      .leftJoin( 'users', 'commits.author', 'users.id' )
       .where( 'stream_commits.streamId', streamId )
 
 
