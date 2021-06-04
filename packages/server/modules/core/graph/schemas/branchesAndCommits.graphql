@@ -12,7 +12,7 @@ extend type User {
 type Branch {
   id: String!
   name: String!
-  author: User!
+  author: User
   description: String
   commits(limit: Int! = 25, cursor: String): CommitCollection
 }
