@@ -114,7 +114,15 @@
     </v-card-text>
 
     <v-card-text v-show="isHomeRoute">
-      <v-btn v-tooltip="'Edit stream global variables!'" block small elevation="0" :to="`/streams/${stream.id}/globals`">Globals</v-btn>
+      <v-btn
+        v-tooltip="'Edit stream global variables!'"
+        block
+        small
+        elevation="0"
+        :to="`/streams/${stream.id}/globals`"
+      >
+        Globals
+      </v-btn>
     </v-card-text>
 
     <v-card-title v-show="isHomeRoute"><h5>Collaborators</h5></v-card-title>

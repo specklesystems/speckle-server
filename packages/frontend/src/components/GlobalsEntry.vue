@@ -26,15 +26,20 @@
               </v-btn>
               <v-text-field
                 ref="keyInput"
-                :value="entry.key"
+                v-model="entry.key"
                 :rules="rules.keys(index, entries)"
+                :error-messages="
+                  entry.valid
+                    ? null
+                    : entry.key
+                    ? 'Each property name must be unique'
+                    : 'This property needs a name!'
+                "
                 class="entry-key mr-5"
                 hint="property name"
                 filled
                 dense
                 rounded
-                @change="updateKey($event, entry, index)"
-                @update:error="invalidKey($event, entry, index)"
               />
               <v-text-field v-model="entry.value" class="entry-value mr-5" hint="property value" />
               <v-btn
@@ -46,8 +51,6 @@
               >
                 <v-icon color="primary">mdi-cube-outline</v-icon>
               </v-btn>
-              {{ entry.valid }}
-              | {{ entry.id }}
             </div>
           </div>
           <v-card v-else rounded="lg" class="pa-3 my-6" elevation="4">
@@ -77,9 +80,15 @@
                 <v-card-title v-else>
                   <v-text-field
                     ref="keyInput"
-                    :value="entry.key"
+                    v-model="entry.key"
                     :rules="rules.keys(index, entries)"
-                    @change="updateKey($event, entry, index)"
+                    :error-messages="
+                      entry.valid
+                        ? null
+                        : entry.key
+                        ? 'Each property name must be unique'
+                        : 'This property needs a name!'
+                    "
                   ></v-text-field>
                   <v-btn icon color="primary" @click="editTitle = false">
                     <v-icon small>mdi-check</v-icon>
@@ -96,13 +105,11 @@
                 >
                   <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
                 </v-btn>
-                {{ entry.valid }}
-                | {{ entry.id }}
               </v-col>
             </v-row>
             <globals-entry
               :entries="entry.globals"
-              :path="[...path, entry.key]"
+              :path="[...path, entry.id]"
               :remove="remove"
               v-on="$listeners"
             />
@@ -169,13 +176,16 @@ export default {
       rules: {
         keys(index, entries) {
           return [
-            (v) => !!v || 'Properties need to have a name!',
+            (v) => {
+              let result = !!v || 'Properties need to have a name!'
+              entries[index].valid = result === true
+              return result
+            },
             (v) => {
               let filtered = entries.filter((_, i) => i != index)
               let result =
-                filtered.findIndex((e) => e.key === v) === -1 ||
-                'A property with this name already exists'
-              entries[index].valid = result === true
+                filtered.findIndex((e) => e.key === v) === -1 || 'Each property name must be unique'
+              entries[index].valid = !!v && result === true
               return result
             }
           ]
@@ -224,7 +234,7 @@ export default {
         valid: entry.valid,
         globals: [
           {
-            key: `placeholder ${~~(Math.random() * 100)}`,
+            key: `parameter ${~~(Math.random() * 100)}`,
             type: 'field',
             value: entry.value,
             id: crs({ length: 10 }),
@@ -237,22 +247,6 @@ export default {
     emitObjectToField(entry, index) {
       let fields = entry.globals
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
-    },
-    updateKey(input, entry, index) {
-      entry.key = input
-      if (this.$refs.keyInput[index].validate()) {
-        entry.valid = true
-      }
-      else if (input) {
-        console.log(`UPDATE KEY >>> current key: ${entry.key}, event value: ${input}`)
-      }
-    },
-    invalidKey(event, entry, index) {
-      if (!event) return
-      console.log(`validate result: ${this.$refs.keyInput[index].validate()}`)
-      console.log(
-        `INVALID KEY >>> current key: ${entry.key}, field value: ${this.$refs.keyInput[index].value}`
-      )
     }
   }
 }

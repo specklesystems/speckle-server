@@ -8,8 +8,11 @@
         @close="closeSaveDialog"
       />
     </v-dialog>
-    <v-card-title v-if="commitMessage">{{ commitMessage }}</v-card-title>
-    <v-card-title v-else>Globals</v-card-title>
+    <v-card-title>Globals</v-card-title>
+    <v-card-subtitle v-if="commitMessage">
+      <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
+      {{ commitMessage }}
+    </v-card-subtitle>
     <v-card-text>
       These global variables can be used for storing design values, project requirements, notes, or
       any info you want to keep track of alongside your geometry. These values can be text, numbers,
@@ -121,7 +124,7 @@ export default {
   data() {
     return {
       globalsArray: [],
-      globalsAreValid: true, //TODO: how to update this if validation fails in child components?
+      globalsAreValid: true,
       saveDialog: false,
       deleteEntries: false,
       sample: {
@@ -194,12 +197,7 @@ export default {
       for (let entry of arr) {
         if (!entry.value && !entry.globals) return
 
-        if (arr.filter((e) => e.key == entry.key).length > 1) {
-
-          // entry.valid = false
-          this.globalsAreValid = false
-        }
-        // if (!entry.valid) this.globalsAreValid = false
+        if (!entry.valid) this.globalsAreValid = false
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
         else if (entry.type == 'object') {
@@ -249,13 +247,13 @@ export default {
       let depth = path.length
 
       if (depth > 0) {
-        let key = path.shift()
-        entry = entry.find((e) => e.key == key)
+        let id = path.shift()
+        entry = entry.find((e) => e.id == id)
       }
 
       if (depth > 1) {
-        path.forEach((key) => {
-          entry = entry.globals.find((e) => e.key == key)
+        path.forEach((id) => {
+          entry = entry.globals.find((e) => e.id == id)
         })
       }
 
