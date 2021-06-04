@@ -35,6 +35,9 @@
         :label="`DELETE`"
       ></v-switch>
       <v-spacer />
+      <v-btn v-tooltip="'Clear all globals'" color="primary" small @click="clearGlobals">
+        clear
+      </v-btn>
       <v-btn v-tooltip="'Undo any changes'" color="primary" small @click="resetGlobals">
         reset all
       </v-btn>
@@ -128,7 +131,21 @@ export default {
       saveDialog: false,
       deleteEntries: false,
       sample: {
-        text: 'here are some words'
+        Region: 'London',
+        'Project Code': 'GB123456',
+        'Linked Projects': ['GB654321', 'EU424242'],
+        'Project Lead': 'Sir Spockle II',
+        'Pretty Cool?': true,
+        Climate: {
+          'Summer DBT [C]': 35,
+          'Summer WBT [C]': 20,
+          'Winter DBT [C]': -4,
+          'Winter WBT [C]': -4,
+          Enthalpy: {
+            'Summer Enthalpy [kJ/kg]': 56.87,
+            'Winter Enthalpy [kJ/kg]': 2.74
+          }
+        }
       }
     }
   },
@@ -221,6 +238,9 @@ export default {
       this.globalsArray = this.object?.data
         ? this.nestedGlobals(this.object.data)
         : this.nestedGlobals(this.sample)
+    },
+    clearGlobals() {
+      this.globalsArray = this.nestedGlobals({ placeholder: 'something cool goes here...' })
     },
     addProp(kwargs) {
       let globals = this.getNestedGlobals(kwargs.path)

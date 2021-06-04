@@ -25,7 +25,7 @@
         :user-role="$attrs['user-role']"
         @new-commit="newCommit"
       />
-      <v-card v-if="branch.commits.items.length">
+      <v-card v-if="!$apollo.loading && branch.commits.items.length">
         <v-card-title>History</v-card-title>
         <v-card-text>
           <list-item-commit

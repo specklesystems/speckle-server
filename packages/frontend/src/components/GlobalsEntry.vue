@@ -215,7 +215,7 @@ export default {
         ' ' +
         bimNouns[Math.floor(Math.random() * bimNouns.length)]
       let field = {
-        key: `parameter ${~~(Math.random() * 100)}`,
+        key: `placeholder ${crs({ length: 6 })}`,
         type: 'field',
         value: randomPhrase,
         valid: true,
@@ -234,7 +234,7 @@ export default {
         valid: entry.valid,
         globals: [
           {
-            key: `parameter ${~~(Math.random() * 100)}`,
+            key: `placeholder ${crs({ length: 6 })}`,
             type: 'field',
             value: entry.value,
             id: crs({ length: 10 }),
