@@ -22,9 +22,9 @@ const {
 
 const {
   createCommitByBranchName,
-  createCommitByBranchId,
   getCommitsByBranchName,
   getCommitById,
+  getCommitsByStreamId,
   deleteCommit,
 } = require( '../services/commits' )
 
@@ -146,9 +146,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       let objId = await createObject( multiOwnerStream.id, { pie: 'in the sky' } )
       let commitId = await createCommitByBranchName( { streamId: multiOwnerStream.id, branchName: 'ballmer/dev', message: 'breakfast commit', sourceApplication: 'tests', objectId:objId, authorId: ballmerUserId } )
       
-      let bcommits = await getCommitsByBranchName( { streamId: multiOwnerStream.id, branchName:'ballmer/dev' } )
-      console.log( `Pre deletion branch commit count: ${bcommits.commits.length}` )
-
       await deleteUser( ballmerUserId )
 
       if ( await getStream( { streamId: soloOwnerStream.id } ) !== undefined ) {
@@ -164,8 +161,13 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( branches.items.length ).to.equal( 3 )
 
       let branchCommits = await getCommitsByBranchName( { streamId: multiOwnerStream.id, branchName:'ballmer/dev' } )
-      console.log( `Post deletion branch commit count: ${branchCommits.commits.length}` )
       expect( branchCommits.commits.length ).to.equal( 1 )
+
+      let commit = await getCommitById( { id: commitId } )
+      expect( commit ).to.be.not.null
+
+      let commitsByStreamId = await getCommitsByStreamId( { streamId: multiOwnerStream.id } )
+      expect( commitsByStreamId.commits.length ).to.equal( 1 )
 
       let user = await getUser( ballmerUserId )
       if ( user )
