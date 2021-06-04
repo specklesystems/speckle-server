@@ -30,6 +30,11 @@ Vue.use(VueMatomo, {
   userId: localStorage.getItem('suuid')
 })
 
+import VueApexCharts from 'vue-apexcharts'
+Vue.use(VueApexCharts)
+
+Vue.component('apexchart', VueApexCharts)
+
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')
 

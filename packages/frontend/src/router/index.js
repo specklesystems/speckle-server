@@ -140,6 +140,31 @@ const routes = [
           title: 'User Profile | Speckle'
         },
         component: () => import('../views/ProfileUser.vue')
+      },
+      {
+        path: 'admin',
+        meta: {
+          title: 'Admin | Overview'
+        },
+        children: [
+          {
+            name: 'Admin | Overview',
+            path: '',
+            component: () => import('../views/admin/AdminOverview.vue')
+          },
+          {
+            name: "Admin | Users",
+            path: "users",
+            component: () => import('../views/admin/AdminUsers.vue')
+
+          },
+          {
+            name: "Admin | Streams",
+            path: "streams",
+            component: () => import('../views/admin/AdminStreams.vue')
+          }
+        ],
+        component: () => import('../views/admin/AdminPanel.vue')
       }
     ]
   },
