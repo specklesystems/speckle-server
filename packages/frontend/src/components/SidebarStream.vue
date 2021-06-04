@@ -32,7 +32,7 @@
         class="pa-2"
         :to="
           stream.commits.items[0].branchName.startsWith('globals')
-            ? `/streams/${stream.id}/${stream.commits.items[0].branchName}`
+            ? `/streams/${stream.id}/${stream.commits.items[0].branchName}/${stream.commits.items[0].id}`
             : `/streams/${stream.id}/commits/${stream.commits.items[0].id}`
         "
       >

@@ -42,7 +42,7 @@
                     <router-link
                       :to="
                         a.branchName.startsWith('globals')
-                          ? `streams/${a.streamId}/${a.branchName}`
+                          ? `streams/${a.streamId}/${a.branchName}/${a.id}`
                           : `streams/${a.streamId}/commits/${a.id}`
                       "
                     >
