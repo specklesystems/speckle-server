@@ -63,14 +63,16 @@ module.exports = {
 
   async getUserById( { userId } ) {
     let user = await Users( ).where( { id: userId } ).select( '*' ).first( )
-    delete user?.passwordDigest
+    if ( user ) 
+      delete user.passwordDigest
     return user
   },
 
   // TODO: deprecate
   async getUser( id ) {
     let user = await Users( ).where( { id: id } ).select( '*' ).first( )
-    delete user?.passwordDigest
+    if ( user ) 
+      delete user.passwordDigest
     return user
   },
 
