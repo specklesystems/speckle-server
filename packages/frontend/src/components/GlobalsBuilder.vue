@@ -15,9 +15,9 @@
     </v-card-subtitle>
     <v-card-text>
       These global variables can be used for storing design values, project requirements, notes, or
-      any info you want to keep track of alongside your geometry. These values can be text, numbers,
+      any info you want to keep track of alongside your geometry. Variable values can be text, numbers,
       lists, or booleans. Click the box icon next to any field to turn it into a nested group of
-      fields. You can drag and drop fields in and out of groups as you please. Note that field order
+      fields, and drag and drop fields in and out of groups as you please! Note that field order
       may not always be preserved.
     </v-card-text>
     <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">

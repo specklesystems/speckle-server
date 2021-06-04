@@ -205,9 +205,9 @@ export default {
   },
   methods: {
     emitAddProp() {
-      var bimNouns = ['parameter', 'BIM', 'triple O', 'digital twin', 'LOD 9000', 'automation']
-      var bimAdjs = ['parametric', 'chonky', '3D']
-      var bimExclamations = ['wow', 'much']
+      var bimNouns = ['parameter', 'BIM', 'triple O', 'digital twin', 'LOD 9000', 'automation', 'structure', 'layer', 'interop']
+      var bimAdjs = ['parametric', 'chonky', '3D', 'liminal', 'brutalist', 'postmodern', 'discrete', 'dank']
+      var bimExclamations = ['wow', 'much', 'yes', 'towards a new']
       var randomPhrase =
         bimExclamations[Math.floor(Math.random() * bimExclamations.length)] +
         ' ' +
