@@ -163,14 +163,10 @@ export default {
             (v) => !!v || 'Properties need to have a name!',
             (v) => {
               let filtered = entries.filter((_, i) => i != index)
-              if (filtered.findIndex((e) => e.key === v) === -1) {
-                // this.entries[index].$set('isValid', true)
-                entries[index].isValid = true
-                return true
-              } else {
-                entries[index].isValid = false
-                return 'A property with this name already exists'
-              }
+              return (
+                filtered.findIndex((e) => e.key === v) === -1 ||
+                'A property with this name already exists'
+              )
             }
           ]
         }

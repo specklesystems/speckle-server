@@ -75,7 +75,7 @@ export default {
     async createClicked() {
       if (!this.branch) {
         this.loading = true
-        this.$matomo && this.$matomo.trackPageView('branch/create')
+        this.$matomo && this.$matomo.trackPageView('globals/branch/create')
         await this.$apollo.mutate({
           mutation: gql`
             mutation branchCreate($params: BranchCreateInput!) {

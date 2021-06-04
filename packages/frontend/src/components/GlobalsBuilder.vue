@@ -38,6 +38,7 @@
         v-if="userRole === 'contributor' || userRole === 'owner'"
         v-tooltip="'Save your changes with a message'"
         small
+        :disabled="!globalsAreValid"
         color="primary"
         @click="
           saveDialog = true
@@ -80,7 +81,7 @@ export default {
       variables() {
         return {
           streamId: this.streamId,
-          id: this.newObjectHash ?? this.objectId
+          id: this.objectId
         }
       },
       update(data) {
@@ -114,7 +115,7 @@ export default {
   data() {
     return {
       globalsArray: [],
-      newObjectHash: null,
+      globalsAreValid: true, //TODO: how to update this if validation fails in child components?
       saveDialog: false,
       deleteEntries: false,
       sample: {
@@ -124,11 +125,10 @@ export default {
   },
   computed: {
     globalsCommit() {
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      this.globalsAreValid = true
       let base = this.globalsToBase(this.globalsArray)
       return base
-    },
-    validObject() {
-      return this.checkValidKeys(this.globalsArray)
     }
   },
   mounted() {
@@ -151,24 +151,21 @@ export default {
               key,
               value: val,
               globals: this.nestedGlobals(val),
-              type: 'object', //TODO: handle references
-              isValid: true
+              type: 'object' //TODO: handle references
             })
           } else {
             arr.push({
               key,
               value: val,
               globals: this.nestedGlobals(val),
-              type: 'object',
-              isValid: true
+              type: 'object'
             })
           }
         } else {
           arr.push({
             key,
             value: val,
-            type: 'field',
-            isValid: true
+            type: 'field'
           })
         }
       }
@@ -183,6 +180,8 @@ export default {
       }
       arr.forEach((entry) => {
         if (!entry.value && !entry.globals) return
+
+        if (arr.filter((e) => e.key == entry.key).length > 1) this.globalsAreValid = false
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
         else if (entry.type == 'object') {
@@ -248,21 +247,6 @@ export default {
     closeSaveDialog() {
       this.saveDialog = false
       this.$emit('new-commit')
-    },
-    checkValidKeys(arr) {
-      if (!arr) return false
-      let valid = true
-      arr.forEach((o) => {
-        if (o.type == 'object') {
-          valid = this.checkValidKeys(o.globals)
-        }
-
-        if (!valid) return false
-
-        if (!o.isValid) return false
-      })
-
-      return true
     }
   }
 }
