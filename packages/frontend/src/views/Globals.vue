@@ -23,7 +23,7 @@
         :object-id="objectId"
         :commit-message="commit.message"
         :user-role="$attrs['user-role']"
-        @new-commit="$apollo.queries.branch.refetch()"
+        @new-commit="newCommit"
       />
       <v-card>
         <v-card-title>History</v-card-title>
@@ -110,6 +110,10 @@ export default {
       }
 
       this.revealBuilder = true
+    },
+    newCommit() {
+      this.$apollo.queries.branch.refetch()
+      if (this.$route.params.commitId) this.$router.push(`/streams/${this.streamId}/globals`)
     }
   }
 }
