@@ -8,7 +8,8 @@
         @close="closeSaveDialog"
       />
     </v-dialog>
-    <v-card-title>Globals</v-card-title>
+    <v-card-title v-if="commitMessage">{{ commitMessage }}</v-card-title>
+    <v-card-title v-else>Globals</v-card-title>
     <v-card-text>
       These global variables can be used for storing design values, project requirements, notes, or
       any info you want to keep track of alongside your geometry. These values can be text, numbers,
@@ -108,6 +109,10 @@ export default {
       default: null
     },
     streamId: {
+      type: String,
+      default: null
+    },
+    commitMessage: {
       type: String,
       default: null
     }

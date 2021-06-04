@@ -21,12 +21,21 @@
         :branch-name="branchName"
         :stream-id="streamId"
         :object-id="objectId"
+        :commit-message="commit.message"
         :user-role="$attrs['user-role']"
         @new-commit="$apollo.queries.branch.refetch()"
       />
       <v-card>
         <v-card-title>History</v-card-title>
-        <v-card-text>TODO</v-card-text>
+        <v-card-text>
+          <list-item-commit
+            v-for="item in branch.commits.items"
+            :key="item.id"
+            :route="`/streams/${streamId}/globals/${item.id}`"
+            :commit="item"
+            :stream-id="streamId"
+          />
+        </v-card-text>
       </v-card>
     </div>
   </v-container>
@@ -35,12 +44,12 @@
 <script>
 import gql from 'graphql-tag'
 import branchQuery from '../graphql/branch.gql'
-import GlobalsBuilder from '../components/GlobalsBuilder'
 
 export default {
   name: 'Globals',
   components: {
-    GlobalsBuilder
+    GlobalsBuilder: () => import('../components/GlobalsBuilder'),
+    ListItemCommit: () => import('../components/ListItemCommit')
   },
   apollo: {
     branch: {
@@ -58,7 +67,8 @@ export default {
   },
   data() {
     return {
-      branchName: 'globals', //TODO: handle multipile globals branches
+      branchName: 'globals', //TODO: handle multipile globals branches,
+
       revealBuilder: false,
       loading: false
     }
@@ -67,8 +77,13 @@ export default {
     streamId() {
       return this.$route.params.streamId
     },
+    commit() {
+      return this.$route.params.commitId
+        ? this.branch?.commits?.items?.filter((c) => c.id == this.$route.params.commitId)[0]
+        : this.branch?.commits?.items[0]
+    },
     objectId() {
-      return this.branch?.commits?.items[0]?.referencedObject
+      return this.commit?.referencedObject
     }
   },
   methods: {
