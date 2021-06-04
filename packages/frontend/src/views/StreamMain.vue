@@ -9,7 +9,7 @@
           <v-select
             v-if="branches"
             v-model="selectedBranch"
-            :items="branches.items"
+            :items="branches"
             item-value="name"
             solo
             flat
@@ -41,7 +41,7 @@
             :to="'/streams/' + $route.params.streamId + '/branches'"
           >
             <v-icon class="mr-2 float-left">mdi-source-branch</v-icon>
-            {{ branches.totalCount }} branch{{ branches.totalCount > 1 ? 'es' : '' }}
+            {{ branches.length }} branch{{ branches.length > 1 ? 'es' : '' }}
           </v-btn>
         </v-sheet>
 
@@ -228,7 +228,7 @@ export default {
         }
       },
       update(data) {
-        return data.stream.branches
+        return data.stream.branches.items.filter((b) => !b.name.startsWith('globals'))
       }
     },
     description: {
@@ -297,7 +297,7 @@ export default {
     },
     branchNames() {
       if (!this.branches) return []
-      return this.branches.items.map((b) => b.name)
+      return this.branches.map((b) => b.name)
     },
     compiledStreamDescription() {
       if (!this.description) return ''
@@ -344,8 +344,8 @@ export default {
     selectBranch() {
       if (!this.branches) return
       let branchName = this.$route.params.branchName ? this.$route.params.branchName : 'main'
-      let index = this.branches.items.findIndex((x) => x.name === branchName)
-      if (index > -1) this.selectedBranch = this.branches.items[index]
+      let index = this.branches.findIndex((x) => x.name === branchName)
+      if (index > -1) this.selectedBranch = this.branches[index]
       else this.error = 'Branch ' + branchName + ' does not exist'
     },
     changeBranch() {
