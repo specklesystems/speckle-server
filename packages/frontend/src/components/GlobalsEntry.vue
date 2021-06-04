@@ -9,7 +9,7 @@
       @start="drag = true"
       @end="drag = false"
     >
-      <div v-for="(entry, index) in entries" :key="entry.key">
+      <div v-for="(entry, index) in entries" :key="entry.id">
         <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
             <div class="d-flex align-center">
@@ -46,6 +46,8 @@
               >
                 <v-icon color="primary">mdi-cube-outline</v-icon>
               </v-btn>
+              {{ entry.valid }}
+              | {{ entry.id }}
             </div>
           </div>
           <v-card v-else rounded="lg" class="pa-3 my-6" elevation="4">
@@ -94,6 +96,8 @@
                 >
                   <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
                 </v-btn>
+                {{ entry.valid }}
+                | {{ entry.id }}
               </v-col>
             </v-row>
             <globals-entry
@@ -129,6 +133,7 @@
 </template>
 <script>
 import draggable from 'vuedraggable'
+import crs from 'crypto-random-string'
 
 export default {
   name: 'GlobalsEntry',
@@ -149,6 +154,10 @@ export default {
     remove: {
       type: Boolean,
       default: false
+    },
+    invalidIds: {
+      type: Array,
+      default: () => []
     }
   },
   data() {
@@ -163,10 +172,11 @@ export default {
             (v) => !!v || 'Properties need to have a name!',
             (v) => {
               let filtered = entries.filter((_, i) => i != index)
-              return (
+              let result =
                 filtered.findIndex((e) => e.key === v) === -1 ||
                 'A property with this name already exists'
-              )
+              entries[index].valid = result === true
+              return result
             }
           ]
         }
@@ -197,7 +207,9 @@ export default {
       let field = {
         key: `parameter ${~~(Math.random() * 100)}`,
         type: 'field',
-        value: randomPhrase
+        value: randomPhrase,
+        valid: true,
+        id: crs({ length: 10 })
       }
       this.$emit('add-prop', { field: field, path: this.path })
     },
@@ -208,8 +220,16 @@ export default {
       let obj = {
         key: entry.key,
         type: 'object',
+        id: entry.id,
+        valid: entry.valid,
         globals: [
-          { key: `placeholder ${~~(Math.random() * 100)}`, type: 'field', value: entry.value }
+          {
+            key: `placeholder ${~~(Math.random() * 100)}`,
+            type: 'field',
+            value: entry.value,
+            id: crs({ length: 10 }),
+            valid: true
+          }
         ]
       }
       this.$emit('field-to-object', { obj: obj, path: this.path, index: index })
@@ -219,7 +239,10 @@ export default {
       this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
     },
     updateKey(input, entry, index) {
-      if (this.$refs.keyInput[index].validate()) entry.key = input
+      entry.key = input
+      if (this.$refs.keyInput[index].validate()) {
+        entry.valid = true
+      }
       else if (input) {
         console.log(`UPDATE KEY >>> current key: ${entry.key}, event value: ${input}`)
       }

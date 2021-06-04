@@ -68,6 +68,7 @@
 </template>
 
 <script>
+import crs from 'crypto-random-string'
 import objectQuery from '../graphql/objectSingle.gql'
 
 export default {
@@ -154,6 +155,8 @@ export default {
           if (val.speckle_type && val.speckle_type === 'reference') {
             arr.push({
               key,
+              valid: true,
+              id: crs({ length: 10 }),
               value: val,
               globals: this.nestedGlobals(val),
               type: 'object' //TODO: handle references
@@ -161,6 +164,8 @@ export default {
           } else {
             arr.push({
               key,
+              valid: true,
+              id: crs({ length: 10 }),
               value: val,
               globals: this.nestedGlobals(val),
               type: 'object'
@@ -169,6 +174,8 @@ export default {
         } else {
           arr.push({
             key,
+            valid: true,
+            id: crs({ length: 10 }),
             value: val,
             type: 'field'
           })
@@ -183,10 +190,16 @@ export default {
         speckle_type: 'Base',
         id: null
       }
-      arr.forEach((entry) => {
+
+      for (let entry of arr) {
         if (!entry.value && !entry.globals) return
 
-        if (arr.filter((e) => e.key == entry.key).length > 1) this.globalsAreValid = false
+        if (arr.filter((e) => e.key == entry.key).length > 1) {
+
+          // entry.valid = false
+          this.globalsAreValid = false
+        }
+        // if (!entry.valid) this.globalsAreValid = false
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
         else if (entry.type == 'object') {
@@ -201,7 +214,8 @@ export default {
         } else {
           base[entry.key] = isNaN(entry.value) ? entry.value : parseFloat(entry.value)
         }
-      })
+      }
+
       return base
     },
     resetGlobals() {
