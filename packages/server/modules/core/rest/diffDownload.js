@@ -8,8 +8,12 @@ const cors = require( 'cors' )
 const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { validatePermissionsReadStream } = require( './authUtils' )
-
+const { SpeckleObjectsStream } = require( './speckleObjectsStream' )
 const { getObjectsStream } = require( '../services/objects' )
+
+const { pipeline } = require( 'stream' )
+
+const fsCapacitor = require( 'fs-capacitor' )
 
 module.exports = ( app ) => {
 
@@ -34,6 +38,29 @@ module.exports = ( app ) => {
     res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': simpleText ? 'text/plain' : 'application/json' } )
 
     const gzip = zlib.createGzip( )
+
+    const fsCapacitorStream = new fsCapacitor.WriteStream()
+
+    fsCapacitorStream.createReadStream().pipe( res )
+
+    pipeline(
+      dbStream,
+      new SpeckleObjectsStream( true ),
+      gzip,
+      fsCapacitorStream,
+      ( err ) => {
+        if ( err ) {
+          console.error( 'Pipeline failed.', err )
+        } else {
+          console.log( 'Pipeline succeeded.' )
+        }
+      }
+    )
+
+    res.on( 'finish', function() {
+      fsCapacitorStream.destroy()
+    } )
+    return
 
     if ( !simpleText ) gzip.write( '[' )
 
