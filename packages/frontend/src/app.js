@@ -35,6 +35,25 @@ Vue.use(VueApexCharts)
 
 Vue.component('apexchart', VueApexCharts)
 
+import numeral from "numeral"
+
+// Filter to turn any number into a nice string like '10k', '5.5m'
+// Accepts 'max' parameter to set it's formatting while being animated
+Vue.filter('prettynum', function (value, max) {
+  const num = numeral(value)
+  const abs = Math.abs(max || num.value())
+
+  switch (abs) {
+    case abs < 1000:
+      return num.value()
+    case abs >= 1000 && abs <= 10000:
+      return num.format('0.0a')
+    default:
+      return num.format('0a')
+  }
+
+})
+
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')
 

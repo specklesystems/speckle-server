@@ -1,6 +1,6 @@
 <template lang="html">
   <v-container>
-    <p>Admin Streams</p>
+    <p></p>
   </v-container>
 </template>
 

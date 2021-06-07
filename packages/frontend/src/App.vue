@@ -22,7 +22,8 @@ export default {
   }
 }
 </script>
-<style>
+<style lang="scss">
+
 .marked-preview h1 {
   padding-bottom: 10px;
   padding-top: 10px;

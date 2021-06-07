@@ -162,6 +162,11 @@ const routes = [
             name: "Admin | Streams",
             path: "streams",
             component: () => import('../views/admin/AdminStreams.vue')
+          },
+          {
+            name: "Admin | Settings",
+            path: "settings",
+            component: () => import('../views/admin/AdminSettings.vue')
           }
         ],
         component: () => import('../views/admin/AdminPanel.vue')

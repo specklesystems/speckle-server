@@ -1,18 +1,22 @@
 <template>
   <div id="admin-overview">
-    <server-info-admin-card/>
-    <usage-info-card/>
-    <version-info-card/>
+    <!-- Dynamically register page cards-->
+    <component v-for="comp in cards" :key="comp.name" :is="comp" outlined/>
   </div>
 </template>
 
 <script>
-import ServerInfoAdminCard from "@/components/admin/ServerInfoCard";
 import VersionInfoCard from "@/components/admin/VersionInfoCard";
-import UsageInfoCard from "@/components/admin/UsageInfoCard";
+import ActivityCard from "@/components/admin/ActivityCard";
+import GeneralInfoCard from "@/components/admin/GeneralInfoCard";
+
 export default {
   name: "AdminOverview",
-  components: { UsageInfoCard, VersionInfoCard, ServerInfoAdminCard },
+  data() {
+    return {
+      cards: [GeneralInfoCard, ActivityCard, VersionInfoCard]
+    };
+  }
 };
 </script>
 

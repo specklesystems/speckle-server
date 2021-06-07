@@ -14,23 +14,31 @@
         Cancel
       </v-btn>
     </template>
-    <div v-if="serverInfo && edit">
-      <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0 pb-0">
-        <span v-if="name == 'inviteOnly'">
-          {{ name }}
-          <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>
-        </span>
-        <v-text-field v-else :hint="value.hint" :label="value.label" dense outlined :disabled="!edit"
-                      v-model="serverInfo[name]"></v-text-field>
-      </v-card-text>
-    </div>
-    <div v-else-if="serverInfo && !edit">
-      <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0">
-        <v-btn-toggle elevation="0" borderless dense>
-          <v-btn class="no-events" small color="primary">{{ value.label }}</v-btn>
-          <v-btn class="no-events" small>{{ serverInfo[name] }}</v-btn>
-        </v-btn-toggle>
-      </v-card-text>
+    <div v-if="serverInfo">
+      <v-fade-transition mode="out-in">
+        <div v-if="edit" key="editPanel">
+          <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0 pb-0">
+            <span v-if="name === 'inviteOnly'">
+              {{ name }}
+              <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>
+            </span>
+            <v-text-field v-else
+                          :hint="value.hint"
+                          :label="value.label"
+                          dense
+                          outlined
+                          v-model="serverInfo[name]"/>
+          </v-card-text>
+        </div>
+        <div v-else key="viewPanel">
+          <v-card-text class="pb-0">
+            <p class="d-flex rounded-lg overflow-hidden" v-for="(value,name) in serverDetails" :key="name">
+              <span class="pa-3 primary lighten-2 white--text" style="min-width: 25%">{{ value.label }}</span>
+              <span class="pa-3 grey lighten-3 flex-grow-1">{{ serverInfo[name] }}</span>
+            </p>
+          </v-card-text>
+        </div>
+      </v-fade-transition>
     </div>
   </admin-card>
 </template>
@@ -104,7 +112,4 @@ export default {
 </script>
 
 <style scoped>
-.no-events {
-  pointer-events: none;
-}
 </style>

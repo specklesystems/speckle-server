@@ -1,12 +1,14 @@
 <template>
   <v-container>
-    <p>Admin Users</p>
+    <admin-card title="Test card"/>
   </v-container>
 </template>
 
 <script>
+import AdminCard from "@/components/admin/AdminCard";
 export default {
-  name: 'AdminUsers'
+  name: 'AdminUsers',
+  components: { AdminCard }
 }
 </script>
 

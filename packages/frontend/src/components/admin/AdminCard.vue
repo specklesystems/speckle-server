@@ -1,12 +1,12 @@
 <template>
-  <v-card elevation="0" outlined rounded>
+  <v-card class="rounded-lg" v-bind="$attrs">
     <v-card-title class="d-flex justify-space-between">
-      <span>{{title}}</span>
+      <span>{{ title }}</span>
       <span>
         <slot name="menu"></slot>
       </span>
     </v-card-title>
-    <span><slot></slot></span>
+    <v-card-text><slot></slot></v-card-text>
   </v-card>
 </template>
 
@@ -17,6 +17,4 @@ export default {
 };
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

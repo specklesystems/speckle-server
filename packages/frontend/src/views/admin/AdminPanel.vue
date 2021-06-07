@@ -2,15 +2,28 @@
   <v-container>
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-10">
-        <v-card id="sideMenu" elevation="0" outlined rounded>
+        <v-card id="sideMenu" elevation="1" class="rounded-lg overflow-hidden">
           <v-card-title>Admin panel</v-card-title>
-          <v-card-text v-for="child in childRoutes" :key="child.to" class="pa-3">
-            <router-link :to="child.to">{{ child.name }}</router-link>
-          </v-card-text>
+          <div v-for="child in childRoutes" :key="child.to">
+            <router-link :to="child.to" v-slot="{ isExactActive, route, navigate }">
+              <v-hover v-slot="{ hover }" >
+                  <span :disabled="isExactActive"
+                        @click="navigate"
+                        :class="{'active-border primary--text': isExactActive,'primary--text': hover}"
+                        class="pa-2 pl-6 text-left d-flex admin-menu-item bold">
+                    <v-icon small class="pr-1" :color="(hover || isExactActive) ? 'primary' : null">{{ child.icon }}</v-icon>
+                    {{ child.name }}
+                  </span>
+              </v-hover>
+            </router-link>
+          </div>
         </v-card>
       </v-col>
+
       <v-col cols="12" sm="12" md="8" lg="9" xl="9" class="pt-10">
-        <router-view></router-view>
+        <v-fade-transition mode="out-in">
+          <router-view></router-view>
+        </v-fade-transition>
       </v-col>
     </v-row>
   </v-container>
@@ -18,29 +31,61 @@
 
 <script>
 export default {
-  name: 'AdminPanel',
+  name: "AdminPanel",
   data() {
     return {
       childRoutes: [
         {
-          name: 'Dashboard',
-          to: '/admin'
+          name: "Dashboard",
+          to: "/admin",
+          icon: "mdi-view-dashboard"
         },
         {
-          name: 'Users',
-          to: '/admin/users'
+          name: "Users",
+          to: "/admin/users",
+          icon: "mdi-account-multiple"
         },
         {
-          name: 'Streams',
-          to: '/admin/streams'
+          name: "Streams",
+          to: "/admin/streams",
+          icon: "mdi-cloud"
+        },
+        {
+          name: "Settings",
+          to: "/admin/settings",
+          icon: "mdi-cog"
         }
       ]
-    }
+    };
   }
-}
+};
 </script>
 
 <style lang="scss">
-#sideMenu {
+
+.gray-border {
+  border-top: 1pt solid var(--v-background-base) !important;
+}
+.admin-menu-item {
+  overflow: hidden;
+  position: relative;
+  border-top: 1pt solid var(--v-background-base) !important;
+  cursor: pointer;
+  transition: 0.5s all ease-out, border-top-color 0s;
+
+  &::before {
+    position: absolute;
+    content: "";
+    width: 0;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: var(--v-primary-base);
+    transition: all 0.5s ease-in-out, border-top-color 0s;
+  }
+
+  &.active-border::before {
+    width: 4pt;
+  }
 }
 </style>
