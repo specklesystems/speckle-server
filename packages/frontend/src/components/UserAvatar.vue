@@ -36,7 +36,7 @@
       </v-card>
       <v-card v-else>
         <v-card-text class="text-xs">
-          <b>Speckle Robo Ghost</b>
+          <b>Speckle Ghost</b>
           <br />
           This user no longer exists.
         </v-card-text>
