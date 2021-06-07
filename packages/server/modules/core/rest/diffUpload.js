@@ -19,6 +19,8 @@ module.exports = ( app ) => {
     
     let objectList = JSON.parse( req.body.objects )
 
+    debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Diffing ${objectList.length} objects for stream ${req.params.streamId}` )
+
     let response = await hasObjects( { streamId: req.params.streamId, objectIds: objectList } )
     // console.log(response)
     res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': 'application/json' } )

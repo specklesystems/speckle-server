@@ -6,19 +6,29 @@ class SpeckleObjectsStream extends Transform {
   constructor( simpleText ) {
     super( { writableObjectMode: true } )
     this.simpleText = simpleText
+
+    if ( !this.simpleText ) this.push( '[' )
+    this.isFirstObject = true
   }
 
   _transform( dbObj, encoding, callback ) {
-    if ( this.simpleText ) {
-      this.push( `${dbObj.data.id}\t${JSON.stringify( dbObj.data )}\n` )
-      
-    } else {
-
+    try {
+      if ( this.simpleText ) {
+        this.push( `${dbObj.data.id}\t${JSON.stringify( dbObj.data )}\n` )
+      } else {
+        // JSON output
+        if ( !this.isFirstObject ) this.push( ',' )
+        this.push( JSON.stringify( dbObj.data ) )
+        this.isFirstObject = false
+      }
+      callback()
+    } catch ( e ) {
+      callback( e )
     }
-    callback()
   }
 
   _flush( callback ) {
+    if ( !this.simpleText ) this.push( ']' )
     callback()
   }
 
