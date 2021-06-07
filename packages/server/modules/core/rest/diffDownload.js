@@ -13,8 +13,6 @@ const { getObjectsStream } = require( '../services/objects' )
 
 const { pipeline } = require( 'stream' )
 
-const fsCapacitor = require( 'fs-capacitor' )
-
 module.exports = ( app ) => {
 
   app.options( '/api/getobjects/:streamId', cors() )
@@ -39,15 +37,11 @@ module.exports = ( app ) => {
 
     const gzip = zlib.createGzip( )
 
-    const fsCapacitorStream = new fsCapacitor.WriteStream()
-
-    fsCapacitorStream.createReadStream().pipe( res )
-
     pipeline(
       dbStream,
       new SpeckleObjectsStream( true ),
       gzip,
-      fsCapacitorStream,
+      res,
       ( err ) => {
         if ( err ) {
           console.error( 'Pipeline failed.', err )
@@ -57,9 +51,6 @@ module.exports = ( app ) => {
       }
     )
 
-    res.on( 'finish', function() {
-      fsCapacitorStream.destroy()
-    } )
     return
 
     if ( !simpleText ) gzip.write( '[' )
