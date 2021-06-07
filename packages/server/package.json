@@ -33,7 +33,6 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
-    "fs-capacitor": "^6.2.0",
     "graphql": "^14.6.0",
     "graphql-redis-subscriptions": "^2.2.2",
     "graphql-scalars": "^1.6.1",
