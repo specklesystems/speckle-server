@@ -18,8 +18,6 @@ module.exports = ( app ) => {
       return res.status( hasStreamAccess.status ).end()
     }
 
-    debug( 'speckle:upload-endpoint' )( 'Upload started' )
-
     let busboy = new Busboy( { headers: req.headers } )
     let totalProcessed = 0
     let last = {}
@@ -94,7 +92,6 @@ module.exports = ( app ) => {
 
       await Promise.all( promises )
 
-      debug( 'speckle:upload-endpoint' )( 'Upload ended' )
       res.status( 201 ).end( )
     } )
 
