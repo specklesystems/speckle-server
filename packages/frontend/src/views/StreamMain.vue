@@ -76,7 +76,10 @@
                 </v-list-item-content>
               </v-list-item>
 
-              <v-list-item v-if="selectedBranch" @click="editBranch">
+              <v-list-item
+                v-if="selectedBranch && selectedBranch.name != 'main'"
+                @click="editBranch"
+              >
                 <v-list-item-action class="mr-2">
                   <v-icon>mdi-cog-outline</v-icon>
                 </v-list-item-action>
