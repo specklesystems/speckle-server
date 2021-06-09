@@ -89,6 +89,36 @@
               </v-list-item>
             </v-list>
           </v-menu>
+          <div
+            v-if="
+              stream &&
+              stream.commit &&
+              stream.commit.branchName != 'main' &&
+              stream.commit.branchName != selectedBranch.name
+            "
+            class="pb-2 caption"
+          >
+            <v-alert color="primary" class="caption" dense text type="info">
+              The last commit of this stream is on the
+              <v-btn
+                text
+                x-small
+                color="primary darken-1"
+                :to="'/streams/' + $route.params.streamId + '/branches/' + stream.commit.branchName"
+              >
+                {{ stream.commit.branchName }}
+              </v-btn>
+              branch, see
+              <v-btn
+                x-small
+                text
+                color="primary  darken-1"
+                :to="'/streams/' + $route.params.streamId + '/commits/' + stream.commit.id"
+              >
+                {{ stream.commit.message }}
+              </v-btn>
+            </v-alert>
+          </div>
         </v-sheet>
 
         <div v-if="latestCommit" style="height: 50vh">
@@ -297,6 +327,26 @@ export default {
         }
       },
       update: (data) => data.stream.description
+    },
+    stream: {
+      query: gql`
+        query($id: String!) {
+          stream(id: $id) {
+            id
+            commit {
+              branchName
+              id
+              message
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      }
+      //update: (data) => data.stream.description
     },
     $subscribe: {
       branchCreated: {
