@@ -91,6 +91,7 @@ export default class Coverter {
     // Last attempt: iterate through all object keys and see if we can display anything!
     // traverses the object in case there's any sub-objects we can convert.
     for ( let prop in target ) {
+      if ( prop === 'bbox' ) continue
       if ( typeof target[prop] !== 'object' ) continue
       let childPromise = this.traverseAndConvert( target[prop], callback, scale )
       childrenConversionPromisses.push( childPromise )
