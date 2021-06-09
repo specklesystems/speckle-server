@@ -33,7 +33,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: cristi/ci-test
+              only: cristi/ci-k8s-tor
 
 jobs:
   test_server:
@@ -90,13 +90,21 @@ jobs:
           command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
       - run:
           name: Deploy
-          command: ./.circleci/deploy.sh
+          command: |
+            ./.circleci/deploy.sh
+            if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
+              env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
+            else
+              env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_LATEST} ./.circleci/deploy_in_new_setup.sh
+            fi
       - run:
           name: Test deployment
           command: |
             ./utils/test-deployment/install_prerequisites.sh
-            SPECKLE_SERVER=https://latest.speckle.dev
             if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
-              SPECKLE_SERVER=https://speckle.xyz
+              ./utils/test-deployment/run_tests.py https://speckle.xyz
+              ./utils/test-deployment/run_tests.py ${SPECKLE_URL_TOR1_1_RELEASE}
+            else
+              ./utils/test-deployment/run_tests.py https://latest.speckle.dev
+              ./utils/test-deployment/run_tests.py ${SPECKLE_URL_TOR1_1_LATEST}
             fi
-            ./utils/test-deployment/run_tests.py $SPECKLE_SERVER
