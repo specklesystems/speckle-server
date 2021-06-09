@@ -43,6 +43,82 @@
             <v-icon class="mr-2 float-left">mdi-source-branch</v-icon>
             {{ branches.length }} branch{{ branches.length > 1 ? 'es' : '' }}
           </v-btn>
+
+          <!-- DIALOGS -->
+          <branch-new-dialog ref="newBranchDialog" />
+          <branch-edit-dialog ref="editBranchDialog" />
+
+          <!-- MENU -->
+
+          <v-menu
+            v-if="userRole === 'contributor' || userRole === 'owner'"
+            offset-y
+            class="mx-2 mb-5"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                style="position: absolute; top: 36px; right: 20px"
+                color="primary"
+                v-bind="attrs"
+                icon
+                v-on="on"
+              >
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </template>
+            <v-list>
+              <v-list-item @click="newBranch">
+                <v-list-item-action class="mr-2">
+                  <v-icon>mdi-plus-circle-outline</v-icon>
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title>New branch</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item
+                v-if="selectedBranch && selectedBranch.name != 'main'"
+                @click="editBranch"
+              >
+                <v-list-item-action class="mr-2">
+                  <v-icon>mdi-cog-outline</v-icon>
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title>Edit {{ selectedBranch.name }}</v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <div
+            v-if="
+              stream &&
+              stream.commit &&
+              stream.commit.branchName != 'main' &&
+              stream.commit.branchName != selectedBranch.name
+            "
+            class="pb-2 caption"
+          >
+            <v-alert color="primary" class="caption" dense text type="info">
+              The last commit of this stream is on the
+              <v-btn
+                text
+                x-small
+                color="primary darken-1"
+                :to="'/streams/' + $route.params.streamId + '/branches/' + stream.commit.branchName"
+              >
+                {{ stream.commit.branchName }}
+              </v-btn>
+              branch, see
+              <v-btn
+                x-small
+                text
+                color="primary  darken-1"
+                :to="'/streams/' + $route.params.streamId + '/commits/' + stream.commit.id"
+              >
+                {{ stream.commit.message }}
+              </v-btn>
+            </v-alert>
+          </div>
         </v-sheet>
 
         <div v-if="latestCommit" style="height: 50vh">
@@ -152,7 +228,7 @@
           />
         </v-dialog>
         <v-card-title>
-          Description
+          Stream Description
           <v-spacer />
           <v-btn
             v-if="userRole === 'owner'"
@@ -193,6 +269,8 @@ import streamBranchesQuery from '../graphql/streamBranches.gql'
 import Renderer from '../components/Renderer'
 import UserAvatar from '../components/UserAvatar'
 import ErrorBlock from '../components/ErrorBlock'
+import BranchNewDialog from '../components/dialogs/BranchNewDialog'
+import BranchEditDialog from '../components/dialogs/BranchEditDialog'
 
 export default {
   name: 'StreamMain',
@@ -202,7 +280,9 @@ export default {
     SourceAppAvatar,
     NoDataPlaceholder,
     Renderer,
-    ErrorBlock
+    ErrorBlock,
+    BranchNewDialog,
+    BranchEditDialog
   },
   props: {
     userRole: {
@@ -213,10 +293,11 @@ export default {
   data() {
     return {
       dialogDescription: false,
-      dialogBranch: false,
       selectedBranch: null,
       clearRendererTrigger: 0,
-      error: ''
+      error: '',
+      dialogBranchNew: false,
+      dialogBranchEdit: false
     }
   },
   apollo: {
@@ -246,6 +327,26 @@ export default {
         }
       },
       update: (data) => data.stream.description
+    },
+    stream: {
+      query: gql`
+        query($id: String!) {
+          stream(id: $id) {
+            id
+            commit {
+              branchName
+              id
+              message
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      }
+      //update: (data) => data.stream.description
     },
     $subscribe: {
       branchCreated: {
@@ -337,9 +438,42 @@ export default {
       this.dialogDescription = false
       this.$apollo.queries.description.refetch()
     },
-    closeBranchDialog() {
-      this.dialogBranch = false
-      this.$apollo.queries.branches.refetch()
+    editBranch() {
+      this.$refs.editBranchDialog.open(this.selectedBranch).then((dialog) => {
+        if (!dialog.result) return
+        else if (dialog.deleted) {
+          this.$router.push({ path: `/streams/${this.$route.params.streamId}` })
+        } else if (dialog.name !== this.selectedBranch.name) {
+          //this.$router.push does not work, refresh entire window
+          window.location =
+            window.origin +
+            '/streams/' +
+            this.$route.params.streamId +
+            '/branches/' +
+            encodeURIComponent(dialog.name)
+        } else {
+          this.$apollo.queries.branches.refetch()
+        }
+      })
+    },
+    newBranch() {
+      this.$refs.newBranchDialog
+        .open(
+          this.$route.params.streamId,
+          this.branches.map((b) => b.name)
+        )
+        .then((dialog) => {
+          if (!dialog.result) return
+          else {
+            //this.$router.push does not work, refresh entire window
+            window.location =
+              window.origin +
+              '/streams/' +
+              this.$route.params.streamId +
+              '/branches/' +
+              encodeURIComponent(dialog.name)
+          }
+        })
     },
     selectBranch() {
       if (!this.branches) return
