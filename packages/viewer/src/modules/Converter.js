@@ -363,6 +363,20 @@ export default class Coverter {
     return new ObjectWrapper( geometry, obj, 'line' )
   }
 
+  async BoxToBufferGeometry( object, scale = true ){
+    let conversionFactor = scale ? getConversionFactor( object.units ) : 1
+
+    var move = this.PointToVector3( object.basePlane.origin )
+    var width = ( object.xSize.end - object.xSize.start ) * conversionFactor
+    var depth = ( object.ySize.end - object.ySize.start ) * conversionFactor
+    var height = ( object.zSize.end - object.zSize.start ) * conversionFactor
+
+    var box = new THREE.BoxBufferGeometry( width,height,depth,1,1,1 )
+    box.applyMatrix4( new THREE.Matrix4().setPosition( move ) )
+    
+    return new ObjectWrapper( box, object )
+  }
+
   async PolycurveToBufferGeometry( object, scale = true ) {
     let obj = {}
     Object.assign( obj, object )
