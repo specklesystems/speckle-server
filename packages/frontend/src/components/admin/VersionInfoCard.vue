@@ -14,13 +14,13 @@
       <div>
         <h4 class="primary--text text--lighten-2">
           Current </h4>
-        <p class="primary--text text-h4 text-sm-h2">
+        <p class="primary--text text-h4 text-sm-h2 speckle-gradient-txt">
           {{ versionInfo.current }} </p>
       </div>
       <v-icon color="primary lighten-1">mdi-arrow-right</v-icon>
       <div>
         <h4 class="primary--text text--lighten-2">Latest</h4>
-        <p class="primary--text text-h4 text-sm-h2">
+        <p class="primary--text text-h4 text-sm-h2 speckle-gradient-txt">
           {{ versionInfo.latest }} </p>
       </div>
     </div>

@@ -1,7 +1,20 @@
 <template>
-  <v-container>
-    <admin-card title="Test card"/>
-  </v-container>
+  <div>
+    <admin-card title="Test card">
+      <template slot="menu">
+        <v-btn icon x-small color="primary">
+          <v-icon small>mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn icon x-small color="primary">
+          <v-icon small>mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn icon x-small color="primary">
+          <v-icon small>mdi-pencil</v-icon>
+        </v-btn>
+      </template>
+      User list goes here!
+    </admin-card>
+  </div>
 </template>
 
 <script>

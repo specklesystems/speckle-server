@@ -168,4 +168,12 @@ export default {
   opacity: 1;
   transition: opacity 0.15s;
 }
+
+.speckle-gradient-bg {
+  @include speckle-gradient-bg;
+}
+
+.speckle-gradient-txt {
+  @include speckle-gradient-txt;
+}
 </style>

@@ -22,21 +22,15 @@
               {{ name }}
               <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>
             </span>
-            <v-text-field v-else
-                          :hint="value.hint"
-                          :label="value.label"
-                          dense
-                          outlined
-                          v-model="serverInfo[name]"/>
+            <v-text-field v-else :hint="value.hint" :label="value.label" dense outlined v-model="serverInfo[name]"/>
           </v-card-text>
         </div>
         <div v-else key="viewPanel">
-          <v-card-text class="pb-0">
-            <p class="d-flex rounded-lg overflow-hidden" v-for="(value,name) in serverDetails" :key="name">
-              <span class="pa-3 primary lighten-2 white--text" style="min-width: 25%">{{ value.label }}</span>
-              <span class="pa-3 grey lighten-3 flex-grow-1">{{ serverInfo[name] }}</span>
-            </p>
-          </v-card-text>
+          <div class="d-flex align-center pb-2" outlined v-for="(value,name) in serverDetails" :key="name">
+            <span class="cover-fill secondary rounded-r-0 d-inline-block" disabled style="min-width: 25%">{{ value.label }}</span>
+            <v-text-field dense solo hide-details :hint="value.hint"  v-model="serverInfo[name]" class="rounded-l-0">
+            </v-text-field>
+          </div>
         </div>
       </v-fade-transition>
     </div>

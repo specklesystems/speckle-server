@@ -7,7 +7,7 @@
         <v-tooltip bottom color="primary" :disabled="value < 1000">
           <template v-slot:activator="{ on, attrs }">
             <p class="primary--text text-h3 text-md-h2 text-lg-h1 text-center" v-bind="attrs" v-on="on">
-              <animated-number :value="value"/>
+              <animated-number :value="value" class="speckle-gradient-txt"/>
             </p>
           </template>
           <span>{{ value }}</span>
@@ -36,6 +36,6 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 
 </style>
