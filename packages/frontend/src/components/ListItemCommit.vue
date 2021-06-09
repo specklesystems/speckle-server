@@ -1,5 +1,5 @@
 <template>
-  <v-list-item :to="`/streams/${streamId}/commits/${commit.id}`">
+  <v-list-item :to="route ? route : `/streams/${streamId}/commits/${commit.id}`">
     <v-list-item-icon>
       <user-avatar
         :id="commit.authorId"
@@ -36,7 +36,7 @@ import SourceAppAvatar from './SourceAppAvatar'
 
 export default {
   components: { UserAvatar, SourceAppAvatar },
-  props: ['commit', 'streamId'],
+  props: ['commit', 'streamId', 'route'],
   computed: {
     commitDate() {
       if (!this.commit) return null

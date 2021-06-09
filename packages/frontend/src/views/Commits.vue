@@ -6,9 +6,8 @@
       </v-col>
       <v-col v-else-if="stream.branch" cols="12">
         <v-card class="pa-4" elevation="0" rounded="lg">
-          <v-dialog v-model="dialogEdit" max-width="500">
-            <branch-edit-dialog :branch="stream.branch" @close="closeEdit" />
-          </v-dialog>
+          <branch-edit-dialog ref="editBranchDialog" />
+
           <v-card-title class="mr-8">
             <v-icon class="mr-2">mdi-source-branch</v-icon>
             <span class="d-inline-block">{{ stream.branch.name }}</span>
@@ -20,7 +19,7 @@
               color="primary"
               text
               class="px-0"
-              @click="dialogEdit = true"
+              @click="editBranch"
             >
               <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
               Edit branch
@@ -144,19 +143,21 @@ export default {
     }
   },
   methods: {
-    closeEdit({ name, deleted }) {
-      this.dialogEdit = false
-      if (deleted) {
-        this.$router.push({ path: `/streams/${this.streamId}` })
-        return
-      }
-      if (name !== this.$route.params.branchName) {
-        this.$router.push({
-          path: `/streams/${this.streamId}/branches/${encodeURIComponent(name)}/commits`
-        })
-        return
-      }
-      this.$apollo.queries.stream.refetch()
+    editBranch() {
+      this.$refs.editBranchDialog.open(this.stream.branch).then((dialog) => {
+        if (!dialog.result) return
+        else if (dialog.deleted) {
+          this.$router.push({ path: `/streams/${this.streamId}` })
+        } else if (dialog.name !== this.$route.params.branchName) {
+          //this.$router.push does not work, refresh entire window
+
+          this.$router.push({
+            path: `/streams/${this.streamId}/branches/${encodeURIComponent(dialog.name)}/commits`
+          })
+        } else {
+          this.$apollo.queries.stream.refetch()
+        }
+      })
     }
   }
 }

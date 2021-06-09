@@ -21,7 +21,11 @@
               :rules="validation.emailRules"
               label="email"
             ></v-text-field>
-            <v-text-field v-model="message" label="message"></v-text-field>
+            <v-text-field
+              v-model="message"
+              :rules="validation.messageRules"
+              label="message"
+            ></v-text-field>
             <v-card-actions>
               <v-btn block color="primary" type="submit">Send invite</v-btn>
             </v-card-actions>
@@ -33,6 +37,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import DOMPurify from 'dompurify'
 
 export default {
   name: 'StreamInviteDialog',
@@ -55,6 +60,17 @@ export default {
         emailRules: [
           (v) => !!v || 'E-mail is required',
           (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
+        ],
+        messageRules: [
+          (v) => {
+            if (v.length >= 1024) return 'Message too long!'
+            return true
+          },
+          (v) => {
+            let pure = DOMPurify.sanitize(v)
+            if (pure !== v) return 'No crazy hacks please.'
+            else return true
+          }
         ]
       }
     }

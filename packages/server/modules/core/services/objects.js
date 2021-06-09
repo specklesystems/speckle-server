@@ -203,7 +203,7 @@ module.exports = {
     } )
       .where( knex.raw( 'object_children_closure."streamId" = ? AND parent = ?', [ streamId, objectId ] ) )
       .orderBy( 'objects.id' )
-    return q.stream( )
+    return q.stream( { highWaterMark: 2 } )
   },
 
   async getObjectChildren( { streamId, objectId, limit, depth, select, cursor } ) {
@@ -442,7 +442,7 @@ module.exports = {
       .andWhere( 'streamId', streamId )
       .orderBy( 'id' )
       .select( 'id', 'speckleType', 'totalChildrenCount', 'totalChildrenCountByDepth', 'createdAt', 'data' )
-    return res.stream( )
+    return res.stream( { highWaterMark: 2 } )
   },
 
   async hasObjects( { streamId, objectIds } ) {

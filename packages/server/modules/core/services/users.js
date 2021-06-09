@@ -63,14 +63,16 @@ module.exports = {
 
   async getUserById( { userId } ) {
     let user = await Users( ).where( { id: userId } ).select( '*' ).first( )
-    delete user.passwordDigest
+    if ( user ) 
+      delete user.passwordDigest
     return user
   },
 
   // TODO: deprecate
   async getUser( id ) {
     let user = await Users( ).where( { id: id } ).select( '*' ).first( )
-    delete user.passwordDigest
+    if ( user ) 
+      delete user.passwordDigest
     return user
   },
 
@@ -150,8 +152,6 @@ module.exports = {
     for ( let i in streams.rows ) {
       await deleteStream( { streamId: streams.rows[i].id } )
     }
-    await knex.raw( 'DELETE FROM commits WHERE author = ?', [ id ] )
-    await knex.raw( 'DELETE FROM branches WHERE "authorId" = ?', [ id ] )
     
     return await Users( ).where( { id: id } ).del( )
   }

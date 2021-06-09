@@ -40,7 +40,9 @@ module.exports = {
   Branch: {
 
     async author( parent, args, context, info ) {
-      return await getUserById( { userId: parent.authorId } )
+      if ( parent.userId )
+        return await getUserById( { userId: parent.authorId } )
+      else return null
     }
 
   },

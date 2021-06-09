@@ -15,6 +15,21 @@ const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUs
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
+const {
+  createBranch,
+  getBranchesByStreamId
+} = require( '../services/branches' )
+
+const {
+  createCommitByBranchName,
+  getCommitsByBranchName,
+  getCommitById,
+  getCommitsByStreamId,
+  deleteCommit,
+} = require( '../services/commits' )
+
+const { createObject, createObjects } = require( '../services/objects' )
+
 describe( 'Actors & Tokens @user-services', ( ) => {
   let myTestActor = {
     name: 'Dimitrie Stefanescu',
@@ -110,29 +125,53 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
     } )
 
+    // Note: deletion is more complicated. 
     it( 'Should delete a user', async ( ) => {
       let soloOwnerStream = { name: 'Test Stream 01', description: 'wonderful test stream', isPublic: true }
       let multiOwnerStream = { name: 'Test Stream 02', description: 'another test stream', isPublic: true }
+
       soloOwnerStream.id = await createStream( { ...soloOwnerStream, ownerId: ballmerUserId } )
       multiOwnerStream.id = await createStream( { ...multiOwnerStream, ownerId: ballmerUserId } )
+      
       await grantPermissionsStream( { streamId: multiOwnerStream.id, userId: myTestActor.id, role: 'stream:owner' } )
+      
+      // create a branch for ballmer on the multiowner stream
+      let branch = { name: 'ballmer/dev' }
+      branch.id = await createBranch( { ...branch, streamId: multiOwnerStream.id, authorId: ballmerUserId } )
+
+      let branchSecond = { name: 'steve/jobs' }
+      branchSecond.id = await createBranch( { ...branchSecond, streamId: multiOwnerStream.id, authorId: myTestActor.id } )
+
+      // create an object and a commit around it on the multiowner stream
+      let objId = await createObject( multiOwnerStream.id, { pie: 'in the sky' } )
+      let commitId = await createCommitByBranchName( { streamId: multiOwnerStream.id, branchName: 'ballmer/dev', message: 'breakfast commit', sourceApplication: 'tests', objectId:objId, authorId: ballmerUserId } )
       
       await deleteUser( ballmerUserId )
 
       if ( await getStream( { streamId: soloOwnerStream.id } ) !== undefined ) {
         assert.fail( 'user stream not deleted' )
       }
+
       let multiOwnerStreamCopy = await getStream( { streamId: multiOwnerStream.id } )
       if ( !multiOwnerStreamCopy || multiOwnerStreamCopy.id != multiOwnerStream.id ) {
         assert.fail( 'shared stream deleted' )
       }
 
-      try {
-        let user = await getUser( ballmerUserId )
-      } catch ( e ) {
-        return
-      }
-      assert.fail( 'user not deleted' )
+      let branches = await getBranchesByStreamId( { streamId: multiOwnerStream.id } )
+      expect( branches.items.length ).to.equal( 3 )
+
+      let branchCommits = await getCommitsByBranchName( { streamId: multiOwnerStream.id, branchName:'ballmer/dev' } )
+      expect( branchCommits.commits.length ).to.equal( 1 )
+
+      let commit = await getCommitById( { id: commitId } )
+      expect( commit ).to.be.not.null
+
+      let commitsByStreamId = await getCommitsByStreamId( { streamId: multiOwnerStream.id } )
+      expect( commitsByStreamId.commits.length ).to.equal( 1 )
+
+      let user = await getUser( ballmerUserId )
+      if ( user )
+        assert.fail( 'user not deleted' )
     } )
 
     it( 'Should get a user', async ( ) => {

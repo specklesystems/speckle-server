@@ -30,7 +30,11 @@
         small
         color="primary"
         class="pa-2"
-        :to="`/streams/${stream.id}/commits/${stream.commits.items[0].id}`"
+        :to="
+          stream.commits.items[0].branchName.startsWith('globals')
+            ? `/streams/${stream.id}/${stream.commits.items[0].branchName}/${stream.commits.items[0].id}`
+            : `/streams/${stream.id}/commits/${stream.commits.items[0].id}`
+        "
       >
         <v-icon small class="mr-1">mdi-source-commit</v-icon>
         {{ stream.commits.items[0].id }}
@@ -38,7 +42,11 @@
       on
       <router-link
         class="text-decoration-none"
-        :to="`/streams/${stream.id}/branches/${stream.commits.items[0].branchName}`"
+        :to="
+          stream.commits.items[0].branchName.startsWith('globals')
+            ? `/streams/${stream.id}/${stream.commits.items[0].branchName}`
+            : `/streams/${stream.id}/branches/${stream.commits.items[0].branchName}`
+        "
       >
         <v-icon small color="primary">mdi-source-branch</v-icon>
         {{ stream.commits.items[0].branchName }}
@@ -93,6 +101,7 @@
         <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
         Edit
       </v-btn>
+
       <v-dialog v-model="editStreamDialog" max-width="500">
         <stream-edit-dialog
           :stream-id="stream.id"
@@ -102,6 +111,18 @@
           @close="editClosed"
         />
       </v-dialog>
+    </v-card-text>
+
+    <v-card-text v-show="isHomeRoute">
+      <v-btn
+        v-tooltip="'Edit stream global variables!'"
+        block
+        small
+        elevation="0"
+        :to="`/streams/${stream.id}/globals`"
+      >
+        Globals
+      </v-btn>
     </v-card-text>
 
     <v-card-title v-show="isHomeRoute"><h5>Collaborators</h5></v-card-title>

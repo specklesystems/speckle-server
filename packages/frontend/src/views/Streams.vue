@@ -39,7 +39,13 @@
                 </v-list-item-avatar>
                 <v-list-item-content>
                   <v-list-item-title class="subtitle-2">
-                    <router-link :to="'streams/' + a.streamId + '/commits/' + a.id">
+                    <router-link
+                      :to="
+                        a.branchName.startsWith('globals')
+                          ? `streams/${a.streamId}/${a.branchName}/${a.id}`
+                          : `streams/${a.streamId}/commits/${a.id}`
+                      "
+                    >
                       {{ a.message }}
                     </router-link>
                   </v-list-item-title>
