@@ -117,9 +117,12 @@ exports.init = async ( ) => {
  * @param  {[type]} app [description]
  * @return {[type]}     [description]
  */
-exports.startHttp = async ( app ) => {
+exports.startHttp = async ( app, customPortOverride ) => {
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT || 3000
+
+  if ( customPortOverride ) port = customPortOverride
+
   app.set( 'port', port )
 
   let frontendHost = process.env.FRONTEND_HOST || 'localhost'

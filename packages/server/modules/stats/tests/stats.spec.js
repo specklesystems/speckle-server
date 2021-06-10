@@ -95,7 +95,7 @@ describe( 'Server stats services @stats-services', function() {
 
 } )
 
-let addr = `http://localhost:${process.env.PORT || 3000}`
+let addr = `http://localhost:3333`
 
 describe( 'Server stats api @stats-api', function() {
   let testServer
@@ -132,7 +132,7 @@ describe( 'Server stats api @stats-api', function() {
     await knex.migrate.latest( )
 
     let { app } = await init( )
-    let { server } = await startHttp( app )
+    let { server } = await startHttp( app, 3333 )
     testServer = server
 
     adminUser.id = await createUser( adminUser )
