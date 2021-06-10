@@ -480,8 +480,8 @@ describe( 'Objects @core-objects', ( ) => {
 
 const crypto = require( 'crypto' )
 
-function createManyObjects( shitTon, noise ) {
-  shitTon = shitTon || 10000
+function createManyObjects( num, noise ) {
+  num = num || 10000
   noise = noise || Math.random( ) * 100
 
   let objs = [ ]
@@ -490,7 +490,7 @@ function createManyObjects( shitTon, noise ) {
   objs.push( base )
   let k = 0
 
-  for ( let i = 0; i < shitTon; i++ ) {
+  for ( let i = 0; i < num; i++ ) {
     let baby = {
       name: `mr. ${i}`,
       nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [ i + 42, i, i ] },
@@ -504,7 +504,7 @@ function createManyObjects( shitTon, noise ) {
     }
 
     if ( i % 3 === 0 ) k++
-    getAFuckingId( baby )
+    getAnId( baby )
 
     base.__closure[ baby.id ] = 1
     if ( i > 1000 )
@@ -513,10 +513,10 @@ function createManyObjects( shitTon, noise ) {
     objs.push( baby )
   }
 
-  getAFuckingId( base )
+  getAnId( base )
   return objs
 }
 
-function getAFuckingId( obj ) {
+function getAnId( obj ) {
   obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
 }

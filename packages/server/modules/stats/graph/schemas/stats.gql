@@ -1,0 +1,26 @@
+extend type Query {
+  serverStats: ServerStats!
+}
+
+type ServerStats {
+  totalStreamCount: Int!
+  totalCommitCount: Int!
+  totalObjectCount: Int!
+  totalUserCount: Int!
+  """
+  An array of objects currently structured as { created_month: Date, count: int }.
+  """
+  streamHistory: [JSONObject]
+  """
+  An array of objects currently structured as { created_month: Date, count: int }.
+  """
+  commitHistory: [JSONObject]
+  """
+  An array of objects currently structured as { created_month: Date, count: int }.
+  """
+  objectHistory: [JSONObject]
+  """
+  An array of objects currently structured as { created_month: Date, count: int }.
+  """
+  userHistory: [JSONObject]
+}
