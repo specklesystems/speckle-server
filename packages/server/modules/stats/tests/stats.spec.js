@@ -4,7 +4,7 @@ const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
 
 const appRoot = require( 'app-root-path' )
-const { init } = require( `${appRoot}/app` )
+const { init, startHttp } = require( `${appRoot}/app` )
 const knex = require( `${appRoot}/db/knex` )
 
 const expect = chai.expect
@@ -12,14 +12,16 @@ chai.use( chaiHttp )
 
 const crypto = require( 'crypto' )
 const { createUser } = require( `${appRoot}/modules/core/services/users` )
+const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 const { createStream } = require( `${appRoot}/modules/core/services/streams` )
 const { createObjects } = require( `${appRoot}/modules/core/services/objects` )
 const { createCommitByBranchName, createCommitByBranchId } = require( `${appRoot}/modules/core/services/commits` )
 
 const { getStreamHistory, getCommitHistory, getObjectHistory, getUserHistory, getTotalStreamCount, getTotalCommitCount, getTotalObjectCount, getTotalUserCount } = require( '../services' )
 
+const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
+
 describe( 'Server stats services @stats-services', function() {
-  const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
   before( async function() {
     this.timeout( 10000 )
@@ -93,6 +95,111 @@ describe( 'Server stats services @stats-services', function() {
 
 } )
 
+let addr = `http://localhost:${process.env.PORT || 3000}`
+
+describe( 'Server stats api @stats-api', function() {
+  let testServer
+  let adminUser = {
+    name: 'Dimitrie',
+    password: 'TestPasswordSecure',
+    email: 'spam@spam.spam'
+  }
+
+  let notAdminUser = {
+    name: 'Andrei',
+    password: 'TestPasswordSecure',
+    email: 'spasm@spam.spam'
+  }
+
+  let fullQuery = `
+  query{
+    serverStats{
+      totalStreamCount
+      totalCommitCount
+      totalObjectCount
+      totalUserCount
+      streamHistory
+      commitHistory
+      objectHistory
+      userHistory
+      }
+    }
+    `
+
+  before( async function() {
+    this.timeout( 10000 )
+    await knex.migrate.rollback( )
+    await knex.migrate.latest( )
+
+    let { app } = await init( )
+    let { server } = await startHttp( app )
+    testServer = server
+
+    adminUser.id = await createUser( adminUser )
+    adminUser.goodToken = `Bearer ${( await createPersonalAccessToken( adminUser.id, 'test token user A', [ 'server:stats' ] ) )}`
+    adminUser.badToken = `Bearer ${( await createPersonalAccessToken( adminUser.id, 'test token user A', [ 'streams:read' ] ) )}`
+
+    notAdminUser.id = await createUser( notAdminUser )
+    notAdminUser.goodToken = `Bearer ${( await createPersonalAccessToken( notAdminUser.id, 'test token user A', [ 'server:stats' ] ) )}`
+    notAdminUser.badToken = `Bearer ${( await createPersonalAccessToken( notAdminUser.id, 'test token user A', [ 'streams:read' ] ) )}`
+
+    await seedDb( params )
+
+  } )
+
+  after( async function() {
+    await knex.migrate.rollback( )
+    testServer.close( )
+  } )
+
+  it( 'Should not get stats if user is not admin', async() => {
+
+    let res = await sendRequest( adminUser.badToken, { query: fullQuery } )
+    expect( res.body.errors ).to.exist
+    expect( res.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
+
+  } )
+
+  it( 'Should not get stats if user is not admin even if the token has the correct scopes', async() => {
+    let res = await sendRequest( notAdminUser.goodToken, { query: fullQuery } )
+    expect( res.body.errors ).to.exist
+    expect( res.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
+  } )
+
+  it( 'Should not get stats if token does not have required scope', async() => {
+    let res = await sendRequest( adminUser.badToken, { query: fullQuery } )
+    expect( res ).to.be.json
+    expect( res.body.errors ).to.exist
+    expect( res.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
+  } )
+
+  it( 'Should get server stats', async() => {
+    let res = await sendRequest( adminUser.goodToken, { query: fullQuery } )
+    expect( res ).to.be.json
+    expect( res.body.errors ).to.not.exist
+
+    expect( res.body.data ).to.have.property( 'serverStats' )
+    expect( res.body.data.serverStats ).to.have.property( 'totalStreamCount' )
+    expect( res.body.data.serverStats ).to.have.property( 'totalCommitCount' )
+    expect( res.body.data.serverStats ).to.have.property( 'totalObjectCount' )
+    expect( res.body.data.serverStats ).to.have.property( 'totalUserCount' )
+    expect( res.body.data.serverStats ).to.have.property( 'streamHistory' )
+    expect( res.body.data.serverStats ).to.have.property( 'commitHistory' )
+    expect( res.body.data.serverStats ).to.have.property( 'userHistory' )
+
+    expect( res.body.data.serverStats.totalStreamCount ).to.equal( params.numStreams )
+    expect( res.body.data.serverStats.totalCommitCount ).to.equal( params.numCommits )
+    expect( res.body.data.serverStats.totalObjectCount ).to.equal( params.numObjects )
+    expect( res.body.data.serverStats.totalUserCount ).to.equal( params.numUsers + 2 ) // we're registering two extra users in the before hook
+
+    expect( res.body.data.serverStats.streamHistory ).to.be.an( 'array' )
+    expect( res.body.data.serverStats.commitHistory ).to.be.an( 'array' )
+    expect( res.body.data.serverStats.userHistory ).to.be.an( 'array' )
+
+  } )
+
+} )
+
 async function seedDb( { numUsers = 10, numStreams = 10, numObjects = 10, numCommits = 10 } = {} ) {
   let users = []
   let streams = []
@@ -149,4 +256,8 @@ function createManyObjects( num, noise ) {
 
 function getAnId( obj ) {
   obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
+}
+
+function sendRequest( auth, obj, address = addr ) {
+  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
 }
