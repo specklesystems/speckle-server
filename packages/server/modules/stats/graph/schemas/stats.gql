@@ -1,0 +1,14 @@
+extend type Query {
+  serverStats: ServerStats!
+}
+
+type ServerStats {
+  totalStreamsCount: Int!
+  totalCommitCount: Int!
+  totalObjectCount: Int!
+  totalUserCount: Int!
+  streamHistory: JSONObject
+  commitHistory: JSONObject
+  objectHistory: JSONObject
+  userHistory: JSONObject
+}
