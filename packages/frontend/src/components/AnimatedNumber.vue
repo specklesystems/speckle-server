@@ -1,5 +1,6 @@
 <template>
-  <span>{{ tweeningValue | prettynum(value) }}</span>
+  <span v-if="pretty">{{ tweeningValue | prettynum(value) }}</span>
+  <span v-else>{{ tweeningValue }}</span>
 </template>
 
 <script>
@@ -14,11 +15,15 @@ export default {
     },
     duration: {
       type: Number,
-      default: 500
+      default: 1000
     },
     delay: {
       type: Number,
-      default: 100
+      default: 300
+    },
+    pretty: {
+      type: Boolean,
+      default: true
     }
   },
   data() {

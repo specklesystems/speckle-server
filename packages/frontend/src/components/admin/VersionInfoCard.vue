@@ -40,8 +40,8 @@ export default {
   data() {
     return {
       versionInfo: {
-        current: "2.1.18",
-        latest: "dev"
+        current: "2.0.18",
+        latest: "2.0.27"
       }
     };
   },
@@ -53,7 +53,7 @@ export default {
         }
       }`,
       update(data) {
-        this.versionInfo.current = data.serverInfo.version;
+        //this.versionInfo.current = data.serverInfo.version;
       }
     }
   },

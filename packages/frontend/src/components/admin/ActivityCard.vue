@@ -5,7 +5,7 @@
         <apexchart type="bar" height="150" :options="userData.options" :series="userData.series"/>
       </v-col>
       <v-col cols="6">
-        <apexchart type="bar" height="150" :options="userData.options" :series="userData.series"/>
+        <apexchart type="bar" height="150" :options="userData.options" :series="userData.seriesB"/>
       </v-col>
     </v-row>
   </admin-card>
@@ -72,7 +72,14 @@ export default {
             name: 'series-1',
             data: [30, 40, 45, 50, 49, 60, 70, 91, 100,44,61,98, 20]
           }
+        ],
+        seriesB: [
+          {
+            name: 'series-1',
+            data: [ 100,44,61,98, 20,33,60,86,22,46,70,40,55]
+          }
         ]
+
       }
     }
   }
