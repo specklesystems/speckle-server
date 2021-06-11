@@ -138,7 +138,7 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
     return true
   },
 
-  async sanitizeMessage( message ) {
+  sanitizeMessage( message ) {
     return sanitizeHtml( message, {
       allowedTags: [ 'b', 'i', 'em', 'strong' ],
     } )
