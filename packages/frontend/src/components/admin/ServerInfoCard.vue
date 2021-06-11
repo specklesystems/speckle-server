@@ -16,21 +16,55 @@
     </template>
     <div v-if="serverInfo">
       <v-fade-transition mode="out-in">
-<!--        <div v-if="edit" key="editPanel">-->
-<!--          <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0 pb-0">-->
-<!--            <span v-if="name === 'inviteOnly'">-->
-<!--              {{ name }}-->
-<!--              <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>-->
-<!--            </span>-->
-<!--            <v-text-field v-else :hint="value.hint" :label="value.label" dense outlined v-model="serverInfo[name]"/>-->
-<!--          </v-card-text>-->
-<!--        </div>-->
+        <!--        <div v-if="edit" key="editPanel">-->
+        <!--          <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0 pb-0">-->
+        <!--            <span v-if="name === 'inviteOnly'">-->
+        <!--              {{ name }}-->
+        <!--              <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>-->
+        <!--            </span>-->
+        <!--            <v-text-field v-else :hint="value.hint" :label="value.label" dense outlined v-model="serverInfo[name]"/>-->
+        <!--          </v-card-text>-->
+        <!--        </div>-->
         <div key="viewPanel">
           <div class="d-flex align-center mb-2" v-for="(value,name) in serverDetails" :key="name">
-            <span class="cover-fill primary white--text pa-2 rounded border-primary mr-2" disabled style="min-width: 25%">{{ value.label }}</span>
-            <v-text-field dense v-if="edit" hide-details solo flat :hint="value.hint"  v-model="serverModifications[name]" class="ma-0 body-2 border-primary dashed primary--text">
-            </v-text-field>
-            <span v-else class="pa-2 pl-3 border-primary flex-grow-1 rounded">{{serverInfo[name] || '-'}}</span>
+            <span class="cover-fill primary white--text pa-2 rounded border-primary mr-2"
+                  disabled
+                  style="min-width: 25%">{{ value.label }}</span>
+            <div v-if="edit" class="flex-grow-1 rounded border-primary dashed primary--text">
+                <span v-if="value.type == 'boolean'">
+                <v-switch :disabled="!edit"
+                          hide-details
+                          flat
+                          v-model="serverModifications[name]"
+                          class="pa-1 ma-1 caption">
+                        <template v-slot:label>
+                          <span class="caption">{{ value.hint }}</span>
+                        </template>
+                </v-switch>
+              </span>
+              <v-text-field dense
+                            v-else
+                            hide-details
+                            solo
+                            flat
+                            :hint="value.hint"
+                            v-model="serverModifications[name]"
+                            class="ma-0 body-2"></v-text-field>
+            </div>
+            <span v-else class="pa-2 pl-3 border-primary flex-grow-1 rounded">
+              <span v-if="value.type == 'boolean'">
+                <v-switch :disabled="!edit"
+                          hide-details
+                          flat
+                          v-model="serverModifications[name]"
+                          class="pa-0 ma-0 caption">
+                        <template v-slot:label>
+                          <span class="caption">{{ value.hint }}</span>
+                        </template>
+                </v-switch>
+              </span>
+              <span v-else>{{ serverInfo[name] || "-" }}</span>
+            </span>
           </div>
         </div>
       </v-fade-transition>
@@ -48,9 +82,7 @@ export default {
   data() {
     return {
       edit: false,
-      serverModifications: {
-
-      },
+      serverModifications: {},
       serverDetails: {
         name: {
           label: "Name",
@@ -73,7 +105,9 @@ export default {
           hint: "Url pointing to the terms of service page"
         },
         inviteOnly: {
-          label: "Invite-Only mode"
+          label: "Invite-Only mode",
+          hint: "Only users with an invitation will be able to join",
+          type: "boolean"
         }
       }
     };
@@ -92,21 +126,24 @@ export default {
           }
         }
       `,
-      update(data){
-        delete data.serverInfo.__typename
-        this.serverModifications = data.serverInfo
-        return data.serverInfo
+      update(data) {
+        console.log("got apollo data", data);
+        delete data.serverInfo.__typename;
+        this.serverModifications = Object.assign({}, data.serverInfo);
+        return data.serverInfo;
       }
     }
   },
   methods: {
     cancelEdit() {
-      this.serverModifications = this.serverInfo
+      console.log("edit was cancelled");
+      this.serverModifications = Object.assign({}, this.serverInfo);
       this.edit = false;
       this.loading = false;
       this.saving = false;
     },
     async saveEdit() {
+      console.log("saving edits");
       await this.$apollo.mutate({
         mutation: gql`mutation($info: ServerInfoUpdateInput!) {
             serverInfoUpdate(info: $info)
@@ -115,8 +152,8 @@ export default {
           info: this.serverModifications
         }
       });
-      await this.$apollo.queries.serverInfo.refresh()
-      this.cancelEdit()
+      await this.$apollo.queries["serverInfo"].refetch();
+      this.cancelEdit();
     }
   }
 };
@@ -125,7 +162,8 @@ export default {
 <style scoped lang="scss">
 .border-primary {
   border: 1px solid var(--v-primary-base);
-  &.dashed{
+
+  &.dashed {
     border-style: dashed;
     border-width: 1px;
   }

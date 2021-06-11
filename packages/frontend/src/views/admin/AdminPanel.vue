@@ -41,16 +41,16 @@ export default {
           to: "/admin",
           icon: "mdi-view-dashboard"
         },
-        {
-          name: "Users",
-          to: "/admin/users",
-          icon: "mdi-account-multiple"
-        },
-        {
-          name: "Streams",
-          to: "/admin/streams",
-          icon: "mdi-cloud"
-        },
+        // {
+        //   name: "Users",
+        //   to: "/admin/users",
+        //   icon: "mdi-account-multiple"
+        // },
+        // {
+        //   name: "Streams",
+        //   to: "/admin/streams",
+        //   icon: "mdi-cloud"
+        // },
         {
           name: "Settings",
           to: "/admin/settings",

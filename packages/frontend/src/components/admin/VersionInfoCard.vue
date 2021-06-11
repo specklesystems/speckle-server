@@ -24,7 +24,7 @@
           {{ versionInfo.latest }} </p>
       </div>
     </div>
-    <v-btn v-if="!isLatestVersion" color="primary" width="100%">
+    <v-btn disabled v-if="!isLatestVersion" color="primary" width="100%">
       Follow our guide on how to update your server
     </v-btn>
   </admin-card>

@@ -1,7 +1,7 @@
 <template>
   <div id="admin-settings">
     <server-info-admin-card/>
-    <server-admins-card/>
+    <!--    <server-admins-card/>-->
   </div>
 </template>
 

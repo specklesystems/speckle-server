@@ -78,29 +78,27 @@ export default {
           },
           labels: {
             show: true,
-            rotate: -25,
+            rotate: 0,
             rotateAlways: true,
-            hideOverlappingLabels: false,
-            showDuplicates: true,
+            hideOverlappingLabels: true,
+            showDuplicates: false,
             trim: false,
-            minHeight: undefined,
-            maxHeight: 120,
             style: {
               colors: [],
               fontSize: '12px',
               fontFamily: 'Helvetica, Arial, sans-serif',
               fontWeight: 400,
-              cssClass: 'apexcharts-xaxis-label'
+              cssClass: 'apexcharts-xaxis-label text-center'
             },
             offsetX: 0,
             offsetY: 0,
-            format: undefined,
-            formatter: undefined,
-            datetimeUTC: true,
-            datetimeFormatter: {
-              year: 'yyyy',
-              month: 'MMM yy'
-            }
+            // format: undefined,
+            // formatter: undefined,
+            // datetimeUTC: true,
+            // datetimeFormatter: {
+            //   year: 'yyyy',
+            //   month: 'M/yy'
+            // }
           }
         },
         yaxis: {
@@ -149,27 +147,22 @@ export default {
       var result = []
       var months = this.past12Months()
       if (this.serverStats) {
-        console.log(this.serverStats)
         result = Object.keys(this.serverStats).map((key) => {
           var category = this.serverStats[key]
-          console.log(key, category)
           var processed = []
           months?.forEach((month) => {
             var totalCount = 0
             category.forEach((value) => {
               var date = this.parseISOString(value.created_month)
               if (this.isSameMonth(month, date)) {
-                console.log(date.getTime())
                 totalCount = value.count
               }
             })
             processed.push([month, totalCount])
           })
-          console.log('processed', key, processed)
           return { name: key, data: processed }
         })
       }
-
       return result
     }
   },
@@ -181,7 +174,7 @@ export default {
       var now = new Date(Date.now())
       var dates = []
       for (let i = 0; i < 12; i++) {
-        var d = new Date(now.getFullYear(), now.getMonth() - i, 28)
+        var d = new Date(now.getFullYear(), now.getMonth() - i, 2)
         dates.push(d)
       }
       return dates
