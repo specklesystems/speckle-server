@@ -14,8 +14,9 @@ const { createUser } = require( `${appRoot}/modules/core/services/users` )
 
 const { createAndSendInvite, getInviteById, getInviteByEmail, validateInvite, useInvite, sanitizeMessage } = require( `${appRoot}/modules/serverinvites/services` )
 const { createStream, getStream, getStreamUsers, getUserStreams } = require( `${appRoot}/modules/core/services/streams` )
+const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 
-const serverAddress = `http://localhost:${process.env.PORT || 3000}`
+const serverAddress = 'http://localhost:3300'
 
 describe( 'Server Invites @server-invites', ( ) => {
 
@@ -82,7 +83,7 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     it( 'should not allow invites with a too long message', async() => {
-      
+
       try {
         let inviteId = await createAndSendInvite( {
           email: '123456@gmail.com',
@@ -92,12 +93,12 @@ describe( 'Server Invites @server-invites', ( ) => {
       } catch ( e ){
         return
       }
-      
+
       assert.fail( 'created invite with too long message' )
     } )
 
     it( 'should sanitize invite messages', async() => {
-      let clean = await sanitizeMessage( 'Click on my <b><a href="https://spam.com">spam link please</a></b>!' )
+      let clean = sanitizeMessage( 'Click on my <b><a href="https://spam.com">spam link please</a></b>!' )
       const includesLink = clean.includes( '<a' )
       expect( includesLink ).to.be.false
     } )
@@ -178,62 +179,61 @@ describe( 'Server Invites @server-invites', ( ) => {
   } )
 
   // TODO: reinstate these tests; not sure why they pass locally and fail on CI
-  // describe( 'API @server-invites-api', () => {
-  //   let actor = {
-  //     name: 'Dimitrie Stefanescu',
-  //     email: 'didimitrie-10000@gmail.com',
-  //     password: 'wtfwtfwtf'
-  //   }
+  describe( 'API @server-invites-api', () => {
+    let actor = {
+      name: 'Dimitrie Stefanescu',
+      email: 'didimitrie-10000@gmail.com',
+      password: 'wtfwtfwtf'
+    }
 
-  //   let testServer, testToken
+    let testServer, testToken
 
-  //   before( async() => {
-  //     // await knex.migrate.rollback( )
-  //     await knex.migrate.latest( )
+    before( async() => {
+      await knex.migrate.rollback( )
+      await knex.migrate.latest( )
 
-  //     // let { app } = await init()
-  //     try {
-  //       let { server } = await startHttp( myApp )
-  //       testServer = server
-  //     } catch ( e ) {}
+      let { app } = await init()
 
-  //     actor.id = await createUser( actor )
+      let { server } = await startHttp( myApp, 3300 )
+      testServer = server
 
-  //     testToken = `Bearer ${( await createPersonalAccessToken( actor.id, 'test token', [ 'users:invite' ] ) )}`
-  //   } )
+      actor.id = await createUser( actor )
 
-  //   after( async() => {
-  //     await knex.migrate.rollback( )
-  //     if ( testServer )
-  //       testServer.close()
-  //   } )
+      testToken = `Bearer ${( await createPersonalAccessToken( actor.id, 'test token', [ 'users:invite' ] ) )}`
+    } )
 
-  //   it( 'should create a server invite', async() => {
+    after( async() => {
+      await knex.migrate.rollback( )
+      if ( testServer )
+        testServer.close()
+    } )
 
-  //     const res = await sendRequest( testToken, {
-  //       query: 'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
-  //       variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
-  //     } )
+    it( 'should create a server invite', async() => {
 
-  //     expect( res.body.errors ).to.not.exist
-  //     expect( res.body.data.serverInviteCreate ).to.equal( true )
-  //   } )
+      const res = await sendRequest( testToken, {
+        query: 'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
+        variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
+      } )
 
-  //   it( 'should create a stream invite', async() => {
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.serverInviteCreate ).to.equal( true )
+    } )
 
-  //     let stream = { name: 'test', description:'wow' }
-  //     stream.id = await createStream( { ...stream, ownerId: actor.id } )
+    it( 'should create a stream invite', async() => {
 
-  //     const res = await sendRequest( testToken, {
-  //       query: 'mutation inviteToStream($input: StreamInviteCreateInput!) { streamInviteCreate( input: $input ) }',
-  //       variables: { input: { email: 'peppers@speckle.systems', message: 'wow!', streamId: stream.id } }
-  //     } )
+      let stream = { name: 'test', description:'wow' }
+      stream.id = await createStream( { ...stream, ownerId: actor.id } )
 
-  //     expect( res.body.errors ).to.not.exist
-  //     expect( res.body.data.streamInviteCreate ).to.equal( true )
-  //   } )
+      const res = await sendRequest( testToken, {
+        query: 'mutation inviteToStream($input: StreamInviteCreateInput!) { streamInviteCreate( input: $input ) }',
+        variables: { input: { email: 'peppers@speckle.systems', message: 'wow!', streamId: stream.id } }
+      } )
 
-  // } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.streamInviteCreate ).to.equal( true )
+    } )
+
+  } )
 } )
 
 function sendRequest( auth, obj, address = serverAddress ) {
