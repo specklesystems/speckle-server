@@ -104,7 +104,7 @@ export default {
     },
     loadMoreUsers() {
       console.log("requested more users!");
-      this.loading = true;
+      this.loading = true;those
       setTimeout(() => {
         this.loading = false;
       }, 700);

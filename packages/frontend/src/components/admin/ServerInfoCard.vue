@@ -16,20 +16,21 @@
     </template>
     <div v-if="serverInfo">
       <v-fade-transition mode="out-in">
-        <div v-if="edit" key="editPanel">
-          <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0 pb-0">
-            <span v-if="name === 'inviteOnly'">
-              {{ name }}
-              <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>
-            </span>
-            <v-text-field v-else :hint="value.hint" :label="value.label" dense outlined v-model="serverInfo[name]"/>
-          </v-card-text>
-        </div>
-        <div v-else key="viewPanel">
-          <div class="d-flex align-center pb-2" outlined v-for="(value,name) in serverDetails" :key="name">
-            <span class="cover-fill secondary rounded-r-0 d-inline-block" disabled style="min-width: 25%">{{ value.label }}</span>
-            <v-text-field dense solo hide-details :hint="value.hint"  v-model="serverInfo[name]" class="rounded-l-0">
+<!--        <div v-if="edit" key="editPanel">-->
+<!--          <v-card-text v-for="(value,name) in serverDetails" :key="name" class="pt-0 pb-0">-->
+<!--            <span v-if="name === 'inviteOnly'">-->
+<!--              {{ name }}-->
+<!--              <v-btn :disabled="edit" v-model="serverInfo['name']">Enable</v-btn>-->
+<!--            </span>-->
+<!--            <v-text-field v-else :hint="value.hint" :label="value.label" dense outlined v-model="serverInfo[name]"/>-->
+<!--          </v-card-text>-->
+<!--        </div>-->
+        <div key="viewPanel">
+          <div class="d-flex align-center mb-2" v-for="(value,name) in serverDetails" :key="name">
+            <span class="cover-fill primary white--text pa-2 rounded border-primary mr-2" disabled style="min-width: 25%">{{ value.label }}</span>
+            <v-text-field dense v-if="edit" hide-details solo flat :hint="value.hint"  v-model="serverModifications[name]" class="ma-0 body-2 border-primary dashed primary--text">
             </v-text-field>
+            <span v-else class="pa-2 pl-3 border-primary flex-grow-1 rounded">{{serverInfo[name] || '-'}}</span>
           </div>
         </div>
       </v-fade-transition>
@@ -47,6 +48,9 @@ export default {
   data() {
     return {
       edit: false,
+      serverModifications: {
+
+      },
       serverDetails: {
         name: {
           label: "Name",
@@ -87,23 +91,43 @@ export default {
             inviteOnly
           }
         }
-      `
+      `,
+      update(data){
+        delete data.serverInfo.__typename
+        this.serverModifications = data.serverInfo
+        return data.serverInfo
+      }
     }
   },
   methods: {
     cancelEdit() {
+      this.serverModifications = this.serverInfo
       this.edit = false;
       this.loading = false;
       this.saving = false;
     },
-    saveEdit() {
-      this.$apollo.mutate({
-        mutation: gql``
+    async saveEdit() {
+      await this.$apollo.mutate({
+        mutation: gql`mutation($info: ServerInfoUpdateInput!) {
+            serverInfoUpdate(info: $info)
+        }`,
+        variables: {
+          info: this.serverModifications
+        }
       });
+      await this.$apollo.queries.serverInfo.refresh()
+      this.cancelEdit()
     }
   }
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.border-primary {
+  border: 1px solid var(--v-primary-base);
+  &.dashed{
+    border-style: dashed;
+    border-width: 1px;
+  }
+}
 </style>

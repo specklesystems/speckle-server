@@ -1,7 +1,7 @@
 <template>
   <admin-card title="Info" v-bind="$attrs">
     <div class="d-flex justify-space-around">
-      <div v-for="(value, name) in totalData" class="flex-grow-1">
+      <div v-for="(value, name) in serverStats" class="flex-grow-1">
         <h4 class="primary--text text--lighten-2 text-center">
           Total {{ name }} </h4>
         <v-tooltip bottom color="primary" :disabled="value < 1000">
@@ -20,18 +20,31 @@
 <script>
 import AdminCard from "@/components/admin/AdminCard";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import gql from "graphql-tag";
 
 export default {
   name: "GeneralInfoCard",
   components: { AnimatedNumber, AdminCard },
-  data() {
-    return {
-      totalData: {
-        users: 435,
-        streams: 1123,
-        commits: 55460
+  apollo: {
+    serverStats: {
+      query: gql`query {
+        serverStats {
+            totalObjectCount
+            totalCommitCount
+            totalStreamCount
+            totalUserCount
+        }
+      }`,
+      update(data){
+        var stats = data.serverStats
+        return {
+          users: stats.totalUserCount,
+          streams: stats.totalStreamCount,
+          commits: stats.totalCommitCount,
+          objects: stats.totalObjectCount
+        }
       }
-    };
+    }
   }
 };
 </script>
