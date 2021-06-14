@@ -60,15 +60,14 @@ export default {
       }
     }
   },
-  async mounted() {
-    this.versionInfo.latest = await this.getLatestVersion()
-  },
   computed: {
     isLatestVersion() {
       return this.versionInfo.current === this.versionInfo.latest
     }
   },
-
+  async mounted() {
+    this.versionInfo.latest = await this.getLatestVersion()
+  },
   methods: {
     getLatestVersion() {
       return fetch('https://api.github.com/repos/specklesystems/speckle-server/releases/latest')

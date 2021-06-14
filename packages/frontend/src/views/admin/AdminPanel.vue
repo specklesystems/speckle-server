@@ -1,5 +1,5 @@
 <template lang="html">
-  <v-container>
+  <v-container v-if="isAdmin">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-md-10">
         <v-card id="sideMenu" elevation="1" class="rounded-lg overflow-hidden">
@@ -28,9 +28,21 @@
       </v-col>
     </v-row>
   </v-container>
+  <v-container v-else-if="!isAdmin && $apollo.loading">
+    <v-card>
+      <v-card-text class="text-center">
+        <v-icon size="50" color="error">mdi-alert</v-icon>
+        <h3>Sorry...but maybe you shouldn't be here!</h3>
+        <p>You are not an admin on this server</p>
+        <v-btn @click="$router.back()">Go back</v-btn>
+      </v-card-text>
+    </v-card>
+  </v-container>
 </template>
 
 <script>
+import gql from "graphql-tag";
+
 export default {
   name: "AdminPanel",
   data() {
@@ -58,6 +70,16 @@ export default {
         }
       ]
     };
+  },
+  apollo: {
+    user: {
+      query: gql`query { user { role }}`
+    }
+  },
+  computed:{
+    isAdmin(){
+      return this.user?.role === "server:admin"
+    }
   }
 };
 </script>
