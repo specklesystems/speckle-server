@@ -40,6 +40,7 @@ export default {
       if (appname.includes('blender')) return 'orange'
       if (appname.includes('rhino')) return 'black'
       if (appname.includes('grasshopper')) return 'green darken-2'
+      if (appname.includes('excel')) return 'green lighten-1'
       return 'grey'
     },
     shortName() {
@@ -54,7 +55,8 @@ export default {
       if (appname.includes('blender')) return 'BLEND'
       if (appname.includes('rhino')) return 'RH'
       if (appname.includes('grasshopper')) return 'GH'
-      return '?'
+      if (appname.includes('excel')) return 'XLSX'
+      return appname
     }
   }
 }

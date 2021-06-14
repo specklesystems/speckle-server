@@ -5,13 +5,8 @@
         <v-skeleton-loader type="article"></v-skeleton-loader>
       </v-card>
       <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0">
-        <v-dialog v-model="dialogBranch" max-width="500">
-          <new-branch-dialog
-            :branch-names="branches.items.map((b) => b.name)"
-            :stream-id="$route.params.streamId"
-            @close="closeBranchDialog"
-          />
-        </v-dialog>
+        <branch-new-dialog ref="newBranchDialog" />
+
         <v-card-title>
           <v-icon class="mr-2">mdi-source-branch</v-icon>
           Branches
@@ -24,7 +19,7 @@
             text
             class="px-0"
             small
-            @click="dialogBranch = true"
+            @click="newBranch"
           >
             <v-icon small class="mr-2 float-left">mdi-plus-circle-outline</v-icon>
             New branch
@@ -40,10 +35,10 @@
       </v-card>
 
       <v-card v-if="!$apollo.queries.stream.loading" class="mt-5 pa-4" elevation="0" rounded="lg">
-        <v-subheader class="text-uppercase">Branches ({{ branches.items.length }})</v-subheader>
+        <v-subheader class="text-uppercase">Branches ({{ branches.length }})</v-subheader>
         <v-card-text>
           <v-list two-line color="transparent">
-            <template v-for="item in branches.items">
+            <template v-for="item in branches">
               <v-list-item
                 :key="item.id"
                 :to="`/streams/${$route.params.streamId}/branches/${encodeURIComponent(item.name)}`"
@@ -71,14 +66,14 @@
   </v-row>
 </template>
 <script>
-import NewBranchDialog from '../components/dialogs/BranchNewDialog'
+import BranchNewDialog from '../components/dialogs/BranchNewDialog'
 import streamBranchesQuery from '../graphql/streamBranches.gql'
 import gql from 'graphql-tag'
 
 export default {
   name: 'StreamMain',
   components: {
-    NewBranchDialog
+    BranchNewDialog
   },
   props: {
     userRole: {
@@ -87,9 +82,7 @@ export default {
     }
   },
   data() {
-    return {
-      dialogBranch: false
-    }
+    return {}
   },
   apollo: {
     stream: {
@@ -144,7 +137,7 @@ export default {
   },
   computed: {
     branches() {
-      return this.stream.branches
+      return this.stream.branches.items.filter((b) => !b.name.startsWith('globals'))
     },
     breadcrumbs() {
       return [
@@ -170,9 +163,18 @@ export default {
     this.$apollo.queries.stream.refetch()
   },
   methods: {
-    closeBranchDialog() {
-      this.dialogBranch = false
-      this.$apollo.queries.stream.refetch()
+    newBranch() {
+      this.$refs.newBranchDialog
+        .open(
+          this.$route.params.streamId,
+          this.branches.map((b) => b.name)
+        )
+        .then((dialog) => {
+          if (!dialog.result) return
+          else {
+            this.$apollo.queries.stream.refetch()
+          }
+        })
     }
   }
 }

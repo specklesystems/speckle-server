@@ -6,6 +6,7 @@ const knex = require( `${appRoot}/db/knex` )
 const Streams = ( ) => knex( 'streams' )
 const Acl = ( ) => knex( 'stream_acl' )
 
+const debug = require( 'debug' )
 const { createBranch } = require( './branches' )
 
 module.exports = {
@@ -93,6 +94,19 @@ module.exports = {
   },
 
   async deleteStream( { streamId } ) {
+    debug( 'speckle:db' )( 'Deleting stream ' + streamId )
+
+    // Delete stream commits (not automatically cascaded)
+    await knex.raw(
+      `
+      DELETE FROM commits WHERE id IN (
+        SELECT sc."commitId" FROM streams s
+        INNER JOIN stream_commits sc ON s.id = sc."streamId"
+        WHERE s.id = ?
+      )
+      `,
+      [ streamId ]
+    )
     return await Streams( ).where( { id: streamId } ).del( )
   },
 

@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser } = require( '../services/users' )
+const { createUser, deleteUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
@@ -113,6 +113,25 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.userUpdate ).to.equal( true )
+      } )
+
+      it( 'Should delete my account', async ( ) => {
+        let userDelete = { name: 'delete', email: 'delete@speckle.systems', password: 'wowwowwowwowwow' }
+        userDelete.id = await createUser( userDelete )
+
+        userDelete.token = `Bearer ${( await createPersonalAccessToken( userDelete.id, 'fail token user del', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
+        
+        let badTokenScopesBadEmail = await sendRequest( userDelete.token, { query: 'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ', variables: { user: { email: 'wrongEmail@email.com' } } } )
+        expect( badTokenScopesBadEmail.body.errors ).to.exist
+        let badTokenScopesGoodEmail = await sendRequest( userDelete.token, { query: 'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ', variables: { user: { email: userDelete.email } } } )
+        expect( badTokenScopesGoodEmail.body.errors ).to.exist
+
+        userDelete.token = `Bearer ${( await createPersonalAccessToken( userDelete.id, 'test token user del', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email', 'profile:delete' ] ) )}`
+
+        let goodTokenScopesBadEmail = await sendRequest( userDelete.token, { query: 'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ', variables: { user: { email: 'wrongEmail@email.com' } } } )
+        expect( goodTokenScopesBadEmail.body.errors ).to.exist
+        let goodTokenScopesGoodEmail = await sendRequest( userDelete.token, { query: 'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ', variables: { user: { email: userDelete.email } } } )
+        expect( goodTokenScopesGoodEmail.body.errors ).to.not.exist
       } )
     } )
 

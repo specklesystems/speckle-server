@@ -13,6 +13,22 @@ const knex = require( `${appRoot}/db/knex` )
 
 const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
+const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
+
+const {
+  createBranch,
+  getBranchesByStreamId
+} = require( '../services/branches' )
+
+const {
+  createCommitByBranchName,
+  getCommitsByBranchName,
+  getCommitById,
+  getCommitsByStreamId,
+  deleteCommit,
+} = require( '../services/commits' )
+
+const { createObject, createObjects } = require( '../services/objects' )
 
 describe( 'Actors & Tokens @user-services', ( ) => {
   let myTestActor = {
@@ -61,63 +77,115 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       try {
         await createUser( { name: 'Dim Sum', email: 'dim@gmail.com', password: '1234567' } )
       } catch ( e ) {
-        // pass
+        return
       }
+      assert.fail( 'short pwd' )
     } )
 
     it( 'Should not create an user with the same email', async ( ) => {
 
-      let newUser = { ...myTestActor }
+      let newUser = { }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
       newUser.password = 'testthebest'
 
       try {
         let actorId = await createUser( newUser )
-        assert.fail( 'dupe email' )
       } catch ( e ) {
-        // pass
+        return
       }
-
+      assert.fail( 'dupe email' )
     } )
+
+    let ballmerUserId = null
 
     it( 'Find or create should create a user', async ( ) => {
 
-      let newUser = { ...myTestActor }
+      let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
 
       let { id } = await findOrCreateUser( { user: newUser } )
+      ballmerUserId = id
       expect( id ).to.be.a( 'string' )
 
     } )
 
     it( 'Find or create should NOT create a user', async ( ) => {
 
-      let newUser = { ...myTestActor }
+      let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
       newUser.suuid = 'really it does not matter'
 
       let { id } = await findOrCreateUser( { user: newUser } )
-      expect( id ).to.be.a( 'string' )
+      expect( id ).to.equal( ballmerUserId )
 
     } )
 
-    it( 'Should get an user', async ( ) => {
+    // Note: deletion is more complicated. 
+    it( 'Should delete a user', async ( ) => {
+      let soloOwnerStream = { name: 'Test Stream 01', description: 'wonderful test stream', isPublic: true }
+      let multiOwnerStream = { name: 'Test Stream 02', description: 'another test stream', isPublic: true }
+
+      soloOwnerStream.id = await createStream( { ...soloOwnerStream, ownerId: ballmerUserId } )
+      multiOwnerStream.id = await createStream( { ...multiOwnerStream, ownerId: ballmerUserId } )
+      
+      await grantPermissionsStream( { streamId: multiOwnerStream.id, userId: myTestActor.id, role: 'stream:owner' } )
+      
+      // create a branch for ballmer on the multiowner stream
+      let branch = { name: 'ballmer/dev' }
+      branch.id = await createBranch( { ...branch, streamId: multiOwnerStream.id, authorId: ballmerUserId } )
+
+      let branchSecond = { name: 'steve/jobs' }
+      branchSecond.id = await createBranch( { ...branchSecond, streamId: multiOwnerStream.id, authorId: myTestActor.id } )
+
+      // create an object and a commit around it on the multiowner stream
+      let objId = await createObject( multiOwnerStream.id, { pie: 'in the sky' } )
+      let commitId = await createCommitByBranchName( { streamId: multiOwnerStream.id, branchName: 'ballmer/dev', message: 'breakfast commit', sourceApplication: 'tests', objectId:objId, authorId: ballmerUserId } )
+      
+      await deleteUser( ballmerUserId )
+
+      if ( await getStream( { streamId: soloOwnerStream.id } ) !== undefined ) {
+        assert.fail( 'user stream not deleted' )
+      }
+
+      let multiOwnerStreamCopy = await getStream( { streamId: multiOwnerStream.id } )
+      if ( !multiOwnerStreamCopy || multiOwnerStreamCopy.id != multiOwnerStream.id ) {
+        assert.fail( 'shared stream deleted' )
+      }
+
+      let branches = await getBranchesByStreamId( { streamId: multiOwnerStream.id } )
+      expect( branches.items.length ).to.equal( 3 )
+
+      let branchCommits = await getCommitsByBranchName( { streamId: multiOwnerStream.id, branchName:'ballmer/dev' } )
+      expect( branchCommits.commits.length ).to.equal( 1 )
+
+      let commit = await getCommitById( { id: commitId } )
+      expect( commit ).to.be.not.null
+
+      let commitsByStreamId = await getCommitsByStreamId( { streamId: multiOwnerStream.id } )
+      expect( commitsByStreamId.commits.length ).to.equal( 1 )
+
+      let user = await getUser( ballmerUserId )
+      if ( user )
+        assert.fail( 'user not deleted' )
+    } )
+
+    it( 'Should get a user', async ( ) => {
       let actor = await getUser( myTestActor.id )
       expect( actor ).to.not.have.property( 'passwordDigest' )
     } )
 
-    it( 'Should search and get an users', async ( ) => {
+    it( 'Should search and get users', async ( ) => {
       let { users } = await searchUsers( 'gates', 20, null )
       expect( users ).to.have.lengthOf( 1 )
       expect( users[ 0 ].name ).to.equal( 'Bill Gates' )
     } )
 
-    it( 'Should update an user', async ( ) => {
+    it( 'Should update a user', async ( ) => {
       let updatedActor = { ...myTestActor }
       updatedActor.name = 'didimitrie'
 

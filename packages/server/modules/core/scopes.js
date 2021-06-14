@@ -22,8 +22,18 @@ module.exports = [
     public: true
   },
   {
+    name: 'profile:delete',
+    description: 'Allows a user to delete their account, with all associated data.',
+    public: false
+  },
+  {
     name: 'users:read',
     description: 'Read other users\' profile on your behalf.',
+    public: true
+  },
+  {
+    name: 'server:stats',
+    description: 'Request server stats from the api. Only works in conjunction with a "server:admin" role.',
     public: true
   },
   {

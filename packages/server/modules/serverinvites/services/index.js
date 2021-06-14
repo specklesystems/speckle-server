@@ -2,6 +2,7 @@
 const appRoot = require( 'app-root-path' )
 const crs = require( 'crypto-random-string' )
 const knex = require( `${appRoot}/db/knex` )
+const sanitizeHtml = require( 'sanitize-html' )
 
 const { getUserByEmail, getUserById } = require( `${appRoot}/modules/core/services/users` )
 
@@ -18,6 +19,15 @@ module.exports = {
     let existingUser = await getUserByEmail( { email } )
 
     if ( existingUser ) throw new Error( 'This email is already associated with an account on this server!' )
+
+    if ( message ) {
+      
+      if ( message.length >= 1024 ) {
+        throw new Error( 'Personal message too long.' )
+      }
+
+      message = module.exports.sanitizeMessage( message )
+    }
 
     // check if email is already invited
     let existingInvite = await module.exports.getInviteByEmail( { email } )
@@ -126,5 +136,11 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
 
     await Invites().where( { id: id } ).update( { used: true } )
     return true
+  },
+
+  sanitizeMessage( message ) {
+    return sanitizeHtml( message, {
+      allowedTags: [ 'b', 'i', 'em', 'strong' ],
+    } )
   }
 }

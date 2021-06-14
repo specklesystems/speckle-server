@@ -10,6 +10,8 @@ const { contextMiddleware } = require( `${appRoot}/modules/shared` )
 const { validatePermissionsReadStream } = require( './authUtils' )
 
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
+const { SpeckleObjectsStream } = require( './speckleObjectsStream' )
+const { pipeline } = require( 'stream' )
 
 module.exports = ( app ) => {
 
@@ -28,85 +30,30 @@ module.exports = ( app ) => {
       return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
     }
 
-    obj = obj.data
-
     let simpleText = req.headers.accept === 'text/plain'
-
-    let dbStream = await getObjectChildrenStream( { streamId: req.params.streamId, objectId: req.params.objectId } )
-
-    let currentChunkSize = 0
-    let maxChunkSize = 50000
-    let chunk = simpleText ? '' : [ ]
-    let isFirst = true
-
 
     res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': simpleText ? 'text/plain' : 'application/json' } )
 
-    const gzip = zlib.createGzip( )
+    let dbStream = await getObjectChildrenStream( { streamId: req.params.streamId, objectId: req.params.objectId } )
+    let speckleObjStream = new SpeckleObjectsStream( simpleText )
+    let gzipStream = zlib.createGzip( )
 
-    if ( !simpleText ) gzip.write( '[' )
+    speckleObjStream.write( obj )
 
-    // helper func to flush the gzip buffer
-    const writeBuffer = ( addStartingComma ) => {
-      if ( simpleText ) {
-        gzip.write( chunk )
-      } else {
-        if ( addStartingComma ) {
-          gzip.write( ',' )
-        }
-        gzip.write( chunk.join( ',' ) )
-      }
-      gzip.flush( )
-      chunk = simpleText ? '' : [ ]
-    }
-
-    var objString = JSON.stringify( obj )
-    if ( simpleText ) {
-      chunk += `${obj.id}\t${objString}\n`
-    } else {
-      chunk.push( objString )
-    }
-    writeBuffer( false )
-
-    let k = 0
-    let requestDropped = false
-    dbStream.on( 'data', row => {
-      try {
-        let data = JSON.stringify( row.data )
-        currentChunkSize += Buffer.byteLength( data, 'utf8' )
-        if ( simpleText ) {
-          chunk += `${row.data.id}\t${data}\n`
+    pipeline(
+      dbStream,
+      speckleObjStream,
+      gzipStream,
+      res,
+      ( err ) => {
+        if ( err ) {
+          debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Error downloading object ${req.params.objectId} from stream ${req.params.streamId}: ${err}` )
         } else {
-          chunk.push( data )
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Downloaded object ${req.params.objectId} from stream ${req.params.streamId} (size: ${gzipStream.bytesWritten / 1000000} MB)` )
         }
-        if ( currentChunkSize >= maxChunkSize ) {
-          currentChunkSize = 0
-          writeBuffer( true )
-        }
-        k++
-      } catch ( e ) {
-        requestDropped = true
-        debug( 'speckle:error' )( `'Failed to find object, or object is corrupted.' ${req.params.objectId}` )
-        return
       }
-    } )
+    )
 
-    dbStream.on( 'error', err => {
-      debug( 'speckle:error' )( `Error in streaming object children for ${req.params.objectId}: ${err}` )
-      requestDropped = true
-      return
-    } )
-
-    dbStream.on( 'end', ( ) => {
-      if ( currentChunkSize !== 0 ) {
-        writeBuffer( true )
-      }
-      if ( !simpleText ) gzip.write( ']' )
-      gzip.end( )
-    } )
-
-    // 🚬
-    gzip.pipe( res )
   } )
 
   app.options( '/objects/:streamId/:objectId/single', cors() )
@@ -121,6 +68,8 @@ module.exports = ( app ) => {
     if ( !obj ) {
       return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
     }
+
+    debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}` )
 
     res.send( obj.data )
   } )
