@@ -93,6 +93,7 @@
             v-if="
               stream &&
               stream.commit &&
+              selectedBranch.name == 'main' &&
               stream.commit.branchName != 'main' &&
               stream.commit.branchName != selectedBranch.name
             "
@@ -182,7 +183,7 @@
                   </v-list-item-subtitle>
                 </v-list-item-content>
                 <v-list-item-action>
-                  <source-app-avatar :application-name="latestCommit.sourceApplication" />
+                  <source-app-avatar :application-name="commit.sourceApplication" />
                 </v-list-item-action>
               </v-list-item>
               <v-divider />
