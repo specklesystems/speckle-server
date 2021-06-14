@@ -214,7 +214,10 @@ export default {
       for (let entry of arr) {
         if (!entry.value && !entry.globals) return
 
-        if (!entry.valid) this.globalsAreValid = false
+        if (entry.valid !== true) {
+          this.globalsAreValid = false
+          return null
+        }
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
         else if (entry.type == 'object') {
