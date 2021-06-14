@@ -12,16 +12,17 @@
     </template>
     <div class="d-flex justify-space-around pl-4 pr-4">
       <div>
-        <h4 class="primary--text text--lighten-2">
-          Current </h4>
+        <h4 class="primary--text text--lighten-2">Current</h4>
         <p class="primary--text text-h4 text-sm-h2 speckle-gradient-txt">
-          {{ versionInfo.current }} </p>
+          {{ versionInfo.current }}
+        </p>
       </div>
       <v-icon color="primary lighten-1">mdi-arrow-right</v-icon>
       <div>
         <h4 class="primary--text text--lighten-2">Latest</h4>
         <p class="primary--text text-h4 text-sm-h2 speckle-gradient-txt">
-          {{ versionInfo.latest }} </p>
+          {{ versionInfo.latest }}
+        </p>
       </div>
     </div>
     <v-btn disabled v-if="!isLatestVersion" color="primary" width="100%">
@@ -31,40 +32,54 @@
 </template>
 
 <script>
-import AdminCard from "@/components/admin/AdminCard";
-import gql from "graphql-tag";
+import AdminCard from '@/components/admin/AdminCard'
+import gql from 'graphql-tag'
 
 export default {
-  name: "VersionInfoCard",
+  name: 'VersionInfoCard',
   components: { AdminCard },
   data() {
     return {
       versionInfo: {
-        current: "2.0.18",
-        latest: "2.0.27"
+        current: '2.0.18',
+        latest: '2.0.27'
       }
-    };
+    }
   },
   apollo: {
     currentVersion: {
-      query: gql`query {
-        serverInfo {
-          version
+      query: gql`
+        query {
+          serverInfo {
+            version
+          }
         }
-      }`,
+      `,
       update(data) {
-        this.versionInfo.current = data.serverInfo.version;
+        this.versionInfo.current = data.serverInfo.version
       }
     }
   },
+  async mounted() {
+    this.versionInfo.latest = await this.getLatestVersion()
+  },
   computed: {
     isLatestVersion() {
-      return this.versionInfo.current === this.versionInfo.latest;
+      return this.versionInfo.current === this.versionInfo.latest
+    }
+  },
+
+  methods: {
+    getLatestVersion() {
+      return fetch('https://api.github.com/repos/specklesystems/speckle-server/releases/latest')
+        .then(async (res) => {
+          var x = await res.json()
+          return x.tag_name.split('v')[1]
+        })
+        .catch((err) => console.error('error fetch', err))
     }
   }
-};
+}
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>
