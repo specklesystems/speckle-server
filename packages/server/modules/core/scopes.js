@@ -32,6 +32,11 @@ module.exports = [
     public: true
   },
   {
+    name: 'server:stats',
+    description: 'Request server stats from the api. Only works in conjunction with a "server:admin" role.',
+    public: true
+  },
+  {
     name: 'users:email',
     description: 'Access the emails of other users on your behalf.',
     public: false
