@@ -21,12 +21,17 @@ async function getScreenshot( objectUrl ) {
 
   console.log("Page loaded")
 
-  console.time( 'lo' )
-  const scr = await page.evaluate( async ( objectUrl ) => {
+  //console.time( 'lo' )
+  const ret = await page.evaluate( async ( objectUrl ) => {
     waitForAnimation = async ( ms=70 ) => await new Promise( ( resolve ) => {
       setTimeout( resolve, ms )
     } )
-    let scr = {}
+    let ret = {
+      duration: 0,
+      mem: 0,
+      scr: {}
+    }
+    let t0 = Date.now()
     let stepAngle = 0.261799
     v.postprocessing = false
     v.sceneManager.skipPostLoad = true
@@ -39,19 +44,19 @@ async function getScreenshot( objectUrl ) {
     
     v.interactions.zoomExtents( 0.95, false )
     await waitForAnimation()
-    scr['0'] = v.interactions.screenshot()
+    ret.scr['0'] = v.interactions.screenshot()
 
     for ( let i = 1; i < 3; i++ ) {
       v.interactions.rotateCamera( stepAngle, undefined, false )
       await waitForAnimation()
-      scr[( -1 * i ) + ''] = v.interactions.screenshot()
+      ret.scr[( -1 * i ) + ''] = v.interactions.screenshot()
     }
     v.interactions.rotateCamera( -2 * stepAngle, undefined, false )
     await waitForAnimation()
     for ( let i = 1; i < 3; i++ ) {
       v.interactions.rotateCamera( -1 * stepAngle, undefined, false )
       await waitForAnimation()
-      scr[i + ''] = v.interactions.screenshot()
+      ret.scr[i + ''] = v.interactions.screenshot()
     }
     /*
     v.interactions.rotateCamera( 2 * stepAngle, transition=false )
@@ -62,31 +67,37 @@ async function getScreenshot( objectUrl ) {
       let d = dirArray[i]
       v.interactions.rotateTo( d )
       await waitForAnimation()
-      scr[d] = v.interactions.screenshot()
+      ret.scr[d] = v.interactions.screenshot()
     }
     */
-    return scr
+
+    ret.duration = ( Date.now() - t0 ) / 1000
+    ret.mem = { total: performance.memory.totalJSHeapSize, used: performance.memory.usedJSHeapSize }
+    return ret
   }, objectUrl )
 
   
   // Don't await for cleanup
   browser.close()
 
-  return scr
+  //console.timeEnd( 'lo' )
+  console.log( `Generated preview for ${objectUrl} in ${ret.duration} sec with ${ret.mem.total / 1000000} MB of memory` )
+  return ret.scr
 
   return `
   <html><body>
-  <img height="200px" src="${scr['-2']}" /><br />
-  <img height="200px" src="${scr['-1']}" /><br />
-  <img height="200px" src="${scr['0']}" /><br />
-  <img height="200px" src="${scr['1']}" /><br />
-  <img height="200px" src="${scr['2']}" /><br />
+  <div>Duration in seconds: ${ret.duration}</div>
+  <div>Memory in MB: ${ret.mem.total / 1000000}</div>
+  <div>Used Memory in MB: ${ret.mem.used / 1000000}</div>
+  <img height="200px" src="${ret.scr['-2']}" /><br />
+  <img height="200px" src="${ret.scr['-1']}" /><br />
+  <img height="200px" src="${ret.scr['0']}" /><br />
+  <img height="200px" src="${ret.scr['1']}" /><br />
+  <img height="200px" src="${ret.scr['2']}" /><br />
   </body></html>
   `
 
   const imageBuffer = new Buffer.from( b64Image.replace( /^data:image\/\w+;base64,/, '' ), 'base64' )
-
-  console.timeEnd( 'lo' )
 
   // await page.waitForTimeout(500);
   //var response = await page.screenshot({

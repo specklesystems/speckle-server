@@ -9,6 +9,10 @@ var logger = require( 'morgan' )
 var indexRouter = require( './routes/index' )
 var previewRouter = require( './routes/preview' )
 var objectsRouter = require( './routes/objects' )
+const prometheusClient = require( 'prom-client' )
+
+prometheusClient.register.clear()
+prometheusClient.collectDefaultMetrics()
 
 var app = express()
 
@@ -21,6 +25,16 @@ app.use( express.static( path.join( __dirname, 'public' ) ) )
 app.use( '/', indexRouter )
 app.use( '/preview', previewRouter )
 app.use( '/objects', objectsRouter )
+
+// Expose prometheus metrics
+app.get( '/metrics', async ( req, res ) => {
+  try {
+    res.set( 'Content-Type', prometheusClient.register.contentType )
+    res.end( await prometheusClient.register.metrics() )
+  } catch ( ex ) {
+    res.status( 500 ).end( ex )
+  }
+} )
 
 // catch 404 and forward to error handler
 app.use( function( req, res, next ) {

@@ -11,16 +11,17 @@
     <v-card-actions>
       <v-btn
         v-if="user && user.role === `server:admin`"
-        v-tooltip="'Edit server information'"
+        v-tooltip="'Takes you to the admin page'"
+        tag="router-link"
         small
         plain
         color="primary"
         text
         block
-        @click="editServer"
+        to="/admin/settings"
       >
         <v-icon small class="mr-2">mdi-cog-outline</v-icon>
-        Edit
+        Go to Admin panel
       </v-btn>
     </v-card-actions>
 

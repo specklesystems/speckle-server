@@ -21,6 +21,17 @@
             <v-icon>mdi-account</v-icon>
           </v-list-item-action>
         </v-list-item>
+        <v-list-item v-if="isAdmin" @click="$router.push('/admin')">
+          <v-list-item-content>
+            <v-list-item-title>
+              <b>Admin Panel</b>
+            </v-list-item-title>
+            <v-list-item-subtitle>Options to administer this server</v-list-item-subtitle>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-icon>mdi-account-cog</v-icon>
+          </v-list-item-action>
+        </v-list-item>
         <v-list-item @click="showServerInviteDialog">
           <v-list-item-content>
             <v-list-item-title>
@@ -84,6 +95,11 @@ export default {
   },
   data() {
     return {}
+  },
+  computed: {
+    isAdmin() {
+      return this.user?.role === "server:admin"
+    }
   },
   methods: {
     showServerInviteDialog() {
