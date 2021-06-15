@@ -28,6 +28,7 @@
     "node-fetch": "^2.6.1",
     "pg": "^8.6.0",
     "pg-query-stream": "^4.1.0",
+    "prom-client": "^13.1.0",
     "puppeteer": "^9.0.0",
     "zlib": "^1.0.5"
   },
