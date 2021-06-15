@@ -28,6 +28,8 @@ export default {
     }
   },
   computed: {
+    // adding new colors?
+    // this can help: https://codepen.io/teocomi/pen/vYxvREG?editors=1010
     color() {
       if (!this.applicationName) return 'grey'
 
@@ -41,6 +43,8 @@ export default {
       if (appname.includes('rhino')) return 'black'
       if (appname.includes('grasshopper')) return 'green darken-2'
       if (appname.includes('excel')) return 'green lighten-1'
+      if (appname.includes('unity')) return 'yellow darken-1'
+      if (appname.includes('unreal')) return 'brown'
       return 'grey'
     },
     shortName() {
@@ -56,6 +60,8 @@ export default {
       if (appname.includes('rhino')) return 'RH'
       if (appname.includes('grasshopper')) return 'GH'
       if (appname.includes('excel')) return 'XLSX'
+      if (appname.includes('unity')) return 'UNITY'
+      if (appname.includes('unreal')) return 'UE'
       return appname
     }
   }
