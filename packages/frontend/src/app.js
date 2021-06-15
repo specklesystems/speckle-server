@@ -30,6 +30,16 @@ Vue.use(VueMatomo, {
   userId: localStorage.getItem('suuid')
 })
 
+import VueApexCharts from 'vue-apexcharts'
+Vue.use(VueApexCharts)
+
+Vue.component('Apexchart', VueApexCharts)
+
+import { formatNumber } from './formatNumber'
+// Filter to turn any number into a nice string like '10k', '5.5m'
+// Accepts 'max' parameter to set it's formatting while being animated
+Vue.filter('prettynum', formatNumber)
+
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')
 

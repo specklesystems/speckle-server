@@ -1,0 +1,15 @@
+$heading-font-family: 'Space Grotesk';
+
+$primary-base: var(--v-primary-base);
+$primary-darken: var(--v-secondary-base);
+$primary-gradient: linear-gradient(0deg, $primary-darken 0%, $primary-base 40%);
+
+@mixin speckle-gradient-bg {
+  background: $primary-base;
+  background: $primary-gradient;
+}
+
+@mixin speckle-gradient-txt {
+  @include speckle-gradient-bg;
+  -webkit-background-clip: text;
+}
