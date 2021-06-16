@@ -10,6 +10,7 @@ const { validatePermissionsWriteStream } = require( './authUtils' )
 
 const { createObjects, createObjectsBatched } = require( '../services/objects' )
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 module.exports = ( app ) => {
   app.post( '/objects/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
@@ -38,7 +39,18 @@ module.exports = ( app ) => {
         file.on( 'end', async ( ) => {
           if ( requestDropped ) return
           let objs = [ ]
-          let gunzipedBuffer = zlib.gunzipSync( Buffer.concat( buffer ) ).toString( )
+
+          let gzippedBuffer = Buffer.concat( buffer )
+          if ( gzippedBuffer.length > MAX_FILE_SIZE ) {
+            requestDropped = true
+            return res.status( 400 ).send( `File size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+          }
+
+          let gunzipedBuffer = zlib.gunzipSync( gzippedBuffer ).toString( )
+          if ( gunzipedBuffer.length > MAX_FILE_SIZE ) {
+            requestDropped = true
+            return res.status( 400 ).send( `File size too large (${gunzipedBuffer.length} > ${MAX_FILE_SIZE})` )
+          }
 
           try {
             objs = JSON.parse( gunzipedBuffer )
@@ -50,7 +62,10 @@ module.exports = ( app ) => {
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
 
-          let promise = createObjectsBatched( req.params.streamId, objs )
+          let promise = createObjectsBatched( req.params.streamId, objs ).catch( e => {
+            requestDropped = true
+            return res.status( 400 ).send( e.message )
+          } )
           promises.push( promise )
 
           await promise
@@ -65,6 +80,12 @@ module.exports = ( app ) => {
         file.on( 'end', async ( ) => {
           if ( requestDropped ) return
           let objs = [ ]
+
+          if ( buffer.length > MAX_FILE_SIZE ) {
+            requestDropped = true
+            return res.status( 400 ).send( `File size too large (${buffer.length} > ${MAX_FILE_SIZE})` )
+          }
+
           try {
             objs = JSON.parse( buffer )
           } catch ( e ) {
@@ -74,7 +95,10 @@ module.exports = ( app ) => {
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
 
-          let promise = createObjectsBatched( req.params.streamId, objs )
+          let promise = createObjectsBatched( req.params.streamId, objs ).catch( e => {
+            requestDropped = true
+            return res.status( 400 ).send( e.message )
+          } )
           promises.push( promise )
 
           await promise
