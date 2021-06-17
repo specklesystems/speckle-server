@@ -6,13 +6,30 @@
           <v-progress-linear indeterminate></v-progress-linear>
         </template>
         <v-card-title>You don't have any globals on this stream!</v-card-title>
-        <v-card-text class="subtitle-1">
+        <v-card-text
+          v-if="$attrs['user-role'] === 'contributor' || $attrs['user-role'] === 'owner'"
+          class="subtitle-1"
+        >
           Globals are useful for storing design values, project requirements, notes, or any info you
           want to keep track of alongside your geometry. Would you like to create some now?
         </v-card-text>
+        <v-card-text
+          v-if="!($attrs['user-role'] === 'contributor') && !($attrs['user-role'] === 'owner')"
+          class="subtitle-1"
+        >
+          Globals are useful for storing design values, project requirements, notes, or any info you
+          want to keep track of alongside your geometry. You don't have permission to create and
+          edit globals on this stream, but you can create your own stream to try them out!
+        </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="primary" @click="createClicked">create globals</v-btn>
+          <v-btn
+            v-if="$attrs['user-role'] === 'contributor' || $attrs['user-role'] === 'owner'"
+            color="primary"
+            @click="createClicked"
+          >
+            create globals
+          </v-btn>
         </v-card-actions>
       </v-card>
     </div>
