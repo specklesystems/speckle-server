@@ -4,7 +4,7 @@ const zlib = require( 'zlib' )
 var express = require( 'express' )
 var { getObject, getObjectChildrenStream } = require( './services/objects_utils' )
 const { SpeckleObjectsStream } = require( './speckleObjectsStream' )
-const { pipeline } = require( 'stream' )
+const { pipeline, PassThrough } = require( 'stream' )
 
 var router = express.Router()
 
@@ -32,6 +32,7 @@ router.get( '/:streamId/:objectId', async function( req, res, next ) {
     dbStream,
     speckleObjStream,
     gzipStream,
+    new PassThrough( { highWaterMark: 16384 * 31 } ),
     res,
     ( err ) => {
       if ( err ) {

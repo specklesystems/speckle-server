@@ -19,7 +19,7 @@ async function getScreenshot( objectUrl ) {
   const page = await browser.newPage()
   await page.goto( 'http://127.0.0.1:3001/render/' )
 
-  console.log("Page loaded")
+  console.log( 'Page loaded' )
 
   //console.time( 'lo' )
   const ret = await page.evaluate( async ( objectUrl ) => {

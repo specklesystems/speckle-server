@@ -11,7 +11,7 @@ const { validatePermissionsReadStream } = require( './authUtils' )
 
 const { getObject, getObjectChildrenStream } = require( '../services/objects' )
 const { SpeckleObjectsStream } = require( './speckleObjectsStream' )
-const { pipeline } = require( 'stream' )
+const { pipeline, PassThrough } = require( 'stream' )
 
 module.exports = ( app ) => {
 
@@ -44,6 +44,7 @@ module.exports = ( app ) => {
       dbStream,
       speckleObjStream,
       gzipStream,
+      new PassThrough( { highWaterMark: 16384 * 31 } ),
       res,
       ( err ) => {
         if ( err ) {
