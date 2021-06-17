@@ -42,10 +42,9 @@
         reset all
       </v-btn>
       <v-btn
-        v-if="userRole === 'contributor' || userRole === 'owner'"
         v-tooltip="'Save your changes with a message'"
         small
-        :disabled="!globalsAreValid"
+        :disabled="!canSave"
         color="primary"
         @click="
           saveDialog = true
@@ -150,6 +149,9 @@ export default {
     }
   },
   computed: {
+    canSave() {
+      return this.globalsAreValid && (this.userRole === 'contributor' || this.userRole === 'owner')
+    },
     globalsCommit() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       this.globalsAreValid = true
