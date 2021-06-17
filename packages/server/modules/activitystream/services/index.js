@@ -20,6 +20,9 @@ module.exports = {
     await StreamActivity( ).insert( dbObject )
   },
 
+  // get stream activity, user activity, user timeline
+  // paginate
+
   // Only `streamId` is mandatory, the rest are optional filters
   async getActivities( { streamId, timeStart, timeEnd, userId, actionType, resourceId } ) {
     let dbQuery = StreamActivity().where( { streamId: streamId } )

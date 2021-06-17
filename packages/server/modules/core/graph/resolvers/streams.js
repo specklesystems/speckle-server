@@ -90,7 +90,6 @@ module.exports = {
     async streamCreate( parent, args, context, info ) {
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
 
-      // TODO: Question: Fetch user from db to include user name in activity log? (maybe useful if user deletes account)
       await saveActivity( {
         streamId: id,
         resourceType: 'stream',
@@ -111,6 +110,7 @@ module.exports = {
 
       await updateStream( update )
       // TODO: Question: Fetch stream info from DB to include the old values in activity log? (we should have the old values in older entries in activity log)
+      // TODO: query old value and save it in `info` (new/old)
       await saveActivity( {
         streamId: args.stream.id,
         resourceType: 'stream',
