@@ -14,7 +14,7 @@ async function startTask() {
       "lastUpdate" = NOW()
     FROM (
       SELECT "streamId", "objectId" FROM object_preview
-      WHERE "previewStatus" = 0 OR ("previewStatus" = 1 AND "lastUpdate" < NOW() - INTERVAL '1 HOUR')
+      WHERE "previewStatus" = 0 OR ("previewStatus" = 1 AND "lastUpdate" < NOW() - INTERVAL '1 WEEK')
       ORDER BY "priority" ASC, "lastUpdate" ASC
       LIMIT 1
     ) as task
