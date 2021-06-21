@@ -203,7 +203,7 @@ module.exports = {
     } )
       .where( knex.raw( 'object_children_closure."streamId" = ? AND parent = ?', [ streamId, objectId ] ) )
       .orderBy( 'objects.id' )
-    return q.stream( { highWaterMark: 2 } )
+    return q.stream( { highWaterMark: 500 } )
   },
 
   async getObjectChildren( { streamId, objectId, limit, depth, select, cursor } ) {
@@ -442,7 +442,7 @@ module.exports = {
       .andWhere( 'streamId', streamId )
       .orderBy( 'id' )
       .select( 'id', 'speckleType', 'totalChildrenCount', 'totalChildrenCountByDepth', 'createdAt', 'data' )
-    return res.stream( { highWaterMark: 2 } )
+    return res.stream( { highWaterMark: 500 } )
   },
 
   async hasObjects( { streamId, objectIds } ) {
@@ -472,6 +472,7 @@ module.exports = {
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject( streamId, obj ) {
   let memNow = process.memoryUsage( ).heapUsed / 1024 / 1024
+  const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
   if ( obj.hash )
     obj.id = obj.hash
@@ -479,6 +480,9 @@ function prepInsertionObject( streamId, obj ) {
     obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
 
   let stringifiedObj = JSON.stringify( obj )
+  if ( stringifiedObj.length > MAX_OBJECT_SIZE ) {
+    throw new Error( `Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})` )
+  }
   let memAfter = process.memoryUsage( ).heapUsed / 1024 / 1024
 
   return {

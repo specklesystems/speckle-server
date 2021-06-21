@@ -22,7 +22,7 @@ export default {
   }
 }
 </script>
-<style>
+<style lang="scss">
 .marked-preview h1 {
   padding-bottom: 10px;
   padding-top: 10px;
@@ -166,5 +166,13 @@ export default {
   visibility: visible;
   opacity: 1;
   transition: opacity 0.15s;
+}
+
+.speckle-gradient-bg {
+  @include speckle-gradient-bg;
+}
+
+.speckle-gradient-txt {
+  @include speckle-gradient-txt;
 }
 </style>

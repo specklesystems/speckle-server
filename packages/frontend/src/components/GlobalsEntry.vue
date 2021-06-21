@@ -28,13 +28,7 @@
                 ref="keyInput"
                 v-model="entry.key"
                 :rules="rules.keys(index, entries)"
-                :error-messages="
-                  entry.valid
-                    ? null
-                    : entry.key
-                    ? 'Each property name must be unique'
-                    : 'This property needs a name!'
-                "
+                :error-messages="entry.valid === true ? null : entry.valid"
                 class="entry-key mr-5"
                 hint="property name"
                 filled
@@ -82,13 +76,7 @@
                     ref="keyInput"
                     v-model="entry.key"
                     :rules="rules.keys(index, entries)"
-                    :error-messages="
-                      entry.valid
-                        ? null
-                        : entry.key
-                        ? 'Each property name must be unique'
-                        : 'This property needs a name!'
-                    "
+                    :error-messages="entry.valid === true ? null : entry.valid"
                   ></v-text-field>
                   <v-btn icon color="primary" @click="editTitle = false">
                     <v-icon small>mdi-check</v-icon>
@@ -178,14 +166,20 @@ export default {
           return [
             (v) => {
               let result = !!v || 'Properties need to have a name!'
-              entries[index].valid = result === true
+              entries[index].valid = result
               return result
             },
             (v) => {
               let filtered = entries.filter((_, i) => i != index)
               let result =
                 filtered.findIndex((e) => e.key === v) === -1 || 'Each property name must be unique'
-              entries[index].valid = !!v && result === true
+              if (entries[index].valid === true) entries[index].valid = result
+              return result
+            },
+            (v) => {
+              const re = /[./]/
+              let result = !re.test(v) || 'The name cannot contain invalid characters: "." or "/"'
+              if (entries[index].valid === true) entries[index].valid = result
               return result
             }
           ]
@@ -205,8 +199,27 @@ export default {
   },
   methods: {
     emitAddProp() {
-      var bimNouns = ['parameter', 'BIM', 'triple O', 'digital twin', 'LOD 9000', 'automation', 'structure', 'layer', 'interop']
-      var bimAdjs = ['parametric', 'chonky', '3D', 'liminal', 'brutalist', 'postmodern', 'discrete', 'dank']
+      var bimNouns = [
+        'parameter',
+        'BIM',
+        'triple O',
+        'digital twin',
+        'LOD 9000',
+        'automation',
+        'structure',
+        'layer',
+        'interop'
+      ]
+      var bimAdjs = [
+        'parametric',
+        'chonky',
+        '3D',
+        'liminal',
+        'brutalist',
+        'postmodern',
+        'discrete',
+        'dank'
+      ]
       var bimExclamations = ['wow', 'much', 'yes', 'towards a new']
       var randomPhrase =
         bimExclamations[Math.floor(Math.random() * bimExclamations.length)] +

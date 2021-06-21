@@ -90,32 +90,27 @@
             </v-list>
           </v-menu>
           <div
-            v-if="
-              stream &&
-              stream.commit &&
-              stream.commit.branchName != 'main' &&
-              stream.commit.branchName != selectedBranch.name
-            "
+            v-if="commitNotif && selectedBranch.name == 'main' && commitNotif.branchName != 'main'"
             class="pb-2 caption"
           >
             <v-alert color="primary" class="caption" dense text type="info">
-              The last commit of this stream is on the
+              The last commitNotif of this stream is on the
               <v-btn
                 text
                 x-small
                 color="primary darken-1"
-                :to="'/streams/' + $route.params.streamId + '/branches/' + stream.commit.branchName"
+                :to="'/streams/' + $route.params.streamId + '/branches/' + commitNotif.branchName"
               >
-                {{ stream.commit.branchName }}
+                {{ commitNotif.branchName }}
               </v-btn>
               branch, see
               <v-btn
                 x-small
                 text
                 color="primary  darken-1"
-                :to="'/streams/' + $route.params.streamId + '/commits/' + stream.commit.id"
+                :to="'/streams/' + $route.params.streamId + '/commits/' + commitNotif.id"
               >
-                {{ stream.commit.message }}
+                {{ commitNotif.message }}
               </v-btn>
             </v-alert>
           </div>
@@ -182,7 +177,7 @@
                   </v-list-item-subtitle>
                 </v-list-item-content>
                 <v-list-item-action>
-                  <source-app-avatar :application-name="latestCommit.sourceApplication" />
+                  <source-app-avatar :application-name="commit.sourceApplication" />
                 </v-list-item-action>
               </v-list-item>
               <v-divider />
@@ -314,7 +309,7 @@ export default {
     },
     description: {
       query: gql`
-        query($id: String!) {
+        query ($id: String!) {
           stream(id: $id) {
             id
             description
@@ -328,15 +323,17 @@ export default {
       },
       update: (data) => data.stream.description
     },
-    stream: {
+    commitNotif: {
       query: gql`
-        query($id: String!) {
+        query ($id: String!) {
           stream(id: $id) {
             id
-            commit {
-              branchName
-              id
-              message
+            commits {
+              items {
+                id
+                message
+                branchName
+              }
             }
           }
         }
@@ -345,13 +342,15 @@ export default {
         return {
           id: this.$route.params.streamId
         }
+      },
+      update(data) {
+        return data.stream.commits.items.filter((c) => !c.branchName.startsWith('globals'))[0]
       }
-      //update: (data) => data.stream.description
     },
     $subscribe: {
       branchCreated: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             branchCreated(streamId: $streamId)
           }
         `,
@@ -369,7 +368,7 @@ export default {
       },
       branchDeleted: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             branchDeleted(streamId: $streamId)
           }
         `,

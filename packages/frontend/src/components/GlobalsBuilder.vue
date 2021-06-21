@@ -15,10 +15,10 @@
     </v-card-subtitle>
     <v-card-text>
       These global variables can be used for storing design values, project requirements, notes, or
-      any info you want to keep track of alongside your geometry. Variable values can be text, numbers,
-      lists, or booleans. Click the box icon next to any field to turn it into a nested group of
-      fields, and drag and drop fields in and out of groups as you please! Note that field order
-      may not always be preserved.
+      any info you want to keep track of alongside your geometry. Variable values can be text,
+      numbers, lists, or booleans. Click the box icon next to any field to turn it into a nested
+      group of fields, and drag and drop fields in and out of groups as you please! Note that field
+      order may not always be preserved.
     </v-card-text>
     <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">
       You are free to play around with the globals here, but you do not have the required stream
@@ -42,10 +42,9 @@
         reset all
       </v-btn>
       <v-btn
-        v-if="userRole === 'contributor' || userRole === 'owner'"
         v-tooltip="'Save your changes with a message'"
         small
-        :disabled="!globalsAreValid"
+        :disabled="!canSave"
         color="primary"
         @click="
           saveDialog = true
@@ -142,14 +141,17 @@ export default {
           'Winter DBT [C]': -4,
           'Winter WBT [C]': -4,
           Enthalpy: {
-            'Summer Enthalpy [kJ/kg]': 56.87,
-            'Winter Enthalpy [kJ/kg]': 2.74
+            'Summer Enthalpy [kJ per kg]': 56.87,
+            'Winter Enthalpy [kJ per kg]': 2.74
           }
         }
       }
     }
   },
   computed: {
+    canSave() {
+      return this.globalsAreValid && (this.userRole === 'contributor' || this.userRole === 'owner')
+    },
     globalsCommit() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       this.globalsAreValid = true
@@ -214,7 +216,10 @@ export default {
       for (let entry of arr) {
         if (!entry.value && !entry.globals) return
 
-        if (!entry.valid) this.globalsAreValid = false
+        if (entry.valid !== true) {
+          this.globalsAreValid = false
+          return null
+        }
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
         else if (entry.type == 'object') {
