@@ -17,8 +17,10 @@ jobs:
         include:
           - package: 'server'
             cxName: 'spec-cx-server'
+            serviceName: 'specklev2-prod'
           - package: 'frontend'
             cxName: 'spec-cx-frontend'
+            serviceName: 'specklev2-frontend-prod'
           - package: 'preview-service'
             cxName: 'spec-cx-preview'
     steps:
@@ -45,3 +47,28 @@ jobs:
         run: |
           docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f packages/${{ matrix.package }}/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          
+      - name: Download task definition
+        if: matrix.package != 'preview-service'
+        run: |
+          aws ecs describe-task-definition --task-definition specklev2-${{ matrix.package }}-prod --query taskDefinition > task-definition.json
+          
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        if: matrix.package != 'preview-service'
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: specklev2-${{ matrix.package }}-prod
+          image: ${{ steps.build-image.outputs.image }}
+          
+          
+      - name: Deploy Amazon ECS task definition
+        if:  matrix.package != 'preview-service' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ matrix.serviceName }}
+          cluster: specklev2-server-prod
+          wait-for-service-stability: true
