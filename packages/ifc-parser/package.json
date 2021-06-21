@@ -1,0 +1,23 @@
+{
+  "name": "ifc-parser",
+  "version": "1.0.0",
+  "description": "> TODO: description",
+  "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
+  "homepage": "https://github.com/specklesystems/speckle-server#readme",
+  "license": "SEE LICENSE IN readme.md",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/specklesystems/speckle-server.git"
+  },
+  "scripts": {
+    "test": "node index.js"
+  },
+  "bugs": {
+    "url": "https://github.com/specklesystems/speckle-server/issues"
+  },
+  "dependencies": {
+    "eslint": "^7.29.0",
+    "web-ifc": "0.0.19"
+  }
+}
