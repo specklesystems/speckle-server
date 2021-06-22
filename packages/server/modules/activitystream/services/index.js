@@ -24,6 +24,7 @@ module.exports = {
     if ( !limit ) {
       limit = 100
     }
+
     let dbQuery = StreamActivity().where( { streamId: streamId } )
     if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
     dbQuery.orderBy( 'time', 'desc' )
@@ -37,6 +38,7 @@ module.exports = {
     if ( !limit ) {
       limit = 100
     }
+
     let dbQuery = StreamActivity().where( { userId: userId } )
     if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
     dbQuery.orderBy( 'time', 'desc' )
@@ -50,6 +52,7 @@ module.exports = {
     if ( !limit ) {
       limit = 100
     }
+
     let dbQuery = StreamActivity().where( { resourceType, resourceId } )
     if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
     dbQuery.orderBy( 'time', 'desc' )
@@ -63,9 +66,11 @@ module.exports = {
     if ( !timeEnd ) {
       timeEnd = Date.now()
     }
+
     if ( !limit ) {
       limit = 100
     }
+
     let dbRawQuery = `
       SELECT act.*
       FROM stream_acl acl

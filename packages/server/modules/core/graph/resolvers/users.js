@@ -1,10 +1,9 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
-const { ApolloError, ForbiddenError, UserInputError } = require( 'apollo-server-express' )
-const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, searchUsers, validatePasssword, getUserById } = require( '../../services/users' )
-const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
+const { UserInputError } = require( 'apollo-server-express' )
+const { getUser, getUserRole, updateUser, deleteUser, searchUsers, getUserById } = require( '../../services/users' )
 const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
-const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
+const { validateServerRole, validateScopes } = require( `${appRoot}/modules/shared` )
 const zxcvbn = require( 'zxcvbn' )
 
 module.exports = {
@@ -38,7 +37,7 @@ module.exports = {
         throw new UserInputError( 'Search query must be at least 3 carachters.' )
 
 
-      if ( args.limit  && args.limit > 100 )
+      if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
 
       let { cursor, users } = await searchUsers( args.query, args.limit, args.cursor )
@@ -86,7 +85,7 @@ module.exports = {
       let oldValue = await getUserById( { userId: context.userId } )
 
       await updateUser( context.userId, args.user )
-      
+
       await saveActivity( {
         streamId: null,
         resourceType: 'user',
@@ -108,8 +107,8 @@ module.exports = {
       }
 
       // The below are not really needed anymore as we've added the hasRole and hasScope
-      // directives in the graphql schema itself. 
-      // Since I am paranoid, I'll leave them here too. 
+      // directives in the graphql schema itself.
+      // Since I am paranoid, I'll leave them here too.
       await validateServerRole( context, 'server:user' )
       await validateScopes( context.scopes, 'profile:delete' )
 
