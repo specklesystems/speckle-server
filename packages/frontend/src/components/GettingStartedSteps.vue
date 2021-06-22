@@ -1,142 +1,213 @@
 <template>
   <div>
     <v-card class="elevation-10 rounded-lg">
-      <v-img class="white--text align-end" height="200px" src="@/assets/onboardingsplash.png">
-        <v-card-title class="">Speckle Onboarding {{ onboarding + 1 }} / 4</v-card-title>
-      </v-img>
-      <v-window v-model="onboarding" class="py-3">
+      <v-btn
+        small
+        text
+        class="white--grey"
+        style="position: absolute; top: 5px; right: 5px; z-index: 1002"
+        @click="skip"
+      >
+        Skip
+      </v-btn>
+
+      <v-window v-model="onboarding" class="pb-3">
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent">
-            <v-card-title>Welcome!</v-card-title>
-            <v-card-text class="body-1">
+          <v-card class="transparent elevation-0 text-center" color="transparent">
+            <v-img
+              class="white--text align-end mb-3"
+              height="200px"
+              src="@/assets/onboardingsplash.png"
+            ></v-img>
+            <v-card-title class="display-1 justify-center mb-5">
+              👋 Welcome to Speckle!
+            </v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              The Open Data Infrastructure for your Digital Twin, BIM model and for the Built
+              Environment.
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
               <p>
-                Next, we will guide you through setting up Speckle on your computer. If you've done
-                this before, feel free to skip this wizard!
+                Engineers, designers, hackers and entire organizations rely on us for
+                interoperability, automation and collaboration to deliver better buildings, faster.
               </p>
-              <p>The next steps in a nutshell:</p>
-              <ul>
-                <li>Installing the Speckle Manager</li>
-                <li>Setting up your account</li>
-                <li>Creating your first stream</li>
-              </ul>
+              <br />
+              <p><strong>Let us give you a quick tour! 🙋‍♂️</strong></p>
             </v-card-text>
-            <v-card-actions class="justify-center">
-              <v-btn block color="primary" @click="next">
-                Let's go
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn>
-            </v-card-actions>
           </v-card>
         </v-window-item>
+
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent">
-            <v-card-title>Speckle Manager Installation</v-card-title>
-            <v-card-text class="body-1">
+          <v-card class="transparent elevation-0 text-center" color="transparent">
+            <v-img
+              class="white--text align-end mb-3"
+              height="200px"
+              src="@/assets/onboarding_connectors.png"
+            ></v-img>
+            <v-card-title class="display-1 justify-center mb-5">🔌 Connectors</v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              Are plugins for design and analysis software.
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
               <p>
-                Speckle Manager is a desktop application that handles accounts and connectors
-                (Rhino, Revit, etc.) on your machine. Once you have downloaded Speckle Manager, go
-                ahead and install it. Once you're done, go to the next step!
+                Connectors let you
+                <b>send and receive</b>
+                geometry and BIM data via Speckle. Install all the connectors you need and manage
+                your accounts with our
+                <b>Desktop Manager 👇</b>
               </p>
-              <p>Note: Currently, we only support Windows.</p>
-              <v-btn
-                block
-                :x-large="!hasClickedDownload"
-                elevation="10"
-                class="mb-4"
-                :color="hasClickedDownload ? '' : 'primary'"
-                @click="downloadManager"
-              >
+              <v-btn elevation="10" class="my-4" rounded color="primary" @click="downloadManager">
                 <v-icon small class="mr-4">mdi-download</v-icon>
-                Download Speckle Manager (WIN)
+                Install connectors
               </v-btn>
-              <p>If you already have installed Speckle Manager, proceed to the next step.</p>
+
+              <v-expansion-panels flat class="mt-2 text-center">
+                <v-expansion-panel>
+                  <v-expansion-panel-header class="text-center d-inline">
+                    <template #actions>
+                      <v-icon class="icon">$expand</v-icon>
+                    </template>
+                    <div class="text-center caption">Having problems?</div>
+                  </v-expansion-panel-header>
+                  <v-expansion-panel-content class="body-2">
+                    <p>
+                      Cannot set up your account? Try adding it from the web:
+                      <v-btn small text color="primary" @click="addAccount">Add Account</v-btn>
+                    </p>
+                    <p>
+                      Having issues installing the connectors? Check out our docs:
+                      <v-btn
+                        small
+                        text
+                        color="primary"
+                        href="https://speckle.guide/user/manager.html"
+                        target="_blank"
+                      >
+                        User Guide
+                      </v-btn>
+                    </p>
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
+              </v-expansion-panels>
             </v-card-text>
-            <v-card-actions class="justify-center">
-              <v-btn block :color="hasClickedDownload ? 'primary' : ''" @click="next">
-                Next Step: Accounts
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn>
-            </v-card-actions>
           </v-card>
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent">
-            <v-card-title>Account Linking</v-card-title>
-            <v-card-text class="body-1">
+          <v-card class="transparent elevation-0 text-center" color="transparent">
+            <v-img
+              class="white--text align-end mb-3"
+              height="200px"
+              src="@/assets/onboarding_streams.png"
+            ></v-img>
+            <v-card-title class="display-1 justify-center mb-5">🌊 Streams</v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              Are collections of data inside Speckle.
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
               <p>
-                In order to use the desktop connectors with Speckle, you need to add this account to
-                the Speckle Manager. Click the button below to do so. NOTE: You need to have Speckle
-                Manager installed first!
+                You can see a
+                <b>stream</b>
+                as a folder, a project or a repository.
               </p>
               <p>
-                The authentication process will open several annoying windows, but at the end of the
-                process your account should be safely stored on your computer - and usable from
-                within all the connectors.
+                Data in a stream is stored in
+                <b>commits,</b>
+                which are snapshots of data in time. Every time you send to Speckle from a
+                connector, a commit is created.
               </p>
-              <v-btn
-                block
-                :x-large="hasClickedAddAccount === 0"
-                class="mb-4"
+              <p>
+                Commits can also be organized in
+                <b>branches,</b>
+                for instace, to have multiple design options or to store data by discipline. The
+                dafault branch is called
+                <i>main</i>
+                .
+              </p>
+              <!-- <v-btn
                 elevation="10"
-                :color="hasClickedAddAccount !== 0 ? '' : 'primary'"
-                @click="addAccount"
+                class="my-4"
+                rounded
+                color="primary"
+                @click="newStreamDialog = true"
               >
-                <v-icon small class="mr-4">mdi-account-plus</v-icon>
-                Add Account Speckle Manager
-              </v-btn>
+                <v-icon small class="mr-4">mdi-plus</v-icon>
+                Create Your First Stream
+              </v-btn> -->
             </v-card-text>
-            <v-alert type="info" color="blue" text class="mx-4" v-show="hasClickedAddAccount >= 2">
-              Having trouble adding your account to the Speckle Manager? Read a
-              <a
-                _target="_blank"
-                href="http://speckle.guide/user/FAQs.html#i-cannot-add-an-account-in-speckle-manager"
-              >
-                quick help article on this
-              </a>
-              !
-            </v-alert>
-            <v-card-actions class="justify-center">
-              <v-btn block :color="hasClickedAddAccount !== 0 ? 'primary' : ''" @click="next">
-                Your first stream
-                <v-icon>mdi-chevron-right</v-icon>
-              </v-btn>
-            </v-card-actions>
           </v-card>
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0" color="transparent">
-            <v-card-title>Your First Stream</v-card-title>
-            <v-card-text class="body-1">
+          <v-card class="transparent elevation-0 text-center" color="transparent">
+            <!-- <v-img
+              class="white--text align-end mb-3"
+              height="200px"
+              src="@/assets/onboarding_workflow.png"
+            ></v-img> -->
+            <v-card-title class="display-1 justify-center my-5">🏃‍♀️ Get Started!</v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              Time to make the most of
+              <b>your</b>
+              data!
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
               <p>
-                Streams are the primary way Speckle organizes data. You can see them as a file, a
-                part of a file, or a repository. Ultimately, a stream is simply a collection of
-                objects with some helpful additional information to manage and retrieve them.
+                You can now start creating your own workflows for automation, interoperaility or
+                collaboration using Speckle!
               </p>
-              <p>
-                A stream also lets you manage permissions: it has a list of collaborators including
-                an owner and additional reviewers and contributors which the owner has chosen to
-                share the stream with.
-              </p>
-              <v-btn block depressed color="primary" class="mb-2" @click="newStreamDialog = true">
-                Create Your First Stream
-              </v-btn>
+              <p>We have put together a series of tutorials that you might find useful:</p>
             </v-card-text>
+            <v-container fluid>
+              <v-row dense>
+                <v-col v-for="(tutorial, i) in tutorials" :key="i" cols="6">
+                  <v-hover>
+                    <v-card
+                      slot-scope="{ hover }"
+                      :class="`elevation-${hover ? 10 : 0}`"
+                      :href="tutorial.link"
+                      target="_blank"
+                    >
+                      <v-img
+                        class="white--text align-end"
+                        height="150"
+                        gradient="to bottom, rgba(36,100,235,.2), rgba(36,100,235,.7)"
+                        :src="require('@/assets/' + tutorial.image)"
+                      >
+                        <v-card-title class="justify-center">
+                          {{ tutorial.title }}
+                        </v-card-title>
+                      </v-img>
+                    </v-card>
+                  </v-hover>
+                </v-col>
+              </v-row>
+            </v-container>
+
+            <v-btn elevation="10" class="my-4" rounded color="primary" @click="finish">
+              <!-- <v-icon small class="mr-4">mdi-download</v-icon> -->
+              Go to the web app
+            </v-btn>
           </v-card>
         </v-window-item>
       </v-window>
+      <v-card-actions class="justify-space-between pb-7">
+        <v-btn text @click="prev">
+          <v-icon>mdi-chevron-left</v-icon>
+        </v-btn>
+        <v-item-group v-model="onboarding" class="text-center" mandatory>
+          <v-item v-for="n in length" :key="`btn-${n}`" v-slot="{ active, toggle }">
+            <v-btn :input-value="active" icon @click="toggle">
+              <v-icon small>mdi-record</v-icon>
+            </v-btn>
+          </v-item>
+        </v-item-group>
+        <v-btn text @click="next">
+          <v-icon>mdi-chevron-right</v-icon>
+        </v-btn>
+      </v-card-actions>
     </v-card>
-    <div class="text-center py-4">
-      <v-btn v-show="onboarding !== 0" small text color="grey" @click="prev">
-        <v-icon small>mdi-chevron-left</v-icon>
-      </v-btn>
-      <v-btn small text @click="skip">
-        Skip Onboarding
-        <v-icon small style="opacity: 0.5" class="ml-1">mdi-fast-forward</v-icon>
-        <!-- <v-icon small>mdi-chevron-right</v-icon> -->
-      </v-btn>
-    </div>
+
     <v-dialog v-model="newStreamDialog" max-width="500">
       <stream-new-dialog @created="finish" />
     </v-dialog>
@@ -148,11 +219,33 @@ import StreamNewDialog from '../components/dialogs/StreamNewDialog'
 export default {
   components: { StreamNewDialog },
   data: () => ({
-    length: 3,
+    length: 4,
     onboarding: 0,
     newStreamDialog: false,
     hasClickedDownload: false,
-    hasClickedAddAccount: 0
+    hasClickedAddAccount: 0,
+    tutorials: [
+      {
+        title: 'Create Revit models from Rhino',
+        image: 'rhino-revit-tutorial.png',
+        link: 'https://speckle.guide/user/interop-rhino-revit.html'
+      },
+      {
+        title: 'View 3d models online',
+        image: 'viewer-tutorial.png',
+        link: 'https://speckle.guide/user/web.html#_3d-viewer'
+      },
+      {
+        title: 'Analyse Revit models in Grasshopper',
+        image: 'revit-gh-tutorial.png',
+        link: 'https://speckle.guide/user/interop-revit-gh.html'
+      },
+      {
+        title: 'See more in our tutorials portal!',
+        image: 'tutorials.png',
+        link: 'https://speckle.guide/user/tutorials.html'
+      }
+    ]
   }),
   computed: {
     rootUrl() {
@@ -171,6 +264,7 @@ export default {
     finish() {
       this.$matomo && this.$matomo.trackPageView(`onboarding/done`)
       localStorage.setItem('onboarding', 'complete')
+      this.$router.push('/')
     },
     prev() {
       this.onboarding--
