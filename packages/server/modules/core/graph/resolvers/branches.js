@@ -61,7 +61,7 @@ module.exports = {
           resourceId: id,
           actionType: 'branch_create',
           userId: context.userId,
-          info: { branch: args.branch },
+          info: { branch:  { ...args.branch, id: id } },
           message: `Branch created: '${args.branch.name}' (${id})`
         } )
         await pubsub.publish( BRANCH_CREATED, {
@@ -76,6 +76,7 @@ module.exports = {
     async branchUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
+      let oldValue = await getBranchById( { id: args.branch.id } )
       let updated = await updateBranch( { ...args.branch } )
 
       if ( updated ) {
@@ -85,7 +86,7 @@ module.exports = {
           resourceId: args.branch.id,
           actionType: 'branch_update',
           userId: context.userId,
-          info: { branch: args.branch },
+          info: { old: oldValue, new: args.branch },
           message: `Branch metadata changed: '${args.branch.name}' (${args.branch.id})`
         } )
         await pubsub.publish( BRANCH_UPDATED, {

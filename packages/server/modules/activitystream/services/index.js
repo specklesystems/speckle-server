@@ -20,18 +20,62 @@ module.exports = {
     await StreamActivity( ).insert( dbObject )
   },
 
-  // get stream activity, user activity, user timeline
-  // paginate
-
-  // Only `streamId` is mandatory, the rest are optional filters
-  async getActivities( { streamId, timeStart, timeEnd, userId, actionType, resourceId } ) {
+  async getStreamActivity( { streamId, timeEnd, limit } ) {
+    if ( !limit ) {
+      limit = 100
+    }
     let dbQuery = StreamActivity().where( { streamId: streamId } )
-    if ( timeStart ) dbQuery.andWhere( 'time', '>', timeStart )
     if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
-    if ( userId ) dbQuery.andWhere( { userId: userId } )
-    if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
-    if ( resourceId ) dbQuery.andWhere( { resourceId: resourceId } )
+    dbQuery.orderBy( 'time', 'desc' )
+    dbQuery.limit( limit )
+
     let results = await dbQuery.select( '*' )
+    return results
+  },
+
+  async getUserActivity( { userId, timeEnd, limit } ) {
+    if ( !limit ) {
+      limit = 100
+    }
+    let dbQuery = StreamActivity().where( { userId: userId } )
+    if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
+    dbQuery.orderBy( 'time', 'desc' )
+    dbQuery.limit( limit )
+
+    let results = await dbQuery.select( '*' )
+    return results
+  },
+
+  async getResourceActivity( { resourceType, resourceId, timeEnd, limit } ) {
+    if ( !limit ) {
+      limit = 100
+    }
+    let dbQuery = StreamActivity().where( { resourceType, resourceId } )
+    if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
+    dbQuery.orderBy( 'time', 'desc' )
+    dbQuery.limit( limit )
+
+    let results = await dbQuery.select( '*' )
+    return results
+  },
+
+  async getUserTimeline( { userId, timeEnd, limit } ) {
+    if ( !timeEnd ) {
+      timeEnd = Date.now()
+    }
+    if ( !limit ) {
+      limit = 100
+    }
+    let dbRawQuery = `
+      SELECT act.*
+      FROM stream_acl acl
+      INNER JOIN stream_activity act ON acl."resourceId" = act."streamId"
+      WHERE acl."userId" = ? AND time < ?
+      ORDER BY time DESC
+      LIMIT ?
+    `
+
+    let results = await knex.raw( dbRawQuery, [ userId, timeEnd, limit ] )
     return results
   }
 }

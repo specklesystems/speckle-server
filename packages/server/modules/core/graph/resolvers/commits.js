@@ -113,7 +113,7 @@ module.exports = {
           resourceId: args.commit.id,
           actionType: 'commit_update',
           userId: context.userId,
-          info: { commit: { ...commit, message: args.commit.message } },
+          info: { old: commit, new: args.commit },
           message: `Commit message changed: ${args.commit.id} (${args.commit.message})`
         } )
         await pubsub.publish( COMMIT_UPDATED, {

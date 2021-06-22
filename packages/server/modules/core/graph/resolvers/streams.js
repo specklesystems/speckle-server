@@ -106,18 +106,18 @@ module.exports = {
     async streamUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
+      let oldValue = await getStream( { streamId: args.stream.id } )
       let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description, isPublic: args.stream.isPublic }
 
       await updateStream( update )
-      // TODO: Question: Fetch stream info from DB to include the old values in activity log? (we should have the old values in older entries in activity log)
-      // TODO: query old value and save it in `info` (new/old)
+
       await saveActivity( {
         streamId: args.stream.id,
         resourceType: 'stream',
         resourceId: args.stream.id,
         actionType: 'stream_update',
         userId: context.userId,
-        info: { stream: args.stream },
+        info: { old: oldValue, new: args.stream },
         message: 'Stream metadata changed'
       } )
       await pubsub.publish( STREAM_UPDATED, { streamUpdated: { id: args.stream.id, name: args.stream.name, description: args.stream.description }, id: args.stream.id } )
@@ -127,6 +127,16 @@ module.exports = {
 
     async streamDelete( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.id, 'stream:owner' )
+
+      await saveActivity( {
+        streamId: args.id,
+        resourceType: 'stream',
+        resourceId: args.id,
+        actionType: 'stream_delete',
+        userId: context.userId,
+        info: { },
+        message: 'Stream deleted'
+      } )
 
       // Notify any listeners on the streamId
       await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, streamId: args.id } )

@@ -1,8 +1,9 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
 const { ApolloError, ForbiddenError, UserInputError } = require( 'apollo-server-express' )
-const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, searchUsers, validatePasssword } = require( '../../services/users' )
+const { createUser, getUser, getUserByEmail, getUserRole, updateUser, deleteUser, searchUsers, validatePasssword, getUserById } = require( '../../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../../services/tokens' )
+const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 const { validateServerRole, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 const zxcvbn = require( 'zxcvbn' )
 
@@ -81,7 +82,21 @@ module.exports = {
   Mutation: {
     async userUpdate( parent, args, context, info ) {
       await validateServerRole( context, 'server:user' )
+
+      let oldValue = await getUserById( { userId: context.userId } )
+
       await updateUser( context.userId, args.user )
+      
+      await saveActivity( {
+        streamId: null,
+        resourceType: 'user',
+        resourceId: context.userId,
+        actionType: 'user_update',
+        userId: context.userId,
+        info: { old: oldValue, new: args.user },
+        message: 'User updated'
+      } )
+
       return true
     },
 
@@ -99,6 +114,17 @@ module.exports = {
       await validateScopes( context.scopes, 'profile:delete' )
 
       await deleteUser( context.userId, args.user )
+
+      await saveActivity( {
+        streamId: null,
+        resourceType: 'user',
+        resourceId: context.userId,
+        actionType: 'user_delete',
+        userId: context.userId,
+        info: { },
+        message: 'User deleted'
+      } )
+
       return true
     }
   }
