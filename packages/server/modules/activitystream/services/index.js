@@ -31,7 +31,8 @@ module.exports = {
     dbQuery.limit( limit )
 
     let results = await dbQuery.select( '*' )
-    return results
+
+    return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
   async getUserActivity( { userId, timeEnd, limit } ) {
@@ -45,7 +46,7 @@ module.exports = {
     dbQuery.limit( limit )
 
     let results = await dbQuery.select( '*' )
-    return results
+    return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
   async getResourceActivity( { resourceType, resourceId, timeEnd, limit } ) {
@@ -59,7 +60,7 @@ module.exports = {
     dbQuery.limit( limit )
 
     let results = await dbQuery.select( '*' )
-    return results
+    return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
   async getUserTimeline( { userId, timeEnd, limit } ) {
@@ -81,6 +82,21 @@ module.exports = {
     `
 
     let results = await knex.raw( dbRawQuery, [ userId, timeEnd, limit ] )
-    return results
+    return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
+  },
+
+  async getActivityCountByResourceId( { resourceId } ) {
+    let [ res ] = await StreamActivity().count().where( { resourceId } )
+    return parseInt( res.count )
+  },
+
+  async getActivityCountByStreamId( { streamId } ) {
+    let [ res ] = await StreamActivity().count().where( { streamId } )
+    return parseInt( res.count )
+  },
+
+  async getActivityCountByUserId( { userId } ) {
+    let [ res ] = await StreamActivity().count().where( { userId } )
+    return parseInt( res.count )
   }
 }
