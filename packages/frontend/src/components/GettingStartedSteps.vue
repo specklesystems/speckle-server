@@ -94,15 +94,6 @@
                 Whether you are writing new integrations, custom workflows or creating brand new
                 apps on top of Speckle, we're here to support you!
               </p>
-              <p>
-                Get started sending data into Speckle by installing our connectos and setting up
-                your accounts with our
-                <b>Desktop Manager 👇</b>
-              </p>
-              <v-btn elevation="10" class="my-4" rounded color="primary" @click="downloadManager">
-                <v-icon small class="mr-4">mdi-download</v-icon>
-                Install connectors
-              </v-btn>
             </v-card-text>
           </v-card>
         </v-window-item>
@@ -126,43 +117,6 @@
                 <b>exchange</b>
                 geometry and BIM data dirctly from the tools you use.
               </p>
-              <p>
-                Install all the connectors you need and manage your accounts with our
-                <b>Desktop Manager 👇</b>
-              </p>
-              <v-btn elevation="10" class="my-4" rounded color="primary" @click="downloadManager">
-                <v-icon small class="mr-4">mdi-download</v-icon>
-                Install connectors
-              </v-btn>
-
-              <v-expansion-panels flat class="mt-2 text-center">
-                <v-expansion-panel>
-                  <v-expansion-panel-header class="text-center d-inline">
-                    <template #actions>
-                      <v-icon class="icon">$expand</v-icon>
-                    </template>
-                    <div class="text-center caption">Having problems?</div>
-                  </v-expansion-panel-header>
-                  <v-expansion-panel-content class="body-2">
-                    <p>
-                      Cannot set up your account? Try adding it from the web:
-                      <v-btn small text color="primary" @click="addAccount">Add Account</v-btn>
-                    </p>
-                    <p>
-                      Having issues installing the connectors? Check out our docs:
-                      <v-btn
-                        small
-                        text
-                        color="primary"
-                        href="https://speckle.guide/user/manager.html"
-                        target="_blank"
-                      >
-                        User Guide
-                      </v-btn>
-                    </p>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-              </v-expansion-panels>
             </v-card-text>
           </v-card>
         </v-window-item>
@@ -402,11 +356,7 @@ export default {
       }
     ]
   }),
-  computed: {
-    rootUrl() {
-      return window.location.origin
-    }
-  },
+  computed: {},
   mounted() {
     this.$matomo && this.$matomo.trackEvent('onboarding', 'start')
   },
@@ -436,18 +386,6 @@ export default {
     nextDev() {
       this.isDev = true
       this.next()
-    },
-    downloadManager() {
-      this.hasClickedDownload = true
-      this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`)
-      this.$matomo && this.$matomo.trackEvent('onboarding', 'managerdownload')
-      window.open('https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe', '_blank')
-    },
-    addAccount() {
-      this.hasClickedAddAccount++
-      this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`)
-      this.$matomo && this.$matomo.trackEvent('onboarding', 'accountadd')
-      window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, '_blank')
     }
   }
 }
