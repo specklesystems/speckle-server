@@ -20,8 +20,10 @@ module.exports = {
     await StreamActivity( ).insert( dbObject )
   },
 
-  async getStreamActivity( { streamId, actionType, after, before } ) {
-    let limit = 200
+  async getStreamActivity( { streamId, actionType, after, before, limit } ) {
+    if ( !limit ) {
+      limit = 200
+    }
 
     let dbQuery = StreamActivity().where( { streamId: streamId } )
     if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
@@ -34,8 +36,10 @@ module.exports = {
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
-  async getUserActivity( { userId, actionType, after, before } ) {
-    let limit = 200
+  async getUserActivity( { userId, actionType, after, before, limit } ) {
+    if ( !limit ) {
+      limit = 200
+    }
 
     let dbQuery = StreamActivity().where( { userId: userId } )
     if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
@@ -47,8 +51,10 @@ module.exports = {
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
-  async getResourceActivity( { resourceType, resourceId, actionType, after, before } ) {
-    let limit = 200
+  async getResourceActivity( { resourceType, resourceId, actionType, after, before, limit } ) {
+    if ( !limit ) {
+      limit = 200
+    }
 
     let dbQuery = StreamActivity().where( { resourceType, resourceId } )
     if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
@@ -60,8 +66,11 @@ module.exports = {
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
-  async getUserTimeline( { userId, actionType, before } ) {
-    let limit = 200
+  async getUserTimeline( { userId, before, limit } ) {
+    if ( !limit ) {
+      limit = 200
+    }
+
     if ( !before ) {
       before = Date.now()
     }

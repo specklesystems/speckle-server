@@ -4,7 +4,7 @@ extend type User {
   """
   All the recent activity from this user in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: String): ActivityCollection
+  activity(actionType: String, after: DateTime, before: DateTime, limit: Int! = 25): ActivityCollection
     @hasRole(role: "server:user")
     @hasScope(scope: "users:read")
 }
@@ -13,7 +13,7 @@ extend type Stream {
   """
   All the recent activity on this stream in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: String): ActivityCollection
+  activity(actionType: String, after: DateTime, before: DateTime, limit: Int! = 25): ActivityCollection
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 }
@@ -22,7 +22,7 @@ extend type Branch {
   """
   All the recent activity on this branch in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: String): ActivityCollection
+  activity(actionType: String, after: DateTime, before: DateTime, limit: Int! = 25): ActivityCollection
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 }

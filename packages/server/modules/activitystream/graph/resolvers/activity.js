@@ -8,7 +8,7 @@ module.exports = {
   Query: {},
   User: {
     async activity( parent, args, context, info ) {
-      let { items, cursor } = await getUserActivity( { userId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
+      let { items, cursor } = await getUserActivity( { userId: parent.id, actionType: args.actionType, after: args.after, before: args.before, limit: args.limit } )
       let totalCount = await getActivityCountByUserId( { userId: parent.id } )
 
       return { items, cursor, totalCount }
@@ -17,7 +17,7 @@ module.exports = {
 
   Stream: {
     async activity( parent, args, context, info ) {
-      let { items, cursor } = await getStreamActivity( { streamId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
+      let { items, cursor } = await getStreamActivity( { streamId: parent.id, actionType: args.actionType, after: args.after, before: args.before, limit: args.limit } )
       let totalCount = await getActivityCountByStreamId( { streamId: parent.id } )
 
       return { items, cursor, totalCount }
@@ -26,7 +26,7 @@ module.exports = {
 
   Branch: {
     async activity( parent, args, context, info ) {
-      let { items, cursor } = await getResourceActivity( { resourceType: 'branch', resourceId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
+      let { items, cursor } = await getResourceActivity( { resourceType: 'branch', resourceId: parent.id, actionType: args.actionType, after: args.after, before: args.before, limit: args.limit } )
       let totalCount = await getActivityCountByResourceId( { resourceId: parent.id } )
 
       return { items, cursor, totalCount }
