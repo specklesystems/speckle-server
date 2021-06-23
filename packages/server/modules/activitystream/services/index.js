@@ -20,56 +20,50 @@ module.exports = {
     await StreamActivity( ).insert( dbObject )
   },
 
-  async getStreamActivity( { streamId, timeEnd, limit } ) {
-    if ( !limit ) {
-      limit = 100
-    }
+  async getStreamActivity( { streamId, actionType, after, before } ) {
+    let limit = 200
 
     let dbQuery = StreamActivity().where( { streamId: streamId } )
-    if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
-    dbQuery.orderBy( 'time', 'desc' )
-    dbQuery.limit( limit )
+    if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
+    if ( after ) dbQuery.andWhere( 'time', '>', after )
+    if ( before ) dbQuery.andWhere( 'time', '<', before )
+    dbQuery.orderBy( 'time', 'desc' ).limit( limit )
 
     let results = await dbQuery.select( '*' )
 
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
-  async getUserActivity( { userId, timeEnd, limit } ) {
-    if ( !limit ) {
-      limit = 100
-    }
+  async getUserActivity( { userId, actionType, after, before } ) {
+    let limit = 200
 
     let dbQuery = StreamActivity().where( { userId: userId } )
-    if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
-    dbQuery.orderBy( 'time', 'desc' )
-    dbQuery.limit( limit )
+    if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
+    if ( after ) dbQuery.andWhere( 'time', '>', after )
+    if ( before ) dbQuery.andWhere( 'time', '<', before )
+    dbQuery.orderBy( 'time', 'desc' ).limit( limit )
 
     let results = await dbQuery.select( '*' )
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
-  async getResourceActivity( { resourceType, resourceId, timeEnd, limit } ) {
-    if ( !limit ) {
-      limit = 100
-    }
+  async getResourceActivity( { resourceType, resourceId, actionType, after, before } ) {
+    let limit = 200
 
     let dbQuery = StreamActivity().where( { resourceType, resourceId } )
-    if ( timeEnd ) dbQuery.andWhere( 'time', '<', timeEnd )
-    dbQuery.orderBy( 'time', 'desc' )
-    dbQuery.limit( limit )
+    if ( actionType ) dbQuery.andWhere( { actionType: actionType } )
+    if ( after ) dbQuery.andWhere( 'time', '>', after )
+    if ( before ) dbQuery.andWhere( 'time', '<', before )
+    dbQuery.orderBy( 'time', 'desc' ).limit( limit )
 
     let results = await dbQuery.select( '*' )
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
-  async getUserTimeline( { userId, timeEnd, limit } ) {
-    if ( !timeEnd ) {
-      timeEnd = Date.now()
-    }
-
-    if ( !limit ) {
-      limit = 100
+  async getUserTimeline( { userId, actionType, before } ) {
+    let limit = 200
+    if ( !before ) {
+      before = Date.now()
     }
 
     let dbRawQuery = `
@@ -81,7 +75,7 @@ module.exports = {
       LIMIT ?
     `
 
-    let results = await knex.raw( dbRawQuery, [ userId, timeEnd, limit ] )
+    let results = await knex.raw( dbRawQuery, [ userId, before, limit ] )
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 

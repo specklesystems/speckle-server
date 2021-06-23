@@ -8,11 +8,7 @@ module.exports = {
   Query: {},
   User: {
     async activity( parent, args, context, info ) {
-      if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 items; please use pagination.' )
-
-      // TODO: cursor and total count
-      let { items, cursor } = await getUserActivity( { userId: parent.id, timeEnd: args.cursor, limit: args.limit } )
+      let { items, cursor } = await getUserActivity( { userId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
       let totalCount = await getActivityCountByUserId( { userId: parent.id } )
 
       return { items, cursor, totalCount }
@@ -21,9 +17,7 @@ module.exports = {
 
   Stream: {
     async activity( parent, args, context, info ) {
-      if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 items; please use pagination.' )
-      let { items, cursor } = await getStreamActivity( { streamId: parent.id, timeEnd: args.cursor, limit: args.limit } )
+      let { items, cursor } = await getStreamActivity( { streamId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
       let totalCount = await getActivityCountByStreamId( { streamId: parent.id } )
 
       return { items, cursor, totalCount }
@@ -32,10 +26,7 @@ module.exports = {
 
   Branch: {
     async activity( parent, args, context, info ) {
-      if ( args.limit && args.limit > 100 )
-        throw new UserInputError( 'Cannot return more than 100 items; please use pagination.' )
-
-      let { items, cursor } = await getResourceActivity( { resourceType: 'branch', resourceId: parent.id, timeEnd: args.cursor, limit: args.limit } )
+      let { items, cursor } = await getResourceActivity( { resourceType: 'branch', resourceId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
       let totalCount = await getActivityCountByResourceId( { resourceId: parent.id } )
 
       return { items, cursor, totalCount }
