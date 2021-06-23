@@ -2,6 +2,7 @@
   <div>
     <v-card class="elevation-10 rounded-lg">
       <v-btn
+        v-if="onboarding < 3"
         small
         text
         class="white--grey"
@@ -23,21 +24,90 @@
               👋 Welcome to Speckle!
             </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              The Open Data Infrastructure for your Digital Twin, BIM model and for the Built
-              Environment.
+              The Open Data Infrastructure for the Built Environment.
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
                 Engineers, designers, hackers and entire organizations rely on us for
                 interoperability, automation and collaboration to deliver better buildings, faster.
+                <br />
+                Please select your role:
               </p>
-              <br />
-              <p><strong>Let us give you a quick tour! 🙋‍♂️</strong></p>
+            </v-card-text>
+            <v-container fluid>
+              <v-row dense>
+                <v-col cols="5" offset="1">
+                  <v-hover>
+                    <v-card
+                      slot-scope="{ hover }"
+                      height="100%"
+                      :class="`pa-5 elevation-${hover ? 10 : 10}`"
+                      @click="nextUser"
+                    >
+                      <h1>👷‍♀️</h1>
+                      <v-card-title class="justify-center">AEC Person</v-card-title>
+                      <v-card-subtitle class="justify-center">
+                        Architect, engineer, BIM/project manager...
+                      </v-card-subtitle>
+                    </v-card>
+                  </v-hover>
+                </v-col>
+                <v-col cols="5" offset="0">
+                  <v-hover>
+                    <v-card
+                      slot-scope="{ hover }"
+                      height="100%"
+                      :class="`pa-5 elevation-${hover ? 10 : 10}`"
+                      @click="nextDev"
+                    >
+                      <h1>👩‍💻</h1>
+                      <v-card-title class="justify-center">AEC Developer</v-card-title>
+                      <v-card-subtitle class="justify-center">
+                        Software engineer, computational designer, hacker
+                      </v-card-subtitle>
+                    </v-card>
+                  </v-hover>
+                </v-col>
+              </v-row>
+            </v-container>
+            <p class="my-7"><strong>Let us give you a quick tour! 🙋‍♂️</strong></p>
+          </v-card>
+        </v-window-item>
+
+        <v-window-item v-if="isDev">
+          <v-card class="transparent elevation-0 text-center" color="transparent">
+            <v-img
+              class="white--text align-end mb-3"
+              height="200px"
+              src="@/assets/onboarding_connectors_dev.png"
+            ></v-img>
+            <v-card-title class="display-1 justify-center mb-5">🧰 Our toolset</v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              Is here to push the AEC industry forward
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
+              <p>
+                Use our
+                <b>connectors, SDKs, APIs and tools</b>
+                to get in control of
+                <i>your data.</i>
+                Whether you are writing new integrations, custom workflows or creating brand new
+                apps on top of Speckle, we're here to support you!
+              </p>
+              <p>
+                Get started sending data into Speckle by installing our connectos and setting up
+                your accounts with our
+                <b>Desktop Manager 👇</b>
+              </p>
+              <v-btn elevation="10" class="my-4" rounded color="primary" @click="downloadManager">
+                <v-icon small class="mr-4">mdi-download</v-icon>
+                Install connectors
+              </v-btn>
             </v-card-text>
           </v-card>
         </v-window-item>
 
-        <v-window-item>
+        <v-window-item v-else>
           <v-card class="transparent elevation-0 text-center" color="transparent">
             <v-img
               class="white--text align-end mb-3"
@@ -50,10 +120,14 @@
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
-                Connectors let you
-                <b>send and receive</b>
-                geometry and BIM data via Speckle. Install all the connectors you need and manage
-                your accounts with our
+                Say goodbye to files! Our
+                <b>connectors</b>
+                let you
+                <b>exchange</b>
+                geometry and BIM data dirctly from the tools you use.
+              </p>
+              <p>
+                Install all the connectors you need and manage your accounts with our
                 <b>Desktop Manager 👇</b>
               </p>
               <v-btn elevation="10" class="my-4" rounded color="primary" @click="downloadManager">
@@ -93,7 +167,34 @@
           </v-card>
         </v-window-item>
 
-        <v-window-item>
+        <v-window-item v-if="isDev">
+          <v-card class="transparent elevation-0 text-center" color="transparent">
+            <v-img
+              class="white--text align-end mb-3"
+              height="200px"
+              src="@/assets/onboarding_streams.png"
+            ></v-img>
+            <v-card-title class="display-1 justify-center mb-5">
+              🐙 Git & DevOps for AEC
+            </v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              Welcome to the future of the AEC industry!
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
+              <p>
+                Speckle ships with a
+                <b>version control system,</b>
+                trigger custom workflows and pipelines and never lose anything.
+              </p>
+              <p>
+                Also, Speckle talks
+                <i>data, not files!</i>
+                Store it where you want, and access it when you need 🔓
+              </p>
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+        <v-window-item v-else>
           <v-card class="transparent elevation-0 text-center" color="transparent">
             <v-img
               class="white--text align-end mb-3"
@@ -124,27 +225,58 @@
                 <i>main</i>
                 .
               </p>
-              <!-- <v-btn
-                elevation="10"
-                class="my-4"
-                rounded
-                color="primary"
-                @click="newStreamDialog = true"
-              >
-                <v-icon small class="mr-4">mdi-plus</v-icon>
-                Create Your First Stream
-              </v-btn> -->
             </v-card-text>
           </v-card>
         </v-window-item>
-
-        <v-window-item>
+        <v-window-item v-if="isDev">
           <v-card class="transparent elevation-0 text-center" color="transparent">
-            <!-- <v-img
-              class="white--text align-end mb-3"
-              height="200px"
-              src="@/assets/onboarding_workflow.png"
-            ></v-img> -->
+            <v-card-title class="display-1 justify-center my-5">🏃‍♀️ Start Hacking!</v-card-title>
+            <v-card-subtitle class="subtitle-1 justify-center mb-5">
+              Time to make the most of
+              <b>your</b>
+              data!
+            </v-card-subtitle>
+            <v-card-text class="body-1 text--primary">
+              <p>
+                You can now start developing with Speckle and create your connectors, apps or custom
+                workflows.
+              </p>
+              <p>We have put together a series of resources that you might find useful:</p>
+            </v-card-text>
+            <v-container fluid>
+              <v-row dense>
+                <v-col v-for="(tutorial, i) in tutorialsDev" :key="i" cols="6">
+                  <v-hover>
+                    <v-card
+                      slot-scope="{ hover }"
+                      :class="`elevation-${hover ? 10 : 0}`"
+                      :href="tutorial.link"
+                      target="_blank"
+                    >
+                      <v-img
+                        class="white--text align-end"
+                        height="150"
+                        gradient="to bottom, rgba(36,100,235,.2), rgba(36,100,235,.7)"
+                        :src="require('@/assets/' + tutorial.image)"
+                      >
+                        <v-card-title class="justify-center">
+                          {{ tutorial.title }}
+                        </v-card-title>
+                      </v-img>
+                    </v-card>
+                  </v-hover>
+                </v-col>
+              </v-row>
+            </v-container>
+
+            <v-btn elevation="10" class="my-4" rounded color="primary" @click="finish">
+              <!-- <v-icon small class="mr-4">mdi-download</v-icon> -->
+              Finish & go to the web app
+            </v-btn>
+          </v-card>
+        </v-window-item>
+        <v-window-item v-else>
+          <v-card class="transparent elevation-0 text-center" color="transparent">
             <v-card-title class="display-1 justify-center my-5">🏃‍♀️ Get Started!</v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               Time to make the most of
@@ -186,12 +318,12 @@
 
             <v-btn elevation="10" class="my-4" rounded color="primary" @click="finish">
               <!-- <v-icon small class="mr-4">mdi-download</v-icon> -->
-              Go to the web app
+              Finish & go to the web app
             </v-btn>
           </v-card>
         </v-window-item>
       </v-window>
-      <v-card-actions class="justify-space-between pb-7">
+      <v-card-actions v-if="onboarding > 0" class="justify-space-between pb-7">
         <v-btn text @click="prev">
           <v-icon>mdi-chevron-left</v-icon>
         </v-btn>
@@ -202,7 +334,7 @@
             </v-btn>
           </v-item>
         </v-item-group>
-        <v-btn text @click="next">
+        <v-btn :disabled="onboarding == 3" text @click="next">
           <v-icon>mdi-chevron-right</v-icon>
         </v-btn>
       </v-card-actions>
@@ -224,6 +356,7 @@ export default {
     newStreamDialog: false,
     hasClickedDownload: false,
     hasClickedAddAccount: 0,
+    isDev: false,
     tutorials: [
       {
         title: 'Create Revit models from Rhino',
@@ -244,6 +377,28 @@ export default {
         title: 'See more in our tutorials portal!',
         image: 'tutorials.png',
         link: 'https://speckle.guide/user/tutorials.html'
+      }
+    ],
+    tutorialsDev: [
+      {
+        title: 'Writing your own connector',
+        image: 'connector-tutorial.png',
+        link: 'https://speckle.guide/dev/connectors-dev.html'
+      },
+      {
+        title: 'Writing your own app',
+        image: 'app-tutorial.png',
+        link: 'https://speckle.guide/dev/apps.html'
+      },
+      {
+        title: 'Using the GraphQL API',
+        image: 'api-tutorial.png',
+        link: 'https://speckle.guide/dev/server-graphql-api.html'
+      },
+      {
+        title: 'See more content and resources in our dev docs!',
+        image: 'tutorials.png',
+        link: 'https://speckle.guide/dev/'
       }
     ]
   }),
@@ -273,6 +428,14 @@ export default {
     next() {
       this.onboarding++
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
+    },
+    nextUser() {
+      this.isDev = false
+      this.next()
+    },
+    nextDev() {
+      this.isDev = true
+      this.next()
     },
     downloadManager() {
       this.hasClickedDownload = true
