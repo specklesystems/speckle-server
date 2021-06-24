@@ -15,7 +15,8 @@ module.exports = class IFCParser {
     this.project = this.api.GetLine( this.modelId, this.projectId, true )
 
     this.createGeometries()
-    this.traverse( this.project, true )
+    let map = {}
+    this.traverse( this.project, true, 0, map )
     
     return this.project
   }
@@ -66,20 +67,39 @@ module.exports = class IFCParser {
   traverse( element, recursive = true, depth = 0, map = {} ) {
     // NOTE: creates the base object. 
     // TODO: combine with alan's value unwrapping
-    console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
-    depth++
-
     if ( !element ) return
+    depth++
+    
+    if( Array.isArray( element ) ) {
+      return element.map( el => this.traverse( el,recursive,depth, map ) )
+    }
+
+    if( !element.expressID ) {
+      return element.value !== null && element.value !== undefined ? element.value : element
+    }
+
+    if( map[element.expressID] ) {
+      return map[element.expressID]
+    }
+
+    // It's an IFC Element, do the thing...
+    console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
+
+    // Iterate through existing keys first.
+    Object.keys( element ).forEach( key => {
+      element[key] = this.traverse( element[key], recursive, depth, map )
+    } )
+
     element.speckle_type = element.constructor.name
     element.__closure = {}
 
     // Find spatial children and assign to element
     const spatialChildrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELAGGREGATES, 'RelatingObject', 'RelatedObjects' )
-    if( spatialChildrenIds.length > 0 ) element.spatialChildren = spatialChildrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, false ) )
+    if( spatialChildrenIds.length > 0 ) element.spatialChildren = spatialChildrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
 
     // Find children and populate element
     const childrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE, 'RelatingStructure', 'RelatedElements' )
-    if( childrenIds.length > 0 )  element.children = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, false ) )
+    if( childrenIds.length > 0 )  element.children = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
 
     // Lookup geometry in generated geometries object
     if( this.productGeo[element.expressID] ) {
@@ -89,13 +109,16 @@ module.exports = class IFCParser {
 
     // Recurse all children
     if ( recursive ) {
-      if( element.spatialChildren ) element.spatialChildren.forEach( ( child ) => this.traverse( child, recursive, depth ) )
+      if( element.spatialChildren ) element.spatialChildren.forEach( ( child ) => this.traverse( child, recursive, depth, map ) )
       // NOTE: unsure if this is needed.
-      if ( element.children ) element.children.forEach( ( child ) => this.traverse( child, recursive, depth ) )
+      if ( element.children ) element.children.forEach( ( child ) => this.traverse( child, recursive, depth, map ) )
     }
 
-    // Detach and swap for ref!
-
+    // TODO: Detach and swap for ref!
+    map[element.expressID] = { referenceId: element.expressID, speckle_type: 'reference' }
+    
+    // Return the modified element.
+    return element
   }
 
   // (c) https://github.com/agviegas/web-ifc-three/blob/907e08b5673d5e1c18261a4fceade7189d6b2db7/src/IFC/PropertyManager.ts#L110
