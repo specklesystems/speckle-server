@@ -124,16 +124,14 @@ module.exports = class IFCParser {
     return IDs
   }
 
-  static unwrapValues( entity ) {
-    const unwraped = {}
+  unwrapValues( entity ) {
     Object.keys( entity ).forEach( ( key ) => {
-      unwraped[key] = IFCParser.parseValue( entity[key] )
+      entity[key] = this.parseValue( entity[key] )
     } )
-
-    return unwraped
   }
-
-  static parseValue( entity ) {
+  
+  parseValue( entity ) {
+    // NOTE: This method does not deal with references (type=5), they are handled in the traverse logic to keep track of depth properly.
     if ( !entity ) return
     // NOTE: this stands in for an express reference. 
     if ( entity.value && entity.type !== 5 ) {
