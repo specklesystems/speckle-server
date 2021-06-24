@@ -71,22 +71,31 @@ module.exports = class IFCParser {
 
     if ( !element ) return
     element.speckle_type = element.constructor.name
+    element.__closure = {}
+
+    // Find spatial children and assign to element
     const spatialChildrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELAGGREGATES, 'RelatingObject', 'RelatedObjects' )
+    if( spatialChildrenIds.length > 0 ) element.spatialChildren = spatialChildrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, false ) )
 
-    element.spatialChildren = spatialChildrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, false ) )
-
+    // Find children and populate element
     const childrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE, 'RelatingStructure', 'RelatedElements' )
-
-    element.children = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, false ) )
+    if( childrenIds.length > 0 )  element.children = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, false ) )
 
     // Lookup geometry in generated geometries object
-    console.log( `${element.constructor.name} (${element.expressID}) mesh:`, this.productGeo[element.expressID]?.length )
-
-    if ( recursive ) {
-      element.spatialChildren.forEach( ( child ) => this.traverse( child, recursive, depth ) )
-      // NOTE: unsure if this is needed.
-      element.children.forEach( ( child ) => this.traverse( child, recursive, depth ) )
+    if( this.productGeo[element.expressID] ) {
+      element['@displayMesh'] = this.productGeo[element.expressID]
+      // TODO: Add detached mesh to closure table.
     }
+
+    // Recurse all children
+    if ( recursive ) {
+      if( element.spatialChildren ) element.spatialChildren.forEach( ( child ) => this.traverse( child, recursive, depth ) )
+      // NOTE: unsure if this is needed.
+      if ( element.children ) element.children.forEach( ( child ) => this.traverse( child, recursive, depth ) )
+    }
+
+    // Detach and swap for ref!
+
   }
 
   // (c) https://github.com/agviegas/web-ifc-three/blob/907e08b5673d5e1c18261a4fceade7189d6b2db7/src/IFC/PropertyManager.ts#L110
