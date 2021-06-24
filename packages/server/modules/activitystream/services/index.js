@@ -3,7 +3,8 @@
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
-const StreamActivity = ( ) => knex( 'stream_activity' )
+const StreamActivity = () => knex( 'stream_activity' )
+const StreamAcl = ( ) => knex( 'stream_acl' )
 
 module.exports = {
 
@@ -72,7 +73,7 @@ module.exports = {
     }
 
     if ( !before ) {
-      before = Date.now()
+      before = new Date()
     }
 
     let dbRawQuery = `
@@ -84,7 +85,7 @@ module.exports = {
       LIMIT ?
     `
 
-    let results = await knex.raw( dbRawQuery, [ userId, before, limit ] )
+    let results = ( await knex.raw( dbRawQuery, [ userId, before, limit ] ) ).rows
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
   },
 
@@ -100,6 +101,14 @@ module.exports = {
 
   async getActivityCountByUserId( { userId } ) {
     let [ res ] = await StreamActivity().count().where( { userId } )
+    return parseInt( res.count )
+  },
+
+  async getTimelineCount( { userId } ) {
+    let [ res ] = await StreamAcl().count()
+      .innerJoin( 'stream_activity', { 'stream_acl.resourceId': 'stream_activity.streamId' } )
+      .where( { 'stream_acl.userId': userId } )
+
     return parseInt( res.count )
   }
 }
