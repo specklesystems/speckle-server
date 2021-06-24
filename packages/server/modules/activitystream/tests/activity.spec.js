@@ -88,14 +88,6 @@ describe( 'Activity @activity', () => {
     testServer.close( )
   } )
 
-  it( 'Should get a user\'s activity', async () => {
-    let { items: activity } = await getUserActivity( { userId: userCr.id } )
-
-    expect( activity.length ).to.equal( 1 )
-    expect( activity[ 0 ] ).to.have.property( 'actionType' )
-    expect( activity[ 0 ].actionType ).to.equal( 'user_create' )
-  } )
-
   it( 'Should create activity', async () => {
     // create stream (cr1)
     const resStream1 = await sendRequest( userCr.token, { query: 'mutation createStream($myStream:StreamCreateInput!) { streamCreate(stream: $myStream) }', variables: { myStream: streamSecret } } )
@@ -135,11 +127,15 @@ describe( 'Activity @activity', () => {
     expect( activityI[ 0 ].actionType ).to.equal( 'stream_permissions_add' )
   } )
 
-  it( 'Should get a user\'s timeline', async () => {
-    const res = await sendRequest( userIz.token, { query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }` } )
+  it( 'Should get a user\'s own activity', async () => {
+    const res = await sendRequest( userIz.token, { query: `query {user(id:"${userIz.id}") { name activity { totalCount items {streamId resourceType resourceId actionType userId message time}}} }` } )
     expect( noErrors( res ) )
-    expect( res.body.data.user.timeline.items.length ).to.equal( 6 ) // sum of all actions in 'should create activity'
-    expect( res.body.data.user.timeline.totalCount ).to.equal( 6 )
+    let activity = res.body.data.user.activity
+
+    expect( activity.items.length ).to.equal( 5 )
+    expect( activity.totalCount ).to.equal( 5 )
+    expect( activity.items[ 0 ].actionType ).to.equal( 'stream_permissions_add' )
+    expect( activity.items[ activity.totalCount - 1 ].actionType ).to.equal( 'user_create' )
   } )
 
   it( 'Should get another user\'s activity', async () => {
@@ -147,6 +143,13 @@ describe( 'Activity @activity', () => {
     expect( noErrors( res ) )
     expect( res.body.data.user.activity.items.length ).to.equal( 3 )
     expect( res.body.data.user.activity.totalCount ).to.equal( 3 )
+  } )
+
+  it( 'Should get a user\'s timeline', async () => {
+    const res = await sendRequest( userIz.token, { query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }` } )
+    expect( noErrors( res ) )
+    expect( res.body.data.user.timeline.items.length ).to.equal( 6 ) // sum of all actions in 'should create activity'
+    expect( res.body.data.user.timeline.totalCount ).to.equal( 6 )
   } )
 
   it( 'Should get a stream\'s activity', async () => {
