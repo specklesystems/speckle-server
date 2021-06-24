@@ -163,7 +163,7 @@
                   its permissions and visibility.
                 </p>
                 <p>
-                  In order to send data to Speckle you first need to create a stream, so
+                  In order to use Speckle you first need to create a stream, so
                   <b>go ahead and create your first one</b>
                   !
                 </p>
@@ -175,7 +175,7 @@
 
               <v-stepper-content step="2" class="body-2">
                 <p>
-                  Speckle Manager is a
+                  Speckle Manager is a free
                   <b>desktop application</b>
                   that lets you install connectors for some of the most popular design and analysis
                   software.
@@ -183,8 +183,7 @@
                 <p>
                   The connectors
                   <b>exchange</b>
-                  geometry and BIM data with Speckle, so that you can then access it wherever you
-                  want!
+                  geometry and BIM data with Speckle, so that you can access it wherever you want!
                 </p>
                 <v-btn elevation="10" class="my-5" rounded color="primary" @click="downloadManager">
                   <v-icon small class="mr-4">mdi-download</v-icon>
@@ -200,12 +199,28 @@
                 <p>
                   With Speckle Manager installed,
                   <b>log into your account</b>
-                  and
-                  <b>add the connectors</b>
+                  and then
+                  <b>install the connectors</b>
                   for the software that you use.
                 </p>
-                <p>Having issues logging in or adding your account? Try with the button below:</p>
-                <v-btn elevation="10" class="my-5" rounded color="primary" @click="addAccount">
+                <p>
+                  <v-btn
+                    elevation="10"
+                    rounded
+                    color="primary"
+                    target="_blank"
+                    @click="refreshApplications"
+                  >
+                    Done
+                  </v-btn>
+                </p>
+
+                <p v-if="refreshFailied" class="red--text caption">
+                  Please install Manager and log into your account to continue.
+                </p>
+
+                <p class="caption">Having issues logging in Manager? Try with the button below:</p>
+                <v-btn small text rounded color="primary" @click="addAccount">
                   <v-icon small class="mr-4">mdi-account-plus</v-icon>
                   Add account to manager
                 </v-btn>
@@ -225,17 +240,18 @@
                   Every time you send to Speckle, a new commit is created for you.
                 </p>
                 <p>Send data to Speckle now by using one of our connetors!</p>
-
-                <v-btn
-                  elevation="10"
-                  class="my-5"
-                  rounded
-                  color="primary"
-                  href="https://speckle.guide/user/connectors.html"
-                  target="_blank"
-                >
-                  How to use connectors
-                </v-btn>
+                <p>
+                  <v-btn
+                    elevation="10"
+                    class="my-5"
+                    rounded
+                    color="primary"
+                    href="https://speckle.guide/user/connectors.html"
+                    target="_blank"
+                  >
+                    How to use connectors
+                  </v-btn>
+                </p>
               </v-stepper-content>
             </v-stepper>
           </v-col>
@@ -247,7 +263,6 @@
 <script>
 import ListItemStream from '../components/ListItemStream'
 import StreamNewDialog from '../components/dialogs/StreamNewDialog'
-import NoDataPlaceholder from '../components/NoDataPlaceholder'
 import UserAvatar from '../components/UserAvatar'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
@@ -321,10 +336,12 @@ export default {
   data: () => ({
     streams: [],
     newStreamDialog: false,
-    hasClickedDownload: false
+    hasClickedDownload: false,
+    refreshFailied: false
   }),
   computed: {
     quickstart() {
+      if (!this.user) return 0
       if (this.streams.totalCount === 0) return 1
       if (this.streams.totalCount > 0 && !this.hasManager && !this.hasClickedDownload) return 2
       if (this.streams.totalCount > 0 && !this.hasManager && this.hasClickedDownload) return 3
@@ -379,6 +396,12 @@ export default {
       this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`)
       this.$matomo && this.$matomo.trackEvent('onboarding', 'accountadd')
       window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, '_blank')
+    },
+    async refreshApplications() {
+      await this.$apollo.queries.authorizedApps.refetch()
+      if (!this.hasManager) {
+        this.refreshFailied = true
+      } else this.refreshFailied = false
     },
     infiniteHandler($state) {
       this.$apollo.queries.streams.fetchMore({

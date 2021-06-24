@@ -81,9 +81,9 @@
               height="200px"
               src="@/assets/onboarding_connectors_dev.png"
             ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">🧰 Our toolset</v-card-title>
+            <v-card-title class="display-1 justify-center mb-5">🧰 Our toolkit</v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              Is here to push the AEC industry forward
+              From AEC developers, for AEC developers
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
@@ -91,8 +91,16 @@
                 <b>connectors, SDKs, APIs and tools</b>
                 to get in control of
                 <i>your data.</i>
-                Whether you are writing new integrations, custom workflows or creating brand new
-                apps on top of Speckle, we're here to support you!
+              </p>
+              <p>
+                Whether you are
+                <b>writing new integrations, custom workflows or creating brand new apps</b>
+                on top of Speckle, our toolkit is here to take care of the low level stuff, so that
+                you can focus on the fun bits.
+              </p>
+              <p>
+                From user permission management, data extraction or 3d model online visualization,
+                we've got you covered!
               </p>
             </v-card-text>
           </v-card>
@@ -107,15 +115,24 @@
             ></v-img>
             <v-card-title class="display-1 justify-center mb-5">🔌 Connectors</v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              Are plugins for design and analysis software.
+              Say goodbye to files!
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
+              <p></p>
               <p>
-                Say goodbye to files! Our
-                <b>connectors</b>
-                let you
+                <b>Connectors</b>
+                are plugins for design and analysis software, they let you
                 <b>exchange</b>
                 geometry and BIM data dirctly from the tools you use.
+              </p>
+              <p>
+                Install our connectors and you'll instantly be able to
+                <b>share your models and data</b>
+                with others or
+                <b>access it from the web,</b>
+                or
+                <b>load it into other supported software</b>
+                .
               </p>
             </v-card-text>
           </v-card>
@@ -138,11 +155,14 @@
               <p>
                 Speckle ships with a
                 <b>version control system,</b>
-                trigger custom workflows and pipelines and never lose anything.
+                we're bringing the tech industry best practices to AEC. You'll soon also be able to
+                <b>trigger custom workflows and pipelines</b>
+                directly from Speckle!
               </p>
               <p>
                 Also, Speckle talks
                 <i>data, not files!</i>
+                <br />
                 Store it where you want, and access it when you need 🔓
               </p>
             </v-card-text>
@@ -157,13 +177,13 @@
             ></v-img>
             <v-card-title class="display-1 justify-center mb-5">🌊 Streams</v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              Are collections of data inside Speckle.
+              A new way of working together
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
-                You can see a
-                <b>stream</b>
-                as a folder, a project or a repository.
+                <b>Streams</b>
+                are collections of data inside Speckle. You can see a stream as a folder, a project
+                or a repository.
               </p>
               <p>
                 Data in a stream is stored in
