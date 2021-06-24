@@ -1,7 +1,4 @@
-const appRoot = require( 'app-root-path' )
-const { validateServerRole, validateScopes } = require( `${appRoot}/modules/shared` )
-const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
-const { getUserActivity, getStreamActivity, getResourceActivity, getUserTimeline, getActivityCountByResourceId, getActivityCountByStreamId, getActivityCountByUserId } = require( '../../services/index' )
+const { getUserActivity, getStreamActivity, getResourceActivity, getUserTimeline, getActivityCountByResourceId, getActivityCountByStreamId, getActivityCountByUserId, getTimelineCount } = require( '../../services/index' )
 
 
 module.exports = {
@@ -10,6 +7,13 @@ module.exports = {
     async activity( parent, args, context, info ) {
       let { items, cursor } = await getUserActivity( { userId: parent.id, actionType: args.actionType, after: args.after, before: args.before, limit: args.limit } )
       let totalCount = await getActivityCountByUserId( { userId: parent.id } )
+
+      return { items, cursor, totalCount }
+    },
+
+    async timeline( parent, args, context, info ) {
+      let { items, cursor } = await getUserTimeline( { userId: parent.id, after: args.after, before: args.before, limit: args.limit } )
+      let totalCount = await getTimelineCount( { userId: parent.id } )
 
       return { items, cursor, totalCount }
     }
