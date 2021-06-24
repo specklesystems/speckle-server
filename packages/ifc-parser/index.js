@@ -10,7 +10,7 @@ const data = fs.readFileSync( './ifcs/example.ifc' )
 
 async function load() {
   const parsed = await myParser.parse( data )
-  console.log( JSON.stringify( parsed ) )
+  console.log( parsed )
 }
 
 load()

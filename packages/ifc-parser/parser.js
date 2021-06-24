@@ -12,11 +12,11 @@ module.exports = class IFCParser {
 
     this.projectId = this.api.GetLineIDsWithType( this.modelId, WebIFC.IFCPROJECT ).get( 0 )
 
-    this.project = this.api.GetLine( this.modelId, this.projectId )
+    this.project = this.api.GetLine( this.modelId, this.projectId, true )
 
     this.createGeometries()
-    this.traverse( this.project )
-
+    this.traverse( this.project, true )
+    
     return this.project
   }
 
@@ -24,7 +24,6 @@ module.exports = class IFCParser {
     // TODO: this is where we can alreadt create speckle meshes and plop them in the db.
     this.rawGeo = this.api.LoadAllGeometry( this.modelId )
     this.productGeo = {}
-
     for( let i = 0; i < this.rawGeo.size(); i++ ) {
       const mesh = this.rawGeo.get( i )
       const prodId = mesh.expressID
@@ -34,16 +33,37 @@ module.exports = class IFCParser {
         let geom = this.api.GetGeometry( this.modelId, mesh.geometries.get( j ).geometryExpressID )
 
         // TODO: actually create Speckle Mesh
-        this.productGeo[prodId].push( {
+
+        let raw = {
           color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
           vertices: this.api.GetVertexArray( geom.GetVertexData(), geom.GetVertexDataSize() ),
           indices: this.api.GetIndexArray( geom.GetIndexData(), geom.GetIndexDataSize() )
-        } )
+        }
+
+        let spcklFaces = [  ]
+        for ( let i = 0; i < raw.indices.length; i++ ) {
+          if( i % 3 === 0 ) 
+            spcklFaces.push( 0 )
+          spcklFaces.push( raw.indices[i] )
+          
+        }
+        let spcklMesh =  {
+          speckle_type: 'Objects.Geometry.Mesh',
+          units: 'm',
+          volume: 0,
+          area: 0,
+          faces: spcklFaces,
+          vertices: raw.vertices,
+          renderMaterial: geom.color ? colorToSpeckleMaterial( geom.color.r, geom.colr.g, geom.color.b ) : undefined
+        }
+        
+        // Send the mesh and swap for speckle ref
+        this.productGeo[prodId].push( spcklMesh )
       }
     }
   }
 
-  traverse( element, recursive = true, depth = 0 ) {
+  traverse( element, recursive = true, depth = 0, map = {} ) {
     // NOTE: creates the base object. 
     // TODO: combine with alan's value unwrapping
     console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
@@ -125,5 +145,35 @@ module.exports = class IFCParser {
     }
 
     return entity
+  }
+}
+
+
+
+function colorToSpeckleMaterial( r,g,b ) {
+  function rgba2int( r, g, b, a ) {
+    if ( typeof r === 'string' && arguments.length === 1 ) {
+      const [ r1, g1, b1, a1 ] = r
+        .match( /^rgba?\((\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s\/]*(.+)?\)$/ )
+        .slice( 1 );
+      [ r, g, b ] = [ r1, g1, b1 ].map( ( v ) => parseFloat( v ) )
+      a = a1
+        ? a1.endsWith( '%' )
+          ? parseInt( a1.substring( 0, a1.length - 1 ), 10 ) / 100
+          : parseFloat( a1 )
+        : null
+    }
+    return a
+      ? ( ( r & 0xff ) << 24 ) + ( ( g & 0xff ) << 16 ) + ( ( b & 0xff ) << 8 ) + ( Math.floor( a * 0xff ) & 0xff )
+      : ( ( r & 0xff ) << 16 ) + ( ( g & 0xff ) << 8 ) + ( b & 0xff )
+  }
+
+  return {
+    diffuse: rgba2int( r, g, b ),
+    opacity: 1,
+    emissive: rgba2int( 0, 0, 0 ),
+    metalness: 0,
+    roughness: 1,
+    speckle_type: 'Objects.Other.RenderMaterial'
   }
 }
