@@ -7,6 +7,9 @@ extend type User {
   activity(actionType: String, after: DateTime, before: DateTime, limit: Int! = 25): ActivityCollection
     @hasRole(role: "server:user")
     @hasScope(scope: "users:read")
+  timeline(after: DateTime, before: DateTime, limit: Int! = 25): ActivityCollection
+    @hasRole(role: "server:user")
+    @hasScopes(scopes: ["users:read", "streams:read"])
 }
 
 extend type Stream {
