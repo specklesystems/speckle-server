@@ -313,17 +313,10 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-
-    <v-dialog v-model="newStreamDialog" max-width="500">
-      <stream-new-dialog @created="finish" />
-    </v-dialog>
   </div>
 </template>
 <script>
-import StreamNewDialog from '../components/dialogs/StreamNewDialog'
-
 export default {
-  components: { StreamNewDialog },
   data: () => ({
     length: 4,
     onboarding: 0,

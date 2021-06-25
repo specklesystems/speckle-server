@@ -10,7 +10,11 @@
             </v-btn>
           </v-card-actions>
           <v-dialog v-model="newStreamDialog" max-width="500">
-            <stream-new-dialog :open="newStreamDialog" />
+            <stream-new-dialog
+              :open="newStreamDialog"
+              :redirect="streams.items.length > 0"
+              @created="newStreamDialog = false"
+            />
           </v-dialog>
         </v-card>
         <div v-if="$apollo.loading" class="pa-3 mx-5 mt-5">
