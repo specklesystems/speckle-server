@@ -46,7 +46,7 @@
       <v-btn block x-small text color="error" @click="showDelete = true">Delete Stream</v-btn>
     </v-card-title>
     <v-card-text v-show="showDelete" class="caption py-5">
-      <h2 class="error--text py-3">Deleting Stream {{ internalName }}</h2>
+      <h2 class="error--text py-3">Deleting Stream '{{ internalName }}'</h2>
       <span class="error--text">
         Type the name of the stream below to confirm you really want to delete it.
         <b>You cannot undo this action.</b>
