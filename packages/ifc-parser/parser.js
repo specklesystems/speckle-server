@@ -22,9 +22,10 @@ module.exports = class IFCParser {
   }
 
   createGeometries() {
-    // TODO: this is where we can alreadt create speckle meshes and plop them in the db.
+    // NOTE: this is where we can alreadt create speckle meshes and plop them in the db.
     this.rawGeo = this.api.LoadAllGeometry( this.modelId )
     this.productGeo = {}
+    let materialMap = {}
     for( let i = 0; i < this.rawGeo.size(); i++ ) {
       const mesh = this.rawGeo.get( i )
       const prodId = mesh.expressID
@@ -32,15 +33,14 @@ module.exports = class IFCParser {
       
       for( let j = 0; j < mesh.geometries.size(); j++ ) {
         let geom = this.api.GetGeometry( this.modelId, mesh.geometries.get( j ).geometryExpressID )
-
-        // TODO: actually create Speckle Mesh
-
+        
         let raw = {
           color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
           vertices: this.api.GetVertexArray( geom.GetVertexData(), geom.GetVertexDataSize() ),
           indices: this.api.GetIndexArray( geom.GetIndexData(), geom.GetIndexDataSize() )
         }
-
+        
+        // Since all faces are triangles, we must add a `0` before each group of 3.
         let spcklFaces = [  ]
         for ( let i = 0; i < raw.indices.length; i++ ) {
           if( i % 3 === 0 ) 
@@ -48,6 +48,8 @@ module.exports = class IFCParser {
           spcklFaces.push( raw.indices[i] )
           
         }
+
+        // Create a propper Speckle Mesh
         let spcklMesh =  {
           speckle_type: 'Objects.Geometry.Mesh',
           units: 'm',
@@ -55,41 +57,48 @@ module.exports = class IFCParser {
           area: 0,
           faces: spcklFaces,
           vertices: raw.vertices,
-          renderMaterial: geom.color ? colorToSpeckleMaterial( geom.color.r, geom.colr.g, geom.color.b ) : undefined
+          renderMaterial: geom.color ? this.colorToSpeckleMaterial( geom.color.r, geom.color.g, geom.color.b, materialMap ) : undefined
         }
         
-        // Send the mesh and swap for speckle ref
-        this.productGeo[prodId].push( spcklMesh )
+        //TODO: Send the mesh and swap for speckle ref
+        let ref = spcklMesh
+        
+        this.productGeo[prodId].push( ref )
       }
     }
   }
 
   traverse( element, recursive = true, depth = 0, map = {} ) {
-    // NOTE: creates the base object. 
-    // TODO: combine with alan's value unwrapping
+
+    // Fast exit if null/undefined
     if ( !element ) return
+
     depth++
     
+    // If array, traverse all items in it.
     if( Array.isArray( element ) ) {
       return element.map( el => this.traverse( el,recursive,depth, map ) )
     }
 
+    // If it has no expressID, its either a simple type or a { type, value } object. 
     if( !element.expressID ) {
       return element.value !== null && element.value !== undefined ? element.value : element
     }
 
+    // If the expressID already exists in the map, return whatever is in there.
     if( map[element.expressID] ) {
       return map[element.expressID]
     }
 
-    // It's an IFC Element, do the thing...
+    // If you got here -> It's an IFC Element: create base object, upload and return ref.
     console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
-    // Iterate through existing keys first.
+    // Traverse all key/value pairs first.
     Object.keys( element ).forEach( key => {
       element[key] = this.traverse( element[key], recursive, depth, map )
     } )
 
+    // Assign speckle_type and empty closure table.
     element.speckle_type = element.constructor.name
     element.__closure = {}
 
@@ -114,11 +123,13 @@ module.exports = class IFCParser {
       if ( element.children ) element.children.forEach( ( child ) => this.traverse( child, recursive, depth, map ) )
     }
 
-    // TODO: Detach and swap for ref!
-    map[element.expressID] = { referenceId: element.expressID, speckle_type: 'reference' }
-    
-    // Return the modified element.
-    return element
+    // TODO: Detach and swap `element.expressID` for ref!
+    let ref = element.expressID
+
+    // Create ref object with returned id, add it to the map and return the ref back.
+    const refObject = { referenceId: ref, speckle_type: 'reference' }
+    map[element.expressID] = refObject
+    return refObject
   }
 
   // (c) https://github.com/agviegas/web-ifc-three/blob/907e08b5673d5e1c18261a4fceade7189d6b2db7/src/IFC/PropertyManager.ts#L110
@@ -146,64 +157,42 @@ module.exports = class IFCParser {
 
     return IDs
   }
-
-  unwrapValues( entity ) {
-    Object.keys( entity ).forEach( ( key ) => {
-      entity[key] = this.parseValue( entity[key] )
-    } )
-  }
   
-  parseValue( entity ) {
-    // NOTE: This method does not deal with references (type=5), they are handled in the traverse logic to keep track of depth properly.
-    if ( !entity ) return
-    // NOTE: this stands in for an express reference. 
-    if ( entity.value && entity.type !== 5 ) {
-      return entity.value
+  /** Returns a ref object for the material given (r,g,b) values with an optional map for memoization. */
+  colorToSpeckleMaterial( r,g,b, materialMap = {} ) {
+    function rgba2int( r, g, b, a ) {
+      if ( typeof r === 'string' && arguments.length === 1 ) {
+        const [ r1, g1, b1, a1 ] = r
+          .match( /^rgba?\((\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s\/]*(.+)?\)$/ )
+          .slice( 1 );
+        [ r, g, b ] = [ r1, g1, b1 ].map( ( v ) => parseFloat( v ) )
+        a = a1
+          ? a1.endsWith( '%' )
+            ? parseInt( a1.substring( 0, a1.length - 1 ), 10 ) / 100
+            : parseFloat( a1 )
+          : null
+      }
+      return a
+        ? ( ( r & 0xff ) << 24 ) + ( ( g & 0xff ) << 16 ) + ( ( b & 0xff ) << 8 ) + ( Math.floor( a * 0xff ) & 0xff )
+        : ( ( r & 0xff ) << 16 ) + ( ( g & 0xff ) << 8 ) + ( b & 0xff )
+    }
+    let intColor = rgba2int( r, g, b )
+    if( materialMap[intColor] ) return materialMap[intColor]
+
+    let material = {
+      diffuse: intColor,
+      opacity: 1,
+      emissive: rgba2int( 0, 0, 0 ),
+      metalness: 0,
+      roughness: 1,
+      speckle_type: 'Objects.Other.RenderMaterial'
     }
 
-    if ( Array.isArray( entity ) ) {
-      const returnValue = entity.map( ( ent ) => IFCParser.unwrapValues( ent ) )
-      return returnValue
-    }
+    // TODO: Detach and swap for ref object!
+    let ref = material
 
-    if ( typeof entity === 'object' ) {
-      const returnValue = {}
-      Object.assign( returnValue, entity )
-      returnValue.speckle_type = 'Base'
-
-      return returnValue
-    }
-
-    return entity
-  }
-}
-
-
-
-function colorToSpeckleMaterial( r,g,b ) {
-  function rgba2int( r, g, b, a ) {
-    if ( typeof r === 'string' && arguments.length === 1 ) {
-      const [ r1, g1, b1, a1 ] = r
-        .match( /^rgba?\((\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s\/]*(.+)?\)$/ )
-        .slice( 1 );
-      [ r, g, b ] = [ r1, g1, b1 ].map( ( v ) => parseFloat( v ) )
-      a = a1
-        ? a1.endsWith( '%' )
-          ? parseInt( a1.substring( 0, a1.length - 1 ), 10 ) / 100
-          : parseFloat( a1 )
-        : null
-    }
-    return a
-      ? ( ( r & 0xff ) << 24 ) + ( ( g & 0xff ) << 16 ) + ( ( b & 0xff ) << 8 ) + ( Math.floor( a * 0xff ) & 0xff )
-      : ( ( r & 0xff ) << 16 ) + ( ( g & 0xff ) << 8 ) + ( b & 0xff )
-  }
-
-  return {
-    diffuse: rgba2int( r, g, b ),
-    opacity: 1,
-    emissive: rgba2int( 0, 0, 0 ),
-    metalness: 0,
-    roughness: 1,
-    speckle_type: 'Objects.Other.RenderMaterial'
+    // Add ref to material map
+    materialMap[intColor] = ref
+    return ref
   }
 }
