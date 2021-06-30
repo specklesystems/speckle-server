@@ -1,5 +1,32 @@
 <template lang="html">
-  <v-sheet style="height: 100%" class="transparent">
+  <v-sheet style="height: 100%; position: relative" class="transparent">
+    <v-menu v-if="!embeded" bottom left close-on-click offset-y>
+      <template #activator="{ on: onMenu, attrs: menuAttrs }">
+        <v-tooltip left color="primary">
+          <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
+            <v-btn
+              style="position: absolute; top: 1em; right: 1em; z-index: 3"
+              color="primary"
+              fab
+              x-small
+              v-bind="{ ...tooltipAttrs, ...menuAttrs }"
+              v-on="{ ...onTooltip, ...onMenu }"
+            >
+              <v-icon small>mdi-share-variant</v-icon>
+            </v-btn>
+          </template>
+          Embed 3D Viewer
+        </v-tooltip>
+      </template>
+      <v-list dense>
+        <v-list-item @click="copyIFrame">
+          <v-list-item-title>Copy iframe</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="copyEmbedUrl">
+          <v-list-item-title>Copy URL</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
     <v-alert
       v-show="showAlert"
       text
@@ -52,32 +79,8 @@
       >
         <!--  -->
         <v-btn-toggle class="elevation-0" style="z-index: 100">
-          <v-menu v-if="!embeded" top close-on-click offset-y>
-            <template #activator="{ on: onMenu, attrs: menuAttrs }">
-              <v-tooltip top>
-                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn
-                    small
-                    v-bind="{ ...tooltipAttrs, ...menuAttrs }"
-                    v-on="{ ...onTooltip, ...onMenu }"
-                  >
-                    <v-icon small>mdi-share-variant</v-icon>
-                  </v-btn>
-                </template>
-                Embed 3D Viewer
-              </v-tooltip>
-            </template>
-            <v-list dense>
-              <v-list-item @click="copyIFrame">
-                <v-list-item-title>Copy iframe</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="copyEmbedUrl">
-                <v-list-item-title>Copy URL</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
           <v-btn
-            v-show="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
+            v-if="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
             small
             color="primary"
             @click="showObjectDetails = !showObjectDetails"

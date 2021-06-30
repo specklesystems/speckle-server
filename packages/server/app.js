@@ -158,5 +158,9 @@ exports.startHttp = async ( app, customPortOverride ) => {
   } )
 
   server.listen( port, bindAddress )
+
+  server.keepAliveTimeout = 61 * 1000
+  server.headersTimeout = 65 * 1000
+
   return { server }
 }

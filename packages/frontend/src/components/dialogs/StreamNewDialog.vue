@@ -87,7 +87,16 @@ import UserAvatar from '../UserAvatar'
 
 export default {
   components: { UserAvatar },
-  props: ['open'],
+  props: {
+    open: {
+      type: Boolean,
+      default: false
+    },
+    redirect: {
+      type: Boolean,
+      default: true
+    }
+  },
   apollo: {
     userSearch: {
       query: userSearchQuery,
@@ -183,7 +192,7 @@ export default {
           }
         }
         this.$emit('created')
-        this.$router.push({ path: `/streams/${res.data.streamCreate}` })
+        if (this.redirect) this.$router.push({ path: `/streams/${res.data.streamCreate}` })
       } catch (e) {
         console.log(e)
       }
