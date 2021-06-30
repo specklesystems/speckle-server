@@ -1,6 +1,6 @@
 <template lang="html">
   <v-sheet style="height: 100%; position: relative" class="transparent">
-    <v-menu v-if="!embeded" bottom close-on-click offset-y>
+    <v-menu v-if="!embeded" bottom left close-on-click offset-y>
       <template #activator="{ on: onMenu, attrs: menuAttrs }">
         <v-tooltip left color="primary">
           <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
