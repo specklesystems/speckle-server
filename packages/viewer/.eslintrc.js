@@ -1,51 +1,30 @@
-// eslint-disable-next-line no-undef
 module.exports = {
-  'env': {
-    'browser': true,
-    'commonjs': true,
-    'es2021': true
+  env: {
+    browser: true,
+    commonjs: true,
+    es2021: true
   },
-  'extends': 'eslint:recommended',
-  'parserOptions': {
-    'ecmaVersion': 12,
-    'sourceType': 'module'
+  parserOptions: {
+    ecmaVersion: 12,
+    sourceType: 'module'
   },
-  'ignorePatterns': [ 'node_modules/*' ],
-  'rules': {
-    'indent': [
-      'error',
-      2
-    ],
-    'linebreak-style': [
-      'error',
-      'unix'
-    ],
-    'quotes': [
-      'error',
-      'single'
-    ],
-    'semi': [
-      'error',
-      'never'
-    ],
-    'arrow-spacing': [
-      2,
-      {
-        'before': true,
-        'after': true
-      }
-    ],
-    'array-bracket-spacing': [ 2, 'always' ],
-    'object-curly-spacing': [ 1, 'always' ],
-    'block-spacing': [ 2, 'always' ],
-    'space-in-parens': [ 2, 'always' ],
-    'keyword-spacing': 2,
-    'space-unary-ops': [
-      2,
-      {
-        'words': true,
-        'nonwords': false
-      }
-    ]
+  ignorePatterns: [ 'node_modules/*' ],
+  extends: 'eslint:recommended',
+  rules: {
+    'object-curly-spacing': [ 'error', 'always' ],
+    'array-bracket-spacing': [ 'error', 'always' ],
+    'semi-spacing': [ 'error', { 'before': false, 'after': true } ],
+    'space-in-parens': [ 'error', 'always' ],
+    'space-before-blocks': 'error',
+    'space-infix-ops': 'error',
+    'comma-dangle': [ 'error', 'never' ],
+    'no-console': [ 'error', { allow: [ 'warn', 'error' ] } ],
+    'space-unary-ops': 'error',
+    'no-var': 'error',
+    'no-alert': 'error',
+    'no-param-reassign': 'warn',
+    semi: [ 'error', 'never' ],
+    quotes: [ 'error', 'single' ],
+    eqeqeq: 'warn'
   }
 }

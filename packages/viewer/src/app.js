@@ -1,4 +1,4 @@
-
+ /* eslint-disable */
 import Viewer from './modules/Viewer'
 
 let v = new Viewer( { container: document.getElementById( 'renderer' ), showStats: true } )

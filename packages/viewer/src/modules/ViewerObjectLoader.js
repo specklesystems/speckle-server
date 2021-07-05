@@ -54,7 +54,7 @@ export default class ViewerObjectLoader {
         total = obj.totalChildrenCount
       }
       current++
-      this.viewer.emit( 'load-progress', { progress: current/( total+1 ), id: this.objectId } )
+      this.viewer.emit( 'load-progress', { progress: current / ( total + 1 ), id: this.objectId } )
     }
 
     if ( firstObjectPromise ) {
