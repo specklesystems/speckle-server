@@ -372,7 +372,7 @@ export default class Coverter {
     var depth = ( object.ySize.end - object.ySize.start ) * conversionFactor
     var height = ( object.zSize.end - object.zSize.start ) * conversionFactor
 
-    var box = new THREE.BoxBufferGeometry( width,height,depth,1,1,1 )
+    var box = new THREE.BoxBufferGeometry( width,depth, height, 1,1,1 )
     box.applyMatrix4( new THREE.Matrix4().setPosition( move ) )
     
     return new ObjectWrapper( box, object )
