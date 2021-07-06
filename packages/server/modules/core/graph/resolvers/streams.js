@@ -15,6 +15,7 @@ const {
 } = require( '../../services/streams' )
 
 const { authorizeResolver, validateScopes, pubsub } = require( `${appRoot}/modules/shared` )
+const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 
 // subscription events
 const USER_STREAM_ADDED = 'USER_STREAM_ADDED'
@@ -88,6 +89,16 @@ module.exports = {
 
     async streamCreate( parent, args, context, info ) {
       let id = await createStream( { ...args.stream, ownerId: context.userId } )
+
+      await saveActivity( {
+        streamId: id,
+        resourceType: 'stream',
+        resourceId: id,
+        actionType: 'stream_create',
+        userId: context.userId,
+        info: { stream: args.stream },
+        message: `Stream '${args.stream.name}' created`
+      } )
       await pubsub.publish( USER_STREAM_ADDED, { userStreamAdded: { id: id, ...args.stream }, ownerId: context.userId } )
       return id
     },
@@ -95,10 +106,20 @@ module.exports = {
     async streamUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.stream.id, 'stream:owner' )
 
+      let oldValue = await getStream( { streamId: args.stream.id } )
       let update = { streamId: args.stream.id, name: args.stream.name, description: args.stream.description, isPublic: args.stream.isPublic }
 
       await updateStream( update )
 
+      await saveActivity( {
+        streamId: args.stream.id,
+        resourceType: 'stream',
+        resourceId: args.stream.id,
+        actionType: 'stream_update',
+        userId: context.userId,
+        info: { old: oldValue, new: args.stream },
+        message: 'Stream metadata changed'
+      } )
       await pubsub.publish( STREAM_UPDATED, { streamUpdated: { id: args.stream.id, name: args.stream.name, description: args.stream.description }, id: args.stream.id } )
 
       return true
@@ -106,6 +127,16 @@ module.exports = {
 
     async streamDelete( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.id, 'stream:owner' )
+
+      await saveActivity( {
+        streamId: args.id,
+        resourceType: 'stream',
+        resourceId: args.id,
+        actionType: 'stream_delete',
+        userId: context.userId,
+        info: { },
+        message: 'Stream deleted'
+      } )
 
       // Notify any listeners on the streamId
       await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, streamId: args.id } )
@@ -134,6 +165,15 @@ module.exports = {
       let granted = await grantPermissionsStream( params )
 
       if ( granted ) {
+        await saveActivity( {
+          streamId: params.streamId,
+          resourceType: 'stream',
+          resourceId: params.streamId,
+          actionType: 'stream_permissions_add',
+          userId: context.userId,
+          info: { targetUser: params.userId, role: params.role },
+          message: `Permission granted to user ${params.userId} (${params.role})`
+        } )
         await pubsub.publish( USER_STREAM_ADDED, { userStreamAdded: { id: args.permissionParams.streamId, sharedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 
@@ -149,6 +189,15 @@ module.exports = {
       let revoked = await revokePermissionsStream( { ...args.permissionParams } )
 
       if ( revoked ) {
+        await saveActivity( {
+          streamId: args.permissionParams.streamId,
+          resourceType: 'stream',
+          resourceId: args.permissionParams.streamId,
+          actionType: 'stream_permissions_remove',
+          userId: context.userId,
+          info: { targetUser: args.permissionParams.userId },
+          message: `Permission revoked for user ${args.permissionParams.userId}`
+        } )
         await pubsub.publish( USER_STREAM_REMOVED, { userStreamRemoved: { id: args.permissionParams.streamId, revokedBy: context.userId }, ownerId: args.permissionParams.userId } )
       }
 

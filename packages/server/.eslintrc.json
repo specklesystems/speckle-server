@@ -19,6 +19,7 @@
     "array-bracket-spacing": [2, "always"],
     "object-curly-spacing": [1, "always"],
     "block-spacing": [2, "always"],
+    "padded-blocks": ["error", "never"],
     "camelcase": [
       1,
       {
