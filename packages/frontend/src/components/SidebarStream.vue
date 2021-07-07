@@ -179,6 +179,10 @@
           @close="dialogShare = false"
         ></stream-share-dialog>
       </v-dialog>
+      <v-divider class="pb-2 mt-2"></v-divider>
+    </v-card-text>
+    <v-card-text>
+      <div v-for="(item, index) in stream.activity.items" :key="index">{{ item.resourceType }}</div>
     </v-card-text>
   </v-card>
 </template>

@@ -1,4 +1,4 @@
-<template>
+<template lang="html">
   <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
@@ -32,51 +32,8 @@
           </v-card-title>
           <v-list color="transparent" two-lines class="recent-commits">
             <div v-for="(a, i) in recentActivity" :key="i">
-              <v-list-item v-if="a.__typename === 'Commit'">
-                <v-list-item-avatar size="30" class="mr-2">
-                  <user-avatar
-                    :id="a.authorId"
-                    :avatar="a.authorAvatar"
-                    :size="30"
-                    :name="a.authorName"
-                  />
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title class="subtitle-2">
-                    <router-link
-                      :to="
-                        a.branchName.startsWith('globals')
-                          ? `streams/${a.streamId}/${a.branchName}/${a.id}`
-                          : `streams/${a.streamId}/commits/${a.id}`
-                      "
-                    >
-                      {{ a.message }}
-                    </router-link>
-                  </v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    <i>
-                      Sent to
-                      <router-link :to="'streams/' + a.streamId">
-                        {{ a.streamName }}
-                      </router-link>
-                    </i>
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-
-              <v-list-item v-if="a.__typename === 'Stream'">
-                <v-list-item-content>
-                  <v-list-item-title class="subtitle-2">
-                    <router-link :to="'streams/' + a.id">
-                      {{ a.name }}
-                    </router-link>
-                  </v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    <i>A new stream was created</i>
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
               <v-divider />
+              <activity-item :activity="a" />
             </div>
           </v-list>
           <v-btn small plain color="primary" text class="d-block" @click="showServerInviteDialog">
@@ -87,13 +44,41 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
-        <v-row>
-          <v-col v-if="$apollo.loading">
-            <v-card elevation="0" color="transparent">
-              <div v-if="$apollo.loading" class="my-5">
-                <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
-              </div>
-            </v-card>
+        <activity-feed type="user"></activity-feed>
+        <div v-if="!$apollo.loading && streams.totalCount === 0" class="pa-4">
+          <no-data-placeholder
+            :message="`Hello there! It seems like you don't have any streams yet. Here's a handful of useful links to help you get started:`"
+          />
+        </div>
+        <v-card v-if="user && user.streams.totalCount > 0" class="my-5" flat>
+          <v-card-text class="body-1">
+            <span>
+              You have
+              <v-icon small>mdi-compare-vertical</v-icon>
+              <b>{{ user.streams.totalCount }}</b>
+              streams and
+              <v-icon small>mdi-source-commit</v-icon>
+              <b>{{ user.commits.totalCount }}</b>
+              commits.
+            </span>
+          </v-card-text>
+        </v-card>
+        <v-card elevation="0" color="transparent">
+          <div v-if="$apollo.loading" class="my-5">
+            <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
+          </div>
+        </v-card>
+        <v-row v-if="streams && streams.items">
+          <v-col
+            v-for="(stream, i) in streams.items"
+            :key="i"
+            cols="12"
+            sm="12"
+            md="12"
+            lg="6"
+            xl="4"
+          >
+            <list-item-stream :stream="stream"></list-item-stream>
           </v-col>
 
           <v-col v-else-if="streams && streams.items && streams.items.length > 0">
@@ -273,15 +258,21 @@ import userQuery from '../graphql/user.gql'
 import InfiniteLoading from 'vue-infinite-loading'
 import ServerInviteDialog from '../components/dialogs/ServerInviteDialog.vue'
 import gql from 'graphql-tag'
+import ActivityItem from '../components/ActivityItem.vue'
+import ActivityFeed from "@/views/ActivityFeed";
 
 export default {
   name: 'Streams',
   components: {
+    ActivityFeed,
     ListItemStream,
     StreamNewDialog,
     InfiniteLoading,
     UserAvatar,
     ServerInviteDialog
+    NoDataPlaceholder,
+    ServerInviteDialog,
+    ActivityItem
   },
   apollo: {
     streams: {
@@ -359,6 +350,8 @@ export default {
       return this.authorizedApps.findIndex((a) => a.id === 'sdm') !== -1
     },
     recentActivity() {
+      return this.user.activity.items
+
       let activity = []
 
       if (this.streams && this.streams.items) {

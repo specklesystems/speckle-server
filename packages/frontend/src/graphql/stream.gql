@@ -24,5 +24,17 @@ query Stream($id: String!) {
         createdAt
       }
     }
+    activity {
+      totalCount
+      cursor
+      items {
+        actionType
+        userId
+        resourceId
+        resourceType
+        time
+        message
+      }
+    }
   }
 }

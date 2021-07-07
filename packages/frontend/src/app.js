@@ -40,6 +40,14 @@ import { formatNumber } from './formatNumber'
 // Accepts 'max' parameter to set it's formatting while being animated
 Vue.filter('prettynum', formatNumber)
 
+
+// Filter to capitalize words
+Vue.filter("capitalize",(value) => {
+  if (!value) return ''
+  value = value.toString()
+  return value.charAt(0).toUpperCase() + value.slice(1)
+})
+
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')
 
