@@ -88,9 +88,9 @@ export default class SelectionHelper extends EventEmitter {
     this.touchLocation
 
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
-    this.viewer.renderer.domElement.addEventListener( 'touchend', ( event ) => {
-      var currentTime = new Date().getTime()
-      var tapLength = currentTime - this.lastTap
+    this.viewer.renderer.domElement.addEventListener( 'touchend', ( ) => {
+      let currentTime = new Date().getTime()
+      let tapLength = currentTime - this.lastTap
       clearTimeout( this.tapTimeout )
       if ( tapLength < 500 && tapLength > 0 ) {
         let selectionObjects = this.getClickedObjects( this.touchLocation )
@@ -148,7 +148,7 @@ export default class SelectionHelper extends EventEmitter {
   }
 
   // get all children of a subset passed as a THREE.Group
-  _getGroupChildren( group ){
+  _getGroupChildren( group ) {
     let children = []
     if ( group.children.length === 0 ) return [ group ]
     group.children.forEach( ( c ) => children = [ ...children, ...this._getGroupChildren( c ) ] )

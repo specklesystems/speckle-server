@@ -76,7 +76,7 @@ export default class InteractionHandler {
     this.selectedObjectsUserData.push( objs[0].object.userData )
 
     let box 
-    if ( selType==='Block' ) {
+    if ( selType === 'Block' ) {
       box = new THREE.BoxHelper( objs[0].object.parent, 0x23F3BD )
     } else {
       box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )

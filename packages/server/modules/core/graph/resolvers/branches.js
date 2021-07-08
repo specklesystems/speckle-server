@@ -14,6 +14,7 @@ const {
 } = require( '../../services/branches' )
 
 const { getUserById } = require( '../../services/users' )
+const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 
 // subscription events
 const BRANCH_CREATED = 'BRANCH_CREATED'
@@ -54,6 +55,15 @@ module.exports = {
       let id = await createBranch( { ...args.branch, authorId: context.userId } )
 
       if ( id ) {
+        await saveActivity( {
+          streamId: args.branch.streamId,
+          resourceType: 'branch',
+          resourceId: id,
+          actionType: 'branch_create',
+          userId: context.userId,
+          info: { branch:  { ...args.branch, id: id } },
+          message: `Branch created: '${args.branch.name}' (${id})`
+        } )
         await pubsub.publish( BRANCH_CREATED, {
           branchCreated: { ...args.branch, id: id, authorId: context.userId },
           streamId: args.branch.streamId
@@ -66,9 +76,19 @@ module.exports = {
     async branchUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
+      let oldValue = await getBranchById( { id: args.branch.id } )
       let updated = await updateBranch( { ...args.branch } )
 
       if ( updated ) {
+        await saveActivity( {
+          streamId: args.branch.streamId,
+          resourceType: 'branch',
+          resourceId: args.branch.id,
+          actionType: 'branch_update',
+          userId: context.userId,
+          info: { old: oldValue, new: args.branch },
+          message: `Branch metadata changed: '${args.branch.name}' (${args.branch.id})`
+        } )
         await pubsub.publish( BRANCH_UPDATED, {
           branchUpdated: { ...args.branch },
           streamId: args.branch.streamId,
@@ -92,6 +112,15 @@ module.exports = {
 
       let deleted = await deleteBranchById( { id: args.branch.id, streamId: args.branch.streamId } )
       if ( deleted ) {
+        await saveActivity( {
+          streamId: args.branch.streamId,
+          resourceType: 'branch',
+          resourceId: args.branch.id,
+          actionType: 'branch_delete',
+          userId: context.userId,
+          info: { branch: { ...args.branch, name: branch.name } },
+          message: `Branch deleted: '${branch.name}' (${args.branch.id})`
+        } )
         await pubsub.publish( BRANCH_DELETED, { branchDeleted: { ...args.branch }, streamId: args.branch.streamId } )
       }
 
