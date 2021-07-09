@@ -28,6 +28,7 @@ module.exports = {
     },
     async webhookDelete( parent, args, context, info ) {
       let deleted = await deleteWebhook( { id: args.id } )
+
       return !!deleted
     }
   }

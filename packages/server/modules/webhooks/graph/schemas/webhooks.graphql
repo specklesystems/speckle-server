@@ -39,7 +39,6 @@ type Webhook {
   url: String!
   description: String
   events: JSONObject!
-  secret: String
   enabled: Boolean
 }
 
