@@ -64,4 +64,10 @@ module.exports = {
 
     return await WebhooksEvents( ).select( '*' ).where( { webhookId } ).orderBy( 'lastUpdate', 'desc' ).limit( limit )
   },
+
+  async getWebhookEventsCount( { webhookId } ) {
+    let [ res ] = await WebhooksEvents().count().where( { webhookId } )
+
+    return parseInt( res.count )
+  }
 }

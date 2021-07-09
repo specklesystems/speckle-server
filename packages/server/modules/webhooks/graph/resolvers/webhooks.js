@@ -1,4 +1,4 @@
-const { createWebhook, getWebhook, updateWebhook, deleteWebhook, getStreamWebhooks, getLastWebhookEvents } = require( '../../services/webhooks' )
+const { createWebhook, getWebhook, updateWebhook, deleteWebhook, getStreamWebhooks, getLastWebhookEvents, getWebhookEventsCount } = require( '../../services/webhooks' )
 
 
 module.exports = {
@@ -12,6 +12,15 @@ module.exports = {
 
       let items = await getStreamWebhooks( { streamId: parent.id } )
       return { items, totalCount: items.length }
+    }
+  },
+
+  Webhook: {
+    async history( parent, args, context, info ) {
+      let items = await getLastWebhookEvents( { webhookId: parent.id, limit: args.limit } )
+      let totalCount = await getWebhookEventsCount( { webhookId: parent.id } )
+
+      return { items, totalCount }
     }
   },
 

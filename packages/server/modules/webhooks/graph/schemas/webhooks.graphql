@@ -40,6 +40,7 @@ type Webhook {
   description: String
   events: JSONObject!
   enabled: Boolean
+  history(limit: Int! = 25): WebhookEventCollection
 }
 
 input WebhookCreateInput {
@@ -58,4 +59,20 @@ input WebhookUpdateInput {
   secret: String
   enabled: Boolean
   events: JSONObject
+}
+
+type WebhookEventCollection{
+  totalCount: Int
+  cursor: String
+  items: [WebhookEvent]
+}
+
+type WebhookEvent {
+  id: String!
+  webhookId: String!
+  status: Int!
+  statusInfo: String!
+  retryCount: Int!
+  lastUpdate: DateTime!
+  payload: String!
 }
