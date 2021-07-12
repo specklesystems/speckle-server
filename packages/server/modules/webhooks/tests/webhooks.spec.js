@@ -95,11 +95,11 @@ describe( 'Webhooks', ( ) => {
       expect( streamWebhooks[0].url ).to.equal( webhookOne.url )
     } )
 
-    //it( 'Should dispatch and get events', async () => {      
-    //  await dispatchStreamEvent( { streamId: streamOne.id, event: 'commit_create', eventPayload: 'payload123' } )
-    //  let lastEvents = getLastWebhookEvents( { webhookId: webhookOne.id } )
-    //  expect( lastEvents ).to.have.lengthOf( 1 )
-    //  expect( lastEvents[0].payload ).to.equal( 'payload123' )
-    //} )
+    it( 'Should dispatch and get events', async () => {      
+      await dispatchStreamEvent( { streamId: streamOne.id, event: 'commit_create', eventPayload: 'payload123' } )
+      let lastEvents = await getLastWebhookEvents( { webhookId: webhookOne.id } )
+      expect( lastEvents ).to.have.lengthOf( 1 )
+      expect( lastEvents[0].payload ).to.equal( 'payload123' )
+    } )
   } )
 } )

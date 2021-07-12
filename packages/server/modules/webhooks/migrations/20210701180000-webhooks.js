@@ -21,12 +21,12 @@ exports.up = async knex => {
     table.integer( 'status' ).notNullable( ).defaultTo( 0 )
     table.string( 'statusInfo' ).notNullable( ).defaultTo( 'Pending' )
 
-    table.integer( 'retryCount' ).notNullable( ).defaultTo( 0 )
     table.timestamp( 'lastUpdate' ).notNullable( ).defaultTo( knex.fn.now( ) )
 
     table.string( 'payload' )
 
     table.index( 'webhookId' )
+    table.index( 'status' )
   } )
 }
 

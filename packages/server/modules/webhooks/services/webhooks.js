@@ -54,7 +54,19 @@ module.exports = {
   },
 
   async dispatchStreamEvent( { streamId, event, eventPayload } ) {
-    // TODO: get all enabled webhooks that are registered to this event, enrich the payload with stream info and create rows in WebhooksEvents for sending
+    let { rows } = await knex.raw( `
+      SELECT * FROM webhooks_config WHERE "streamId" = ?
+    `, [ streamId ] )
+    for ( let wh of rows ) {
+      if ( !( event in wh.events ) )
+        continue
+
+      await WebhooksEvents( ).insert( {
+        id: crs( { length: 20 } ),
+        webhookId: wh.id,
+        payload: eventPayload
+      } )
+    }
   },
 
   async getLastWebhookEvents( { webhookId, limit } ) {

@@ -3,6 +3,7 @@
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
+const { dispatchStreamEvent } = require( '../../webhooks/services/webhooks' )
 const StreamActivity = () => knex( 'stream_activity' )
 const StreamAcl = ( ) => knex( 'stream_acl' )
 
@@ -19,6 +20,13 @@ module.exports = {
       message
     }
     await StreamActivity( ).insert( dbObject )
+    if ( streamId ) {
+      let webhooksPayload = {
+        'event_name': actionType,
+        'data': info
+      }
+      dispatchStreamEvent( { streamId, event: actionType, eventPayload: webhooksPayload } )
+    }
   },
 
   async getStreamActivity( { streamId, actionType, after, before, limit } ) {
