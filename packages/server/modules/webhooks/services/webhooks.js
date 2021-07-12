@@ -11,7 +11,7 @@ module.exports = {
 
   async createWebhook( { streamId, url, description, secret, enabled, events } ) {
     // TODO: limit max number of webhooks for a stream to 100 (github has a 20 limit per event)
-    
+
     let [ id ] = await WebhooksConfig( ).returning( 'id' ).insert( {
       id: crs( { length: 10 } ),
       streamId,
@@ -23,7 +23,7 @@ module.exports = {
     } )
     return id
   },
-  
+
   async getWebhook( { id } ) {
     // TODO: get webhook object + summary of event history (last event status, etc)
     return await WebhooksConfig().select( '*' ).where( { id } ).first()
@@ -73,6 +73,13 @@ module.exports = {
     if ( !limit ) {
       limit = 100
     }
+
     return await WebhooksEvents( ).select( '*' ).where( { webhookId } ).orderBy( 'lastUpdate', 'desc' ).limit( limit )
   },
+
+  async getWebhookEventsCount( { webhookId } ) {
+    let [ res ] = await WebhooksEvents().count().where( { webhookId } )
+
+    return parseInt( res.count )
+  }
 }
