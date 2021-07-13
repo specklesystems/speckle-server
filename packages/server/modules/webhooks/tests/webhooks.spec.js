@@ -121,10 +121,7 @@ describe( 'Webhooks @webhooks', () => {
       description: 'test wh no 2',
       secret: 'secret',
       enabled: true,
-      events: {
-        'commit_create': true,
-        'commit_update': true
-      }
+      triggers: [ 'commit_create', 'commit_update' ]
     }
 
     let streamTwo = {
@@ -208,11 +205,13 @@ describe( 'Webhooks @webhooks', () => {
       for ( let i = 0; i < limit - 1; i++ ) {
         await createWebhook( webhookOne )
       }
+
       try {
         await createWebhook( webhookOne )
       } catch ( err ) {
         if ( err.toString().indexOf( 'Maximum' ) > -1 ) return
       }
+
       assert.fail( 'Configured more webhooks than the limit' )
     } )
 
@@ -224,10 +223,11 @@ describe( 'Webhooks @webhooks', () => {
           await deleteWebhook( { id: webhook.id } )
         }
       }
+
       streamWebhooks = await getStreamWebhooks( { streamId: streamOne.id } )
       expect( streamWebhooks ).to.have.lengthOf( 1 )
-      expect( streamWebhooks[0] ).to.have.property( 'id' )
-      expect( streamWebhooks[0].id ).to.equal( webhookOne.id )
+      expect( streamWebhooks[ 0 ] ).to.have.property( 'id' )
+      expect( streamWebhooks[ 0 ].id ).to.equal( webhookOne.id )
     } )
   } )
 } )
