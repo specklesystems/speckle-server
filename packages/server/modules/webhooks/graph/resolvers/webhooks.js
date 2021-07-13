@@ -26,12 +26,12 @@ module.exports = {
 
   Mutation: {
     async webhookCreate( parent, args, context, info ) {
-      let id = await createWebhook( { streamId: args.webhook.streamId, url: args.webhook.url, description: args.webhook.description, secret: args.webhook.secret, enabled: args.webhook.enabled !== false, events: args.webhook.events } )
+      let id = await createWebhook( { streamId: args.webhook.streamId, url: args.webhook.url, description: args.webhook.description, secret: args.webhook.secret, enabled: args.webhook.enabled !== false, triggers: args.webhook.triggers } )
 
       return id
     },
     async webhookUpdate( parent, args, context, info ) {
-      let updated = await updateWebhook( { id: args.webhook.id, url: args.webhook.url, description: args.webhook.description, secret: args.webhook.secret, enabled: args.webhook.enabled !== false, events: args.webhook.events } )
+      let updated = await updateWebhook( { id: args.webhook.id, url: args.webhook.url, description: args.webhook.description, secret: args.webhook.secret, enabled: args.webhook.enabled !== false, triggers: args.webhook.triggers } )
 
       return !!updated
     },

@@ -7,7 +7,7 @@ exports.up = async knex => {
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).onDelete( 'cascade' )
     table.string( 'url' )
     table.string( 'description' )
-    table.jsonb( 'events' )
+    table.jsonb( 'triggers' )
     table.string( 'secret' )
     table.boolean( 'enabled' ).defaultTo( true )
 

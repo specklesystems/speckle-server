@@ -34,7 +34,7 @@ describe( 'Webhooks', ( ) => {
     description: 'test wh',
     secret: 'secret',
     enabled: true,
-    events: [ 'commit_create', 'commit_update' ]
+    triggers: [ 'commit_create', 'commit_update' ]
   }
 
   before( async ( ) => {
