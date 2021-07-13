@@ -34,10 +34,7 @@ describe( 'Webhooks', ( ) => {
     description: 'test wh',
     secret: 'secret',
     enabled: true,
-    events: {
-      'commit_create': true,
-      'commit_update': true
-    }
+    events: [ 'commit_create', 'commit_update' ]
   }
 
   before( async ( ) => {
@@ -100,6 +97,33 @@ describe( 'Webhooks', ( ) => {
       let lastEvents = await getLastWebhookEvents( { webhookId: webhookOne.id } )
       expect( lastEvents ).to.have.lengthOf( 1 )
       expect( lastEvents[0].payload ).to.equal( 'payload123' )
+    } )
+
+    it( 'Should have a webhook limit for streams', async ( ) => {
+      let limit = 100
+      for ( let i = 0; i < limit - 1; i++ ) {
+        await createWebhook( webhookOne )
+      }
+      try {
+        await createWebhook( webhookOne )
+      } catch ( err ) {
+        if ( err.toString().indexOf( 'Maximum' ) > -1 ) return
+      }
+      assert.fail( 'Configured more webhooks than the limit' )
+    } )
+
+    it( 'Should cleanup stream webhooks', async ( ) => {
+      // just cleanup the 99 extra webhooks added before (not a real test)
+      let streamWebhooks = await getStreamWebhooks( { streamId: streamOne.id } )
+      for ( let webhook of streamWebhooks ) {
+        if ( webhook.id != webhookOne.id ) {
+          await deleteWebhook( { id: webhook.id } )
+        }
+      }
+      streamWebhooks = await getStreamWebhooks( { streamId: streamOne.id } )
+      expect( streamWebhooks ).to.have.lengthOf( 1 )
+      expect( streamWebhooks[0] ).to.have.property( 'id' )
+      expect( streamWebhooks[0].id ).to.equal( webhookOne.id )
     } )
   } )
 } )

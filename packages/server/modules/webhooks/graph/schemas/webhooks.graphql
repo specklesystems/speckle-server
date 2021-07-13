@@ -38,7 +38,7 @@ type Webhook {
   streamId: String!
   url: String!
   description: String
-  events: JSONObject!
+  events: [String]!
   enabled: Boolean
   history(limit: Int! = 25): WebhookEventCollection
 }
@@ -47,7 +47,7 @@ input WebhookCreateInput {
   streamId: String!
   url: String!
   description: String
-  events: JSONObject!
+  events: [String]!
   secret: String
   enabled: Boolean
 }
@@ -58,7 +58,7 @@ input WebhookUpdateInput {
   description: String
   secret: String
   enabled: Boolean
-  events: JSONObject
+  events: [String]
 }
 
 type WebhookEventCollection{
