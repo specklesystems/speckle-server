@@ -29,7 +29,6 @@ extend type Mutation {
 
 type WebhookCollection {
   totalCount: Int
-  cursor: String
   items: [Webhook]
 }
 
@@ -63,7 +62,6 @@ input WebhookUpdateInput {
 
 type WebhookEventCollection{
   totalCount: Int
-  cursor: String
   items: [WebhookEvent]
 }
 
