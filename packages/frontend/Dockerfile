@@ -18,7 +18,7 @@ RUN npm run build
 
 
 # production stage
-FROM nginx:stable-alpine as production-stage
+FROM openresty/openresty:1.19.3.2-buster as production-stage
 COPY --from=build-stage /opt/frontend/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 COPY packages/frontend/nginx/nginx.conf /etc/nginx/conf.d
