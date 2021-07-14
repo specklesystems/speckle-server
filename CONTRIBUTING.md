@@ -20,6 +20,10 @@ This means that what might look like a simple quick change in one repo may have 
 
 - Try to reference & note all potentially affected projects.
 
+### Security vulnerabilities
+
+For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems.
+
 ### Sending a PR for Bug Fixes
 
 You fixed something! Great! We hope you logged it first :) Make sure though that you've covered the lateral thinking needed for a bug report, as described above, also in your implementation! If there any tests, make sure they all pass. If there are none, it means they're missing - so add them!
