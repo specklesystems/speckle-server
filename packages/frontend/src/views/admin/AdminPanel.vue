@@ -1,5 +1,10 @@
 <template lang="html">
-  <v-container v-if="isAdmin">
+  <v-container v-if="$apollo.loading" class="fill-height">
+    <v-layout class="d-flex justify-center align-center">
+      <v-progress-circular :size="70" :width="7" color="grey" indeterminate></v-progress-circular>
+    </v-layout>
+  </v-container>
+  <v-container v-else-if="isAdmin">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-md-10">
         <v-card id="sideMenu" elevation="1" class="rounded-lg overflow-hidden">
@@ -7,14 +12,17 @@
           <div v-for="child in childRoutes" :key="child.to">
             <router-link :to="child.to" v-slot="{ isExactActive, route, navigate }">
               <v-hover v-slot="{ hover }">
-                  <span :disabled="isExactActive"
-                        @click="navigate"
-                        :class="{'active-border primary--text': isExactActive,'primary--text': hover}"
-                        class="pa-2 pl-6 text-left d-flex admin-menu-item bold">
-                    <v-icon small class="pr-1" :color="(hover || isExactActive) ? 'primary' : null">{{ child.icon
-                                                                                                    }}</v-icon>
-                    {{ child.name }}
-                  </span>
+                <span
+                  :disabled="isExactActive"
+                  @click="navigate"
+                  :class="{ 'active-border primary--text': isExactActive, 'primary--text': hover }"
+                  class="pa-2 pl-6 text-left d-flex admin-menu-item bold"
+                >
+                  <v-icon small class="pr-1" :color="hover || isExactActive ? 'primary' : null">
+                    {{ child.icon }}
+                  </v-icon>
+                  {{ child.name }}
+                </span>
               </v-hover>
             </router-link>
           </div>
@@ -28,7 +36,7 @@
       </v-col>
     </v-row>
   </v-container>
-  <v-container v-else-if="!isAdmin && $apollo.loading">
+  <v-container v-else-if="!isAdmin">
     <v-card>
       <v-card-text class="text-center">
         <v-icon size="50" color="error">mdi-alert</v-icon>
@@ -41,17 +49,17 @@
 </template>
 
 <script>
-import gql from "graphql-tag";
+import gql from 'graphql-tag'
 
 export default {
-  name: "AdminPanel",
+  name: 'AdminPanel',
   data() {
     return {
       childRoutes: [
         {
-          name: "Dashboard",
-          to: "/admin",
-          icon: "mdi-view-dashboard"
+          name: 'Dashboard',
+          to: '/admin',
+          icon: 'mdi-view-dashboard'
         },
         // {
         //   name: "Users",
@@ -64,28 +72,35 @@ export default {
         //   icon: "mdi-cloud"
         // },
         {
-          name: "Settings",
-          to: "/admin/settings",
-          icon: "mdi-cog"
+          name: 'Settings',
+          to: '/admin/settings',
+          icon: 'mdi-cog'
         }
       ]
-    };
+    }
   },
   apollo: {
     user: {
-      query: gql`query { user { role }}`
+      query: gql`
+        query {
+          user {
+            role
+            id
+          }
+        }
+      `,
+      prefetch: true
     }
   },
-  computed:{
-    isAdmin(){
-      return this.user?.role === "server:admin"
+  computed: {
+    isAdmin() {
+      return this.user?.role === 'server:admin'
     }
   }
-};
+}
 </script>
 
 <style lang="scss">
-
 .gray-border {
   border-top: 1pt solid var(--v-background-base) !important;
 }
@@ -101,7 +116,7 @@ export default {
     @include speckle-gradient-bg;
 
     position: absolute;
-    content: "";
+    content: '';
     width: 0;
     height: 100%;
     top: 0;
