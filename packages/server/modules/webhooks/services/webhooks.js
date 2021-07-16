@@ -17,7 +17,7 @@ module.exports = {
       throw new Error( `Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})` )
     }
 
-    let triggersObj = Object.assign( {}, ...triggers.map( ( x ) => ( { [x]: true } ) ) )
+    let triggersObj = Object.assign( {}, ...triggers.map( ( x ) => ( { [ x ]: true } ) ) )
 
     let [ id ] = await WebhooksConfig( ).returning( 'id' ).insert( {
       id: crs( { length: 10 } ),
@@ -36,6 +36,7 @@ module.exports = {
     if ( webhook ) {
       webhook.triggers = Object.keys( webhook.triggers )
     }
+
     return webhook
   },
 
@@ -46,7 +47,7 @@ module.exports = {
     if ( secret !== undefined ) fieldsToUpdate.secret = secret
     if ( enabled !== undefined ) fieldsToUpdate.enabled = enabled
     if ( triggers !== undefined ) {
-      let triggersObj = Object.assign( {}, ...triggers.map( ( x ) => ( { [x]: true } ) ) )
+      let triggersObj = Object.assign( {}, ...triggers.map( ( x ) => ( { [ x ]: true } ) ) )
       fieldsToUpdate.triggers = triggersObj
     }
 
@@ -66,6 +67,7 @@ module.exports = {
     for ( let webhook of webhooks ) {
       webhook.triggers = Object.keys( webhook.triggers )
     }
+
     return webhooks
   },
 
