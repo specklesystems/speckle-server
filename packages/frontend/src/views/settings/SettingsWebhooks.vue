@@ -27,6 +27,11 @@
       </v-btn>
     </template>
 
+    <v-card-text v-if="webhooks.length == 0">
+      You don't have any webhooks on this stream yet. Click the blue "Add Webhook" button in the top
+      right to add one.
+    </v-card-text>
+
     <v-list subheader two-line>
       <v-list-item
         v-for="wh in webhooks"

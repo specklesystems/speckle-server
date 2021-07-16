@@ -3,7 +3,13 @@
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-md-10">
         <v-card id="sideMenu" elevation="1" class="rounded-lg overflow-hidden">
-          <v-card-title class="text--secondary font-weight-regular">{{ stream.name }}</v-card-title>
+          <v-card-title class="text--secondary font-weight-regular">
+            {{ stream.name }}
+            <v-btn plain small class="mt-3 pa-0" :to="'/streams/' + stream.id">
+              <v-icon small>mdi-chevron-left</v-icon>
+              back to stream
+            </v-btn>
+          </v-card-title>
           <div v-for="child in childRoutes" :key="child.to">
             <router-link v-slot="{ isActive, navigate }" :to="child.to">
               <v-hover v-slot="{ hover }">
