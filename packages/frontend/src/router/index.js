@@ -142,6 +142,45 @@ const routes = [
         ]
       },
       {
+        path: 'settings/:streamId/',
+        name: 'settings',
+        props: true,
+        component: () => import('../views/settings/StreamSettings.vue'),
+        children: [
+          {
+            path: 'general/',
+            name: 'general',
+            meta: {
+              title: 'Stream Settings | Speckle'
+            },
+            props: true,
+            component: () => import('../views/settings/SettingsGeneral.vue')
+          },
+          {
+            path: 'webhooks/',
+            name: 'webhooks',
+            meta: {
+              title: 'Webhooks | Speckle'
+            },
+            props: true,
+            component: () => import('../views/settings/SettingsWebhooks.vue'),
+            children: [
+              {
+                path: 'edit/:webhookId/',
+                name: 'edit webhook',
+                props: true
+              }
+            ]
+          },
+          {
+            path: 'webhooks/new/',
+            name: 'add webhook',
+            props: true,
+            component: () => import('../views/settings/SettingsWebhooks.vue')
+          }
+        ]
+      },
+      {
         path: 'profile',
         name: 'profile',
         meta: {
@@ -169,19 +208,18 @@ const routes = [
             component: () => import('../views/admin/AdminOverview.vue')
           },
           {
-            name: "Admin | Users",
-            path: "users",
+            name: 'Admin | Users',
+            path: 'users',
             component: () => import('../views/admin/AdminUsers.vue')
-
           },
           {
-            name: "Admin | Streams",
-            path: "streams",
+            name: 'Admin | Streams',
+            path: 'streams',
             component: () => import('../views/admin/AdminStreams.vue')
           },
           {
-            name: "Admin | Settings",
-            path: "settings",
+            name: 'Admin | Settings',
+            path: 'settings',
             component: () => import('../views/admin/AdminSettings.vue')
           }
         ],

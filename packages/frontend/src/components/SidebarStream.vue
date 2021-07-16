@@ -98,7 +98,7 @@
         class="px-0"
         @click="editStreamDialog = true"
       >
-        <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
+        <v-icon small class="mr-2 float-left">mdi-pencil-outline</v-icon>
         Edit
       </v-btn>
 
@@ -122,6 +122,13 @@
         :to="`/streams/${stream.id}/globals`"
       >
         Globals
+      </v-btn>
+    </v-card-text>
+
+    <v-card-text v-if="userRole === 'owner'">
+      <v-btn block small elevation="0" :to="`/settings/${stream.id}/general`">
+        <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
+        Settings
       </v-btn>
     </v-card-text>
 
