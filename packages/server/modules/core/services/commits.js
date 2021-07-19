@@ -126,7 +126,7 @@ module.exports = {
     return parseInt( res.count )
   },
 
-  async getCommitsByStreamId( { streamId, limit, cursor } ) {
+  async getCommitsByStreamId( { streamId, limit, cursor, ignoreGlobalsBranch } ) {
     limit = limit || 25
     let query = StreamCommits( )
       .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
@@ -137,6 +137,8 @@ module.exports = {
       .leftJoin( 'users', 'commits.author', 'users.id' )
       .where( 'stream_commits.streamId', streamId )
 
+    if ( ignoreGlobalsBranch )
+      query.andWhere( 'branches.name', '!=', 'globals' )
 
     if ( cursor )
       query.andWhere( 'commits.createdAt', '<', cursor )

@@ -17,14 +17,14 @@ module.exports = {
     let panelHeight = 80
 
     let title = '/ ' + streamName
-    let maxTitleSize = 800
-    if ( pixelWidth( title, { size: 48 } ) > maxTitleSize ) {
-      while ( pixelWidth( title, { size: 48 } ) > maxTitleSize ) {
+    let maxTitleSize = 750
+    if ( pixelWidth( title, { font: 'open sans', size: 48 } ) > maxTitleSize ) {
+      while ( pixelWidth( title, { font: 'open sans', size: 48 } ) > maxTitleSize ) {
         title = title.slice( 0, -1 )
       }
       title += '...'
     }
-    console.log( streamName, pixelWidth( title, { size: 48 } ), ' / ', imgWidth - 2 * panelPadding - 305 )
+    // console.log( streamName, pixelWidth( title, { font: 'open sans', size: 48 } ), ' / ', imgWidth - 2 * panelPadding - 305 )
 
     const logo = await sharp( `${appRoot}/modules/previews/assets/speckle_logo_and_text.png` ).resize( { height: panelHeight } ).toBuffer()
 
@@ -33,9 +33,9 @@ module.exports = {
         <defs>
           <filter id="dropshadow" height="130%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="3"/> 
-            <feOffset dx="2" dy="2" result="offsetblur"/>
+            <feOffset dx="0" dy="5" result="offsetblur"/>
             <feComponentTransfer>
-              <feFuncA type="linear" slope="0.2"/>
+              <feFuncA type="linear" slope="0.3"/>
             </feComponentTransfer>
             <feMerge> 
               <feMergeNode/>
@@ -45,7 +45,7 @@ module.exports = {
         </defs>
   
         <rect x="${panelPadding}" y="${panelPadding}" width="${panelWidth}" height="${panelHeight}" fill="#fff" rx="15" filter="url(#dropshadow)" />
-        <text x="${panelPadding + 305}" y="${panelPadding + 60}" fill="#000" font-family="Arial, Helvetica, sans-serif" font-size="48px">
+        <text x="${panelPadding + 305}" y="${panelPadding + 60}" fill="#000" font-family="DejaVu Sans, sans-serif" font-size="48px">
           ${xmlescape( title )}
         </text>  
       </svg>

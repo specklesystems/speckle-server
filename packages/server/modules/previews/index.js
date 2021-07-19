@@ -125,7 +125,7 @@ exports.init = ( app, options ) => {
       return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
     }
     
-    let { commits } = await getCommitsByStreamId( { streamId: req.params.streamId, limit: 1 } )
+    let { commits } = await getCommitsByStreamId( { streamId: req.params.streamId, limit: 1, ignoreGlobalsBranch: true } )
     if ( !commits || commits.length == 0 ) {
       return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
     }
