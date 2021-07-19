@@ -24,3 +24,9 @@ npm run dev
 ```
 
 This will use the default dev DB connection of `postgres://speckle:speckle@localhost/speckle`. You can pass the environment variable `PG_CONNECTION_STRING` to change this to a different DB.
+
+
+To run locally in a docker container (after you build the docker image) with limited memory, the command line might look something like:
+```
+docker run -it --rm --net=host -e DEBUG="preview-service:*" -e PG_CONNECTION_STRING="postgres://speckle:speckle@localhost/speckle" -m 700m  speckle-server_preview-service
+```
