@@ -85,30 +85,22 @@ export default {
   },
   data() {
     return {
-      previewImgUrls: [],
       currentPreviewImg: '/loadingImage.png'
     }
   },
   mounted() {
-    this.getPreviewImages().then().catch()
+    this.getPreviewImage().then().catch()
   },
   methods: {
-    async getPreviewImages() {
-      if (this.stream.commits.items.length === 0) return
-      // let angles = [-2, -1, 0, 1, 2]
-      let angles = [0]
-      for (let ang of angles) {
-        let previewUrl = `/preview/${this.stream.id}/objects/${this.stream.commits.items[0].referencedObject}/${ang}`
-        const res = await fetch(previewUrl, {
-          headers: localStorage.getItem('AuthToken')
-            ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
-            : {}
-        })
-        const blob = await res.blob()
-        const imgUrl = URL.createObjectURL(blob)
-        this.previewImgUrls.push(imgUrl)
-        if (ang === 0) this.currentPreviewImg = imgUrl
-      }
+    async getPreviewImage() {
+      let previewUrl = `/preview/${this.stream.id}`
+      const res = await fetch(previewUrl, {
+        headers: localStorage.getItem('AuthToken')
+          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
+          : {}
+      })
+      const blob = await res.blob()
+      this.currentPreviewImg = URL.createObjectURL(blob)
     }
   }
 }
