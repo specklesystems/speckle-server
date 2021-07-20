@@ -86,7 +86,7 @@ module.exports = {
           resourceId: id,
           actionType: 'commit_create',
           userId: context.userId,
-          info: { commit: args.commit },
+          info: { id: id, commit: args.commit },
           message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
         } )
         await pubsub.publish( COMMIT_CREATED, {
