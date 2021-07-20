@@ -1,6 +1,6 @@
 extend type Stream {
   webhooks(id: String): WebhookCollection
-    @hasRole(role: "stream:owner")
+    @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 }
 
@@ -9,21 +9,21 @@ extend type Mutation {
   Creates a new webhook on a stream
   """
   webhookCreate(webhook: WebhookCreateInput!): String!
-    @hasRole(role: "stream:owner")
+    @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 
   """
   Updates an existing webhook
   """
   webhookUpdate(webhook: WebhookUpdateInput!): String!
-    @hasRole(role: "stream:owner")
+    @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 
   """
   Deletes an existing webhook
   """
-  webhookDelete(id: String!): String!
-    @hasRole(role: "stream:owner")
+  webhookDelete(webhook: WebhookDeleteInput!): String!
+    @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 }
 
@@ -53,11 +53,17 @@ input WebhookCreateInput {
 
 input WebhookUpdateInput {
   id: String!
+  streamId: String!
   url: String
   description: String
   secret: String
   enabled: Boolean
   triggers: [String]
+}
+
+input WebhookDeleteInput {
+  id: String!
+  streamId: String!
 }
 
 type WebhookEventCollection{
