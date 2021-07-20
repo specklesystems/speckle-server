@@ -126,7 +126,7 @@
     </v-card-text>
 
     <v-card-text v-if="userRole === 'owner'">
-      <v-btn block small elevation="0" :to="`/settings/${stream.id}/general`">
+      <v-btn block small elevation="0" :to="`/settings/streams/${stream.id}/general`">
         <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
         Settings
       </v-btn>

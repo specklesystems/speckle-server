@@ -3,8 +3,9 @@
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-md-10">
         <v-card id="sideMenu" elevation="1" class="rounded-lg overflow-hidden">
-          <v-card-title class="text--secondary font-weight-regular">
+          <v-card-title class="tmr-8 display-1 text--secondary">
             {{ stream.name }}
+            <br />
             <v-btn plain small class="mt-3 pa-0" :to="'/streams/' + stream.id">
               <v-icon small>mdi-chevron-left</v-icon>
               back to stream
@@ -73,11 +74,11 @@ export default {
       childRoutes: [
         {
           name: 'General',
-          to: `/settings/${this.$attrs.streamId}/general`
+          to: `/settings/streams/${this.$attrs.streamId}/general`
         },
         {
           name: 'Webhooks',
-          to: `/settings/${this.$attrs.streamId}/webhooks`
+          to: `/settings/streams/${this.$attrs.streamId}/webhooks`
         }
       ]
     }

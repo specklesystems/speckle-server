@@ -133,18 +133,18 @@ describe( 'Webhooks @webhooks', () => {
 
     before( async () => {
       userTwo.id = await createUser( userTwo )
-      streamTwo.ownerId = userOne.id
+      streamTwo.ownerId = userTwo.id
       streamTwo.id = await createStream( streamTwo )
       webhookTwo.streamId = streamTwo.id
 
 
       userOne.token = `Bearer ${( await createPersonalAccessToken( userOne.id, 'userOne test token', [ 'streams:read', 'streams:write' ] ) )}`
       userTwo.token = `Bearer ${( await createPersonalAccessToken( userTwo.id, 'userTwo test token', [ 'streams:read', 'streams:write' ] ) )}`
-      await grantPermissionsStream( { streamId: streamTwo.id, userId: userTwo.id, role: 'stream:contributor' } )
+      await grantPermissionsStream( { streamId: streamTwo.id, userId: userOne.id, role: 'stream:contributor' } )
     } )
 
     it( 'Should create a webhook', async () => {
-      const res = await sendRequest( userOne.token, { query: 'mutation createWebhook($webhook: WebhookCreateInput!) { webhookCreate( webhook: $webhook ) }', variables: { webhook: webhookTwo } } )
+      const res = await sendRequest( userTwo.token, { query: 'mutation createWebhook($webhook: WebhookCreateInput!) { webhookCreate( webhook: $webhook ) }', variables: { webhook: webhookTwo } } )
       expect( noErrors( res ) )
       expect( res.body.data.webhookCreate ).to.not.be.null
       webhookTwo.id = res.body.data.webhookCreate
@@ -152,7 +152,7 @@ describe( 'Webhooks @webhooks', () => {
 
     it( 'Should get stream webhooks and the previous events', async () => {
       await dispatchStreamEvent( { streamId: streamTwo.id, event: 'commit_create', eventPayload: 'payload321' } )
-      const res = await sendRequest( userOne.token, { query: `query {
+      const res = await sendRequest( userTwo.token, { query: `query {
         stream(id: "${streamTwo.id}") {
           webhooks { totalCount items { id url enabled
             history { totalCount items { status statusInfo payload } } }
@@ -169,7 +169,8 @@ describe( 'Webhooks @webhooks', () => {
     } )
 
     it( 'Should update a webhook', async () => {
-      const res = await sendRequest( userOne.token, { query: `mutation { webhookUpdate(webhook: { id: "${webhookTwo.id}", description: "updated webhook", enabled: false })
+      const res = await sendRequest( userTwo.token, {
+        query: `mutation { webhookUpdate(webhook: { id: "${webhookTwo.id}", streamId: "${streamTwo.id}", description: "updated webhook", enabled: false })
     }` } )
       let webhook = await getWebhook( { id: webhookTwo.id } )
       expect( noErrors( res ) )
@@ -179,8 +180,8 @@ describe( 'Webhooks @webhooks', () => {
     } )
 
     it( 'Should delete a webhook', async () => {
-      const res = await sendRequest( userOne.token, {
-        query: `mutation { webhookDelete(id: "${webhookTwo.id}") }`
+      const res = await sendRequest( userTwo.token, {
+        query: `mutation { webhookDelete(webhook: { id: "${webhookTwo.id}", streamId: "${streamTwo.id}" } ) }`
       } )
       expect( noErrors( res ) )
       expect( res.body.data.webhookDelete ).to.equal( 'true' )
@@ -188,13 +189,16 @@ describe( 'Webhooks @webhooks', () => {
 
     it( 'Should *not* create a webhook if user is not a stream owner', async () => {
       delete webhookTwo.id
-      const res = await sendRequest( userTwo.token, { query: 'mutation createWebhook($webhook: WebhookCreateInput!) { webhookCreate( webhook: $webhook ) }', variables: { webhook: webhookTwo } } )
+      const res = await sendRequest( userOne.token, {
+        query: 'mutation createWebhook($webhook: WebhookCreateInput!) { webhookCreate( webhook: $webhook ) }',
+        variables: { webhook: webhookTwo }
+      } )
       expect( res.body.errors ).to.exist
       expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
     } )
 
     it( 'Should *not* get a webhook if the user is not a stream owner', async () => {
-      const res = await sendRequest( userTwo.token, { query: `query {
+      const res = await sendRequest( userOne.token, { query: `query {
         stream(id: "${streamTwo.id}") { webhooks { totalCount items { id url enabled } } }
       }` } )
       expect( res.body.errors ).to.exist
