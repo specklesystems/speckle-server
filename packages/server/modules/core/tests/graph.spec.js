@@ -49,12 +49,13 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     testServer.close( )
   } )
 
-  // the four stream ids
+  // the stream ids
   let ts1
   let ts2
   let ts3
   let ts4
   let ts5
+  let ts6
 
   // some api tokens
   let token1
@@ -72,6 +73,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
   let b1 = {}
   let b2 = {}
   let b3 = {}
+  let b4 = {}
 
   describe( 'Mutations', ( ) => {
     describe( 'Users & Api tokens', ( ) => {
@@ -120,7 +122,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         userDelete.id = await createUser( userDelete )
 
         userDelete.token = `Bearer ${( await createPersonalAccessToken( userDelete.id, 'fail token user del', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
-        
+
         let badTokenScopesBadEmail = await sendRequest( userDelete.token, { query: 'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ', variables: { user: { email: 'wrongEmail@email.com' } } } )
         expect( badTokenScopesBadEmail.body.errors ).to.exist
         let badTokenScopesGoodEmail = await sendRequest( userDelete.token, { query: 'mutation($user:UserDeleteInput!) { userDelete( userConfirmation: $user) } ', variables: { user: { email: userDelete.email } } } )
@@ -430,6 +432,44 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res.body.data ).to.have.property( 'commitCreate' )
         expect( res.body.data.commitCreate ).to.be.a( 'string' )
       } )
+
+      it( 'Should *not* update a branch if given the wrong stream id', async () => {
+        // create stream for user C
+        const res = await sendRequest( userC.token, { query: 'mutation { streamCreate(stream: { name: "TS (u C) private", description: "sup my dudes", isPublic:false } ) }' } )
+        ts6 = res.body.data.streamCreate
+
+        // user B creates branch on private stream
+        b4 = { streamId: ts3, name: 'izz/secret', description: 'a private branch on a private stream' }
+        const res1 = await sendRequest( userB.token, { query: 'mutation( $branch:BranchCreateInput! ) { branchCreate( branch:$branch ) }', variables: { branch: b4 } } )
+        expect( res1 ).to.be.json
+        expect( res1.body.errors ).to.not.exist
+        expect( res1.body.data ).to.have.property( 'branchCreate' )
+        expect( res1.body.data.branchCreate ).to.be.a( 'string' )
+        b4.id = res1.body.data.branchCreate
+
+        let badPayload = {
+          streamId: ts6, // stream user C has access to
+          id: b4.id, // branch user C doesn't have access to
+          name: 'izz/not-so-secret'
+        }
+
+        const res2 = await sendRequest( userC.token, { query: 'mutation( $branch:BranchUpdateInput! ) { branchUpdate( branch:$branch ) }', variables: { branch: badPayload } } )
+        expect( res2 ).to.be.json
+        expect( res2.body.errors ).to.exist
+        expect( res2.body.errors[ 0 ].message ).to.equal( 'The branch id and stream id do not match. Please check your inputs.' )
+      } )
+
+      it( 'should *not* delete a branch if given the wrong stream id', async () => {
+        let badPayload = {
+          streamId: ts6, // stream user C has access to
+          id: b4.id, // branch user C doesn't have access to
+        }
+
+        const res = await sendRequest( userC.token, { query: 'mutation( $branch:BranchDeleteInput! ) { branchDelete( branch: $branch ) }', variables: { branch: badPayload } } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+        expect( res.body.errors[ 0 ].message ).to.equal( 'The branch id and stream id do not match. Please check your inputs.' )
+      } )
     } )
   } )
 
@@ -543,7 +583,6 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       } )
 
       it( 'Should search for some users', async ( ) => {
-
         for ( var i = 0; i < 10; i++ ) {
           // create 10 users: 3 bakers and 7 millers
           await createUser( {
@@ -593,11 +632,9 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.userSearch.items.length ).to.equal( 1 )
-
       } )
 
       it( 'Should not search for some users if bad request', async ( ) => {
-
         const query_lim = 'query { userSearch( query: "mi" ) { cursor items { id name } } } '
         let res = await sendRequest( userB.token, { query: query_lim } )
         expect( res ).to.be.json
@@ -607,9 +644,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         res = await sendRequest( userB.token, { query: query_pagination } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.exist
-
       } )
-
     } )
 
     describe( 'Streams', ( ) => {
@@ -644,12 +679,10 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       } )
 
       it( 'Should retrieve a public stream even if not authenticated', async ( ) => {
-
         const query = `query { stream( id: "${ts2}" ) { name createdAt } }`
         const res = await sendRequest( null, { query } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.not.exist
-
       } )
 
       let bees = [ ]
@@ -967,14 +1000,11 @@ describe( 'GraphQL API Core @core-api', ( ) => {
   } )
 
   describe( 'Generic / Server Info', ( ) => {
-
     it( 'Should eval string for password strength', async ( ) => {
-
       const query = 'query { userPwdStrength( pwd: "garbage" ) } '
       const res = await sendRequest( null, { query } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
-
     } )
 
     it( 'Should return a valid server information object', async ( ) => {
@@ -1014,27 +1044,22 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     } )
 
     it( 'Should update the server info object', async ( ) => {
-
       const query = 'mutation updateSInfo($info: ServerInfoUpdateInput!) { serverInfoUpdate( info: $info ) } '
       const variables = { info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' } }
 
       const res = await sendRequest( userA.token, { query, variables } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.not.exist
-
     } )
 
     it( 'Should NOT update the server info object if user is not an admin', async ( ) => {
-
       const query = 'mutation updateSInfo( $info: ServerInfoUpdateInput! ) { serverInfoUpdate( info: $info ) } '
       const variables = { info: { name: 'Super Duper Test Server Yo!', company: 'Super Systems' } }
 
       const res = await sendRequest( userB.token, { query, variables } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.exist
-
     } )
-
   } )
 } )
 
