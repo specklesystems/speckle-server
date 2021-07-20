@@ -142,7 +142,7 @@ const routes = [
         ]
       },
       {
-        path: 'settings/:streamId/',
+        path: 'settings/streams/:streamId/',
         name: 'settings',
         props: true,
         component: () => import('../views/settings/StreamSettings.vue'),

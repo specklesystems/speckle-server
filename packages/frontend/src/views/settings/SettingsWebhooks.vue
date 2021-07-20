@@ -22,7 +22,12 @@
 
   <admin-card v-else title="Webhooks">
     <template #menu>
-      <v-btn small outlined color="primary" :to="`/settings/${$attrs.streamId}/webhooks/new`">
+      <v-btn
+        small
+        outlined
+        color="primary"
+        :to="`/settings/streams/${$attrs.streamId}/webhooks/new`"
+      >
         Add Webhook
       </v-btn>
     </template>
@@ -36,7 +41,7 @@
       <v-list-item
         v-for="wh in webhooks"
         :key="wh.id"
-        :to="`/settings/${$attrs.streamId}/webhooks/edit/${wh.id}`"
+        :to="`/settings/streams/${$attrs.streamId}/webhooks/edit/${wh.id}`"
       >
         <v-list-item-content>
           <v-list-item-title>

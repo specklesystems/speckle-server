@@ -166,6 +166,7 @@ export default {
 
       let params = {
         id: this.webhook.id,
+        streamId: this.streamId,
         url: this.url,
         description: this.description,
         triggers: this.triggers,
@@ -219,12 +220,12 @@ export default {
 
       await this.$apollo.mutate({
         mutation: gql`
-          mutation webhookDelete($id: String!) {
-            webhookDelete(id: $id)
+          mutation webhookDelete($params: WebhookDeleteInput!) {
+            webhookDelete(webhook: $params)
           }
         `,
         variables: {
-          id: this.webhookId
+          params: { id: this.webhookId, streamId: this.streamId }
         }
       })
 
