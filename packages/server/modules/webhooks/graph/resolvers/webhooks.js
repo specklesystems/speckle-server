@@ -1,4 +1,6 @@
 const appRoot = require( 'app-root-path' )
+const { ForbiddenError } = require( 'apollo-server-express' )
+
 const { authorizeResolver } = require( `${appRoot}/modules/shared` )
 const { createWebhook, getWebhook, updateWebhook, deleteWebhook, getStreamWebhooks, getLastWebhookEvents, getWebhookEventsCount } = require( '../../services/webhooks' )
 
@@ -39,12 +41,20 @@ module.exports = {
     async webhookUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.webhook.streamId, 'stream:owner' )
 
+      let wh = await getWebhook( { id: args.webhook.id } )
+      if ( args.webhook.streamId !== wh.streamId )
+        throw new ForbiddenError( 'The webhook id and stream id do not match. Please check your inputs.' )
+
       let updated = await updateWebhook( { id: args.webhook.id, url: args.webhook.url, description: args.webhook.description, secret: args.webhook.secret, enabled: args.webhook.enabled !== false, triggers: args.webhook.triggers } )
 
       return !!updated
     },
     async webhookDelete( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.webhook.streamId, 'stream:owner' )
+
+      let wh = await getWebhook( { id: args.webhook.id } )
+      if ( args.webhook.streamId !== wh.streamId )
+        throw new ForbiddenError( 'The webhook id and stream id do not match. Please check your inputs.' )
 
       let deleted = await deleteWebhook( { id: args.webhook.id } )
 

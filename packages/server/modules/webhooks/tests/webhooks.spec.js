@@ -179,6 +179,22 @@ describe( 'Webhooks @webhooks', () => {
       expect( webhook.enabled ).to.equal( false )
     } )
 
+    it( 'Should *not* update or delete a webhook if the stream id and webhook id do not match', async () => {
+      const res1 = await sendRequest( userOne.token, {
+        query: `mutation { webhookDelete(webhook: { id: "${webhookTwo.id}", streamId: "${streamOne.id}" } ) }`
+      } )
+      expect( res1.body.errors ).to.exist
+      expect( res1.body.errors[ 0 ].message ).to.equal( 'The webhook id and stream id do not match. Please check your inputs.' )
+      expect( res1.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
+
+      const res2 = await sendRequest( userOne.token, {
+        query: `mutation { webhookUpdate(webhook: { id: "${webhookTwo.id}", streamId: "${streamOne.id}", description: "updated webhook", enabled: false }) }`
+      } )
+      expect( res2.body.errors ).to.exist
+      expect( res2.body.errors[ 0 ].message ).to.equal( 'The webhook id and stream id do not match. Please check your inputs.' )
+      expect( res2.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
+    } )
+
     it( 'Should delete a webhook', async () => {
       const res = await sendRequest( userTwo.token, {
         query: `mutation { webhookDelete(webhook: { id: "${webhookTwo.id}", streamId: "${streamTwo.id}" } ) }`
@@ -204,6 +220,7 @@ describe( 'Webhooks @webhooks', () => {
       expect( res.body.errors ).to.exist
       expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
     } )
+
 
     it( 'Should have a webhook limit for streams', async ( ) => {
       let limit = 100
