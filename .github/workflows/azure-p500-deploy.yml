@@ -31,7 +31,8 @@ jobs:
       with:
         push: true
         tags: speckleacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_fc4ba7f0d13a4196b92c012034a7ebf5 }}/backend:${{ github.sha }}
-        file: ./Dockerfile
+        file: ./packages/server/Dockerfile
+        build-args: SPECKLE_SERVER_VERSION=${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
