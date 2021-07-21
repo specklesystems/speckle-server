@@ -102,10 +102,10 @@ describe( 'Webhooks @webhooks', () => {
     } )
 
     it( 'Should dispatch and get events', async () => {
-      await dispatchStreamEvent( { streamId: streamOne.id, event: 'commit_create', eventPayload: 'payload123' } )
+      await dispatchStreamEvent( { streamId: streamOne.id, event: 'commit_create', eventPayload: { test: 'payload123' } } )
       let lastEvents = await getLastWebhookEvents( { webhookId: webhookOne.id } )
       expect( lastEvents ).to.have.lengthOf( 1 )
-      expect( lastEvents[ 0 ].payload ).to.equal( 'payload123' )
+      expect( JSON.parse( lastEvents[ 0 ].payload ).test ).to.equal( 'payload123' )
     } )
   } )
 
@@ -151,7 +151,7 @@ describe( 'Webhooks @webhooks', () => {
     } )
 
     it( 'Should get stream webhooks and the previous events', async () => {
-      await dispatchStreamEvent( { streamId: streamTwo.id, event: 'commit_create', eventPayload: 'payload321' } )
+      await dispatchStreamEvent( { streamId: streamTwo.id, event: 'commit_create', eventPayload: { test: 'payload321' } } )
       const res = await sendRequest( userTwo.token, { query: `query {
         stream(id: "${streamTwo.id}") {
           webhooks { totalCount items { id url enabled
@@ -165,7 +165,7 @@ describe( 'Webhooks @webhooks', () => {
       expect( webhooks.totalCount ).to.equal( 1 )
       expect( webhooks.items[ 0 ].url ).to.equal( webhookTwo.url )
       expect( webhooks.items[ 0 ].history.totalCount ).to.equal( 1 )
-      expect( webhooks.items[ 0 ].history.items[ 0 ].payload ).to.equal( 'payload321' )
+      expect( JSON.parse( webhooks.items[ 0 ].history.items[ 0 ].payload ).test ).to.equal( 'payload321' )
     } )
 
     it( 'Should update a webhook', async () => {
