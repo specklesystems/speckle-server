@@ -6,6 +6,10 @@ const crs = require( 'crypto-random-string' )
 
 const WebhooksConfig = ( ) => knex( 'webhooks_config' )
 const WebhooksEvents = ( ) => knex( 'webhooks_events' )
+const Users = ( ) => knex( 'users' )
+
+const { getServerInfo } = require( '../../core/services/generic' )
+const { getStream } = require( '../../core/services/streams' )
 
 let MAX_STREAM_WEBHOOKS = 100
 
@@ -77,17 +81,43 @@ module.exports = {
   },
 
   async dispatchStreamEvent( { streamId, event, eventPayload } ) {
+    // Add server info
+    eventPayload.server = await getServerInfo()
+    eventPayload.server.canonicalUrl = process.env.CANONICAL_URL
+    delete eventPayload.server.id
+
+    // Add stream info
+    if ( eventPayload.streamId ) {
+      eventPayload.stream = await getStream( { streamId: eventPayload.streamId, userId: eventPayload.userId } )
+    }
+
+    // Add user info (except email and pwd)
+    if ( eventPayload.userId ) {
+      eventPayload.user = await Users( ).where( { id: eventPayload.userId } ).select( '*' ).first( )
+      if ( eventPayload.user ) {
+        delete eventPayload.user.passwordDigest
+        delete eventPayload.user.email
+      }
+    }
+
     let { rows } = await knex.raw( `
       SELECT * FROM webhooks_config WHERE "streamId" = ?
     `, [ streamId ] )
     for ( let wh of rows ) {
+      if ( !wh.enabled )
+        continue
       if ( !( event in wh.triggers ) )
         continue
+
+      // Add webhook info (the key `webhook` will be replaced for each webhook configured, before serializing the payload and storing it)
+      eventPayload.webhook = wh
+      eventPayload.webhook.triggers = Object.keys( eventPayload.webhook.triggers )
+      delete eventPayload.webhook.secret
 
       await WebhooksEvents( ).insert( {
         id: crs( { length: 20 } ),
         webhookId: wh.id,
-        payload: eventPayload
+        payload: JSON.stringify( eventPayload )
       } )
     }
   },

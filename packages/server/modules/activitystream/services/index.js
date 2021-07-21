@@ -22,8 +22,13 @@ module.exports = {
     await StreamActivity( ).insert( dbObject )
     if ( streamId ) {
       let webhooksPayload = {
-        'event_name': actionType,
-        'data': info
+        streamId: streamId,
+        userId: userId,
+        activityMessage: message,
+        event: {
+          'event_name': actionType,
+          'data': info
+        }
       }
       dispatchStreamEvent( { streamId, event: actionType, eventPayload: webhooksPayload } )
     }

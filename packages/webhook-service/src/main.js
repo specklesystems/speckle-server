@@ -28,11 +28,9 @@ async function doTask( task ) {
     let { rows } = await knex.raw( `
       SELECT 
         ev.payload as evt,
-        cnf.id as wh_id, cnf.url as wh_url, cnf.description as wh_desc, cnf.secret as wh_secret, cnf.enabled as wh_enabled,
-        stm.id as stm_id, stm.name as stm_name, stm.description as stm_desc, stm."isPublic" as stm_pub
+        cnf.id as wh_id, cnf.url as wh_url, cnf.secret as wh_secret, cnf.enabled as wh_enabled
       FROM webhooks_events ev
       INNER JOIN webhooks_config cnf ON ev."webhookId" = cnf.id
-      INNER JOIN streams stm ON cnf."streamId" = stm.id
       WHERE ev.id = ?
       LIMIT 1
     `, [ task.id ] )
@@ -40,20 +38,15 @@ async function doTask( task ) {
     if ( !info ) {
       throw new Error( 'Internal error: DB inconsistent' )
     }
-    if ( !info.wh_enabled ) return
 
-    let fullPayload = {
-      stream: { id: info.stm_id, name: info.stm_name, description: info.stm_desc, isPublic: info.stm_pub },
-      webhook: { id: info.wh_id, url: info.wh_url, description: info.wh_desc },
-      event: JSON.parse( info.evt )
-    }
+    let fullPayload = JSON.parse( info.evt )
 
-    let postData = { payload: JSON.stringify( fullPayload ) }
+    let postData = { payload: info.evt }
 
     let signature = crypto.createHmac( 'sha256', info.wh_secret || '' ).update( postData.payload ).digest( 'hex' )
     let postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 
-    console.log( `Callin webhook ${fullPayload.stream.id} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...` )
+    console.log( `Callin webhook ${fullPayload.streamId} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...` )
     let result = await makeNetworkRequest( { url: info.wh_url, data: postData, headersData: postHeaders } )
 
     console.log( `  Result: ${JSON.stringify( result )}` )
