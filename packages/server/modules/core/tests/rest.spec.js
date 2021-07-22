@@ -140,7 +140,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
         .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
         .attach( 'batch3', Buffer.from( JSON.stringify( objBatches[ 2 ] ), 'utf8' ) )
 
-    // TODO: test gziped uploads. They work. Current blocker: cannot set content-type for each part in the 'multipart' request.
+    // TODO: test gzipped uploads. They work. Current blocker: cannot set content-type for each part in the 'multipart' request.
     // .attach( 'batch1', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 0 ] ) ), 'utf8' ) )
     // .attach( 'batch2', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 1 ] ) ), 'utf8' ) )
     // .attach( 'batch3', zlib.gzipSync( Buffer.from( JSON.stringify( objBatches[ 2 ] ) ), 'utf8' ) )

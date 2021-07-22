@@ -87,7 +87,7 @@ module.exports = {
     let closureBatchSize = 1000
     let objectsBatchSize = 500
 
-    // step 1: insert objecs
+    // step 1: insert objects
     if ( objsToInsert.length > 0 ) {
       let batches = chunk( objsToInsert, objectsBatchSize )
       for ( const batch of batches ) {
@@ -270,7 +270,7 @@ module.exports = {
       cursor = JSON.parse( Buffer.from( cursor, 'base64' ).toString( 'binary' ) )
     }
 
-    // Flag that keeps track of wether we select the whole "data" part of an object or not
+    // Flag that keeps track of whether we select the whole "data" part of an object or not
     let fullObjectSelect = false
     if ( Array.isArray( select ) ) {
       // if we order by a field that we do not select, select it!
@@ -332,7 +332,7 @@ module.exports = {
             else whereClause = 'andWhere'
 
             // Note: castType is generated from the statement's value and operators are matched against a whitelist.
-            // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the qoutes manually to the raw provided comparison value.
+            // If comparing with strings, the jsonb_path_query(_first) func returns json encoded strings (ie, `bar` is actually `"bar"`), hence we need to add the quotes manually to the raw provided comparison value.
             nestedWhereQuery[ whereClause ]( knex.raw( `jsonb_path_query_first( data, ? )::${castType} ${statement.operator} ? `, [ '$.' + statement.field, castType === 'text' ? `"${statement.value}"` : statement.value ] ) )
           } )
         } )
@@ -358,7 +358,7 @@ module.exports = {
       if ( typeof cursor.value === 'boolean' ) castType = 'boolean'
       if ( typeof cursor.value === 'number' ) castType = 'numeric'
 
-      // When strings are used inside an order clause, as mentioned above, we need to add qoutes around the comparison value, as the jsonb_path_query funcs return json encoded strings (`{"test":"foo"}` => test is returned as `"foo"`)
+      // When strings are used inside an order clause, as mentioned above, we need to add quotes around the comparison value, as the jsonb_path_query funcs return json encoded strings (`{"test":"foo"}` => test is returned as `"foo"`)
       if ( castType === 'text' )
         cursor.value = `"${cursor.value}"`
 
@@ -423,7 +423,7 @@ module.exports = {
       cursorObj.lastSeenId = rows[ rows.length - 1 ].id
     }
 
-    // Cursor objetcs should be client-side opaque, hence we encode them to base64.
+    // Cursor objects should be client-side opaque, hence we encode them to base64.
     let cursorEncoded = Buffer.from( JSON.stringify( cursorObj ), 'binary' ).toString( 'base64' )
     return { totalCount, objects: rows, cursor: rows.length === limit ? cursorEncoded : null }
   },

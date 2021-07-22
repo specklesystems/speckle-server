@@ -37,7 +37,7 @@ exports.up = async knex => {
   // Roles.
   // Roles keep track of their name and the target resource they are applied to.
   // The target resource must be a table name.
-  // The heigher the weight, the bigger the permissions.
+  // The higher the weight, the bigger the permissions.
   await knex.schema.createTable( 'user_roles', table => {
     table.string( 'name', 256 ).primary( )
     table.string( 'description', 256 ).notNullable( )

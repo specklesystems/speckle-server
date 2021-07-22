@@ -123,7 +123,7 @@
                 <b>Connectors</b>
                 are plugins for design and analysis software, they let you
                 <b>exchange</b>
-                geometry and BIM data dirctly from the tools you use.
+                geometry and BIM data directly from the tools you use.
               </p>
               <p>
                 Install our connectors and you'll instantly be able to
@@ -194,8 +194,8 @@
               <p>
                 Commits can also be organized in
                 <b>branches,</b>
-                for instace, to have multiple design options or to store data by discipline. The
-                dafault branch is called
+                for instance, to have multiple design options or to store data by discipline. The
+                default branch is called
                 <i>main</i>
                 .
               </p>

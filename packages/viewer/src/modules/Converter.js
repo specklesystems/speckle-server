@@ -19,8 +19,8 @@ export default class Coverter {
   }
 
   /**
-   * If the object is convertable (there is a direct conversion routine), it will invoke the callback with the conversion result.
-   * If the object is not convertable, it will recursively iterate through it (arrays & objects) and invoke the callback on any postive conversion result.
+   * If the object is convertible (there is a direct conversion routine), it will invoke the callback with the conversion result.
+   * If the object is not convertible, it will recursively iterate through it (arrays & objects) and invoke the callback on any positive conversion result.
    * @param  {[type]}   obj      [description]
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
@@ -236,7 +236,7 @@ export default class Coverter {
       if ( !obj ) return
       let { bufferGeometry } = await this.MeshToBufferGeometry( await this.resolveReference( obj.displayValue || obj.displayMesh ), scale )
 
-      // deletes known uneeded fields
+      // deletes known unneeded fields
       // delete obj.displayMesh
       // delete obj.displayValue
       delete obj.Edges
@@ -476,7 +476,7 @@ export default class Coverter {
     const xAxis = this.PointToVector3( plane.xdir )
     const yAxis = this.PointToVector3( plane.ydir )
 
-    // Make sure plane axis are unit lenght!!!!
+    // Make sure plane axis are unit length!!!!
     xAxis.normalize()
     yAxis.normalize()
 

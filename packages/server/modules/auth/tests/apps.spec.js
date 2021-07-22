@@ -161,7 +161,7 @@ describe( 'Apps @apps', ( ) => {
       let usedAccessCode = await createAuthorizationCode( { appId: myTestApp.id, userId: actor.id, challenge } )
       let apiTokenResponse = await createAppTokenFromAccessCode( { appId: myTestApp.id, appSecret: myTestApp.secret, accessCode: usedAccessCode, challenge: challenge } )
 
-      // We now have one unused acces code, an api token and a refresh token.
+      // We now have one unused access code, an api token and a refresh token.
       // Proceed to update the app:
       const res = await updateApp( { app: { name: 'updated test application', id: myTestApp.id, scopes: [ 'streams:write', 'users:read' ] } } )
 
