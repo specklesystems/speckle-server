@@ -45,7 +45,7 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
       existingUser = await getUserByEmail( { email: user.email } )
 
       // if there is an existing user, go ahead and log them in (regardless of
-      // wether the server is invite only or not).
+      // whether the server is invite only or not).
       if ( existingUser ) {
         let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
         return done( null, myUser )

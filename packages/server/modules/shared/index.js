@@ -42,7 +42,7 @@ async function contextApiTokenHelper( { req, res, connection } ) {
 
     return { auth: true, userId, role, token, scopes }
   } catch ( e ) {
-    // TODO: Think wether perhaps it's better to throw the error
+    // TODO: Think whether perhaps it's better to throw the error
     return { auth: false, err: e }
   }
 

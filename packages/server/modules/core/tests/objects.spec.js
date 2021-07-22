@@ -305,7 +305,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   } )
 
-  it( 'should query childern and sort them by a boolean value ', async ( ) => {
+  it( 'should query children and sort them by a boolean value ', async ( ) => {
     let test = await getObjectChildrenQuery( {
       streamId: stream.id,
       objectId: parentObjectId,
@@ -330,7 +330,7 @@ describe( 'Objects @core-objects', ( ) => {
 
   } )
 
-  it( 'should query childern and sort them by a string value ', async ( ) => {
+  it( 'should query children and sort them by a string value ', async ( ) => {
     let limVal = 20
 
     let test = await getObjectChildrenQuery( {
@@ -355,13 +355,13 @@ describe( 'Objects @core-objects', ( ) => {
 
     expect( test.objects[ 0 ].data.name ).to.equal( 'mr. 0' )
     expect( test.objects[ 1 ].data.name ).to.equal( 'mr. 1' )
-    expect( test.objects[ 2 ].data.name ).to.equal( 'mr. 10' ) // remeber kids, this is a lexicographical sort
+    expect( test.objects[ 2 ].data.name ).to.equal( 'mr. 10' ) // remember kids, this is a lexicographical sort
     expect( test.objects[ 4 ].data.name ).to.equal( 'mr. 12' )
     expect( test2.objects[ 0 ].data.name ).to.equal( 'mr. 13' )
 
   } )
 
-  it( 'should query childern and sort them by id by default ', async ( ) => {
+  it( 'should query children and sort them by id by default ', async ( ) => {
     let test = await getObjectChildrenQuery( {
       streamId: stream.id,
       objectId: parentObjectId,

@@ -41,7 +41,7 @@ describe( 'Password reset requests @passwordresets', ( ) => {
       .post( '/auth/pwdreset/request' )
       .expect( 400 )
 
-    // non-existant user
+    // non-existent user
     await request( expressApp )
       .post( '/auth/pwdreset/request' )
       .send( { email: 'doesnot@exist.here' } )
