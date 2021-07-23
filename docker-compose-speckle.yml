@@ -41,3 +41,12 @@ services:
     environment:
       DEBUG: "preview-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+
+  webhook-service:
+    build:
+      context: .
+      dockerfile: packages/webhook-service/Dockerfile
+    restart: always
+    environment:
+      DEBUG: "webhook-service:*"
+      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"

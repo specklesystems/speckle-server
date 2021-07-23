@@ -1,0 +1,82 @@
+extend type Stream {
+  webhooks(id: String): WebhookCollection
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+}
+
+extend type Mutation {
+  """
+  Creates a new webhook on a stream
+  """
+  webhookCreate(webhook: WebhookCreateInput!): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Updates an existing webhook
+  """
+  webhookUpdate(webhook: WebhookUpdateInput!): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  """
+  Deletes an existing webhook
+  """
+  webhookDelete(webhook: WebhookDeleteInput!): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+}
+
+type WebhookCollection {
+  totalCount: Int
+  items: [Webhook]
+}
+
+type Webhook {
+  id: String!
+  streamId: String!
+  url: String!
+  description: String
+  triggers: [String]!
+  enabled: Boolean
+  history(limit: Int! = 25): WebhookEventCollection
+}
+
+input WebhookCreateInput {
+  streamId: String!
+  url: String!
+  description: String
+  triggers: [String]!
+  secret: String
+  enabled: Boolean
+}
+
+input WebhookUpdateInput {
+  id: String!
+  streamId: String!
+  url: String
+  description: String
+  secret: String
+  enabled: Boolean
+  triggers: [String]
+}
+
+input WebhookDeleteInput {
+  id: String!
+  streamId: String!
+}
+
+type WebhookEventCollection{
+  totalCount: Int
+  items: [WebhookEvent]
+}
+
+type WebhookEvent {
+  id: String!
+  webhookId: String!
+  status: Int!
+  statusInfo: String!
+  retryCount: Int!
+  lastUpdate: DateTime!
+  payload: String!
+}
