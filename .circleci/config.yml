@@ -33,7 +33,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: cristi/ci-k8s-tor
+              only: cristi/webhookservice_ci_build
 
 jobs:
   test_server:
@@ -88,6 +88,9 @@ jobs:
       - run:
           name: Build Object Preview Service
           command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
+      - run:
+          name: Build Webhook Service
+          command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
       - run:
           name: Deploy
           command: |
