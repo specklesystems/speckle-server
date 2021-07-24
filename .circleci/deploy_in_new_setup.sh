@@ -46,6 +46,14 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --namespace=$K8S_NAMESPACE \
   set image deployment/speckle-preview-service main=$DOCKER_IMAGE_TAG-preview-service:$IMAGE_VERSION_TAG
 
+./kubectl \
+  --kubeconfig=/dev/null \
+  --server=$K8S_SERVER \
+  --certificate-authority=k8s_cert.crt \
+  --token=$K8S_TOKEN \
+  --namespace=$K8S_NAMESPACE \
+  set image deployment/speckle-webhook-service main=$DOCKER_IMAGE_TAG-webhook-service:$IMAGE_VERSION_TAG
+
 
 # Wait for rollout to complete
 ./kubectl \
@@ -71,3 +79,11 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --token=$K8S_TOKEN \
   --namespace=$K8S_NAMESPACE \
   rollout status -w deployment/speckle-preview-service --timeout=3m
+
+./kubectl \
+  --kubeconfig=/dev/null \
+  --server=$K8S_SERVER \
+  --certificate-authority=k8s_cert.crt \
+  --token=$K8S_TOKEN \
+  --namespace=$K8S_NAMESPACE \
+  rollout status -w deployment/speckle-webhook-service --timeout=3m
