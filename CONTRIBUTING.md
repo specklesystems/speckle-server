@@ -6,7 +6,7 @@ Thank you for reading this! Speckle's a rather wide network of parts that depend
 
 > **Speckle** is a quite large ecosystem of moving parts. Any changes may have unintended effects, that can cause problems quickly for many people (and processes) that rely on Speckle.
 
-This means that what might look like a simple quick change in one repo may have a big hidden cost that propagates around other parts of the project. We're all here to help each other, and this guide is meant to help you get started and promote a framework that can untangle all these dependecies through discussion!
+This means that what might look like a simple quick change in one repo may have a big hidden cost that propagates around other parts of the project. We're all here to help each other, and this guide is meant to help you get started and promote a framework that can untangle all these dependencies through discussion!
 
 ## Bugs & Issues 🐞
 
@@ -19,6 +19,10 @@ This means that what might look like a simple quick change in one repo may have 
 - Can't mention this often enough: tells us how to reproduce the problem! We will ignore or flag as such issues without reproduction steps.
 
 - Try to reference & note all potentially affected projects.
+
+### Security vulnerabilities
+
+For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems.
 
 ### Sending a PR for Bug Fixes
 
@@ -41,7 +45,7 @@ Changes that are cosmetic in nature and do not add anything substantial to the s
 
 Why? However trivial the changes might seem, there might be subtle reasons for the original code to be as it is. Furthermore, there are a lot of potential hidden costs (that even maintainers themselves are not aware of fully!) and they eat up review time unncessarily.
 
-> **Examples**: modifying the colour of an UI element in one client may have a big hidden cost and need propagation in several other clients that implement a similar ui element. Changing the default port or specifiying `localhost` instead of `0.0.0.0` breaks cross-vm debugging and developing.
+> **Examples**: modifying the colour of an UI element in one client may have a big hidden cost and need propagation in several other clients that implement a similar ui element. Changing the default port or specifying `localhost` instead of `0.0.0.0` breaks cross-vm debugging and developing.
 
 ## Wrap up
 

@@ -2,6 +2,7 @@ FROM node:14.16.0-buster-slim as node
 
 RUN apt-get update && apt-get install -y \
   tini \
+  fonts-dejavu-core fontconfig \
   && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait

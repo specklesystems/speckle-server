@@ -14,6 +14,8 @@ const { getObject } = require( '../core/services/objects' )
 const { getCommitsByStreamId, getCommitsByBranchName, getCommitById } = require( '../core/services/commits' )
 const { getPreviewImage, createObjectPreview, getObjectPreviewInfo } = require( './services/previews' )
 
+const { makeOgImage } = require( './ogImage' )
+
 exports.init = ( app, options ) => {
   if ( process.env.DISABLE_PREVIEWS ) {
     debug( 'speckle:modules' )( '📸 Object preview module is DISABLED' )
@@ -23,15 +25,15 @@ exports.init = ( app, options ) => {
 
   let DEFAULT_ANGLE = '0'
 
-  let sendObjectPreview = async ( req, res, streamId, objectId, angle ) => {
+  let getObjectPreviewBufferOrFilepath = async ( { streamId, objectId, angle } ) => {
     if ( process.env.DISABLE_PREVIEWS ) {
-      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 
     // Check if objectId is valid
     const dbObj = await getObject( { streamId, objectId } )
     if ( !dbObj ) {
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_error.png` }
     }
 
     // Get existing preview metadata
@@ -41,22 +43,42 @@ exports.init = ( app, options ) => {
     }
 
     if ( previewInfo.previewStatus != 2 || !previewInfo.preview ) {
-      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 
     let previewImgId = previewInfo.preview[angle]
     if ( !previewImgId ) {
       debug( 'speckle:errors' )( `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}` )
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_error.png` }
     }
     let previewImg = await getPreviewImage( { previewId: previewImgId } )
     if ( !previewImg ) {
       debug( 'speckle:errors' )( `Error: Preview image not found: ${previewImgId}` )
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_error.png` }
     }
+    return { type: 'buffer', buffer: previewImg }
+  }
 
-    res.contentType( 'image/png' )
-    res.send( previewImg )
+  let sendObjectPreview = async ( req, res, streamId, objectId, angle ) => {
+    let previewBufferOrFile = await getObjectPreviewBufferOrFilepath( { streamId, objectId, angle } )
+
+    if ( req.query.postprocess === 'og' ) {
+      const stream = await getStream( { streamId: req.params.streamId } )
+      const streamName = stream.name
+
+      if ( previewBufferOrFile.type === 'file' ) {
+        previewBufferOrFile = { type: 'buffer', buffer: await makeOgImage( previewBufferOrFile.file, streamName ) }
+      } else {
+        previewBufferOrFile = { type: 'buffer', buffer: await makeOgImage( previewBufferOrFile.buffer, streamName ) }
+      }
+    }
+    
+    if ( previewBufferOrFile.type === 'file' ) {
+      res.sendFile( previewBufferOrFile.file )
+    } else {
+      res.contentType( 'image/png' )
+      res.send( previewBufferOrFile.buffer )  
+    }
   }
 
   let checkStreamPermissions = async ( req ) => {
@@ -103,7 +125,7 @@ exports.init = ( app, options ) => {
       return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
     }
     
-    let { commits } = await getCommitsByStreamId( { streamId: req.params.streamId, limit: 1 } )
+    let { commits } = await getCommitsByStreamId( { streamId: req.params.streamId, limit: 1, ignoreGlobalsBranch: true } )
     if ( !commits || commits.length == 0 ) {
       return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
     }

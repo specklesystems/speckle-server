@@ -61,6 +61,9 @@
     "prom-client": "^13.1.0",
     "redis": "^3.1.1",
     "sanitize-html": "^2.4.0",
+    "sharp": "^0.28.3",
+    "string-pixel-width": "^1.10.0",
+    "xml-escape": "^1.1.0",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {

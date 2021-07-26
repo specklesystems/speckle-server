@@ -10,6 +10,61 @@ function sleep( ms ) {
   } )
 }
 
+async function pageFunction( objectUrl ) {
+  waitForAnimation = async ( ms=70 ) => await new Promise( ( resolve ) => {
+    setTimeout( resolve, ms )
+  } )
+  let ret = {
+    duration: 0,
+    mem: 0,
+    scr: {}
+  }
+
+  let t0 = Date.now()
+  let stepAngle = 0.261799
+  v.postprocessing = false
+  v.sceneManager.skipPostLoad = true
+  try {
+    await v.loadObject( objectUrl, '' )
+  } catch ( error ) {
+    // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
+    await waitForAnimation( 1000 )
+  }
+  
+  v.interactions.zoomExtents( 0.95, false )
+  await waitForAnimation()
+  ret.scr['0'] = v.interactions.screenshot()
+
+  for ( let i = 1; i < 3; i++ ) {
+    v.interactions.rotateCamera( stepAngle, undefined, false )
+    await waitForAnimation()
+    ret.scr[( -1 * i ) + ''] = v.interactions.screenshot()
+  }
+  v.interactions.rotateCamera( -2 * stepAngle, undefined, false )
+  await waitForAnimation()
+  for ( let i = 1; i < 3; i++ ) {
+    v.interactions.rotateCamera( -1 * stepAngle, undefined, false )
+    await waitForAnimation()
+    ret.scr[i + ''] = v.interactions.screenshot()
+  }
+  /*
+  v.interactions.rotateCamera( 2 * stepAngle, transition=false )
+  await waitForAnimation( 500 )
+
+  let dirArray = [ 'top', 'bottom', 'front', 'back', 'left', 'right' ]
+  for ( let i in dirArray ) {
+    let d = dirArray[i]
+    v.interactions.rotateTo( d )
+    await waitForAnimation()
+    ret.scr[d] = v.interactions.screenshot()
+  }
+  */
+
+  ret.duration = ( Date.now() - t0 ) / 1000
+  ret.mem = { total: performance.memory.totalJSHeapSize, used: performance.memory.usedJSHeapSize }
+  return ret
+}
+
 async function getScreenshot( objectUrl ) {
   let launchParams = { args: [ '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage' ] }
   // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
@@ -17,70 +72,45 @@ async function getScreenshot( objectUrl ) {
   // }
   const browser = await puppeteer.launch( launchParams )
   const page = await browser.newPage()
-  await page.goto( 'http://127.0.0.1:3001/render/' )
 
-  console.log( 'Page loaded' )
-
-  //console.time( 'lo' )
-  const ret = await page.evaluate( async ( objectUrl ) => {
-    waitForAnimation = async ( ms=70 ) => await new Promise( ( resolve ) => {
-      setTimeout( resolve, ms )
-    } )
-    let ret = {
-      duration: 0,
-      mem: 0,
-      scr: {}
-    }
-    let t0 = Date.now()
-    let stepAngle = 0.261799
-    v.postprocessing = false
-    v.sceneManager.skipPostLoad = true
+  const wrapperPromise = new Promise( async ( resolve, reject ) => {
     try {
-      await v.loadObject( objectUrl, '' )
-    } catch ( error ) {
-      // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
-      await waitForAnimation( 1000 )
-    }
+      await page.goto( 'http://127.0.0.1:3001/render/' )
+
+      console.log( 'Page loaded' )
+
+      // Handle page crash (oom?)
+      page.on( 'error', ( err ) => {
+        reject ( err )
+      } )
     
-    v.interactions.zoomExtents( 0.95, false )
-    await waitForAnimation()
-    ret.scr['0'] = v.interactions.screenshot()
+      page.evaluate( pageFunction, objectUrl )
+        .then( ret => { resolve( ret ) } )
+        .catch( err => { reject( err ) } )
 
-    for ( let i = 1; i < 3; i++ ) {
-      v.interactions.rotateCamera( stepAngle, undefined, false )
-      await waitForAnimation()
-      ret.scr[( -1 * i ) + ''] = v.interactions.screenshot()
+    } catch ( err ) {
+      return reject( err )
     }
-    v.interactions.rotateCamera( -2 * stepAngle, undefined, false )
-    await waitForAnimation()
-    for ( let i = 1; i < 3; i++ ) {
-      v.interactions.rotateCamera( -1 * stepAngle, undefined, false )
-      await waitForAnimation()
-      ret.scr[i + ''] = v.interactions.screenshot()
+
+  } )
+
+  let ret = null
+  try {
+    ret = await wrapperPromise
+  } catch ( err ) {
+    console.log( `Error generating preview for ${objectUrl}: ${err}` )
+    ret = {
+      error: err,
     }
-    /*
-    v.interactions.rotateCamera( 2 * stepAngle, transition=false )
-    await waitForAnimation( 500 )
-
-    let dirArray = [ 'top', 'bottom', 'front', 'back', 'left', 'right' ]
-    for ( let i in dirArray ) {
-      let d = dirArray[i]
-      v.interactions.rotateTo( d )
-      await waitForAnimation()
-      ret.scr[d] = v.interactions.screenshot()
-    }
-    */
-
-    ret.duration = ( Date.now() - t0 ) / 1000
-    ret.mem = { total: performance.memory.totalJSHeapSize, used: performance.memory.usedJSHeapSize }
-    return ret
-  }, objectUrl )
-
+  }
   
   // Don't await for cleanup
   browser.close()
 
-  //console.timeEnd( 'lo' )
+  if ( ret.error ) {
+    return null
+  }
+
   console.log( `Generated preview for ${objectUrl} in ${ret.duration} sec with ${ret.mem.total / 1000000} MB of memory` )
   return ret.scr
 
@@ -124,9 +154,13 @@ router.get( '/:streamId/:objectId', async function( req, res, next ) {
   */
 
   console.log( objectUrl )
-  console.time( 'test' )
+
   let scr = await getScreenshot( objectUrl )
-  console.timeEnd( 'test' )
+
+  if ( !scr ) {
+    return res.status( 500 ).end()
+  }
+
   // res.setHeader( 'content-type', 'image/png' )
   res.send( scr )
 } )
