@@ -23,7 +23,32 @@
             />
           </v-dialog>
         </div>
-        <v-subheader class="my-3">Recent streams</v-subheader>
+
+        <v-list
+          v-if="streams && streams.items.length > 0"
+          color="transparent"
+          class="recent-streams ml-3"
+          two-lines
+        >
+          <v-subheader class="mt-3">Recent streams</v-subheader>
+          <div v-for="(s, i) in streams.items" :key="i">
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title class="subtitle-1">
+                  <router-link :to="'streams/' + s.id">
+                    {{ s.name }}
+                  </router-link>
+                </v-list-item-title>
+                <v-list-item-subtitle class="caption">
+                  <i>
+                    Updated
+                    <timeago :datetime="s.updatedAt"></timeago>
+                  </i>
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </div>
+        </v-list>
         <p></p>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
@@ -153,6 +178,7 @@ export default {
             items {
               id
               name
+              updatedAt
             }
           }
         }
@@ -194,4 +220,16 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style>
+.recent-streams a {
+  text-decoration: none;
+}
+
+.recent-streams .v-list-item__title {
+  font-family: 'Space Grotesk' !important;
+}
+
+/* .recent-streams a:hover {
+  text-decoration: underline;
+} */
+</style>
