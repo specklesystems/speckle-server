@@ -186,7 +186,7 @@ export default {
 </script>
 <style>
 .logo {
-  font-family: Space Grotesk, sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
   text-transform: none;
   color: rgb(37, 99, 235);
   font-weight: 500;

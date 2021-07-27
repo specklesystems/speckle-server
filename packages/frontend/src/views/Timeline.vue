@@ -2,7 +2,7 @@
   <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <!-- <v-card rounded="lg" class="mt-5 mx-5" elevation="0" color="background">
+        <div class="mt-5 mx-5">
           <div class="d-flex flex-column">
             <v-btn large rounded color="primary" class="mb-2" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
@@ -16,12 +16,15 @@
           <server-invite-dialog ref="serverInviteDialog" />
           <v-dialog v-model="newStreamDialog" max-width="500">
             <stream-new-dialog
+              v-if="streams"
               :open="newStreamDialog"
               :redirect="streams.items.length > 0"
               @created="newStreamDialog = false"
             />
           </v-dialog>
-        </v-card> -->
+        </div>
+        <v-subheader class="my-3">Recent streams</v-subheader>
+        <p></p>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
         <v-row>
@@ -35,75 +38,7 @@
 
           <v-col v-else>
             <div>
-              <!-- <v-card elevation="0" class="my-5" flat>
-                <v-card-text class="pb-0">
-                  <span>Filter activity feed</span>
-                  <div class="d-flex">
-                    <v-select
-                      v-model="activityFilter.type"
-                      :items="filterSelect"
-                      item-text="name"
-                      item-value="type"
-                      label="Activity type"
-                      dense
-                      clearable
-                    ></v-select>
-                    <v-menu
-                      ref="menub"
-                      v-model="menu2"
-                      :close-on-content-click="true"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="auto"
-                    >
-                      <template #activator="{ on, attrs }">
-                        <v-text-field
-                          v-model="activityFilter.after"
-                          label="After date"
-                          prepend-icon="mdi-calendar"
-                          readonly
-                          v-bind="attrs"
-                          dense
-                          clearable
-                          v-on="on"
-                        ></v-text-field>
-                      </template>
-                      <v-date-picker
-                        v-model="activityFilter.after"
-                        no-title
-                        color="primary"
-                      ></v-date-picker>
-                    </v-menu>
-                    <v-menu
-                      ref="menu"
-                      v-model="menu"
-                      :close-on-content-click="true"
-                      transition="scale-transition"
-                      offset-y
-                      min-width="auto"
-                    >
-                      <template #activator="{ on, attrs }">
-                        <v-text-field
-                          v-model="activityFilter.before"
-                          label="Before date"
-                          prepend-icon="mdi-calendar"
-                          readonly
-                          v-bind="attrs"
-                          dense
-                          clearable
-                          v-on="on"
-                        ></v-text-field>
-                      </template>
-                      <v-date-picker
-                        v-model="activityFilter.before"
-                        no-title
-                        color="primary"
-                        @cancel="activityFilter.before = null"
-                      ></v-date-picker>
-                    </v-menu>
-                  </div>
-                </v-card-text>
-              </v-card> -->
+              <v-subheader class="mb-3">Recent activity</v-subheader>
               <div v-if="timeline" key="activity-list">
                 <list-item-activity
                   v-for="activity in timeline.items"
@@ -129,17 +64,20 @@
 
 <script>
 import ListItemActivity from '@/components/ListItemActivity'
+import ServerInviteDialog from '@/components/dialogs/ServerInviteDialog.vue'
+import StreamNewDialog from '@/components/dialogs/StreamNewDialog'
 import gql from 'graphql-tag'
 import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'Timeline',
-  components: { ListItemActivity, InfiniteLoading },
+  components: { ListItemActivity, InfiniteLoading, ServerInviteDialog, StreamNewDialog },
   props: {
     type: String
   },
   data() {
     return {
+      newStreamDialog: false,
       filterTypes: [
         'branch_create',
         'branch_delete',
@@ -204,11 +142,29 @@ export default {
       `,
       update: (data) => {
         return data.user.timeline
-      }
+      },
+      fetchPolicy: 'cache-and-network'
+    },
+    streams: {
+      prefetch: true,
+      query: gql`
+        query {
+          streams {
+            items {
+              id
+              name
+            }
+          }
+        }
+      `,
+      fetchPolicy: 'cache-and-network' //https://www.apollographql.com/docs/react/data/queries/
     }
   },
 
   methods: {
+    showServerInviteDialog() {
+      this.$refs.serverInviteDialog.show()
+    },
     infiniteHandler($state) {
       this.$apollo.queries.timeline.fetchMore({
         variables: {

@@ -1,54 +1,139 @@
 <template>
-  <div>
+  <div class="list-item-activity">
     <div v-if="user" class="caption mb-2">
       <user-avatar :id="user.id" :avatar="user.avatar" :size="30" :name="user.name" />
       &nbsp;
       <a target="_blank" :href="'/profile/' + user.id">{{ user.name }}</a>
       &nbsp;
-      <span>{{ activityInfo.modifier }} &nbsp;</span>
+      <span>{{ activityInfo.captionText }} &nbsp;</span>
       <span v-if="stream">
-        <a target="_blank" :href="'/streams/' + activity.streamId">{{ stream.name }}</a>
+        <a target="_blank" :href="url">{{ stream.name }}</a>
       </span>
       <timeago :datetime="activity.time" class="font-italic ma-1"></timeago>
     </div>
-    <v-card class="mb-5 activity-card">
-      <v-card-text class="pa-5 subtitle-1">
-        <!-- <div
-          :class="tagColor"
-          class="rounded-pill pa-2 white--text d-inline-flex justify-center align-center"
-        >
-          <v-icon small color="white">{{ activityInfo.icon }}</v-icon>
-        </div> -->
-        <span>
-          <span v-if="activityInfo.description" v-html="activityInfo.description"></span>
-          <span v-else-if="type !== 'stream_permissions'">
-            {{ type | capitalize }}
-            <span class="font-weight-bold font-italic primary--text">
-              {{ activityInfo.name }}
-            </span>
-          </span>
-          <span v-else>
-            <v-chip v-if="targetUser" small class="pl-0">
-              <v-avatar color="grey lighten-3" class="mr-1">
-                <img
-                  :src="
-                    targetUser.avatar || `https://robohash.org/` + targetUser.id + `.png?size=40x40`
-                  "
-                  :alt="targetUser.name"
-                />
-              </v-avatar>
-              {{ user.name }}
-            </v-chip>
-            <v-progress-circular v-else indeterminate></v-progress-circular>
-          </span>
 
-          <span v-if="type !== 'stream' && type !== 'user'" id="streamAttribution">
-            in stream
-            <span class="font-weight-bold font-italic primary--text">
-              {{ stream ? stream.name : `[Deleted] ${activity.streamId}` }}
-            </span>
+    <!-- STREAM PERMISSIONS -->
+    <v-card
+      v-if="activity.actionType.includes('stream_permissions') && stream"
+      class="mb-5 ml-10 activity-card"
+    >
+      <v-card-text class="pa-5 body-1">
+        <v-chip v-if="targetUser" pill :color="activityInfo.color">
+          <v-avatar left>
+            <user-avatar
+              :id="targetUser.id"
+              :avatar="targetUser.avatar"
+              :size="30"
+              :name="targetUser.name"
+            />
+          </v-avatar>
+
+          {{ targetUser.name }}
+        </v-chip>
+
+        <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+        <v-chip v-if="activity.info.role" small outlined class="ml-3">
+          <v-icon small left>mdi-account-key-outline</v-icon>
+          {{ activity.info.role.split(':')[1] }}
+        </v-chip>
+      </v-card-text>
+    </v-card>
+
+    <!-- STREAM -->
+    <v-card
+      v-else-if="activity.resourceType === 'stream' && stream"
+      class="mb-5 ml-10 activity-card"
+    >
+      <v-card-text class="pa-5 body-1">
+        <a :href="url" class="title">
+          {{ stream.name }}
+        </a>
+        <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+        <div v-if="activityInfo.description" class="mt-3" v-html="activityInfo.description"></div>
+      </v-card-text>
+      <v-card-actions class="pt-0">
+        <div>
+          <v-btn
+            v-tooltip="
+              stream.branches.totalCount +
+              ' branch' +
+              (stream.branches.totalCount === 1 ? '' : 'es')
+            "
+            color="primary"
+            text
+            class="px-0 ml-3"
+            small
+            :to="'/streams/' + stream.id + '/branches'"
+          >
+            <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
+            {{ stream.branches.totalCount }}
+          </v-btn>
+
+          <v-btn
+            v-tooltip="
+              stream.commits.totalCount + ' commit' + (stream.commits.totalCount === 1 ? '' : 's')
+            "
+            color="primary"
+            text
+            class="px-0 ml-3"
+            small
+            :to="'/streams/' + stream.id + '/branches/main/commits'"
+          >
+            <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
+            {{ stream.commits.totalCount }}
+          </v-btn>
+          <v-chip small outlined class="ml-3">
+            <v-icon small left>mdi-account-key-outline</v-icon>
+            {{ stream.role.split(':')[1] }}
+          </v-chip>
+          <span class="caption mb-2 ml-3 font-italic">
+            Updated
+            <timeago :datetime="stream.updatedAt"></timeago>
           </span>
-        </span>
+        </div>
+      </v-card-actions>
+    </v-card>
+
+    <!-- BRANCHES -->
+    <v-card v-else-if="activity.resourceType === 'branch'" class="mb-5 ml-10 activity-card">
+      <v-card-text class="pa-5 body-1">
+        <v-chip :to="url" :color="activityInfo.color">
+          <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
+          {{ branchName }}
+        </v-chip>
+        <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+        <div v-if="activityInfo.description" class="mt-3" v-html="activityInfo.description"></div>
+      </v-card-text>
+    </v-card>
+
+    <!-- COMMITS -->
+    <v-card v-else-if="activity.resourceType === 'commit'" class="mb-5 ml-10 activity-card">
+      <v-card-text class="pa-5">
+        <div>
+          <v-chip :to="url" :color="activityInfo.color">
+            <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
+            {{ activity.resourceId }}
+          </v-chip>
+          <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+          <span v-if="activity.actionType === 'commit_create' && commit">
+            <v-chip
+              :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
+              small
+              color="primary"
+            >
+              <v-icon small class="float-left" light>mdi-source-branch</v-icon>
+              {{ commit.branchName }}
+            </v-chip>
+            <span class="mx-3 body-2 font-italic">from</span>
+            <source-app-avatar :application-name="commit.sourceApplication" />
+          </span>
+          <span v-if="activity.actionType === 'commit_create' && !commit">[commit deleted]</span>
+        </div>
+        <div
+          v-if="activityInfo.description"
+          class="mt-3 body-1"
+          v-html="activityInfo.description"
+        ></div>
       </v-card-text>
     </v-card>
   </div>
@@ -56,10 +141,11 @@
 
 <script>
 import UserAvatar from './UserAvatar'
+import SourceAppAvatar from './SourceAppAvatar'
 import gql from 'graphql-tag'
 
 export default {
-  components: { UserAvatar },
+  components: { UserAvatar, SourceAppAvatar },
   props: ['activity'],
   apollo: {
     user: {
@@ -97,7 +183,7 @@ export default {
         }
       },
       skip() {
-        return this.activity.info.targetUser === null || this.activity.info.targetUser === undefined
+        return !this.activity.info.targetUser
       }
     },
 
@@ -106,6 +192,14 @@ export default {
         query($id: String!) {
           stream(id: $id) {
             name
+            updatedAt
+            role
+            branches {
+              totalCount
+            }
+            commits {
+              totalCount
+            }
           }
         }
       `,
@@ -114,101 +208,175 @@ export default {
           id: this.activity.streamId
         }
       }
+    },
+    branch: {
+      query: gql`
+        query($id: String!, $branchName: String!) {
+          stream(id: $id) {
+            branch(name: $branchName) {
+              id
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.activity.streamId,
+          branchName: this.branchName
+        }
+      },
+      skip() {
+        return this.activity.resourceType !== 'branch'
+      },
+      update: (data) => data.stream.branch
+    },
+    commit: {
+      query: gql`
+        query($id: String!, $commitId: String!) {
+          stream(id: $id) {
+            commit(id: $commitId) {
+              branchName
+              sourceApplication
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.activity.streamId,
+          commitId: this.activity.resourceId
+        }
+      },
+      skip() {
+        return this.activity.resourceType !== 'commit'
+      },
+      update: (data) => data.stream.commit
     }
   },
   computed: {
-    modifier() {
+    captionText() {
       return this.activity.actionType.split('_').pop()
     },
-    type() {
-      var x = this.activity.actionType.split('_')
-      x.pop()
-      return x.join('_')
+    branchName() {
+      if (this.activity.info?.branch) return this.activity.info.branch.name
+      else if (this.activity.info?.new?.name) return this.activity.info.new.name
+      else if (this.activity.info?.old?.name) return this.activity.info.old.name
+      return ''
     },
     url() {
-      if (this.modifier === 'delete' || this.modifier === 'remove') return null
-      switch (this.type) {
+      switch (this.activity.resourceType) {
         case 'stream':
-          return `/streams/${this.activity.streamId}`
-        case 'stream_permissions':
-          return `/streams/${this.activity.streamId}`
+          return this.stream ? `/streams/${this.activity.streamId}` : null
         case 'branch':
-          return `/streams/${this.activity.streamId}/branches/${this.activity.info.branch?.name}`
+          return this.branch
+            ? `/streams/${this.activity.streamId}/branches/${this.branchName}`
+            : null
         case 'commit':
-          return `/streams/${this.activity.streamId}/commits/${this.activity.resourceId}`
+          return this.commit
+            ? `/streams/${this.activity.streamId}/commits/${this.activity.resourceId}`
+            : null
         case 'user':
           return '/profile'
         default:
           return null
       }
     },
+
     activityInfo() {
       switch (this.activity.actionType) {
         case 'stream_create':
           return {
-            icon: 'mdi-cloud',
-            modifier: 'created'
+            captionText: 'created',
+            actionText: 'new stream',
+            description: this.activity?.info?.stream?.description
+              ? this.truncate(this.activity.info.stream.description, 50)
+              : 'No description provided.'
           }
         case 'stream_update':
           return {
-            icon: 'mdi-cloud',
-            modifier: 'updated',
-            description: this.streamUpdatedDescription()
+            captionText: 'updated',
+            actionText: 'stream updated',
+            description: this.updatedDescription()
           }
-        case 'stream_delete':
+        case 'stream_delete': //not used
           return {
-            icon: 'mdi-cloud-alert',
-            modifier: 'deleted'
+            captionText: 'deleted'
           }
         case 'stream_permissions_add':
           return {
-            icon: 'mdi-cloud-alert',
-            modifier: 'added a user to'
+            captionText: 'added a user to',
+            actionText: 'user added as ',
+            color: 'success'
           }
         case 'stream_permissions_remove':
           return {
-            icon: 'mdi-cloud-alert',
-            modifier: 'removed a user from'
-          }
-        case 'commit_create':
-          return {
-            icon: 'mdi-timeline-plus',
-            modifier: 'pushed to'
-          }
-        case 'commit_delete':
-          return {
-            icon: 'mdi-timeline-minus',
-            modifier: 'deleted a commit from'
+            captionText: 'removed a user from',
+            actionText: 'user removed',
+            color: 'error'
           }
         case 'branch_create':
           return {
             icon: 'mdi-source-branch-plus',
-            modifier: 'branched'
+            captionText: 'created a branch in',
+            actionText: 'new branch',
+            color: 'success',
+            description: this.activity?.info?.branch?.description
+              ? this.truncate(this.activity.info.branch.description, 50)
+              : 'No description provided.'
           }
         case 'branch_delete':
           return {
             icon: 'mdi-source-branch-minus',
-            modifier: 'deleted a branch from'
+            captionText: 'deleted a branch from',
+            actionText: 'branch deleted',
+            color: 'error'
           }
         case 'branch_update':
           return {
             icon: 'mdi-source-branch-sync',
-            modifier: 'updated a branch in'
+            captionText: 'updated a branch in',
+            actionText: 'branch updated',
+            color: 'primary',
+            description: this.updatedDescription()
           }
+        case 'commit_create':
+          return {
+            icon: 'mdi-timeline-plus-outline',
+            captionText: 'pushed to',
+            actionText: 'new commit in',
+            color: 'success',
+            description: this.activity?.info?.commit?.message
+          }
+        case 'commit_update':
+          return {
+            icon: 'mdi-timeline-text-outline',
+            captionText: 'updated a commit in',
+            actionText: 'commit updated',
+            color: 'primary',
+            description: this.updatedDescription()
+          }
+        case 'commit_delete':
+          return {
+            icon: 'mdi-timeline-remove-outline',
+            captionText: 'deleted a commit from',
+            color: 'error',
+            actionText: 'commit deleted'
+          }
+
         case 'user_create':
           return {
             icon: 'mdi-account-plus',
-            modifier: 'created'
+            captionText: 'created'
           }
         case 'user_update':
           return {
             icon: 'mdi-account-convert',
-            modifier: 'updated'
+            captionText: 'updated'
           }
         case 'user_delete':
           return {
             icon: 'mdi-account-remove',
-            modifier: 'deleted'
+            captionText: 'deleted'
           }
         default:
           return {
@@ -216,28 +384,10 @@ export default {
             name: this.activity.actionType
           }
       }
-    },
-
-    tagColor() {
-      var split = this.activity.actionType.split('_')
-      var mod = split[split.length - 1]
-      console.log('mod', this.activity.actionType, mod)
-      switch (mod) {
-        case 'create':
-          return 'success'
-        case 'add':
-          return 'success'
-        case 'delete':
-          return 'error'
-        case 'remove':
-          return 'error'
-        default:
-          return 'primary'
-      }
     }
   },
   methods: {
-    streamUpdatedDescription() {
+    updatedDescription() {
       let changes = ''
       for (const [key] of Object.entries(this.activity.info.new)) {
         if (
@@ -246,18 +396,29 @@ export default {
         ) {
           if (key === 'name')
             changes +=
-              '<p>✏️ Renamed from <i>' +
+              '<p>✏️ Renamed from <i><del>' +
               this.activity.info.old[key] +
-              '</i> to <i>' +
+              '</del></i> to <i>' +
               this.activity.info.new[key] +
               '</i></p>'
-          if (key === 'description')
+          if (key === 'description') {
+            let oldDesc = this.activity.info.old[key] ? this.activity.info.old[key] : 'empty'
             changes +=
-              '<p>📋 Description changed from <i>' +
-              this.truncate(this.activity.info.old[key]) +
-              '</i> to <i>' +
+              '<p>📋 Description changed from <i><del>' +
+              this.truncate(oldDesc) +
+              '</del></i> to <i>' +
               this.truncate(this.activity.info.new[key]) +
               '</ib></p>'
+          }
+          if (key === 'message') {
+            let oldDesc = this.activity.info.old[key] ? this.activity.info.old[key] : 'empty'
+            changes +=
+              '<p>📋 Message changed from <i><del>' +
+              this.truncate(oldDesc) +
+              '</del></i> to <i>' +
+              this.truncate(this.activity.info.new[key]) +
+              '</ib></p>'
+          }
           if (key === 'isPublic' && this.activity.info.new[key])
             changes += '<p>👀 Stream is now <i>public</i></p>'
           if (key === 'isPublic' && !this.activity.info.new[key])
@@ -267,9 +428,10 @@ export default {
 
       return changes
     },
-    truncate(input) {
-      if (input.length > 25) {
-        return input.substring(0, 25) + '...'
+    truncate(input, length = 25) {
+      if (!input) return ''
+      if (input.length > length) {
+        return input.substring(0, length) + '...'
       }
       return input
     }
@@ -280,5 +442,8 @@ export default {
 <style>
 .activity-card p {
   margin: 0 !important;
+}
+.list-item-activity a {
+  text-decoration: none;
 }
 </style>

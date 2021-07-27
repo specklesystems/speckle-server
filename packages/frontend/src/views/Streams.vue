@@ -2,7 +2,7 @@
   <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <v-card rounded="lg" class="mt-5 mx-5" elevation="0" color="background">
+        <div class="mt-5 mx-5">
           <div class="d-flex flex-column">
             <v-btn large rounded color="primary" class="mb-2" block @click="newStreamDialog = true">
               <v-icon small class="mr-1">mdi-plus-box</v-icon>
@@ -21,9 +21,6 @@
               @created="newStreamDialog = false"
             />
           </v-dialog>
-        </v-card>
-        <div v-if="$apollo.loading" class="pa-3 mx-5 mt-5">
-          <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
         </div>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
@@ -374,9 +371,6 @@ export default {
         return -1
       }
       return 0
-    },
-    showServerInviteDialog() {
-      this.$refs.serverInviteDialog.show()
     }
   }
 }
