@@ -70,3 +70,10 @@ services:
     environment:
       DEBUG: "preview-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+
+  speckle-webhook-service:
+    image: speckle/speckle-webhook-service:2
+    restart: always
+    environment:
+      DEBUG: "webhook-service:*"
+      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
