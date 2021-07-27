@@ -63,13 +63,20 @@ const routes = [
         path: '',
         name: 'home',
         meta: {
+          title: 'Home | Speckle'
+        },
+        component: () => import('../views/Timeline.vue')
+      },
+      {
+        path: 'streams',
+        name: 'streams',
+        meta: {
           title: 'Streams | Speckle'
         },
         component: () => import('../views/Streams.vue')
       },
       {
         path: 'streams/:streamId',
-        name: 'streams',
         meta: {
           title: 'Stream | Speckle'
         },

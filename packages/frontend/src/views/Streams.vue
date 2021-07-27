@@ -13,11 +13,13 @@
               Send an invite
             </v-btn>
           </div>
-          <server-invite-dialog ref="serverInviteDialog"/>
+          <server-invite-dialog ref="serverInviteDialog" />
           <v-dialog v-model="newStreamDialog" max-width="500">
-            <stream-new-dialog :open="newStreamDialog"
-                               :redirect="streams.items.length > 0"
-                               @created="newStreamDialog = false"/>
+            <stream-new-dialog
+              :open="newStreamDialog"
+              :redirect="streams.items.length > 0"
+              @created="newStreamDialog = false"
+            />
           </v-dialog>
         </v-card>
         <div v-if="$apollo.loading" class="pa-3 mx-5 mt-5">
@@ -25,14 +27,7 @@
         </div>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
-        <v-card>
-          <v-tabs centered grow>
-            <v-tab @click="activeTab = 'streams'">Streams</v-tab>
-            <v-tab @click="activeTab = 'activity'">Activity</v-tab>
-          </v-tabs>
-        </v-card>
-        <activity-feed v-if="activeTab === 'activity'"></activity-feed>
-        <v-row v-else-if="activeTab === 'streams'">
+        <v-row>
           <v-col v-if="$apollo.loading">
             <v-card elevation="0" color="transparent">
               <div v-if="$apollo.loading" class="my-5">
@@ -57,10 +52,21 @@
             </v-card>
 
             <v-row>
-              <v-col v-for="(stream, i) in streams.items" :key="i" cols="12" sm="12" md="12" lg="6" xl="4">
+              <v-col
+                v-for="(stream, i) in streams.items"
+                :key="i"
+                cols="12"
+                sm="12"
+                md="12"
+                lg="6"
+                xl="4"
+              >
                 <list-item-stream :stream="stream"></list-item-stream>
               </v-col>
-              <infinite-loading v-if="streams.items.length < streams.totalCount" @infinite="infiniteHandler">
+              <infinite-loading
+                v-if="streams.items.length < streams.totalCount"
+                @infinite="infiniteHandler"
+              >
                 <div slot="no-more">These are all your streams!</div>
                 <div slot="no-results">There are no streams to load</div>
               </infinite-loading>
@@ -69,10 +75,16 @@
           <v-col v-if="quickstart > 0">
             <div v-if="quickstart === 1" class="ma-5 headline">
               Hello 👋
-              <br/>
+              <br />
               It seems you're new here, let's get you set up:
             </div>
-            <v-stepper v-model="quickstart" flat shaped vertical class="rounded-lg quickstart-stepper mt-5">
+            <v-stepper
+              v-model="quickstart"
+              flat
+              shaped
+              vertical
+              class="rounded-lg quickstart-stepper mt-5"
+            >
               <v-stepper-step :complete="quickstart > 1" step="1">
                 Create your first stream
               </v-stepper-step>
@@ -81,16 +93,19 @@
                 <p>
                   Streams are the
                   <b>primary way Speckle organizes data</b>
-                  . You can see them as a folder, a project or a repository. </p>
+                  . You can see them as a folder, a project or a repository.
+                </p>
                 <p>
                   Streams
                   <b>can be shared with others</b>
                   and can be made publicly visible on the web. Only the owner of a stream can manage
-                  its permissions and visibility. </p>
+                  its permissions and visibility.
+                </p>
                 <p>
                   In order to use Speckle you first need to create a stream, so
                   <b>go ahead and create your first one</b>
-                  ! </p>
+                  !
+                </p>
               </v-stepper-content>
 
               <v-stepper-step :complete="quickstart > 2" step="2">
@@ -102,11 +117,13 @@
                   Speckle Manager is a free
                   <b>desktop application</b>
                   that lets you install connectors for some of the most popular design and analysis
-                  software. </p>
+                  software.
+                </p>
                 <p>
                   The connectors
                   <b>exchange</b>
-                  geometry and BIM data with Speckle, so that you can access it wherever you want! </p>
+                  geometry and BIM data with Speckle, so that you can access it wherever you want!
+                </p>
                 <v-btn elevation="10" class="my-5" rounded color="primary" @click="downloadManager">
                   <v-icon small class="mr-4">mdi-download</v-icon>
                   Download Manager
@@ -123,15 +140,23 @@
                   <b>log into your account</b>
                   and then
                   <b>install the connectors</b>
-                  for the software that you use. </p>
+                  for the software that you use.
+                </p>
                 <p>
-                  <v-btn elevation="10" rounded color="primary" target="_blank" @click="refreshApplications">
+                  <v-btn
+                    elevation="10"
+                    rounded
+                    color="primary"
+                    target="_blank"
+                    @click="refreshApplications"
+                  >
                     Done
                   </v-btn>
                 </p>
 
                 <p v-if="refreshFailied" class="red--text caption">
-                  Please install Manager and log into your account to continue. </p>
+                  Please install Manager and log into your account to continue.
+                </p>
 
                 <p class="caption">Having issues logging in Manager? Try with the button below:</p>
                 <v-btn small text rounded color="primary" @click="addAccount">
@@ -151,15 +176,18 @@
                 <p>
                   Commits are
                   <b>snapshots or versions of your data in time.</b>
-                  Every time you send to Speckle, a new commit is created for you. </p>
+                  Every time you send to Speckle, a new commit is created for you.
+                </p>
                 <p>Send data to Speckle now by using one of our connetors!</p>
                 <p>
-                  <v-btn elevation="10"
-                         class="my-5"
-                         rounded
-                         color="primary"
-                         href="https://speckle.guide/user/connectors.html"
-                         target="_blank">
+                  <v-btn
+                    elevation="10"
+                    class="my-5"
+                    rounded
+                    color="primary"
+                    href="https://speckle.guide/user/connectors.html"
+                    target="_blank"
+                  >
                     How to use connectors
                   </v-btn>
                 </p>
@@ -172,36 +200,32 @@
   </v-container>
 </template>
 <script>
-import ListItemStream from "../components/ListItemStream";
-import StreamNewDialog from "../components/dialogs/StreamNewDialog";
-import UserAvatar from "../components/UserAvatar";
-import streamsQuery from "../graphql/streams.gql";
-import userQuery from "../graphql/user.gql";
-import InfiniteLoading from "vue-infinite-loading";
-import ServerInviteDialog from "../components/dialogs/ServerInviteDialog.vue";
-import gql from "graphql-tag";
-import ActivityFeed from "@/views/ActivityFeed";
+import ListItemStream from '../components/ListItemStream'
+import StreamNewDialog from '../components/dialogs/StreamNewDialog'
+import streamsQuery from '../graphql/streams.gql'
+import userQuery from '../graphql/user.gql'
+import InfiniteLoading from 'vue-infinite-loading'
+import ServerInviteDialog from '../components/dialogs/ServerInviteDialog.vue'
+import gql from 'graphql-tag'
 
 export default {
-  name: "Streams",
+  name: 'Streams',
   components: {
-    ActivityFeed,
     ListItemStream,
     StreamNewDialog,
     InfiniteLoading,
-    UserAvatar,
     ServerInviteDialog
   },
   apollo: {
     streams: {
       prefetch: true,
       query: streamsQuery,
-      fetchPolicy: "cache-and-network" //https://www.apollographql.com/docs/react/data/queries/
+      fetchPolicy: 'cache-and-network' //https://www.apollographql.com/docs/react/data/queries/
     },
     user: {
       query: userQuery,
       skip() {
-        return !this.loggedIn;
+        return !this.loggedIn
       }
     },
     $subscribe: {
@@ -212,10 +236,10 @@ export default {
           }
         `,
         result() {
-          this.$apollo.queries.streams.refetch();
+          this.$apollo.queries.streams.refetch()
         },
         skip() {
-          return !this.loggedIn;
+          return !this.loggedIn
         }
       },
       userStreamRemoved: {
@@ -225,10 +249,10 @@ export default {
           }
         `,
         result() {
-          this.$apollo.queries.streams.refetch();
+          this.$apollo.queries.streams.refetch()
         },
         skip() {
-          return !this.loggedIn;
+          return !this.loggedIn
         }
       }
     },
@@ -247,7 +271,7 @@ export default {
     }
   },
   data: () => ({
-    activeTab: "streams",
+    activeTab: 'streams',
     streams: [],
     newStreamDialog: false,
     hasClickedDownload: false,
@@ -255,67 +279,67 @@ export default {
   }),
   computed: {
     quickstart() {
-      if (!this.user) return 0;
-      if (this.streams.totalCount === 0) return 1;
-      if (this.streams.totalCount > 0 && !this.hasManager && !this.hasClickedDownload) return 2;
-      if (this.streams.totalCount > 0 && !this.hasManager && this.hasClickedDownload) return 3;
-      if (this.hasManager && this.user.commits.totalCount === 0) return 4;
-      if (this.user.commits.totalCount > 0) return 0;
+      if (!this.user) return 0
+      if (this.streams.totalCount === 0) return 1
+      if (this.streams.totalCount > 0 && !this.hasManager && !this.hasClickedDownload) return 2
+      if (this.streams.totalCount > 0 && !this.hasManager && this.hasClickedDownload) return 3
+      if (this.hasManager && this.user.commits.totalCount === 0) return 4
+      if (this.user.commits.totalCount > 0) return 0
 
-      return 0;
+      return 0
     },
     hasManager() {
-      if (!this.authorizedApps) return false;
-      return this.authorizedApps.findIndex((a) => a.id === "sdm") !== -1;
+      if (!this.authorizedApps) return false
+      return this.authorizedApps.findIndex((a) => a.id === 'sdm') !== -1
     },
     recentActivity() {
-      let activity = [];
+      let activity = []
 
       if (this.streams && this.streams.items) {
         this.streams.items.forEach((x) =>
           x.commits.items.forEach((y) => {
-            y.streamName = x.name;
-            y.streamId = x.id;
-            activity.push(y);
+            y.streamName = x.name
+            y.streamId = x.id
+            activity.push(y)
           })
-        );
-        activity.push(...this.streams.items);
+        )
+        activity.push(...this.streams.items)
       }
 
-      activity.sort(this.compareUpdates);
-      return activity;
+      activity.sort(this.compareUpdates)
+      return activity
     },
     loggedIn() {
-      return localStorage.getItem("uuid") !== null;
+      return localStorage.getItem('uuid') !== null
     },
     rootUrl() {
-      return window.location.origin;
+      return window.location.origin
     }
   },
   watch: {
     streams(val) {
-      if (val.items.length === 0 && !localStorage.getItem("onboarding")) {
-        this.$router.push("/onboarding");
+      if (val.items.length === 0 && !localStorage.getItem('onboarding')) {
+        this.$router.push('/onboarding')
       }
     }
   },
   methods: {
     downloadManager() {
-      this.hasClickedDownload = true;
-      this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`);
-      this.$matomo && this.$matomo.trackEvent("onboarding", "managerdownload");
-      window.open("https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe", "_blank");
+      this.hasClickedDownload = true
+      this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`)
+      this.$matomo && this.$matomo.trackEvent('onboarding', 'managerdownload')
+      window.open('https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe', '_blank')
     },
     addAccount() {
-      this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`);
-      this.$matomo && this.$matomo.trackEvent("onboarding", "accountadd");
-      window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, "_blank");
+      this.$matomo && this.$matomo.trackPageView(`onboarding/accountadd`)
+      this.$matomo && this.$matomo.trackEvent('onboarding', 'accountadd')
+      window.open(`speckle://accounts?add_server_account=${this.rootUrl}`, '_blank')
     },
     async refreshApplications() {
-      await this.$apollo.queries.authorizedApps.refetch();
+      await this.$apollo.queries.authorizedApps.refetch()
       if (!this.hasManager) {
-        this.refreshFailied = true;
-      } else this.refreshFailied = false;
+        this.refreshFailied = true
+      } else this.refreshFailied = false
     },
     infiniteHandler($state) {
       this.$apollo.queries.streams.fetchMore({
@@ -324,11 +348,11 @@ export default {
         },
         // Transform the previous result with new data
         updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.streams.items;
+          const newItems = fetchMoreResult.streams.items
 
           //set vue-infinite state
-          if (newItems.length === 0) $state.complete();
-          else $state.loaded();
+          if (newItems.length === 0) $state.complete()
+          else $state.loaded()
 
           return {
             streams: {
@@ -338,24 +362,24 @@ export default {
               // Merging the new streams
               items: [...previousResult.streams.items, ...newItems]
             }
-          };
+          }
         }
-      });
+      })
     },
     compareUpdates(a, b) {
       if (a.createdAt < b.createdAt) {
-        return 1;
+        return 1
       }
       if (a.createdAt > b.createdAt) {
-        return -1;
+        return -1
       }
-      return 0;
+      return 0
     },
     showServerInviteDialog() {
-      this.$refs.serverInviteDialog.show();
+      this.$refs.serverInviteDialog.show()
     }
   }
-};
+}
 </script>
 <style scoped>
 .recent-commits a {

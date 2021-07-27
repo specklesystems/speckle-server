@@ -13,15 +13,15 @@
         </v-btn>
         <span class="mr-5">|</span>
         <span v-if="serverInfo" class="subtitle-2">{{ serverInfo.name }}</span>
-        <!-- <v-btn
+        <v-btn
           v-for="link in navLinks"
           :key="link.name"
           text
-          class="text-uppercase"
+          class="text-uppercase ml-5"
           :to="link.link"
         >
           {{ link.name }}
-        </v-btn> -->
+        </v-btn>
         <v-spacer></v-spacer>
         <v-responsive v-if="user" max-width="300">
           <search-bar />
@@ -50,11 +50,11 @@
               </template>
               <v-card>
                 <v-row>
-                  <!-- <v-col v-for="link in navLinks" :key="link.name" cols="12">
+                  <v-col v-for="link in navLinks" :key="link.name" cols="12">
                     <v-btn text block :to="link.link">
                       {{ link.name }}
                     </v-btn>
-                  </v-col> -->
+                  </v-col>
                   <v-col cols="12" class="px-10 pb-7">
                     <v-divider class="mb-5"></v-divider>
                     <search-bar />
@@ -121,12 +121,12 @@ export default {
       streamSnackbarInfo: {},
       showMobileMenu: false,
       streams: { items: [] },
-      selectedSearchResult: null
-      // navLinks: [
-      //   { link: '/streams', name: 'streams' },
-      //   { link: '/profile', name: 'profile' },
-      //   { link: '/help', name: 'help' }
-      // ]
+      selectedSearchResult: null,
+      navLinks: [
+        { link: '/', name: 'feed' },
+        { link: '/streams', name: 'streams' },
+        { link: '/profile', name: 'profile' }
+      ]
     }
   },
   apollo: {
