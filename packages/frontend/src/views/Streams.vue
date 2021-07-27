@@ -16,6 +16,7 @@
           <server-invite-dialog ref="serverInviteDialog" />
           <v-dialog v-model="newStreamDialog" max-width="500">
             <stream-new-dialog
+              v-if="streams && streams.items"
               :open="newStreamDialog"
               :redirect="streams.items.length > 0"
               @created="newStreamDialog = false"
@@ -321,6 +322,9 @@ export default {
     }
   },
   methods: {
+    showServerInviteDialog() {
+      this.$refs.serverInviteDialog.show()
+    },
     downloadManager() {
       this.hasClickedDownload = true
       this.$matomo && this.$matomo.trackPageView(`onboarding/managerdownload`)

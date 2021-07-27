@@ -191,6 +191,7 @@ export default {
       query: gql`
         query($id: String!) {
           stream(id: $id) {
+            id
             name
             updatedAt
             role
@@ -213,6 +214,7 @@ export default {
       query: gql`
         query($id: String!, $branchName: String!) {
           stream(id: $id) {
+            id
             branch(name: $branchName) {
               id
             }
@@ -234,9 +236,11 @@ export default {
       query: gql`
         query($id: String!, $commitId: String!) {
           stream(id: $id) {
+            id
             commit(id: $commitId) {
               branchName
               sourceApplication
+              id
             }
           }
         }
