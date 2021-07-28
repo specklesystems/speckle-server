@@ -1,10 +1,11 @@
 <template>
   <v-row>
-    <v-col sm="12">
-      <v-card v-if="$apollo.queries.stream.loading">
-        <v-skeleton-loader type="article"></v-skeleton-loader>
-      </v-card>
-      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0">
+    <v-col v-if="$apollo.queries.stream.loading">
+      <v-skeleton-loader type="article"></v-skeleton-loader>
+    </v-col>
+    <v-col v-else-if="branches" cols="12">
+      <breadcrumb-title />
+      <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
         <branch-new-dialog ref="newBranchDialog" />
 
         <v-card-title>
@@ -14,7 +15,6 @@
           <v-spacer />
           <v-btn
             v-if="userRole === 'contributor' || userRole === 'owner'"
-            plain
             color="primary"
             text
             class="px-0"
@@ -25,7 +25,6 @@
             New branch
           </v-btn>
         </v-card-title>
-        <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
         <v-card-text>
           <i>
             A branch represents an independent line of data. You can think of them as an independent
@@ -66,14 +65,14 @@
   </v-row>
 </template>
 <script>
-import BranchNewDialog from '../components/dialogs/BranchNewDialog'
-import streamBranchesQuery from '../graphql/streamBranches.gql'
+import streamBranchesQuery from '@/graphql/streamBranches.gql'
 import gql from 'graphql-tag'
 
 export default {
   name: 'StreamMain',
   components: {
-    BranchNewDialog
+    BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog'),
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   props: {
     userRole: {
@@ -139,22 +138,7 @@ export default {
     branches() {
       return this.stream.branches.items.filter((b) => !b.name.startsWith('globals'))
     },
-    breadcrumbs() {
-      return [
-        {
-          text: this.stream.name,
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id
-        },
-        {
-          text: 'branches',
-          disabled: true,
-          exact: true,
-          to: '/streams/' + this.stream.id + '/branches/'
-        }
-      ]
-    },
+
     loggedIn() {
       return localStorage.getItem('uuid') !== null
     }

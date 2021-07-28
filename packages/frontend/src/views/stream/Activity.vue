@@ -1,5 +1,43 @@
 <template>
   <v-row v-if="!error">
+    <v-col v-if="stream">
+      <v-breadcrumbs class="display-1" :items="breadcrumbs" divider="/"></v-breadcrumbs>
+      <h3 class="title font-italic font-weight-thin my-5">
+        {{ truncate(stream.description) }}
+      </h3>
+      <div>
+        <v-chip>
+          <v-icon small>mdi-source-branch</v-icon>
+
+          {{ stream.branches.totalCount }}
+          branch{{ stream.branches.totalCount === 1 ? '' : 'es' }}
+        </v-chip>
+        <v-chip class="ml-3">
+          <v-icon small>mdi-source-commit</v-icon>
+          &nbsp;
+
+          {{ stream.commits.totalCount }}
+          commit{{ stream.commits.totalCount === 1 ? '' : 's' }}
+        </v-chip>
+        <v-chip class="ml-3">
+          <span
+            v-if="stream.isPublic"
+            v-tooltip="`Anyone can view this stream. Only you and collaborators can edit it.`"
+          >
+            <v-icon small>mdi-lock-open-variant-outline</v-icon>
+            &nbsp; public
+          </span>
+          <span v-else v-tooltip="`Only collaborators can access this stream.`">
+            <v-icon small>mdi-lock-outline</v-icon>
+            &nbsp; private
+          </span>
+        </v-chip>
+        <span class="ml-3 caption">
+          Created
+          <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
+        </span>
+      </div>
+    </v-col>
     <v-col sm="12">
       <v-card v-if="$apollo.queries.branches.loading">
         <v-skeleton-loader type="card-heading, card-avatar, article"></v-skeleton-loader>
@@ -208,7 +246,7 @@
       </v-card>
 
       <v-card
-        v-if="$apollo.queries.description.loading || $apollo.queries.branches.loading"
+        v-if="$apollo.queries.stream.loading || $apollo.queries.branches.loading"
         class="mt-5"
       >
         <v-skeleton-loader type="article"></v-skeleton-loader>
@@ -222,17 +260,16 @@
   </v-row>
 </template>
 <script>
-import marked from 'marked'
-import DOMPurify from 'dompurify'
+import streamQuery from '@/graphql/stream.gql'
 import gql from 'graphql-tag'
-import NoDataPlaceholder from '../components/NoDataPlaceholder'
-import SourceAppAvatar from '../components/SourceAppAvatar'
-import streamBranchesQuery from '../graphql/streamBranches.gql'
-import Renderer from '../components/Renderer'
-import UserAvatar from '../components/UserAvatar'
-import ErrorBlock from '../components/ErrorBlock'
-import BranchNewDialog from '../components/dialogs/BranchNewDialog'
-import BranchEditDialog from '../components/dialogs/BranchEditDialog'
+import NoDataPlaceholder from '@/components/NoDataPlaceholder'
+import SourceAppAvatar from '@/components/SourceAppAvatar'
+import streamBranchesQuery from '@/graphql/streamBranches.gql'
+import Renderer from '@/components/Renderer'
+import UserAvatar from '@/components/UserAvatar'
+import ErrorBlock from '@/components/ErrorBlock'
+import BranchNewDialog from '@/components/dialogs/BranchNewDialog'
+import BranchEditDialog from '@/components/dialogs/BranchEditDialog'
 
 export default {
   name: 'StreamMain',
@@ -273,21 +310,13 @@ export default {
         return data.stream.branches.items.filter((b) => !b.name.startsWith('globals'))
       }
     },
-    description: {
-      query: gql`
-        query($id: String!) {
-          stream(id: $id) {
-            id
-            description
-          }
-        }
-      `,
+    stream: {
+      query: streamQuery,
       variables() {
         return {
           id: this.$route.params.streamId
         }
-      },
-      update: (data) => data.stream.description
+      }
     },
     commitNotif: {
       query: gql`
@@ -365,11 +394,6 @@ export default {
       if (!this.branches) return []
       return this.branches.map((b) => b.name)
     },
-    compiledStreamDescription() {
-      if (!this.description) return ''
-      let md = marked(this.description)
-      return DOMPurify.sanitize(md)
-    },
     latestCommit() {
       if (!this.selectedBranch) return null
       return this.selectedBranch.commits.items[0]
@@ -396,12 +420,22 @@ export default {
   },
   mounted() {
     this.$apollo.queries.branches.refetch()
-    this.$apollo.queries.description.refetch()
+    this.$apollo.queries.stream.refetch()
   },
   methods: {
-    closeDescription() {
-      this.dialogDescription = false
-      this.$apollo.queries.description.refetch()
+    truncate(input, length = 250) {
+      if (!input) return ''
+      if (input.length > length) {
+        return input.substring(0, length) + '...'
+      }
+      return input
+    },
+    formatDate(d) {
+      if (!this.stream) return null
+      let date = new Date(d)
+      let options = { year: 'numeric', month: 'short', day: 'numeric' }
+
+      return date.toLocaleString(undefined, options)
     },
     editBranch() {
       this.$refs.editBranchDialog.open(this.selectedBranch).then((dialog) => {

@@ -43,9 +43,9 @@
   </v-row>
 </template>
 <script>
-import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
-import ObjectSimpleViewer from '../components/ObjectSimpleViewer'
-import Renderer from '../components/Renderer'
+import ObjectSpeckleViewer from '@/components/ObjectSpeckleViewer'
+import ObjectSimpleViewer from '@/components/ObjectSimpleViewer'
+import Renderer from '@/components/Renderer'
 
 export default {
   name: 'ObjectViewer',

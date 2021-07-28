@@ -5,6 +5,7 @@
         <v-skeleton-loader type="article, article"></v-skeleton-loader>
       </v-col>
       <v-col v-else-if="stream.branch" cols="12">
+        <breadcrumb-title />
         <v-card class="pa-4" elevation="0" rounded="lg">
           <branch-edit-dialog ref="editBranchDialog" />
 
@@ -15,7 +16,6 @@
             <v-btn
               v-if="userRole === 'contributor' || userRole === 'owner'"
               small
-              plain
               color="primary"
               text
               class="px-0"
@@ -25,7 +25,7 @@
               Edit branch
             </v-btn>
           </v-card-title>
-          <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
+
           <v-card-text v-if="stream.branch.description">
             {{ stream.branch.description }}
           </v-card-text>
@@ -63,15 +63,17 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import branchQuery from '../graphql/branch.gql'
-import ListItemCommit from '../components/ListItemCommit'
-import BranchEditDialog from '../components/dialogs/BranchEditDialog'
-import NoDataPlaceholder from '../components/NoDataPlaceholder'
-import ErrorBlock from '../components/ErrorBlock'
+import branchQuery from '@/graphql/branch.gql'
 
 export default {
   name: 'Branch',
-  components: { ListItemCommit, BranchEditDialog, NoDataPlaceholder, ErrorBlock },
+  components: {
+    ListItemCommit: () => import('@/components/ListItemCommit'),
+    BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
+    ErrorBlock: () => import('@/components/ErrorBlock'),
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
+  },
   props: {
     userRole: {
       type: String,
@@ -114,32 +116,6 @@ export default {
   computed: {
     streamId() {
       return this.$route.params.streamId
-    },
-    breadcrumbs() {
-      return [
-        {
-          text: this.stream.name,
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id
-        },
-        {
-          text: 'branches',
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id + '/branches/'
-        },
-        {
-          text: this.stream.branch.name,
-          disabled: true,
-          exact: true,
-          to:
-            '/streams/' +
-            this.stream.id +
-            '/branches/' +
-            encodeURIComponent(this.stream.branch.name)
-        }
-      ]
     }
   },
   methods: {

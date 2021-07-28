@@ -8,8 +8,8 @@
         @close="closeSaveDialog"
       />
     </v-dialog>
-    <v-card-title>Globals</v-card-title>
     <v-card-subtitle v-if="commitMessage">
+      <b>Selected commit:</b>
       <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
       {{ commitMessage }}
     </v-card-subtitle>
