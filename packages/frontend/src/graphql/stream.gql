@@ -6,6 +6,7 @@ query Stream($id: String!) {
     isPublic
     createdAt
     updatedAt
+    role
     collaborators {
       id
       name
@@ -20,20 +21,13 @@ query Stream($id: String!) {
       totalCount
       items {
         id
+        message
+        referencedObject
+        authorName
+        authorAvatar
+        authorId
         branchName
         createdAt
-      }
-    }
-    activity {
-      totalCount
-      cursor
-      items {
-        actionType
-        userId
-        resourceId
-        resourceType
-        time
-        message
       }
     }
   }

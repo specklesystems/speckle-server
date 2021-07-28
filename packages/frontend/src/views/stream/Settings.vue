@@ -73,12 +73,6 @@ export default {
   components: {
     AdminCard: () => import('@/components/admin/AdminCard')
   },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
-  },
   apollo: {
     stream: {
       query: streamQuery,

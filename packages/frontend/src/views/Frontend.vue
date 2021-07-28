@@ -1,6 +1,7 @@
 <template>
   <v-app id="speckle">
     <v-app-bar app clipped-left>
+      <v-app-bar-nav-icon v-if="isStreamPage" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-container
         :fluid="$vuetify.breakpoint.mdAndDown"
         class="py-0 fill-height hidden-sm-and-down"
@@ -17,6 +18,7 @@
           v-for="link in navLinks"
           :key="link.name"
           text
+          exact
           class="text-uppercase ml-5"
           :to="link.link"
         >
@@ -51,7 +53,7 @@
               <v-card>
                 <v-row>
                   <v-col v-for="link in navLinks" :key="link.name" cols="12">
-                    <v-btn text block :to="link.link">
+                    <v-btn text block :to="link.link" exact>
                       {{ link.name }}
                     </v-btn>
                   </v-col>
@@ -74,6 +76,27 @@
         </v-row>
       </v-container>
     </v-app-bar>
+    <v-navigation-drawer v-if="isStreamPage" v-model="drawer" app clipped left>
+      <v-list v-if="stream">
+        <v-subheader>Stream menu</v-subheader>
+        <v-list-item
+          v-for="menu in menues"
+          :key="menu.name"
+          :to="menu.to"
+          :disabled="menu.disabled"
+          exact
+          @click="handleFunction(menu.click)"
+        >
+          <v-list-item-icon>
+            <v-icon>{{ menu.icon }}</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>{{ menu.name }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
     <v-main :style="background">
       <router-view></router-view>
       <v-snackbar
@@ -117,6 +140,7 @@ export default {
   data() {
     return {
       search: '',
+      drawer: true,
       streamSnackbar: false,
       streamSnackbarInfo: {},
       showMobileMenu: false,
@@ -129,7 +153,27 @@ export default {
       ]
     }
   },
+
   apollo: {
+    stream: {
+      query: gql`
+        query Stream($id: String!) {
+          stream(id: $id) {
+            id
+            name
+            role
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
+      },
+      skip() {
+        return !this.isStreamPage
+      }
+    },
     serverInfo: {
       query: gql`
         query {
@@ -174,6 +218,51 @@ export default {
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null
+    },
+    isStreamPage() {
+      return this.$route.params.streamId
+    },
+    menues() {
+      return [
+        {
+          name: 'Details',
+          icon: 'mdi-compare-vertical',
+          to: '/streams/' + this.$route.params.streamId
+        },
+        {
+          name: 'Activity',
+          icon: 'mdi-history',
+          to: '/streams/' + this.$route.params.streamId + '/activity'
+        },
+        {
+          name: 'Branches',
+          icon: 'mdi-source-branch',
+          to: '/streams/' + this.$route.params.streamId + '/branches'
+        },
+        {
+          name: 'Globals',
+          icon: 'mdi-earth',
+          to: '/streams/' + this.$route.params.streamId + '/globals'
+        },
+        {
+          name: 'Collaborators',
+          icon: 'mdi-account-group-outline',
+          click: 'manageCollabrators',
+          disabled: this.stream.role !== 'stream:owner'
+        },
+        {
+          name: 'Webhooks',
+          icon: 'mdi-webhook',
+          to: '/streams/' + this.$route.params.streamId + '/webhooks',
+          disabled: this.stream.role !== 'stream:owner'
+        },
+        {
+          name: 'Settings',
+          icon: 'mdi-cog-outline',
+          click: 'editStream',
+          disabled: this.stream.role !== 'stream:owner'
+        }
+      ]
     }
   },
   watch: {
@@ -181,7 +270,12 @@ export default {
       this.showMobileMenu = false
     }
   },
-  methods: {}
+
+  methods: {
+    handleFunction(f) {
+      if (this[f]) this[f]()
+    }
+  }
 }
 </script>
 <style>

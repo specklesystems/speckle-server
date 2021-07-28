@@ -68,19 +68,21 @@
             <div>
               <v-subheader class="mb-3">Recent activity</v-subheader>
               <div v-if="timeline" key="activity-list">
-                <list-item-activity
-                  v-for="activity in timeline.items"
-                  :key="activity.time"
-                  :activity="activity"
-                  class="my-1"
-                ></list-item-activity>
-                <infinite-loading
-                  v-if="timeline && timeline.items.length < timeline.totalCount"
-                  @infinite="infiniteHandler"
-                >
-                  <div slot="no-more">This is all your activity!</div>
-                  <div slot="no-results">There are no ctivities to load</div>
-                </infinite-loading>
+                <v-timeline align-top dense>
+                  <list-item-activity
+                    v-for="activity in timeline.items"
+                    :key="activity.time"
+                    :activity="activity"
+                    class="my-1"
+                  ></list-item-activity>
+                  <infinite-loading
+                    v-if="timeline && timeline.items.length < timeline.totalCount"
+                    @infinite="infiniteHandler"
+                  >
+                    <div slot="no-more">This is all your activity!</div>
+                    <div slot="no-results">There are no ctivities to load</div>
+                  </infinite-loading>
+                </v-timeline>
               </div>
             </div>
           </v-col>
@@ -109,7 +111,6 @@ import ServerInviteDialog from '@/components/dialogs/ServerInviteDialog.vue'
 import StreamNewDialog from '@/components/dialogs/StreamNewDialog'
 import gql from 'graphql-tag'
 import InfiniteLoading from 'vue-infinite-loading'
-import SpeckleLoading from '../components/SpeckleLoading.vue'
 
 export default {
   name: 'Timeline',
@@ -118,8 +119,7 @@ export default {
     InfiniteLoading,
     ServerInviteDialog,
     StreamNewDialog,
-    GettingStartedWizard,
-    SpeckleLoading
+    GettingStartedWizard
   },
   props: {
     type: String

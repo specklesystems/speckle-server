@@ -1,147 +1,163 @@
 <template>
-  <div class="list-item-activity">
-    <div v-if="user" class="body-2 mb-2">
-      <user-avatar :id="user.id" :avatar="user.avatar" :size="30" :name="user.name" />
-      &nbsp;
-      <a target="_blank" :href="'/profile/' + user.id">{{ user.name }}</a>
-      &nbsp;
-      <span>{{ activityInfo.captionText }} &nbsp;</span>
-      <span v-if="stream">
-        <a target="_blank" :href="url">{{ stream.name }}</a>
-      </span>
-      <timeago :datetime="activity.time" class="font-italic ma-1"></timeago>
-    </div>
-
-    <!-- STREAM PERMISSIONS -->
-    <v-card
-      v-if="activity.actionType.includes('stream_permissions') && stream"
-      class="mb-5 ml-10 activity-card"
-      flat
-    >
-      <v-card-text class="pa-5 body-1">
-        <v-chip v-if="targetUser" pill :color="activityInfo.color">
-          <v-avatar left>
-            <user-avatar
-              :id="targetUser.id"
-              :avatar="targetUser.avatar"
-              :size="30"
-              :name="targetUser.name"
-            />
-          </v-avatar>
-
-          {{ targetUser.name }}
-        </v-chip>
-
-        <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-        <v-chip v-if="activity.info.role" small outlined class="ml-3">
-          <v-icon small left>mdi-account-key-outline</v-icon>
-          {{ activity.info.role.split(':')[1] }}
-        </v-chip>
-      </v-card-text>
-    </v-card>
-
-    <!-- STREAM -->
-    <v-card
-      v-else-if="activity.resourceType === 'stream' && stream"
-      class="mb-5 ml-10 activity-card"
-      flat
-    >
-      <v-card-text class="pa-5 body-1">
-        <a :href="url" class="title">
-          <v-icon color="primary" small>mdi-compare-vertical</v-icon>
-          {{ stream.name }}
-        </a>
-        <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-        <div v-if="activityInfo.description" class="mt-3" v-html="activityInfo.description"></div>
-      </v-card-text>
-      <v-card-actions class="pt-0">
-        <div>
-          <v-btn
-            v-tooltip="
-              stream.branches.totalCount +
-              ' branch' +
-              (stream.branches.totalCount === 1 ? '' : 'es')
-            "
-            color="primary"
-            text
-            class="px-0 ml-3"
-            small
-            :to="'/streams/' + stream.id + '/branches'"
-          >
-            <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
-            {{ stream.branches.totalCount }}
-          </v-btn>
-
-          <v-btn
-            v-tooltip="
-              stream.commits.totalCount + ' commit' + (stream.commits.totalCount === 1 ? '' : 's')
-            "
-            color="primary"
-            text
-            class="px-0 ml-3"
-            small
-            :to="'/streams/' + stream.id + '/branches/main/commits'"
-          >
-            <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
-            {{ stream.commits.totalCount }}
-          </v-btn>
-          <v-chip small outlined class="ml-3">
-            <v-icon small left>mdi-account-key-outline</v-icon>
-            {{ stream.role.split(':')[1] }}
-          </v-chip>
-          <span class="caption mb-2 ml-3 font-italic">
-            Updated
-            <timeago :datetime="stream.updatedAt"></timeago>
+  <v-timeline-item medium>
+    <template #icon>
+      <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" />
+    </template>
+    <v-row class="pt-1 timeline-activity">
+      <v-col cols="12" class="mb-0 pb-0">
+        <div v-if="user && you && stream" class="body-2">
+          &nbsp;
+          <router-link :to="'/profile/' + user.id">
+            {{ userName }}
+          </router-link>
+          <span>&nbsp;{{ activityInfo.captionText }} &nbsp;</span>
+          <span v-if="stream">
+            <router-link :to="'/streams/' + stream.id">{{ stream.name }}</router-link>
           </span>
+          <timeago :datetime="activity.time" class="font-italic ma-1"></timeago>
         </div>
-      </v-card-actions>
-    </v-card>
+      </v-col>
+      <v-col cols="12">
+        <!-- STREAM PERMISSIONS -->
+        <v-card
+          v-if="activity.actionType.includes('stream_permissions') && stream"
+          class="activity-card"
+          flat
+        >
+          <v-card-text class="pa-5 body-1">
+            <v-chip v-if="targetUser" pill :color="activityInfo.color">
+              <v-avatar left>
+                <user-avatar
+                  :id="targetUser.id"
+                  :avatar="targetUser.avatar"
+                  :size="30"
+                  :name="targetUser.name"
+                />
+              </v-avatar>
 
-    <!-- BRANCHES -->
-    <v-card v-else-if="activity.resourceType === 'branch'" class="mb-5 ml-10 activity-card" flat>
-      <v-card-text class="pa-5 body-1">
-        <v-chip :to="url" :color="activityInfo.color">
-          <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
-          {{ branchName }}
-        </v-chip>
-        <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-        <div v-if="activityInfo.description" class="mt-3" v-html="activityInfo.description"></div>
-      </v-card-text>
-    </v-card>
-
-    <!-- COMMITS -->
-    <v-card v-else-if="activity.resourceType === 'commit'" class="mb-5 ml-10 activity-card" flat>
-      <v-card-text class="pa-5">
-        <div>
-          <v-chip :to="url" :color="activityInfo.color">
-            <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
-            {{ activity.resourceId }}
-          </v-chip>
-          <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-          <span v-if="activity.actionType !== 'commit_delete' && commit">
-            <v-chip
-              :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
-              small
-              color="primary"
-            >
-              <v-icon small class="float-left" light>mdi-source-branch</v-icon>
-              {{ commit.branchName }}
+              {{ targetUser.name }}
             </v-chip>
-            <span v-if="activity.actionType === 'commit_create'">
-              <span class="mx-3 body-2 font-italic">from</span>
-              <source-app-avatar :application-name="commit.sourceApplication" />
-            </span>
-          </span>
-          <span v-if="activity.actionType !== 'commit_delete' && !commit">[commit deleted]</span>
-        </div>
-        <div
-          v-if="activityInfo.description"
-          class="mt-3 body-1"
-          v-html="activityInfo.description"
-        ></div>
-      </v-card-text>
-    </v-card>
-  </div>
+
+            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+            <v-chip v-if="activity.info.role" small outlined class="ml-3">
+              <v-icon small left>mdi-account-key-outline</v-icon>
+              {{ activity.info.role.split(':')[1] }}
+            </v-chip>
+          </v-card-text>
+        </v-card>
+
+        <!-- STREAM -->
+        <v-card v-else-if="activity.resourceType === 'stream' && stream" class="activity-card" flat>
+          <v-card-text class="pa-5 body-1">
+            <a :href="url" class="title">
+              <v-icon color="primary" small>mdi-compare-vertical</v-icon>
+              {{ stream.name }}
+            </a>
+            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+            <div
+              v-if="activityInfo.description"
+              class="mt-3"
+              v-html="activityInfo.description"
+            ></div>
+          </v-card-text>
+          <v-card-actions class="pt-0">
+            <div>
+              <v-btn
+                v-tooltip="
+                  stream.branches.totalCount +
+                  ' branch' +
+                  (stream.branches.totalCount === 1 ? '' : 'es')
+                "
+                color="primary"
+                text
+                class="px-0 ml-3"
+                small
+                :to="'/streams/' + stream.id + '/branches'"
+              >
+                <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
+                {{ stream.branches.totalCount }}
+              </v-btn>
+
+              <v-btn
+                v-tooltip="
+                  stream.commits.totalCount +
+                  ' commit' +
+                  (stream.commits.totalCount === 1 ? '' : 's')
+                "
+                color="primary"
+                text
+                class="px-0 ml-3"
+                small
+                :to="'/streams/' + stream.id + '/branches/main/commits'"
+              >
+                <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
+                {{ stream.commits.totalCount }}
+              </v-btn>
+              <v-chip small outlined class="ml-3">
+                <v-icon small left>mdi-account-key-outline</v-icon>
+                {{ stream.role.split(':')[1] }}
+              </v-chip>
+              <span class="caption mb-2 ml-3 font-italic">
+                Updated
+                <timeago :datetime="stream.updatedAt"></timeago>
+              </span>
+            </div>
+          </v-card-actions>
+        </v-card>
+
+        <!-- BRANCHES -->
+        <v-card v-else-if="activity.resourceType === 'branch'" class="activity-card" flat>
+          <v-card-text class="pa-5 body-1">
+            <v-chip :to="url" :color="activityInfo.color">
+              <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
+              {{ branchName }}
+            </v-chip>
+            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+            <div
+              v-if="activityInfo.description"
+              class="mt-3"
+              v-html="activityInfo.description"
+            ></div>
+          </v-card-text>
+        </v-card>
+
+        <!-- COMMITS -->
+        <v-card v-else-if="activity.resourceType === 'commit'" class="activity-card" flat>
+          <v-card-text class="pa-5">
+            <div>
+              <v-chip :to="url" :color="activityInfo.color">
+                <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
+                {{ activity.resourceId }}
+              </v-chip>
+              <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+              <span v-if="activity.actionType !== 'commit_delete' && commit">
+                <v-chip
+                  :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
+                  small
+                  color="primary"
+                >
+                  <v-icon small class="float-left" light>mdi-source-branch</v-icon>
+                  {{ commit.branchName }}
+                </v-chip>
+                <span v-if="activity.actionType === 'commit_create'">
+                  <span class="mx-3 body-2 font-italic">from</span>
+                  <source-app-avatar :application-name="commit.sourceApplication" />
+                </span>
+              </span>
+              <span v-if="activity.actionType !== 'commit_delete' && !commit">
+                [commit deleted]
+              </span>
+            </div>
+            <div
+              v-if="activityInfo.description"
+              class="mt-3 body-1"
+              v-html="activityInfo.description"
+            ></div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-timeline-item>
 </template>
 
 <script>
@@ -153,6 +169,17 @@ export default {
   components: { UserAvatar, SourceAppAvatar },
   props: ['activity'],
   apollo: {
+    you: {
+      query: gql`
+        query {
+          user {
+            id
+            name
+          }
+        }
+      `,
+      update: (data) => data.user
+    },
     user: {
       query: gql`
         query($id: String) {
@@ -170,17 +197,15 @@ export default {
       }
     },
     targetUser: {
-      query() {
-        return gql`
-          query targetUser($id: String) {
-            user(id: $id) {
-              name
-              avatar
-              id
-            }
+      query: gql`
+        query targetUser($id: String) {
+          user(id: $id) {
+            name
+            avatar
+            id
           }
-        `
-      },
+        }
+      `,
       update: (data) => data.user,
       variables() {
         return {
@@ -263,6 +288,9 @@ export default {
     }
   },
   computed: {
+    userName() {
+      return this.user.id === this.you.id ? 'You' : this.user.name
+    },
     captionText() {
       return this.activity.actionType.split('_').pop()
     },
@@ -452,7 +480,7 @@ export default {
 .activity-card p {
   margin: 0 !important;
 }
-.list-item-activity a {
+.timeline-activity a {
   text-decoration: none;
 }
 </style>

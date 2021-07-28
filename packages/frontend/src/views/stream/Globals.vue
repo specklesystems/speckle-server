@@ -9,14 +9,14 @@
           </template>
           <v-card-title>You don't have any globals on this stream!</v-card-title>
           <v-card-text
-            v-if="$attrs['user-role'] === 'contributor' || $attrs['user-role'] === 'owner'"
+            v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
             class="subtitle-1"
           >
             Globals are useful for storing design values, project requirements, notes, or any info
             you want to keep track of alongside your geometry. Would you like to create some now?
           </v-card-text>
           <v-card-text
-            v-if="!($attrs['user-role'] === 'contributor') && !($attrs['user-role'] === 'owner')"
+            v-if="!(stream.role === 'contributor') && !(stream.role === 'stream:owner')"
             class="subtitle-1"
           >
             Globals are useful for storing design values, project requirements, notes, or any info
@@ -26,7 +26,7 @@
           <v-card-actions>
             <v-spacer />
             <v-btn
-              v-if="$attrs['user-role'] === 'contributor' || $attrs['user-role'] === 'owner'"
+              v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
               color="primary"
               @click="createClicked"
             >
@@ -41,11 +41,19 @@
           :stream-id="streamId"
           :object-id="objectId"
           :commit-message="commit ? commit.message : null"
-          :user-role="$attrs['user-role']"
+          :user-role="stream.role"
           @new-commit="newCommit"
         />
-        <v-card v-if="!$apollo.loading && branch.commits.items.length">
-          <v-card-title>History</v-card-title>
+        <v-card
+          v-if="!$apollo.loading && branch.commits.items.length"
+          class="pa-4"
+          elevation="0"
+          rounded="lg"
+        >
+          <v-card-title>
+            <v-icon class="mr-2">mdi-history</v-icon>
+            History
+          </v-card-title>
           <v-card-text>
             <list-item-commit
               v-for="item in branch.commits.items"
@@ -79,6 +87,7 @@ export default {
           stream(id: $id) {
             id
             name
+            role
           }
         }
       `,
@@ -110,20 +119,6 @@ export default {
     }
   },
   computed: {
-    breadcrumbs() {
-      return [
-        {
-          text: this.stream.name,
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id
-        },
-        {
-          text: 'globals',
-          disabled: true
-        }
-      ]
-    },
     streamId() {
       return this.$route.params.streamId
     },

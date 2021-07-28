@@ -123,7 +123,7 @@ export default {
           text: this.commit.id,
           disabled: true
         })
-      } else {
+      } else if (this.$route.name !== 'stream') {
         items.push({
           text: this.$route.name,
           disabled: true

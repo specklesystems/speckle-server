@@ -88,7 +88,7 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Activity.vue')
+            component: () => import('@/views/stream/Home.vue')
           },
 
           {
@@ -122,6 +122,15 @@ const routes = [
               title: 'Object | Speckle'
             },
             component: () => import('@/views/stream/Object.vue')
+          },
+          {
+            path: 'activity/',
+            name: 'activity',
+            meta: {
+              title: 'Stream Activity | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Activity.vue')
           },
           {
             path: 'settings/',

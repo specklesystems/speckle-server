@@ -14,7 +14,7 @@
 
           <v-spacer />
           <v-btn
-            v-if="userRole === 'contributor' || userRole === 'owner'"
+            v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
             color="primary"
             text
             class="px-0"
@@ -73,12 +73,6 @@ export default {
   components: {
     BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog'),
     BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
   },
   data() {
     return {}

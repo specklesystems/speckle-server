@@ -1,5 +1,5 @@
 <template>
-  <v-card rounded="lg" class="pa-3 mb-3" elevation="0">
+  <v-card class="pa-4 mb-3" elevation="0" rounded="lg">
     <v-dialog v-model="saveDialog" max-width="500">
       <globals-save-dialog
         :branch-name="branchName"
@@ -8,7 +8,12 @@
         @close="closeSaveDialog"
       />
     </v-dialog>
-    <v-card-subtitle v-if="commitMessage">
+
+    <v-card-title>
+      <v-icon class="mr-2">mdi-earth</v-icon>
+      Globals
+    </v-card-title>
+    <v-card-subtitle v-if="commitMessage" class="mt-3">
       <b>Selected commit:</b>
       <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
       {{ commitMessage }}
@@ -20,7 +25,7 @@
       group of fields, and drag and drop fields in and out of groups as you please! Note that field
       order may not always be preserved.
     </v-card-text>
-    <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">
+    <v-card-text v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')">
       You are free to play around with the globals here, but you do not have the required stream
       permission to save your changes.
     </v-card-text>
@@ -150,7 +155,10 @@ export default {
   },
   computed: {
     canSave() {
-      return this.globalsAreValid && (this.userRole === 'contributor' || this.userRole === 'owner')
+      return (
+        this.globalsAreValid &&
+        (this.userRole === 'stream:contributor' || this.userRole === 'stream:owner')
+      )
     },
     globalsCommit() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties

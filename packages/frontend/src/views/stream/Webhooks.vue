@@ -15,7 +15,12 @@
         />
       </admin-card>
 
-      <admin-card v-else-if="$route.name === 'add webhook'" :loading="loading" title="Add Webhook">
+      <admin-card
+        v-else-if="$route.name === 'add webhook'"
+        :loading="loading"
+        title="Add Webhook"
+        icon="mdi-webhook"
+      >
         <webhook-form
           :loading.sync="loading"
           :stream-id="$attrs.streamId"
@@ -23,14 +28,14 @@
         />
       </admin-card>
 
-      <admin-card v-else>
+      <admin-card v-else title="Webhooks" icon="mdi-webhook">
         <template #menu>
           <v-btn small outlined color="primary" :to="`/streams/${$attrs.streamId}/webhooks/new`">
             Add Webhook
           </v-btn>
         </template>
 
-        <v-card-text v-if="webhooks.length == 0">
+        <v-card-text v-if="webhooks && webhooks.length == 0">
           You don't have any webhooks on this stream yet. Click the blue "Add Webhook" button in the
           top right to add one.
         </v-card-text>
@@ -68,17 +73,11 @@
 <script>
 import webhooksQuery from '@/graphql/webhooks.gql'
 export default {
-  name: 'SettingsWebhooks',
+  name: 'Webhooks',
   components: {
     AdminCard: () => import('@/components/admin/AdminCard'),
     WebhookForm: () => import('@/components/settings/WebhookForm'),
     BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
   },
   apollo: {
     webhooks: {

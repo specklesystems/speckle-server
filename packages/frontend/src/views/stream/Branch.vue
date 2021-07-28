@@ -14,7 +14,7 @@
             <span class="d-inline-block">{{ stream.branch.name }}</span>
             <v-spacer />
             <v-btn
-              v-if="userRole === 'contributor' || userRole === 'owner'"
+              v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
               small
               color="primary"
               text
@@ -73,12 +73,6 @@ export default {
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorBlock: () => import('@/components/ErrorBlock'),
     BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
   },
   data() {
     return {
