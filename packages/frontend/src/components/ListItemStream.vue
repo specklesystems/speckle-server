@@ -3,7 +3,7 @@
     <v-card
       :to="'/streams/' + stream.id"
       color=""
-      :elevation="hover ? 5 : 1"
+      :elevation="hover ? 5 : 0"
       style="transition: all 0.2s ease-in-out"
     >
       <img

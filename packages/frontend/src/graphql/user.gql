@@ -16,18 +16,5 @@ query {
     commits {
       totalCount
     }
-    activity {
-      totalCount
-      cursor
-      items {
-        actionType
-        userId
-        resourceId
-        resourceType
-        streamId
-        message
-        time
-      }
-    }
   }
 }

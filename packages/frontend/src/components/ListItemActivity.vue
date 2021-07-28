@@ -1,6 +1,6 @@
 <template>
   <div class="list-item-activity">
-    <div v-if="user" class="caption mb-2">
+    <div v-if="user" class="body-2 mb-2">
       <user-avatar :id="user.id" :avatar="user.avatar" :size="30" :name="user.name" />
       &nbsp;
       <a target="_blank" :href="'/profile/' + user.id">{{ user.name }}</a>
@@ -16,6 +16,7 @@
     <v-card
       v-if="activity.actionType.includes('stream_permissions') && stream"
       class="mb-5 ml-10 activity-card"
+      flat
     >
       <v-card-text class="pa-5 body-1">
         <v-chip v-if="targetUser" pill :color="activityInfo.color">
@@ -43,9 +44,11 @@
     <v-card
       v-else-if="activity.resourceType === 'stream' && stream"
       class="mb-5 ml-10 activity-card"
+      flat
     >
       <v-card-text class="pa-5 body-1">
         <a :href="url" class="title">
+          <v-icon color="primary" small>mdi-compare-vertical</v-icon>
           {{ stream.name }}
         </a>
         <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
@@ -95,7 +98,7 @@
     </v-card>
 
     <!-- BRANCHES -->
-    <v-card v-else-if="activity.resourceType === 'branch'" class="mb-5 ml-10 activity-card">
+    <v-card v-else-if="activity.resourceType === 'branch'" class="mb-5 ml-10 activity-card" flat>
       <v-card-text class="pa-5 body-1">
         <v-chip :to="url" :color="activityInfo.color">
           <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
@@ -107,7 +110,7 @@
     </v-card>
 
     <!-- COMMITS -->
-    <v-card v-else-if="activity.resourceType === 'commit'" class="mb-5 ml-10 activity-card">
+    <v-card v-else-if="activity.resourceType === 'commit'" class="mb-5 ml-10 activity-card" flat>
       <v-card-text class="pa-5">
         <div>
           <v-chip :to="url" :color="activityInfo.color">
@@ -115,7 +118,7 @@
             {{ activity.resourceId }}
           </v-chip>
           <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-          <span v-if="activity.actionType === 'commit_create' && commit">
+          <span v-if="activity.actionType !== 'commit_delete' && commit">
             <v-chip
               :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
               small
@@ -124,10 +127,12 @@
               <v-icon small class="float-left" light>mdi-source-branch</v-icon>
               {{ commit.branchName }}
             </v-chip>
-            <span class="mx-3 body-2 font-italic">from</span>
-            <source-app-avatar :application-name="commit.sourceApplication" />
+            <span v-if="activity.actionType === 'commit_create'">
+              <span class="mx-3 body-2 font-italic">from</span>
+              <source-app-avatar :application-name="commit.sourceApplication" />
+            </span>
           </span>
-          <span v-if="activity.actionType === 'commit_create' && !commit">[commit deleted]</span>
+          <span v-if="activity.actionType !== 'commit_delete' && !commit">[commit deleted]</span>
         </div>
         <div
           v-if="activityInfo.description"
@@ -294,7 +299,7 @@ export default {
             actionText: 'new stream',
             description: this.activity?.info?.stream?.description
               ? this.truncate(this.activity.info.stream.description, 50)
-              : 'No description provided.'
+              : ''
           }
         case 'stream_update':
           return {
@@ -322,11 +327,11 @@ export default {
           return {
             icon: 'mdi-source-branch-plus',
             captionText: 'created a branch in',
-            actionText: 'new branch',
+            actionText: 'new branch in',
             color: 'success',
             description: this.activity?.info?.branch?.description
               ? this.truncate(this.activity.info.branch.description, 50)
-              : 'No description provided.'
+              : ''
           }
         case 'branch_delete':
           return {
@@ -339,7 +344,7 @@ export default {
           return {
             icon: 'mdi-source-branch-sync',
             captionText: 'updated a branch in',
-            actionText: 'branch updated',
+            actionText: 'branch updated in',
             color: 'primary',
             description: this.updatedDescription()
           }
@@ -355,7 +360,7 @@ export default {
           return {
             icon: 'mdi-timeline-text-outline',
             captionText: 'updated a commit in',
-            actionText: 'commit updated',
+            actionText: 'commit updated in',
             color: 'primary',
             description: this.updatedDescription()
           }

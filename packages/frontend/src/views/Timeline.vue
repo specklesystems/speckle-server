@@ -53,6 +53,9 @@
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
         <v-row>
+          <v-col cols="12">
+            <getting-started-wizard />
+          </v-col>
           <v-col v-if="$apollo.loading && !timeline">
             <v-card elevation="0" color="transparent">
               <div v-if="$apollo.loading" class="my-5">
@@ -61,7 +64,7 @@
             </v-card>
           </v-col>
 
-          <v-col v-else>
+          <v-col v-else-if="timeline && timeline.items.length > 0">
             <div>
               <v-subheader class="mb-3">Recent activity</v-subheader>
               <div v-if="timeline" key="activity-list">
@@ -81,6 +84,18 @@
               </div>
             </div>
           </v-col>
+          <v-col v-else cols="12">
+            <div class="ma-5 headline justify-center text-center">
+              🎈
+              <br />
+              Your feed is empty!
+
+              <br />
+              <span class="subtitle-2 font-italic">
+                Try creating a stream, sending data etc and your activity willshow up here.
+              </span>
+            </div>
+          </v-col>
         </v-row>
       </v-col>
     </v-row>
@@ -89,14 +104,23 @@
 
 <script>
 import ListItemActivity from '@/components/ListItemActivity'
+import GettingStartedWizard from '../components/GettingStartedWizard'
 import ServerInviteDialog from '@/components/dialogs/ServerInviteDialog.vue'
 import StreamNewDialog from '@/components/dialogs/StreamNewDialog'
 import gql from 'graphql-tag'
 import InfiniteLoading from 'vue-infinite-loading'
+import SpeckleLoading from '../components/SpeckleLoading.vue'
 
 export default {
   name: 'Timeline',
-  components: { ListItemActivity, InfiniteLoading, ServerInviteDialog, StreamNewDialog },
+  components: {
+    ListItemActivity,
+    InfiniteLoading,
+    ServerInviteDialog,
+    StreamNewDialog,
+    GettingStartedWizard,
+    SpeckleLoading
+  },
   props: {
     type: String
   },
