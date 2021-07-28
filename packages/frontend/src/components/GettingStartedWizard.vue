@@ -1,5 +1,5 @@
 <template>
-  <div v-if="quickstart > 0" class="ma-3">
+  <div v-if="quickstart > 0 && !$apollo.loading" class="ma-3">
     <div v-if="user" class="ma-5 headline justify-center text-center">
       Hello {{ user.name.split(' ')[0] }} 👋,
       <br />

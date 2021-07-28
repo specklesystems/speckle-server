@@ -90,14 +90,14 @@ const routes = [
             },
             component: () => import('../views/StreamMain.vue')
           },
-          {
-            path: 'globals/',
-            name: 'globals',
-            meta: {
-              title: 'Globals | Speckle'
-            },
-            component: () => import('../views/Globals.vue')
-          },
+          // {
+          //   path: 'globals/',
+          //   name: 'globals',
+          //   meta: {
+          //     title: 'Globals | Speckle'
+          //   },
+          //   component: () => import('../views/Globals.vue')
+          // },
           {
             path: 'globals/:commitId',
             name: 'previous globals',
@@ -145,48 +145,58 @@ const routes = [
               title: 'Object | Speckle'
             },
             component: () => import('../views/Object.vue')
-          }
-        ]
-      },
-      {
-        path: 'settings/streams/:streamId/',
-        name: 'settings',
-        props: true,
-        component: () => import('../views/settings/StreamSettings.vue'),
-        children: [
-          {
-            path: 'general/',
-            name: 'general',
-            meta: {
-              title: 'Stream Settings | Speckle'
-            },
-            props: true,
-            component: () => import('../views/settings/SettingsGeneral.vue')
           },
           {
-            path: 'webhooks/',
-            name: 'webhooks',
-            meta: {
-              title: 'Webhooks | Speckle'
-            },
+            path: 'settings/',
+            name: 'settings',
             props: true,
-            component: () => import('../views/settings/SettingsWebhooks.vue'),
+            component: () => import('../views/settings/StreamSettings.vue'),
             children: [
               {
-                path: 'edit/:webhookId/',
-                name: 'edit webhook',
-                props: true
+                path: 'general/',
+                name: 'general',
+                meta: {
+                  title: 'Stream Settings | Speckle'
+                },
+                props: true,
+                component: () => import('../views/settings/SettingsGeneral.vue')
+              },
+              {
+                path: 'webhooks/',
+                name: 'webhooks',
+                meta: {
+                  title: 'Webhooks | Speckle'
+                },
+                props: true,
+                component: () => import('../views/settings/SettingsWebhooks.vue'),
+                children: [
+                  {
+                    path: 'edit/:webhookId/',
+                    name: 'edit webhook',
+                    props: true
+                  }
+                ]
+              },
+              {
+                path: 'webhooks/new/',
+                name: 'add webhook',
+                props: true,
+                component: () => import('../views/settings/SettingsWebhooks.vue')
+              },
+              {
+                path: 'globals/',
+                name: 'globals',
+                meta: {
+                  title: 'Globals | Speckle'
+                },
+                props: true,
+                component: () => import('../views/Globals.vue')
               }
             ]
-          },
-          {
-            path: 'webhooks/new/',
-            name: 'add webhook',
-            props: true,
-            component: () => import('../views/settings/SettingsWebhooks.vue')
           }
         ]
       },
+
       {
         path: 'profile',
         name: 'profile',
@@ -274,10 +284,9 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
-
   if (
     !uuid &&
-    !to.matched.some(({ name }) => name === 'streams') && //allow public streams to be viewed
+    !to.matched.some(({ name }) => name === 'stream') && //allow public streams to be viewed
     to.name !== 'Embeded Viewer' &&
     to.name !== 'Login' &&
     to.name !== 'Register' &&

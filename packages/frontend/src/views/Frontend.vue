@@ -1,6 +1,6 @@
 <template>
   <v-app id="speckle">
-    <v-app-bar app>
+    <v-app-bar app clipped-left>
       <v-container
         :fluid="$vuetify.breakpoint.mdAndDown"
         class="py-0 fill-height hidden-sm-and-down"

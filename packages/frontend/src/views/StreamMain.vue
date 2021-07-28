@@ -213,38 +213,6 @@
       >
         <v-skeleton-loader type="article"></v-skeleton-loader>
       </v-card>
-
-      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0">
-        <v-dialog v-model="dialogDescription">
-          <stream-description-dialog
-            :id="$route.params.streamId"
-            :description="description"
-            @close="closeDescription"
-          />
-        </v-dialog>
-        <v-card-title>
-          Stream Description
-          <v-spacer />
-          <v-btn
-            v-if="userRole === 'owner'"
-            small
-            plain
-            color="primary"
-            text
-            class="px-0"
-            @click="dialogDescription = true"
-          >
-            <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
-            Edit
-          </v-btn>
-        </v-card-title>
-        <v-card-text
-          v-if="description"
-          class="marked-preview"
-          v-html="compiledStreamDescription"
-        ></v-card-text>
-        <v-card-text v-else><i>No description provided</i></v-card-text>
-      </v-card>
     </v-col>
   </v-row>
   <v-row v-else justify="center">
@@ -257,7 +225,6 @@
 import marked from 'marked'
 import DOMPurify from 'dompurify'
 import gql from 'graphql-tag'
-import StreamDescriptionDialog from '../components/dialogs/StreamDescriptionDialog'
 import NoDataPlaceholder from '../components/NoDataPlaceholder'
 import SourceAppAvatar from '../components/SourceAppAvatar'
 import streamBranchesQuery from '../graphql/streamBranches.gql'
@@ -271,7 +238,6 @@ export default {
   name: 'StreamMain',
   components: {
     UserAvatar,
-    StreamDescriptionDialog,
     SourceAppAvatar,
     NoDataPlaceholder,
     Renderer,
@@ -309,7 +275,7 @@ export default {
     },
     description: {
       query: gql`
-        query ($id: String!) {
+        query($id: String!) {
           stream(id: $id) {
             id
             description
@@ -325,7 +291,7 @@ export default {
     },
     commitNotif: {
       query: gql`
-        query ($id: String!) {
+        query($id: String!) {
           stream(id: $id) {
             id
             commits {
@@ -350,7 +316,7 @@ export default {
     $subscribe: {
       branchCreated: {
         query: gql`
-          subscription ($streamId: String!) {
+          subscription($streamId: String!) {
             branchCreated(streamId: $streamId)
           }
         `,
@@ -368,7 +334,7 @@ export default {
       },
       branchDeleted: {
         query: gql`
-          subscription ($streamId: String!) {
+          subscription($streamId: String!) {
             branchDeleted(streamId: $streamId)
           }
         `,

@@ -6,7 +6,7 @@
           <v-card-title class="tmr-8 display-1 text--secondary">
             {{ stream.name }}
             <br />
-            <v-btn plain small class="mt-3 pa-0" :to="'/streams/' + stream.id">
+            <v-btn block plain small class="justify-start mt-3 pa-0" :to="'/streams/' + stream.id">
               <v-icon small>mdi-chevron-left</v-icon>
               back to stream
             </v-btn>
@@ -79,6 +79,10 @@ export default {
         {
           name: 'Webhooks',
           to: `/settings/streams/${this.$attrs.streamId}/webhooks`
+        },
+        {
+          name: 'Globals',
+          to: `/settings/streams/${this.$attrs.streamId}/globals`
         }
       ]
     }

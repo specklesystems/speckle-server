@@ -22,6 +22,30 @@
               @created="newStreamDialog = false"
             />
           </v-dialog>
+          <div v-if="user" class="my-5">
+            <v-subheader class="mt-3">Your stats:</v-subheader>
+            <div class="ml-5">
+              <p>
+                <v-icon small>mdi-compare-vertical</v-icon>
+                <b>{{ user.streams.totalCount }}</b>
+                streams
+              </p>
+              <p>
+                <v-icon small>mdi-source-commit</v-icon>
+                <b>{{ user.commits.totalCount }}</b>
+                commits
+              </p>
+              <p v-if="user.commits.totalCount > 0">
+                Last commit
+                <b>
+                  <timeago
+                    :datetime="user.commits.items[0].createdAt"
+                    class="font-italic ma-1"
+                  ></timeago>
+                </b>
+              </p>
+            </div>
+          </div>
         </div>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10">
@@ -38,20 +62,6 @@
           </v-col>
 
           <v-col v-else-if="streams && streams.items && streams.items.length > 0">
-            <v-card v-if="user" class="my-5" flat>
-              <v-card-text class="body-1">
-                <span>
-                  You have
-                  <v-icon small>mdi-compare-vertical</v-icon>
-                  <b>{{ user.streams.totalCount }}</b>
-                  streams and
-                  <v-icon small>mdi-source-commit</v-icon>
-                  <b>{{ user.commits.totalCount }}</b>
-                  commits.
-                </span>
-              </v-card-text>
-            </v-card>
-
             <v-row>
               <v-col
                 v-for="(stream, i) in streams.items"

@@ -54,6 +54,9 @@
     </v-card-text>
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
+      <p class="font-italic">
+        {{ truncate(stream.description) }}
+      </p>
       <p>
         Created
         <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
@@ -89,107 +92,110 @@
         </span>
       </p>
       <v-divider class="pb-2"></v-divider>
-      <v-btn
-        v-if="userRole === 'owner' && isHomeRoute"
-        small
-        plain
-        color="primary"
-        text
-        class="px-0"
-        @click="editStreamDialog = true"
-      >
-        <v-icon small class="mr-2 float-left">mdi-pencil-outline</v-icon>
-        Edit
-      </v-btn>
+      <div v-if="isHomeRoute">
+        <v-btn
+          v-if="userRole === 'owner'"
+          small
+          color="primary"
+          text
+          class="px-0"
+          @click="editStreamDialog = true"
+        >
+          <v-icon small class="mr-2 float-left">mdi-pencil-outline</v-icon>
+          Edit details
+        </v-btn>
+        <v-btn
+          v-if="userRole === 'owner'"
+          small
+          color="primary"
+          text
+          class="px-0 d-block"
+          @click="dialogShare = true"
+        >
+          <v-icon small class="mr-2">mdi-account-multiple</v-icon>
+          Manage collaboratos
+        </v-btn>
 
-      <v-dialog v-model="editStreamDialog" max-width="500">
-        <stream-edit-dialog
-          :stream-id="stream.id"
-          :name="stream.name"
-          :is-public="stream.isPublic"
-          :open="editStreamDialog"
-          @close="editClosed"
-        />
-      </v-dialog>
-    </v-card-text>
+        <!-- <v-btn
+          v-tooltip="'Edit stream global variables!'"
+          small
+          plain
+          color="primary"
+          text
+          class="px-0 d-block justify-start"
+          :to="`/streams/${stream.id}/globals`"
+        >
+          Manage Globals
+        </v-btn> -->
 
-    <v-card-text v-show="isHomeRoute">
-      <v-btn
-        v-tooltip="'Edit stream global variables!'"
-        block
-        small
-        elevation="0"
-        :to="`/streams/${stream.id}/globals`"
-      >
-        Globals
-      </v-btn>
-    </v-card-text>
+        <v-btn
+          v-if="userRole === 'owner'"
+          small
+          color="primary"
+          text
+          left
+          class="px-0"
+          :to="`/streams/${stream.id}/settings/general`"
+          @click.prevent=""
+        >
+          <v-icon small class="mr-2">mdi-cog-outline</v-icon>
+          Settings
+        </v-btn>
 
-    <v-card-text v-if="userRole === 'owner'">
-      <v-btn block small elevation="0" :to="`/settings/streams/${stream.id}/general`">
-        <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
-        Settings
-      </v-btn>
-    </v-card-text>
+        <v-btn
+          v-if="userRole === 'owner'"
+          small
+          plain
+          color="primary"
+          text
+          class="px-0 d-block"
+          @click="showStreamInviteDialog"
+        >
+          <v-icon small class="mr-2">mdi-email-send-outline</v-icon>
+          Invite to this stream
+        </v-btn>
 
-    <v-card-title v-show="isHomeRoute"><h5>Collaborators</h5></v-card-title>
-    <v-card-text v-show="isHomeRoute">
-      <v-row no-gutters>
-        <template v-for="(collab, i) in stream.collaborators">
-          <v-col :key="i" cols="3" class="mb-2">
-            <user-avatar
-              :id="collab.id"
-              :size="40"
-              :avatar="collab.avatar"
-              :name="collab.name"
-            ></user-avatar>
-          </v-col>
-          <v-col :key="collab.id" cols="9" class="mb-2 hidden-sm-and-down">
-            <span class="text-body-2">{{ collab.name }}</span>
-            <br />
-            <span class="caption">{{ collab.role.split(':')[1] }}</span>
-          </v-col>
-        </template>
-      </v-row>
-      <v-divider class="pb-2 mt-2"></v-divider>
+        <v-dialog v-model="editStreamDialog" max-width="500">
+          <stream-edit-dialog
+            :stream-id="stream.id"
+            :name="stream.name"
+            :description="stream.description"
+            :is-public="stream.isPublic"
+            :open="editStreamDialog"
+            @close="editClosed"
+          />
+        </v-dialog>
 
-      <v-btn
-        v-if="userRole === 'owner'"
-        small
-        plain
-        color="primary"
-        text
-        class="px-0 d-block"
-        @click="dialogShare = true"
-      >
-        <v-icon small class="mr-2">mdi-account-multiple</v-icon>
-        Manage
-      </v-btn>
-      <v-btn
-        v-if="userRole === 'owner'"
-        small
-        plain
-        color="primary"
-        text
-        class="px-0 d-block"
-        @click="showStreamInviteDialog"
-      >
-        <v-icon small class="mr-2">mdi-email-send-outline</v-icon>
-        Send an invite
-      </v-btn>
-      <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
-      <v-dialog v-if="userId" v-model="dialogShare" max-width="500">
-        <stream-share-dialog
-          :users="stream.collaborators"
-          :stream-id="stream.id"
-          :user-id="userId"
-          @close="dialogShare = false"
-        ></stream-share-dialog>
-      </v-dialog>
-      <v-divider class="pb-2 mt-2"></v-divider>
-    </v-card-text>
-    <v-card-text>
-      <div v-for="(item, index) in stream.activity.items" :key="index">{{ item.resourceType }}</div>
+        <v-card-title><h5>Collaborators</h5></v-card-title>
+
+        <v-row no-gutters>
+          <template v-for="(collab, i) in stream.collaborators">
+            <v-col :key="i" cols="3" class="mb-2">
+              <user-avatar
+                :id="collab.id"
+                :size="40"
+                :avatar="collab.avatar"
+                :name="collab.name"
+              ></user-avatar>
+            </v-col>
+            <v-col :key="collab.id" cols="9" class="mb-2 hidden-sm-and-down">
+              <span class="text-body-2">{{ collab.name }}</span>
+              <br />
+              <span class="caption">{{ collab.role.split(':')[1] }}</span>
+            </v-col>
+          </template>
+        </v-row>
+
+        <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
+        <v-dialog v-if="userId" v-model="dialogShare" max-width="500">
+          <stream-share-dialog
+            :users="stream.collaborators"
+            :stream-id="stream.id"
+            :user-id="userId"
+            @close="dialogShare = false"
+          ></stream-share-dialog>
+        </v-dialog>
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -249,6 +255,13 @@ export default {
     },
     showStreamInviteDialog() {
       this.$refs.streamInviteDialog.show()
+    },
+    truncate(input, length = 250) {
+      if (!input) return ''
+      if (input.length > length) {
+        return input.substring(0, length) + '...'
+      }
+      return input
     }
   }
 }
