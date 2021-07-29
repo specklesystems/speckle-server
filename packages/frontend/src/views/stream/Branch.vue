@@ -6,35 +6,28 @@
       </v-col>
       <v-col v-else-if="stream.branch" cols="12">
         <breadcrumb-title />
-        <v-card class="pa-4" elevation="0" rounded="lg">
+        <h3 v-if="stream.branch.description" class="title font-italic font-weight-thin my-5">
+          {{ stream.branch.descrption }}
+        </h3>
+
+        <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
           <branch-edit-dialog ref="editBranchDialog" />
 
-          <v-card-title class="mr-8">
+          <v-card-title>
             <v-icon class="mr-2">mdi-source-branch</v-icon>
             <span class="d-inline-block">{{ stream.branch.name }}</span>
             <v-spacer />
             <v-btn
               v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
-              small
               color="primary"
-              text
-              class="px-0"
+              class="my-2"
+              small
               @click="editBranch"
             >
               <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
               Edit branch
             </v-btn>
           </v-card-title>
-
-          <v-card-text v-if="stream.branch.description">
-            {{ stream.branch.description }}
-          </v-card-text>
-          <v-card-text v-else>
-            <i>No description provided</i>
-          </v-card-text>
-        </v-card>
-
-        <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
           <v-subheader class="text-uppercase">
             Commits ({{ stream.branch.commits.totalCount }})
           </v-subheader>

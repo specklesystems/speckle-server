@@ -1,10 +1,20 @@
 <template>
   <v-row v-if="!error">
     <v-col v-if="stream" cols="12">
-      <breadcrumb-title />
+      <h1 class="display-1">{{ stream.name }}</h1>
       <h3 class="title font-italic font-weight-thin my-5">
         {{ truncate(stream.description) }}
       </h3>
+      <div class="mb-3">
+        <span class="caption">
+          Created
+          <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
+        </span>
+        <span class="ml-3 caption">
+          Updated
+          <timeago v-tooltip="formatDate(stream.updatedAt)" :datetime="stream.updatedAt"></timeago>
+        </span>
+      </div>
       <div>
         <v-chip>
           <v-icon small>mdi-source-branch</v-icon>
@@ -32,14 +42,15 @@
             &nbsp; private
           </span>
         </v-chip>
-        <span class="ml-3 caption">
-          Created
-          <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
-        </span>
-        <span class="ml-3 caption">
-          Updated
-          <timeago v-tooltip="formatDate(stream.updatedAt)" :datetime="stream.updatedAt"></timeago>
-        </span>
+        <user-avatar
+          v-for="(collab, i) in stream.collaborators"
+          :id="collab.id"
+          :key="i"
+          :size="30"
+          :avatar="collab.avatar"
+          :name="collab.name"
+          class="ml-1"
+        ></user-avatar>
       </div>
     </v-col>
 
@@ -103,16 +114,7 @@
               See commit details
             </v-btn>
           </v-sheet>
-          <h3 class="title mt-4 mb-3">Collaborators</h3>
 
-          <user-avatar
-            v-for="(collab, i) in stream.collaborators"
-            :id="collab.id"
-            :key="i"
-            :size="40"
-            :avatar="collab.avatar"
-            :name="collab.name"
-          ></user-avatar>
           <no-data-placeholder v-if="!latestCommit" :message="`This branch has no commits.`" />
         </v-card>
       </div>

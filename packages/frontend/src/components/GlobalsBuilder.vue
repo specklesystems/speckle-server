@@ -13,22 +13,33 @@
       <v-icon class="mr-2">mdi-earth</v-icon>
       Globals
     </v-card-title>
-    <v-card-subtitle v-if="commitMessage" class="mt-3">
-      <b>Selected commit:</b>
-      <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
-      {{ commitMessage }}
-    </v-card-subtitle>
-    <v-card-text>
-      These global variables can be used for storing design values, project requirements, notes, or
-      any info you want to keep track of alongside your geometry. Variable values can be text,
-      numbers, lists, or booleans. Click the box icon next to any field to turn it into a nested
-      group of fields, and drag and drop fields in and out of groups as you please! Note that field
-      order may not always be preserved.
+
+    <v-card-text class="subtitle-1">
+      Click the box icon next to any field to turn it into a nested group of fields, and drag and
+      drop fields in and out of groups as you please! Note that field order may not always be
+      preserved.
+      <span v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')">
+        <br />
+        <br />
+        You are free to play around with the globals here, but you do not have the required stream
+        permission to save your changes.
+      </span>
+      <v-btn
+        text
+        small
+        color="primary"
+        href="https://speckle.guide/user/web.html#globals"
+        target="_blank"
+      >
+        Read the docs
+      </v-btn>
+      <div v-if="commitMessage" class="mt-3">
+        <b>Selected commit:</b>
+        <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
+        {{ commitMessage }}
+      </div>
     </v-card-text>
-    <v-card-text v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')">
-      You are free to play around with the globals here, but you do not have the required stream
-      permission to save your changes.
-    </v-card-text>
+
     <v-card-actions>
       <v-switch
         v-model="deleteEntries"

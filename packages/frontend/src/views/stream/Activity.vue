@@ -2,6 +2,7 @@
   <v-row>
     <v-col v-if="stream" cols="12">
       <breadcrumb-title />
+      <h3 class="title font-italic font-weight-thin my-5">Recent activity on this Stream</h3>
     </v-col>
     <v-col cols="12">
       <v-timeline v-if="stream" align-top>

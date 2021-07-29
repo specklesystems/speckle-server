@@ -2,37 +2,49 @@
   <v-row>
     <v-col>
       <breadcrumb-title />
+      <h3 class="title font-italic font-weight-thin my-5">
+        Globals store design values, project requirements, notes etc
+      </h3>
       <div v-if="!objectId && !$apollo.loading && !revealBuilder">
-        <v-card :loading="loading">
+        <v-card :loading="loading" class="mt-5 pa-4" elevation="0" rounded="lg">
           <template slot="progress">
             <v-progress-linear indeterminate></v-progress-linear>
           </template>
-          <v-card-title>You don't have any globals on this stream!</v-card-title>
-          <v-card-text
-            v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
-            class="subtitle-1"
-          >
-            Globals are useful for storing design values, project requirements, notes, or any info
-            you want to keep track of alongside your geometry. Would you like to create some now?
-          </v-card-text>
-          <v-card-text
-            v-if="!(stream.role === 'contributor') && !(stream.role === 'stream:owner')"
-            class="subtitle-1"
-          >
-            Globals are useful for storing design values, project requirements, notes, or any info
-            you want to keep track of alongside your geometry. You don't have permission to create
-            and edit globals on this stream, but you can create your own stream to try them out!
-          </v-card-text>
-          <v-card-actions>
+          <v-card-title>
+            <v-icon class="mr-2">mdi-earth</v-icon>
+            Globals
             <v-spacer />
             <v-btn
               v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
               color="primary"
+              dark
+              class="ma-2"
+              small
               @click="createClicked"
             >
               create globals
             </v-btn>
-          </v-card-actions>
+          </v-card-title>
+          <v-card-text class="subtitle-1">
+            There are no globals in this stream yet.
+            <br />
+            Globals are useful for storing design values, project requirements, notes, or any info
+            you want to keep track of alongside your geometry.
+            <strong v-if="!(stream.role === 'contributor') && !(stream.role === 'stream:owner')">
+              <br />
+              <br />
+              You don't have permission to create globals in this stream.
+            </strong>
+            <v-btn
+              text
+              small
+              color="primary"
+              href="https://speckle.guide/user/web.html#globals"
+              target="_blank"
+            >
+              Read the docs
+            </v-btn>
+          </v-card-text>
         </v-card>
       </div>
       <div v-if="objectId || revealBuilder">
@@ -52,7 +64,7 @@
         >
           <v-card-title>
             <v-icon class="mr-2">mdi-history</v-icon>
-            History
+            Globals History
           </v-card-title>
           <v-card-text>
             <list-item-commit

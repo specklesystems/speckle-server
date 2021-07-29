@@ -3,38 +3,30 @@
     <v-col v-if="$apollo.queries.stream.loading">
       <v-skeleton-loader type="article"></v-skeleton-loader>
     </v-col>
-    <v-col v-else-if="branches" cols="12">
+    <v-col v-else-if="stream" cols="12">
       <breadcrumb-title />
-      <v-card rounded="lg" class="pa-4 mb-4" elevation="0">
-        <branch-new-dialog ref="newBranchDialog" />
+      <h3 class="title font-italic font-weight-thin my-5">
+        A branch represents a series of commits, you can see them as labels, folders etc
+      </h3>
 
+      <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
         <v-card-title>
           <v-icon class="mr-2">mdi-source-branch</v-icon>
-          Branches
-
+          <span class="d-inline-block">Branches ({{ branches.length }})</span>
           <v-spacer />
           <v-btn
             v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
             color="primary"
-            text
-            class="px-0"
+            class="my-2"
             small
             @click="newBranch"
           >
-            <v-icon small class="mr-2 float-left">mdi-plus-circle-outline</v-icon>
+            <!-- <v-icon small class="mr-2 float-left">mdi-plus-circle-outline</v-icon> -->
             New branch
           </v-btn>
+          <branch-new-dialog ref="newBranchDialog" />
         </v-card-title>
-        <v-card-text>
-          <i>
-            A branch represents an independent line of data. You can think of them as an independent
-            directory, staging area and project history.
-          </i>
-        </v-card-text>
-      </v-card>
 
-      <v-card v-if="!$apollo.queries.stream.loading" class="mt-5 pa-4" elevation="0" rounded="lg">
-        <v-subheader class="text-uppercase">Branches ({{ branches.length }})</v-subheader>
         <v-card-text>
           <v-list two-line color="transparent">
             <template v-for="item in branches">

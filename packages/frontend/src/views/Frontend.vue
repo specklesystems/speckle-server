@@ -76,26 +76,43 @@
         </v-row>
       </v-container>
     </v-app-bar>
-    <v-navigation-drawer v-if="isStreamPage" v-model="drawer" app clipped left>
-      <v-list v-if="stream">
+    <v-navigation-drawer v-if="isStreamPage && stream" v-model="drawer" app clipped left>
+      <v-list>
         <v-subheader>Stream menu</v-subheader>
-        <v-list-item
-          v-for="menu in menues"
-          :key="menu.name"
-          :to="menu.to"
-          :disabled="menu.disabled"
-          exact
-          @click="handleFunction(menu.click)"
-        >
-          <v-list-item-icon>
-            <v-icon>{{ menu.icon }}</v-icon>
-          </v-list-item-icon>
+        <v-list-item-group color="primary">
+          <v-list-item
+            v-for="menu in menues"
+            :key="menu.name"
+            :to="menu.to"
+            :disabled="menu.disabled"
+            exact
+            @click="handleFunction(menu.click)"
+          >
+            <v-list-item-icon>
+              <v-icon>{{ menu.icon }}</v-icon>
+            </v-list-item-icon>
 
-          <v-list-item-content>
-            <v-list-item-title>{{ menu.name }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
+            <v-list-item-content>
+              <v-list-item-title>{{ menu.name }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-item-group>
       </v-list>
+      <v-btn
+        v-if="stream.role === 'stream:owner'"
+        outlined
+        color="primary"
+        rounded
+        height="50"
+        class="ma-3 d-block"
+        @click="showStreamInviteDialog"
+      >
+        <v-icon small class="mr-2">mdi-email-send-outline</v-icon>
+        Invite to this
+        <br />
+        stream by email
+      </v-btn>
+      <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
     </v-navigation-drawer>
     <v-main :style="background">
       <router-view></router-view>
@@ -134,9 +151,10 @@ import gql from 'graphql-tag'
 import userQuery from '../graphql/user.gql'
 import UserMenuTop from '../components/UserMenuTop'
 import SearchBar from '../components/SearchBar'
+import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
 export default {
-  components: { UserMenuTop, SearchBar },
+  components: { UserMenuTop, SearchBar, StreamInviteDialog },
   data() {
     return {
       search: '',
@@ -247,7 +265,7 @@ export default {
         {
           name: 'Collaborators',
           icon: 'mdi-account-group-outline',
-          click: 'manageCollabrators',
+          to: '/streams/' + this.$route.params.streamId + '/collaborators',
           disabled: this.stream.role !== 'stream:owner'
         },
         {
@@ -259,7 +277,7 @@ export default {
         {
           name: 'Settings',
           icon: 'mdi-cog-outline',
-          click: 'editStream',
+          to: '/streams/' + this.$route.params.streamId + '/settings',
           disabled: this.stream.role !== 'stream:owner'
         }
       ]
@@ -274,11 +292,16 @@ export default {
   methods: {
     handleFunction(f) {
       if (this[f]) this[f]()
+    },
+    showStreamInviteDialog() {
+      this.$refs.streamInviteDialog.show()
     }
   }
 }
 </script>
 <style>
+.action-button {
+}
 .logo {
   font-family: 'Space Grotesk', sans-serif;
   text-transform: none;

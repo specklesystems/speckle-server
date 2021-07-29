@@ -1,86 +1,86 @@
 <template>
-  <admin-card :loading="loading" title="General">
-    <v-card-text class="py-0 my-0">
-      <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="save">
-        <v-text-field
-          v-model="name"
-          :rules="validation.nameRules"
-          label="Name"
-          hint="The name of this stream."
-        />
-        <p class="subtitle-1">Description</p>
-        <v-row>
-          <v-col cols="12" sm="12" md="6">
-            <p class="caption">
-              Use Markdown! Tips:
-              <code>#, ##, ###</code>
-              prefix headings, links:
-              <code>[speckle](https://speckle.systems)</code>
-              , images:
-              <code>![image title](image url)</code>
-              , list items are prefixed by
-              <code>-</code>
-              on new lines,
-              <b>bold</b>
-              text by surrounding it with
-              <code>**</code>
-              , etc.
-            </p>
-            <v-textarea
+  <v-row>
+    <v-col v-if="stream" cols="12">
+      <breadcrumb-title />
+      <h3 class="title font-italic font-weight-thin my-5">Fine tune this Stream's settings</h3>
+
+      <v-card class="mt-5 pa-4" elevation="0" rounded="lg" :loading="loading">
+        <v-card-title>
+          <v-icon class="mr-2">mdi-cog</v-icon>
+          <span class="d-inline-block">General</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="save">
+            <v-text-field
+              v-model="name"
+              :rules="validation.nameRules"
+              label="Name"
+              hint="The name of this stream."
+              class="mt-5"
+            />
+            <v-text-field
               v-model="description"
-              auto-grow
-              filled
-              rows="10"
-              style="font-size: 12px; line-height: 10px"
-            ></v-textarea>
-          </v-col>
-          <v-col cols="12" sm="12" md="6">
-            <p class="subtitle">Preview</p>
-            <div class="marked-preview" v-html="compiledMarkdown"></div>
-          </v-col>
-        </v-row>
-        <v-switch
-          v-model="isPublic"
-          :label="isPublic ? 'Public' : 'Private'"
-          :hint="
-            isPublic
-              ? 'Anyone can view this stream. It is also visible on your profile page. Only collaborators can edit it.'
-              : 'Only collaborators can access this stream.'
-          "
-          persistent-hint
-        />
-      </v-form>
-    </v-card-text>
+              label="Description"
+              hint="The description of this stream."
+              class="mt-5"
+            />
 
-    <v-divider class="mt-4 mb-3" />
+            <v-switch
+              v-model="isPublic"
+              class="mt-5"
+              :label="isPublic ? 'Public' : 'Private'"
+              :hint="
+                isPublic
+                  ? 'Anyone can view this stream. It is also visible on your profile page. Only collaborators can edit it.'
+                  : 'Only collaborators can access this stream.'
+              "
+              persistent-hint
+            />
+          </v-form>
+        </v-card-text>
 
-    <v-card-actions>
-      <v-btn outlined color="success" type="submit" :disabled="!valid" @click="save">
-        Save Changes
-      </v-btn>
-    </v-card-actions>
-  </admin-card>
+        <v-card-actions>
+          <v-btn class="ml-3 mt-5" color="primary" type="submit" :disabled="!canSave" @click="save">
+            Save Changes
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-col>
+    <v-snackbar v-model="snackbar" timeout="800" color="primary">
+      <p class="text-center my-0">
+        <b>Changes saved!</b>
+      </p>
+    </v-snackbar>
+  </v-row>
 </template>
 
 <script>
-import marked from 'marked'
-import DOMPurify from 'dompurify'
 import gql from 'graphql-tag'
-import streamQuery from '@/graphql/stream.gql'
 
 export default {
   name: 'SettingsGeneral',
   components: {
-    AdminCard: () => import('@/components/admin/AdminCard')
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   apollo: {
     stream: {
-      query: streamQuery,
+      query: gql`
+        query Stream($id: String!) {
+          stream(id: $id) {
+            id
+            name
+            description
+            isPublic
+          }
+        }
+      `,
       variables() {
         return {
-          id: this.$attrs.streamId
+          id: this.$route.params.streamId
         }
       },
+
       update(data) {
         let stream = data.stream
         if (stream)
@@ -91,6 +91,7 @@ export default {
     }
   },
   data: () => ({
+    snackbar: false,
     loading: false,
     valid: false,
     name: null,
@@ -101,12 +102,16 @@ export default {
     }
   }),
   computed: {
-    compiledMarkdown() {
-      if (!this.description) return ''
-      let md = marked(this.description)
-      return DOMPurify.sanitize(md)
+    canSave() {
+      return (
+        this.valid &&
+        (this.name !== this.stream.name ||
+          this.description !== this.stream.description ||
+          this.isPublic !== this.stream.isPublic)
+      )
     }
   },
+
   methods: {
     async save() {
       this.loading = true
@@ -127,6 +132,7 @@ export default {
             }
           }
         })
+        this.snackbar = true
       } catch (e) {
         console.log(e)
       }

@@ -133,6 +133,15 @@ const routes = [
             component: () => import('@/views/stream/Activity.vue')
           },
           {
+            path: 'collaborators/',
+            name: 'collaborators',
+            meta: {
+              title: 'Stream Collaborators | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Collaborators.vue')
+          },
+          {
             path: 'settings/',
             name: 'settings',
             meta: {

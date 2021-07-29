@@ -2,6 +2,9 @@
   <v-row>
     <v-col>
       <breadcrumb-title />
+      <h3 class="title font-italic font-weight-thin my-5">
+        Automate anything by adding webhooks to Stream events
+      </h3>
       <admin-card v-if="selectedWebhook != undefined" :loading="loading" title="Edit Webhook">
         <template #subtitle>
           <v-icon dense class="text-subtitle-1 pr-1">mdi-webhook</v-icon>
@@ -30,14 +33,28 @@
 
       <admin-card v-else title="Webhooks" icon="mdi-webhook">
         <template #menu>
-          <v-btn small outlined color="primary" :to="`/streams/${$attrs.streamId}/webhooks/new`">
+          <v-btn
+            color="primary"
+            dark
+            class="ma-2"
+            small
+            :to="`/streams/${$attrs.streamId}/webhooks/new`"
+          >
             Add Webhook
           </v-btn>
         </template>
 
         <v-card-text v-if="webhooks && webhooks.length == 0">
-          You don't have any webhooks on this stream yet. Click the blue "Add Webhook" button in the
-          top right to add one.
+          There are no webhooks on this stream yet.
+          <v-btn
+            text
+            small
+            color="primary"
+            href="https://speckle.guide/dev/server-webhooks.html"
+            target="_blank"
+          >
+            Read the docs
+          </v-btn>
         </v-card-text>
 
         <v-list subheader two-line>
