@@ -23,6 +23,9 @@
             />
           </v-dialog>
         </div>
+        <div v-if="$apollo.queries.streams.loading" class="my-5">
+          <v-skeleton-loader type="list-item-two-line@3"></v-skeleton-loader>
+        </div>
 
         <v-list
           v-if="streams && streams.items.length > 0"
@@ -57,11 +60,13 @@
             <getting-started-wizard />
           </v-col>
           <v-col v-if="$apollo.loading && !timeline">
-            <v-card elevation="0" color="transparent">
-              <div v-if="$apollo.loading" class="my-5">
-                <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
-              </div>
-            </v-card>
+            <div class="my-5">
+              <v-timeline align-top dense>
+                <v-timeline-item v-for="i in 6" :key="i" medium>
+                  <v-skeleton-loader type="article"></v-skeleton-loader>
+                </v-timeline-item>
+              </v-timeline>
+            </div>
           </v-col>
 
           <v-col v-else-if="timeline && timeline.items.length > 0">

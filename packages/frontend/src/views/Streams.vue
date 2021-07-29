@@ -54,11 +54,12 @@
             <getting-started-wizard />
           </v-col>
           <v-col v-if="$apollo.loading">
-            <v-card elevation="0" color="transparent">
-              <div v-if="$apollo.loading" class="my-5">
-                <v-skeleton-loader type="list-item-three-line"></v-skeleton-loader>
-              </div>
-            </v-card>
+            <v-row>
+              <v-col v-for="i in 6" :key="i" cols="12" sm="12" md="12" lg="6" xl="4">
+                <v-skeleton-loader type="card, list-item-two-line" class="ma-2"></v-skeleton-loader>
+              </v-col>
+            </v-row>
+            <div v-if="$apollo.loading" class="my-5"></div>
           </v-col>
 
           <v-col v-else-if="streams && streams.items && streams.items.length > 0">

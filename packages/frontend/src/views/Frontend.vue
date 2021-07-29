@@ -16,6 +16,7 @@
         <span v-if="serverInfo" class="subtitle-2">{{ serverInfo.name }}</span>
         <v-btn
           v-for="link in navLinks"
+          v-if="loggedIn"
           :key="link.name"
           text
           exact
@@ -31,13 +32,14 @@
         <user-menu-top v-if="user" :user="user" />
         <v-btn v-else color="primary" to="/authn/login">
           <v-icon left>mdi-account-arrow-right</v-icon>
-          Logn in / Register
+          Log in
         </v-btn>
       </v-container>
       <v-container class="hidden-md-and-up">
         <v-row>
           <v-col>
             <v-menu
+              v-if="loggedIn"
               :value="showMobileMenu"
               transition="slide-y-transition"
               bottom
@@ -47,7 +49,7 @@
             >
               <template #activator="{ on, attrs }">
                 <v-btn icon v-bind="attrs" v-on="on" @click="showMobileMenu = true">
-                  <v-icon>mdi-magnify</v-icon>
+                  <v-icon>mdi-dots-vertical-circle-outline</v-icon>
                 </v-btn>
               </template>
               <v-card>
@@ -238,7 +240,7 @@ export default {
       return localStorage.getItem('uuid') !== null
     },
     isStreamPage() {
-      return this.$route.params.streamId
+      return this.$route.params.streamId && this.loggedIn
     },
     menues() {
       return [
@@ -300,8 +302,6 @@ export default {
 }
 </script>
 <style>
-.action-button {
-}
 .logo {
   font-family: 'Space Grotesk', sans-serif;
   text-transform: none;

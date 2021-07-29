@@ -6,7 +6,9 @@
         <error-block v-else-if="error" :message="error" />
       </v-col>
     </v-row>
-
+    <v-snackbar :value="!loggedIn" color="primary" :timeout="-1">
+      <p class="text-center my-0 title">Log in to see more!</p>
+    </v-snackbar>
     <v-snackbar
       v-if="commitSnackbarInfo"
       v-model="commitSnackbar"
@@ -101,6 +103,9 @@ export default {
   computed: {
     userId() {
       return localStorage.getItem('uuid')
+    },
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
     }
   },
   mounted() {
@@ -112,9 +117,7 @@ export default {
       }, 500)
     }
   },
-  loggedIn() {
-    return localStorage.getItem('uuid') !== null
-  },
+
   methods: {
     // editStream() {
     //   this.editStreamDialog = true

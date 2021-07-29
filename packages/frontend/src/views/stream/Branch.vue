@@ -31,10 +31,6 @@
           <v-subheader class="text-uppercase">
             Commits ({{ stream.branch.commits.totalCount }})
           </v-subheader>
-          <no-data-placeholder
-            v-if="stream.branch.commits.totalCount === 0"
-            :name="stream.branch.name"
-          />
 
           <v-card-text>
             <list-item-commit
@@ -45,6 +41,11 @@
             ></list-item-commit>
           </v-card-text>
         </v-card>
+
+        <no-data-placeholder
+          v-if="stream.branch.commits.totalCount === 0"
+          :message="'This Branch has no commits yet.'"
+        />
       </v-col>
     </v-row>
     <v-row v-if="!$apollo.loading && !stream.branch" justify="center">

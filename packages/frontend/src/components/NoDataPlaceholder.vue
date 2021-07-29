@@ -94,14 +94,6 @@ export default {
     message: {
       type: String,
       default: "It's a bit quiet here."
-    },
-    name: {
-      type: String,
-      default: null
-    },
-    resourceType: {
-      type: String,
-      default: null
     }
   },
   computed: {},

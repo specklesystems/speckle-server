@@ -18,12 +18,6 @@
       Click the box icon next to any field to turn it into a nested group of fields, and drag and
       drop fields in and out of groups as you please! Note that field order may not always be
       preserved.
-      <span v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')">
-        <br />
-        <br />
-        You are free to play around with the globals here, but you do not have the required stream
-        permission to save your changes.
-      </span>
       <v-btn
         text
         small
@@ -33,6 +27,17 @@
       >
         Read the docs
       </v-btn>
+
+      <v-alert
+        v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')"
+        class="my-3"
+        dense
+        type="warning"
+      >
+        You are free to play around with the globals here, but you do not have the required stream
+        permission to save your changes.
+      </v-alert>
+
       <div v-if="commitMessage" class="mt-3">
         <b>Selected commit:</b>
         <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
