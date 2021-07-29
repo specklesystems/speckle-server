@@ -88,7 +88,7 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Home.vue')
+            component: () => import('@/views/stream/Details.vue')
           },
 
           {
