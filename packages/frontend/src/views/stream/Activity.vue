@@ -35,7 +35,8 @@ export default {
   name: 'Activity',
   components: {
     ListItemActivity: () => import('@/components/ListItemActivity'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle'),
+    InfiniteLoading: () => import('vue-infinite-loading')
   },
   data() {
     return {}
@@ -43,7 +44,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query Stream($id: String!) {
+        query Stream($id: String!, $before: DateTime) {
           stream(id: $id) {
             id
             name
@@ -54,7 +55,7 @@ export default {
             branches {
               totalCount
             }
-            activity {
+            activity(before: $before) {
               totalCount
               cursor
               items {
