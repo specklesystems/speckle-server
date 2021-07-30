@@ -77,7 +77,7 @@
                   <v-list-item-content>
                     <v-list-item-title class="mb-2 pt-1">
                       <b>{{ latestCommit.message }}</b>
-                      (latest)
+                      <i class="caption">&nbsp;(latest)</i>
                     </v-list-item-title>
                     <v-list-item-subtitle class="caption">
                       <b>{{ latestCommit.authorName }}</b>
@@ -88,8 +88,8 @@
                   <v-list-item-action>
                     <v-row align="center" justify="center">
                       <v-chip small class="mr-2">
-                        <v-icon small class="mr-2">mdi-source-branch</v-icon>
-                        {{ latestCommit.branchName }}
+                        <v-icon small class="mr-2">mdi-source-commit</v-icon>
+                        {{ latestCommit.id }}
                       </v-chip>
 
                       <source-app-avatar :application-name="latestCommit.sourceApplication" />
@@ -125,8 +125,8 @@
                     <v-list-item-action>
                       <v-row align="center" justify="center">
                         <v-chip small class="mr-2">
-                          <v-icon small class="mr-2">mdi-source-branch</v-icon>
-                          {{ latestCommit.branchName }}
+                          <v-icon small class="mr-2">mdi-source-commit</v-icon>
+                          {{ commit.id }}
                         </v-chip>
 
                         <source-app-avatar :application-name="commit.sourceApplication" />
@@ -228,6 +228,8 @@
 </template>
 <script>
 import streamBranchesQuery from '@/graphql/streamBranches.gql'
+import gql from 'graphql-tag'
+
 export default {
   name: 'Details',
   components: {
@@ -250,6 +252,62 @@ export default {
       variables() {
         return {
           id: this.$route.params.streamId
+        }
+      }
+    },
+    $subscribe: {
+      streamUpdated: {
+        query: gql`
+          subscription($streamId: String!) {
+            streamUpdated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
+        }
+      },
+      branchCreated: {
+        query: gql`
+          subscription($streamId: String!) {
+            branchCreated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
+        }
+      },
+      branchDeleted: {
+        query: gql`
+          subscription($streamId: String!) {
+            branchDeleted(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
         }
       }
     }

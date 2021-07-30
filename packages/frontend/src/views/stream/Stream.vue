@@ -18,7 +18,7 @@
       right
       top
     >
-      New commit
+      <b>New commit!</b></br>
       <i>{{ commitSnackbarInfo.message }}</i>
       on
       <i>{{ commitSnackbarInfo.branchName }}</i>
@@ -31,9 +31,9 @@
         >
           see
         </v-btn>
-        <v-btn icon v-bind="attrs" @click="commitSnackbar = false">
+        <!-- <v-btn icon v-bind="attrs" @click="commitSnackbar = false">
           <v-icon>mdi-close</v-icon>
-        </v-btn>
+        </v-btn> -->
       </template>
     </v-snackbar>
   </v-container>

@@ -127,7 +127,7 @@
         right
         top
       >
-        New stream
+        <b>New stream!</b></br>
         <i v-if="streamSnackbarInfo && streamSnackbarInfo.name">{{ streamSnackbarInfo.name }}</i>
         <span v-else>available</span>
         <template #action="{ attrs }">
@@ -140,9 +140,9 @@
           >
             see
           </v-btn>
-          <v-btn icon v-bind="attrs" @click="streamSnackbar = false">
+          <!-- <v-btn icon v-bind="attrs" @click="streamSnackbar = false">
             <v-icon>mdi-close</v-icon>
-          </v-btn>
+          </v-btn> -->
         </template>
       </v-snackbar>
     </v-main>
