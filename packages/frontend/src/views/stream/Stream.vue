@@ -1,7 +1,7 @@
 <template>
   <v-container :fluid="$vuetify.breakpoint.mdAndDown">
     <v-row justify="center">
-      <v-col cols="12" sm="12" md="12" lg="9" xl="10" class="pt-10">
+      <v-col cols="12" sm="12" lg="10" class="pt-10">
         <router-view v-if="stream"></router-view>
         <error-block v-else-if="error" :message="error" />
       </v-col>

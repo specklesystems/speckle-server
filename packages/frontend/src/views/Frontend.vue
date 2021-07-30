@@ -302,6 +302,10 @@ export default {
 }
 </script>
 <style>
+.space-grotesk {
+  font-family: 'Space Grotesk' !important;
+}
+
 .logo {
   font-family: 'Space Grotesk', sans-serif;
   text-transform: none;

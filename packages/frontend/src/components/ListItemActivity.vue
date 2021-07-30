@@ -49,10 +49,10 @@
         <!-- STREAM -->
         <v-card v-else-if="activity.resourceType === 'stream' && stream" class="activity-card" flat>
           <v-card-text class="pa-5 body-1">
-            <a :href="url" class="title">
+            <router-link :to="url" class="title">
               <v-icon color="primary" small>mdi-compare-vertical</v-icon>
               {{ stream.name }}
-            </a>
+            </router-link>
             <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
             <div
               v-if="activityInfo.description"

@@ -10,120 +10,174 @@
       <h3 class="title font-italic font-weight-thin my-5">
         {{ truncate(stream.description) }}
       </h3>
-      <div class="mb-3">
-        <span class="caption">
-          Created
-          <timeago v-tooltip="formatDate(stream.createdAt)" :datetime="stream.createdAt"></timeago>
-        </span>
-        <span class="ml-3 caption">
-          Updated
-          <timeago v-tooltip="formatDate(stream.updatedAt)" :datetime="stream.updatedAt"></timeago>
-        </span>
-      </div>
-      <div>
-        <v-chip>
-          <v-icon small left>mdi-source-branch</v-icon>
 
-          {{ stream.branches.totalCount }}
-          branch{{ stream.branches.totalCount === 1 ? '' : 'es' }}
-        </v-chip>
-        <v-chip class="ml-3">
-          <v-icon small left>mdi-source-commit</v-icon>
-          &nbsp;
+      <!-- <v-card class="mt-5 pa-4" elevation="0" rounded="lg"> -->
+      <v-row v-if="stream">
+        <v-col cols="12" sm="12" md="8" lg="9" xl="9">
+          <v-card class="mb-4" rounded="lg" elevation="0">
+            <div class="pt-5 ml-7">
+              <span class="title mb-3 mt-3 mr-3">Branch:</span>
+              <v-select
+                v-model="selectedBranch"
+                :items="branches"
+                item-value="name"
+                solo
+                flat
+                return-object
+                background-color="background"
+                class="d-inline-block mt-2 mr-4 mb-0 pb-0"
+                style="max-width: 50%"
+              >
+                <template #selection="{ item }">
+                  <v-icon class="mr-2">mdi-source-branch</v-icon>
+                  <span class="text-truncate">{{ item.name }}</span>
+                </template>
+                <template #item="{ item }">
+                  <div class="pa-2">
+                    <p class="pa-0 ma-0">{{ item.name }}</p>
+                    <p class="caption pa-0 ma-0 grey--text">
+                      {{ item.description }}
+                    </p>
+                  </div>
+                </template>
+              </v-select>
+              <!-- <v-btn
+                class="pa-3"
+                color="primary"
+                text
+                block
+                :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id"
+              >
+                <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
+                See commit details
+              </v-btn> -->
+            </div>
 
-          {{ stream.commits.totalCount }}
-          commit{{ stream.commits.totalCount === 1 ? '' : 's' }}
-        </v-chip>
-        <v-chip class="ml-3">
-          <span
-            v-if="stream.isPublic"
-            v-tooltip="`Anyone can view this stream. Only you and collaborators can edit it.`"
-          >
-            <v-icon small left>mdi-lock-open-variant-outline</v-icon>
-            &nbsp; public
-          </span>
-          <span v-else v-tooltip="`Only collaborators can access this stream.`">
-            <v-icon small left>mdi-lock-outline</v-icon>
-            &nbsp; private
-          </span>
-        </v-chip>
-        <v-chip v-if="loggedIn" class="ml-3">
-          <v-icon small left>mdi-account-key-outline</v-icon>
-          {{ stream.role.split(':')[1] }}
-        </v-chip>
-        <user-avatar
-          v-for="collab in stream.collaborators"
-          :id="collab.id"
-          :key="collab.id"
-          :size="30"
-          :avatar="collab.avatar"
-          :name="collab.name"
-          class="ml-1"
-        ></user-avatar>
-      </div>
-    </v-col>
+            <div v-if="latestCommit">
+              <div style="height: 50vh">
+                <renderer
+                  :object-url="latestCommitObjectUrl"
+                  :unload-trigger="clearRendererTrigger"
+                  show-selection-helper
+                />
+              </div>
 
-    <no-data-placeholder v-if="!latestCommit" :message="'This Stream has no data yet.'" />
+              <v-list two-line class="pa-0" color="transparent">
+                <v-list-item
+                  :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id"
+                >
+                  <v-list-item-icon>
+                    <user-avatar
+                      :id="latestCommit.authorId"
+                      :avatar="latestCommit.authorAvatar"
+                      :name="latestCommit.authorName"
+                      :size="30"
+                    />
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title class="mb-2 pt-1">
+                      <b>{{ latestCommit.message }}</b>
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="caption">
+                      <b>{{ latestCommit.authorName }}</b>
+                      &nbsp;
+                      <timeago :datetime="latestCommit.createdAt"></timeago>
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-row align="center" justify="center">
+                      <v-chip small class="mr-2">
+                        <v-icon small class="mr-2">mdi-source-branch</v-icon>
+                        {{ latestCommit.branchName }}
+                      </v-chip>
 
-    <v-col v-else cols="12">
-      <h3 class="title mb-3 mt-3">Last commit</h3>
-      <v-card class="mb-4 transparent" rounded="lg" elevation="0">
-        <v-list two-line class="pa-0">
-          <v-list-item :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id">
-            <v-list-item-icon>
-              <user-avatar
-                :id="latestCommit.authorId"
-                :avatar="latestCommit.authorAvatar"
-                :name="latestCommit.authorName"
-                :size="30"
-              />
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title class="mb-2 pt-1">
-                <b>{{ latestCommit.message }}</b>
-              </v-list-item-title>
-              <v-list-item-subtitle class="caption">
-                <b>{{ latestCommit.authorName }}</b>
-                &nbsp;
-                <timeago :datetime="latestCommit.createdAt"></timeago>
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-row align="center" justify="center">
-                <v-chip small class="mr-2">
-                  <v-icon small class="mr-2">mdi-source-branch</v-icon>
-                  {{ latestCommit.branchName }}
-                </v-chip>
-
-                <source-app-avatar :application-name="latestCommit.sourceApplication" />
-              </v-row>
-            </v-list-item-action>
-          </v-list-item>
-        </v-list>
-
-        <div style="height: 50vh">
-          <renderer
-            :object-url="latestCommitObjectUrl"
-            :unload-trigger="clearRendererTrigger"
-            show-selection-helper
+                      <source-app-avatar :application-name="latestCommit.sourceApplication" />
+                    </v-row>
+                  </v-list-item-action>
+                </v-list-item>
+                <v-list-item
+                  v-if="selectedBranch"
+                  color="transparent"
+                  :to="'/streams/' + $route.params.streamId + '/branches/' + selectedBranch.name"
+                >
+                  <v-row align="center" justify="center">
+                    <span class="font-weight-bold primary--text">
+                      <v-icon class="mr-2 float-left" color="primary">mdi-source-commit</v-icon>
+                      SEE ALL ({{ selectedBranch.commits.totalCount }}) COMMITS ON
+                      {{ selectedBranch.name }}
+                    </span>
+                  </v-row>
+                </v-list-item>
+              </v-list>
+            </div>
+          </v-card>
+          <no-data-placeholder
+            v-if="!latestCommit && selectedBranch"
+            :message="'Branch ' + selectedBranch.name + ' has no commits.'"
           />
-        </div>
+        </v-col>
+        <v-col cols="12" sm="12" md="4" lg="3" xl="3">
+          <h4 class="space-grotesk mb-3">About:</h4>
+          <div>
+            <v-chip class="mr-3 mb-3">
+              <v-icon small left>mdi-source-branch</v-icon>
 
-        <v-sheet class="rounded-b-lg pa-3">
-          <v-btn
-            class="pa-3"
-            color="primary"
-            text
-            block
-            :to="'/streams/' + $route.params.streamId + '/commits/' + latestCommit.id"
-          >
-            <v-icon class="mr-2 float-left">mdi-source-commit</v-icon>
-            See commit details
-          </v-btn>
-        </v-sheet>
+              {{ stream.branches.totalCount }}
+              branch{{ stream.branches.totalCount === 1 ? '' : 'es' }}
+            </v-chip>
+            <v-chip class="mr-3 mb-3">
+              <v-icon small left>mdi-source-commit</v-icon>
+              &nbsp;
 
-        <no-data-placeholder v-if="!latestCommit" :message="`This branch has no commits.`" />
-      </v-card>
+              {{ stream.commits.totalCount }}
+              commit{{ stream.commits.totalCount === 1 ? '' : 's' }}
+            </v-chip>
+            <v-chip class="mr-3 mb-3">
+              <span
+                v-if="stream.isPublic"
+                v-tooltip="`Anyone can view this stream. Only you and collaborators can edit it.`"
+              >
+                <v-icon small left>mdi-lock-open-variant-outline</v-icon>
+                &nbsp; public
+              </span>
+              <span v-else v-tooltip="`Only collaborators can access this stream.`">
+                <v-icon small left>mdi-lock-outline</v-icon>
+                &nbsp; private
+              </span>
+            </v-chip>
+            <v-chip v-if="loggedIn" class="mr-3 mb-3">
+              <v-icon small left>mdi-account-key-outline</v-icon>
+              {{ stream.role.split(':')[1] }}
+            </v-chip>
+          </div>
+          <div class="my-3">
+            <div v-tooltip="formatDate(stream.createdAt)" class="caption mb-3">
+              Created
+              <timeago :datetime="stream.createdAt"></timeago>
+            </div>
+            <div v-tooltip="formatDate(stream.updatedAt)" class="caption">
+              Updated
+              <timeago :datetime="stream.updatedAt"></timeago>
+            </div>
+          </div>
+          <h4 class="space-grotesk mt-7 mb-3">Collaborators:</h4>
+          <user-avatar
+            v-for="collab in stream.collaborators"
+            :id="collab.id"
+            :key="collab.id"
+            :size="30"
+            :avatar="collab.avatar"
+            :name="collab.name"
+            class="ml-1"
+          ></user-avatar>
+        </v-col>
+      </v-row>
+      <v-row v-else-if="error" justify="center">
+        <v-col cols="12" sm="12" md="8" lg="9" xl="8" class="pt-10">
+          <error-block :message="error" />
+        </v-col>
+      </v-row>
+      <!-- </v-card> -->
     </v-col>
   </v-row>
   <v-row v-else justify="center">
@@ -133,9 +187,9 @@
   </v-row>
 </template>
 <script>
-import streamQuery from '@/graphql/stream.gql'
+import streamBranchesQuery from '@/graphql/streamBranches.gql'
 export default {
-  name: 'Home',
+  name: 'Details',
   components: {
     UserAvatar: () => import('@/components/UserAvatar'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
@@ -146,12 +200,13 @@ export default {
   data() {
     return {
       clearRendererTrigger: 0,
-      error: ''
+      error: '',
+      selectedBranch: null
     }
   },
   apollo: {
     stream: {
-      query: streamQuery,
+      query: streamBranchesQuery,
       variables() {
         return {
           id: this.$route.params.streamId
@@ -160,8 +215,12 @@ export default {
     }
   },
   computed: {
+    branches() {
+      return this.stream.branches.items.filter((b) => !b.name.startsWith('globals'))
+    },
     latestCommit() {
-      return this.stream ? this.stream.commits.items[0] : null
+      if (!this.selectedBranch || this.selectedBranch.commits.items.length === 0) return null
+      return this.selectedBranch.commits.items[0]
     },
     latestCommitObjectUrl() {
       if (!this.latestCommit) return null
@@ -169,6 +228,14 @@ export default {
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null
+    }
+  },
+  watch: {
+    stream() {
+      if (!this.stream) return
+      let branchName = 'main'
+      let index = this.branches.findIndex((x) => x.name === branchName)
+      if (index > -1) this.selectedBranch = this.branches[index]
     }
   },
 
@@ -186,6 +253,9 @@ export default {
       let options = { year: 'numeric', month: 'short', day: 'numeric' }
 
       return date.toLocaleString(undefined, options)
+    },
+    changeBranch() {
+      this.clearRendererTrigger += 42
     }
   }
 }

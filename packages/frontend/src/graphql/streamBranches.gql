@@ -1,8 +1,19 @@
-query StreamBranches($id: String!) {
+query Stream($id: String!) {
   stream(id: $id) {
     id
     name
+    description
+    isPublic
+    createdAt
+    updatedAt
     role
+    collaborators {
+      id
+      name
+      role
+      company
+      avatar
+    }
     branches {
       totalCount
       items {
@@ -24,6 +35,9 @@ query StreamBranches($id: String!) {
           }
         }
       }
+    }
+    commits {
+      totalCount
     }
   }
 }
