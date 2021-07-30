@@ -13,10 +13,12 @@
           </div>
         </v-btn>
         <span class="mr-5">|</span>
-        <span v-if="serverInfo" class="subtitle-2">{{ serverInfo.name }}</span>
-        <v-btn
+        <span v-if="serverInfo" v-tooltip="`Version: `+serverInfo.version" class="subtitle-2">{{ serverInfo.name }}</span>
+        <span v-if="serverInfo && isDevServer" v-tooltip="`This is a test server and should not be used in production!`" class="ml-4" >⚠️</span>
+        <span v-if="loggedIn">
+            <v-btn
           v-for="link in navLinks"
-          v-if="loggedIn"
+          
           :key="link.name"
           text
           exact
@@ -25,6 +27,8 @@
         >
           {{ link.name }}
         </v-btn>
+        </span>
+      
         <v-spacer></v-spacer>
         <v-responsive v-if="user" max-width="300">
           <search-bar />
@@ -202,6 +206,7 @@ export default {
             company
             description
             adminContact
+            version
           }
         }
       `
@@ -235,6 +240,9 @@ export default {
     background() {
       let theme = this.$vuetify.theme.dark ? 'dark' : 'light'
       return `background-color: ${this.$vuetify.theme.themes[theme].background};`
+    },
+    isDevServer(){
+      return (this.serverInfo.version[0]!=="v" ) ? true : false
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null

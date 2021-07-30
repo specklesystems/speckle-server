@@ -309,6 +309,24 @@ export default {
         skip() {
           return !this.loggedIn
         }
+      },
+      commitCreated: {
+        query: gql`
+          subscription($streamId: String!) {
+            commitCreated(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        },
+        skip() {
+          return !this.loggedIn
+        }
       }
     }
   },
