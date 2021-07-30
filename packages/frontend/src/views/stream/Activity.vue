@@ -12,6 +12,13 @@
           :activity="activity"
           class="my-1"
         ></list-item-activity>
+        <infinite-loading
+          v-if="stream.activity && stream.activity.items.length < stream.activity.totalCount"
+          @infinite="infiniteHandler"
+        >
+          <div slot="no-more">This is all your activity!</div>
+          <div slot="no-results">There are no ctivities to load</div>
+        </infinite-loading>
       </v-timeline>
       <v-timeline v-else-if="$apollo.loading" align-top :dense="$vuetify.breakpoint.mobile">
         <v-timeline-item v-for="i in 6" :key="i" medium>
@@ -68,6 +75,30 @@ export default {
           id: this.$route.params.streamId
         }
       }
+    }
+  },
+  methods: {
+    infiniteHandler($state) {
+      this.$apollo.queries.stream.fetchMore({
+        variables: {
+          before: this.stream.activity.cursor
+        },
+        // Transform the previous result with new data
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          const newItems = fetchMoreResult.stream.activity.items
+
+          //set vue-infinite state
+          if (newItems.length === 0) $state.complete()
+          else $state.loaded()
+
+          fetchMoreResult.stream.activity.items = [
+            ...previousResult.stream.activity.items,
+            ...newItems
+          ]
+
+          return fetchMoreResult
+        }
+      })
     }
   }
 }

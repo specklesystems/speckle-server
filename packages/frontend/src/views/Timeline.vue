@@ -195,19 +195,9 @@ export default {
           if (newItems.length === 0) $state.complete()
           else $state.loaded()
 
-          return {
-            user: {
-              __typename: previousResult.user.__typename,
-              id: previousResult.user.id,
-              timeline: {
-                __typename: previousResult.user.timeline.__typename,
-                totalCount: fetchMoreResult.user.timeline.totalCount,
-                cursor: fetchMoreResult.user.timeline.cursor,
-                // Merging the new timeline
-                items: [...previousResult.user.timeline.items, ...newItems]
-              }
-            }
-          }
+          fetchMoreResult.user.timeline.items = [...previousResult.user.timeline.items, ...newItems]
+
+          return fetchMoreResult
         }
       })
     }
