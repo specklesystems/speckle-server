@@ -20,7 +20,7 @@ query Stream($id: String!) {
         id
         name
         description
-        commits(limit: 1) {
+        commits(limit: 4) {
           totalCount
           items {
             id

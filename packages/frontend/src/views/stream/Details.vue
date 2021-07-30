@@ -77,6 +77,7 @@
                   <v-list-item-content>
                     <v-list-item-title class="mb-2 pt-1">
                       <b>{{ latestCommit.message }}</b>
+                      (latest)
                     </v-list-item-title>
                     <v-list-item-subtitle class="caption">
                       <b>{{ latestCommit.authorName }}</b>
@@ -95,13 +96,52 @@
                     </v-row>
                   </v-list-item-action>
                 </v-list-item>
+              </v-list>
+              <!-- LAST 2 COMMITS -->
+              <v-list dense color="transparent" class="mb-0 pa-0">
+                <div v-for="(commit, i) in selectedBranch.commits.items" :key="commit.id">
+                  <v-list-item
+                    v-if="i > 0"
+                    :to="'/streams/' + $route.params.streamId + '/commits/' + commit.id"
+                  >
+                    <v-list-item-icon>
+                      <user-avatar
+                        :id="commit.authorId"
+                        :avatar="commit.authorAvatar"
+                        :name="commit.authorName"
+                        :size="30"
+                      />
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title class="mb-2 pt-1">
+                        {{ commit.message }}
+                      </v-list-item-title>
+                      <v-list-item-subtitle class="caption">
+                        <b>{{ commit.authorName }}</b>
+                        &nbsp;
+                        <timeago :datetime="commit.createdAt"></timeago>
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                    <v-list-item-action>
+                      <v-row align="center" justify="center">
+                        <v-chip small class="mr-2">
+                          <v-icon small class="mr-2">mdi-source-branch</v-icon>
+                          {{ latestCommit.branchName }}
+                        </v-chip>
+
+                        <source-app-avatar :application-name="commit.sourceApplication" />
+                      </v-row>
+                    </v-list-item-action>
+                  </v-list-item>
+                  <v-divider />
+                </div>
                 <v-list-item
                   v-if="selectedBranch"
                   color="transparent"
                   :to="'/streams/' + $route.params.streamId + '/branches/' + selectedBranch.name"
                 >
                   <v-row align="center" justify="center">
-                    <span class="font-weight-bold primary--text">
+                    <span class="font-weight-bold primary--text py-3 my-4">
                       <v-icon class="mr-2 float-left" color="primary">mdi-source-commit</v-icon>
                       SEE ALL ({{ selectedBranch.commits.totalCount }}) COMMITS ON
                       {{ selectedBranch.name }}
