@@ -12,13 +12,18 @@ class SpeckleObjectsStream extends Transform {
   }
 
   _transform( dbObj, encoding, callback ) {
+    let objData = dbObj.dataText
+    if ( objData === undefined ) objData = JSON.stringify( dbObj.data )
+
     try {
       if ( this.simpleText ) {
-        this.push( `${dbObj.data.id}\t${JSON.stringify( dbObj.data )}\n` )
+        this.push( `${dbObj.id}\t` )
+        this.push( objData )
+        this.push( '\n' )
       } else {
         // JSON output
         if ( !this.isFirstObject ) this.push( ',' )
-        this.push( JSON.stringify( dbObj.data ) )
+        this.push( objData )
         this.isFirstObject = false
       }
       callback()
@@ -31,7 +36,6 @@ class SpeckleObjectsStream extends Transform {
     if ( !this.simpleText ) this.push( ']' )
     callback()
   }
-
 }
 
 exports.SpeckleObjectsStream = SpeckleObjectsStream
