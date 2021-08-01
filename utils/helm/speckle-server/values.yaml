@@ -1,0 +1,18 @@
+
+namespace: speckle-test
+
+domain: example.com
+
+server:
+  replicaCount: 1
+  authGoogle: false
+  email: false
+
+
+db:
+  customCertificate: true
+  certificateConfigMapName: postgres-certificate
+  # Create configmap with:
+  # kubectl --namespace=[NAMESPACE] create configmap postgres-certificate --from-file=[/path/to/ca-certificate.crt]
+
+secretName: server-vars

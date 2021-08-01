@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-server
+    project: speckle-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: speckle-server
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-server
+        project: speckle-server
+    spec:
+      {{- if .Values.db.customCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: {{ .Values.db.certificateConfigMapName }}
+      {{- end }}
+
+      containers:
+      - name: main
+        image: speckle/speckle-server:v{{ .Chart.AppVersion }}
+
+        {{- if .Values.db.customCertificate }}
+        volumeMounts:
+        - name: postgres-certificate
+          mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: POSTGRES_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: postgres_url
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: redis_url
+          - name: SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: session_secret
+
+          - name: PORT
+            value: "3000"
+          - name: DEBUG
+            value: "speckle:*"
+          - name: PGSSLMODE
+            value: "require"
+
+          {{- if .Values.db.customCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+          - name: STRATEGY_LOCAL
+            value: "true"
+
+          {{- if .Values.server.authGoogle }}
+          - name: STRATEGY_GOOGLE
+            value: "true"
+
+          - name: GOOGLE_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: google_client_id
+
+          - name: GOOGLE_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: google_client_secret
+          {{- end }}
+
+          - name: CANONICAL_URL
+            value: https://{{ .Values.domain }}
+
+          {{- if .Values.server.email }}
+          - name: EMAIL
+            value: "true"
+          - name: EMAIL_HOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: email_host
+          - name: EMAIL_PORT
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: email_port
+          - name: EMAIL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: email_username
+          - name: EMAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: email_password
+          {{- end }}

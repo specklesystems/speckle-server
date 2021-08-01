@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: speckle-server
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.org/client-max-body-size: "100m"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.domain }}
+    secretName: server-tls
+  rules:
+  - host: {{ .Values.domain }}
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: speckle-frontend
+            port:
+              number: 80
+      - pathType: Exact
+        path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*))"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              number: 3000

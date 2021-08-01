@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-preview-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-preview-service
+    project: speckle-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: speckle-preview-service
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-preview-service
+        project: speckle-server
+    spec:
+      {{- if .Values.db.customCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: {{ .Values.db.certificateConfigMapName }}
+      {{- end }}
+
+      containers:
+      - name: main
+        image: speckle/speckle-preview-service:v{{ .Chart.AppVersion }}
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "3Gi"
+            cpu: "1000m"
+
+        {{- if .Values.db.customCertificate }}
+        volumeMounts:
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: PG_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: postgres_url
+
+          - name: DEBUG
+            value: "preview-service:*"
+
+          {{- if .Values.db.customCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
