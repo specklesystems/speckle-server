@@ -25,35 +25,71 @@
           flat
         >
           <v-card-text class="pa-5 body-1">
-            <v-chip v-if="targetUser" pill :color="activityInfo.color">
-              <v-avatar left>
-                <user-avatar
-                  :id="targetUser.id"
-                  :avatar="targetUser.avatar"
-                  :size="30"
-                  :name="targetUser.name"
-                />
-              </v-avatar>
+            <v-container>
+              <v-row class="align-center">
+                <v-chip v-if="targetUser" pill :color="activityInfo.color">
+                  <v-avatar left>
+                    <user-avatar
+                      :id="targetUser.id"
+                      :avatar="targetUser.avatar"
+                      :size="30"
+                      :name="targetUser.name"
+                    />
+                  </v-avatar>
 
-              {{ targetUser.name }}
-            </v-chip>
+                  {{ targetUser.name }}
+                </v-chip>
 
-            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-            <v-chip v-if="activity.info.role" small outlined class="ml-3">
-              <v-icon small left>mdi-account-key-outline</v-icon>
-              {{ activity.info.role.split(':')[1] }}
-            </v-chip>
+                <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+                <v-chip v-if="activity.info.role" small outlined class="ml-3">
+                  <v-icon small left>mdi-account-key-outline</v-icon>
+                  {{ activity.info.role.split(':')[1] }}
+                </v-chip>
+                <v-spacer />
+
+                <v-btn
+                  v-if="targetUser && activity.actionType === `stream_permissions_add`"
+                  text
+                  outlined
+                  small
+                  :to="'/profile/' + targetUser.id"
+                  color="primary"
+                >
+                  view
+                </v-btn>
+              </v-row>
+            </v-container>
           </v-card-text>
         </v-card>
 
         <!-- STREAM -->
         <v-card v-else-if="activity.resourceType === 'stream' && stream" class="activity-card" flat>
           <v-card-text class="pa-5 body-1">
-            <router-link :to="url" class="title">
-              <v-icon color="primary" small>mdi-compare-vertical</v-icon>
-              {{ stream.name }}
-            </router-link>
-            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+            <v-container>
+              <v-row class="align-center">
+                <router-link :to="url" class="title">
+                  <v-icon color="primary" small>mdi-compare-vertical</v-icon>
+                  {{ stream.name }}
+                </router-link>
+                <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+
+                <v-spacer />
+
+                <v-btn
+                  v-if="
+                    activity.actionType === `stream_create` ||
+                    activity.actionType === `stream_update`
+                  "
+                  text
+                  outlined
+                  small
+                  color="primary"
+                >
+                  view
+                </v-btn>
+              </v-row>
+            </v-container>
+
             <div
               v-if="activityInfo.description"
               class="mt-3"
@@ -93,7 +129,7 @@
                 <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
                 {{ stream.commits.totalCount }}
               </v-btn>
-              <v-chip small outlined class="ml-3">
+              <v-chip small outlined class="ml-3 no-hover">
                 <v-icon small left>mdi-account-key-outline</v-icon>
                 {{ stream.role.split(':')[1] }}
               </v-chip>
