@@ -1,5 +1,5 @@
 <template>
-  <v-card rounded="lg" class="pa-3 mb-3" elevation="0">
+  <v-card class="pa-4 mb-3" elevation="0" rounded="lg">
     <v-dialog v-model="saveDialog" max-width="500">
       <globals-save-dialog
         :branch-name="branchName"
@@ -8,22 +8,43 @@
         @close="closeSaveDialog"
       />
     </v-dialog>
-    <v-card-title>Globals</v-card-title>
-    <v-card-subtitle v-if="commitMessage">
-      <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
-      {{ commitMessage }}
-    </v-card-subtitle>
-    <v-card-text>
-      These global variables can be used for storing design values, project requirements, notes, or
-      any info you want to keep track of alongside your geometry. Variable values can be text,
-      numbers, lists, or booleans. Click the box icon next to any field to turn it into a nested
-      group of fields, and drag and drop fields in and out of groups as you please! Note that field
-      order may not always be preserved.
+
+    <v-card-title>
+      <v-icon class="mr-2">mdi-earth</v-icon>
+      Globals
+    </v-card-title>
+
+    <v-card-text class="subtitle-1">
+      Click the box icon next to any field to turn it into a nested group of fields, and drag and
+      drop fields in and out of groups as you please! Note that field order may not always be
+      preserved.
+      <v-btn
+        text
+        small
+        color="primary"
+        href="https://speckle.guide/user/web.html#globals"
+        target="_blank"
+      >
+        Read the docs
+      </v-btn>
+
+      <v-alert
+        v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')"
+        class="my-3"
+        dense
+        type="warning"
+      >
+        You are free to play around with the globals here, but you do not have the required stream
+        permission to save your changes.
+      </v-alert>
+
+      <div v-if="commitMessage" class="mt-3">
+        <b>Selected commit:</b>
+        <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
+        {{ commitMessage }}
+      </div>
     </v-card-text>
-    <v-card-text v-if="!(userRole === 'contributor') && !(userRole === 'owner')">
-      You are free to play around with the globals here, but you do not have the required stream
-      permission to save your changes.
-    </v-card-text>
+
     <v-card-actions>
       <v-switch
         v-model="deleteEntries"
@@ -150,7 +171,10 @@ export default {
   },
   computed: {
     canSave() {
-      return this.globalsAreValid && (this.userRole === 'contributor' || this.userRole === 'owner')
+      return (
+        this.globalsAreValid &&
+        (this.userRole === 'stream:contributor' || this.userRole === 'stream:owner')
+      )
     },
     globalsCommit() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties

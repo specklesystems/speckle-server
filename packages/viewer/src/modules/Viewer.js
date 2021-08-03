@@ -189,5 +189,5 @@ export default class Viewer extends EventEmitter {
 
   dispose() {
     // TODO
-  }
+  }l
 }

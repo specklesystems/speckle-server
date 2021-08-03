@@ -7,6 +7,8 @@
         </v-card>
       </v-col>
       <v-col v-else-if="stream.commit" cols="12">
+        <breadcrumb-title />
+
         <v-card elevation="0" rounded="lg">
           <v-sheet class="pa-4" color="transparent">
             <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
@@ -15,20 +17,19 @@
               {{ stream.commit.message }}
               <v-spacer />
               <v-btn
-                v-if="userRole === 'contributor' || userRole === 'owner'"
+                v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
                 v-tooltip="'Edit commit details'"
                 small
-                plain
                 color="primary"
                 text
                 class="px-0"
                 @click="editCommit"
               >
                 <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
-                Edit
+                Edit commit
               </v-btn>
             </v-card-title>
-            <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
+
             <v-list-item dense>
               <v-list-item-icon class="mr-2 mt-1">
                 <user-avatar
@@ -107,31 +108,20 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import UserAvatar from '../components/UserAvatar'
-import ObjectSpeckleViewer from '../components/ObjectSpeckleViewer'
-import ObjectSimpleViewer from '../components/ObjectSimpleViewer'
-import Renderer from '../components/Renderer'
-import streamCommitQuery from '../graphql/commit.gql'
-import CommitEditDialog from '../components/dialogs/CommitEditDialog'
-import SourceAppAvatar from '../components/SourceAppAvatar'
-import ErrorBlock from '../components/ErrorBlock'
+
+import streamCommitQuery from '@/graphql/commit.gql'
 
 export default {
-  name: 'Commit',
+  name: 'Branch',
   components: {
-    CommitEditDialog,
-    UserAvatar,
-    ObjectSpeckleViewer,
-    ObjectSimpleViewer,
-    Renderer,
-    SourceAppAvatar,
-    ErrorBlock
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
+    CommitEditDialog: () => import('@/components/dialogs/CommitEditDialog'),
+    UserAvatar: () => import('@/components/UserAvatar'),
+    ObjectSpeckleViewer: () => import('@/components/ObjectSpeckleViewer'),
+    ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
+    Renderer: () => import('@/components/Renderer'),
+    SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
+    ErrorBlock: () => import('@/components/ErrorBlock'),
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   data: () => ({
     loadedModel: false,
@@ -166,37 +156,6 @@ export default {
     },
     commitObjectUrl() {
       return `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
-    },
-    breadcrumbs() {
-      return [
-        {
-          text: this.stream.name,
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id
-        },
-        {
-          text: 'branches',
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id + '/branches/'
-        },
-        {
-          text: this.stream.commit.branchName,
-          disabled: false,
-          exact: true,
-          to:
-            '/streams/' +
-            this.stream.id +
-            '/branches/' +
-            encodeURIComponent(this.stream.commit.branchName) +
-            '/commits'
-        },
-        {
-          text: this.stream.commit.message,
-          disabled: true
-        }
-      ]
     }
   },
   methods: {

@@ -5,43 +5,32 @@
         <v-skeleton-loader type="article, article"></v-skeleton-loader>
       </v-col>
       <v-col v-else-if="stream.branch" cols="12">
-        <v-card class="pa-4" elevation="0" rounded="lg">
+        <breadcrumb-title />
+        <h3 v-if="stream.branch.description" class="title font-italic font-weight-thin my-5">
+          {{ stream.branch.descrption }}
+        </h3>
+
+        <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
           <branch-edit-dialog ref="editBranchDialog" />
 
-          <v-card-title class="mr-8">
+          <v-card-title>
             <v-icon class="mr-2">mdi-source-branch</v-icon>
             <span class="d-inline-block">{{ stream.branch.name }}</span>
             <v-spacer />
             <v-btn
-              v-if="userRole === 'contributor' || userRole === 'owner'"
-              small
-              plain
+              v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
               color="primary"
-              text
-              class="px-0"
+              class="my-2"
+              small
               @click="editBranch"
             >
               <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
               Edit branch
             </v-btn>
           </v-card-title>
-          <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
-          <v-card-text v-if="stream.branch.description">
-            {{ stream.branch.description }}
-          </v-card-text>
-          <v-card-text v-else>
-            <i>No description provided</i>
-          </v-card-text>
-        </v-card>
-
-        <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
           <v-subheader class="text-uppercase">
             Commits ({{ stream.branch.commits.totalCount }})
           </v-subheader>
-          <no-data-placeholder
-            v-if="stream.branch.commits.totalCount === 0"
-            :name="stream.branch.name"
-          />
 
           <v-card-text>
             <list-item-commit
@@ -52,6 +41,11 @@
             ></list-item-commit>
           </v-card-text>
         </v-card>
+
+        <no-data-placeholder
+          v-if="stream.branch.commits.totalCount === 0"
+          :message="'This Branch has no commits yet.'"
+        />
       </v-col>
     </v-row>
     <v-row v-if="!$apollo.loading && !stream.branch" justify="center">
@@ -63,20 +57,16 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import branchQuery from '../graphql/branch.gql'
-import ListItemCommit from '../components/ListItemCommit'
-import BranchEditDialog from '../components/dialogs/BranchEditDialog'
-import NoDataPlaceholder from '../components/NoDataPlaceholder'
-import ErrorBlock from '../components/ErrorBlock'
+import branchQuery from '@/graphql/branch.gql'
 
 export default {
   name: 'Branch',
-  components: { ListItemCommit, BranchEditDialog, NoDataPlaceholder, ErrorBlock },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
+  components: {
+    ListItemCommit: () => import('@/components/ListItemCommit'),
+    BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
+    ErrorBlock: () => import('@/components/ErrorBlock'),
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   data() {
     return {
@@ -114,32 +104,6 @@ export default {
   computed: {
     streamId() {
       return this.$route.params.streamId
-    },
-    breadcrumbs() {
-      return [
-        {
-          text: this.stream.name,
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id
-        },
-        {
-          text: 'branches',
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id + '/branches/'
-        },
-        {
-          text: this.stream.branch.name,
-          disabled: true,
-          exact: true,
-          to:
-            '/streams/' +
-            this.stream.id +
-            '/branches/' +
-            encodeURIComponent(this.stream.branch.name)
-        }
-      ]
     }
   },
   methods: {

@@ -3,7 +3,7 @@
     <v-menu v-if="loggedIn" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
         <v-avatar
-          v-if="user"
+          v-if="userById"
           class="ma-1"
           color="grey lighten-3"
           :size="size"
@@ -17,19 +17,21 @@
           <v-img contain src="/logo.svg"></v-img>
         </v-avatar>
       </template>
-      <v-card v-if="user" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
+      <v-card v-if="userById" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
         <v-card-text v-if="!$apollo.loading" class="text-center">
           <v-avatar class="my-4" color="grey lighten-3" :size="40">
             <v-img v-if="avatar" :src="avatar" />
             <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
           </v-avatar>
           <br />
-          <b>{{ user.name }}</b>
+          <b>{{ userById.name }}</b>
           <v-divider class="ma-4"></v-divider>
-          {{ user.company }}
+          {{ userById.company }}
           <br />
           {{
-            user.bio ? user.bio : 'This user prefers to keep an air of mystery around themselves.'
+            userById.bio
+              ? userById.bio
+              : 'This user prefers to keep an air of mystery around themselves.'
           }}
           <br />
         </v-card-text>
@@ -49,7 +51,7 @@
   </div>
 </template>
 <script>
-import userQuery from '../graphql/userById.gql'
+import userByIdQuery from '../graphql/userById.gql'
 
 export default {
   props: {
@@ -73,8 +75,8 @@ export default {
     }
   },
   apollo: {
-    user: {
-      query: userQuery,
+    userById: {
+      query: userByIdQuery,
       variables() {
         return {
           id: this.id
@@ -82,6 +84,10 @@ export default {
       },
       skip() {
         return !this.loggedIn
+      },
+
+      update: (data) => {
+        return data.user
       }
     }
   }

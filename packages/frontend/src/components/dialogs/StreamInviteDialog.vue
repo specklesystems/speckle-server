@@ -45,6 +45,10 @@ export default {
     streamId: {
       type: String,
       default: null
+    },
+    text: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -78,7 +82,7 @@ export default {
   watch: {
     showDialog() {
       this.clear()
-      this.email = null
+      this.email = this.text
       this.message = 'Hey, I want to share this stream with you!'
     }
   },

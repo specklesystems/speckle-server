@@ -8,7 +8,7 @@ const routes = [
     path: '/authn',
     name: 'Auth',
     redirect: '/authn/login',
-    component: () => import('../views/Auth.vue'),
+    component: () => import('@/views/Auth.vue'),
     children: [
       {
         path: 'login',
@@ -16,7 +16,7 @@ const routes = [
         meta: {
           title: 'Login | Speckle'
         },
-        component: () => import('../views/auth/Login.vue')
+        component: () => import('@/views/auth/Login.vue')
       },
       {
         path: 'register',
@@ -24,7 +24,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('../views/auth/Registration.vue')
+        component: () => import('@/views/auth/Registration.vue')
       },
       {
         path: 'resetpassword',
@@ -32,7 +32,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('../views/auth/ResetPasswordRequest.vue')
+        component: () => import('@/views/auth/ResetPasswordRequest.vue')
       },
       {
         path: 'resetpassword/finalize',
@@ -40,7 +40,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('../views/auth/ResetPasswordFinalization.vue')
+        component: () => import('@/views/auth/ResetPasswordFinalization.vue')
       },
       {
         path: 'verify/:appId/:challenge',
@@ -48,7 +48,7 @@ const routes = [
         meta: {
           title: 'Authorizing App | Speckle'
         },
-        component: () => import('../views/auth/AuthorizeApp.vue')
+        component: () => import('@/views/auth/AuthorizeApp.vue')
       }
     ]
   },
@@ -57,23 +57,30 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('../views/Frontend.vue'),
+    component: () => import('@/views/Frontend.vue'),
     children: [
       {
         path: '',
         name: 'home',
         meta: {
+          title: 'Home | Speckle'
+        },
+        component: () => import('@/views/Timeline.vue')
+      },
+      {
+        path: 'streams',
+        name: 'streams',
+        meta: {
           title: 'Streams | Speckle'
         },
-        component: () => import('../views/Streams.vue')
+        component: () => import('@/views/Streams.vue')
       },
       {
         path: 'streams/:streamId',
-        name: 'streams',
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('../views/Stream.vue'),
+        component: () => import('@/views/stream/Stream.vue'),
         children: [
           {
             path: '',
@@ -81,31 +88,16 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('../views/StreamMain.vue')
+            component: () => import('@/views/stream/Details.vue')
           },
-          {
-            path: 'globals/',
-            name: 'globals',
-            meta: {
-              title: 'Globals | Speckle'
-            },
-            component: () => import('../views/Globals.vue')
-          },
-          {
-            path: 'globals/:commitId',
-            name: 'previous globals',
-            meta: {
-              title: 'Globals | Speckle'
-            },
-            component: () => import('../views/Globals.vue')
-          },
+
           {
             path: 'branches/',
             name: 'branches',
             meta: {
               title: 'Branches | Speckle'
             },
-            component: () => import('../views/Branches.vue')
+            component: () => import('@/views/stream/Branches.vue')
           },
           {
             path: 'branches/:branchName',
@@ -113,15 +105,7 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('../views/StreamMain.vue')
-          },
-          {
-            path: 'branches/:branchName/commits',
-            name: 'commits',
-            meta: {
-              title: 'Commits | Speckle'
-            },
-            component: () => import('../views/Commits.vue')
+            component: () => import('@/views/stream/Branch.vue')
           },
           {
             path: 'commits/:commitId',
@@ -129,7 +113,7 @@ const routes = [
             meta: {
               title: 'Commit | Speckle'
             },
-            component: () => import('../views/Commit.vue')
+            component: () => import('@/views/stream/Commit.vue')
           },
           {
             path: 'objects/:objectId',
@@ -137,24 +121,34 @@ const routes = [
             meta: {
               title: 'Object | Speckle'
             },
-            component: () => import('../views/Object.vue')
-          }
-        ]
-      },
-      {
-        path: 'settings/streams/:streamId/',
-        name: 'settings',
-        props: true,
-        component: () => import('../views/settings/StreamSettings.vue'),
-        children: [
+            component: () => import('@/views/stream/Object.vue')
+          },
           {
-            path: 'general/',
-            name: 'general',
+            path: 'activity/',
+            name: 'activity',
+            meta: {
+              title: 'Stream Activity | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Activity.vue')
+          },
+          {
+            path: 'collaborators/',
+            name: 'collaborators',
+            meta: {
+              title: 'Stream Collaborators | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Collaborators.vue')
+          },
+          {
+            path: 'settings/',
+            name: 'settings',
             meta: {
               title: 'Stream Settings | Speckle'
             },
             props: true,
-            component: () => import('../views/settings/SettingsGeneral.vue')
+            component: () => import('@/views/stream/Settings.vue')
           },
           {
             path: 'webhooks/',
@@ -163,7 +157,7 @@ const routes = [
               title: 'Webhooks | Speckle'
             },
             props: true,
-            component: () => import('../views/settings/SettingsWebhooks.vue'),
+            component: () => import('@/views/stream/Webhooks.vue'),
             children: [
               {
                 path: 'edit/:webhookId/',
@@ -176,17 +170,35 @@ const routes = [
             path: 'webhooks/new/',
             name: 'add webhook',
             props: true,
-            component: () => import('../views/settings/SettingsWebhooks.vue')
+            component: () => import('@/views/stream/Webhooks.vue')
+          },
+          {
+            path: 'globals/',
+            name: 'globals',
+            meta: {
+              title: 'Globals | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Globals.vue')
+          },
+          {
+            path: 'globals/:commitId',
+            name: 'previous globals',
+            meta: {
+              title: 'Globals | Speckle'
+            },
+            component: () => import('@/views/stream/Globals.vue')
           }
         ]
       },
+
       {
         path: 'profile',
         name: 'profile',
         meta: {
           title: 'Your Profile | Speckle'
         },
-        component: () => import('../views/Profile.vue')
+        component: () => import('@/views/Profile.vue')
       },
       {
         path: 'profile/:userId',
@@ -194,7 +206,7 @@ const routes = [
         meta: {
           title: 'User Profile | Speckle'
         },
-        component: () => import('../views/ProfileUser.vue')
+        component: () => import('@/views/ProfileUser.vue')
       },
       {
         path: 'admin',
@@ -205,25 +217,25 @@ const routes = [
           {
             name: 'Admin | Overview',
             path: '',
-            component: () => import('../views/admin/AdminOverview.vue')
+            component: () => import('@/views/admin/AdminOverview.vue')
           },
           {
             name: 'Admin | Users',
             path: 'users',
-            component: () => import('../views/admin/AdminUsers.vue')
+            component: () => import('@/views/admin/AdminUsers.vue')
           },
           {
             name: 'Admin | Streams',
             path: 'streams',
-            component: () => import('../views/admin/AdminStreams.vue')
+            component: () => import('@/views/admin/AdminStreams.vue')
           },
           {
             name: 'Admin | Settings',
             path: 'settings',
-            component: () => import('../views/admin/AdminSettings.vue')
+            component: () => import('@/views/admin/AdminSettings.vue')
           }
         ],
-        component: () => import('../views/admin/AdminPanel.vue')
+        component: () => import('@/views/admin/AdminPanel.vue')
       }
     ]
   },
@@ -233,7 +245,7 @@ const routes = [
     meta: {
       title: 'Error | Speckle'
     },
-    component: () => import('../views/Error.vue')
+    component: () => import('@/views/Error.vue')
   },
   {
     path: '/onboarding',
@@ -241,12 +253,12 @@ const routes = [
     meta: {
       title: 'Getting Started | Speckle'
     },
-    component: () => import('../views/GettingStartedView.vue')
+    component: () => import('@/views/GettingStartedView.vue')
   },
   {
     path: '/embed',
     name: 'Embeded Viewer',
-    component: () => import('../views/EmbedViewer.vue')
+    component: () => import('@/views/EmbedViewer.vue')
   },
   {
     path: '*',
@@ -254,7 +266,7 @@ const routes = [
     meta: {
       title: 'Not Found | Speckle'
     },
-    component: () => import('../views/NotFound.vue')
+    component: () => import('@/views/NotFound.vue')
   }
 ]
 
@@ -267,10 +279,9 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
-
   if (
     !uuid &&
-    !to.matched.some(({ name }) => name === 'streams') && //allow public streams to be viewed
+    !to.matched.some(({ name }) => name === 'stream' || name === 'commit') && //allow public streams to be viewed
     to.name !== 'Embeded Viewer' &&
     to.name !== 'Login' &&
     to.name !== 'Register' &&

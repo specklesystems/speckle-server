@@ -1,14 +1,18 @@
 <template>
-  <v-card class="rounded-lg" v-bind="$attrs">
+  <v-card rounded="lg" class="pa-4 mb-4" elevation="0" v-bind="$attrs">
     <template slot="progress">
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
-    <v-card-title class="d-flex justify-space-between">
-      <span class="text--secondary">{{ title }}</span>
+    <v-card-title>
+      <v-icon class="mr-2">{{ icon }}</v-icon>
+      {{ title }}
+
+      <v-spacer />
       <span>
         <slot name="menu"></slot>
       </span>
     </v-card-title>
+
     <v-card-subtitle>
       <span>
         <slot name="subtitle"></slot>
@@ -23,7 +27,7 @@
 <script>
 export default {
   name: 'AdminCard',
-  props: ['title']
+  props: ['title', 'icon']
 }
 </script>
 

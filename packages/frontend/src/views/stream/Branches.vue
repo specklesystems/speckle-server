@@ -1,41 +1,32 @@
 <template>
   <v-row>
-    <v-col sm="12">
-      <v-card v-if="$apollo.queries.stream.loading">
-        <v-skeleton-loader type="article"></v-skeleton-loader>
-      </v-card>
-      <v-card v-else rounded="lg" class="pa-4 mb-4" elevation="0">
-        <branch-new-dialog ref="newBranchDialog" />
+    <v-col v-if="$apollo.queries.stream.loading">
+      <v-skeleton-loader type="article"></v-skeleton-loader>
+    </v-col>
+    <v-col v-else-if="stream" cols="12">
+      <breadcrumb-title />
+      <h3 class="title font-italic font-weight-thin my-5">
+        A branch represents a series of commits, you can see them as labels, folders etc
+      </h3>
 
+      <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
         <v-card-title>
           <v-icon class="mr-2">mdi-source-branch</v-icon>
-          Branches
-
+          <span class="d-inline-block">Branches ({{ branches.length }})</span>
           <v-spacer />
           <v-btn
-            v-if="userRole === 'contributor' || userRole === 'owner'"
-            plain
+            v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
             color="primary"
-            text
-            class="px-0"
+            class="my-2"
             small
             @click="newBranch"
           >
-            <v-icon small class="mr-2 float-left">mdi-plus-circle-outline</v-icon>
+            <!-- <v-icon small class="mr-2 float-left">mdi-plus-circle-outline</v-icon> -->
             New branch
           </v-btn>
+          <branch-new-dialog ref="newBranchDialog" />
         </v-card-title>
-        <v-breadcrumbs :items="breadcrumbs" divider="/"></v-breadcrumbs>
-        <v-card-text>
-          <i>
-            A branch represents an independent line of data. You can think of them as an independent
-            directory, staging area and project history.
-          </i>
-        </v-card-text>
-      </v-card>
 
-      <v-card v-if="!$apollo.queries.stream.loading" class="mt-5 pa-4" elevation="0" rounded="lg">
-        <v-subheader class="text-uppercase">Branches ({{ branches.length }})</v-subheader>
         <v-card-text>
           <v-list two-line color="transparent">
             <template v-for="item in branches">
@@ -66,20 +57,14 @@
   </v-row>
 </template>
 <script>
-import BranchNewDialog from '../components/dialogs/BranchNewDialog'
-import streamBranchesQuery from '../graphql/streamBranches.gql'
+import streamBranchesQuery from '@/graphql/streamBranches.gql'
 import gql from 'graphql-tag'
 
 export default {
   name: 'StreamMain',
   components: {
-    BranchNewDialog
-  },
-  props: {
-    userRole: {
-      type: String,
-      default: null
-    }
+    BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog'),
+    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   data() {
     return {}
@@ -139,22 +124,7 @@ export default {
     branches() {
       return this.stream.branches.items.filter((b) => !b.name.startsWith('globals'))
     },
-    breadcrumbs() {
-      return [
-        {
-          text: this.stream.name,
-          disabled: false,
-          exact: true,
-          to: '/streams/' + this.stream.id
-        },
-        {
-          text: 'branches',
-          disabled: true,
-          exact: true,
-          to: '/streams/' + this.stream.id + '/branches/'
-        }
-      ]
-    },
+
     loggedIn() {
       return localStorage.getItem('uuid') !== null
     }

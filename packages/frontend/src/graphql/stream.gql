@@ -6,6 +6,7 @@ query Stream($id: String!) {
     isPublic
     createdAt
     updatedAt
+    role
     collaborators {
       id
       name
@@ -20,6 +21,11 @@ query Stream($id: String!) {
       totalCount
       items {
         id
+        message
+        referencedObject
+        authorName
+        authorAvatar
+        authorId
         branchName
         createdAt
       }

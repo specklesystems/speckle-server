@@ -1,9 +1,12 @@
 <template>
-  <v-card :loading="loading">
+  <v-card v-if="stream" :loading="loading" class="mt-5 pa-4" elevation="0" rounded="lg">
     <template slot="progress">
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
-    <v-card-title class="pt-10">Add collaborators</v-card-title>
+    <v-card-title>
+      <v-icon class="mr-2">mdi-account-plus-outline</v-icon>
+      <span class="d-inline-block">Add collaborators</span>
+    </v-card-title>
     <v-card-text>
       <v-text-field
         v-model="search"
@@ -27,12 +30,13 @@
           </v-list-item-content>
         </v-list-item>
         <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
-          <v-list-item-content>
-            <v-btn block color="primary" @click="showStreamInviteDialog">Invite {{ search }}</v-btn>
-          </v-list-item-content>
+          <v-list-item-action>
+            <v-btn color="primary" @click="showStreamInviteDialog">Invite {{ search }}</v-btn>
+          </v-list-item-action>
         </v-list-item>
         <v-list-item
           v-for="item in filteredSearchResults"
+          v-else
           :key="item.id"
           class="px-0 mx-0"
           @click="addCollab(item)"
@@ -58,10 +62,15 @@
         </v-list-item>
       </v-list>
     </v-card-text>
-    <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
-    <v-card-title>Existing collaborators</v-card-title>
+    <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" :text="search" />
+    <v-card-title>
+      <v-icon class="mr-2">mdi-account-group-outline</v-icon>
+      <span class="d-inline-block">Collaborators ({{ stream.collaborators.length - 1 }})</span>
+    </v-card-title>
     <v-card-text class="px-0">
-      <p v-if="collaborators.length === 0" class="ml-6">This stream has no collaborators.</p>
+      <p v-if="collaborators.length === 0" class="ml-4">
+        You don't have collaborators on this stream .
+      </p>
       <v-list v-else>
         <v-list-item v-for="user in collaborators" :key="user.id" two-lines>
           <v-list-item-icon>
@@ -100,23 +109,18 @@
         </v-list-item>
       </v-list>
     </v-card-text>
-    <v-card-actions>
-      <v-spacer></v-spacer>
-      <v-btn color="primary" text @click="$emit('close')">Close</v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 <script>
 import gql from 'graphql-tag'
-import serverQuery from '../../graphql/server.gql'
-import streamCollaboratorsQuery from '../../graphql/streamCollaborators.gql'
-import userSearchQuery from '../../graphql/userSearch.gql'
-import UserAvatar from '../UserAvatar'
-import StreamInviteDialog from './StreamInviteDialog'
+import serverQuery from '@/graphql/server.gql'
+import streamCollaboratorsQuery from '@/graphql/streamCollaborators.gql'
+import userSearchQuery from '@/graphql/userSearch.gql'
+import UserAvatar from '@/components/UserAvatar'
+import StreamInviteDialog from '@/components/dialogs/StreamInviteDialog'
 
 export default {
   components: { UserAvatar, StreamInviteDialog },
-  props: ['streamId', 'userId'],
   data: () => ({
     search: '',
     selectedUsers: null,
@@ -131,7 +135,7 @@ export default {
       query: streamCollaboratorsQuery,
       variables() {
         return {
-          id: this.streamId
+          id: this.$route.params.streamId
         }
       }
     },
@@ -188,7 +192,7 @@ export default {
           `,
           variables: {
             params: {
-              streamId: this.streamId,
+              streamId: this.stream.id,
               userId: user.id
             }
           }
@@ -230,7 +234,7 @@ export default {
           `,
           variables: {
             params: {
-              streamId: this.streamId,
+              streamId: this.stream.id,
               userId: user.id,
               role: user.role
             }
