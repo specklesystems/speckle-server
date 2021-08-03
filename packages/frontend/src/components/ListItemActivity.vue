@@ -88,7 +88,7 @@
                 text
                 class="px-0 ml-3"
                 small
-                :to="'/streams/' + stream.id + '/branches/main/commits'"
+                :to="'/streams/' + stream.id + '/branches/main'"
               >
                 <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
                 {{ stream.commits.totalCount }}
