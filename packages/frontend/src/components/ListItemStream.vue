@@ -6,11 +6,7 @@
       :elevation="hover ? 5 : 0"
       style="transition: all 0.2s ease-in-out"
     >
-      <preview-image
-        :url="`/preview/${stream.d}`"
-        :color="hover"
-        style="width: 100%"
-      ></preview-image>
+      <preview-image :url="`/preview/${stream.d}`" :color="hover"></preview-image>
       <v-card-title class="">{{ stream.name }}</v-card-title>
       <v-card-text>
         <span class="caption mb-2 font-italic">

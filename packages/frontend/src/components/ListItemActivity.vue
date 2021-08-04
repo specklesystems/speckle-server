@@ -48,7 +48,11 @@
                 <v-spacer />
 
                 <v-btn
-                  v-if="targetUser && activity.actionType === `stream_permissions_add`"
+                  v-if="
+                    targetUser &&
+                    activity.actionType === `stream_permissions_add` &&
+                    $vuetify.breakpoint.smAndUp
+                  "
                   text
                   outlined
                   small
@@ -77,8 +81,9 @@
 
                 <v-btn
                   v-if="
-                    activity.actionType === `stream_create` ||
-                    activity.actionType === `stream_update`
+                    (activity.actionType === `stream_create` ||
+                      activity.actionType === `stream_update`) &&
+                    $vuetify.breakpoint.smAndUp
                   "
                   text
                   outlined
@@ -162,7 +167,7 @@
         <v-card v-else-if="activity.resourceType === 'commit'" class="activity-card" flat>
           <v-container>
             <v-row class="align-center">
-              <div class="float-left">
+              <v-col sm="10" cols="12">
                 <v-card-text class="pa-5">
                   <div>
                     <v-chip :to="url" :color="activityInfo.color">
@@ -194,19 +199,22 @@
                     v-html="activityInfo.description"
                   ></div>
                 </v-card-text>
-              </div>
+              </v-col>
 
-              <v-spacer />
-              <v-hover v-if="activity.actionType !== 'commit_delete' && commit" v-slot="{ hover }">
-                <router-link :to="url">
-                  <preview-image
-                    :url="`/preview/${activity.streamId}/commits/${activity.resourceId}`"
-                    class="float-left"
-                    :height="100"
-                    :color="hover"
-                  />
-                </router-link>
-              </v-hover>
+              <v-col sm="2" cols="12">
+                <v-hover
+                  v-if="activity.actionType !== 'commit_delete' && commit"
+                  v-slot="{ hover }"
+                >
+                  <router-link :to="url">
+                    <preview-image
+                      :url="`/preview/${activity.streamId}/commits/${activity.resourceId}`"
+                      :height="100"
+                      :color="hover"
+                    />
+                  </router-link>
+                </v-hover>
+              </v-col>
             </v-row>
           </v-container>
         </v-card>

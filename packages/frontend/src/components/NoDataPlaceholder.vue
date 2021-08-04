@@ -10,16 +10,15 @@
             <v-card
               slot-scope="{ hover }"
               height="100%"
-              href="https://speckle.guide/user/quickstart.html"
+              href="https://speckle.systems/tutorials/"
               tile
               target="_blank"
               :class="`pt-4  ${hover ? 'elevation-5' : 'elevation-0'} rounded-lg`"
               style="transition: all 0.15s; min-height: 130px"
             >
-              <v-card-title class="">🏃‍♀️ Quickstart</v-card-title>
+              <v-card-title class="">🏃‍♀️ Tutorials</v-card-title>
               <v-card-text>
-                Get started as fast as humanly possible by following our "Zero to Speckle ASAP"
-                guide!
+                Get started as fast as humanly possible by following our Tutorials!
               </v-card-text>
             </v-card>
           </v-hover>

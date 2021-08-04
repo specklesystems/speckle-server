@@ -1,11 +1,13 @@
 <template>
   <v-app id="speckle">
     <v-app-bar app clipped-left>
-      <v-app-bar-nav-icon v-if="isStreamPage" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+      
+      <!-- DESKTOP APP BAR -->
       <v-container
-        :fluid="$vuetify.breakpoint.mdAndDown"
-        class="py-0 fill-height hidden-sm-and-down"
+      
+        class="py-0 fill-height hidden-md-and-down"
       >
+      <v-app-bar-nav-icon v-if="isStreamPage" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
         <v-btn text to="/" active-class="no-active">
           <v-img class="" contain max-height="30" max-width="30" src="@/assets/logo.svg" />
           <div class="logo">
@@ -39,10 +41,15 @@
           Log in
         </v-btn>
       </v-container>
-      <v-container class="hidden-md-and-up">
+      <!-- MOBILE APP BAR -->
+      <v-container class="hidden-lg-and-up">
         <v-row>
           <v-col>
-            <v-menu
+           <v-app-bar-nav-icon v-if="isStreamPage" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+          </v-col>
+          <v-col class="text-center">
+
+ <v-menu
               v-if="loggedIn"
               :value="showMobileMenu"
               transition="slide-y-transition"
@@ -52,8 +59,8 @@
               min-width="100%"
             >
               <template #activator="{ on, attrs }">
-                <v-btn icon v-bind="attrs" v-on="on" @click="showMobileMenu = true">
-                  <v-icon>mdi-dots-vertical-circle-outline</v-icon>
+                <v-btn active-class="no-active" large icon text v-bind="attrs" v-on="on" @click="showMobileMenu = true">
+                  <v-img contain max-height="40" max-width="40" src="@/assets/logo.svg" />
                 </v-btn>
               </template>
               <v-card>
@@ -70,11 +77,9 @@
                 </v-row>
               </v-card>
             </v-menu>
-          </v-col>
-          <v-col class="text-center">
-            <v-btn text to="/" active-class="no-active" large icon>
-              <v-img contain max-height="40" max-width="40" src="@/assets/logo.svg" />
-            </v-btn>
+
+
+
           </v-col>
           <v-col class="text-right" style="margin-top: 5px">
             <user-menu-top v-if="user" :user="user" />
