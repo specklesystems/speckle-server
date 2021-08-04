@@ -7,9 +7,10 @@
     </v-col>
     <v-col v-if="stream" cols="12">
       <h1 class="display-1">{{ stream.name }}</h1>
-      <h3 class="title font-italic font-weight-thin my-5">
-        {{ truncate(stream.description) }}
-      </h3>
+      <h3
+        class="title font-italic font-weight-thin my-5"
+        v-html="hyperlink(truncate(stream.description))"
+      ></h3>
 
       <!-- <v-card class="mt-5 pa-4" elevation="0" rounded="lg"> -->
       <v-row v-if="stream">
@@ -87,7 +88,7 @@
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-row align="center" justify="center">
-                      <v-chip small class="mr-2">
+                      <v-chip small class="mr-2 no-hover">
                         <v-icon small class="mr-2">mdi-source-commit</v-icon>
                         {{ latestCommit.id }}
                       </v-chip>
@@ -124,7 +125,7 @@
                     </v-list-item-content>
                     <v-list-item-action>
                       <v-row align="center" justify="center">
-                        <v-chip small class="mr-2">
+                        <v-chip small class="mr-2 no-hover">
                           <v-icon small class="mr-2">mdi-source-commit</v-icon>
                           {{ commit.id }}
                         </v-chip>
@@ -143,8 +144,8 @@
                   <v-row align="center" justify="center">
                     <span class="font-weight-bold primary--text py-3 my-4">
                       <v-icon class="mr-2 float-left" color="primary">mdi-source-commit</v-icon>
-                      SEE ALL ({{ selectedBranch.commits.totalCount }}) COMMITS ON
-                      {{ selectedBranch.name }}
+                      See all commits on
+                      {{ selectedBranch.name }} ({{ selectedBranch.commits.totalCount }})
                     </span>
                   </v-row>
                 </v-list-item>
@@ -159,20 +160,20 @@
         <v-col cols="12" sm="12" md="4" lg="3" xl="3">
           <h4 class="space-grotesk mb-3">About:</h4>
           <div>
-            <v-chip class="mr-3 mb-3">
+            <v-chip class="mr-3 mb-3 no-hover">
               <v-icon small left>mdi-source-branch</v-icon>
 
               {{ stream.branches.totalCount }}
               branch{{ stream.branches.totalCount === 1 ? '' : 'es' }}
             </v-chip>
-            <v-chip class="mr-3 mb-3">
+            <v-chip class="mr-3 mb-3 no-hover">
               <v-icon small left>mdi-source-commit</v-icon>
               &nbsp;
 
               {{ stream.commits.totalCount }}
               commit{{ stream.commits.totalCount === 1 ? '' : 's' }}
             </v-chip>
-            <v-chip class="mr-3 mb-3">
+            <v-chip class="mr-3 mb-3 no-hover">
               <span
                 v-if="stream.isPublic"
                 v-tooltip="`Anyone can view this stream. Only you and collaborators can edit it.`"
@@ -185,19 +186,23 @@
                 &nbsp; private
               </span>
             </v-chip>
-            <v-chip v-if="loggedIn" class="mr-3 mb-3">
+            <v-chip v-if="loggedIn" class="mr-3 mb-3 no-hover">
               <v-icon small left>mdi-account-key-outline</v-icon>
               {{ stream.role.split(':')[1] }}
             </v-chip>
           </div>
           <div class="my-3">
-            <div v-tooltip="formatDate(stream.createdAt)" class="caption mb-3">
-              Created
-              <timeago :datetime="stream.createdAt"></timeago>
+            <div class="caption mb-3">
+              <span v-tooltip="formatDate(stream.createdAt)">
+                Created
+                <timeago :datetime="stream.createdAt"></timeago>
+              </span>
             </div>
-            <div v-tooltip="formatDate(stream.updatedAt)" class="caption">
-              Updated
-              <timeago :datetime="stream.updatedAt"></timeago>
+            <div class="caption">
+              <span v-tooltip="formatDate(stream.updatedAt)">
+                Updated
+                <timeago :datetime="stream.updatedAt"></timeago>
+              </span>
             </div>
           </div>
           <h4 class="space-grotesk mt-7 mb-3">Collaborators:</h4>
@@ -356,6 +361,10 @@ export default {
   },
 
   methods: {
+    hyperlink(text) {
+      var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gi
+      return text.replace(exp, '<a target="_blank" href="$1">$1</a>')
+    },
     truncate(input, length = 250) {
       if (!input) return ''
       if (input.length > length) {

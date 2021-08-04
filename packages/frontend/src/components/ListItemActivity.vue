@@ -25,35 +25,72 @@
           flat
         >
           <v-card-text class="pa-5 body-1">
-            <v-chip v-if="targetUser" pill :color="activityInfo.color">
-              <v-avatar left>
-                <user-avatar
-                  :id="targetUser.id"
-                  :avatar="targetUser.avatar"
-                  :size="30"
-                  :name="targetUser.name"
-                />
-              </v-avatar>
+            <v-container>
+              <v-row class="align-center">
+                <v-chip v-if="targetUser" pill :color="activityInfo.color">
+                  <v-avatar left>
+                    <user-avatar
+                      :id="targetUser.id"
+                      :avatar="targetUser.avatar"
+                      :size="30"
+                      :name="targetUser.name"
+                    />
+                  </v-avatar>
 
-              {{ targetUser.name }}
-            </v-chip>
+                  {{ targetUser.name }}
+                </v-chip>
 
-            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-            <v-chip v-if="activity.info.role" small outlined class="ml-3">
-              <v-icon small left>mdi-account-key-outline</v-icon>
-              {{ activity.info.role.split(':')[1] }}
-            </v-chip>
+                <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+                <v-chip v-if="activity.info.role" small outlined class="ml-3">
+                  <v-icon small left>mdi-account-key-outline</v-icon>
+                  {{ activity.info.role.split(':')[1] }}
+                </v-chip>
+                <v-spacer />
+
+                <v-btn
+                  v-if="targetUser && activity.actionType === `stream_permissions_add`"
+                  text
+                  outlined
+                  small
+                  :to="'/profile/' + targetUser.id"
+                  color="primary"
+                >
+                  view
+                </v-btn>
+              </v-row>
+            </v-container>
           </v-card-text>
         </v-card>
 
         <!-- STREAM -->
         <v-card v-else-if="activity.resourceType === 'stream' && stream" class="activity-card" flat>
           <v-card-text class="pa-5 body-1">
-            <router-link :to="url" class="title">
-              <v-icon color="primary" small>mdi-compare-vertical</v-icon>
-              {{ stream.name }}
-            </router-link>
-            <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+            <v-container>
+              <v-row class="align-center">
+                <router-link :to="url" class="title">
+                  <v-icon color="primary" small>mdi-compare-vertical</v-icon>
+                  {{ stream.name }}
+                </router-link>
+                <span class="ml-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+
+                <v-spacer />
+
+                <v-btn
+                  v-if="
+                    activity.actionType === `stream_create` ||
+                    activity.actionType === `stream_update`
+                  "
+                  text
+                  outlined
+                  small
+                  :to="url"
+                  color="primary"
+                >
+                  view
+                </v-btn>
+              </v-row>
+            </v-container>
+
             <div
               v-if="activityInfo.description"
               class="mt-3"
@@ -88,12 +125,12 @@
                 text
                 class="px-0 ml-3"
                 small
-                :to="'/streams/' + stream.id + '/branches/main/commits'"
+                :to="'/streams/' + stream.id + '/branches/main'"
               >
                 <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
                 {{ stream.commits.totalCount }}
               </v-btn>
-              <v-chip small outlined class="ml-3">
+              <v-chip small outlined class="ml-3 no-hover">
                 <v-icon small left>mdi-account-key-outline</v-icon>
                 {{ stream.role.split(':')[1] }}
               </v-chip>
@@ -123,37 +160,55 @@
 
         <!-- COMMITS -->
         <v-card v-else-if="activity.resourceType === 'commit'" class="activity-card" flat>
-          <v-card-text class="pa-5">
-            <div>
-              <v-chip :to="url" :color="activityInfo.color">
-                <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
-                {{ activity.resourceId }}
-              </v-chip>
-              <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-              <span v-if="activity.actionType !== 'commit_delete' && commit">
-                <v-chip
-                  :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
-                  small
-                  color="primary"
-                >
-                  <v-icon small class="float-left" light>mdi-source-branch</v-icon>
-                  {{ commit.branchName }}
-                </v-chip>
-                <span v-if="activity.actionType === 'commit_create'">
-                  <span class="mx-3 body-2 font-italic">from</span>
-                  <source-app-avatar :application-name="commit.sourceApplication" />
-                </span>
-              </span>
-              <span v-if="activity.actionType !== 'commit_delete' && !commit">
-                [commit deleted]
-              </span>
-            </div>
-            <div
-              v-if="activityInfo.description"
-              class="mt-3 body-1"
-              v-html="activityInfo.description"
-            ></div>
-          </v-card-text>
+          <v-container>
+            <v-row class="align-center">
+              <div class="float-left">
+                <v-card-text class="pa-5">
+                  <div>
+                    <v-chip :to="url" :color="activityInfo.color">
+                      <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
+                      {{ activity.resourceId }}
+                    </v-chip>
+                    <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+                    <span v-if="activity.actionType !== 'commit_delete' && commit">
+                      <v-chip
+                        :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
+                        small
+                        color="primary"
+                      >
+                        <v-icon small class="float-left" light>mdi-source-branch</v-icon>
+                        {{ commit.branchName }}
+                      </v-chip>
+                      <span v-if="activity.actionType === 'commit_create'">
+                        <span class="mx-3 body-2 font-italic">from</span>
+                        <source-app-avatar :application-name="commit.sourceApplication" />
+                      </span>
+                    </span>
+                    <span v-if="activity.actionType !== 'commit_delete' && !commit">
+                      [commit deleted]
+                    </span>
+                  </div>
+                  <div
+                    v-if="activityInfo.description"
+                    class="mt-3 body-1"
+                    v-html="activityInfo.description"
+                  ></div>
+                </v-card-text>
+              </div>
+
+              <v-spacer />
+              <v-hover v-if="activity.actionType !== 'commit_delete' && commit" v-slot="{ hover }">
+                <router-link :to="url">
+                  <preview-image
+                    :url="`/preview/${activity.streamId}/commits/${activity.resourceId}`"
+                    class="float-left"
+                    :height="100"
+                    :color="hover"
+                  />
+                </router-link>
+              </v-hover>
+            </v-row>
+          </v-container>
         </v-card>
       </v-col>
     </v-row>
@@ -163,10 +218,11 @@
 <script>
 import UserAvatar from './UserAvatar'
 import SourceAppAvatar from './SourceAppAvatar'
+import PreviewImage from './PreviewImage'
 import gql from 'graphql-tag'
 
 export default {
-  components: { UserAvatar, SourceAppAvatar },
+  components: { UserAvatar, SourceAppAvatar, PreviewImage },
   props: ['activity'],
   apollo: {
     you: {

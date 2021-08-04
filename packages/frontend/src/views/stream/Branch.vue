@@ -116,7 +116,7 @@ export default {
           //this.$router.push does not work, refresh entire window
 
           this.$router.push({
-            path: `/streams/${this.streamId}/branches/${encodeURIComponent(dialog.name)}/commits`
+            path: `/streams/${this.streamId}/branches/${encodeURIComponent(dialog.name)}`
           })
         } else {
           this.$apollo.queries.stream.refetch()

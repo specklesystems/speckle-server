@@ -3,7 +3,7 @@
     <template #activator="{ on, attrs }">
       <v-chip
         small
-        class="ma-1 caption white--text"
+        class="ma-1 caption white--text no-hover"
         :color="color"
         :size="size"
         v-bind="attrs"

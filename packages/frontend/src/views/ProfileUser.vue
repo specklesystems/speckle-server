@@ -19,18 +19,26 @@
           </v-card-title>
         </v-card>
         <v-row>
-        <v-col cols="12" sm="12" md="6" lg="6" xl="4"  v-for="(stream, i) in user.streams.items" :key="i">
-          <list-item-stream :stream="stream"></list-item-stream>
-        </v-col >
+          <v-col
+            v-for="(stream, i) in user.streams.items"
+            :key="i"
+            cols="12"
+            sm="12"
+            md="6"
+            lg="6"
+            xl="4"
+          >
+            <list-item-stream :stream="stream"></list-item-stream>
+          </v-col>
         </v-row>
       </v-col>
     </v-row>
   </v-container>
 </template>
 <script>
-import userById from '../graphql/userById.gql'
 import UserInfoCard from '../components/UserInfoCard'
 import ListItemStream from '../components/ListItemStream'
+import gql from 'graphql-tag'
 
 export default {
   name: 'ProfileUser',
@@ -38,7 +46,28 @@ export default {
   data: () => ({}),
   apollo: {
     user: {
-      query: userById,
+      query: gql`
+        query User($id: String!) {
+          user(id: $id) {
+            id
+            email
+            name
+            bio
+            company
+            avatar
+            verified
+            profiles
+            role
+            suuid
+            streams {
+              totalCount
+            }
+            commits {
+              totalCount
+            }
+          }
+        }
+      `,
       variables() {
         return {
           id: this.$route.params.userId

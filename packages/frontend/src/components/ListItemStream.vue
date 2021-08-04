@@ -6,11 +6,11 @@
       :elevation="hover ? 5 : 0"
       style="transition: all 0.2s ease-in-out"
     >
-      <img
-        ref="cover"
-        :class="`${hover ? '' : 'grasycale-img'} preview-img`"
-        :src="currentPreviewImg"
-      />
+      <preview-image
+        :url="`/preview/${stream.d}`"
+        :color="hover"
+        style="width: 100%"
+      ></preview-image>
       <v-card-title class="">{{ stream.name }}</v-card-title>
       <v-card-text>
         <span class="caption mb-2 font-italic">
@@ -45,7 +45,7 @@
           text
           class="px-0"
           small
-          :to="'/streams/' + stream.id + '/branches/main/commits'"
+          :to="'/streams/' + stream.id + '/branches/main'"
         >
           <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
           {{ stream.commits.totalCount }}
@@ -72,9 +72,10 @@
 </template>
 <script>
 import UserAvatar from '../components/UserAvatar'
+import PreviewImage from '@/components/PreviewImage'
 
 export default {
-  components: { UserAvatar },
+  components: { UserAvatar, PreviewImage },
   props: {
     stream: {
       type: Object,
@@ -82,48 +83,6 @@ export default {
         return {}
       }
     }
-  },
-  data() {
-    return {
-      currentPreviewImg: '/loadingImage.png'
-    }
-  },
-  mounted() {
-    this.getPreviewImage().then().catch()
-  },
-  methods: {
-    async getPreviewImage() {
-      let previewUrl = `/preview/${this.stream.id}`
-      const res = await fetch(previewUrl, {
-        headers: localStorage.getItem('AuthToken')
-          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
-          : {}
-      })
-      const blob = await res.blob()
-      this.currentPreviewImg = URL.createObjectURL(blob)
-    }
   }
 }
 </script>
-<style scoped>
-.grasycale-img {
-  transition: all 0.3s;
-  filter: grayscale(100%);
-}
-
-.preview-img {
-  height: 180px;
-  width: 100%;
-  object-fit: cover;
-}
-
-.stream-link a {
-  /* color: inherit; */
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.stream-link a:hover {
-  text-decoration: underline;
-}
-</style>

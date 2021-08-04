@@ -5,7 +5,7 @@
       <h3 class="title font-italic font-weight-thin my-5">Recent activity on this Stream</h3>
     </v-col>
     <v-col cols="12">
-      <v-timeline v-if="stream" align-top :dense="$vuetify.breakpoint.mobile">
+      <v-timeline v-if="stream" align-top dense>
         <list-item-activity
           v-for="activity in stream.activity.items"
           :key="activity.time"
@@ -20,7 +20,7 @@
           <div slot="no-results">There are no ctivities to load</div>
         </infinite-loading>
       </v-timeline>
-      <v-timeline v-else-if="$apollo.loading" align-top :dense="$vuetify.breakpoint.mobile">
+      <v-timeline v-else-if="$apollo.loading" align-top dense>
         <v-timeline-item v-for="i in 6" :key="i" medium>
           <v-skeleton-loader type="article"></v-skeleton-loader>
         </v-timeline-item>

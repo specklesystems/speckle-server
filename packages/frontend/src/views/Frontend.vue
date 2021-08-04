@@ -104,13 +104,15 @@
           </v-list-item>
         </v-list-item-group>
       </v-list>
+      <div class="mx-5 m t-5">
       <v-btn
         v-if="stream.role === 'stream:owner'"
         outlined
         color="primary"
         rounded
+        block
         height="50"
-        class="ma-3 d-block"
+     
         @click="showStreamInviteDialog"
       >
         <v-icon small class="mr-2">mdi-email-send-outline</v-icon>
@@ -118,6 +120,7 @@
         <br />
         stream by email
       </v-btn>
+      </div>
       <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
     </v-navigation-drawer>
     <v-main :style="background">
@@ -329,4 +332,6 @@ export default {
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
 }
+
+.no-hover:before {display: none}
 </style>
