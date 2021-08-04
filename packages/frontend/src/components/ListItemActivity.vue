@@ -83,6 +83,7 @@
                   text
                   outlined
                   small
+                  :to="url"
                   color="primary"
                 >
                   view
@@ -159,37 +160,55 @@
 
         <!-- COMMITS -->
         <v-card v-else-if="activity.resourceType === 'commit'" class="activity-card" flat>
-          <v-card-text class="pa-5">
-            <div>
-              <v-chip :to="url" :color="activityInfo.color">
-                <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
-                {{ activity.resourceId }}
-              </v-chip>
-              <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
-              <span v-if="activity.actionType !== 'commit_delete' && commit">
-                <v-chip
-                  :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
-                  small
-                  color="primary"
-                >
-                  <v-icon small class="float-left" light>mdi-source-branch</v-icon>
-                  {{ commit.branchName }}
-                </v-chip>
-                <span v-if="activity.actionType === 'commit_create'">
-                  <span class="mx-3 body-2 font-italic">from</span>
-                  <source-app-avatar :application-name="commit.sourceApplication" />
-                </span>
-              </span>
-              <span v-if="activity.actionType !== 'commit_delete' && !commit">
-                [commit deleted]
-              </span>
-            </div>
-            <div
-              v-if="activityInfo.description"
-              class="mt-3 body-1"
-              v-html="activityInfo.description"
-            ></div>
-          </v-card-text>
+          <v-container>
+            <v-row class="align-center">
+              <div class="float-left">
+                <v-card-text class="pa-5">
+                  <div>
+                    <v-chip :to="url" :color="activityInfo.color">
+                      <v-icon small class="mr-2 float-left" light>{{ activityInfo.icon }}</v-icon>
+                      {{ activity.resourceId }}
+                    </v-chip>
+                    <span class="mx-3 body-2 font-italic">{{ activityInfo.actionText }}</span>
+                    <span v-if="activity.actionType !== 'commit_delete' && commit">
+                      <v-chip
+                        :to="`/streams/${activity.streamId}/branches/${commit.branchName}`"
+                        small
+                        color="primary"
+                      >
+                        <v-icon small class="float-left" light>mdi-source-branch</v-icon>
+                        {{ commit.branchName }}
+                      </v-chip>
+                      <span v-if="activity.actionType === 'commit_create'">
+                        <span class="mx-3 body-2 font-italic">from</span>
+                        <source-app-avatar :application-name="commit.sourceApplication" />
+                      </span>
+                    </span>
+                    <span v-if="activity.actionType !== 'commit_delete' && !commit">
+                      [commit deleted]
+                    </span>
+                  </div>
+                  <div
+                    v-if="activityInfo.description"
+                    class="mt-3 body-1"
+                    v-html="activityInfo.description"
+                  ></div>
+                </v-card-text>
+              </div>
+
+              <v-spacer />
+              <v-hover v-if="activity.actionType !== 'commit_delete' && commit" v-slot="{ hover }">
+                <router-link :to="url">
+                  <preview-image
+                    :url="`/preview/${activity.streamId}/commits/${activity.resourceId}`"
+                    class="float-left"
+                    :height="100"
+                    :color="hover"
+                  />
+                </router-link>
+              </v-hover>
+            </v-row>
+          </v-container>
         </v-card>
       </v-col>
     </v-row>
@@ -199,10 +218,11 @@
 <script>
 import UserAvatar from './UserAvatar'
 import SourceAppAvatar from './SourceAppAvatar'
+import PreviewImage from './PreviewImage'
 import gql from 'graphql-tag'
 
 export default {
-  components: { UserAvatar, SourceAppAvatar },
+  components: { UserAvatar, SourceAppAvatar, PreviewImage },
   props: ['activity'],
   apollo: {
     you: {
