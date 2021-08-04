@@ -48,7 +48,11 @@
                 <v-spacer />
 
                 <v-btn
-                  v-if="targetUser && activity.actionType === `stream_permissions_add`"
+                  v-if="
+                    targetUser &&
+                    activity.actionType === `stream_permissions_add` &&
+                    $vuetify.breakpoint.smAndUp
+                  "
                   text
                   outlined
                   small
@@ -77,8 +81,9 @@
 
                 <v-btn
                   v-if="
-                    activity.actionType === `stream_create` ||
-                    activity.actionType === `stream_update`
+                    (activity.actionType === `stream_create` ||
+                      activity.actionType === `stream_update`) &&
+                    $vuetify.breakpoint.smAndUp
                   "
                   text
                   outlined
