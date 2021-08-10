@@ -89,30 +89,38 @@ module.exports = {
     }
 
     let sqlFilters = ''
-    let sqlVariables = []
+    let aclVariables = [ userId ]
+		let unionVariables = [ userId ]
     if ( after ) {
       sqlFilters += ' AND time > ?'
-      sqlVariables.push( after )
+      aclVariables.push( after )
+      unionVariables.push( after )
     }
     if ( before ) {
       sqlFilters += ' AND time < ?'
-      sqlVariables.push( before )
+      aclVariables.push( before )
+      unionVariables.push( before )
     }
     if ( cursor ) {
       sqlFilters += ' AND time < ?'
-      sqlVariables.push( cursor )
+      aclVariables.push( cursor )
+      unionVariables.push( cursor )
     }
 
     let dbRawQuery = `
       SELECT act.*
-      FROM stream_acl acl
-      INNER JOIN stream_activity act ON acl."resourceId" = act."streamId"
-      WHERE acl."userId" = ? ${sqlFilters}
+        FROM stream_acl acl
+        INNER JOIN stream_activity act ON acl."resourceId" = act."streamId"
+        WHERE acl."userId" = ? ${sqlFilters}
+      UNION
+      SELECT act.*
+        FROM stream_activity act
+        WHERE act."userId" = ? ${sqlFilters} AND act."streamId" IS NULL
       ORDER BY time DESC
       LIMIT ?
     `
 
-    sqlVariables.unshift( userId )
+		let sqlVariables = aclVariables.concat(unionVariables)
     sqlVariables.push( limit )
     let results = ( await knex.raw( dbRawQuery, sqlVariables ) ).rows
     return { items: results, cursor: results.length > 0 ? results[ results.length - 1 ].time.toISOString() : null }
@@ -146,12 +154,14 @@ module.exports = {
   },
 
   async getTimelineCount( { userId, after, before } ) {
-    let query = StreamAcl().count()
+    let [ streamActivityRes ] = await StreamAcl().count()
       .innerJoin( 'stream_activity', { 'stream_acl.resourceId': 'stream_activity.streamId' } )
       .where( { 'stream_acl.userId': userId } )
-    if ( after ) query.andWhere( 'stream_activity.time', '>', after )
-    if ( before ) query.andWhere( 'stream_activity.time', '<', before )
-    let [ res ] = await query
-    return parseInt( res.count )
+
+    let [ userActivityRes ] = await StreamActivity().count()
+      .where( { 'stream_activity.userId': userId } )
+      .andWhere( { 'stream_activity.streamId': null } )
+
+    return parseInt( streamActivityRes.count ) + parseInt( userActivityRes.count )
   }
 }

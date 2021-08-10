@@ -146,10 +146,24 @@ describe( 'Activity @activity', () => {
   } )
 
   it( 'Should get a user\'s timeline', async () => {
-    const res = await sendRequest( userIz.token, { query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }` } )
+    const res = await sendRequest( userCr.token, { query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }` } )
     expect( noErrors( res ) )
-    expect( res.body.data.user.timeline.items.length ).to.equal( 6 ) // sum of all actions in 'should create activity'
-    expect( res.body.data.user.timeline.totalCount ).to.equal( 6 )
+
+    const timeline = res.body.data.user.timeline
+    expect( timeline.items.length ).to.equal( 7 ) // sum of all actions in 'should create activity' + user creation
+    expect( timeline.totalCount ).to.equal( 7 )
+    expect( timeline.items.pop().actionType).to.equal( "user_create" ) // oldest timeline item is user_create
+  } )
+
+  it( 'Should record user update in a user\'s timeline', async () => {
+    await sendRequest( userCr.token, { query: 'mutation($user:UserUpdateInput!) { userUpdate( user: $user) } ', variables: { user: { name: 'Rob', bio: 'Is often outside when he is not inside' } } } )
+    const res = await sendRequest( userCr.token, { query: `query {user(id:"${userCr.id}") { name timeline { totalCount items {streamId resourceType resourceId actionType userId message time}}} }` } )
+    expect( noErrors( res ) )
+
+    const timeline = res.body.data.user.timeline
+    expect( timeline.items.length ).to.equal( 8 ) // sum of previous test actions + user update
+    expect( timeline.totalCount ).to.equal( 8 )
+    expect( timeline.items[0].actionType).to.equal( "user_update" ) // newest timeline item is user_update
   } )
 
   it( 'Should get a stream\'s activity', async () => {
