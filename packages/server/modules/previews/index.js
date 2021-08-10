@@ -33,7 +33,7 @@ exports.init = ( app, options ) => {
     // Check if objectId is valid
     const dbObj = await getObject( { streamId, objectId } )
     if ( !dbObj ) {
-      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_error.png` }
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_404.png` }
     }
 
     // Get existing preview metadata
@@ -112,7 +112,7 @@ exports.init = ( app, options ) => {
     let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
     if ( !hasPermissions ) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
     }
 
     return sendObjectPreview( req, res, req.params.streamId, req.params.objectId, req.params.angle )
@@ -122,7 +122,7 @@ exports.init = ( app, options ) => {
     let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
     if ( !hasPermissions ) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
     }
     
     let { commits } = await getCommitsByStreamId( { streamId: req.params.streamId, limit: 1, ignoreGlobalsBranch: true } )
@@ -138,7 +138,7 @@ exports.init = ( app, options ) => {
     let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
     if ( !hasPermissions ) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
     }
 
     let commitsObj
@@ -160,7 +160,7 @@ exports.init = ( app, options ) => {
     let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
     if ( !hasPermissions ) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
     }
 
     let commit = await getCommitById( { id: req.params.commitId } )
@@ -175,12 +175,11 @@ exports.init = ( app, options ) => {
     let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
     if ( !hasPermissions ) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
     }
 
     return sendObjectPreview( req, res, req.params.streamId, req.params.objectId, DEFAULT_ANGLE )
   } )
-
 }
 
 exports.finalize = () => {}
