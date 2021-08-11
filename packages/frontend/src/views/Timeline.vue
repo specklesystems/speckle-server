@@ -139,10 +139,10 @@ export default {
   apollo: {
     timeline: {
       query: gql`
-        query($before: DateTime) {
+        query($cursor: DateTime) {
           user {
             id
-            timeline(before: $before) {
+            timeline(cursor: $cursor) {
               totalCount
               cursor
               items {
@@ -185,7 +185,7 @@ export default {
     infiniteHandler($state) {
       this.$apollo.queries.timeline.fetchMore({
         variables: {
-          before: this.timeline.cursor
+          cursor: this.timeline.cursor
         },
         // Transform the previous result with new data
         updateQuery: (previousResult, { fetchMoreResult }) => {
