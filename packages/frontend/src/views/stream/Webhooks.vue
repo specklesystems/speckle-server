@@ -61,7 +61,7 @@
           <v-list-item
             v-for="wh in webhooks"
             :key="wh.id"
-            :to="`/settings/streams/${$attrs.streamId}/webhooks/edit/${wh.id}`"
+            :to="`/streams/${$attrs.streamId}/webhooks/edit/${wh.id}`"
           >
             <v-list-item-content>
               <v-list-item-title>
