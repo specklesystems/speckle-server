@@ -46,6 +46,53 @@
           </v-btn>
         </v-card-actions>
       </v-card>
+
+      <v-card class="mt-5 pa-4" elevation="0" rounded="lg" :loading="loading">
+        <v-card-title>
+          <v-icon class="mr-2">mdi-bomb</v-icon>
+          <span class="d-inline-block">Danger Zone</span>
+        </v-card-title>
+
+        <v-card-text>
+          <v-list-item two-line>
+            <v-list-item-content>
+              <v-list-item-title>Delete Stream</v-list-item-title>
+              <v-list-item-subtitle>
+                Once you delete a stream, there is no going back!
+              </v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-btn color="error" @click="deleteDialog = true">delete</v-btn>
+            </v-list-item-action>
+          </v-list-item>
+          <v-dialog v-model="deleteDialog" width="500" @keydown.esc="deleteDialog = false">
+            <v-card class="pa-4">
+              <v-card-title>Deleting Stream '{{ stream.name }}'</v-card-title>
+              <v-card-text class="caption py-5">
+                Type the name of the stream below to confirm you really want to delete it.
+                <b>You cannot undo this action.</b>
+
+                <v-text-field
+                  v-model="streamNameConfirm"
+                  label="Confirm stream name"
+                  class="pt-10"
+                ></v-text-field>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn
+                  class="mr-3"
+                  color="error"
+                  :disabled="streamNameConfirm !== stream.name"
+                  @click="deleteStream"
+                >
+                  delete
+                </v-btn>
+                <v-btn text color="primary" @click="deleteDialog = false">Cancel</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-card-text>
+      </v-card>
     </v-col>
     <v-snackbar v-model="snackbar" timeout="800" color="primary">
       <p class="text-center my-0">
@@ -59,7 +106,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'SettingsGeneral',
+  name: 'StreamSettings',
   components: {
     BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
@@ -95,6 +142,8 @@ export default {
     loading: false,
     valid: false,
     name: null,
+    deleteDialog: false,
+    streamNameConfirm: '',
     description: null,
     isPublic: true,
     validation: {
@@ -139,6 +188,25 @@ export default {
 
       this.$apollo.queries.stream.refetch()
       this.loading = false
+    },
+    async deleteStream() {
+      this.$matomo && this.$matomo.trackPageView('stream/delete')
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation deleteStream($id: String!) {
+              streamDelete(id: $id)
+            }
+          `,
+          variables: {
+            id: this.stream.id
+          }
+        })
+      } catch (e) {
+        console.log(e)
+      }
+      this.deleteDialog = false
+      this.$router.push({ path: '/streams' })
     }
   }
 }
