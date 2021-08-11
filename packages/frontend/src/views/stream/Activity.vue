@@ -44,7 +44,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query Stream($id: String!, $before: DateTime) {
+        query Stream($id: String!, $cursor: DateTime) {
           stream(id: $id) {
             id
             name
@@ -55,7 +55,7 @@ export default {
             branches {
               totalCount
             }
-            activity(before: $before) {
+            activity(cursor: $cursor) {
               totalCount
               cursor
               items {
@@ -82,7 +82,7 @@ export default {
     infiniteHandler($state) {
       this.$apollo.queries.stream.fetchMore({
         variables: {
-          before: this.stream.activity.cursor
+          cursor: this.stream.activity.cursor
         },
         // Transform the previous result with new data
         updateQuery: (previousResult, { fetchMoreResult }) => {
