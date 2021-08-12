@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy container app to Azure Web App - speckle-container-backend-sandpit-web
+name: P500 Backend
 
 on:
   push:
@@ -22,15 +22,15 @@ jobs:
     - name: Log in to registry
       uses: docker/login-action@v1
       with:
-        registry: https://speckleacr.azurecr.io/
-        username: ${{ secrets.AzureAppService_ContainerUsername_fc4ba7f0d13a4196b92c012034a7ebf5 }}
-        password: ${{ secrets.AzureAppService_ContainerPassword_68afc3c178dc427ba300716a57c7d7e4 }}
+        registry: https://arupspecklev2prodacr.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_ff44661e05e94e0aa89a43eaf41808c7 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_07bfd3cf925041cb9246f1fe66fb8d17 }}
 
     - name: Build and push container image to registry
       uses: docker/build-push-action@v2
       with:
         push: true
-        tags: speckleacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_fc4ba7f0d13a4196b92c012034a7ebf5 }}/backend:${{ github.sha }}
+        tags: arupspecklev2prodacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_ff44661e05e94e0aa89a43eaf41808c7 }}/backend:${{ github.sha }}
         file: ./packages/server/Dockerfile
         build-args: SPECKLE_SERVER_VERSION=${{ github.sha }}
 
@@ -46,7 +46,7 @@ jobs:
       id: deploy-to-webapp
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'speckle-container-backend-sandpit-web'
+        app-name: 'speckle-v2-backend-prod-web'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AzureAppService_PublishProfile_4d37ffb2d576429ab40fb302bc07e92c }}
-        images: 'speckleacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_fc4ba7f0d13a4196b92c012034a7ebf5 }}/backend:${{ github.sha }}'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_f2962ef2bf0146968e6b35c963f8aa43 }}
+        images: 'arupspecklev2prodacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_ff44661e05e94e0aa89a43eaf41808c7 }}/backend:${{ github.sha }}'
