@@ -6,6 +6,7 @@ const knex = require( `${appRoot}/db/knex` )
 const { ForbiddenError, ApolloError } = require( 'apollo-server-express' )
 const { RedisPubSub } = require( 'graphql-redis-subscriptions' )
 const { validateToken } = require( `${appRoot}/modules/core/services/tokens` )
+const { uniqueNamesGenerator, adjectives, animals } = require( 'unique-names-generator' )
 
 
 let pubsub = new RedisPubSub( {
@@ -147,6 +148,19 @@ async function registerOrUpdateRole( role ) {
   return
 }
 
+/** Generate a random name for streams 
+ * @return {string}
+*/
+function generateUniqueStreamName() {
+  const config = {
+    dictionaries: [ adjectives, animals ],
+    separator: ' ',
+    style: 'capital'
+  }
+  
+  return uniqueNamesGenerator( config )
+}
+
 module.exports = {
   registerOrUpdateScope,
   registerOrUpdateRole,
@@ -155,5 +169,6 @@ module.exports = {
   validateServerRole,
   validateScopes,
   authorizeResolver,
+  generateUniqueStreamName,
   pubsub
 }

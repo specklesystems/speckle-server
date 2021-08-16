@@ -2,6 +2,8 @@
 const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
+const { generateUniqueStreamName } = require( `${appRoot}/modules/shared` )
+
 
 const Streams = ( ) => knex( 'streams' )
 const Acl = ( ) => knex( 'stream_acl' )
@@ -14,7 +16,7 @@ module.exports = {
   async createStream( { name, description, isPublic, ownerId } ) {
     let stream = {
       id: crs( { length: 10 } ),
-      name: name || 'Random Stream',
+      name: name || generateUniqueStreamName(),
       description: description || '',
       isPublic: isPublic !== false,
       updatedAt: knex.fn.now( )
