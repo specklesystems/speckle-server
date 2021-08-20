@@ -1,5 +1,5 @@
 <template lang="html">
-  <div>Hello from my embed app</div>
+  <router-view />
 </template>
 <script>
 export default {
