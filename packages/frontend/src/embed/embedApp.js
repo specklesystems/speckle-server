@@ -1,8 +1,8 @@
 import Vue from 'vue'
 import App from './EmbedApp.vue'
-import vuetify from './plugins/vuetifyEmbed'
-import { createProvider } from './vue-apollo-embedApp'
-import router from './router/embedAppRouter'
+import vuetify from './embedVuetify'
+import { createProvider } from './embedApollo'
+import router from './embedRouter'
 Vue.config.productionTip = false
 
 new Vue({

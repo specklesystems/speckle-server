@@ -8,7 +8,7 @@ module.exports = {
       filename: 'app.html'
     },
     embedApp: {
-      entry: 'src/embedApp.js',
+      entry: 'src/embed/embedApp.js',
       title: 'Speckle Embed Viewer',
       template: 'public/embedApp.html',
       filename: 'embedApp.html'
