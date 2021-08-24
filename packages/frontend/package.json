@@ -20,6 +20,7 @@
     "lodash.throttle": "^4.1.1",
     "marked": "^1.2.6",
     "numeral": "^2.0.6",
+    "portal-vue": "^2.1.7",
     "tween": "^0.9.0",
     "v-tooltip": "^2.0.3",
     "vue": "^2.6.12",

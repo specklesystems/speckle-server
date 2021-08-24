@@ -1,6 +1,7 @@
 query StreamCommits($id: String!) {
   stream(id: $id) {
     id
+    role
     commits {
       totalCount
       items{

@@ -2,7 +2,12 @@
   <div>
     <v-dialog v-model="showDialog" max-width="400">
       <v-card>
-        <v-card-title>Send a server invite</v-card-title>
+        <v-toolbar color="primary" dark>
+          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-icon>mdi-email</v-icon>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>Invite Colleagues!</v-toolbar-title>
+        </v-toolbar>
         <v-alert v-model="showError" dismissible type="error" :class="`${success ? 'mb-0' : ''}`">
           {{ error }}
         </v-alert>
@@ -11,8 +16,8 @@
         </v-alert>
         <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="sendInvite">
           <v-card-text class="pb-0 mb-0">
-            We will send an invite link for this server to the email below. You can also add a
-            personal message if you want to.
+            Speckle will send a server invite link to the email below. You can also add a personal
+            message if you want to.
           </v-card-text>
           <v-card-text class="pt-0 mt-0">
             <v-text-field
@@ -25,10 +30,10 @@
               :rules="validation.messageRules"
               label="message"
             ></v-text-field>
-            <v-card-actions>
-              <v-btn block color="primary" type="submit">Send invite</v-btn>
-            </v-card-actions>
           </v-card-text>
+          <v-card-actions class="pb-3">
+            <v-btn block large color="primary" type="submit">Send invite</v-btn>
+          </v-card-actions>
         </v-form>
       </v-card>
     </v-dialog>

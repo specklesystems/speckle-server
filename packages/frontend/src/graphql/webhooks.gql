@@ -1,6 +1,7 @@
 query webhooks($streamId: String!) {
   stream(id: $streamId) {
     id
+    role
     webhooks {
       items {
         id
@@ -9,10 +10,11 @@ query webhooks($streamId: String!) {
         description
         triggers
         enabled
-        history(limit: 1) {
+        history(limit: 50) {
           items {
             status
             statusInfo
+            lastUpdate
           }
         }
       }

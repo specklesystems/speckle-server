@@ -1,6 +1,6 @@
 <template>
-  <v-card color="transparent" class="text-center elevation-0">
-    <v-card-title v-if="user" class="text-center text-wrap justify-center">
+  <v-card color="transparent" class="elevation-0">
+    <v-card-title v-if="user" class="text-wrap">
       {{ serverInfo.name }}
     </v-card-title>
     <v-card-text>

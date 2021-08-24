@@ -1,11 +1,11 @@
 <template>
-  <div v-if="quickstart > 0 && !$apollo.loading" class="ma-3">
-    <div v-if="user" class="ma-5 headline justify-center text-center">
+  <!-- <div v-if="quickstart > 0 && !$apollo.loading" class="ma-3"> -->
+  <div v-if="true">
+    <div v-if="user" class="ma-5 headline">
       Hello {{ user.name.split(' ')[0] }} 👋,
-      <br />
       It seems you're new here, let's get you set up!
     </div>
-    <v-stepper v-model="quickstart" flat shaped vertical class="rounded-lg quickstart-stepper mt-5">
+    <v-stepper v-model="quickstart" flat shaped vertical class="rounded-lg quickstart-stepper mt-5 transparent">
       <v-btn
         small
         text

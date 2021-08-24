@@ -4,8 +4,8 @@
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
 
-    <v-card v-else color="transparent" class="elevation-0 text-center">
-      <v-card-title class="text-center mb-5 mt-5 pt-15 pb-10">
+    <v-card v-else color="transparent" class="elevation-0 ">
+      <v-card-title class=" mb-5 mt-5 pt-15 pb-10">
         <v-btn
           v-tooltip="'Change your profile picture.'"
           color="transparent"
@@ -43,7 +43,7 @@
           </v-card>
         </v-dialog>
       </v-card-title>
-      <v-card-title class="text-center justify-center">
+      <v-card-title>
         {{ user.name }}
       </v-card-title>
       <v-card-text>

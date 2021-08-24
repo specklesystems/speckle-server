@@ -1,5 +1,6 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
+  <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
+  <v-container fluid>
     <v-row v-if="$apollo.loading">
       <v-col cols="12">
         <v-skeleton-loader type="card, article"></v-skeleton-loader>

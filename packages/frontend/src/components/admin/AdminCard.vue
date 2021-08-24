@@ -1,5 +1,5 @@
 <template>
-  <v-card rounded="lg" class="pa-4 mb-4" elevation="0" v-bind="$attrs">
+  <v-card rounded="lg" class="pa-4 mb-4" elevation="3" v-bind="$attrs">
     <template slot="progress">
       <v-progress-linear indeterminate></v-progress-linear>
     </template>

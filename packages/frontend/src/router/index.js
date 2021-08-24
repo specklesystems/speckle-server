@@ -57,7 +57,7 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/views/Frontend.vue'),
+    component: () => import('@/views/Frontend_re.vue'),
     children: [
       {
         path: '',
@@ -80,15 +80,15 @@ const routes = [
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/views/stream/Stream.vue'),
+        component: () => import('@/views/stream/Stream_re_re.vue'),
         children: [
           {
             path: '',
-            name: 'stream',
+            name: '',
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Details.vue')
+            component: () => import('@/views/stream/Details_re.vue')
           },
 
           {
@@ -139,7 +139,7 @@ const routes = [
               title: 'Stream Collaborators | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Collaborators.vue')
+            component: () => import('@/views/stream/CollaboratorsManage.vue')
           },
           {
             path: 'settings/',
@@ -156,19 +156,6 @@ const routes = [
             meta: {
               title: 'Webhooks | Speckle'
             },
-            props: true,
-            component: () => import('@/views/stream/Webhooks.vue'),
-            children: [
-              {
-                path: 'edit/:webhookId/',
-                name: 'edit webhook',
-                props: true
-              }
-            ]
-          },
-          {
-            path: 'webhooks/new/',
-            name: 'add webhook',
             props: true,
             component: () => import('@/views/stream/Webhooks.vue')
           },
@@ -213,10 +200,12 @@ const routes = [
         meta: {
           title: 'Admin | Overview'
         },
+        redirect: 'admin/dashboard',
+        component: () => import('@/views/admin/AdminPanel.vue'),
         children: [
           {
             name: 'Admin | Overview',
-            path: '',
+            path: 'dashboard',
             component: () => import('@/views/admin/AdminOverview.vue')
           },
           {
@@ -234,8 +223,7 @@ const routes = [
             path: 'settings',
             component: () => import('@/views/admin/AdminSettings.vue')
           }
-        ],
-        component: () => import('@/views/admin/AdminPanel.vue')
+        ]
       }
     ]
   },
@@ -273,7 +261,10 @@ const routes = [
 const router = new VueRouter({
   mode: 'history',
   // base: process.env.BASE_URL,
-  routes
+  routes,
+  scrollBehavior (to, from, savedPosition) {
+    return { x: 0, y: 0 }
+  }
 })
 
 router.beforeEach((to, from, next) => {

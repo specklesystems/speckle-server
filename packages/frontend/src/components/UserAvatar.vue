@@ -9,6 +9,7 @@
           :size="size"
           v-bind="attrs"
           v-on="on"
+         
         >
           <v-img v-if="avatar" :src="avatar" />
           <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
@@ -23,17 +24,23 @@
             <v-img v-if="avatar" :src="avatar" />
             <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
           </v-avatar>
-          <br />
-          <b>{{ userById.name }}</b>
-          <v-divider class="ma-4"></v-divider>
+          
+          <!-- Uncomment when email verification is in place -->
+          <!-- <div v-if="userById.verified" class="mb-1">
+            <v-chip color="primary" small>
+              <v-icon small class="mr-2">mdi-shield</v-icon>
+              verified email
+            </v-chip>
+          </div> -->
+
+          <div>
+            <b>{{ userById.name }}</b>
+          </div>
+          <div class="caption">
           {{ userById.company }}
-          <br />
-          {{
-            userById.bio
-              ? userById.bio
-              : 'This user prefers to keep an air of mystery around themselves.'
-          }}
-          <br />
+          <br/>
+          {{ userById.bio ? 'Bio: ' + userById.bio : ''}}
+          </div>
         </v-card-text>
       </v-card>
       <v-card v-else>

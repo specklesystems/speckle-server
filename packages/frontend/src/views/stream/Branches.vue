@@ -4,11 +4,11 @@
       <v-skeleton-loader type="article"></v-skeleton-loader>
     </v-col>
     <v-col v-else-if="stream" cols="12">
-      <breadcrumb-title />
-      <h3 class="title font-italic font-weight-thin my-5">
+      <!-- <breadcrumb-title /> -->
+<!--       <h3 class="title font-italic font-weight-thin my-5">
         A branch represents a series of commits, you can see them as labels, folders etc
       </h3>
-
+ -->
       <v-card class="mt-5 pa-4" elevation="0" rounded="lg">
         <v-card-title>
           <v-icon class="mr-2">mdi-source-branch</v-icon>

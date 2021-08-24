@@ -1,41 +1,38 @@
 <template>
   <div>
-    <v-container>
-      <v-row justify="center">
-        <v-col cols="12" sm="12" lg="10" class="pt-10">
-          <router-view v-if="stream"></router-view>
-          <error-block v-else-if="error" :message="error" />
-        </v-col>
-      </v-row>
-    </v-container>
-
-    <v-snackbar :value="!loggedIn" color="primary" :timeout="-1">
-      <p class="text-center my-0 title">Log in to see more!</p>
-    </v-snackbar>
-    <v-snackbar
-      v-if="commitSnackbarInfo"
-      v-model="commitSnackbar"
-      :timeout="5000"
-      color="primary"
-      absolute
-      right
-      top
-    >
-      <b>New commit!</b></br>
-      <i>{{ commitSnackbarInfo.message }}</i>
-      on
-      <i>{{ commitSnackbarInfo.branchName }}</i>
-      <template #action="{ attrs }">
-        <v-btn
-          text
-          v-bind="attrs"
-          :to="'/streams/' + $route.params.streamId + '/commits/' + commitSnackbarInfo.id"
-          @click="commitSnackbar = false"
-        >
-          see
+    <v-app-bar app elevate-on-scroll>
+      <v-toolbar-title class="space-grotesk"><router-link :to="`/streams/${stream.id}`" class="text-decoration-none">{{stream.name}}</router-link></v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-toolbar-items class="hidden-md-and-down">
+        <v-btn small elevation="0">
+          <v-icon small class="mr-1">mdi-source-commit</v-icon>
+          Commits
         </v-btn>
-      </template>
-    </v-snackbar>
+        <v-btn small elevation="0" :to="`/streams/${stream.id}/branches`" v-tooltip="'Use branches to keep track of commits.'">
+          <v-icon small class="mr-1">mdi-source-branch</v-icon>
+          Branches
+        </v-btn>
+        <v-btn small elevation="0" :to="`/streams/${stream.id}/globals`" v-tooltip="'Set/edit project code, location, and other global variables.'">
+          <v-icon small class="mr-1">mdi-source-branch</v-icon>
+          Globals
+        </v-btn>
+        <v-btn small elevation="0" :to="`/streams/${stream.id}/collaborators`" v-tooltip="'Manage access & sharing for this stream.'">
+          <v-icon small class="mr-1">mdi-account-group</v-icon>
+          Collaborators
+        </v-btn>
+        <v-btn small elevation="0" :to="`/streams/${stream.id}/webhooks`">
+          <v-icon small class="mr-1">mdi-webhook</v-icon>
+          Webhooks
+        </v-btn>
+        <v-btn small elevation="0" :to="`/streams/${stream.id}/settings`" v-tooltip="'Edit stream name & other settings.'">
+          <v-icon small class="mr-1">mdi-cog-outline</v-icon>
+        </v-btn>
+      </v-toolbar-items>
+      <v-app-bar-nav-icon class="hidden-lg-and-up"></v-app-bar-nav-icon>
+    </v-app-bar>
+    <v-container fluid class="pa-0">
+      <router-view v-if="stream"></router-view>
+    </v-container>
   </div>
 </template>
 
@@ -64,6 +61,7 @@ export default {
           stream(id: $id) {
             id
             name
+            role
           }
         }
       `,
@@ -117,21 +115,7 @@ export default {
       }, 500)
     }
   },
-
   methods: {
-    // editStream() {
-    //   this.editStreamDialog = true
-    // },
-    // manageCollabrators() {
-    //   this.dialogShare = true
-    // },
-    // showStreamInviteDialog() {
-    //   this.$refs.streamInviteDialog.show()
-    // },
-    // editClosed() {
-    //   this.editStreamDialog = false
-    //   this.$apollo.queries.stream.refetch()
-    // }
   }
 }
 </script>

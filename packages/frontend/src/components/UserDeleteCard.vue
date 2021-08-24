@@ -7,10 +7,13 @@
       <v-alert type="error" class="my-5 mt-10 mx-4">Danger zone</v-alert>
       <v-card color="transparent" flat>
         <v-card-title>
-          Delete account and all associated streams
+          Delete account
           <v-spacer />
           <v-btn text color="error" @click="deleteUser">Delete account</v-btn>
         </v-card-title>
+        <v-card-text>
+          This action cannot be undone. We will delete all streams where you are the sole owner, and any associated data.
+        </v-card-text>
       </v-card>
       <user-delete-dialog ref="userDeleteDialog"></user-delete-dialog>
     </div>

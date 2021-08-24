@@ -6,13 +6,6 @@
       <v-skeleton-loader type="list-item-two-line, image"></v-skeleton-loader>
     </v-col>
     <v-col v-if="stream" cols="12">
-      <h1 class="display-1">{{ stream.name }}</h1>
-      <h3
-        class="title font-italic font-weight-thin my-5"
-        v-html="hyperlink(truncate(stream.description))"
-      ></h3>
-
-      <!-- <v-card class="mt-5 pa-4" elevation="0" rounded="lg"> -->
       <v-row v-if="stream">
         <v-col cols="12" sm="12" md="8" lg="9" xl="9">
           <v-card class="mb-4" rounded="lg" elevation="0">

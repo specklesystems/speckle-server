@@ -5,7 +5,7 @@
         <v-tooltip left color="primary">
           <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
             <v-btn
-              style="position: absolute; top: 1em; right: 1em; z-index: 3"
+              style="position: absolute; bottom: 1em; right: 1em; z-index: 3"
               color="primary"
               fab
               x-small

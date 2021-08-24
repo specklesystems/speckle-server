@@ -1,10 +1,9 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
+  <v-container fluid>
+  <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3" xl="2">
         <user-info-card :user="user" @update="update"></user-info-card>
-        <v-divider class="my-5"></v-divider>
-        <server-info-card :user="user"></server-info-card>
       </v-col>
       <v-col cols="12" sm="12" md="8" lg="9" xl="10" class="pt-10">
         <user-authorised-apps />

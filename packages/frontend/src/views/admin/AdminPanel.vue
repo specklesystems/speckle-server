@@ -5,8 +5,22 @@
     </v-layout>
   </v-container>
   <v-container v-else-if="isAdmin">
+    <v-app-bar app elevate-on-scroll transparent>
+      <v-toolbar-title class="space-grotesk"><router-link :to="`/admin/dashboard`" class="text-decoration-none">Server Admin</router-link></v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-toolbar-items class="hidden-md-and-down">
+        <v-btn small elevation="0" to="/admin/dashboard">
+          <v-icon small class="mr-1">mdi-view-dashboard</v-icon>
+          Dashboard
+        </v-btn>
+        <v-btn small elevation="0" to="/admin/settings">
+          <v-icon small class="mr-1">mdi-cog</v-icon>
+          Server Settings
+        </v-btn>
+      </v-toolbar-items>
+    </v-app-bar>
     <v-row>
-      <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-md-10">
+<!--       <v-col cols="12" sm="12" md="4" lg="3" xl="3" class="pt-md-10">
         <v-card id="sideMenu" elevation="1" class="rounded-lg overflow-hidden">
           <v-card-title class="text--secondary font-weight-regular">Admin panel</v-card-title>
           <div v-for="child in childRoutes" :key="child.to">
@@ -27,7 +41,7 @@
             </router-link>
           </div>
         </v-card>
-      </v-col>
+      </v-col> -->
 
       <v-col cols="12" sm="12" md="8" lg="9" xl="9" class="pt-md-10">
         <v-fade-transition mode="out-in">

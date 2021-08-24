@@ -4,7 +4,7 @@
       
       <!-- DESKTOP APP BAR -->
       <v-container
-      
+        fluid
         class="py-0 fill-height hidden-md-and-down"
       >
       <v-app-bar-nav-icon v-if="isStreamPage" @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
@@ -18,7 +18,7 @@
         <span v-if="serverInfo" v-tooltip="`Version: `+serverInfo.version" class="subtitle-2">{{ serverInfo.name }}</span>
         <span v-if="serverInfo && isDevServer" v-tooltip="`This is a test server and should not be used in production!`" class="ml-4" >⚠️</span>
         <span v-if="loggedIn">
-            <v-btn
+          <v-btn
           v-for="link in navLinks"
           
           :key="link.name"
@@ -26,7 +26,7 @@
           exact
           class="text-uppercase ml-5"
           :to="link.link"
-        >
+          >
           {{ link.name }}
         </v-btn>
         </span>
@@ -41,6 +41,7 @@
           Log in
         </v-btn>
       </v-container>
+
       <!-- MOBILE APP BAR -->
       <v-container class="hidden-lg-and-up">
         <v-row>
@@ -49,7 +50,7 @@
           </v-col>
           <v-col class="text-center">
 
- <v-menu
+          <v-menu
               v-if="loggedIn"
               :value="showMobileMenu"
               transition="slide-y-transition"
@@ -128,6 +129,7 @@
       </div>
       <stream-invite-dialog ref="streamInviteDialog" :stream-id="stream.id" />
     </v-navigation-drawer>
+    
     <v-main :style="background">
       <router-view></router-view>
       <v-snackbar

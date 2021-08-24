@@ -1,10 +1,16 @@
 <template>
   <v-row>
-    <v-col cols="12" sm="12">
-      <v-card class="pa-0" elevation="0" rounded="lg" color="transparent" style="height: 50vh">
+    <portal to="streamTitleBar">
+      <div>
+        <v-icon small class="mr-1">mdi-database</v-icon>
+        <span class="space-grotesk mr-2">Object View</span>
+      </div>
+    </portal>
+    <v-col cols="12" sm="12" class="ma-0 pa-0">
+      <v-card class="pa-0" elevation="0" rounded="lg" color="transparent" style="height: 60vh">
         <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
       </v-card>
-      <v-card class="pa-4 mt-3" elevation="0" rounded="lg">
+      <v-card class="pa-4" elevation="0" rounded="lg">
         <v-expand-transition>
           <v-sheet v-show="selectionData.length !== 0" class="pa-0" color="transparent">
             <v-card-title class="mr-8">

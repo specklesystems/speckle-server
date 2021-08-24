@@ -1,102 +1,138 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
-    <v-row>
-      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <div class="mt-5 mx-5">
-          <div class="d-flex flex-column">
-            <v-btn large rounded color="primary" class="mb-2" block @click="newStreamDialog = true">
-              <v-icon small class="mr-1">mdi-plus-box</v-icon>
-              new stream
-            </v-btn>
-            <v-btn large rounded outlined color="primary" block @click="showServerInviteDialog">
-              <v-icon small class="mr-2">mdi-email-send</v-icon>
-              Send an invite
-            </v-btn>
-          </div>
-          <server-invite-dialog ref="serverInviteDialog" />
-          <v-dialog v-model="newStreamDialog" max-width="500">
-            <stream-new-dialog
-              v-if="streams && streams.items"
-              :open="newStreamDialog"
-              :redirect="streams.items.length > 0"
-              @created="newStreamDialog = false"
-            />
-          </v-dialog>
-          <div v-if="user" class="my-5">
-            <v-subheader class="mt-3">Your stats:</v-subheader>
-            <div class="ml-5">
-              <p>
-                <v-icon small>mdi-compare-vertical</v-icon>
-                <b>{{ user.streams.totalCount }}</b>
-                streams
-              </p>
-              <p>
-                <v-icon small>mdi-source-commit</v-icon>
-                <b>{{ user.commits.totalCount }}</b>
-                commits
-              </p>
-              <p v-if="user.commits.totalCount > 0">
-                Last commit
-                <b>
-                  <timeago
-                    :datetime="user.commits.items[0].createdAt"
-                    class="font-italic ma-1"
-                  ></timeago>
-                </b>
-              </p>
-            </div>
-          </div>
-        </div>
+  <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
+  <v-container style="padding-left: 56px" fluid>
+    <v-navigation-drawer
+      app
+      fixed
+      :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
+      v-model="streamNav"
+      style="left: 56px"
+      width="320"
+    >
+      <v-toolbar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
+        <search-bar />
+      </v-toolbar>
+
+      <v-list style="margin-top: 64px" shaped>
+        <v-list-item class="primary" dark link @click="newStreamDialog = true">
+          <v-list-item-content>
+            <v-list-item-title>New Stream</v-list-item-title>
+            <v-list-item-subtitle class="caption">
+              Quickly create a new data repository.
+            </v-list-item-subtitle>
+          </v-list-item-content>
+          <v-list-item-icon>
+            <v-icon class="">mdi-plus-box</v-icon>
+          </v-list-item-icon>
+        </v-list-item>
+        <v-list-item link @click="showServerInviteDialog()">
+          <v-list-item-icon>
+            <v-icon class="">mdi-email</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Invite</v-list-item-title>
+            <v-list-item-subtitle class="caption">
+              Invite a colleague to Speckle!
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+
+      <div v-if="user">
+        <v-subheader class="mt-3">Your stats:</v-subheader>
+
+        <v-list dense>
+          <v-list-item>
+            <v-list-item-icon>
+              <v-icon small class="ml-4">mdi-folder-multiple</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Total: {{ user.streams.totalCount }} streams</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-icon>
+              <v-icon small class="ml-4">mdi-source-commit</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Total: {{ user.commits.totalCount }} commits</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+
+        <div class="ml-5"></div>
+      </div>
+    </v-navigation-drawer>
+
+    <v-app-bar app style="padding-left: 56px">
+      <v-app-bar-nav-icon @click="streamNav = !streamNav" v-show="!streamNav"></v-app-bar-nav-icon>
+      <v-toolbar-title class="space-grotesk">
+        <v-icon>mdi-folder-multiple</v-icon>
+        Streams
+      </v-toolbar-title>
+      <v-spacer v-if="!streamNav"></v-spacer>
+      <v-toolbar-items v-if="!streamNav">
+        <v-btn color="primary" @click="newStreamDialog = true">
+          <v-icon>mdi-plus-box</v-icon>
+        </v-btn>
+      </v-toolbar-items>
+    </v-app-bar>
+    
+    <server-invite-dialog ref="serverInviteDialog" />
+    
+    <v-dialog v-model="newStreamDialog" max-width="500">
+      <stream-new-dialog
+        v-if="streams && streams.items"
+        :open="newStreamDialog"
+        :redirect="streams.items.length > 0"
+        @created="newStreamDialog = false"
+      />
+    </v-dialog>
+    
+    <!-- <getting-started-wizard /> -->
+    
+    <v-row class="px-4" no-gutters>
+      <v-col cols="12">
+        
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
+      <v-col v-if="$apollo.loading">
         <v-row>
-          <v-col cols="12">
-            <getting-started-wizard />
-          </v-col>
-          <v-col v-if="$apollo.loading">
-            <v-row>
-              <v-col v-for="i in 6" :key="i" cols="12" sm="12" md="12" lg="6" xl="4">
-                <v-skeleton-loader type="card, list-item-two-line" class="ma-2"></v-skeleton-loader>
-              </v-col>
-            </v-row>
-            <div v-if="$apollo.loading" class="my-5"></div>
-          </v-col>
-
-          <v-col v-else-if="streams && streams.items && streams.items.length > 0">
-            <v-row>
-              <v-col
-                v-for="(stream, i) in streams.items"
-                :key="i"
-                cols="12"
-                sm="12"
-                md="12"
-                lg="6"
-                xl="4"
-              >
-                <list-item-stream :stream="stream"></list-item-stream>
-              </v-col>
-              <infinite-loading
-                v-if="streams.items.length < streams.totalCount"
-                @infinite="infiniteHandler"
-              >
-                <div slot="no-more">These are all your streams!</div>
-                <div slot="no-results">There are no streams to load</div>
-              </infinite-loading>
-            </v-row>
-          </v-col>
-          <v-col v-else cols="12">
-            <div class="ma-5 headline justify-center text-center">
-              😿
-              <br />
-              Your don't have any streams!
-
-              <br />
-              <span class="subtitle-2 font-italic">
-                Create one now with the big blue button to the side.
-              </span>
-            </div>
+          <v-col v-for="i in 6" :key="i" cols="12" sm="6" md="6" lg="4" xl="4">
+            <v-skeleton-loader type="card, list-item-two-line" class="ma-2"></v-skeleton-loader>
           </v-col>
         </v-row>
+        <div v-if="$apollo.loading" class="my-5"></div>
+      </v-col>
+
+      <v-col cols="12" v-else-if="streams && streams.items && streams.items.length > 0">
+        <v-row>
+          <v-col
+            v-for="(stream, i) in streams.items"
+            :key="i"
+            cols="12" sm="6" md="6" lg="4" xl="4"
+          >
+            <list-item-stream :stream="stream"></list-item-stream>
+          </v-col>
+          <infinite-loading
+            v-if="streams.items.length < streams.totalCount"
+            @infinite="infiniteHandler"
+          >
+            <div slot="no-more">These are all your streams!</div>
+            <div slot="no-results">There are no streams to load</div>
+          </infinite-loading>
+        </v-row>
+      </v-col>
+      <v-col v-else cols="12">
+        <div class="ma-5 headline justify-center text-center">
+          😿
+          <br />
+          Your don't have any streams!
+
+          <br />
+          <span class="subtitle-2 font-italic">
+            Create one now with the big blue button to the side.
+          </span>
+        </div>
       </v-col>
     </v-row>
   </v-container>
@@ -109,6 +145,7 @@ import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
 import InfiniteLoading from 'vue-infinite-loading'
 import ServerInviteDialog from '../components/dialogs/ServerInviteDialog.vue'
+import SearchBar from '../components/SearchBar'
 import gql from 'graphql-tag'
 
 export default {
@@ -118,7 +155,8 @@ export default {
     StreamNewDialog,
     InfiniteLoading,
     ServerInviteDialog,
-    GettingStartedWizard
+    GettingStartedWizard,
+    SearchBar
   },
   apollo: {
     streams: {
@@ -164,7 +202,8 @@ export default {
   data: () => ({
     activeTab: 'streams',
     streams: [],
-    newStreamDialog: false
+    newStreamDialog: false,
+    streamNav: true
   }),
   computed: {
     recentActivity() {

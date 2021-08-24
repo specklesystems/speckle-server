@@ -22,7 +22,7 @@ export default {
   }
 }
 </script>
-<style lang="scss">
+<style lang="css">
 .marked-preview h1 {
   padding-bottom: 10px;
   padding-top: 10px;
@@ -52,6 +52,26 @@ export default {
   word-break: normal !important;
 }
 
+.max-width-chip.v-chip {
+  max-width: 140px;
+}
+
+.max-width-chip .v-chip__content {
+  line-height: 24px;
+  display: inline-block !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+.max-width-chip .v-chip__close {
+  position: absolute;
+  top: 5px;
+  right: 0;
+  width: 24px;
+}
+
 /*.v-application code {
   background-color: #969696;
   color: #171717;
@@ -68,7 +88,7 @@ export default {
 }
 
 .tooltip .tooltip-inner {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 1);
   color: white;
   border-radius: 16px;
   padding: 5px 10px 4px;
