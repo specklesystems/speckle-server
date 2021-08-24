@@ -138,6 +138,8 @@ module.exports = {
       let t0 = performance.now( )
 
       batch.forEach( obj => {
+        if( !obj ) return
+        
         let insertionObject = prepInsertionObject( streamId, obj )
         let totalChildrenCountByDepth = {}
         let totalChildrenCountGlobal = 0
