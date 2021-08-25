@@ -35,7 +35,7 @@
           </v-list-item-icon>
         </v-list-item>
       </v-list>
-      <v-list v-if="streams && streams.items.length > 0" color="transparent"  dense>
+      <v-list v-if="streams && streams.items.length > 0" color="transparent" dense>
         <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
         <v-list-item
           v-for="(s, i) in streams.items"
@@ -67,7 +67,7 @@
         Recent Activity
       </v-toolbar-title>
       <v-spacer v-if="!activityNav"></v-spacer>
-      <v-toolbar-items v-if="!activityNav" style="position: relative;left:0;">
+      <v-toolbar-items v-if="!activityNav" style="position: relative; left: 0">
         <v-btn color="primary" @click="newStreamDialog = true">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
@@ -105,9 +105,10 @@
               <div v-if="timeline" key="activity-list">
                 <v-timeline align-top dense>
                   <list-item-activity
-                    v-for="activity in timeline.items"
+                    v-for="activity in groupedTimeline"
                     :key="activity.time"
                     :activity="activity"
+                    :activity-group="activity"
                     class="my-1"
                   ></list-item-activity>
                   <infinite-loading
@@ -199,8 +200,11 @@ export default {
           }
         }
       `,
-      update: (data) => {
+      update(data) {
         return data.user.timeline
+      },
+      result({ data }) {
+        this.groupSimilarActivities(data)
       }
     },
     streams: {
@@ -219,6 +223,34 @@ export default {
     }
   },
   methods: {
+    groupSimilarActivities(data) {
+      let groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
+        //first item
+        if (!prev.length) {
+          prev.push([curr])
+          return prev
+        }
+        let test = prev[prev.length - 1][0]
+        let action = 'split' // split | combine | skip
+        if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
+          if (curr.actionType.includes('stream_permissions')) {
+            //skip multiple stream_permission actions on the same user, just pick the last!
+            if (prev[prev.length - 1].some((x) => x.info.targetUser === curr.info.targetUser))
+              action = 'skip'
+            else action = 'combine'
+          } //stream, branch, commit
+          else if (curr.actionType.includes('_update') || curr.actionType === 'commit_create')
+            action = 'combine'
+        }
+        if (action === 'combine') {
+          prev[prev.length - 1].push(curr)
+        } else if (action === 'split') {
+          prev.push([curr])
+        }
+        return prev
+      }, [])
+      this.groupedTimeline = groupedTimeline
+    },
     showServerInviteDialog() {
       this.$refs.serverInviteDialog.show()
     },
