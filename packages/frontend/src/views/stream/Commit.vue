@@ -1,11 +1,13 @@
 <template>
   <div>
     <v-row>
+      
       <v-col v-if="$apollo.queries.stream.loading" cols="12" class="ma-0 pa-0">
         <v-card>
           <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
         </v-card>
       </v-col>
+
       <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
         <portal to="streamActionsBar">
           <v-btn elevation="0" color="primary" small v-tooltip="'Edit commit'" v-if=" stream && (stream.role === 'stream:owner' || stream.role === 'stream:contributor')" @click="editCommit">
@@ -15,15 +17,13 @@
         </portal>
         <portal to="streamTitleBar">
           <div>
-            <router-link :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`" class="text-decoration-none space-grotesk">
-              <v-icon small class="mr-1">mdi-source-branch</v-icon>
-              
-                {{ stream.commit.branchName }}
-              
+            <router-link :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`" class="text-decoration-none space-grotesk" v-tooltip="'Go to branch ' + stream.commit.branchName">
+              <v-icon small class="primary--text mr-1 mb-1">mdi-source-branch</v-icon>
+                <b>{{ stream.commit.branchName }}</b>
             </router-link>
             /
             <v-icon small class="mr-1">mdi-source-commit</v-icon>
-            <span class="space-grotesk mr-2">{{ stream.commit.message }}</span>
+            <span class="space-grotesk mr-2" v-tooltip="'Commit message'">{{ stream.commit.message }}</span>
             <user-avatar
               :id="stream.commit.authorId"
               :avatar="stream.commit.authorAvatar"

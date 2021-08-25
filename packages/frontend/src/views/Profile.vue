@@ -1,11 +1,11 @@
 <template>
-  <v-container fluid>
+  <v-container style="xxxpadding-left: 56px; max-width: 1024px;">
   <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
     <v-row>
-      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
+      <v-col cols="12" :style="`margin-top: ${$vuetify.breakpoint.smAndDown ? '0px' : '50px'}`" class="pa-5">
         <user-info-card :user="user" @update="update"></user-info-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="10" class="pt-10">
+      <v-col cols="12" class="pt-10">
         <user-authorised-apps />
         <v-alert type="info" class="my-5 mt-10 mx-4">
           Heads up! The sections below are intended for developers.

@@ -3,7 +3,7 @@
     <portal to="streamTitleBar">
       <span class="space-grotesk">Stream Home</span>
     </portal>
-    <v-row v-if="stream && stream.commits.totalCount !== 0">
+    <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
       <v-col cols="12" class="pa-0 ma-0">
         <div style="height: 60vh" v-if="latestCommitObjectUrl">
           <renderer :object-url="latestCommitObjectUrl" />
@@ -17,12 +17,11 @@
           ></list-item-commit>
         </v-list>
       </v-col>
-      <v-col cols="12">
+      <v-col cols="12" class="pa-0 ma-0">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Latest Active Branches</v-toolbar-title>
             <v-spacer />
-            <v-btn small depressed>Create Branch</v-btn>
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px">
             The stream's last three updated branches.

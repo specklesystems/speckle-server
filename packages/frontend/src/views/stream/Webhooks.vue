@@ -1,6 +1,9 @@
 <template>
   <div>
-    <no-data-placeholder :show-message="false" v-if="!$apollo.loading && webhooks.length === 0">
+    <no-data-placeholder
+      :show-message="false"
+      v-if="!$apollo.loading && webhooks.length === 0 && stream && stream.role === 'stream:owner'"
+    >
       <h2>This stream has no webhooks.</h2>
       <p class="caption">
         Webhooks allow you to subscribe to a stream's events and get notified of them in real time.
@@ -16,6 +19,7 @@
               <v-list-item-title>Create Webhook</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+
           <v-list-item
             link
             :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
@@ -35,6 +39,11 @@
         </v-list>
       </template>
     </no-data-placeholder>
+    
+    <error-placeholder error-type="access" v-if="error">
+      <h2>Only stream owners can access webhooks.</h2>
+      <p class="caption">If you need to use webhooks, ask the stream's owner to grant you ownership.</p>
+    </error-placeholder>
 
     <v-container style="max-width: 768px" v-if="!$apollo.loading && webhooks.length !== 0">
       <portal to="streamTitleBar">
@@ -43,17 +52,7 @@
           <span class="space-grotesk">Webhooks</span>
         </div>
       </portal>
-
-      <v-alert
-        type="warning"
-        v-if="stream && stream.role !== 'stream:contributor' && stream.role !== 'stream:owner'"
-      >
-        Hai! Your permission level ({{ stream.role }}) is not high enough to edit this stream's
-        webhooks.
-      </v-alert>
-
       <v-card
-        v-else
         elevation="0"
         rounded="lg"
         :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
@@ -86,11 +85,9 @@
             <span class="d-inline-block">Existing Webhooks</span>
           </v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn @click="newWebhookDialog = true" small class="primary" dark>
-            New Webhook
-          </v-btn>
+          <v-btn @click="newWebhookDialog = true" small class="primary" dark>New Webhook</v-btn>
         </v-toolbar>
-        <v-list subheader class="transparent pa-0 ma-0" >
+        <v-list subheader class="transparent pa-0 ma-0">
           <v-list-item v-for="wh in webhooks" :key="wh.id" link style="cursor: default">
             <v-list-item-icon>
               <v-icon :color="wh.statusIcon.color" class="pt-2">
@@ -242,7 +239,8 @@ export default {
   components: {
     AdminCard: () => import('@/components/admin/AdminCard'),
     WebhookForm: () => import('@/components/settings/WebhookForm'),
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
   },
   apollo: {
     stream: {
@@ -257,6 +255,10 @@ export default {
           wh.statusIcon = this.getStatusIcon(wh)
         })
         return data.stream
+      },
+      error(err) {
+        if (err.message) this.error = err.message.replace('GraphQL error: ', '')
+        else this.error = err
       }
     }
   },
@@ -267,7 +269,8 @@ export default {
       newWebhookDialog: false,
       editWebhookDialog: false,
       statusReportsDialog: false,
-      selectedWebhook: null
+      selectedWebhook: null,
+      error: null
     }
   },
   computed: {

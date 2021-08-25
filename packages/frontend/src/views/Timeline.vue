@@ -1,16 +1,15 @@
 <template>
-  <v-container style="padding-left: 56px" fluid>
+  <v-container style="padding-left: 56px" fluid pt-4 pr-0>
     <v-navigation-drawer
       app
       fixed
       :permanent="activityNav && !$vuetify.breakpoint.smAndDown"
       v-model="activityNav"
       style="left: 56px"
-      width="320"
     >
-      <v-toolbar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
+      <v-app-bar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
         <search-bar />
-      </v-toolbar>
+      </v-app-bar>
 
       <v-list style="margin-top: 64px" shaped>
         <v-list-item class="primary" dark link @click="newStreamDialog = true">
@@ -36,7 +35,7 @@
           </v-list-item-icon>
         </v-list-item>
       </v-list>
-      <v-list v-if="streams && streams.items.length > 0" color="transparent" two-lines dense>
+      <v-list v-if="streams && streams.items.length > 0" color="transparent"  dense>
         <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
         <v-list-item
           v-for="(s, i) in streams.items"
@@ -58,7 +57,7 @@
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
-    <v-app-bar app style="padding-left: 56px">
+    <v-app-bar app style="padding-left: 56px" flat>
       <v-app-bar-nav-icon
         @click="activityNav = !activityNav"
         v-show="!activityNav"
@@ -68,8 +67,8 @@
         Recent Activity
       </v-toolbar-title>
       <v-spacer v-if="!activityNav"></v-spacer>
-      <v-toolbar-items v-if="!activityNav">
-        <v-btn  color="primary" @click="newStreamDialog = true">
+      <v-toolbar-items v-if="!activityNav" style="position: relative;left:0;">
+        <v-btn color="primary" @click="newStreamDialog = true">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
@@ -170,7 +169,14 @@ export default {
     }
   },
   computed: {},
-  mounted() {},
+  mounted() {
+    setTimeout(
+      function () {
+        this.activityNav = !this.$vuetify.breakpoint.smAndDown
+      }.bind(this),
+      10
+    )
+  },
   apollo: {
     timeline: {
       query: gql`
@@ -212,7 +218,6 @@ export default {
       `
     }
   },
-
   methods: {
     showServerInviteDialog() {
       this.$refs.serverInviteDialog.show()

@@ -9,7 +9,7 @@
 
     <v-alert type="warning" v-if="stream.role !== 'stream:owner'">
       Your permission level ({{ stream.role }}) is not high enough to edit this stream's
-      collaborators. Contact one of the stream's owners!
+      collaborators.
     </v-alert>
     <v-card
       v-if="serverInfo"

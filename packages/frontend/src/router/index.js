@@ -84,7 +84,7 @@ const routes = [
         children: [
           {
             path: '',
-            name: '',
+            name: 'stream',
             meta: {
               title: 'Stream | Speckle'
             },
@@ -178,7 +178,6 @@ const routes = [
           }
         ]
       },
-
       {
         path: 'profile',
         name: 'profile',
@@ -201,7 +200,7 @@ const routes = [
           title: 'Admin | Overview'
         },
         redirect: 'admin/dashboard',
-        component: () => import('@/views/admin/AdminPanel.vue'),
+        component: () => import('@/views/admin/Admin.vue'),
         children: [
           {
             name: 'Admin | Overview',

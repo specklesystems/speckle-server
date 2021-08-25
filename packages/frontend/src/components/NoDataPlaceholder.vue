@@ -67,16 +67,6 @@
 </template>
 <script>
 export default {
-  props: {
-    showMessage: {
-      type: Boolean,
-      default: true
-    },
-    message: {
-      type: String,
-      default: "🍃 It's a bit quiet here..."
-    }
-  },
   computed: {},
   methods: {}
 }

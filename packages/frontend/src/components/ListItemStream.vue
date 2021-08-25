@@ -14,7 +14,7 @@
       </v-toolbar>
       <v-card-text class="transparent elevation-0 mt-0 pt-0" dense>
         <v-toolbar-title>
-          <v-chip small class="mr-1">
+          <v-chip small class="mr-1" v-if="stream.role">
             <v-icon small left>mdi-account-key-outline</v-icon>
             {{ stream.role.split(':')[1] }}
           </v-chip>
@@ -22,7 +22,7 @@
             Updated
             <timeago :datetime="stream.updatedAt" class="ml-1"></timeago>
           </v-chip>
-          <v-chip small>
+          <v-chip small v-if="stream.branches">
             <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
             {{ stream.branches.totalCount }}
           </v-chip>
@@ -30,7 +30,7 @@
         <div class="mt-3 mb-1 caption text-truncate">
           {{ stream.description || 'No description' }}
         </div>
-        <div>
+        <div v-if="stream.collaborators">
           <user-avatar
             v-for="user in stream.collaborators.slice(0, 4)"
             :id="user.id"

@@ -1,34 +1,26 @@
 <template>
   <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
-  <v-container fluid>
+  <v-container style="padding-left: 56px">
     <v-row v-if="$apollo.loading">
       <v-col cols="12">
         <v-skeleton-loader type="card, article"></v-skeleton-loader>
       </v-col>
     </v-row>
     <v-row v-else>
-      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
+      <v-col cols="12">
         <user-info-card :user="user"></user-info-card>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="10" class="pt-10">
+      <v-col cols="12" class="pt-10">
         <v-card class="mb-3 elevation-0">
           <v-card-title>
             {{ user.name }} and you share {{ user.streams.totalCount }}
-            {{ user.streams.totalCount === 1 ? 'stream' : 'streams' }} and
+            {{ user.streams.totalCount === 1 ? 'stream' : 'streams' }}. {{ user.name.split(' ')[0] }} has
             {{ user.commits.totalCount }}
             {{ user.commits.totalCount === 1 ? 'commit' : 'commits' }}.
           </v-card-title>
         </v-card>
         <v-row>
-          <v-col
-            v-for="(stream, i) in user.streams.items"
-            :key="i"
-            cols="12"
-            sm="12"
-            md="6"
-            lg="6"
-            xl="4"
-          >
+          <v-col v-for="(stream, i) in user.streams.items" :key="i" cols="12" sm="6" lg="4">
             <list-item-stream :stream="stream"></list-item-stream>
           </v-col>
         </v-row>
@@ -62,6 +54,12 @@ export default {
             suuid
             streams {
               totalCount
+              items {
+                id
+                description
+                updatedAt
+                name
+              }
             }
             commits {
               totalCount

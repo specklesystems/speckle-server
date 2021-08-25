@@ -1,70 +1,71 @@
 <template>
   <div>
+    <v-dialog v-model="avatarDialog" max-width="400">
+      <v-card>
+        <v-card-title>Choose a new profile picture</v-card-title>
+        <v-card-text class="pl-10 pr-0 mt-5">
+          <v-image-input
+            v-model="imageData"
+            :image-quality="0.85"
+            :image-height="256"
+            :image-width="256"
+            full-width
+            full-height
+            clearable
+            image-format="jpeg"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <span v-if="imageData" class="caption">You look wonderful!</span>
+          <v-spacer></v-spacer>
+          <v-btn text @click="avatarDialog = false">cancel</v-btn>
+          <v-btn :disabled="!imageData" @click="updateAvatar">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <div v-if="!user">
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
 
-    <v-card v-else color="transparent" class="elevation-0 ">
-      <v-card-title class=" mb-5 mt-5 pt-15 pb-10">
-        <v-btn
-          v-tooltip="'Change your profile picture.'"
-          color="transparent"
-          text
-          block
-          :disabled="!isSelf"
-          class="elevation-0 pa-0 ma-0"
-        >
-          <v-avatar class="elevation-0" size="100" @click="avatarDialog = true">
-            <v-img v-if="user.avatar" :src="user.avatar" />
-            <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=64x64`" />
-          </v-avatar>
-        </v-btn>
-        <v-dialog v-model="avatarDialog" max-width="400">
-          <v-card>
-            <v-card-title>Choose a new profile picture</v-card-title>
-            <v-card-text class="pa-0 ma-0 mt-5">
-              <v-image-input
-                v-model="imageData"
-                :image-quality="0.85"
-                :image-height="256"
-                :image-width="256"
-                full-width
-                full-height
-                clearable
-                image-format="jpeg"
-              />
-            </v-card-text>
-            <v-card-actions>
-              <span v-if="imageData" class="caption">You look wonderful!</span>
-              <v-spacer></v-spacer>
-              <v-btn text @click="avatarDialog = false">cancel</v-btn>
-              <v-btn :disabled="!imageData" @click="updateAvatar">Save</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-card-title>
-      <v-card-title>
-        {{ user.name }}
-      </v-card-title>
-      <v-card-text>
-        <p v-if="user.company" class="subtitle-1">{{ user.company }}</p>
-        <p v-if="user.email && isSelf">
-          {{ user.email }}
-        </p>
-        <p v-if="user.bio">
-          {{ user.bio }}
-        </p>
-        <p v-else>This user keeps an air of mystery around themselves.</p>
-
-        <span v-if="isSelf" class="caption">ID: {{ user.id }}</span>
-      </v-card-text>
-
-      <v-card-actions>
-        <v-btn v-if="isSelf" small plain color="primary" text block @click="editUser">
+    <v-card
+      v-else
+      class="elevation-0"
+      rounded="lg"
+      :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
+    >
+      <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`">
+        <v-toolbar-title><span v-if="isSelf">Hi </span>{{ user.name }}<span v-if="isSelf">!</span></v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn v-if="isSelf" small color="primary" @click="editUser">
           <v-icon small class="mr-2">mdi-cog-outline</v-icon>
           Edit
         </v-btn>
-      </v-card-actions>
+      </v-toolbar>
+      <v-row class="pa-4" align="stretch">
+        <v-col cols="12" sm="8">
+          <p v-if="user.company" class="subtitle-1">Company: {{ user.company }}</p>
+          <p v-if="user.email && isSelf">Email: {{ user.email }}</p>
+          <p v-if="user.bio">Bio: {{ user.bio }}</p>
+          <p v-else>This user keeps an air of mystery around themselves.</p>
+
+          <span v-if="isSelf" class="caption">ID: {{ user.id }}</span>
+          <br />
+        </v-col>
+        <v-col cols="12" sm="4" class="d-flex justify-center">
+          <v-avatar
+            class="elevation-0 align-self-center"
+            size="100"
+            @click="avatarDialog = isSelf ? true : false"
+            v-tooltip="`${isSelf ? 'Change your profile picture' : ''}` "
+            :style="`${isSelf ? 'cursor: pointer;' : ''}`"
+          >
+            <v-img v-if="user.avatar" :src="user.avatar" />
+            <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=64x64`" />
+          </v-avatar>
+        </v-col>
+      </v-row>
+      <v-card-actions></v-card-actions>
 
       <user-edit-dialog ref="userDialog" :user="user"></user-edit-dialog>
     </v-card>
