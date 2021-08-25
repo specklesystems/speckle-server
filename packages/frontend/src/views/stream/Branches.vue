@@ -64,7 +64,6 @@ export default {
   name: 'StreamMain',
   components: {
     BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   data() {
     return {}

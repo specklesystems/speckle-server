@@ -1,5 +1,8 @@
 <template>
-  <v-card title="Server Admins">
+  <v-card>
+    <v-toolbar>
+      <v-toolbar-title>Server Admin</v-toolbar-title>
+    </v-toolbar>
     <template slot="menu">
       <v-slide-x-reverse-transition mode="out-in">
         <v-tooltip v-if="!addUserMode" left color="primary" open-delay="500">

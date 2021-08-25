@@ -52,7 +52,6 @@ export default {
         query {
           serverInfo {
             version
-            isDevServer
           }
         }
       `,

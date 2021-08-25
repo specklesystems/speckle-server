@@ -31,7 +31,6 @@ export default {
   name: 'Activity',
   components: {
     ListItemActivity: () => import('@/components/ListItemActivity'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle'),
     InfiniteLoading: () => import('vue-infinite-loading')
   },
   data() {

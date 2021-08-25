@@ -5,7 +5,7 @@
       <v-col cols="12" :style="`margin-top: ${$vuetify.breakpoint.smAndDown ? '0px' : '50px'}`" class="pa-5">
         <user-info-card :user="user" @update="update"></user-info-card>
       </v-col>
-      <v-col cols="12" class="pt-10">
+      <v-col cols="12">
         <user-authorised-apps />
         <v-alert type="info" class="my-5 mt-10 mx-4">
           Heads up! The sections below are intended for developers.
@@ -25,10 +25,10 @@
           </v-card-text>
           <v-card-text>
             <user-apps />
+            <user-delete-card :user="user" />
           </v-card-text>
         </v-card>
 
-        <user-delete-card :user="user" />
       </v-col>
     </v-row>
   </v-container>
@@ -36,7 +36,6 @@
 <script>
 import userQuery from '../graphql/user.gql'
 import UserInfoCard from '../components/UserInfoCard'
-import ServerInfoCard from '../components/ServerInfoCard'
 import UserAccessTokens from '../components/UserAccessTokens'
 import UserApps from '../components/UserApps'
 import UserAuthorisedApps from '../components/UserAuthorisedApps'
@@ -46,7 +45,6 @@ export default {
   name: 'Profile',
   components: {
     UserInfoCard,
-    ServerInfoCard,
     UserAccessTokens,
     UserApps,
     UserAuthorisedApps,

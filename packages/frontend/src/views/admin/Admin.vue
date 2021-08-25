@@ -12,9 +12,9 @@
       v-model="adminNav"
       style="left: 56px"
     >
-      <v-toolbar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
+      <v-app-bar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
         <v-toolbar-title>Server Admin</v-toolbar-title>
-      </v-toolbar>
+      </v-app-bar>
 
       <v-list style="margin-top: 64px; padding-left: 10px" rounded>
         <v-list-item link to="/admin/dashboard">
@@ -31,7 +31,7 @@
 
         <v-list-item link to="/admin/settings">
           <v-list-item-icon>
-            <v-icon small class="mt-1">mdi-cog</v-icon>
+            <v-icon small class="mt-1">mdi-tune</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>Settings</v-list-item-title>
@@ -43,7 +43,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app style="padding-left: 56px">
+    <v-app-bar app style="padding-left: 56px" flat v-if="!adminNav">
       <v-app-bar-nav-icon @click="adminNav = !adminNav" v-if="!adminNav"/>
       <v-toolbar-title v-if="!adminNav">
         Server Admin

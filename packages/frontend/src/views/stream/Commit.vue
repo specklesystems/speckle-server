@@ -34,16 +34,6 @@
             <v-chip small class="mx-1">
               <timeago :datetime="stream.commit.createdAt"></timeago>
             </v-chip>
-            <!-- <v-chip
-              small
-              color="primary"
-              class="max-width-chip hidden-sm-and-down"
-              :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
-              v-tooltip="`On branch '${stream.commit.branchName}'`"
-            >
-              <v-icon small class="mr-1">mdi-source-branch</v-icon>
-              {{ stream.commit.branchName }}
-            </v-chip> -->
             <source-app-avatar
               :application-name="stream.commit.sourceApplication"
               class="hidden-sm-and-down"
@@ -119,7 +109,6 @@ export default {
     Renderer: () => import('@/components/Renderer'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
     ErrorBlock: () => import('@/components/ErrorBlock'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   data: () => ({
     loadedModel: false,

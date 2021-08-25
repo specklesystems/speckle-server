@@ -109,7 +109,6 @@ export default {
     BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorBlock: () => import('@/components/ErrorBlock'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle'),
     Renderer: () => import('@/components/Renderer')
   },
   data() {

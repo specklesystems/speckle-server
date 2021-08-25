@@ -43,6 +43,7 @@
           />
 
           <v-switch
+            inset
             v-model="isPublic"
             class="mt-5"
             :label="isPublic ? 'Public (Link Sharing)' : 'Private'"
@@ -148,7 +149,6 @@ import gql from 'graphql-tag'
 export default {
   name: 'StreamSettings',
   components: {
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
   },
   apollo: {
     stream: {

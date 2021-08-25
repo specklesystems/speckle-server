@@ -6,7 +6,6 @@
       :elevation="hover ? 5 : 1"
       style="transition: all 0.2s ease-in-out"
     >
-      <!-- <v-img :src=""></v-img> -->
       <preview-image :url="`/preview/${stream.id}`" :color="hover"></preview-image>
       <v-toolbar class="transparent elevation-0" dense>
         <v-toolbar-title>{{ stream.name }}</v-toolbar-title>

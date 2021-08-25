@@ -207,16 +207,16 @@ const routes = [
             path: 'dashboard',
             component: () => import('@/views/admin/AdminOverview.vue')
           },
-          {
-            name: 'Admin | Users',
-            path: 'users',
-            component: () => import('@/views/admin/AdminUsers.vue')
-          },
-          {
-            name: 'Admin | Streams',
-            path: 'streams',
-            component: () => import('@/views/admin/AdminStreams.vue')
-          },
+          // {
+          //   name: 'Admin | Users',
+          //   path: 'users',
+          //   component: () => import('@/views/admin/AdminUsers.vue')
+          // },
+          // {
+          //   name: 'Admin | Streams',
+          //   path: 'streams',
+          //   component: () => import('@/views/admin/AdminStreams.vue')
+          // },
           {
             name: 'Admin | Settings',
             path: 'settings',
