@@ -1,18 +1,17 @@
 <template>
   <div id="admin-settings">
-    <server-info-admin-card/>
-    <!--    <server-admins-card/>-->
+    <server-info-admin-card />
   </div>
 </template>
 
 <script>
-import ServerInfoAdminCard from "@/components/admin/ServerInfoCard";
-import ServerAdminsCard from "@/components/admin/ServerAdminsCard";
+import ServerInfoAdminCard from '@/components/admin/ServerInfoCard'
+import ServerAdminsCard from '@/components/admin/ServerAdminsCard'
 
 export default {
-  name: "AdminSettings",
+  name: 'AdminSettings',
   components: { ServerAdminsCard, ServerInfoAdminCard }
-};
+}
 </script>
 
 <style scoped lang="scss">

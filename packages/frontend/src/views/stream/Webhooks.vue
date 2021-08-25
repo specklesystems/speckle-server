@@ -237,7 +237,6 @@ import webhooksQuery from '@/graphql/webhooks.gql'
 export default {
   name: 'Webhooks',
   components: {
-    AdminCard: () => import('@/components/admin/AdminCard'),
     WebhookForm: () => import('@/components/settings/WebhookForm'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
