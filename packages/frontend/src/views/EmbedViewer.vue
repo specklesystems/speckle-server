@@ -1,4 +1,4 @@
-<template lang="html">
+<template>
   <v-app class="no-scrollbar">
     <speckle-loading v-if="!stream || error" :error="error" style="z-index: 101" />
     <div v-if="!error" class="no-scrollbar embed-view">
@@ -87,15 +87,55 @@
 </template>
 
 <script>
-import gql from 'graphql-tag'
 import Renderer from '../components/Renderer.vue'
 import SpeckleLoading from '../components/SpeckleLoading.vue'
+import { getCommit, getLatestBranchCommit, getServerInfo } from "@/embed/speckleUtils";
+
 export default {
   name: 'EmbedViewer',
   components: { Renderer, SpeckleLoading },
   filters: {
     truncate: function (str, n = 20) {
       return str.length > n ? str.substr(0, n - 3) + '...' : str
+    }
+  },
+  async beforeMount() {
+    try {
+      var serverInfoResponse = await getServerInfo()
+      this.serverInfo = serverInfoResponse.data.serverInfo
+    } catch (e) {
+      this.error = e.message
+      return
+    }
+    if(this.displayType === 'commit'){
+      try {
+        var res = await getCommit(this.input.stream, this.input.commit)
+        var data = res.data
+        var latestCommit = data.stream.commit
+        if (this.input.object === undefined) this.objectId = latestCommit.referencedObject
+        this.specificCommit = data.stream
+      } catch (e) {
+        this.error = e.message
+        return
+      }
+    } else {
+      try {
+        var res = await getLatestBranchCommit(this.input.stream, this.input.branch)
+        var data = res.data
+        console.log(data)
+        var latestCommit = data.stream.branch.commits.items[0] || data.stream.branch.commit
+        if (!latestCommit) {
+          this.error = 'No commit for this branch'
+          this.lastCommit = data.stream
+          return
+        }
+        if (this.input.object == undefined) this.objectId = latestCommit.referencedObject
+        else this.objectId = this.input.object
+        this.lastCommit = data.stream
+      } catch (e) {
+        this.error = e.message
+        return
+      }
     }
   },
   data() {
@@ -108,95 +148,10 @@ export default {
         object: this.$route.query.object,
         branch: this.$route.query.branch || 'main',
         commit: this.$route.query.commit
-      }
-    }
-  },
-  apollo: {
-    lastCommit: {
-      query: gql`
-        query Stream($id: String!, $branch: String!) {
-          stream(id: $id) {
-            id
-            name
-            description
-            isPublic
-            branch(name: $branch) {
-              commits(limit: 1) {
-                totalCount
-                items {
-                  referencedObject
-                }
-              }
-            }
-          }
-        }
-      `,
-      variables() {
-        return {
-          id: this.input.stream,
-          branch: this.input.branch
-        }
       },
-      error(err) {
-        this.error = err.message
-      },
-      update(data) {
-        var latestCommit = data.stream.branch.commits.items[0] || data.stream.branch.commit
-        if (!latestCommit) {
-          this.error = 'No commit for this branch'
-          return data.stream
-        }
-        if (this.input.object == undefined) this.objectId = latestCommit.referencedObject
-        else this.objectId = this.input.object
-        return data.stream
-      },
-      skip() {
-        return this.displayType === 'commit'
-      }
-    },
-    specificCommit: {
-      query: gql`
-        query Stream($id: String!, $commit: String!) {
-          stream(id: $id) {
-            id
-            name
-            description
-            isPublic
-            commit(id: $commit) {
-              referencedObject
-            }
-          }
-        }
-      `,
-      variables() {
-        return {
-          id: this.input.stream,
-          commit: this.input.commit
-        }
-      },
-      error(err) {
-        this.error = err.message
-      },
-      update(data) {
-        var latestCommit = data.stream.commit
-        if (this.input.object === undefined) this.objectId = latestCommit.referencedObject
-        return data.stream
-      },
-      skip() {
-        return this.displayType !== 'commit'
-      }
-    },
-    serverInfo: {
-      query: gql`
-        query ServerInfo {
-          serverInfo {
-            name
-          }
-        }
-      `,
-      error(err) {
-        this.error = err.message
-      }
+      lastCommit: null,
+      specificCommit: null,
+      serverInfo: null
     }
   },
   computed: {
