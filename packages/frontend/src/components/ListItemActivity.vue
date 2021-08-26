@@ -1,7 +1,7 @@
 <template>
-  <v-timeline-item>
+  <v-timeline-item medium>
     <template #icon>
-      <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" :size="30" />
+      <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" />
     </template>
     <v-row class="pt-1 timeline-activity">
       <v-col cols="12" class="mb-0 pb-0">
@@ -22,51 +22,53 @@
         <v-card
           v-if="lastActivity.actionType.includes('stream_permissions') && stream"
           class="activity-card"
-          flat
+          :flat="$vuetify.theme.dark"
         >
           <v-card-text class="pa-5 body-1">
-            <v-row
-              v-for="activityItem in activityGroup"
-              :key="activityItem.time"
-              class="align-center"
-            >
-              <v-col cols="12" md="10">
-                <user-pill
-                  class="mr-3"
-                  :user-id="activityItem.info.targetUser"
-                  :color="
-                    lastActivity.actionType === 'stream_permissions_add' ? 'success' : 'error'
-                  "
-                ></user-pill>
+            <v-container>
+              <v-row
+                v-for="activityItem in activityGroup"
+                :key="activityItem.time"
+                class="align-center"
+              >
+                <v-col cols="12" md="10">
+                  <user-pill
+                    class="mr-3"
+                    :user-id="activityItem.info.targetUser"
+                    :color="
+                      lastActivity.actionType === 'stream_permissions_add' ? 'success' : 'error'
+                    "
+                  ></user-pill>
 
-                <span v-if="$vuetify.breakpoint.smAndUp" class="mr-3 body-2 font-italic">
-                  {{
-                    lastActivity.actionType === 'stream_permissions_add'
-                      ? 'user added as'
-                      : 'user removed'
-                  }}
-                </span>
-                <v-chip v-if="activityItem.info.role" small outlined class="my-2">
-                  <v-icon small left>mdi-account-key-outline</v-icon>
-                  {{ activityItem.info.role.split(':')[1] }}
-                </v-chip>
-              </v-col>
-              <v-col v-if="$vuetify.breakpoint.mdAndUp" cols="2" class="text-right">
-                <v-btn
-                  v-if="
-                    activityItem.info.targetUser &&
-                    activityItem.actionType === `stream_permissions_add`
-                  "
-                  text
-                  outlined
-                  small
-                  :to="'/profile/' + activityItem.info.targetUser"
-                  color="primary"
-                >
-                  view
-                </v-btn>
-              </v-col>
-            </v-row>
+                  <span v-if="$vuetify.breakpoint.smAndUp" class="mr-3 body-2 font-italic">
+                    {{
+                      lastActivity.actionType === 'stream_permissions_add'
+                        ? 'user added as'
+                        : 'user removed'
+                    }}
+                  </span>
+                  <v-chip v-if="activityItem.info.role" small outlined class="my-2">
+                    <v-icon small left>mdi-account-key-outline</v-icon>
+                    {{ activityItem.info.role.split(':')[1] }}
+                  </v-chip>
+                </v-col>
+                <v-col v-if="$vuetify.breakpoint.mdAndUp" cols="2" class="text-right">
+                  <v-btn
+                    v-if="
+                      activityItem.info.targetUser &&
+                      activityItem.actionType === `stream_permissions_add`
+                    "
+                    text
+                    outlined
+                    small
+                    :to="'/profile/' + activityItem.info.targetUser"
+                    color="primary"
+                  >
+                    view
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-container>
           </v-card-text>
         </v-card>
 
@@ -74,34 +76,36 @@
         <v-card
           v-else-if="lastActivity.resourceType === 'stream' && stream"
           class="activity-card"
-          flat
+          :flat="$vuetify.theme.dark"
         >
           <v-card-text class="pa-5 body-1">
-            <v-row class="align-center">
-              <router-link :to="url" class="title">
-                <v-icon color="primary" small>mdi-compare-vertical</v-icon>
-                {{ stream.name }}
-              </router-link>
-              <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span>
+            <v-container>
+              <v-row class="align-center">
+                <router-link :to="url" class="title">
+                  <v-icon color="primary" small>mdi-compare-vertical</v-icon>
+                  {{ stream.name }}
+                </router-link>
+                <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span>
 
-              <v-spacer />
+                <v-spacer />
 
-              <v-btn
-                v-if="
-                  (lastActivity.actionType === `stream_create` ||
-                    lastActivity.actionType === `stream_update`) &&
-                  $vuetify.breakpoint.mdAndUp
-                "
-                text
-                outlined
-                small
-                exact
-                :to="url"
-                color="primary"
-              >
-                view
-              </v-btn>
-            </v-row>
+                <v-btn
+                  v-if="
+                    (lastActivity.actionType === `stream_create` ||
+                      lastActivity.actionType === `stream_update`) &&
+                    $vuetify.breakpoint.mdAndUp
+                  "
+                  text
+                  outlined
+                  small
+                  exact
+                  :to="url"
+                  color="primary"
+                >
+                  view
+                </v-btn>
+              </v-row>
+            </v-container>
 
             <div class="mt-3">
               <div
@@ -157,16 +161,20 @@
         </v-card>
 
         <!-- BRANCHES -->
-        <v-card v-else-if="lastActivity.resourceType === 'branch'" class="activity-card" flat>
-          <v-card-text>
+        <v-card
+          v-else-if="lastActivity.resourceType === 'branch'"
+          class="activity-card"
+          :flat="$vuetify.theme.dark"
+        >
+          <v-card-text class="pa-5 body-1">
             <v-chip :to="url" :color="lastActivityBrief.color">
               <v-icon small class="mr-2 float-left" light>{{ lastActivityBrief.icon }}</v-icon>
               {{ branchName }}
             </v-chip>
-            <!-- <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span> -->
+            <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span>
             <div class="mt-3">
               <div
-                v-for="activityItem in activityGroup.slice(0, 1)"
+                v-for="activityItem in activityGroup"
                 :key="activityItem.time"
                 v-html="updatedDescription(activityItem)"
               ></div>
@@ -175,7 +183,11 @@
         </v-card>
 
         <!-- COMMITS -->
-        <v-card v-else-if="lastActivity.resourceType === 'commit'" class="activity-card" flat>
+        <v-card
+          v-else-if="lastActivity.resourceType === 'commit'"
+          class="activity-card"
+          :flat="$vuetify.theme.dark"
+        >
           <v-container>
             <v-row class="align-center">
               <v-col sm="10" cols="12">

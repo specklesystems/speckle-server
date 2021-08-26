@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col cols="12">
-      <v-timeline v-if="stream" align-top dense clipped>
+      <v-timeline v-if="stream" align-top dense>
         <list-item-activity
           v-for="activity in groupedActivity"
           :key="activity.time"
@@ -62,6 +62,7 @@ export default {
                 resourceType
                 time
                 info
+                message
               }
             }
           }

@@ -1,5 +1,5 @@
 <template>
-  <!-- <v-chip v-if="targetUser" pill :color="color"> -->
+  <v-chip v-if="targetUser" pill :color="color">
     <v-avatar left>
       <user-avatar
         :id="targetUser.id"
@@ -9,8 +9,8 @@
       />
     </v-avatar>
 
-    <!-- {{ targetUser.name }} -->
-  <!-- </v-chip> -->
+    {{ targetUser.name }}
+  </v-chip>
 </template>
 <script>
 import gql from 'graphql-tag'

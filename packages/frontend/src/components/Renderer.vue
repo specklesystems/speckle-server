@@ -161,9 +161,13 @@
             </template>
             Show viewer help
           </v-tooltip>
-          <v-dialog v-model="showObjectDetails" width="500">
+          <v-dialog v-model="showObjectDetails" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
             <v-card>
-              <v-card-title>Selection Details</v-card-title>
+              <v-toolbar>
+                <v-toolbar-title>Selection Details</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn icon @click="showObjectDetails=false"><v-icon>mdi-close</v-icon></v-btn>
+              </v-toolbar>
               <v-sheet>
                 <div v-if="selectedObjects.length !== 0">
                   <object-simple-viewer

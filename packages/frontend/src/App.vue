@@ -23,6 +23,11 @@ export default {
 }
 </script>
 <style lang="css">
+
+.v-timeline:before{
+  top: 40px !important;
+}
+
 .marked-preview h1 {
   padding-bottom: 10px;
   padding-top: 10px;

@@ -6,7 +6,7 @@
     <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
       <v-col cols="12" class="pa-0 ma-0">
         <div style="height: 60vh" v-if="latestCommitObjectUrl">
-          <renderer :object-url="latestCommitObjectUrl" />
+          <renderer :object-url="latestCommitObjectUrl" show-selection-helper/>
         </div>
 
         <v-list class="pa-0 ma-0">
@@ -56,7 +56,7 @@
           </v-row>
         </v-card>
       </v-col>
-      <v-col cols="12">
+      <v-col cols="12" class="pr-10">
         <v-card class="transparent elevation-0">
           <v-card-title>Stream Activity</v-card-title>
           <v-card-text class="caption">Recent event log</v-card-text>

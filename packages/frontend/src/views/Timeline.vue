@@ -57,6 +57,7 @@
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
+
     <v-app-bar app style="padding-left: 56px" flat>
       <v-app-bar-nav-icon
         @click="activityNav = !activityNav"
@@ -75,66 +76,71 @@
     </v-app-bar>
 
     <server-invite-dialog ref="serverInviteDialog" />
-    <v-dialog v-model="newStreamDialog" max-width="500">
+    <v-dialog v-model="newStreamDialog" max-width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
       <stream-new-dialog
         v-if="streams"
         :open="newStreamDialog"
         :redirect="streams.items.length > 0"
         @created="newStreamDialog = false"
+        @close="newStreamDialog = false"
       />
     </v-dialog>
 
-    <v-row>
-      <v-col cols="12">
-        <v-row>
-          <v-col cols="12">
-            <getting-started-wizard />
-          </v-col>
-          <v-col v-if="$apollo.loading && !timeline">
-            <div class="my-5">
-              <v-timeline align-top dense>
-                <v-timeline-item v-for="i in 6" :key="i" medium>
-                  <v-skeleton-loader type="article"></v-skeleton-loader>
-                </v-timeline-item>
-              </v-timeline>
-            </div>
-          </v-col>
+    <v-row class="pr-4">
+      <!-- <v-col cols="12"> -->
+        <!-- <getting-started-wizard /> -->
+      <!-- </v-col> -->
+      <v-col v-if="$apollo.loading && !timeline">
+        <div class="my-5">
+          <v-timeline align-top dense>
+            <v-timeline-item v-for="i in 6" :key="i" medium>
+              <v-skeleton-loader type="article"></v-skeleton-loader>
+            </v-timeline-item>
+          </v-timeline>
+        </div>
+      </v-col>
 
-          <v-col v-else-if="timeline && timeline.items.length > 0">
-            <div>
-              <div v-if="timeline" key="activity-list">
-                <v-timeline align-top dense>
-                  <list-item-activity
-                    v-for="activity in groupedTimeline"
-                    :key="activity.time"
-                    :activity="activity"
-                    :activity-group="activity"
-                    class="my-1"
-                  ></list-item-activity>
-                  <infinite-loading
-                    v-if="timeline && timeline.items.length < timeline.totalCount"
-                    @infinite="infiniteHandler"
-                  >
-                    <div slot="no-more">This is all your activity!</div>
-                    <div slot="no-results">There are no ctivities to load</div>
-                  </infinite-loading>
-                </v-timeline>
-              </div>
-            </div>
-          </v-col>
-          <v-col v-else cols="12">
-            <div class="ma-5 headline justify-center text-center">
-              🎈
-              <br />
-              Your feed is empty!
+      <v-col cols="12" lg="9" v-else-if="timeline && timeline.items.length > 0" class="pr-5">
+        <div>
+          <div v-if="timeline" key="activity-list">
+            <v-timeline align-top dense>
+              <list-item-activity
+                v-for="activity in groupedTimeline"
+                :key="activity.time"
+                :activity="activity"
+                :activity-group="activity"
+                class="my-1"
+              ></list-item-activity>
+              <infinite-loading
+                v-if="timeline && timeline.items.length < timeline.totalCount"
+                @infinite="infiniteHandler"
+              >
+                <div slot="no-more">This is all your activity!</div>
+                <div slot="no-results">There are no ctivities to load</div>
+              </infinite-loading>
+            </v-timeline>
+          </div>
+        </div>
+      </v-col>
+      <v-col v-else cols="12">
+        <div class="ma-5 headline justify-center text-center">
+          🎈
+          <br />
+          Your feed is empty!
 
-              <br />
-              <span class="subtitle-2 font-italic">
-                Try creating a stream, sending data etc and your activity will show up here.
-              </span>
-            </div>
-          </v-col>
-        </v-row>
+          <br />
+          <span class="subtitle-2 font-italic">
+            Try creating a stream, sending data etc and your activity will show up here.
+          </span>
+        </div>
+      </v-col>
+      <v-col cols="12" lg="3" xl="3" v-show="$vuetify.breakpoint.lgAndUp" class="mt-7">
+        <latest-blogposts></latest-blogposts>
+        <v-card rounded="lg" class="mt-2">
+          <v-card-text class="caption">
+            <p class="mb-0">At <a href="https://speckle.systems" target="_blank" class="text-decoration-none">Speckle</a>, we're working tirelessly to bring you the best open source data platform for AEC. Tell us what you think on our <a href="https://speckle.community" target="_blank" class="text-decoration-none">forum</a>, and don't forget to give us a ⭐️ on <a href="https://github.com/specklesystems/speckle-sharp" target="_blank" class="text-decoration-none">Github</a>!</p>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
@@ -149,6 +155,7 @@ import GettingStartedWizard from '../components/GettingStartedWizard'
 import ServerInviteDialog from '@/components/dialogs/ServerInviteDialog.vue'
 import StreamNewDialog from '@/components/dialogs/StreamNewDialog'
 import SearchBar from '@/components/SearchBar'
+import LatestBlogposts from '@/components/LatestBlogposts'
 
 export default {
   name: 'Timeline',
@@ -158,7 +165,8 @@ export default {
     ServerInviteDialog,
     StreamNewDialog,
     GettingStartedWizard,
-    SearchBar
+    SearchBar,
+    LatestBlogposts
   },
   props: {
     type: String
@@ -195,6 +203,7 @@ export default {
                 resourceType
                 time
                 info
+                message
               }
             }
           }
@@ -249,6 +258,7 @@ export default {
         }
         return prev
       }, [])
+      // console.log(groupedTimeline)
       this.groupedTimeline = groupedTimeline
     },
     showServerInviteDialog() {

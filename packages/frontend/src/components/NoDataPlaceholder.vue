@@ -9,57 +9,68 @@
           <div class="pl-4 text-center mb-2 space-grotesk">
             <slot name="default"></slot>
           </div>
-          <slot name="actions">
-            <v-list rounded class="transparent">
-              <v-list-item link class="primary mb-4" dark>
-                <v-list-item-icon>
-                  <v-icon>mdi-swap-horizontal</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Connectors</v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    Learn how to send data from various software.
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
+          <v-container style="max-width: 500px">
+            <slot name="actions">
+              <v-list rounded class="transparent">
+                <v-list-item link class="primary mb-4" dark>
+                  <v-list-item-icon>
+                    <v-icon>mdi-swap-horizontal</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Connectors</v-list-item-title>
+                    <v-list-item-subtitle class="caption">
+                      Learn how to send data from various software.
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
 
-              <v-list-item link :class="`grey ${ $vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`">
-                <v-list-item-icon>
-                  <v-icon>mdi-school</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Tutorials</v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    Tips, tricks and how-to guides.
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
+                <v-list-item
+                  link
+                  :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
+                >
+                  <v-list-item-icon>
+                    <v-icon>mdi-school</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Tutorials</v-list-item-title>
+                    <v-list-item-subtitle class="caption">
+                      Tips, tricks and how-to guides.
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
 
-              <v-list-item link :class="`grey ${ $vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`">
-                <v-list-item-icon>
-                  <v-icon>mdi-book-open-variant</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Docs</v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    Documentation and training material for all connectors.
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
+                <v-list-item
+                  link
+                  :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
+                >
+                  <v-list-item-icon>
+                    <v-icon>mdi-book-open-variant</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Docs</v-list-item-title>
+                    <v-list-item-subtitle class="caption">
+                      Documentation and training material for all connectors.
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
 
-              <v-list-item link :class="`grey ${ $vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`">
-                <v-list-item-icon>
-                  <v-icon>mdi-forum</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Community</v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    Our community is friendly and here to help!
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-          </slot>
+                <v-list-item
+                  link
+                  :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
+                >
+                  <v-list-item-icon>
+                    <v-icon>mdi-forum</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>Community</v-list-item-title>
+                    <v-list-item-subtitle class="caption">
+                      Our community is friendly and here to help!
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </slot>
+          </v-container>
         </v-card>
       </v-col>
     </v-row>

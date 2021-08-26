@@ -28,7 +28,7 @@
         <branch-edit-dialog ref="editBranchDialog" />
 
         <div style="height: 60vh" v-if="latestCommitObjectUrl">
-          <renderer :object-url="latestCommitObjectUrl" />
+          <renderer :object-url="latestCommitObjectUrl" show-selection-helper/>
         </div>
 
         <v-list class="pa-0 ma-0" v-if="stream.branch.commits.items.length > 0">

@@ -5,6 +5,8 @@
         <v-icon>mdi-plus-box</v-icon>
       </v-app-bar-nav-icon>
       <v-toolbar-title>Create a New Stream</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn icon @click="$emit('close')"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
     <v-form ref="form" v-model="valid" lazy-validation class="px-2" @submit.prevent="createStream">
       <v-card-text>
