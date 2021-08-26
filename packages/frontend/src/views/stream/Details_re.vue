@@ -6,7 +6,7 @@
     <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
       <v-col cols="12" class="pa-0 ma-0">
         <div style="height: 60vh" v-if="latestCommitObjectUrl">
-          <renderer :object-url="latestCommitObjectUrl" show-selection-helper/>
+          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
 
         <v-list class="pa-0 ma-0">
@@ -17,26 +17,21 @@
           ></list-item-commit>
         </v-list>
       </v-col>
-      <v-col cols="12" class="pa-0 ma-0">
+      <v-col cols="12" class="" style="height: 40px"></v-col>
+      <v-col cols="12" lg="4" class="pa-0 ma-0" :order="`${$vuetify.breakpoint.lgAndUp ? 'last' : ''}`">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Latest Active Branches</v-toolbar-title>
             <v-spacer />
           </v-toolbar>
-          <v-card-title class="caption" style="margin-top: -30px">
+          <v-card-title class="caption" style="margin-top: -30px;">
             The stream's last three updated branches.
           </v-card-title>
-          <v-row class="pa-4">
-            <v-col
-              cols="12"
-              md="6"
-              lg="4"
-              xl="4"
-              v-for="branch in latestBranches"
-              :key="branch.name"
-            >
+          <v-row class="pa-4 mt-1">
+            <v-col cols="12" md="4" lg="12" v-for="branch in latestBranches" :key="branch.name">
               <v-card :to="`/streams/${$route.params.streamId}/branches/${branch.name}`">
                 <preview-image
+                  :height="120"
                   :url="`/preview/${$route.params.streamId}/commits/${branch.commits.items[0].id}`"
                 ></preview-image>
                 <v-toolbar flat class="transparent">
@@ -45,7 +40,11 @@
                     {{ branch.name }}
                   </v-toolbar-title>
                   <v-spacer></v-spacer>
-                  <v-badge inline :content="branch.commits.totalCount" :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"></v-badge>
+                  <v-badge
+                    inline
+                    :content="branch.commits.totalCount"
+                    :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"
+                  ></v-badge>
                 </v-toolbar>
                 <list-item-commit
                   :commit="branch.commits.items[0]"
@@ -56,12 +55,20 @@
           </v-row>
         </v-card>
       </v-col>
-      <v-col cols="12" class="pr-10">
+
+      <v-col cols="12" lg="8" class="pr-2">
         <v-card class="transparent elevation-0">
-          <v-card-title>Stream Activity</v-card-title>
-          <v-card-text class="caption">Recent event log</v-card-text>
+          <v-toolbar class="transparent elevation-0">
+            <v-toolbar-title>Stream Feed</v-toolbar-title>
+            <v-spacer />
+          </v-toolbar>
+          <v-card-title class="caption" style="margin-top: -30px;">
+            Recent activity log.
+          </v-card-title>
         </v-card>
-        <stream-activity></stream-activity>
+        <div style="margin-top:-42px">
+          <stream-activity></stream-activity>
+        </div>
       </v-col>
     </v-row>
 
