@@ -1,6 +1,6 @@
 <template>
   <div id="admin-settings">
-  <v-card class="elevation-0" rounded="lg" v-if="serverInfo">
+  <v-card rounded="lg" v-if="serverInfo">
     <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
       <v-toolbar-title>{{ serverInfo.name }}</v-toolbar-title>
     </v-toolbar>

@@ -271,7 +271,7 @@ router.beforeEach((to, from, next) => {
   let redirect = localStorage.getItem('shouldRedirectTo')
   if (
     !uuid &&
-    !to.matched.some(({ name }) => name === 'stream' || name === 'commit') && //allow public streams to be viewed
+    !to.matched.some(({ name }) => name === 'stream' || name === 'commit' || name === 'branch') && //allow public streams to be viewed
     to.name !== 'Embeded Viewer' &&
     to.name !== 'Login' &&
     to.name !== 'Register' &&

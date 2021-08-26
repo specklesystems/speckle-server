@@ -1,7 +1,14 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card class="pa-4">
-      <v-card-title class="subtitle-1">Edit Commit</v-card-title>
+    <v-card >
+        <v-toolbar color="primary" dark>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-pencil</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>Edit Commit</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="show = false"><v-icon>mdi-close</v-icon></v-btn>
+      </v-toolbar>
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
         <v-card-text class="pl-2 pr-2 pt-0 pb-0">
           <v-container>
@@ -13,7 +20,6 @@
                   :rules="nameRules"
                   validate-on-blur
                   required
-                  filled
                   autofocus
                 ></v-text-field>
               </v-col>

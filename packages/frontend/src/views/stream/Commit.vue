@@ -1,7 +1,6 @@
 <template>
   <div>
     <v-row>
-      
       <v-col v-if="$apollo.queries.stream.loading" cols="12" class="ma-0 pa-0">
         <v-card>
           <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
@@ -10,20 +9,36 @@
 
       <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
         <portal to="streamActionsBar">
-          <v-btn elevation="0" color="primary" small v-tooltip="'Edit commit'" v-if=" stream && (stream.role === 'stream:owner' || stream.role === 'stream:contributor')" @click="editCommit">
+          <v-btn
+            elevation="0"
+            color="primary"
+            small
+            rounded
+            v-tooltip="'Edit commit'"
+            v-if="
+              stream && stream.role!== 'stream:reviewer' && stream.commit.authorId === loggedInUserId
+            "
+            @click="editCommit"
+          >
             <v-icon small class="mr-2">mdi-pencil</v-icon>
             <span class="hidden-md-and-down">Edit</span>
           </v-btn>
         </portal>
         <portal to="streamTitleBar">
           <div>
-            <router-link :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`" class="text-decoration-none space-grotesk" v-tooltip="'Go to branch ' + stream.commit.branchName">
+            <router-link
+              :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
+              class="text-decoration-none space-grotesk"
+              v-tooltip="'Go to branch ' + stream.commit.branchName"
+            >
               <v-icon small class="primary--text mr-1 mb-1">mdi-source-branch</v-icon>
-                <b>{{ stream.commit.branchName }}</b>
+              <b>{{ stream.commit.branchName }}</b>
             </router-link>
             /
             <v-icon small class="mr-1">mdi-source-commit</v-icon>
-            <span class="space-grotesk mr-2" v-tooltip="'Commit message'">{{ stream.commit.message }}</span>
+            <span class="space-grotesk mr-2" v-tooltip="'Commit message'">
+              {{ stream.commit.message }}
+            </span>
             <user-avatar
               :id="stream.commit.authorId"
               :avatar="stream.commit.authorAvatar"
@@ -44,7 +59,7 @@
         <div style="height: 60vh">
           <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
         </div>
-        
+
         <v-card elevation="0" rounded="lg">
           <!-- Selected object -->
           <v-expand-transition>
@@ -92,6 +107,7 @@
         <error-block :message="'Commit not found'" />
       </v-col>
     </v-row>
+    <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
   </div>
 </template>
 <script>
@@ -108,7 +124,7 @@ export default {
     ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
     Renderer: () => import('@/components/Renderer'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
-    ErrorBlock: () => import('@/components/ErrorBlock'),
+    ErrorBlock: () => import('@/components/ErrorBlock')
   },
   data: () => ({
     loadedModel: false,
@@ -128,6 +144,9 @@ export default {
     }
   },
   computed: {
+    loggedInUserId(){
+      return localStorage.getItem('uuid')
+    },
     commitDate() {
       if (!this.stream.commit) return null
       let date = new Date(this.stream.commit.createdAt)
@@ -178,5 +197,4 @@ export default {
   }
 }
 </script>
-<style scoped>
-</style>
+<style scoped></style>

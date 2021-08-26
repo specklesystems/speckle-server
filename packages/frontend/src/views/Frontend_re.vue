@@ -47,7 +47,7 @@
 
           <v-list-item link to="/streams" style="height: 59px">
             <v-list-item-icon>
-              <v-icon>mdi-folder-multiple</v-icon>
+              <v-icon>mdi-folder</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>Streams</v-list-item-title>
@@ -127,7 +127,7 @@
               </v-list-item-content>
             </v-list-item>
 
-            <v-list-item link @click="switchTheme" color="primary">
+            <v-list-item link @click="signOut()" color="primary" v-if="user">
               <v-list-item-icon>
                 <v-icon small class="ml-1">mdi-account-off</v-icon>
               </v-list-item-icon>
@@ -171,6 +171,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/user.gql'
 import UserMenuTop from '../components/UserMenuTop'
 import SearchBar from '../components/SearchBar'
@@ -240,6 +241,9 @@ export default {
     }
   },
   methods: {
+    signOut(){
+      signOut()
+    },
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')

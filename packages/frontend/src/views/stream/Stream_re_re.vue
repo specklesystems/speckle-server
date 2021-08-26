@@ -30,7 +30,9 @@
 
       <!-- Top padding hack -->
       <div style="display: block; height: 65px"></div>
-
+      <div class="px-4 mt-2" v-if="!loggedIn" >
+        <v-btn large block color="primary" to="/authn/login">Log In</v-btn>
+      </div>
       <!-- Various Stream Details -->
       <v-card elevation="0" v-if="stream" class="pa-1 mb-0" color="transparent">
         <v-card-text class="caption">
@@ -123,10 +125,10 @@
           <v-list-item
             link
             v-tooltip.bottom="'Create a new branch to help categorise your commits.'"
-            v-if="stream.role!=='stream:reviewer'"
+            v-if="stream.role !== 'stream:reviewer'"
           >
             <v-list-item-icon>
-              <v-icon small style="padding-top:10px;">mdi-plus-box</v-icon>
+              <v-icon small style="padding-top: 10px">mdi-plus-box</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>New Branch</v-list-item-title>
@@ -143,8 +145,10 @@
             :to="`/streams/${stream.id}/branches/${branch.name}`"
           >
             <v-list-item-icon>
-              <v-icon small style="padding-top:10px;" v-if="branch.name !== 'main'">mdi-source-branch</v-icon>
-              <v-icon small style="padding-top:10px;" v-else>mdi-star</v-icon>
+              <v-icon small style="padding-top: 10px" v-if="branch.name !== 'main'">
+                mdi-source-branch
+              </v-icon>
+              <v-icon small style="padding-top: 10px" v-else>mdi-star</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>
@@ -233,7 +237,8 @@
         <!-- child routes can teleport buttons here -->
       </portal-target>
       <v-toolbar-items>
-        <v-btn elevation="0" v-if="stream">
+        <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">Log In</v-btn>
+        <v-btn elevation="0" v-if="loggedIn && stream">
           <v-icon small class="mr-2">mdi-share-variant</v-icon>
           <v-icon small class="mr-2 hidden-sm-and-down" v-if="!stream.isPublic">mdi-lock</v-icon>
           <v-icon small class="mr-2 hidden-sm-and-down" v-else>mdi-lock-open</v-icon>
@@ -249,8 +254,8 @@
       </transition>
     </v-container>
     <v-container style="padding-left: 56px" v-else>
-      <error-placeholder :error-type='error.toLowerCase().includes("not found") ? "404" : "access"'>
-        <h2>{{error}}</h2>
+      <error-placeholder :error-type="error.toLowerCase().includes('not found') ? '404' : 'access'">
+        <h2>{{ error }}</h2>
       </error-placeholder>
     </v-container>
   </v-container>
@@ -347,6 +352,9 @@ export default {
     }
   },
   computed: {
+    loggedIn() {
+      return localStorage.getItem('uuid') !== null
+    },
     sortedBranches() {
       // TODO: group by `/` (for later)
       if (!this.stream) return
@@ -357,7 +365,7 @@ export default {
     },
     branchesTotalCount() {
       if (!this.stream) return 0
-      return this.stream.branches.items.filter(b => b.name !== 'globals').length
+      return this.stream.branches.items.filter((b) => b.name !== 'globals').length
     },
     userId() {
       return localStorage.getItem('uuid')
@@ -402,7 +410,7 @@ export default {
 }
 </script>
 <style scoped>
-  .no-overlay.v-list-item--active::before{
-    opacity: 0 !important;
-  }
+.no-overlay.v-list-item--active::before {
+  opacity: 0 !important;
+}
 </style>

@@ -18,17 +18,18 @@
         </v-list>
       </v-col>
       <v-col cols="12" class="" style="height: 40px"></v-col>
-      <v-col cols="12" lg="4" class="pa-0 ma-0" :order="`${$vuetify.breakpoint.lgAndUp ? 'last' : ''}`">
+
+      <v-col cols="12" :lg="loggedIn ? 4 : 12" class="pa-0 ma-0" :order="`${$vuetify.breakpoint.lgAndUp ? 'last' : ''}`">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Latest Active Branches</v-toolbar-title>
             <v-spacer />
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px;">
-            The stream's last three updated branches.
+            The stream's last three updated branches
           </v-card-title>
           <v-row class="pa-4 mt-1">
-            <v-col cols="12" md="4" lg="12" v-for="branch in latestBranches" :key="branch.name">
+            <v-col cols="12" sm="4" md="4" :lg="loggedIn ? 12 : 4" v-for="branch in latestBranches" :key="branch.name">
               <v-card :to="`/streams/${$route.params.streamId}/branches/${branch.name}`">
                 <preview-image
                   :height="120"
@@ -56,14 +57,14 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" lg="8" class="pr-2">
+      <v-col cols="12" lg="8" class="pr-2" v-if="loggedIn">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Stream Feed</v-toolbar-title>
             <v-spacer />
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px;">
-            Recent activity log.
+            Recent activity log
           </v-card-title>
         </v-card>
         <div style="margin-top:-42px">

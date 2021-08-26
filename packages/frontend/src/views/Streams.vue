@@ -7,36 +7,37 @@
       v-model="streamNav"
       style="left: 56px"
     >
-      <v-app-bar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
-        <search-bar />
-      </v-app-bar>
-
-      <v-list style="margin-top: 64px" shaped>
-        <v-list-item class="primary" dark link @click="newStreamDialog = true">
-          <v-list-item-content>
-            <v-list-item-title>New Stream</v-list-item-title>
-            <v-list-item-subtitle class="caption">
-              Quickly create a new data repository.
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-icon>
-            <v-icon class="">mdi-plus-box</v-icon>
-          </v-list-item-icon>
-        </v-list-item>
-        <v-list-item link @click="showServerInviteDialog()">
-          <v-list-item-content>
-            <v-list-item-title>Invite</v-list-item-title>
-            <v-list-item-subtitle class="caption">
-              Invite a colleague to Speckle!
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-icon>
-            <v-icon class="">mdi-email</v-icon>
-          </v-list-item-icon>
-        </v-list-item>
-      </v-list>
+      <main-nav-actions :open-new-stream="streamNewDialog" />
 
       <div v-if="user">
+        <!--         <v-subheader class="caption">Filter:</v-subheader>
+        <v-list dense rounded>
+          <v-list-item link>
+            <v-list-item-icon>
+              <v-icon small class="">mdi-key</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-subtitle class="caption">Owner</v-list-item-subtitle class="caption">
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item link>
+            <v-list-item-icon>
+              <v-icon small class="">mdi-account</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-subtitle class="caption">Contributor</v-list-item-subtitle class="caption">
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item link>
+            <v-list-item-icon>
+              <v-icon small class="">mdi-circle</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-subtitle class="caption">Reviewer</v-list-item-subtitle class="caption">
+            </v-list-item-content>
+          </v-list-item>
+        </v-list> -->
+
         <v-subheader class="caption">Your stats:</v-subheader>
         <v-list dense>
           <v-list-item>
@@ -44,7 +45,10 @@
               <v-icon small class="">mdi-folder-multiple</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-subtitle class="caption"><b>{{ user.streams.totalCount }}</b> total streams</v-list-item-subtitle class="caption">
+              <v-list-item-subtitle class="caption">
+                <b>{{ user.streams.totalCount }}</b>
+                total streams
+              </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
           <v-list-item>
@@ -52,39 +56,58 @@
               <v-icon small class="">mdi-source-commit</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-subtitle class="caption"><b>{{ user.commits.totalCount }}</b> total commits</v-list-item-subtitle class="caption">
+              <v-list-item-subtitle class="caption">
+                <b>{{ user.commits.totalCount }}</b>
+                total commits
+              </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
         </v-list>
 
-        <div class="ml-5"></div>
+        <v-list
+          v-if="userCommits && userCommits.commits.items.length !== 0"
+          color="transparent"
+          dense
+        >
+          <v-subheader class="mt-3 ml-2">Your latest commits:</v-subheader>
+          <v-list-item
+            v-for="(commit, i) in userCommits.commits.items"
+            :key="i"
+            :to="`streams/${commit.streamId}/${ commit.branchName === 'globals' ? 'globals' : 'commits' }/${commit.id}`"
+            v-if="commit"
+            v-tooltip="`In stream '${commit.streamName}'`"
+          >
+            <v-list-item-content>
+              <v-list-item-title>
+                {{ commit.message }}
+              </v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                <i>
+                  Updated
+                  <timeago :datetime="commit.createdAt"></timeago>
+                </i>
+                on <v-icon style="font-size: 10px;">mdi-source-branch</v-icon>{{commit.branchName}}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+
       </div>
     </v-navigation-drawer>
 
     <v-app-bar app style="padding-left: 56px" flat>
       <v-app-bar-nav-icon @click="streamNav = !streamNav" v-show="!streamNav"></v-app-bar-nav-icon>
       <v-toolbar-title class="space-grotesk">
-        <v-icon>mdi-folder-multiple</v-icon>
+        <v-icon class="mb-1">mdi-folder</v-icon>
         Streams
       </v-toolbar-title>
       <v-spacer v-if="!streamNav"></v-spacer>
       <v-toolbar-items v-if="!streamNav">
-        <v-btn color="primary" @click="newStreamDialog = true">
+        <v-btn color="primary" @click="streamNewDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
     </v-app-bar>
-
-    <server-invite-dialog ref="serverInviteDialog" />
-
-    <v-dialog v-model="newStreamDialog" max-width="500">
-      <stream-new-dialog
-        v-if="streams && streams.items"
-        :open="newStreamDialog"
-        :redirect="streams.items.length > 0"
-        @created="newStreamDialog = false"
-      />
-    </v-dialog>
 
     <!-- <getting-started-wizard /> -->
 
@@ -137,25 +160,17 @@
   </v-container>
 </template>
 <script>
-import ListItemStream from '../components/ListItemStream'
-import StreamNewDialog from '../components/dialogs/StreamNewDialog'
-import GettingStartedWizard from '../components/GettingStartedWizard'
+import gql from 'graphql-tag'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
-import InfiniteLoading from 'vue-infinite-loading'
-import ServerInviteDialog from '../components/dialogs/ServerInviteDialog.vue'
-import SearchBar from '../components/SearchBar'
-import gql from 'graphql-tag'
 
 export default {
   name: 'Streams',
   components: {
-    ListItemStream,
-    StreamNewDialog,
-    InfiniteLoading,
-    ServerInviteDialog,
-    GettingStartedWizard,
-    SearchBar
+    InfiniteLoading: () => import('vue-infinite-loading'),
+    ListItemStream: () => import('@/components/ListItemStream'),
+    GettingStartedWizard: () => import('@/components/GettingStartedWizard'),
+    MainNavActions: () => import('@/components/MainNavActions')
   },
   apollo: {
     streams: {
@@ -165,6 +180,30 @@ export default {
     },
     user: {
       query: userQuery,
+      skip() {
+        return !this.loggedIn
+      }
+    },
+    userCommits: {
+      query: gql`
+        query {
+          userCommits: user {
+            id
+            commits {
+              totalCount
+              items {
+                id
+                message
+                sourceApplication
+                streamId
+                streamName
+                branchName
+                createdAt
+              }
+            }
+          }
+        }
+      `,
       skip() {
         return !this.loggedIn
       }
@@ -199,10 +238,9 @@ export default {
     }
   },
   data: () => ({
-    activeTab: 'streams',
     streams: [],
-    newStreamDialog: false,
-    streamNav: true
+    streamNav: true,
+    streamNewDialog: 0
   }),
   computed: {
     loggedIn() {
@@ -217,7 +255,12 @@ export default {
     }
   },
   mounted() {
-    setTimeout( function() { this.streamNav = !this.$vuetify.breakpoint.smAndDown }.bind(this), 100 )
+    setTimeout(
+      function () {
+        this.streamNav = !this.$vuetify.breakpoint.smAndDown
+      }.bind(this),
+      100
+    )
   },
   methods: {
     showServerInviteDialog() {

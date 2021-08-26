@@ -15,11 +15,12 @@
         <portal to="streamActionsBar">
           <v-btn
             elevation="0"
-            v-if="stream"
+            v-if="loggedInUserId && stream && stream.role !== 'stream:reviewer' && stream.branch.name !== 'main'"
             color="primary"
             small
             v-tooltip="'Edit branch'"
             @click="editBranch()"
+            rounded
           >
             <v-icon small class="mr-2">mdi-pencil</v-icon>
             <span class="hidden-md-and-down">Edit</span>
@@ -50,7 +51,7 @@
 
           <!-- TODO: pagination -->
 
-          <v-list-item v-if="stream">
+<!--           <v-list-item v-if="stream">
             <v-list-item-icon class="pl-4" style="width: 40px">
               <v-avatar
                 :color="`grey ${this.$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
@@ -65,8 +66,8 @@
                 Branch "{{ stream.branch.name }}" created
               </v-list-item-title>
             </v-list-item-content>
-          </v-list-item>
-          <v-list-item v-if="stream">
+          </v-list-item> -->
+<!--           <v-list-item v-if="stream">
             <v-list-item-icon class="pl-4" style="width: 40px">
               <v-avatar
                 :color="`grey ${this.$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
@@ -81,7 +82,7 @@
                 TODO: PAGINATION YO
               </v-list-item-title>
             </v-list-item-content>
-          </v-list-item>
+          </v-list-item> -->
         </v-list>
       </v-col>
 
@@ -145,6 +146,9 @@ export default {
     }
   },
   computed: {
+    loggedInUserId(){
+      return localStorage.getItem('uuid')
+    },
     streamId() {
       return this.$route.params.streamId
     },

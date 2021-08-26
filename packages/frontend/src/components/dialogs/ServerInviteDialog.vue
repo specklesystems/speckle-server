@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="showDialog" max-width="400" :fullscreen="$vuetify.breakpoint.smAndDown">
+  <v-dialog v-model="showDialog" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
     <v-card>
       <v-toolbar color="primary" dark>
         <v-app-bar-nav-icon style="pointer-events: none">

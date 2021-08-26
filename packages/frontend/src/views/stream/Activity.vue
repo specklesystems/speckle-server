@@ -1,7 +1,7 @@
 <template>
   <v-row>
     <v-col cols="12">
-      <v-timeline v-if="stream" align-top dense>
+      <v-timeline v-if="stream && groupedActivity && groupedActivity.length !== 0" align-top dense>
         <list-item-activity
           v-for="activity in groupedActivity"
           :key="activity.time"
@@ -22,6 +22,11 @@
           <v-skeleton-loader type="article"></v-skeleton-loader>
         </v-timeline-item>
       </v-timeline>
+      <div v-if="groupedActivity && groupedActivity.length === 0">
+        <v-card class="transparent elevation-0 mt-10">
+          <v-card-text>Nothing to show 🍃</v-card-text>
+        </v-card>
+      </div>
     </v-col>
   </v-row>
 </template>

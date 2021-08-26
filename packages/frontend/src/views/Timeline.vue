@@ -7,34 +7,8 @@
       v-model="activityNav"
       style="left: 56px"
     >
-      <v-app-bar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
-        <search-bar />
-      </v-app-bar>
+      <main-nav-actions :open-new-stream="newStreamDialog"/>
 
-      <v-list style="margin-top: 64px" shaped>
-        <v-list-item class="primary" dark link @click="newStreamDialog = true">
-          <v-list-item-content>
-            <v-list-item-title>New Stream</v-list-item-title>
-            <v-list-item-subtitle class="caption">
-              Quickly create a new data repository.
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-icon>
-            <v-icon class="">mdi-plus-box</v-icon>
-          </v-list-item-icon>
-        </v-list-item>
-        <v-list-item link @click="showServerInviteDialog()">
-          <v-list-item-content>
-            <v-list-item-title>Invite</v-list-item-title>
-            <v-list-item-subtitle class="caption">
-              Invite a colleague to Speckle!
-            </v-list-item-subtitle>
-          </v-list-item-content>
-          <v-list-item-icon>
-            <v-icon class="">mdi-email</v-icon>
-          </v-list-item-icon>
-        </v-list-item>
-      </v-list>
       <v-list v-if="streams && streams.items.length > 0" color="transparent" dense>
         <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
         <v-list-item
@@ -69,26 +43,15 @@
       </v-toolbar-title>
       <v-spacer v-if="!activityNav"></v-spacer>
       <v-toolbar-items v-if="!activityNav" style="position: relative; left: 0">
-        <v-btn color="primary" @click="newStreamDialog = true">
+        <v-btn color="primary" @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
     </v-app-bar>
 
-    <server-invite-dialog ref="serverInviteDialog" />
-    <v-dialog v-model="newStreamDialog" max-width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
-      <stream-new-dialog
-        v-if="streams"
-        :open="newStreamDialog"
-        :redirect="streams.items.length > 0"
-        @created="newStreamDialog = false"
-        @close="newStreamDialog = false"
-      />
-    </v-dialog>
-
     <v-row class="pr-4">
       <!-- <v-col cols="12"> -->
-        <!-- <getting-started-wizard /> -->
+      <!-- <getting-started-wizard /> -->
       <!-- </v-col> -->
       <v-col v-if="$apollo.loading && !timeline">
         <div class="my-5">
@@ -138,7 +101,26 @@
         <latest-blogposts></latest-blogposts>
         <v-card rounded="lg" class="mt-2">
           <v-card-text class="caption">
-            <p class="mb-0">At <a href="https://speckle.systems" target="_blank" class="text-decoration-none">Speckle</a>, we're working tirelessly to bring you the best open source data platform for AEC. Tell us what you think on our <a href="https://speckle.community" target="_blank" class="text-decoration-none">forum</a>, and don't forget to give us a ⭐️ on <a href="https://github.com/specklesystems/speckle-sharp" target="_blank" class="text-decoration-none">Github</a>!</p>
+            <p class="mb-0">
+              At
+              <a href="https://speckle.systems" target="_blank" class="text-decoration-none">
+                Speckle
+              </a>
+              we're working tirelessly to bring you the best open source data platform for AEC.
+              Tell us what you think on our
+              <a href="https://speckle.community" target="_blank" class="text-decoration-none">
+                forum
+              </a>
+              , and don't forget to give us a ⭐️ on
+              <a
+                href="https://github.com/specklesystems/speckle-sharp"
+                target="_blank"
+                class="text-decoration-none"
+              >
+                Github
+              </a>
+              !
+            </p>
           </v-card-text>
         </v-card>
       </v-col>
@@ -148,32 +130,22 @@
 
 <script>
 import gql from 'graphql-tag'
-import InfiniteLoading from 'vue-infinite-loading'
-
-import ListItemActivity from '@/components/ListItemActivity'
-import GettingStartedWizard from '../components/GettingStartedWizard'
-import ServerInviteDialog from '@/components/dialogs/ServerInviteDialog.vue'
-import StreamNewDialog from '@/components/dialogs/StreamNewDialog'
-import SearchBar from '@/components/SearchBar'
-import LatestBlogposts from '@/components/LatestBlogposts'
 
 export default {
   name: 'Timeline',
   components: {
-    ListItemActivity,
-    InfiniteLoading,
-    ServerInviteDialog,
-    StreamNewDialog,
-    GettingStartedWizard,
-    SearchBar,
-    LatestBlogposts
+    InfiniteLoading:()=>import( 'vue-infinite-loading'),
+    ListItemActivity:()=>import( '@/components/ListItemActivity'),
+    GettingStartedWizard:()=>import( '@/components/GettingStartedWizard'),
+    LatestBlogposts: () => import('@/components/LatestBlogposts'),
+    MainNavActions: () => import('@/components/MainNavActions')
   },
   props: {
     type: String
   },
   data() {
     return {
-      newStreamDialog: false,
+      newStreamDialog: 0,
       activityNav: true
     }
   },
@@ -261,9 +233,7 @@ export default {
       // console.log(groupedTimeline)
       this.groupedTimeline = groupedTimeline
     },
-    showServerInviteDialog() {
-      this.$refs.serverInviteDialog.show()
-    },
+
     infiniteHandler($state) {
       this.$apollo.queries.timeline.fetchMore({
         variables: {
