@@ -7,80 +7,82 @@
 <p align="center"><a href="https://twitter.com/SpeckleSystems"><img src="https://img.shields.io/twitter/follow/SpeckleSystems?style=social" alt="Twitter Follow"></a> <a href="https://speckle.community"><img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&amp;style=flat-square&amp;logo=discourse&amp;logoColor=white" alt="Community forum users"></a> <a href="https://speckle.systems"><img src="https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square" alt="website"></a> <a href="https://speckle.guide/dev/"><img src="https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&amp;logo=read-the-docs&amp;logoColor=white" alt="docs"></a></p>
 <p align="center"><a href="https://github.com/Speckle-Next/SpeckleServer/"><img src="https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&amp;circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29" alt="Speckle-Next"></a> <a href="https://codecov.io/gh/specklesystems/speckle-server"><img src="https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg" alt="codecov"></a></p>
 
-Introduction
+## Introduction
 
-What is Speckle? Check our 
+What is Speckle? Check our ![YouTube Video Views](https://img.shields.io/youtube/views/B9humiSpHzM?label=Speckle%20in%201%20minute%20video&style=social)
 
-Features
+### Features
 
-- Object-based: say goodbye to files! Speckle is the first object based platform for the AEC industry
-- Version control: Speckle is the Git & Hub for geometry and BIM data
-- Collaboration: share your designs collaborate with others
-- 3D Viewer: see your CAD and BIM models online, share and embed them anywhere
-- Interoperability: get your CAD and BIM models into other software without exporting or importing
-- Real time: get real time updates and notifications and changes
-- GraphQL API: get what you need anywhere you want it
-- Webhooks: the base for a automation and next-gen pipelines
-- Built for developers: we are building Speckle with developers in mind and got tools for every stack
-- Built for the AEC industry: Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender and more!
+- **Object-based:** say goodbye to files! Speckle is the first object based platform for the AEC industry
+- **Version control:** Speckle is the Git & Hub for geometry and BIM data
+- **Collaboration:** share your designs collaborate with others
+- **3D Viewer:** see your CAD and BIM models online, share and embed them anywhere
+- **Interoperability:** get your CAD and BIM models into other software without exporting or importing
+- **Real time:** get real time updates and notifications and changes
+- **GraphQL API:** get what you need anywhere you want it
+- **Webhooks:** the base for a automation and next-gen pipelines
+- **Built for developers:** we are building Speckle with developers in mind and got tools for every stack
+- **Built for the AEC industry:** Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender and more!
 
-Try Speckle now!
+### Try Speckle now!
 
 Give Speckle a try in no time by:
 
-- using our general availability instance at ⇒  
-- deploying an instance in 1 click ⇒ 
+- using our general availability instance at ⇒  [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz)
+- deploying an instance in 1 click ⇒ [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1)
 
-Resources
+### Resources
 
-  
+[![Community forum users](https://img.shields.io/badge/community-forum-green?style=for-the-badge&logo=discourse&logoColor=white)](https://speckle.community) [![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
 
 
 
-Speckle Server | Repo structure
+## Speckle Server | Repo structure
 
 This monorepo is the home of the Speckle v2 web packages:
 
--  Server, a nodejs app. Core external dependencies are a Redis and Postgresql db.
+-  [Server](https://github.com/specklesystems/speckle-server/blob/main/packages/server), a nodejs app. Core external dependencies are a Redis and Postgresql db.
 
-- Frontend, the frontend is a static Vue app.
+- [Frontend](https://github.com/specklesystems/speckle-server/blob/main/packages/frontend), the frontend is a static Vue app.
 
-- Viewer, a threejs extension that allows you to display 3D data 
+- [Viewer](https://github.com/specklesystems/speckle-server/blob/main/packages/viewer), a threejs extension that allows you to display 3D data [![npm version](https://camo.githubusercontent.com/dc69232cc57b77de6554e752dd6dfc60ca0ecdfbe91bdfcbf7c7531a511ec200/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532467669657765722e737667)](https://www.npmjs.com/package/@speckle/viewer)
 
-- Object Loader, a small js utility class that helps you stream an object and all its sub-components from the Speckle Server API.
-  
-- ➡️ Preview Service, generates object previews for Speckle Objects headlessly. This package is meant to be called on by the server.
+- [Object Loader](https://github.com/specklesystems/speckle-server/blob/main/packages/objectloader), a small js utility class that helps you stream an object and all its sub-components from the Speckle Server API.
 
-Other repos
+  [![npm version](https://camo.githubusercontent.com/4d4f1e38ce50aaf11b4a3ad8e01ce3eaaa561dc5fd08febbae556f52f1d41097/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532466f626a6563746c6f616465722e737667)](https://www.npmjs.com/package/@speckle/objectloader)
+
+- ➡️ [Preview Service](https://github.com/specklesystems/speckle-server/blob/main/packages/preview-service), generates object previews for Speckle Objects headlessly. This package is meant to be called on by the server.
+
+#### Other repos
 
 Make sure to also check and ⭐️ these other Speckle repositories:
 
-- speckle-sharp .NET tooling, connectors and interoperability
-- specklepy Python SDK 🐍
-- and more connectos & tooling!
+- [`speckle-sharp`](https://github.com/specklesystems/speckle-sharp) .NET tooling, connectors and interoperability
+- [`specklepy`](https://github.com/specklesystems/specklepy) Python SDK 🐍
+- and more [connectos & tooling](https://github.com/specklesystems/)!
 
 
 
-Developing and Debugging
+## Developing and Debugging
 
-Have you checked our dev docs?
+Have you checked our [dev docs](https://speckle.guide/dev/)?
 
-We have a detailed section on deploying a Speckle server. To get started developing locally, you can see the run in development mode chapter.
+We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [run in development mode](https://speckle.guide/dev/server-setup.html#run-in-development-mode) chapter.
 
-Contributing
+### Contributing
 
-Please make sure you read the contribution guidelines for an overview of the best practices we try to follow.
+Please make sure you read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md) for an overview of the best practices we try to follow.
 
 When pushing commits to this repo, please follow the following guidelines:
 
-- Install commitizen globally (npm i -g commitizen).
-- When ready to commit, git cz & follow the prompts.
-- Please use either server or frontend as the scope of your commit.
+- Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally (`npm i -g commitizen`).
+- When ready to commit, `git cz` & follow the prompts.
+- Please use either `server` or `frontend` as the scope of your commit.
 
-Security
+### Security
 
 For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems.
 
-License
+### License
 
-Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different license file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via email.
+Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different license file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via [email](mailto:hello@speckle.systems).
