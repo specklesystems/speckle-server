@@ -16,11 +16,17 @@
             rounded
             v-tooltip="'Edit commit'"
             v-if="
-              stream && stream.role!== 'stream:reviewer' && stream.commit.authorId === loggedInUserId
+              stream &&
+              stream.role !== 'stream:reviewer' &&
+              stream.commit.authorId === loggedInUserId
             "
             @click="editCommit"
+            :fab="$vuetify.breakpoint.mdAndDown"
+            dark
           >
-            <v-icon small class="mr-2">mdi-pencil</v-icon>
+            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+              mdi-pencil
+            </v-icon>
             <span class="hidden-md-and-down">Edit</span>
           </v-btn>
         </portal>
@@ -103,11 +109,9 @@
       </v-col>
     </v-row>
     <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
-        
       <error-placeholder error-type="404">
-        <h2>Commit {{$route.params.commitId}} not found.</h2>
+        <h2>Commit {{ $route.params.commitId }} not found.</h2>
       </error-placeholder>
-
     </v-row>
     <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
   </div>
@@ -137,7 +141,6 @@ export default {
       prefetch: true,
       query: streamCommitQuery,
       variables() {
-        // Use vue reactive properties here
         return {
           streamid: this.$route.params.streamId,
           id: this.$route.params.commitId
@@ -145,8 +148,15 @@ export default {
       }
     }
   },
+  watch: {
+    stream(val) {
+      if (!val) return
+      if (val.commit.branchName === 'globals')
+        this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
+    }
+  },
   computed: {
-    loggedInUserId(){
+    loggedInUserId() {
       return localStorage.getItem('uuid')
     },
     commitDate() {

@@ -10,8 +10,13 @@
       v-if="!error"
     >
       <!-- Toolbar holds link to stream home page -->
-      <v-app-bar v-if="stream" style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0" flat>
-        <v-toolbar-title >
+      <v-app-bar
+        v-if="stream"
+        style="position: absolute; top: 0; width: 100%; z-index: 90"
+        elevation="0"
+        flat
+      >
+        <v-toolbar-title>
           <router-link
             :to="`/streams/${stream.id}`"
             class="text-decoration-none space-grotesk"
@@ -36,10 +41,11 @@
       <!-- Various Stream Details -->
       <v-card elevation="0" v-if="stream" class="pa-1 mb-0" color="transparent">
         <v-card-text class="caption">
-          {{ stream.description ? stream.description : 'No description provided.' }}
+          <span v-html="parsedDescription"></span>
           <router-link
             :to="`/streams/${$route.params.streamId}/settings`"
             class="text-decoration-none"
+            v-if="stream.role === 'stream:owner'"
           >
             Edit
           </router-link>
@@ -244,11 +250,11 @@
         <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">
           Log In
         </v-btn>
-        <v-btn elevation="0" v-if="loggedIn && stream">
+        <v-btn elevation="0" v-if="loggedIn && stream" @click="openShareStreamDialog()" v-tooltip="'Share this stream'">
           <v-icon small class="mr-2">mdi-share-variant</v-icon>
-          <v-icon small class="mr-2 hidden-sm-and-down" v-if="!stream.isPublic">mdi-lock</v-icon>
-          <v-icon small class="mr-2 hidden-sm-and-down" v-else>mdi-lock-open</v-icon>
-          <span class="hidden-sm-and-down">Share</span>
+          <v-icon small class="mr-2 xxxhidden-md-and-down" v-if="!stream.isPublic">mdi-lock</v-icon>
+          <v-icon small class="mr-2 xxxhidden-md-and-down" v-else>mdi-lock-open</v-icon>
+          <span class="hidden-md-and-down">Share</span>
         </v-btn>
       </v-toolbar-items>
     </v-app-bar>
@@ -266,6 +272,127 @@
     </v-container>
 
     <branch-new-dialog ref="branchDialog" @refetch-branches="refetchBranches" />
+
+    <v-dialog v-model="shareStream" max-width="600" :fullscreen="$vuetify.breakpoint.xsOnly">
+      <v-card>
+        <v-sheet color="primary">
+          <v-toolbar color="primary" dark flat>
+            <v-app-bar-nav-icon style="pointer-events: none">
+              <v-icon>mdi-share-variant</v-icon>
+            </v-app-bar-nav-icon>
+            <v-toolbar-title>Engage Multiplayer Mode</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon @click="shareStream = false"><v-icon>mdi-close</v-icon></v-btn>
+          </v-toolbar>
+          <v-card-text class="mt-0 mb-0 px-2">
+            <v-text-field
+              dark
+              ref="streamUrl"
+              filled
+              rounded
+              hint="Stream url copied to clipboard. Use it in a connector, or just share it with colleagues!"
+              style="color: blue"
+              prepend-inner-icon="mdi-folder"
+              :value="streamUrl"
+              @focus="copyToClipboard"
+            ></v-text-field>
+            <v-text-field
+              v-if="$route.params.branchName"
+              dark
+              ref="branchUrl"
+              filled
+              rounded
+              hint="Branch url copied to clipboard. Most connectors can receive the latest commit from a branch by using this url."
+              style="color: blue"
+              prepend-inner-icon="mdi-source-branch"
+              :value="streamUrl + '/branch/' + $route.params.branchName"
+              @focus="copyToClipboard"
+            ></v-text-field>
+            <v-text-field
+              v-if="$route.params.commitId"
+              dark
+              ref="commitUrl"
+              filled
+              rounded
+              hint="Commit url copied to clipboard. Most connectors can receive a specific commit by using this url."
+              style="color: blue"
+              prepend-inner-icon="mdi-source-commit"
+              :value="streamUrl + '/commits/' + $route.params.commitId"
+              @focus="copyToClipboard"
+            ></v-text-field>
+          </v-card-text>
+        </v-sheet>
+        <v-sheet
+          :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
+          v-if="stream"
+        >
+          <v-toolbar class="transparent" rounded v-if="stream.role === 'stream:owner'" flat>
+            <v-app-bar-nav-icon style="pointer-events: none">
+              <v-icon>{{ stream.isPublic ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
+            </v-app-bar-nav-icon>
+            <v-toolbar-title>
+              {{ stream.isPublic ? 'Public stream' : 'Private stream.' }}
+            </v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-switch
+              inset
+              class="mt-4"
+              v-model="stream.isPublic"
+              :loading="swapPermsLoading"
+              @click="changeVisibility"
+            ></v-switch>
+          </v-toolbar>
+          <v-card-text v-if="stream.isPublic" class="pt-2">
+            This stream is public. This means that anyone with the link can view and read data from
+            it.
+          </v-card-text>
+          <v-card-text v-if="!stream.isPublic" class="pt-2">
+            This stream is private. This means that only registered persons that you've explicitely
+            added can view it.
+          </v-card-text>
+        </v-sheet>
+        <v-sheet v-if="stream">
+          <v-toolbar flat>
+            <!--             <v-app-bar-nav-icon style="pointer-events: none">
+              <v-icon>mdi-account-multiple</v-icon>
+            </v-app-bar-nav-icon> -->
+            <v-toolbar-title>
+              <user-avatar
+                v-for="collab in stream.collaborators.slice(
+                  0,
+                  stream.collaborators.length > 5 ? 4 : 5
+                )"
+                :id="collab.id"
+                :key="collab.id"
+                :size="30"
+                :avatar="collab.avatar"
+                :name="collab.name"
+              ></user-avatar>
+            </v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn
+              color="primary"
+              text
+              rounded
+              :to="`/streams/${$route.params.streamId}/collaborators`"
+            >
+              Manage
+            </v-btn>
+          </v-toolbar>
+          <v-toolbar flat v-if="!stream.isPublic">
+            <v-app-bar-nav-icon style="pointer-events: none">
+              <v-icon>mdi-email</v-icon>
+            </v-app-bar-nav-icon>
+            <v-toolbar-title>Someone not here?</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text rounded @click="showStreamInviteDialog()">
+              Send Invite
+            </v-btn>
+          </v-toolbar>
+        </v-sheet>
+      </v-card>
+    </v-dialog>
+    <stream-invite-dialog ref="streamInviteDialog" :stream-id="$route.params.streamId" />
   </v-container>
 </template>
 
@@ -277,7 +404,8 @@ export default {
   components: {
     UserAvatar: () => import('@/components/UserAvatar'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
-    BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog')
+    BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog'),
+    StreamInviteDialog: () => import('@/components/dialogs/StreamInviteDialog')
   },
   data() {
     return {
@@ -286,8 +414,9 @@ export default {
       commitSnackbar: false,
       commitSnackbarInfo: {},
       editStreamDialog: false,
-      dialogShare: false,
-      branchMenuOpen: false
+      shareStream: false,
+      branchMenuOpen: false,
+      swapPermsLoading: false
     }
   },
   apollo: {
@@ -373,6 +502,16 @@ export default {
     }
   },
   computed: {
+    streamUrl() {
+      return `${window.location.origin}/streams/${this.$route.params.streamId}`
+    },
+    parsedDescription() {
+      if (!this.stream || !this.stream.description) return 'No description provided.'
+      return this.stream.description.replace(
+        /\[(.+?)\]\((https?:\/\/[a-zA-Z0-9/.(]+?)\)/g,
+        '<a href="$2" class="text-decoration-none" target="_blank">$1</a>'
+      )
+    },
     loggedIn() {
       return localStorage.getItem('uuid') !== null
     },
@@ -400,6 +539,8 @@ export default {
       // Ensures branch menu is open when navigating to a branch url
       if (this.$route.name.toLowerCase().includes('branch') && !this.branchMenuOpen)
         this.branchMenuOpen = true
+
+      this.shareStream = false
     }
   },
   mounted() {
@@ -420,6 +561,47 @@ export default {
     }
   },
   methods: {
+    copyToClipboard(e) {
+      e.target.select()
+      document.execCommand('copy')
+    },
+    openShareStreamDialog() {
+      this.shareStream = true
+      setTimeout(
+        function () {
+          // console.log(this.$refs.streamUrl.$refs.input)
+          this.$refs.streamUrl.$refs.input.select()
+          document.execCommand('copy')
+        }.bind(this),
+        100
+      )
+    },
+    showStreamInviteDialog() {
+      this.$refs.streamInviteDialog.show()
+    },
+    async changeVisibility() {
+      this.swapPermsLoading = true
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation editDescription($input: StreamUpdateInput!) {
+              streamUpdate(stream: $input)
+            }
+          `,
+          variables: {
+            input: {
+              id: this.$route.params.streamId,
+              isPublic: this.stream.isPublic
+            }
+          }
+        })
+      } catch (e) {
+        console.log(e)
+        this.stream.isPublic = !this.stream.isPublic
+      }
+      this.swapPermsLoading = false
+      this.$apollo.queries.stream.refetch()
+    },
     refetchBranches() {
       this.$apollo.queries.branchQuery.refetch()
     },

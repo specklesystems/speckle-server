@@ -211,6 +211,10 @@ export default {
         }
       })
     }
+  },
+  mounted(){
+    if(this.$route.params.branchName === 'globals')
+      this.$router.push(`/streams/${this.$route.params.streamId}/globals`)
   }
 }
 </script>
