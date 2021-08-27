@@ -103,9 +103,11 @@
       </v-col>
     </v-row>
     <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
-      <v-col cols="12" class="pt-10">
-        <error-block :message="'Commit not found'" />
-      </v-col>
+        
+      <error-placeholder error-type="404">
+        <h2>Commit {{$route.params.commitId}} not found.</h2>
+      </error-placeholder>
+
     </v-row>
     <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
   </div>
@@ -124,7 +126,7 @@ export default {
     ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
     Renderer: () => import('@/components/Renderer'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
-    ErrorBlock: () => import('@/components/ErrorBlock')
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
   },
   data: () => ({
     loadedModel: false,

@@ -24,7 +24,7 @@
           <v-container style="max-width: 500px">
             <slot name="actions">
               <v-list rounded class="transparent">
-                <v-list-item link class="primary mb-4" dark to="/">
+                <v-list-item link class="primary mb-4 no-overlay" dark :to="`${$route.params.streamId ? '/streams/' + $route.params.streamId : '/'}`">
                   <v-list-item-icon>
                     <v-icon>mdi-home</v-icon>
                   </v-list-item-icon>
@@ -53,3 +53,11 @@ export default {
   methods: {}
 }
 </script>
+<style scoped>
+.no-overlay.v-list-item--active::before {
+  opacity: 0 !important;
+}
+.no-overlay.v-list-item--active {
+  color: white !important;
+}
+</style>

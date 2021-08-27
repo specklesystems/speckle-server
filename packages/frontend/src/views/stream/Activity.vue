@@ -109,7 +109,6 @@ export default {
         }
         return prev
       }, [])
-      console.log(groupedActivity)
       this.groupedActivity = groupedActivity
     },
     infiniteHandler($state) {

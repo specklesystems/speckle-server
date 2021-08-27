@@ -1,11 +1,15 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card :loading="loading">
-      <template slot="progress">
-        <v-progress-linear indeterminate></v-progress-linear>
-      </template>
-      <v-card-title>New Branch</v-card-title>
-      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
+  <v-dialog v-model="showDialog" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
+    <v-card>
+      <v-toolbar color="primary" dark>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-source-branch</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>New Branch</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+      </v-toolbar>
+      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="submit">
         <v-card-text>
           <v-text-field
             v-model="name"
@@ -31,7 +35,7 @@ import gql from 'graphql-tag'
 export default {
   data() {
     return {
-      dialog: false,
+      showDialog: false,
       streamId: null,
       branchNames: [],
       valid: false,
@@ -54,32 +58,12 @@ export default {
     }
   },
   computed: {
-    show: {
-      get() {
-        return this.dialog
-      },
-      set(value) {
-        this.dialog = value
-        if (value === false) {
-          this.cancel()
-        }
-      }
-    }
   },
   methods: {
-    open(streamId, branchNames) {
-      this.dialog = true
-      if (this.$refs.form) this.$refs.form.resetValidation()
-
-      this.branchNames = branchNames
-      this.streamId = streamId
-
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve
-        this.reject = reject
-      })
+    show() {
+      this.showDialog = true
     },
-    async agree() {
+    async submit() {
       if (!this.$refs.form.validate()) return
 
       this.loading = true
@@ -92,26 +76,17 @@ export default {
         `,
         variables: {
           params: {
-            streamId: this.streamId,
+            streamId: this.$route.params.streamId,
             name: this.name,
             description: this.description
           }
         }
       })
       this.loading = false
-
-      this.resolve({
-        result: true,
-        name: this.name
-      })
-      this.dialog = false
+      this.showDialog = false
+      this.$emit('refetch-branches')
+      this.$router.push(`/streams/${this.$route.params.streamId}/branches/${this.name}`)
     }
-  },
-  cancel() {
-    this.resolve({
-      result: false
-    })
-    this.dialog = false
   }
 }
 </script>

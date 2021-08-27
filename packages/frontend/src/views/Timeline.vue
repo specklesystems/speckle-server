@@ -63,7 +63,7 @@
         </div>
       </v-col>
 
-      <v-col cols="12" lg="9" v-else-if="timeline && timeline.items.length > 0" class="pr-5">
+      <v-col cols="12" lg="8" v-else-if="timeline && timeline.items.length > 0" class="pr-2">
         <div>
           <div v-if="timeline" key="activity-list">
             <v-timeline align-top dense>
@@ -97,7 +97,7 @@
           </span>
         </div>
       </v-col>
-      <v-col cols="12" lg="3" xl="3" v-show="$vuetify.breakpoint.lgAndUp" class="mt-7">
+      <v-col cols="12" lg="4" v-show="$vuetify.breakpoint.lgAndUp" class="mt-7">
         <latest-blogposts></latest-blogposts>
         <v-card rounded="lg" class="mt-2">
           <v-card-text class="caption">

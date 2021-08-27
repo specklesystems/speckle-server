@@ -226,7 +226,7 @@
                           [commit deleted]
                         </span>
                       </div>
-                      <div v-if="activityItem.info.commit.message" class="mt-3 body-1">
+                      <div v-if="activityItem.info.commit && activityItem.info.commit.message" class="mt-3 body-1">
                         {{ activityItem.info.commit.message }}
                       </div>
                       <!-- <div class="mt-3 body-1">
@@ -518,40 +518,42 @@ export default {
 
       //UPDATED
       let changes = ''
-      for (const [key] of Object.entries(activity.info.new)) {
-        if (
-          activity.info.old[key] !== undefined &&
-          activity.info.new[key] !== activity.info.old[key]
-        ) {
-          if (key === 'name')
-            changes +=
-              '<p>✏️ Renamed from <i><del>' +
-              activity.info.old[key] +
-              '</del></i> to <i>' +
-              activity.info.new[key] +
-              '</i></p>'
-          if (key === 'description') {
-            let oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
-            changes +=
-              '<p>📋 Description changed from <i><del>' +
-              this.truncate(oldDesc) +
-              '</del></i> to <i>' +
-              this.truncate(activity.info.new[key]) +
-              '</ib></p>'
+      if (activity.info.new) {
+        for (const [key] of Object.entries(activity.info.new)) {
+          if (
+            activity.info.old[key] !== undefined &&
+            activity.info.new[key] !== activity.info.old[key]
+          ) {
+            if (key === 'name')
+              changes +=
+                '<p>✏️ Renamed from <i><del>' +
+                activity.info.old[key] +
+                '</del></i> to <i>' +
+                activity.info.new[key] +
+                '</i></p>'
+            if (key === 'description') {
+              let oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
+              changes +=
+                '<p>📋 Description changed from <i><del>' +
+                this.truncate(oldDesc) +
+                '</del></i> to <i>' +
+                this.truncate(activity.info.new[key]) +
+                '</ib></p>'
+            }
+            if (key === 'message') {
+              let oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
+              changes +=
+                '<p>📋 Message changed from <i><del>' +
+                this.truncate(oldDesc) +
+                '</del></i> to <i>' +
+                this.truncate(activity.info.new[key]) +
+                '</ib></p>'
+            }
+            if (key === 'isPublic' && activity.info.new[key])
+              changes += '<p>👀 Stream is now <i>public</i></p>'
+            if (key === 'isPublic' && !activity.info.new[key])
+              changes += '<p>👀 Stream is now <i>private</i></p>'
           }
-          if (key === 'message') {
-            let oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
-            changes +=
-              '<p>📋 Message changed from <i><del>' +
-              this.truncate(oldDesc) +
-              '</del></i> to <i>' +
-              this.truncate(activity.info.new[key]) +
-              '</ib></p>'
-          }
-          if (key === 'isPublic' && activity.info.new[key])
-            changes += '<p>👀 Stream is now <i>public</i></p>'
-          if (key === 'isPublic' && !activity.info.new[key])
-            changes += '<p>👀 Stream is now <i>private</i></p>'
         }
       }
 

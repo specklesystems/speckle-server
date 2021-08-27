@@ -25,7 +25,6 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn text small color="error" @click="showDelete = true">Delete</v-btn>
-          <v-btn @click="cancel">Cancel</v-btn>
           <v-btn color="primary" :disabled="!valid" type="submit">Save</v-btn>
         </v-card-actions>
       </v-form>

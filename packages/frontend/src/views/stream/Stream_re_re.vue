@@ -10,10 +10,9 @@
       v-if="!error"
     >
       <!-- Toolbar holds link to stream home page -->
-      <v-app-bar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0" flat>
-        <v-toolbar-title>
+      <v-app-bar v-if="stream" style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0" flat>
+        <v-toolbar-title >
           <router-link
-            v-if="stream"
             :to="`/streams/${stream.id}`"
             class="text-decoration-none space-grotesk"
             v-tooltip="stream.name"
@@ -27,10 +26,11 @@
           <v-icon v-if="streamNav">mdi-chevron-left</v-icon>
         </v-app-bar-nav-icon>
       </v-app-bar>
+      <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
 
       <!-- Top padding hack -->
       <div style="display: block; height: 65px"></div>
-      <div class="px-4 mt-2" v-if="!loggedIn" >
+      <div class="px-4 mt-2" v-if="!loggedIn">
         <v-btn large block color="primary" to="/authn/login">Log In</v-btn>
       </div>
       <!-- Various Stream Details -->
@@ -126,6 +126,7 @@
             link
             v-tooltip.bottom="'Create a new branch to help categorise your commits.'"
             v-if="stream.role !== 'stream:reviewer'"
+            @click="showNewBranchDialog()"
           >
             <v-list-item-icon>
               <v-icon small style="padding-top: 10px">mdi-plus-box</v-icon>
@@ -138,9 +139,11 @@
             </v-list-item-content>
           </v-list-item>
           <!-- <v-divider class="mb-2"></v-divider> -->
+
           <v-list-item
-            v-for="branch in sortedBranches"
-            :key="branch.name"
+            v-if="!$apollo.queries.branchQuery.loading"
+            v-for="(branch, i) in sortedBranches"
+            :key="i"
             link
             :to="`/streams/${stream.id}/branches/${branch.name}`"
           >
@@ -159,6 +162,7 @@
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
+          <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
           <v-divider class="mb-2"></v-divider>
         </v-list-group>
 
@@ -237,7 +241,9 @@
         <!-- child routes can teleport buttons here -->
       </portal-target>
       <v-toolbar-items>
-        <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">Log In</v-btn>
+        <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">
+          Log In
+        </v-btn>
         <v-btn elevation="0" v-if="loggedIn && stream">
           <v-icon small class="mr-2">mdi-share-variant</v-icon>
           <v-icon small class="mr-2 hidden-sm-and-down" v-if="!stream.isPublic">mdi-lock</v-icon>
@@ -250,7 +256,7 @@
     <!-- Stream Child Routes -->
     <v-container style="padding-left: 56px" fluid pt-0 pr-0 v-if="!error">
       <transition name="fade">
-        <router-view v-if="stream"></router-view>
+        <router-view v-if="stream" @refetch-branches="refetchBranches"></router-view>
       </transition>
     </v-container>
     <v-container style="padding-left: 56px" v-else>
@@ -258,19 +264,20 @@
         <h2>{{ error }}</h2>
       </error-placeholder>
     </v-container>
+
+    <branch-new-dialog ref="branchDialog" @refetch-branches="refetchBranches" />
   </v-container>
 </template>
 
 <script>
-import ErrorBlock from '@/components/ErrorBlock'
 import gql from 'graphql-tag'
 
 export default {
   name: 'Stream',
   components: {
-    ErrorBlock,
     UserAvatar: () => import('@/components/UserAvatar'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    BranchNewDialog: () => import('@/components/dialogs/BranchNewDialog')
   },
   data() {
     return {
@@ -295,16 +302,6 @@ export default {
             updatedAt
             description
             isPublic
-            branches {
-              totalCount
-              items {
-                name
-                description
-                commits {
-                  totalCount
-                }
-              }
-            }
             commits {
               totalCount
             }
@@ -326,6 +323,30 @@ export default {
       error(err) {
         if (err.message) this.error = err.message.replace('GraphQL error: ', '')
         else this.error = err
+      }
+    },
+    branchQuery: {
+      query: gql`
+        query Stream($id: String!) {
+          branchQuery: stream(id: $id) {
+            id
+            branches {
+              totalCount
+              items {
+                name
+                description
+                commits {
+                  totalCount
+                }
+              }
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          id: this.$route.params.streamId
+        }
       }
     },
     $subscribe: {
@@ -357,15 +378,15 @@ export default {
     },
     sortedBranches() {
       // TODO: group by `/` (for later)
-      if (!this.stream) return
+      if (!this.branchQuery) return
       return [
-        this.stream.branches.items.find((b) => b.name === 'main'),
-        ...this.stream.branches.items.filter((b) => b.name !== 'main' && b.name !== 'globals')
+        this.branchQuery.branches.items.find((b) => b.name === 'main'),
+        ...this.branchQuery.branches.items.filter((b) => b.name !== 'main' && b.name !== 'globals')
       ]
     },
     branchesTotalCount() {
-      if (!this.stream) return 0
-      return this.stream.branches.items.filter((b) => b.name !== 'globals').length
+      if (!this.branchQuery) return 0
+      return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
     },
     userId() {
       return localStorage.getItem('uuid')
@@ -399,6 +420,12 @@ export default {
     }
   },
   methods: {
+    refetchBranches() {
+      this.$apollo.queries.branchQuery.refetch()
+    },
+    showNewBranchDialog() {
+      this.$refs.branchDialog.show()
+    },
     formatDate(d) {
       if (!this.stream) return null
       let date = new Date(d)

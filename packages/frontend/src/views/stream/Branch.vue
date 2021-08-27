@@ -10,12 +10,27 @@
             <v-icon small class="mr-1">mdi-source-branch</v-icon>
             <span class="space-grotesk" style="max-width: 80%">{{ stream.branch.name }}</span>
             <span class="caption ml-2 mb-2 pb-2">{{ stream.branch.description }}</span>
+            <v-chip
+              class="ml-2 pl-2"
+              small
+              v-tooltip="
+                `Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`
+              "
+            >
+              <v-icon small>mdi-source-commit</v-icon>
+              {{ stream.branch.commits.totalCount }}
+            </v-chip>
           </div>
         </portal>
         <portal to="streamActionsBar">
           <v-btn
             elevation="0"
-            v-if="loggedInUserId && stream && stream.role !== 'stream:reviewer' && stream.branch.name !== 'main'"
+            v-if="
+              loggedInUserId &&
+              stream &&
+              stream.role !== 'stream:reviewer' &&
+              stream.branch.name !== 'main'
+            "
             color="primary"
             small
             v-tooltip="'Edit branch'"
@@ -29,7 +44,7 @@
         <branch-edit-dialog ref="editBranchDialog" />
 
         <div style="height: 60vh" v-if="latestCommitObjectUrl">
-          <renderer :object-url="latestCommitObjectUrl" show-selection-helper/>
+          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
 
         <v-list class="pa-0 ma-0" v-if="stream.branch.commits.items.length > 0">
@@ -51,7 +66,7 @@
 
           <!-- TODO: pagination -->
 
-<!--           <v-list-item v-if="stream">
+          <!--           <v-list-item v-if="stream">
             <v-list-item-icon class="pl-4" style="width: 40px">
               <v-avatar
                 :color="`grey ${this.$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
@@ -67,7 +82,7 @@
               </v-list-item-title>
             </v-list-item-content>
           </v-list-item> -->
-<!--           <v-list-item v-if="stream">
+          <!--           <v-list-item v-if="stream">
             <v-list-item-icon class="pl-4" style="width: 40px">
               <v-avatar
                 :color="`grey ${this.$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
@@ -86,16 +101,14 @@
         </v-list>
       </v-col>
 
-      <no-data-placeholder
-        v-if="stream && stream.branch.commits.totalCount === 0"
-      >
-      <h2 class="space-grotesk">This branch has no commits.</h2>
-    </no-data-placeholder>
+      <no-data-placeholder v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0">
+        <h2 class="space-grotesk">This branch has no commits.</h2>
+      </no-data-placeholder>
     </v-row>
-    <v-row v-if="!$apollo.loading && !stream.branch" justify="center">
-      <v-col cols="12" class="pt-10">
-        <error-block :message="'Branch ' + $route.params.branchName + ' does not exist'" />
-      </v-col>
+    <v-row v-if="!$apollo.loading && (error || stream.branch === null)">
+      <error-placeholder error-type="404">
+        <h2>{{ error || `Branch ${$route.params.branchName} does not exist.`}}</h2>
+      </error-placeholder>
     </v-row>
   </div>
 </template>
@@ -109,12 +122,13 @@ export default {
     ListItemCommit: () => import('@/components/ListItemCommit'),
     BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
-    ErrorBlock: () => import('@/components/ErrorBlock'),
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     Renderer: () => import('@/components/Renderer')
   },
   data() {
     return {
-      dialogEdit: false
+      dialogEdit: false,
+      error: null
     }
   },
   apollo: {
@@ -141,12 +155,17 @@ export default {
         },
         result() {
           this.$apollo.queries.stream.refetch()
+        },
+        error(err) {
+          console.log( err )
+          if (err.message) this.error = err.message.replace('GraphQL error: ', '')
+          else this.error = err
         }
       }
     }
   },
   computed: {
-    loggedInUserId(){
+    loggedInUserId() {
       return localStorage.getItem('uuid')
     },
     streamId() {
@@ -178,6 +197,7 @@ export default {
       this.$refs.editBranchDialog.open(this.stream.branch).then((dialog) => {
         if (!dialog.result) return
         else if (dialog.deleted) {
+          this.$emit('refetch-branches')
           this.$router.push({ path: `/streams/${this.streamId}` })
         } else if (dialog.name !== this.$route.params.branchName) {
           //this.$router.push does not work, refresh entire window
@@ -186,6 +206,7 @@ export default {
             path: `/streams/${this.streamId}/branches/${encodeURIComponent(dialog.name)}`
           })
         } else {
+          this.$emit('refetch-branches')
           this.$apollo.queries.stream.refetch()
         }
       })
