@@ -41,19 +41,14 @@ Give Speckle a try in no time by:
 
 This monorepo is the home of the Speckle v2 web packages:
 
--  [Server](https://github.com/specklesystems/speckle-server/blob/main/packages/server), a nodejs app. Core external dependencies are a Redis and Postgresql db.
+-  [`packages/server`](https://github.com/specklesystems/speckle-server/blob/main/packages/server): the Server, a nodejs app. Core external dependencies are a Redis and Postgresql db.
+- [`packages/frontend`](https://github.com/specklesystems/speckle-server/blob/main/packages/frontend): the Frontend, a static Vue app.
+- [`packages/viewer`](https://github.com/specklesystems/speckle-server/blob/main/packages/viewer): a threejs extension that allows you to display 3D data [![npm version](https://camo.githubusercontent.com/dc69232cc57b77de6554e752dd6dfc60ca0ecdfbe91bdfcbf7c7531a511ec200/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532467669657765722e737667)](https://www.npmjs.com/package/@speckle/viewer)
+- [`packages/objectloader`](https://github.com/specklesystems/speckle-server/blob/main/packages/objectloader): a small js utility class that helps you stream an object and all its sub-components from the Speckle Server API. [![npm version](https://camo.githubusercontent.com/4d4f1e38ce50aaf11b4a3ad8e01ce3eaaa561dc5fd08febbae556f52f1d41097/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532466f626a6563746c6f616465722e737667)](https://www.npmjs.com/package/@speckle/objectloader)
+- [packages/preview-service`](https://github.com/specklesystems/speckle-server/blob/main/packages/preview-service): generates object previews for Speckle Objects headlessly. This package is meant to be called on by the server.
+- [`webhook-service`](https://github.com/specklesystems/speckle-server/tree/main/packages/webhook-service): the Webhook service
 
-- [Frontend](https://github.com/specklesystems/speckle-server/blob/main/packages/frontend), the frontend is a static Vue app.
-
-- [Viewer](https://github.com/specklesystems/speckle-server/blob/main/packages/viewer), a threejs extension that allows you to display 3D data [![npm version](https://camo.githubusercontent.com/dc69232cc57b77de6554e752dd6dfc60ca0ecdfbe91bdfcbf7c7531a511ec200/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532467669657765722e737667)](https://www.npmjs.com/package/@speckle/viewer)
-
-- [Object Loader](https://github.com/specklesystems/speckle-server/blob/main/packages/objectloader), a small js utility class that helps you stream an object and all its sub-components from the Speckle Server API.
-
-  [![npm version](https://camo.githubusercontent.com/4d4f1e38ce50aaf11b4a3ad8e01ce3eaaa561dc5fd08febbae556f52f1d41097/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532466f626a6563746c6f616465722e737667)](https://www.npmjs.com/package/@speckle/objectloader)
-
-- ➡️ [Preview Service](https://github.com/specklesystems/speckle-server/blob/main/packages/preview-service), generates object previews for Speckle Objects headlessly. This package is meant to be called on by the server.
-
-#### Other repos
+### Other repos
 
 Make sure to also check and ⭐️ these other Speckle repositories:
 
