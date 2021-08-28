@@ -95,10 +95,6 @@ const routes = [
             path: 'branches/',
             name: 'branches',
             redirect: 'branches/main',
-            meta: {
-              title: 'Branches | Speckle'
-            },
-            component: () => import('@/views/stream/Branches.vue')
           },
           {
             path: 'branches/:branchName',

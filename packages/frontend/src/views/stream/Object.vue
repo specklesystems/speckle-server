@@ -1,5 +1,5 @@
 <template>
-  <v-row>
+  <v-row no-gutters>
     <portal to="streamTitleBar">
       <div>
         <v-icon small class="mr-1">mdi-database</v-icon>

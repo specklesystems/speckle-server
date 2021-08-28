@@ -178,7 +178,6 @@
 import gql from 'graphql-tag'
 import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/user.gql'
-import UserMenuTop from '../components/UserMenuTop'
 import SearchBar from '../components/SearchBar'
 import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
