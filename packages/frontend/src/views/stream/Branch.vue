@@ -33,11 +33,15 @@
             "
             color="primary"
             small
+            rounded
+            :fab="$vuetify.breakpoint.mdAndDown"
+            dark
             v-tooltip="'Edit branch'"
             @click="editBranch()"
-            rounded
           >
-            <v-icon small class="mr-2">mdi-pencil</v-icon>
+            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+              mdi-pencil
+            </v-icon>
             <span class="hidden-md-and-down">Edit</span>
           </v-btn>
         </portal>
@@ -101,13 +105,15 @@
         </v-list>
       </v-col>
 
-      <no-data-placeholder v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0">
+      <no-data-placeholder
+        v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
+      >
         <h2 class="space-grotesk">This branch has no commits.</h2>
       </no-data-placeholder>
     </v-row>
     <v-row v-if="!$apollo.loading && (error || stream.branch === null)">
       <error-placeholder error-type="404">
-        <h2>{{ error || `Branch ${$route.params.branchName} does not exist.`}}</h2>
+        <h2>{{ error || `Branch ${$route.params.branchName} does not exist.` }}</h2>
       </error-placeholder>
     </v-row>
   </div>
@@ -157,7 +163,7 @@ export default {
           this.$apollo.queries.stream.refetch()
         },
         error(err) {
-          console.log( err )
+          console.log(err)
           if (err.message) this.error = err.message.replace('GraphQL error: ', '')
           else this.error = err
         }
@@ -212,8 +218,8 @@ export default {
       })
     }
   },
-  mounted(){
-    if(this.$route.params.branchName === 'globals')
+  mounted() {
+    if (this.$route.params.branchName === 'globals')
       this.$router.push(`/streams/${this.$route.params.streamId}/globals`)
   }
 }

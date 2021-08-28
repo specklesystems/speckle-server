@@ -135,7 +135,7 @@
             @click="showNewBranchDialog()"
           >
             <v-list-item-icon>
-              <v-icon small style="padding-top: 10px">mdi-plus-box</v-icon>
+              <v-icon small style="padding-top: 10px" class="primary--text" >mdi-plus-box</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>New Branch</v-list-item-title>
@@ -157,7 +157,7 @@
               <v-icon small style="padding-top: 10px" v-if="branch.name !== 'main'">
                 mdi-source-branch
               </v-icon>
-              <v-icon small style="padding-top: 10px" v-else>mdi-star</v-icon>
+              <v-icon small style="padding-top: 10px" class="primary--text" v-else>mdi-star</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>
@@ -250,7 +250,12 @@
         <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">
           Log In
         </v-btn>
-        <v-btn elevation="0" v-if="loggedIn && stream" @click="openShareStreamDialog()" v-tooltip="'Share this stream'">
+        <v-btn
+          elevation="0"
+          v-if="loggedIn && stream"
+          @click="openShareStreamDialog()"
+          v-tooltip="'Share this stream'"
+        >
           <v-icon small class="mr-2">mdi-share-variant</v-icon>
           <v-icon small class="mr-2 xxxhidden-md-and-down" v-if="!stream.isPublic">mdi-lock</v-icon>
           <v-icon small class="mr-2 xxxhidden-md-and-down" v-else>mdi-lock-open</v-icon>
@@ -346,16 +351,23 @@
             This stream is public. This means that anyone with the link can view and read data from
             it.
           </v-card-text>
-          <v-card-text v-if="!stream.isPublic" class="pt-2">
-            This stream is private. This means that only registered persons that you've explicitely
-            added can view it.
+          <v-card-text v-if="!stream.isPublic" class="pt-2 pb-2">
+            This stream is private. This means that only collaborators can access it.
           </v-card-text>
         </v-sheet>
         <v-sheet v-if="stream">
-          <v-toolbar flat>
-            <!--             <v-app-bar-nav-icon style="pointer-events: none">
-              <v-icon>mdi-account-multiple</v-icon>
-            </v-app-bar-nav-icon> -->
+          <v-toolbar
+            flat
+            v-tooltip="
+              `${
+                stream.role !== 'stream:owner'
+                  ? 'You do not have the right access level (' +
+                    stream.role +
+                    ') to add collaborators.'
+                  : ''
+              }`
+            "
+          >
             <v-toolbar-title>
               <user-avatar
                 v-for="collab in stream.collaborators.slice(
@@ -375,24 +387,43 @@
               text
               rounded
               :to="`/streams/${$route.params.streamId}/collaborators`"
+              :disabled="stream.role !== 'stream:owner'"
             >
               Manage
             </v-btn>
           </v-toolbar>
-          <v-toolbar flat v-if="!stream.isPublic">
+          <v-toolbar
+            flat
+            v-if="!stream.isPublic"
+            v-tooltip="
+              `${
+                stream.role !== 'stream:owner'
+                  ? 'You do not have the right access level (' +
+                    stream.role +
+                    ') to invite people to this stream.'
+                  : ''
+              }`
+            "
+          >
             <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>mdi-email</v-icon>
             </v-app-bar-nav-icon>
             <v-toolbar-title>Someone not here?</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-btn color="primary" text rounded @click="showStreamInviteDialog()">
+            <v-btn
+              color="primary"
+              text
+              rounded
+              @click="showStreamInviteDialog()"
+              :disabled="stream.role !== 'stream:owner'"
+            >
               Send Invite
             </v-btn>
           </v-toolbar>
         </v-sheet>
       </v-card>
     </v-dialog>
-    <stream-invite-dialog ref="streamInviteDialog" :stream-id="$route.params.streamId" />
+    <stream-invite-dialog v-if="stream" ref="streamInviteDialog" :stream-id="$route.params.streamId" :stream-name="stream.name"/>
   </v-container>
 </template>
 

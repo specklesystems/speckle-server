@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="showDialog" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
     <v-card>
-      <v-toolbar color="primary" dark>
+      <v-toolbar color="primary" dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>mdi-email</v-icon>
         </v-app-bar-nav-icon>

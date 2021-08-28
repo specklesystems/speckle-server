@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-toolbar color="primary" dark>
+    <v-toolbar color="primary" dark flat>
       <v-app-bar-nav-icon style="pointer-events: none">
         <v-icon>mdi-plus-box</v-icon>
       </v-app-bar-nav-icon>
@@ -88,19 +88,19 @@
           <span class="caption">{{ user.name }}</span>
         </v-chip>
       </v-card-text>
-        <v-card-actions class="pb-3">
-          <v-btn
-            color="primary"
-            block
-            large
-            :disabled="!valid"
-            :loading="isLoading"
-            elevation="0"
-            type="submit"
-          >
-            Create Stream
-          </v-btn>
-        </v-card-actions>
+      <v-card-actions class="pb-3">
+        <v-btn
+          color="primary"
+          block
+          large
+          :disabled="!valid"
+          :loading="isLoading"
+          elevation="0"
+          type="submit"
+        >
+          Create Stream
+        </v-btn>
+      </v-card-actions>
     </v-form>
   </v-card>
 </template>
