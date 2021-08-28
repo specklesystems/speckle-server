@@ -24,6 +24,7 @@
         />
         <v-textarea v-model="description" rows="1" row-height="15" label="Description (optional)" />
         <v-switch
+          inset
           v-model="isPublic"
           v-tooltip="
             isPublic

@@ -169,7 +169,6 @@ export default {
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     ListItemStream: () => import('@/components/ListItemStream'),
-    GettingStartedWizard: () => import('@/components/GettingStartedWizard'),
     MainNavActions: () => import('@/components/MainNavActions')
   },
   apollo: {

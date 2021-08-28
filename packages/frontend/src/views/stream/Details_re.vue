@@ -92,7 +92,6 @@ export default {
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     Renderer: () => import('@/components/Renderer'),
-    ErrorBlock: () => import('@/components/ErrorBlock'),
     ListItemCommit: () => import('@/components/ListItemCommit'),
     PreviewImage: () => import('@/components/PreviewImage'),
     StreamActivity: () => import('@/views/stream/Activity')

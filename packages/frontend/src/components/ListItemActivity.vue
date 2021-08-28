@@ -82,7 +82,7 @@
             <v-container>
               <v-row class="align-center">
                 <router-link :to="url" class="title">
-                  <v-icon color="primary" small>mdi-compare-vertical</v-icon>
+                  <v-icon color="primary" small>mdi-folder</v-icon>
                   {{ stream.name }}
                 </router-link>
                 <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span>

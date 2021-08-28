@@ -7,7 +7,7 @@
       v-model="activityNav"
       style="left: 56px"
     >
-      <main-nav-actions :open-new-stream="newStreamDialog"/>
+      <main-nav-actions :open-new-stream="newStreamDialog" />
 
       <v-list v-if="streams && streams.items.length > 0" color="transparent" dense>
         <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
@@ -86,18 +86,44 @@
         </div>
       </v-col>
       <v-col v-else cols="12">
-        <div class="ma-5 headline justify-center text-center">
-          🎈
-          <br />
-          Your feed is empty!
+        <!-- <getting-started-wizard @newstream="newStreamDialog++" /> -->
+        <no-data-placeholder v-if="user">
+          <h2>Welcome {{user.name.split(' ')[0]}}!</h2>
+          <p class="caption">
+            Once you will create a stream and start sending some data, your activity will show up
+            here.
+          </p>
 
-          <br />
-          <span class="subtitle-2 font-italic">
-            Try creating a stream, sending data etc and your activity will show up here.
-          </span>
-        </div>
+          <template v-slot:actions>
+            <v-list rounded class="transparent">
+              <v-list-item
+                link
+                class="primary mb-4"
+                dark
+                @click="newStreamDialog++"
+              >
+                <v-list-item-icon>
+                  <v-icon>mdi-plus-box</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Create a new stream!</v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    Streams are like folders, or data repositories.
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </template>
+        </no-data-placeholder>
       </v-col>
-      <v-col cols="12" lg="4" v-show="$vuetify.breakpoint.lgAndUp" class="mt-7">
+
+      <v-col
+        cols="12"
+        lg="4"
+        v-show="$vuetify.breakpoint.lgAndUp"
+        class="mt-7"
+        v-if="timeline && timeline.items.length > 0"
+      >
         <latest-blogposts></latest-blogposts>
         <v-card rounded="lg" class="mt-2">
           <v-card-text class="caption">
@@ -106,8 +132,8 @@
               <a href="https://speckle.systems" target="_blank" class="text-decoration-none">
                 Speckle
               </a>
-              we're working tirelessly to bring you the best open source data platform for AEC.
-              Tell us what you think on our
+              we're working tirelessly to bring you the best open source data platform for AEC. Tell
+              us what you think on our
               <a href="https://speckle.community" target="_blank" class="text-decoration-none">
                 forum
               </a>
@@ -134,11 +160,11 @@ import gql from 'graphql-tag'
 export default {
   name: 'Timeline',
   components: {
-    InfiniteLoading:()=>import( 'vue-infinite-loading'),
-    ListItemActivity:()=>import( '@/components/ListItemActivity'),
-    GettingStartedWizard:()=>import( '@/components/GettingStartedWizard'),
+    InfiniteLoading: () => import('vue-infinite-loading'),
+    ListItemActivity: () => import('@/components/ListItemActivity'),
     LatestBlogposts: () => import('@/components/LatestBlogposts'),
-    MainNavActions: () => import('@/components/MainNavActions')
+    MainNavActions: () => import('@/components/MainNavActions'),
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
   },
   props: {
     type: String
@@ -159,6 +185,9 @@ export default {
     )
   },
   apollo: {
+    user: {
+      query: gql`query { user { id name } } `
+    },
     timeline: {
       query: gql`
         query($cursor: DateTime) {
@@ -181,6 +210,7 @@ export default {
           }
         }
       `,
+      fetchPolicy: 'cache-and-network',
       update(data) {
         return data.user.timeline
       },

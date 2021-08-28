@@ -12,29 +12,69 @@
           <v-container style="max-width: 500px">
             <slot name="actions">
               <v-list rounded class="transparent">
-                <v-list-item
-                  link
-                  class="primary mb-4"
-                  dark
-                  href="https://speckle.systems/features/connectors"
-                  target="_blank"
-                >
-                  <v-list-item-icon>
-                    <v-icon>mdi-swap-horizontal</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>Connectors</v-list-item-title>
-                    <v-list-item-subtitle class="caption">
-                      Learn how to send data from various software.
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
+                  <v-list-item
+                    v-if="user && !hasManager"
+                    href="https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe"
+                    link
+                    class="primary mb-4"
+                    dark
+                  >
+                    <v-list-item-icon>
+                      <v-icon class="pt-5">mdi-download</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title>Install Connectors</v-list-item-title>
+
+                      <p class="caption pb-0 mb-0">
+                        Download Speckle Manager to install connectors for your design applications and start sending data in no time!
+                      </p>
+                    </v-list-item-content>
+                  </v-list-item>
+                  <v-list-item
+                    v-if="user && !hasManager"
+                    :href="`speckle://accounts?add_server_account=${this.rootUrl}`"
+                    link
+                    :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
+                  >
+                    <v-list-item-icon>
+                      <v-icon class="pt-4">mdi-account-plus</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title>Authenticate</v-list-item-title>
+
+                      <p class="caption pb-0 mb-0">
+                        Link up your Speckle account with the desktop connectors you have installed.
+                      </p>
+                    </v-list-item-content>
+                  </v-list-item>
+
+                  <v-list-item
+                    link
+                    :class="`${!hasManager ? 'primary' : ''} mb-4 grey ${
+                      $vuetify.theme.dark ? 'darken-4' : 'lighten-4'
+                    }`"
+                    dark
+                    href="https://speckle.systems/features/connectors"
+                    target="_blank"
+                    v-if="hasManager"
+                  >
+                    <v-list-item-icon>
+                      <v-icon>mdi-swap-horizontal</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title>Connectors Guides</v-list-item-title>
+                      <v-list-item-subtitle class="caption">
+                        Learn how to send data from various software.
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
 
                 <v-list-item
                   link
                   :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
                   href="https://speckle.systems/tutorials"
                   target="_blank"
+                  v-if="hasManager"
                 >
                   <v-list-item-icon>
                     <v-icon>mdi-school</v-icon>
@@ -52,6 +92,7 @@
                   :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
                   href="https://speckle.guide"
                   target="_blank"
+                  v-if="hasManager"
                 >
                   <v-list-item-icon>
                     <v-icon>mdi-book-open-variant</v-icon>
@@ -76,12 +117,13 @@
                   <v-list-item-content>
                     <v-list-item-title>Community Forum</v-list-item-title>
                     <v-list-item-subtitle class="caption">
-                      Our community is friendly and here to help!
+                      Need help? We're here for you!
                     </v-list-item-subtitle>
                   </v-list-item-content>
                 </v-list-item>
               </v-list>
             </slot>
+            <slot name="append"></slot>
           </v-container>
         </v-card>
       </v-col>
@@ -89,8 +131,32 @@
   </v-container>
 </template>
 <script>
+import gql from 'graphql-tag'
 export default {
-  computed: {},
+  apollo: {
+    user: {
+      query: gql`
+        query {
+          user {
+            id
+            authorizedApps {
+              id
+              name
+            }
+          }
+        }
+      `
+    }
+  },
+  computed: {
+    rootUrl() {
+      return window.location.origin
+    },
+    hasManager() {
+      if (!this.user) return
+      return this.user.authorizedApps.filter((app) => app.id === 'sdm').length !== 0
+    }
+  },
   methods: {}
 }
 </script>
