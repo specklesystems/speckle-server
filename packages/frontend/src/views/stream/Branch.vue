@@ -1,50 +1,46 @@
 <template>
   <div>
-    <v-row>
+    <portal to="streamTitleBar">
+      <div>
+        <v-icon small class="mr-1">mdi-source-branch</v-icon>
+        <span class="space-grotesk" style="max-width: 80%">{{ stream.branch.name }}</span>
+        <span class="caption ml-2 mb-2 pb-2">{{ stream.branch.description }}</span>
+        <v-chip
+          class="ml-2 pl-2"
+          small
+          v-tooltip="`Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`"
+        >
+          <v-icon small>mdi-source-commit</v-icon>
+          {{ stream.branch.commits.totalCount }}
+        </v-chip>
+      </div>
+    </portal>
+    <portal to="streamActionsBar">
+      <v-btn
+        elevation="0"
+        v-if="
+          loggedInUserId &&
+          stream &&
+          stream.role !== 'stream:reviewer' &&
+          stream.branch.name !== 'main'
+        "
+        color="primary"
+        small
+        rounded
+        :fab="$vuetify.breakpoint.mdAndDown"
+        dark
+        v-tooltip="'Edit branch'"
+        @click="editBranch()"
+      >
+        <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">mdi-pencil</v-icon>
+        <span class="hidden-md-and-down">Edit</span>
+      </v-btn>
+    </portal>
+    <v-row no-gutters>
       <v-col v-if="$apollo.loading">
         <v-skeleton-loader type="article, article"></v-skeleton-loader>
       </v-col>
       <v-col v-else-if="stream && stream.branch" cols="12" class="pa-0 ma-0">
-        <portal to="streamTitleBar">
-          <div>
-            <v-icon small class="mr-1">mdi-source-branch</v-icon>
-            <span class="space-grotesk" style="max-width: 80%">{{ stream.branch.name }}</span>
-            <span class="caption ml-2 mb-2 pb-2">{{ stream.branch.description }}</span>
-            <v-chip
-              class="ml-2 pl-2"
-              small
-              v-tooltip="
-                `Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`
-              "
-            >
-              <v-icon small>mdi-source-commit</v-icon>
-              {{ stream.branch.commits.totalCount }}
-            </v-chip>
-          </div>
-        </portal>
-        <portal to="streamActionsBar">
-          <v-btn
-            elevation="0"
-            v-if="
-              loggedInUserId &&
-              stream &&
-              stream.role !== 'stream:reviewer' &&
-              stream.branch.name !== 'main'
-            "
-            color="primary"
-            small
-            rounded
-            :fab="$vuetify.breakpoint.mdAndDown"
-            dark
-            v-tooltip="'Edit branch'"
-            @click="editBranch()"
-          >
-            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
-              mdi-pencil
-            </v-icon>
-            <span class="hidden-md-and-down">Edit</span>
-          </v-btn>
-        </portal>
         <branch-edit-dialog ref="editBranchDialog" />
 
         <div style="height: 60vh" v-if="latestCommitObjectUrl">

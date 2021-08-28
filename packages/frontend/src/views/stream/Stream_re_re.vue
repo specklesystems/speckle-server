@@ -224,11 +224,11 @@
     </v-navigation-drawer>
 
     <!-- Stream Page App Bar -->
-    <v-app-bar app style="padding-left: 56px" flat v-if="!error">
+    <v-app-bar app style="padding-left: 56px;" flat v-if="!error">
       <v-app-bar-nav-icon @click="streamNav = !streamNav" v-if="!streamNav">
         <v-icon v-if="streamNav">mdi-chevron-left</v-icon>
       </v-app-bar-nav-icon>
-      <v-toolbar-title>
+      <v-toolbar-title class="pl-0">
         <router-link
           v-if="stream"
           v-show="!streamNav && !$vuetify.breakpoint.smAndDown"
@@ -246,7 +246,7 @@
       <portal-target name="streamActionsBar">
         <!-- child routes can teleport buttons here -->
       </portal-target>
-      <v-toolbar-items>
+      <v-toolbar-items style="margin-right: -20px;">
         <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">
           Log In
         </v-btn>
@@ -285,7 +285,7 @@
             <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>mdi-share-variant</v-icon>
             </v-app-bar-nav-icon>
-            <v-toolbar-title>Engage Multiplayer Mode</v-toolbar-title>
+            <v-toolbar-title>Engage Multiplayer Mode!</v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn icon @click="shareStream = false"><v-icon>mdi-close</v-icon></v-btn>
           </v-toolbar>
@@ -380,7 +380,7 @@
                 )"
                 :id="collab.id"
                 :key="collab.id"
-                :size="30"
+                :size="20"
                 :avatar="collab.avatar"
                 :name="collab.name"
               ></user-avatar>
@@ -396,8 +396,11 @@
               Manage
             </v-btn>
           </v-toolbar>
+        </v-sheet>
+        <v-sheet v-if="stream" :xxxclass="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`">
           <v-toolbar
             flat
+            class="transparent"
             v-if="!stream.isPublic"
             v-tooltip="
               `${
@@ -412,7 +415,7 @@
             <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>mdi-email</v-icon>
             </v-app-bar-nav-icon>
-            <v-toolbar-title>Someone not here?</v-toolbar-title>
+            <v-toolbar-title>Missing someone?</v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn
               color="primary"

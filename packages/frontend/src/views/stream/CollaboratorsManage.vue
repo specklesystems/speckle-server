@@ -2,7 +2,7 @@
   <v-container style="max-width: 768px;">
     <portal to="streamTitleBar">
       <div>
-        <v-icon small class="mr-2">mdi-account-multiple</v-icon>
+        <v-icon small class="mr-2 hidden-xs-only">mdi-account-multiple</v-icon>
         <span class="space-grotesk">Stream Collaborators</span>
       </div>
     </portal>

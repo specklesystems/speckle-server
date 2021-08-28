@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-row>
+    <v-row no-gutters>
       <v-col v-if="$apollo.queries.stream.loading" cols="12" class="ma-0 pa-0">
         <v-card>
           <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>

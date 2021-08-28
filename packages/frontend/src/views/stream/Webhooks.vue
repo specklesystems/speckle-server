@@ -48,7 +48,7 @@
     <v-container style="max-width: 768px" v-if="!$apollo.loading && webhooks.length !== 0">
       <portal to="streamTitleBar">
         <div>
-          <v-icon small class="mr-2">mdi-webhook</v-icon>
+          <v-icon small class="mr-2 hidden-xs-only">mdi-webhook</v-icon>
           <span class="space-grotesk">Webhooks</span>
         </div>
       </portal>
@@ -211,7 +211,7 @@
 
         <v-list v-if="selectedWebhook">
           <v-subheader>Latest delivery reports:</v-subheader>
-          <v-list-item v-for="sr in selectedWebhook.history.items">
+          <v-list-item v-for="(sr, index) in selectedWebhook.history.items" :key="index">
             <v-list-item-icon>
               <v-icon :class="`${sr.status === 2 ? 'green--text' : 'red--text'}`">
                 {{ sr.status === 2 ? 'mdi-check' : 'mdi-close' }}

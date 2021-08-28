@@ -4,7 +4,7 @@
       <v-toolbar-title>General Info</v-toolbar-title>
     </v-toolbar>
     <v-row class="d-flex justify-space-around mt-4">
-      <v-col cols="6" sm="6" md="3" v-for="(value, name) in serverStats" class="flex-grow-1">
+      <v-col cols="6" sm="6" md="3" v-for="(value, name) in serverStats" :key="name" class="flex-grow-1">
         <h4 class="primary--text text--lighten-2 text-center">Total {{ name }}</h4>
         <v-tooltip bottom color="primary" :disabled="value < 1000">
           <template v-slot:activator="{ on, attrs }">

@@ -10,33 +10,6 @@
       <main-nav-actions :open-new-stream="newStreamDialog" />
 
       <div v-if="user">
-        <!--         <v-subheader class="caption">Filter:</v-subheader>
-        <v-list dense rounded>
-          <v-list-item link>
-            <v-list-item-icon>
-              <v-icon small class="">mdi-key</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-subtitle class="caption">Owner</v-list-item-subtitle class="caption">
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item link>
-            <v-list-item-icon>
-              <v-icon small class="">mdi-account</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-subtitle class="caption">Contributor</v-list-item-subtitle class="caption">
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item link>
-            <v-list-item-icon>
-              <v-icon small class="">mdi-circle</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-subtitle class="caption">Reviewer</v-list-item-subtitle class="caption">
-            </v-list-item-content>
-          </v-list-item>
-        </v-list> -->
 
         <v-subheader class="caption">Your stats:</v-subheader>
         <v-list dense>
@@ -100,13 +73,13 @@
 
     <v-app-bar app style="padding-left: 56px" flat>
       <v-app-bar-nav-icon @click="streamNav = !streamNav" v-show="!streamNav"></v-app-bar-nav-icon>
-      <v-toolbar-title class="space-grotesk">
-        <v-icon class="mb-1">mdi-folder</v-icon>
+      <v-toolbar-title class="space-grotesk pl-0">
+        <v-icon class="mb-1 hidden-xs-only">mdi-folder</v-icon>
         Streams
       </v-toolbar-title>
       <v-spacer v-if="!streamNav"></v-spacer>
-      <v-toolbar-items v-if="!streamNav">
-        <v-btn color="primary" @click="newStreamDialog++">
+      <v-toolbar-items v-if="!streamNav" style="margin-right: -20px;">
+        <v-btn color="primary" depressed @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>

@@ -53,7 +53,7 @@
     <v-container style="max-width: 768px">
       <portal to="streamTitleBar">
         <div style="display: inline-block">
-          <v-icon small class="mx-1">mdi-earth</v-icon>
+          <v-icon small class="mx-1 hidden-xs-only">mdi-earth</v-icon>
           <span class="space-grotesk" style="max-width: 80%">Globals</span>
         </div>
       </portal>

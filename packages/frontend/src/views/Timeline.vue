@@ -37,13 +37,13 @@
         @click="activityNav = !activityNav"
         v-show="!activityNav"
       ></v-app-bar-nav-icon>
-      <v-toolbar-title class="space-grotesk">
-        <v-icon>mdi-clock-fast</v-icon>
-        Recent Activity
+      <v-toolbar-title class="space-grotesk pl-0">
+        <v-icon class="hidden-xs-only">mdi-clock-fast</v-icon>
+        Timeline
       </v-toolbar-title>
       <v-spacer v-if="!activityNav"></v-spacer>
-      <v-toolbar-items v-if="!activityNav" style="position: relative; left: 0">
-        <v-btn color="primary" @click="newStreamDialog++">
+      <v-toolbar-items v-if="!activityNav" style="margin-right: -20px;">
+        <v-btn color="primary" depressed @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>

@@ -2,8 +2,8 @@
   <v-container style="max-width: 768px">
     <portal to="streamTitleBar">
       <div>
-        <v-icon small class="mr-2">mdi-cog</v-icon>
-        <span class="space-grotesk">Stream Settings</span>
+        <v-icon small class="mr-2 hidden-xs-only">mdi-cog</v-icon>
+        <span class="space-grotesk">Settings</span>
       </div>
     </portal>
 
