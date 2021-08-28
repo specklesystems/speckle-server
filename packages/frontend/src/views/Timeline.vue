@@ -87,8 +87,8 @@
       </v-col>
       <v-col v-else cols="12">
         <!-- <getting-started-wizard @newstream="newStreamDialog++" /> -->
-        <no-data-placeholder v-if="user">
-          <h2>Welcome {{user.name.split(' ')[0]}}!</h2>
+        <no-data-placeholder v-if="quickUser">
+          <h2>Welcome {{quickUser.name.split(' ')[0]}}!</h2>
           <p class="caption">
             Once you will create a stream and start sending some data, your activity will show up
             here.
@@ -185,8 +185,8 @@ export default {
     )
   },
   apollo: {
-    user: {
-      query: gql`query { user { id name } } `
+    quickUser: {
+      query: gql`query { quickUser: user { id name } } `
     },
     timeline: {
       query: gql`
