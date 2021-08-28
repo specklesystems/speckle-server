@@ -7,7 +7,7 @@
       v-model="streamNav"
       style="left: 56px"
     >
-      <main-nav-actions :open-new-stream="streamNewDialog" />
+      <main-nav-actions :open-new-stream="newStreamDialog" />
 
       <div v-if="user">
         <!--         <v-subheader class="caption">Filter:</v-subheader>
@@ -73,7 +73,9 @@
           <v-list-item
             v-for="(commit, i) in userCommits.commits.items"
             :key="i"
-            :to="`streams/${commit.streamId}/${ commit.branchName === 'globals' ? 'globals' : 'commits' }/${commit.id}`"
+            :to="`streams/${commit.streamId}/${
+              commit.branchName === 'globals' ? 'globals' : 'commits'
+            }/${commit.id}`"
             v-if="commit"
             v-tooltip="`In stream '${commit.streamName}'`"
           >
@@ -86,12 +88,13 @@
                   Updated
                   <timeago :datetime="commit.createdAt"></timeago>
                 </i>
-                on <v-icon style="font-size: 10px;">mdi-source-branch</v-icon>{{commit.branchName}}
+                on
+                <v-icon style="font-size: 10px">mdi-source-branch</v-icon>
+                {{ commit.branchName }}
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
         </v-list>
-
       </div>
     </v-navigation-drawer>
 
@@ -103,7 +106,7 @@
       </v-toolbar-title>
       <v-spacer v-if="!streamNav"></v-spacer>
       <v-toolbar-items v-if="!streamNav">
-        <v-btn color="primary" @click="streamNewDialog++">
+        <v-btn color="primary" @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
@@ -145,16 +148,29 @@
         </v-row>
       </v-col>
       <v-col v-else cols="12">
-        <div class="ma-5 headline justify-center text-center">
-          😿
-          <br />
-          Your don't have any streams!
+        <no-data-placeholder v-if="user">
+          <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
+          <p class="caption">
+            Once you will create a stream and start sending some data, your activity will show up
+            here.
+          </p>
 
-          <br />
-          <span class="subtitle-2 font-italic">
-            Create one now with the big blue button to the side.
-          </span>
-        </div>
+          <template v-slot:actions>
+            <v-list rounded class="transparent">
+              <v-list-item link class="primary mb-4" dark @click="newStreamDialog++">
+                <v-list-item-icon>
+                  <v-icon>mdi-plus-box</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Create a new stream!</v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    Streams are like folders, or data repositories.
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </template>
+        </no-data-placeholder>
       </v-col>
     </v-row>
   </v-container>
@@ -169,7 +185,8 @@ export default {
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     ListItemStream: () => import('@/components/ListItemStream'),
-    MainNavActions: () => import('@/components/MainNavActions')
+    MainNavActions: () => import('@/components/MainNavActions'),
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
   },
   apollo: {
     streams: {
@@ -239,7 +256,7 @@ export default {
   data: () => ({
     streams: [],
     streamNav: true,
-    streamNewDialog: 0
+    newStreamDialog: 0
   }),
   computed: {
     loggedIn() {

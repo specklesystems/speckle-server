@@ -24,7 +24,7 @@
           <v-container style="max-width: 500px">
             <slot name="actions">
               <v-list rounded class="transparent">
-                <v-list-item link class="primary mb-4 no-overlay" dark :to="`${$route.params.streamId ? '/streams/' + $route.params.streamId : '/'}`">
+                <v-list-item link class="primary mb-4 no-overlay" dark :to="`${$route.params.streamId && errorType !== '404' ? '/streams/' + $route.params.streamId : '/'}`">
                   <v-list-item-icon>
                     <v-icon>mdi-home</v-icon>
                   </v-list-item-icon>

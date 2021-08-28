@@ -39,7 +39,7 @@ export default {
   data() {
     return {
       showDialog: false,
-      showError: true,
+      showError: false,
       error: null,
       streamId: null,
       branchNames: ['main', 'globals'],

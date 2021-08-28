@@ -1,8 +1,12 @@
 <template>
-  <v-container style="xxxpadding-left: 56px; max-width: 1024px;">
-  <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
+  <v-container style="padding-left: 56px; max-width: 1024px">
+    <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
     <v-row>
-      <v-col cols="12" :style="`margin-top: ${$vuetify.breakpoint.smAndDown ? '0px' : '50px'}`" class="pa-5">
+      <v-col
+        cols="12"
+        :style="`margin-top: ${$vuetify.breakpoint.smAndDown ? '0px' : '50px'}`"
+        class="pa-5"
+      >
         <user-info-card :user="user" @update="update"></user-info-card>
       </v-col>
       <v-col cols="12">
@@ -28,7 +32,6 @@
             <user-delete-card :user="user" />
           </v-card-text>
         </v-card>
-
       </v-col>
     </v-row>
   </v-container>

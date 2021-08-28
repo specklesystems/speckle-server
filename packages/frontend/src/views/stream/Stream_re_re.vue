@@ -135,7 +135,7 @@
             @click="showNewBranchDialog()"
           >
             <v-list-item-icon>
-              <v-icon small style="padding-top: 10px" class="primary--text" >mdi-plus-box</v-icon>
+              <v-icon small style="padding-top: 10px" class="primary--text">mdi-plus-box</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>New Branch</v-list-item-title>
@@ -336,7 +336,7 @@
               <v-icon>{{ stream.isPublic ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
             </v-app-bar-nav-icon>
             <v-toolbar-title>
-              {{ stream.isPublic ? 'Public stream' : 'Private stream.' }}
+              {{ stream.isPublic ? 'Public stream' : 'Private stream' }}
             </v-toolbar-title>
             <v-spacer></v-spacer>
             <v-switch
@@ -368,7 +368,11 @@
               }`
             "
           >
+          <v-app-bar-nav-icon style="pointer-events: none">
+              <v-icon>mdi-account-group</v-icon>
+            </v-app-bar-nav-icon>
             <v-toolbar-title>
+              Collaborators
               <user-avatar
                 v-for="collab in stream.collaborators.slice(
                   0,
@@ -423,7 +427,12 @@
         </v-sheet>
       </v-card>
     </v-dialog>
-    <stream-invite-dialog v-if="stream" ref="streamInviteDialog" :stream-id="$route.params.streamId" :stream-name="stream.name"/>
+    <stream-invite-dialog
+      v-if="stream"
+      ref="streamInviteDialog"
+      :stream-id="$route.params.streamId"
+      :stream-name="stream.name"
+    />
   </v-container>
 </template>
 

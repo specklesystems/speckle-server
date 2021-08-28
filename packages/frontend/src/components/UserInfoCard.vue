@@ -37,7 +37,7 @@
       <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`">
         <v-toolbar-title><span v-if="isSelf">Hi </span>{{ user.name }}<span v-if="isSelf">!</span></v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn v-if="isSelf" small color="primary" @click="editUser">
+        <v-btn v-if="isSelf" small rounded color="primary" @click="editUser">
           <v-icon small class="mr-2">mdi-cog-outline</v-icon>
           Edit
         </v-btn>
