@@ -39,7 +39,7 @@
       ></v-app-bar-nav-icon>
       <v-toolbar-title class="space-grotesk pl-0">
         <v-icon class="hidden-xs-only">mdi-clock-fast</v-icon>
-        Timeline
+        Feed
       </v-toolbar-title>
       <v-spacer v-if="!activityNav"></v-spacer>
       <v-toolbar-items v-if="!activityNav" style="margin-right: -20px;">
