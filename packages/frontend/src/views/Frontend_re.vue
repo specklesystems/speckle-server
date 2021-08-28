@@ -182,7 +182,7 @@ import SearchBar from '../components/SearchBar'
 import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
 export default {
-  components: { UserMenuTop, SearchBar, StreamInviteDialog },
+  components: { SearchBar, StreamInviteDialog },
   data() {
     return {
       streamSnackbar: false,
