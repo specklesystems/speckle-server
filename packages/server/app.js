@@ -42,7 +42,7 @@ exports.init = async ( ) => {
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
-  // await knex.migrate.latest( )
+  await knex.migrate.latest( )
 
   if ( process.env.NODE_ENV !== 'test' ) {
     app.use( logger( 'speckle', 'dev', {} ) )
