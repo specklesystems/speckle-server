@@ -1,7 +1,7 @@
 <template>
   <div>
     <portal to="streamTitleBar">
-      <div>
+      <div v-if="stream && stream.branch">
         <v-icon small class="mr-1">mdi-source-branch</v-icon>
         <span class="space-grotesk" style="max-width: 80%">{{ stream.branch.name }}</span>
         <span class="caption ml-2 mb-2 pb-2">{{ stream.branch.description }}</span>
@@ -22,6 +22,7 @@
           loggedInUserId &&
           stream &&
           stream.role !== 'stream:reviewer' &&
+          stream.branch && 
           stream.branch.name !== 'main'
         "
         color="primary"
@@ -108,9 +109,11 @@
       </no-data-placeholder>
     </v-row>
     <v-row v-if="!$apollo.loading && (error || stream.branch === null)">
-      <error-placeholder error-type="404">
-        <h2>{{ error || `Branch ${$route.params.branchName} does not exist.` }}</h2>
-      </error-placeholder>
+      <v-col cols="11">
+        <error-placeholder error-type="404">
+          <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
+        </error-placeholder>
+      </v-col>
     </v-row>
   </div>
 </template>
