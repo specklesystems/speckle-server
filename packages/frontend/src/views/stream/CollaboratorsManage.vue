@@ -95,7 +95,7 @@
           Default role for new collaborators is that of a stream contributor. You will be able to
           change it after they're added.
         </p>
-        <v-text-field v-model="search" autofocus label="Search for a user" persistent-hint />
+        <v-text-field v-model="search" label="Search for a user" persistent-hint />
         <div v-if="$apollo.loading">Searching.</div>
         <v-list
           v-if="search && search.length >= 3 && userSearch && userSearch.items"

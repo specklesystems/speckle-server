@@ -5,7 +5,7 @@
     </portal>
     <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
       <v-col cols="12" class="pa-0 ma-0">
-        <div style="height: 60vh" v-if="latestCommitObjectUrl">
+        <div style="height: 50vh" v-if="latestCommitObjectUrl">
           <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
 

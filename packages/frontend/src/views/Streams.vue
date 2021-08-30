@@ -1,16 +1,15 @@
 <template>
-  <v-container style="padding-left: 56px" fluid pt-4 pr-0>
+  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"  fluid pt-4 pr-0>
     <v-navigation-drawer
       app
       fixed
       :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
       v-model="streamNav"
-      style="left: 56px"
+      :style="`${ !$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`" 
     >
       <main-nav-actions :open-new-stream="newStreamDialog" />
 
       <div v-if="user">
-
         <v-subheader class="caption">Your stats:</v-subheader>
         <v-list dense>
           <v-list-item>
@@ -71,14 +70,14 @@
       </div>
     </v-navigation-drawer>
 
-    <v-app-bar app style="padding-left: 56px" flat>
-      <v-app-bar-nav-icon @click="streamNav = !streamNav" v-show="!streamNav"></v-app-bar-nav-icon>
+    <v-app-bar app :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
+      <v-app-bar-nav-icon @click="streamNav = !streamNav"></v-app-bar-nav-icon>
       <v-toolbar-title class="space-grotesk pl-0">
         <v-icon class="mb-1 hidden-xs-only">mdi-folder</v-icon>
         Streams
       </v-toolbar-title>
-      <v-spacer v-if="!streamNav"></v-spacer>
-      <v-toolbar-items v-if="!streamNav" style="margin-right: -20px;">
+      <v-spacer></v-spacer>
+      <v-toolbar-items style="margin-right: -18px">
         <v-btn color="primary" depressed @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
@@ -87,8 +86,7 @@
 
     <!-- <getting-started-wizard /> -->
 
-    <v-row class="px-4" no-gutters>
-      <v-col cols="12"></v-col>
+    <v-row class="pl-2 pr-4" no-gutters>
       <v-col v-if="$apollo.loading">
         <v-row>
           <v-col v-for="i in 6" :key="i" cols="12" sm="6" md="6" lg="4" xl="4">

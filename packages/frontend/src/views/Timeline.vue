@@ -1,11 +1,11 @@
 <template>
-  <v-container style="padding-left: 56px" fluid pt-4 pr-0>
+  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" fluid pt-4 pr-0>
     <v-navigation-drawer
       app
       fixed
       :permanent="activityNav && !$vuetify.breakpoint.smAndDown"
       v-model="activityNav"
-      style="left: 56px"
+      :style="`${ !$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`" 
     >
       <main-nav-actions :open-new-stream="newStreamDialog" />
 
@@ -32,17 +32,16 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app style="padding-left: 56px" flat>
+    <v-app-bar app :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
       <v-app-bar-nav-icon
         @click="activityNav = !activityNav"
-        v-show="!activityNav"
       ></v-app-bar-nav-icon>
       <v-toolbar-title class="space-grotesk pl-0">
         <v-icon class="hidden-xs-only">mdi-clock-fast</v-icon>
         Feed
       </v-toolbar-title>
-      <v-spacer v-if="!activityNav"></v-spacer>
-      <v-toolbar-items v-if="!activityNav" style="margin-right: -20px;">
+      <v-spacer></v-spacer>
+      <v-toolbar-items style="margin-right: -18px;">
         <v-btn color="primary" depressed @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
@@ -63,7 +62,7 @@
         </div>
       </v-col>
 
-      <v-col cols="12" lg="8" v-else-if="timeline && timeline.items.length > 0" class="pr-2">
+      <v-col cols="12" lg="8" v-else-if="timeline && timeline.items.length > 0" class="pr-2" :style="`${$vuetify.breakpoint.xsOnly ? 'margin-left: -20px;' :''}`">
         <div>
           <div v-if="timeline" key="activity-list">
             <v-timeline align-top dense>

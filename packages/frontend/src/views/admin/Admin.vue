@@ -10,7 +10,7 @@
       fixed
       :permanent="adminNav && !$vuetify.breakpoint.smAndDown"
       v-model="adminNav"
-      style="left: 56px"
+      :style="`${ !$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`" 
     >
       <v-app-bar style="position: absolute; top: 0; width: 100%; z-index: 90" elevation="0">
         <v-toolbar-title>Server Admin</v-toolbar-title>
@@ -43,14 +43,14 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app style="padding-left: 56px" flat v-if="!adminNav">
+    <v-app-bar app :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat v-if="!adminNav">
       <v-app-bar-nav-icon @click="adminNav = !adminNav" v-if="!adminNav"/>
       <v-toolbar-title v-if="!adminNav">
         Server Admin
       </v-toolbar-title>
     </v-app-bar>
 
-    <v-container style="padding-left: 56px; max-width: 1024px;" fluid pt-4 pr-0>
+    <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px;' : ''} max-width: 1024px;`"  fluid pt-4 pr-0>
       <transition name="fade">
         <router-view></router-view>
       </transition>

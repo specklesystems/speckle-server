@@ -6,7 +6,7 @@
       fixed
       :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
       v-model="streamNav"
-      style="left: 56px"
+      :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
       v-if="!error"
     >
       <!-- Toolbar holds link to stream home page -->
@@ -27,7 +27,7 @@
           </router-link>
         </v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-app-bar-nav-icon @click="streamNav = !streamNav" v-if="streamNav">
+        <v-app-bar-nav-icon @click="streamNav = !streamNav">
           <v-icon v-if="streamNav">mdi-chevron-left</v-icon>
         </v-app-bar-nav-icon>
       </v-app-bar>
@@ -224,7 +224,12 @@
     </v-navigation-drawer>
 
     <!-- Stream Page App Bar -->
-    <v-app-bar app style="padding-left: 56px;" flat v-if="!error">
+    <v-app-bar
+      app
+      :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
+      flat
+      v-if="!error"
+    >
       <v-app-bar-nav-icon @click="streamNav = !streamNav" v-if="!streamNav">
         <v-icon v-if="streamNav">mdi-chevron-left</v-icon>
       </v-app-bar-nav-icon>
@@ -246,7 +251,7 @@
       <portal-target name="streamActionsBar">
         <!-- child routes can teleport buttons here -->
       </portal-target>
-      <v-toolbar-items style="margin-right: -20px;">
+      <v-toolbar-items style="margin-right: -20px">
         <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">
           Log In
         </v-btn>
@@ -265,12 +270,19 @@
     </v-app-bar>
 
     <!-- Stream Child Routes -->
-    <v-container style="padding-left: 56px" fluid pt-0 pr-0 v-if="!error">
+    <v-container
+      :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px;' : ''}`"
+      :class="`${$vuetify.breakpoint.xsOnly ? 'pl-0' : ''}`"
+      fluid
+      pt-0
+      pr-0
+      v-if="!error"
+    >
       <transition name="fade">
         <router-view v-if="stream" @refetch-branches="refetchBranches"></router-view>
       </transition>
     </v-container>
-    <v-container style="padding-left: 56px" v-else>
+    <v-container :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" v-else>
       <error-placeholder :error-type="error.toLowerCase().includes('not found') ? '404' : 'access'">
         <h2>{{ error }}</h2>
       </error-placeholder>
@@ -368,7 +380,7 @@
               }`
             "
           >
-          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>mdi-account-group</v-icon>
             </v-app-bar-nav-icon>
             <v-toolbar-title>
@@ -397,7 +409,10 @@
             </v-btn>
           </v-toolbar>
         </v-sheet>
-        <v-sheet v-if="stream" :xxxclass="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`">
+        <v-sheet
+          v-if="stream"
+          :xxxclass="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
+        >
           <v-toolbar
             flat
             class="transparent"

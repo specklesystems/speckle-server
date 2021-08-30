@@ -1,7 +1,7 @@
 <template>
   <v-app id="speckle">
     <v-navigation-drawer
-      app
+      :app="!$vuetify.breakpoint.xsOnly"
       permanent
       mini-variant
       :expand-on-hover="true || $vuetify.breakpoint.mdAndUp"
@@ -11,8 +11,7 @@
       :color="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
       :dark="$vuetify.theme.dark"
       style="z-index: 100"
-      :class="`elevation-5`"
-      @update:mini-variant="mini"
+      :class="`elevation-5 hidden-xs-only`"
       mini-variant-width="56"
     >
       <v-toolbar class="transparent elevation-0">
@@ -157,19 +156,118 @@
         </v-list>
       </template>
     </v-navigation-drawer>
+
+    <v-bottom-navigation fixed xxx-hide-on-scroll class="hidden-sm-and-up elevation-10">
+      <v-btn color="primary" text to="/">
+        <span>Feed</span>
+        <v-icon>mdi-clock-fast</v-icon>
+      </v-btn>
+
+      <v-btn color="primary" text to="/streams">
+        <span>Streams</span>
+        <v-icon>mdi-folder</v-icon>
+      </v-btn>
+
+      <v-btn color="primary" text to="/profile">
+        <span>Profile</span>
+        <v-icon>mdi-account</v-icon>
+      </v-btn>
+
+      <v-btn text @click="bottomSheet = true">
+        <span>More</span>
+        <v-icon>mdi-dots-horizontal</v-icon>
+      </v-btn>
+    </v-bottom-navigation>
+
+    <v-bottom-sheet v-model="bottomSheet">
+      <v-sheet class="">
+        <v-toolbar class="transparent elevation-0">
+          <v-toolbar-title class="space-grotesk primary--text">
+            <router-link to="/" class="text-decoration-none">
+              <v-img
+                class="mt-2"
+                max-width="30"
+                src="@/assets/logo.svg"
+                style="display: inline-block"
+              />
+            </router-link>
+            <router-link
+              to="/"
+              class="text-decoration-none"
+              style="position: relative; top: -4px; margin-left: 20px"
+            >
+              <span class="pb-4"><b>Speckle</b></span>
+            </router-link>
+          </v-toolbar-title>
+        </v-toolbar>
+        <v-list>
+          <v-list-item
+            link
+            href="https://speckle.community/new-topic?category=features"
+            target="_blank"
+            class="primary"
+            dark
+          >
+            <v-list-item-icon>
+              <v-icon small class="ml-1">mdi-comment-arrow-right</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Feedback</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item link @click="signOut()" color="primary" v-if="user">
+            <v-list-item-icon>
+              <v-icon small class="ml-1">mdi-account-off</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Logout</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item link to="/admin" color="primary" v-if="user && user.role === 'server:admin'">
+            <v-list-item-icon>
+              <v-icon small class="ml-1">mdi-cog</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Server Admin</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item link @click="switchTheme">
+            <v-list-item-icon>
+              <v-icon small class="ml-1">mdi-theme-light-dark</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Switch Theme</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item v-if="serverInfo">
+            <v-list-item-icon>
+              <v-icon
+                v-if="serverInfo && isDevServer"
+                v-tooltip="`This is a test server and should not be used in production!`"
+                color="red"
+              >
+                mdi-alert
+              </v-icon>
+              <v-icon v-else>mdi-information-variant</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title class="caption">{{ serverInfo.name }}</v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                {{ serverInfo.version }}
+              </v-list-item-subtitle>
+              <div class="caption">This is a test server and should not be used in production!</div>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-sheet>
+    </v-bottom-sheet>
     <v-main style="overflow: hidden">
       <transition name="fade">
         <router-view></router-view>
-      </transition>
-      <transition name="fade">
-        <div
-          @click="showScrim = false"
-          v-show="showScrim"
-          class="hidden-sm-and-up"
-          style="z-index: 10"
-        >
-          <v-overlay z-index="10"></v-overlay>
-        </div>
       </transition>
     </v-main>
   </v-app>
@@ -187,7 +285,7 @@ export default {
     return {
       streamSnackbar: false,
       streamSnackbarInfo: {},
-      showScrim: false
+      bottomSheet: false
     }
   },
   apollo: {
@@ -241,12 +339,6 @@ export default {
     }
   },
   methods: {
-    help() {
-      console.log('wtf')
-    },
-    mini(args) {
-      this.showScrim = true
-    },
     signOut() {
       signOut()
     },

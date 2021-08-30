@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel">
+  <v-dialog v-model="show" width="500" @keydown.esc="cancel" :fullscreen="$vuetify.breakpoint.smAndDown">
     <v-card>
       <v-toolbar color="primary" dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">

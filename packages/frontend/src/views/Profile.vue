@@ -1,11 +1,11 @@
 <template>
-  <v-container style="padding-left: 56px; max-width: 1024px">
+  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px;' : ''} max-width: 1024px;`" >
     <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
     <v-row>
       <v-col
         cols="12"
         :style="`margin-top: ${$vuetify.breakpoint.smAndDown ? '0px' : '50px'}`"
-        class="pa-5"
+        class="pa-3"
       >
         <user-info-card :user="user" @update="update"></user-info-card>
       </v-col>

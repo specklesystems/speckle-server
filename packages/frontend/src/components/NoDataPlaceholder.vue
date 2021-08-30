@@ -6,7 +6,7 @@
           <div class="d-flex flex-column justify-space-between align-center mb-10">
             <v-img contain max-height="200" src="@/assets/emptybox.png"></v-img>
           </div>
-          <div class="pl-4 text-center mb-2 space-grotesk">
+          <div class=" text-center mb-2 space-grotesk">
             <slot name="default"></slot>
           </div>
           <v-container style="max-width: 500px">

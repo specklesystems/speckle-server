@@ -18,7 +18,7 @@
               v-else-if="errorType == '404'"
             ></v-img>
           </div>
-          <div class="pl-4 text-center mb-2 space-grotesk">
+          <div class="text-center mb-2 space-grotesk">
             <slot name="default"></slot>
           </div>
           <v-container style="max-width: 500px">
