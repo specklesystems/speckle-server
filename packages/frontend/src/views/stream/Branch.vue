@@ -22,7 +22,7 @@
           loggedInUserId &&
           stream &&
           stream.role !== 'stream:reviewer' &&
-          stream.branch && 
+          stream.branch &&
           stream.branch.name !== 'main'
         "
         color="primary"
@@ -108,13 +108,12 @@
         <h2 class="space-grotesk">This branch has no commits.</h2>
       </no-data-placeholder>
     </v-row>
-    <v-row v-if="!$apollo.loading && (error || stream.branch === null)">
-      <v-col cols="11">
-        <error-placeholder error-type="404">
-          <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
-        </error-placeholder>
-      </v-col>
-    </v-row>
+    <error-placeholder
+      error-type="404"
+      v-if="!$apollo.loading && (error || stream.branch === null)"
+    >
+      <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
+    </error-placeholder>
   </div>
 </template>
 <script>
