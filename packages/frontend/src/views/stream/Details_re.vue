@@ -1,14 +1,15 @@
 <template>
   <div>
     <portal to="streamTitleBar">
-      <span class="space-grotesk">Stream Home</span>
+      <div>
+        <span class="space-grotesk" v-if="stream">{{$vuetify.breakpoint.xsOnly ? stream.name : 'Stream Home'}}</span>
+      </div>
     </portal>
     <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
       <v-col cols="12" class="pa-0 ma-0">
         <div style="height: 50vh" v-if="latestCommitObjectUrl">
           <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
-
         <v-list class="pa-0 ma-0">
           <list-item-commit
             :commit="stream.commits.items[0]"
@@ -19,17 +20,29 @@
       </v-col>
       <v-col cols="12" class="" style="height: 40px"></v-col>
 
-      <v-col cols="12" :xl="loggedIn ? 4 : 12" class="pa-0 ma-0" :order="`${$vuetify.breakpoint.xlOnly ? 'last' : ''}`">
+      <v-col
+        cols="12"
+        :xl="loggedIn ? 4 : 12"
+        class="pa-0 ma-0"
+        :order="`${$vuetify.breakpoint.xlOnly ? 'last' : ''}`"
+      >
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Latest Active Branches</v-toolbar-title>
             <v-spacer />
           </v-toolbar>
-          <v-card-title class="caption" style="margin-top: -30px;">
+          <v-card-title class="caption" style="margin-top: -30px">
             The stream's last three updated branches
           </v-card-title>
           <v-row class="pa-4 mt-1">
-            <v-col cols="12" sm="4" md="4" :xl="loggedIn ? 12 : 4" v-for="branch in latestBranches" :key="branch.name">
+            <v-col
+              cols="12"
+              sm="4"
+              md="4"
+              :xl="loggedIn ? 12 : 4"
+              v-for="branch in latestBranches"
+              :key="branch.name"
+            >
               <v-card :to="`/streams/${$route.params.streamId}/branches/${branch.name}`">
                 <preview-image
                   :height="120"
@@ -63,11 +76,9 @@
             <v-toolbar-title>Stream Feed</v-toolbar-title>
             <v-spacer />
           </v-toolbar>
-          <v-card-title class="caption" style="margin-top: -30px;">
-            Recent activity log
-          </v-card-title>
+          <v-card-title class="caption" style="margin-top: -30px">Recent activity log</v-card-title>
         </v-card>
-        <div style="margin-top:-42px">
+        <div style="margin-top: -42px">
           <stream-activity></stream-activity>
         </div>
       </v-col>
@@ -110,6 +121,7 @@ export default {
           stream(id: $id) {
             id
             isPublic
+            name
             branches {
               totalCount
               items {
@@ -244,7 +256,9 @@ export default {
       let branches = this.stream.branches.items
         .filter((br) => br.name !== 'globals' && br.commits.totalCount !== 0)
         .slice()
-        .sort((a, b) => new Date(b.commits.items[0].createdAt) - new Date(a.commits.items[0].createdAt))
+        .sort(
+          (a, b) => new Date(b.commits.items[0].createdAt) - new Date(a.commits.items[0].createdAt)
+        )
 
       return branches.slice(0, 3)
     },

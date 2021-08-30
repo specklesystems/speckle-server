@@ -4,7 +4,7 @@
     <v-skeleton-loader type="article"></v-skeleton-loader>
   </v-container>
 
-  <v-container v-else-if="isAdmin">
+  <v-container v-else-if="isAdmin" :class="`${$vuetify.breakpoint.xsOnly ? 'pl-0' : ''}`">
     <v-navigation-drawer
       app
       fixed

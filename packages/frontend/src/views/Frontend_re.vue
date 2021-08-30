@@ -326,6 +326,11 @@ export default {
       }
     }
   },
+  watch: {
+    $route(to, from) {
+      this.bottomSheet = false
+    }
+  },
   computed: {
     background() {
       let theme = this.$vuetify.theme.dark ? 'dark' : 'light'

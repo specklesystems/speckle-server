@@ -1,11 +1,17 @@
 <template>
-  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"  fluid pt-4 pr-0>
+  <v-container
+    :class="`${$vuetify.breakpoint.xsOnly ? 'pl-2' : ''}`"
+    :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
+    fluid
+    pt-4
+    pr-0
+  >
     <v-navigation-drawer
       app
       fixed
       :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
       v-model="streamNav"
-      :style="`${ !$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`" 
+      :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
     >
       <main-nav-actions :open-new-stream="newStreamDialog" />
 
@@ -70,7 +76,7 @@
       </div>
     </v-navigation-drawer>
 
-    <v-app-bar app :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
+    <v-app-bar app :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
       <v-app-bar-nav-icon @click="streamNav = !streamNav"></v-app-bar-nav-icon>
       <v-toolbar-title class="space-grotesk pl-0">
         <v-icon class="mb-1 hidden-xs-only">mdi-folder</v-icon>
