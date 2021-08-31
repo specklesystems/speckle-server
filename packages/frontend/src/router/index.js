@@ -256,11 +256,6 @@ const routes = [
     component: () => import('@/views/GettingStartedView.vue')
   },
   {
-    path: '/embed',
-    name: 'Embeded Viewer',
-    component: () => import('@/views/EmbedViewer.vue')
-  },
-  {
     path: '*',
     name: 'notfound',
     meta: {
