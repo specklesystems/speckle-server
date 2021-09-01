@@ -42,7 +42,7 @@
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-items style="margin-right: -18px;">
-        <v-btn color="primary" depressed @click="newStreamDialog++">
+        <v-btn color="primary" depressed @click="newStreamDialog++" v-if="$vuetify.breakpoint.smAndDown || !activityNav">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
