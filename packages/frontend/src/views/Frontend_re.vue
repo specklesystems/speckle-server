@@ -139,23 +139,23 @@
       </template>
     </v-navigation-drawer>
 
-    <v-bottom-navigation fixed xxx-hide-on-scroll class="hidden-sm-and-up elevation-10">
-      <v-btn color="primary" text to="/">
+    <v-bottom-navigation fixed xxx-hide-on-scroll class="hidden-sm-and-up elevation-20">
+      <v-btn color="primary" text to="/" style="height: 100%;">
         <span>Feed</span>
         <v-icon>mdi-clock-fast</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/streams">
+      <v-btn color="primary" text to="/streams" style="height: 100%;">
         <span>Streams</span>
         <v-icon>mdi-folder</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/profile">
+      <v-btn color="primary" text to="/profile" style="height: 100%;">
         <span>Profile</span>
         <v-icon>mdi-account</v-icon>
       </v-btn>
 
-      <v-btn text @click="bottomSheet = true">
+      <v-btn text @click="bottomSheet = true" style="height: 100%;">
         <span>More</span>
         <v-icon>mdi-dots-horizontal</v-icon>
       </v-btn>
