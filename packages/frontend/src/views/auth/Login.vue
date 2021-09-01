@@ -194,6 +194,7 @@ export default {
 
         if (res.redirected) {
           window.location = res.url
+          return
         }
 
         let data = await res.json()
