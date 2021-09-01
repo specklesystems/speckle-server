@@ -13,17 +13,6 @@
         <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
             <div class="d-flex align-center">
-              <v-btn
-                v-if="remove"
-                class="entry-delete mr-5"
-                fab
-                rounded
-                x-small
-                color="error"
-                @click="emitRemoveAt(index)"
-              >
-                <v-icon>mdi-minus</v-icon>
-              </v-btn>
               <v-text-field
                 ref="keyInput"
                 v-model="entry.key"
@@ -37,53 +26,55 @@
               />
               <v-text-field v-model="entry.value" class="entry-value mr-5" hint="property value" />
               <v-btn
-                v-if="!remove"
-                v-tooltip="'Transform this field into an object'"
+                v-if="true"
+                v-tooltip="'Transform this field into a nested object'"
                 icon
                 small
                 @click="emitFieldToObject(entry, index)"
               >
-                <v-icon color="primary">mdi-cube-outline</v-icon>
+                <v-icon small color="primary">mdi-cube-outline</v-icon>
+              </v-btn>
+              <v-btn
+                v-if="true"
+                v-tooltip="'Remove this entry'"
+                icon
+                rounded
+                x-small
+                color="error"
+                style="margin-left: 3px"
+                @click="emitRemoveAt(index)"
+              >
+                <v-icon>mdi-close</v-icon>
               </v-btn>
             </div>
           </div>
-          <v-card v-else rounded="lg" class="pa-3 my-6" elevation="4">
-            <v-row align="center">
-              <v-col>
-                <v-card-title
-                  v-if="!editTitle"
-                  @mouseenter="mouseOver = true"
-                  @mouseleave="mouseOver = false"
-                >
-                  <v-btn
-                    v-if="remove"
-                    class="entry-delete mr-5"
-                    fab
-                    rounded
-                    x-small
-                    color="error"
-                    @click="emitRemoveAt(index)"
-                  >
-                    <v-icon>mdi-minus</v-icon>
-                  </v-btn>
-                  {{ entry.key }}
-                  <v-btn v-if="mouseOver" icon small color="primary" @click="editTitle = true">
-                    <v-icon small>mdi-pencil</v-icon>
-                  </v-btn>
-                </v-card-title>
-                <v-card-title v-else>
-                  <v-text-field
-                    ref="keyInput"
-                    v-model="entry.key"
-                    :rules="rules.keys(index, entries)"
-                    :error-messages="entry.valid === true ? null : entry.valid"
-                  ></v-text-field>
-                  <v-btn icon color="primary" @click="editTitle = false">
-                    <v-icon small>mdi-check</v-icon>
-                  </v-btn>
-                </v-card-title>
-              </v-col>
-              <v-col cols="auto">
+          <v-card v-else rounded="lg" class="my-2" elevation="4">
+            <v-toolbar dense flat>
+              <v-toolbar-title
+                v-if="!editTitle"
+                @mouseenter="mouseOver = true"
+                @mouseleave="mouseOver = false"
+                @click="editTitle=true"
+              >
+                {{ entry.key }}
+                <v-btn v-show="mouseOver" icon small color="primary" @click="editTitle = true">
+                  <v-icon small>mdi-pencil</v-icon>
+                </v-btn>
+              </v-toolbar-title>
+              <v-toolbar-title v-else>
+                <v-text-field
+                  ref="keyInput"
+                  v-model="entry.key"
+                  :rules="rules.keys(index, entries)"
+                  :error-messages="entry.valid === true ? null : entry.valid"
+                  append-icon="mdi-check"
+                  @click:append="editTitle=false"
+                  @keyup.enter="editTitle=false"
+                  style="width: 300px; margin-top:14px;"
+                ></v-text-field>
+              </v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-toolbar-items>
                 <v-btn
                   v-tooltip="'Flatten this object into fields'"
                   class="mr-3"
@@ -91,10 +82,22 @@
                   small
                   @click="emitObjectToField(entry, index)"
                 >
-                  <v-icon color="primary">mdi-arrow-collapse-down</v-icon>
+                  <v-icon small color="primary">mdi-arrow-collapse-down</v-icon>
                 </v-btn>
-              </v-col>
-            </v-row>
+                <v-btn
+                  v-if="true"
+                  v-tooltip="'Remove this entry'"
+                  icon
+                  rounded
+                  x-small
+                  color="error"
+                  style="margin-left: 3px"
+                  @click="emitRemoveAt(index)"
+                >
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </v-toolbar-items>
+            </v-toolbar>
             <globals-entry
               :entries="entry.globals"
               :path="[...path, entry.id]"
@@ -121,7 +124,7 @@
         small
         @click="emitAddProp"
       >
-        <v-icon>mdi-plus</v-icon>
+        <v-icon small>mdi-plus</v-icon>
       </v-btn>
     </div>
   </v-container>
@@ -272,8 +275,6 @@ export default {
 .v-card__title {
   font-weight: 500;
   font-size: large;
-  letter-spacing: 1px;
-  text-transform: uppercase;
 }
 
 .v-text-field {

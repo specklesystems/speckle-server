@@ -1,65 +1,73 @@
 <template>
   <div>
-    <v-row>
-      <v-col v-if="$apollo.queries.stream.loading" cols="12">
+    <v-row no-gutters>
+      <v-col v-if="$apollo.queries.stream.loading" cols="12" class="ma-0 pa-0">
         <v-card>
           <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
         </v-card>
       </v-col>
-      <v-col v-else-if="stream.commit" cols="12">
-        <breadcrumb-title />
+
+      <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
+        <portal to="streamActionsBar">
+          <v-btn
+            elevation="0"
+            color="primary"
+            small
+            rounded
+            v-tooltip="'Edit commit'"
+            v-if="
+              stream &&
+              stream.role !== 'stream:reviewer' &&
+              stream.commit.authorId === loggedInUserId
+            "
+            @click="editCommit"
+            :fab="$vuetify.breakpoint.mdAndDown"
+            dark
+          >
+            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+              mdi-pencil
+            </v-icon>
+            <span class="hidden-md-and-down">Edit</span>
+          </v-btn>
+        </portal>
+        <portal to="streamTitleBar">
+          <div>
+            <router-link
+              :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
+              class="text-decoration-none space-grotesk"
+              v-tooltip="'Go to branch ' + stream.commit.branchName"
+            >
+              <v-icon small class="primary--text mr-1 mb-1">mdi-source-branch</v-icon>
+              <b>{{ stream.commit.branchName }}</b>
+            </router-link>
+            /
+            <v-icon small class="mr-1">mdi-source-commit</v-icon>
+            <span class="space-grotesk mr-2" v-tooltip="'Commit message'">
+              {{ stream.commit.message }}
+            </span>
+            <user-avatar
+              :id="stream.commit.authorId"
+              :avatar="stream.commit.authorAvatar"
+              :name="stream.commit.authorName"
+              :size="22"
+              class="hidden-sm-and-down"
+            />
+            <v-chip small class="mx-1">
+              <timeago :datetime="stream.commit.createdAt"></timeago>
+            </v-chip>
+            <source-app-avatar
+              :application-name="stream.commit.sourceApplication"
+              class="hidden-sm-and-down"
+            />
+          </div>
+        </portal>
+
+        <div style="height: 60vh">
+          <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
+        </div>
 
         <v-card elevation="0" rounded="lg">
-          <v-sheet class="pa-4" color="transparent">
-            <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
-            <v-card-title>
-              <v-icon class="mr-2">mdi-source-commit</v-icon>
-              {{ stream.commit.message }}
-              <v-spacer />
-              <v-btn
-                v-if="stream.role === 'stream:contributor' || stream.role === 'stream:owner'"
-                v-tooltip="'Edit commit details'"
-                small
-                color="primary"
-                text
-                class="px-0"
-                @click="editCommit"
-              >
-                <v-icon small class="mr-2 float-left">mdi-cog-outline</v-icon>
-                Edit commit
-              </v-btn>
-            </v-card-title>
-
-            <v-list-item dense>
-              <v-list-item-icon class="mr-2 mt-1">
-                <user-avatar
-                  :id="stream.commit.authorId"
-                  :avatar="stream.commit.authorAvatar"
-                  :name="stream.commit.authorName"
-                  :size="25"
-                />
-              </v-list-item-icon>
-              <v-list-item-content>
-                <v-list-item-subtitle class="caption">
-                  <b>{{ stream.commit.authorName }}</b>
-                  &nbsp;
-                  <timeago :datetime="stream.commit.createdAt"></timeago>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-              <v-list-item-action>
-                <v-row align="center" justify="center">
-                  <v-chip small class="mr-2">
-                    <v-icon small class="mr-2">mdi-source-branch</v-icon>
-                    {{ stream.commit.branchName }}
-                  </v-chip>
-                  <source-app-avatar :application-name="stream.commit.sourceApplication" />
-                </v-row>
-              </v-list-item-action>
-            </v-list-item>
-          </v-sheet>
-          <div style="height: 50vh">
-            <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
-          </div>
+          <!-- Selected object -->
           <v-expand-transition>
             <v-sheet v-show="selectionData.length !== 0" class="pa-4" color="transparent">
               <v-card-title class="mr-8">
@@ -81,6 +89,7 @@
               </div>
             </v-sheet>
           </v-expand-transition>
+          <!-- Object explorer -->
           <v-sheet class="pa-4" color="transparent">
             <v-card-title class="mr-8">
               <v-icon class="mr-2">mdi-database</v-icon>
@@ -100,10 +109,11 @@
       </v-col>
     </v-row>
     <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
-      <v-col cols="12" class="pt-10">
-        <error-block :message="'Commit not found'" />
-      </v-col>
+      <error-placeholder error-type="404">
+        <h2>Commit {{ $route.params.commitId }} not found.</h2>
+      </error-placeholder>
     </v-row>
+    <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
   </div>
 </template>
 <script>
@@ -120,8 +130,7 @@ export default {
     ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
     Renderer: () => import('@/components/Renderer'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
-    ErrorBlock: () => import('@/components/ErrorBlock'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
   },
   data: () => ({
     loadedModel: false,
@@ -132,7 +141,6 @@ export default {
       prefetch: true,
       query: streamCommitQuery,
       variables() {
-        // Use vue reactive properties here
         return {
           streamid: this.$route.params.streamId,
           id: this.$route.params.commitId
@@ -140,7 +148,17 @@ export default {
       }
     }
   },
+  watch: {
+    stream(val) {
+      if (!val) return
+      if (val.commit.branchName === 'globals')
+        this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
+    }
+  },
   computed: {
+    loggedInUserId() {
+      return localStorage.getItem('uuid')
+    },
     commitDate() {
       if (!this.stream.commit) return null
       let date = new Date(this.stream.commit.createdAt)
@@ -191,12 +209,4 @@ export default {
   }
 }
 </script>
-<style scoped>
-.v-item-group {
-  float: left;
-}
-
-.clear {
-  clear: both;
-}
-</style>
+<style scoped></style>

@@ -1,11 +1,18 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card :loading="loading">
-      <template slot="progress">
-        <v-progress-linear indeterminate></v-progress-linear>
-      </template>
-      <v-card-title>New Branch</v-card-title>
-      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
+  <v-dialog v-model="showDialog" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
+    <v-card>
+      <v-toolbar color="primary" dark flat>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-source-branch</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>New Branch</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+      </v-toolbar>
+      <v-alert v-model="showError" dismissible type="error">
+        {{ error }}
+      </v-alert>
+      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="submit">
         <v-card-text>
           <v-text-field
             v-model="name"
@@ -31,9 +38,11 @@ import gql from 'graphql-tag'
 export default {
   data() {
     return {
-      dialog: false,
+      showDialog: false,
+      showError: false,
+      error: null,
       streamId: null,
-      branchNames: [],
+      branchNames: ['main', 'globals'],
       valid: false,
       loading: false,
       name: null,
@@ -48,70 +57,47 @@ export default {
         (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',
         (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
-      description: null,
-      isEdit: false,
-      pendingDelete: false
+      description: null
     }
   },
-  computed: {
-    show: {
-      get() {
-        return this.dialog
-      },
-      set(value) {
-        this.dialog = value
-        if (value === false) {
-          this.cancel()
-        }
-      }
-    }
-  },
+  computed: {},
   methods: {
-    open(streamId, branchNames) {
-      this.dialog = true
-      if (this.$refs.form) this.$refs.form.resetValidation()
-
-      this.branchNames = branchNames
-      this.streamId = streamId
-
-      return new Promise((resolve, reject) => {
-        this.resolve = resolve
-        this.reject = reject
-      })
+    show() {
+      this.showDialog = true
     },
-    async agree() {
+    async submit() {
       if (!this.$refs.form.validate()) return
 
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('branch/create')
-      await this.$apollo.mutate({
-        mutation: gql`
-          mutation branchCreate($params: BranchCreateInput!) {
-            branchCreate(branch: $params)
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation branchCreate($params: BranchCreateInput!) {
+              branchCreate(branch: $params)
+            }
+          `,
+          variables: {
+            params: {
+              streamId: this.$route.params.streamId,
+              name: this.name,
+              description: this.description
+            }
           }
-        `,
-        variables: {
-          params: {
-            streamId: this.streamId,
-            name: this.name,
-            description: this.description
-          }
-        }
-      })
-      this.loading = false
-
-      this.resolve({
-        result: true,
-        name: this.name
-      })
-      this.dialog = false
+        })
+        this.showError = false
+        this.error = null
+        this.loading = false
+        this.showDialog = false
+        this.$emit('refetch-branches')
+        this.$router.push(`/streams/${this.$route.params.streamId}/branches/${this.name}`)
+      } catch (err) {
+        this.showError = true
+        if (err.message.includes('branches_streamid_name_unique'))
+          this.error = 'A branch with that name already exists.'
+        else this.error = err.message
+      }
     }
-  },
-  cancel() {
-    this.resolve({
-      result: false
-    })
-    this.dialog = false
   }
 }
 </script>

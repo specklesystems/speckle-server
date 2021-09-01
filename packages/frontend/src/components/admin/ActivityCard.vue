@@ -1,7 +1,10 @@
 <template>
-  <admin-card title="Usage stats" v-bind="$attrs">
-    <v-row dense v-if="!$apollo.loading">
-      <v-col cols="6" v-if="value.data" v-for="value in graphSeries" :key="value.name">
+  <v-card :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-10`">
+    <v-toolbar flat>
+      <v-toolbar-title>Usage Stats</v-toolbar-title>
+    </v-toolbar>
+    <v-row dense v-if="!$apollo.loading" class="mt-2">
+      <v-col cols="12" sm="6" v-if="value.data" v-for="value in graphSeries" :key="value.name">
         <p class="text-center caption primary--text">
           <v-icon x-small color="primary" class="mr-1">{{ icons[value.name] }}</v-icon>
           {{ capitalize(value.name.split('History')[0]) }} history
@@ -9,17 +12,16 @@
         <apexchart class="primary--text" type="bar" :options="options" :series="[value]" />
       </v-col>
     </v-row>
-  </admin-card>
+  </v-card>
 </template>
 
 <script>
-import AdminCard from '@/components/admin/AdminCard'
 import gql from 'graphql-tag'
 import { formatNumber } from '@/formatNumber.js'
 
 export default {
   name: 'ActivityCard',
-  components: { AdminCard },
+  components: { },
   data() {
     return {
       icons: {

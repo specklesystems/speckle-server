@@ -1,142 +1,188 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
-    <v-row>
-      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <div class="mt-5 mx-5">
-          <div class="d-flex flex-column">
-            <v-btn large rounded color="primary" class="mb-2" block @click="newStreamDialog = true">
-              <v-icon small class="mr-1">mdi-plus-box</v-icon>
-              new stream
-            </v-btn>
-            <v-btn large rounded outlined color="primary" block @click="showServerInviteDialog">
-              <v-icon small class="mr-2">mdi-email-send</v-icon>
-              Send an invite
-            </v-btn>
-          </div>
-          <server-invite-dialog ref="serverInviteDialog" />
-          <v-dialog v-model="newStreamDialog" max-width="500">
-            <stream-new-dialog
-              v-if="streams"
-              :open="newStreamDialog"
-              :redirect="streams.items.length > 0"
-              @created="newStreamDialog = false"
-            />
-          </v-dialog>
-        </div>
-        <div v-if="$apollo.queries.streams.loading" class="my-5">
-          <v-skeleton-loader type="list-item-two-line@3"></v-skeleton-loader>
-        </div>
+  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" fluid pt-4 pr-0>
+    <v-navigation-drawer
+      app
+      fixed
+      :permanent="activityNav && !$vuetify.breakpoint.smAndDown"
+      v-model="activityNav"
+      :style="`${ !$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`" 
+    >
+      <main-nav-actions :open-new-stream="newStreamDialog" />
 
-        <v-list
-          v-if="streams && streams.items.length > 0"
-          color="transparent"
-          class="recent-streams ml-3 hidden-sm-and-down"
-          two-lines
+      <v-list v-if="streams && streams.items.length > 0" color="transparent" dense>
+        <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
+        <v-list-item
+          v-for="(s, i) in streams.items"
+          :key="i"
+          :to="'streams/' + s.id"
+          v-if="streams.items"
         >
-          <v-subheader class="mt-3">Recent streams</v-subheader>
-          <div v-for="(s, i) in streams.items" :key="i">
-            <v-list-item>
-              <v-list-item-content>
-                <v-list-item-title class="subtitle-1">
-                  <router-link :to="'streams/' + s.id">
-                    {{ s.name }}
-                  </router-link>
-                </v-list-item-title>
-                <v-list-item-subtitle class="caption">
-                  <i>
-                    Updated
-                    <timeago :datetime="s.updatedAt"></timeago>
-                  </i>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-            </v-list-item>
-          </div>
-        </v-list>
-        <p></p>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{ s.name }}
+            </v-list-item-title>
+            <v-list-item-subtitle class="caption">
+              <i>
+                Updated
+                <timeago :datetime="s.updatedAt"></timeago>
+              </i>
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar app :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
+      <v-app-bar-nav-icon
+        @click="activityNav = !activityNav"
+      ></v-app-bar-nav-icon>
+      <v-toolbar-title class="space-grotesk pl-0">
+        <v-icon class="hidden-xs-only">mdi-clock-fast</v-icon>
+        Feed
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-toolbar-items style="margin-right: -18px;">
+        <v-btn color="primary" depressed @click="newStreamDialog++" v-if="$vuetify.breakpoint.smAndDown || !activityNav">
+          <v-icon>mdi-plus-box</v-icon>
+        </v-btn>
+      </v-toolbar-items>
+    </v-app-bar>
+
+    <v-row class="pr-4">
+      <v-col v-if="$apollo.loading && !timeline">
+        <div class="my-5">
+          <v-timeline align-top dense>
+            <v-timeline-item v-for="i in 6" :key="i" medium>
+              <v-skeleton-loader type="article"></v-skeleton-loader>
+            </v-timeline-item>
+          </v-timeline>
+        </div>
       </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
-        <v-row>
-          <v-col cols="12">
-            <getting-started-wizard />
-          </v-col>
-          <v-col v-if="$apollo.loading && !timeline">
-            <div class="my-5">
-              <v-timeline align-top dense>
-                <v-timeline-item v-for="i in 6" :key="i" medium>
-                  <v-skeleton-loader type="article"></v-skeleton-loader>
-                </v-timeline-item>
-              </v-timeline>
-            </div>
-          </v-col>
 
-          <v-col v-else-if="timeline && timeline.items.length > 0">
-            <div>
-              <v-subheader class="mb-3">Recent activity</v-subheader>
-              <div v-if="timeline" key="activity-list">
-                <v-timeline align-top dense>
-                  <list-item-activity
-                    v-for="activity in timeline.items"
-                    :key="activity.time"
-                    :activity="activity"
-                    class="my-1"
-                  ></list-item-activity>
-                  <infinite-loading
-                    v-if="timeline && timeline.items.length < timeline.totalCount"
-                    @infinite="infiniteHandler"
-                  >
-                    <div slot="no-more">This is all your activity!</div>
-                    <div slot="no-results">There are no ctivities to load</div>
-                  </infinite-loading>
-                </v-timeline>
-              </div>
-            </div>
-          </v-col>
-          <v-col v-else cols="12">
-            <div class="ma-5 headline justify-center text-center">
-              🎈
-              <br />
-              Your feed is empty!
+      <v-col cols="12" lg="8" v-else-if="timeline && timeline.items.length > 0" class="pr-2" :style="`${$vuetify.breakpoint.xsOnly ? 'margin-left: -20px;' :''}`">
+        <div>
+          <div v-if="timeline" key="activity-list">
+            <v-timeline align-top dense>
+              <list-item-activity
+                v-for="activity in groupedTimeline"
+                :key="activity.time"
+                :activity="activity"
+                :activity-group="activity"
+                class="my-1"
+              ></list-item-activity>
+              <infinite-loading
+                v-if="timeline && timeline.items.length < timeline.totalCount"
+                @infinite="infiniteHandler"
+              >
+                <div slot="no-more">This is all your activity!</div>
+                <div slot="no-results">There are no ctivities to load</div>
+              </infinite-loading>
+            </v-timeline>
+          </div>
+        </div>
+      </v-col>
+      <v-col v-else cols="12">
+        <no-data-placeholder v-if="quickUser">
+          <h2>Welcome {{quickUser.name.split(' ')[0]}}!</h2>
+          <p class="caption">
+            Once you will create a stream and start sending some data, your activity will show up
+            here.
+          </p>
 
-              <br />
-              <span class="subtitle-2 font-italic">
-                Try creating a stream, sending data etc and your activity willshow up here.
-              </span>
-            </div>
-          </v-col>
-        </v-row>
+          <template v-slot:actions>
+            <v-list rounded class="transparent">
+              <v-list-item
+                link
+                class="primary mb-4"
+                dark
+                @click="newStreamDialog++"
+              >
+                <v-list-item-icon>
+                  <v-icon>mdi-plus-box</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Create a new stream!</v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    Streams are like folders, or data repositories.
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </template>
+        </no-data-placeholder>
+      </v-col>
+
+      <v-col
+        cols="12"
+        lg="4"
+        v-show="$vuetify.breakpoint.lgAndUp"
+        class="mt-7"
+        v-if="timeline && timeline.items.length > 0"
+      >
+        <latest-blogposts></latest-blogposts>
+        <v-card rounded="lg" class="mt-2">
+          <v-card-text class="caption">
+            <p class="mb-0">
+              At
+              <a href="https://speckle.systems" target="_blank" class="text-decoration-none">
+                Speckle
+              </a>
+              we're working tirelessly to bring you the best open source data platform for AEC. Tell
+              us what you think on our
+              <a href="https://speckle.community" target="_blank" class="text-decoration-none">
+                forum
+              </a>
+              , and don't forget to give us a ⭐️ on
+              <a
+                href="https://github.com/specklesystems/speckle-sharp"
+                target="_blank"
+                class="text-decoration-none"
+              >
+                Github
+              </a>
+              !
+            </p>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script>
-import ListItemActivity from '@/components/ListItemActivity'
-import GettingStartedWizard from '../components/GettingStartedWizard'
-import ServerInviteDialog from '@/components/dialogs/ServerInviteDialog.vue'
-import StreamNewDialog from '@/components/dialogs/StreamNewDialog'
 import gql from 'graphql-tag'
-import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'Timeline',
   components: {
-    ListItemActivity,
-    InfiniteLoading,
-    ServerInviteDialog,
-    StreamNewDialog,
-    GettingStartedWizard
+    InfiniteLoading: () => import('vue-infinite-loading'),
+    ListItemActivity: () => import('@/components/ListItemActivity'),
+    LatestBlogposts: () => import('@/components/LatestBlogposts'),
+    MainNavActions: () => import('@/components/MainNavActions'),
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
   },
   props: {
     type: String
   },
   data() {
     return {
-      newStreamDialog: false
+      newStreamDialog: 0,
+      activityNav: true
     }
   },
   computed: {},
-  mounted() {},
+  mounted() {
+    setTimeout(
+      function () {
+        this.activityNav = !this.$vuetify.breakpoint.smAndDown
+      }.bind(this),
+      10
+    )
+  },
   apollo: {
+    quickUser: {
+      query: gql`query { quickUser: user { id name } } `
+    },
     timeline: {
       query: gql`
         query($cursor: DateTime) {
@@ -153,13 +199,18 @@ export default {
                 resourceType
                 time
                 info
+                message
               }
             }
           }
         }
       `,
-      update: (data) => {
+      fetchPolicy: 'cache-and-network',
+      update(data) {
         return data.user.timeline
+      },
+      result({ data }) {
+        this.groupSimilarActivities(data)
       }
     },
     streams: {
@@ -177,11 +228,37 @@ export default {
       `
     }
   },
-
   methods: {
-    showServerInviteDialog() {
-      this.$refs.serverInviteDialog.show()
+    groupSimilarActivities(data) {
+      let groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
+        //first item
+        if (!prev.length) {
+          prev.push([curr])
+          return prev
+        }
+        let test = prev[prev.length - 1][0]
+        let action = 'split' // split | combine | skip
+        if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
+          if (curr.actionType.includes('stream_permissions')) {
+            //skip multiple stream_permission actions on the same user, just pick the last!
+            if (prev[prev.length - 1].some((x) => x.info.targetUser === curr.info.targetUser))
+              action = 'skip'
+            else action = 'combine'
+          } //stream, branch, commit
+          else if (curr.actionType.includes('_update') || curr.actionType === 'commit_create')
+            action = 'combine'
+        }
+        if (action === 'combine') {
+          prev[prev.length - 1].push(curr)
+        } else if (action === 'split') {
+          prev.push([curr])
+        }
+        return prev
+      }, [])
+      // console.log(groupedTimeline)
+      this.groupedTimeline = groupedTimeline
     },
+
     infiniteHandler($state) {
       this.$apollo.queries.timeline.fetchMore({
         variables: {

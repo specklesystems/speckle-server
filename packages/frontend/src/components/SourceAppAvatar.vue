@@ -1,19 +1,13 @@
 <template>
-  <v-tooltip bottom>
-    <template #activator="{ on, attrs }">
-      <v-chip
-        small
-        class="ma-1 caption white--text no-hover"
-        :color="color"
-        :size="size"
-        v-bind="attrs"
-        v-on="on"
-      >
-        {{ shortName }}
-      </v-chip>
-    </template>
-    <span>Source application: {{ applicationName ? applicationName : 'unknown' }}</span>
-  </v-tooltip>
+  <v-chip
+    small
+    class="ma-1 caption white--text no-hover"
+    :color="color"
+    :size="size"
+    v-tooltip="`Source Application: ${applicationName ? applicationName : 'unknown'}`"
+  >
+    {{ shortName }}
+  </v-chip>
 </template>
 <script>
 export default {
@@ -36,7 +30,7 @@ export default {
       let appname = this.applicationName.toLowerCase()
 
       if (appname.includes('dynamo')) return 'purple'
-      if (appname.includes('revit')) return 'blue darken-1'
+      if (appname.includes('revit')) return 'blue darken-3'
       if (appname.includes('autocad')) return 'red lighten-1'
       if (appname.includes('civil')) return 'blue lighten-1'
       if (appname.includes('blender')) return 'orange darken-1'

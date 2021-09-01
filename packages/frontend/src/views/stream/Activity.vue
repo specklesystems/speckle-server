@@ -1,15 +1,12 @@
 <template>
   <v-row>
     <v-col cols="12">
-      <breadcrumb-title />
-      <h3 class="title font-italic font-weight-thin my-5">Recent activity on this Stream</h3>
-    </v-col>
-    <v-col cols="12">
-      <v-timeline v-if="stream" align-top dense>
+      <v-timeline v-if="stream && groupedActivity && groupedActivity.length !== 0" align-top dense>
         <list-item-activity
-          v-for="activity in stream.activity.items"
+          v-for="activity in groupedActivity"
           :key="activity.time"
           :activity="activity"
+          :activity-group="activity"
           class="my-1"
         ></list-item-activity>
         <infinite-loading
@@ -25,6 +22,11 @@
           <v-skeleton-loader type="article"></v-skeleton-loader>
         </v-timeline-item>
       </v-timeline>
+      <div v-if="groupedActivity && groupedActivity.length === 0">
+        <v-card class="transparent elevation-0 mt-10">
+          <v-card-text>Nothing to show 🍃</v-card-text>
+        </v-card>
+      </div>
     </v-col>
   </v-row>
 </template>
@@ -35,11 +37,10 @@ export default {
   name: 'Activity',
   components: {
     ListItemActivity: () => import('@/components/ListItemActivity'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle'),
     InfiniteLoading: () => import('vue-infinite-loading')
   },
   data() {
-    return {}
+    return { groupedActivity: null }
   },
   apollo: {
     stream: {
@@ -66,6 +67,7 @@ export default {
                 resourceType
                 time
                 info
+                message
               }
             }
           }
@@ -75,10 +77,40 @@ export default {
         return {
           id: this.$route.params.streamId
         }
+      },
+      result({ data }) {
+        this.groupSimilarActivities(data)
       }
     }
   },
   methods: {
+    groupSimilarActivities(data) {
+      let groupedActivity = data.stream.activity.items.reduce(function (prev, curr) {
+        //first item
+        if (!prev.length) {
+          prev.push([curr])
+          return prev
+        }
+        let test = prev[prev.length - 1][0]
+        let action = 'split' // split | combine | skip
+        if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
+          if (curr.actionType.includes('stream_permissions')) {
+            //skip multiple stream_permission actions on the same user, just pick the last!
+            if (prev[prev.length - 1].some((x) => x.info.targetUser === curr.info.targetUser))
+              action = 'skip'
+            else action = 'combine'
+          } //stream, branch, commit
+          else if (curr.actionType.includes('_update')) action = 'combine'
+        }
+        if (action === 'combine') {
+          prev[prev.length - 1].push(curr)
+        } else if (action === 'split') {
+          prev.push([curr])
+        }
+        return prev
+      }, [])
+      this.groupedActivity = groupedActivity
+    },
     infiniteHandler($state) {
       this.$apollo.queries.stream.fetchMore({
         variables: {

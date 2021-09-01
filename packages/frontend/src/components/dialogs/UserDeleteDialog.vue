@@ -1,7 +1,14 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card v-if="correctEmail" class="pa-4">
-      <v-card-title class="subtitle-1">Delete account?</v-card-title>
+    <v-card v-if="correctEmail" class="">
+      <v-toolbar color="error" dark flat>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-delete</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>Delete Account?</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="show = false"><v-icon>mdi-close</v-icon></v-btn>
+      </v-toolbar>
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
         <v-card-text class="pl-2 pr-2 pt-0 pb-0">
           <v-container>
@@ -31,14 +38,13 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn text @click="cancel">Cancel</v-btn>
-          <v-btn color="primary" text :disabled="!valid" type="submit">Save</v-btn>
+          <v-btn color="error" :disabled="!valid" type="submit">Delete my account</v-btn>
         </v-card-actions>
       </v-form>
     </v-card>
   </v-dialog>
 </template>
 <script>
-
 export default {
   data() {
     return {

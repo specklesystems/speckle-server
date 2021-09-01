@@ -1,124 +1,169 @@
 <template>
-  <v-container :fluid="$vuetify.breakpoint.mdAndDown">
-    <v-row>
-      <v-col cols="12" sm="12" md="4" lg="3" xl="2">
-        <div class="mt-5 mx-5">
-          <div class="d-flex flex-column">
-            <v-btn large rounded color="primary" class="mb-2" block @click="newStreamDialog = true">
-              <v-icon small class="mr-1">mdi-plus-box</v-icon>
-              new stream
-            </v-btn>
-            <v-btn large rounded outlined color="primary" block @click="showServerInviteDialog">
-              <v-icon small class="mr-2">mdi-email-send</v-icon>
-              Send an invite
-            </v-btn>
-          </div>
-          <server-invite-dialog ref="serverInviteDialog" />
-          <v-dialog v-model="newStreamDialog" max-width="500">
-            <stream-new-dialog
-              v-if="streams && streams.items"
-              :open="newStreamDialog"
-              :redirect="streams.items.length > 0"
-              @created="newStreamDialog = false"
-            />
-          </v-dialog>
-          <div v-if="user" class="my-5">
-            <v-subheader class="mt-3">Your stats:</v-subheader>
-            <div class="ml-5">
-              <p>
-                <v-icon small>mdi-compare-vertical</v-icon>
+  <v-container
+    :class="`${$vuetify.breakpoint.xsOnly ? 'pl-2' : ''}`"
+    :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
+    fluid
+    pt-4
+    pr-0
+  >
+    <v-navigation-drawer
+      app
+      fixed
+      :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
+      v-model="streamNav"
+      :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
+    >
+      <main-nav-actions :open-new-stream="newStreamDialog" />
+
+      <div v-if="user">
+        <v-subheader class="caption">Your stats:</v-subheader>
+        <v-list dense>
+          <v-list-item>
+            <v-list-item-icon>
+              <v-icon small class="">mdi-folder-multiple</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-subtitle class="caption">
                 <b>{{ user.streams.totalCount }}</b>
-                streams
-              </p>
-              <p>
-                <v-icon small>mdi-source-commit</v-icon>
+                total streams
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-icon>
+              <v-icon small class="">mdi-source-commit</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-subtitle class="caption">
                 <b>{{ user.commits.totalCount }}</b>
-                commits
-              </p>
-              <p v-if="user.commits.totalCount > 0">
-                Last commit
-                <b>
-                  <timeago
-                    :datetime="user.commits.items[0].createdAt"
-                    class="font-italic ma-1"
-                  ></timeago>
-                </b>
-              </p>
-            </div>
-          </div>
-        </div>
-      </v-col>
-      <v-col cols="12" sm="12" md="8" lg="9" xl="10">
+                total commits
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+
+        <v-list
+          v-if="userCommits && userCommits.commits.items.length !== 0"
+          color="transparent"
+          dense
+        >
+          <v-subheader class="mt-3 ml-2">Your latest commits:</v-subheader>
+          <v-list-item
+            v-for="(commit, i) in userCommits.commits.items"
+            :key="i"
+            :to="`streams/${commit.streamId}/${
+              commit.branchName === 'globals' ? 'globals' : 'commits'
+            }/${commit.id}`"
+            v-if="commit"
+            v-tooltip="`In stream '${commit.streamName}'`"
+          >
+            <v-list-item-content>
+              <v-list-item-title>
+                {{ commit.message }}
+              </v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                <i>
+                  Updated
+                  <timeago :datetime="commit.createdAt"></timeago>
+                </i>
+                on
+                <v-icon style="font-size: 10px">mdi-source-branch</v-icon>
+                {{ commit.branchName }}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </div>
+    </v-navigation-drawer>
+
+    <v-app-bar app :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
+      <v-app-bar-nav-icon @click="streamNav = !streamNav"></v-app-bar-nav-icon>
+      <v-toolbar-title class="space-grotesk pl-0">
+        <v-icon class="mb-1 hidden-xs-only">mdi-folder</v-icon>
+        Streams
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-toolbar-items style="margin-right: -18px">
+        <v-btn color="primary" depressed @click="newStreamDialog++" v-if="$vuetify.breakpoint.smAndDown || !streamNav">
+          <v-icon>mdi-plus-box</v-icon>
+        </v-btn>
+      </v-toolbar-items>
+    </v-app-bar>
+
+    <!-- <getting-started-wizard /> -->
+
+    <v-row class="pl-2 pr-4" no-gutters>
+      <v-col v-if="$apollo.loading">
         <v-row>
-          <v-col cols="12">
-            <getting-started-wizard />
-          </v-col>
-          <v-col v-if="$apollo.loading">
-            <v-row>
-              <v-col v-for="i in 6" :key="i" cols="12" sm="12" md="12" lg="6" xl="4">
-                <v-skeleton-loader type="card, list-item-two-line" class="ma-2"></v-skeleton-loader>
-              </v-col>
-            </v-row>
-            <div v-if="$apollo.loading" class="my-5"></div>
-          </v-col>
-
-          <v-col v-else-if="streams && streams.items && streams.items.length > 0">
-            <v-row>
-              <v-col
-                v-for="(stream, i) in streams.items"
-                :key="i"
-                cols="12"
-                sm="12"
-                md="12"
-                lg="6"
-                xl="4"
-              >
-                <list-item-stream :stream="stream"></list-item-stream>
-              </v-col>
-              <infinite-loading
-                v-if="streams.items.length < streams.totalCount"
-                @infinite="infiniteHandler"
-              >
-                <div slot="no-more">These are all your streams!</div>
-                <div slot="no-results">There are no streams to load</div>
-              </infinite-loading>
-            </v-row>
-          </v-col>
-          <v-col v-else cols="12">
-            <div class="ma-5 headline justify-center text-center">
-              😿
-              <br />
-              Your don't have any streams!
-
-              <br />
-              <span class="subtitle-2 font-italic">
-                Create one now with the big blue button to the side.
-              </span>
-            </div>
+          <v-col v-for="i in 6" :key="i" cols="12" sm="6" md="6" lg="4" xl="4">
+            <v-skeleton-loader type="card, list-item-two-line" class="ma-2"></v-skeleton-loader>
           </v-col>
         </v-row>
+        <div v-if="$apollo.loading" class="my-5"></div>
+      </v-col>
+
+      <v-col cols="12" v-else-if="streams && streams.items && streams.items.length > 0">
+        <v-row>
+          <v-col
+            v-for="(stream, i) in streams.items"
+            :key="i"
+            cols="12"
+            sm="6"
+            md="6"
+            lg="4"
+            xl="4"
+          >
+            <list-item-stream :stream="stream"></list-item-stream>
+          </v-col>
+          <infinite-loading
+            v-if="streams.items.length < streams.totalCount"
+            @infinite="infiniteHandler"
+          >
+            <div slot="no-more">These are all your streams!</div>
+            <div slot="no-results">There are no streams to load</div>
+          </infinite-loading>
+        </v-row>
+      </v-col>
+      <v-col v-else cols="12">
+        <no-data-placeholder v-if="user">
+          <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
+          <p class="caption">
+            Once you will create a stream and start sending some data, your activity will show up
+            here.
+          </p>
+
+          <template v-slot:actions>
+            <v-list rounded class="transparent">
+              <v-list-item link class="primary mb-4" dark @click="newStreamDialog++">
+                <v-list-item-icon>
+                  <v-icon>mdi-plus-box</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>Create a new stream!</v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    Streams are like folders, or data repositories.
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </template>
+        </no-data-placeholder>
       </v-col>
     </v-row>
   </v-container>
 </template>
 <script>
-import ListItemStream from '../components/ListItemStream'
-import StreamNewDialog from '../components/dialogs/StreamNewDialog'
-import GettingStartedWizard from '../components/GettingStartedWizard'
+import gql from 'graphql-tag'
 import streamsQuery from '../graphql/streams.gql'
 import userQuery from '../graphql/user.gql'
-import InfiniteLoading from 'vue-infinite-loading'
-import ServerInviteDialog from '../components/dialogs/ServerInviteDialog.vue'
-import gql from 'graphql-tag'
 
 export default {
   name: 'Streams',
   components: {
-    ListItemStream,
-    StreamNewDialog,
-    InfiniteLoading,
-    ServerInviteDialog,
-    GettingStartedWizard
+    InfiniteLoading: () => import('vue-infinite-loading'),
+    ListItemStream: () => import('@/components/ListItemStream'),
+    MainNavActions: () => import('@/components/MainNavActions'),
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
   },
   apollo: {
     streams: {
@@ -128,6 +173,30 @@ export default {
     },
     user: {
       query: userQuery,
+      skip() {
+        return !this.loggedIn
+      }
+    },
+    userCommits: {
+      query: gql`
+        query {
+          userCommits: user {
+            id
+            commits {
+              totalCount
+              items {
+                id
+                message
+                sourceApplication
+                streamId
+                streamName
+                branchName
+                createdAt
+              }
+            }
+          }
+        }
+      `,
       skip() {
         return !this.loggedIn
       }
@@ -162,28 +231,11 @@ export default {
     }
   },
   data: () => ({
-    activeTab: 'streams',
     streams: [],
-    newStreamDialog: false
+    streamNav: true,
+    newStreamDialog: 0
   }),
   computed: {
-    recentActivity() {
-      let activity = []
-
-      if (this.streams && this.streams.items) {
-        this.streams.items.forEach((x) =>
-          x.commits.items.forEach((y) => {
-            y.streamName = x.name
-            y.streamId = x.id
-            activity.push(y)
-          })
-        )
-        activity.push(...this.streams.items)
-      }
-
-      activity.sort(this.compareUpdates)
-      return activity
-    },
     loggedIn() {
       return localStorage.getItem('uuid') !== null
     }
@@ -194,6 +246,14 @@ export default {
         this.$router.push('/onboarding')
       }
     }
+  },
+  mounted() {
+    setTimeout(
+      function () {
+        this.streamNav = !this.$vuetify.breakpoint.smAndDown
+      }.bind(this),
+      100
+    )
   },
   methods: {
     showServerInviteDialog() {
@@ -224,15 +284,6 @@ export default {
           }
         }
       })
-    },
-    compareUpdates(a, b) {
-      if (a.createdAt < b.createdAt) {
-        return 1
-      }
-      if (a.createdAt > b.createdAt) {
-        return -1
-      }
-      return 0
     }
   }
 }

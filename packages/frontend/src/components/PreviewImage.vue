@@ -1,9 +1,10 @@
 <template>
-  <img
+  <v-img
     ref="cover"
     :height="height"
     :class="`${color ? '' : 'grasycale-img'} preview-img`"
     :src="currentPreviewImg"
+    :gradient="`to top right, ${$vuetify.theme.dark ? 'rgba(100,115,201,.33), rgba(25,32,72,.7)' : 'rgba(100,115,231,.15), rgba(25,32,72,.05)'}`"
   />
 </template>
 <script>

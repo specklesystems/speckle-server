@@ -1,70 +1,23 @@
 <template>
-  <v-card class="pa-4 mb-3" elevation="0" rounded="lg">
-    <v-dialog v-model="saveDialog" max-width="500">
-      <globals-save-dialog
-        :branch-name="branchName"
-        :stream-id="$route.params.streamId"
-        :commit-obj="globalsCommit"
-        @close="closeSaveDialog"
-      />
-    </v-dialog>
-
-    <v-card-title>
-      <v-icon class="mr-2">mdi-earth</v-icon>
-      Globals
-    </v-card-title>
-
-    <v-card-text class="subtitle-1">
-      Click the box icon next to any field to turn it into a nested group of fields, and drag and
-      drop fields in and out of groups as you please! Note that field order may not always be
-      preserved.
-      <v-btn
-        text
-        small
-        color="primary"
-        href="https://speckle.guide/user/web.html#globals"
-        target="_blank"
-      >
-        Read the docs
-      </v-btn>
-
-      <v-alert
-        v-if="!(userRole === 'stream:contributor') && !(userRole === 'stream:owner')"
-        class="my-3"
-        dense
-        type="warning"
-      >
-        You are free to play around with the globals here, but you do not have the required stream
-        permission to save your changes.
-      </v-alert>
-
-      <div v-if="commitMessage" class="mt-3">
-        <b>Selected commit:</b>
+  <v-card elevation="0" rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
+  
+    <v-toolbar :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`" flat>
+      <v-toolbar-title v-if="commitMessage">
+        Current:
         <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
         {{ commitMessage }}
-      </div>
-    </v-card-text>
-
-    <v-card-actions>
-      <v-switch
-        v-model="deleteEntries"
-        v-tooltip="'Toggle delete mode'"
-        class="ml-3"
-        dense
-        inset
-        color="error"
-        :label="`DELETE`"
-      ></v-switch>
+      </v-toolbar-title>
       <v-spacer />
-      <v-btn v-tooltip="'Clear all globals'" color="primary" small @click="clearGlobals">
-        clear
+      <v-btn v-tooltip="'Clear all globals'" color="error" icon class="mr-2" @click="clearGlobals">
+        <v-icon>mdi-close</v-icon>
       </v-btn>
-      <v-btn v-tooltip="'Undo any changes'" color="primary" small @click="resetGlobals">
-        reset all
+      <v-btn v-tooltip="'Undo any changes'" color="primary" icon class="mr-2" @click="resetGlobals">
+        <v-icon>mdi-undo</v-icon>
       </v-btn>
       <v-btn
         v-tooltip="'Save your changes with a message'"
         small
+        class="mr-2"
         :disabled="!canSave"
         color="primary"
         @click="
@@ -74,7 +27,7 @@
       >
         save
       </v-btn>
-    </v-card-actions>
+    </v-toolbar>
     <v-card-text>
       <globals-entry
         v-if="!$apollo.loading"
@@ -90,18 +43,47 @@
         <v-skeleton-loader type="list-item-three-line" />
       </div>
     </v-card-text>
+
+    <v-dialog v-model="saveDialog" max-width="500">
+      <v-card :loading="saveLoading">
+        <template slot="progress">
+          <v-progress-linear indeterminate></v-progress-linear>
+        </template>
+        <v-card-title>Save Globals</v-card-title>
+        <v-form ref="form" v-model="saveValid" lazy-validation @submit.prevent="saveGlobals">
+          <v-card-text>
+            <v-text-field
+              v-model="saveMessage"
+              label="Message"
+              :rules="nameRules"
+              validate-on-blur
+              required
+              autofocus
+            ></v-text-field>
+          </v-card-text>
+          <v-alert v-if="saveError" type="error" dismissible>
+            There was a problem saving the current global variables. Computer said:
+            <b>{{ saveError }}</b>
+          </v-alert>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text :disabled="!saveValid" type="submit">Save</v-btn>
+          </v-card-actions>
+        </v-form>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
 <script>
+import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
 import objectQuery from '../graphql/objectSingle.gql'
 
 export default {
   name: 'GlobalsBuilder',
   components: {
-    GlobalsEntry: () => import('../components/GlobalsEntry'),
-    GlobalsSaveDialog: () => import('../components/dialogs/GlobalsSaveDialog')
+    GlobalsEntry: () => import('../components/GlobalsEntry')
   },
   apollo: {
     object: {
@@ -152,21 +134,21 @@ export default {
       deleteEntries: false,
       sample: {
         Region: 'London',
-        'Project Code': 'GB123456',
-        'Linked Projects': ['GB654321', 'EU424242'],
-        'Project Lead': 'Sir Spockle II',
-        'Pretty Cool?': true,
+        Latitude: '0',
+        Longitude: '0',
+        'Project Code': 'TX-023',
         Climate: {
           'Summer DBT [C]': 35,
           'Summer WBT [C]': 20,
           'Winter DBT [C]': -4,
-          'Winter WBT [C]': -4,
-          Enthalpy: {
-            'Summer Enthalpy [kJ per kg]': 56.87,
-            'Winter Enthalpy [kJ per kg]': 2.74
-          }
+          'Winter WBT [C]': -4
         }
-      }
+      },
+      saveValid: false,
+      saveLoading: false,
+      nameRules: [(v) => (v && v.length >= 3) || 'Message must be at least 3 characters'],
+      saveMessage: null,
+      saveError: null
     }
   },
   computed: {
@@ -189,6 +171,54 @@ export default {
     }
   },
   methods: {
+    async saveGlobals() {
+      if (!this.$refs.form.validate()) return
+
+      let commitObject = this.globalsToBase(this.globalsArray)
+      
+      console.log(commitObject)
+      console.log(this.globalsArray)
+
+      try {
+        this.loading = true
+        this.$matomo && this.$matomo.trackPageView('globals/save')
+        let res = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ObjectCreate($params: ObjectCreateInput!) {
+              objectCreate(objectInput: $params)
+            }
+          `,
+          variables: {
+            params: {
+              streamId: this.$route.params.streamId,
+              objects: [ commitObject ]
+            }
+          }
+        })
+
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation CommitCreate($commit: CommitCreateInput!) {
+              commitCreate(commit: $commit)
+            }
+          `,
+          variables: {
+            commit: {
+              streamId: this.$route.params.streamId,
+              branchName: 'globals',
+              objectId: res.data.objectCreate[0],
+              message: this.saveMessage,
+              sourceApplication: 'web'
+            }
+          }
+        })
+        this.saveLoading = false
+        this.saveDialog = false
+      } catch (err) {
+        this.saveLoading = false
+        this.saveError = err
+      }
+    },
     nestedGlobals(data) {
       if (!data) return []
       let entries = Object.entries(data)
@@ -238,7 +268,8 @@ export default {
       }
 
       for (let entry of arr) {
-        if (!entry.value && !entry.globals) return
+
+        if (!entry.value && !entry.globals) continue
 
         if (entry.valid !== true) {
           this.globalsAreValid = false

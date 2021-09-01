@@ -1,90 +1,235 @@
 <template>
-  <v-row>
-    <v-col>
-      <breadcrumb-title />
-      <h3 class="title font-italic font-weight-thin my-5">
-        Automate anything by adding webhooks to Stream events
-      </h3>
-      <admin-card v-if="selectedWebhook != undefined" :loading="loading" title="Edit Webhook">
-        <template #subtitle>
-          <v-icon dense class="text-subtitle-1 pr-1">mdi-webhook</v-icon>
-          <code>{{ selectedWebhook.id }}</code>
-        </template>
+  <div>
+    <no-data-placeholder
+      :show-message="false"
+      v-if="!$apollo.loading && webhooks.length === 0 && stream && stream.role === 'stream:owner'"
+    >
+      <h2>This stream has no webhooks.</h2>
+      <p class="caption">
+        Webhooks allow you to subscribe to a stream's events and get notified of them in real time.
+        You can then use this to trigger ci apps, automation workflows, and more.
+      </p>
+      <template v-slot:actions>
+        <v-list rounded class="transparent">
+          <v-list-item link class="primary mb-4" dark @click="newWebhookDialog = true">
+            <v-list-item-icon>
+              <v-icon>mdi-plus-box</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Create Webhook</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          <v-list-item
+            link
+            :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
+            href="https://speckle.guide/dev/server-webhooks.html"
+            target="_blank"
+          >
+            <v-list-item-icon>
+              <v-icon>mdi-book-open-variant</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Webhook docs</v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                Read the documentation on webhooks.
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </template>
+    </no-data-placeholder>
+    
+    <error-placeholder error-type="access" v-if="error">
+      <h2>Only stream owners can access webhooks.</h2>
+      <p class="caption">If you need to use webhooks, ask the stream's owner to grant you ownership.</p>
+    </error-placeholder>
+
+    <v-container style="max-width: 768px" v-if="!$apollo.loading && webhooks.length !== 0">
+      <portal to="streamTitleBar">
+        <div>
+          <v-icon small class="mr-2 hidden-xs-only">mdi-webhook</v-icon>
+          <span class="space-grotesk">Webhooks</span>
+        </div>
+      </portal>
+      <v-card
+        elevation="0"
+        rounded="lg"
+        :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
+      >
+        <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`">
+          <v-toolbar-title>
+            <v-icon class="mr-2" small>mdi-webhook</v-icon>
+            <span class="d-inline-block">What are Webhooks?</span>
+          </v-toolbar-title>
+        </v-toolbar>
+        <v-card-text class="pb-1">
+          <p class="caption">
+            Webhooks allow you to subscribe to a stream's events and get notified of them in real
+            time. You can then use this to trigger ci apps, automation workflows, and more. Read
+            more on webhooks
+            <a href="https://speckle.guide/dev/server-webhooks.html" target="_blank">here</a>
+            .
+          </p>
+        </v-card-text>
+      </v-card>
+      <v-card
+        elevation="0"
+        rounded="lg"
+        :loading="loading"
+        :class="`mt-2 ${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
+      >
+        <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`">
+          <v-toolbar-title>
+            <v-icon class="mr-2" small>mdi-webhook</v-icon>
+            <span class="d-inline-block">Existing Webhooks</span>
+          </v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn @click="newWebhookDialog = true" small class="primary" dark>New Webhook</v-btn>
+        </v-toolbar>
+        <v-list subheader class="transparent pa-0 ma-0">
+          <v-list-item v-for="wh in webhooks" :key="wh.id" link style="cursor: default">
+            <v-list-item-icon>
+              <v-icon :color="wh.statusIcon.color" class="pt-2">
+                {{ wh.statusIcon.icon }}
+              </v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>
+                {{ wh.description ? wh.description : `Webhook ${wh.id}` }}
+              </v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                {{ wh.url }} {{ `(${wh.triggers.join(', ')})` }}
+              </v-list-item-subtitle>
+              <v-list-item-subtitle class="caption">
+                {{ getStatusInfo(wh) }}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action v-if="wh.history.items.length != 0">
+              <v-btn
+                @click="
+                  selectedWebhook = wh
+                  statusReportsDialog = true
+                "
+                icon
+                v-tooltip="'View status reports'"
+              >
+                <v-icon>mdi-information</v-icon>
+              </v-btn>
+            </v-list-item-action>
+            <v-list-item-action>
+              <v-btn
+                small
+                @click="
+                  selectedWebhook = wh
+                  editWebhookDialog = true
+                "
+              >
+                edit
+              </v-btn>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+      </v-card>
+
+      <v-card-text v-if="webhooks && webhooks.length == 0">
+        There are no webhooks on this stream yet.
+        <v-btn
+          text
+          small
+          color="primary"
+          href="https://speckle.guide/dev/server-webhooks.html"
+          target="_blank"
+        >
+          Read the docs
+        </v-btn>
+      </v-card-text>
+    </v-container>
+
+    <v-dialog v-model="newWebhookDialog" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+      <v-card>
+        <v-toolbar>
+          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-icon>mdi-plus-box</v-icon>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>Create Webhook</v-toolbar-title>
+          <v-spacer />
+          <v-toolbar-items>
+            <v-btn icon @click="newWebhookDialog = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
         <webhook-form
+          :loading.sync="loading"
+          :stream-id="$attrs.streamId"
+          @refetch-webhooks="refetchWebhooks"
+          @close="newWebhookDialog = false"
+        />
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="editWebhookDialog" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+      <v-card>
+        <v-toolbar>
+          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-icon>mdi-pencil</v-icon>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>Edit Webhook</v-toolbar-title>
+          <v-spacer />
+          <v-toolbar-items>
+            <v-btn icon @click="editWebhookDialog = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
+        <webhook-form
+          v-if="selectedWebhook"
           :loading.sync="loading"
           :stream-id="$attrs.streamId"
           :webhook-id="selectedWebhook.id"
           @refetch-webhooks="refetchWebhooks"
+          @close="editWebhookDialog = false"
         />
-      </admin-card>
+      </v-card>
+    </v-dialog>
 
-      <admin-card
-        v-else-if="$route.name === 'add webhook'"
-        :loading="loading"
-        title="Add Webhook"
-        icon="mdi-webhook"
-      >
-        <webhook-form
-          :loading.sync="loading"
-          :stream-id="$attrs.streamId"
-          @refetch-webhooks="refetchWebhooks"
-        />
-      </admin-card>
+    <v-dialog v-model="statusReportsDialog" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+      <v-card>
+        <v-toolbar>
+          <v-app-bar-nav-icon style="pointer-events: none">
+            <v-icon>mdi-information</v-icon>
+          </v-app-bar-nav-icon>
+          <v-toolbar-title>Webhook Status Reports</v-toolbar-title>
+          <v-spacer />
+          <v-toolbar-items>
+            <v-btn icon @click="statusReportsDialog = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
 
-      <admin-card v-else title="Webhooks" icon="mdi-webhook">
-        <template #menu>
-          <v-btn
-            color="primary"
-            dark
-            class="ma-2"
-            small
-            :to="`/streams/${$attrs.streamId}/webhooks/new`"
-          >
-            Add Webhook
-          </v-btn>
-        </template>
-
-        <v-card-text v-if="webhooks && webhooks.length == 0">
-          There are no webhooks on this stream yet.
-          <v-btn
-            text
-            small
-            color="primary"
-            href="https://speckle.guide/dev/server-webhooks.html"
-            target="_blank"
-          >
-            Read the docs
-          </v-btn>
-        </v-card-text>
-
-        <v-list subheader two-line>
-          <v-list-item
-            v-for="wh in webhooks"
-            :key="wh.id"
-            :to="`/streams/${$attrs.streamId}/webhooks/edit/${wh.id}`"
-          >
+        <v-list v-if="selectedWebhook">
+          <v-subheader>Latest delivery reports:</v-subheader>
+          <v-list-item v-for="(sr, index) in selectedWebhook.history.items" :key="index">
+            <v-list-item-icon>
+              <v-icon :class="`${sr.status === 2 ? 'green--text' : 'red--text'}`">
+                {{ sr.status === 2 ? 'mdi-check' : 'mdi-close' }}
+              </v-icon>
+            </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-title>
-                <v-tooltip left>
-                  <template #activator="{ on }" class="ml-1">
-                    <v-icon class="pb-2 pr-1" small :color="wh.statusIcon.color" v-on="on">
-                      {{ wh.statusIcon.icon }}
-                    </v-icon>
-                  </template>
-                  <span>{{ getStatusInfo(wh) }}</span>
-                </v-tooltip>
-                <span id="description">
-                  {{ wh.description ? wh.description : `webhook ${wh.id}` }}
-                </span>
-              </v-list-item-title>
-              <v-list-item-subtitle>{{ wh.url }}</v-list-item-subtitle>
-              <v-list-item-subtitle>{{ `( ${wh.triggers.join(', ')} )` }}</v-list-item-subtitle>
+              <div>
+                {{ sr.statusInfo }}
+              </div>
+              <v-list-item-subtitle class="caption">
+                Last update: {{ sr.lastUpdate }}
+              </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
         </v-list>
-      </admin-card>
-    </v-col>
-  </v-row>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
@@ -92,37 +237,45 @@ import webhooksQuery from '@/graphql/webhooks.gql'
 export default {
   name: 'Webhooks',
   components: {
-    AdminCard: () => import('@/components/admin/AdminCard'),
     WebhookForm: () => import('@/components/settings/WebhookForm'),
-    BreadcrumbTitle: () => import('@/components/BreadcrumbTitle')
+    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
   },
   apollo: {
-    webhooks: {
+    stream: {
       query: webhooksQuery,
       variables() {
         return {
-          streamId: this.$attrs.streamId
+          streamId: this.$route.params.streamId
         }
       },
       update(data) {
-        let webhooks = data.stream.webhooks.items
-        webhooks.forEach((wh) => {
+        data.stream.webhooks.items.forEach((wh) => {
           wh.statusIcon = this.getStatusIcon(wh)
         })
-        return webhooks
+        return data.stream
+      },
+      error(err) {
+        if (err.message) this.error = err.message.replace('GraphQL error: ', '')
+        else this.error = err
       }
     }
   },
   data() {
     return {
-      loading: false
+      loading: false,
+      stream: null,
+      newWebhookDialog: false,
+      editWebhookDialog: false,
+      statusReportsDialog: false,
+      selectedWebhook: null,
+      error: null
     }
   },
   computed: {
-    selectedWebhook() {
-      if (this.$apollo.loading || !this.$attrs.webhookId) return
-
-      return this.webhooks.find(({ id }) => id === this.$attrs.webhookId)
+    webhooks() {
+      if (this.stream) return this.stream.webhooks.items
+      return []
     }
   },
   methods: {
@@ -137,7 +290,6 @@ export default {
           return { color: 'green', icon: 'mdi-check' }
         case 3:
           return { color: 'red', icon: 'mdi-close' }
-
         default:
           return { color: 'blue-grey', icon: 'mdi-alert-circle-outline' }
       }
@@ -149,18 +301,8 @@ export default {
       return msg
     },
     refetchWebhooks() {
-      this.$apollo.queries.webhooks.refetch()
+      this.$apollo.queries.stream.refetch()
     }
   }
 }
 </script>
-
-<style>
-#description {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  max-width: 300px;
-  display: inline-block;
-}
-</style>
