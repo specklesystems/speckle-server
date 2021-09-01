@@ -45,9 +45,9 @@
                       @click="nextUser"
                     >
                       <h1>👷‍♀️</h1>
-                      <v-card-title class="justify-center">AEC Person</v-card-title>
+                      <v-card-title class="justify-center">Designer or Manager</v-card-title>
                       <v-card-subtitle class="justify-center">
-                        Architect, engineer, BIM/project manager...
+                        Architect, engineer, BIM Manager, etc.
                       </v-card-subtitle>
                     </v-card>
                   </v-hover>
@@ -61,7 +61,7 @@
                       @click="nextDev"
                     >
                       <h1>👩‍💻</h1>
-                      <v-card-title class="justify-center">AEC Developer</v-card-title>
+                      <v-card-title class="justify-center">Developer</v-card-title>
                       <v-card-subtitle class="justify-center">
                         Software engineer, computational designer, hacker
                       </v-card-subtitle>
