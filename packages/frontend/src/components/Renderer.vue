@@ -352,9 +352,15 @@ export default {
     async getPreviewImage(angle) {
       angle = angle || 0
       let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      let token = undefined
+      try {
+        token = localStorage.getItem('AuthToken')
+      }catch (e) {
+        console.warn("Sanboxed mode, only public streams will fetch properly.")
+      }
       const res = await fetch(previewUrl, {
-        headers: localStorage.getItem('AuthToken')
-          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
+        headers: token
+          ? { Authorization: `Bearer ${token}` }
           : {}
       })
       const blob = await res.blob()

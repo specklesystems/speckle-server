@@ -10,7 +10,12 @@ export default class ViewerObjectLoader {
 
   constructor( parent, objectUrl, authToken ) {
     this.viewer = parent
-    this.token = authToken || localStorage.getItem( 'AuthToken' )
+    this.token = null
+    try {
+      this.token = authToken || localStorage.getItem( 'AuthToken' )
+    } catch ( error ) {
+        // Accessing localStorage may throw when executing on sandboxed document, ignore.
+    }
 
     if ( !this.token ) {
       console.warn( 'Viewer: no auth token present. Requests to non-public stream objects will fail.' )
@@ -32,7 +37,7 @@ export default class ViewerObjectLoader {
       serverUrl: this.serverUrl,
       token: this.token,
       streamId: this.streamId,
-      objectId: this.objectId,
+      objectId: this.objectId
     } )
 
     this.converter = new Converter( this.loader )
