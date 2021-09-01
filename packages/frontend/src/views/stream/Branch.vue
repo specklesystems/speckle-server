@@ -141,7 +141,7 @@ export default {
       variables() {
         return {
           streamId: this.streamId,
-          branchName: this.$route.params.branchName
+          branchName: this.$route.params.branchName.toLowerCase()
         }
       }
     },
