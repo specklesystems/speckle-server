@@ -8,9 +8,6 @@
       <v-icon small>mdi-shield-alert-outline</v-icon>
       This Speckle server is invite only.
     </div>
-<!--     <v-alert type="error" v-if="">
-
-    </v-alert> -->
     <v-card-title class="justify-center pt-5 pb-2 hidden-md-and-up">
       <v-img src="@/assets/logo.svg" max-width="30" />
     </v-card-title>

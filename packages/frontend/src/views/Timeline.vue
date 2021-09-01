@@ -49,9 +49,6 @@
     </v-app-bar>
 
     <v-row class="pr-4">
-      <!-- <v-col cols="12"> -->
-      <!-- <getting-started-wizard /> -->
-      <!-- </v-col> -->
       <v-col v-if="$apollo.loading && !timeline">
         <div class="my-5">
           <v-timeline align-top dense>
@@ -85,7 +82,6 @@
         </div>
       </v-col>
       <v-col v-else cols="12">
-        <!-- <getting-started-wizard @newstream="newStreamDialog++" /> -->
         <no-data-placeholder v-if="quickUser">
           <h2>Welcome {{quickUser.name.split(' ')[0]}}!</h2>
           <p class="caption">

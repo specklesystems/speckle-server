@@ -72,9 +72,6 @@
                   @keyup.enter="editTitle=false"
                   style="width: 300px; margin-top:14px;"
                 ></v-text-field>
-                <!-- <v-btn icon color="primary" @click="editTitle = false">
-                  <v-icon small>mdi-check</v-icon>
-                </v-btn> -->
               </v-toolbar-title>
               <v-spacer></v-spacer>
               <v-toolbar-items>

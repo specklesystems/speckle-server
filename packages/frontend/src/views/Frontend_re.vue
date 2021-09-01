@@ -55,24 +55,6 @@
           </v-list-item-content>
         </v-list-item>
 
-        <!--   <v-list-item link to='/projects'>
-          <v-list-item-icon>
-            <v-icon>mdi-forum</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Projects</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>    
-        
-        <v-list-item link to='/viewer'>
-          <v-list-item-icon>
-            <v-icon>mdi-inbox</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Viewer</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item> -->
-
         <v-list-item link to="/profile" v-if="user" style="height: 59px">
           <v-list-item-icon>
             <v-avatar size="25">

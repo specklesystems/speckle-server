@@ -28,7 +28,6 @@
               <v-badge inline :content="getRoleCount(role.name)" :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"></v-badge>
             </v-toolbar>
             <v-card-text class="flex-grow-1">{{ role.description }}</v-card-text>
-            <!-- <v-divider></v-divider> -->
             <v-card-text class="mt-auto">
               <div v-if="role.name === 'stream:reviewer'" class="align-self-end">
                 <user-avatar
@@ -175,7 +174,6 @@
             <v-list-item-content>
               <v-list-item-title class="font-weight-bold">{{ user.name }}</v-list-item-title>
               <v-list-item-subtitle>
-                <!-- Role: {{ user.role.replace('stream:', '') }} -->
                 <v-select
                   v-model="user.role"
                   item-value="name"

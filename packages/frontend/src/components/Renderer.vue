@@ -77,7 +77,6 @@
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
-        <!--  -->
         <v-btn-toggle class="elevation-0" style="z-index: 100">
           <v-btn
             v-if="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
@@ -125,7 +124,6 @@
               <v-list-item v-for="view in namedViews" :key="view.id" @click="setNamedView(view.id)">
                 <v-list-item-title>{{ view.name }}</v-list-item-title>
               </v-list-item>
-              <!-- </div> -->
             </v-list>
           </v-menu>
 
@@ -161,12 +159,16 @@
             </template>
             Show viewer help
           </v-tooltip>
-          <v-dialog v-model="showObjectDetails" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+          <v-dialog
+            v-model="showObjectDetails"
+            width="500"
+            :fullscreen="$vuetify.breakpoint.smAndDown"
+          >
             <v-card>
               <v-toolbar>
                 <v-toolbar-title>Selection Details</v-toolbar-title>
                 <v-spacer></v-spacer>
-                <v-btn icon @click="showObjectDetails=false"><v-icon>mdi-close</v-icon></v-btn>
+                <v-btn icon @click="showObjectDetails = false"><v-icon>mdi-close</v-icon></v-btn>
               </v-toolbar>
               <v-sheet>
                 <div v-if="selectedObjects.length !== 0">
@@ -355,13 +357,11 @@ export default {
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')
-      }catch (e) {
-        console.warn("Sanboxed mode, only public streams will fetch properly.")
+      } catch (e) {
+        console.warn('Sanboxed mode, only public streams will fetch properly.')
       }
       const res = await fetch(previewUrl, {
-        headers: token
-          ? { Authorization: `Bearer ${token}` }
-          : {}
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       const blob = await res.blob()
       const imgUrl = URL.createObjectURL(blob)

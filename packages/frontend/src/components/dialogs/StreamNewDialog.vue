@@ -10,10 +10,6 @@
     </v-toolbar>
     <v-form ref="form" v-model="valid" lazy-validation class="px-2" @submit.prevent="createStream">
       <v-card-text>
-        <!-- <p class="">
-          <b>Stream Info:</b>
-          Name & Description
-        </p> -->
         <v-text-field
           v-model="name"
           :rules="nameRules"

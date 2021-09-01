@@ -144,7 +144,6 @@
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
-          <!-- <v-divider class="mb-2"></v-divider> -->
 
           <v-list-item
             v-if="!$apollo.queries.branchQuery.loading"
@@ -173,17 +172,6 @@
         </v-list-group>
 
         <!-- Other menu items go here -->
-
-        <!--
-        <v-list-item link :to="`/streams/${stream.id}/activity`">
-          <v-list-item-icon>
-            <v-icon small>mdi-clock</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Activity</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        -->
 
         <v-list-item link :to="`/streams/${stream.id}/globals`">
           <v-list-item-icon>

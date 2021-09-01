@@ -67,38 +67,6 @@
 
           <!-- TODO: pagination -->
 
-          <!--           <v-list-item v-if="stream">
-            <v-list-item-icon class="pl-4" style="width: 40px">
-              <v-avatar
-                :color="`grey ${this.$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
-                outline
-                size="50"
-              >
-                <v-icon>mdi-source-branch-plus</v-icon>
-              </v-avatar>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title class="mt-0 pt-0 py-1 pl-5 ml-1">
-                Branch "{{ stream.branch.name }}" created
-              </v-list-item-title>
-            </v-list-item-content>
-          </v-list-item> -->
-          <!--           <v-list-item v-if="stream">
-            <v-list-item-icon class="pl-4" style="width: 40px">
-              <v-avatar
-                :color="`grey ${this.$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
-                outline
-                size="50"
-              >
-                <v-icon>mdi-source-branch-plus</v-icon>
-              </v-avatar>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title class="mt-0 pt-0 py-1 pl-5 ml-1">
-                TODO: PAGINATION YO
-              </v-list-item-title>
-            </v-list-item-content>
-          </v-list-item> -->
         </v-list>
       </v-col>
 
@@ -162,8 +130,6 @@ export default {
         },
         error(err) {
           console.log(err)
-          if (err.message) this.error = err.message.replace('GraphQL error: ', '')
-          else this.error = err
         }
       }
     }
