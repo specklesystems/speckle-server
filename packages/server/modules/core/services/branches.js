@@ -27,7 +27,7 @@ module.exports = {
   },
 
   async updateBranch( { id, name, description } ) {
-    return await Branches( ).where( { id: id } ).update( { name: name.toLowerCase( ), description: description } )
+    return await Branches( ).where( { id: id } ).update( { name: name ? name.toLowerCase( ) : name, description: description } )
   },
 
   async getBranchById( { id } ) {
