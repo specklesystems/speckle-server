@@ -310,7 +310,7 @@
               hint="Branch url copied to clipboard. Most connectors can receive the latest commit from a branch by using this url."
               style="color: blue"
               prepend-inner-icon="mdi-source-branch"
-              :value="streamUrl + '/branch/' + $route.params.branchName"
+              :value="streamUrl + '/branches/' + $route.params.branchName"
               @focus="copyToClipboard"
             ></v-text-field>
             <v-text-field
