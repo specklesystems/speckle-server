@@ -114,7 +114,7 @@
             <v-icon small>mdi-home</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
-            <v-list-item-title>Steam Home</v-list-item-title>
+            <v-list-item-title>Stream Home</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
 
