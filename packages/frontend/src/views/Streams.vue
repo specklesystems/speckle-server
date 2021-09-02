@@ -16,8 +16,8 @@
       <main-nav-actions :open-new-stream="newStreamDialog" />
 
       <div v-if="user">
-        <v-subheader class="caption">Your stats:</v-subheader>
-        <v-list dense>
+        <v-list dense class="py-0">
+          <v-subheader class="caption ml-2">Your stats:</v-subheader>
           <v-list-item>
             <v-list-item-icon>
               <v-icon small class="">mdi-folder-multiple</v-icon>
@@ -46,8 +46,9 @@
           v-if="userCommits && userCommits.commits.items.length !== 0"
           color="transparent"
           dense
+          class="py-0"
         >
-          <v-subheader class="mt-3 ml-2">Your latest commits:</v-subheader>
+          <v-subheader class="ml-2">Your latest commits:</v-subheader>
           <v-list-item
             v-for="(commit, i) in userCommits.commits.items"
             :key="i"
@@ -84,7 +85,12 @@
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-toolbar-items style="margin-right: -18px">
-        <v-btn color="primary" depressed @click="newStreamDialog++" v-if="$vuetify.breakpoint.smAndDown || !streamNav">
+        <v-btn
+          color="primary"
+          depressed
+          @click="newStreamDialog++"
+          v-if="$vuetify.breakpoint.smAndDown || !streamNav"
+        >
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
@@ -182,7 +188,7 @@ export default {
         query {
           userCommits: user {
             id
-            commits {
+            commits(limit: 7) {
               totalCount
               items {
                 id

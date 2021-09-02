@@ -217,7 +217,7 @@ export default {
       prefetch: true,
       query: gql`
         query {
-          streams {
+          streams (limit: 10) {
             items {
               id
               name
@@ -230,6 +230,7 @@ export default {
   },
   methods: {
     groupSimilarActivities(data) {
+      if(!data) return
       let groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
         //first item
         if (!prev.length) {
