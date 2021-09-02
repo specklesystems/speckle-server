@@ -249,9 +249,9 @@
           @click="openShareStreamDialog()"
           v-tooltip="'Share this stream'"
         >
+          <v-icon small class="mr-2 grey--text" v-if="!stream.isPublic">mdi-lock</v-icon>
+          <v-icon small class="mr-2 grey--text" v-else>mdi-lock-open</v-icon>
           <v-icon small class="mr-2">mdi-share-variant</v-icon>
-          <v-icon small class="mr-2 xxxhidden-md-and-down" v-if="!stream.isPublic">mdi-lock</v-icon>
-          <v-icon small class="mr-2 xxxhidden-md-and-down" v-else>mdi-lock-open</v-icon>
           <span class="hidden-md-and-down">Share</span>
         </v-btn>
       </v-toolbar-items>
