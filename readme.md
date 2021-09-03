@@ -1,13 +1,16 @@
 <h1 align="center">
   <img src="https://user-images.githubusercontent.com/2679513/131189167-18ea5fe1-c578-47f6-9785-3748178e4312.png" width="150px"/><br/>
-  Speckle
-</h1><br/>
+  Speckle | Server
+</h1>
+<h3 align="center">
+    Server and Web packages
+</h3>
 <p align="center"><b>Speckle</b> is data infrastructure for the AEC industry.</p><br/>
 
 <p align="center"><a href="https://twitter.com/SpeckleSystems"><img src="https://img.shields.io/twitter/follow/SpeckleSystems?style=social" alt="Twitter Follow"></a> <a href="https://speckle.community"><img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fspeckle.community&amp;style=flat-square&amp;logo=discourse&amp;logoColor=white" alt="Community forum users"></a> <a href="https://speckle.systems"><img src="https://img.shields.io/badge/https://-speckle.systems-royalblue?style=flat-square" alt="website"></a> <a href="https://speckle.guide/dev/"><img src="https://img.shields.io/badge/docs-speckle.guide-orange?style=flat-square&amp;logo=read-the-docs&amp;logoColor=white" alt="docs"></a></p>
 <p align="center"><a href="https://github.com/Speckle-Next/SpeckleServer/"><img src="https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&amp;circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29" alt="Speckle-Next"></a> <a href="https://codecov.io/gh/specklesystems/speckle-server"><img src="https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg" alt="codecov"></a></p>
 
-## Introduction
+# About Speckle
 
 What is Speckle? Check our ![YouTube Video Views](https://img.shields.io/youtube/views/B9humiSpHzM?label=Speckle%20in%201%20minute%20video&style=social)
 
@@ -28,16 +31,20 @@ What is Speckle? Check our ![YouTube Video Views](https://img.shields.io/youtube
 
 Give Speckle a try in no time by:
 
-- using our general availability instance at ⇒  [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz)
+- creating an account at ⇒  [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz)
 - deploying an instance in 1 click ⇒ [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1)
 
 ### Resources
 
-[![Community forum users](https://img.shields.io/badge/community-forum-green?style=for-the-badge&logo=discourse&logoColor=white)](https://speckle.community) [![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems) [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/)
+[![Community forum users](https://img.shields.io/badge/community-forum-green?style=for-the-badge&logo=discourse&logoColor=white)](https://speckle.community): for help, feature requests or just to hang with other speckle enthusiasts, check out our community forum!
+
+[![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems): our tutorials portal is full of resources to get you started using Speckle
+
+[![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/): referecne on almost any end-user and developer functionality
 
 
 
-## Speckle Server | Repo structure
+# Repo structure
 
 This monorepo is the home of the Speckle v2 web packages:
 
@@ -52,8 +59,14 @@ This monorepo is the home of the Speckle v2 web packages:
 
 Make sure to also check and ⭐️ these other Speckle repositories:
 
-- [`speckle-sharp`](https://github.com/specklesystems/speckle-sharp) .NET tooling, connectors and interoperability
-- [`specklepy`](https://github.com/specklesystems/specklepy) Python SDK 🐍
+- [`speckle-sharp`](https://github.com/specklesystems/speckle-sharp): .NET tooling, connectors and interoperability
+- [`specklepy`](https://github.com/specklesystems/specklepy): Python SDK 🐍
+- [`speckle-excel`](https://github.com/specklesystems/speckle-excel): Excel connector
+- [`speckle-unity`](https://github.com/specklesystems/speckle-unity): Unity 3D connector
+- [`speckle-blender`](https://github.com/specklesystems/speckle-blender): Blender connector
+- [`speckle-unreal`](https://github.com/specklesystems/speckle-unreal): Unreal Engine Connector
+- [`speckle-qgis`](https://github.com/specklesystems/speckle-qgis): QGIS connectod
+- [`speckle-powerbi`](https://github.com/specklesystems/speckle-powerbi): PowerBi connector
 - and more [connectos & tooling](https://github.com/specklesystems/)!
 
 
