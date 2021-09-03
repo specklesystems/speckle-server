@@ -2,7 +2,6 @@
 'use strict'
 
 const appRoot = require( 'app-root-path' )
-const { async } = require('crypto-random-string')
 const knex = require( `${appRoot}/db/knex` )
 
 const ObjectPreview = ( ) => knex( 'object_preview' )

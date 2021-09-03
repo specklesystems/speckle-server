@@ -27,36 +27,48 @@ async function startTask() {
 async function doTask( task ) {
   
   let previewUrl = `http://127.0.0.1:3001/preview/${task.streamId}/${task.objectId}`
-  let res = await fetch( previewUrl )
-  res = await res.json()
-  // let imgBuffer = await res.buffer()  // this gets the binary response body
 
-  let metadata = {}
+  try {
+    let res = await fetch( previewUrl )
+    res = await res.json()
+    // let imgBuffer = await res.buffer()  // this gets the binary response body
 
-  for ( let angle in res ) {
-    const imgBuffer = new Buffer.from( res[angle].replace( /^data:image\/\w+;base64,/, '' ), 'base64' )
-    let previewId = crypto.createHash( 'md5' ).update( imgBuffer ).digest( 'hex' )
+    let metadata = {}
 
-    // Save preview image
-    let insertionObject = { id: previewId, data: imgBuffer }
-    //await Previews().insert( insertionObject )
-    //let dbQuery = Previews().insert( insertionObject ).toString( ) + ' on conflict do nothing'
-    await knex.raw( 'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING', [ previewId, imgBuffer ] )
+    for ( let angle in res ) {
+      const imgBuffer = new Buffer.from( res[angle].replace( /^data:image\/\w+;base64,/, '' ), 'base64' )
+      let previewId = crypto.createHash( 'md5' ).update( imgBuffer ).digest( 'hex' )
 
-    metadata[angle] = previewId
+      // Save preview image
+      let insertionObject = { id: previewId, data: imgBuffer }
+      //await Previews().insert( insertionObject )
+      //let dbQuery = Previews().insert( insertionObject ).toString( ) + ' on conflict do nothing'
+      await knex.raw( 'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING', [ previewId, imgBuffer ] )
+
+      metadata[angle] = previewId
+    }
+
+    // Update preview metadata
+    await knex.raw( `
+      UPDATE object_preview
+      SET
+        "previewStatus" = 2,
+        "lastUpdate" = NOW(),
+        "preview" = ?
+      WHERE "streamId" = ? AND "objectId" = ?
+    `, [ metadata, task.streamId, task.objectId ] )
+
+  } catch ( err ) {
+    // Update preview metadata
+    await knex.raw( `
+      UPDATE object_preview
+      SET
+        "previewStatus" = 3,
+        "lastUpdate" = NOW(),
+        "preview" = ?
+      WHERE "streamId" = ? AND "objectId" = ?
+    `, [ {}, task.streamId, task.objectId ] )
   }
-
-  // Update preview metadata
-  await knex.raw( `
-    UPDATE object_preview
-    SET
-      "previewStatus" = 2,
-      "lastUpdate" = NOW(),
-      "preview" = ?
-    WHERE "streamId" = ? AND "objectId" = ?
-  `, [ metadata, task.streamId, task.objectId ] )
-
-
 }
 
 async function tick() {

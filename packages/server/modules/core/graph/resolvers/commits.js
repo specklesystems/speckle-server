@@ -32,8 +32,8 @@ module.exports = {
     async commits( parent, args, context, info ) {
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
-      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor } )
-      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id } )
+      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor, ignoreGlobalsBranch: true } )
+      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id, ignoreGlobalsBranch: true } )
 
       return { items, cursor, totalCount }
     },
@@ -86,7 +86,7 @@ module.exports = {
           resourceId: id,
           actionType: 'commit_create',
           userId: context.userId,
-          info: { commit: args.commit },
+          info: { id: id, commit: args.commit },
           message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
         } )
         await pubsub.publish( COMMIT_CREATED, {

@@ -45,9 +45,9 @@
                       @click="nextUser"
                     >
                       <h1>👷‍♀️</h1>
-                      <v-card-title class="justify-center">AEC Person</v-card-title>
+                      <v-card-title class="justify-center">Designer or Manager</v-card-title>
                       <v-card-subtitle class="justify-center">
-                        Architect, engineer, BIM/project manager...
+                        Architect, engineer, BIM Manager, etc.
                       </v-card-subtitle>
                     </v-card>
                   </v-hover>
@@ -61,7 +61,7 @@
                       @click="nextDev"
                     >
                       <h1>👩‍💻</h1>
-                      <v-card-title class="justify-center">AEC Developer</v-card-title>
+                      <v-card-title class="justify-center">Developer</v-card-title>
                       <v-card-subtitle class="justify-center">
                         Software engineer, computational designer, hacker
                       </v-card-subtitle>
@@ -123,7 +123,7 @@
                 <b>Connectors</b>
                 are plugins for design and analysis software, they let you
                 <b>exchange</b>
-                geometry and BIM data dirctly from the tools you use.
+                geometry and BIM data directly from the tools you use.
               </p>
               <p>
                 Install our connectors and you'll instantly be able to
@@ -194,8 +194,8 @@
               <p>
                 Commits can also be organized in
                 <b>branches,</b>
-                for instace, to have multiple design options or to store data by discipline. The
-                dafault branch is called
+                for instance, to have multiple design options or to store data by discipline. The
+                default branch is called
                 <i>main</i>
                 .
               </p>

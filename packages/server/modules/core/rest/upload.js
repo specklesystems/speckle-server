@@ -48,15 +48,15 @@ module.exports = ( app ) => {
             return res.status( 400 ).send( `File size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
           }
 
-          let gunzipedBuffer = zlib.gunzipSync( gzippedBuffer ).toString( )
-          if ( gunzipedBuffer.length > MAX_FILE_SIZE ) {
+          let gunzippedBuffer = zlib.gunzipSync( gzippedBuffer ).toString( )
+          if ( gunzippedBuffer.length > MAX_FILE_SIZE ) {
             requestDropped = true
-            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${gunzipedBuffer.length} > ${MAX_FILE_SIZE})` )
-            return res.status( 400 ).send( `File size too large (${gunzipedBuffer.length} > ${MAX_FILE_SIZE})` )
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+            return res.status( 400 ).send( `File size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
           }
 
           try {
-            objs = JSON.parse( gunzipedBuffer )
+            objs = JSON.parse( gunzippedBuffer )
           } catch ( e ) {
             requestDropped = true
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch not in JSON format` )
@@ -74,7 +74,7 @@ module.exports = ( app ) => {
 
           await promise
 
-          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzipedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzippedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
         } )
       } else if ( mimetype === 'text/plain' || mimetype === 'application/json' || mimetype === 'application/octet-stream' ) {
         let buffer = ''
@@ -111,7 +111,7 @@ module.exports = ( app ) => {
           promises.push( promise )
 
           await promise
-          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzipedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${buffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
         } )
       } else {
         requestDropped = true

@@ -1,0 +1,23 @@
+{
+  "name": "@speckle/webhook-service",
+  "version": "2.0.0",
+  "description": "Component to handle calling external webhooks",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/specklesystems/speckle-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/specklesystems/speckle-server/issues"
+  },
+  "homepage": "https://github.com/specklesystems/speckle-server#readme",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node src/main.js"
+  },
+  "dependencies": {
+    "knex": "^0.95.7",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.6.0"
+  }
+}

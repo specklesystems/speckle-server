@@ -9,6 +9,9 @@ import vuetify from './plugins/vuetify'
 
 Vue.config.productionTip = false
 
+import PortalVue from 'portal-vue'
+Vue.use(PortalVue)
+
 import VueTimeago from 'vue-timeago'
 Vue.use(VueTimeago, { locale: 'en' })
 
@@ -39,6 +42,13 @@ import { formatNumber } from './formatNumber'
 // Filter to turn any number into a nice string like '10k', '5.5m'
 // Accepts 'max' parameter to set it's formatting while being animated
 Vue.filter('prettynum', formatNumber)
+
+// Filter to capitalize words
+Vue.filter('capitalize', (value) => {
+  if (!value) return ''
+  value = value.toString()
+  return value.charAt(0).toUpperCase() + value.slice(1)
+})
 
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')

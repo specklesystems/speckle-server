@@ -2,6 +2,7 @@ query Stream($streamid: String!, $id: String!) {
   stream(id: $streamid) {
     id
     name
+    role
     commit(id: $id) {
       id
       message

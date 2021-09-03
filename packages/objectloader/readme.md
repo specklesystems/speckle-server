@@ -10,7 +10,7 @@ Comprehensive developer and user documentation can be found in our:
 
 ## Getting started
 
-This is a small utility class that helps you stream an object and all its sub-components from the Speckle Server API. It is inteded to be used in contexts where you want to "download" the whole object, or iteratively traverse its whole tree.
+This is a small utility class that helps you stream an object and all its sub-components from the Speckle Server API. It is intended to be used in contexts where you want to "download" the whole object, or iteratively traverse its whole tree.
 
 Here's a sample way on how to use it, pfilfered from the [3d viewer package](../viewer):
 

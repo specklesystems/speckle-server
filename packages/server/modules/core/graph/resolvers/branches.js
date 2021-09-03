@@ -61,7 +61,7 @@ module.exports = {
           resourceId: id,
           actionType: 'branch_create',
           userId: context.userId,
-          info: { branch:  { ...args.branch, id: id } },
+          info: { branch: { ...args.branch, id: id } },
           message: `Branch created: '${args.branch.name}' (${id})`
         } )
         await pubsub.publish( BRANCH_CREATED, {
@@ -77,6 +77,13 @@ module.exports = {
       await authorizeResolver( context.userId, args.branch.streamId, 'stream:contributor' )
 
       let oldValue = await getBranchById( { id: args.branch.id } )
+      if ( !oldValue ) {
+        throw new ApolloError( 'Branch not found.' )
+      }
+
+      if ( oldValue.streamId !== args.branch.streamId )
+        throw new ForbiddenError( 'The branch id and stream id do not match. Please check your inputs.' )
+
       let updated = await updateBranch( { ...args.branch } )
 
       if ( updated ) {
@@ -106,6 +113,9 @@ module.exports = {
       if ( !branch ) {
         throw new ApolloError( 'Branch not found.' )
       }
+
+      if ( branch.streamId !== args.branch.streamId )
+        throw new ForbiddenError( 'The branch id and stream id do not match. Please check your inputs.' )
 
       if ( branch.authorId !== context.userId && role !== 'stream:owner' )
         throw new ForbiddenError( 'Only the branch creator or stream owners are allowed to delete branches.' )

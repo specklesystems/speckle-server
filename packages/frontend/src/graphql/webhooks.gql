@@ -1,0 +1,23 @@
+query webhooks($streamId: String!) {
+  stream(id: $streamId) {
+    id
+    role
+    webhooks {
+      items {
+        id
+        streamId
+        url
+        description
+        triggers
+        enabled
+        history(limit: 50) {
+          items {
+            status
+            statusInfo
+            lastUpdate
+          }
+        }
+      }
+    }
+  }
+}

@@ -4,13 +4,21 @@
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
     <div v-else>
-      <v-alert type="error" class="my-5 mt-10 mx-4">Danger zone</v-alert>
-      <v-card color="transparent" flat>
-        <v-card-title>
-          Delete account and all associated streams
-          <v-spacer />
-          <v-btn text color="error" @click="deleteUser">Delete account</v-btn>
-        </v-card-title>
+      <v-card rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-5`" style="overflow: hidden;">
+        <v-toolbar flat color="red" dark>
+          <v-toolbar-title>Delete Account</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="showDelete = !showDelete"><v-icon>mdi-chevron-down</v-icon></v-btn>
+        </v-toolbar>
+        <div v-show="showDelete">
+          <v-card-text>
+            This action cannot be undone. We will delete all streams where you are the sole owner,
+            and any associated data.
+          </v-card-text>
+          <v-card-actions>
+            <v-btn block @click="deleteUser">Delete account</v-btn>
+          </v-card-actions>
+        </div>
       </v-card>
       <user-delete-dialog ref="userDeleteDialog"></user-delete-dialog>
     </div>
@@ -30,7 +38,9 @@ export default {
     }
   },
   data() {
-    return {}
+    return {
+      showDelete: false
+    }
   },
   computed: {},
   methods: {

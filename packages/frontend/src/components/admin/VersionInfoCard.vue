@@ -1,16 +1,20 @@
 <template>
-  <admin-card title="Version Info" v-bind="$attrs">
-    <template v-slot:menu>
-      <span v-if="isLatestVersion" class="text--h6 success--text">
-        <v-icon size="medium" color="success">mdi-check-bold</v-icon>
-        <span class="body-2 success--text">Your server is up to date</span>
-      </span>
-      <span v-else class="warning--text">
-        <v-icon size="medium" color="warning">mdi-alert</v-icon>
-        <span class="body-2 warning--text">There's a newer version available!</span>
-      </span>
-    </template>
-    <div class="d-flex justify-space-around pl-4 pr-4">
+  <v-card :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-10`">
+    <v-toolbar flat>
+      <v-toolbar-title>Version Info</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn icon href="https://github.com/specklesystems/speckle-server/releases" target="_blank">
+        <span v-if="isLatestVersion" class="text--h6 success--text">
+          <v-icon size="medium" color="success" v-tooltip="'Up to date.'">mdi-check-bold</v-icon>
+        </span>
+        <span v-else class="warning--text">
+          <v-icon size="medium" color="warning" v-tooltip="'There is a newer version available!'">
+            mdi-alert
+          </v-icon>
+        </span>
+      </v-btn>
+    </v-toolbar>
+    <div class="d-flex justify-space-around pl-4 pr-4 mt-4">
       <div>
         <h4 class="primary--text text--lighten-2">Current</h4>
         <p class="primary--text text-h4 text-sm-h2 speckle-gradient-txt">
@@ -25,19 +29,15 @@
         </p>
       </div>
     </div>
-    <v-btn disabled v-if="!isLatestVersion" color="primary" width="100%">
-      Follow our guide on how to update your server
-    </v-btn>
-  </admin-card>
+  </v-card>
 </template>
 
 <script>
-import AdminCard from '@/components/admin/AdminCard'
 import gql from 'graphql-tag'
 
 export default {
   name: 'VersionInfoCard',
-  components: { AdminCard },
+  components: { },
   data() {
     return {
       versionInfo: {
