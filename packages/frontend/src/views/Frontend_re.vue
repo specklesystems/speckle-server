@@ -19,8 +19,8 @@
           <router-link to="/" class="text-decoration-none">
             <v-img
               class="mt-2"
-              max-width="30"
-              src="@/assets/logo.svg"
+              width="24"
+              src="@/assets/specklebrick.png"
               style="display: inline-block"
             />
           </router-link>
