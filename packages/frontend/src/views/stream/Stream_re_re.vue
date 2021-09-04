@@ -4,6 +4,7 @@
     <v-navigation-drawer
       app
       fixed
+      clipped
       :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
       v-model="streamNav"
       :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
@@ -11,7 +12,7 @@
     >
       <!-- Toolbar holds link to stream home page -->
       <v-app-bar
-        v-if="stream"
+        v-if="stream && $vuetify.breakpoint.smAndDown"
         style="position: absolute; top: 0; width: 100%; z-index: 90"
         elevation="0"
         flat
@@ -26,15 +27,12 @@
             <b>{{ stream.name }}</b>
           </router-link>
         </v-toolbar-title>
-        <v-spacer></v-spacer>
-        <v-app-bar-nav-icon @click="streamNav = !streamNav">
-          <v-icon v-if="streamNav">mdi-chevron-left</v-icon>
-        </v-app-bar-nav-icon>
       </v-app-bar>
-      <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
+
+      <!-- <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader> -->
 
       <!-- Top padding hack -->
-      <div style="display: block; height: 65px"></div>
+      <div style="display: block; height: 65px" v-if="$vuetify.breakpoint.smAndDown"></div>
       <div class="px-4 mt-2" v-if="!loggedIn">
         <v-btn large block color="primary" to="/authn/login">Log In</v-btn>
       </div>
@@ -216,21 +214,22 @@
       app
       :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
       flat
+      clipped-left
       v-if="!error"
     >
-      <v-app-bar-nav-icon @click="streamNav = !streamNav" v-if="!streamNav">
-        <v-icon v-if="streamNav">mdi-chevron-left</v-icon>
+      <v-app-bar-nav-icon @click="streamNav = !streamNav" v-if="true || !streamNav">
+        <!-- <v-icon v-if="streamNav">mdi-chevron-left</v-icon> -->
       </v-app-bar-nav-icon>
       <v-toolbar-title class="pl-0">
         <router-link
           v-if="stream"
-          v-show="!streamNav && !$vuetify.breakpoint.smAndDown"
+          v-show="true || !streamNav && !$vuetify.breakpoint.smAndDown"
           class="text-decoration-none space-grotesk"
           :to="`/streams/${stream.id}`"
         >
           <b>{{ stream.name }}</b>
         </router-link>
-        <span class="mx-2" v-show="!streamNav && !$vuetify.breakpoint.smAndDown">/</span>
+        <span class="mx-2" v-show="true || !streamNav && !$vuetify.breakpoint.smAndDown">/</span>
         <portal-target name="streamTitleBar" slim style="display: inline-block">
           <!-- child routes can teleport things here -->
         </portal-target>
