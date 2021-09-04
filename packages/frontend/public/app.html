@@ -27,6 +27,7 @@
           color: #0A66FF;
         }
       }
+      
       .tada {
         -webkit-animation-name: tada;
         animation-name: tada;
@@ -36,6 +37,17 @@
         animation-fill-mode: both;
         animation-iteration-count: infinite;
       }
+
+      .hover-tada:hover{
+       -webkit-animation-name: tada;
+        animation-name: tada;
+        -webkit-animation-duration: 1s;
+        animation-duration: 1s;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+        animation-iteration-count: infinite; 
+      }
+
       @-webkit-keyframes tada {
         0% {
           -webkit-transform: scale3d(1, 1, 1);
