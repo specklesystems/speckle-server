@@ -22,6 +22,8 @@
               v-model="form.password"
               label="new password"
               type="password"
+              autocomplete="new-password"
+              id="new-password"
               :rules="validation.passwordRules"
               filled
               single-line
