@@ -3,9 +3,6 @@
 </template>
 <script>
 export default {
-  components: {},
-  mounted() {
-    this.$matomo.trackPageView('embed/view')
-  }
+  components: {}
 }
 </script>
