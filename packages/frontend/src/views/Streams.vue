@@ -84,12 +84,11 @@
         Streams
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-toolbar-items style="margin-right: -18px">
+      <v-toolbar-items style="margin-right: -18px" v-if="$vuetify.breakpoint.smAndDown">
         <v-btn
           color="primary"
           depressed
           @click="newStreamDialog++"
-          v-if="$vuetify.breakpoint.smAndDown || !streamNav"
         >
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
@@ -109,7 +108,7 @@
       </v-col>
 
       <v-col cols="12" v-else-if="streams && streams.items && streams.items.length > 0">
-        <v-row>
+        <v-row :class="`${$vuetify.breakpoint.xsOnly ? '' : 'pl-2'}`">
           <v-col
             v-for="(stream, i) in streams.items"
             :key="i"

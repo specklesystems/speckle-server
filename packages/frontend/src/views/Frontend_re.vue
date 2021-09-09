@@ -18,9 +18,9 @@
         <v-toolbar-title class="space-grotesk primary--text">
           <router-link to="/" class="text-decoration-none">
             <v-img
-              class="mt-2"
-              max-width="30"
-              src="@/assets/logo.svg"
+              class="mt-2 hover-tada"
+              width="24"
+              src="@/assets/specklebrick.png"
               style="display: inline-block"
             />
           </router-link>

@@ -33,7 +33,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: cristi/webhookservice_ci_build
+              only: cristi/ci-new-dep
 
 jobs:
   test_server:
@@ -97,6 +97,7 @@ jobs:
             ./.circleci/deploy.sh
             if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
             else
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_LATEST} ./.circleci/deploy_in_new_setup.sh
             fi

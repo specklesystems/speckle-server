@@ -42,7 +42,7 @@
             <v-list-item-content>
               <v-list-item-title>Globals docs</v-list-item-title>
               <v-list-item-subtitle class="caption">
-                Read the documentation on webhooks.
+                Read the documentation on global variables.
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>

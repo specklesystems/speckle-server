@@ -73,7 +73,7 @@
       <no-data-placeholder
         v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
       >
-        <h2 class="space-grotesk">This branch has no commits.</h2>
+        <h2 class="space-grotesk">Branch "{{stream.branch.name}}" has no commits.</h2>
       </no-data-placeholder>
     </v-row>
     <error-placeholder
@@ -183,6 +183,7 @@ export default {
     }
   },
   mounted() {
+    console.log(this.$route.params)
     if (this.$route.params.branchName === 'globals')
       this.$router.push(`/streams/${this.$route.params.streamId}/globals`)
   }

@@ -47,6 +47,10 @@
                 filled
                 single-line
                 prepend-icon="mdi-email"
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="username"
               />
             </v-col>
             <v-col cols="12" sm="12">
@@ -76,6 +80,8 @@
                 v-model="form.password"
                 label="password"
                 type="password"
+                autocomplete="new-password"
+                id="new-password"
                 :rules="validation.passwordRules"
                 filled
                 single-line
@@ -89,6 +95,8 @@
                 v-model="form.passwordConf"
                 label="confirm password"
                 type="password"
+                autocomplete="new-password"
+                id="confirm-password"
                 :rules="validation.passwordRules"
                 filled
                 single-line
