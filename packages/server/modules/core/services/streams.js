@@ -8,13 +8,18 @@ const Acl = ( ) => knex( 'stream_acl' )
 
 const debug = require( 'debug' )
 const { createBranch } = require( './branches' )
+const { uniqueNamesGenerator, adjectives, animals } =  require( 'unique-names-generator' )
+const architects = require( `${appRoot}/modules/shared/architects` )
+
+const generateStreamName = () => 
+  `${uniqueNamesGenerator( { dictionaries: [ architects ],style: 'capital' } )}\'s ${uniqueNamesGenerator( { dictionaries: [ adjectives ] } )} stream`
 
 module.exports = {
 
   async createStream( { name, description, isPublic, ownerId } ) {
     let stream = {
       id: crs( { length: 10 } ),
-      name: name || 'Random Stream',
+      name: name || generateStreamName(),
       description: description || '',
       isPublic: isPublic !== false,
       updatedAt: knex.fn.now( )
