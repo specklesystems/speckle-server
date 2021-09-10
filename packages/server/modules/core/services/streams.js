@@ -8,7 +8,7 @@ const Acl = ( ) => knex( 'stream_acl' )
 
 const debug = require( 'debug' )
 const { createBranch } = require( './branches' )
-const { uniqueNamesGenerator, adjectives, animals } =  require( 'unique-names-generator' )
+const { uniqueNamesGenerator, adjectives } =  require( 'unique-names-generator' )
 const architects = require( `${appRoot}/modules/shared/architects` )
 
 const generateStreamName = () => 
