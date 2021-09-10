@@ -6,6 +6,8 @@ FROM node:14.16-buster-slim as build-stage
 WORKDIR /opt/viewer
 COPY packages/viewer/package*.json ./
 RUN npm install
+COPY packages/objectloader /opt/objectloader
+RUN npm install ../objectloader
 COPY packages/viewer .
 RUN npm run build
 
