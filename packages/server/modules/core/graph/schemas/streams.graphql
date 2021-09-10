@@ -5,7 +5,7 @@ extend type Query {
   stream( id: String! ): Stream
 
   """
-  All the streams of the current user, pass in the `query` parameter to seach by name, description or ID.
+  All the streams of the current user, pass in the `query` parameter to search by name, description or ID.
   """
   streams( query: String, limit: Int = 25, cursor: String ): StreamCollection
     @hasScope(scope: "streams:read")
@@ -17,7 +17,7 @@ type Stream {
   description: String
   isPublic: Boolean!
   """
-  Your role for this stream. `null` if request is not authenticated, or the stream is not explictely shared with you.
+  Your role for this stream. `null` if request is not authenticated, or the stream is not explicitly shared with you.
   """
   role: String
   createdAt: DateTime!

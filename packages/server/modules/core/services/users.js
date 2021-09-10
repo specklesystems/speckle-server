@@ -3,6 +3,7 @@ const bcrypt = require( 'bcrypt' )
 const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
+const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 
 const Users = ( ) => knex( 'users' )
 const Acl = ( ) => knex( 'server_acl' )
@@ -39,6 +40,18 @@ module.exports = {
     } else {
       await Acl( ).insert( { userId: res[ 0 ], role: 'server:user' } )
     }
+
+    let loggedUser = { ...user }
+    delete loggedUser.passwordDigest
+    await saveActivity( {
+      streamId: null,
+      resourceType: 'user',
+      resourceId: user.id,
+      actionType: 'user_create',
+      userId: user.id,
+      info: { user: loggedUser },
+      message: 'User created'
+    } )
 
     return res[ 0 ]
   },

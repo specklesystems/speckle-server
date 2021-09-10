@@ -23,7 +23,7 @@ export default class EventEmitter {
   }
 
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
-  emit( name, ...args) {
+  emit( name, ...args ) {
     if ( !this._events[name] ) return
 
     const fireCallbacks = ( callback ) => {
@@ -33,7 +33,7 @@ export default class EventEmitter {
     this._events[name].forEach( fireCallbacks )
   }
 
-  dispose(){
+  dispose() {
     this._events = null
   }
 }

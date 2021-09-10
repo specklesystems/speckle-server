@@ -1,4 +1,4 @@
-version: "3"
+version: "2"
 services:
   ####
   # Speckle Server dependencies
@@ -65,6 +65,15 @@ services:
   speckle-preview-service:
     image: speckle/speckle-preview-service:2
     restart: always
+    mem_limit: "1000m"
+    memswap_limit: "1000m"
     environment:
       DEBUG: "preview-service:*"
+      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+
+  speckle-webhook-service:
+    image: speckle/speckle-webhook-service:2
+    restart: always
+    environment:
+      DEBUG: "webhook-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"

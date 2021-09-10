@@ -38,24 +38,28 @@ module.exports = ( app ) => {
 
         file.on( 'end', async ( ) => {
           if ( requestDropped ) return
+          let t0 = Date.now()
           let objs = [ ]
 
           let gzippedBuffer = Buffer.concat( buffer )
           if ( gzippedBuffer.length > MAX_FILE_SIZE ) {
             requestDropped = true
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
             return res.status( 400 ).send( `File size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
           }
 
-          let gunzipedBuffer = zlib.gunzipSync( gzippedBuffer ).toString( )
-          if ( gunzipedBuffer.length > MAX_FILE_SIZE ) {
+          let gunzippedBuffer = zlib.gunzipSync( gzippedBuffer ).toString( )
+          if ( gunzippedBuffer.length > MAX_FILE_SIZE ) {
             requestDropped = true
-            return res.status( 400 ).send( `File size too large (${gunzipedBuffer.length} > ${MAX_FILE_SIZE})` )
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+            return res.status( 400 ).send( `File size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
           }
 
           try {
-            objs = JSON.parse( gunzipedBuffer )
+            objs = JSON.parse( gunzippedBuffer )
           } catch ( e ) {
             requestDropped = true
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch not in JSON format` )
             return res.status( 400 ).send( 'Failed to parse data.' )
           }
 
@@ -69,6 +73,8 @@ module.exports = ( app ) => {
           promises.push( promise )
 
           await promise
+
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzippedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
         } )
       } else if ( mimetype === 'text/plain' || mimetype === 'application/json' || mimetype === 'application/octet-stream' ) {
         let buffer = ''
@@ -79,10 +85,12 @@ module.exports = ( app ) => {
 
         file.on( 'end', async ( ) => {
           if ( requestDropped ) return
+          let t0 = Date.now()
           let objs = [ ]
 
           if ( buffer.length > MAX_FILE_SIZE ) {
             requestDropped = true
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${buffer.length} > ${MAX_FILE_SIZE})` )
             return res.status( 400 ).send( `File size too large (${buffer.length} > ${MAX_FILE_SIZE})` )
           }
 
@@ -90,6 +98,7 @@ module.exports = ( app ) => {
             objs = JSON.parse( buffer )
           } catch ( e ) {
             requestDropped = true
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch not in JSON format` )
             return res.status( 400 ).send( 'Failed to parse data.' )
           }
           last = objs[ objs.length - 1 ]
@@ -102,6 +111,7 @@ module.exports = ( app ) => {
           promises.push( promise )
 
           await promise
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${buffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
         } )
       } else {
         requestDropped = true
@@ -112,7 +122,7 @@ module.exports = ( app ) => {
     busboy.on( 'finish', async ( ) => {
       if ( requestDropped ) return
 
-      debug( 'speckle:upload-endpoint' )( 'Done parsing ' + totalProcessed + ' objs ' + process.memoryUsage( ).heapUsed / 1024 / 1024 + ' mb mem' )
+      debug( 'speckle:upload-endpoint' )( `[User ${req.context.userId || '-'}] Upload finished: ${totalProcessed} objs, ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB mem` )
 
       await Promise.all( promises )
 

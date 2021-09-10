@@ -171,7 +171,7 @@ export default class Viewer extends EventEmitter {
     // Render as usual
     // TODO: post processing SSAO sucks so much currently it's off by default
     // if ( this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled ){
-    if ( this.postprocessing && !this.pauseSSAO ){
+    if ( this.postprocessing && !this.pauseSSAO ) {
       // console.log('composer')
       this.composer.render( this.scene, this.camera )
     }
@@ -189,5 +189,5 @@ export default class Viewer extends EventEmitter {
 
   dispose() {
     // TODO
-  }
+  }l
 }

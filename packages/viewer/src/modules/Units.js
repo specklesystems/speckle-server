@@ -9,7 +9,7 @@ export const Units = {
   Miles: 'mi'
 }
 
-export function getConversionFactor( from, to = Units.Meters ){
+export function getConversionFactor( from, to = Units.Meters ) {
   from = normaliseName( from )
   to = normaliseName( to )
   switch ( from )

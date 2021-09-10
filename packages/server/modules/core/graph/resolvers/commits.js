@@ -3,6 +3,7 @@
 const appRoot = require( 'app-root-path' )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
+const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 
 const {
   createCommitByBranchName,
@@ -31,8 +32,8 @@ module.exports = {
     async commits( parent, args, context, info ) {
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
-      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor } )
-      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id } )
+      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor, ignoreGlobalsBranch: true } )
+      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id, ignoreGlobalsBranch: true } )
 
       return { items, cursor, totalCount }
     },
@@ -79,6 +80,15 @@ module.exports = {
 
       let id = await createCommitByBranchName( { ...args.commit, authorId: context.userId } )
       if ( id ) {
+        await saveActivity( {
+          streamId: args.commit.streamId,
+          resourceType: 'commit',
+          resourceId: id,
+          actionType: 'commit_create',
+          userId: context.userId,
+          info: { id: id, commit: args.commit },
+          message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
+        } )
         await pubsub.publish( COMMIT_CREATED, {
           commitCreated: { ...args.commit, id: id, authorId: context.userId },
           streamId: args.commit.streamId
@@ -97,6 +107,15 @@ module.exports = {
 
       let updated = await updateCommit( { ...args.commit } )
       if ( updated ) {
+        await saveActivity( {
+          streamId: args.commit.streamId,
+          resourceType: 'commit',
+          resourceId: args.commit.id,
+          actionType: 'commit_update',
+          userId: context.userId,
+          info: { old: commit, new: args.commit },
+          message: `Commit message changed: ${args.commit.id} (${args.commit.message})`
+        } )
         await pubsub.publish( COMMIT_UPDATED, {
           commitUpdated: { ...args.commit },
           streamId: args.commit.streamId,
@@ -116,6 +135,15 @@ module.exports = {
 
       let deleted = await deleteCommit( { id: args.commit.id } )
       if ( deleted ) {
+        await saveActivity( {
+          streamId: args.commit.streamId,
+          resourceType: 'commit',
+          resourceId: args.commit.id,
+          actionType: 'commit_delete',
+          userId: context.userId,
+          info: { commit: commit },
+          message: `Commit deleted: ${args.commit.id}`
+        } )
         await pubsub.publish( COMMIT_DELETED, { commitDeleted: { ...args.commit }, streamId: args.commit.streamId } )
       }
 

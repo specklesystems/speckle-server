@@ -30,7 +30,7 @@ export default class SectionBox {
       opacity: 0.02,
       color: 0x0A66FF,
       metalness: 0.1,
-      roughness: 0.75,
+      roughness: 0.75
     } ) )
 
     this.display.add( this.boxHelper )

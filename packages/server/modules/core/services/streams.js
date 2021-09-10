@@ -15,7 +15,7 @@ module.exports = {
     let stream = {
       id: crs( { length: 10 } ),
       name: name || 'Random Stream',
-      description: description || 'No description provided.',
+      description: description || '',
       isPublic: isPublic !== false,
       updatedAt: knex.fn.now( )
     }

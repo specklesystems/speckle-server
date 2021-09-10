@@ -1,6 +1,9 @@
 <template>
-  <v-list-item :to="route ? route : `/streams/${streamId}/commits/${commit.id}`">
-    <v-list-item-icon>
+  <v-list-item
+    :to="route ? route : `/streams/${streamId}/commits/${commit.id}`"
+    class="xxx-elevation-10"
+  >
+    <v-list-item-icon class="pl-4">
       <user-avatar
         :id="commit.authorId"
         :avatar="commit.authorAvatar"
@@ -11,22 +14,23 @@
     <v-list-item-content>
       <v-list-item-title class="mt-0 pt-0 py-1">
         {{ commit.message }}
-        <span v-if="commit.branchName" class="caption">
-          <v-chip small style="top: -3px">
-            <v-icon small class="mr-2">mdi-source-branch</v-icon>
-            {{ commit.branchName }}
-          </v-chip>
-        </span>
       </v-list-item-title>
       <v-list-item-subtitle class="caption">
-        <b>{{ commit.authorName }}</b>
-        committed
+        <b>{{ commit.authorName }}</b>&nbsp;
         <timeago :datetime="commit.createdAt"></timeago>
         ({{ commitDate }})
       </v-list-item-subtitle>
     </v-list-item-content>
     <v-list-item-action>
-      <source-app-avatar :application-name="commit.sourceApplication" />
+      <div>
+        <span v-if="commit.branchName" class="caption">
+          <v-chip small v-tooltip="`On branch '${commit.branchName}'`" color="primary" :to="`/streams/${streamId}/branches/${commit.branchName}`">
+            <v-icon small class="mr-2">mdi-source-branch</v-icon>
+            {{ commit.branchName }}
+          </v-chip>
+        </span>
+        <source-app-avatar :application-name="commit.sourceApplication" />
+      </div>
     </v-list-item-action>
   </v-list-item>
 </template>

@@ -1,5 +1,32 @@
 <template lang="html">
-  <v-sheet style="height: 100%" class="transparent">
+  <v-sheet style="height: 100%; position: relative" class="transparent">
+    <v-menu v-if="!embeded" bottom left close-on-click offset-y>
+      <template #activator="{ on: onMenu, attrs: menuAttrs }">
+        <v-tooltip left color="primary">
+          <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
+            <v-btn
+              style="position: absolute; bottom: 1em; right: 1em; z-index: 3"
+              color="primary"
+              fab
+              x-small
+              v-bind="{ ...tooltipAttrs, ...menuAttrs }"
+              v-on="{ ...onTooltip, ...onMenu }"
+            >
+              <v-icon small>mdi-share-variant</v-icon>
+            </v-btn>
+          </template>
+          Embed 3D Viewer
+        </v-tooltip>
+      </template>
+      <v-list dense>
+        <v-list-item @click="copyIFrame">
+          <v-list-item-title>Copy iframe</v-list-item-title>
+        </v-list-item>
+        <v-list-item @click="copyEmbedUrl">
+          <v-list-item-title>Copy URL</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-menu>
     <v-alert
       v-show="showAlert"
       text
@@ -50,34 +77,9 @@
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
-        <!--  -->
         <v-btn-toggle class="elevation-0" style="z-index: 100">
-          <v-menu v-if="!embeded" top close-on-click offset-y>
-            <template #activator="{ on: onMenu, attrs: menuAttrs }">
-              <v-tooltip top>
-                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn
-                    small
-                    v-bind="{ ...tooltipAttrs, ...menuAttrs }"
-                    v-on="{ ...onTooltip, ...onMenu }"
-                  >
-                    <v-icon small>mdi-share-variant</v-icon>
-                  </v-btn>
-                </template>
-                Embed 3D Viewer
-              </v-tooltip>
-            </template>
-            <v-list dense>
-              <v-list-item @click="copyIFrame">
-                <v-list-item-title>Copy iframe</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="copyEmbedUrl">
-                <v-list-item-title>Copy URL</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
           <v-btn
-            v-show="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
+            v-if="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
             small
             color="primary"
             @click="showObjectDetails = !showObjectDetails"
@@ -122,7 +124,6 @@
               <v-list-item v-for="view in namedViews" :key="view.id" @click="setNamedView(view.id)">
                 <v-list-item-title>{{ view.name }}</v-list-item-title>
               </v-list-item>
-              <!-- </div> -->
             </v-list>
           </v-menu>
 
@@ -158,9 +159,17 @@
             </template>
             Show viewer help
           </v-tooltip>
-          <v-dialog v-model="showObjectDetails" width="500">
+          <v-dialog
+            v-model="showObjectDetails"
+            width="500"
+            :fullscreen="$vuetify.breakpoint.smAndDown"
+          >
             <v-card>
-              <v-card-title>Selection Details</v-card-title>
+              <v-toolbar>
+                <v-toolbar-title>Selection Details</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn icon @click="showObjectDetails = false"><v-icon>mdi-close</v-icon></v-btn>
+              </v-toolbar>
               <v-sheet>
                 <div v-if="selectedObjects.length !== 0">
                   <object-simple-viewer
@@ -345,10 +354,14 @@ export default {
     async getPreviewImage(angle) {
       angle = angle || 0
       let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      let token = undefined
+      try {
+        token = localStorage.getItem('AuthToken')
+      } catch (e) {
+        console.warn('Sanboxed mode, only public streams will fetch properly.')
+      }
       const res = await fetch(previewUrl, {
-        headers: localStorage.getItem('AuthToken')
-          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
-          : {}
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       const blob = await res.blob()
       const imgUrl = URL.createObjectURL(blob)

@@ -19,8 +19,8 @@ export default class Coverter {
   }
 
   /**
-   * If the object is convertable (there is a direct conversion routine), it will invoke the callback with the conversion result.
-   * If the object is not convertable, it will recursively iterate through it (arrays & objects) and invoke the callback on any postive conversion result.
+   * If the object is convertible (there is a direct conversion routine), it will invoke the callback with the conversion result.
+   * If the object is not convertible, it will recursively iterate through it (arrays & objects) and invoke the callback on any positive conversion result.
    * @param  {[type]}   obj      [description]
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
@@ -58,7 +58,7 @@ export default class Coverter {
     let target = obj.data || obj
 
     // Check if the object has a display value of sorts
-    let displayValue = target['displayMesh'] || target['@displayMesh'] || target['displayValue']|| target['@displayValue']
+    let displayValue = target['displayMesh'] || target['@displayMesh'] || target['displayValue'] || target['@displayValue']
     if ( displayValue ) {
       if ( !Array.isArray( displayValue ) ) {
         displayValue = await this.resolveReference( displayValue )
@@ -174,19 +174,19 @@ export default class Coverter {
   }
 
   async BlockInstanceToBufferGeometry( obj, scale ) {
-    
+
     let cF = scale ? getConversionFactor( obj.units ) : 1
     let definition = await this.resolveReference( obj.blockDefinition )
-    
+
     const matrix = new THREE.Matrix4().set( ...obj.transform )
     let geoms = []
     for ( let obj of definition.geometry ) {
       // Note: we are passing scale = false to the conversion of all objects, as scaling *needs* to happen
       // at a global group level.
-      let res = await this.convert ( await this.resolveReference( obj ), false ) 
+      let res = await this.convert ( await this.resolveReference( obj ), false )
       // We are not baking the matrix transform in the vertices so as to allow
       // for easy composed transforms coming in at nested block levels
-      // res.bufferGeometry.applyMatrix4( matrix ) 
+      // res.bufferGeometry.applyMatrix4( matrix )
       geoms.push( res )
     }
 
@@ -220,7 +220,7 @@ export default class Coverter {
         let r = color >> 16 & 0xFF
         let g = color >> 8 & 0xFF
         let b = color & 0xFF
-        buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
+        buffer.attributes.color.setXYZ( i, r / 255, g / 255, b / 255 )
       }
     }
 
@@ -236,7 +236,7 @@ export default class Coverter {
       if ( !obj ) return
       let { bufferGeometry } = await this.MeshToBufferGeometry( await this.resolveReference( obj.displayValue || obj.displayMesh ), scale )
 
-      // deletes known uneeded fields
+      // deletes known unneeded fields
       // delete obj.displayMesh
       // delete obj.displayValue
       delete obj.Edges
@@ -302,7 +302,7 @@ export default class Coverter {
           let r = color >> 16 & 0xFF
           let g = color >> 8 & 0xFF
           let b = color & 0xFF
-          buffer.attributes.color.setXYZ( i, r/255, g/255, b/255 )
+          buffer.attributes.color.setXYZ( i, r / 255, g / 255, b / 255 )
         }
       }
 
@@ -330,7 +330,7 @@ export default class Coverter {
   }
 
   async LineToBufferGeometry( object, scale = true ) {
-    if ( object.value ){
+    if ( object.value ) {
       //Old line format, treat as polyline
       return this.PolylineToBufferGeometry( object, scale )
     }
@@ -350,8 +350,8 @@ export default class Coverter {
     obj.value = await this.dechunk( obj.value )
 
     const points = []
-    for ( let i = 0; i < obj.value.length; i+=3 ) {
-      points.push( new THREE.Vector3( obj.value[i] * conversionFactor,obj.value[i+1] * conversionFactor,obj.value[i+2] * conversionFactor ) )
+    for ( let i = 0; i < obj.value.length; i += 3 ) {
+      points.push( new THREE.Vector3( obj.value[i] * conversionFactor,obj.value[i + 1] * conversionFactor,obj.value[i + 2] * conversionFactor ) )
     }
     if ( obj.closed )
       points.push( points[0] )
@@ -364,17 +364,17 @@ export default class Coverter {
     return new ObjectWrapper( geometry, obj, 'line' )
   }
 
-  async BoxToBufferGeometry( object, scale = true ){
+  async BoxToBufferGeometry( object, scale = true ) {
     let conversionFactor = scale ? getConversionFactor( object.units ) : 1
 
-    var move = this.PointToVector3( object.basePlane.origin )
-    var width = ( object.xSize.end - object.xSize.start ) * conversionFactor
-    var depth = ( object.ySize.end - object.ySize.start ) * conversionFactor
-    var height = ( object.zSize.end - object.zSize.start ) * conversionFactor
+    let move = this.PointToVector3( object.basePlane.origin )
+    let width = ( object.xSize.end - object.xSize.start ) * conversionFactor
+    let depth = ( object.ySize.end - object.ySize.start ) * conversionFactor
+    let height = ( object.zSize.end - object.zSize.start ) * conversionFactor
 
-    var box = new THREE.BoxBufferGeometry( width,height,depth,1,1,1 )
+    let box = new THREE.BoxBufferGeometry( width, depth, height, 1,1,1 )
     box.applyMatrix4( new THREE.Matrix4().setPosition( move ) )
-    
+
     return new ObjectWrapper( box, object )
   }
 
@@ -457,7 +457,7 @@ export default class Coverter {
     return new ObjectWrapper( geometry, obj, 'line' )
   }
 
-  PlaneToMatrix4( plane, scale = true ){
+  PlaneToMatrix4( plane, scale = true ) {
     const m = new THREE.Matrix4()
     let conversionFactor = scale ? getConversionFactor( plane.units ) : 1
 
@@ -469,14 +469,14 @@ export default class Coverter {
     return m
   }
 
-  getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2*Math.PI, res = this.curveSegmentLength ) {
+  getCircularCurvePoints( plane, radius, startAngle = 0, endAngle = 2 * Math.PI, res = this.curveSegmentLength ) {
 
     // Get alignment vectors
     const center = this.PointToVector3( plane.origin )
     const xAxis = this.PointToVector3( plane.xdir )
     const yAxis = this.PointToVector3( plane.ydir )
 
-    // Make sure plane axis are unit lenght!!!!
+    // Make sure plane axis are unit length!!!!
     xAxis.normalize()
     yAxis.normalize()
 

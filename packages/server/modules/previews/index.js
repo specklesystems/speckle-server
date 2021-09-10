@@ -11,7 +11,10 @@ const { contextMiddleware, validateScopes, authorizeResolver } = require( `${app
 
 const { getStream } = require( '../core/services/streams' )
 const { getObject } = require( '../core/services/objects' )
+const { getCommitsByStreamId, getCommitsByBranchName, getCommitById } = require( '../core/services/commits' )
 const { getPreviewImage, createObjectPreview, getObjectPreviewInfo } = require( './services/previews' )
+
+const { makeOgImage } = require( './ogImage' )
 
 exports.init = ( app, options ) => {
   if ( process.env.DISABLE_PREVIEWS ) {
@@ -20,15 +23,17 @@ exports.init = ( app, options ) => {
     debug( 'speckle:modules' )( '📸 Init object preview module' )
   }
 
-  let sendObjectPreview = async ( req, res, streamId, objectId ) => {
+  let DEFAULT_ANGLE = '0'
+
+  let getObjectPreviewBufferOrFilepath = async ( { streamId, objectId, angle } ) => {
     if ( process.env.DISABLE_PREVIEWS ) {
-      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 
     // Check if objectId is valid
     const dbObj = await getObject( { streamId, objectId } )
     if ( !dbObj ) {
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_404.png` }
     }
 
     // Get existing preview metadata
@@ -37,65 +42,143 @@ exports.init = ( app, options ) => {
       await createObjectPreview( { streamId, objectId, priority: 0 } )
     }
 
-    let timestampStart = Date.now()
-
-    // Try for 10 sec of wall-clock to get the image (wait for preview generation)
-    while ( Date.now() < timestampStart + 10*1000 ) {
-      previewInfo = await getObjectPreviewInfo( { streamId, objectId } )
-      if ( previewInfo.previewStatus == 2 && previewInfo.preview ) {
-        break
-      }
-      await new Promise( ( resolve ) => {
-        setTimeout( resolve, 500 )
-      } )
-    }
-
     if ( previewInfo.previewStatus != 2 || !previewInfo.preview ) {
-      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 
-    let previewImgId = previewInfo.preview[req.params.angle]
+    let previewImgId = previewInfo.preview[angle]
     if ( !previewImgId ) {
-      debug( 'speckle:errors' )( `Error: Preview angle '${req.params.angle}' not found for object ${streamId}:${objectId}` )
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      debug( 'speckle:errors' )( `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_error.png` }
     }
     let previewImg = await getPreviewImage( { previewId: previewImgId } )
     if ( !previewImg ) {
       debug( 'speckle:errors' )( `Error: Preview image not found: ${previewImgId}` )
-      return res.sendFile( `${appRoot}/modules/previews/assets/preview_error.png` )
+      return { type: 'file', file: `${appRoot}/modules/previews/assets/preview_error.png` }
     }
-
-    res.contentType( 'image/png' )
-    res.send( previewImg )
+    return { type: 'buffer', buffer: previewImg }
   }
 
-  app.get( '/preview/:streamId/objects/:objectId/:angle', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+  let sendObjectPreview = async ( req, res, streamId, objectId, angle ) => {
+    let previewBufferOrFile = await getObjectPreviewBufferOrFilepath( { streamId, objectId, angle } )
 
+    if ( req.query.postprocess === 'og' ) {
+      const stream = await getStream( { streamId: req.params.streamId } )
+      const streamName = stream.name
+
+      if ( previewBufferOrFile.type === 'file' ) {
+        previewBufferOrFile = { type: 'buffer', buffer: await makeOgImage( previewBufferOrFile.file, streamName ) }
+      } else {
+        previewBufferOrFile = { type: 'buffer', buffer: await makeOgImage( previewBufferOrFile.buffer, streamName ) }
+      }
+    }
+    
+    if ( previewBufferOrFile.type === 'file' ) {
+      res.sendFile( previewBufferOrFile.file )
+    } else {
+      res.contentType( 'image/png' )
+      res.send( previewBufferOrFile.buffer )  
+    }
+  }
+
+  let checkStreamPermissions = async ( req ) => {
     const stream = await getStream( { streamId: req.params.streamId, userId: req.context.userId } )
 
     if ( !stream ) {
-      return res.status( 404 ).end()
+      return { hasPermissions: false, httpErrorCode: 404 }
     }
 
     if ( !stream.isPublic && req.context.auth === false ) {
-      return res.status( 401 ).end( )
+      return { hasPermissions: false, httpErrorCode: 401 }
     }
 
     if ( !stream.isPublic ) {
       try {
         await validateScopes( req.context.scopes, 'streams:read' )
       } catch ( err ) {
-        return res.status( 401 ).end( )
+        return { hasPermissions: false, httpErrorCode: 401 }
       }
 
       try {
         await authorizeResolver( req.context.userId, req.params.streamId, 'stream:reviewer' )
       } catch ( err ) {
-        return res.status( 401 ).end( )
+        return { hasPermissions: false, httpErrorCode: 401 }
       }
     }
+    return { hasPermissions: true, httpErrorCode: 200 }
+  }
 
-    return sendObjectPreview( req, res, req.params.streamId, req.params.objectId )
+  app.get( '/preview/:streamId/objects/:objectId/:angle', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+    let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
+    if ( !hasPermissions ) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
+    }
+
+    return sendObjectPreview( req, res, req.params.streamId, req.params.objectId, req.params.angle )
+  } )
+
+  app.get( '/preview/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+    let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
+    if ( !hasPermissions ) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
+    }
+    
+    let { commits } = await getCommitsByStreamId( { streamId: req.params.streamId, limit: 1, ignoreGlobalsBranch: true } )
+    if ( !commits || commits.length == 0 ) {
+      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+    }
+    let lastCommit = commits[0]
+
+    return sendObjectPreview( req, res, req.params.streamId, lastCommit.referencedObject, DEFAULT_ANGLE )
+  } )
+
+  app.get( '/preview/:streamId/branches/:branchName', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+    let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
+    if ( !hasPermissions ) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
+    }
+
+    let commitsObj
+    try {
+      commitsObj = await getCommitsByBranchName( { streamId: req.params.streamId, branchName: req.params.branchName, limit: 1 } )
+    } catch {
+      commitsObj = {}
+    }
+    let { commits } = commitsObj
+    if ( !commits || commits.length == 0 ) {
+      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+    }
+    let lastCommit = commits[0]
+
+    return sendObjectPreview( req, res, req.params.streamId, lastCommit.referencedObject, DEFAULT_ANGLE )
+  } )
+
+  app.get( '/preview/:streamId/commits/:commitId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+    let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
+    if ( !hasPermissions ) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
+    }
+
+    let commit = await getCommitById( { id: req.params.commitId } )
+    if ( !commit ) {
+      return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
+    }
+
+    return sendObjectPreview( req, res, req.params.streamId, commit.referencedObject, DEFAULT_ANGLE )
+  } )
+
+  app.get( '/preview/:streamId/objects/:objectId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+    let { hasPermissions, httpErrorCode } = await checkStreamPermissions( req )
+    if ( !hasPermissions ) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
+    }
+
+    return sendObjectPreview( req, res, req.params.streamId, req.params.objectId, DEFAULT_ANGLE )
   } )
 }
 

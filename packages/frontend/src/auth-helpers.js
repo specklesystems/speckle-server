@@ -92,7 +92,7 @@ export async function signOut() {
   localStorage.removeItem('uuid')
   localStorage.removeItem('onboarding')
 
-  window.location.reload()
+  window.location = '/'
 }
 
 export async function refreshToken() {

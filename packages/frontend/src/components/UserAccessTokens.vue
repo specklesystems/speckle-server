@@ -1,6 +1,11 @@
 <template>
-  <v-card class="elevation-0 mt-3">
-    <v-card-title>Personal Access Tokens</v-card-title>
+  <v-card rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
+    <v-toolbar flat>
+      <v-toolbar-title>
+        Personal Access Tokens    
+      </v-toolbar-title>
+    </v-toolbar>
+    
     <v-card-text>
       Personal Access Tokens can be used to access the Speckle API on this server; they function
       like ordinary OAuth access tokens. Use them in your scripts or apps!

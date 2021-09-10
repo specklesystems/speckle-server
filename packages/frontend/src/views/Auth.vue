@@ -5,7 +5,7 @@
         <v-col v-if="showBlurb" cols="12" md="6" lg="6" xl="4" class="hidden-sm-and-down">
           <blurb :server-info="serverInfo" />
         </v-col>
-        <v-col cols="12" md="6" lg="4" xl="3">
+        <v-col cols="11" sm="8" md="6" lg="4" xl="3">
           <router-view></router-view>
           <p
             v-if="serverInfo"

@@ -134,7 +134,7 @@ export default class SceneObjectManager {
         if ( material.metalness > 0.8 ) material.color = new THREE.Color( '#CDCDCD' ) // hack for rhino metal materials being black FFS
         return this.addSingleSolid( wrapper, material )
       }
-    } else if ( wrapper.bufferGeometry.attributes.color ){
+    } else if ( wrapper.bufferGeometry.attributes.color ) {
       return this.addSingleSolid( wrapper, this.solidVertexMaterial )
     } else {
       // If we don't have defined material, just use the default
@@ -245,7 +245,7 @@ export default class SceneObjectManager {
 
   removeAllObjects() {
     for ( let obj of this.objects ) {
-      if ( obj.geometry ){
+      if ( obj.geometry ) {
         obj.geometry.dispose()
       }
     }
@@ -289,7 +289,7 @@ export default class SceneObjectManager {
     color.getHSL( hsl )
 
     if ( hsl.s + hsl.l > 1 ) {
-      while ( hsl.s + hsl.l > 1 ){
+      while ( hsl.s + hsl.l > 1 ) {
         hsl.s -= 0.05
         hsl.l -= 0.05
       }

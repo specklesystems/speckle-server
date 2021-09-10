@@ -14,12 +14,12 @@ exports.init = async ( app ) => {
   let moduleDirs = [ './core', './auth', './apiexplorer', './emails', './pwdreset', './serverinvites', './previews' ] // TODO: add './invites'
 
   // Stage 1: initialise all modules
-  for ( let dir of moduleDirs ){
+  for ( let dir of moduleDirs ) {
     await require( dir ).init( app )
   }
 
   // Stage 2: finalize init all modules
-  for ( let dir of moduleDirs ){
+  for ( let dir of moduleDirs ) {
     await require( dir ).finalize( app )
   }
 }
@@ -30,6 +30,7 @@ exports.graph = ( ) => {
   let typeDefs = [ `
       ${scalarSchemas}
       directive @hasScope(scope: String!) on FIELD_DEFINITION
+      directive @hasScopes(scopes: [String]!) on FIELD_DEFINITION
       directive @hasRole(role: String!) on FIELD_DEFINITION
 
       type Query {

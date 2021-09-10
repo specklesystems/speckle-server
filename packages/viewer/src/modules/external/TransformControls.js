@@ -185,7 +185,7 @@ var TransformControls = function ( camera, domElement, translationDotsOnly ) {
 
   };
 
-  // Detatch from object
+  // Detach from object
   this.detach = function () {
 
     this.object = undefined;

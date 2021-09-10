@@ -42,7 +42,7 @@
           v-model="description"
           label="Description"
           persistent-hint
-          hint="A short description of your applicaiton."
+          hint="A short description of your application."
         ></v-textarea>
         <v-card-actions>
           <v-spacer></v-spacer>
