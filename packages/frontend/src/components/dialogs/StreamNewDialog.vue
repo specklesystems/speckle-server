@@ -14,13 +14,11 @@
           v-model="name"
           :rules="nameRules"
           validate-on-blur
-          required
           autofocus
-          label="Stream Name"
+          label="Stream Name (optional)"
         />
         <v-textarea v-model="description" rows="1" row-height="15" label="Description (optional)" />
         <v-switch
-          inset
           v-model="isPublic"
           v-tooltip="
             isPublic
@@ -28,6 +26,7 @@
           can edit it.`
               : `Only collaborators can access this stream.`
           "
+          inset
           :label="`${isPublic ? 'Public stream' : 'Private stream'}`"
         />
 
@@ -155,9 +154,12 @@ export default {
   },
   mounted() {
     this.nameRules = [
-      (v) => !!v || 'Stream name is required.',
-      (v) => (v && v.length <= 150) || 'Name must be less than 150 characters',
-      (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
+      (v) =>
+        !v ||
+        (v.length <= 150 && v.length >= 3) ||
+        'Stream name must be between 3 and 150 characters.'
+      // (v) => (!v && v.length <= 150) || 'Name must be less than 150 characters',
+      // (v) => (!v && v.length >= 3) || 'Name must be at least 3 characters'
     ]
   },
   methods: {
