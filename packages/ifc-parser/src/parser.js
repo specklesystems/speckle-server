@@ -1,8 +1,11 @@
 const WebIFC = require( 'web-ifc/web-ifc-api-node' )
+const ObjectSaver = require( './api.js' )
 
 module.exports = class IFCParser {
-  constructor() {
+  
+  constructor( { objectSaver } ) {
     this.api = new WebIFC.IfcAPI()
+    this.objectSaver = objectSaver || new ObjectSaver()
   }
 
   async parse( data ) {
@@ -14,17 +17,22 @@ module.exports = class IFCParser {
 
     this.project = this.api.GetLine( this.modelId, this.projectId, true )
 
-    this.createGeometries()
+    // Steps: create and store in speckle all the geometries (meshes) from this project and store them 
+    // as reference objects in this.productGeo
+    this.productGeo = {}
+    await this.createGeometries()
+
+    // Lastly, traverse the ifc project object and parse it into something friendly; as well as 
+    // replace all its geometries with actual references to speckle meshes from the productGeo map
     let map = {}
     this.traverse( this.project, true, 0, map )
     
     return this.project
   }
 
-  createGeometries() {
+  async createGeometries() {
     // NOTE: this is where we can alreadt create speckle meshes and plop them in the db.
     this.rawGeo = this.api.LoadAllGeometry( this.modelId )
-    this.productGeo = {}
     let materialMap = {}
     for( let i = 0; i < this.rawGeo.size(); i++ ) {
       const mesh = this.rawGeo.get( i )
@@ -61,8 +69,9 @@ module.exports = class IFCParser {
         }
         
         //TODO: Send the mesh and swap for speckle ref
+        let id = await this.objectSaver.saveObject( spcklMesh )
         let ref = spcklMesh
-        
+
         this.productGeo[prodId].push( ref )
       }
     }
@@ -91,7 +100,7 @@ module.exports = class IFCParser {
     }
 
     // If you got here -> It's an IFC Element: create base object, upload and return ref.
-    console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
+    // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
     // Traverse all key/value pairs first.
     Object.keys( element ).forEach( key => {
