@@ -55,7 +55,7 @@
           </v-list-item-content>
         </v-list-item>
 
-        <v-list-item link to="/profile" v-if="user" style="height: 59px">
+        <v-list-item v-if="user" link to="/profile" style="height: 59px">
           <v-list-item-icon>
             <v-avatar size="25">
               <v-img v-if="user.avatar" :src="user.avatar" />
@@ -74,7 +74,7 @@
         <v-list-item v-if="serverInfo">
           <v-list-item-icon>
             <v-icon
-              v-if="serverInfo && isDevServer"
+              v-if="isDevServer"
               v-tooltip="`This is a test server and should not be used in production!`"
               color="red"
             >
@@ -87,12 +87,14 @@
             <v-list-item-subtitle class="caption">
               {{ serverInfo.version }}
             </v-list-item-subtitle>
-            <div class="caption">This is a test server and should not be used in production!</div>
+            <div class="caption">
+              {{ serverInfo.description }}
+            </div>
           </v-list-item-content>
         </v-list-item>
       </v-list>
 
-      <template v-slot:append>
+      <template #append>
         <v-list dense>
           <v-list-item
             link
@@ -109,7 +111,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link @click="signOut()" color="primary" v-if="user">
+          <v-list-item v-if="user" link color="primary" @click="signOut()">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-account-off</v-icon>
             </v-list-item-icon>
@@ -118,7 +120,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link to="/admin" color="primary" v-if="user && user.role === 'server:admin'">
+          <v-list-item v-if="user && user.role === 'server:admin'" link to="/admin" color="primary">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-cog</v-icon>
             </v-list-item-icon>
@@ -140,22 +142,22 @@
     </v-navigation-drawer>
 
     <v-bottom-navigation fixed xxx-hide-on-scroll class="hidden-sm-and-up elevation-20">
-      <v-btn color="primary" text to="/" style="height: 100%;">
+      <v-btn color="primary" text to="/" style="height: 100%">
         <span>Feed</span>
         <v-icon>mdi-clock-fast</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/streams" style="height: 100%;">
+      <v-btn color="primary" text to="/streams" style="height: 100%">
         <span>Streams</span>
         <v-icon>mdi-folder</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/profile" style="height: 100%;">
+      <v-btn color="primary" text to="/profile" style="height: 100%">
         <span>Profile</span>
         <v-icon>mdi-account</v-icon>
       </v-btn>
 
-      <v-btn text @click="bottomSheet = true" style="height: 100%;">
+      <v-btn text style="height: 100%" @click="bottomSheet = true">
         <span>More</span>
         <v-icon>mdi-dots-horizontal</v-icon>
       </v-btn>
@@ -198,7 +200,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link @click="signOut()" color="primary" v-if="user">
+          <v-list-item v-if="user" link color="primary" @click="signOut()">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-account-off</v-icon>
             </v-list-item-icon>
@@ -207,7 +209,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link to="/admin" color="primary" v-if="user && user.role === 'server:admin'">
+          <v-list-item v-if="user && user.role === 'server:admin'" link to="/admin" color="primary">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-cog</v-icon>
             </v-list-item-icon>
@@ -308,11 +310,6 @@ export default {
       }
     }
   },
-  watch: {
-    $route(to, from) {
-      this.bottomSheet = false
-    }
-  },
   computed: {
     background() {
       let theme = this.$vuetify.theme.dark ? 'dark' : 'light'
@@ -323,6 +320,11 @@ export default {
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null
+    }
+  },
+  watch: {
+    $route(to, from) {
+      this.bottomSheet = false
     }
   },
   methods: {
