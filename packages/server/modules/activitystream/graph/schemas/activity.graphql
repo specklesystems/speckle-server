@@ -30,6 +30,18 @@ extend type Branch {
     @hasScope(scope: "streams:read")
 }
 
+extend type Mutation {
+  commitReadReceiptCreate(input: CreateReadReceiptInput!): Boolean
+    @hasRole(role: "server:user")
+}
+
+input CreateReadReceiptInput {
+  applicationName: String!
+  streamId: String!
+  commitId: String!
+  branchName: String!
+}
+
 type ActivityCollection {
   totalCount: Int!
   cursor: String
