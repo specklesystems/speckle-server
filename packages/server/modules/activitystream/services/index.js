@@ -11,13 +11,13 @@ module.exports = {
 
   async saveActivity( { streamId, resourceType, resourceId, actionType, userId, info, message } ) {
     let dbObject = {
-      streamId,
-      resourceType,
-      resourceId,
-      actionType,
-      userId,
-      info: JSON.stringify( info ),
-      message
+      streamId, // abc
+      resourceType, // "commit"
+      resourceId, // commit id
+      actionType, // "commit_received"
+      userId, // populated by the api
+      info: JSON.stringify( info ), // can be anything with conventions! (TBD) 
+      message // something human understandable for frontend purposes mostly
     }
     await StreamActivity( ).insert( dbObject )
     if ( streamId ) {

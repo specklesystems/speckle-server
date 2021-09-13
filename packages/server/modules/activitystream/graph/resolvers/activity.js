@@ -1,5 +1,13 @@
+'use strict'
+const appRoot = require( 'app-root-path' )
+const { ApolloError, ForbiddenError, UserInputError, withFilter } = require( 'apollo-server-express' )
+
 const { getUserActivity, getStreamActivity, getResourceActivity, getUserTimeline, getActivityCountByResourceId, getActivityCountByStreamId, getActivityCountByUserId, getTimelineCount } = require( '../../services/index' )
 
+const { authorizeResolver, validateScopes } = require( `${appRoot}/modules/shared` )
+const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
+
+const { getStream } = require( `${appRoot}/modules/core/services/streams` )
 
 module.exports = {
   Query: {},
@@ -34,6 +42,36 @@ module.exports = {
       let totalCount = await getActivityCountByResourceId( { resourceId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
 
       return { items, cursor, totalCount }
+    }
+  }, 
+
+  Mutation: {
+    
+    async commitReadReceiptCreate( parent, args, context, info ) {
+      let stream = await getStream( { streamId: args.input.streamId, userId: context.userId } )
+      if ( !stream )
+        throw new ApolloError( 'Stream not found' )
+
+      if ( !stream.isPublic && context.auth === false )
+        throw new ForbiddenError( 'You are not authorised.' )
+
+      if ( !stream.isPublic ) {
+        await validateScopes( context.scopes, 'streams:read' )
+        await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
+      }
+
+      // TODO: 
+      await saveActivity( {
+        streamId: args.input.streamId,
+        resourceType: 'commit',
+        resourceId: args.input.commitId,
+        actionType: 'commit_receive',
+        userId: context.userId,
+        info: args.input,
+        message: `Commit ${args.input.commitId} was received by user ${context.userId}.`
+      } ) 
+
+      return true
     }
   }
 
