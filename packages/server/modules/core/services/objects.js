@@ -223,7 +223,7 @@ module.exports = {
 
     if ( Array.isArray( select ) ) {
       select.forEach( ( field, index ) => {
-        q.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: '$.' + field, name: '' + index } ) )
+        q.select( knex.raw( 'jsonb_path_query(data, :path) as :name:', { path: `$."${field}"`, name: '' + index } ) )
       } )
     } else {
       fullObjectSelect = true
@@ -239,7 +239,7 @@ module.exports = {
       .andWhere( knex.raw( 'id > ?', [ cursor ? cursor : '0' ] ) )
       .orderBy( 'objects.id' )
       .limit( limit )
-
+      
     let rows = await q
 
     if ( rows.length === 0 ) {
