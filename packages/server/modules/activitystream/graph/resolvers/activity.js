@@ -68,7 +68,7 @@ module.exports = {
         actionType: 'commit_receive',
         userId: context.userId,
         info: args.input,
-        message: `Commit ${args.input.commitId} was received by user ${context.userId}.`
+        message: `Commit ${args.input.commitId} was received by user ${context.userId} from ${args.input.applicationName}.`
       } ) 
 
       return true

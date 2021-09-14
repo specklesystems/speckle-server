@@ -221,6 +221,10 @@
                             <span class="mx-3 body-2 font-italic">from</span>
                             <source-app-avatar :application-name="commit.sourceApplication" />
                           </span>
+                          <span v-if="lastActivity.actionType === 'commit_receive'">
+                            <span class="mx-3 body-2 font-italic">in</span>
+                            <source-app-avatar :application-name="lastActivity.info.applicationName" />
+                          </span>
                         </span>
                         <span v-if="lastActivity.actionType !== 'commit_delete' && !commit">
                           [commit deleted]
@@ -418,6 +422,11 @@ export default {
           return {
             captionText: 'updated',
             actionText: 'stream updated'
+          }
+        case 'commit_receive':
+          return {
+            captionText: 'received',
+            actionText: 'commit received from'
           }
         case 'stream_delete': //not used
           return {
