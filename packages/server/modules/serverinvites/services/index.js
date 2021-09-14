@@ -21,7 +21,6 @@ module.exports = {
     if ( existingUser ) throw new Error( 'This email is already associated with an account on this server!' )
 
     if ( message ) {
-      
       if ( message.length >= 1024 ) {
         throw new Error( 'Personal message too long.' )
       }

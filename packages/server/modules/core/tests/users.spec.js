@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword } = require( '../services/users' )
+const { createUser, findOrCreateUser, getUser, getUsers, searchUsers, countUsers, updateUser, deleteUser, validatePasssword, updateUserPassword, getUserRole } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
@@ -46,7 +46,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
     let actorId = await createUser( myTestActor )
     myTestActor.id = actorId
-
   } )
 
   after( async ( ) => {
@@ -55,11 +54,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
 
   describe( 'Users @core-users', ( ) => {
-
-    it( 'First created user should be a server admin', async ( ) => {
-
-    } )
-
     it( 'Should create an user', async ( ) => {
       let newUser = { ...myTestActor }
       newUser.name = 'Bill Gates'
@@ -83,7 +77,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
     } )
 
     it( 'Should not create an user with the same email', async ( ) => {
-
       let newUser = { }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
@@ -100,7 +93,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
     let ballmerUserId = null
 
     it( 'Find or create should create a user', async ( ) => {
-
       let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
@@ -109,11 +101,9 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       let { id } = await findOrCreateUser( { user: newUser } )
       ballmerUserId = id
       expect( id ).to.be.a( 'string' )
-
     } )
 
     it( 'Find or create should NOT create a user', async ( ) => {
-
       let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
@@ -122,7 +112,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
       let { id } = await findOrCreateUser( { user: newUser } )
       expect( id ).to.equal( ballmerUserId )
-
     } )
 
     // Note: deletion is more complicated. 
@@ -193,7 +182,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
       let actor = await getUser( myTestActor.id )
       expect( actor.name ).to.equal( updatedActor.name )
-
     } )
 
     it( 'Should not update password', async ( ) => {
@@ -218,7 +206,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( match ).to.equal( true )
       let match_wrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' } )
       expect( match_wrong ).to.equal( false )
-
     } )
 
     it( 'Should update the password of a user', async() => {
@@ -285,6 +272,76 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( userTokens ).to.have.lengthOf( 2 )
     } )
   } )
+} )
 
 
+describe ( 'User admin @user-services', ( ) => {
+  let myTestActor = {
+    name: 'Gergo Jedlicska',
+    email: 'gergo@jedlicska.com',
+    password: 'sn3aky-1337-b1m'
+  }
+
+  before( async () => {
+    await knex.migrate.rollback( )
+    await knex.migrate.latest( )
+    await init()
+
+    let actorId = await createUser( myTestActor )
+    myTestActor.id = actorId
+  } )
+
+  after( async ( ) => {
+    await knex.migrate.rollback( )
+  } )
+
+  it ( 'First created user should be admin', async () => {
+    let users = await getUsers( 100, 0 )
+    expect( users ).to.be.an( 'array' )
+    expect( users ).to.have.lengthOf( 1 )
+    let firstUser = users[0]
+
+    let userRole = await getUserRole( firstUser.id ) 
+    expect( userRole ).to.equal( 'server:admin' )
+  } )
+
+  it ( 'Count user knows how to count', async () => {
+    expect ( await countUsers() ).to.equal( 1 )
+    let newUser = { ...myTestActor }
+    newUser.name = 'Bill Gates'
+    newUser.email = 'bill@gates.com'
+    newUser.password = 'testthebest'
+
+    let actorId = await createUser( newUser )
+
+    expect ( await countUsers() ).to.equal( 2 )
+
+    await deleteUser( actorId )
+    expect ( await countUsers() ).to.equal( 1 )
+  } )
+
+  it ( 'Get users query limit is sanitized to upper limit', async () => {
+    let createNewDroid = ( number ) => {
+      return {
+        name: `${number}`,
+        email: `${number}@droidarmy.com`,
+        password: 'sn3aky-1337-b1m'
+      }
+    }
+
+    let userInputs = Array( 250 ).fill().map( ( v, i ) => createNewDroid( i ) )
+
+    expect ( await countUsers() ).to.equal( 1 )
+
+    await Promise.all( userInputs.map( userInput => createUser( userInput ) ) )
+    expect ( await countUsers() ).to.equal( 251 )
+
+    let users = await getUsers( 2000000 )
+    expect ( users ).to.have.lengthOf( 200 )
+  } )
+
+  it ( ' Get users offset is applied', async () => {
+    let users = await getUsers( 200, 200 )
+    expect( users ).to.have.lengthOf( 51 )
+  } )
 } )

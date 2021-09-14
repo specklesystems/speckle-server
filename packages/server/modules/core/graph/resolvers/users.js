@@ -1,7 +1,7 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
 const { UserInputError } = require( 'apollo-server-express' )
-const { getUser, getUserRole, updateUser, deleteUser, searchUsers, getUserById } = require( '../../services/users' )
+const { getUser, getUsers, countUsers, getUserRole, updateUser, deleteUser, searchUsers, getUserById } = require( '../../services/users' )
 const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 const { validateServerRole, validateScopes } = require( `${appRoot}/modules/shared` )
 const zxcvbn = require( 'zxcvbn' )
@@ -26,6 +26,14 @@ module.exports = {
       }
 
       return await getUser( args.id || context.userId )
+    },
+
+    async users( parent, args, context, info ){
+      await validateServerRole( context, 'server:admin' )
+      await validateScopes( context.scopes, 'users:read' )
+      let users = await getUsers ( args.limit, args.offset )
+      let totalCount = await countUsers()
+      return { totalCount, items: users }
     },
 
     async userSearch( parent, args, context, info ) {

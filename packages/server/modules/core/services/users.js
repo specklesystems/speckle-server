@@ -34,12 +34,10 @@ module.exports = {
     if ( usr ) throw new Error( 'Email taken. Try logging in?' )
 
     let res = await Users( ).returning( 'id' ).insert( user )
+    
+    let userRole = parseInt( count ) === 0 ? 'server:admin' : 'server:user' 
 
-    if ( parseInt( count ) === 0 ) {
-      await Acl( ).insert( { userId: res[ 0 ], role: 'server:admin' } )
-    } else {
-      await Acl( ).insert( { userId: res[ 0 ], role: 'server:user' } )
-    }
+    await Acl( ).insert( { userId: res[ 0 ], role: userRole } )
 
     let loggedUser = { ...user }
     delete loggedUser.passwordDigest
@@ -60,7 +58,6 @@ module.exports = {
     let existingUser = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
 
     if ( existingUser ) {
-
       if ( user.suuid ) {
         await module.exports.updateUser( existingUser.id, { suuid: user.suuid } )
       }
@@ -140,6 +137,7 @@ module.exports = {
   },
 
   async deleteUser( id ) {
+    //TODO: check for the last admin user to survive
     debug( 'speckle:db' )( 'Deleting user ' + id )
     let streams = await knex.raw(
       `
@@ -167,5 +165,20 @@ module.exports = {
     }
     
     return await Users( ).where( { id: id } ).del( )
+  },
+
+  async getUsers ( limit = 10, offset = 0 ) {
+    // sanitize limit
+    const maxLimit = 200
+    if ( limit > maxLimit ) limit = maxLimit
+  
+    let users =await Users ( ).limit( limit ).offset( offset )
+    users.map( user => delete user.passwordDigest )
+    return users
+  },
+
+  async countUsers (){
+    let [ userCount ] = await Users().count() 
+    return parseInt( userCount.count )
   }
 }
