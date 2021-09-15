@@ -423,11 +423,6 @@ export default {
             captionText: 'updated',
             actionText: 'stream updated'
           }
-        case 'commit_receive':
-          return {
-            captionText: 'received',
-            actionText: 'commit received from'
-          }
         case 'stream_delete': //not used
           return {
             captionText: 'deleted'
@@ -479,6 +474,13 @@ export default {
             icon: 'mdi-timeline-text-outline',
             captionText: 'updated a commit in',
             actionText: 'commit updated in',
+            color: 'primary'
+          }
+        case 'commit_receive':
+          return {
+            icon: 'mdi-source-branch-sync',
+            captionText: 'received',
+            actionText: 'commit received from',
             color: 'primary'
           }
         case 'commit_delete':

@@ -31,7 +31,7 @@ extend type Branch {
 }
 
 extend type Mutation {
-  commitReadReceiptCreate(input: CreateReadReceiptInput!): Boolean
+  commitReadReceiptCreate(input: CreateReadReceiptInput!, after: DateTime, before: DateTime, cursor: DateTime): JSONObject
     @hasRole(role: "server:user")
 }
 
