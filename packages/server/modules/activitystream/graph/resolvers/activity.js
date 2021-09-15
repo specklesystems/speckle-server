@@ -61,9 +61,6 @@ module.exports = {
       }
 
       // TODO: 
-      let { items, cursor } = await getResourceActivity( { resourceType: 'commit', resourceId: args.input.commitId, actionType: 'commit_receive', after: args.after, before: args.before, cursor: args.cursor, limit: args.limit } )
-      let totalCount = await getActivityCountByResourceId( { resourceId: args.input.commitId, actionType: 'commit_receive', after: args.after, before: args.before } )
-
       await saveActivity( {
         streamId: args.input.streamId,
         resourceType: 'commit',
@@ -74,7 +71,7 @@ module.exports = {
         message: `Commit ${args.input.commitId} was received by user ${context.userId} from ${args.input.applicationName}.`
       } ) 
 
-      return { items, cursor, totalCount }
+      return true
     }
   }
 
