@@ -94,7 +94,7 @@ const routes = [
           {
             path: 'branches/',
             name: 'branches',
-            redirect: 'branches/main',
+            redirect: 'branches/main'
           },
           {
             path: 'branches/:branchName*',
@@ -204,11 +204,11 @@ const routes = [
             path: 'dashboard',
             component: () => import('@/views/admin/AdminOverview.vue')
           },
-          // {
-          //   name: 'Admin | Users',
-          //   path: 'users',
-          //   component: () => import('@/views/admin/AdminUsers.vue')
-          // },
+          {
+            name: 'Admin | Users',
+            path: 'users',
+            component: () => import('@/views/admin/AdminUsers.vue')
+          },
           // {
           //   name: 'Admin | Streams',
           //   path: 'streams',
