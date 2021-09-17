@@ -11,6 +11,14 @@ const Acl = ( ) => knex( 'server_acl' )
 const debug = require( 'debug' )
 const { deleteStream } = require( './streams' )
 
+
+const changeUserRole = async ( { userId, role } ) => await Acl().where( { userId: userId } ).update( { role } )
+
+const countAdminUsers = async ( ) => {
+  let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
+  return parseInt ( count )
+} 
+
 module.exports = {
 
   /*
@@ -20,8 +28,6 @@ module.exports = {
   */
 
   async createUser( user ) {
-    let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
-
     user.id = crs( { length: 10 } )
 
     if ( user.password ) {
@@ -35,7 +41,7 @@ module.exports = {
 
     let res = await Users( ).returning( 'id' ).insert( user )
     
-    let userRole = parseInt( count ) === 0 ? 'server:admin' : 'server:user' 
+    let userRole = await countAdminUsers () === 0 ? 'server:admin' : 'server:user' 
 
     await Acl( ).insert( { userId: res[ 0 ], role: userRole } )
 
@@ -176,6 +182,23 @@ module.exports = {
     users.map( user => delete user.passwordDigest )
     return users
   },
+
+  async makeUserAdmin( { userId } ){
+    await changeUserRole( { userId, role:'server:admin' } )
+  },
+
+  async unmakeUserAdmin( { userId } ){
+    // dont delete last admin role
+    if ( await countAdminUsers() === 1 ){
+      let currentAdmin = await Acl( ).where( { role: 'server:admin' } ).first()
+      if ( currentAdmin.userId == userId ) {
+        throw new Error( 'Cannot remove the last admin role from the server' )
+      }
+    }
+
+    await changeUserRole( { userId, role:'server:user' } )
+  },
+
 
   async countUsers (){
     let [ userCount ] = await Users().count() 

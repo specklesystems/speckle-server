@@ -7,11 +7,12 @@ const appRoot = require( 'app-root-path' )
 const { init } = require( `${appRoot}/app` )
 
 const expect = chai.expect
+
 chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, findOrCreateUser, getUser, getUsers, searchUsers, countUsers, updateUser, deleteUser, validatePasssword, updateUserPassword, getUserRole } = require( '../services/users' )
+const { createUser, findOrCreateUser, getUser, getUsers, searchUsers, countUsers, updateUser, deleteUser, validatePasssword, updateUserPassword, getUserRole, unmakeUserAdmin, makeUserAdmin } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
@@ -340,8 +341,29 @@ describe ( 'User admin @user-services', ( ) => {
     expect ( users ).to.have.lengthOf( 200 )
   } )
 
-  it ( ' Get users offset is applied', async () => {
+  it ( 'Get users offset is applied', async () => {
     let users = await getUsers( 200, 200 )
     expect( users ).to.have.lengthOf( 51 )
+  } )
+
+  it ( 'Change user role modifies role', async () => {
+    let [ user ] = await getUsers( 1, 10 )
+
+    let oldRole = await getUserRole( user.id )
+    expect( oldRole ).to.equal( 'server:user' )
+
+    await makeUserAdmin ( { userId: user.id } )
+    let newRole = await getUserRole( user.id )
+    expect( newRole ).to.equal( 'server:admin' )
+
+    await unmakeUserAdmin ( { userId: user.id } )
+    newRole = await getUserRole( user.id )
+    expect( newRole ).to.equal( 'server:user' )
+  } )
+
+  it ( 'Ensure at least one admin remains in the server', async () => {
+    unmakeUserAdmin ( { userId: myTestActor.id, role: 'server:admin' } )
+      .then( function( m ) { throw new Error( 'This should have failed' ) } )
+      .catch( function( err ) { expect( err ).to.equal( new Error( 'Cannot remove the last admin role from the server' ) ) } )
   } )
 } )
