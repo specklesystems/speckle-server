@@ -16,7 +16,8 @@ module.exports = class IFCParser {
     this.projectId = this.api.GetLineIDsWithType( this.modelId, WebIFC.IFCPROJECT ).get( 0 )
 
     this.project = this.api.GetLine( this.modelId, this.projectId, true )
-
+    this.project.__closure = {}
+    
     // Steps: create and store in speckle all the geometries (meshes) from this project and store them 
     // as reference objects in this.productGeo
     this.productGeo = {}
@@ -34,6 +35,7 @@ module.exports = class IFCParser {
     // NOTE: this is where we can alreadt create speckle meshes and plop them in the db.
     this.rawGeo = this.api.LoadAllGeometry( this.modelId )
     let materialMap = {}
+    
     for( let i = 0; i < this.rawGeo.size(); i++ ) {
       const mesh = this.rawGeo.get( i )
       const prodId = mesh.expressID
@@ -70,8 +72,8 @@ module.exports = class IFCParser {
         
         //TODO: Send the mesh and swap for speckle ref
         let id = await this.objectSaver.saveObject( spcklMesh )
-        let ref = spcklMesh
-
+        let ref = { speckle_type: "reference", referencedId: id }
+        console.log( ref )
         this.productGeo[prodId].push( ref )
       }
     }
@@ -122,7 +124,9 @@ module.exports = class IFCParser {
     // Lookup geometry in generated geometries object
     if( this.productGeo[element.expressID] ) {
       element['@displayMesh'] = this.productGeo[element.expressID]
-      // TODO: Add detached mesh to closure table.
+      // Set element in "root project object" closure table
+      for(let displayRef of this.productGeo[element.expressID]) 
+        this.project.__closure[ displayRef.referencedId.toString() ] = depth 
     }
 
     // Recurse all children
@@ -136,7 +140,7 @@ module.exports = class IFCParser {
     let ref = element.expressID
 
     // Create ref object with returned id, add it to the map and return the ref back.
-    const refObject = { referenceId: ref, speckle_type: 'reference' }
+    const refObject = { referencedId: ref, speckle_type: 'reference' }
     map[element.expressID] = refObject
     return refObject
   }

@@ -15,6 +15,7 @@ module.exports = class ObjectSaver {
 			obj.id = crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
 		}
 		
+		// console.log( `TODO: save mesh ${obj.id}`)
 		// TODO
 
 		return obj.id
