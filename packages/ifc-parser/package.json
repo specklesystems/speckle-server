@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "eslint": "^7.29.0",
-    "web-ifc": "0.0.19"
+    "knex": "^0.95.11",
+    "web-ifc": "0.0.24"
   }
 }
