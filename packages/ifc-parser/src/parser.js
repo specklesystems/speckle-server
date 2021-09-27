@@ -18,17 +18,20 @@ module.exports = class IFCParser {
     this.project = this.api.GetLine( this.modelId, this.projectId, true )
     this.project.__closure = {}
     
+
     // Steps: create and store in speckle all the geometries (meshes) from this project and store them 
     // as reference objects in this.productGeo
     this.productGeo = {}
-    await this.createGeometries()
-
+    await this.createGeometries()    
+    console.log(`Geometries created: ${Object.keys(this.productGeo).length} meshes.`)
+    
     // Lastly, traverse the ifc project object and parse it into something friendly; as well as 
     // replace all its geometries with actual references to speckle meshes from the productGeo map
-    let map = {}
-    this.traverse( this.project, true, 0, map )
     
-    return this.project
+    await this.traverse( this.project, true, 0 )
+    
+    let id = await this.objectSaver.saveObject( this.project )
+    return { id, tCount: Object.keys(this.project.__closure).length }
   }
 
   async createGeometries() {
@@ -43,20 +46,29 @@ module.exports = class IFCParser {
       
       for( let j = 0; j < mesh.geometries.size(); j++ ) {
         let geom = this.api.GetGeometry( this.modelId, mesh.geometries.get( j ).geometryExpressID )
-        
+
+        let mat = mesh.geometries.get( j ).flatTransformation 
         let raw = {
           color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
           vertices: this.api.GetVertexArray( geom.GetVertexData(), geom.GetVertexDataSize() ),
           indices: this.api.GetIndexArray( geom.GetIndexData(), geom.GetIndexDataSize() )
         }
         
+        const { vertices, normals } = this.extractVertexData(raw.vertices)
+
+        for(let k = 0; k< vertices.length;k+=3){
+          let x = vertices[k], y = vertices[k+1], z = vertices[k+2]
+          vertices[k] =  mat[0] * x + mat[4] * y + mat[8] * z + mat[12]
+          vertices[k+1] = (mat[2] * x + mat[6] * y + mat[10] * z + mat[14]) * -1 //mat[1] * x + mat[5] * y + mat[9] * z + mat[13]
+          vertices[k+2] = mat[1] * x + mat[5] * y + mat[9] * z + mat[13] //mat[2] * x + mat[6] * y + mat[10] * z + mat[14]
+        }
+
         // Since all faces are triangles, we must add a `0` before each group of 3.
         let spcklFaces = [  ]
         for ( let i = 0; i < raw.indices.length; i++ ) {
           if( i % 3 === 0 ) 
             spcklFaces.push( 0 )
           spcklFaces.push( raw.indices[i] )
-          
         }
 
         // Create a propper Speckle Mesh
@@ -66,29 +78,29 @@ module.exports = class IFCParser {
           volume: 0,
           area: 0,
           faces: spcklFaces,
-          vertices: raw.vertices,
-          renderMaterial: geom.color ? this.colorToSpeckleMaterial( geom.color.r, geom.color.g, geom.color.b, materialMap ) : undefined
+          vertices: Array.from( vertices ),
+          renderMaterial: geom.color ? this.colorToMaterial( geom.color ) : null
         }
+        // console.log( geom.material )
+        // console.log( mesh.geometries.get( j ).color )
+
         
-        //TODO: Send the mesh and swap for speckle ref
         let id = await this.objectSaver.saveObject( spcklMesh )
         let ref = { speckle_type: "reference", referencedId: id }
-        console.log( ref )
         this.productGeo[prodId].push( ref )
       }
     }
   }
 
-  traverse( element, recursive = true, depth = 0, map = {} ) {
+  async traverse( element, recursive = true, depth = 0 ) {
 
     // Fast exit if null/undefined
     if ( !element ) return
 
-    depth++
     
     // If array, traverse all items in it.
     if( Array.isArray( element ) ) {
-      return element.map( el => this.traverse( el,recursive,depth, map ) )
+      return element.map( async el => await this.traverse( el,recursive, depth + 1 ) )
     }
 
     // If it has no expressID, its either a simple type or a { type, value } object. 
@@ -96,18 +108,13 @@ module.exports = class IFCParser {
       return element.value !== null && element.value !== undefined ? element.value : element
     }
 
-    // If the expressID already exists in the map, return whatever is in there.
-    if( map[element.expressID] ) {
-      return map[element.expressID]
-    }
-
     // If you got here -> It's an IFC Element: create base object, upload and return ref.
     // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
     // Traverse all key/value pairs first.
-    Object.keys( element ).forEach( key => {
-      element[key] = this.traverse( element[key], recursive, depth, map )
-    } )
+    for(let key of Object.keys( element )) {
+      element[key] = await this.traverse( element[key], recursive, depth + 1 )
+    }
 
     // Assign speckle_type and empty closure table.
     element.speckle_type = element.constructor.name
@@ -123,26 +130,74 @@ module.exports = class IFCParser {
 
     // Lookup geometry in generated geometries object
     if( this.productGeo[element.expressID] ) {
-      element['@displayMesh'] = this.productGeo[element.expressID]
-      // Set element in "root project object" closure table
-      for(let displayRef of this.productGeo[element.expressID]) 
-        this.project.__closure[ displayRef.referencedId.toString() ] = depth 
+      element['@displayValue'] = this.productGeo[element.expressID]
+      this.productGeo[element.expressID].forEach( ref => {
+        this.project.__closure[ref.referencedId.toString()] = depth 
+        element.__closure[ref.referencedId.toString()] = 1
+      })
+      console.log( `${element.constructor.name} ${element.GlobalId}: display mesh count: ${this.productGeo[element.expressID].length}`)
     }
 
     // Recurse all children
     if ( recursive ) {
-      if( element.spatialChildren ) element.spatialChildren.forEach( ( child ) => this.traverse( child, recursive, depth, map ) )
-      // NOTE: unsure if this is needed.
-      if ( element.children ) element.children.forEach( ( child ) => this.traverse( child, recursive, depth, map ) )
+
+      if( element.spatialChildren ) {
+        element.sc = []
+        for(let child of element.spatialChildren) {
+          let res = await this.traverse( child, recursive, depth + 1 )
+          if( res.referencedId ) {
+            element.sc.push( res )
+            this.project.__closure[res.referencedId.toString()] = depth 
+            element.__closure[res.referencedId.toString()] = 1
+          }
+        }
+        delete element.spatialChildren
+      }
+      
+      if ( element.children ) { 
+        element.c = []
+        for(let child of element.children) {
+          let res = await this.traverse( child, recursive, depth + 1 ) 
+          if( res.referencedId ) {
+            element.c.push( res )
+            this.project.__closure[res.referencedId.toString()] = depth 
+            element.__closure[res.referencedId.toString()] = 1
+          }
+        }
+        delete element.children
+      }
+
+      if( element.children || element.spatialChildren){
+        console.log( `${element.constructor.name} ${element.GlobalId}: children count: ${ element.children ? element.children.length : '0'}; spatial children count: ${element.spatialChildren ? element.spatialChildren.length : '0'} `)
+      }
+
     }
 
     // TODO: Detach and swap `element.expressID` for ref!
-    let ref = element.expressID
+    // TOTHINK: i don't think we really need all of these tbh? (Partially)
+    // A1: maybe only ones with the display values? (N)
+    // A2: maybe only ones with the display values or spatial children or children? (Y)
 
-    // Create ref object with returned id, add it to the map and return the ref back.
-    const refObject = { referencedId: ref, speckle_type: 'reference' }
-    map[element.expressID] = refObject
-    return refObject
+    if( this.productGeo[element.expressID] || element.sc || element.c ) {
+      let id = await this.objectSaver.saveObject( element )
+      let ref = { speckle_type: "reference", referencedId: id }
+      return ref 
+    } else {
+      return element
+    }
+  }
+
+
+  // (c) https://github.com/agviegas/web-ifc-three
+  extractVertexData(vertexData) {
+    const vertices = []
+    const normals = []
+    let isNormalData = false
+    for (let i = 0; i < vertexData.length; i++) {
+        isNormalData ? normals.push(vertexData[i]) : vertices.push(vertexData[i])
+        if ((i + 1) % 3 == 0) isNormalData = !isNormalData
+    }
+    return { vertices, normals }
   }
 
   // (c) https://github.com/agviegas/web-ifc-three/blob/907e08b5673d5e1c18261a4fceade7189d6b2db7/src/IFC/PropertyManager.ts#L110
@@ -171,6 +226,10 @@ module.exports = class IFCParser {
     return IDs
   }
   
+  colorToMaterial( color ) {
+    console.log( color )
+  }
+
   /** Returns a ref object for the material given (r,g,b) values with an optional map for memoization. */
   colorToSpeckleMaterial( r,g,b, materialMap = {} ) {
     function rgba2int( r, g, b, a ) {
