@@ -18,6 +18,8 @@ module.exports = class IFCParser {
     this.project = this.api.GetLine( this.modelId, this.projectId, true )
     this.project.__closure = {}
     
+    this.cache = {}
+    this.closureCache = {}
 
     // Steps: create and store in speckle all the geometries (meshes) from this project and store them 
     // as reference objects in this.productGeo
@@ -35,7 +37,6 @@ module.exports = class IFCParser {
   }
 
   async createGeometries() {
-    // NOTE: this is where we can alreadt create speckle meshes and plop them in the db.
     this.rawGeo = this.api.LoadAllGeometry( this.modelId )
     let materialMap = {}
     
@@ -45,9 +46,10 @@ module.exports = class IFCParser {
       this.productGeo[prodId ] = []
       
       for( let j = 0; j < mesh.geometries.size(); j++ ) {
-        let geom = this.api.GetGeometry( this.modelId, mesh.geometries.get( j ).geometryExpressID )
+        let placedGeom = mesh.geometries.get( j )
+        let geom = this.api.GetGeometry( this.modelId, placedGeom.geometryExpressID )
 
-        let mat = mesh.geometries.get( j ).flatTransformation 
+        let matrix = placedGeom.flatTransformation 
         let raw = {
           color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
           vertices: this.api.GetVertexArray( geom.GetVertexData(), geom.GetVertexDataSize() ),
@@ -58,9 +60,9 @@ module.exports = class IFCParser {
 
         for(let k = 0; k< vertices.length;k+=3){
           let x = vertices[k], y = vertices[k+1], z = vertices[k+2]
-          vertices[k] =  mat[0] * x + mat[4] * y + mat[8] * z + mat[12]
-          vertices[k+1] = (mat[2] * x + mat[6] * y + mat[10] * z + mat[14]) * -1 //mat[1] * x + mat[5] * y + mat[9] * z + mat[13]
-          vertices[k+2] = mat[1] * x + mat[5] * y + mat[9] * z + mat[13] //mat[2] * x + mat[6] * y + mat[10] * z + mat[14]
+          vertices[k] =  matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]
+          vertices[k+1] = (matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14]) * -1 
+          vertices[k+2] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]
         }
 
         // Since all faces are triangles, we must add a `0` before each group of 3.
@@ -79,11 +81,8 @@ module.exports = class IFCParser {
           area: 0,
           faces: spcklFaces,
           vertices: Array.from( vertices ),
-          renderMaterial: geom.color ? this.colorToMaterial( geom.color ) : null
+          renderMaterial: placedGeom.color ? this.colorToMaterial( placedGeom.color ) : null
         }
-        // console.log( geom.material )
-        // console.log( mesh.geometries.get( j ).color )
-
         
         let id = await this.objectSaver.saveObject( spcklMesh )
         let ref = { speckle_type: "reference", referencedId: id }
@@ -108,6 +107,7 @@ module.exports = class IFCParser {
       return element.value !== null && element.value !== undefined ? element.value : element
     }
 
+    if(this.cache[element.expressID.toString()]) return this.cache[element.expressID.toString()]
     // If you got here -> It's an IFC Element: create base object, upload and return ref.
     // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
@@ -122,11 +122,11 @@ module.exports = class IFCParser {
 
     // Find spatial children and assign to element
     const spatialChildrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELAGGREGATES, 'RelatingObject', 'RelatedObjects' )
-    if( spatialChildrenIds.length > 0 ) element.spatialChildren = spatialChildrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
+    if( spatialChildrenIds.length > 0 ) element.rawSpatialChildren = spatialChildrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
 
     // Find children and populate element
     const childrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE, 'RelatingStructure', 'RelatedElements' )
-    if( childrenIds.length > 0 )  element.children = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
+    if( childrenIds.length > 0 )  element.rawChildren = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
 
     // Lookup geometry in generated geometries object
     if( this.productGeo[element.expressID] ) {
@@ -135,54 +135,67 @@ module.exports = class IFCParser {
         this.project.__closure[ref.referencedId.toString()] = depth 
         element.__closure[ref.referencedId.toString()] = 1
       })
-      console.log( `${element.constructor.name} ${element.GlobalId}: display mesh count: ${this.productGeo[element.expressID].length}`)
     }
 
     // Recurse all children
     if ( recursive ) {
 
-      if( element.spatialChildren ) {
-        element.sc = []
-        for(let child of element.spatialChildren) {
+      if( element.rawSpatialChildren ) {
+        element.spatialChildren = []
+        for(let child of element.rawSpatialChildren) {
           let res = await this.traverse( child, recursive, depth + 1 )
           if( res.referencedId ) {
-            element.sc.push( res )
+            element.spatialChildren.push( res )
             this.project.__closure[res.referencedId.toString()] = depth 
             element.__closure[res.referencedId.toString()] = 1
+            
+            if( this.closureCache[child.expressID.toString()]) {
+              // console.log(this.closureCache[child.expressID.toString()])
+              for(let key of Object.keys( this.closureCache[child.expressID.toString()] )) {
+                element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
+              }
+            }
+
           }
         }
-        delete element.spatialChildren
+        delete element.rawSpatialChildren
       }
       
-      if ( element.children ) { 
-        element.c = []
-        for(let child of element.children) {
+      if ( element.rawChildren ) { 
+        element.children = []
+        for(let child of element.rawChildren) {
           let res = await this.traverse( child, recursive, depth + 1 ) 
           if( res.referencedId ) {
-            element.c.push( res )
+            element.children.push( res )
             this.project.__closure[res.referencedId.toString()] = depth 
             element.__closure[res.referencedId.toString()] = 1
+
+            if( this.closureCache[child.expressID.toString()]) {
+              // console.log(this.closureCache[child.expressID.toString()])
+              for(let key of Object.keys( this.closureCache[child.expressID.toString()] )) {
+                element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
+              }
+            }
           }
         }
-        delete element.children
+        delete element.rawChildren
       }
 
-      if( element.children || element.spatialChildren){
+      if( element.children || element.spatialChildren ){
         console.log( `${element.constructor.name} ${element.GlobalId}: children count: ${ element.children ? element.children.length : '0'}; spatial children count: ${element.spatialChildren ? element.spatialChildren.length : '0'} `)
       }
 
     }
 
-    // TODO: Detach and swap `element.expressID` for ref!
-    // TOTHINK: i don't think we really need all of these tbh? (Partially)
-    // A1: maybe only ones with the display values? (N)
-    // A2: maybe only ones with the display values or spatial children or children? (Y)
-
-    if( this.productGeo[element.expressID] || element.sc || element.c ) {
+    if( this.productGeo[element.expressID] || element.spatialChildren || element.children ) {
       let id = await this.objectSaver.saveObject( element )
       let ref = { speckle_type: "reference", referencedId: id }
+      this.cache[element.expressID.toString()] = ref
+      this.closureCache[element.expressID.toString()] = element.__closure
       return ref 
     } else {
+      this.cache[element.expressID.toString()] = element
+      this.closureCache[element.expressID.toString()] = element.__closure
       return element
     }
   }
@@ -227,44 +240,14 @@ module.exports = class IFCParser {
   }
   
   colorToMaterial( color ) {
-    console.log( color )
-  }
-
-  /** Returns a ref object for the material given (r,g,b) values with an optional map for memoization. */
-  colorToSpeckleMaterial( r,g,b, materialMap = {} ) {
-    function rgba2int( r, g, b, a ) {
-      if ( typeof r === 'string' && arguments.length === 1 ) {
-        const [ r1, g1, b1, a1 ] = r
-          .match( /^rgba?\((\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s]*(\d+\.?\d*)[,\s\/]*(.+)?\)$/ )
-          .slice( 1 );
-        [ r, g, b ] = [ r1, g1, b1 ].map( ( v ) => parseFloat( v ) )
-        a = a1
-          ? a1.endsWith( '%' )
-            ? parseInt( a1.substring( 0, a1.length - 1 ), 10 ) / 100
-            : parseFloat( a1 )
-          : null
-      }
-      return a
-        ? ( ( r & 0xff ) << 24 ) + ( ( g & 0xff ) << 16 ) + ( ( b & 0xff ) << 8 ) + ( Math.floor( a * 0xff ) & 0xff )
-        : ( ( r & 0xff ) << 16 ) + ( ( g & 0xff ) << 8 ) + ( b & 0xff )
-    }
-    let intColor = rgba2int( r, g, b )
-    if( materialMap[intColor] ) return materialMap[intColor]
-
-    let material = {
+    let intColor = (color.w << 24) + ((color.x * 255) << 16) + ((color.y * 255) << 8) + ((color.z * 255))
+    
+    return {
       diffuse: intColor,
-      opacity: 1,
-      emissive: rgba2int( 0, 0, 0 ),
+      opacity: color.w,
       metalness: 0,
       roughness: 1,
       speckle_type: 'Objects.Other.RenderMaterial'
     }
-
-    // TODO: Detach and swap for ref object!
-    let ref = material
-
-    // Add ref to material map
-    materialMap[intColor] = ref
-    return ref
   }
 }

@@ -8,11 +8,14 @@ const branchName = 'main'
 const userId = 'e24eb8e7e4'
 
 // const data = fs.readFileSync( './ifcs/20160414office_model_CV2_fordesign.ifc' )
-// const data = fs.readFileSync( './ifcs/231110AC11-Institute-Var-2-IFC.ifc' )
+// const data = fs.readFileSync( './ifcs/hospital.ifc' )
+// const data = fs.readFileSync( './ifcs/primark.ifc' )
+const data = fs.readFileSync( './ifcs/231110AC11-Institute-Var-2-IFC.ifc' )
 // const data = fs.readFileSync( './ifcs/small.ifc' )
 // const data = fs.readFileSync( './ifcs/example.ifc' )
 // const data = fs.readFileSync( './ifcs/steelplates.ifc' )
-const data = fs.readFileSync( './ifcs/railing.ifc' )
+// const data = fs.readFileSync( './ifcs/railing.ifc' )
+// const data = fs.readFileSync( './ifcs/hall.ifc' )
 // const data = fs.readFileSync( './ifcs/231110ADT-FZK-Haus-2005-2006.ifc' )
 // const data = fs.readFileSync( './ifcs/202103162102_cira.ifc' )
 

@@ -23,8 +23,6 @@ module.exports = class ObjectSaver {
 		}
 		
 		let res = await createObject( this.streamId, obj )
-		// console.log( `TODO: save mesh ${obj.id}`)
-		// TODO
 
 		return obj.id
 	}	
