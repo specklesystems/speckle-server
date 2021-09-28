@@ -1,6 +1,5 @@
 <template>
   <v-card elevation="0" rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
-  
     <v-toolbar :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`" flat>
       <v-toolbar-title v-if="commitMessage">
         Current:
@@ -175,7 +174,7 @@ export default {
       if (!this.$refs.form.validate()) return
 
       let commitObject = this.globalsToBase(this.globalsArray)
-      
+
       console.log(commitObject)
       console.log(this.globalsArray)
 
@@ -191,7 +190,7 @@ export default {
           variables: {
             params: {
               streamId: this.$route.params.streamId,
-              objects: [ commitObject ]
+              objects: [commitObject]
             }
           }
         })
@@ -268,7 +267,6 @@ export default {
       }
 
       for (let entry of arr) {
-
         if (!entry.value && !entry.globals) continue
 
         if (entry.valid !== true) {
