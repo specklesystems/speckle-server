@@ -3,6 +3,7 @@
 const appRoot = require( 'app-root-path' )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
+const _ = require( 'lodash' )
 
 const {
   createBranch,
@@ -14,6 +15,8 @@ const {
 } = require( '../../services/branches' )
 
 const { getUserById } = require( '../../services/users' )
+const { getCommitsByBranchName } = require( '../../services/commits' )
+const { getObject } = require( '../../services/objects' )
 const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 
 // subscription events
@@ -35,6 +38,31 @@ module.exports = {
 
     async branch( parent, args, context, info ) {
       return await getBranchByNameAndStreamId( { streamId: parent.id, name: args.name } )
+    },
+
+    async globals( parent, args, context, info ) {
+      let branches = await getBranchesByStreamId( { streamId: parent.id } )
+      if ( !branches.items.some( b => b.name === 'globals' ) ) 
+        return null
+
+      let { commits, cursor } = await getCommitsByBranchName( { streamId: parent.id, branchName: 'globals', limit: 1 } )
+      if ( !commits || commits.length === 0 ){
+        return null
+      }
+
+      let globalsObject = commits[0].referencedObject
+      let obj = await getObject( { streamId: parent.id, objectId: globalsObject } )
+      if ( !obj ) 
+        return null
+      obj.streamId = parent.id
+
+      let filtered = _.omit( obj.data, 'totalChildrenCount' )
+      filtered = _.omit( filtered, 'speckle_type' )
+      filtered = _.omit( filtered, 'id' )
+      let items = filtered
+      let totalCount = Object.keys( filtered ).length
+
+      return { totalCount, items }
     },
 
   },
