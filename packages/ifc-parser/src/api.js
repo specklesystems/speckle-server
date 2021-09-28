@@ -1,15 +1,21 @@
+'use strict'
 const crypto = require( 'crypto' )
+const crs = require('crypto-random-string')
 
 const knex = require('../knex')
 const Streams = ( ) => knex( 'streams' )
+const Branches = ( ) => knex( 'branches' )
+const Commits = ( ) => knex( 'commits' )
 const Objects = ( ) => knex( 'objects' )
 const Closures = ( ) => knex( 'object_children_closure' )
 
+const StreamCommits = ( ) => knex( 'stream_commits' )
+const BranchCommits = ( ) => knex( 'branch_commits' )
+const ParentCommits = ( ) => knex( 'parent_commits' )
 
-module.exports = class ObjectSaver {
+module.exports = class ServerAPI {
 
-	constructor( { serverUrl = 'http://localhost:3000', streamId } ) {
-		this.serverUrl = serverUrl 
+	constructor( { streamId } ) {
 		this.streamId = streamId
 		this.isSending = false
 		this.buffer = []
@@ -22,16 +28,13 @@ module.exports = class ObjectSaver {
 			obj.id = crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
 		}
 		
-		let res = await createObject( this.streamId, obj )
+		let res = await this.createObject( this.streamId, obj )
 
 		return obj.id
 	}	
 
-}
-
-
-async function createObject( streamId, object ) {
-    let insertionObject = prepInsertionObject( streamId, object )
+	async createObject( streamId, object ) {
+    let insertionObject = this.prepInsertionObject( streamId, object )
 
     let closures = [ ]
     let totalChildrenCountByDepth = {}
@@ -63,7 +66,7 @@ async function createObject( streamId, object ) {
     return insertionObject.id
   }
 
-function prepInsertionObject( streamId, obj ) {
+prepInsertionObject( streamId, obj ) {
   let memNow = process.memoryUsage( ).heapUsed / 1024 / 1024
   const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
@@ -84,4 +87,66 @@ function prepInsertionObject( streamId, obj ) {
     id: obj.id,
     speckleType: obj.speckleType
   }
+}
+
+async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {
+  branchName = branchName.toLowerCase( )
+  let myBranch = await this.getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
+
+  if ( !myBranch )
+    throw new Error( `Failed to find branch with name ${branchName}.` )
+
+  return await this.createCommitByBranchId( { streamId, branchId: myBranch.id, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } )
+}
+
+async getBranchByNameAndStreamId( { streamId, name } ) {
+  let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [name]) ).first( )
+  return await query
+}
+
+async createBranch( { name, description, streamId, authorId } ) {
+    let branch = {}
+    branch.id = crs( { length: 10 } )
+    branch.streamId = streamId
+    branch.authorId = authorId
+    branch.name = name.toLowerCase( )
+    branch.description = description
+
+    let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
+
+    // update stream updated at
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
+
+    return branch.id
+  }
+
+async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {
+  // If no total children count is passed in, get it from the original object
+  // that this commit references.
+  if ( !totalChildrenCount ){
+    let { totalChildrenCount: tc } = await getObject( { streamId, objectId } )
+    totalChildrenCount = tc || 1
+  }
+
+  // Create main table entry
+  let [ id ] = await Commits( ).returning( 'id' ).insert( {
+    id: crs( { length: 10 } ),
+    referencedObject: objectId,
+    author: authorId,
+    sourceApplication,
+    totalChildrenCount,
+    parents,
+    message
+  } )
+
+  // Link it to a branch
+  await BranchCommits( ).insert( {branchId: branchId, commitId: id} )
+  // Link it to a stream
+  await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
+
+  // update stream updated at
+  await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+  return id
+  }
+
 }

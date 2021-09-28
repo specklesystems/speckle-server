@@ -17,6 +17,7 @@
     "url": "https://github.com/specklesystems/speckle-server/issues"
   },
   "dependencies": {
+    "crypto-random-string": "^3.3.1",
     "eslint": "^7.29.0",
     "knex": "^0.95.11",
     "pg": "^8.7.1",

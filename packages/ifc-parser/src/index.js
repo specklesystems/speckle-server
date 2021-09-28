@@ -1,29 +1,34 @@
 const fs = require( 'fs' )
 const Parser = require( './parser' )
-const ObjectSaver = require( './api.js' )
+const ServerAPI = require( './api.js' )
 
 // Hard coded local vars
 const streamId = '27d29ef972'
 const branchName = 'main'
 const userId = 'e24eb8e7e4'
 
+// NOTE: not all the files below are present in the repo. Moreover, not all of the ones in the repo
+// work properly, as we're dependent on the web-ifc library, whose support is partially limited, and/or
+// the files are corrupt/do not pass validation. Welcome to IFC!
 // const data = fs.readFileSync( './ifcs/20160414office_model_CV2_fordesign.ifc' )
 // const data = fs.readFileSync( './ifcs/hospital.ifc' )
 // const data = fs.readFileSync( './ifcs/primark.ifc' )
-const data = fs.readFileSync( './ifcs/231110AC11-Institute-Var-2-IFC.ifc' )
+// const data = fs.readFileSync( './ifcs/231110AC11-Institute-Var-2-IFC.ifc' )
 // const data = fs.readFileSync( './ifcs/small.ifc' )
 // const data = fs.readFileSync( './ifcs/example.ifc' )
 // const data = fs.readFileSync( './ifcs/steelplates.ifc' )
+// const data = fs.readFileSync( './ifcs/piping.ifc' )
 // const data = fs.readFileSync( './ifcs/railing.ifc' )
 // const data = fs.readFileSync( './ifcs/hall.ifc' )
-// const data = fs.readFileSync( './ifcs/231110ADT-FZK-Haus-2005-2006.ifc' )
-// const data = fs.readFileSync( './ifcs/202103162102_cira.ifc' )
+const data = fs.readFileSync( './ifcs/231110ADT-FZK-Haus-2005-2006.ifc' )
+// const data = fs.readFileSync( './ifcs/crazy.ifc' )
 
 async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', userId, message = 'Manual IFC file upload' } ) {
-  const myParser = new Parser( { objectSaver: new ObjectSaver({ streamId }) } )
+  const serverApi = new ServerAPI( { streamId } )
+  const myParser = new Parser( { serverApi } )
+  
   const { id, tCount } = await myParser.parse( data )
   
-  // async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {
   let commit = {
     streamId: streamId,
     branchName: branchName,
@@ -34,9 +39,21 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
     totalChildrenCount: tCount
   }
 
+  let branch = await serverApi.getBranchByNameAndStreamId({streamId: streamId, name: branchName})
+  
+  if( !branch ) {
+    await createBranch({
+      name: branchName, 
+      streamId: streamId,
+      description: branchName === 'uploads' ? 'File upload branch' : null,
+      authorId: userId
+    })
+  }
+
+  await serverApi.createCommitByBranchName( commit )
 
   console.log( commit )
-  // TODO: save commit, ensuring branch exists first.
+  // console.log( "TODO: save commit" )
 }
 
 parseAndCreateCommit({
@@ -45,14 +62,3 @@ parseAndCreateCommit({
   branchName,
   userId
 })
-
-
-// const parser = new Parser( { objectSaver: new ObjectSaver({}) } )
-// async function load() {
-//   const parsed = await parser.parse( data )
-//   fs.writeFileSync( 'foo.txt', JSON.stringify( parsed ) )
-
-//   console.log( parsed )
-// }
-
-// load()

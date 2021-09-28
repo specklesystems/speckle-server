@@ -1,11 +1,11 @@
 const WebIFC = require( 'web-ifc/web-ifc-api-node' )
-const ObjectSaver = require( './api.js' )
+const ServerAPI = require( './api.js' )
 
 module.exports = class IFCParser {
   
-  constructor( { objectSaver } ) {
+  constructor( { serverApi } ) {
     this.api = new WebIFC.IfcAPI()
-    this.objectSaver = objectSaver || new ObjectSaver()
+    this.serverApi = serverApi || new ServerAPI()
   }
 
   async parse( data ) {
@@ -32,7 +32,7 @@ module.exports = class IFCParser {
     
     await this.traverse( this.project, true, 0 )
     
-    let id = await this.objectSaver.saveObject( this.project )
+    let id = await this.serverApi.saveObject( this.project )
     return { id, tCount: Object.keys(this.project.__closure).length }
   }
 
@@ -84,7 +84,7 @@ module.exports = class IFCParser {
           renderMaterial: placedGeom.color ? this.colorToMaterial( placedGeom.color ) : null
         }
         
-        let id = await this.objectSaver.saveObject( spcklMesh )
+        let id = await this.serverApi.saveObject( spcklMesh )
         let ref = { speckle_type: "reference", referencedId: id }
         this.productGeo[prodId].push( ref )
       }
@@ -149,13 +149,12 @@ module.exports = class IFCParser {
             this.project.__closure[res.referencedId.toString()] = depth 
             element.__closure[res.referencedId.toString()] = 1
             
+            // adds to parent (this element) the child's closure tree.
             if( this.closureCache[child.expressID.toString()]) {
-              // console.log(this.closureCache[child.expressID.toString()])
               for(let key of Object.keys( this.closureCache[child.expressID.toString()] )) {
                 element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
               }
             }
-
           }
         }
         delete element.rawSpatialChildren
@@ -170,8 +169,8 @@ module.exports = class IFCParser {
             this.project.__closure[res.referencedId.toString()] = depth 
             element.__closure[res.referencedId.toString()] = 1
 
+            // adds to parent (this element) the child's closure tree.
             if( this.closureCache[child.expressID.toString()]) {
-              // console.log(this.closureCache[child.expressID.toString()])
               for(let key of Object.keys( this.closureCache[child.expressID.toString()] )) {
                 element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
               }
@@ -188,7 +187,7 @@ module.exports = class IFCParser {
     }
 
     if( this.productGeo[element.expressID] || element.spatialChildren || element.children ) {
-      let id = await this.objectSaver.saveObject( element )
+      let id = await this.serverApi.saveObject( element )
       let ref = { speckle_type: "reference", referencedId: id }
       this.cache[element.expressID.toString()] = ref
       this.closureCache[element.expressID.toString()] = element.__closure
