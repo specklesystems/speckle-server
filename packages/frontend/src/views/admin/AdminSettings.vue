@@ -164,13 +164,6 @@ export default {
       })
       await this.$apollo.queries['serverInfo'].refetch()
       this.loading = false
-    },
-    validateDefaultGlobals: function () {
-      const re = /[./]/
-      let result =
-        !re.test(this.serverModifications.defaultGlobals) ||
-        'The name cannot contain invalid characters: "." or "/"'
-      if (entries[index].valid === true) entries[index].valid = result
     }
   }
 }
