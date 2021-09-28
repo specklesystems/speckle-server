@@ -32,12 +32,14 @@
           </div>
           <p class="mt-2">{{ defaultGlobals.label }}</p>
           <div class="flex-grow-1">
-            <v-text-field
+            <v-textarea
               v-model="defaultGlobalsString"
               persistent-hint
               :hint="defaultGlobals.hint"
+              :rules="rules.checkGlobals()"
               class="ma-0 body-2"
-            ></v-text-field>
+              rows="2"
+            ></v-textarea>
           </div>
         </div>
       </v-card-text>
@@ -96,7 +98,22 @@ export default {
         label: 'Default globals',
         hint:
           'A json string containing a set of default globals and their default values, to be added to all streams on this server on stream creation'
-      }
+      },
+      rules: {
+        checkGlobals() {
+          return [
+            (v) => {
+              try {
+                JSON.parse(v)
+              } catch (e) {
+                return 'Invalid JSON string'
+              }
+              return true
+            }
+          ]
+        }
+      },
+      errors: []
     }
   },
   apollo: {
@@ -147,6 +164,13 @@ export default {
       })
       await this.$apollo.queries['serverInfo'].refetch()
       this.loading = false
+    },
+    validateDefaultGlobals: function () {
+      const re = /[./]/
+      let result =
+        !re.test(this.serverModifications.defaultGlobals) ||
+        'The name cannot contain invalid characters: "." or "/"'
+      if (entries[index].valid === true) entries[index].valid = result
     }
   }
 }

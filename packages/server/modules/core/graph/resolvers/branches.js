@@ -46,7 +46,7 @@ module.exports = {
         return null
 
       let { commits, cursor } = await getCommitsByBranchName( { streamId: parent.id, branchName: 'globals', limit: 1 } )
-      if ( !commits ){
+      if ( !commits || commits.length === 0 ){
         return null
       }
 
