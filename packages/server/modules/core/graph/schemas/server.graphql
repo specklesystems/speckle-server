@@ -16,6 +16,8 @@ type ServerInfo {
   scopes: [Scope]!
   inviteOnly: Boolean
   version: String
+  createDefaultGlobals: Boolean
+  defaultGlobals: JSONObject
 }
 
 """
@@ -48,4 +50,6 @@ input ServerInfoUpdateInput {
   adminContact: String
   termsOfService: String
   inviteOnly: Boolean
+  createDefaultGlobals: Boolean
+  defaultGlobals: JSONObject    
 }
