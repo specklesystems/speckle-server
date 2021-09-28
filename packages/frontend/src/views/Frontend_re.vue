@@ -55,12 +55,9 @@
           </v-list-item-content>
         </v-list-item>
 
-        <v-list-item link to="/profile" v-if="user" style="height: 59px">
+        <v-list-item v-if="user" link to="/profile" style="height: 59px">
           <v-list-item-icon>
-            <v-avatar size="25">
-              <v-img v-if="user.avatar" :src="user.avatar" />
-              <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=38x38`" />
-            </v-avatar>
+            <user-avatar-icon :size="24" :avatar="user.avatar" :seed="user.id"></user-avatar-icon>
           </v-list-item-icon>
 
           <v-list-item-content>
@@ -140,22 +137,22 @@
     </v-navigation-drawer>
 
     <v-bottom-navigation fixed xxx-hide-on-scroll class="hidden-sm-and-up elevation-20">
-      <v-btn color="primary" text to="/" style="height: 100%;">
+      <v-btn color="primary" text to="/" style="height: 100%">
         <span>Feed</span>
         <v-icon>mdi-clock-fast</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/streams" style="height: 100%;">
+      <v-btn color="primary" text to="/streams" style="height: 100%">
         <span>Streams</span>
         <v-icon>mdi-folder</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/profile" style="height: 100%;">
+      <v-btn color="primary" text to="/profile" style="height: 100%">
         <span>Profile</span>
         <v-icon>mdi-account</v-icon>
       </v-btn>
 
-      <v-btn text @click="bottomSheet = true" style="height: 100%;">
+      <v-btn text @click="bottomSheet = true" style="height: 100%">
         <span>More</span>
         <v-icon>mdi-dots-horizontal</v-icon>
       </v-btn>
@@ -260,9 +257,10 @@ import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/user.gql'
 import SearchBar from '../components/SearchBar'
 import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
-  components: { SearchBar, StreamInviteDialog },
+  components: { UserAvatarIcon, SearchBar, StreamInviteDialog },
   data() {
     return {
       streamSnackbar: false,

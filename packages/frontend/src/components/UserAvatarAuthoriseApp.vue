@@ -1,9 +1,6 @@
 <template>
   <div v-if="user" style="display: inline-block" class="text-center">
-    <v-avatar class="ma-1" color="grey lighten-3" :size="size">
-      <v-img v-if="user.avatar" :src="user.avatar" />
-      <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-    </v-avatar>
+    <user-avatar-icon :size="size" :avatar="user.avatar" :seed="user.id"></user-avatar-icon>
     <p class="text-h6 mt-4">
       {{ user.name }}
       <br />
@@ -14,8 +11,10 @@
 <script>
 import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/userById.gql'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
+  components: { UserAvatarIcon },
   props: {
     size: {
       type: Number,
