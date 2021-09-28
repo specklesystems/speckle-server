@@ -106,7 +106,7 @@
       </v-card>
 
       <!-- Stream menu options -->
-      <v-list v-if="stream" style="padding-left: 10px" rounded dense class="mt-0 pt-0" expand>
+      <v-list v-if="stream" style="padding-left: 10px" rounded dense class="mt-0 pt-0">
         <v-list-item link :to="`/streams/${stream.id}`" class="no-overlay">
           <v-list-item-icon>
             <v-icon small>mdi-home</v-icon>
@@ -142,77 +142,28 @@
             </v-list-item-content>
           </v-list-item>
 
-          <!-- TODO -->
-          <div v-if="!$apollo.queries.branchQuery.loading">
-            <template v-for="(item, i) in groupedBranches">
-              <v-list-item
-                v-if="item.type === 'item'"
-                :key="i"
-                :to="`/streams/${stream.id}/branches/${item.name}`"
-                exact
-              >
-                <v-list-item-icon>
-                  <v-icon v-if="item.name !== 'main'" small style="padding-top: 10px">
-                    mdi-source-branch
-                  </v-icon>
-                  <v-icon v-else small style="padding-top: 10px" class="primary--text">
-                    mdi-star
-                  </v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ item.displayName }} ({{ item.commits.totalCount }})
-                  </v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    {{ item.description ? item.description : 'no description' }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-              <v-list-group
-                v-else
-                :key="i"
-                sub-group
-                :value="item.expand"
-                prepend-icon=""
-                :group="item.name"
-              >
-                <template #activator>
-                  <v-list-item style="overflow: visible">
-                    <v-list-item-icon style="position: relative; left: -26px">
-                      <v-icon style="padding-top: 10px">
-                        {{ item.expand ? 'mdi-chevron-down' : 'mdi-chevron-down' }}
-                      </v-icon>
-                    </v-list-item-icon>
-                    <v-list-item-content style="position: relative; left: -8px">
-                      <v-list-item-title>{{ item.name }}</v-list-item-title>
-                      <v-list-item-subtitle class="caption">
-                        {{ item.children.length }} branches
-                      </v-list-item-subtitle>
-                    </v-list-item-content>
-                  </v-list-item>
-                </template>
-                <v-list-item
-                  v-for="(kid, j) in item.children"
-                  :key="j"
-                  :to="`/streams/${stream.id}/branches/${kid.name}`"
-                  exact
-                >
-                  <v-list-item-icon>
-                    <v-icon small style="padding-top: 10px">mdi-source-branch</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{ kid.displayName }} ({{ kid.commits.totalCount }})
-                    </v-list-item-title>
-                    <v-list-item-subtitle class="caption">
-                      {{ kid.description ? kid.description : 'no description' }}
-                    </v-list-item-subtitle>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-group>
-            </template>
-          </div>
-
+          <v-list-item
+            v-for="(branch, i) in sortedBranches"
+            v-if="!$apollo.queries.branchQuery.loading"
+            :key="i"
+            link
+            :to="`/streams/${stream.id}/branches/${branch.name}`"
+          >
+            <v-list-item-icon>
+              <v-icon v-if="branch.name !== 'main'" small style="padding-top: 10px">
+                mdi-source-branch
+              </v-icon>
+              <v-icon v-else small style="padding-top: 10px" class="primary--text">mdi-star</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>
+                {{ branch.name }} ({{ branch.commits.totalCount }})
+              </v-list-item-title>
+              <v-list-item-subtitle class="caption">
+                {{ branch.description ? branch.description : 'no description' }}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
           <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
           <v-divider class="mb-2"></v-divider>
         </v-list-group>
@@ -224,7 +175,9 @@
             <v-icon small>mdi-earth</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
-            <v-list-item-title>Globals</v-list-item-title>
+            <v-list-item-title>
+              {{ `Globals (${globalsTotalCount})` }}
+            </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
 
@@ -564,6 +517,9 @@ export default {
               company
               avatar
             }
+            globals {
+              totalCount
+            }
           }
         }
       `,
@@ -715,6 +671,10 @@ export default {
     branchesTotalCount() {
       if (!this.branchQuery) return 0
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
+    },
+    globalsTotalCount() {
+      if (!this.stream.globals) return 0
+      return this.stream.globals.totalCount
     },
     userId() {
       return localStorage.getItem('uuid')
