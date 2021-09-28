@@ -5,9 +5,12 @@ const knex = require( `${appRoot}/db/knex` )
 
 const Streams = ( ) => knex( 'streams' )
 const Acl = ( ) => knex( 'stream_acl' )
+const Info = ( ) => knex( 'server_config' )
 
 const debug = require( 'debug' )
 const { createBranch } = require( './branches' )
+const { createDefaultGlobalsObject } = require( './objects' )
+const { createCommitByBranchName } = require( './commits' )
 
 module.exports = {
 
@@ -26,6 +29,16 @@ module.exports = {
 
     // Create a default main branch
     await createBranch( { name: 'main', description: 'default branch', streamId: streamId, authorId: ownerId } )
+
+    // Create a default globals branch if specified per server config settings
+    let createDefaultGlobals = await Info( ).select( 'createDefaultGlobals' ).first( )
+    if ( createDefaultGlobals.createDefaultGlobals === true ) {
+      await createBranch( { name: 'globals', description: 'globals branch', streamId: streamId, authorId: ownerId } )  
+      let objId = await createDefaultGlobalsObject( { streamId: streamId } )
+      let commitId = await createCommitByBranchName( { streamId : streamId,  branchName: 'globals', objectId : objId[0], authorId : ownerId, message: 'Add default globals on stream creation', sourceApplication : 'web' } )
+      if ( !commitId ) return null
+    }
+        
     return streamId
   },
 

@@ -16,6 +16,7 @@ const Streams = ( ) => knex( 'streams' )
 const Objects = ( ) => knex( 'objects' )
 const Closures = ( ) => knex( 'object_children_closure' )
 const StreamCommits = ( ) => knex( 'stream_commits' )
+const Info = ( ) => knex( 'server_config' )
 
 module.exports = {
 
@@ -116,6 +117,54 @@ module.exports = {
     return true
   },
 
+  async createDefaultGlobalsObject( streamId ) {
+    let defaultGlobals = await Info( ).select( 'defaultGlobals' ).first( )
+    if ( !defaultGlobals ) return []
+    let defaultGlobalsString = JSON.parse( JSON.stringify( defaultGlobals.defaultGlobals ) )
+    let entries = Object.entries( defaultGlobalsString )
+    let arr = []
+
+    for ( let [ key, val ] of entries ) {
+      arr.push( {
+        key,
+        valid: true,
+        id: crs( { length: 10 } ),
+        value: val,
+        type: 'field'
+      } )
+    }
+
+    let base = {
+      speckle_type: 'Base',
+      id: null
+    }
+
+    for ( let entry of arr ) {
+      if ( !entry.value ) continue
+
+      if ( entry.valid !== true ) {
+        return null
+      }
+
+      if ( Array.isArray( entry.value ) ) base[entry.key] = entry.value
+      else if ( typeof entry.value === 'string' && entry.value.includes( ',' ) ) {
+        base[entry.key] = entry.value
+          .replace( /\s/g, '' )
+          .split( ',' )
+          .map( ( el ) => ( isNaN( el ) ? el : parseFloat( el ) ) )
+      } else if ( typeof entry.value === 'boolean' ) {
+        base[entry.key] = entry.value
+      } else {
+        base[entry.key] = isNaN( entry.value ) ? entry.value : parseFloat( entry.value )
+      }
+    }
+
+    var commitObject = JSON.parse( JSON.stringify( base ) )
+    let ids = await await module.exports.createObjects( streamId.streamId, [ commitObject ] )
+
+    return ids
+  },
+
   async createObjects( streamId, objects ) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
@@ -138,7 +187,7 @@ module.exports = {
       let t0 = performance.now( )
 
       batch.forEach( obj => {
-        if( !obj ) return
+        if ( !obj ) return
         
         let insertionObject = prepInsertionObject( streamId, obj )
         let totalChildrenCountByDepth = {}

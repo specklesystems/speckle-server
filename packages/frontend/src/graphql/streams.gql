@@ -32,6 +32,9 @@ query Streams($cursor: String) {
       }
       branches {
         totalCount
+        items {
+          name
+        }
       }
     }
   }
