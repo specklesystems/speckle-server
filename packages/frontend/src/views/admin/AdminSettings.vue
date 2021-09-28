@@ -90,7 +90,7 @@ export default {
         createDefaultGlobals: {
           label: 'Add default globals on stream creation',
           hint:
-            'Whether to automatically add the specified set of globals to all streams created on this server',
+            'Automatically add the specified set of globals to all streams created on this server',
           type: 'boolean'
         }
       },
