@@ -1,6 +1,7 @@
 'use strict'
 const crypto = require( 'crypto' )
 const crs = require( 'crypto-random-string' )
+const bcrypt = require( 'bcrypt' )
 
 const knex = require( '../knex' )
 const Streams = ( ) => knex( 'streams' )
@@ -8,6 +9,8 @@ const Branches = ( ) => knex( 'branches' )
 const Commits = ( ) => knex( 'commits' )
 const Objects = ( ) => knex( 'objects' )
 const Closures = ( ) => knex( 'object_children_closure' )
+const ApiTokens = ( ) => knex( 'api_tokens' )
+const TokenScopes = ( ) => knex( 'token_scopes' )
 
 const StreamCommits = ( ) => knex( 'stream_commits' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
@@ -65,78 +68,86 @@ module.exports = class ServerAPI {
     return insertionObject.id
   }
 
-prepInsertionObject( streamId, obj ) {
-  const MAX_OBJECT_SIZE = 10 * 1024 * 1024
+  prepInsertionObject( streamId, obj ) {
+    const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
-  if ( obj.hash )
-    obj.id = obj.hash
-  else
-    obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
+    if ( obj.hash )
+      obj.id = obj.hash
+    else
+      obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' ) // generate a hash if none is present
 
-  let stringifiedObj = JSON.stringify( obj )
-  if ( stringifiedObj.length > MAX_OBJECT_SIZE ) {
-    throw new Error( `Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})` )
+    let stringifiedObj = JSON.stringify( obj )
+    if ( stringifiedObj.length > MAX_OBJECT_SIZE ) {
+      throw new Error( `Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})` )
+    }
+
+    return {
+      data: stringifiedObj, // stored in jsonb column
+      streamId: streamId,
+      id: obj.id,
+      speckleType: obj.speckleType
+    }
   }
 
-  return {
-    data: stringifiedObj, // stored in jsonb column
-    streamId: streamId,
-    id: obj.id,
-    speckleType: obj.speckleType
-  }
-}
 
-async createCommitByBranchName( { streamId, branchName, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {
-  branchName = branchName.toLowerCase( )
-  let myBranch = await this.getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
-
-  if ( !myBranch )
-    throw new Error( `Failed to find branch with name ${branchName}.` )
-
-  return await this.createCommitByBranchId( { streamId, branchId: myBranch.id, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } )
-}
-
-async getBranchByNameAndStreamId( { streamId, name } ) {
-  let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [ name ] ) ).first( )
-  return await query
-}
-
-async createBranch( { name, description, streamId, authorId } ) {
-    let branch = {}
-    branch.id = crs( { length: 10 } )
-    branch.streamId = streamId
-    branch.authorId = authorId
-    branch.name = name.toLowerCase( )
-    branch.description = description
-
-    await Branches( ).returning( 'id' ).insert( branch )
-
-    // update stream updated at
-    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
-
-    return branch.id
+  async getBranchByNameAndStreamId( { streamId, name } ) {
+    let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [ name ] ) ).first( )
+    return await query
   }
 
-async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {  
-  // Create main table entry
-  let [ id ] = await Commits( ).returning( 'id' ).insert( {
-    id: crs( { length: 10 } ),
-    referencedObject: objectId,
-    author: authorId,
-    sourceApplication,
-    totalChildrenCount,
-    parents,
-    message
-  } )
+  async createBranch( { name, description, streamId, authorId } ) {
+      let branch = {}
+      branch.id = crs( { length: 10 } )
+      branch.streamId = streamId
+      branch.authorId = authorId
+      branch.name = name.toLowerCase( )
+      branch.description = description
 
-  // Link it to a branch
-  await BranchCommits( ).insert( { branchId: branchId, commitId: id } )
-  // Link it to a stream
-  await StreamCommits( ).insert( { streamId: streamId,commitId: id } )
+      await Branches( ).returning( 'id' ).insert( branch )
 
-  // update stream updated at
-  await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
-  return id
+      // update stream updated at
+      await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
+
+      return branch.id
   }
+
+  async createBareToken( ) {
+    let tokenId = crs( { length: 10 } )
+    let tokenString = crs( { length: 32 } )
+    let tokenHash = await bcrypt.hash( tokenString, 10 )
+    let lastChars = tokenString.slice( tokenString.length - 6, tokenString.length )
+
+    return { tokenId, tokenString, tokenHash, lastChars }
+  }
+
+  async createToken( { userId, name, scopes, lifespan } ) {
+    let { tokenId, tokenString, tokenHash, lastChars } = await this.createBareToken( )
+
+    if ( scopes.length === 0 ) throw new Error( 'No scopes provided' )
+
+    let token = {
+      id: tokenId,
+      tokenDigest: tokenHash,
+      lastChars: lastChars,
+      owner: userId,
+      name: name,
+      lifespan: lifespan
+    }
+    let tokenScopes = scopes.map( scope => ( { tokenId: tokenId, scopeName: scope } ) )
+
+    await ApiTokens( ).insert( token )
+    await TokenScopes( ).insert( tokenScopes )
+
+    return { id: tokenId, token: tokenId + tokenString }
+  }
+
+  async revokeTokenById( tokenId ) {
+    let delCount = await ApiTokens( ).where( { id: tokenId.slice( 0, 10 ) } ).del( )
+
+    if ( delCount === 0 )
+      throw new Error( 'Token revokation failed' )
+    return true
+  }
+
 
 }

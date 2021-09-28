@@ -17,9 +17,11 @@
     "url": "https://github.com/specklesystems/speckle-server/issues"
   },
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "crypto-random-string": "^3.3.1",
     "eslint": "^7.29.0",
     "knex": "^0.95.11",
+    "node-fetch": "^2.6.5",
     "pg": "^8.7.1",
     "web-ifc": "0.0.24"
   }
