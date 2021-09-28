@@ -4,7 +4,7 @@ const ServerAPI = require( './api.js' )
 
 // Hard coded local vars
 const streamId = '27d29ef972'
-const branchName = 'main'
+// const branchName = 'main'
 const userId = 'e24eb8e7e4'
 
 // NOTE: not all the files below are present in the repo. Moreover, not all of the ones in the repo
@@ -20,8 +20,8 @@ const userId = 'e24eb8e7e4'
 // const data = fs.readFileSync( './ifcs/piping.ifc' )
 // const data = fs.readFileSync( './ifcs/railing.ifc' )
 // const data = fs.readFileSync( './ifcs/hall.ifc' )
-const data = fs.readFileSync( './ifcs/231110ADT-FZK-Haus-2005-2006.ifc' )
-// const data = fs.readFileSync( './ifcs/crazy.ifc' )
+// const data = fs.readFileSync( './ifcs/231110ADT-FZK-Haus-2005-2006.ifc' )
+const data = fs.readFileSync( './ifcs/crazy.ifc' )
 
 async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', userId, message = 'Manual IFC file upload' } ) {
   const serverApi = new ServerAPI( { streamId } )
@@ -39,15 +39,15 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
     totalChildrenCount: tCount
   }
 
-  let branch = await serverApi.getBranchByNameAndStreamId({streamId: streamId, name: branchName})
+  let branch = await serverApi.getBranchByNameAndStreamId( { streamId: streamId, name: branchName } )
   
   if( !branch ) {
-    await createBranch({
+    await serverApi.createBranch( {
       name: branchName, 
       streamId: streamId,
       description: branchName === 'uploads' ? 'File upload branch' : null,
       authorId: userId
-    })
+    } )
   }
 
   await serverApi.createCommitByBranchName( commit )
@@ -56,9 +56,8 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
   // console.log( "TODO: save commit" )
 }
 
-parseAndCreateCommit({
+parseAndCreateCommit( {
   data, 
   streamId,
-  branchName,
   userId
-})
+} )

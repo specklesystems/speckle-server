@@ -25,7 +25,7 @@ module.exports = class IFCParser {
     // as reference objects in this.productGeo
     this.productGeo = {}
     await this.createGeometries()    
-    console.log(`Geometries created: ${Object.keys(this.productGeo).length} meshes.`)
+    console.log( `Geometries created: ${Object.keys( this.productGeo ).length} meshes.` )
     
     // Lastly, traverse the ifc project object and parse it into something friendly; as well as 
     // replace all its geometries with actual references to speckle meshes from the productGeo map
@@ -33,12 +33,11 @@ module.exports = class IFCParser {
     await this.traverse( this.project, true, 0 )
     
     let id = await this.serverApi.saveObject( this.project )
-    return { id, tCount: Object.keys(this.project.__closure).length }
+    return { id, tCount: Object.keys( this.project.__closure ).length }
   }
 
   async createGeometries() {
     this.rawGeo = this.api.LoadAllGeometry( this.modelId )
-    let materialMap = {}
     
     for( let i = 0; i < this.rawGeo.size(); i++ ) {
       const mesh = this.rawGeo.get( i )
@@ -56,13 +55,13 @@ module.exports = class IFCParser {
           indices: this.api.GetIndexArray( geom.GetIndexData(), geom.GetIndexDataSize() )
         }
         
-        const { vertices, normals } = this.extractVertexData(raw.vertices)
+        const { vertices } = this.extractVertexData( raw.vertices )
 
-        for(let k = 0; k< vertices.length;k+=3){
-          let x = vertices[k], y = vertices[k+1], z = vertices[k+2]
+        for( let k = 0; k < vertices.length; k += 3 ) {
+          let x = vertices[k], y = vertices[k + 1], z = vertices[k + 2]
           vertices[k] =  matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]
-          vertices[k+1] = (matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14]) * -1 
-          vertices[k+2] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]
+          vertices[k + 1] = ( matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14] ) * -1 
+          vertices[k + 2] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]
         }
 
         // Since all faces are triangles, we must add a `0` before each group of 3.
@@ -85,7 +84,7 @@ module.exports = class IFCParser {
         }
         
         let id = await this.serverApi.saveObject( spcklMesh )
-        let ref = { speckle_type: "reference", referencedId: id }
+        let ref = { speckle_type: 'reference', referencedId: id }
         this.productGeo[prodId].push( ref )
       }
     }
@@ -107,12 +106,12 @@ module.exports = class IFCParser {
       return element.value !== null && element.value !== undefined ? element.value : element
     }
 
-    if(this.cache[element.expressID.toString()]) return this.cache[element.expressID.toString()]
+    if( this.cache[element.expressID.toString()] ) return this.cache[element.expressID.toString()]
     // If you got here -> It's an IFC Element: create base object, upload and return ref.
     // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
     // Traverse all key/value pairs first.
-    for(let key of Object.keys( element )) {
+    for( let key of Object.keys( element ) ) {
       element[key] = await this.traverse( element[key], recursive, depth + 1 )
     }
 
@@ -134,7 +133,7 @@ module.exports = class IFCParser {
       this.productGeo[element.expressID].forEach( ref => {
         this.project.__closure[ref.referencedId.toString()] = depth 
         element.__closure[ref.referencedId.toString()] = 1
-      })
+      } )
     }
 
     // Recurse all children
@@ -142,7 +141,7 @@ module.exports = class IFCParser {
 
       if( element.rawSpatialChildren ) {
         element.spatialChildren = []
-        for(let child of element.rawSpatialChildren) {
+        for( let child of element.rawSpatialChildren ) {
           let res = await this.traverse( child, recursive, depth + 1 )
           if( res.referencedId ) {
             element.spatialChildren.push( res )
@@ -150,8 +149,8 @@ module.exports = class IFCParser {
             element.__closure[res.referencedId.toString()] = 1
             
             // adds to parent (this element) the child's closure tree.
-            if( this.closureCache[child.expressID.toString()]) {
-              for(let key of Object.keys( this.closureCache[child.expressID.toString()] )) {
+            if( this.closureCache[child.expressID.toString()] ) {
+              for( let key of Object.keys( this.closureCache[child.expressID.toString()] ) ) {
                 element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
               }
             }
@@ -162,7 +161,7 @@ module.exports = class IFCParser {
       
       if ( element.rawChildren ) { 
         element.children = []
-        for(let child of element.rawChildren) {
+        for( let child of element.rawChildren ) {
           let res = await this.traverse( child, recursive, depth + 1 ) 
           if( res.referencedId ) {
             element.children.push( res )
@@ -170,8 +169,8 @@ module.exports = class IFCParser {
             element.__closure[res.referencedId.toString()] = 1
 
             // adds to parent (this element) the child's closure tree.
-            if( this.closureCache[child.expressID.toString()]) {
-              for(let key of Object.keys( this.closureCache[child.expressID.toString()] )) {
+            if( this.closureCache[child.expressID.toString()] ) {
+              for( let key of Object.keys( this.closureCache[child.expressID.toString()] ) ) {
                 element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
               }
             }
@@ -180,15 +179,15 @@ module.exports = class IFCParser {
         delete element.rawChildren
       }
 
-      if( element.children || element.spatialChildren ){
-        console.log( `${element.constructor.name} ${element.GlobalId}: children count: ${ element.children ? element.children.length : '0'}; spatial children count: ${element.spatialChildren ? element.spatialChildren.length : '0'} `)
+      if( element.children || element.spatialChildren ) {
+        console.log( `${element.constructor.name} ${element.GlobalId}: children count: ${ element.children ? element.children.length : '0'}; spatial children count: ${element.spatialChildren ? element.spatialChildren.length : '0'} ` )
       }
 
     }
 
     if( this.productGeo[element.expressID] || element.spatialChildren || element.children ) {
       let id = await this.serverApi.saveObject( element )
-      let ref = { speckle_type: "reference", referencedId: id }
+      let ref = { speckle_type: 'reference', referencedId: id }
       this.cache[element.expressID.toString()] = ref
       this.closureCache[element.expressID.toString()] = element.__closure
       return ref 
@@ -201,13 +200,13 @@ module.exports = class IFCParser {
 
 
   // (c) https://github.com/agviegas/web-ifc-three
-  extractVertexData(vertexData) {
+  extractVertexData( vertexData ) {
     const vertices = []
     const normals = []
     let isNormalData = false
-    for (let i = 0; i < vertexData.length; i++) {
-        isNormalData ? normals.push(vertexData[i]) : vertices.push(vertexData[i])
-        if ((i + 1) % 3 == 0) isNormalData = !isNormalData
+    for ( let i = 0; i < vertexData.length; i++ ) {
+        isNormalData ? normals.push( vertexData[i] ) : vertices.push( vertexData[i] )
+        if ( ( i + 1 ) % 3 === 0 ) isNormalData = !isNormalData
     }
     return { vertices, normals }
   }
@@ -239,7 +238,7 @@ module.exports = class IFCParser {
   }
   
   colorToMaterial( color ) {
-    let intColor = (color.w << 24) + ((color.x * 255) << 16) + ((color.y * 255) << 8) + ((color.z * 255))
+    let intColor = ( color.w << 24 ) + ( ( color.x * 255 ) << 16 ) + ( ( color.y * 255 ) << 8 ) + ( ( color.z * 255 ) )
     
     return {
       diffuse: intColor,

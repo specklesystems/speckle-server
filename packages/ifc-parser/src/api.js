@@ -1,8 +1,8 @@
 'use strict'
 const crypto = require( 'crypto' )
-const crs = require('crypto-random-string')
+const crs = require( 'crypto-random-string' )
 
-const knex = require('../knex')
+const knex = require( '../knex' )
 const Streams = ( ) => knex( 'streams' )
 const Branches = ( ) => knex( 'branches' )
 const Commits = ( ) => knex( 'commits' )
@@ -11,29 +11,28 @@ const Closures = ( ) => knex( 'object_children_closure' )
 
 const StreamCommits = ( ) => knex( 'stream_commits' )
 const BranchCommits = ( ) => knex( 'branch_commits' )
-const ParentCommits = ( ) => knex( 'parent_commits' )
 
 module.exports = class ServerAPI {
 
-	constructor( { streamId } ) {
-		this.streamId = streamId
-		this.isSending = false
-		this.buffer = []
-	}
+  constructor( { streamId } ) {
+    this.streamId = streamId
+    this.isSending = false
+    this.buffer = []
+  }
 
-	async saveObject( obj ) { 
-		if( !obj ) throw new Error( 'Null object' )
-		
-		if( !obj.id )	{
-			obj.id = crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
-		}
-		
-		let res = await this.createObject( this.streamId, obj )
+  async saveObject( obj ) { 
+    if( !obj ) throw new Error( 'Null object' )
+    
+    if( !obj.id ) {
+      obj.id = crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
+    }
+    
+    await this.createObject( this.streamId, obj )
 
-		return obj.id
-	}	
+    return obj.id
+  } 
 
-	async createObject( streamId, object ) {
+  async createObject( streamId, object ) {
     let insertionObject = this.prepInsertionObject( streamId, object )
 
     let closures = [ ]
@@ -67,7 +66,6 @@ module.exports = class ServerAPI {
   }
 
 prepInsertionObject( streamId, obj ) {
-  let memNow = process.memoryUsage( ).heapUsed / 1024 / 1024
   const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
   if ( obj.hash )
@@ -79,7 +77,6 @@ prepInsertionObject( streamId, obj ) {
   if ( stringifiedObj.length > MAX_OBJECT_SIZE ) {
     throw new Error( `Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})` )
   }
-  let memAfter = process.memoryUsage( ).heapUsed / 1024 / 1024
 
   return {
     data: stringifiedObj, // stored in jsonb column
@@ -100,7 +97,7 @@ async createCommitByBranchName( { streamId, branchName, objectId, authorId, mess
 }
 
 async getBranchByNameAndStreamId( { streamId, name } ) {
-  let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [name]) ).first( )
+  let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [ name ] ) ).first( )
   return await query
 }
 
@@ -112,7 +109,7 @@ async createBranch( { name, description, streamId, authorId } ) {
     branch.name = name.toLowerCase( )
     branch.description = description
 
-    let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
+    await Branches( ).returning( 'id' ).insert( branch )
 
     // update stream updated at
     await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
@@ -120,14 +117,7 @@ async createBranch( { name, description, streamId, authorId } ) {
     return branch.id
   }
 
-async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {
-  // If no total children count is passed in, get it from the original object
-  // that this commit references.
-  if ( !totalChildrenCount ){
-    let { totalChildrenCount: tc } = await getObject( { streamId, objectId } )
-    totalChildrenCount = tc || 1
-  }
-
+async createCommitByBranchId( { streamId, branchId, objectId, authorId, message, sourceApplication, totalChildrenCount, parents } ) {  
   // Create main table entry
   let [ id ] = await Commits( ).returning( 'id' ).insert( {
     id: crs( { length: 10 } ),
@@ -140,12 +130,12 @@ async createCommitByBranchId( { streamId, branchId, objectId, authorId, message,
   } )
 
   // Link it to a branch
-  await BranchCommits( ).insert( {branchId: branchId, commitId: id} )
+  await BranchCommits( ).insert( { branchId: branchId, commitId: id } )
   // Link it to a stream
-  await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
+  await StreamCommits( ).insert( { streamId: streamId,commitId: id } )
 
   // update stream updated at
-  await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+  await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
   return id
   }
 
