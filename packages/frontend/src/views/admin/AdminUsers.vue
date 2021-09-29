@@ -1,10 +1,23 @@
 <template>
   <v-card title="Users">
-    <h2>Users</h2>
-    <div>search bar here</div>
+    <h2 class="ma-4">Users</h2>
+    <v-text-field
+      v-model="searchQuery"
+      class="mx-4"
+      :prepend-inner-icon="'mdi-magnify'"
+      :loading="$apollo.loading"
+      label="Search users"
+      type="text"
+      single-line
+      clearable
+      rounded
+      filled
+      dense
+    ></v-text-field>
     <v-list v-if="!$apollo.loading" rounded>
       <!-- <div>sorting here</div> -->
-      <v-list-item-group color="primary">
+      <h3 v-if="!users.items">It's so lonely here.</h3>
+      <v-list-item-group v-else color="primary">
         <v-list-item v-for="user in users.items" :key="user.id">
           <div class="my-1 d-flex flex-row flex-grow-1 justify-space-between align-center">
             <user-avatar-icon
@@ -33,15 +46,15 @@
             </div>
           </div>
         </v-list-item>
+        <div class="text-center">
+          <v-pagination
+            v-model="currentPage"
+            :length="numberOfPages"
+            :total-visible="7"
+            circle
+          ></v-pagination>
+        </div>
       </v-list-item-group>
-      <div class="text-center">
-        <v-pagination
-          v-model="currentPage"
-          :length="numberOfPages"
-          :total-visible="7"
-          circle
-        ></v-pagination>
-      </div>
     </v-list>
     <v-skeleton-loader v-else class="mx-auto" type="card"></v-skeleton-loader>
   </v-card>
@@ -50,22 +63,30 @@
 <script>
 import gql from 'graphql-tag'
 import UserAvatarIcon from '@/components/UserAvatarIcon'
+import debounce from 'lodash.debounce'
 
 export default {
   name: 'UserAdmin',
   components: { UserAvatarIcon },
+  beforeRouteUpdate(to, from, next) {
+    console.debug(to)
+    console.debug(from)
+    console.debug(next)
+    this.currentPage = this.page
+    next()
+  },
   props: {
     limit: { type: [Number, String], required: false, default: 10 },
-    page: { type: [Number, String], required: false, default: 0 }
+    page: { type: [Number, String], required: false, default: 1 },
+    q: { type: String, required: false, default: null }
   },
   data() {
     return {
-      // loading: false,
-      // currentPage: 0,
       users: {
         items: []
       },
-      currentPage: 1
+      currentPage: 1,
+      searchQuery: null
     }
   },
   computed: {
@@ -80,14 +101,27 @@ export default {
     }
   },
   watch: {
-    currentPage: function (newPage, oldPage) {
-      this.paginateNext(newPage, oldPage)
-    }
+    currentPage: function (newPage, _) {
+      this.paginateNext(newPage)
+    },
+    searchQuery: debounce(function (newQuery) {
+      this.applySearch(newQuery)
+    }, 1000)
   },
   methods: {
-    paginateNext: function (newPage, oldPage) {
-      console.log(newPage, oldPage)
-      this.$router.push(`users?page=${newPage}&limit=${this.queryLimit}`)
+    paginateNext: function (newPage) {
+      this.$router.push(this._prepareRoute(newPage, this.limit, this.searchQuery))
+    },
+    applySearch: function (searchQuery) {
+      this.$router.push(this._prepareRoute(1, this.limit, searchQuery))
+    },
+    _prepareRoute: function (page, limit, query) {
+      let newRoute = `users?page=${page}&limit=${limit}`
+      if (query) newRoute = `${newRoute}&q=${query}`
+      return newRoute
+    },
+    _matchCurrentPage: function () {
+      this.currentPage = this.page
     }
   },
   apollo: {
