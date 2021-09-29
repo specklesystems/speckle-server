@@ -1,42 +1,17 @@
 <template>
   <v-card title="Users">
-    <!-- <v-data-iterator -->
-    <!-- :headers="headers" -->
-    <!-- :items="users.items" -->
-    <!-- :loading="this.$apollo.queries.users.loading" -->
-    <!-- :server-items-length="users.totalCount" -->
-    <!-- row -->
-    <!-- wrap -->
-    <!-- > -->
-    <!-- <template #default="{ items, isExpanded, expand }"> -->
-    <!-- <v-card v-for="user in items" :key="user.id"> -->
-    <!-- <div>{{ user.name }}</div> -->
-    <!-- </v-card> -->
-    <!-- </template> -->
-    <!-- </v-data-iterator> -->
-    <!-- <server-admins-card :admin-users="users.items"></server-admins-card> -->
-    <!-- <v-data-table
-      :headers="headers"
-      :items="users.items"
-      :loading="this.$apollo.queries.users.loading"
-      :server-items-length="users.totalCount"
-    > -->
-    <!-- <template v-slot:item. -->
-    <!-- </v-data-table> -->
-    <v-list rounded>
-      <v-subheader>Users</v-subheader>
-      <div>search bar here</div>
-      <div>sorting here</div>
+    <h2>Users</h2>
+    <div>search bar here</div>
+    <v-list v-if="!$apollo.loading" rounded>
+      <!-- <div>sorting here</div> -->
       <v-list-item-group color="primary">
         <v-list-item v-for="user in users.items" :key="user.id">
           <div class="my-1 d-flex flex-row flex-grow-1 justify-space-between align-center">
-            <!-- <v-list-item-title v-text="user.name"></v-list-item-title> -->
-            <!-- <user-avatar :id="user.id" :avatar="user.avatar" :name="user.name"></user-avatar> -->
             <user-avatar-icon
               class="ml-n2"
               :avatar="user.avatar"
               :seed="user.id"
-              :size="'50'"
+              :size="50"
             ></user-avatar-icon>
             <div class="px-4 d-flex flex-column justify-center">
               <h4 class="subtitle-2">{{ user.name }}</h4>
@@ -59,38 +34,64 @@
           </div>
         </v-list-item>
       </v-list-item-group>
+      <div class="text-center">
+        <v-pagination
+          v-model="currentPage"
+          :length="numberOfPages"
+          :total-visible="7"
+          circle
+        ></v-pagination>
+      </div>
     </v-list>
+    <v-skeleton-loader v-else class="mx-auto" type="card"></v-skeleton-loader>
   </v-card>
 </template>
 
 <script>
 import gql from 'graphql-tag'
-import ServerAdminsCard from '@/components/admin/ServerAdminsCard'
-import UserAvatar from '@/components/UserAvatar'
 import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
   name: 'UserAdmin',
-  components: { ServerAdminsCard, UserAvatar, UserAvatarIcon },
+  components: { UserAvatarIcon },
+  props: {
+    limit: { type: [Number, String], required: false, default: 10 },
+    page: { type: [Number, String], required: false, default: 0 }
+  },
   data() {
     return {
       // loading: false,
-      // usersPerPage: 30,
       // currentPage: 0,
-      headers: [
-        { text: 'Avatar', value: 'avatar', sortable: false },
-        { text: 'Name', value: 'name' },
-        { text: 'Email', value: 'email' },
-        { text: 'Admin', value: 'role' }
-      ],
       users: {
         items: []
-      }
+      },
+      currentPage: 1
+    }
+  },
+  computed: {
+    queryLimit: function () {
+      return parseInt(this.limit)
+    },
+    queryOffset: function () {
+      return (this.page - 1) * this.queryLimit
+    },
+    numberOfPages: function () {
+      return Math.ceil(this.users.totalCount / this.limit)
+    }
+  },
+  watch: {
+    currentPage: function (newPage, oldPage) {
+      this.paginateNext(newPage, oldPage)
+    }
+  },
+  methods: {
+    paginateNext: function (newPage, oldPage) {
+      console.log(newPage, oldPage)
+      this.$router.push(`users?page=${newPage}&limit=${this.queryLimit}`)
     }
   },
   apollo: {
     users: {
-      prefetch: true,
       query: gql`
         query Users($limit: Int, $offset: Int) {
           users(limit: $limit, offset: $offset) {
@@ -112,11 +113,14 @@ export default {
             }
           }
         }
-      `
+      `,
+      variables() {
+        return {
+          limit: this.queryLimit,
+          offset: this.queryOffset
+        }
+      }
     }
   }
 }
 </script>
-
-<style>
-</style>

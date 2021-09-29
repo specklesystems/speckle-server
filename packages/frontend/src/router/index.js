@@ -207,7 +207,8 @@ const routes = [
           {
             name: 'Admin | Users',
             path: 'users',
-            component: () => import('@/views/admin/AdminUsers.vue')
+            component: () => import('@/views/admin/AdminUsers.vue'),
+            props: (route) => ({ ...route.query, ...route.props })
           },
           // {
           //   name: 'Admin | Streams',
