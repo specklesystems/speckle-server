@@ -14,8 +14,8 @@ const { getObjectsStream } = require( '../services/objects' )
 const { pipeline, PassThrough } = require( 'stream' )
 
 module.exports = ( app ) => {
-
   app.options( '/api/getobjects/:streamId', cors() )
+  
   app.post( '/api/getobjects/:streamId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsReadStream( req.params.streamId, req )
     if ( !hasStreamAccess.result ) {
@@ -46,6 +46,5 @@ module.exports = ( app ) => {
         }
       }
     )
-
   } )
 }
