@@ -38,10 +38,15 @@
               </span>
             </div>
             <div class="d-flex flex-grow-1 justify-end">
-              <v-chip v-if="user.role === 'server:admin'" class="ma-2" color="primary">
+              <v-chip
+                v-if="user.role === 'server:admin'"
+                class="ma-2"
+                color="primary"
+                @click="removeAdminRole(user.id)"
+              >
                 Admin
               </v-chip>
-              <v-chip v-else class="ma-2">User</v-chip>
+              <v-chip v-else class="ma-2" @click="addAdminRole(user.id)">User</v-chip>
               <v-icon large>mdi-menu-down</v-icon>
             </div>
           </div>
@@ -110,6 +115,42 @@ export default {
     }, 1000)
   },
   methods: {
+    removeAdminRole(userId) {
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation ($userId: String!) {
+            userRoleChange(userRoleInput: { id: $userId, role: "server:user" })
+          }
+        `,
+        variables: {
+          userId
+        },
+        update: () => {
+          this.$apollo.queries.users.refetch()
+        },
+        error: (err) => {
+          console.log(err)
+        }
+      })
+    },
+    addAdminRole(userId) {
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation ($userId: String!) {
+            userRoleChange(userRoleInput: { id: $userId, role: "server:admin" })
+          }
+        `,
+        variables: {
+          userId
+        },
+        update: () => {
+          this.$apollo.queries.users.refetch()
+        },
+        error: (err) => {
+          console.log(err)
+        }
+      })
+    },
     paginateNext: function (newPage) {
       this.$router.push(this._prepareRoute(newPage, this.limit, this.searchQuery))
     },
