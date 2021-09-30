@@ -31,8 +31,8 @@ module.exports = {
     async users( parent, args, context, info ){
       await validateServerRole( context, 'server:admin' )
       await validateScopes( context.scopes, 'users:read' )
-      let users = await getUsers ( args.limit, args.offset )
-      let totalCount = await countUsers()
+      let users = await getUsers ( args.limit, args.offset, args.query )
+      let totalCount = await countUsers( args.query )
       return { totalCount, items: users }
     },
 

@@ -3,7 +3,7 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user(id: String): User
-  users(limit: Int!=25, offset: Int!=0) : UserCollection
+  users(limit: Int!=25, offset: Int!=0, query: String=null) : UserCollection
   userSearch(
     query: String!
     limit: Int! = 25

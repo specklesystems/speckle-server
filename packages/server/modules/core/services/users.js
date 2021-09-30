@@ -173,12 +173,22 @@ module.exports = {
     return await Users( ).where( { id: id } ).del( )
   },
 
-  async getUsers ( limit = 10, offset = 0 ) {
+  async getUsers ( limit = 10, offset = 0, searchQuery = null ) {
     // sanitize limit
     const maxLimit = 200
     if ( limit > maxLimit ) limit = maxLimit
   
-    let users =await Users ( ).limit( limit ).offset( offset )
+    let query = Users ( )
+
+    if ( searchQuery ) {
+      query.where( queryBuilder => {
+        queryBuilder
+          .where( 'email', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'name', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'company', 'ILIKE', `%${searchQuery}%` )
+      } )
+    }
+    let users = await query.limit( limit ).offset( offset ) 
     users.map( user => delete user.passwordDigest )
     return users
   },
@@ -200,8 +210,18 @@ module.exports = {
   },
 
 
-  async countUsers (){
-    let [ userCount ] = await Users().count() 
+  async countUsers ( searchQuery=null ){
+    let query = Users()
+    if ( searchQuery ) {
+      query.where( queryBuilder => {
+        queryBuilder
+          .where( 'email', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'name', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'company', 'ILIKE', `%${searchQuery}%` )
+      } )
+    }
+    
+    let [ userCount ] = await query.count() 
     return parseInt( userCount.count )
   }
 }
