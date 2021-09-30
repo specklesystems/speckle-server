@@ -16,7 +16,7 @@
     ></v-text-field>
     <v-list v-if="!$apollo.loading" rounded>
       <!-- <div>sorting here</div> -->
-      <h3 v-if="!users.items">It's so lonely here.</h3>
+      <h3 v-if="!users.totalCount.length === 0">It's so lonely here.</h3>
       <v-list-item-group v-else color="primary">
         <v-list-item v-for="user in users.items" :key="user.id">
           <div class="my-1 d-flex flex-row flex-grow-1 justify-space-between align-center">
@@ -68,13 +68,13 @@ import debounce from 'lodash.debounce'
 export default {
   name: 'UserAdmin',
   components: { UserAvatarIcon },
-  beforeRouteUpdate(to, from, next) {
-    console.debug(to)
-    console.debug(from)
-    console.debug(next)
-    this.currentPage = this.page
-    next()
-  },
+  // beforeRouteUpdate(to, from, next) {
+  //   console.debug(to)
+  //   console.debug(from)
+  //   console.debug(next)
+  //   this.currentPage = this.page
+  //   next()
+  // },
   props: {
     limit: { type: [Number, String], required: false, default: 10 },
     page: { type: [Number, String], required: false, default: 1 },
@@ -83,7 +83,8 @@ export default {
   data() {
     return {
       users: {
-        items: []
+        items: [],
+        totalCount: 0
       },
       currentPage: 1,
       searchQuery: null
@@ -127,8 +128,8 @@ export default {
   apollo: {
     users: {
       query: gql`
-        query Users($limit: Int, $offset: Int) {
-          users(limit: $limit, offset: $offset) {
+        query Users($limit: Int, $offset: Int, $query: String) {
+          users(limit: $limit, offset: $offset, query: $query) {
             totalCount
             items {
               id
@@ -151,7 +152,8 @@ export default {
       variables() {
         return {
           limit: this.queryLimit,
-          offset: this.queryOffset
+          offset: this.queryOffset,
+          query: this.q
         }
       }
     }
