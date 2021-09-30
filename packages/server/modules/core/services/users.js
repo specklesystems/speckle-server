@@ -12,7 +12,7 @@ const debug = require( 'debug' )
 const { deleteStream } = require( './streams' )
 
 
-const changeUserRole = async ( { userId, role } ) => await Acl().where( { userId: userId } ).update( { role } )
+const changeUserRole = async ( { userId, role } ) => await Acl().where( { userId: userId } ).update( { role:role } )
 
 const countAdminUsers = async ( ) => {
   let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
