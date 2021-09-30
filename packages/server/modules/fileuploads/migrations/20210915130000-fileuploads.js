@@ -5,6 +5,7 @@ exports.up = async knex => {
   await knex.schema.createTable( 'file_uploads', table => {
     table.string( 'id' ).primary( )
     table.string( 'streamId', 10 ).references( 'id' ).inTable( 'streams' ).onDelete( 'cascade' )
+    table.string( 'branchName' )
     table.string( 'userId' )
     table.string( 'fileName' ).notNullable( )
     table.string( 'fileType' ).notNullable( )

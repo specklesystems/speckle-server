@@ -11,11 +11,10 @@ const FileUploads = ( ) => knex( 'file_uploads' )
 
 function getS3Config()
 {
-  // TODO: use ENV
   return {
-    accessKeyId: 'minioadmin' ,
-    secretAccessKey: 'minioadmin' ,
-    endpoint: 'http://127.0.0.1:9000' ,
+    accessKeyId: process.env.S3_ACCESS_KEY || 'minioadmin',
+    secretAccessKey: process.env.S3_SECRET_KEY || 'minioadmin',
+    endpoint: process.env.S3_ENDPOINT || 'http://127.0.0.1:9000' ,
     s3ForcePathStyle: true,
     signatureVersion: 'v4'
   }
@@ -38,7 +37,8 @@ module.exports = {
     
     // Upload stream
     const s3 = new S3( getS3Config() )
-    let Bucket = 'server'
+    let Bucket = process.env.S3_BUCKET
+    // TODO: error if missing
     let Key = `files/${fileId}`
     
     let uploadResponse = await s3.upload( { Bucket, Key, Body: fileStream } ).promise()

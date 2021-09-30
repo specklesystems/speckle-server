@@ -14,7 +14,7 @@ const userId = 'e24eb8e7e4'
 // const data = fs.readFileSync( './ifcs/20160414office_model_CV2_fordesign.ifc' )
 // const data = fs.readFileSync( './ifcs/hospital.ifc' )
 // const data = fs.readFileSync( './ifcs/primark.ifc' )
-const data = fs.readFileSync( './ifcs/231110AC11-Institute-Var-2-IFC.ifc' )
+// const data = fs.readFileSync( './ifcs/231110AC11-Institute-Var-2-IFC.ifc' )
 // const data = fs.readFileSync( './ifcs/small.ifc' )
 // const data = fs.readFileSync( './ifcs/example.ifc' )
 // const data = fs.readFileSync( './ifcs/steelplates.ifc' )
@@ -53,9 +53,8 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
 
   let { token:userToken } = await serverApi.createToken( { userId, name: 'temp upload token', scopes: [ 'streams:write' ], lifespan: 3000 } )
 
-
-  // TODO: in case there's a custom server port, perhaps we need to use an env variable here instead of the default 3000?
-  const response = await fetch( 'http://localhost:3000/graphql', {
+  let server_base_url = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
+  const response = await fetch( server_base_url + '/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -73,10 +72,14 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
   console.log( json )
 
   await serverApi.revokeTokenById( userToken )
+
+  return json.data.commitCreate
 }
 
-parseAndCreateCommit( {
-  data, 
-  streamId,
-  userId
-} )
+// parseAndCreateCommit( {
+//   data, 
+//   streamId,
+//   userId
+// } )
+
+module.exports = { parseAndCreateCommit }

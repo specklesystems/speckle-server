@@ -11,12 +11,14 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "scripts": {
-    "test": "node index.js"
+    "test": "node index.js",
+    "dev": "nodemon ./src/main.js"
   },
   "bugs": {
     "url": "https://github.com/specklesystems/speckle-server/issues"
   },
   "dependencies": {
+    "aws-sdk": "^2.996.0",
     "bcrypt": "^5.0.1",
     "crypto-random-string": "^3.3.1",
     "eslint": "^7.29.0",
@@ -24,5 +26,8 @@
     "node-fetch": "^2.6.5",
     "pg": "^8.7.1",
     "web-ifc": "0.0.24"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.13"
   }
 }
