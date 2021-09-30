@@ -218,6 +218,11 @@ const routes = [
             name: 'Admin | Settings',
             path: 'settings',
             component: () => import('@/views/admin/AdminSettings.vue')
+          },
+          {
+            name: 'Admin | Invites',
+            path: 'invites',
+            component: () => import('@/views/admin/AdminInvites.vue')
           }
         ]
       }
