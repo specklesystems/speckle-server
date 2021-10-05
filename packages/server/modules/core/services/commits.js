@@ -60,10 +60,6 @@ module.exports = {
     return await Commits( ).where( { id: id } ).update( { message: message } )
   },
 
-  async receiveCommit( { id, message, received } ) {
-    return await Commits( ).where( { id: id } ).update( { message: message, received: received } )
-  },
-
   async getCommitById( { id } ) {
     let query = await Commits( )
       .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )

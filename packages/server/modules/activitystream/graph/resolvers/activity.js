@@ -43,6 +43,15 @@ module.exports = {
 
       return { items, cursor, totalCount }
     }
-  }, 
+  },
+
+  Commit: {
+    async activity( parent, args, context, info ) {
+      let { items, cursor } = await getResourceActivity( { resourceType: 'commit', resourceId: parent.id, actionType: args.actionType, after: args.after, before: args.before, cursor: args.cursor, limit: args.limit } )
+      let totalCount = await getActivityCountByResourceId( { resourceId: parent.id, actionType: args.actionType, after: args.after, before: args.before } )
+
+      return { items, cursor, totalCount }
+    }
+  }
 
 }

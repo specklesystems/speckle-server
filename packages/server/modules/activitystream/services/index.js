@@ -18,7 +18,6 @@ module.exports = {
       userId, // populated by the api
       info: JSON.stringify( info ), // can be anything with conventions! (TBD) 
       message, // something human understandable for frontend purposes mostly
-      received
     }
     await StreamActivity( ).insert( dbObject )
     if ( streamId ) {
