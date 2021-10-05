@@ -41,6 +41,10 @@
           </template>
         </v-combobox>
       </v-card-text>
+      <stream-search-bar :gotostreamonclick="false" @select="setStream"/>
+      <v-alert type="success" dismissible>
+        They will be invited to strema name.
+      </v-alert>
       <v-card-actions>
         <v-btn :disabled="!submitable" color="primary" type="submit">Invite</v-btn>
       </v-card-actions>
@@ -54,8 +58,9 @@
 <script>
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
-
+import StreamSearchBar from '@/components/SearchBar'
 export default {
+  components: { StreamSearchBar },
   data() {
     return {
       valid: false,
@@ -113,6 +118,9 @@ export default {
     }
   },
   methods: {
+    setStream(args) {
+      console.log(args)
+    },
     remove(item) {
       this.chips.splice(this.chips.indexOf(item), 1)
     },
@@ -152,7 +160,7 @@ export default {
       return await this.$apollo
         .mutate({
           mutation: gql`
-            mutation ($input: ServerInviteCreateInput!) {
+            mutation($input: ServerInviteCreateInput!) {
               serverInviteCreate(input: $input)
             }
           `,
