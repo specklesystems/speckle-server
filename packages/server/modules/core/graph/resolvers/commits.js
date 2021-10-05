@@ -21,6 +21,10 @@ const {
   getCommitsTotalCountByBranchId
 } = require( '../../services/commits' )
 
+
+const { getStream } = require( '../../services/streams' )
+const { getUser } = require( '../../services/users' )
+
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
@@ -131,32 +135,37 @@ module.exports = {
     },
 
     async commitReceive( parent, args, context, info ) {
-      await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
+      // if the request is NOT authenticated (ie, there's no user behind it), return/throw error
+      // Above is BS: route guards prevent anon requests
 
-      let commit = await getCommitById( { id: args.commit.id } )
-      if ( commit.authorId !== context.userId )
-        throw new ForbiddenError( 'Only the author of a commit may update it.' )
-
-      let receivedd = await receiveCommit( { ...args.commit } )
-      if ( receivedd ) {
-        await saveActivity( {
-          streamId: args.commit.streamId,
-          resourceType: 'commit',
-          resourceId: args.commit.id,
-          actionType: 'commit_receive',
-          userId: context.userId,
-          info: { old: commit, new: args.commit },
-          message: `Commit was received: ${args.commit.id} (${args.commit.message})`,
-          received: args.commit.received
-        } )
-        await pubsub.publish( COMMIT_RECEIVED, {
-          commitReceived: { ...args.commit },
-          streamId: args.commit.streamId,
-          commitId: args.commit.id
-        } )
+      // if stream is private, check if the user has access to it
+      console.log()
+      let stream = await getStream( { streamId: args.input.streamId } )
+      
+      if ( !stream.public ) {
+        await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )  
       }
 
-      return receivedd
+
+      let commit = await getCommitById( { id: args.input.commitId } )
+      let user = await getUser( context.userId )
+
+      await saveActivity( {
+        streamId: args.input.streamId,
+        resourceType: 'commit',
+        resourceId: args.input.commitId,
+        actionType: 'commit_receive',
+        userId: context.userId,
+        info: { sourceApplication: args.input.sourceApplication, message: args.input.message },
+        message: `Commit ${args.input.commitId} was received by ${user.name}.`,
+      } )
+      // await pubsub.publish( COMMIT_RECEIVED, {
+      //   commitReceived: { ...args.commit },
+      //   streamId: args.commit.streamId,
+      //   commitId: args.commit.id
+      // } )
+      
+      return true
     },
 
     async commitDelete( parent, args, context, info ) {

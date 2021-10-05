@@ -30,6 +30,15 @@ extend type Branch {
     @hasScope(scope: "streams:read")
 }
 
+extend type Commit {
+  """
+  All the recent activity on this commit in chronological order
+  """
+  activity(actionType: String, after: DateTime, before: DateTime, cursor: DateTime, limit: Int! = 25): ActivityCollection
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+}
+
 type ActivityCollection {
   totalCount: Int!
   cursor: String
