@@ -14,10 +14,11 @@ module.exports = {
       streamId, // abc
       resourceType, // "commit"
       resourceId, // commit id
-      actionType, // "commit_received"
+      actionType, // "commit_receive"
       userId, // populated by the api
       info: JSON.stringify( info ), // can be anything with conventions! (TBD) 
-      message // something human understandable for frontend purposes mostly
+      message, // something human understandable for frontend purposes mostly
+      received
     }
     await StreamActivity( ).insert( dbObject )
     if ( streamId ) {

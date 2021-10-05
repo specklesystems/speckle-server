@@ -11,6 +11,7 @@ query Stream($streamid: String!, $id: String!) {
       authorId
       authorAvatar
       createdAt
+      received
       branchName
       sourceApplication
     }

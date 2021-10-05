@@ -32,7 +32,8 @@ module.exports = {
       sourceApplication,
       totalChildrenCount,
       parents,
-      message
+      message,
+      received
     } )
 
     // Link it to a branch
@@ -57,6 +58,10 @@ module.exports = {
 
   async updateCommit( { id, message } ) {
     return await Commits( ).where( { id: id } ).update( { message: message } )
+  },
+
+  async receiveCommit( { id, message, received } ) {
+    return await Commits( ).where( { id: id } ).update( { message: message, received: received } )
   },
 
   async getCommitById( { id } ) {

@@ -9,6 +9,7 @@ const {
   createCommitByBranchName,
   createCommitByBranchId,
   updateCommit,
+  receiveCommit,
   deleteCommit,
   getCommitById,
   getCommitsByBranchId,
@@ -23,6 +24,7 @@ const {
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
+const COMMIT_RECEIVED = 'COMMIT_RECEIVED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
 module.exports = {
@@ -87,7 +89,8 @@ module.exports = {
           actionType: 'commit_create',
           userId: context.userId,
           info: { id: id, commit: args.commit },
-          message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
+          message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`,
+          received: args.commit.received
         } )
         await pubsub.publish( COMMIT_CREATED, {
           commitCreated: { ...args.commit, id: id, authorId: context.userId },
@@ -114,7 +117,8 @@ module.exports = {
           actionType: 'commit_update',
           userId: context.userId,
           info: { old: commit, new: args.commit },
-          message: `Commit message changed: ${args.commit.id} (${args.commit.message})`
+          message: `Commit message changed: ${args.commit.id} (${args.commit.message})`,
+          received: args.commit.received
         } )
         await pubsub.publish( COMMIT_UPDATED, {
           commitUpdated: { ...args.commit },
@@ -124,6 +128,35 @@ module.exports = {
       }
 
       return updated
+    },
+
+    async commitReceive( parent, args, context, info ) {
+      await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
+
+      let commit = await getCommitById( { id: args.commit.id } )
+      if ( commit.authorId !== context.userId )
+        throw new ForbiddenError( 'Only the author of a commit may update it.' )
+
+      let receivedd = await receiveCommit( { ...args.commit } )
+      if ( receivedd ) {
+        await saveActivity( {
+          streamId: args.commit.streamId,
+          resourceType: 'commit',
+          resourceId: args.commit.id,
+          actionType: 'commit_receive',
+          userId: context.userId,
+          info: { old: commit, new: args.commit },
+          message: `Commit was received: ${args.commit.id} (${args.commit.message})`,
+          received: args.commit.received
+        } )
+        await pubsub.publish( COMMIT_RECEIVED, {
+          commitReceived: { ...args.commit },
+          streamId: args.commit.streamId,
+          commitId: args.commit.id
+        } )
+      }
+
+      return receivedd
     },
 
     async commitDelete( parent, args, context, info ) {
@@ -142,7 +175,8 @@ module.exports = {
           actionType: 'commit_delete',
           userId: context.userId,
           info: { commit: commit },
-          message: `Commit deleted: ${args.commit.id}`
+          message: `Commit deleted: ${args.commit.id}`,
+          received: args.commit.received
         } )
         await pubsub.publish( COMMIT_DELETED, { commitDeleted: { ...args.commit }, streamId: args.commit.streamId } )
       }

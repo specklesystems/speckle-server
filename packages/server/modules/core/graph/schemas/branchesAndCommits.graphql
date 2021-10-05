@@ -29,6 +29,7 @@ type Commit {
   authorId: String
   authorAvatar: String
   createdAt: DateTime
+  received: String
 }
 
 type CommitCollectionUserNode {
@@ -42,6 +43,7 @@ type CommitCollectionUserNode {
   streamId: String
   streamName: String
   createdAt: DateTime
+  received: String
 }
 
 type BranchCollection {
@@ -77,6 +79,9 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   commitUpdate(commit: CommitUpdateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+  commitReceive(commit: CommitReceivedInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   commitDelete(commit: CommitDeleteInput!): Boolean!
@@ -118,6 +123,12 @@ extend type Subscription {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
   """
+  Subscribe to commit receive event.
+  """
+  commitReceived(streamId: String!, commitId: String): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+  """
   Subscribe to commit deleted event
   """
   commitDeleted(streamId: String!): JSONObject
@@ -155,12 +166,21 @@ input CommitCreateInput {
   """
   previousCommitIds: [String]
   parents: [String]
+  received: String
 }
 
 input CommitUpdateInput {
   streamId: String!
   id: String!
   message: String!
+}
+
+input CommitReceivedInput {
+  streamId: String!
+  id: String!
+  parents: [String]
+  message: String!
+  received: String
 }
 
 input CommitDeleteInput {
