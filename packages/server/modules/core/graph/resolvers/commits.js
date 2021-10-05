@@ -9,7 +9,7 @@ const {
   createCommitByBranchName,
   createCommitByBranchId,
   updateCommit,
-  receiveCommit,
+  //receiveCommit,
   deleteCommit,
   getCommitById,
   getCommitsByBranchId,
@@ -28,7 +28,7 @@ const { getUser } = require( '../../services/users' )
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
-const COMMIT_RECEIVED = 'COMMIT_RECEIVED'
+//const COMMIT_RECEIVED = 'COMMIT_RECEIVED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
 module.exports = {
@@ -93,8 +93,7 @@ module.exports = {
           actionType: 'commit_create',
           userId: context.userId,
           info: { id: id, commit: args.commit },
-          message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`,
-          received: args.commit.received
+          message: `Commit created on branch ${args.commit.branchName}: ${id} (${args.commit.message})`
         } )
         await pubsub.publish( COMMIT_CREATED, {
           commitCreated: { ...args.commit, id: id, authorId: context.userId },
@@ -121,8 +120,7 @@ module.exports = {
           actionType: 'commit_update',
           userId: context.userId,
           info: { old: commit, new: args.commit },
-          message: `Commit message changed: ${args.commit.id} (${args.commit.message})`,
-          received: args.commit.received
+          message: `Commit message changed: ${args.commit.id} (${args.commit.message})`
         } )
         await pubsub.publish( COMMIT_UPDATED, {
           commitUpdated: { ...args.commit },
@@ -184,8 +182,7 @@ module.exports = {
           actionType: 'commit_delete',
           userId: context.userId,
           info: { commit: commit },
-          message: `Commit deleted: ${args.commit.id}`,
-          received: args.commit.received
+          message: `Commit deleted: ${args.commit.id}`
         } )
         await pubsub.publish( COMMIT_DELETED, { commitDeleted: { ...args.commit }, streamId: args.commit.streamId } )
       }

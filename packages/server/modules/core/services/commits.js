@@ -32,8 +32,7 @@ module.exports = {
       sourceApplication,
       totalChildrenCount,
       parents,
-      message,
-      received
+      message
     } )
 
     // Link it to a branch
