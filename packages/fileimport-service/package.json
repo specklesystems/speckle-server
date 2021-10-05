@@ -1,7 +1,7 @@
 {
-  "name": "ifc-parser",
-  "version": "1.0.0",
-  "description": "> TODO: description",
+  "name": "@speckle/fileimport-service",
+  "version": "2.0.0",
+  "description": "Parse and import files of various types into a stream",
   "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "license": "SEE LICENSE IN readme.md",
@@ -11,8 +11,7 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "scripts": {
-    "test": "node index.js",
-    "dev": "nodemon ./src/main.js"
+    "dev": "S3_BUCKET=speckle-server nodemon ./src/daemon.js"
   },
   "bugs": {
     "url": "https://github.com/specklesystems/speckle-server/issues"

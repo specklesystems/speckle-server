@@ -18,6 +18,15 @@ function getS3Config()
 
 module.exports = {
 
+  async getFileStream( { fileId } ) {
+    const s3 = new S3( getS3Config() )
+    let Bucket = process.env.S3_BUCKET
+    let Key = `files/${fileId}`
+    
+    let fileStream = s3.getObject( { Key, Bucket } ).createReadStream()
+    return fileStream
+  },
+  
   async readFile( { fileId } ) {
     const s3 = new S3( getS3Config() )
     let Bucket = process.env.S3_BUCKET

@@ -23,12 +23,46 @@ function getS3Config()
 
 module.exports = {
 
-  async uploadFile( { streamId, userId, fileName, fileType, fileStream } ) {
+  async checkBucket() {
+    const s3 = new S3( getS3Config() )
+    let Bucket = process.env.S3_BUCKET
+    
+    try {
+      let data = await s3.headBucket( { Bucket } ).promise()
+      return
+    } catch ( err ) {
+      if ( err.statusCode === 403 ) {
+        throw new Error( 'Access denied to S3 bucket ' )
+      }
+      if ( process.env.S3_CREATE_BUCKET === 'true' ) {
+        await s3.createBucket( { Bucket } ).promise()
+      } else {
+        throw new Error( `Can't open S3 bucket '${Bucket}': ${err.toString()}` )
+      }
+    }
+  },
+
+  async getFileInfo( { fileId } ) {
+    let fileInfo = await FileUploads( ).where( { id: fileId } ).select( '*' ).first( )
+    return fileInfo
+  },
+
+  async getFileStream( { fileId } ) {
+    const s3 = new S3( getS3Config() )
+    let Bucket = process.env.S3_BUCKET
+    let Key = `files/${fileId}`
+    
+    let fileStream = s3.getObject( { Key, Bucket } ).createReadStream()
+    return fileStream
+  },
+
+  async uploadFile( { streamId, branchName, userId, fileName, fileType, fileStream } ) {
     // Create ID and db entry
     let fileId = crs( { length: 10 } )
     let dbFile = {
       id: fileId,
       streamId,
+      branchName,
       userId,
       fileName,
       fileType,
@@ -48,5 +82,7 @@ module.exports = {
     let fileSize = headResponse.ContentLength
 
     await FileUploads().where( { id: fileId } ).update( { uploadComplete: true, fileSize } )
+
+    return fileId
   }
 }

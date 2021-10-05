@@ -51,7 +51,7 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
     } )
   }
 
-  let { token:userToken } = await serverApi.createToken( { userId, name: 'temp upload token', scopes: [ 'streams:write' ], lifespan: 3000 } )
+  let userToken = process.env.USER_TOKEN
 
   let server_base_url = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
   const response = await fetch( server_base_url + '/graphql', {
@@ -70,8 +70,6 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
 
   let json = await response.json()
   console.log( json )
-
-  await serverApi.revokeTokenById( userToken )
 
   return json.data.commitCreate
 }
