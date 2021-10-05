@@ -1,9 +1,14 @@
 <template>
-  <v-card title="Users">
-    <h2 class="ma-4">Users</h2>
+  <v-card>
+    <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
+      <v-toolbar-title>
+        Server Users Admin
+        <span v-if="users">({{ users.totalCount }} total users)</span>
+      </v-toolbar-title>
+    </v-toolbar>
     <v-text-field
       v-model="searchQuery"
-      class="mx-4"
+      class="mx-4 mt-4"
       :prepend-inner-icon="'mdi-magnify'"
       :loading="$apollo.loading"
       label="Search users"
@@ -16,40 +21,41 @@
     ></v-text-field>
     <v-list v-if="!$apollo.loading" rounded>
       <!-- <div>sorting here</div> -->
-      <h3 v-if="!users.totalCount.length === 0">It's so lonely here.</h3>
+      <h3 v-if="users.totalCount === 0">It's so lonely here.</h3>
       <v-list-item-group v-else color="primary">
         <v-list-item v-for="user in users.items" :key="user.id">
-          <div class="my-1 d-flex flex-row flex-grow-1 justify-space-between align-center">
+          <v-list-item-avatar>
             <user-avatar-icon
               class="ml-n2"
               :avatar="user.avatar"
               :seed="user.id"
               :size="50"
             ></user-avatar-icon>
-            <div class="px-4 d-flex flex-column justify-center">
-              <h4 class="subtitle-2">{{ user.name }}</h4>
-              <span class="caption">
-                <v-icon x-small>mdi-email-outline</v-icon>
-                {{ user.email }}
-              </span>
-              <span class="caption">
-                <v-icon x-small>mdi-domain</v-icon>
-                {{ user.company }}
-              </span>
-            </div>
-            <div class="d-flex flex-grow-1 justify-end">
-              <v-chip
-                v-if="user.role === 'server:admin'"
-                class="ma-2"
-                color="primary"
-                @click="removeAdminRole(user.id)"
-              >
-                Admin
-              </v-chip>
-              <v-chip v-else class="ma-2" @click="addAdminRole(user.id)">User</v-chip>
-              <v-icon large>mdi-menu-down</v-icon>
-            </div>
-          </div>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{ user.name }}
+            </v-list-item-title>
+
+            <span class="caption">
+              <v-icon x-small>mdi-email-outline</v-icon>
+              {{ user.email }}
+            </span>
+            <span class="caption">
+              <v-icon x-small>{{ user.company ? 'mdi-domain' : 'mdi-help-circle' }}</v-icon>
+              {{ user.company ? user.company : 'No info company' }}
+            </span>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-select
+              v-model="user.role"
+              :items="roles"
+              label="user role"
+              filled
+              flat
+              @change="changeUserRole(user)"
+            ></v-select>
+          </v-list-item-action>
         </v-list-item>
         <div class="text-center">
           <v-pagination
@@ -91,8 +97,10 @@ export default {
         items: [],
         totalCount: 0
       },
+      roles: ['server:user', 'server:admin', 'server:archived_user'],
       currentPage: 1,
-      searchQuery: null
+      searchQuery: null,
+      showConfirmDialog: false
     }
   },
   computed: {
@@ -115,10 +123,18 @@ export default {
     }, 1000)
   },
   methods: {
+    changeUserRole( user ) {
+
+      console.log(user)
+    },
+
+    getUserCurrentRole(user) {
+      return user.role
+    },
     removeAdminRole(userId) {
       this.$apollo.mutate({
         mutation: gql`
-          mutation ($userId: String!) {
+          mutation($userId: String!) {
             userRoleChange(userRoleInput: { id: $userId, role: "server:user" })
           }
         `,
@@ -136,7 +152,7 @@ export default {
     addAdminRole(userId) {
       this.$apollo.mutate({
         mutation: gql`
-          mutation ($userId: String!) {
+          mutation($userId: String!) {
             userRoleChange(userRoleInput: { id: $userId, role: "server:admin" })
           }
         `,
