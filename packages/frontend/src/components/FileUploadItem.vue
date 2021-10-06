@@ -9,7 +9,7 @@
         <span class="caption">{{ file.size }}kb</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn @click="upload()">Upload</v-btn>
+      <v-btn @click="upload()" color="primary">Upload</v-btn>
     </v-toolbar>
     <v-alert v-if="error" type="error" dismissible>An error occurred.</v-alert>
   </v-card>
