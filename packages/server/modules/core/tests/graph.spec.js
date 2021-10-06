@@ -154,9 +154,10 @@ describe( 'GraphQL API Core @core-api', ( ) => {
 
       it ( 'Onyl admins can change user role', async () => {
         let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
-        await sendRequest( userB.token, { query } )
-        queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
-        expect( queriedUserB.body.errors ).to.exist
+        let res = await sendRequest( userB.token, { query } )
+        let queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
+        expect( res.body.errors ).to.exist
+        expect( queriedUserB.body.data.user.role ).to.equal( 'server:user' )
       } )
     } )
     describe( 'Streams', ( ) => {
