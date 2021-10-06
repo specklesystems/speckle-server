@@ -346,6 +346,17 @@ describe ( 'User admin @user-services', ( ) => {
     expect( users ).to.have.lengthOf( 51 )
   } )
 
+  it ( 'User query filters', async () => {
+    let users = await getUsers( 100, 0, 'gergo' )
+    expect ( users ).to.have.lengthOf( 1 )
+    let [ user ] = users
+    expect ( user.email ).to.equal( 'gergo@jedlicska.com' ) 
+  } )
+
+  it ( 'Count users applies query', async () => {
+    expect ( await countUsers( 'droid' ) ).to.equal( 250 )
+  } )
+
   it ( 'Change user role modifies role', async () => {
     let [ user ] = await getUsers( 1, 10 )
 
