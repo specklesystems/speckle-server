@@ -2,9 +2,10 @@ const appRoot = require( 'app-root-path' )
 const { createUser } = require( `${appRoot}/modules/core/services/users` )
 const https = require( 'https' )
 const axios = require( 'axios' )
+const { fetch } = require( 'node-fetch' )
 
 const main = async () => {
-  let userInputs = ( await axios.get( 'https://randomuser.me/api/?results=250' ) ).data.results.map( user => {
+  let userInputs = ( await fetch( 'https://randomuser.me/api/?results=250' ) ).json().results.map( user => {
     return {
       name: `${user.name.first} ${user.name.last}`,
       email: user.email,
