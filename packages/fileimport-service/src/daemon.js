@@ -72,7 +72,7 @@ async function doTask( task ) {
       {
         USER_TOKEN: tempUserToken
       },
-      5 * 60 * 1000
+      10 * 60 * 1000
     )
 
     let output = JSON.parse( fs.readFileSync( TMP_RESULTS_PATH ) )
