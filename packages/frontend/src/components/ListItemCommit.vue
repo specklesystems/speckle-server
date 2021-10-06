@@ -117,21 +117,6 @@ export default {
         if (!this.streamId || !this.commit) return true
         return false
       }
-    },
-    userById: {
-      query: userByIdQuery,
-      variables() {
-        return {
-          id: this.id
-        }
-      },
-      skip() {
-        return !this.loggedIn
-      },
-
-      update: (data) => {
-        return data.user
-      }
     }
   },
   data() {

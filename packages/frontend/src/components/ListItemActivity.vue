@@ -223,7 +223,7 @@
                           </span>
                           <span v-if="lastActivity.actionType === 'commit_receive'">
                             <span class="mx-3 body-2 font-italic">in</span>
-                            <source-app-avatar :application-name="lastActivity.info.applicationName" />
+                            <source-app-avatar :application-name="lastActivity.info.sourceApplication" />
                           </span>
                         </span>
                         <span v-if="lastActivity.actionType !== 'commit_delete' && !commit">
