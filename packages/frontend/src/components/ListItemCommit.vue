@@ -24,27 +24,36 @@
       </v-list-item-subtitle>
     </v-list-item-content>
 
-    <v-list-item-action>
+    <v-list-item-action v-if="receivedUsersAll.length>0">
       <p class="text-end mt-2 mb-0">
-        <v-list-item-title>Received</v-list-item-title>
+        <!-- Can be also "Received X times" -->
+        <v-list-item-title>Last received</v-list-item-title>
       </p>
       <v-list-item-subtitle class="mt-2 caption">
         <p>
           by
-          <b>{{ commit.authorName }}</b>
+          <b>{{ receivedUsersAll[0].userId }}</b>
           &nbsp;
-          <timeago :datetime="commit.createdAt"></timeago>
+          <timeago :datetime="receivedUsersAll[0].time"></timeago>
         </p>
       </v-list-item-subtitle>
     </v-list-item-action>
 
     <v-list-item-action class="pl-4 pt-0 mt-0">
+      <div>
+      <!-- Fix avatar size for small views (e.g. Stream home) -->
       <user-avatar
-        :id="commit.authorId"
-        :avatar="commit.authorAvatar"
-        :name="commit.authorName"
-        :size="40"
-      />
+          v-for="user in receivedUsersUnique.slice(0, 4)"
+          :id="user"
+          :key="user"
+          :avatar="user.avatar"
+          :size="40" 
+          :name="user.name"
+        />
+        <v-avatar v-if="receivedUsersUnique.length > 4" size="30" color="grey">
+          <span class="white--text">+{{ receivedUsersUnique.length - 4 }}</span>
+        </v-avatar>
+        </div>
     </v-list-item-action>
 
     <v-list-item-action>
@@ -60,17 +69,19 @@
             {{ commit.branchName }}
           </v-chip>
         </span>
+        <!-- Suggestion to move commit SourceApp to the left -->
         <source-app-avatar :application-name="commit.sourceApplication" />
       </div>
     </v-list-item-action>
     <br />
-    {{ activity ? uniqueUsersThatReceived : 'loading' }}
+    
   </v-list-item>
 </template>
 <script>
 import gql from 'graphql-tag'
 import UserAvatar from './UserAvatar'
 import SourceAppAvatar from './SourceAppAvatar'
+//import userByIdQuery from '../graphql/userById.gql'
 
 export default {
   components: { UserAvatar, SourceAppAvatar },
@@ -106,12 +117,29 @@ export default {
         if (!this.streamId || !this.commit) return true
         return false
       }
+    },
+    userById: {
+      query: userByIdQuery,
+      variables() {
+        return {
+          id: this.id
+        }
+      },
+      skip() {
+        return !this.loggedIn
+      },
+
+      update: (data) => {
+        return data.user
+      }
     }
   },
   data() {
     return {
       activity: null,
-      uniqueUsersThatReceived: []
+      receivedUsersAll: [],
+      receivedNamesAll: [],
+      receivedUsersUnique: []
     }
   },
   computed: {
@@ -131,10 +159,12 @@ export default {
   },
   watch: {
     activity(val) {
-      console.log(val.items)
+      //console.log(val.items)
       let set = new Set()
       val.items.forEach((item) => set.add(item.userId))
-      this.uniqueUsersThatReceived = Array.from( set )
+      this.receivedUsersUnique = Array.from( set )
+      this.receivedUsersAll = val.items
+      let arr = new Array()
     }
   },
   methods: {
