@@ -3,6 +3,10 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user(id: String): User
+  
+  """
+  Get users from the server in a paginated view. The query search for matches in name, company and email.
+  """
   users(limit: Int!=25, offset: Int!=0, query: String=null) : UserCollection
   userSearch(
     query: String!

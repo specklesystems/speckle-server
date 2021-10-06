@@ -1,9 +1,14 @@
 <template>
-  <v-card title="Users">
-    <h2 class="ma-4">Users</h2>
+  <v-card>
+    <v-toolbar flat>
+      <v-toolbar-title>
+        Server Users Admin
+        <span v-if="users">(found {{ users.totalCount }} users)</span>
+      </v-toolbar-title>
+    </v-toolbar>
     <v-text-field
       v-model="searchQuery"
-      class="mx-4"
+      class="mx-4 mt-4"
       :prepend-inner-icon="'mdi-magnify'"
       :loading="$apollo.loading"
       label="Search users"
@@ -15,41 +20,42 @@
       dense
     ></v-text-field>
     <v-list v-if="!$apollo.loading" rounded>
-      <!-- <div>sorting here</div> -->
-      <h3 v-if="!users.totalCount.length === 0">It's so lonely here.</h3>
-      <v-list-item-group v-else color="primary">
+      <v-list-item-group v-if="users.totalCount > 0" color="primary">
         <v-list-item v-for="user in users.items" :key="user.id">
-          <div class="my-1 d-flex flex-row flex-grow-1 justify-space-between align-center">
+          <v-list-item-avatar :size="55">
             <user-avatar-icon
               class="ml-n2"
               :avatar="user.avatar"
               :seed="user.id"
               :size="50"
             ></user-avatar-icon>
-            <div class="px-4 d-flex flex-column justify-center">
-              <h4 class="subtitle-2">{{ user.name }}</h4>
-              <span class="caption">
-                <v-icon x-small>mdi-email-outline</v-icon>
-                {{ user.email }}
-              </span>
-              <span class="caption">
-                <v-icon x-small>mdi-domain</v-icon>
-                {{ user.company }}
-              </span>
-            </div>
-            <div class="d-flex flex-grow-1 justify-end">
-              <v-chip
-                v-if="user.role === 'server:admin'"
-                class="ma-2"
-                color="primary"
-                @click="removeAdminRole(user.id)"
-              >
-                Admin
-              </v-chip>
-              <v-chip v-else class="ma-2" @click="addAdminRole(user.id)">User</v-chip>
-              <v-icon large>mdi-menu-down</v-icon>
-            </div>
-          </div>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{ user.name }}
+            </v-list-item-title>
+
+            <span class="caption">
+              <v-icon x-small>mdi-email-outline</v-icon>
+              {{ user.email }}
+            </span>
+            <span v-if="user.company" class="caption">
+              <v-icon x-small>mdi-domain</v-icon>
+              user.company
+            </span>
+            <span v-else class="caption">
+              <v-icon x-small>mdi-help-circle</v-icon>
+              No company info
+            </span>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-select
+              :value="user.role"
+              :items="availableRoles"
+              label="user role"
+              @change="changeUserRole(user, ...arguments)"
+            ></v-select>
+          </v-list-item-action>
         </v-list-item>
         <div class="text-center">
           <v-pagination
@@ -62,6 +68,29 @@
       </v-list-item-group>
     </v-list>
     <v-skeleton-loader v-else class="mx-auto" type="card"></v-skeleton-loader>
+    <v-dialog v-model="showConfirmDialog" persistent max-width="600px">
+      <v-card v-if="showConfirmDialog">
+        <v-toolbar flat class="mb-6">
+          <v-toolbar-title>Confirm user role change</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <v-alert v-if="newRole === 'server:admin'" type="error">
+            Make sure you trust {{ manipulatedUser.name }}!
+            <br />
+            An admin on the server has access to every resource.
+          </v-alert>
+          You are changing {{ manipulatedUser.name }}'s server access role from
+          {{ roleLookupTable[manipulatedUser.role] }} to {{ roleLookupTable[newRole] }}.
+          <br />
+          Proceed?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" text @click="cancelRoleChange">Cancel</v-btn>
+          <v-btn color="primary" text @click="proceedRoleChange">Proceed</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
@@ -73,13 +102,6 @@ import debounce from 'lodash.debounce'
 export default {
   name: 'UserAdmin',
   components: { UserAvatarIcon },
-  // beforeRouteUpdate(to, from, next) {
-  //   console.debug(to)
-  //   console.debug(from)
-  //   console.debug(next)
-  //   this.currentPage = this.page
-  //   next()
-  // },
   props: {
     limit: { type: [Number, String], required: false, default: 10 },
     page: { type: [Number, String], required: false, default: 1 },
@@ -87,27 +109,42 @@ export default {
   },
   data() {
     return {
+      roleLookupTable: {
+        'server:user': 'User',
+        'server:admin': 'Admin'
+        // 'server:archived_user': 'Archived'
+      },
       users: {
         items: [],
         totalCount: 0
       },
       currentPage: 1,
-      searchQuery: null
+      searchQuery: null,
+      showConfirmDialog: false,
+      manipulatedUser: null,
+      newRole: null
     }
   },
   computed: {
-    queryLimit: function () {
+    queryLimit() {
       return parseInt(this.limit)
     },
-    queryOffset: function () {
+    queryOffset() {
       return (this.page - 1) * this.queryLimit
     },
-    numberOfPages: function () {
+    numberOfPages() {
       return Math.ceil(this.users.totalCount / this.limit)
+    },
+    availableRoles() {
+      let roleItems = []
+      for (let role in this.roleLookupTable) {
+        roleItems.push({ text: this.roleLookupTable[role], value: role })
+      }
+      return roleItems
     }
   },
   watch: {
-    currentPage: function (newPage, _) {
+    currentPage: function (newPage) {
       this.paginateNext(newPage)
     },
     searchQuery: debounce(function (newQuery) {
@@ -115,15 +152,38 @@ export default {
     }, 1000)
   },
   methods: {
-    removeAdminRole(userId) {
-      this.$apollo.mutate({
+    changeUserRole(user, args) {
+      this.manipulatedUser = user
+      this.newRole = args
+      console.log(user.role)
+      console.log(this.newRole)
+
+      this.showConfirmDialog = true
+    },
+    resetManipulatedUser() {
+      this.manipulatedUser = null
+      this.newRole = null
+    },
+    cancelRoleChange() {
+      this.showConfirmDialog = false
+      this.$apollo.queries.users.refetch()
+      this.resetManipulatedUser()
+    },
+    async proceedRoleChange() {
+      await this.updateUserRole(this.manipulatedUser.id, this.newRole)
+      this.resetManipulatedUser()
+      this.showConfirmDialog = false
+    },
+    async updateUserRole(userId, newRole) {
+      await this.$apollo.mutate({
         mutation: gql`
-          mutation ($userId: String!) {
-            userRoleChange(userRoleInput: { id: $userId, role: "server:user" })
+          mutation ($userId: String!, $newRole: String!) {
+            userRoleChange(userRoleInput: { id: $userId, role: $newRole })
           }
         `,
         variables: {
-          userId
+          userId,
+          newRole
         },
         update: () => {
           this.$apollo.queries.users.refetch()
@@ -133,37 +193,16 @@ export default {
         }
       })
     },
-    addAdminRole(userId) {
-      this.$apollo.mutate({
-        mutation: gql`
-          mutation ($userId: String!) {
-            userRoleChange(userRoleInput: { id: $userId, role: "server:admin" })
-          }
-        `,
-        variables: {
-          userId
-        },
-        update: () => {
-          this.$apollo.queries.users.refetch()
-        },
-        error: (err) => {
-          console.log(err)
-        }
-      })
-    },
-    paginateNext: function (newPage) {
+    paginateNext(newPage) {
       this.$router.push(this._prepareRoute(newPage, this.limit, this.searchQuery))
     },
-    applySearch: function (searchQuery) {
+    applySearch(searchQuery) {
       this.$router.push(this._prepareRoute(1, this.limit, searchQuery))
     },
-    _prepareRoute: function (page, limit, query) {
+    _prepareRoute(page, limit, query) {
       let newRoute = `users?page=${page}&limit=${limit}`
       if (query) newRoute = `${newRoute}&q=${query}`
       return newRoute
-    },
-    _matchCurrentPage: function () {
-      this.currentPage = this.page
     }
   },
   apollo: {

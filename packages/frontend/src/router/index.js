@@ -157,6 +157,15 @@ const routes = [
             component: () => import('@/views/stream/Webhooks.vue')
           },
           {
+            path: 'uploads/',
+            name: 'uploads',
+            meta: {
+              title: 'Stream Uploads | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Uploads.vue')
+          },
+          {
             path: 'globals/',
             name: 'globals',
             meta: {

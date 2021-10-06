@@ -1,0 +1,39 @@
+
+extend type Stream {
+	"""
+	Returns a list of all the file uploads for this stream.
+	"""
+	fileUploads: [FileUpload]
+	"""
+	Returns a specific file upload that belongs to this stream.
+	"""
+	fileUpload(id:String!): FileUpload
+}
+
+type FileUpload {
+	id: String!
+	streamId: String!
+	branchName: String
+	"""
+	If present, the conversion result is stored in this commit.
+	"""
+	convertedCommitId: String
+	"""
+	The user's id that uploaded this file.
+	"""
+	userId: String!
+	"""
+	0 = queued, 1 = processing, 2 = success, 3 = error
+	"""
+	convertedStatus: Int!
+	"""
+	Holds any errors or info.
+	"""
+	convertedMessage: String
+	fileName: String!
+	fileType: String!
+	fileSize: Int!
+	uploadComplete: Boolean!
+	uploadDate: DateTime!
+	convertedLastUpdate: DateTime!
+}

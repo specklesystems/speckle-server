@@ -2,13 +2,13 @@
   <v-container fluid pa-0 ma-0>
     <!-- Stream Page Navigation Drawer -->
     <v-navigation-drawer
+      v-if="!error"
+      v-model="streamNav"
       app
       fixed
       clipped
       :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
-      v-model="streamNav"
       :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
-      v-if="!error"
     >
       <!-- Toolbar holds link to stream home page -->
       <v-app-bar
@@ -19,9 +19,9 @@
       >
         <v-toolbar-title>
           <router-link
+            v-tooltip="stream.name"
             :to="`/streams/${stream.id}`"
             class="text-decoration-none space-grotesk"
-            v-tooltip="stream.name"
           >
             <v-icon class="mr-2 primary--text" style="font-size: 20px">mdi-folder</v-icon>
             <b>{{ stream.name }}</b>
@@ -32,18 +32,18 @@
       <!-- <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader> -->
 
       <!-- Top padding hack -->
-      <div style="display: block; height: 65px" v-if="$vuetify.breakpoint.smAndDown"></div>
-      <div class="px-4 mt-2" v-if="!loggedIn">
+      <div v-if="$vuetify.breakpoint.smAndDown" style="display: block; height: 65px"></div>
+      <div v-if="!loggedIn" class="px-4 mt-2">
         <v-btn large block color="primary" to="/authn/login">Log In</v-btn>
       </div>
       <!-- Various Stream Details -->
-      <v-card elevation="0" v-if="stream" class="pa-1 mb-0" color="transparent">
+      <v-card v-if="stream" elevation="0" class="pa-1 mb-0" color="transparent">
         <v-card-text class="caption">
           <span v-html="parsedDescription"></span>
           <router-link
+            v-if="stream.role === 'stream:owner'"
             :to="`/streams/${$route.params.streamId}/settings`"
             class="text-decoration-none"
-            v-if="stream.role === 'stream:owner'"
           >
             Edit
           </router-link>
@@ -78,19 +78,19 @@
               :name="collab.name"
             ></user-avatar>
             <v-btn
+              v-if="stream.collaborators.length > 5"
+              v-tooltip="`${stream.collaborators.length - 4} more collaborators`"
               icon
               :to="`/streams/${stream.id}/collaborators`"
-              v-tooltip="`${stream.collaborators.length - 4} more collaborators`"
-              v-if="stream.collaborators.length > 5"
             >
               <span class="text-subtitle-1">+{{ stream.collaborators.length - 4 }}</span>
             </v-btn>
             <v-btn
+              v-if="stream.collaborators.length <= 5"
+              v-tooltip="'Manage collaborators'"
               icon
               :to="`/streams/${stream.id}/collaborators`"
               class="ml-2"
-              v-tooltip="'Manage collaborators'"
-              v-if="stream.collaborators.length <= 5"
             >
               <v-avatar>
                 <v-icon>mdi-account-plus</v-icon>
@@ -106,7 +106,7 @@
       </v-card>
 
       <!-- Stream menu options -->
-      <v-list style="padding-left: 10px" rounded dense class="mt-0 pt-0" v-if="stream">
+      <v-list v-if="stream" style="padding-left: 10px" rounded dense class="mt-0 pt-0">
         <v-list-item link :to="`/streams/${stream.id}`" class="no-overlay">
           <v-list-item-icon>
             <v-icon small>mdi-home</v-icon>
@@ -119,7 +119,7 @@
         <!-- Branch menu group -->
         <!-- TODO: group by "/", eg. dim/a, dim/b, dim/c should be under a sub-group called "dim". -->
         <v-list-group v-model="branchMenuOpen" class="my-2">
-          <template v-slot:activator>
+          <template #activator>
             <v-list-item-icon>
               <v-icon small>mdi-source-branch</v-icon>
             </v-list-item-icon>
@@ -127,9 +127,9 @@
           </template>
           <v-divider class="mb-1"></v-divider>
           <v-list-item
-            link
-            v-tooltip.bottom="'Create a new branch to help categorise your commits.'"
             v-if="stream.role !== 'stream:reviewer'"
+            v-tooltip.bottom="'Create a new branch to help categorise your commits.'"
+            link
             @click="showNewBranchDialog()"
           >
             <v-list-item-icon>
@@ -144,17 +144,17 @@
           </v-list-item>
 
           <v-list-item
-            v-if="!$apollo.queries.branchQuery.loading"
             v-for="(branch, i) in sortedBranches"
+            v-if="!$apollo.queries.branchQuery.loading"
             :key="i"
             link
             :to="`/streams/${stream.id}/branches/${branch.name}`"
           >
             <v-list-item-icon>
-              <v-icon small style="padding-top: 10px" v-if="branch.name !== 'main'">
+              <v-icon v-if="branch.name !== 'main'" small style="padding-top: 10px">
                 mdi-source-branch
               </v-icon>
-              <v-icon small style="padding-top: 10px" class="primary--text" v-else>mdi-star</v-icon>
+              <v-icon v-else small style="padding-top: 10px" class="primary--text">mdi-star</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
               <v-list-item-title>
@@ -177,6 +177,15 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>Globals</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+
+        <v-list-item link :to="`/streams/${stream.id}/uploads`">
+          <v-list-item-icon>
+            <v-icon small>mdi-arrow-up</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Import IFC</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
 
@@ -211,25 +220,25 @@
 
     <!-- Stream Page App Bar -->
     <v-app-bar
+      v-if="!error"
       app
       :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
       flat
       clipped-left
-      v-if="!error"
     >
-      <v-app-bar-nav-icon @click="streamNav = !streamNav" v-if="true || !streamNav">
+      <v-app-bar-nav-icon v-if="true || !streamNav" @click="streamNav = !streamNav">
         <!-- <v-icon v-if="streamNav">mdi-chevron-left</v-icon> -->
       </v-app-bar-nav-icon>
       <v-toolbar-title class="pl-0">
         <router-link
           v-if="stream"
-          v-show="true || !streamNav && !$vuetify.breakpoint.smAndDown"
+          v-show="true || (!streamNav && !$vuetify.breakpoint.smAndDown)"
           class="text-decoration-none space-grotesk"
           :to="`/streams/${stream.id}`"
         >
           <b>{{ stream.name }}</b>
         </router-link>
-        <span class="mx-2" v-show="true || !streamNav && !$vuetify.breakpoint.smAndDown">/</span>
+        <span v-show="true || (!streamNav && !$vuetify.breakpoint.smAndDown)" class="mx-2">/</span>
         <portal-target name="streamTitleBar" slim style="display: inline-block">
           <!-- child routes can teleport things here -->
         </portal-target>
@@ -239,17 +248,17 @@
         <!-- child routes can teleport buttons here -->
       </portal-target>
       <v-toolbar-items style="margin-right: -20px">
-        <v-btn large color="primary" to="/authn/login" v-if="!loggedIn && stream && !streamNav">
+        <v-btn v-if="!loggedIn && stream && !streamNav" large color="primary" to="/authn/login">
           Log In
         </v-btn>
         <v-btn
-          elevation="0"
           v-if="loggedIn && stream"
-          @click="openShareStreamDialog()"
           v-tooltip="'Share this stream'"
+          elevation="0"
+          @click="openShareStreamDialog()"
         >
-          <v-icon small class="mr-2 grey--text" v-if="!stream.isPublic">mdi-lock</v-icon>
-          <v-icon small class="mr-2 grey--text" v-else>mdi-lock-open</v-icon>
+          <v-icon v-if="!stream.isPublic" small class="mr-2 grey--text">mdi-lock</v-icon>
+          <v-icon v-else small class="mr-2 grey--text">mdi-lock-open</v-icon>
           <v-icon small class="mr-2">mdi-share-variant</v-icon>
           <span class="hidden-md-and-down">Share</span>
         </v-btn>
@@ -258,18 +267,18 @@
 
     <!-- Stream Child Routes -->
     <v-container
+      v-if="!error"
       :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px;' : ''}`"
       :class="`${$vuetify.breakpoint.xsOnly ? 'pl-0' : ''}`"
       fluid
       pt-0
       pr-0
-      v-if="!error"
     >
       <transition name="fade">
         <router-view v-if="stream" @refetch-branches="refetchBranches"></router-view>
       </transition>
     </v-container>
-    <v-container :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" v-else>
+    <v-container v-else :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`">
       <error-placeholder :error-type="error.toLowerCase().includes('not found') ? '404' : 'access'">
         <h2>{{ error }}</h2>
       </error-placeholder>
@@ -290,8 +299,8 @@
           </v-toolbar>
           <v-card-text class="mt-0 mb-0 px-2">
             <v-text-field
-              dark
               ref="streamUrl"
+              dark
               filled
               rounded
               hint="Stream url copied to clipboard. Use it in a connector, or just share it with colleagues!"
@@ -302,8 +311,8 @@
             ></v-text-field>
             <v-text-field
               v-if="$route.params.branchName"
-              dark
               ref="branchUrl"
+              dark
               filled
               rounded
               hint="Branch url copied to clipboard. Most connectors can receive the latest commit from a branch by using this url."
@@ -314,8 +323,8 @@
             ></v-text-field>
             <v-text-field
               v-if="$route.params.commitId"
-              dark
               ref="commitUrl"
+              dark
               filled
               rounded
               hint="Commit url copied to clipboard. Most connectors can receive a specific commit by using this url."
@@ -327,10 +336,10 @@
           </v-card-text>
         </v-sheet>
         <v-sheet
-          :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
           v-if="stream"
+          :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
         >
-          <v-toolbar class="transparent" rounded v-if="stream.role === 'stream:owner'" flat>
+          <v-toolbar v-if="stream.role === 'stream:owner'" class="transparent" rounded flat>
             <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>{{ stream.isPublic ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
             </v-app-bar-nav-icon>
@@ -339,9 +348,9 @@
             </v-toolbar-title>
             <v-spacer></v-spacer>
             <v-switch
+              v-model="stream.isPublic"
               inset
               class="mt-4"
-              v-model="stream.isPublic"
               :loading="swapPermsLoading"
               @click="changeVisibility"
             ></v-switch>
@@ -356,7 +365,6 @@
         </v-sheet>
         <v-sheet v-if="stream">
           <v-toolbar
-            flat
             v-tooltip="
               `${
                 stream.role !== 'stream:owner'
@@ -366,6 +374,7 @@
                   : ''
               }`
             "
+            flat
           >
             <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>mdi-account-group</v-icon>
@@ -401,8 +410,6 @@
           :xxxclass="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
         >
           <v-toolbar
-            flat
-            class="transparent"
             v-if="!stream.isPublic"
             v-tooltip="
               `${
@@ -413,6 +420,8 @@
                   : ''
               }`
             "
+            flat
+            class="transparent"
           >
             <v-app-bar-nav-icon style="pointer-events: none">
               <v-icon>mdi-email</v-icon>
@@ -423,8 +432,8 @@
               color="primary"
               text
               rounded
-              @click="showStreamInviteDialog()"
               :disabled="stream.role !== 'stream:owner'"
+              @click="showStreamInviteDialog()"
             >
               Send Invite
             </v-btn>
