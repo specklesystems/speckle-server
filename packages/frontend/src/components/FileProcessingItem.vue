@@ -2,10 +2,7 @@
   <v-card class="my-4 elevation-1" :loading="$apollo.loading">
     <div v-if="!$apollo.loading && file">
       <v-toolbar dense flat color="transparent">
-        <v-app-bar-nav-icon
-          v-tooltip="`Download the original file`"
-          @click="downloadOriginalFile()"
-        >
+        <v-app-bar-nav-icon>
           <v-icon>mdi-download</v-icon>
         </v-app-bar-nav-icon>
         <v-toolbar-title>
@@ -107,24 +104,6 @@ export default {
   mounted() {
     this.$apollo.queries.file.startPolling(1000)
   },
-  methods: {
-    async downloadOriginalFile() {
-      let res = await fetch(`/api/file/${this.fileId}`, {
-        headers: {
-          Authorization: localStorage.getItem('AuthToken')
-        }
-      })
-      let blob = await res.blob()
-      let file = window.URL.createObjectURL(blob)
-
-      let a = document.createElement('a')
-      document.body.appendChild(a)
-      a.style = 'display: none'
-      a.href = file
-      a.download = this.file.fileName
-      a.click()
-      window.URL.revokeObjectURL(file)
-    }
-  }
+  methods: {}
 }
 </script>
