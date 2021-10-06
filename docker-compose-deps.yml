@@ -23,6 +23,16 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
 
+  minio:
+    image: "minio/minio"
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - minio-data:/data
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
 
   # Useful for debugging / exploring local databases
 
@@ -57,3 +67,4 @@ volumes:
   redis-data:
   pgadmin-data:
   redis_insight-data:
+  minio-data:

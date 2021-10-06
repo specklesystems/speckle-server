@@ -1,15 +1,15 @@
 <template>
   <div>
     <no-data-placeholder
-      :show-message="false"
       v-if="!$apollo.loading && webhooks.length === 0 && stream && stream.role === 'stream:owner'"
+      :show-message="false"
     >
       <h2>This stream has no webhooks.</h2>
       <p class="caption">
         Webhooks allow you to subscribe to a stream's events and get notified of them in real time.
         You can then use this to trigger ci apps, automation workflows, and more.
       </p>
-      <template v-slot:actions>
+      <template #actions>
         <v-list rounded class="transparent">
           <v-list-item link class="primary mb-4" dark @click="newWebhookDialog = true">
             <v-list-item-icon>
@@ -39,24 +39,22 @@
         </v-list>
       </template>
     </no-data-placeholder>
-    
-    <error-placeholder error-type="access" v-if="error">
+
+    <error-placeholder v-if="error" error-type="access">
       <h2>Only stream owners can access webhooks.</h2>
-      <p class="caption">If you need to use webhooks, ask the stream's owner to grant you ownership.</p>
+      <p class="caption">
+        If you need to use webhooks, ask the stream's owner to grant you ownership.
+      </p>
     </error-placeholder>
 
-    <v-container style="max-width: 768px" v-if="!$apollo.loading && webhooks.length !== 0">
+    <v-container v-if="!$apollo.loading && webhooks.length !== 0" style="max-width: 768px">
       <portal to="streamTitleBar">
         <div>
           <v-icon small class="mr-2 hidden-xs-only">mdi-webhook</v-icon>
           <span class="space-grotesk">Webhooks</span>
         </div>
       </portal>
-      <v-card
-        elevation="0"
-        rounded="lg"
-        :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
-      >
+      <v-card elevation="0" rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
         <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`">
           <v-toolbar-title>
             <v-icon class="mr-2" small>mdi-webhook</v-icon>
@@ -85,7 +83,7 @@
             <span class="d-inline-block">Existing Webhooks</span>
           </v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn @click="newWebhookDialog = true" small class="primary" dark>New Webhook</v-btn>
+          <v-btn small class="primary" dark @click="newWebhookDialog = true">New Webhook</v-btn>
         </v-toolbar>
         <v-list subheader class="transparent pa-0 ma-0">
           <v-list-item v-for="wh in webhooks" :key="wh.id" link style="cursor: default">
@@ -107,12 +105,12 @@
             </v-list-item-content>
             <v-list-item-action v-if="wh.history.items.length != 0">
               <v-btn
+                v-tooltip="'View status reports'"
+                icon
                 @click="
                   selectedWebhook = wh
                   statusReportsDialog = true
                 "
-                icon
-                v-tooltip="'View status reports'"
               >
                 <v-icon>mdi-information</v-icon>
               </v-btn>
