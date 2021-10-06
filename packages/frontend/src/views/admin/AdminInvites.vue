@@ -1,6 +1,8 @@
 <template>
   <v-card class="pa-5">
-    <v-card-title>Send invites to multiple adresses</v-card-title>
+    <v-toolbar flat>
+      <v-toolbar-title>Send invites to multiple adresses</v-toolbar-title>
+    </v-toolbar>
     <v-alert v-model="success" timeout="3000" dismissible type="success">
       Great! All invites were sent.
     </v-alert>
@@ -119,7 +121,8 @@ export default {
     sanitize() {
       let splitInputs = []
       this.chips.forEach((input) => {
-        splitInputs.push(...input.replace(/\s+/g, '').split(','))
+        // first replace supports csv comma and spaces, second repalce for space separated values
+        splitInputs.push(...input.replace(', ', ',').replace(/\s+/g, ',').split(','))
       })
       this.chips = [...splitInputs]
     },
