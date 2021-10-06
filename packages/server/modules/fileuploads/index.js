@@ -53,9 +53,7 @@ exports.init = async ( app, options ) => {
     if ( process.env.DISABLE_FILE_UPLOADS ) {
       return res.status( 503 ).send( 'File uploads are disabled on this server' )
     }
-
     let fileInfo = await getFileInfo( { fileId: req.params.fileId } )
-
     if ( !fileInfo )
       return res.status( 404 ).send( 'File not found' )
 
@@ -87,7 +85,7 @@ exports.init = async ( app, options ) => {
 
     let fileStream = await getFileStream( { fileId: req.params.fileId } )
 
-    res.writeHead( 200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': `attachment; filename="${fileInfo.fileName}"`,  } )
+    res.writeHead( 200, { 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment' } )
 
     fileStream.pipe( res )
   } ),

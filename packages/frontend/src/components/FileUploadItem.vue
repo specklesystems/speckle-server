@@ -9,37 +9,47 @@
         <span class="caption">{{ file.size }}kb</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-menu offset-y>
-        <template #activator="{ attrs, on }">
-          <v-btn v-tooltip="`Change the branch to upload to`" text v-bind="attrs" v-on="on">
-            <v-icon small>mdi-source-branch</v-icon>
-            <span class="caption">{{ selectedBranch }}</span>
-          </v-btn>
-        </template>
-        <v-list>
-          <v-list-item
-            v-for="item in branches.filter((b) => b.name != 'globals')"
-            :key="item.name"
-            link
-            @click="selectedBranch = item.name"
-          >
-            <v-list-item-title class="caption">{{ item.name }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-      <v-btn color="primary" @click="upload()">Upload</v-btn>
+      <v-btn @click="upload()" color="primary">Upload</v-btn>
     </v-toolbar>
     <v-alert v-if="error" type="error" dismissible>An error occurred.</v-alert>
   </v-card>
 </template>
 <script>
+import gql from 'graphql-tag'
+
 export default {
-  props: ['file', 'branches'],
+  props: ['file'],
   data: () => ({
     percentCompleted: -1,
-    error: null,
-    selectedBranch: 'main'
+    error: null
   }),
+  apollo: {
+    streams: {
+      query: gql`
+        query Streams($query: String) {
+          streams(query: $query) {
+            totalCount
+            cursor
+            items {
+              id
+              name
+              updatedAt
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          query: this.search
+        }
+      },
+      skip() {
+        return !this.search || this.search.length < 3
+      },
+      debounce: 300
+    }
+  },
+  watch: {},
   methods: {
     upload() {
       let data = new FormData()
@@ -47,19 +57,14 @@ export default {
       data.append('file', this.file)
 
       let request = new XMLHttpRequest()
-      request.open(
-        'POST',
-        `/api/file/ifc/${this.$route.params.streamId}/${
-          this.selectedBranch ? this.selectedBranch : 'main'
-        }`
-      )
+      request.open('POST', `/api/file/ifc/${this.$route.params.streamId}`)
       request.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('AuthToken')}`)
 
       request.upload.addEventListener(
         'progress',
         function (e) {
           this.percentCompleted = (e.loaded / e.total) * 100
-          if (this.percentCompleted >= 100) {
+          if (this.percentCompleted >= 100) { 
             this.$emit('done', this.file.name)
           }
         }.bind(this)
