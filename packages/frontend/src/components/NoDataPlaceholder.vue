@@ -3,10 +3,10 @@
     <v-row justify="center" style="margin-top: 50px" dense>
       <v-col cols="12" lg="6" md="6" xl="6" class="d-flex flex-column justify-center align-center">
         <v-card flat tile color="transparent" class="pa-0">
-          <div class="d-flex flex-column justify-space-between align-center mb-10">
+          <div class="d-flex flex-column justify-space-between align-center mb-10" v-if="showImage">
             <v-img contain max-height="200" src="@/assets/emptybox.png"></v-img>
           </div>
-          <div class=" text-center mb-2 space-grotesk">
+          <div class="text-center mb-2 space-grotesk">
             <slot name="default"></slot>
           </div>
           <v-container style="max-width: 500px">
@@ -48,12 +48,12 @@
                 </v-list-item>
 
                 <v-list-item
+                  v-if="hasManager"
                   link
                   :class="`${hasManager ? 'primary' : ''} mb-4`"
                   dark
                   href="https://speckle.systems/features/connectors"
                   target="_blank"
-                  v-if="hasManager"
                 >
                   <v-list-item-icon>
                     <v-icon>mdi-swap-horizontal</v-icon>
@@ -67,11 +67,11 @@
                 </v-list-item>
 
                 <v-list-item
+                  v-if="hasManager"
                   link
                   :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
                   href="https://speckle.systems/tutorials"
                   target="_blank"
-                  v-if="hasManager"
                 >
                   <v-list-item-icon>
                     <v-icon>mdi-school</v-icon>
@@ -85,11 +85,11 @@
                 </v-list-item>
 
                 <v-list-item
+                  v-if="hasManager"
                   link
                   :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
                   href="https://speckle.guide"
                   target="_blank"
-                  v-if="hasManager"
                 >
                   <v-list-item-icon>
                     <v-icon>mdi-book-open-variant</v-icon>
@@ -130,6 +130,12 @@
 <script>
 import gql from 'graphql-tag'
 export default {
+  props: {
+    showImage: {
+      type: Boolean,
+      default: true
+    }
+  },
   apollo: {
     user: {
       query: gql`
@@ -146,7 +152,7 @@ export default {
     }
   },
   data() {
-    return{}
+    return {}
   },
   computed: {
     rootUrl() {
@@ -160,14 +166,13 @@ export default {
   mounted() {
     this.checkAccountTimer = setInterval(
       function () {
-        if(!this.hasManager)
-          this.$apollo.queries.user.refetch()
+        if (!this.hasManager) this.$apollo.queries.user.refetch()
       }.bind(this),
       3000
     )
   },
   beforeDestroy() {
-    clearInterval( this.checkAccountTimer )
+    clearInterval(this.checkAccountTimer)
   },
   methods: {}
 }

@@ -1,0 +1,32 @@
+{
+  "name": "@speckle/fileimport-service",
+  "version": "2.0.0",
+  "description": "Parse and import files of various types into a stream",
+  "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
+  "homepage": "https://github.com/specklesystems/speckle-server#readme",
+  "license": "SEE LICENSE IN readme.md",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/specklesystems/speckle-server.git"
+  },
+  "scripts": {
+    "dev": "nodemon ./src/daemon.js"
+  },
+  "bugs": {
+    "url": "https://github.com/specklesystems/speckle-server/issues"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.996.0",
+    "bcrypt": "^5.0.1",
+    "crypto-random-string": "^3.3.1",
+    "eslint": "^7.29.0",
+    "knex": "^0.95.11",
+    "node-fetch": "^2.6.5",
+    "pg": "^8.7.1",
+    "web-ifc": "0.0.24"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.13"
+  }
+}

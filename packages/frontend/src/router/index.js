@@ -94,7 +94,7 @@ const routes = [
           {
             path: 'branches/',
             name: 'branches',
-            redirect: 'branches/main',
+            redirect: 'branches/main'
           },
           {
             path: 'branches/:branchName*',
@@ -155,6 +155,15 @@ const routes = [
             },
             props: true,
             component: () => import('@/views/stream/Webhooks.vue')
+          },
+          {
+            path: 'uploads/',
+            name: 'uploads',
+            meta: {
+              title: 'Stream Uploads | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Uploads.vue')
           },
           {
             path: 'globals/',
