@@ -9,7 +9,6 @@
           :size="size"
           v-bind="attrs"
           v-on="on"
-         
         >
           <v-img v-if="avatar" :src="avatar" />
           <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
@@ -18,13 +17,13 @@
           <v-img contain src="/logo.svg"></v-img>
         </v-avatar>
       </template>
-      <v-card v-if="userById" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
+      <v-card v-if="userById && showHover" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
         <v-card-text v-if="!$apollo.loading" class="text-center">
           <v-avatar class="my-4" color="grey lighten-3" :size="40">
             <v-img v-if="avatar" :src="avatar" />
             <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
           </v-avatar>
-          
+
           <!-- Uncomment when email verification is in place -->
           <!-- <div v-if="userById.verified" class="mb-1">
             <v-chip color="primary" small>
@@ -37,13 +36,13 @@
             <b>{{ userById.name }}</b>
           </div>
           <div class="caption">
-          {{ userById.company }}
-          <br/>
-          {{ userById.bio ? 'Bio: ' + userById.bio : ''}}
+            {{ userById.company }}
+            <br />
+            {{ userById.bio ? 'Bio: ' + userById.bio : '' }}
           </div>
         </v-card-text>
       </v-card>
-      <v-card v-else>
+      <v-card v-else-if="showHover">
         <v-card-text class="text-xs">
           <b>Speckle Ghost</b>
           <br />
@@ -51,7 +50,7 @@
         </v-card-text>
       </v-card>
     </v-menu>
-    <v-avatar v-else class="ma-1" color="grey lighten-3" :size="size">
+    <v-avatar v-else-if="showHover" class="ma-1" color="grey lighten-3" :size="size">
       <v-img v-if="avatar" :src="avatar" />
       <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
     </v-avatar>
@@ -64,6 +63,10 @@ export default {
   props: {
     avatar: String,
     name: String,
+    showHover: {
+      type: Boolean,
+      default: true
+    },
     size: {
       type: Number,
       default: 42
