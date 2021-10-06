@@ -86,7 +86,21 @@
         @dragleave.prevent="dragover = false"
       >
         <div v-if="!dragError" class="align-self-center text-center">
-          <v-icon x-large color="primary" :class="`hover-tada ${dragover ? 'tada' : ''}`">
+          <input
+            id="myid"
+            type="file"
+            accept=".ifc,.IFC"
+            style="display: none"
+            multiple
+            @change="onFileSelect($event)"
+          />
+          <v-icon
+            x-large
+            color="primary"
+            :class="`hover-tada ${dragover ? 'tada' : ''}`"
+            style="cursor: pointer"
+            onclick="document.getElementById('myid').click()"
+          >
             mdi-cloud-upload
           </v-icon>
           <br />
@@ -131,6 +145,12 @@
       <template v-for="file in streamUploads" v-if="!$apollo.loading">
         <file-processing-item :key="file.id" :file-id="file.id" />
       </template>
+      <v-card v-if="!$apollo.loading && streamUploads.length === 0" class="my-4 elevation-1">
+        <v-toolbar dense flat color="transparent">
+          <v-toolbar-title>No uploads yet.</v-toolbar-title>
+          <v-spacer></v-spacer>
+        </v-toolbar>
+      </v-card>
     </v-container>
   </div>
 </template>
@@ -179,10 +199,16 @@ export default {
   },
   computed: {},
   methods: {
+    onFileSelect(e) {
+      this.parseFiles(e.target.files)
+    },
     onFileDrop(e) {
+      this.parseFiles(e.dataTransfer.files)
+    },
+    parseFiles(files) {
       this.dragover = false
       this.dragError = null
-      for (const file of e.dataTransfer.files) {
+      for (const file of files) {
         console.log(file.name.split('.')[1])
         let extension = file.name.split('.')[1]
         if (!extension || extension !== 'ifc') {
@@ -200,13 +226,13 @@ export default {
           return
         }
       }
-      if (e.dataTransfer.files.length > 5) {
+      if (files.length > 5) {
         this.dragError = 'Maximum five files at a time allowed.'
         return
       }
       this.dragError = null
 
-      for (const file of e.dataTransfer.files) {
+      for (const file of files) {
         this.files.push(file)
       }
     },
