@@ -96,7 +96,7 @@ export default {
   watch: {
     selectedSearchResult(val) {
       let myStream = this.streams.items.find((s) => s.id === val.id)
-      this.$emit('select', { streamId: myStream })
+      this.$emit('select', myStream)
 
       this.streams.items = []
       this.search = ''

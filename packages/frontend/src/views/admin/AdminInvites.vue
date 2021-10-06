@@ -1,19 +1,19 @@
 <template>
-  <v-card class="pa-5">
+  <v-card>
     <v-toolbar flat>
       <v-toolbar-title>Send invites to multiple adresses</v-toolbar-title>
     </v-toolbar>
-    <v-alert v-model="success" timeout="3000" dismissible type="success">
-      Great! All invites were sent.
-    </v-alert>
-    <v-alert v-model="showError" dismissible type="error">
-      <p>Invite send failed for adresses:</p>
-      <ul>
-        <li v-for="error in errors" :key="error.email">{{ error.email }}: {{ error.reason }}</li>
-      </ul>
-    </v-alert>
-    <v-form v-model="valid" @submit.prevent="submit">
-      <v-card-text>
+    <v-card-text>
+      <v-alert v-model="success" timeout="3000" dismissible type="success">
+        Great! All invites were sent.
+      </v-alert>
+      <v-alert v-model="showError" dismissible type="error">
+        <p>Invite send failed for adresses:</p>
+        <ul>
+          <li v-for="error in errors" :key="error.email">{{ error.email }}: {{ error.reason }}</li>
+        </ul>
+      </v-alert>
+      <v-form v-model="valid" @submit.prevent="submit">
         <v-textarea
           v-model="invitation"
           label="Invitation message"
@@ -42,15 +42,22 @@
             </v-chip>
           </template>
         </v-combobox>
-      </v-card-text>
-      <stream-search-bar :gotostreamonclick="false" @select="setStream"/>
-      <v-alert type="success" dismissible>
-        They will be invited to strema name.
-      </v-alert>
-      <v-card-actions>
-        <v-btn :disabled="!submitable" color="primary" type="submit">Invite</v-btn>
-      </v-card-actions>
-    </v-form>
+        Optionaly invite users to stream.
+        <stream-search-bar
+          v-if="!selectedStream"
+          :gotostreamonclick="false"
+          class="py-3"
+          @select="setStream"
+        />
+        <v-alert v-else type="success" dismissible @input="dismiss">
+          They will be invited to be collaborators on {{ selectedStream.name }} stream.
+        </v-alert>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn :disabled="!submitable" color="primary" type="submit">Invite</v-btn>
+        </v-card-actions>
+      </v-form>
+    </v-card-text>
     <v-overlay absolute :value="submitting">
       <v-progress-circular :width="1.5" indeterminate></v-progress-circular>
     </v-overlay>
@@ -72,6 +79,7 @@ export default {
       submitting: false,
       invitation: '',
       chips: [],
+      selectedStream: null,
       validation: {
         emailRules: [
           (v) => v.length > 0 || 'E-mail is required',
@@ -120,8 +128,11 @@ export default {
     }
   },
   methods: {
-    setStream(args) {
-      console.log(args)
+    setStream(stream) {
+      this.selectedStream = stream
+    },
+    dismiss() {
+      this.selectedStream = null
     },
     remove(item) {
       this.chips.splice(this.chips.indexOf(item), 1)
@@ -143,11 +154,14 @@ export default {
     async submit() {
       this.submitting = true
       let results = await Promise.all(
-        this.chips.map((chip) => this.sendInvite(chip, this.createInviteMessage(), null))
+        this.chips.map((chip) =>
+          this.sendInvite(chip, this.createInviteMessage(), this.selectedStream?.id)
+        )
       )
       this.submitting = false
       let errors = results.filter(Boolean)
-      if (errors) {
+      console.log(errors)
+      if (errors.length) {
         this.errors = errors
         this.showError = true
       } else {
@@ -159,14 +173,25 @@ export default {
         email: email,
         message: message
       }
-      if (streamId) input.streamId = streamId
+      let query
+      if (streamId) {
+        input.streamId = streamId
+        console.log(input)
+        query = gql`
+          mutation ($input: StreamInviteCreateInput!) {
+            streamInviteCreate(input: $input)
+          }
+        `
+      } else {
+        query = gql`
+          mutation ($input: ServerInviteCreateInput!) {
+            serverInviteCreate(input: $input)
+          }
+        `
+      }
       return await this.$apollo
         .mutate({
-          mutation: gql`
-            mutation($input: ServerInviteCreateInput!) {
-              serverInviteCreate(input: $input)
-            }
-          `,
+          mutation: query,
           variables: {
             input: input
           }
