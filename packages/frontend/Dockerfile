@@ -3,6 +3,8 @@
 # build stage
 FROM node:14.16-buster-slim as build-stage
 
+ARG VUE_APP_GRAPHQL_WS
+
 WORKDIR /opt/viewer
 COPY packages/viewer/package*.json ./
 RUN npm install

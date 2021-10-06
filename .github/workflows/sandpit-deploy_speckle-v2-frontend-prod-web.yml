@@ -32,6 +32,8 @@ jobs:
         push: true
         tags: arupspecklev2prodacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_de098371e29a46b5b05da0397be4e193 }}/frontend:${{ github.sha }}
         file: ./packages/frontend/Dockerfile
+        build-args: |
+            VUE_APP_GRAPHQL_WS=wss://${{ secrets.P500_SPECKLE_BACKEND }}/graphql
 
   deploy:
     runs-on: ubuntu-latest
