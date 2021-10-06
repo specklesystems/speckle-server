@@ -56,7 +56,7 @@ async function doTask( task ) {
     await new Promise( fulfill => diskFileStream.on( 'finish' , fulfill ) )
     
     serverApi = new ServerAPI( { streamId: info.streamId } )
-    let { token } = await serverApi.createToken( { userId: info.userId, name: 'temp upload token', scopes: [ 'streams:write' ], lifespan: 3000 } )
+    let { token } = await serverApi.createToken( { userId: info.userId, name: 'temp upload token', scopes: [ 'streams:write', 'streams:read' ], lifespan: 1000000 } )
     tempUserToken = token
 
     await runProcessWithTimeout(
@@ -112,7 +112,7 @@ async function doTask( task ) {
 
 }
 
-function runProcessWithTimeout(  cmd, cmdArgs, extraEnv, timeoutMs ) {
+function runProcessWithTimeout( cmd, cmdArgs, extraEnv, timeoutMs ) {
   
   return new Promise( ( resolve, reject ) => {
     console.log( `Starting process: ${cmd} ${cmdArgs}` )

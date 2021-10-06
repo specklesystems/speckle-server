@@ -47,6 +47,11 @@ module.exports = {
     return fileInfo
   },
 
+  async getStreamFileUploads( { streamId } ) {
+    let fileInfos = await FileUploads().where( { streamId: streamId } ).select( '*' ).orderBy( [ { column: 'uploadDate', order: 'desc' } ] )
+    return fileInfos
+  },
+
   async getFileStream( { fileId } ) {
     const s3 = new S3( getS3Config() )
     let Bucket = process.env.S3_BUCKET

@@ -49,7 +49,7 @@ exports.init = async ( app, options ) => {
     return { hasPermissions: true, httpErrorCode: 200 }
   }
 
-  app.get( '/api/download_file/:fileId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+  app.get( '/api/file/:fileId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
     if ( process.env.DISABLE_FILE_UPLOADS ) {
       return res.status( 503 ).send( 'File uploads are disabled on this server' )
     }
@@ -90,7 +90,7 @@ exports.init = async ( app, options ) => {
     fileStream.pipe( res )
   } ),
 
-  app.post( '/api/upload_file/:fileType/:streamId/:branchName?', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+  app.post( '/api/file/:fileType/:streamId/:branchName?', contextMiddleware, matomoMiddleware, async ( req, res ) => {
     if ( process.env.DISABLE_FILE_UPLOADS ) {
       return res.status( 503 ).send( 'File uploads are disabled on this server' )
     }
@@ -100,7 +100,8 @@ exports.init = async ( app, options ) => {
     }
 
     let fileUploadPromises = []
-    var busboy = new Busboy( { headers: req.headers } )
+    let busboy = new Busboy( { headers: req.headers } )
+    
     busboy.on( 'file', function( fieldname, file, filename, encoding, mimetype ) {
       let promise = uploadFile( {
         streamId: req.params.streamId,
@@ -112,6 +113,7 @@ exports.init = async ( app, options ) => {
       } )
       fileUploadPromises.push( promise )
     } )
+
     busboy.on( 'finish', async function() {
       let fileIds = []
 
