@@ -4,10 +4,10 @@
       <v-toolbar-title>Send invites to multiple adresses</v-toolbar-title>
     </v-toolbar>
     <v-card-text>
-      <v-alert v-model="success" timeout="3000" dismissible type="success">
+      <v-alert v-model="success" prominent timeout="3000" dismissible type="success">
         Great! All invites were sent.
       </v-alert>
-      <v-alert v-model="showError" dismissible type="error">
+      <v-alert v-model="showError" prominent dismissible type="error">
         <p>Invite send failed for adresses:</p>
         <ul>
           <li v-for="error in errors" :key="error.email">{{ error.email }}: {{ error.reason }}</li>
@@ -42,14 +42,14 @@
             </v-chip>
           </template>
         </v-combobox>
-        Optionaly invite users to stream.
+        <v-text v-if="!selectedStream">Optionaly invite users to stream.</v-text>
         <stream-search-bar
           v-if="!selectedStream"
           :gotostreamonclick="false"
           class="py-3"
           @select="setStream"
         />
-        <v-alert v-else type="success" dismissible @input="dismiss">
+        <v-alert v-else text dense type="info" dismissible @input="dismiss">
           They will be invited to be collaborators on {{ selectedStream.name }} stream.
         </v-alert>
         <v-card-actions>
