@@ -11,7 +11,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, findOrCreateUser, getUser, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword } = require( '../services/users' )
+const { createUser, findOrCreateUser, getUser, getUserByEmail, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
@@ -46,7 +46,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
     let actorId = await createUser( myTestActor )
     myTestActor.id = actorId
-
   } )
 
   after( async ( ) => {
@@ -55,7 +54,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
 
   describe( 'Users @core-users', ( ) => {
-
     it( 'First created user should be a server admin', async ( ) => {
 
     } )
@@ -73,6 +71,24 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( actorId ).to.be.a( 'string' )
     } )
 
+    it( 'Should store user email lowercase', async ( ) => {
+      let user = { name: 'Marty McFly', email: 'Marty@Mc.Fly', password: 'something_future_proof' }
+
+      let userId = await createUser( user )
+
+      let storedUser = await getUser( userId )
+      expect( storedUser.email ).to.equal( user.email.toLowerCase() )
+    } )
+  
+    it ( 'Get user by should ignore email casing', async ( ) => {
+      let user = await getUserByEmail( { email: 'BiLL@GaTES.cOm' } )
+      expect( user.email ).to.equal( 'bill@gates.com' )
+    } )
+
+    it ( 'Validate password should ignore email casing', async ( ) => {
+      expect( await validatePasssword( { email: 'BiLL@GaTES.cOm', password: 'testthebest' } ) )
+    } )
+
     it( 'Should not create a user with a too small password', async () => {
       try {
         await createUser( { name: 'Dim Sum', email: 'dim@gmail.com', password: '1234567' } )
@@ -83,7 +99,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
     } )
 
     it( 'Should not create an user with the same email', async ( ) => {
-
       let newUser = { }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
@@ -100,7 +115,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
     let ballmerUserId = null
 
     it( 'Find or create should create a user', async ( ) => {
-
       let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
@@ -109,11 +123,9 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       let { id } = await findOrCreateUser( { user: newUser } )
       ballmerUserId = id
       expect( id ).to.be.a( 'string' )
-
     } )
 
     it( 'Find or create should NOT create a user', async ( ) => {
-
       let newUser = { }
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
@@ -122,7 +134,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
       let { id } = await findOrCreateUser( { user: newUser } )
       expect( id ).to.equal( ballmerUserId )
-
     } )
 
     // Note: deletion is more complicated. 
@@ -193,7 +204,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
 
       let actor = await getUser( myTestActor.id )
       expect( actor.name ).to.equal( updatedActor.name )
-
     } )
 
     it( 'Should not update password', async ( ) => {
@@ -218,7 +228,6 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( match ).to.equal( true )
       let match_wrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' } )
       expect( match_wrong ).to.equal( false )
-
     } )
 
     it( 'Should update the password of a user', async() => {
@@ -285,6 +294,4 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       expect( userTokens ).to.have.lengthOf( 2 )
     } )
   } )
-
-
 } )
