@@ -41,7 +41,7 @@
             </span>
             <span v-if="user.company" class="caption">
               <v-icon x-small>mdi-domain</v-icon>
-              user.company
+              {{ user.company }}
             </span>
             <span v-else class="caption">
               <v-icon x-small>mdi-help-circle</v-icon>
@@ -177,7 +177,7 @@ export default {
     async updateUserRole(userId, newRole) {
       await this.$apollo.mutate({
         mutation: gql`
-          mutation ($userId: String!, $newRole: String!) {
+          mutation($userId: String!, $newRole: String!) {
             userRoleChange(userRoleInput: { id: $userId, role: $newRole })
           }
         `,
