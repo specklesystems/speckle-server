@@ -12,7 +12,7 @@ exports.up = async knex => {
     table.integer( 'fileSize' )
     table.boolean( 'uploadComplete' ).notNullable( ).defaultTo( false )
     table.timestamp( 'uploadDate' ).notNullable( ).defaultTo( knex.fn.now( ) )
-
+    // 0 = queued, 1 = in progress, 2 = success, 3 = error
     table.integer( 'convertedStatus' ).notNullable( ).defaultTo( 0 )
     table.timestamp( 'convertedLastUpdate' ).notNullable( ).defaultTo( knex.fn.now( ) )
     table.string( 'convertedMessage' )
