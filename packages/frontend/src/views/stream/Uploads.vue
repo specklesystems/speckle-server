@@ -88,6 +88,7 @@
           <file-upload-item
             :key="file.fileName"
             :file="file"
+            :branches="stream.branches.items"
             @done="uploadCompleted"
           ></file-upload-item>
         </template>
@@ -125,8 +126,6 @@ import gql from 'graphql-tag'
 export default {
   name: 'Webhooks',
   components: {
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     FileUploadItem: () => import('@/components/FileUploadItem'),
     FileProcessingItem: () => import('@/components/FileProcessingItem')
   },
@@ -137,6 +136,12 @@ export default {
           stream(id: $id) {
             id
             role
+            branches {
+              totalCount
+              items {
+                name
+              }
+            }
           }
         }
       `,
