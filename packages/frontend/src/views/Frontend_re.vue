@@ -55,7 +55,7 @@
           </v-list-item-content>
         </v-list-item>
 
-        <v-list-item link to="/profile" v-if="user" style="height: 59px">
+        <v-list-item v-if="user" link to="/profile" style="height: 59px">
           <v-list-item-icon>
             <v-avatar size="25">
               <v-img v-if="user.avatar" :src="user.avatar" />
@@ -92,7 +92,7 @@
         </v-list-item>
       </v-list>
 
-      <template v-slot:append>
+      <template #append>
         <v-list dense>
           <v-list-item
             link
@@ -109,7 +109,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link @click="signOut()" color="primary" v-if="user">
+          <v-list-item v-if="user" link color="primary" @click="signOut()">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-account-off</v-icon>
             </v-list-item-icon>
@@ -118,7 +118,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link to="/admin" color="primary" v-if="user && user.role === 'server:admin'">
+          <v-list-item v-if="user && user.role === 'server:admin'" link to="/admin" color="primary">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-cog</v-icon>
             </v-list-item-icon>
@@ -140,22 +140,22 @@
     </v-navigation-drawer>
 
     <v-bottom-navigation fixed xxx-hide-on-scroll class="hidden-sm-and-up elevation-20">
-      <v-btn color="primary" text to="/" style="height: 100%;">
+      <v-btn color="primary" text to="/" style="height: 100%">
         <span>Feed</span>
         <v-icon>mdi-clock-fast</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/streams" style="height: 100%;">
+      <v-btn color="primary" text to="/streams" style="height: 100%">
         <span>Streams</span>
         <v-icon>mdi-folder</v-icon>
       </v-btn>
 
-      <v-btn color="primary" text to="/profile" style="height: 100%;">
+      <v-btn color="primary" text to="/profile" style="height: 100%">
         <span>Profile</span>
         <v-icon>mdi-account</v-icon>
       </v-btn>
 
-      <v-btn text @click="bottomSheet = true" style="height: 100%;">
+      <v-btn text style="height: 100%" @click="bottomSheet = true">
         <span>More</span>
         <v-icon>mdi-dots-horizontal</v-icon>
       </v-btn>
@@ -198,7 +198,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link @click="signOut()" color="primary" v-if="user">
+          <v-list-item v-if="user" link color="primary" @click="signOut()">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-account-off</v-icon>
             </v-list-item-icon>
@@ -207,7 +207,7 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item link to="/admin" color="primary" v-if="user && user.role === 'server:admin'">
+          <v-list-item v-if="user && user.role === 'server:admin'" link to="/admin" color="primary">
             <v-list-item-icon>
               <v-icon small class="ml-1">mdi-cog</v-icon>
             </v-list-item-icon>
@@ -252,17 +252,31 @@
         <router-view></router-view>
       </transition>
     </v-main>
+    <v-snackbar
+      v-model="streamSnackbar"
+      rounded="pill"
+      :timeout="10000"
+      style="z-index: 10000"
+      :color="`${$vuetify.theme.dark ? 'primary' : 'primary'}`"
+    >
+      <span v-if="streamSnackbarInfo.sharedBy">You have been granted access to a new stream!</span>
+      <span v-else>New stream created!</span>
+      <template #action="{ attrs }">
+        <v-btn color="white" text v-bind="attrs" @click="goToStreamAndCloseSnackbar()">View</v-btn>
+        <v-btn color="pink" icon v-bind="attrs" @click="streamSnackbar = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 <script>
 import gql from 'graphql-tag'
 import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/user.gql'
-import SearchBar from '../components/SearchBar'
-import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
 
 export default {
-  components: { SearchBar, StreamInviteDialog },
+  components: {},
   data() {
     return {
       streamSnackbar: false,
@@ -298,6 +312,7 @@ export default {
           }
         `,
         result(streamInfo) {
+          console.log(streamInfo)
           if (!streamInfo.data.userStreamAdded) return
           this.streamSnackbar = true
           this.streamSnackbarInfo = streamInfo.data.userStreamAdded
@@ -306,11 +321,6 @@ export default {
           return !this.loggedIn
         }
       }
-    }
-  },
-  watch: {
-    $route(to, from) {
-      this.bottomSheet = false
     }
   },
   computed: {
@@ -325,6 +335,14 @@ export default {
       return localStorage.getItem('uuid') !== null
     }
   },
+  watch: {
+    $route(to) {
+      this.bottomSheet = false
+      // close the snackbar if it's a stream create event in this window
+      if (to.params.streamId === this.streamSnackbarInfo.id) 
+        this.streamSnackbar = false
+    }
+  },
   methods: {
     signOut() {
       signOut()
@@ -335,6 +353,10 @@ export default {
     },
     showStreamInviteDialog() {
       this.$refs.streamInviteDialog.show()
+    },
+    goToStreamAndCloseSnackbar() {
+      this.streamSnackbar = false
+      this.$router.push(`/streams/${this.streamSnackbarInfo.id}`)
     }
   }
 }
