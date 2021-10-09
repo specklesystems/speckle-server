@@ -339,8 +339,7 @@ export default {
     $route(to) {
       this.bottomSheet = false
       // close the snackbar if it's a stream create event in this window
-      if (to.params.streamId === this.streamSnackbarInfo.id) 
-        this.streamSnackbar = false
+      if (to.params.streamId === this.streamSnackbarInfo.id) this.streamSnackbar = false
     }
   },
   methods: {
