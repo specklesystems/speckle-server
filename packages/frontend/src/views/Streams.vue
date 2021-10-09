@@ -7,10 +7,10 @@
     pr-0
   >
     <v-navigation-drawer
+      v-model="streamNav"
       app
       fixed
       :permanent="streamNav && !$vuetify.breakpoint.smAndDown"
-      v-model="streamNav"
       :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
     >
       <main-nav-actions :open-new-stream="newStreamDialog" />
@@ -51,12 +51,12 @@
           <v-subheader class="ml-2">Your latest commits:</v-subheader>
           <v-list-item
             v-for="(commit, i) in userCommits.commits.items"
+            v-if="commit"
             :key="i"
+            v-tooltip="`In stream '${commit.streamName}'`"
             :to="`streams/${commit.streamId}/${
               commit.branchName === 'globals' ? 'globals' : 'commits'
             }/${commit.id}`"
-            v-if="commit"
-            v-tooltip="`In stream '${commit.streamName}'`"
           >
             <v-list-item-content>
               <v-list-item-title>
@@ -84,12 +84,8 @@
         Streams
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-toolbar-items style="margin-right: -18px" v-if="$vuetify.breakpoint.smAndDown">
-        <v-btn
-          color="primary"
-          depressed
-          @click="newStreamDialog++"
-        >
+      <v-toolbar-items v-if="$vuetify.breakpoint.smAndDown" style="margin-right: -18px">
+        <v-btn color="primary" depressed @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
       </v-toolbar-items>
@@ -107,7 +103,7 @@
         <div v-if="$apollo.loading" class="my-5"></div>
       </v-col>
 
-      <v-col cols="12" v-else-if="streams && streams.items && streams.items.length > 0">
+      <v-col v-else-if="streams && streams.items && streams.items.length > 0" cols="12">
         <v-row :class="`${$vuetify.breakpoint.xsOnly ? '' : 'pl-2'}`">
           <v-col
             v-for="(stream, i) in streams.items"
@@ -137,7 +133,7 @@
             here.
           </p>
 
-          <template v-slot:actions>
+          <template #actions>
             <v-list rounded class="transparent">
               <v-list-item link class="primary mb-4" dark @click="newStreamDialog++">
                 <v-list-item-icon>

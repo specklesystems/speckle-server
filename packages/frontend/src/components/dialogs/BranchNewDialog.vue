@@ -61,6 +61,11 @@ export default {
     }
   },
   computed: {},
+  watch: {
+    name(val) {
+      this.name = val.toLowerCase()
+    }
+  },
   methods: {
     show() {
       this.showDialog = true
@@ -80,7 +85,7 @@ export default {
           variables: {
             params: {
               streamId: this.$route.params.streamId,
-              name: this.name,
+              name: this.name.toLowerCase(),
               description: this.description
             }
           }
@@ -90,7 +95,9 @@ export default {
         this.loading = false
         this.showDialog = false
         this.$emit('refetch-branches')
-        this.$router.push(`/streams/${this.$route.params.streamId}/branches/${this.name}`)
+        this.$router.push(
+          `/streams/${this.$route.params.streamId}/branches/${this.name.toLowerCase()}`
+        )
       } catch (err) {
         this.showError = true
         if (err.message.includes('branches_streamid_name_unique'))
