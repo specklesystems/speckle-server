@@ -57,7 +57,7 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/views/Frontend_re.vue'),
+    component: () => import('@/views/Frontend.vue'),
     children: [
       {
         path: '',
@@ -80,7 +80,7 @@ const routes = [
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/views/stream/Stream_re_re.vue'),
+        component: () => import('@/views/stream/Stream.vue'),
         children: [
           {
             path: '',
@@ -88,7 +88,7 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Details_re.vue')
+            component: () => import('@/views/stream/Details.vue')
           },
 
           {
