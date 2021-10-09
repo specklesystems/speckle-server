@@ -1,5 +1,6 @@
 'use strict'
 const zlib = require( 'zlib' )
+const cors = require( 'cors' )
 const Busboy = require( 'busboy' )
 const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
@@ -13,7 +14,9 @@ const { createObjects, createObjectsBatched } = require( '../services/objects' )
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 module.exports = ( app ) => {
-  app.post( '/objects/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+  app.options( '/objects/:streamId', cors() ) 
+  
+  app.post( '/objects/:streamId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsWriteStream( req.params.streamId, req )
     if ( !hasStreamAccess.result ) {
       return res.status( hasStreamAccess.status ).end()

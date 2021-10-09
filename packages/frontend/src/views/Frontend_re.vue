@@ -74,7 +74,7 @@
         <v-list-item v-if="serverInfo">
           <v-list-item-icon>
             <v-icon
-              v-if="serverInfo && isDevServer"
+              v-if="isDevServer"
               v-tooltip="`This is a test server and should not be used in production!`"
               color="red"
             >
@@ -87,7 +87,9 @@
             <v-list-item-subtitle class="caption">
               {{ serverInfo.version }}
             </v-list-item-subtitle>
-            <div class="caption">This is a test server and should not be used in production!</div>
+            <div class="caption">
+              {{ serverInfo.description }}
+            </div>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -340,6 +342,7 @@ export default {
       this.bottomSheet = false
       // close the snackbar if it's a stream create event in this window
       if (to.params.streamId === this.streamSnackbarInfo.id) this.streamSnackbar = false
+      this.bottomSheet = false
     }
   },
   methods: {

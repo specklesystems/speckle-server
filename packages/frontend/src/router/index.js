@@ -97,7 +97,7 @@ const routes = [
             redirect: 'branches/main'
           },
           {
-            path: 'branches/:branchName',
+            path: 'branches/:branchName*',
             name: 'branch',
             meta: {
               title: 'Branch | Speckle'
