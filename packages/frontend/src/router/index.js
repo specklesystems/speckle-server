@@ -102,7 +102,14 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('@/views/stream/Branch.vue')
+            component: () => import('@/views/stream/Branch.vue'),
+            beforeEnter: (to, from, next) => {
+              if (to.params.branchName.toLowerCase() !== to.params.branchName)
+                return next(
+                  `/streams/${to.params.streamId}/branches/${to.params.branchName.toLowerCase()}`
+                )
+              else next()
+            }
           },
           {
             path: 'commits/:commitId',
@@ -262,7 +269,7 @@ const router = new VueRouter({
   mode: 'history',
   // base: process.env.BASE_URL,
   routes,
-  scrollBehavior (to, from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     return { x: 0, y: 0 }
   }
 })
