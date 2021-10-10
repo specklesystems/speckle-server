@@ -113,6 +113,9 @@ describe( 'Branches @core-branches', ( ) => {
 
     let bbb = await getBranchByNameAndStreamId( { streamId: stream.id, name:'CASESENSITIVE' } )
     expect( bbb.name ).to.equal( 'casesensitive' )
+
+    // cleanup
+    await deleteBranchById( { id, streamId: stream.id } )
   } )
 
   it( 'Should get a branch', async ( ) => {
