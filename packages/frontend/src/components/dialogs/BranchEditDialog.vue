@@ -1,6 +1,11 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel" :fullscreen="$vuetify.breakpoint.smAndDown">
-    <v-card :loading="loading" v-if="branch && branch.name !== 'main'">
+  <v-dialog
+    v-model="show"
+    width="500"
+    :fullscreen="$vuetify.breakpoint.smAndDown"
+    @keydown.esc="cancel"
+  >
+    <v-card v-if="branch && branch.name !== 'main'" :loading="loading">
       <v-toolbar color="primary" dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>mdi-pencil</v-icon>
@@ -64,6 +69,8 @@ export default {
       showDelete: false,
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
+        (v) =>
+          !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
         (v) =>
           (v && this.allBranchNames.findIndex((e) => e === v) === -1) ||
           'A branch with this name already exists',
