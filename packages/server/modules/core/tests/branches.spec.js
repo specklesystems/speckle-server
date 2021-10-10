@@ -102,6 +102,19 @@ describe( 'Branches @core-branches', ( ) => {
     }
   } )
 
+  it( 'Branch names should be case insensitive (always lowercase)', async ( ) => {
+    let id = await createBranch( { name: 'CaseSensitive', streamId: stream.id, authorId: user.id } )
+
+    let b = await getBranchByNameAndStreamId( { streamId: stream.id, name:'casesensitive' } )
+    expect( b.name ).to.equal( 'casesensitive' )
+
+    let bb = await getBranchByNameAndStreamId( { streamId: stream.id, name:'CaseSensitive' } )
+    expect( bb.name ).to.equal( 'casesensitive' )
+
+    let bbb = await getBranchByNameAndStreamId( { streamId: stream.id, name:'CASESENSITIVE' } )
+    expect( bbb.name ).to.equal( 'casesensitive' )
+  } )
+
   it( 'Should get a branch', async ( ) => {
     let myBranch = await getBranchById( { id: branch.id } )
     expect( myBranch.authorId ).to.equal( user.id )
