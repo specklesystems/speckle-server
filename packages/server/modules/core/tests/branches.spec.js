@@ -24,7 +24,6 @@ const {
 } = require( '../services/branches' )
 
 describe( 'Branches @core-branches', ( ) => {
-
   let user = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie4342@gmail.com',
@@ -73,6 +72,36 @@ describe( 'Branches @core-branches', ( ) => {
     }
   } )
 
+  it( 'Should not allow branch names starting with # or /', async ( ) => {
+    try {
+      await createBranch( { name: '/pasta', streamId: stream.id, authorId: user.id } )
+      assert.fail( 'Illegal branch name passed through.' )
+    } catch ( err ) {
+      expect( err.message ).to.contain( 'names cannot start with # or /' )
+    }
+
+    try {
+      await createBranch( { name: '#rice', streamId: stream.id, authorId: user.id } )
+      assert.fail( 'Illegal branch name passed through.' )
+    } catch ( err ) {
+      expect( err.message ).to.contain( 'names cannot start with # or /' )
+    }
+
+    try {
+      await updateBranch( { id: branch.id, name: '/super/part/two' } )
+      assert.fail( 'Illegal branch name passed through in update operation.' )
+    } catch ( err ) {
+      expect( err.message ).to.contain( 'names cannot start with # or /' )
+    }
+
+    try {
+      await updateBranch( { id: branch.id, name: '#super#part#three' } )
+      assert.fail( 'Illegal branch name passed through in update operation.' )
+    } catch ( err ) {
+      expect( err.message ).to.contain( 'names cannot start with # or /' )
+    }
+  } )
+
   it( 'Should get a branch', async ( ) => {
     let myBranch = await getBranchById( { id: branch.id } )
     expect( myBranch.authorId ).to.equal( user.id )
@@ -87,7 +116,6 @@ describe( 'Branches @core-branches', ( ) => {
   } )
 
   it( 'Should get all stream branches', async ( ) => {
-
     await createBranch( { name: 'main-faster', streamId: stream.id, authorId: user.id } )
     await createBranch( { name: 'main-blaster', streamId: stream.id, authorId: user.id } )
     await createBranch( { name: 'blaster-farter', streamId: stream.id, authorId: user.id } )
@@ -112,7 +140,5 @@ describe( 'Branches @core-branches', ( ) => {
     } catch ( e ){
       // pass
     }
-
   } )
-
 } )

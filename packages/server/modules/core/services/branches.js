@@ -18,6 +18,8 @@ module.exports = {
     branch.name = name.toLowerCase( )
     branch.description = description
 
+    module.exports.validateBranchName( { name } )
+
     let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
 
     // update stream updated at
@@ -27,7 +29,12 @@ module.exports = {
   },
 
   async updateBranch( { id, name, description } ) {
+    module.exports.validateBranchName( { name } )
     return await Branches( ).where( { id: id } ).update( { name: name ? name.toLowerCase( ) : name, description: description } )
+  },
+
+  validateBranchName( { name } ) {
+    if ( name.startsWith( '/' ) || name.startsWith( '#' ) ) throw new Error( 'Branch names cannot start with # or /.' )
   },
 
   async getBranchById( { id } ) {
@@ -54,7 +61,7 @@ module.exports = {
   },
 
   async getBranchByNameAndStreamId( { streamId, name } ) {
-    let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [name]) ).first( )
+    let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [ name ] ) ).first( )
     return await query
   },
 
