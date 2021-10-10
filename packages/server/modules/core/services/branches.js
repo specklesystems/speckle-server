@@ -18,7 +18,7 @@ module.exports = {
     branch.name = name.toLowerCase( )
     branch.description = description
 
-    module.exports.validateBranchName( { name } )
+    if(name) module.exports.validateBranchName( { name } )
 
     let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
 
@@ -29,7 +29,7 @@ module.exports = {
   },
 
   async updateBranch( { id, name, description } ) {
-    module.exports.validateBranchName( { name } )
+    if ( name ) module.exports.validateBranchName( { name } )
     return await Branches( ).where( { id: id } ).update( { name: name ? name.toLowerCase( ) : name, description: description } )
   },
 
@@ -61,7 +61,7 @@ module.exports = {
   },
 
   async getBranchByNameAndStreamId( { streamId, name } ) {
-    let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [ name ] ) ).first( )
+    let query = Branches( ).select( '*' ).where( { streamId: streamId } ).andWhere( knex.raw( 'LOWER(name) = ?', [ name.toLowerCase() ] ) ).first( )
     return await query
   },
 

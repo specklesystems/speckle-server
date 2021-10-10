@@ -104,7 +104,7 @@ describe( 'Branches @core-branches', ( ) => {
 
   it( 'Branch names should be case insensitive (always lowercase)', async ( ) => {
     let id = await createBranch( { name: 'CaseSensitive', streamId: stream.id, authorId: user.id } )
-
+    
     let b = await getBranchByNameAndStreamId( { streamId: stream.id, name:'casesensitive' } )
     expect( b.name ).to.equal( 'casesensitive' )
 
