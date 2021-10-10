@@ -48,7 +48,8 @@ export default {
       name: null,
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
-        (v) => !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
+        (v) =>
+          !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
         (v) =>
           (v && this.reservedBranchNames.findIndex((e) => e === v) === -1) ||
           'This is a reserved branch name',
