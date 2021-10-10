@@ -42,18 +42,16 @@ export default {
       showError: false,
       error: null,
       streamId: null,
-      branchNames: ['main', 'globals'],
+      reservedBranchNames: ['main', 'globals'],
       valid: false,
       loading: false,
       name: null,
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
+        (v) => !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
         (v) =>
-          (v && !v.startsWith('globals')) ||
-          'Globals is a reserved branch name. Please choose a different name.',
-        (v) =>
-          (v && this.branchNames.findIndex((e) => e === v) === -1) ||
-          'A branch with this name already exists',
+          (v && this.reservedBranchNames.findIndex((e) => e === v) === -1) ||
+          'This is a reserved branch name',
         (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',
         (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
