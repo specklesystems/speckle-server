@@ -7,11 +7,20 @@
       <v-alert v-model="success" prominent timeout="3000" dismissible type="success">
         Great! All invites were sent.
       </v-alert>
-      <v-alert v-model="showError" prominent dismissible type="error">
+      <v-alert v-show="errors.length !== 0" prominent dismissible type="error">
         <p>Invite send failed for adresses:</p>
         <ul>
           <li v-for="error in errors" :key="error.email">{{ error.email }}: {{ error.reason }}</li>
         </ul>
+      </v-alert>
+      <v-alert
+        v-show="errors.length !== 0 && sentToEmails.length !== 0"
+        prominent
+        timeout="3000"
+        dismissible
+        type="success"
+      >
+        <p>Invite sent to: {{ sentToEmails.join(', ') }}</p>
       </v-alert>
       <v-form v-model="valid" @submit.prevent="submit">
         <v-textarea
@@ -24,6 +33,7 @@
         ></v-textarea>
         <v-combobox
           v-model="chips"
+          :search-input.sync="emails"
           placeholder="Type emails separated by commas or paste the content of a .csv"
           deletable-chips
           append-icon=""
@@ -32,17 +42,26 @@
           flat
           type="email"
           class="lighten-2"
-          :rules="validation.emailRules"
+          :error-messages="inputErrors"
           multiple
-          @change="sanitize"
+          append-outer-icon="mdi-close"
+          @keydown="keyDownHandler"
+          @blur="validateAndCreateChips"
+          @paste="validateAndCreateChips"
+          @click:append-outer="chips = []"
         >
           <template #selection="data">
-            <v-chip :input-value="data.selected" close @click:close="remove(data.item)">
+            <v-chip
+              v-if="data.item"
+              :input-value="data.selected"
+              close
+              @click:close="remove(data.item)"
+            >
               {{ data.item }}
             </v-chip>
           </template>
         </v-combobox>
-        <v-text v-if="!selectedStream">Optionaly invite users to stream.</v-text>
+        <p v-if="!selectedStream">Optionaly invite users to stream.</p>
         <stream-search-bar
           v-if="!selectedStream"
           :gotostreamonclick="false"
@@ -76,15 +95,14 @@ export default {
       success: false,
       showError: false,
       errors: [],
+      sentToEmails: [],
       submitting: false,
       invitation: '',
+      emails: '',
       chips: [],
+      inputErrors: [],
       selectedStream: null,
       validation: {
-        emailRules: [
-          (v) => v.length > 0 || 'E-mail is required',
-          (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
-        ],
         messageRules: [
           (v) => {
             if (v.length >= 1024) return 'Message too long!'
@@ -101,7 +119,7 @@ export default {
   },
   computed: {
     submitable() {
-      return this.valid && this.chips
+      return this.chips && this.chips.length !== 0
     }
   },
   apollo: {
@@ -137,13 +155,27 @@ export default {
     remove(item) {
       this.chips.splice(this.chips.indexOf(item), 1)
     },
-    sanitize() {
-      let splitInputs = []
-      this.chips.forEach((input) => {
-        // first replace supports csv comma and spaces, second repalce for space separated values
-        splitInputs.push(...input.replace(', ', ',').replace(/\s+/g, ',').split(','))
-      })
-      this.chips = [...splitInputs]
+    validateEmail(email) {
+      const re = /^\S+@\S+\.\S+$/
+      return re.test(email)
+    },
+    keyDownHandler(val) {
+      if (!(val.key === ' ' || val.key === ',' || val.key === 'Enter')) return
+      this.validateAndCreateChips()
+    },
+    validateAndCreateChips() {
+      this.inputErrors = []
+      if (!this.emails || this.emails === '') return
+      let splitEmails = this.emails.split(/[ ,]+/)
+      for (let email of splitEmails) {
+        let valid = this.validateEmail(email) && this.chips.indexOf(email) === -1
+        if (valid) {
+          this.chips.push(email)
+        } else {
+          this.inputErrors.push('Invalid email')
+        }
+      }
+      this.emails = ''
     },
     createInviteMessage() {
       let message =
@@ -153,19 +185,23 @@ export default {
     },
     async submit() {
       this.submitting = true
-      let results = await Promise.all(
-        this.chips.map((chip) =>
-          this.sendInvite(chip, this.createInviteMessage(), this.selectedStream?.id)
-        )
-      )
+      this.errors = []
+      this.sentToEmails = []
+      for (let chip of this.chips) {
+        if (!chip || chip.length === 0) continue
+        try {
+          await this.sendInvite(chip, this.createInviteMessage(), this.selectedStream?.id)
+          this.sentToEmails.push(chip)
+        } catch (err) {
+          this.errors.push({ email: chip, reason: err.graphQLErrors[0].message })
+        }
+      }
+
       this.submitting = false
-      let errors = results.filter(Boolean)
-      console.log(errors)
-      if (errors.length) {
-        this.errors = errors
-        this.showError = true
-      } else {
+      if (this.errors.length === 0) {
         this.success = true
+        this.chips = []
+        this.dismiss()
       }
     },
     async sendInvite(email, message, streamId) {
@@ -173,39 +209,24 @@ export default {
         email: email,
         message: message
       }
-      let query
+
+      let query = gql`
+        mutation($input: ${streamId ? 'StreamInviteCreateInput!' : 'ServerInviteCreateInput!'}) {
+          ${streamId ? 'streamInviteCreate' : 'serverInviteCreate'}(input: $input)
+        }
+      `
       if (streamId) {
         input.streamId = streamId
-        console.log(input)
-        query = gql`
-          mutation ($input: StreamInviteCreateInput!) {
-            streamInviteCreate(input: $input)
-          }
-        `
-      } else {
-        query = gql`
-          mutation ($input: ServerInviteCreateInput!) {
-            serverInviteCreate(input: $input)
-          }
-        `
       }
-      return await this.$apollo
-        .mutate({
-          mutation: query,
-          variables: {
-            input: input
-          }
-        })
-        .then(() => {
-          this.$matomo && this.$matomo.trackEvent('invite', 'server')
-          return null
-        })
-        .catch((error) => {
-          return {
-            email: email,
-            reason: error.graphQLErrors.map((gqlError) => gqlError.message).join(', ')
-          }
-        })
+
+      await this.$apollo.mutate({
+        mutation: query,
+        variables: {
+          input: input
+        }
+      })
+
+      this.$matomo && this.$matomo.trackEvent('invite', 'server')
     }
   }
 }
