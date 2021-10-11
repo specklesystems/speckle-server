@@ -40,6 +40,15 @@
           </v-list-item-content>
         </v-list-item>
 
+        <v-list-item link to="/admin/users">
+          <v-list-item-icon>
+            <v-icon small class="mt-1">mdi-account-group</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Users</v-list-item-title>
+            <v-list-item-subtitle class="caption">Edit server user details.</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
         <v-list-item link to="/admin/invites">
           <v-list-item-icon>
             <v-icon small class="mt-1">mdi-account-multiple-plus-outline</v-icon>

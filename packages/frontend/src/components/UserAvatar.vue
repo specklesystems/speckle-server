@@ -2,29 +2,23 @@
   <div style="display: inline-block">
     <v-menu v-if="loggedIn" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
-        <v-avatar
-          v-if="userById"
-          class="ma-1"
-          color="grey lighten-3"
-          :size="size"
-          v-bind="attrs"
-          v-on="on"
-         
-        >
-          <v-img v-if="avatar" :src="avatar" />
-          <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-        </v-avatar>
+        <div v-if="userById" v-on="on">
+          <user-avatar-icon
+            :size="size"
+            :avatar="avatar"
+            :seed="id"
+            v-bind="attrs"
+            class="ma-1"
+          ></user-avatar-icon>
+        </div>
         <v-avatar v-else class="ma-1" :size="size" v-bind="attrs" v-on="on">
           <v-img contain src="/logo.svg"></v-img>
         </v-avatar>
       </template>
       <v-card v-if="userById" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
         <v-card-text v-if="!$apollo.loading" class="text-center">
-          <v-avatar class="my-4" color="grey lighten-3" :size="40">
-            <v-img v-if="avatar" :src="avatar" />
-            <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-          </v-avatar>
-          
+          <user-avatar-icon class="my-4" :size="40" :avatar="avatar" :seed="id"></user-avatar-icon>
+
           <!-- Uncomment when email verification is in place -->
           <!-- <div v-if="userById.verified" class="mb-1">
             <v-chip color="primary" small>
@@ -37,9 +31,9 @@
             <b>{{ userById.name }}</b>
           </div>
           <div class="caption">
-          {{ userById.company }}
-          <br/>
-          {{ userById.bio ? 'Bio: ' + userById.bio : ''}}
+            {{ userById.company }}
+            <br />
+            {{ userById.bio ? 'Bio: ' + userById.bio : '' }}
           </div>
         </v-card-text>
       </v-card>
@@ -51,16 +45,21 @@
         </v-card-text>
       </v-card>
     </v-menu>
-    <v-avatar v-else class="ma-1" color="grey lighten-3" :size="size">
-      <v-img v-if="avatar" :src="avatar" />
-      <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-    </v-avatar>
+    <user-avatar-icon
+      v-else
+      class="ma-1"
+      :size="size"
+      :avatar="avatar"
+      :seed="id"
+    ></user-avatar-icon>
   </div>
 </template>
 <script>
 import userByIdQuery from '../graphql/userById.gql'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
+  components: { UserAvatarIcon },
   props: {
     avatar: String,
     name: String,

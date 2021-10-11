@@ -220,11 +220,12 @@ const routes = [
             path: 'dashboard',
             component: () => import('@/views/admin/AdminOverview.vue')
           },
-          // {
-          //   name: 'Admin | Users',
-          //   path: 'users',
-          //   component: () => import('@/views/admin/AdminUsers.vue')
-          // },
+          {
+            name: 'Admin | Users',
+            path: 'users',
+            component: () => import('@/views/admin/AdminUsers.vue'),
+            props: (route) => ({ ...route.query, ...route.props })
+          },
           // {
           //   name: 'Admin | Streams',
           //   path: 'streams',

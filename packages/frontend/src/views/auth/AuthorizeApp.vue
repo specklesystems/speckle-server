@@ -18,13 +18,15 @@
             </template>
           </v-expansion-panel-header>
           <v-expansion-panel-content class="">
-            <p>
-              <b>Author:</b>
+            <p class="d-flex align-center">
+              <b class="mr-1">Author:</b>
               {{ app.author.name }}
-              <v-avatar class="ma-1 ml-2" color="grey lighten-3" :size="20">
-                <v-img v-if="app.author.avatar" :src="app.author.avatar" />
-                <v-img v-else :src="`https://robohash.org/` + app.author.id + `.png?size=40x40`" />
-              </v-avatar>
+              <user-avatar-icon
+                :avatar="app.author.avatar"
+                :seed="app.author.id"
+                :size="20"
+                class="ml-1"
+              ></user-avatar-icon>
             </p>
             <p>
               <b>Description:</b>
@@ -65,10 +67,11 @@
 <script>
 import gql from 'graphql-tag'
 import UserAvatar from '../../components/UserAvatarAuthoriseApp'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
   name: 'AuthorizeApp',
-  components: { UserAvatar },
+  components: { UserAvatar, UserAvatarIcon },
   apollo: {
     app: {
       query: gql`

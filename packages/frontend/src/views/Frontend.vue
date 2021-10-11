@@ -57,10 +57,7 @@
 
         <v-list-item v-if="user" link to="/profile" style="height: 59px">
           <v-list-item-icon>
-            <v-avatar size="25">
-              <v-img v-if="user.avatar" :src="user.avatar" />
-              <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=38x38`" />
-            </v-avatar>
+            <user-avatar-icon :size="24" :avatar="user.avatar" :seed="user.id"></user-avatar-icon>
           </v-list-item-icon>
 
           <v-list-item-content>
@@ -276,9 +273,10 @@
 import gql from 'graphql-tag'
 import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/user.gql'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
-  components: {},
+  components: { UserAvatarIcon },
   data() {
     return {
       streamSnackbar: false,
