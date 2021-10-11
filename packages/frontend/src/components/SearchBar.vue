@@ -105,7 +105,6 @@ export default {
         this.$router.push({ name: 'stream', params: { stream: val } })
     },
     search(val) {
-      console.log(val)
       if (val === '42') this.liff = true
     }
   },
