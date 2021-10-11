@@ -1,9 +1,8 @@
 'use strict'
-const passport = require( 'passport' )
 const URL = require( 'url' ).URL
 const appRoot = require( 'app-root-path' )
 const debug = require( 'debug' )
-const { createUser, updateUser, findOrCreateUser, validatePasssword, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
+const { createUser, updateUser, validatePasssword, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
 const { validateInvite, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
 
@@ -40,7 +39,6 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
   app.post( '/auth/local/register', session, sessionAppId, async ( req, res, next ) => {
     const serverInfo = await getServerInfo()
     try {
-
       if ( !req.body.password )
         throw new Error( 'Password missing' )
 
@@ -62,7 +60,6 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
       req.user = { id: userId, email: user.email }
 
       return next( )
-
     } catch ( err ) {
       debug( 'speckle:errors' )( err )
       return res.status( 400 ).send( { err: err.message } )

@@ -70,6 +70,8 @@ export default {
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
         (v) =>
+          !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
+        (v) =>
           (v && this.allBranchNames.findIndex((e) => e === v) === -1) ||
           'A branch with this name already exists',
         (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',

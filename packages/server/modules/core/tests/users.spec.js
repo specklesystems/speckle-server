@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, findOrCreateUser, getUser, getUsers, searchUsers, countUsers, updateUser, deleteUser, validatePasssword, updateUserPassword, getUserRole, unmakeUserAdmin, makeUserAdmin } = require( '../services/users' )
+const { createUser, findOrCreateUser, getUser, getUserByEmail, getUsers, searchUsers, countUsers, updateUser, deleteUser, validatePasssword, updateUserPassword, getUserRole, unmakeUserAdmin, makeUserAdmin } = require( '../services/users' )
 const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
 const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
@@ -66,6 +66,24 @@ describe( 'Actors & Tokens @user-services', ( ) => {
       otherUser = { ...newUser }
 
       expect( actorId ).to.be.a( 'string' )
+    } )
+
+    it( 'Should store user email lowercase', async ( ) => {
+      let user = { name: 'Marty McFly', email: 'Marty@Mc.Fly', password: 'something_future_proof' }
+
+      let userId = await createUser( user )
+
+      let storedUser = await getUser( userId )
+      expect( storedUser.email ).to.equal( user.email.toLowerCase() )
+    } )
+  
+    it ( 'Get user by should ignore email casing', async ( ) => {
+      let user = await getUserByEmail( { email: 'BiLL@GaTES.cOm' } )
+      expect( user.email ).to.equal( 'bill@gates.com' )
+    } )
+
+    it ( 'Validate password should ignore email casing', async ( ) => {
+      expect( await validatePasssword( { email: 'BiLL@GaTES.cOm', password: 'testthebest' } ) )
     } )
 
     it( 'Should not create a user with a too small password', async () => {

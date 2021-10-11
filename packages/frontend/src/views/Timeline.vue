@@ -1,11 +1,16 @@
 <template>
-  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" fluid pt-4 pr-0>
+  <v-container
+    :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
+    fluid
+    pt-4
+    pr-0
+  >
     <v-navigation-drawer
+      v-model="activityNav"
       app
       fixed
       :permanent="activityNav && !$vuetify.breakpoint.smAndDown"
-      v-model="activityNav"
-      :style="`${ !$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`" 
+      :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
     >
       <main-nav-actions :open-new-stream="newStreamDialog" />
 
@@ -13,9 +18,9 @@
         <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
         <v-list-item
           v-for="(s, i) in streams.items"
+          v-if="streams.items"
           :key="i"
           :to="'streams/' + s.id"
-          v-if="streams.items"
         >
           <v-list-item-content>
             <v-list-item-title>
@@ -32,16 +37,14 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
-      <v-app-bar-nav-icon
-        @click="activityNav = !activityNav"
-      ></v-app-bar-nav-icon>
+    <v-app-bar app :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
+      <v-app-bar-nav-icon @click="activityNav = !activityNav"></v-app-bar-nav-icon>
       <v-toolbar-title class="space-grotesk pl-0">
         <v-icon class="hidden-xs-only">mdi-clock-fast</v-icon>
         Feed
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-toolbar-items style="margin-right: -18px;" v-if="$vuetify.breakpoint.smAndDown ">
+      <v-toolbar-items v-if="$vuetify.breakpoint.smAndDown" style="margin-right: -18px">
         <v-btn color="primary" depressed @click="newStreamDialog++">
           <v-icon>mdi-plus-box</v-icon>
         </v-btn>
@@ -59,7 +62,13 @@
         </div>
       </v-col>
 
-      <v-col cols="12" lg="8" v-else-if="timeline && timeline.items.length > 0" class="pr-2" :style="`${$vuetify.breakpoint.xsOnly ? 'margin-left: -20px;' :''}`">
+      <v-col
+        v-else-if="timeline && timeline.items.length > 0"
+        cols="12"
+        lg="8"
+        class="pr-2"
+        :style="`${$vuetify.breakpoint.xsOnly ? 'margin-left: -20px;' : ''}`"
+      >
         <div>
           <div v-if="timeline" key="activity-list">
             <v-timeline align-top dense>
@@ -83,20 +92,15 @@
       </v-col>
       <v-col v-else cols="12">
         <no-data-placeholder v-if="quickUser">
-          <h2>Welcome {{quickUser.name.split(' ')[0]}}!</h2>
+          <h2>Welcome {{ quickUser.name.split(' ')[0] }}!</h2>
           <p class="caption">
             Once you will create a stream and start sending some data, your activity will show up
             here.
           </p>
 
-          <template v-slot:actions>
+          <template #actions>
             <v-list rounded class="transparent">
-              <v-list-item
-                link
-                class="primary mb-4"
-                dark
-                @click="newStreamDialog++"
-              >
+              <v-list-item link class="primary mb-4" dark @click="newStreamDialog++">
                 <v-list-item-icon>
                   <v-icon>mdi-plus-box</v-icon>
                 </v-list-item-icon>
@@ -113,11 +117,11 @@
       </v-col>
 
       <v-col
+        v-show="$vuetify.breakpoint.lgAndUp"
+        v-if="timeline && timeline.items.length > 0"
         cols="12"
         lg="4"
-        v-show="$vuetify.breakpoint.lgAndUp"
         class="mt-7"
-        v-if="timeline && timeline.items.length > 0"
       >
         <latest-blogposts></latest-blogposts>
         <v-card rounded="lg" class="mt-2">
@@ -170,18 +174,16 @@ export default {
       activityNav: true
     }
   },
-  computed: {},
-  mounted() {
-    setTimeout(
-      function () {
-        this.activityNav = !this.$vuetify.breakpoint.smAndDown
-      }.bind(this),
-      10
-    )
-  },
   apollo: {
     quickUser: {
-      query: gql`query { quickUser: user { id name } } `
+      query: gql`
+        query {
+          quickUser: user {
+            id
+            name
+          }
+        }
+      `
     },
     timeline: {
       query: gql`
@@ -217,7 +219,7 @@ export default {
       prefetch: true,
       query: gql`
         query {
-          streams (limit: 10) {
+          streams(limit: 10) {
             items {
               id
               name
@@ -228,9 +230,25 @@ export default {
       `
     }
   },
+  computed: {},
+  watch: {
+    timeline(val) {
+      if (val.totalCount === 0 && !localStorage.getItem('onboarding')) {
+        this.$router.push('/onboarding')
+      }
+    }
+  },
+  mounted() {
+    setTimeout(
+      function () {
+        this.activityNav = !this.$vuetify.breakpoint.smAndDown
+      }.bind(this),
+      10
+    )
+  },
   methods: {
     groupSimilarActivities(data) {
-      if(!data) return
+      if (!data) return
       let groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
         //first item
         if (!prev.length) {
