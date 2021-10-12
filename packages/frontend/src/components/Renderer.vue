@@ -437,6 +437,7 @@ export default {
     showVis(visId){
       //console.log(window.__viewer)
       window.__viewer.interactions.deselectObjects()
+      console.log(window.__viewer.sceneManager.views)
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
         if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
@@ -445,7 +446,6 @@ export default {
           obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
         }
       })
-
     },
     nextView() {
       this.viewsPlayed += 1 
@@ -455,12 +455,18 @@ export default {
     },
     nextSlide() {
       this.viewsPlayed += 1 
-      if (window.__viewer.sceneManager.views.length == 0 ) return
-      if (this.viewsPlayed >= window.__viewer.sceneManager.views.length || !window.__viewer.sceneManager.views[this.viewsPlayed].userSlides) this.viewsPlayed = 0
+      if (window.__viewer.sceneManager.views.length == 0 ) return // exit if no views saved 
+      if (this.viewsPlayed >= window.__viewer.sceneManager.views.length ) this.viewsPlayed = 0 
+      if (!window.__viewer.sceneManager.views[this.viewsPlayed].userSlides) {
+        do { this.viewsPlayed += 1} while (!window.__viewer.sceneManager.views[this.viewsPlayed].userSlides) // increase count until userSlides exist 
+      }
+      
       window.__viewer.interactions.setView(window.__viewer.sceneManager.views[this.viewsPlayed].id)
 
-      //console.log(window.__viewer.sceneManager.views[this.viewsPlayed])
-      let filterGroup = window.__viewer.sceneManager.views[this.viewsPlayed].userSlides
+      console.log(window.__viewer.sceneManager.views[this.viewsPlayed])
+      let filterGroup = []
+      if (window.__viewer.sceneManager.views[this.viewsPlayed].userSlides) filterGroup = window.__viewer.sceneManager.views[this.viewsPlayed].userSlides 
+      
       window.__viewer.interactions.deselectObjects()
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
