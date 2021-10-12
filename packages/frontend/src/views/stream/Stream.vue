@@ -117,58 +117,6 @@
         </v-list-item>
 
         <!-- Branch menu group -->
-        <!-- TODO: group by "/", eg. dim/a, dim/b, dim/c should be under a sub-group called "dim". -->
-        <!--  <v-list-group v-model="branchMenuOpen" class="my-2">
-          <template #activator>
-            <v-list-item-icon>
-              <v-icon small>mdi-source-branch</v-icon>
-            </v-list-item-icon>
-            <v-list-item-title>Branches ({{ branchesTotalCount }})</v-list-item-title>
-          </template>
-          <v-divider class="mb-1"></v-divider>
-          <v-list-item
-            v-if="stream.role !== 'stream:reviewer'"
-            v-tooltip.bottom="'Create a new branch to help categorise your commits.'"
-            link
-            @click="showNewBranchDialog()"
-          >
-            <v-list-item-icon>
-              <v-icon small style="padding-top: 10px" class="primary--text">mdi-plus-box</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>New Branch</v-list-item-title>
-              <v-list-item-subtitle class="caption">
-                Create a new branch to help categorise your commits.
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-
-          <v-list-item
-            v-for="(branch, i) in sortedBranches"
-            v-if="!$apollo.queries.branchQuery.loading"
-            :key="i"
-            link
-            :to="`/streams/${stream.id}/branches/${branch.name}`"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="branch.name !== 'main'" small style="padding-top: 10px">
-                mdi-source-branch
-              </v-icon>
-              <v-icon v-else small style="padding-top: 10px" class="primary--text">mdi-star</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>
-                {{ branch.name }} ({{ branch.commits.totalCount }})
-              </v-list-item-title>
-              <v-list-item-subtitle class="caption">
-                {{ branch.description ? branch.description : 'no description' }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
-          <v-divider class="mb-2"></v-divider>
-        </v-list-group> -->
-
         <v-list-group v-model="branchMenuOpen" class="my-2">
           <template #activator>
             <v-list-item-icon>
