@@ -341,7 +341,7 @@ export default {
         this.namedViews.push(...views)
 
         let set = new Set()
-        window.__viewer.sceneManager.objects.forEach((item) => {if (item.userData.Visuals) item.visible = false, set.add(item.userData.Visuals) })
+        window.__viewer.sceneManager.objects.forEach((item) => {if (item.userData.userVisuals) item.visible = false, set.add(item.userData.userVisuals) })
         this.allVisuals = Array.from(set)
       }
     }
@@ -423,7 +423,7 @@ export default {
       console.log(window.__viewer)
       window.__viewer.interactions.deselectObjects()
       window.__viewer.sceneManager.objects.forEach(obj => {
-        if (obj.userData.Visuals != visId && obj.userData.Visuals) {
+        if (obj.userData.userVisuals != visId && obj.userData.userVisuals) {
           obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
         }else { obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1 }
       })
