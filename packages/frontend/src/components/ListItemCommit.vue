@@ -89,23 +89,29 @@
         <v-toolbar>
           <v-toolbar-title>Full commit activity</v-toolbar-title>
         </v-toolbar>
-        <v-card-text class="pt-2 pb-2" v-for="obj in activity.items" v-bind:key="obj.id">
-          <div >
-            <span>
-                <user-avatar class="pr-2"
-                  :id="obj.userId"
-                  :key="obj.userId"
-                  :avatar="userAvatar"
-                  :size="40"
-                  :name="obj.userId.name"
-                  :show-hover="true"
-                /> 
-                {{ obj.message.split('received by')[1] }} received
+        <v-card-text class="pt-2 pb-2 pl-3 pr-3" v-for="obj in activity.items" v-bind:key="obj.id">
+          <v-list-item class="pl-0 pr-0">
+              <user-avatar class="pr-3"
+                :id="obj.userId"
+                :key="obj.userId"
+                :avatar="userAvatar"
+                :size="40"
+                :name="obj.userId.name"
+                :show-hover="true"
+              /> 
+            <v-list-item-content>
+              <v-list-item-title>
+                <b> {{ obj.message.split('received by')[1] }} </b> received
                 <timeago :datetime="obj.time"></timeago> in 
-            </span>
-            <source-app-avatar class="mt-3 mb-3" style="position: relative; float: right"  :application-name="commit.sourceApplication" />
-              
-          </div>
+              </v-list-item-title>
+
+              <v-list-item-subtitle class="caption">
+                {{obj.info.message}}
+              </v-list-item-subtitle>
+            </v-list-item-content>
+            <source-app-avatar class="mt-3 mb-3"   :application-name="obj.info.sourceApplication" />
+          </v-list-item>
+
         </v-card-text>
       </v-card>
       
@@ -113,6 +119,7 @@
   </v-list-item>
 </template>
 <script>
+//style="position: relative; float: right"
 import gql from 'graphql-tag'
 import UserAvatar from './UserAvatar'
 import SourceAppAvatar from './SourceAppAvatar'
