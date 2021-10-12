@@ -11,14 +11,14 @@ export default class ObjectLoader {
    * Creates a new object loader instance.
    * @param {*} param0
    */
-  constructor( { serverUrl, streamId, token, objectId, options = { fullyTraverseArrays: false, excludeProps: [ ] } } ) {
+  constructor( { serverUrl, streamId, token, objectId, options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [ ] } } ) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
     this.serverUrl = serverUrl || window.location.origin
     this.streamId = streamId
     this.objectId = objectId
-    console.log('Object loader constructor called!!!')
+    console.log('Object loader constructor called!')
     try {
       this.token = token || localStorage.getItem( 'AuthToken' )
     } catch (error) {
@@ -33,7 +33,8 @@ export default class ObjectLoader {
       this.headers['Authorization'] = `Bearer ${this.token}`
     }
 
-    this.requestUrl = `${this.serverUrl}/objects/${this.streamId}/${this.objectId}`
+    this.requestUrlRootObj = `${this.serverUrl}/objects/${this.streamId}/${this.objectId}/single`
+    this.requestUrlChildren = `${this.serverUrl}/api/getobjects/${this.streamId}`
     this.promises = []
     this.intervals = {}
     this.buffer = []
@@ -41,7 +42,10 @@ export default class ObjectLoader {
     this.totalChildrenCount = 0
     this.traversedReferencesCount = 0
     this.options = options
-  }
+    this.options.numConnections = this.options.numConnections || 4
+
+    this.cacheDB = null
+}
 
   dispose() {
     this.buffer = []
@@ -177,11 +181,13 @@ export default class ObjectLoader {
   }
 
   async * getObjectIterator(  ) {
+    let t0 = Date.now()
     for await ( let line of this.getRawObjectIterator() ) {
       let { id, obj } = this.processLine( line )
       this.buffer[ id ] = obj
       yield obj
     }
+    console.log("Loaded in: ", (Date.now() - t0) / 1000)
   }
 
   processLine( chunk ) {
@@ -190,31 +196,161 @@ export default class ObjectLoader {
   }
 
   async * getRawObjectIterator() {
-    const decoder = new TextDecoder()
-    const response = await fetch( this.requestUrl, { headers: this.headers } )
-    const reader = response.body.getReader()
-    let { value: chunk, done: readerDone } = await reader.read()
-    chunk = chunk ? decoder.decode( chunk ) : ''
+    if ( this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
+      // TODO: safari issue https://github.com/jakearchibald/idb-keyval
+      let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
+      idbOpenRequest.onupgradeneeded = () => idbOpenRequest.result.createObjectStore('objects');
+      this.cacheDB = await this.promisifyIdbRequest( idbOpenRequest )
+    }
 
-    let re = /\r\n|\n|\r/gm
-    let startIndex = 0
+    const rootObjJson = await this.getRawRootObject()
+    yield `${this.objectId}\t${rootObjJson}`
 
+    const rootObj = JSON.parse(rootObjJson)
+    if ( !rootObj.__closure ) return
+
+    let childrenIds = Object.keys(rootObj.__closure)
+    if ( childrenIds.length === 0 ) return
+
+    const cachedObjects = await this.cacheGetObjects( childrenIds )
+    for ( let id in cachedObjects ) {
+      yield `${id}\t${cachedObjects[ id ]}`
+    }
+    childrenIds = childrenIds.filter(id => !( id in cachedObjects ) )
+
+    let splitChildrenIds = []
+    if ( childrenIds.length <= 10 ){
+      splitChildrenIds.push( childrenIds )
+    } else {
+      for (let i = 0; i < this.options.numConnections; i++) {
+        splitChildrenIds.push( [] )
+      }
+      for (let i = 0; i < childrenIds.length; i++) {
+        splitChildrenIds[ i % this.options.numConnections ].push(childrenIds[i])
+      }
+    }
+    
+    const decoders = []
+    const readers = []
+    const readPromisses = []
+    const startIndexes = []
+    const readBuffers = []
+    const finishedRequests = []
+
+    for (let i = 0; i < splitChildrenIds.length; i++) {
+      decoders.push(new TextDecoder())
+      readers.push( null )
+      readPromisses.push( null )
+      startIndexes.push( 0 )
+      readBuffers.push( '' )
+      finishedRequests.push( false )
+
+      fetch(
+        this.requestUrlChildren,
+        {
+          method: 'POST',
+          headers: { ...this.headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify( { objects: JSON.stringify( splitChildrenIds[i] ) } )
+        }
+      ).then( crtResponse => {
+        let crtReader = crtResponse.body.getReader()
+        readers[i] = crtReader
+        let crtReadPromise = crtReader.read().then(x => { x.reqId = i; return x })
+        readPromisses[i] = crtReadPromise
+      })
+    }
+    
     while ( true ) {
-      let result = re.exec( chunk )
-      if ( !result ) {
-        if ( readerDone ) break
-        let remainder = chunk.substr( startIndex )
-        ;( { value: chunk, done: readerDone } = await reader.read() ) // PS: semicolon of doom
-        chunk = remainder + ( chunk ? decoder.decode( chunk ) : '' )
-        startIndex = re.lastIndex = 0
+      let validReadPromises = readPromisses.filter(x => x != null)
+      if ( validReadPromises.length === 0 ) {
+        // Check if all requests finished
+        if ( finishedRequests.every(x => x) ) {
+          break
+        }
+        // Sleep 10 ms
+        await new Promise( ( resolve ) => {
+          setTimeout( resolve, 10 )
+        } )
         continue
       }
-      yield chunk.substring( startIndex, result.index )
-      startIndex = re.lastIndex
+
+      // Wait for data on any running request
+      let data = await Promise.any( validReadPromises )
+      let { value: crtDataChunk, done: readerDone, reqId } = data
+      finishedRequests[ reqId ] = readerDone
+
+      // Replace read promise on this request with a new `read` call
+      if ( !readerDone ) {
+         let crtReadPromise = readers[ reqId ].read().then(x => { x.reqId = reqId; return x })
+         readPromisses[ reqId ] = crtReadPromise
+      } else {
+        // This request finished. "Flush any non-newline-terminated text"
+        if ( readBuffers[ reqId ].length > 0 ) {
+          yield readBuffers[ reqId ]
+          readBuffers[ reqId ] = ''
+        }
+        // no other read calls for this request
+        readPromisses[ reqId ] = null
+      }
+
+      if ( !crtDataChunk )
+        continue
+
+      crtDataChunk = decoders[ reqId ].decode( crtDataChunk )
+      let unprocessedText = readBuffers[ reqId ] + crtDataChunk
+      let unprocessedLines = unprocessedText.split(/\r\n|\n|\r/)
+      let remainderText = unprocessedLines.pop()
+      readBuffers[ reqId ] = remainderText
+
+      for ( let line of unprocessedLines ) {
+        yield line
+      }
+      this.cacheStoreObjects(unprocessedLines)
+    }
+  }
+
+  async getRawRootObject() {
+    const response = await fetch( this.requestUrlRootObj, { headers: this.headers } )
+    return response.text()
+  }
+
+  promisifyIdbRequest(request) {
+    return new Promise((resolve, reject) => {
+      request.oncomplete = request.onsuccess = () => resolve(request.result);
+      request.onabort = request.onerror = () => reject(request.error);
+    })
+  }
+
+  async cacheGetObjects(ids) {
+    if ( !this.options.enableCaching || !window.indexedDB ) {
+      return {}
     }
 
-    if ( startIndex < chunk.length ) {
-      yield chunk.substr( startIndex )
+    let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
+    let idbChildrenPromises = ids.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
+    let cachedData = await Promise.all(idbChildrenPromises)
+
+    let ret = {}
+    for ( let cachedObj of cachedData ) {
+      if ( !cachedObj.data ) // non-existent objects are retrieved with `undefined` data
+        continue
+      ret[ cachedObj.id ] = cachedObj.data
     }
+
+    return ret
+  }
+
+  cacheStoreObjects(objects) {
+    if ( !this.options.enableCaching || !window.indexedDB ) {
+      return {}
+    }
+
+    let store = this.cacheDB.transaction('objects', 'readwrite').objectStore('objects')
+    for ( let obj of objects ) {
+      let idAndData = obj.split( '\t' )
+      store.put(idAndData[1], idAndData[0])
+    }
+
+    return this.promisifyIdbRequest( store.transaction )
   }
 }
