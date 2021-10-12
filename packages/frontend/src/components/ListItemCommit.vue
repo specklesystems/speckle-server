@@ -52,9 +52,9 @@
           v-for="user in receivedUsersUnique.slice(0, 4)"
           :id="user"
           :key="user"
-          :avatar="user.avatar"
+          :avatar="userAvatar"
           :size="30"
-          :name="user.name"
+          :name="user.userId"
           :show-hover="false"
         />
         <v-avatar v-if="receivedUsersUnique.length > 4" size="30" color="grey">
@@ -95,7 +95,7 @@
                 <user-avatar class="pr-2"
                   :id="obj.userId"
                   :key="obj.userId"
-                  :avatar="obj.userId.avatar"
+                  :avatar="userAvatar"
                   :size="40"
                   :name="obj.userId.name"
                   :show-hover="true"
@@ -152,6 +152,28 @@ export default {
         if (!this.streamId || !this.commit) return true
         return false
       }
+    },
+    userData: {
+      query: gql`
+        query UserData($userId: String!) {
+          user(id: $userId) {
+            name
+            bio
+            company
+            avatar
+          }
+        }
+      `,
+      update: (data) => data.user,
+      variables() {
+        return {
+          userId: this.receivedUsersUnique[0] /////////////fake code
+        }
+      },
+      skip() {
+        if (!this.receivedUsersUnique[0] ) return true /////////////fake code
+        return false
+      }
     }
   },
   data() {
@@ -160,7 +182,10 @@ export default {
       receivedUsersAll: [],
       receivedNamesAll: [],
       receivedUsersUnique: [],
-      showAllActivityDialog: false
+      showAllActivityDialog: false,
+
+      userData: null,
+      userAvatar: null
     }
   },
   computed: {
@@ -182,10 +207,15 @@ export default {
     activity(val) {
       //console.log(val.items)
       let set = new Set()
-      val.items.forEach((item) => set.add(item.userId))
-      this.receivedUsersUnique = Array.from(set)
-      this.receivedUsersAll = val.items
-      let arr = new Array()
+      if (val.items && val.items.length>0) {
+        val.items.forEach((item) => set.add(item.userId))
+        this.receivedUsersUnique = Array.from(set)
+        this.receivedUsersAll = val.items
+      } 
+    },
+    userData(val) {
+      this.userAvatar = val.avatar
+      //console.log(this.userAvatar)
     }
   },
   methods: {
