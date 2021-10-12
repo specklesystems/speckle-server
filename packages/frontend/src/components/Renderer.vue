@@ -179,7 +179,7 @@
             </template>
 
             <v-list dense>
-              <v-list-item @click="showVis(0)">
+              <v-list-item @click="showVis()">
                 <v-list-item-title>No added properties</v-list-item-title>
               </v-list-item>
               <v-divider v-if="allVisuals.length !== 0"></v-divider>
@@ -201,7 +201,7 @@
           <v-tooltip top>
             <template #activator="{ on, attrs }">
               <v-btn v-bind="attrs" small @click="nextSlide()" v-on="on">
-                <v-icon small>mdi-animation-play</v-icon>
+                <v-icon small>mdi-play</v-icon>
               </v-btn>
             </template>
             Next Slide
@@ -351,10 +351,10 @@ export default {
 
         let set = new Set()
         window.__viewer.sceneManager.objects.forEach((item) => {
-          console.log(item.userData.userVisuals)
+          //console.log(item.userData.userVisuals)
           if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
             item.visible = false
-            item.userData.userVisuals.forEach( obj => { if (obj) console.log(obj), set.add(obj) } )
+            item.userData.userVisuals.forEach( obj => { if (obj) set.add(obj) } )
           } else item.visible = true
         })
         this.allVisuals = Array.from(set)
@@ -435,10 +435,11 @@ export default {
       window.__viewer.interactions.rotateTo(view)
     },
     showVis(visId){
-      console.log(window.__viewer)
+      //console.log(window.__viewer)
       window.__viewer.interactions.deselectObjects()
       window.__viewer.sceneManager.objects.forEach(obj => {
-        if (!obj.userData.userVisuals || obj.userData.userVisuals.includes(visId) || obj.userData.userVisuals[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+        let propertyGroup = obj.userData.userVisuals
+        if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
           obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
         } else { 
           obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
@@ -453,6 +454,25 @@ export default {
       window.__viewer.interactions.setView(this.namedViews[this.viewsPlayed].id)
     },
     nextSlide() {
+      this.viewsPlayed += 1 
+      if (window.__viewer.sceneManager.views.length == 0 ) return
+      if (this.viewsPlayed >= window.__viewer.sceneManager.views.length || !window.__viewer.sceneManager.views[this.viewsPlayed].userSlides) this.viewsPlayed = 0
+      window.__viewer.interactions.setView(window.__viewer.sceneManager.views[this.viewsPlayed].id)
+
+      //console.log(window.__viewer.sceneManager.views[this.viewsPlayed])
+      let filterGroup = window.__viewer.sceneManager.views[this.viewsPlayed].userSlides
+      window.__viewer.interactions.deselectObjects()
+      window.__viewer.sceneManager.objects.forEach(obj => {
+        let propertyGroup = obj.userData.userVisuals
+        filterGroup.forEach( fil => {
+          if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+            obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+            return
+          } else { 
+            obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
+          }
+        })
+      })
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
