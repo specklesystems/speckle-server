@@ -22,6 +22,10 @@
             required
             autofocus
           ></v-text-field>
+          <p class="caption">
+            Tip: you can create nested branches by using "/" as a separator in their names. E.g.,
+            "mep/stage-1" or "arch/sketch-design".
+          </p>
           <v-textarea v-model="description" rows="2" label="Description"></v-textarea>
         </v-card-text>
         <v-card-actions>
@@ -45,7 +49,7 @@ export default {
       reservedBranchNames: ['main', 'globals'],
       valid: false,
       loading: false,
-      name: null,
+      name: '',
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
         (v) =>

@@ -106,7 +106,7 @@
       </v-card>
 
       <!-- Stream menu options -->
-      <v-list v-if="stream" style="padding-left: 10px" rounded dense class="mt-0 pt-0">
+      <v-list v-if="stream" style="padding-left: 10px" rounded dense class="mt-0 pt-0" expand>
         <v-list-item link :to="`/streams/${stream.id}`" class="no-overlay">
           <v-list-item-icon>
             <v-icon small>mdi-home</v-icon>
@@ -117,7 +117,6 @@
         </v-list-item>
 
         <!-- Branch menu group -->
-        <!-- TODO: group by "/", eg. dim/a, dim/b, dim/c should be under a sub-group called "dim". -->
         <v-list-group v-model="branchMenuOpen" class="my-2">
           <template #activator>
             <v-list-item-icon>
@@ -143,28 +142,77 @@
             </v-list-item-content>
           </v-list-item>
 
-          <v-list-item
-            v-for="(branch, i) in sortedBranches"
-            v-if="!$apollo.queries.branchQuery.loading"
-            :key="i"
-            link
-            :to="`/streams/${stream.id}/branches/${branch.name}`"
-          >
-            <v-list-item-icon>
-              <v-icon v-if="branch.name !== 'main'" small style="padding-top: 10px">
-                mdi-source-branch
-              </v-icon>
-              <v-icon v-else small style="padding-top: 10px" class="primary--text">mdi-star</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>
-                {{ branch.name }} ({{ branch.commits.totalCount }})
-              </v-list-item-title>
-              <v-list-item-subtitle class="caption">
-                {{ branch.description ? branch.description : 'no description' }}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
+          <!-- TODO -->
+          <div v-if="!$apollo.queries.branchQuery.loading">
+            <template v-for="(item, i) in groupedBranches">
+              <v-list-item
+                v-if="item.type === 'item'"
+                :key="i"
+                :to="`/streams/${stream.id}/branches/${item.name}`"
+                exact
+              >
+                <v-list-item-icon>
+                  <v-icon v-if="item.name !== 'main'" small style="padding-top: 10px">
+                    mdi-source-branch
+                  </v-icon>
+                  <v-icon v-else small style="padding-top: 10px" class="primary--text">
+                    mdi-star
+                  </v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title>
+                    {{ item.displayName }} ({{ item.commits.totalCount }})
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="caption">
+                    {{ item.description ? item.description : 'no description' }}
+                  </v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+              <v-list-group
+                v-else
+                :key="i"
+                sub-group
+                :value="item.expand"
+                prepend-icon=""
+                :group="item.name"
+              >
+                <template #activator>
+                  <v-list-item style="overflow: visible">
+                    <v-list-item-icon style="position: relative; left: -26px">
+                      <v-icon style="padding-top: 10px">
+                        {{ item.expand ? 'mdi-chevron-down' : 'mdi-chevron-down' }}
+                      </v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content style="position: relative; left: -8px">
+                      <v-list-item-title>{{ item.name }}</v-list-item-title>
+                      <v-list-item-subtitle class="caption">
+                        {{ item.children.length }} branches
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                </template>
+                <v-list-item
+                  v-for="(kid, j) in item.children"
+                  :key="j"
+                  :to="`/streams/${stream.id}/branches/${kid.name}`"
+                  exact
+                >
+                  <v-list-item-icon>
+                    <v-icon small style="padding-top: 10px">mdi-source-branch</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title>
+                      {{ kid.displayName }} ({{ kid.commits.totalCount }})
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="caption">
+                      {{ kid.description ? kid.description : 'no description' }}
+                    </v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-group>
+            </template>
+          </div>
+
           <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
           <v-divider class="mb-2"></v-divider>
         </v-list-group>
@@ -539,6 +587,10 @@ export default {
               items {
                 name
                 description
+                author {
+                  id
+                  name
+                }
                 commits {
                   totalCount
                 }
@@ -551,6 +603,10 @@ export default {
         return {
           id: this.$route.params.streamId
         }
+      },
+      update: (data) => {
+        // console.log(data.branchQuery.branches.items)
+        return data.branchQuery
       }
     },
     $subscribe: {
@@ -598,6 +654,43 @@ export default {
     }
   },
   computed: {
+    groupedBranches() {
+      if (!this.branchQuery) return
+      let branches = this.branchQuery.branches.items
+      let items = []
+      for (let b of branches) {
+        if (b.name === 'globals') continue
+        let parts = b.name.split('/')
+        if (parts.length === 1) {
+          items.push({ ...b, displayName: b.name, type: 'item', children: [] })
+        } else {
+          let existing = items.find((i) => i.name === parts[0] && i.type === 'group')
+          if (!existing) {
+            existing = { name: parts[0], type: 'group', children: [], expand: false }
+            items.push(existing)
+          }
+          existing.children.push({
+            ...b,
+            displayName: parts.slice(1).join('/'),
+            type: 'item'
+          })
+          if (this.$route.path.includes(b.name)) existing.expand = true
+        }
+      }
+      let sorted = items.sort((a, b) => {
+        const nameA = a.name.toLowerCase()
+        const nameB = b.name.toLowerCase()
+        if (nameA < nameB) return -1
+        if (nameA > nameB) return 1
+        return 0
+      })
+
+      return [
+        ...sorted.filter((it) => it.name === 'main'),
+        ...sorted.filter((it) => it.name !== 'main')
+      ]
+      // return items
+    },
     streamUrl() {
       return `${window.location.origin}/streams/${this.$route.params.streamId}`
     },
@@ -631,14 +724,20 @@ export default {
     }
   },
   watch: {
-    $route() {
+    $route(to) {
       // Ensures branch menu is open when navigating to a branch url
-      if (this.$route.name.toLowerCase().includes('branch') && !this.branchMenuOpen)
+      if (to.name.toLowerCase().includes('branch') && !this.branchMenuOpen)
         this.branchMenuOpen = true
       // closes any share dialog
       this.shareStream = false
       this.snackbar = false
     }
+    // branchMenuOpen(val) {
+    //   if (this.$route.name.toLowerCase().includes('branch') && !val)
+    //     this.$nextTick(() => {
+    //       this.branchMenuOpen = true
+    //     })
+    // }
   },
   mounted() {
     setTimeout(
