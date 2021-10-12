@@ -159,6 +159,45 @@
             </template>
             Show viewer help
           </v-tooltip>
+
+
+          
+          <v-menu top close-on-click offset-y style="z-index: 100">
+            <template #activator="{ on: onMenu, attrs: menuAttrs }">
+              <v-tooltip top>
+                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
+                  <v-btn
+                    small
+                    v-bind="{ ...tooltipAttrs, ...menuAttrs }"
+                    v-on="{ ...onTooltip, ...onMenu }"
+                  >
+                    <v-icon small>mdi-layers-triple</v-icon>
+                  </v-btn>
+                </template>
+                Select Analysis Layer
+              </v-tooltip>
+            </template>
+
+            <v-list dense>
+              <v-list-item @click="showVis(0)">
+                <v-list-item-title>No added properties</v-list-item-title>
+              </v-list-item>
+              <v-divider v-if="allVisuals.length !== 0"></v-divider>
+              <v-list-item v-for="vis in allVisuals" @click="showVis(vis)">
+                <v-list-item-title>{{ vis }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn v-bind="attrs" small @click="nextView()" v-on="on">
+                <v-icon small>mdi-arrow-right-bold</v-icon>
+              </v-btn>
+            </template>
+            Next View
+          </v-tooltip>
+
           <v-dialog
             v-model="showObjectDetails"
             width="500"
@@ -258,7 +297,9 @@ export default {
       selectedObjects: [],
       showObjectDetails: false,
       hasImg: false,
-      namedViews: []
+      namedViews: [],
+      viewsPlayed: -1,
+      allVisuals: []
     }
   },
   computed: {
@@ -298,6 +339,10 @@ export default {
       if (newVal >= 99) {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
+
+        let set = new Set()
+        window.__viewer.sceneManager.objects.forEach((item) => {if (item.userData.Visuals) item.visible = false, set.add(item.userData.Visuals) })
+        this.allVisuals = Array.from(set)
       }
     }
   },
@@ -373,6 +418,22 @@ export default {
     },
     setView(view) {
       window.__viewer.interactions.rotateTo(view)
+    },
+    showVis(visId){
+      console.log(window.__viewer)
+      window.__viewer.interactions.deselectObjects()
+      window.__viewer.sceneManager.objects.forEach(obj => {
+        if (obj.userData.Visuals != visId && obj.userData.Visuals) {
+          obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
+        }else { obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1 }
+      })
+
+    },
+    nextView() {
+      this.viewsPlayed += 1 
+      if (this.namedViews.length ==0 ) return
+      if (this.viewsPlayed >= this.namedViews.length) this.viewsPlayed = 0
+      window.__viewer.interactions.setView(this.namedViews[this.viewsPlayed].id)
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)

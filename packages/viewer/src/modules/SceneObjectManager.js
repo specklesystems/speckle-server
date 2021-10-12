@@ -264,7 +264,7 @@ export default class SceneObjectManager {
 
   _postLoadFunction() {
     if ( this.skipPostLoad ) return
-    this.viewer.interactions.zoomExtents()
+    //this.viewer.interactions.zoomExtents()
     this.viewer.interactions.hideSectionBox()
     this.viewer.reflectionsNeedUpdate = true
   }
