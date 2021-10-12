@@ -52,7 +52,7 @@
           v-for="user in receivedUsersUnique.slice(0, 4)"
           :id="user"
           :key="user"
-          :avatar="userAvatar"
+          :avatar="user.userId"
           :size="30"
           :name="user.userId"
           :show-hover="false"
@@ -85,16 +85,16 @@
       max-width="400"
       :fullscreen="$vuetify.breakpoint.xsOnly"
     >
-      <v-card>
+      <v-card v-if="activity">
         <v-toolbar>
           <v-toolbar-title>Full commit activity</v-toolbar-title>
         </v-toolbar>
-        <v-card-text class="pt-2 pb-2 pl-3 pr-3" v-for="obj in activity.items" v-bind:key="obj.id">
+        <v-card-text  class="pt-2 pb-2 pl-3 pr-3" v-for="obj in activity.items" v-bind:key="obj.id">
           <v-list-item class="pl-0 pr-0">
               <user-avatar class="pr-3"
                 :id="obj.userId"
                 :key="obj.userId"
-                :avatar="userAvatar"
+                :avatar="obj.userId"
                 :size="40"
                 :name="obj.userId.name"
                 :show-hover="true"
@@ -164,6 +164,7 @@ export default {
       query: gql`
         query UserData($userId: String!) {
           user(id: $userId) {
+            id
             name
             bio
             company
@@ -174,11 +175,11 @@ export default {
       update: (data) => data.user,
       variables() {
         return {
-          userId: this.receivedUsersUnique[0] /////////////fake code
+          userId: this.currentId 
         }
       },
       skip() {
-        if (!this.receivedUsersUnique[0] ) return true /////////////fake code
+        if (!this.currentId ) return true 
         return false
       }
     }
@@ -192,7 +193,9 @@ export default {
       showAllActivityDialog: false,
 
       userData: null,
-      userAvatar: null
+      userAvatars: [],
+      idUnique: [],
+      currentId: null
     }
   },
   computed: {
@@ -212,22 +215,31 @@ export default {
   },
   watch: {
     activity(val) {
-      //console.log(val.items)
       let set = new Set()
-      if (val.items && val.items.length>0) {
+      if ( val && val.items && val.items.length>0) {
         val.items.forEach((item) => set.add(item.userId))
         this.receivedUsersUnique = Array.from(set)
         this.receivedUsersAll = val.items
+        
+        this.receivedUsersUnique.forEach(obj => { 
+          if (obj) {
+            this.idUnique.push(obj), this.currentId = obj, console.log("loop in progress")//,  console.log(val)
+          }
+        })
       } 
     },
     userData(val) {
-      this.userAvatar = val.avatar
-      //console.log(this.userAvatar)
+      console.log("query was called")
+      this.userAvatars.push(val.avatar)
     }
   },
   methods: {
     goToBranch() {
       this.$router.push(this.branchUrl)
+    },
+    callApollo() {
+      console.log(this.currentId)
+      this.currentId = this.currentId
     }
   }
 }
