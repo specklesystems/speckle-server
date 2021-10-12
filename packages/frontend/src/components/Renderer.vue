@@ -198,6 +198,15 @@
             Next View
           </v-tooltip>
 
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn v-bind="attrs" small @click="nextSlide()" v-on="on">
+                <v-icon small>mdi-animation-play</v-icon>
+              </v-btn>
+            </template>
+            Next Slide
+          </v-tooltip>
+
           <v-dialog
             v-model="showObjectDetails"
             width="500"
@@ -341,7 +350,13 @@ export default {
         this.namedViews.push(...views)
 
         let set = new Set()
-        window.__viewer.sceneManager.objects.forEach((item) => {if (item.userData.userVisuals) item.visible = false, set.add(item.userData.userVisuals) })
+        window.__viewer.sceneManager.objects.forEach((item) => {
+          console.log(item.userData.userVisuals)
+          if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
+            item.visible = false
+            item.userData.userVisuals.forEach( obj => { if (obj) console.log(obj), set.add(obj) } )
+          } else item.visible = true
+        })
         this.allVisuals = Array.from(set)
       }
     }
@@ -423,9 +438,11 @@ export default {
       console.log(window.__viewer)
       window.__viewer.interactions.deselectObjects()
       window.__viewer.sceneManager.objects.forEach(obj => {
-        if (obj.userData.userVisuals != visId && obj.userData.userVisuals) {
+        if (!obj.userData.userVisuals || obj.userData.userVisuals.includes(visId) || obj.userData.userVisuals[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+          obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+        } else { 
           obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
-        }else { obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1 }
+        }
       })
 
     },
@@ -434,6 +451,8 @@ export default {
       if (this.namedViews.length ==0 ) return
       if (this.viewsPlayed >= this.namedViews.length) this.viewsPlayed = 0
       window.__viewer.interactions.setView(this.namedViews[this.viewsPlayed].id)
+    },
+    nextSlide() {
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
