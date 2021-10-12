@@ -155,7 +155,7 @@ module.exports = {
         actionType: 'commit_receive',
         userId: context.userId,
         info: { sourceApplication: args.input.sourceApplication, message: args.input.message },
-        message: `Commit ${args.input.commitId} was received by ${user.name}.`,
+        message: `Commit ${args.input.commitId} was received by ${user.name}`,
       } )
       // await pubsub.publish( COMMIT_RECEIVED, {
       //   commitReceived: { ...args.commit },

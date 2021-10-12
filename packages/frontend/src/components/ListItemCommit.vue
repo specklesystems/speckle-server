@@ -35,7 +35,7 @@
       <p class="text-end mt-2 mb-0">
         <!-- Can be also "Received X times" -->
         <v-list-item-title class="caption">
-          received by {{ receivedUsersAll[0].message.split('received by')[1] }}
+          Received by {{ receivedUsersAll[0].message.split('received by')[1] }}
         </v-list-item-title>
       </p>
       <v-list-item-subtitle class="mt-2 caption">
@@ -76,7 +76,6 @@
             {{ commit.branchName }}
           </v-chip>
         </span>
-        <!-- Suggestion to move commit SourceApp to the left -->
         <source-app-avatar :application-name="commit.sourceApplication" />
       </div>
     </v-list-item-action>
@@ -90,8 +89,26 @@
         <v-toolbar>
           <v-toolbar-title>Full commit activity</v-toolbar-title>
         </v-toolbar>
-        <v-card-text>{{ activity }}</v-card-text>
+        <v-card-text class="pt-2 pb-2" v-for="obj in activity.items" v-bind:key="obj.id">
+          <div >
+            <span>
+                <user-avatar class="pr-2"
+                  :id="obj.userId"
+                  :key="obj.userId"
+                  :avatar="obj.userId.avatar"
+                  :size="40"
+                  :name="obj.userId.name"
+                  :show-hover="true"
+                /> 
+                {{ obj.message.split('received by')[1] }} received
+                <timeago :datetime="obj.time"></timeago> in 
+            </span>
+            <source-app-avatar class="mt-3 mb-3" style="position: relative; float: right"  :application-name="commit.sourceApplication" />
+              
+          </div>
+        </v-card-text>
       </v-card>
+      
     </v-dialog>
   </v-list-item>
 </template>
