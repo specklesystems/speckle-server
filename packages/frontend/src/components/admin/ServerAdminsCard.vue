@@ -69,13 +69,13 @@ import userSearchQuery from '@/graphql/userSearch.gql'
 export default {
   name: 'ServerAdminsCard',
   components: { SearchBar, ServerAdminsUser },
+  props: ['adminUsers'],
   data() {
     return {
       selectedSearchItem: [],
       search: '',
       userSearch: { items: [] },
-      addUserMode: false,
-      adminUsers: []
+      addUserMode: false
     }
   },
   apollo: {

@@ -57,10 +57,7 @@
 
         <v-list-item v-if="user" link to="/profile" style="height: 59px">
           <v-list-item-icon>
-            <v-avatar size="25">
-              <v-img v-if="user.avatar" :src="user.avatar" />
-              <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=38x38`" />
-            </v-avatar>
+            <user-avatar-icon :size="24" :avatar="user.avatar" :seed="user.id"></user-avatar-icon>
           </v-list-item-icon>
 
           <v-list-item-content>
@@ -254,17 +251,32 @@
         <router-view></router-view>
       </transition>
     </v-main>
+    <v-snackbar
+      v-model="streamSnackbar"
+      rounded="pill"
+      :timeout="10000"
+      style="z-index: 10000"
+      :color="`${$vuetify.theme.dark ? 'primary' : 'primary'}`"
+    >
+      <span v-if="streamSnackbarInfo.sharedBy">You have been granted access to a new stream!</span>
+      <span v-else>New stream created!</span>
+      <template #action="{ attrs }">
+        <v-btn color="white" text v-bind="attrs" @click="goToStreamAndCloseSnackbar()">View</v-btn>
+        <v-btn color="pink" icon v-bind="attrs" @click="streamSnackbar = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 <script>
 import gql from 'graphql-tag'
 import { signOut } from '@/auth-helpers'
 import userQuery from '../graphql/user.gql'
-import SearchBar from '../components/SearchBar'
-import StreamInviteDialog from '../components/dialogs/StreamInviteDialog'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
-  components: { SearchBar, StreamInviteDialog },
+  components: { UserAvatarIcon },
   data() {
     return {
       streamSnackbar: false,
@@ -300,6 +312,7 @@ export default {
           }
         `,
         result(streamInfo) {
+          console.log(streamInfo)
           if (!streamInfo.data.userStreamAdded) return
           this.streamSnackbar = true
           this.streamSnackbarInfo = streamInfo.data.userStreamAdded
@@ -323,7 +336,10 @@ export default {
     }
   },
   watch: {
-    $route(to, from) {
+    $route(to) {
+      this.bottomSheet = false
+      // close the snackbar if it's a stream create event in this window
+      if (to.params.streamId === this.streamSnackbarInfo.id) this.streamSnackbar = false
       this.bottomSheet = false
     }
   },
@@ -337,6 +353,10 @@ export default {
     },
     showStreamInviteDialog() {
       this.$refs.streamInviteDialog.show()
+    },
+    goToStreamAndCloseSnackbar() {
+      this.streamSnackbar = false
+      this.$router.push(`/streams/${this.streamSnackbarInfo.id}`)
     }
   }
 }

@@ -16,12 +16,12 @@ const Invites = () => knex( 'server_invites' )
 module.exports = {
   async createAndSendInvite( { email, inviterId, message, resourceTarget, resourceId, role } ) {
     // check if email is already registered as a user
+    email = email.toLowerCase()
     let existingUser = await getUserByEmail( { email } )
 
     if ( existingUser ) throw new Error( 'This email is already associated with an account on this server!' )
 
     if ( message ) {
-      
       if ( message.length >= 1024 ) {
         throw new Error( 'Personal message too long.' )
       }
@@ -105,12 +105,12 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
   },
 
   async getInviteByEmail( { email } ) {
-    return await Invites().where( { email: email } ).select( '*' ).first()
+    return await Invites().where( { email: email.toLowerCase() } ).select( '*' ).first()
   },
 
   async validateInvite( { email, id } ) {
     const invite = await module.exports.getInviteById( { id } )
-    return invite && invite.email === email && !invite.used
+    return invite && invite.email === email.toLowerCase() && !invite.used
   },
 
   async useInvite( { id, email } ) {
@@ -120,7 +120,7 @@ This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL}, dep
     let invite = await module.exports.getInviteById( { id } )
     if ( !invite ) throw new Error( 'Invite not found' )
     if ( invite.used ) throw new Error( 'Invite has been used' )
-    if ( invite.email !== email ) throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
+    if ( invite.email !== email.toLowerCase() ) throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
 
     if ( invite.resourceId && invite.resourceTarget && invite.role ) {
       let user = await getUserByEmail( { email: invite.email } )

@@ -6,9 +6,9 @@
         <span class="space-grotesk" style="max-width: 80%">{{ stream.branch.name }}</span>
         <span class="caption ml-2 mb-2 pb-2">{{ stream.branch.description }}</span>
         <v-chip
+          v-tooltip="`Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`"
           class="ml-2 pl-2"
           small
-          v-tooltip="`Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`"
         >
           <v-icon small>mdi-source-commit</v-icon>
           {{ stream.branch.commits.totalCount }}
@@ -17,7 +17,6 @@
     </portal>
     <portal to="streamActionsBar">
       <v-btn
-        elevation="0"
         v-if="
           loggedInUserId &&
           stream &&
@@ -25,12 +24,13 @@
           stream.branch &&
           stream.branch.name !== 'main'
         "
+        v-tooltip="'Edit branch'"
+        elevation="0"
         color="primary"
         small
         rounded
         :fab="$vuetify.breakpoint.mdAndDown"
         dark
-        v-tooltip="'Edit branch'"
         @click="editBranch()"
       >
         <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">mdi-pencil</v-icon>
@@ -44,11 +44,11 @@
       <v-col v-else-if="stream && stream.branch" cols="12" class="pa-0 ma-0">
         <branch-edit-dialog ref="editBranchDialog" />
 
-        <div style="height: 60vh" v-if="latestCommitObjectUrl">
+        <div v-if="latestCommitObjectUrl" style="height: 60vh">
           <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
 
-        <v-list class="pa-0 ma-0" v-if="stream.branch.commits.items.length > 0">
+        <v-list v-if="stream.branch.commits.items.length > 0" class="pa-0 ma-0">
           <list-item-commit
             :commit="latestCommit"
             :stream-id="streamId"
@@ -66,19 +66,18 @@
           ></list-item-commit>
 
           <!-- TODO: pagination -->
-
         </v-list>
       </v-col>
 
       <no-data-placeholder
         v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
       >
-        <h2 class="space-grotesk">Branch "{{stream.branch.name}}" has no commits.</h2>
+        <h2 class="space-grotesk">Branch "{{ stream.branch.name }}" has no commits.</h2>
       </no-data-placeholder>
     </v-row>
     <error-placeholder
-      error-type="404"
       v-if="!$apollo.loading && (error || stream.branch === null)"
+      error-type="404"
     >
       <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
     </error-placeholder>
@@ -162,6 +161,10 @@ export default {
       else return null
     }
   },
+  mounted() {
+    if (this.$route.params.branchName === 'globals')
+      this.$router.push(`/streams/${this.$route.params.streamId}/globals`)
+  },
   methods: {
     editBranch() {
       this.$refs.editBranchDialog.open(this.stream.branch).then((dialog) => {
@@ -181,11 +184,6 @@ export default {
         }
       })
     }
-  },
-  mounted() {
-    console.log(this.$route.params)
-    if (this.$route.params.branchName === 'globals')
-      this.$router.push(`/streams/${this.$route.params.streamId}/globals`)
   }
 }
 </script>

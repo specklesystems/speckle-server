@@ -39,7 +39,11 @@
     <v-dialog v-model="liff" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
       <v-card>
         <v-toolbar>
-          <v-toolbar-title>thanks for all the fish <v-icon>mdi-fish</v-icon><v-icon>mdi-arrow-up</v-icon></v-toolbar-title>
+          <v-toolbar-title>
+            thanks for all the fish
+            <v-icon>mdi-fish</v-icon>
+            <v-icon>mdi-arrow-up</v-icon>
+          </v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon @click="liff = false"><v-icon>mdi-close</v-icon></v-btn>
         </v-toolbar>
@@ -51,6 +55,12 @@
 import gql from 'graphql-tag'
 
 export default {
+  props: {
+    gotostreamonclick: {
+      type: Boolean,
+      default: true
+    }
+  },
   data: () => ({
     search: '',
     liff: false,
@@ -85,12 +95,15 @@ export default {
   },
   watch: {
     selectedSearchResult(val) {
-      this.search = ''
+      let myStream = this.streams.items.find((s) => s.id === val.id)
+      this.$emit('select', myStream)
+
       this.streams.items = []
-      if (val) this.$router.push({ name: 'stream', params: { streamId: val.id } })
+      this.search = ''
+
+      if (val && this.gotostreamonclick) this.$router.push(`/streams/${val.id}`)
     },
     search(val) {
-      console.log(val)
       if (val === '42') this.liff = true
     }
   },

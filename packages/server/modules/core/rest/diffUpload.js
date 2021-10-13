@@ -1,5 +1,6 @@
 'use strict'
 const zlib = require( 'zlib' )
+const cors = require( 'cors' )
 const Busboy = require( 'busboy' )
 const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
@@ -11,7 +12,9 @@ const { validatePermissionsWriteStream } = require( './authUtils' )
 const { hasObjects } = require( '../services/objects' )
 
 module.exports = ( app ) => {
-  app.post( '/api/diff/:streamId', contextMiddleware, matomoMiddleware, async ( req, res ) => {
+  app.options( '/api/diff/:streamId', cors() )
+  
+  app.post( '/api/diff/:streamId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
     let hasStreamAccess = await validatePermissionsWriteStream( req.params.streamId, req )
     if ( !hasStreamAccess.result ) {
       return res.status( hasStreamAccess.status ).end()

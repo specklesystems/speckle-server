@@ -21,10 +21,9 @@ async function contextApiTokenHelper( { req, res, connection } ) {
 
   if ( connection && connection.context.token ) { // Websockets (subscriptions)
     token = connection.context.token
-  } else if ( req && req.headers.authorization ) { // Standard http
+  } else if ( req && req.headers.authorization ) { // Standard http post
     token = req.headers.authorization
-  }
-
+  } 
   if ( token && token.includes( 'Bearer ' ) ) {
     token = token.split( ' ' )[ 1 ]
   }

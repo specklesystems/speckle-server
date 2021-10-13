@@ -57,7 +57,7 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/views/Frontend_re.vue'),
+    component: () => import('@/views/Frontend.vue'),
     children: [
       {
         path: '',
@@ -80,7 +80,7 @@ const routes = [
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/views/stream/Stream_re_re.vue'),
+        component: () => import('@/views/stream/Stream.vue'),
         children: [
           {
             path: '',
@@ -88,13 +88,13 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Details_re.vue')
+            component: () => import('@/views/stream/Details.vue')
           },
 
           {
             path: 'branches/',
             name: 'branches',
-            redirect: 'branches/main',
+            redirect: 'branches/main'
           },
           {
             path: 'branches/:branchName*',
@@ -102,7 +102,14 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('@/views/stream/Branch.vue')
+            component: () => import('@/views/stream/Branch.vue'),
+            beforeEnter: (to, from, next) => {
+              if (to.params.branchName.toLowerCase() !== to.params.branchName)
+                return next(
+                  `/streams/${to.params.streamId}/branches/${to.params.branchName.toLowerCase()}`
+                )
+              else next()
+            }
           },
           {
             path: 'commits/:commitId',
@@ -157,6 +164,15 @@ const routes = [
             component: () => import('@/views/stream/Webhooks.vue')
           },
           {
+            path: 'uploads/',
+            name: 'uploads',
+            meta: {
+              title: 'Stream Uploads | Speckle'
+            },
+            props: true,
+            component: () => import('@/views/stream/Uploads.vue')
+          },
+          {
             path: 'globals/',
             name: 'globals',
             meta: {
@@ -204,11 +220,12 @@ const routes = [
             path: 'dashboard',
             component: () => import('@/views/admin/AdminOverview.vue')
           },
-          // {
-          //   name: 'Admin | Users',
-          //   path: 'users',
-          //   component: () => import('@/views/admin/AdminUsers.vue')
-          // },
+          {
+            name: 'Admin | Users',
+            path: 'users',
+            component: () => import('@/views/admin/AdminUsers.vue'),
+            props: (route) => ({ ...route.query, ...route.props })
+          },
           // {
           //   name: 'Admin | Streams',
           //   path: 'streams',
@@ -218,6 +235,11 @@ const routes = [
             name: 'Admin | Settings',
             path: 'settings',
             component: () => import('@/views/admin/AdminSettings.vue')
+          },
+          {
+            name: 'Admin | Invites',
+            path: 'invites',
+            component: () => import('@/views/admin/AdminInvites.vue')
           }
         ]
       }
@@ -253,7 +275,7 @@ const router = new VueRouter({
   mode: 'history',
   // base: process.env.BASE_URL,
   routes,
-  scrollBehavior (to, from, savedPosition) {
+  scrollBehavior(to, from, savedPosition) {
     return { x: 0, y: 0 }
   }
 })

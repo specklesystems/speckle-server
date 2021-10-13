@@ -1,41 +1,41 @@
 <template>
   <div id="admin-settings">
-  <v-card rounded="lg" v-if="serverInfo">
-    <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
-      <v-toolbar-title>{{ serverInfo.name }}</v-toolbar-title>
-    </v-toolbar>
-    <v-card-text>
-      <div key="viewPanel">
-        <div class="d-flex align-center mb-2" v-for="(value, name) in serverDetails" :key="name">
-          <div class="flex-grow-1">
-            <div v-if="value.type == 'boolean'">
-              <p class="mt-2">{{value.label}}</p>
-              <v-switch
-                inset
-                persistent-hint
+    <v-card v-if="serverInfo" rounded="lg">
+      <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
+        <v-toolbar-title>{{ serverInfo.name }}</v-toolbar-title>
+      </v-toolbar>
+      <v-card-text>
+        <div key="viewPanel">
+          <div v-for="(value, name) in serverDetails" :key="name" class="d-flex align-center mb-2">
+            <div class="flex-grow-1">
+              <div v-if="value.type == 'boolean'">
+                <p class="mt-2">{{ value.label }}</p>
+                <v-switch
+                  v-model="serverModifications[name]"
+                  inset
+                  persistent-hint
+                  class="pa-1 ma-1 caption"
+                >
+                  <template #label>
+                    <span class="caption">{{ value.hint }}</span>
+                  </template>
+                </v-switch>
+              </div>
+              <v-text-field
+                v-else
                 v-model="serverModifications[name]"
-                class="pa-1 ma-1 caption"
-              >
-                <template v-slot:label>
-                  <span class="caption">{{ value.hint }}</span>
-                </template>
-              </v-switch>
+                persistent-hint
+                :hint="value.hint"
+                class="ma-0 body-2"
+              ></v-text-field>
             </div>
-            <v-text-field
-              persistent-hint
-              v-else
-              :hint="value.hint"
-              v-model="serverModifications[name]"
-              class="ma-0 body-2"
-            ></v-text-field>
           </div>
         </div>
-      </div>
-    </v-card-text>
-    <v-card-actions>
-      <v-btn block color="primary" @click="saveEdit" :loading="loading">Save</v-btn>
-    </v-card-actions>
-  </v-card>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn block color="primary" :loading="loading" @click="saveEdit">Save</v-btn>
+      </v-card-actions>
+    </v-card>
   </div>
 </template>
 

@@ -1,7 +1,7 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
 const { UserInputError } = require( 'apollo-server-express' )
-const { getUser, getUserRole, updateUser, deleteUser, searchUsers, getUserById } = require( '../../services/users' )
+const { getUser, getUsers, countUsers, getUserRole, updateUser, deleteUser, searchUsers, getUserById, makeUserAdmin, unmakeUserAdmin } = require( '../../services/users' )
 const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 const { validateServerRole, validateScopes } = require( `${appRoot}/modules/shared` )
 const zxcvbn = require( 'zxcvbn' )
@@ -26,6 +26,14 @@ module.exports = {
       }
 
       return await getUser( args.id || context.userId )
+    },
+
+    async users( parent, args, context, info ){
+      await validateServerRole( context, 'server:admin' )
+      await validateScopes( context.scopes, 'users:read' )
+      let users = await getUsers ( args.limit, args.offset, args.query )
+      let totalCount = await countUsers( args.query )
+      return { totalCount, items: users }
     },
 
     async userSearch( parent, args, context, info ) {
@@ -96,6 +104,12 @@ module.exports = {
         message: 'User updated'
       } )
 
+      return true
+    },
+
+    async userRoleChange( parent, args, context, info ) {
+      let roleChanger = args.userRoleInput.role === 'server:admin' ? makeUserAdmin: unmakeUserAdmin
+      await roleChanger( { userId: args.userRoleInput.id } )
       return true
     },
 
