@@ -90,15 +90,15 @@
           <v-toolbar-title>Full commit activity</v-toolbar-title>
         </v-toolbar>
         <v-card-text  class="pt-2 pb-2 pl-3 pr-3" v-for="obj in activity.items" v-bind:key="obj.id">
-          <v-list-item class="pl-0 pr-0">
-              <user-avatar class="pr-3"
+          <v-list-item class="pl-2 pr-0">
+              <!-- <user-avatar class="pr-3"
                 :id="obj.userId"
                 :key="obj.userId"
                 :avatar="obj.userId"
                 :size="40"
                 :name="obj.userId.name"
                 :show-hover="true"
-              /> 
+              />  -->
             <v-list-item-content>
               <v-list-item-title>
                 <b> {{ obj.message.split('received by')[1] }} </b> received
@@ -162,24 +162,40 @@ export default {
     },
     userData: {
       query: gql`
-        query UserData($userId: String!) {
-          user(id: $userId) {
+        query UserData($userId1: String! $userId2: String! $userId3: String! $userId4: String!) {
+          user1: user(id: $userId1) {
             id
             name
-            bio
-            company
+            avatar
+          }
+          user2: user(id: $userId2) {
+            id
+            name
+            avatar
+          }
+          user3: user(id: $userId3) {
+            id
+            name
+            avatar
+          }
+          user4: user(id: $userId4) {
+            id
+            name
             avatar
           }
         }
       `,
-      update: (data) => data.user,
+      update: (data) => data,
       variables() {
         return {
-          userId: this.currentId 
+          userId1: this.idUnique[0],
+          userId2: this.idUnique[1],
+          userId3: this.idUnique[2],
+          userId4: this.idUnique[3] 
         }
       },
       skip() {
-        if (!this.currentId ) return true 
+        if (!this.idUnique || this.idUnique.length==0 ) return true 
         return false
       }
     }
@@ -223,14 +239,20 @@ export default {
         
         this.receivedUsersUnique.forEach(obj => { 
           if (obj) {
-            this.idUnique.push(obj), this.currentId = obj, console.log("loop in progress")//,  console.log(val)
+            this.idUnique.push(obj), console.log("loop in progress"), console.log(this.idUnique)//,  console.log(val)
           }
         })
+        do {this.idUnique.push(this.idUnique[0])} while (this.idUnique.length<4) //fill all 4 users with fake data
       } 
-    },
+    }, 
     userData(val) {
-      console.log("query was called")
-      this.userAvatars.push(val.avatar)
+      console.log("query was called, the data received: ")
+      console.log(val)
+      if (val.user1.avatar) this.userAvatars.push(val.user1.avatar)
+      if (val.user2.avatar) this.userAvatars.push(val.user2.avatar) 
+      if (val.user3.avatar) this.userAvatars.push(val.user3.avatar) 
+      if (val.user4.avatar) this.userAvatars.push(val.user4.avatar) 
+      console.log(this.userAvatars)
     }
   },
   methods: {
