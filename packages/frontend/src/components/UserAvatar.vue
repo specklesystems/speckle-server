@@ -49,12 +49,6 @@
         </v-card-text>
       </v-card>
     </v-menu>
-    <<<<<<< HEAD
-    <v-avatar v-else-if="showHover" class="ma-1" color="grey lighten-3" :size="size">
-      <v-img v-if="avatar" :src="avatar" />
-      <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-    </v-avatar>
-    =======
     <user-avatar-icon
       v-else
       class="ma-1"
@@ -62,7 +56,6 @@
       :avatar="avatar"
       :seed="id"
     ></user-avatar-icon>
-    >>>>>>> main
   </div>
 </template>
 <script>
