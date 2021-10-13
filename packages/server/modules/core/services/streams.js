@@ -14,7 +14,7 @@ module.exports = {
   async createStream( { name, description, isPublic, ownerId } ) {
     let stream = {
       id: crs( { length: 10 } ),
-      name: name || 'Random Stream',
+      name: name || generateStreamName(),
       description: description || '',
       isPublic: isPublic !== false,
       updatedAt: knex.fn.now( )
@@ -169,4 +169,16 @@ module.exports = {
 
     return await query
   }
+}
+
+const adjectives = [
+  'Tall', 'Curved', 'Stacked', 'Purple', 'Pink', 'Rectangular', 'Circular', 'Oval', 'Shiny', 'Speckled', 'Blue', 'Stretched', 'Round', 'Spherical', 'Majestic', 'Symmetrical'
+]
+
+const nouns = [
+  'Building', 'House', 'Treehouse', 'Tower', 'Tunnel', 'Bridge', 'Pyramid', 'Structure', 'Edifice', 'Palace', 'Castle', 'Villa'
+]
+
+const generateStreamName = () => {
+  return `${adjectives[Math.floor( Math.random()*adjectives.length )]} ${nouns[Math.floor( Math.random()*nouns.length )]}`
 }

@@ -17,11 +17,9 @@ module.exports = async () => {
   await registerOrUpdateApp( { ...SpeckleApiExplorer } )
   await registerOrUpdateApp( { ...SpeckleDesktopApp } )
   await registerOrUpdateApp( { ...SpeckleExcel } )
-
 }
 
 async function registerOrUpdateApp( app ) {
-
   if ( app.scopes && app.scopes === 'all' ) {
     // let scopes = await Scopes( ).select( '*' )
     // console.log( allScopes.length )

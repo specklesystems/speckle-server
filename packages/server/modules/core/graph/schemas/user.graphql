@@ -3,6 +3,11 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user(id: String): User
+  
+  """
+  Get users from the server in a paginated view. The query search for matches in name, company and email.
+  """
+  users(limit: Int!=25, offset: Int!=0, query: String=null) : UserCollection
   userSearch(
     query: String!
     limit: Int! = 25
@@ -25,6 +30,12 @@ type User {
   verified: Boolean
   profiles: JSONObject
   role: String
+}
+
+
+type UserCollection {
+  totalCount: Int!
+  items: [ User ]
 }
 
 type UserSearchResultCollection {
@@ -53,6 +64,14 @@ extend type Mutation {
   userDelete(userConfirmation: UserDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:delete")
+
+  userRoleChange(userRoleInput: UserRoleInput!): Boolean!
+    @hasRole(role: "server:admin")
+}
+
+input UserRoleInput {
+  id: String!
+  role: String!
 }
 
 input UserUpdateInput {

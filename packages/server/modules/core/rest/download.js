@@ -14,7 +14,6 @@ const { SpeckleObjectsStream } = require( './speckleObjectsStream' )
 const { pipeline, PassThrough } = require( 'stream' )
 
 module.exports = ( app ) => {
-
   app.options( '/objects/:streamId/:objectId', cors() )
 
   app.get( '/objects/:streamId/:objectId', cors(), contextMiddleware, matomoMiddleware, async ( req, res ) => {
@@ -54,7 +53,6 @@ module.exports = ( app ) => {
         }
       }
     )
-
   } )
 
   app.options( '/objects/:streamId/:objectId/single', cors() )

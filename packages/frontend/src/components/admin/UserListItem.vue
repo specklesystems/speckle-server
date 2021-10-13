@@ -1,7 +1,13 @@
 <template>
   <div class="d-flex align-center pa-3 admin-user-view">
     <div class="d-flex flex-grow-1 align-center">
-      <img height="60pt" width="60pt" class="rounded-circle overflow-hidden elevation-1" contain :src="admin.avatar"/>
+      <img
+        height="60pt"
+        width="60pt"
+        class="rounded-circle overflow-hidden elevation-1"
+        contain
+        :src="admin.avatar"
+      />
       <div class="d-flex flex-column flex-grow-1 ml-2" style="min-width: 30%">
         <span class="subtitle-1">{{ admin.name }}</span>
         <span class="caption">
@@ -52,7 +58,7 @@ export default {
     admin: {},
     widgets: {},
   },
-  data(){
+  data() {
     return {
     }
   },

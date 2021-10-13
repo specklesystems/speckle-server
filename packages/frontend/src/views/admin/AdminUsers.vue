@@ -1,155 +1,242 @@
 <template>
-  <div>
-    <v-card title="Users">
-      <template slot="menu">
-        <span class="caption mr-2">Showing XX of YYY users.</span>
-        <v-menu offset-y left class="rounded-circle">
-          <template #activator="{ attrs, on }">
-            <v-btn v-bind="attrs" v-on="on" icon outlined small color="primary" class="mr-2">
-              <v-icon small>mdi-plus</v-icon>
-            </v-btn>
-          </template>
-          <v-list class="rounded-circle">
-            <v-list-item>Hi</v-list-item>
-            <v-list-item>Hi</v-list-item>
-            <v-list-item>Hi</v-list-item>
-          </v-list>
-        </v-menu>
+  <v-card>
+    <v-toolbar flat>
+      <v-toolbar-title>
+        Server Users Admin
+        <span v-if="users">(found {{ users.totalCount }} users)</span>
+      </v-toolbar-title>
+    </v-toolbar>
+    <v-text-field
+      v-model="searchQuery"
+      class="mx-4 mt-4"
+      :prepend-inner-icon="'mdi-magnify'"
+      :loading="$apollo.loading"
+      label="Search users"
+      type="text"
+      single-line
+      clearable
+      rounded
+      filled
+      dense
+    ></v-text-field>
+    <v-list v-if="!$apollo.loading" rounded>
+      <v-list-item-group v-if="users.totalCount > 0" color="primary">
+        <v-list-item v-for="user in users.items" :key="user.id">
+          <v-list-item-avatar :size="55">
+            <user-avatar-icon
+              class="ml-n2"
+              :avatar="user.avatar"
+              :seed="user.id"
+              :size="50"
+            ></user-avatar-icon>
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>
+              {{ user.name }}
+            </v-list-item-title>
 
-        <v-btn icon outlined small color="primary" class="mr-2">
-          <v-icon small>mdi-filter</v-icon>
-        </v-btn>
-        <v-btn icon outlined small color="primary">
-          <v-icon small>mdi-sort</v-icon>
-        </v-btn>
-      </template>
-
-      <user-list-item v-for="user in users" :key="user.id" :admin="user" :widgets="widgets(user)">
-        <v-menu offset-y left rounded>
-          <template v-slot:activator="{ attrs, on }">
-            <v-btn icon small v-bind="attrs" v-on="on" class="ml-2">
-              <v-icon small>mdi-dots-vertical</v-icon>
-            </v-btn>
-          </template>
-          <v-list nav dense>
-            <v-tooltip
-              left
-              max-width="200pt"
-              open-delay="500"
-              v-for="opt in menuOptions"
-              :key="opt.text"
-              :disabled="!opt.hint"
-            >
-              <template v-slot:activator="{ attrs, on }">
-                <v-list-item
-                  v-bind="attrs"
-                  v-on="on"
-                  link
-                  @click="opt.action ? opt.action(user) : null"
-                >
-                  <v-list-item-icon class="mr-3">
-                    <v-icon
-                      small
-                      v-text="opt.icon"
-                      :class="`${opt.color || 'dark'}--text`"
-                    ></v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title
-                      v-text="opt.text"
-                      :class="`${opt.color || 'dark'}--text`"
-                    ></v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </template>
-              {{ opt.hint }}
-            </v-tooltip>
-          </v-list>
-        </v-menu>
-      </user-list-item>
-
-      <div class="text-center subtitle-2 pt-3">
-        <v-btn :loading="loading" text width="100%" color="primary" @click="loadMoreUsers">
-          Load more
-        </v-btn>
-      </div>
-    </v-card>
-  </div>
+            <span class="caption">
+              <v-icon x-small>mdi-email-outline</v-icon>
+              {{ user.email }}
+            </span>
+            <span v-if="user.company" class="caption">
+              <v-icon x-small>mdi-domain</v-icon>
+              {{ user.company }}
+            </span>
+            <span v-else class="caption">
+              <v-icon x-small>mdi-help-circle</v-icon>
+              No company info
+            </span>
+          </v-list-item-content>
+          <v-list-item-action>
+            <v-select
+              :value="user.role"
+              :items="availableRoles"
+              label="user role"
+              @change="changeUserRole(user, ...arguments)"
+            ></v-select>
+          </v-list-item-action>
+        </v-list-item>
+        <div class="text-center">
+          <v-pagination
+            v-model="currentPage"
+            :length="numberOfPages"
+            :total-visible="7"
+            circle
+          ></v-pagination>
+        </div>
+      </v-list-item-group>
+    </v-list>
+    <v-skeleton-loader v-else class="mx-auto" type="card"></v-skeleton-loader>
+    <v-dialog v-model="showConfirmDialog" persistent max-width="600px">
+      <v-card v-if="showConfirmDialog">
+        <v-toolbar flat class="mb-6">
+          <v-toolbar-title>Confirm user role change</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <v-alert v-if="newRole === 'server:admin'" type="error">
+            Make sure you trust {{ manipulatedUser.name }}!
+            <br />
+            An admin on the server has access to every resource.
+          </v-alert>
+          You are changing {{ manipulatedUser.name }}'s server access role from
+          {{ roleLookupTable[manipulatedUser.role] }} to {{ roleLookupTable[newRole] }}.
+          <br />
+          Proceed?
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="error" text @click="cancelRoleChange">Cancel</v-btn>
+          <v-btn color="primary" text @click="proceedRoleChange">Proceed</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-card>
 </template>
 
 <script>
-import UserListItem from '@/components/admin/UserListItem'
+import gql from 'graphql-tag'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
+import debounce from 'lodash.debounce'
 
 export default {
-  name: 'AdminUsers',
-  components: { UserListItem },
-  methods: {
-    viewProfile(user) {
-      console.log('requesting profile for user with id ', user.id)
-    },
-    widgets(user) {
-      return [
-        {
-          icon: 'mdi-eye-outline',
-          hint: 'Last seen',
-          value: '< 1 day',
-          type: 'text',
-          color: null
-        },
-        {
-          icon: 'mdi-cloud-outline',
-          hint: 'Streams',
-          value: user.streams.totalCount,
-          type: 'number'
-        },
-        {
-          icon: 'mdi-cloud-upload-outline',
-          hint: 'Commits',
-          value: user.commits.totalCount,
-          type: 'number'
-        },
-        {
-          icon: 'mdi-calendar-outline',
-          hint: 'Joined in',
-          value: 'Feb/21',
-          type: 'text'
-        },
-        {
-          icon: 'mdi-decagram-outline',
-          hint: 'Badges',
-          value: 55
-        }
-      ]
-    },
-    loadMoreUsers() {
-      console.log('requested more users!')
-      this.loading = true
-      those
-      setTimeout(() => {
-        this.loading = false
-      }, 700)
-    }
+  name: 'UserAdmin',
+  components: { UserAvatarIcon },
+  props: {
+    limit: { type: [Number, String], required: false, default: 10 },
+    page: { type: [Number, String], required: false, default: 1 },
+    q: { type: String, required: false, default: null }
   },
   data() {
     return {
-      loading: false,
-      menuOptions: [
-        {
-          text: 'View profile',
-          icon: 'mdi-account',
-          action: this.viewProfile
+      roleLookupTable: {
+        'server:user': 'User',
+        'server:admin': 'Admin'
+        // 'server:archived_user': 'Archived'
+      },
+      users: {
+        items: [],
+        totalCount: 0
+      },
+      currentPage: 1,
+      searchQuery: null,
+      showConfirmDialog: false,
+      manipulatedUser: null,
+      newRole: null
+    }
+  },
+  computed: {
+    queryLimit() {
+      return parseInt(this.limit)
+    },
+    queryOffset() {
+      return (this.page - 1) * this.queryLimit
+    },
+    numberOfPages() {
+      return Math.ceil(this.users.totalCount / this.limit)
+    },
+    availableRoles() {
+      let roleItems = []
+      for (let role in this.roleLookupTable) {
+        roleItems.push({ text: this.roleLookupTable[role], value: role })
+      }
+      return roleItems
+    }
+  },
+  watch: {
+    currentPage: function (newPage) {
+      this.paginateNext(newPage)
+    },
+    searchQuery: debounce(function (newQuery) {
+      this.applySearch(newQuery)
+    }, 1000)
+  },
+  methods: {
+    changeUserRole(user, args) {
+      this.manipulatedUser = user
+      this.newRole = args
+      console.log(user.role)
+      console.log(this.newRole)
+
+      this.showConfirmDialog = true
+    },
+    resetManipulatedUser() {
+      this.manipulatedUser = null
+      this.newRole = null
+    },
+    cancelRoleChange() {
+      this.showConfirmDialog = false
+      this.$apollo.queries.users.refetch()
+      this.resetManipulatedUser()
+    },
+    async proceedRoleChange() {
+      await this.updateUserRole(this.manipulatedUser.id, this.newRole)
+      this.resetManipulatedUser()
+      this.showConfirmDialog = false
+    },
+    async updateUserRole(userId, newRole) {
+      await this.$apollo.mutate({
+        mutation: gql`
+          mutation($userId: String!, $newRole: String!) {
+            userRoleChange(userRoleInput: { id: $userId, role: $newRole })
+          }
+        `,
+        variables: {
+          userId,
+          newRole
         },
-        {
-          text: 'Delete user',
-          icon: 'mdi-delete',
-          color: 'error',
-          hint: "Removes this user's admin privileges. This will not delete the user's account."
+        update: () => {
+          this.$apollo.queries.users.refetch()
+        },
+        error: (err) => {
+          console.log(err)
         }
-      ],
-      users:[],
+      })
+    },
+    paginateNext(newPage) {
+      this.$router.push(this._prepareRoute(newPage, this.limit, this.searchQuery))
+    },
+    applySearch(searchQuery) {
+      this.$router.push(this._prepareRoute(1, this.limit, searchQuery))
+    },
+    _prepareRoute(page, limit, query) {
+      let newRoute = `users?page=${page}&limit=${limit}`
+      if (query) newRoute = `${newRoute}&q=${query}`
+      return newRoute
+    }
+  },
+  apollo: {
+    users: {
+      query: gql`
+        query Users($limit: Int, $offset: Int, $query: String) {
+          users(limit: $limit, offset: $offset, query: $query) {
+            totalCount
+            items {
+              id
+              suuid
+              email
+              name
+              bio
+              company
+              avatar
+              verified
+              profiles
+              role
+              authorizedApps {
+                name
+              }
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          limit: this.queryLimit,
+          offset: this.queryOffset,
+          query: this.q
+        }
+      }
     }
   }
 }
 </script>
-
-<style scoped></style>
