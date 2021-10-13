@@ -73,7 +73,7 @@
       ></v-progress-linear>
 
       <v-card
-        v-show="hasLoadedModel && loadProgress >= 99"
+        v-show="hasLoadedModel && loadProgress >= 100"
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
@@ -350,16 +350,7 @@ export default {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
 
-        //display from the beginning only the main model, no visuals
-        let set = new Set() 
-        window.__viewer.sceneManager.objects.forEach((item) => {
-          //console.log(item.userData.userVisuals)
-          if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
-            item.visible = false
-            item.userData.userVisuals.forEach( obj => { if (obj) set.add(obj) } )
-          } else item.visible = true
-        })
-        this.allVisuals = Array.from(set)
+        
 
         //get proper views
         this.userViews = window.__viewer.sceneManager.views
@@ -372,6 +363,22 @@ export default {
         //this.userViews = _.sortBy( this.userViews, 'applicationId' );
         this.userViews.sort((a, b) => a.applicationId < b.applicationId ? - 1 : Number(a.applicationId > b.applicationId))
         console.log(this.userViews)
+
+        //display from the beginning only the main model, no visuals
+        console.log("objects")
+        console.log(window.__viewer.sceneManager.objects)
+        let set = new Set() 
+        window.__viewer.sceneManager.objects.forEach((item) => {
+          console.log(item.userData.userVisuals)
+          if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
+            item.visible = false
+            console.log(item.userData.userVisuals)
+            item.userData.userVisuals.forEach( obj => { if (obj) set.add(obj) } )
+          } else item.visible = true
+        })
+        this.allVisuals = Array.from(set)
+        console.log("All Visuals:")
+        console.log(this.allVisuals)
       }
     }
   },
@@ -449,7 +456,7 @@ export default {
       window.__viewer.interactions.rotateTo(view)
     },
     showVis(visId){
-      //console.log(window.__viewer)
+      console.log(window.__viewer.sceneManager.objects)
       window.__viewer.interactions.deselectObjects()
       console.log(this.userViews)
       window.__viewer.sceneManager.objects.forEach(obj => {
