@@ -33,9 +33,28 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: ams3_ci
+              only: ams3_ci_not_really
+  
+  deploy-tag-test:
+    jobs:
+      - test_tags:
+          context: main-builds
+          filters:
+            tags:
+              only: /^test.*/
+            branches:
+              ignore: /.*/
 
 jobs:
+  test_tags:
+    docker:
+      - image: circleci/python:3.6-buster
+    steps:
+      - checkout
+      - run:
+          name: check the checkout
+          command: cat ./.circleci/tag_test
+
   test_server:
     docker:
       - image: 'circleci/node:12'
