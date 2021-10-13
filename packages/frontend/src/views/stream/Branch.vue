@@ -53,6 +53,7 @@
             :commit="latestCommit"
             :stream-id="streamId"
             class="elevation-3"
+            show-received-receipts
           ></list-item-commit>
           <v-divider></v-divider>
           <v-subheader class="ml-5">
@@ -63,6 +64,7 @@
             :key="item.id"
             :commit="item"
             :stream-id="streamId"
+            show-received-receipts
           ></list-item-commit>
 
           <!-- TODO: pagination -->

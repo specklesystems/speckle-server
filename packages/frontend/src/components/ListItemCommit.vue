@@ -10,59 +10,26 @@
     </v-list-item-icon>
 
     <v-list-item-content>
-      <v-list-item-title class="mt-0 pt-0 py-1">
-        <router-link
-          class="text-decoration-none"
-          :to="route ? route : `/streams/${streamId}/commits/${commit.id}`"
-        >
+      <router-link
+        class="text-decoration-none"
+        :to="route ? route : `/streams/${streamId}/commits/${commit.id}`"
+      >
+        <v-list-item-title class="mt-0 pt-0 py-1">
           {{ commit.message }}
-        </router-link>
-      </v-list-item-title>
-      <v-list-item-subtitle class="caption">
-        <b>{{ commit.authorName }}</b>
-        &nbsp;
-        <timeago :datetime="commit.createdAt"></timeago>
-        ({{ commitDate }})
-      </v-list-item-subtitle>
-    </v-list-item-content>
-
-    <v-list-item-action
-      v-if="receivedUsersAll.length > 0"
-      style="cursor: pointer"
-      @click="showAllActivityDialog = true"
-      v-tooltip="'Click to see all commit receives.'"
-    >
-      <p class="text-end mt-2 mb-0">
-        <!-- Can be also "Received X times" -->
-        <v-list-item-title class="caption">
-          Received by {{ receivedUsersAll[0].message.split('received by')[1] }}
         </v-list-item-title>
-      </p>
-      <v-list-item-subtitle class="mt-2 caption">
-        <p>
-          <timeago :datetime="receivedUsersAll[0].time"></timeago>
-        </p>
-      </v-list-item-subtitle>
-    </v-list-item-action>
-
-    <v-list-item-action class="pl-4 pt-0 mt-0" @click="showAllActivityDialog = true" v-tooltip="'Click to see all commit receives.'">
-      <div>
-        <!-- Fix avatar size for small views (e.g. Stream home) -->
-        <user-avatar
-          v-for="user in userAvatars.slice(0, receivedUsersUnique.length)"
-          :id="user.id"
-          :key="user.id"
-          :avatar="user.avatar"
-          :size="30"
-          :name="user.name"
-          :show-hover="false"
-        />
-        <v-avatar v-if="receivedUsersUnique.length > 4" size="30" color="grey">
-          <span class="white--text">+{{ receivedUsersUnique.length - 4 }}</span>
-        </v-avatar>
-      </div>
-    </v-list-item-action>
-
+        <v-list-item-subtitle class="caption">
+          <b>{{ commit.authorName }}</b>
+          &nbsp;
+          <timeago :datetime="commit.createdAt"></timeago>
+          ({{ commitDate }})
+        </v-list-item-subtitle>
+      </router-link>
+    </v-list-item-content>
+    <commit-received-receipts
+      v-if="showReceivedReceipts"
+      :stream-id="streamId"
+      :commit-id="commit.id"
+    />
     <v-list-item-action>
       <div>
         <span v-if="commit.branchName" class="caption">
@@ -79,55 +46,34 @@
         <source-app-avatar :application-name="commit.sourceApplication" />
       </div>
     </v-list-item-action>
-    <br />
-    <v-dialog
-      v-model="showAllActivityDialog"
-      max-width="400"
-      :fullscreen="$vuetify.breakpoint.xsOnly"
-    >
-      <v-card v-if="activity">
-        <v-toolbar>
-          <v-toolbar-title>Full commit activity</v-toolbar-title>
-        </v-toolbar>
-        <v-card-text  class="pt-2 pb-2 pl-3 pr-3" v-for="obj in activity.items" v-bind:key="obj.id">
-          <v-list-item class="pl-2 pr-0">
-              <!-- <user-avatar class="pr-3"
-                :id="obj.userId"
-                :key="obj.userId"
-                :avatar="obj.userId"
-                :size="40"
-                :name="obj.userId.name"
-                :show-hover="true"
-              />  -->
-            <v-list-item-content>
-              <v-list-item-title>
-                <b> {{ obj.message.split('received by')[1] }} </b> received
-                <timeago :datetime="obj.time"></timeago> in 
-              </v-list-item-title>
-
-              <v-list-item-subtitle class="caption">
-                {{obj.info.message}}
-              </v-list-item-subtitle>
-            </v-list-item-content>
-            <source-app-avatar class="mt-3 mb-3"   :application-name="obj.info.sourceApplication" />
-          </v-list-item>
-
-        </v-card-text>
-      </v-card>
-      
-    </v-dialog>
   </v-list-item>
 </template>
 <script>
-//style="position: relative; float: right"
 import gql from 'graphql-tag'
 import UserAvatar from './UserAvatar'
 import SourceAppAvatar from './SourceAppAvatar'
-//import userByIdQuery from '../graphql/userById.gql'
+import CommitReceivedReceipts from './CommitReceivedReceipts'
 
 export default {
-  components: { UserAvatar, SourceAppAvatar },
-  props: ['commit', 'streamId', 'route'],
+  components: { UserAvatar, SourceAppAvatar, CommitReceivedReceipts },
+  props: {
+    commit: {
+      type: Object,
+      default: null
+    },
+    streamId: {
+      type: String,
+      default: null
+    },
+    route: {
+      type: String,
+      default: null
+    },
+    showReceivedReceipts: {
+      type: Boolean,
+      default: false
+    }
+  },
   apollo: {
     activity: {
       query: gql`
@@ -159,58 +105,13 @@ export default {
         if (!this.streamId || !this.commit) return true
         return false
       }
-    },
-    userData: {
-      query: gql`
-        query UserData($userId1: String! $userId2: String! $userId3: String! $userId4: String!) {
-          user1: user(id: $userId1) {
-            id
-            name
-            avatar
-          }
-          user2: user(id: $userId2) {
-            id
-            name
-            avatar
-          }
-          user3: user(id: $userId3) {
-            id
-            name
-            avatar
-          }
-          user4: user(id: $userId4) {
-            id
-            name
-            avatar
-          }
-        }
-      `,
-      update: (data) => data,
-      variables() {
-        return {
-          userId1: this.idUnique[0],
-          userId2: this.idUnique[1],
-          userId3: this.idUnique[2],
-          userId4: this.idUnique[3] 
-        }
-      },
-      skip() {
-        if (!this.idUnique || this.idUnique.length==0 ) return true 
-        return false
-      }
     }
   },
   data() {
     return {
       activity: null,
-      receivedUsersAll: [],
-      receivedNamesAll: [],
-      receivedUsersUnique: [],
       showAllActivityDialog: false,
-
       userData: null,
-      userAvatars: [],
-      idUnique: [],
       currentId: null
     }
   },
@@ -227,27 +128,22 @@ export default {
       return `${window.location.origin}/streams/${
         this.$route.params.streamId
       }/branches/${encodeURIComponent(this.commit.branchName)}`
+    },
+    receivedUsersUnique() {
+      if (!(this.activity && this.activity.items && this.activity.items.length > 0)) return []
+      let set = new Set()
+      this.activity.items.forEach((item) => set.add(item.userId))
+      return Array.from(set)
     }
   },
   watch: {
-    activity(val) {
-      let set = new Set()
-      if ( val && val.items && val.items.length>0) {
-        val.items.forEach((item) => set.add(item.userId))
-        this.receivedUsersUnique = Array.from(set)
-        this.receivedUsersAll = val.items
-        
-        this.receivedUsersUnique.forEach(obj => { 
-          if (obj) {
-            this.idUnique.push(obj) 
-          }
-        })
-        do {this.idUnique.push(this.idUnique[0])} while (this.idUnique.length<4) //fill all 4 users with fake data
-      } 
-    }, 
-    userData(val) {
-      this.userAvatars.push(val.user1), this.userAvatars.push(val.user2), this.userAvatars.push(val.user3), this.userAvatars.push(val.user4) 
-    }
+    // activity(val) {
+    //   let set = new Set()
+    //   if (val && val.items && val.items.length > 0) {
+    //     val.items.forEach((item) => set.add(item.userId))
+    //     this.receivedUsersUnique = Array.from(set)
+    //   }
+    // }
   },
   methods: {
     goToBranch() {

@@ -2,18 +2,19 @@
   <div style="display: inline-block">
     <v-menu v-if="loggedIn" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
-        <div v-if="userById" v-on="on">
+        <div v-bind="attrs" v-on="on">
           <user-avatar-icon
+            v-if="userById"
             :size="size"
-            :avatar="avatar"
+            :avatar="userById.avatar"
             :seed="id"
             v-bind="attrs"
             class="ma-1"
           ></user-avatar-icon>
+          <v-avatar v-else class="ma-1" :size="size">
+            <v-img contain src="/logo.svg"></v-img>
+          </v-avatar>
         </div>
-        <v-avatar v-else class="ma-1" :size="size" v-bind="attrs" v-on="on">
-          <v-img contain src="/logo.svg"></v-img>
-        </v-avatar>
       </template>
       <v-card
         v-if="userById && showHover"
@@ -99,7 +100,6 @@ export default {
       skip() {
         return !this.loggedIn
       },
-
       update: (data) => {
         return data.user
       }
