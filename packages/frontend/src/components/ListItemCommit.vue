@@ -49,12 +49,12 @@
       <div>
         <!-- Fix avatar size for small views (e.g. Stream home) -->
         <user-avatar
-          v-for="user in receivedUsersUnique.slice(0, 4)"
-          :id="user"
-          :key="user"
-          :avatar="user.userId"
+          v-for="user in userAvatars.slice(0, receivedUsersUnique.length)"
+          :id="user.id"
+          :key="user.id"
+          :avatar="user.avatar"
           :size="30"
-          :name="user.userId"
+          :name="user.name"
           :show-hover="false"
         />
         <v-avatar v-if="receivedUsersUnique.length > 4" size="30" color="grey">
@@ -239,29 +239,22 @@ export default {
         
         this.receivedUsersUnique.forEach(obj => { 
           if (obj) {
-            this.idUnique.push(obj), console.log("loop in progress"), console.log(this.idUnique)//,  console.log(val)
+            this.idUnique.push(obj) //, console.log("loop in progress"), console.log(this.idUnique)//,  console.log(val)
           }
         })
         do {this.idUnique.push(this.idUnique[0])} while (this.idUnique.length<4) //fill all 4 users with fake data
       } 
     }, 
     userData(val) {
-      console.log("query was called, the data received: ")
-      console.log(val)
-      if (val.user1.avatar) this.userAvatars.push(val.user1.avatar)
-      if (val.user2.avatar) this.userAvatars.push(val.user2.avatar) 
-      if (val.user3.avatar) this.userAvatars.push(val.user3.avatar) 
-      if (val.user4.avatar) this.userAvatars.push(val.user4.avatar) 
-      console.log(this.userAvatars)
+      //console.log("query was called, the data received: ")
+      //console.log(val)
+      this.userAvatars.push(val.user1), this.userAvatars.push(val.user2), this.userAvatars.push(val.user3), this.userAvatars.push(val.user4) 
+      //console.log(this.userAvatars)
     }
   },
   methods: {
     goToBranch() {
       this.$router.push(this.branchUrl)
-    },
-    callApollo() {
-      console.log(this.currentId)
-      this.currentId = this.currentId
     }
   }
 }
