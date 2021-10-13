@@ -239,17 +239,14 @@ export default {
         
         this.receivedUsersUnique.forEach(obj => { 
           if (obj) {
-            this.idUnique.push(obj) //, console.log("loop in progress"), console.log(this.idUnique)//,  console.log(val)
+            this.idUnique.push(obj) 
           }
         })
         do {this.idUnique.push(this.idUnique[0])} while (this.idUnique.length<4) //fill all 4 users with fake data
       } 
     }, 
     userData(val) {
-      //console.log("query was called, the data received: ")
-      //console.log(val)
       this.userAvatars.push(val.user1), this.userAvatars.push(val.user2), this.userAvatars.push(val.user3), this.userAvatars.push(val.user4) 
-      //console.log(this.userAvatars)
     }
   },
   methods: {
