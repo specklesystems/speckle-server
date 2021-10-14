@@ -3,7 +3,7 @@
     <v-toolbar flat>
       <v-toolbar-title>
         Server Users Admin
-        <span v-if="users">(found {{ users.totalCount }} users)</span>
+        <span v-if="users">(showing {{ users.items.length }} of {{ users.totalCount }} users)</span>
       </v-toolbar-title>
     </v-toolbar>
     <v-text-field
@@ -22,13 +22,8 @@
     <v-list v-if="!$apollo.loading" rounded>
       <v-list-item-group v-if="users.totalCount > 0" color="primary">
         <v-list-item v-for="user in users.items" :key="user.id">
-          <v-list-item-avatar :size="55">
-            <user-avatar-icon
-              class="ml-n2"
-              :avatar="user.avatar"
-              :seed="user.id"
-              :size="50"
-            ></user-avatar-icon>
+          <v-list-item-avatar class="d-flex justify-start" :size="50">
+            <user-avatar-icon :avatar="user.avatar" :seed="user.id" :size="50"></user-avatar-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
@@ -177,7 +172,7 @@ export default {
     async updateUserRole(userId, newRole) {
       await this.$apollo.mutate({
         mutation: gql`
-          mutation($userId: String!, $newRole: String!) {
+          mutation ($userId: String!, $newRole: String!) {
             userRoleChange(userRoleInput: { id: $userId, role: $newRole })
           }
         `,
