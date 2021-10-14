@@ -361,7 +361,7 @@ describe( 'User admin @user-services', () => {
 
   it( 'Get users offset is applied', async () => {
     let users = await getUsers( 200, 200 )
-    expect( users ).to.have.lengthOf( 5100000 )
+    expect( users ).to.have.lengthOf( 51 )
   } )
 
   it( 'User query filters', async () => {
