@@ -120,8 +120,8 @@
               <v-list-item @click="setView('right')">
                 <v-list-item-title>Right</v-list-item-title>
               </v-list-item>
-              <v-divider v-if="namedViews.length !== 0"></v-divider>
-              <v-list-item v-for="view in namedViews" :key="view.id" @click="setNamedView(view.id)">
+              <v-divider v-if="userViews.length !== 0"></v-divider>
+              <v-list-item v-for="view in userViews" :key="view.id" @click="setNamedView(view.id)">
                 <v-list-item-title>{{ view.name }}</v-list-item-title>
               </v-list-item>
             </v-list>
@@ -191,7 +191,16 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="nextView()" v-on="on">
+              <v-btn v-bind="attrs" small @click="nextView(-1)" v-on="on">
+                <v-icon small>mdi-arrow-left-bold</v-icon>
+              </v-btn>
+            </template>
+            Previous View
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn v-bind="attrs" small @click="nextView(1)" v-on="on">
                 <v-icon small>mdi-arrow-right-bold</v-icon>
               </v-btn>
             </template>
@@ -200,8 +209,17 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="nextSlide()" v-on="on">
-                <v-icon small>mdi-play</v-icon>
+              <v-btn v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
+                <v-icon small>mdi-skip-previous-circle</v-icon>
+              </v-btn>
+            </template>
+            Previous Slide
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn v-bind="attrs" small @click="nextSlide(1)" v-on="on">
+                <v-icon small>mdi-skip-next-circle</v-icon>
               </v-btn>
             </template>
             Next Slide
@@ -350,17 +368,29 @@ export default {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
 
-        
+        //get user views
+        let tempViews = window.__viewer.sceneManager.views
+        let ids = []
+        tempViews.forEach(obj => {
+          let currentID = parseInt(obj.applicationId)
+          console.log("__________________")
+          console.log(currentID)
+          if (obj.userSlides) console.log(obj.userSlides[0])
 
-        //get proper views
-        this.userViews = window.__viewer.sceneManager.views
-        console.log(this.userViews)
-        this.userViews.forEach(obj => {
-          obj.applicationId = parseInt(obj.applicationId)
-          console.log(obj)
+          if (ids.includes(currentID) && (!obj.userSlides || obj.userSlides[0].length<2 )) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
+          else {
+          if (obj.userSlides) console.log(obj.userSlides[0])
+            if (ids.includes(currentID)) { //delete existing duplicate view 
+              console.log("delete existing view")
+              let index = ids.indexOf(currentID)
+              ids.splice(index, 1)
+              this.userViews.splice(index, 1)
+            }
+            ids.push(currentID)
+            obj.applicationId = currentID
+            this.userViews.push(obj)
+          }
         })
-        //this.userViews.sort((a, b) => a.applicationId.localeCompare(b.applicationId));
-        //this.userViews = _.sortBy( this.userViews, 'applicationId' );
         this.userViews.sort((a, b) => a.applicationId < b.applicationId ? - 1 : Number(a.applicationId > b.applicationId))
         console.log(this.userViews)
 
@@ -468,27 +498,32 @@ export default {
         }
       })
     },
-    nextView() {
-      this.viewsPlayed += 1 
+    nextView(num) {
+      this.viewsPlayed += num 
       if (this.userViews.length ==0 ) return
       if (this.viewsPlayed >= this.userViews.length) this.viewsPlayed = 0
+      if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
       console.log(this.userViews[this.viewsPlayed].applicationId)
     },
-    nextSlide() {
-      this.viewsPlayed += 1 
+    nextSlide(num) {
+      this.viewsPlayed += num
+      console.log(this.viewsPlayed)
       if (this.userViews.length == 0 ) return // exit if no views saved 
       if (this.viewsPlayed >= this.userViews.length ) this.viewsPlayed = 0 
+      if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
+      // define the view number 
+      /*
       if (!this.userViews[this.viewsPlayed].userSlides) {
         do { 
-          if (this.viewsPlayed < this.userViews.length-1) { this.viewsPlayed += 1, console.log("iteration") }
+          if (this.viewsPlayed < this.userViews.length-1 && num==1) { this.viewsPlayed += 1, console.log("iteration forward") }
+          if (this.viewsPlayed > 0 && num==-1) { this.viewsPlayed += -1, console.log("iteration back") }
           else break
         } while (!this.userViews[this.viewsPlayed].userSlides) // increase count until userSlides exist 
-      }
+      }*/
       
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
-
-      console.log(this.userViews[this.viewsPlayed].applicationId)
+      //console.log(this.userViews[this.viewsPlayed].applicationId)
       let filterGroup = []
       if (this.userViews[this.viewsPlayed].userSlides) filterGroup = this.userViews[this.viewsPlayed].userSlides 
       
