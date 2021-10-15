@@ -49,25 +49,25 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --server=$K8S_SERVER \
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
-  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-frontend --timeout=3m
+  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-frontend --timeout=10m
 
 ./kubectl \
   --kubeconfig=/dev/null \
   --server=$K8S_SERVER \
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
-  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-server --timeout=3m
+  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-server --timeout=10m
 
 ./kubectl \
   --kubeconfig=/dev/null \
   --server=$K8S_SERVER \
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
-  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-preview-service --timeout=3m
+  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-preview-service --timeout=10m
 
 ./kubectl \
   --kubeconfig=/dev/null \
   --server=$K8S_SERVER \
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
-  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-webhook-service --timeout=3m
+  rollout status -w deployment/$TARGET_SPECKLE_DEPLOYMENT-webhook-service --timeout=10m
