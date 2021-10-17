@@ -28,7 +28,6 @@ const { getUser } = require( '../../services/users' )
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
-//const COMMIT_RECEIVED = 'COMMIT_RECEIVED'
 const COMMIT_DELETED = 'COMMIT_DELETED'
 
 module.exports = {
@@ -133,17 +132,12 @@ module.exports = {
     },
 
     async commitReceive( parent, args, context, info ) {
-      // if the request is NOT authenticated (ie, there's no user behind it), return/throw error
-      // Above is BS: route guards prevent anon requests
-
       // if stream is private, check if the user has access to it
-      console.log()
       let stream = await getStream( { streamId: args.input.streamId } )
       
       if ( !stream.public ) {
         await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )  
       }
-
 
       let commit = await getCommitById( { id: args.input.commitId } )
       let user = await getUser( context.userId )
@@ -157,11 +151,6 @@ module.exports = {
         info: { sourceApplication: args.input.sourceApplication, message: args.input.message },
         message: `Commit ${args.input.commitId} was received by ${user.name}`,
       } )
-      // await pubsub.publish( COMMIT_RECEIVED, {
-      //   commitReceived: { ...args.commit },
-      //   streamId: args.commit.streamId,
-      //   commitId: args.commit.id
-      // } )
       
       return true
     },
