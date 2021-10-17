@@ -84,10 +84,10 @@
               style="z-index: 100"
               v-text=""
             ></span>
-            <span v-if="showAnimationPanel" class="subheading font-weight-light mr-1" style="z-index: 100">  Isovist path </span>
+            <span v-if="showAnimationPanel" class="subheading font-weight-light mr-1" style="z-index: 100"> Animation </span>
             
-            <v-slider v-if="showAnimationPanel" class="mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px"
-                v-model="animSlider.val"
+            <v-slider v-if="showAnimationPanel" class="mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
+                v-model="animVal"
                 :thumb-color="animSlider.color"
                 :max="animSlider.max"
                 :min="animSlider.min"
@@ -342,7 +342,12 @@ export default {
       userViews: [],
       viewsPlayed: -1,
       allVisuals: [],
-      animSlider: { label: 'Time', val: 0, color: 'primary', min: 2, max: 100 },
+      defaultObj: [],
+      animObj: [],
+      visObj: [],
+      activeObj: null,
+      animSlider: { label: 'Time', color: 'primary', min: 5, max: 5 },
+      animVal: 2,
     }
   },
   computed: {
@@ -378,6 +383,8 @@ export default {
     fullScreen() {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
     },
+    animVal(val) {
+    },
     loadProgress(newVal) {
       if (newVal >= 99) {
         let views = window.__viewer.interactions.getViews()
@@ -392,7 +399,7 @@ export default {
           console.log(currentID)
           if (obj.userSlides) console.log(obj.userSlides[0])
 
-          if (ids.includes(currentID) && (!obj.userSlides || obj.userSlides[0].length<2 )) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
+          if (ids.includes(currentID) && (!obj.userSlides )) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
           else {
           if (obj.userSlides) console.log(obj.userSlides[0])
             if (ids.includes(currentID)) { //delete existing duplicate view 
@@ -414,16 +421,28 @@ export default {
         console.log(window.__viewer.sceneManager.objects)
         let set = new Set() 
         window.__viewer.sceneManager.objects.forEach((item) => {
-          console.log(item.userData.userVisuals)
           if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
             item.visible = false
-            console.log(item.userData.userVisuals)
-            item.userData.userVisuals.forEach( obj => { if (obj && obj!='Animation') set.add(obj) } )
-          } else item.visible = true
+            item.userData.userVisuals.forEach( obj => { if (obj && obj!=0 && obj!='Animation' && !item.userData.userVisuals.includes('Animation')) set.add(obj) } )
+
+            if (item.userData.userVisuals.includes('Animation')) {
+              console.log(item.userData.userAnimation)
+              if (item.userData.userAnimation < this.animSlider.min) this.animSlider.min = item.userData.userAnimation
+              if (item.userData.userAnimation > this.animSlider.max) this.animSlider.max = item.userData.userAnimation
+              this.animObj.push(item)
+            }else this.visObj.push(item)
+          } else { this.defaultObj.push(item), item.visible = true }
         })
         this.allVisuals = Array.from(set)
         console.log("All Visuals:")
         console.log(this.allVisuals)
+
+        console.log("DefaultObj: ")
+        console.log(this.defaultObj)
+        console.log("VisObj: ")
+        console.log(this.visObj)
+        console.log("AnimObj: ")
+        console.log(this.animObj)
       }
     }
   },
@@ -506,10 +525,10 @@ export default {
       console.log(this.userViews)
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
-        if ( (!propertyGroup.includes('Animation')) && (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' )) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
-          obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+        if ( !propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+          obj.visible = true //, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
         } else { 
-          obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
+          obj.visible = false //, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
         }
       })
     },
@@ -523,27 +542,59 @@ export default {
     },
     nextSlide(num) {
       this.viewsPlayed += num
-      console.log(this.viewsPlayed)
       if (this.userViews.length == 0 ) return // exit if no views saved 
       if (this.viewsPlayed >= this.userViews.length ) this.viewsPlayed = 0 
       if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
       
+      console.log(this.viewsPlayed)
+      
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
       let filterGroup = []
-      if (this.userViews[this.viewsPlayed].userSlides) filterGroup = this.userViews[this.viewsPlayed].userSlides // set ofvisualt attached to the view 
+      if (this.userViews[this.viewsPlayed].userSlides) filterGroup = this.userViews[this.viewsPlayed].userSlides // set of visuals attached to the view 
       
       window.__viewer.interactions.deselectObjects()
-      window.__viewer.sceneManager.objects.forEach(obj => {
-        let propertyGroup = obj.userData.userVisuals
-        filterGroup.forEach( fil => {
-          if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) || propertyGroup[0] == '' ) { //show obj if no Visual property (main model) OR property empty OR includes needed value OR empty atring inside
-            obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+      if (this.activeObj) this.activeObj.visible = false
+
+      if (filterGroup.includes('Animation')) {
+        this.showAnimationPanel = true
+        let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
+        console.log("range:")
+        console.log(range)
+        range.forEach(i =>  { this.doSetTimeout(i) } )
+        //for ( let item = this.animSlider.min; item <=this.animSlider.max; item++) { 
+        //  this.doSetTimeout(item) 
+        //  if (item==this.animSlider.max) item = this.animSlider.min
+        //}
+
+      }else {
+        this.showAnimationPanel = false
+        this.visObj.forEach(obj => {
+          let propertyGroup = obj.userData.userVisuals
+          filterGroup.forEach( fil => {
+            if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) ) { //show obj if no Visual property (main model) OR property empty OR includes needed value OR empty atring inside
+              obj.visible = true, this.activeObj = obj//, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+            } else { 
+              obj.visible = false //, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
+            }
+          })
+        })
+      }
+    },
+    doSetTimeout(i) {
+      let objectsToIterate = this.animObj 
+      let max = this.animSlider.max
+      setTimeout(function() { 
+        if (this.activeObj) this.activeObj.visible = false
+        objectsToIterate.forEach(obj => {
+          console.log(i)
+          console.log(obj.userData.userAnimation)
+          if ( (obj.userData.userAnimation && obj.userData.userAnimation == i) ) {
+            obj.visible = true, this.activeObj = obj //obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
             return
-          } else { 
-            obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
           }
         })
-      })
+        if (i==max) this.activeObj.visible = false
+      }, 1000);
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
