@@ -78,6 +78,21 @@
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
         <v-btn-toggle class="elevation-0" style="z-index: 100">
+
+            <span v-if="showAnimationPanel"
+              class="text font-weight-light ml-1 mb-0 mt-0"
+              style="z-index: 100"
+              v-text=""
+            ></span>
+            <span v-if="showAnimationPanel" class="subheading font-weight-light mr-1" style="z-index: 100">  Isovist path </span>
+            
+            <v-slider v-if="showAnimationPanel" class="mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px"
+                v-model="animSlider.val"
+                :thumb-color="animSlider.color"
+                :max="animSlider.max"
+                :min="animSlider.min"
+              ></v-slider>
+              
           <v-btn
             v-if="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
             small
@@ -160,13 +175,12 @@
             Show viewer help
           </v-tooltip>
 
-
           
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn
+                  <v-btn color="primary" 
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
                     v-on="{ ...onTooltip, ...onMenu }"
@@ -177,7 +191,6 @@
                 Select Analysis Layer
               </v-tooltip>
             </template>
-
             <v-list dense>
               <v-list-item @click="showVis()">
                 <v-list-item-title>No added properties</v-list-item-title>
@@ -191,7 +204,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="nextView(-1)" v-on="on">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextView(-1)" v-on="on">
                 <v-icon small>mdi-arrow-left-bold</v-icon>
               </v-btn>
             </template>
@@ -200,7 +213,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="nextView(1)" v-on="on">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextView(1)" v-on="on">
                 <v-icon small>mdi-arrow-right-bold</v-icon>
               </v-btn>
             </template>
@@ -209,7 +222,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
                 <v-icon small>mdi-skip-previous-circle</v-icon>
               </v-btn>
             </template>
@@ -218,7 +231,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn v-bind="attrs" small @click="nextSlide(1)" v-on="on">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextSlide(1)" v-on="on">
                 <v-icon small>mdi-skip-next-circle</v-icon>
               </v-btn>
             </template>
@@ -323,11 +336,13 @@ export default {
       showAlert: false,
       selectedObjects: [],
       showObjectDetails: false,
+      showAnimationPanel: false,
       hasImg: false,
       namedViews: [],
       userViews: [],
       viewsPlayed: -1,
-      allVisuals: []
+      allVisuals: [],
+      animSlider: { label: 'Time', val: 0, color: 'primary', min: 2, max: 100 },
     }
   },
   computed: {
@@ -394,7 +409,7 @@ export default {
         this.userViews.sort((a, b) => a.applicationId < b.applicationId ? - 1 : Number(a.applicationId > b.applicationId))
         console.log(this.userViews)
 
-        //display from the beginning only the main model, no visuals
+        //display from the beginning only the main model, no visuals 
         console.log("objects")
         console.log(window.__viewer.sceneManager.objects)
         let set = new Set() 
@@ -403,7 +418,7 @@ export default {
           if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
             item.visible = false
             console.log(item.userData.userVisuals)
-            item.userData.userVisuals.forEach( obj => { if (obj) set.add(obj) } )
+            item.userData.userVisuals.forEach( obj => { if (obj && obj!='Animation') set.add(obj) } )
           } else item.visible = true
         })
         this.allVisuals = Array.from(set)
@@ -491,10 +506,10 @@ export default {
       console.log(this.userViews)
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
-        if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+        if ( (!propertyGroup.includes('Animation')) && (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' )) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
           obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
         } else { 
-          obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
+          obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
         }
       })
     },
@@ -512,30 +527,20 @@ export default {
       if (this.userViews.length == 0 ) return // exit if no views saved 
       if (this.viewsPlayed >= this.userViews.length ) this.viewsPlayed = 0 
       if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
-      // define the view number 
-      /*
-      if (!this.userViews[this.viewsPlayed].userSlides) {
-        do { 
-          if (this.viewsPlayed < this.userViews.length-1 && num==1) { this.viewsPlayed += 1, console.log("iteration forward") }
-          if (this.viewsPlayed > 0 && num==-1) { this.viewsPlayed += -1, console.log("iteration back") }
-          else break
-        } while (!this.userViews[this.viewsPlayed].userSlides) // increase count until userSlides exist 
-      }*/
       
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
-      //console.log(this.userViews[this.viewsPlayed].applicationId)
       let filterGroup = []
-      if (this.userViews[this.viewsPlayed].userSlides) filterGroup = this.userViews[this.viewsPlayed].userSlides 
+      if (this.userViews[this.viewsPlayed].userSlides) filterGroup = this.userViews[this.viewsPlayed].userSlides // set ofvisualt attached to the view 
       
       window.__viewer.interactions.deselectObjects()
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
         filterGroup.forEach( fil => {
-          if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+          if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) || propertyGroup[0] == '' ) { //show obj if no Visual property (main model) OR property empty OR includes needed value OR empty atring inside
             obj.visible = true, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
             return
           } else { 
-            obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale sdded just because of some curve display bug
+            obj.visible = false, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
           }
         })
       })

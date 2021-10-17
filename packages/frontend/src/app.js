@@ -24,6 +24,9 @@ Vue.use(VueFilterDateFormat)
 import VTooltip from 'v-tooltip'
 Vue.use(VTooltip, { defaultDelay: 300 })
 
+import VSlider from 'v-slider'
+//Vue.use(VSlider, { defaultDelay: 300 })
+
 import VueMatomo from 'vue-matomo'
 
 Vue.use(VueMatomo, {
