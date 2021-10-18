@@ -384,6 +384,22 @@ export default {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
     },
     animVal(val) {
+      if (this.activeObj) this.activeObj.visible = false
+      /*
+      let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
+      let ind = range.indexOf(val)
+      this.activeObj = this.animObj[ind]
+      this.activeObj.visible = true
+      console.log(val)
+      console.log(ind) */
+      
+      this.animObj.forEach(obj => {
+        if (obj.userData.userAnimation && obj.userData.userAnimation == val)  {
+          obj.visible = true 
+          this.activeObj = obj 
+          return
+        }
+      })
     },
     loadProgress(newVal) {
       if (newVal >= 99) {
@@ -433,6 +449,9 @@ export default {
             }else this.visObj.push(item)
           } else { this.defaultObj.push(item), item.visible = true }
         })
+        //console.log(this.animObj)
+        this.animObj.sort((a, b) => a.userData.userAnimation < b.userData.userAnimation ? - 1 : Number(a.userData.userAnimation > b.userData.userAnimation))
+        //console.log(this.animObj)
         this.allVisuals = Array.from(set)
         console.log("All Visuals:")
         console.log(this.allVisuals)
@@ -526,9 +545,9 @@ export default {
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
         if ( !propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
-          obj.visible = true //, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+          obj.visible = true 
         } else { 
-          obj.visible = false //, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
+          obj.visible = false 
         }
       })
     },
@@ -557,10 +576,13 @@ export default {
 
       if (filterGroup.includes('Animation')) {
         this.showAnimationPanel = true
-        let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
-        console.log("range:")
-        console.log(range)
-        range.forEach(i =>  { this.doSetTimeout(i) } )
+        this.activeObj = this.animObj[0]
+        this.activeObj.visible = true
+
+        //let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
+        //console.log("range:")
+        //console.log(range)
+        //range.forEach(i =>  { this.doSetTimeout(i) } )
         //for ( let item = this.animSlider.min; item <=this.animSlider.max; item++) { 
         //  this.doSetTimeout(item) 
         //  if (item==this.animSlider.max) item = this.animSlider.min
@@ -572,9 +594,9 @@ export default {
           let propertyGroup = obj.userData.userVisuals
           filterGroup.forEach( fil => {
             if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) ) { //show obj if no Visual property (main model) OR property empty OR includes needed value OR empty atring inside
-              obj.visible = true, this.activeObj = obj//, obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+              obj.visible = true, this.activeObj = obj
             } else { 
-              obj.visible = false //, obj.scale.x =0, obj.scale.y =0, obj.scale.z =0 //scale added just because of some curve display bug
+              obj.visible = false 
             }
           })
         })
@@ -583,17 +605,19 @@ export default {
     doSetTimeout(i) {
       let objectsToIterate = this.animObj 
       let max = this.animSlider.max
+      let localActiveObj = this.activeObj
       setTimeout(function() { 
         if (this.activeObj) this.activeObj.visible = false
         objectsToIterate.forEach(obj => {
           console.log(i)
           console.log(obj.userData.userAnimation)
           if ( (obj.userData.userAnimation && obj.userData.userAnimation == i) ) {
-            obj.visible = true, this.activeObj = obj //obj.scale.x =1, obj.scale.y =1, obj.scale.z =1
+            obj.visible = true, localActiveObj = obj 
             return
           }
         })
-        if (i==max) this.activeObj.visible = false
+        this.activeObj = localActiveObj
+        //if (i==max) this.activeObj.visible = false
       }, 1000);
     },
     setNamedView(id) {
