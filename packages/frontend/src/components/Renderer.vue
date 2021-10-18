@@ -391,14 +391,17 @@ export default {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
     },
     animVal(val) {
-      if (this.activeObj) this.activeObj.visible = false
+      console.log("Slider changed")
       
-      let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
-      let ind = range.indexOf(val)
-      this.activeObj = this.animObj[ind]
-      this.activeObj.visible = true
-      console.log(val)
-      console.log(ind) 
+      if (this.activeObj && this.activeObj.userData.userAnimation != val) { // if changed manually, and needen object is not active yet
+        console.log("adjust active obj")
+        if (this.activeObj) this.activeObj.visible = false
+        let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
+        let ind = range.indexOf(val)
+        
+        this.activeObj = this.animObj[ind]
+        if (this.activeObj) this.activeObj.visible = true
+      }
       /*
       this.animObj.forEach(obj => {
         if (obj.userData.userAnimation && obj.userData.userAnimation == val)  {
@@ -418,15 +421,16 @@ export default {
         let ids = []
         tempViews.forEach(obj => {
           let currentID = parseInt(obj.applicationId)
-          //console.log("__________________")
-          //console.log(currentID)
+          console.log("__________________")
+          console.log(currentID)
           if (obj.userSlides) console.log(obj.userSlides[0])
 
-          if (ids.includes(currentID) && (!obj.userSlides )) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
+          if (ids.includes(currentID) && ((!obj.userSlides)||(obj.userSlides[0]=="0") ) ) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
           else {
-          if (obj.userSlides) console.log(obj.userSlides[0])
+            console.log("consider new View")
+            if (obj.userSlides) console.log(obj.userSlides[0])
             if (ids.includes(currentID)) { //delete existing duplicate view 
-              //console.log("delete existing view")
+              console.log("delete existing view")
               let index = ids.indexOf(currentID)
               ids.splice(index, 1)
               this.userViews.splice(index, 1)
@@ -435,6 +439,7 @@ export default {
             obj.applicationId = currentID
             this.userViews.push(obj)
           }
+          console.log(this.userViews)
         })
         this.userViews.sort((a, b) => a.applicationId < b.applicationId ? - 1 : Number(a.applicationId > b.applicationId))
         console.log(this.userViews)
@@ -563,7 +568,8 @@ export default {
     },
     nextView(num) {
       this.viewsPlayed += num 
-      if (this.userViews.length ==0 ) return
+      console.log(num)
+      if (this.userViews.length ==0 ) return // exit if no views saved 
       if (this.viewsPlayed >= this.userViews.length) this.viewsPlayed = 0
       if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
@@ -583,6 +589,8 @@ export default {
       
       window.__viewer.interactions.deselectObjects()
       if (this.activeObj) this.activeObj.visible = false
+      this.activeObj = this.animObj[this.animObj.length-1]
+      if (this.activeObj) this.activeObj.visible = false
 
       if (filterGroup.includes('Animation')) {
         this.showAnimationPanel = true
@@ -591,13 +599,32 @@ export default {
         this.activeObj.visible = true
 
         //let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
-        //console.log("range:")
+        //range.forEach(i =>  { 
+        //  console.log(i)
+        //  setTimeout(this.doSetTimeout.bind(i), 1000)
+        //})
         //console.log(range)
-        //range.forEach(i =>  { this.doSetTimeout(i) } )
-        //for ( let item = this.animSlider.min; item <=this.animSlider.max; item++) { 
-        //  this.doSetTimeout(item) 
-        //  if (item==this.animSlider.max) item = this.animSlider.min
-        //}
+        
+        /*
+        for (let i in range) {
+          setTimeout(() => {
+            console.log("TIMEOUT running")
+            console.log(i+this.animSlider.min-1)
+            if (this.activeObj) this.activeObj.visible = false
+            this.animObj.forEach(obj => {
+              console.log(obj.userData.userAnimation)
+              if ( (obj.userData.userAnimation && obj.userData.userAnimation == i+this.animSlider.min-1) ) {
+                this.activeObj = obj 
+                obj.visible = true
+                this.activeObj.visible = true
+                console.log(this.activeObj.visible)
+                return 
+              }
+            })
+            this.animVal = i
+          }, 
+          i++ * 5000);
+        } */
 
       }else {
         this.showAnimationPanel = false
@@ -614,23 +641,17 @@ export default {
         })
       }
     },
-    doSetTimeout(i) {
-      let objectsToIterate = this.animObj 
-      let max = this.animSlider.max
-      let localActiveObj = this.activeObj
-      setTimeout(function() { 
-        if (this.activeObj) this.activeObj.visible = false
-        objectsToIterate.forEach(obj => {
-          console.log(i)
-          console.log(obj.userData.userAnimation)
-          if ( (obj.userData.userAnimation && obj.userData.userAnimation == i) ) {
-            obj.visible = true, localActiveObj = obj 
-            return
-          }
-        })
-        this.activeObj = localActiveObj
-        //if (i==max) this.activeObj.visible = false
-      }, 1000);
+    doSetTimeout(i){ /*
+      console.log("TIMEOUT running")
+      if (this.activeObj) this.activeObj.visible = false
+      this.animObj.forEach(obj => {
+        if ( (obj.userData.userAnimation && obj.userData.userAnimation == i) ) {
+          obj.visible = true
+          this.activeObj = obj 
+          return //obj
+        }
+      })
+      //return this.activeObj  */
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
