@@ -79,20 +79,6 @@
       >
         <v-btn-toggle class="elevation-0" style="z-index: 100">
 
-            <span v-if="showAnimationPanel"
-              class="text font-weight-light ml-1 mb-0 mt-0"
-              style="z-index: 100"
-              v-text=""
-            ></span>
-            <span v-if="showAnimationPanel" class="subheading font-weight-light mr-1" style="z-index: 100"> Animation </span>
-            
-            <v-slider v-if="showAnimationPanel" class="mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
-                v-model="animVal"
-                :thumb-color="animSlider.color"
-                :max="animSlider.max"
-                :min="animSlider.min"
-              ></v-slider>
-              
           <v-btn
             v-if="selectedObjects.length !== 0 && (showSelectionHelper || fullScreen)"
             small
@@ -290,6 +276,27 @@
               </v-card-text>
             </v-card>
           </v-dialog>
+
+         
+
+            <v-slider v-if="showAnimationPanel" class="ml-3 mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
+                v-model="animVal"
+                :thumb-color="animSlider.color"
+                :max="animSlider.max"
+                :min="animSlider.min"
+                ticks="always"
+                tick-size="4"
+              ></v-slider>
+
+            <span v-if="showAnimationPanel"
+            class="subheading font-weight-light"
+            v-text="animVal"
+          ></span>
+            <span v-if="showAnimationPanel" class="subheading font-weight-light mr-3" style="z-index: 100"> :00 </span>
+            
+            
+
+
         </v-btn-toggle>
       </v-card>
     </div>
@@ -346,7 +353,7 @@ export default {
       animObj: [],
       visObj: [],
       activeObj: null,
-      animSlider: { label: 'Time', color: 'primary', min: 5, max: 5 },
+      animSlider: { label: 'Time', color: 'primary', min: 10, max: 5 },
       animVal: 2,
     }
   },
@@ -385,21 +392,21 @@ export default {
     },
     animVal(val) {
       if (this.activeObj) this.activeObj.visible = false
-      /*
+      
       let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
       let ind = range.indexOf(val)
       this.activeObj = this.animObj[ind]
       this.activeObj.visible = true
       console.log(val)
-      console.log(ind) */
-      
+      console.log(ind) 
+      /*
       this.animObj.forEach(obj => {
         if (obj.userData.userAnimation && obj.userData.userAnimation == val)  {
           obj.visible = true 
           this.activeObj = obj 
           return
         }
-      })
+      }) */
     },
     loadProgress(newVal) {
       if (newVal >= 99) {
@@ -411,15 +418,15 @@ export default {
         let ids = []
         tempViews.forEach(obj => {
           let currentID = parseInt(obj.applicationId)
-          console.log("__________________")
-          console.log(currentID)
+          //console.log("__________________")
+          //console.log(currentID)
           if (obj.userSlides) console.log(obj.userSlides[0])
 
           if (ids.includes(currentID) && (!obj.userSlides )) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
           else {
           if (obj.userSlides) console.log(obj.userSlides[0])
             if (ids.includes(currentID)) { //delete existing duplicate view 
-              console.log("delete existing view")
+              //console.log("delete existing view")
               let index = ids.indexOf(currentID)
               ids.splice(index, 1)
               this.userViews.splice(index, 1)
@@ -447,9 +454,10 @@ export default {
               if (item.userData.userAnimation > this.animSlider.max) this.animSlider.max = item.userData.userAnimation
               this.animObj.push(item)
             }else this.visObj.push(item)
-          } else { this.defaultObj.push(item), item.visible = true }
+          } else { this.defaultObj.push(item), item.visible = true, console.log("VISIBLE"), console.log(item) }
         })
         //console.log(this.animObj)
+        this.animVal = this.animSlider.min 
         this.animObj.sort((a, b) => a.userData.userAnimation < b.userData.userAnimation ? - 1 : Number(a.userData.userAnimation > b.userData.userAnimation))
         //console.log(this.animObj)
         this.allVisuals = Array.from(set)
@@ -462,6 +470,8 @@ export default {
         console.log(this.visObj)
         console.log("AnimObj: ")
         console.log(this.animObj)
+        console.log(this.animSlider.min)
+        console.log(this.animSlider.max)
       }
     }
   },
