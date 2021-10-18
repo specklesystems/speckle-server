@@ -565,7 +565,7 @@ export default {
       if (this.viewsPlayed >= this.userViews.length ) this.viewsPlayed = 0 
       if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
       
-      console.log(this.viewsPlayed)
+      //console.log(this.viewsPlayed)
       
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
       let filterGroup = []
@@ -576,6 +576,7 @@ export default {
 
       if (filterGroup.includes('Animation')) {
         this.showAnimationPanel = true
+        this.animVal = this.animSlider.min 
         this.activeObj = this.animObj[0]
         this.activeObj.visible = true
 
@@ -590,6 +591,7 @@ export default {
 
       }else {
         this.showAnimationPanel = false
+        this.animVal = this.animSlider.min 
         this.visObj.forEach(obj => {
           let propertyGroup = obj.userData.userVisuals
           filterGroup.forEach( fil => {
