@@ -277,6 +277,11 @@
             v-text="animVal"
           ></span>
             <span v-if="showAnimationPanel==23" class="subheading font-weight-light mr-3" style="z-index: 100"> :00 </span>
+
+            <span 
+            class="subheading font-weight-light ml-10 mr-10"
+            v-text="textPanel"
+          ></span>
             
             
 
@@ -358,6 +363,7 @@ export default {
       activeObj: null,
       animSlider: { label: 'Time', color: 'primary', min: 10, max: 5 },
       animVal: 2,
+      textPanel: ""
     }
   },
   computed: {
@@ -441,8 +447,6 @@ export default {
         tempViews.forEach(obj => {
           console.log(obj.applicationId)
           let currentID = parseInt(obj.applicationId.toString().split("-")[0])
-          //console.log(toString(obj.applicationId))
-          //console.log(toString(obj.applicationId).split("-")[0])
           console.log("__________________")
           console.log(currentID)
           if (obj.userSlides) console.log(obj.userSlides[0])
@@ -612,7 +616,8 @@ export default {
       let filterGroup = []
       if (this.userViews[this.viewsPlayed].userSlides) filterGroup = this.userViews[this.viewsPlayed].userSlides // set of visuals attached to the view 
       
-      
+      if (filterGroup && filterGroup.length>0) console.log(filterGroup), this.textPanel = "   " + filterGroup[filterGroup.length-1].toString() + "   " //.split("[")[1].split("]")[0] 
+
       if (filterGroup.includes('Animation') && this.activeObj.constructor.name != "Array") {
         this.showAnimationPanel = true
         this.animVal = this.animSlider.min 
