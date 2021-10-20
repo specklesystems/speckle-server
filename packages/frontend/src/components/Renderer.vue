@@ -398,25 +398,25 @@ export default {
       
       if (this.activeObj && this.activeObj.constructor.name != "Array" && this.activeObj.userData.userAnimation != val) { // if changed manually, and needen object is not active yet
         console.log("adjust active obj")
-        if (this.activeObj) this.activeObj.visible = false
+        if (this.activeObj) this.hide(this.activeObj,0)
         let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
         let ind = range.indexOf(val)
         
         this.activeObj = this.animObj[ind]
-        if (this.activeObj) this.activeObj.visible = true
+        if (this.activeObj) this.hide(this.activeObj,1)
 
       } else if (this.activeObj && this.activeObj.constructor.name == "Array"){
         console.log("Animation Array")
-        this.activeObj.forEach(obj => obj.visible = false)
+        this.activeObj.forEach(obj => this.hide(obj,0))
         this.activeObj =[]
         this.animObj.forEach(obj => {
           //console.log(obj.userData.userAnimation)
           if ( (obj.userData.userAnimation && obj.userData.userAnimation == val) ) {
-            obj.visible = true
+            this.hide(obj,1)
             this.activeObj.push(obj) 
-            this.activeObj.visible = true
+            this.hide(this.activeObj,1)
           }else{
-            obj.visible = false
+            this.hide(obj,0)
           }
         })
       }
@@ -473,7 +473,7 @@ export default {
         console.log(window.__viewer.sceneManager.objects)
         window.__viewer.sceneManager.objects.forEach((item) => {
           if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
-            item.visible = false
+            this.hide(item,0)
             item.userData.userVisuals.forEach( obj => { if (obj && obj!=0 && obj!="0" && obj!='Animation' && !item.userData.userVisuals.includes('Animation')) set.add(obj) } )
 
             if (item.userData.userVisuals.includes('Animation')) {
@@ -482,7 +482,7 @@ export default {
               if (item.userData.userAnimation > this.animSlider.max) this.animSlider.max = item.userData.userAnimation
               this.animObj.push(item)
             }else this.visObj.push(item)
-          } else { this.defaultObj.push(item), item.visible = true, console.log("VISIBLE"), console.log(item) }
+          } else { this.defaultObj.push(item), this.hide(item,1), console.log("VISIBLE"), console.log(item) }
         })
         //console.log(this.animObj)
         this.animVal = this.animSlider.min 
@@ -583,9 +583,9 @@ export default {
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
         if ( !propertyGroup || propertyGroup.includes('base') || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
-          obj.visible = true 
+          this.hide(obj,1) 
         } else { 
-          obj.visible = false 
+          this.hide(obj,0) 
         }
       })
     },
@@ -617,7 +617,7 @@ export default {
         this.showAnimationPanel = true
         this.animVal = this.animSlider.min 
         this.activeObj = this.animObj[0]
-        this.activeObj.visible = true
+        this.hide(this.activeObj,1)
 
         //let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
         //range.forEach(i =>  { 
@@ -633,22 +633,23 @@ export default {
         this.animVal = this.animSlider.min 
         if (this.activeObj && this.activeObj.constructor.name == "Array"){
           console.log("Animation Array")
-          this.activeObj.forEach(obj => obj.visible = false)
+          this.activeObj.forEach(obj => this.hide(obj,0))
           this.activeObj =[]
-          this.animObj.forEach(obj => obj.visible = false  )
+          this.animObj.forEach(obj => this.hide(obj,0)  )
         }
       } 
-      if (this.activeObj) { this.activeObj.visible = false }
+      console.log(filterGroup)
+      if (this.activeObj) { this.hide(this.activeObj,0) }
       this.visObj.forEach(obj => {
-          obj.visible = false 
+          this.hide(obj,0)
           let propertyGroup = obj.userData.userVisuals
           
-          console.log(filterGroup)
-          console.log(propertyGroup)
+          //console.log(filterGroup)
+          //console.log(propertyGroup)
           filterGroup.forEach( fil => {
             if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) ) { //show obj if no Visual property (main model) OR property empty OR includes needed value OR empty atring inside
               console.log(obj)
-              obj.visible = true, this.activeObj = obj, this.activeObj.visible = true
+              this.hide(obj,1), this.activeObj = obj, this.hide(this.activeObj,1)
               console.log(this.activeObj)
             } //else { 
               //obj.visible = false 
@@ -666,16 +667,18 @@ export default {
         setTimeout(() => {
           console.log("TIMEOUT running")
           //console.log(i+this.animSlider.min)
-          if (this.activeObj) this.activeObj.visible = false
+          if (this.activeObj) this.hide(this.activeObj,0)
           this.activeObj =[]
           this.animObj.forEach(obj => {
             console.log(obj.userData.userAnimation)
             if ( (obj.userData.userAnimation && obj.userData.userAnimation <= i+this.animSlider.min) ) {
-              obj.visible = true
+              this.hide(obj,1)
+              console.log(obj)
               this.activeObj.push(obj) 
-              this.activeObj.visible = true
+              console.log(this.activeObj)
+              this.hide(this.activeObj,1)
             }else{
-              obj.visible = false
+              this.hide(obj,0)
             }
           })
           //this.animVal = i+this.animSlider.min
@@ -688,6 +691,16 @@ export default {
     },
     checks(){
       this.loadProgress = 99
+    },
+    hide(obj,i){
+      if (i==0) {
+        obj.visible = false 
+        if (obj.scale) obj.scale.x=0, obj.scale.y=0, obj.scale.z=0
+      }
+      if (i==1) {
+        obj.visible = true
+        if (obj.scale) obj.scale.x=1, obj.scale.y=1, obj.scale.z=1
+      }
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
