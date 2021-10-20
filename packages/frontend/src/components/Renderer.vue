@@ -73,7 +73,7 @@
       ></v-progress-linear>
 
       <v-card
-        v-show="hasLoadedModel && loadProgress >= 100"
+        v-show="hasLoadedModel && loadProgress >= 99"
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
@@ -166,7 +166,7 @@
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn color="primary" 
+                  <v-btn  
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
                     v-on="{ ...onTooltip, ...onMenu }"
@@ -178,7 +178,7 @@
               </v-tooltip>
             </template>
             <v-list dense>
-              <v-list-item @click="showVis()">
+              <v-list-item @click="showVis(), checks()" >
                 <v-list-item-title>No added properties</v-list-item-title>
               </v-list-item>
               <v-divider v-if="allVisuals.length !== 0"></v-divider>
@@ -188,27 +188,11 @@
             </v-list>
           </v-menu>
 
-          <v-tooltip top>
-            <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="nextView(-1)" v-on="on">
-                <v-icon small>mdi-arrow-left-bold</v-icon>
-              </v-btn>
-            </template>
-            Previous View
-          </v-tooltip>
+          
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="nextView(1)" v-on="on">
-                <v-icon small>mdi-arrow-right-bold</v-icon>
-              </v-btn>
-            </template>
-            Next View
-          </v-tooltip>
-
-          <v-tooltip top>
-            <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
+              <v-btn  v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
                 <v-icon small>mdi-skip-previous-circle</v-icon>
               </v-btn>
             </template>
@@ -217,7 +201,7 @@
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="nextSlide(1)" v-on="on">
+              <v-btn   v-bind="attrs" small @click="nextSlide(1)" v-on="on">
                 <v-icon small>mdi-skip-next-circle</v-icon>
               </v-btn>
             </template>
@@ -279,7 +263,7 @@
 
          
 
-            <v-slider v-if="showAnimationPanel" class="ml-3 mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
+            <v-slider v-if="showAnimationPanel==23" class="ml-3 mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
                 v-model="animVal"
                 :thumb-color="animSlider.color"
                 :max="animSlider.max"
@@ -288,11 +272,11 @@
                 tick-size="4"
               ></v-slider>
 
-            <span v-if="showAnimationPanel"
+            <span v-if="showAnimationPanel==23"
             class="subheading font-weight-light"
             v-text="animVal"
           ></span>
-            <span v-if="showAnimationPanel" class="subheading font-weight-light mr-3" style="z-index: 100"> :00 </span>
+            <span v-if="showAnimationPanel==23" class="subheading font-weight-light mr-3" style="z-index: 100"> :00 </span>
             
             
 
@@ -303,6 +287,25 @@
   </v-sheet>
 </template>
 <script>
+/*
+<v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextView(-1)" v-on="on">
+                <v-icon small>mdi-arrow-left-bold</v-icon>
+              </v-btn>
+            </template>
+            Previous View
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextView(1)" v-on="on">
+                <v-icon small>mdi-arrow-right-bold</v-icon>
+              </v-btn>
+            </template>
+            Next View
+          </v-tooltip>
+          */
 import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 import ObjectSimpleViewer from './ObjectSimpleViewer'
@@ -427,16 +430,19 @@ export default {
       }) */
     },
     loadProgress(newVal) {
-      if (newVal >= 100) {
+      if (newVal >= 99) {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
 
         //get user views
+        this.userViews = []
         let tempViews = window.__viewer.sceneManager.views
         let ids = []
         tempViews.forEach(obj => {
           console.log(obj.applicationId)
-          let currentID = parseInt(obj.applicationId.split("-")[0])
+          let currentID = parseInt(obj.applicationId.toString().split("-")[0])
+          //console.log(toString(obj.applicationId))
+          //console.log(toString(obj.applicationId).split("-")[0])
           console.log("__________________")
           console.log(currentID)
           if (obj.userSlides) console.log(obj.userSlides[0])
@@ -576,7 +582,7 @@ export default {
       console.log(this.userViews)
       window.__viewer.sceneManager.objects.forEach(obj => {
         let propertyGroup = obj.userData.userVisuals
-        if ( !propertyGroup || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
+        if ( !propertyGroup || propertyGroup.includes('base') || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
           obj.visible = true 
         } else { 
           obj.visible = false 
@@ -664,7 +670,7 @@ export default {
           this.activeObj =[]
           this.animObj.forEach(obj => {
             console.log(obj.userData.userAnimation)
-            if ( (obj.userData.userAnimation && obj.userData.userAnimation == i+this.animSlider.min) ) {
+            if ( (obj.userData.userAnimation && obj.userData.userAnimation <= i+this.animSlider.min) ) {
               obj.visible = true
               this.activeObj.push(obj) 
               this.activeObj.visible = true
@@ -672,13 +678,16 @@ export default {
               obj.visible = false
             }
           })
-          this.animVal = i+this.animSlider.min
+          //this.animVal = i+this.animSlider.min
           console.log("slider reset to: ")
           console.log(this.animVal)
           console.log(this.activeObj)
         }, 
-        i++ * 100);
+        i++ * 200);
       } console.log(this.activeObj)
+    },
+    checks(){
+      this.loadProgress = 99
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
