@@ -208,6 +208,33 @@
             Next Slide
           </v-tooltip>
 
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="getCameraView()" v-on="on">
+                <v-icon small>mdi-note-plus</v-icon>
+              </v-btn>
+            </template>
+            Create a slide
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextCustomSlide(-1)" v-on="on">
+                <v-icon small>mdi-arrow-left-bold</v-icon>
+              </v-btn>
+            </template>
+            Previous View
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="nextCustomSlide(1)" v-on="on">
+                <v-icon small>mdi-arrow-right-bold</v-icon>
+              </v-btn>
+            </template>
+            Next View
+          </v-tooltip>
+
           <v-dialog
             v-model="showObjectDetails"
             width="500"
@@ -363,7 +390,10 @@ export default {
       activeObj: null,
       animSlider: { label: 'Time', color: 'primary', min: 10, max: 5 },
       animVal: 2,
-      textPanel: ""
+      textPanel: "",
+
+      customSlides: [],      
+      customSlidesPlayed: -1,
     }
   },
   computed: {
@@ -608,7 +638,7 @@ export default {
       if (this.viewsPlayed >= this.userViews.length ) this.viewsPlayed = 0 
       if (this.viewsPlayed <0 ) this.viewsPlayed = this.userViews.length -1
       
-      console.log(this.viewsPlayed)
+      //console.log(this.viewsPlayed)
       
       window.__viewer.interactions.setView(this.userViews[this.viewsPlayed].id)
       window.__viewer.interactions.deselectObjects()
@@ -623,13 +653,6 @@ export default {
         this.animVal = this.animSlider.min 
         this.activeObj = this.animObj[0]
         this.hide(this.activeObj,1)
-
-        //let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
-        //range.forEach(i =>  { 
-        //  console.log(i)
-        //  setTimeout(this.doSetTimeout.bind(i), 1000)
-        //})
-        //console.log(range)
         this.animate() 
 
       }else {
@@ -643,59 +666,74 @@ export default {
           this.animObj.forEach(obj => this.hide(obj,0)  )
         }
       } 
-      console.log(filterGroup)
       if (this.activeObj) { this.hide(this.activeObj,0) }
       this.visObj.forEach(obj => {
           this.hide(obj,0)
           let propertyGroup = obj.userData.userVisuals
           
-          //console.log(filterGroup)
-          //console.log(propertyGroup)
           filterGroup.forEach( fil => {
             if (!propertyGroup || propertyGroup.length==0 || propertyGroup.includes(fil) ) { //show obj if no Visual property (main model) OR property empty OR includes needed value OR empty atring inside
-              console.log(obj)
               this.hide(obj,1), this.activeObj = obj, this.hide(this.activeObj,1)
-              console.log(this.activeObj)
-            } //else { 
-              //obj.visible = false 
-            //}
+            } 
           })
         })
       
     },
     animate(){ 
       let range = Array.from(new Array(this.animSlider.max-this.animSlider.min), (x, i) => i + this.animSlider.min)
-      console.log(range)
-      console.log(this.animSlider.min)
-      console.log(this.animSlider.max)
+      //console.log(range)
+      //console.log(this.animSlider.min)
+      //console.log(this.animSlider.max)
       for (let i in range) {
         setTimeout(() => {
-          console.log("TIMEOUT running")
+          //console.log("TIMEOUT running")
           //console.log(i+this.animSlider.min)
           if (this.activeObj) this.hide(this.activeObj,0)
           this.activeObj =[]
           this.animObj.forEach(obj => {
-            console.log(obj.userData.userAnimation)
+            //console.log(obj.userData.userAnimation)
             if ( (obj.userData.userAnimation && obj.userData.userAnimation <= i+this.animSlider.min) ) {
               this.hide(obj,1)
-              console.log(obj)
+              //console.log(obj)
               this.activeObj.push(obj) 
-              console.log(this.activeObj)
+              //console.log(this.activeObj)
               this.hide(this.activeObj,1)
             }else{
               this.hide(obj,0)
             }
           })
           //this.animVal = i+this.animSlider.min
-          console.log("slider reset to: ")
-          console.log(this.animVal)
-          console.log(this.activeObj)
+          //console.log("slider reset to: ")
+          //console.log(this.animVal)
+          //console.log(this.activeObj)
         }, 
         i++ * 200);
-      } console.log(this.activeObj)
+      } //console.log(this.activeObj)
     },
     checks(){
       this.loadProgress = 99
+    },
+    getCameraView(){
+      //console.log(window.__viewer.interactions.getViews)
+      console.log(window.__viewer.sceneManager.viewer.camera)
+      let c = window.__viewer.sceneManager.viewer.camera
+      this.customSlides.push({c_position: [c.position.x,c.position.y,c.position.z], c_rotation: [c.rotation.x,c.rotation.y,c.rotation.z]})
+      console.log( this.customSlides)
+    },
+    nextCustomSlide(num) {
+      this.customSlidesPlayed += num
+      if (this.customSlides.length == 0 ) return // exit if no views saved 
+      if (this.customSlidesPlayed >= this.customSlides.length ) this.customSlidesPlayed = 0 
+      if (this.customSlidesPlayed <0 ) this.customSlidesPlayed = this.customSlides.length -1
+
+      console.log( this.customSlidesPlayed)
+
+      let position = this.customSlides[this.customSlidesPlayed].c_position
+      let az = this.customSlides[this.customSlidesPlayed].c_rotation
+      let pol = this.customSlides[this.customSlidesPlayed].c_rotation
+
+      window.__viewer.interactions.setLookAt(position,{x:1,y:1,z:-1})
+      //rotateCamera(az,pol) 
     },
     hide(obj,i){
       if (i==0) {
