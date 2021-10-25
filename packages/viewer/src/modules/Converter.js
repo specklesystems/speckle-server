@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 
@@ -308,7 +308,7 @@ export default class Coverter {
 
 
       buffer.computeVertexNormals( )
-      buffer.computeFaceNormals( )
+      //buffer.computeFaceNormals( )
       buffer.computeBoundingSphere( )
 
       // delete obj.vertices

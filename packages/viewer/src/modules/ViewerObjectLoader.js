@@ -52,6 +52,7 @@ export default class ViewerObjectLoader {
     for await ( let obj of this.loader.getObjectIterator() ) {
       if ( first ) {
         firstObjectPromise = this.converter.traverseAndConvert( obj, ( o ) => {
+          console.log("ADDING OBJECT")
           this.viewer.sceneManager.addObject( o )
           viewerLoads++
         } )
@@ -65,6 +66,8 @@ export default class ViewerObjectLoader {
     if ( firstObjectPromise ) {
       await firstObjectPromise
     }
+
+    this.viewer.sceneManager.sceneObjects.setFilteredView()
 
     if ( viewerLoads === 0 ) {
       console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )

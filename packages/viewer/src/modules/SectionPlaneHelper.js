@@ -85,7 +85,7 @@ export default class SectionPlaneHelper {
     this.cutters.push( cutter )
 
     // adds local clipping planes to all materials
-    let objs = this.viewer.sceneManager.objects
+    let objs = this.viewer.sceneManager.filteredObjects
     objs.forEach( obj => {
       obj.material.clippingPlanes = this.cutters.map( c => c.plane )
     } )

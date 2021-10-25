@@ -1,5 +1,7 @@
 import * as THREE from 'three'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import debounce from 'lodash.debounce'
+import SceneObjects from './SceneObjects'
 
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
@@ -9,18 +11,9 @@ export default class SceneObjectManager {
   constructor( viewer, skipPostLoad = false ) {
     this.viewer = viewer
     this.scene = viewer.scene
-    this.userObjects = new THREE.Group()
-    this.solidObjects = new THREE.Group()
-    this.lineObjects = new THREE.Group()
-    this.pointObjects = new THREE.Group()
-    this.transparentObjects = new THREE.Group()
     this.views = []
 
-    this.userObjects.add( this.solidObjects )
-    this.userObjects.add( this.transparentObjects )
-    this.userObjects.add( this.lineObjects )
-    this.userObjects.add( this.pointObjects )
-    this.scene.add( this.userObjects )
+    this.sceneObjects = new SceneObjects( viewer )
 
     this.solidMaterial = new THREE.MeshStandardMaterial( {
       color: 0x8D9194,
@@ -65,8 +58,12 @@ export default class SceneObjectManager {
     this.loaders = []
   }
 
-  get objects() {
-    return [ ...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children ]
+  get allObjects() {
+    return [ ...this.sceneObjects.allSolidObjects.children, ...this.sceneObjects.allTransparentObjects.children, ...this.sceneObjects.allLineObjects.children, ...this.sceneObjects.allPointObjects.children ]
+  }
+
+  get filteredObjects() {
+    return [ ...this.sceneObjects.filteredSolidObjects.children, ...this.sceneObjects.filteredTransparentObjects.children, ...this.sceneObjects.filteredLineObjects.children, ...this.sceneObjects.filteredPointObjects.children ]
   }
 
   get materials() {
@@ -83,6 +80,8 @@ export default class SceneObjectManager {
   // the TODO ones (colour by property).
   addObject( wrapper, addToScene = true ) {
     if ( !wrapper || !wrapper.bufferGeometry ) return
+
+    this.postLoad()
 
     switch ( wrapper.geometryType ) {
     case 'View':
@@ -105,7 +104,6 @@ export default class SceneObjectManager {
       return this.addBlock( wrapper, addToScene )
     }
 
-    this.postLoad()
   }
 
   addSolid( wrapper, addToScene = true ) {
@@ -117,7 +115,7 @@ export default class SceneObjectManager {
       // Is it a transparent material?
       if ( renderMat.opacity !== 1 ) {
         let material = this.transparentMaterial.clone()
-        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+        // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
         material.color = color
         material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -126,7 +124,7 @@ export default class SceneObjectManager {
       // It's not a transparent material!
       } else {
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+        // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
         material.color = color
         material.metalness = renderMat.metalness
@@ -139,7 +137,7 @@ export default class SceneObjectManager {
     } else {
       // If we don't have defined material, just use the default
       let material = this.solidMaterial.clone()
-      material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+      // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
       return this.addSingleSolid( wrapper, material )
     }
@@ -147,11 +145,12 @@ export default class SceneObjectManager {
 
   addSingleSolid( wrapper, material, addToScene = true ) {
     const mesh = new THREE.Mesh( wrapper.bufferGeometry, material ? material : this.solidMaterial )
+    mesh.matrixAutoUpdate = false
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
     if ( addToScene ) {
       this.objectIds.push( mesh.uuid )
-      this.solidObjects.add( mesh )
+      this.sceneObjects.allSolidObjects.add( mesh )
     }
     return mesh
   }
@@ -162,7 +161,7 @@ export default class SceneObjectManager {
     mesh.uuid = wrapper.meta.id
     if ( addToScene ) {
       this.objectIds.push( mesh.uuid )
-      this.transparentObjects.add( mesh )
+      this.sceneObjects.allTransparentObjects.add( mesh )
     }
     return mesh
   }
@@ -173,7 +172,7 @@ export default class SceneObjectManager {
     line.uuid = wrapper.meta.id
     if ( addToScene ) {
       this.objectIds.push( line.uuid )
-      this.lineObjects.add( line )
+      this.sceneObjects.allLineObjects.add( line )
     }
     return line
   }
@@ -184,7 +183,7 @@ export default class SceneObjectManager {
     dot.uuid = wrapper.meta.id
     if ( addToScene ) {
       this.objectIds.push( dot.uuid )
-      this.pointObjects.add( dot )
+      this.sceneObjects.allPointObjects.add( dot )
     }
     return dot
   }
@@ -199,7 +198,7 @@ export default class SceneObjectManager {
 
       this._normaliseColor( color )
       let material = this.pointMaterial.clone()
-      material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+      // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
       material.color = color
 
@@ -212,7 +211,7 @@ export default class SceneObjectManager {
     clouds.uuid = wrapper.meta.id
     if ( addToScene ) {
       this.objectIds.push( clouds.uuid )
-      this.pointObjects.add( clouds )
+      this.sceneObjects.allPointObjects.add( clouds )
     }
     return clouds
   }
@@ -233,7 +232,7 @@ export default class SceneObjectManager {
       // Note: only apply the scale transform if this block is going to be added to the scene. otherwise it means it's a child of a nested block.
       group.applyMatrix4( wrapper.extras.scaleMatrix )
       this.objectIds.push()
-      this.solidObjects.add( group )
+      this.sceneObjects.allSolidObjects.add( group )
     }
 
     return group
@@ -249,10 +248,10 @@ export default class SceneObjectManager {
         obj.geometry.dispose()
       }
     }
-    this.solidObjects.clear()
-    this.transparentObjects.clear()
-    this.lineObjects.clear()
-    this.pointObjects.clear()
+    this.sceneObjects.allSolidObjects.clear()
+    this.sceneObjects.allTransparentObjects.clear()
+    this.sceneObjects.allLineObjects.clear()
+    this.sceneObjects.allPointObjects.clear()
 
     this.viewer.interactions.deselectObjects()
     this.viewer.interactions.hideSectionBox()

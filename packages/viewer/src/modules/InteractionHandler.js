@@ -7,20 +7,20 @@ export default class InteractionHandler {
   constructor( viewer ) {
     this.viewer = viewer
 
-    this.sectionBox = new SectionBox( this.viewer )
-    this.sectionBox.toggle() // switch off
+    //this.sectionBox = new SectionBox( this.viewer )
+    //this.sectionBox.toggle() // switch off
 
     this.preventSelection = false
 
     this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.viewer.sceneManager.userObjects, sectionBox: this.sectionBox } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectionMeshMaterial.clippingPlanes = this.sectionBox.planes
+    //this.selectionMeshMaterial.clippingPlanes = this.sectionBox.planes
 
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
-    this.selectionLineMaterial.clippingPlanes = this.sectionBox.planes
+    //this.selectionLineMaterial.clippingPlanes = this.sectionBox.planes
 
     this.selectionEdgesMaterial = new THREE.LineBasicMaterial( { color: 0x23F3BD } )
-    this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes
+    //this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes
 
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add( this.selectedObjects )
@@ -31,7 +31,7 @@ export default class InteractionHandler {
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
 
-    this.viewer.sceneManager.materials.forEach( mat => mat.clippingPlanes = this.sectionBox.planes )
+    // this.viewer.sceneManager.materials.forEach( mat => mat.clippingPlanes = this.sectionBox.planes )
   }
 
   _handleDoubleClick( objs ) {
@@ -113,13 +113,13 @@ export default class InteractionHandler {
   }
 
   hideSectionBox() {
-    if ( !this.sectionBox.display.visible ) return
-    this.toggleSectionBox( )
+    //if ( !this.sectionBox.display.visible ) return
+    //this.toggleSectionBox( )
   }
 
   showSectionBox() {
-    if ( this.sectionBox.display.visible ) return
-    this.toggleSectionBox( )
+    //if ( this.sectionBox.display.visible ) return
+    //this.toggleSectionBox( )
   }
 
   zoomToObject( target, fit = 1.2, transition = true ) {
@@ -128,17 +128,17 @@ export default class InteractionHandler {
   }
 
   zoomExtents( fit = 1.2, transition = true ) {
-    if ( this.sectionBox.display.visible ) {
-      this.zoomToObject( this.sectionBox.boxMesh )
-      return
-    }
-    if ( this.viewer.sceneManager.objects.length === 0 )  {
+    // if ( this.sectionBox.display.visible ) {
+    //   this.zoomToObject( this.sectionBox.boxMesh )
+    //   return
+    // }
+    if ( this.viewer.sceneManager.allObjects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box, fit, transition )
       return
     }
 
-    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
+    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
     this.zoomToBox( box, fit, transition )
     this.viewer.controls.setBoundary( box )
   }

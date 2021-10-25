@@ -15,8 +15,10 @@ export default class Viewer extends EventEmitter {
   constructor( { container, postprocessing = true, reflections = true, showStats = false } ) {
     super()
 
-    this.clock = new THREE.Clock()
+    window.THREE = THREE
 
+    this.clock = new THREE.Clock()
+    
     this.container = container || document.getElementById( 'renderer' )
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()
@@ -141,6 +143,7 @@ export default class Viewer extends EventEmitter {
       this.needsRender = false
       if ( this.stats ) this.stats.begin()
       this.render()
+      document.getElementById( 'draw-calls' ).textContent = 'Draw calls: ' + this.renderer.info.render.calls
       if ( this.stats ) this.stats.end()
     }
 
@@ -151,7 +154,7 @@ export default class Viewer extends EventEmitter {
       // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
       // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
       // First remove the env map from all materials
-      for ( let obj of this.sceneManager.objects ) {
+      for ( let obj of this.sceneManager.filteredObjects ) {
         obj.material.envMap = null
       }
 
@@ -162,7 +165,7 @@ export default class Viewer extends EventEmitter {
       this.scene.background = null
 
       // Finally, re-set the env maps of all materials
-      for ( let obj of this.sceneManager.objects ) {
+      for ( let obj of this.sceneManager.filteredObjects ) {
         obj.material.envMap = this.cubeCamera.renderTarget.texture
       }
       this.reflectionsNeedUpdate = false
