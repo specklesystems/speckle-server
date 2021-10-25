@@ -181,8 +181,8 @@
               <v-list-item @click="showVis(), checks()" >
                 <v-list-item-title>No added properties</v-list-item-title>
               </v-list-item>
-              <v-divider v-if="allVisuals.length !== 0"></v-divider>
-              <v-list-item v-for="vis in allVisuals" @click="showVis(vis)">
+              <v-divider v-if="branchNames.length !== 0"></v-divider>
+              <v-list-item v-for="vis in branchNames" @click="showVis(vis)">
                 <v-list-item-title>{{ vis }}</v-list-item-title>
               </v-list-item>
             </v-list>
@@ -190,23 +190,7 @@
 
           
 
-          <v-tooltip top>
-            <template #activator="{ on, attrs }">
-              <v-btn  v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
-                <v-icon small>mdi-skip-previous-circle</v-icon>
-              </v-btn>
-            </template>
-            Previous Slide
-          </v-tooltip>
-
-          <v-tooltip top>
-            <template #activator="{ on, attrs }">
-              <v-btn   v-bind="attrs" small @click="nextSlide(1)" v-on="on">
-                <v-icon small>mdi-skip-next-circle</v-icon>
-              </v-btn>
-            </template>
-            Next Slide
-          </v-tooltip>
+          
 
 
 
@@ -313,6 +297,24 @@
 /*
 <v-tooltip top>
             <template #activator="{ on, attrs }">
+              <v-btn  v-bind="attrs" small @click="nextSlide(-1)" v-on="on">
+                <v-icon small>mdi-skip-previous-circle</v-icon>
+              </v-btn>
+            </template>
+            Previous Slide
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn   v-bind="attrs" small @click="nextSlide(1)" v-on="on">
+                <v-icon small>mdi-skip-next-circle</v-icon>
+              </v-btn>
+            </template>
+            Next Slide
+          </v-tooltip>
+
+<v-tooltip top>
+            <template #activator="{ on, attrs }">
               <v-btn color="primary"  v-bind="attrs" small @click="nextView(-1)" v-on="on">
                 <v-icon small>mdi-arrow-left-bold</v-icon>
               </v-btn>
@@ -356,6 +358,7 @@ import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 import ObjectSimpleViewer from './ObjectSimpleViewer'
 import StreamQuery from '../graphql/stream.gql'
+import gql from 'graphql-tag'
 
 export default {
   components: { ObjectSimpleViewer },
@@ -379,6 +382,37 @@ export default {
     embeded: {
       type: Boolean,
       default: false
+    }
+  },
+  apollo: {
+    branchQuery: {
+      query: gql`
+        query smth($id: String!) {
+          stream(id: $id) {
+            id
+            isPublic
+            name
+            branches {
+              totalCount
+              items {
+                name
+                commits {
+                  items {
+                    id
+                    referencedObject
+                  }
+                }
+              }
+            }
+          }
+        }
+      `,
+      update: (data) => data.stream.branches.items,
+      variables() {
+        return {
+          id: this.$route.params.streamId ,
+        }
+      }
     }
   },
   data() {
@@ -406,6 +440,9 @@ export default {
       animVal: 2,
       textPanel: "",
 
+      branchQuery: null,
+      branchNames: [],
+      branchUrls: [],
       custom_count: -1,
       customSlides: [],   
       currentMessage: "",
@@ -483,6 +520,23 @@ export default {
     },
     loadProgress(newVal) {
       if (newVal >= 99) {
+        
+        //get branch names 
+        console.log("BRANCHESSSS")
+        console.log(this.branchQuery)
+        let temp = this.branchQuery
+        temp.forEach(obj=> {
+          
+        let url = this.objectUrl.split("/")[0] + "//" + this.objectUrl.split("/")[2] + "/" + this.objectUrl.split("/")[3] + "/" + this.objectUrl.split("/")[4] + "/objects/"
+        if (!this.branchNames.includes(obj.name) ) {
+          this.branchNames.push(obj.name) 
+          this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
+        }
+        })
+        //console.log(this.branchNames)
+        //console.log(this.branchUrls)
+        
+
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
 
@@ -491,18 +545,18 @@ export default {
         let tempViews = window.__viewer.sceneManager.views
         let ids = []
         tempViews.forEach(obj => {
-          console.log(obj.applicationId)
+          //console.log(obj.applicationId)
           let currentID = parseInt(obj.applicationId.toString().split("-")[0])
-          console.log("__________________")
-          console.log(currentID)
+          //console.log("__________________")
+          //console.log(currentID)
           if (obj.userSlides) console.log(obj.userSlides[0])
 
           if (ids.includes(currentID) && ((!obj.userSlides)||(obj.userSlides[0]=="0") ) ) console.log("view deleted") // do nothing, if the view already exists, and the new view doesn't have extra properties
           else {
-            console.log("consider new View")
-            if (obj.userSlides) console.log(obj.userSlides[0])
+            //console.log("consider new View")
+            //if (obj.userSlides) console.log(obj.userSlides[0])
             if (ids.includes(currentID)) { //delete existing duplicate view 
-              console.log("delete existing view")
+              //console.log("delete existing view")
               let index = ids.indexOf(currentID)
               ids.splice(index, 1)
               this.userViews.splice(index, 1)
@@ -511,10 +565,10 @@ export default {
             obj.applicationId = currentID
             this.userViews.push(obj)
           }
-          console.log(this.userViews)
+          //console.log(this.userViews)
         })
         this.userViews.sort((a, b) => a.applicationId < b.applicationId ? - 1 : Number(a.applicationId > b.applicationId))
-        console.log(this.userViews)
+        //console.log(this.userViews)
 
         //display from the beginning only the main model, no visuals 
         console.log("objects")
@@ -548,8 +602,7 @@ export default {
         console.log(this.visObj)
         console.log("AnimObj: ")
         console.log(this.animObj)
-        console.log(this.animSlider.min)
-        console.log(this.animSlider.max)
+
       }
     }
   },
@@ -578,6 +631,8 @@ export default {
     }
 
     window.__viewer.onWindowResize()
+    
+    //console.log(window.__viewerLastLoadedUrl)
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
       window.__viewer.sceneManager.removeAllObjects()
@@ -627,6 +682,11 @@ export default {
       window.__viewer.interactions.rotateTo(view)
     },
     showVis(visId){
+      let index = this.branchNames.indexOf(visId)
+      let url = this.branchUrls[index]
+      console.log(url)
+      window.__viewer.loadObject(url)
+      /*
       console.log(window.__viewer.sceneManager.objects)
       window.__viewer.interactions.deselectObjects()
       console.log(this.userViews)
@@ -638,6 +698,7 @@ export default {
           this.hide(obj,0) 
         }
       })
+      */
     },
     nextView(num) {
       this.viewsPlayed += num 
@@ -731,8 +792,11 @@ export default {
     },
     getCameraView(){
       //console.log(window.__viewer.interactions.getViews)
+      console.log("GET CAMERA VIEW")
       console.log(window.__viewer.sceneManager.viewer.camera)
       console.log(window.__viewer.sceneManager.viewer.controls)
+      console.log(this.$route)
+      console.log(this.streamQuery)
 
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
@@ -748,16 +812,6 @@ export default {
         if (this.custom_count >= this.customSlides.length ) this.custom_count = 0 
         if (this.custom_count <0 ) this.custom_count = this.customSlides.length -1
         console.log( this.custom_count)
-        // get current camera position to get rotation difference
-        /*
-        let number = this.custom_count-1
-        if ( (this.custom_count-1) <0) number = this.customSlides.length-1
-        let c = window.__viewer.sceneManager.viewer.camera.matrix.elements
-        let contr = window.__viewer.sceneManager.viewer.controls
-        let position0 = { x: c[12],y: c[13],z: c[14] }
-        let az0 = contr.azimuthAngle
-        let pol0 = contr.polarAngle
-        */
 
         // get desired camera settings
         let position1 = this.customSlides[this.custom_count].cam_position
@@ -768,6 +822,7 @@ export default {
         window.__viewer.interactions.setLookAt(position1,target1)
         this.currentMessage = this.customMessages[this.custom_count]
         //window.__viewer.interactions.rotateCamera(az1-az0, pol1-pol0) 
+
       }
     },
     hide(obj,i){
