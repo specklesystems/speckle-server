@@ -10,19 +10,19 @@
       <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
         <portal to="streamActionsBar">
           <v-btn
-            elevation="0"
-            color="primary"
-            small
-            rounded
-            v-tooltip="'Edit commit'"
             v-if="
               stream &&
               stream.role !== 'stream:reviewer' &&
               stream.commit.authorId === loggedInUserId
             "
-            @click="editCommit"
+            v-tooltip="'Edit commit'"
+            elevation="0"
+            color="primary"
+            small
+            rounded
             :fab="$vuetify.breakpoint.mdAndDown"
             dark
+            @click="editCommit"
           >
             <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
               mdi-pencil
@@ -33,16 +33,16 @@
         <portal to="streamTitleBar">
           <div>
             <router-link
+              v-tooltip="'Go to branch ' + stream.commit.branchName"
               :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
               class="text-decoration-none space-grotesk"
-              v-tooltip="'Go to branch ' + stream.commit.branchName"
             >
               <v-icon small class="primary--text mr-1 mb-1">mdi-source-branch</v-icon>
               <b>{{ stream.commit.branchName }}</b>
             </router-link>
             /
             <v-icon small class="mr-1">mdi-source-commit</v-icon>
-            <span class="space-grotesk mr-2" v-tooltip="'Commit message'">
+            <span v-tooltip="'Commit message'" class="space-grotesk mr-2">
               {{ stream.commit.message }}
             </span>
             <user-avatar
@@ -90,11 +90,18 @@
             </v-sheet>
           </v-expand-transition>
           <!-- Object explorer -->
-          <v-sheet class="pa-4" color="transparent">
-            <v-card-title class="mr-8">
-              <v-icon class="mr-2">mdi-database</v-icon>
-              Data
-            </v-card-title>
+          <v-card class="pa-4" rounded="lg" color="transparent">
+            <v-toolbar flat class="transparent">
+              <v-app-bar-nav-icon style="pointer-events: none">
+                <v-icon>mdi-database</v-icon>
+              </v-app-bar-nav-icon>
+              <v-toolbar-title>Data</v-toolbar-title>
+              <v-spacer />
+              <commit-received-receipts
+                :stream-id="$route.params.streamId"
+                :commit-id="stream.commit.id"
+              />
+            </v-toolbar>
             <v-card-text class="pa-0">
               <object-speckle-viewer
                 class="mt-4"
@@ -104,7 +111,7 @@
                 :expand="true"
               ></object-speckle-viewer>
             </v-card-text>
-          </v-sheet>
+          </v-card>
         </v-card>
       </v-col>
     </v-row>
@@ -130,7 +137,8 @@ export default {
     ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
     Renderer: () => import('@/components/Renderer'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder')
+    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    CommitReceivedReceipts: () => import('@/components/CommitReceivedReceipts')
   },
   data: () => ({
     loadedModel: false,
@@ -146,13 +154,6 @@ export default {
           id: this.$route.params.commitId
         }
       }
-    }
-  },
-  watch: {
-    stream(val) {
-      if (!val) return
-      if (val.commit.branchName === 'globals')
-        this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
     }
   },
   computed: {
@@ -174,6 +175,13 @@ export default {
     },
     commitObjectUrl() {
       return `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
+    }
+  },
+  watch: {
+    stream(val) {
+      if (!val) return
+      if (val.commit.branchName === 'globals')
+        this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
     }
   },
   methods: {

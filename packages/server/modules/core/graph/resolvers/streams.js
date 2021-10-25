@@ -33,7 +33,6 @@ module.exports = {
   Query: {
 
     async stream( parent, args, context, info ) {
-
       let stream = await getStream( { streamId: args.id, userId: context.userId } )
       if ( !stream )
         throw new ApolloError( 'Stream not found' )

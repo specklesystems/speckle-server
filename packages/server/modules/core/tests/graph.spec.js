@@ -359,6 +359,36 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res2.body.errors ).to.exist
       } )
 
+      it( 'Should create a read receipt', async () => {
+        let res = await sendRequest( userA.token, { query: 'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }' , variables: {
+          input: {
+            streamId: ts1,
+            commitId: c1.id,
+            sourceApplication: 'tests',
+            message: 'Irrelevant!'
+          }
+        } 
+        } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.commitReceive ).to.equal( true )
+
+        let res3 = await sendRequest( null, { query: 'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }' , variables: {
+          input: {
+            streamId: ts1,
+            commitId: c1.id,
+            sourceApplication: 'tests',
+            message: 'Irrelevant!'
+          }
+        } 
+        } )
+        
+        expect( res3 ).to.be.json
+        expect( res3.body.errors ).to.exist
+        expect( res3.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
+      } )
+
       it( 'Should delete a commit', async ( ) => {
         let payload = { streamId: ts1, id: c2.id }
 

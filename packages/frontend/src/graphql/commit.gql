@@ -13,6 +13,14 @@ query Stream($streamid: String!, $id: String!) {
       createdAt
       branchName
       sourceApplication
+      activity(actionType: "commit_receive", limit: 200) {
+        items {
+          info
+          time
+          userId
+          message
+        }
+      }
     }
   }
 }

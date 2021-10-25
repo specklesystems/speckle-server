@@ -2,20 +2,25 @@
   <div style="display: inline-block">
     <v-menu v-if="loggedIn" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
-        <div v-if="userById" v-on="on">
+        <div v-bind="attrs" v-on="on">
           <user-avatar-icon
+            v-if="userById"
             :size="size"
-            :avatar="avatar"
+            :avatar="userById.avatar"
             :seed="id"
             v-bind="attrs"
             class="ma-1"
           ></user-avatar-icon>
+          <v-avatar v-else class="ma-1" :size="size">
+            <v-img contain src="/logo.svg"></v-img>
+          </v-avatar>
         </div>
-        <v-avatar v-else class="ma-1" :size="size" v-bind="attrs" v-on="on">
-          <v-img contain src="/logo.svg"></v-img>
-        </v-avatar>
       </template>
-      <v-card v-if="userById" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
+      <v-card
+        v-if="userById && showHover"
+        style="width: 200px"
+        :to="isSelf ? '/profile' : '/profile/' + id"
+      >
         <v-card-text v-if="!$apollo.loading" class="text-center">
           <user-avatar-icon class="my-4" :size="40" :avatar="avatar" :seed="id"></user-avatar-icon>
 
@@ -37,7 +42,7 @@
           </div>
         </v-card-text>
       </v-card>
-      <v-card v-else>
+      <v-card v-else-if="showHover">
         <v-card-text class="text-xs">
           <b>Speckle Ghost</b>
           <br />
@@ -63,6 +68,10 @@ export default {
   props: {
     avatar: String,
     name: String,
+    showHover: {
+      type: Boolean,
+      default: true
+    },
     size: {
       type: Number,
       default: 42
@@ -91,7 +100,6 @@ export default {
       skip() {
         return !this.loggedIn
       },
-
       update: (data) => {
         return data.user
       }

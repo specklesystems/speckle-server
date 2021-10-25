@@ -221,6 +221,10 @@
                             <span class="mx-3 body-2 font-italic">from</span>
                             <source-app-avatar :application-name="commit.sourceApplication" />
                           </span>
+                          <span v-if="lastActivity.actionType === 'commit_receive'">
+                            <span class="mx-3 body-2 font-italic">in</span>
+                            <source-app-avatar :application-name="lastActivity.info.sourceApplication" />
+                          </span>
                         </span>
                         <span v-if="lastActivity.actionType !== 'commit_delete' && !commit">
                           [commit deleted]
@@ -470,6 +474,13 @@ export default {
             icon: 'mdi-timeline-text-outline',
             captionText: 'updated a commit in',
             actionText: 'commit updated in',
+            color: 'primary'
+          }
+        case 'commit_receive':
+          return {
+            icon: 'mdi-source-branch-sync',
+            captionText: 'received',
+            actionText: 'commit received from',
             color: 'primary'
           }
         case 'commit_delete':
