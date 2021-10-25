@@ -44,11 +44,11 @@
       <v-col v-else-if="stream && stream.branch" cols="12" class="pa-0 ma-0">
         <branch-edit-dialog ref="editBranchDialog" />
 
-        <div style="height: 60vh" v-if="latestCommitObjectUrl">
+        <div style="height: 60vh" > <!-- v-if="latestCommitObjectUrl"> -->
           <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
 
-        <v-list class="pa-0 ma-0" v-if="stream.branch.commits.items.length > 0">
+        <v-list class="pa-0 ma-0"> <!-- v-if="stream.branch.commits.items.length > 0"> -->
           <list-item-commit
             :commit="latestCommit"
             :stream-id="streamId"
@@ -69,12 +69,12 @@
 
         </v-list>
       </v-col>
-
+<!--
       <no-data-placeholder
         v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
       >
         <h2 class="space-grotesk">Branch "{{stream.branch.name}}" has no commits.</h2>
-      </no-data-placeholder>
+      </no-data-placeholder> -->
     </v-row>
     <error-placeholder
       error-type="404"

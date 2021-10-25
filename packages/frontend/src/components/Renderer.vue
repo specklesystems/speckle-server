@@ -400,6 +400,7 @@ export default {
                   items {
                     id
                     referencedObject
+                    branchName
                   }
                 }
               }
@@ -443,10 +444,14 @@ export default {
       branchQuery: null,
       branchNames: [],
       branchUrls: [],
+      branchCurrentOn: [],
+      branchCurrent_index: null,
+      objectsCurrentGroup: [],
+      all_obj_ids_scene: [],
       custom_count: -1,
       customSlides: [],   
+      customSlides_parsed: [],
       currentMessage: "",
-      customMessages: [],
     }
   },
   computed: {
@@ -483,10 +488,10 @@ export default {
       setTimeout(() => window.__viewer.onWindowResize(), 20)
     },
     animVal(val) {
-      console.log("Slider changed")
+      //console.log("Slider changed")
       
       if (this.activeObj && this.activeObj.constructor.name != "Array" && this.activeObj.userData.userAnimation != val) { // if changed manually, and needen object is not active yet
-        console.log("adjust active obj")
+        //console.log("adjust active obj")
         if (this.activeObj) this.hide(this.activeObj,0)
         let range = Array.from(new Array(this.animSlider.max-this.animSlider.min+1), (x, i) => i + this.animSlider.min)
         let ind = range.indexOf(val)
@@ -495,7 +500,7 @@ export default {
         if (this.activeObj) this.hide(this.activeObj,1)
 
       } else if (this.activeObj && this.activeObj.constructor.name == "Array"){
-        console.log("Animation Array")
+        //console.log("Animation Array")
         this.activeObj.forEach(obj => this.hide(obj,0))
         this.activeObj =[]
         this.animObj.forEach(obj => {
@@ -509,34 +514,68 @@ export default {
           }
         })
       }
-      /*
-      this.animObj.forEach(obj => {
-        if (obj.userData.userAnimation && obj.userData.userAnimation == val)  {
-          obj.visible = true 
-          this.activeObj = obj 
-          return
-        }
-      }) */
     },
     loadProgress(newVal) {
       if (newVal >= 99) {
-        
-        //get branch names 
-        console.log("BRANCHESSSS")
-        console.log(this.branchQuery)
+        //console.log(window.__viewerLastLoadedUrl)
         let temp = this.branchQuery
-        temp.forEach(obj=> {
-          
-        let url = this.objectUrl.split("/")[0] + "//" + this.objectUrl.split("/")[2] + "/" + this.objectUrl.split("/")[3] + "/" + this.objectUrl.split("/")[4] + "/objects/"
-        if (!this.branchNames.includes(obj.name) ) {
-          this.branchNames.push(obj.name) 
-          this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
-        }
-        })
-        //console.log(this.branchNames)
-        //console.log(this.branchUrls)
+        let count = 0
         
+        console.log(temp)
 
+        temp.forEach(obj=> { // run loop for each branch name
+
+          ///////////////////////////// TOFIX: DEAL WITH EMPTY BRANCHES
+          ///////////////////////////// TOFIX: SPLIT BY STREAM, NOT SYMBOLS
+          ///////////////////////////// TOFIX: REMOVE CURRENT BRANCH FROM THE LAYERS LIST 
+          ///////////////////////////// TOFIX: GET URL WITHOUT AN OBJECT
+          let url = ""
+          let start_url = ""
+
+          if (this.objectUrl) start_url = this.objectUrl
+          else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
+          url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/"
+          
+          if (!this.branchNames.includes(obj.name) ) { // execute only if branch is not in the list yet, basically the first load
+              this.branchNames.push(obj.name) 
+              ////////////////// TOFIX: set current branch to 0
+              if(url && obj.commits.items[0]) this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
+              else this.branchUrls.push( "" ) 
+              this.branchCurrentOn.push(0)
+
+              // if iteration on the branch that is selected, push new objects there, otherwise push null
+              //console.log(this.branchCurrent_index )
+              //console.log(count)
+              if (this.branchCurrent_index != count) this.objectsCurrentGroup.push( [] )
+              else {
+                let allObj = []
+                window.__viewer.sceneManager.objects.forEach((item) => {
+                  allObj.push(item)
+                })  
+                this.objectsCurrentGroup.push(allObj)
+              }
+                
+          } else{ // executes every time new layer is called, updates object lists
+              if (this.branchCurrent_index == count) {
+                let allObj = []
+                console.log(count)
+                window.__viewer.sceneManager.objects.forEach((item) => {
+                  if (!this.all_obj_ids_scene.includes(item.uuid)){ //check if object is already uploaded to one of the other groups
+                    this.all_obj_ids_scene.push(item.uuid)
+                    allObj.push(item)
+                    console.log(item)
+                  }
+                })  
+                this.objectsCurrentGroup[count] = allObj
+              }
+          }
+          count +=1
+        })
+        
+        console.log("New group of objects")
+        console.log(this.objectsCurrentGroup)
+/////////////////////////
+        
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
 
@@ -568,16 +607,16 @@ export default {
           //console.log(this.userViews)
         })
         this.userViews.sort((a, b) => a.applicationId < b.applicationId ? - 1 : Number(a.applicationId > b.applicationId))
-        //console.log(this.userViews)
 
-        //display from the beginning only the main model, no visuals 
-        console.log("objects")
-        console.log(window.__viewer.sceneManager.objects)
-        let set = new Set() 
-        console.log(window.__viewer.sceneManager.objects)
-        window.__viewer.sceneManager.objects.forEach((item) => {
+
+        // get newly loaded objects
+        
+        //console.log(window.__viewer.sceneManager.objects)
+        /*
+        let set = new Set() // set of unique animation names
+        
           if (item.userData.userVisuals && item.userData.userVisuals.length > 0 && item.userData.userVisuals[0]!='') { 
-            this.hide(item,0)
+            this.hide(item,1)
             item.userData.userVisuals.forEach( obj => { if (obj && obj!=0 && obj!="0" && obj!='Animation' && !item.userData.userVisuals.includes('Animation')) set.add(obj) } )
 
             if (item.userData.userVisuals.includes('Animation')) {
@@ -586,15 +625,18 @@ export default {
               if (item.userData.userAnimation > this.animSlider.max) this.animSlider.max = item.userData.userAnimation
               this.animObj.push(item)
             }else this.visObj.push(item)
-          } else { this.defaultObj.push(item), this.hide(item,1), console.log("VISIBLE"), console.log(item) }
-        })
-        //console.log(this.animObj)
+          } else {  }
+        
         this.animVal = this.animSlider.min 
         this.animObj.sort((a, b) => a.userData.userAnimation < b.userData.userAnimation ? - 1 : Number(a.userData.userAnimation > b.userData.userAnimation))
-        //console.log(this.animObj)
         this.allVisuals = Array.from(set)
+          */
+        
+
+        /*
         console.log("All Visuals:")
         console.log(this.allVisuals)
+        
 
         console.log("DefaultObj: ")
         console.log(this.defaultObj)
@@ -602,6 +644,7 @@ export default {
         console.log(this.visObj)
         console.log("AnimObj: ")
         console.log(this.animObj)
+        */
 
       }
     }
@@ -660,7 +703,10 @@ export default {
   methods: {
     async getPreviewImage(angle) {
       angle = angle || 0
-      let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      let start_url = ""
+      if(this.objectUrl) start_url = this.objectUrl
+      else start_url = "http://localhost:3000/streams/57ff4b8873/branches/experiment"
+      let previewUrl = start_url.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')
@@ -681,25 +727,7 @@ export default {
     setView(view) {
       window.__viewer.interactions.rotateTo(view)
     },
-    showVis(visId){
-      let index = this.branchNames.indexOf(visId)
-      let url = this.branchUrls[index]
-      console.log(url)
-      window.__viewer.loadObject(url)
-      /*
-      console.log(window.__viewer.sceneManager.objects)
-      window.__viewer.interactions.deselectObjects()
-      console.log(this.userViews)
-      window.__viewer.sceneManager.objects.forEach(obj => {
-        let propertyGroup = obj.userData.userVisuals
-        if ( !propertyGroup || propertyGroup.includes('base') || propertyGroup.length==0 || propertyGroup.includes(visId) || propertyGroup[0] == '' ) { //show obj if no Visual property OR property empty OR includes needed value OR empty atring inside
-          this.hide(obj,1) 
-        } else { 
-          this.hide(obj,0) 
-        }
-      })
-      */
-    },
+    
     nextView(num) {
       this.viewsPlayed += num 
       console.log(num)
@@ -790,38 +818,74 @@ export default {
     checks(){
       this.loadProgress = 99
     },
+    showVis(visId){
+      let index = this.branchNames.indexOf(visId)
+      console.log("setting index")
+      console.log(index)
+      let url = this.branchUrls[index]
+      this.branchCurrent_index = index
+      if (!this.branchCurrentOn[index] ==1  )  window.__viewer.loadObject(url), this.branchCurrentOn[index] =1  // run only if data is not On
+      
+    },
     getCameraView(){
       //console.log(window.__viewer.interactions.getViews)
-      console.log("GET CAMERA VIEW")
-      console.log(window.__viewer.sceneManager.viewer.camera)
-      console.log(window.__viewer.sceneManager.viewer.controls)
-      console.log(this.$route)
-      console.log(this.streamQuery)
+      //console.log("GET CAMERA VIEW")
+      //console.log(window.__viewer.sceneManager.viewer.camera)
+      //console.log(window.__viewer.sceneManager.viewer.controls)
+      //console.log(this.$route)
+      //console.log(this.streamQuery)
 
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
 
-      this.customSlides.push({cam_position: { x: cam[12],y: cam[13],z: cam[14] }, azim: contr.azimuthAngle, polar: contr.polarAngle, target:contr._target, cam_up: [cam[4],cam[5],cam[6]]})
-      this.customMessages.push(this.currentMessage)
-      console.log( this.customSlides)
+      this.customSlides.push({
+        cam_position: { x: cam[12],y: cam[13],z: cam[14] }, azim: contr.azimuthAngle, polar: contr.polarAngle, target:contr._target, cam_up: [cam[4],cam[5],cam[6]],
+        visibilities: this.branchCurrentOn, 
+        msg:this.currentMessage, 
+        obj: this.objectsCurrentGroup
+      })
+      this.customSlides_parsed.push( JSON.parse(JSON.stringify(this.customSlides[this.customSlides.length-1])) )
+      console.log("SAVE SLIDES: ")
+      console.log( this.customSlides_parsed)
     },
     nextCustomSlide(num) {
-      if (this.customSlides.length>0){
+      if (this.customSlides_parsed.length>0){
+        
         this.custom_count += num
-        if (this.customSlides.length == 0 ) return // exit if no views saved 
-        if (this.custom_count >= this.customSlides.length ) this.custom_count = 0 
-        if (this.custom_count <0 ) this.custom_count = this.customSlides.length -1
-        console.log( this.custom_count)
-
+        if (this.customSlides_parsed.length == 0 ) return // exit if no views saved 
+        if (this.custom_count >= this.customSlides_parsed.length ) this.custom_count = 0 
+        if (this.custom_count <0 ) this.custom_count = this.customSlides_parsed.length -1
+        
         // get desired camera settings
-        let position1 = this.customSlides[this.custom_count].cam_position
-        let az1 = this.customSlides[this.custom_count].azim
-        let pol1 = this.customSlides[this.custom_count].polar
-        let target1 = this.customSlides[this.custom_count].target
+        let position1 = this.customSlides_parsed[this.custom_count].cam_position
+        let az1 = this.customSlides_parsed[this.custom_count].azim
+        let pol1 = this.customSlides_parsed[this.custom_count].polar
+        let target1 = this.customSlides_parsed[this.custom_count].target
 
         window.__viewer.interactions.setLookAt(position1,target1)
-        this.currentMessage = this.customMessages[this.custom_count]
+        this.currentMessage = this.customSlides_parsed[this.custom_count].msg
         //window.__viewer.interactions.rotateCamera(az1-az0, pol1-pol0) 
+
+        console.log("SLIDE SHOWING: ")
+        console.log(this.custom_count)
+        console.log(this.customSlides_parsed)
+        //console.log( this.customSlides_parsed[this.custom_count])
+
+        // get objects and visibilities 
+        let count=0
+        this.customSlides_parsed[this.custom_count].obj.forEach( obj => { // go slide by slide 
+          
+          console.log(this.customSlides_parsed[this.customSlides_parsed.length-1]) //take LATEST object set with all loaded objects 
+          this.customSlides_parsed[this.customSlides_parsed.length-1].obj.forEach( sub_obj => { // go for all LATEST obj within the branch
+            console.log("Sub-obj:")
+            console.log(sub_obj.object)
+            this.hide(sub_obj.object, this.customSlides_parsed[this.customSlides_parsed.length-1].visibilities[count])
+          })
+          count+=1
+        })
+
+        console.log("SLIDE completed SHOWING:")
+        console.log(this.custom_count)
 
       }
     },
@@ -852,7 +916,8 @@ export default {
         throttle(
           function (args) {
             this.loadProgress = args.progress * 100
-            this.zoomEx()
+            ////////////// TOFIX: Zoom on first load
+            //this.zoomEx()
           }.bind(this),
           200
         )
