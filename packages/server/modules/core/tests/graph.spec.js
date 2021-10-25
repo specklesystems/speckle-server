@@ -374,17 +374,6 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data.commitReceive ).to.equal( true )
 
-        let res2 = await sendRequest( userB.token, { query: 'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }' , variables: {
-          input: {
-            streamId: ts1,
-            commitId: c1.id,
-            sourceApplication: 'tests',
-            message: 'Irrelevant!'
-          }
-        } 
-        } )
-        console.log( res2.body.errors )
-
         let res3 = await sendRequest( null, { query: 'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }' , variables: {
           input: {
             streamId: ts1,
@@ -394,7 +383,10 @@ describe( 'GraphQL API Core @core-api', ( ) => {
           }
         } 
         } )
-        console.log( res3.body.errors )
+        
+        expect( res3 ).to.be.json
+        expect( res3.body.errors ).to.exist
+        expect( res3.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
       } )
 
       it( 'Should delete a commit', async ( ) => {
