@@ -208,6 +208,15 @@
             Next Slide
           </v-tooltip>
 
+
+
+
+
+
+
+
+          <input v-model="currentMessage" placeholder="type description here" class="ml-2 mr-2" style="color: white; text-align: right" />
+
           <v-tooltip top>
             <template #activator="{ on, attrs }">
               <v-btn color="primary"  v-bind="attrs" small @click="getCameraView()" v-on="on">
@@ -290,25 +299,7 @@
 
          
 
-            <v-slider v-if="showAnimationPanel==23" class="ml-3 mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
-                v-model="animVal"
-                :thumb-color="animSlider.color"
-                :max="animSlider.max"
-                :min="animSlider.min"
-                ticks="always"
-                tick-size="4"
-              ></v-slider>
-
-            <span v-if="showAnimationPanel==23"
-            class="subheading font-weight-light"
-            v-text="animVal"
-          ></span>
-            <span v-if="showAnimationPanel==23" class="subheading font-weight-light mr-3" style="z-index: 100"> :00 </span>
-
-            <span 
-            class="subheading font-weight-light ml-10 mr-10"
-            v-text="textPanel"
-          ></span>
+            
             
             
 
@@ -337,6 +328,29 @@
             </template>
             Next View
           </v-tooltip>
+
+
+
+          <v-slider v-if="showAnimationPanel==23" class="ml-3 mb-0 mt-0 pb-0 pt-0" style="z-index: 100; width: 400px; height: 0px" 
+                v-model="animVal"
+                :thumb-color="animSlider.color"
+                :max="animSlider.max"
+                :min="animSlider.min"
+                ticks="always"
+                tick-size="4"
+              ></v-slider>
+
+            <span v-if="showAnimationPanel==23"
+            class="subheading font-weight-light"
+            v-text="animVal"
+          ></span>
+            <span v-if="showAnimationPanel==23" class="subheading font-weight-light mr-3" style="z-index: 100"> :00 </span>
+
+            <span 
+            class="subheading font-weight-light ml-10 mr-10"
+            v-text="textPanel"
+          ></span>
+
           */
 import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
@@ -392,8 +406,10 @@ export default {
       animVal: 2,
       textPanel: "",
 
-      customSlides: [],      
-      customSlidesPlayed: -1,
+      custom_count: -1,
+      customSlides: [],   
+      currentMessage: "",
+      customMessages: [],
     }
   },
   computed: {
@@ -716,24 +732,43 @@ export default {
     getCameraView(){
       //console.log(window.__viewer.interactions.getViews)
       console.log(window.__viewer.sceneManager.viewer.camera)
-      let c = window.__viewer.sceneManager.viewer.camera
-      this.customSlides.push({c_position: [c.position.x,c.position.y,c.position.z], c_rotation: [c.rotation.x,c.rotation.y,c.rotation.z]})
+      console.log(window.__viewer.sceneManager.viewer.controls)
+
+      let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
+      let contr = window.__viewer.sceneManager.viewer.controls
+
+      this.customSlides.push({cam_position: { x: cam[12],y: cam[13],z: cam[14] }, azim: contr.azimuthAngle, polar: contr.polarAngle, target:contr._target, cam_up: [cam[4],cam[5],cam[6]]})
+      this.customMessages.push(this.currentMessage)
       console.log( this.customSlides)
     },
     nextCustomSlide(num) {
-      this.customSlidesPlayed += num
-      if (this.customSlides.length == 0 ) return // exit if no views saved 
-      if (this.customSlidesPlayed >= this.customSlides.length ) this.customSlidesPlayed = 0 
-      if (this.customSlidesPlayed <0 ) this.customSlidesPlayed = this.customSlides.length -1
+      if (this.customSlides.length>0){
+        this.custom_count += num
+        if (this.customSlides.length == 0 ) return // exit if no views saved 
+        if (this.custom_count >= this.customSlides.length ) this.custom_count = 0 
+        if (this.custom_count <0 ) this.custom_count = this.customSlides.length -1
+        console.log( this.custom_count)
+        // get current camera position to get rotation difference
+        /*
+        let number = this.custom_count-1
+        if ( (this.custom_count-1) <0) number = this.customSlides.length-1
+        let c = window.__viewer.sceneManager.viewer.camera.matrix.elements
+        let contr = window.__viewer.sceneManager.viewer.controls
+        let position0 = { x: c[12],y: c[13],z: c[14] }
+        let az0 = contr.azimuthAngle
+        let pol0 = contr.polarAngle
+        */
 
-      console.log( this.customSlidesPlayed)
+        // get desired camera settings
+        let position1 = this.customSlides[this.custom_count].cam_position
+        let az1 = this.customSlides[this.custom_count].azim
+        let pol1 = this.customSlides[this.custom_count].polar
+        let target1 = this.customSlides[this.custom_count].target
 
-      let position = this.customSlides[this.customSlidesPlayed].c_position
-      let az = this.customSlides[this.customSlidesPlayed].c_rotation
-      let pol = this.customSlides[this.customSlidesPlayed].c_rotation
-
-      window.__viewer.interactions.setLookAt(position,{x:1,y:1,z:-1})
-      //rotateCamera(az,pol) 
+        window.__viewer.interactions.setLookAt(position1,target1)
+        this.currentMessage = this.customMessages[this.custom_count]
+        //window.__viewer.interactions.rotateCamera(az1-az0, pol1-pol0) 
+      }
     },
     hide(obj,i){
       if (i==0) {
