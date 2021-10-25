@@ -81,7 +81,7 @@ extend type Mutation {
     @hasScope(scope: "streams:write")
   commitReceive(input: CommitReceivedInput!): Boolean!
     @hasRole(role: "server:user")
-    @hasScope(scope: "streams:write")
+    @hasScope(scope: "streams:read")
   commitDelete(commit: CommitDeleteInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")

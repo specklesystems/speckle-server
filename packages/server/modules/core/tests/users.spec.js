@@ -240,17 +240,15 @@ describe( 'Actors & Tokens @user-services', () => {
     let myFirstToken
     let pregeneratedToken
     let revokedToken
-    let someOtherToken
     let expireSoonToken
 
     before( async () => {
       pregeneratedToken = await createPersonalAccessToken( myTestActor.id, 'Whabadub', [ 'streams:read', 'streams:write', 'profile:read', 'users:email' ] )
       revokedToken = await createPersonalAccessToken( myTestActor.id, 'Mr. Revoked', [ 'streams:read' ] )
-      someOtherToken = await createPersonalAccessToken( otherUser.id, 'Hello World', [ 'streams:write' ] )
       expireSoonToken = await createPersonalAccessToken( myTestActor.id, 'Mayfly', [ 'streams:read' ], 1 ) // 1ms lifespan
     } )
 
-    it( 'Should create an personal api token', async () => {
+    it( 'Should create a personal api token', async () => {
       let scopes = [ 'streams:write', 'profile:read' ]
       let name = 'My Test Token'
 

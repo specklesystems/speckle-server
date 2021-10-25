@@ -9,7 +9,6 @@ const {
   createCommitByBranchName,
   createCommitByBranchId,
   updateCommit,
-  //receiveCommit,
   deleteCommit,
   getCommitById,
   getCommitsByBranchId,
