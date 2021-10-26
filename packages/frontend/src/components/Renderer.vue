@@ -191,11 +191,6 @@
               </v-tooltip>
             </template>
             <v-list dense>
-              <!--
-              <v-list-item @click="showVis(), checks()" >
-                <v-list-item-title>No added properties</v-list-item-title>
-              </v-list-item>
-              <v-divider v-if="branchNames.length !== 0"></v-divider> -->
               
               <v-list-item v-for="vis in branchNames_Checks" @click="showVis(vis[0])" v-if="!vis[0].includes('abracadabra') " 
               :style= "[vis[1]==0 ? {} : { background: '#757575' }]">
@@ -211,10 +206,28 @@
           <v-tooltip top>
             <template #activator="{ on, attrs }">
               <v-btn color="primary"  v-bind="attrs" small @click="getCameraView()" v-on="on">
-                <v-icon small>mdi-note-plus</v-icon>
+                <v-icon small>mdi-movie-open-plus-outline</v-icon>
               </v-btn>
             </template>
             Create a slide
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="agree()" v-on="on">
+                <v-icon small>mdi-content-save</v-icon>
+              </v-btn>
+            </template>
+            Save presentation
+          </v-tooltip>
+
+          <v-tooltip top>
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="delete_pres()" v-on="on">
+                <v-icon small>mdi-delete-outline</v-icon>
+              </v-btn>
+            </template>
+            Delete presentation
           </v-tooltip>
 
           <v-tooltip top>
@@ -402,7 +415,9 @@ export default {
             branches {
               totalCount
               items {
+                id
                 name
+                description
                 commits {
                   items {
                     id
@@ -449,7 +464,10 @@ export default {
       textPanel: "",
 
       branchQuery: null,
+      branch_description: null,
       branchNames: [],
+      branch_id: null,
+      branch_name: "",
       branchUrls: [],
       branchCurrent_index: null,
       objectsCurrentGroup_ids: [],
@@ -459,6 +477,8 @@ export default {
       customSlides: [],   
       customSlides_parsed: [],
       currentMessage: "",
+      loading: false,
+      total_vis: []
     }
   },
   computed: {
@@ -529,12 +549,16 @@ export default {
     loadProgress(newVal) {
       if (newVal >= 99) {
         //console.log(window.__viewerLastLoadedUrl)
+
+        
+
         let temp = this.branchQuery
         let count = 0
         
         //console.log(temp)
 
         temp.forEach(obj=> { // run loop for each branch name
+        if (obj.name.includes('abracadabra')) this.branch_id = obj.id, this.branch_name = obj.name, this.branch_description = obj.description //, console.log(obj)
         if (!obj.name.includes('abracadabra')) {
 
           ///////////////////////////// TOFIX: DEAL WITH EMPTY BRANCHES
@@ -542,6 +566,7 @@ export default {
           ///////////////////////////// TOFIX: GET URL WITHOUT AN OBJECT
           ///////////////////////////// TOFIX: ListItemCommit load
           ///////////////////////////// TOFIX: only if main branch has commits 
+          ///////////////////////////// TOFIX: now only 1 branch can be treated because of ID
           let url = ""
           let start_url = ""
 
@@ -549,13 +574,11 @@ export default {
           else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
           url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/"
           //console.log(this.branchNames)
-          //console.log(obj)
 
           if (!this.branchNames.includes(obj.name) ) { // execute only if branch is not in the list yet, basically the first load
+              console.log("branch first upload ")
               window.__viewer.sceneManager.removeAllObjects()
-              //console.log("branch layer first load")
-              //console.log(count)
-              //console.log(obj.name)
+
               this.branchNames.push(obj.name) 
               ////////////////// TOFIX: set current branch to 0
               if(url && obj.commits.items[0]) this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
@@ -574,19 +597,29 @@ export default {
                 this.objectsCurrentGroup_ids.push(allObj)
               }
                 
-          } else{ // if branch namealready in the list, executes every time new layer is called, updates object lists
+          } 
+          //else if (this.branch_description.length>100) {
+            //if (total_urls[count]) window.__viewer.loadObject(total_urls[count])
+          //}
+          else{ // if branch namealready in the list, executes every time new layer is called, updates object lists
               //console.log("branch layer update ")
               //console.log(this.objectsCurrentGroup_ids[count])
+              console.log("branch weird")
               if (this.branchCurrent_index == count && this.objectsCurrentGroup_ids[count].length==0) {  // only execute if branch is null
-                //console.log("branch layer update ")
+                console.log("branch layer update ")
                 //console.log(count)
                 //console.log(obj.name)
                 let allObj = []
+                let visibility = this.customSlides_parsed[this.custom_count].visibilities[count]
                 window.__viewer.sceneManager.objects.forEach((item) => {
                   if (!this.all_obj_ids_scene.includes(item.uuid)){ //check if object is already uploaded to one of the other groups
                     this.all_obj_ids_scene.push(item.uuid)
                     allObj.push(item.uuid)
+                    this.hide(item, 0)
                     //console.log(item.uuid)
+                    //console.log(item)
+
+                    if (this.branch_description && this.branch_description.length>100) this.hide(item, this.total_vis[count])
                   }
                 })  
                 this.objectsCurrentGroup_ids[count] = JSON.parse(JSON.stringify(allObj) )
@@ -596,7 +629,38 @@ export default {
           count +=1
         }
         })
+
+        ////// load objects existing in the presentation
+        let total_urls = []
+        let c=0
+        if (this.branch_description.length>100) {
+          this.customSlides_parsed = JSON.parse(this.branch_description)
+
+          this.customSlides_parsed.forEach(obj=> { //for each slide
+            let cur_vis = obj.visibilities
+            let c_local = 0
+            obj.visibilities.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
+              if (this.total_vis.length< obj.visibilities.length) this.total_vis.push(sub_obj) //first go
+              if ( this.total_vis[c_local] < sub_obj )  this.total_vis[c_local] =  sub_obj
+              c_local +=1
+              //this.hide(item, 0) 
+            })
+            c+=1
+          }) 
+          console.log("Total vis")
+          console.log(this.total_vis)
+          let countt = 0
+          this.total_vis.forEach(obj=> {
+            if (obj==1) total_urls.push(this.branchUrls[countt]) 
+            console.log(this.branchUrls[countt])
+            //window.__viewer.loadObject(this.branchUrls[count])
+            ////////////LOAD
+            countt +=1
+          })
+        }
         
+        
+
         console.log("New group of objects ")
         console.log(this.objectsCurrentGroup_ids)
         console.log(this.branchNames_Checks)
@@ -845,6 +909,44 @@ export default {
     checks(){
       this.loadProgress = 99
     },
+
+
+
+
+
+
+
+    async agree() {
+      //if (!this.$refs.form.validate()) return
+      console.log(JSON.stringify(this.customSlides_parsed))
+      this.loading = true
+      this.$matomo && this.$matomo.trackPageView('branch/update')
+      await this.$apollo.mutate({
+        mutation: gql`
+          mutation branchUpdate($params: BranchUpdateInput!) {
+            branchUpdate(branch: $params)
+          }
+        `,
+        variables: {
+          params: {
+            streamId: this.$route.params.streamId,
+            id: this.branch_id, //this.$route.params.branch.id,
+            name: this.branch_name,
+            description: JSON.stringify(this.customSlides_parsed)
+          }
+        }
+      })
+
+      this.loading = false
+
+      //this.resolve({
+      //  result: true,
+      //  name: this.branch_name
+      //})
+      this.dialog = false
+    },
+
+
     showVis(visId){
       let index = this.branchNames.indexOf(visId)
       console.log("setting index")
@@ -920,17 +1022,15 @@ export default {
 
         window.__viewer.interactions.setLookAt(position1,target1)
         this.currentMessage = this.customSlides_parsed[this.custom_count].msg
-        //window.__viewer.interactions.rotateCamera(az1-az0, pol1-pol0) 
 
         console.log("SLIDE SHOWING:  ")
         console.log(this.custom_count)
         console.log(this.customSlides_parsed[this.custom_count])
-        //console.log( this.customSlides_parsed[this.custom_count])
 
         // get objects and visibilities 
         let count=0
         this.customSlides_parsed[this.customSlides_parsed.length-1].obj_id.forEach( obj => { // go object by object in the slide 
-          console.log("Slide branch # " + count.toString())
+          console.log("Slide branch # " + count.toString() + " object IDs:" )
           console.log(obj)
           let count_sub = 0
           //console.log(this.customSlides_parsed[this.customSlides_parsed.length-1]) //take LATEST object set with all loaded objects
@@ -938,17 +1038,22 @@ export default {
           this.branchNames_Checks[count][1] = visibility
 
           obj.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
-            console.log("Sub-obj (shows from the latest version to include all):")
-            console.log(count_sub)
-            console.log(sub_obj)
-            console.log("Visible: " + visibility.toString())
+              let item_exists = 0
+              window.__viewer.sceneManager.objects.forEach( item => {
+                if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
+                  item_exists +=1
+                  this.hide(item, visibility) 
+                }
+              }) 
+              let url = ""
+              let start_url = ""
 
-            window.__viewer.sceneManager.objects.forEach((item) => {
-              if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
-                this.hide(item, visibility) 
-              }
-            }) 
-            count_sub +=1
+              if (this.objectUrl) start_url = this.objectUrl
+              else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
+              url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/" + sub_obj
+
+              if (item_exists==0) window.__viewer.loadObject(url)
+              count_sub +=1 
           })
           count+=1
         })
@@ -957,6 +1062,11 @@ export default {
         console.log(this.custom_count)
 
       }
+    },
+    delete_pres(){
+      this.customSlides_parsed = []
+      this.agree()
+
     },
     hide(obj,i){
       if (i==0) {
