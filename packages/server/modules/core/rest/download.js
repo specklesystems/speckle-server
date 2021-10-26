@@ -5,7 +5,7 @@ const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 const cors = require( 'cors' )
 
-const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
+const { matomoMiddleware } = require( `${appRoot}/logging/posthogHelper` )
 const { contextMiddleware } = require( `${appRoot}/modules/shared` )
 const { validatePermissionsReadStream } = require( './authUtils' )
 

@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 const Sentry = require( '@sentry/node' )
 const { ApolloError } = require( 'apollo-server-express' )
-const { apolloHelper } = require( './matomoHelper' )
+const { apolloHelper } = require( './posthogHelper' )
 const prometheusClient = require( 'prom-client' )
 
 const metricCallCount = new prometheusClient.Counter( { name: 'speckle_server_apollo_calls', help: 'Number of calls', labelNames: [ 'actionName' ] } )
