@@ -1066,6 +1066,7 @@ export default {
     delete_pres(){
       this.customSlides_parsed = []
       this.agree()
+      window.__viewer.sceneManager.objects.forEach(obj=> hide(obj,0))
 
     },
     hide(obj,i){

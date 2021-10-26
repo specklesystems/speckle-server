@@ -72,7 +72,7 @@
       </v-col>
 
       <no-data-placeholder
-        v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
+        v-if="( !$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0) && !$route.params.branchName.includes('abracadabra')"
       >
         <h2 class="space-grotesk">Branch "{{stream.branch.name}}" has no commits.</h2>
       </no-data-placeholder> 
