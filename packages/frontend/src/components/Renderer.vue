@@ -174,7 +174,7 @@
 
 
 
-          <v-menu top close-on-click offset-y style="z-index: 100">
+          <v-menu top close-on-click offset-y style="z-index: 100" v-if="$route.params.branchName.includes('abracadabra')">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
@@ -198,12 +198,32 @@
               </v-list-item>
             </v-list>
           </v-menu>
-
           
-           <!-- TOFIX: ACCESS COLOR AS PRIMARY -->
-          <input v-model="currentMessage" placeholder="type description here" class="pl-2 pr-2 mr-0.5" style="color: white; text-align: right;  background: #047EFB; opacity: 0.8 "  />
+          
+          <v-tooltip top v-if="$route.params.branchName.includes('abracadabra')">
+            <template #activator="{ on, attrs }">
+              <v-btn  v-bind="attrs" small @click="nextCustomSlide(-1)" v-on="on">
+                <v-icon small>mdi-arrow-left-bold</v-icon>
+              </v-btn>
+            </template>
+            Previous View
+          </v-tooltip>
+          
+          <input v-model="currentMessage_display" readonly class="pl-2 pr-2 mr-0.5" style="color: white; text-align: center; opacity: 0.8 " v-if="$route.params.branchName.includes('abracadabra')" />
 
-          <v-tooltip top>
+          <v-tooltip top v-if="$route.params.branchName.includes('abracadabra')">
+            <template #activator="{ on, attrs }">
+              <v-btn  v-bind="attrs" small @click="nextCustomSlide(1)" v-on="on">
+                <v-icon small>mdi-arrow-right-bold</v-icon>
+              </v-btn>
+            </template>
+            Next View
+          </v-tooltip>
+
+           <!-- TOFIX: ACCESS COLOR AS PRIMARY -->
+          <input v-model="currentMessage"  placeholder="type description here" class="pl-2 pr-2 mr-0.5" style="color: white; text-align: center;  background: #047EFB; opacity: 0.8 " v-if="$route.params.branchName.includes('abracadabra')" />
+
+          <v-tooltip top v-if="$route.params.branchName.includes('abracadabra')">
             <template #activator="{ on, attrs }">
               <v-btn color="primary"  v-bind="attrs" small @click="getCameraView()" v-on="on">
                 <v-icon small>mdi-movie-open-plus-outline</v-icon>
@@ -212,40 +232,22 @@
             Create a slide
           </v-tooltip>
 
-          <v-tooltip top>
+          <v-tooltip top v-if="$route.params.branchName.includes('abracadabra')">
             <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="agree()" v-on="on">
+              <v-btn color="error"  v-bind="attrs" small @click="agree()" v-on="on">
                 <v-icon small>mdi-content-save</v-icon>
               </v-btn>
             </template>
             Save presentation
           </v-tooltip>
 
-          <v-tooltip top>
+          <v-tooltip top v-if="$route.params.branchName.includes('abracadabra')">
             <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="delete_pres()" v-on="on">
+              <v-btn color="error"  v-bind="attrs" small @click="delete_pres()" v-on="on">
                 <v-icon small>mdi-delete-outline</v-icon>
               </v-btn>
             </template>
             Delete presentation
-          </v-tooltip>
-
-          <v-tooltip top>
-            <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="nextCustomSlide(-1)" v-on="on">
-                <v-icon small>mdi-arrow-left-bold</v-icon>
-              </v-btn>
-            </template>
-            Previous View
-          </v-tooltip>
-
-          <v-tooltip top>
-            <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="nextCustomSlide(1)" v-on="on">
-                <v-icon small>mdi-arrow-right-bold</v-icon>
-              </v-btn>
-            </template>
-            Next View
           </v-tooltip>
 
           <v-dialog
@@ -477,7 +479,9 @@ export default {
       customSlides: [],   
       customSlides_parsed: [],
       currentMessage: "",
+      currentMessage_display: "",
       loading: false,
+      slide_clicked: 0,
       total_vis: []
     }
   },
@@ -543,20 +547,15 @@ export default {
       }
     },
     branchNames_Checks(val){
-      console.log('layer hidden')
+      console.log('layer value changed')
       console.log(val)
     },
     loadProgress(newVal) {
       if (newVal >= 99) {
-        //console.log(window.__viewerLastLoadedUrl)
-
-        
-
+      
         let temp = this.branchQuery
         let count = 0
         
-        //console.log(temp)
-
         temp.forEach(obj=> { // run loop for each branch name
         if (obj.name.includes('abracadabra')) this.branch_id = obj.id, this.branch_name = obj.name, this.branch_description = obj.description //, console.log(obj)
         if (!obj.name.includes('abracadabra')) {
@@ -580,55 +579,74 @@ export default {
               window.__viewer.sceneManager.removeAllObjects()
 
               this.branchNames.push(obj.name) 
-              ////////////////// TOFIX: set current branch to 0
-              if(url && obj.commits.items[0]) this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
-              else this.branchUrls.push( "" ) 
+              let local_gr = []
+              //console.log(count)
+              //console.log(obj.name)
+
+              if(url && obj.commits.items[0]) {
+                obj.commits.items.forEach(sub_obj =>{
+                  local_gr.push( url +  sub_obj.referencedObject) 
+                })
+                this.branchUrls.push(local_gr)
+                //console.log(local_gr)
+              } else this.branchUrls.push( "" ) 
+
               this.branchNames_Checks.push([obj.name,0])
+              console.log(this.branchNames)
 
               // if iteration on the branch that is selected, push new objects there, otherwise push null
               //console.log(this.branchCurrent_index )
               //console.log(count)
-              if (this.branchCurrent_index != count) this.objectsCurrentGroup_ids.push( [ ] )
-              else {
+              if (this.branchCurrent_index == count) {
                 let allObj = []
                 window.__viewer.sceneManager.objects.forEach((item) => {
                   allObj.push(item)
                 })  
                 this.objectsCurrentGroup_ids.push(allObj)
+                console.log(this.objectsCurrentGroup_ids)
               }
+              else  this.objectsCurrentGroup_ids.push( [ ] )
+              
                 
-          } 
-          //else if (this.branch_description.length>100) {
-            //if (total_urls[count]) window.__viewer.loadObject(total_urls[count])
-          //}
-          else{ // if branch namealready in the list, executes every time new layer is called, updates object lists
-              //console.log("branch layer update ")
-              //console.log(this.objectsCurrentGroup_ids[count])
+          }  else{ 
               console.log("branch weird")
               if (this.branchCurrent_index == count && this.objectsCurrentGroup_ids[count].length==0) {  // only execute if branch is null
-                console.log("branch layer update ")
+                console.log("branch layer fill ")
                 //console.log(count)
                 //console.log(obj.name)
                 let allObj = []
-                let visibility = this.customSlides_parsed[this.custom_count].visibilities[count]
+                //console.log(this.custom_count)
+                //console.log(this.customSlides_parsed)
+
                 window.__viewer.sceneManager.objects.forEach((item) => {
                   if (!this.all_obj_ids_scene.includes(item.uuid)){ //check if object is already uploaded to one of the other groups
                     this.all_obj_ids_scene.push(item.uuid)
                     allObj.push(item.uuid)
-                    this.hide(item, 0)
-                    //console.log(item.uuid)
-                    //console.log(item)
-
-                    if (this.branch_description && this.branch_description.length>100) this.hide(item, this.total_vis[count])
+                    this.hide(item, this.branchNames_Checks[count][1])
                   }
                 })  
                 this.objectsCurrentGroup_ids[count] = JSON.parse(JSON.stringify(allObj) )
                 this.branchNames_Checks[count][1] = 1
+              }else { // to figure out
+                if (this.slide_clicked == 1 && this.branchNames_Checks[count][0] == obj.name ) {
+                  console.log(this.customSlides_parsed)
+                  console.log(this.custom_count)
+                  console.log(this.branchNames_Checks)
+                  console.log( obj.name)
+
+                  let visibility = this.customSlides_parsed[this.custom_count].visibilities[count] // if layer already created
+                  console.log(visibility)
+                  //window.__viewer.sceneManager.objects.forEach((item) => {
+                  //  this.hide(item, visibility)
+                  //})  
+                }
+                
               }
           }
           count +=1
         }
         })
+        this.slide_clicked = 0
 
         ////// load objects existing in the presentation
         let total_urls = []
@@ -652,20 +670,16 @@ export default {
           let countt = 0
           this.total_vis.forEach(obj=> {
             if (obj==1) total_urls.push(this.branchUrls[countt]) 
-            console.log(this.branchUrls[countt])
+            //console.log(this.branchUrls[countt])
             //window.__viewer.loadObject(this.branchUrls[count])
             ////////////LOAD
             countt +=1
           })
         }
         
-        
 
-        console.log("New group of objects ")
-        console.log(this.objectsCurrentGroup_ids)
-        console.log(this.branchNames_Checks)
 
-/////////////////////////
+        /////////////////////////
         
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
@@ -736,7 +750,6 @@ export default {
         console.log("AnimObj: ")
         console.log(this.animObj)
         */
-
       }
     }
   },
@@ -918,7 +931,7 @@ export default {
 
     async agree() {
       //if (!this.$refs.form.validate()) return
-      console.log(JSON.stringify(this.customSlides_parsed))
+      console.log(this.customSlides_parsed)
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('branch/update')
       await this.$apollo.mutate({
@@ -936,16 +949,13 @@ export default {
           }
         }
       })
-
       this.loading = false
-
       //this.resolve({
       //  result: true,
       //  name: this.branch_name
       //})
-      this.dialog = false
+      //this.dialog = false
     },
-
 
     showVis(visId){
       let index = this.branchNames.indexOf(visId)
@@ -954,33 +964,36 @@ export default {
       console.log(this.branchNames_Checks)
 
       let url = this.branchUrls[index]
-      this.branchCurrent_index = index
-      if (!this.branchNames_Checks[index][1] ==1  )  window.__viewer.loadObject(url), this.branchNames_Checks[index][1] =1  // run only if data is not On
+      this.branchCurrent_index = index //////////////////////////////////////////////////////////// here is multiple objects error
+      if (!this.branchNames_Checks[index][1] ==1  )  { // run only if data is not On
+        window.__viewer.loadObject(url)
+        this.branchNames_Checks[index][1] =1 
+        console.log("obj loaded from branh # " + index.toString())  
+        console.log(url)
+      }
       else {
         this.branchNames_Checks[index][1] = 0
-        let count = 0
-        this.objectsCurrentGroup_ids.forEach(obj => { //going through each branch
-          if (count==index) { // get branch that was unselected 
+        //console.log(this.branchUrls[index])
+        
+        let count_sub = 0
+        this.branchUrls[index].forEach(sub_obj => { //going through each branch
+          console.log("Unselected branch# " + index.toString())
+          
+          window.__viewer.sceneManager.objects.forEach((item) => {
+            console.log(item)
+            console.log(sub_obj.split("/")[sub_obj.split("/").length-1])
 
-            let count_sub = 0
-            obj.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
-              window.__viewer.sceneManager.objects.forEach((item) => {
-                if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
-                  this.hide(item, 0) 
-                  this.branchNames_Checks[count][1] = 0
-                }
-              }) 
-              count_sub +=1
-            })
-
-          }
-          count +=1
+            if ( item.uuid == sub_obj.split("/")[sub_obj.split("/").length-1] ){ //check if object is already uploaded to one of the other groups
+              console.log(item)
+              this.hide(item, 0) 
+              this.branchNames_Checks[index][1] = 0
+            }
+          }) 
+          count_sub +=1
         })
       }
       
     },
-
-
 
 
     getCameraView(){
@@ -997,16 +1010,23 @@ export default {
       this.branchNames_Checks.forEach(obj=> visib.push(obj[1]) )
 
       this.customSlides.push({
+        user_message: "DO NOT EDIT THIS FIELD", 
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, azim: contr.azimuthAngle, polar: contr.polarAngle, target:contr._target, cam_up: [cam[4],cam[5],cam[6]],
         visibilities: visib, 
-        msg:this.currentMessage, 
+        msg: this.currentMessage, 
         obj_id: this.objectsCurrentGroup_ids
       })
+      
+      console.log( this.customSlides_parsed)
       this.customSlides_parsed.push( JSON.parse(JSON.stringify(this.customSlides[this.customSlides.length-1])) )
       console.log("SAVE SLIDES: ")
       console.log( this.customSlides_parsed)
+      this.currentMessage = "Slide #" + this.customSlides_parsed.length.toString() + " saved!"
+      this.custom_count +=1
     },
+    
     nextCustomSlide(num) {
+      this.currentMessage = ""
       if (this.customSlides_parsed.length>0){
         
         this.custom_count += num
@@ -1021,7 +1041,7 @@ export default {
         let target1 = this.customSlides_parsed[this.custom_count].target
 
         window.__viewer.interactions.setLookAt(position1,target1)
-        this.currentMessage = this.customSlides_parsed[this.custom_count].msg
+        this.currentMessage_display =""+ (this.custom_count+1).toString() + "/" + this.customSlides_parsed.length.toString() + " -  " + this.customSlides_parsed[this.custom_count].msg
 
         console.log("SLIDE SHOWING:  ")
         console.log(this.custom_count)
@@ -1029,13 +1049,14 @@ export default {
 
         // get objects and visibilities 
         let count=0
-        this.customSlides_parsed[this.customSlides_parsed.length-1].obj_id.forEach( obj => { // go object by object in the slide 
+        this.customSlides_parsed[this.custom_count].obj_id.forEach( obj => { // go object by object in the slide ////////// doesn't work with newly created slide
           console.log("Slide branch # " + count.toString() + " object IDs:" )
           console.log(obj)
           let count_sub = 0
           //console.log(this.customSlides_parsed[this.customSlides_parsed.length-1]) //take LATEST object set with all loaded objects
           let visibility = this.customSlides_parsed[this.custom_count].visibilities[count]
           this.branchNames_Checks[count][1] = visibility
+          console.log(visibility)
 
           obj.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
               let item_exists = 0
@@ -1043,6 +1064,7 @@ export default {
                 if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
                   item_exists +=1
                   this.hide(item, visibility) 
+                  console.log("EXISTS")
                 }
               }) 
               let url = ""
@@ -1052,7 +1074,13 @@ export default {
               else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
               url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/" + sub_obj
 
-              if (item_exists==0) window.__viewer.loadObject(url)
+              if (item_exists==0) {
+                if (visibility== 1) {
+                  console.log("DOES NOT EXISTS") 
+                  this.slide_clicked = 1 
+                  window.__viewer.loadObject(url)
+                }
+              }
               count_sub +=1 
           })
           count+=1
@@ -1066,7 +1094,7 @@ export default {
     delete_pres(){
       this.customSlides_parsed = []
       this.agree()
-      window.__viewer.sceneManager.objects.forEach(obj=> hide(obj,0))
+      window.__viewer.sceneManager.objects.forEach(obj=> this.hide(obj,0))
 
     },
     hide(obj,i){
