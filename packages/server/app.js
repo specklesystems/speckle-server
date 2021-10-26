@@ -14,7 +14,7 @@ const debug = require( 'debug' )
 const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
 const Logging = require( `${appRoot}/logging` )
-const { startup: MatStartup } = require( `${appRoot}/logging/matomoHelper` )
+const { startup: MatStartup } = require( `${appRoot}/logging/posthogHelper` )
 const prometheusClient = require( 'prom-client' )
 
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )

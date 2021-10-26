@@ -9,7 +9,7 @@ const debug = require( 'debug' )
 const cors = require( 'cors' )
 
 const sentry = require( `${appRoot}/logging/sentryHelper` )
-const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
+const { matomoMiddleware } = require( `${appRoot}/logging/posthogHelper` )
 const { getApp, getAllAppsAuthorizedByUser, createAuthorizationCode, createAppTokenFromAccessCode, refreshAppToken } = require( '../services/apps' )
 const { createPersonalAccessToken, validateToken, revokeTokenById } = require( `${appRoot}/modules/core/services/tokens` )
 const { revokeRefreshToken } = require( `${appRoot}/modules/auth/services/apps` )

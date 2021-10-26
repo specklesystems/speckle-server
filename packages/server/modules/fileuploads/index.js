@@ -7,7 +7,7 @@ const appRoot = require( 'app-root-path' )
 const Busboy = require( 'busboy' )
 
 const cors = require( 'cors' )
-const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
+const { matomoMiddleware } = require( `${appRoot}/logging/posthogHelper` )
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 const { checkBucket, uploadFile, getFileInfo, getFileStream } = require( './services/fileuploads' )
