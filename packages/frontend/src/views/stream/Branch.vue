@@ -44,11 +44,12 @@
       <v-col v-else-if="stream && stream.branch" cols="12" class="pa-0 ma-0">
         <branch-edit-dialog ref="editBranchDialog" />
 
-        <div style="height: 60vh" > <!-- v-if="latestCommitObjectUrl"> -->
-          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
+        <div style="height: 60vh"   v-if="(latestCommitObjectUrl || $route.params.branchName.includes('abracadabra') )"> 
+          <renderer :object-url="latestCommitObjectUrl" show-selection-helper v-if="!$route.params.branchName.includes('abracadabra')" />
+          <renderer :object-url="latestCommitObjectMainUrl" show-selection-helper v-if="$route.params.branchName.includes('abracadabra')" />
         </div>
 
-        <v-list class="pa-0 ma-0"> <!-- v-if="stream.branch.commits.items.length > 0"> -->
+        <v-list class="pa-0 ma-0" v-if="stream.branch.commits.items.length > 0"> 
           <list-item-commit
             :commit="latestCommit"
             :stream-id="streamId"
@@ -69,12 +70,12 @@
 
         </v-list>
       </v-col>
-<!--
+
       <no-data-placeholder
         v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
       >
         <h2 class="space-grotesk">Branch "{{stream.branch.name}}" has no commits.</h2>
-      </no-data-placeholder> -->
+      </no-data-placeholder> 
     </v-row>
     <error-placeholder
       error-type="404"
@@ -91,7 +92,7 @@ import branchQuery from '@/graphql/branch.gql'
 export default {
   name: 'Branch',
   components: {
-    ListItemCommit: () => import('@/components/ListItemCommit'),
+    //ListItemCommit: () => { console.log("logging"), console.log(this.$route), import('@/components/ListItemCommit') },
     BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
@@ -113,6 +114,16 @@ export default {
         }
       }
     },
+    streamMain: {
+      query: branchQuery,
+      update: (data) => data.stream,
+      variables() {
+        return {
+          streamId: this.streamId,
+          branchName: 'main'
+        }
+      }
+    },
     $subscribe: {
       commitCreated: {
         query: gql`
@@ -127,6 +138,7 @@ export default {
         },
         result() {
           this.$apollo.queries.stream.refetch()
+          this.$apollo.queries.streamMain.refetch()
         },
         error(err) {
           console.log(err)
@@ -149,6 +161,16 @@ export default {
         this.stream.branch.commits.items.length > 0
       )
         return `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.branch.commits.items[0].referencedObject}`
+      else return null
+    },
+    latestCommitObjectMainUrl() {
+      if (
+        this.streamMain &&
+        this.streamMain.branch &&
+        this.streamMain.branch.commits.items &&
+        this.streamMain.branch.commits.items.length > 0
+      )
+        return `${window.location.origin}/streams/${this.streamMain.id}/objects/${this.streamMain.branch.commits.items[0].referencedObject}`
       else return null
     },
     latestCommit() {

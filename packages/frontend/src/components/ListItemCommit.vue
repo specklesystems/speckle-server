@@ -1,7 +1,7 @@
 <template>
-  <v-list-item class="xxx-elevation-10">
+  <v-list-item class="xxx-elevation-10" >
     <v-list-item-icon class="pl-4">
-      <user-avatar
+      <user-avatar 
         :id="commit.authorId"
         :avatar="commit.authorAvatar"
         :name="commit.authorName"
@@ -11,7 +11,7 @@
 
     <v-list-item-content>
       <v-list-item-title class="mt-0 pt-0 py-1">
-        <router-link
+        <router-link 
           class="text-decoration-none"
           :to="route ? route : `/streams/${streamId}/commits/${commit.id}`"
         >

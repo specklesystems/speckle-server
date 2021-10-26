@@ -162,10 +162,23 @@
           </v-tooltip>
 
           
+
+
+
+
+
+
+
+
+
+
+
+
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
+                  
                   <v-btn  
                     small
                     v-bind="{ ...tooltipAttrs, ...menuAttrs }"
@@ -178,28 +191,22 @@
               </v-tooltip>
             </template>
             <v-list dense>
+              <!--
               <v-list-item @click="showVis(), checks()" >
                 <v-list-item-title>No added properties</v-list-item-title>
               </v-list-item>
-              <v-divider v-if="branchNames.length !== 0"></v-divider>
-              <v-list-item v-for="vis in branchNames" @click="showVis(vis)">
-                <v-list-item-title>{{ vis }}</v-list-item-title>
+              <v-divider v-if="branchNames.length !== 0"></v-divider> -->
+              
+              <v-list-item v-for="vis in branchNames_Checks" @click="showVis(vis[0])" v-if="!vis[0].includes('abracadabra') " 
+              :style= "[vis[1]==0 ? {} : { background: '#757575' }]">
+                <v-list-item-title>{{ vis[0] }}</v-list-item-title>
               </v-list-item>
             </v-list>
           </v-menu>
 
           
-
-          
-
-
-
-
-
-
-
-
-          <input v-model="currentMessage" placeholder="type description here" class="ml-2 mr-2" style="color: white; text-align: right" />
+           <!-- TOFIX: ACCESS COLOR AS PRIMARY -->
+          <input v-model="currentMessage" placeholder="type description here" class="pl-2 pr-2 mr-0.5" style="color: white; text-align: right;  background: #047EFB; opacity: 0.8 "  />
 
           <v-tooltip top>
             <template #activator="{ on, attrs }">
@@ -444,11 +451,11 @@ export default {
       branchQuery: null,
       branchNames: [],
       branchUrls: [],
-      branchCurrentOn: [],
       branchCurrent_index: null,
       objectsCurrentGroup_ids: [],
       all_obj_ids_scene: [],
       custom_count: -1,
+      branchNames_Checks: [],
       customSlides: [],   
       customSlides_parsed: [],
       currentMessage: "",
@@ -515,6 +522,10 @@ export default {
         })
       }
     },
+    branchNames_Checks(val){
+      console.log('layer hidden')
+      console.log(val)
+    },
     loadProgress(newVal) {
       if (newVal >= 99) {
         //console.log(window.__viewerLastLoadedUrl)
@@ -524,11 +535,13 @@ export default {
         //console.log(temp)
 
         temp.forEach(obj=> { // run loop for each branch name
+        if (!obj.name.includes('abracadabra')) {
 
           ///////////////////////////// TOFIX: DEAL WITH EMPTY BRANCHES
           ///////////////////////////// TOFIX: SPLIT BY STREAM, NOT SYMBOLS
-          ///////////////////////////// TOFIX: REMOVE CURRENT BRANCH FROM THE LAYERS LIST 
           ///////////////////////////// TOFIX: GET URL WITHOUT AN OBJECT
+          ///////////////////////////// TOFIX: ListItemCommit load
+          ///////////////////////////// TOFIX: only if main branch has commits 
           let url = ""
           let start_url = ""
 
@@ -539,6 +552,7 @@ export default {
           //console.log(obj)
 
           if (!this.branchNames.includes(obj.name) ) { // execute only if branch is not in the list yet, basically the first load
+              window.__viewer.sceneManager.removeAllObjects()
               //console.log("branch layer first load")
               //console.log(count)
               //console.log(obj.name)
@@ -546,7 +560,7 @@ export default {
               ////////////////// TOFIX: set current branch to 0
               if(url && obj.commits.items[0]) this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
               else this.branchUrls.push( "" ) 
-              this.branchCurrentOn.push(0)
+              this.branchNames_Checks.push([obj.name,0])
 
               // if iteration on the branch that is selected, push new objects there, otherwise push null
               //console.log(this.branchCurrent_index )
@@ -576,13 +590,16 @@ export default {
                   }
                 })  
                 this.objectsCurrentGroup_ids[count] = JSON.parse(JSON.stringify(allObj) )
+                this.branchNames_Checks[count][1] = 1
               }
           }
           count +=1
+        }
         })
         
         console.log("New group of objects ")
         console.log(this.objectsCurrentGroup_ids)
+        console.log(this.branchNames_Checks)
 
 /////////////////////////
         
@@ -832,20 +849,34 @@ export default {
       let index = this.branchNames.indexOf(visId)
       console.log("setting index")
       console.log(index)
+      console.log(this.branchNames_Checks)
+
       let url = this.branchUrls[index]
       this.branchCurrent_index = index
-      if (!this.branchCurrentOn[index] ==1  )  window.__viewer.loadObject(url), this.branchCurrentOn[index] =1  // run only if data is not On
+      if (!this.branchNames_Checks[index][1] ==1  )  window.__viewer.loadObject(url), this.branchNames_Checks[index][1] =1  // run only if data is not On
+      else {
+        this.branchNames_Checks[index][1] = 0
+        let count = 0
+        this.objectsCurrentGroup_ids.forEach(obj => { //going through each branch
+          if (count==index) { // get branch that was unselected 
+
+            let count_sub = 0
+            obj.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
+              window.__viewer.sceneManager.objects.forEach((item) => {
+                if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
+                  this.hide(item, 0) 
+                  this.branchNames_Checks[count][1] = 0
+                }
+              }) 
+              count_sub +=1
+            })
+
+          }
+          count +=1
+        })
+      }
       
     },
-
-
-
-
-
-
-
-
-
 
 
 
@@ -860,10 +891,12 @@ export default {
 
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
+      let visib = []
+      this.branchNames_Checks.forEach(obj=> visib.push(obj[1]) )
 
       this.customSlides.push({
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, azim: contr.azimuthAngle, polar: contr.polarAngle, target:contr._target, cam_up: [cam[4],cam[5],cam[6]],
-        visibilities: this.branchCurrentOn, 
+        visibilities: visib, 
         msg:this.currentMessage, 
         obj_id: this.objectsCurrentGroup_ids
       })
@@ -901,9 +934,10 @@ export default {
           console.log(obj)
           let count_sub = 0
           //console.log(this.customSlides_parsed[this.customSlides_parsed.length-1]) //take LATEST object set with all loaded objects
+          let visibility = this.customSlides_parsed[this.custom_count].visibilities[count]
+          this.branchNames_Checks[count][1] = visibility
 
-          obj.forEach( sub_obj => { // go for all LATEST obj within the branch
-            let visibility = this.customSlides_parsed[this.custom_count].visibilities[count] // visibility of entire branch applies 
+          obj.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
             console.log("Sub-obj (shows from the latest version to include all):")
             console.log(count_sub)
             console.log(sub_obj)
@@ -912,7 +946,6 @@ export default {
             window.__viewer.sceneManager.objects.forEach((item) => {
               if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
                 this.hide(item, visibility) 
-                return
               }
             }) 
             count_sub +=1
