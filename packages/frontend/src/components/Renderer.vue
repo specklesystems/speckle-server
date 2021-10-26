@@ -446,7 +446,7 @@ export default {
       branchUrls: [],
       branchCurrentOn: [],
       branchCurrent_index: null,
-      objectsCurrentGroup: [],
+      objectsCurrentGroup_ids: [],
       all_obj_ids_scene: [],
       custom_count: -1,
       customSlides: [],   
@@ -521,7 +521,7 @@ export default {
         let temp = this.branchQuery
         let count = 0
         
-        console.log(temp)
+        //console.log(temp)
 
         temp.forEach(obj=> { // run loop for each branch name
 
@@ -535,8 +535,13 @@ export default {
           if (this.objectUrl) start_url = this.objectUrl
           else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
           url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/"
-          
+          //console.log(this.branchNames)
+          //console.log(obj)
+
           if (!this.branchNames.includes(obj.name) ) { // execute only if branch is not in the list yet, basically the first load
+              //console.log("branch layer first load")
+              //console.log(count)
+              //console.log(obj.name)
               this.branchNames.push(obj.name) 
               ////////////////// TOFIX: set current branch to 0
               if(url && obj.commits.items[0]) this.branchUrls.push( url +  obj.commits.items[0].referencedObject) 
@@ -546,34 +551,39 @@ export default {
               // if iteration on the branch that is selected, push new objects there, otherwise push null
               //console.log(this.branchCurrent_index )
               //console.log(count)
-              if (this.branchCurrent_index != count) this.objectsCurrentGroup.push( [] )
+              if (this.branchCurrent_index != count) this.objectsCurrentGroup_ids.push( [ ] )
               else {
                 let allObj = []
                 window.__viewer.sceneManager.objects.forEach((item) => {
                   allObj.push(item)
                 })  
-                this.objectsCurrentGroup.push(allObj)
+                this.objectsCurrentGroup_ids.push(allObj)
               }
                 
-          } else{ // executes every time new layer is called, updates object lists
-              if (this.branchCurrent_index == count) {
+          } else{ // if branch namealready in the list, executes every time new layer is called, updates object lists
+              //console.log("branch layer update ")
+              //console.log(this.objectsCurrentGroup_ids[count])
+              if (this.branchCurrent_index == count && this.objectsCurrentGroup_ids[count].length==0) {  // only execute if branch is null
+                //console.log("branch layer update ")
+                //console.log(count)
+                //console.log(obj.name)
                 let allObj = []
-                console.log(count)
                 window.__viewer.sceneManager.objects.forEach((item) => {
                   if (!this.all_obj_ids_scene.includes(item.uuid)){ //check if object is already uploaded to one of the other groups
                     this.all_obj_ids_scene.push(item.uuid)
-                    allObj.push(item)
-                    console.log(item)
+                    allObj.push(item.uuid)
+                    //console.log(item.uuid)
                   }
                 })  
-                this.objectsCurrentGroup[count] = allObj
+                this.objectsCurrentGroup_ids[count] = JSON.parse(JSON.stringify(allObj) )
               }
           }
           count +=1
         })
         
-        console.log("New group of objects")
-        console.log(this.objectsCurrentGroup)
+        console.log("New group of objects ")
+        console.log(this.objectsCurrentGroup_ids)
+
 /////////////////////////
         
         let views = window.__viewer.interactions.getViews()
@@ -827,6 +837,19 @@ export default {
       if (!this.branchCurrentOn[index] ==1  )  window.__viewer.loadObject(url), this.branchCurrentOn[index] =1  // run only if data is not On
       
     },
+
+
+
+
+
+
+
+
+
+
+
+
+
     getCameraView(){
       //console.log(window.__viewer.interactions.getViews)
       //console.log("GET CAMERA VIEW")
@@ -842,7 +865,7 @@ export default {
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, azim: contr.azimuthAngle, polar: contr.polarAngle, target:contr._target, cam_up: [cam[4],cam[5],cam[6]],
         visibilities: this.branchCurrentOn, 
         msg:this.currentMessage, 
-        obj: this.objectsCurrentGroup
+        obj_id: this.objectsCurrentGroup_ids
       })
       this.customSlides_parsed.push( JSON.parse(JSON.stringify(this.customSlides[this.customSlides.length-1])) )
       console.log("SAVE SLIDES: ")
@@ -866,25 +889,38 @@ export default {
         this.currentMessage = this.customSlides_parsed[this.custom_count].msg
         //window.__viewer.interactions.rotateCamera(az1-az0, pol1-pol0) 
 
-        console.log("SLIDE SHOWING: ")
+        console.log("SLIDE SHOWING:  ")
         console.log(this.custom_count)
-        console.log(this.customSlides_parsed)
+        console.log(this.customSlides_parsed[this.custom_count])
         //console.log( this.customSlides_parsed[this.custom_count])
 
         // get objects and visibilities 
         let count=0
-        this.customSlides_parsed[this.custom_count].obj.forEach( obj => { // go slide by slide 
-          
-          console.log(this.customSlides_parsed[this.customSlides_parsed.length-1]) //take LATEST object set with all loaded objects 
-          this.customSlides_parsed[this.customSlides_parsed.length-1].obj.forEach( sub_obj => { // go for all LATEST obj within the branch
-            console.log("Sub-obj:")
-            console.log(sub_obj.object)
-            this.hide(sub_obj.object, this.customSlides_parsed[this.customSlides_parsed.length-1].visibilities[count])
+        this.customSlides_parsed[this.customSlides_parsed.length-1].obj_id.forEach( obj => { // go object by object in the slide 
+          console.log("Slide branch # " + count.toString())
+          console.log(obj)
+          let count_sub = 0
+          //console.log(this.customSlides_parsed[this.customSlides_parsed.length-1]) //take LATEST object set with all loaded objects
+
+          obj.forEach( sub_obj => { // go for all LATEST obj within the branch
+            let visibility = this.customSlides_parsed[this.custom_count].visibilities[count] // visibility of entire branch applies 
+            console.log("Sub-obj (shows from the latest version to include all):")
+            console.log(count_sub)
+            console.log(sub_obj)
+            console.log("Visible: " + visibility.toString())
+
+            window.__viewer.sceneManager.objects.forEach((item) => {
+              if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
+                this.hide(item, visibility) 
+                return
+              }
+            }) 
+            count_sub +=1
           })
           count+=1
         })
 
-        console.log("SLIDE completed SHOWING:")
+        console.log("SLIDE completed SHOWING: ")
         console.log(this.custom_count)
 
       }
