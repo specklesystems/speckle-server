@@ -92,7 +92,7 @@ import branchQuery from '@/graphql/branch.gql'
 export default {
   name: 'Branch',
   components: {
-    //ListItemCommit: () => { console.log("logging"), console.log(this.$route), import('@/components/ListItemCommit') },
+    ListItemCommit: () => { import('@/components/ListItemCommit') },
     BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),

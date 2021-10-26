@@ -466,7 +466,7 @@ export default {
       textPanel: "",
 
       branchQuery: null,
-      branch_description: null,
+      branch_description: "",
       branchNames: [],
       branch_id: null,
       branch_name: "",
@@ -552,12 +552,19 @@ export default {
     },
     loadProgress(newVal) {
       if (newVal >= 99) {
-      
+      console.log(this.$route.params.branchName)
+      if (this.$route.params.branchName.includes('abracadabra')) {
         let temp = this.branchQuery
         let count = 0
         
         temp.forEach(obj=> { // run loop for each branch name
-        if (obj.name.includes('abracadabra')) this.branch_id = obj.id, this.branch_name = obj.name, this.branch_description = obj.description //, console.log(obj)
+        if (obj.name == this.$route.params.branchName) {
+          this.branch_id = obj.id
+          this.branch_name = obj.name
+          this.branch_description = obj.description //, console.log(obj)
+          //console.log(this.branch_description)
+        }
+
         if (!obj.name.includes('abracadabra')) {
 
           ///////////////////////////// TOFIX: DEAL WITH EMPTY BRANCHES
@@ -750,6 +757,7 @@ export default {
         console.log("AnimObj: ")
         console.log(this.animObj)
         */
+      }
       }
     }
   },
@@ -1058,12 +1066,15 @@ export default {
           this.branchNames_Checks[count][1] = visibility
           console.log(visibility)
 
-          obj.forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
+          this.customSlides_parsed[0].obj_id[count].forEach( sub_obj => { // go for all LATEST obj within the branch // visibility of entire branch applies 
+              console.log(sub_obj)
               let item_exists = 0
               window.__viewer.sceneManager.objects.forEach( item => {
                 if ( item.uuid == sub_obj ){ //check if object is already uploaded to one of the other groups
                   item_exists +=1
                   this.hide(item, visibility) 
+                  console.log(item)
+                  console.log(visibility)
                   console.log("EXISTS")
                 }
               }) 
@@ -1123,9 +1134,9 @@ export default {
         'load-progress',
         throttle(
           function (args) {
-            this.loadProgress = args.progress * 100
+            this.loadProgress = args.progress * 99
             ////////////// TOFIX: Zoom on first load
-            //this.zoomEx()
+            if (!this.$route.params.branchName.includes('abracadabra'))  this.zoomEx()
           }.bind(this),
           200
         )
