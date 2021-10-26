@@ -31,7 +31,7 @@ module.exports = {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
       client.capture({
         distinctId: id,
-        event: 'req.url',
+        event: req.url,
       })
     }
     next()
