@@ -74,7 +74,7 @@ export default class Coverter {
           let val = await this.resolveReference( element )
           if ( !val.units ) val.units = obj.units
           let { bufferGeometry } = await this.convert( val, scale )
-          callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial } ) )
+          callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
         }
       }
     }

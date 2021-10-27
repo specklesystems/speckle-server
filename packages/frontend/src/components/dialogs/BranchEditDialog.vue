@@ -1,6 +1,11 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel" :fullscreen="$vuetify.breakpoint.smAndDown">
-    <v-card :loading="loading" v-if="branch && branch.name !== 'main'">
+  <v-dialog
+    v-model="show"
+    width="500"
+    :fullscreen="$vuetify.breakpoint.smAndDown"
+    @keydown.esc="cancel"
+  >
+    <v-card v-if="branch && branch.name !== 'main'" :loading="loading">
       <v-toolbar color="primary" dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>mdi-pencil</v-icon>
@@ -9,7 +14,9 @@
         <v-spacer></v-spacer>
         <v-btn icon @click="show = false"><v-icon>mdi-close</v-icon></v-btn>
       </v-toolbar>
-
+      <v-alert v-show="error" dismissible type="error">
+        {{ error }}
+      </v-alert>
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
         <v-card-text>
           <v-text-field
@@ -20,6 +27,10 @@
             required
             autofocus
           ></v-text-field>
+          <p class="caption">
+            Tip: you can create nested branches by using "/" as a separator in their names. E.g.,
+            "mep/stage-1" or "arch/sketch-design".
+          </p>
           <v-textarea v-model="branch.description" rows="2" label="Description"></v-textarea>
         </v-card-text>
         <v-card-actions>
@@ -65,6 +76,8 @@ export default {
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
         (v) =>
+          !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
+        (v) =>
           (v && this.allBranchNames.findIndex((e) => e === v) === -1) ||
           'A branch with this name already exists',
         (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',
@@ -72,7 +85,8 @@ export default {
       ],
       isEdit: false,
       pendingDelete: false,
-      allBranchNames: []
+      allBranchNames: [],
+      error: null
     }
   },
   apollo: {
@@ -118,6 +132,7 @@ export default {
   methods: {
     async deleteBranch() {
       this.loading = true
+      this.error = null
       this.$matomo && this.$matomo.trackPageView('branch/delete')
       try {
         await this.$apollo.mutate({
@@ -134,16 +149,18 @@ export default {
           }
         })
       } catch (e) {
-        console.log(e)
+        this.error = e.message
       }
 
       this.loading = false
-
-      this.resolve({
-        result: true,
-        deleted: true
-      })
-      this.dialog = false
+      this.showDelete = false
+      if (!this.error) {
+        this.resolve({
+          result: true,
+          deleted: true
+        })
+        this.dialog = false
+      }
     },
     open(branch) {
       this.dialog = true

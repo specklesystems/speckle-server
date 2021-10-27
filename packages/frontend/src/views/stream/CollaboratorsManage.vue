@@ -1,5 +1,5 @@
 <template>
-  <v-container style="max-width: 768px;">
+  <v-container style="max-width: 768px">
     <portal to="streamTitleBar">
       <div>
         <v-icon small class="mr-2 hidden-xs-only">mdi-account-multiple</v-icon>
@@ -7,62 +7,64 @@
       </div>
     </portal>
 
-    <v-alert type="warning" v-if="stream.role !== 'stream:owner'">
+    <v-alert v-if="stream.role !== 'stream:owner'" type="warning">
       Your permission level ({{ stream.role }}) is not high enough to edit this stream's
       collaborators.
     </v-alert>
-    <v-card
-      v-if="serverInfo"
-      elevation="0"
-      color="transparent"
-      :class="`mb-4 py-4`"
-    >
+    <v-card v-if="serverInfo" elevation="0" color="transparent" :class="`mb-4 py-4`">
       <v-row align="stretch">
-        <v-col cols="12" sm="4" v-for="role in roles" :key="role.name">
-          <v-card rounded="lg" style="height: 100%" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} d-flex flex-column`">
-            <v-toolbar style="flex:none;" flat>
+        <v-col v-for="role in roles" :key="role.name" cols="12" sm="4">
+          <v-card
+            rounded="lg"
+            style="height: 100%"
+            :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} d-flex flex-column`"
+          >
+            <v-toolbar style="flex: none" flat>
               <v-toolbar-title class="text-capitalize">
                 {{ role.name.split(':')[1] }}s
               </v-toolbar-title>
               <v-spacer></v-spacer>
-              <v-badge inline :content="getRoleCount(role.name)" :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"></v-badge>
+              <v-badge
+                inline
+                :content="getRoleCount(role.name)"
+                :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"
+              ></v-badge>
             </v-toolbar>
             <v-card-text class="flex-grow-1">{{ role.description }}</v-card-text>
             <v-card-text class="mt-auto">
               <div v-if="role.name === 'stream:reviewer'" class="align-self-end">
                 <user-avatar
                   v-for="user in reviewers"
-                  :key="user.id"
                   :id="user.id"
+                  :key="user.id"
                   :avatar="user.avatar"
                   :name="user.name"
                   :size="30"
                 />
-                <span v-if="reviewers.length===0">No users with this role.</span>
+                <span v-if="reviewers.length === 0">No users with this role.</span>
               </div>
               <div v-if="role.name === 'stream:contributor'">
                 <user-avatar
                   v-for="user in contributors"
-                  :key="user.id"
                   :id="user.id"
+                  :key="user.id"
                   :avatar="user.avatar"
                   :name="user.name"
                   :size="30"
                 />
-                <span v-if="contributors.length===0">No users with this role.</span>
+                <span v-if="contributors.length === 0">No users with this role.</span>
               </div>
               <div v-if="role.name === 'stream:owner'">
                 <user-avatar
                   v-for="user in owners"
-                  :key="user.id"
                   :id="user.id"
+                  :key="user.id"
                   :avatar="user.avatar"
                   :name="user.name"
                   :size="30"
                 />
               </div>
             </v-card-text>
-          
           </v-card>
         </v-col>
       </v-row>
@@ -79,9 +81,9 @@
       </template>
 
       <v-toolbar
+        v-if="stream.role === 'stream:owner'"
         flat
         :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`"
-        v-if="stream.role === 'stream:owner'"
       >
         <v-toolbar-title>
           <v-icon small class="mr-2">mdi-account-plus</v-icon>
@@ -152,9 +154,9 @@
       :class="`mt-5 ${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
     >
       <v-toolbar
+        v-if="stream.role === 'stream:owner'"
         flat
         :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`"
-        v-if="stream.role === 'stream:owner'"
       >
         <v-toolbar-title>
           <v-icon small class="mr-2">mdi-account-group</v-icon>
@@ -179,8 +181,8 @@
                   item-value="name"
                   :items="roles"
                   class="py-0 my-0"
-                  @change="setUserPermissions(user)"
                   :disabled="stream.role !== 'stream:owner'"
+                  @change="setUserPermissions(user)"
                 >
                   <template #selection="{ item }">
                     {{ item.name }}
@@ -201,8 +203,8 @@
                 icon
                 small
                 color="error"
-                @click="removeUser(user)"
                 :disabled="stream.role !== 'stream:owner'"
+                @click="removeUser(user)"
               >
                 <v-icon>mdi-close</v-icon>
               </v-btn>
@@ -294,10 +296,10 @@ export default {
     }
   },
   methods: {
-    getRoleCount( role ) {
-      if(role === 'stream:owner') return this.owners.length || '0'
-      if(role === 'stream:contributor') return this.contributors.length || '0'
-      if(role === 'stream:reviewer') return this.reviewers.length || '0'
+    getRoleCount(role) {
+      if (role === 'stream:owner') return this.owners.length || '0'
+      if (role === 'stream:contributor') return this.contributors.length || '0'
+      if (role === 'stream:reviewer') return this.reviewers.length || '0'
     },
     async removeUser(user) {
       this.loading = true

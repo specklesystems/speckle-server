@@ -62,7 +62,7 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
   --namespace=$K8S_NAMESPACE \
-  rollout status -w deployment/speckle-frontend --timeout=3m
+  rollout status -w deployment/speckle-frontend --timeout=10m
 
 ./kubectl \
   --kubeconfig=/dev/null \
@@ -70,7 +70,7 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
   --namespace=$K8S_NAMESPACE \
-  rollout status -w deployment/speckle-server --timeout=3m
+  rollout status -w deployment/speckle-server --timeout=10m
 
 ./kubectl \
   --kubeconfig=/dev/null \
@@ -78,7 +78,7 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
   --namespace=$K8S_NAMESPACE \
-  rollout status -w deployment/speckle-preview-service --timeout=3m
+  rollout status -w deployment/speckle-preview-service --timeout=10m
 
 ./kubectl \
   --kubeconfig=/dev/null \
@@ -86,4 +86,4 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --certificate-authority=k8s_cert.crt \
   --token=$K8S_TOKEN \
   --namespace=$K8S_NAMESPACE \
-  rollout status -w deployment/speckle-webhook-service --timeout=3m
+  rollout status -w deployment/speckle-webhook-service --timeout=10m

@@ -35,7 +35,11 @@
       :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
     >
       <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`">
-        <v-toolbar-title><span v-if="isSelf">Hi </span>{{ user.name }}<span v-if="isSelf">!</span></v-toolbar-title>
+        <v-toolbar-title>
+          <span v-if="isSelf">Hi</span>
+          {{ user.name }}
+          <span v-if="isSelf">!</span>
+        </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn v-if="isSelf" small rounded color="primary" @click="editUser">
           <v-icon small class="mr-2">mdi-cog-outline</v-icon>
@@ -53,16 +57,15 @@
           <br />
         </v-col>
         <v-col cols="12" sm="4" class="d-flex justify-center">
-          <v-avatar
-            class="elevation-0 align-self-center"
-            size="100"
-            @click="avatarDialog = isSelf ? true : false"
-            v-tooltip="`${isSelf ? 'Change your profile picture' : ''}` "
-            :style="`${isSelf ? 'cursor: pointer;' : ''}`"
-          >
-            <v-img v-if="user.avatar" :src="user.avatar" />
-            <v-img v-else :src="`https://robohash.org/` + user.id + `.png?size=64x64`" />
-          </v-avatar>
+          <div @click="avatarDialog = isSelf ? true : false">
+            <user-avatar-icon
+              v-tooltip="`${isSelf ? 'Change your profile picture' : ''}`"
+              :style="`${isSelf ? 'cursor: pointer;' : ''}`"
+              :size="100"
+              :avatar="user.avatar"
+              :seed="user.id"
+            ></user-avatar-icon>
+          </div>
         </v-col>
       </v-row>
       <v-card-actions></v-card-actions>
@@ -75,9 +78,10 @@
 import gql from 'graphql-tag'
 import UserEditDialog from '../components/dialogs/UserEditDialog'
 import VImageInput from 'vuetify-image-input/a-la-carte'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
-  components: { UserEditDialog, VImageInput },
+  components: { UserAvatarIcon, UserEditDialog, VImageInput },
   props: {
     user: {
       type: Object,
