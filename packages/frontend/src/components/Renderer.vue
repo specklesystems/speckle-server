@@ -577,7 +577,7 @@ export default {
           let start_url = ""
 
           if (this.objectUrl) start_url = this.objectUrl
-          else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
+          else start_url =   window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
           url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/"
           //console.log(this.branchNames)
 
@@ -816,8 +816,8 @@ export default {
     async getPreviewImage(angle) {
       angle = angle || 0
       let start_url = ""
-      if(this.objectUrl) start_url = this.objectUrl
-      else start_url = "http://localhost:3000/streams/57ff4b8873/branches/experiment"
+      if(this.objectUrl) start_url = this.objectUrl 
+      else start_url = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + "main" //this.$route.params.branchName //"http://localhost:3000/streams/57ff4b8873/branches/experiment"
       let previewUrl = start_url.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
@@ -1082,7 +1082,7 @@ export default {
               let start_url = ""
 
               if (this.objectUrl) start_url = this.objectUrl
-              else start_url = "http://localhost:3000/streams/57ff4b8873/branches/ "
+              else start_url =  window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" // "http://localhost:3000/streams/57ff4b8873/branches/ "
               url = start_url.split("/")[0] + "//" + start_url.split("/")[2] + "/" + start_url.split("/")[3] + "/" + start_url.split("/")[4] + "/objects/" + sub_obj
 
               if (item_exists==0) {
