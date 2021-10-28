@@ -159,18 +159,16 @@ describe( 'Branches @core-branches', () => {
     }
   } )
 
-  it( 'Should return branches in updatedAt order when using cursor', async () => {
-    let { items } = await getBranchesByStreamId( { streamId: stream.id } )
-    let branch = items[3]
-    await updateBranch( { id: branch.id, description: 'lorem ipsum' } )
-
-    let cursor = new Date().toISOString()
-    let got = await getBranchesByStreamId( { streamId: stream.id, cursor: cursor } ) 
-    expect( got.items[0].name ).to.equal( branch.name )
-  } )
-
   it( 'Should return branches in time createdAt order, MAIN first', async () => {
     let { items } = await getBranchesByStreamId( { streamId: stream.id } )
     expect( items[0].name ).to.equal( 'main' )
+  
+    let branch = items[3]
+    await updateBranch( { id: branch.id, description: 'lorem ipsum' } )
+    let cursor = new Date().toISOString()
+    let got = await getBranchesByStreamId( { streamId: stream.id, cursor: cursor } ) 
+
+    expect( got.items[3].name ).to.equal( branch.name )
+    expect( got.items[0].name ).to.equal( 'main' )
   } )
 } )

@@ -45,12 +45,8 @@ module.exports = {
     limit = limit || 25
     let query = Branches( ).select( '*' ).where( { streamId: streamId } )
 
-    if ( cursor ) {
-      query.andWhere( 'updatedAt', '<', cursor ).orderBy( 'updatedAt', 'desc' )
-    } else {
-      query.orderBy( 'createdAt' )
-    }
-    query.limit( limit )
+    if ( cursor ) query.andWhere( 'createdAt', '<', cursor )
+    query.orderBy( 'createdAt' ).limit( limit )
 
     let totalCount = await module.exports.getBranchesByStreamIdTotalCount( { streamId } )
     let rows = await query
