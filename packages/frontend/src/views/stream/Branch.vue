@@ -45,7 +45,7 @@
         <branch-edit-dialog ref="editBranchDialog" />
 
         <div v-if="latestCommitObjectUrl || $route.params.branchName.includes('abracadabra')" style="height: 60vh">
-          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
+          <renderer :object-url="latestCommitObjectUrl" :object-main-url="latestCommitObjectMainUrl" show-selection-helper />
         </div>
 
         <v-list v-if="stream.branch.commits.items.length > 0 || $route.params.branchName.includes('abracadabra')" class="pa-0 ma-0">

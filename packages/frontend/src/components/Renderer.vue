@@ -393,6 +393,10 @@ export default {
       type: String,
       default: null
     },
+    objectMainUrl: {
+      type: String,
+      default: null
+    },
     unloadTrigger: {
       type: Number,
       default: 0
@@ -556,7 +560,7 @@ export default {
       if (this.$route.params.branchName.includes('abracadabra')) {
         let temp = this.branchQuery
         let count = 0
-        
+
         temp.forEach(obj=> { // run loop for each branch name
         if (obj.name == this.$route.params.branchName) {
           this.branch_id = obj.id
@@ -626,7 +630,7 @@ export default {
                 //console.log(this.customSlides_parsed)
 
                 window.__viewer.sceneManager.objects.forEach((item) => {
-                  if (!this.all_obj_ids_scene.includes(item.uuid)){ //check if object is already uploaded to one of the other groups
+                  if (this.all_obj_ids_scene && !this.all_obj_ids_scene.includes(item.uuid)){ //check if object is already uploaded to one of the other groups
                     this.all_obj_ids_scene.push(item.uuid)
                     allObj.push(item.uuid)
                     this.hide(item, this.branchNames_Checks[count][1])
@@ -683,6 +687,9 @@ export default {
             countt +=1
           })
         }
+
+        if (this.custom_count ==-1) this.currentMessage_display = this.customSlides_parsed.length.toString() +" slides saved"
+        
         
 
 
@@ -814,11 +821,10 @@ export default {
   },
   methods: {
     async getPreviewImage(angle) {
+
+      console.log(this.objectMainUrl)
       angle = angle || 0
-      let start_url = ""
-      if(this.objectUrl) start_url = this.objectUrl 
-      else start_url = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + "main" //this.$route.params.branchName //"http://localhost:3000/streams/57ff4b8873/branches/experiment"
-      let previewUrl = start_url.replace('streams', 'preview') + '/' + angle
+      let previewUrl = this.objectMainUrl.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')
@@ -1150,11 +1156,10 @@ export default {
       })
     },
     load() {
-      if (!this.objectUrl) return
+      if (!this.objectMainUrl) return
       this.hasLoadedModel = true
-      window.__viewer.loadObject(this.objectUrl)
-      window.__viewerLastLoadedUrl = this.objectUrl
-
+      window.__viewer.loadObject(this.objectMainUrl)
+      window.__viewerLastLoadedUrl = this.objectMainUrl
       this.setupEvents()
     },
     unloadData() {
