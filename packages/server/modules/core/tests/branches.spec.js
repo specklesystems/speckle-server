@@ -22,7 +22,7 @@ const {
   getBranchByNameAndStreamId,
   deleteBranchById
 } = require( '../services/branches' )
-const { async } = require( 'crypto-random-string' )
+
 
 describe( 'Branches @core-branches', () => {
   let user = {
