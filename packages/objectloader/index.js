@@ -45,7 +45,26 @@ export default class ObjectLoader {
     this.options.numConnections = this.options.numConnections || 4
 
     this.cacheDB = null
-}
+
+    this.lastAsyncPause = Date.now()
+    this.existingAsyncPause = null
+
+  }
+
+  async asyncPause() {
+    // Don't freeze the UI
+    // while ( this.existingAsyncPause ) {
+    //   await this.existingAsyncPause
+    // }
+    if ( Date.now() - this.lastAsyncPause >= 30 ) {
+      this.lastAsyncPause = Date.now()
+      this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
+      await this.existingAsyncPause
+      this.existingAsyncPause = null
+      if (Date.now() - this.lastAsyncPause > 100) console.log("Loader Event loop lag: ", Date.now() - this.lastAsyncPause)
+    }
+
+  }
 
   dispose() {
     this.buffer = []
@@ -144,6 +163,8 @@ export default class ObjectLoader {
    * @returns
    */
   async getObject( id ){
+    await this.asyncPause()
+    
     if ( this.buffer[id] ) return this.buffer[id]
 
     let promise = new Promise( ( resolve, reject ) => {
@@ -182,12 +203,14 @@ export default class ObjectLoader {
 
   async * getObjectIterator(  ) {
     let t0 = Date.now()
+    let count = 0
     for await ( let line of this.getRawObjectIterator() ) {
       let { id, obj } = this.processLine( line )
       this.buffer[ id ] = obj
+      count += 1
       yield obj
     }
-    console.log("Loaded in: ", (Date.now() - t0) / 1000)
+    console.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
   processLine( chunk ) {
@@ -213,10 +236,18 @@ export default class ObjectLoader {
     if ( childrenIds.length === 0 ) return
 
     const cachedObjects = await this.cacheGetObjects( childrenIds )
+    // await 0ms timeout every 100ms to not freeze the UI
+    let lastAsyncPause = Date.now()
     for ( let id in cachedObjects ) {
+      if ( Date.now() - lastAsyncPause >= 100 ) {
+        await new Promise( resolve => setTimeout( resolve, 0 ) )
+        lastAsyncPause = Date.now()
+      }
       yield `${id}\t${cachedObjects[ id ]}`
     }
+
     childrenIds = childrenIds.filter(id => !( id in cachedObjects ) )
+    if ( childrenIds.length === 0 ) return
 
     let splitChildrenIds = []
     if ( childrenIds.length <= 10 ){
@@ -326,15 +357,22 @@ export default class ObjectLoader {
       return {}
     }
 
-    let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
-    let idbChildrenPromises = ids.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
-    let cachedData = await Promise.all(idbChildrenPromises)
-
     let ret = {}
-    for ( let cachedObj of cachedData ) {
-      if ( !cachedObj.data ) // non-existent objects are retrieved with `undefined` data
-        continue
-      ret[ cachedObj.id ] = cachedObj.data
+
+    for (let i = 0; i < ids.length; i += 5000) {
+      let idsChunk = ids.slice(i, i + 5000)
+
+      await this.asyncPause()
+
+      let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
+      let idbChildrenPromises = idsChunk.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
+      let cachedData = await Promise.all(idbChildrenPromises)
+
+      for ( let cachedObj of cachedData ) {
+        if ( !cachedObj.data ) // non-existent objects are retrieved with `undefined` data
+          continue
+        ret[ cachedObj.id ] = cachedObj.data
+      }
     }
 
     return ret

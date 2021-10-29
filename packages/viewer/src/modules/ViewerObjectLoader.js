@@ -9,6 +9,7 @@ export default class ViewerObjectLoader {
 
 
   constructor( parent, objectUrl, authToken ) {
+    this.objectUrl = objectUrl
     this.viewer = parent
     this.token = null
     try {
@@ -41,6 +42,23 @@ export default class ViewerObjectLoader {
     } )
 
     this.converter = new Converter( this.loader )
+
+    this.lastAsyncPause = Date.now()
+    this.existingAsyncPause = null
+  }
+
+  async asyncPause() {
+    // while ( this.existingAsyncPause ) {
+    //   await this.existingAsyncPause
+    // }
+    // Don't freeze the UI
+    if ( Date.now() - this.lastAsyncPause >= 30 ) {
+      this.lastAsyncPause = Date.now()
+      this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
+      await this.existingAsyncPause
+      this.existingAsyncPause = null
+      if (Date.now() - this.lastAsyncPause > 100) console.log("VObjLoader Event loop lag: ", Date.now() - this.lastAsyncPause)
+    }
   }
 
   async load( ) {
@@ -51,9 +69,12 @@ export default class ViewerObjectLoader {
     let firstObjectPromise = null
     for await ( let obj of this.loader.getObjectIterator() ) {
       if ( first ) {
-        firstObjectPromise = this.converter.traverseAndConvert( obj, ( o ) => {
-          console.log("ADDING OBJECT")
-          this.viewer.sceneManager.addObject( o )
+        firstObjectPromise = this.converter.traverseAndConvert( obj, async ( objectWrapper ) => {
+          await this.asyncPause()
+          objectWrapper.meta.__importedUrl = this.objectUrl
+          let t0 = Date.now()
+          this.viewer.sceneManager.addObject( objectWrapper )
+          // console.log(`Added ${objectWrapper.meta.id} in ${Date.now() - t0}ms`)
           viewerLoads++
         } )
         first = false
@@ -67,11 +88,15 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
-    this.viewer.sceneManager.sceneObjects.setFilteredView()
+    await this.viewer.sceneManager.sceneObjects.setFilteredView()
 
     if ( viewerLoads === 0 ) {
       console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )
       this.viewer.emit( 'load-warning', { message: `No displayable objects found in object ${this.objectId}.` } )
     }
+  }
+
+  async unload( ) {
+    await this.viewer.sceneManager.removeImportedObject( this.objectUrl )
   }
 }

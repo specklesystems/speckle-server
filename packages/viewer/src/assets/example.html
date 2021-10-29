@@ -51,17 +51,22 @@
         <button onclick="v.interactions.rotateTo('left')">Left</button>
         <button onclick="v.interactions.rotateTo('right')">Right</button>
       </div>
+
+      <div class="twelve columns">
+        Used Memory (MB): <span id="info-mem">-</span> /
+        LoadProgress: <span id="info-progress">-</span> /
+        ViewerBusy: <span id="info-busy">-</span> /
+        Draw Calls: <span id="info-draws">-</span>
+      </div>
+  
+      </div>
     </div>
     <div class="row">
       <div class="twelve columns">
         <div id="renderer"></div>
       </div>
     </div>
-    <div class="row">
-      <div class="twelve columns">
-        <div id="draw-calls"></div>
-      </div>
-    </div>
+
 </body>
 
 </html>

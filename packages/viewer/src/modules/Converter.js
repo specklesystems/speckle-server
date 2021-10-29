@@ -1,3 +1,4 @@
+import { chunk } from 'lodash'
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import ObjectWrapper from './ObjectWrapper'
@@ -16,6 +17,17 @@ export default class Coverter {
 
     this.objectLoader = objectLoader
     this.curveSegmentLength = 0.1
+
+    this.lastAsyncPause = Date.now()
+  }
+
+  async asyncPause() {
+    // Don't freeze the UI when doing all those traversals
+    if ( Date.now() - this.lastAsyncPause >= 30 ) {
+      this.lastAsyncPause = Date.now()
+      await new Promise( resolve => setTimeout( resolve, 0 ) )
+      if (Date.now() - this.lastAsyncPause > 100) console.log("CONV Event loop lag: ", Date.now() - this.lastAsyncPause)
+    }
   }
 
   /**
@@ -26,6 +38,8 @@ export default class Coverter {
    * @return {[type]}            [description]
    */
   async traverseAndConvert( obj, callback, scale = true ) {
+    await this.asyncPause()
+
     // Exit on primitives (string, ints, bools, bigints, etc.)
     if ( typeof obj !== 'object' ) return
     if ( obj.referencedId ) obj = await this.resolveReference( obj )
@@ -48,7 +62,7 @@ export default class Coverter {
     
     if ( this[`${type}ToBufferGeometry`] ) {
       try {
-        callback( await this[`${type}ToBufferGeometry`]( obj.data || obj, scale ) )
+        await callback( await this[`${type}ToBufferGeometry`]( obj.data || obj, scale ) )
         return
       } catch ( e ) {
         console.warn( `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`, e )
@@ -65,7 +79,7 @@ export default class Coverter {
         if ( !displayValue.units ) displayValue.units = obj.units
         try {
           let { bufferGeometry } = await this.convert( displayValue, scale )
-          callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
+          await callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
         } catch ( e ) {
           console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
         }
@@ -74,7 +88,7 @@ export default class Coverter {
           let val = await this.resolveReference( element )
           if ( !val.units ) val.units = obj.units
           let { bufferGeometry } = await this.convert( val, scale )
-          callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
+          await callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
         }
       }
     }
@@ -130,11 +144,15 @@ export default class Coverter {
     // Handles pre-chunking objects, or arrs that have not been chunked
     if ( !arr[0].referencedId ) return arr
 
-    let dechunked = []
+    let chunked = []
     for ( let ref of arr ) {
       let real = await this.objectLoader.getObject( ref.referencedId )
-      dechunked.push( ...real.data )
+      chunked.push( real.data )
+      await this.asyncPause()
     }
+
+    let dechunked = [].concat( ...chunked )
+
     return dechunked
   }
 
@@ -144,8 +162,11 @@ export default class Coverter {
    * @return {[type]}     [description]
    */
   async resolveReference( obj ) {
-    if ( obj.referencedId )
-      return await this.objectLoader.getObject( obj.referencedId )
+    if ( obj.referencedId ) {
+      let resolvedObj = await this.objectLoader.getObject( obj.referencedId )
+      this.asyncPause()
+      return resolvedObj
+    }
     else return obj
   }
 
@@ -256,6 +277,8 @@ export default class Coverter {
   }
 
   async MeshToBufferGeometry( obj, scale = true ) {
+    await this.asyncPause()
+
     try {
       if ( !obj ) return
 

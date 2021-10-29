@@ -78,7 +78,7 @@ export default class Viewer extends EventEmitter {
     this.sceneLights()
     this.animate()
 
-    this.loaders = []
+    this.loaders = {}
   }
 
   sceneLights() {
@@ -143,7 +143,7 @@ export default class Viewer extends EventEmitter {
       this.needsRender = false
       if ( this.stats ) this.stats.begin()
       this.render()
-      document.getElementById( 'draw-calls' ).textContent = 'Draw calls: ' + this.renderer.info.render.calls
+      document.getElementById( 'info-draws' ).textContent = '' + this.renderer.info.render.calls
       if ( this.stats ) this.stats.end()
     }
 
@@ -186,8 +186,13 @@ export default class Viewer extends EventEmitter {
 
   async loadObject( url, token ) {
     let loader = new ViewerObjectLoader( this, url, token )
-    this.loaders.push( loader )
+    this.loaders[ url ] = loader
     await loader.load()
+  }
+
+  async unloadObject( url ) {
+    await this.loaders[ url ].unload()
+    delete this.loaders[ url ]
   }
 
   dispose() {

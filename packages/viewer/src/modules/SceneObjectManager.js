@@ -51,8 +51,8 @@ export default class SceneObjectManager {
       size: 2, sizeAttenuation: false, vertexColors: true
     } )
 
-    this.objectIds = []
-    this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
+    // this.objectIds = []
+    this.postLoad = debounce( () => { this._postLoadFunction() }, 200, { maxWait: 1500 } )
     this.skipPostLoad = skipPostLoad
 
     this.loaders = []
@@ -145,11 +145,11 @@ export default class SceneObjectManager {
 
   addSingleSolid( wrapper, material, addToScene = true ) {
     const mesh = new THREE.Mesh( wrapper.bufferGeometry, material ? material : this.solidMaterial )
-    mesh.matrixAutoUpdate = false
+    // mesh.matrixAutoUpdate = false
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( mesh.uuid )
+      // this.objectIds.push( mesh.uuid )
       this.sceneObjects.allSolidObjects.add( mesh )
     }
     return mesh
@@ -160,7 +160,7 @@ export default class SceneObjectManager {
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( mesh.uuid )
+      // this.objectIds.push( mesh.uuid )
       this.sceneObjects.allTransparentObjects.add( mesh )
     }
     return mesh
@@ -171,7 +171,7 @@ export default class SceneObjectManager {
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( line.uuid )
+      // this.objectIds.push( line.uuid )
       this.sceneObjects.allLineObjects.add( line )
     }
     return line
@@ -182,7 +182,7 @@ export default class SceneObjectManager {
     dot.userData = wrapper.meta
     dot.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( dot.uuid )
+      // this.objectIds.push( dot.uuid )
       this.sceneObjects.allPointObjects.add( dot )
     }
     return dot
@@ -210,7 +210,7 @@ export default class SceneObjectManager {
     clouds.userData = wrapper.meta
     clouds.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( clouds.uuid )
+      // this.objectIds.push( clouds.uuid )
       this.sceneObjects.allPointObjects.add( clouds )
     }
     return clouds
@@ -231,7 +231,7 @@ export default class SceneObjectManager {
     if ( addToScene ) {
       // Note: only apply the scale transform if this block is going to be added to the scene. otherwise it means it's a child of a nested block.
       group.applyMatrix4( wrapper.extras.scaleMatrix )
-      this.objectIds.push()
+      // this.objectIds.push()
       this.sceneObjects.allSolidObjects.add( group )
     }
 
@@ -240,6 +240,23 @@ export default class SceneObjectManager {
 
   removeObject( id ) {
     // TODO
+  }
+
+  async removeImportedObject( importedUrl ) {
+    for ( let objGroup of this.sceneObjects.allObjects.children ) {
+      let toRemove = objGroup.children.filter( obj => obj.userData?.__importedUrl === importedUrl )
+      toRemove.forEach( obj => {
+        if ( obj.material )
+          obj.material.dispose()
+        if ( obj.geometry )
+          obj.geometry.dispose()
+        objGroup.remove( obj )
+      } )
+  
+    }
+    this.views = this.views.filter( v => v.__importedUrl !== importedUrl )
+
+    await this.sceneObjects.applyFilter( undefined, true )
   }
 
   removeAllObjects() {
@@ -255,13 +272,14 @@ export default class SceneObjectManager {
 
     this.viewer.interactions.deselectObjects()
     this.viewer.interactions.hideSectionBox()
-    this.objectIds = []
+    //this.objectIds = []
     this.views = []
 
     this._postLoadFunction()
   }
 
   _postLoadFunction() {
+    console.log("POST_LOAD")
     if ( this.skipPostLoad ) return
     this.viewer.interactions.zoomExtents()
     this.viewer.interactions.hideSectionBox()
