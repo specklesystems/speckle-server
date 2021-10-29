@@ -19,14 +19,16 @@ export default class Coverter {
     this.curveSegmentLength = 0.1
 
     this.lastAsyncPause = Date.now()
+    this.activePromises = 0
+    this.maxChildrenPromises = 200
   }
 
   async asyncPause() {
     // Don't freeze the UI when doing all those traversals
-    if ( Date.now() - this.lastAsyncPause >= 30 ) {
+    if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
       await new Promise( resolve => setTimeout( resolve, 0 ) )
-      if (Date.now() - this.lastAsyncPause > 100) console.log("CONV Event loop lag: ", Date.now() - this.lastAsyncPause)
+      if (Date.now() - this.lastAsyncPause > 200) console.log("CONV Event loop lag: ", Date.now() - this.lastAsyncPause)
     }
   }
 
@@ -38,6 +40,7 @@ export default class Coverter {
    * @return {[type]}            [description]
    */
   async traverseAndConvert( obj, callback, scale = true ) {
+    //console.log("Active promises: ", this.activePromises)
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -50,10 +53,16 @@ export default class Coverter {
     if ( Array.isArray( obj ) ) {
       for ( let element of obj ) {
         if ( typeof element !== 'object' ) break // exit early for non-object based arrays
-        let childPromise = this.traverseAndConvert( element, callback, scale )
-        childrenConversionPromisses.push( childPromise )
+        if ( this.activePromises >= this.maxChildrenPromises ) {
+          await this.traverseAndConvert( element, callback, scale )
+        } else {
+          let childPromise = this.traverseAndConvert( element, callback, scale )
+          childrenConversionPromisses.push( childPromise )
+        }
       }
+      this.activePromises += childrenConversionPromisses.length
       await Promise.all( childrenConversionPromisses )
+      this.activePromises -= childrenConversionPromisses.length
       return
     }
 
@@ -97,7 +106,9 @@ export default class Coverter {
     if ( displayValue && obj.speckle_type.toLowerCase().includes( 'builtelements' ) ) {
       if ( obj['elements'] ) {
         childrenConversionPromisses.push( this.traverseAndConvert( obj['elements'], callback, scale ) )
+        this.activePromises += childrenConversionPromisses.length
         await Promise.all( childrenConversionPromisses )
+        this.activePromises -= childrenConversionPromisses.length
       }
       return
     }
@@ -107,10 +118,16 @@ export default class Coverter {
     for ( let prop in target ) {
       if ( prop === 'bbox' ) continue
       if ( typeof target[prop] !== 'object' ) continue
-      let childPromise = this.traverseAndConvert( target[prop], callback, scale )
-      childrenConversionPromisses.push( childPromise )
+      if ( this.activePromises >= this.maxChildrenPromises ) {
+        await this.traverseAndConvert( target[prop], callback, scale )
+      } else {
+        let childPromise = this.traverseAndConvert( target[prop], callback, scale )
+        childrenConversionPromisses.push( childPromise )
+      }
     }
+    this.activePromises += childrenConversionPromisses.length
     await Promise.all( childrenConversionPromisses )
+    this.activePromises -= childrenConversionPromisses.length
   }
 
   /**
@@ -148,7 +165,7 @@ export default class Coverter {
     for ( let ref of arr ) {
       let real = await this.objectLoader.getObject( ref.referencedId )
       chunked.push( real.data )
-      await this.asyncPause()
+      // await this.asyncPause()
     }
 
     let dechunked = [].concat( ...chunked )
@@ -164,7 +181,7 @@ export default class Coverter {
   async resolveReference( obj ) {
     if ( obj.referencedId ) {
       let resolvedObj = await this.objectLoader.getObject( obj.referencedId )
-      this.asyncPause()
+      // this.asyncPause()
       return resolvedObj
     }
     else return obj
@@ -277,7 +294,7 @@ export default class Coverter {
   }
 
   async MeshToBufferGeometry( obj, scale = true ) {
-    await this.asyncPause()
+    // await this.asyncPause()
 
     try {
       if ( !obj ) return

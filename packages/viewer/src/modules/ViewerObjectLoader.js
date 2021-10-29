@@ -52,12 +52,12 @@ export default class ViewerObjectLoader {
     //   await this.existingAsyncPause
     // }
     // Don't freeze the UI
-    if ( Date.now() - this.lastAsyncPause >= 30 ) {
+    if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
       this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
       await this.existingAsyncPause
       this.existingAsyncPause = null
-      if (Date.now() - this.lastAsyncPause > 100) console.log("VObjLoader Event loop lag: ", Date.now() - this.lastAsyncPause)
+      if (Date.now() - this.lastAsyncPause > 500) console.log("VObjLoader Event loop lag: ", Date.now() - this.lastAsyncPause)
     }
   }
 
@@ -68,13 +68,12 @@ export default class ViewerObjectLoader {
     let viewerLoads = 0
     let firstObjectPromise = null
     for await ( let obj of this.loader.getObjectIterator() ) {
+      await this.converter.asyncPause()
       if ( first ) {
         firstObjectPromise = this.converter.traverseAndConvert( obj, async ( objectWrapper ) => {
-          await this.asyncPause()
+          await this.converter.asyncPause()
           objectWrapper.meta.__importedUrl = this.objectUrl
-          let t0 = Date.now()
           this.viewer.sceneManager.addObject( objectWrapper )
-          // console.log(`Added ${objectWrapper.meta.id} in ${Date.now() - t0}ms`)
           viewerLoads++
         } )
         first = false

@@ -163,8 +163,8 @@ export default class SceneObjects {
       materialIdToBufferGeometry[ materialId ].push( mesh.geometry )
       materialIdToMeshes[ materialId ].push( mesh )
 
-      // Max 1000 objects per group (mergeBufferGeometries is sync and can freeze for large data)
-      if ( materialIdToBufferGeometry[ materialId ].length >= 1000 ) {
+      // Max 1024 objects per group (mergeBufferGeometries is sync and can freeze for large data)
+      if ( materialIdToBufferGeometry[ materialId ].length >= 1024 ) {
         let archivedMaterialId = `arch//${materialId}//${mesh.id}`
         materialIdToBufferGeometry[ archivedMaterialId ] = materialIdToBufferGeometry[ materialId ]
         materialIdToMaterial[ archivedMaterialId ] = materialIdToMaterial[ materialId ]

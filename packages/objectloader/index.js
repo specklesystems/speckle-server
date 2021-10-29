@@ -56,12 +56,12 @@ export default class ObjectLoader {
     // while ( this.existingAsyncPause ) {
     //   await this.existingAsyncPause
     // }
-    if ( Date.now() - this.lastAsyncPause >= 30 ) {
+    if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
       this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
       await this.existingAsyncPause
       this.existingAsyncPause = null
-      if (Date.now() - this.lastAsyncPause > 100) console.log("Loader Event loop lag: ", Date.now() - this.lastAsyncPause)
+      if (Date.now() - this.lastAsyncPause > 500) console.log("Loader Event loop lag: ", Date.now() - this.lastAsyncPause)
     }
 
   }
@@ -163,8 +163,6 @@ export default class ObjectLoader {
    * @returns
    */
   async getObject( id ){
-    await this.asyncPause()
-    
     if ( this.buffer[id] ) return this.buffer[id]
 
     let promise = new Promise( ( resolve, reject ) => {
@@ -232,35 +230,84 @@ export default class ObjectLoader {
     const rootObj = JSON.parse(rootObjJson)
     if ( !rootObj.__closure ) return
 
-    let childrenIds = Object.keys(rootObj.__closure)
+    let childrenIds = Object.keys(rootObj.__closure).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
     if ( childrenIds.length === 0 ) return
 
-    const cachedObjects = await this.cacheGetObjects( childrenIds )
-    // await 0ms timeout every 100ms to not freeze the UI
-    let lastAsyncPause = Date.now()
-    for ( let id in cachedObjects ) {
-      if ( Date.now() - lastAsyncPause >= 100 ) {
-        await new Promise( resolve => setTimeout( resolve, 0 ) )
-        lastAsyncPause = Date.now()
+    let splitHttpRequests = []
+
+    if ( childrenIds.length > 50 ) {
+      // split into 5%, 15%, 40%, 40% (5% for the high priority children: the ones with lower minDepth)
+      let splitBeforeCacheCheck = [ [], [], [], [] ]
+      let crtChildIndex = 0
+      
+      for ( ; crtChildIndex < 0.05 * childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[0].push( childrenIds[ crtChildIndex ] )
       }
-      yield `${id}\t${cachedObjects[ id ]}`
-    }
+      for ( ; crtChildIndex < 0.2 * childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[1].push( childrenIds[ crtChildIndex ] )
+      }
+      for ( ; crtChildIndex < 0.6 * childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[2].push( childrenIds[ crtChildIndex ] )
+      }
+      for ( ; crtChildIndex < childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[3].push( childrenIds[ crtChildIndex ] )
+      }
 
-    childrenIds = childrenIds.filter(id => !( id in cachedObjects ) )
-    if ( childrenIds.length === 0 ) return
+      let newChildren = []
+      let cachePromises = []
+      for ( let cacheCheckGroup of splitBeforeCacheCheck ) {
+        cachePromises.push( this.cacheGetObjects( cacheCheckGroup ) )
+      }
+      for ( let i = 0; i < 4; i++ ) {
+        let cachedObjects = await cachePromises[ i ]
+        let sortedCachedKeys = Object.keys(cachedObjects).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
+        for ( let id of sortedCachedKeys ) {
+          yield `${id}\t${cachedObjects[ id ]}`
+        }
+        let newChildrenForBatch = splitBeforeCacheCheck[i].filter( id => !( id in cachedObjects ) )
+        newChildren.push( ...newChildrenForBatch )
+      }
 
-    let splitChildrenIds = []
-    if ( childrenIds.length <= 10 ){
-      splitChildrenIds.push( childrenIds )
+      if ( newChildren.length === 0 ) return
+
+      if ( newChildren.length <= 50 ) {
+        // we have almost all of children in the cache. do only 1 requests for the remaining new children
+        splitHttpRequests.push( newChildren )
+      } else {
+        // we now set up the batches for 4 http requests, starting from `newChildren` (already sorted by priority)
+        splitHttpRequests = [ [], [], [], [] ]
+        crtChildIndex = 0
+
+        for ( ; crtChildIndex < 0.05 * newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[0].push( newChildren[ crtChildIndex ] )
+        }
+        for ( ; crtChildIndex < 0.2 * newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[1].push( newChildren[ crtChildIndex ] )
+        }
+        for ( ; crtChildIndex < 0.6 * newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[2].push( newChildren[ crtChildIndex ] )
+        }
+        for ( ; crtChildIndex < newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[3].push( newChildren[ crtChildIndex ] )
+        }
+      }
+
     } else {
-      for (let i = 0; i < this.options.numConnections; i++) {
-        splitChildrenIds.push( [] )
+      // small object with <= 50 children. check cache and make only 1 request
+      const cachedObjects = await this.cacheGetObjects( childrenIds )
+      let sortedCachedKeys = Object.keys(cachedObjects).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
+      for ( let id of sortedCachedKeys ) {
+        yield `${id}\t${cachedObjects[ id ]}`
       }
-      for (let i = 0; i < childrenIds.length; i++) {
-        splitChildrenIds[ i % this.options.numConnections ].push(childrenIds[i])
-      }
+      childrenIds = childrenIds.filter(id => !( id in cachedObjects ) )
+      if ( childrenIds.length === 0 ) return
+
+      // only 1 http request with the remaining children ( <= 50 )
+      splitHttpRequests.push( childrenIds )
     }
-    
+
+    // Starting http requests for batches in `splitHttpRequests`
+
     const decoders = []
     const readers = []
     const readPromisses = []
@@ -268,7 +315,7 @@ export default class ObjectLoader {
     const readBuffers = []
     const finishedRequests = []
 
-    for (let i = 0; i < splitChildrenIds.length; i++) {
+    for (let i = 0; i < splitHttpRequests.length; i++) {
       decoders.push(new TextDecoder())
       readers.push( null )
       readPromisses.push( null )
@@ -281,7 +328,7 @@ export default class ObjectLoader {
         {
           method: 'POST',
           headers: { ...this.headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify( { objects: JSON.stringify( splitChildrenIds[i] ) } )
+          body: JSON.stringify( { objects: JSON.stringify( splitHttpRequests[i] ) } )
         }
       ).then( crtResponse => {
         let crtReader = crtResponse.body.getReader()
@@ -341,8 +388,13 @@ export default class ObjectLoader {
   }
 
   async getRawRootObject() {
+    const cachedRootObject = await this.cacheGetObjects( [ this.objectId ] )
+    if ( cachedRootObject[ this.objectId ] )
+      return cachedRootObject[ this.objectId ]
     const response = await fetch( this.requestUrlRootObj, { headers: this.headers } )
-    return response.text()
+    const responseText = await response.text()
+    this.cacheStoreObjects( [ `${this.objectId}\t${responseText}` ] )
+    return responseText
   }
 
   promisifyIdbRequest(request) {
@@ -362,12 +414,10 @@ export default class ObjectLoader {
     for (let i = 0; i < ids.length; i += 5000) {
       let idsChunk = ids.slice(i, i + 5000)
 
-      await this.asyncPause()
-
       let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
       let idbChildrenPromises = idsChunk.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
       let cachedData = await Promise.all(idbChildrenPromises)
-
+ 
       for ( let cachedObj of cachedData ) {
         if ( !cachedObj.data ) // non-existent objects are retrieved with `undefined` data
           continue

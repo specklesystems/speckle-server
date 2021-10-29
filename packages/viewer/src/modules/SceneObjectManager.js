@@ -281,9 +281,9 @@ export default class SceneObjectManager {
   _postLoadFunction() {
     console.log("POST_LOAD")
     if ( this.skipPostLoad ) return
-    this.viewer.interactions.zoomExtents()
-    this.viewer.interactions.hideSectionBox()
-    this.viewer.reflectionsNeedUpdate = true
+    this.viewer.interactions.zoomExtents( undefined, false )
+    // this.viewer.interactions.hideSectionBox()
+    this.viewer.reflectionsNeedUpdate = false
   }
 
   getSceneBoundingBox() {
