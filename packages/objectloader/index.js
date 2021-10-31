@@ -217,6 +217,8 @@ export default class ObjectLoader {
   }
 
   async * getRawObjectIterator() {
+    let tSTART = Date.now()
+
     if ( this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
       // TODO: safari issue https://github.com/jakearchibald/idb-keyval
       let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
@@ -225,6 +227,8 @@ export default class ObjectLoader {
     }
 
     const rootObjJson = await this.getRawRootObject()
+    console.log("Root in: ", Date.now() - tSTART)
+
     yield `${this.objectId}\t${rootObjJson}`
 
     const rootObj = JSON.parse(rootObjJson)
@@ -253,13 +257,16 @@ export default class ObjectLoader {
         splitBeforeCacheCheck[3].push( childrenIds[ crtChildIndex ] )
       }
 
+
+      console.log("Cache check for: ", splitBeforeCacheCheck)
+
       let newChildren = []
-      let cachePromises = []
-      for ( let cacheCheckGroup of splitBeforeCacheCheck ) {
-        cachePromises.push( this.cacheGetObjects( cacheCheckGroup ) )
-      }
+      let nextCachePromise = this.cacheGetObjects( splitBeforeCacheCheck[ 0 ] )
+      
       for ( let i = 0; i < 4; i++ ) {
-        let cachedObjects = await cachePromises[ i ]
+        let cachedObjects = await nextCachePromise
+        if ( i < 3 ) nextCachePromise = this.cacheGetObjects( splitBeforeCacheCheck[ i + 1 ] )
+
         let sortedCachedKeys = Object.keys(cachedObjects).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
         for ( let id of sortedCachedKeys ) {
           yield `${id}\t${cachedObjects[ id ]}`
@@ -411,13 +418,16 @@ export default class ObjectLoader {
 
     let ret = {}
 
-    for (let i = 0; i < ids.length; i += 5000) {
-      let idsChunk = ids.slice(i, i + 5000)
+    for (let i = 0; i < ids.length; i += 500) {
+      let idsChunk = ids.slice(i, i + 500)
+      let t0 = Date.now()
 
       let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
       let idbChildrenPromises = idsChunk.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
       let cachedData = await Promise.all(idbChildrenPromises)
  
+      // console.log("Cache check for : ", idsChunk.length, Date.now() - t0)
+
       for ( let cachedObj of cachedData ) {
         if ( !cachedObj.data ) // non-existent objects are retrieved with `undefined` data
           continue

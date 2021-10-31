@@ -52,7 +52,7 @@ export default class SceneObjectManager {
     } )
 
     // this.objectIds = []
-    this.postLoad = debounce( () => { this._postLoadFunction() }, 200, { maxWait: 1500 } )
+    this.postLoad = debounce( () => { this._postLoadFunction() }, 20, { maxWait: 5000 } )
     this.skipPostLoad = skipPostLoad
 
     this.loaders = []
@@ -63,7 +63,13 @@ export default class SceneObjectManager {
   }
 
   get filteredObjects() {
-    return [ ...this.sceneObjects.filteredSolidObjects.children, ...this.sceneObjects.filteredTransparentObjects.children, ...this.sceneObjects.filteredLineObjects.children, ...this.sceneObjects.filteredPointObjects.children ]
+    let ret = []
+    for ( let objectGroup of this.sceneObjects.objectsInScene.children ) {
+      if ( objectGroup.name === 'GroupedObjects' )
+        continue
+      ret.push( ...objectGroup.children )
+    }
+    return ret
   }
 
   get materials() {
@@ -81,7 +87,7 @@ export default class SceneObjectManager {
   addObject( wrapper, addToScene = true ) {
     if ( !wrapper || !wrapper.bufferGeometry ) return
 
-    this.postLoad()
+    // this.postLoad()
 
     switch ( wrapper.geometryType ) {
     case 'View':
@@ -278,9 +284,10 @@ export default class SceneObjectManager {
     this._postLoadFunction()
   }
 
-  _postLoadFunction() {
+  async _postLoadFunction() {
     console.log("POST_LOAD")
     if ( this.skipPostLoad ) return
+    await this.sceneObjects.applyFilter()
     this.viewer.interactions.zoomExtents( undefined, false )
     // this.viewer.interactions.hideSectionBox()
     this.viewer.reflectionsNeedUpdate = false

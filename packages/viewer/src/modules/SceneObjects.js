@@ -9,58 +9,67 @@ import { filterAndColorObject } from './Filtering'
 export default class SceneObjects {
 
   constructor( viewer ) {
-    this.isInitialLoading = true
-
     this.viewer = viewer
     this.scene = viewer.scene
 
     this.allObjects = new THREE.Group()
     this.allObjects.name = 'allObjects'
+    
     this.allSolidObjects = new THREE.Group()
     this.allSolidObjects.name = 'allSolidObjects'
+    this.allSolidObjects.visible = false // these are grouped later, we never want to display them individually
+    this.allObjects.add( this.allSolidObjects )
+    
     this.allTransparentObjects = new THREE.Group()
     this.allTransparentObjects.name = 'allTransparentObjects'
+    this.allObjects.add( this.allTransparentObjects )
+    
     this.allLineObjects = new THREE.Group()
     this.allLineObjects.name = 'allLineObjects'
+    this.allObjects.add( this.allLineObjects )
+    
     this.allPointObjects = new THREE.Group()
     this.allPointObjects.name = 'allPointObjects'
-    this.allObjects.add( this.allSolidObjects )
-    this.allObjects.add( this.allTransparentObjects )
-    this.allObjects.add( this.allLineObjects )
     this.allObjects.add( this.allPointObjects )
 
-    this.filteredObjects = new THREE.Group()
-    this.filteredObjects.name = 'filteredObjects'
-    this.filteredSolidObjects = new THREE.Group()
-    this.filteredSolidObjects.name = 'filteredSolidObjects'
-    this.filteredTransparentObjects = new THREE.Group()
-    this.filteredTransparentObjects.name = 'filteredTransparentObjects'
-    this.filteredLineObjects = new THREE.Group()
-    this.filteredLineObjects.name = 'filteredLineObjects'
-    this.filteredPointObjects = new THREE.Group()
-    this.filteredPointObjects.name = 'filteredPointObjects'
-    this.filteredObjects.add( this.filteredSolidObjects )
-    this.filteredObjects.add( this.filteredTransparentObjects )
-    this.filteredObjects.add( this.filteredLineObjects )
-    this.filteredObjects.add( this.filteredPointObjects )
-
-
+    // Grouped solid objects, generated from `allSolidObjects`
     this.groupedSolidObjects = new THREE.Group()
     this.groupedSolidObjects.name = 'groupedSolidObjects'
+    this.allObjects.add( this.groupedSolidObjects )
 
-    this.filteredObjects.add( this.groupedSolidObjects )
+    this.filteredObjects = null
 
-    this.scene.add( this.allObjects )
+    // this.filteredObjects = new THREE.Group()
+    // this.filteredObjects.name = 'filteredObjects'
+    // this.filteredSolidObjects = new THREE.Group()
+    // this.filteredSolidObjects.name = 'filteredSolidObjects'
+    // this.filteredSolidObjects.visible = false // these are grouped later, we never want to display them individually
+    // this.filteredTransparentObjects = new THREE.Group()
+    // this.filteredTransparentObjects.name = 'filteredTransparentObjects'
+    // this.filteredLineObjects = new THREE.Group()
+    // this.filteredLineObjects.name = 'filteredLineObjects'
+    // this.filteredPointObjects = new THREE.Group()
+    // this.filteredPointObjects.name = 'filteredPointObjects'
+    // this.filteredObjects.add( this.filteredSolidObjects )
+    // this.filteredObjects.add( this.filteredTransparentObjects )
+    // this.filteredObjects.add( this.filteredLineObjects )
+    // this.filteredObjects.add( this.filteredPointObjects )
 
     this.appliedFilter = null
 
+    // When the `appliedFilter` is null, scene will contain `allObjects`. Otherwise, `filteredObjects`
+    // This is to optimize the no-filter usecase, so we don't make an unnecessary clone of all the objects
+    this.objectsInScene = this.allObjects
+    this.scene.add( this.allObjects )
+
+    this.isBusy = true
     this.lastAsyncPause = Date.now()
   }
 
   async asyncPause() {
     // Don't freeze the UI when doing all those traversals
-    if ( Date.now() - this.lastAsyncPause >= 30 ) {
-      if (Date.now() - this.lastAsyncPause > 50 ) console.log("FREEZED for ", Date.now() - this.lastAsyncPause)
+    if ( Date.now() - this.lastAsyncPause >= 100 ) {
+      // if (Date.now() - this.lastAsyncPause > 200 ) console.log("FREEZED for ", Date.now() - this.lastAsyncPause)
       await new Promise( resolve => setTimeout( resolve, 0 ) )
       this.lastAsyncPause = Date.now()
     }
@@ -78,23 +87,27 @@ export default class SceneObjects {
     this.scene.remove( this.allObjects )
   }
 
-  async applyFilterToObjects( objectArray, filter, targetGroup ) {
-    for ( let i = 0; i < objectArray.length; i++ ) {
-      if ( i % 100 === 0 ) await this.asyncPause()
+  async applyFilterToGroup( threejsGroup, filter ) {
+    let ret = new THREE.Group()
+    ret.name = 'filtered_' + threejsGroup.name
 
-      let filteredObj = filterAndColorObject( objectArray[ i ], filter )
+    for ( let obj of threejsGroup.children ) {
+      await this.asyncPause()
+      let filteredObj = filterAndColorObject( obj, filter )
       if ( filteredObj )
-        targetGroup.add( filteredObj )
+        ret.add( filteredObj )
     }
+    return ret
   }
 
-  disposeAndClearGroup( threejsGroup, disposeGeometry = false ) {
+  disposeAndClearGroup( threejsGroup, disposeGeometry = true ) {
     let t0 = Date.now()
     for ( let child of threejsGroup.children ) {
+      if ( child.type === 'Group' ) {
+        this.disposeAndClearGroup( child, disposeGeometry )
+      }
       if ( child.material )
         child.material.dispose()
-      else
-        fdsfs()
       if ( disposeGeometry && child.geometry )
         child.geometry.dispose()
     }
@@ -102,55 +115,72 @@ export default class SceneObjects {
     console.log("Dispose in: ", Date.now() - t0)
   }
 
-  async applyFilter( filter, disposeGeometry = false ) {
+  async applyFilter( filter ) {
     // eslint-disable-next-line no-param-reassign
     if ( filter === undefined ) filter = this.appliedFilter
-    this.appliedFilter = filter
     
-    this.lastAsyncPause = Date.now()
+    if ( filter === null ) {
+      // Remove filters, use allObjects
+      let newGoupedSolidObjects = await this.groupSolidObjects( this.allSolidObjects )
+      if ( this.groupedSolidObjects !== null ) {
+        this.disposeAndClearGroup( this.groupedSolidObjects )
+        this.allObjects.remove( this.groupedSolidObjects )
+      }
+      this.groupedSolidObjects = newGoupedSolidObjects
+      this.allObjects.add( this.groupedSolidObjects )
 
-    // this.filteredSolidObjects.clear()
-    this.disposeAndClearGroup( this.filteredSolidObjects, disposeGeometry )
-    await this.applyFilterToObjects( this.allSolidObjects.children, filter, this.filteredSolidObjects )
+      if ( this.filteredObjects !== null ) {
+        this.disposeAndClearGroup( this.filteredObjects )
+        this.filteredObjects = null
+      }
+      this.scene.remove( this.objectsInScene )
+      this.scene.add( this.allObjects )
+      this.objectsInScene = this.allObjects
+    } else {
+      // A filter is to be applied
 
-    // for ( let obj of this.allSolidObjects.children ) {
-    //   let filteredObj = filterAndColorObject( obj, filter )
-    //   if ( filteredObj )
-    //     this.filteredSolidObjects.add( filteredObj )
-    // }
+      let newFilteredObjects = new THREE.Group()
+      newFilteredObjects.name = 'FilteredObjects'
+  
+      let filteredSolidObjects = await this.applyFilterToGroup( this.allSolidObjects, filter )
+      filteredSolidObjects.visible = false
+      newFilteredObjects.add( filteredSolidObjects )
+  
+      let filteredLineObjects = await this.applyFilterToGroup( this.allLineObjects, filter )
+      newFilteredObjects.add( filteredLineObjects )
+  
+      let filteredTransparentObjects = await this.applyFilterToGroup( this.allTransparentObjects, filter )
+      newFilteredObjects.add( filteredTransparentObjects )
+  
+      let filteredPointObjects = await this.applyFilterToGroup( this.allPointObjects, filter )
+      newFilteredObjects.add( filteredPointObjects )
+      
+      // group solid objects
+      let groupedFilteredSolidObjects = await this.groupedSolidObjects( filteredSolidObjects )
+      newFilteredObjects.add( groupedFilteredSolidObjects )
 
-    this.filteredTransparentObjects.clear()
-    for ( let obj of this.allTransparentObjects.children ) {
-      let filteredObj = filterAndColorObject( obj, filter )
-      if ( filteredObj )
-        this.filteredTransparentObjects.add( filteredObj )
+      // Sync update scene
+      if ( this.filteredObjects !== null ) {
+        this.disposeAndClearGroup( this.filteredObjects )
+      }
+      this.filteredObjects = newFilteredObjects
+
+      this.scene.remove( this.objectsInScene )
+      this.scene.add( this.filteredObjects )
+      this.objectsInScene = this.filteredObjects
     }
 
-    this.filteredLineObjects.clear()
-    for ( let obj of this.allLineObjects.children ) {
-      let filteredObj = filterAndColorObject( obj, filter )
-      if ( filteredObj )
-        this.filteredLineObjects.add( filteredObj )
-    }
-
-    this.filteredPointObjects.clear()
-    for ( let obj of this.allPointObjects.children ) {
-      let filteredObj = filterAndColorObject( obj, filter )
-      if ( filteredObj )
-        this.filteredPointObjects.add( filteredObj )
-    }
-
-    await this._groupObjects()
-
+    this.appliedFilter = filter
     this.viewer.needsRender = true
+
   }
 
-  async _groupObjects() {
+  async groupSolidObjects( threejsGroup ) {
     let materialIdToBufferGeometry = {}
     let materialIdToMaterial = {}
     let materialIdToMeshes = {}
 
-    for ( let mesh of this.filteredSolidObjects.children ) {
+    for ( let mesh of threejsGroup.children ) {
       let m = mesh.material
       let materialId = `${m.type}/${m.vertexColors}/${m.color.toJSON()}/${m.side}/${m.transparent}/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}`
 
@@ -175,10 +205,11 @@ export default class SceneObjects {
       }
     }
     
+    let groupedObjects = new THREE.Group()
+    groupedObjects.name = 'GroupedSolidObjects'
+
     await this.asyncPause()
 
-    this.disposeAndClearGroup( this.groupedSolidObjects, true )
-    
     for ( let materialId in materialIdToBufferGeometry ) {
       await this.asyncPause()
       // TODO: does this handle transforms well ?
@@ -186,12 +217,10 @@ export default class SceneObjects {
       await this.asyncPause()
       let groupMaterial = materialIdToMaterial[ materialId ]
       let groupMesh = new THREE.Mesh( groupGeometry, groupMaterial )
-      this.groupedSolidObjects.add( groupMesh )
-      for ( let mesh of materialIdToMeshes[ materialId ] ) {
-        mesh.visible = false
-      }
+      groupedObjects.add( groupMesh )
     }
 
+    return groupedObjects
   }
 
 }

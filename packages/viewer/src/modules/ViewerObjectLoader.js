@@ -87,7 +87,7 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
-    await this.viewer.sceneManager.sceneObjects.setFilteredView()
+    await this.viewer.sceneManager.postLoad()
 
     if ( viewerLoads === 0 ) {
       console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )
