@@ -38,16 +38,21 @@ module.exports = {
   matomoMiddleware( req, res, next ) {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
       let distinctId = id
+      let serverName = 'unknown'
       
       if(req.context && req.context.email) {
         distinctId = req.context.email
+      }
+
+      if(req.context && req.context.serverName) {
+        serverName = req.context.serverName
       }
     
       client.capture({
         distinctId: distinctId,
         event: req.url,
         properties: {
-          serverName: req.context.serverName
+          serverName
         }
       })
     }
