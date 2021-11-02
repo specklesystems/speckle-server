@@ -3,6 +3,7 @@ const bcrypt = require( 'bcrypt' )
 const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
+const { identify } = require(`${appRoot}/logging/posthogHelper`)
 
 const Users = ( ) => knex( 'users' )
 const ApiTokens = ( ) => knex( 'api_tokens' )
@@ -85,7 +86,12 @@ module.exports = {
       await ApiTokens( ).where( { id: tokenId } ).update( { lastUsed: knex.fn.now( ) } )
       let scopes = await TokenScopes( ).select( 'scopeName' ).where( { tokenId: tokenId } )
       let { role } = await ServerRoles( ).select( 'role' ).where( { userId: token.owner } ).first( )
-      return { valid: true, userId: token.owner, role: role, scopes: scopes.map( s => s.scopeName ) }
+      let { email, name } = await Users().select('email', 'name').where( { id: token.owner }).first()
+      identify({
+        email,
+        name
+      });
+      return { valid: true, userId: token.owner, role: role, scopes: scopes.map( s => s.scopeName ), email }
     } else
       return { valid: false }
   },

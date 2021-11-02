@@ -26,8 +26,8 @@ module.exports = {
           
           // console.log( actionName )
           // Filter out subscription ops
-          if ( !ctx.operation.operation.toLowerCase().includes( 'subscription' ) ) {
-            apolloHelper( actionName )
+          if ( !ctx.operation.operation.toLowerCase().includes( 'subscription' ) && ctx.context ) {
+            apolloHelper( actionName, ctx.context.email )
           }
         } catch ( e ) {
           Sentry.captureException( e )
