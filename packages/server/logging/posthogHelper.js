@@ -5,11 +5,17 @@ const client = new PostHog(
     { host: 'https://posthog.insights.arup.com' }
 )
 
-const { machineIdSync } = require( 'node-machine-id' )
+const { machineIdSync } = require( 'node-machine-id' );
 
 const id = machineIdSync( )
 
 module.exports = {
+  identify(user) {
+    client.identify({
+      distinctId: user.email,
+      properties: user
+    })
+  },
   startup() {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
       client.capture({
@@ -18,19 +24,24 @@ module.exports = {
       })
     }
   },
-  apolloHelper( actionName ) {
+  apolloHelper( actionName, email) {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
       client.capture({
-        distinctId: id,
+        distinctId: email,
         event: actionName || 'gql api call',
       })
-      client.flush()
     }
   },
   matomoMiddleware( req, res, next ) {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
+      let distinctId = id
+      
+      if(req.context && req.context.email) {
+        distinctId = req.context.email
+      }
+    
       client.capture({
-        distinctId: id,
+        distinctId: distinctId,
         event: req.url,
       })
     }
