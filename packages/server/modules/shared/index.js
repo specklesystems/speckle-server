@@ -33,13 +33,13 @@ async function contextApiTokenHelper( { req, res, connection } ) {
 
 
   try {
-    let { valid, scopes, userId, role } = await validateToken( token )
+    let { valid, scopes, userId, role, email } = await validateToken( token )
 
     if ( !valid ) {
       return { auth: false }
     }
 
-    return { auth: true, userId, role, token, scopes }
+    return { auth: true, userId, role, token, scopes, email }
   } catch ( e ) {
     // TODO: Think whether perhaps it's better to throw the error
     return { auth: false, err: e }
