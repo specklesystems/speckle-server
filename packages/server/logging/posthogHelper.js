@@ -24,11 +24,14 @@ module.exports = {
       })
     }
   },
-  apolloHelper( actionName, email) {
+  apolloHelper( actionName, email, serverName) {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
       client.capture({
         distinctId: email,
         event: actionName || 'gql api call',
+        properties: {
+          serverName
+        }
       })
     }
   },
@@ -43,6 +46,9 @@ module.exports = {
       client.capture({
         distinctId: distinctId,
         event: req.url,
+        properties: {
+          serverName: req.context.serverName
+        }
       })
     }
     next()
