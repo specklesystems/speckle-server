@@ -32,7 +32,7 @@ jobs:
         push: true
         tags: arupspecklev2prodacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_ff44661e05e94e0aa89a43eaf41808c7 }}/backend:${{ github.sha }}
         file: ./packages/server/Dockerfile
-        build-args: SPECKLE_SERVER_VERSION=${{ github.sha }}
+        build-args: SPECKLE_SERVER_VERSION=v${{ github.sha }}
 
   deploy:
     runs-on: ubuntu-latest
