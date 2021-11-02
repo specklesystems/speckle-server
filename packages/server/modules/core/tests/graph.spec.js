@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, deleteUser } = require( '../services/users' )
+const { createUser, deleteUser, getUsers } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
@@ -152,12 +152,46 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( queriedUserB.body.data.user.role ).to.equal( 'server:user' )
       } )
 
-      it ( 'Onyl admins can change user role', async () => {
+      it ( 'Only admins can change user role', async () => {
         let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
         let res = await sendRequest( userB.token, { query } )
         let queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
         expect( res.body.errors ).to.exist
         expect( queriedUserB.body.data.user.role ).to.equal( 'server:user' )
+      } )
+    } )
+
+    describe( 'User deletion', ( ) => {
+      it ( 'Only admins can delete user', async () => {
+        let userDelete = { name: 'delete', email: 'delete@speckle.systems', password: 'wowwowwowwowwow' }
+        userDelete.id = await createUser( userDelete )
+
+        let users = await getUsers()
+        expect( users.map( u => u.id ) ).to.contain( userDelete.id )
+        let query = `mutation { adminDeleteUser( userConfirmation: { email: "${userDelete.email}" } ) } `
+        let res = await sendRequest( userB.token, { query } )
+        expect( res.body.errors ).to.exist
+        expect ( res.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
+      } )
+
+      it ( 'Admin can delete user', async () => {
+        let userDelete = { name: 'delete', email: 'd3l3t3@speckle.systems', password: 'wowwowwowwowwow' }
+        userDelete.id = await createUser( userDelete )
+
+        let users = await getUsers()
+        expect( users.map( u => u.id ) ).to.contain( userDelete.id )
+        let query = `mutation { adminDeleteUser( userConfirmation: { email: "${userDelete.email}" } ) } `
+        let deleteResult = await sendRequest( userA.token, { query } )
+        expect( deleteResult.body.data.adminDeleteUser ).to.equal( true )
+        users = await getUsers()
+        expect( users.map( u => u.id ) ).to.not.contain( userDelete.id )
+      } )
+
+      it ( 'Cannot delete the last admin', async () => {
+        let query = `mutation { adminDeleteUser( userConfirmation: { email: "${userA.email}" } ) } `
+        let res = await sendRequest( userA.token, { query } )
+        expect( res.body.errors ).to.exist
+        expect ( res.body.errors[0].message ).to.equal( 'Cannot remove the last admin role from the server' )
       } )
     } )
     describe( 'Streams', ( ) => {

@@ -182,6 +182,15 @@ describe( 'Actors & Tokens @user-services', () => {
         assert.fail( 'user not deleted' )
     } )
 
+    it( 'Should not delete the last admin user', async () => {
+      try {
+        await deleteUser( myTestActor.id )
+        assert.fail( 'boom' )
+      } catch ( err ) {
+        expect( err.message ).to.equal( 'Cannot remove the last admin role from the server' )
+      }
+    } )
+
     it( 'Should get a user', async () => {
       let actor = await getUser( myTestActor.id )
       expect( actor ).to.not.have.property( 'passwordDigest' )
@@ -223,8 +232,8 @@ describe( 'Actors & Tokens @user-services', () => {
 
       let match = await validatePasssword( { email: actor.email, password: 'super-test-200' } )
       expect( match ).to.equal( true )
-      let match_wrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' } )
-      expect( match_wrong ).to.equal( false )
+      let matchWrong = await validatePasssword( { email: actor.email, password: 'super-test-2000' } )
+      expect( matchWrong ).to.equal( false )
     } )
 
     it( 'Should update the password of a user', async () => {
