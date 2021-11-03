@@ -134,7 +134,13 @@ export default class SelectionHelper extends EventEmitter {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
 
-    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren( this.subset ) : this.viewer.sceneManager.filteredObjects )
+    let targetObjects
+    if ( this.subset ) {
+      targetObjects = this._getGroupChildren( this.subset )
+    } else {
+      targetObjects = this.viewer.sceneManager.filteredObjects.filter( obj => !!obj.userData )
+    }
+    let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
 
 
     if ( this.sectionBox && this.sectionBox.display.visible ) {

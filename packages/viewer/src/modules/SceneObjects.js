@@ -39,22 +39,6 @@ export default class SceneObjects {
 
     this.filteredObjects = null
 
-    // this.filteredObjects = new THREE.Group()
-    // this.filteredObjects.name = 'filteredObjects'
-    // this.filteredSolidObjects = new THREE.Group()
-    // this.filteredSolidObjects.name = 'filteredSolidObjects'
-    // this.filteredSolidObjects.visible = false // these are grouped later, we never want to display them individually
-    // this.filteredTransparentObjects = new THREE.Group()
-    // this.filteredTransparentObjects.name = 'filteredTransparentObjects'
-    // this.filteredLineObjects = new THREE.Group()
-    // this.filteredLineObjects.name = 'filteredLineObjects'
-    // this.filteredPointObjects = new THREE.Group()
-    // this.filteredPointObjects.name = 'filteredPointObjects'
-    // this.filteredObjects.add( this.filteredSolidObjects )
-    // this.filteredObjects.add( this.filteredTransparentObjects )
-    // this.filteredObjects.add( this.filteredLineObjects )
-    // this.filteredObjects.add( this.filteredPointObjects )
-
     this.appliedFilter = null
 
     // When the `appliedFilter` is null, scene will contain `allObjects`. Otherwise, `filteredObjects`
@@ -73,6 +57,65 @@ export default class SceneObjects {
       await new Promise( resolve => setTimeout( resolve, 0 ) )
       this.lastAsyncPause = Date.now()
     }
+  }
+
+  getObjectsProperties() {
+    let flattenObject = function( obj ) {
+      let flatten = {}
+      for ( let k in obj ) {
+        if ( [ 'id', '__closure', 'bbox', 'totalChildrenCount' ].includes( k ) )
+          continue
+        let v = obj[ k ]
+        if ( Array.isArray( v ) )
+          continue
+        if ( v.constructor === Object ) {
+          let flattenProp = flattenObject( v )
+          for ( let pk in flattenProp ) {
+            flatten[ `${k}.${pk}` ] = flattenProp[ pk ]
+          }
+          continue
+        }
+        if ( [ 'string', 'number', 'boolean' ].includes( typeof v ) )
+          flatten[ k ] = v
+      }
+      return flatten
+    }
+
+    let propValues = {}
+    for ( let objGroup of this.objectsInScene.children ) {
+      for ( let threeObj of objGroup.children ) {
+        let obj = flattenObject( threeObj.userData )
+        for ( let prop of Object.keys( obj ) ) {
+          if ( !( prop in propValues ) ) {
+            propValues[ prop ] = []
+          }
+          propValues[ prop ].push( obj[ prop ] )
+        }
+      }
+    }
+
+    let propInfo = {}
+    for ( let prop in propValues ) {
+      let pinfo = {
+        type: typeof propValues[ prop ][ 0 ],
+        objectCount: propValues[ prop ].length,
+        allValues: propValues[ prop ],
+        uniqueValues: {},
+        minValue: propValues[ prop ][ 0 ],
+        maxValue: propValues[ prop ][ 0 ]
+      }
+      for ( let v of propValues[ prop ] ) {
+        if ( v < pinfo.minValue ) pinfo.minValue = v
+        if ( v > pinfo.maxValue ) pinfo.maxValue = v
+        if ( !( v in pinfo.uniqueValues ) ) {
+          pinfo.uniqueValues[ v ] = 0
+        }
+        pinfo.uniqueValues[ v ] += 1
+      }
+
+      propInfo[ prop ] = pinfo
+    }
+    return propInfo
   }
 
   async setFilteredView() {
@@ -156,7 +199,7 @@ export default class SceneObjects {
       newFilteredObjects.add( filteredPointObjects )
       
       // group solid objects
-      let groupedFilteredSolidObjects = await this.groupedSolidObjects( filteredSolidObjects )
+      let groupedFilteredSolidObjects = await this.groupSolidObjects( filteredSolidObjects )
       newFilteredObjects.add( groupedFilteredSolidObjects )
 
       // Sync update scene
@@ -217,6 +260,7 @@ export default class SceneObjects {
       await this.asyncPause()
       let groupMaterial = materialIdToMaterial[ materialId ]
       let groupMesh = new THREE.Mesh( groupGeometry, groupMaterial )
+      groupMesh.userData = null
       groupedObjects.add( groupMesh )
     }
 
