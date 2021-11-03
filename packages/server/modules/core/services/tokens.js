@@ -11,6 +11,7 @@ const PersonalApiTokens = ( ) => knex( 'personal_api_tokens' )
 
 const TokenScopes = ( ) => knex( 'token_scopes' )
 const ServerRoles = ( ) => knex( 'server_acl' )
+const ServerConfig = ( ) => knex( 'server_config' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
 
