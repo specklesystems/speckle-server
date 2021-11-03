@@ -33,7 +33,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: ams3_ci
+              only: ci/fileimport
   
 jobs:
   test_server:
