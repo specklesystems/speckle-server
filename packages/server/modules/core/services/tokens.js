@@ -11,6 +11,7 @@ const PersonalApiTokens = ( ) => knex( 'personal_api_tokens' )
 
 const TokenScopes = ( ) => knex( 'token_scopes' )
 const ServerRoles = ( ) => knex( 'server_acl' )
+const ServerConfig = ( ) => knex( 'server_config' )
 const ServerApps = ( ) => knex( 'server_apps' )
 const ServerAppsScopes = ( ) => knex( 'server_apps_scopes' )
 
@@ -87,11 +88,12 @@ module.exports = {
       let scopes = await TokenScopes( ).select( 'scopeName' ).where( { tokenId: tokenId } )
       let { role } = await ServerRoles( ).select( 'role' ).where( { userId: token.owner } ).first( )
       let { email, name } = await Users().select('email', 'name').where( { id: token.owner }).first()
+      let { name: serverName } = await ServerConfig().select('name').first()
       identify({
         email,
         name
       });
-      return { valid: true, userId: token.owner, role: role, scopes: scopes.map( s => s.scopeName ), email }
+      return { valid: true, userId: token.owner, role: role, scopes: scopes.map( s => s.scopeName ), email, serverName }
     } else
       return { valid: false }
   },
