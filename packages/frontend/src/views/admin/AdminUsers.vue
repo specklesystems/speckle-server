@@ -134,8 +134,8 @@ export default {
     return {
       roleLookupTable: {
         'server:user': 'User',
-        'server:admin': 'Admin'
-        // 'server:archived_user': 'Archived'
+        'server:admin': 'Admin',
+        'server:archived-user': 'Archived'
       },
       users: {
         items: [],
