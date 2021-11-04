@@ -12,7 +12,7 @@ chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, deleteUser, getUsers } = require( '../services/users' )
+const { createUser, deleteUser, getUsers, archiveUser, makeUserAdmin } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createObject, createObjects } = require( '../services/objects' )
 
@@ -30,7 +30,11 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
     let { app } = await init( )
-    let { server } = await startHttp( app )
+    let { server } = await startHttp( app, 0 )
+    app.on( 'appStarted', () => {
+      addr    = `http://localhost:${server.address().port}`
+      wsAddr = `ws://localhost:${server.address().port}`
+    } )
     testServer = server
 
     userA.id = await createUser( userA )
@@ -39,9 +43,6 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     userB.token = `Bearer ${( await createPersonalAccessToken( userB.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
     userC.id = await createUser( userC )
     userC.token = `Bearer ${( await createPersonalAccessToken( userC.id, 'test token user B', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
-
-    addr = `http://localhost:${process.env.PORT || 3000}`
-    wsAddr = `ws://localhost:${process.env.PORT || 3000}`
   } )
 
   after( async ( ) => {
@@ -1159,6 +1160,135 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       const res = await sendRequest( userB.token, { query, variables } )
       expect( res ).to.be.json
       expect( res.body.errors ).to.exist
+    } )
+  } )
+
+  describe( 'Archived role access validation', ( ) => {
+    let archivedUser = { name: 'Mark von Archival', email: 'archi@speckle.systems', password: 'i"ll be back, just wait' }
+    let streamId
+    before( async () => {
+      archivedUser.id = await createUser( archivedUser )
+      archivedUser.token = `Bearer ${
+        ( 
+          await createPersonalAccessToken(
+            archivedUser.id,
+            'this will be archived',
+            [ 
+              'streams:read',
+              'streams:write',
+              'users:read',
+              'users:email',  
+              'tokens:write',
+              'tokens:read',
+              'profile:read',
+              'profile:email',
+              'apps:read',
+              'apps:write',
+              'users:invite'
+            ]
+          )
+        )
+      }`
+      await archiveUser( { userId: archivedUser.id } )
+    } )
+
+    it ( 'Should be able to read public streams', async () => {
+      const streamRes = await sendRequest( userA.token, { query: 'mutation { streamCreate( stream: { name: "Share this with poor Mark", description: "💩", isPublic:true } ) }' } )
+      const grantRes = await sendRequest( userA.token, {
+        query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${streamRes.body.data.streamCreate}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
+      } )
+      expect ( grantRes.body.data.streamGrantPermission ).to.equal( true )
+
+      let res = await sendRequest( archivedUser.token, { query: `query { stream(id:"${streamRes.body.data.streamCreate}") { id name } }` } )
+      expect( res.body.errors ).to.not.exist
+      expect( res.body.data.stream.id ).to.equal( streamRes.body.data.streamCreate )
+    } )
+
+    it ( 'Should not be able to create token', async ( ) => {
+      const query = 'mutation( $tokenInput:ApiTokenCreateInput! ) { apiTokenCreate ( token: $tokenInput ) }' 
+      const res = await sendRequest( archivedUser.token, { query, variables: { tokenInput:{ scopes:[ 'streams:read' ], name: 'thisWillNotBeCreated', lifespan: 1000000 } } } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role' )
+    } )
+
+    it ( 'Should fail to interact (read, write, delete) private streams it had access to', async () => {
+      const streamRes = await sendRequest( userA.token, { query: 'mutation { streamCreate( stream: { name: "Share this with poor Mark", description: "💩", isPublic:false } ) }' } )
+      streamId = streamRes.body.data.streamCreate
+      const grantRes = await sendRequest( userA.token, {
+        query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
+      } )
+
+      expect ( grantRes.body.data.streamGrantPermission ).to.equal( true )
+
+      let res = await sendRequest( archivedUser.token, { query: `query { stream(id:"${streamId}") { id name } }` } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+
+      res = await sendRequest( archivedUser.token, { query: '{ user { streams( limit: 30 ) { totalCount cursor items { id name } } } }' } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+
+      res = await sendRequest( archivedUser.token, { query: `mutation { streamDelete( id:"${streamId}")}` } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+
+      res = await sendRequest( archivedUser.token, { query: `mutation { streamUpdate(stream: {id:"${streamId}" name: "HACK", description: "Hello World, Again!", isPublic:false } ) }` } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+    } )
+
+    it ( 'Should fail to create streams, both public and private', async () => {
+      const query = 'mutation ( $streamInput: StreamCreateInput!) { streamCreate(stream: $streamInput ) }'
+      let res = await sendRequest( archivedUser.token, { query, variables: { streamInput:  { name: 'Trying to create stream', description: '💩', isPublic:false } } } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+      res = await sendRequest( archivedUser.token, { query, variables: { streamInput:  { name: 'Trying to create stream', description: '💩', isPublic:true } } } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+    } )
+
+    it ( 'Should fail to add apps', async () => {
+      const query = 'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
+      const variables = { myApp: { name: 'Test App', public: true, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
+
+      const res = await sendRequest( archivedUser.token, { query, variables } )
+
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+    } )
+
+    it ( 'Should fail to send email invites', async () => {
+      const res = await sendRequest( archivedUser.token, {
+        query: 'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
+        variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
+      } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+    } )
+
+    it ( 'Should fail to create object', async () => {
+      let objs = [ ]
+      for ( let i = 0; i < 10; i++ ) {
+        if ( i % 2 === 0 ) objs.push( { applicationId: i, type: 'Point', x: i, y: 1, z: i * 0.42, extra: { super: true, arr: [ 1, 2, 3, 4 ] } } )
+        else if ( i % 3 === 0 ) objs.push( { applicationId: i, type: 'Line', start: { x: i, y: 1, z: i * 0.42 }, end: { x: 0, y: 2, z: i * i }, extra: { super: false, arr: [ 12, 23, 34, 42, { imp: [ 'possible', 'this', 'sturcture', 'is' ] } ] } } )
+        else objs.push( { cool: [ 's', 't', [ 'u', 'f', 'f', i ], { that: true } ], iValue: i + i / 3 } )
+      }
+
+      const res = await sendRequest( archivedUser.token, { query: `mutation( $objs: [JSONObject]! ) { objectCreate( objectInput: {streamId:"${ts1}", objects: $objs} ) }`, variables: { objs: objs } } )
+
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+    } )
+
+    it ( 'Should fail to create commit', async () => {
+      c1.message = 'what a message for a first commit'
+      c1.streamId = streamId
+      c1.objectId = 'justARandomHash'
+      c1.branchName = 'main'
+
+      let res = await sendRequest( archivedUser.token, { query: 'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }', variables: { myCommit: c1 } } )
+      expect( res.body.errors ).to.exist
+      expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
   } )
 } )

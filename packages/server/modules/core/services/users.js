@@ -214,6 +214,11 @@ module.exports = {
     await changeUserRole( { userId, role:'server:user' } )
   },
 
+  async archiveUser( { userId } ){
+    // dont change last admin to archived
+    await _ensureAtleastOneAdminRemains( userId )
+    await changeUserRole( { userId, role:'server:archived-user' } )
+  },
 
   async countUsers ( searchQuery=null ){
     let query = Users()

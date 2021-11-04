@@ -19,8 +19,6 @@ const knex = require( `${appRoot}/db/knex` )
 const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 
-// const addr = `http://localhost:${process.env.PORT || 3000}`
-// const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
 const addr = `http://localhost:${process.env.PORT}/graphql`
 const wsAddr = `ws://localhost:${process.env.PORT}/graphql`
 

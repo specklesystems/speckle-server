@@ -1,7 +1,7 @@
 'use strict'
 const appRoot = require( 'app-root-path' )
 const { UserInputError } = require( 'apollo-server-express' )
-const { getUser, getUserByEmail, getUsers, countUsers, getUserRole, updateUser, deleteUser, searchUsers, getUserById, makeUserAdmin, unmakeUserAdmin } = require( '../../services/users' )
+const { getUser, getUserByEmail, getUsers, countUsers, getUserRole, updateUser, deleteUser, searchUsers, getUserById, makeUserAdmin, unmakeUserAdmin, archiveUser } = require( '../../services/users' )
 const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 const { validateServerRole, validateScopes } = require( `${appRoot}/modules/shared` )
 const zxcvbn = require( 'zxcvbn' )
@@ -108,7 +108,12 @@ module.exports = {
     },
 
     async userRoleChange( parent, args, context, info ) {
-      let roleChanger = args.userRoleInput.role === 'server:admin' ? makeUserAdmin : unmakeUserAdmin
+      let roleChangers = {
+        'server:admin': makeUserAdmin,
+        'server:user': unmakeUserAdmin,
+        'server:archived-user': archiveUser
+      }
+      let roleChanger = roleChangers[args.userRoleInput.role]
       await roleChanger( { userId: args.userRoleInput.id } )
       return true
     },
