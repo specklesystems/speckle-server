@@ -1281,12 +1281,13 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     } )
 
     it ( 'Should fail to create commit', async () => {
-      c1.message = 'what a message for a first commit'
-      c1.streamId = streamId
-      c1.objectId = 'justARandomHash'
-      c1.branchName = 'main'
-
-      let res = await sendRequest( archivedUser.token, { query: 'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }', variables: { myCommit: c1 } } )
+      const commit = {
+        message : 'what a message for a first commit',
+        streamId : streamId,
+        objectId : 'justARandomHash',
+        branchName : 'main'
+      }
+      let res = await sendRequest( archivedUser.token, { query: 'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }', variables: { myCommit: commit } } )
       expect( res.body.errors ).to.exist
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
