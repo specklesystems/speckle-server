@@ -27,7 +27,7 @@ module.exports = {
   apolloHelper( actionName, email, serverName) {
     if ( process.env.DISABLE_TRACKING !== 'true' ) {
       client.capture({
-        distinctId: email,
+        distinctId: email || id,
         event: actionName || 'gql api call',
         properties: {
           serverName
