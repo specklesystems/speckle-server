@@ -18,6 +18,7 @@ const { createObject, createObjects } = require( '../services/objects' )
 
 let addr
 let wsAddr
+let expressApp
 
 describe( 'GraphQL API Core @core-api', ( ) => {
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wowwowwowwowwow' }
@@ -30,6 +31,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
     let { app } = await init( )
+    expressApp = app
     let { server } = await startHttp( app, 0 )
     app.on( 'appStarted', () => {
       addr    = `http://localhost:${server.address().port}`
@@ -1204,14 +1206,16 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       expect( res.body.data.stream.id ).to.equal( streamRes.body.data.streamCreate )
     } )
 
-    it ( 'Should not be able to create token', async ( ) => {
+    it ( 'Should be forbidden to create token', async ( ) => {
       const query = 'mutation( $tokenInput:ApiTokenCreateInput! ) { apiTokenCreate ( token: $tokenInput ) }' 
       const res = await sendRequest( archivedUser.token, { query, variables: { tokenInput:{ scopes:[ 'streams:read' ], name: 'thisWillNotBeCreated', lifespan: 1000000 } } } )
+      // WHY NOT 401 ???
+      // expect( res ).to.have.status( 401 )
       expect( res.body.errors ).to.exist
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role' )
     } )
 
-    it ( 'Should fail to interact (read, write, delete) private streams it had access to', async () => {
+    it ( 'Should be forbidden to interact (read, write, delete) private streams it had access to', async () => {
       const streamRes = await sendRequest( userA.token, { query: 'mutation { streamCreate( stream: { name: "Share this with poor Mark", description: "💩", isPublic:false } ) }' } )
       streamId = streamRes.body.data.streamCreate
       const grantRes = await sendRequest( userA.token, {
@@ -1237,17 +1241,19 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
 
-    it ( 'Should fail to create streams, both public and private', async () => {
+    it ( 'Should be forbidden to create streams, both public and private', async () => {
       const query = 'mutation ( $streamInput: StreamCreateInput!) { streamCreate(stream: $streamInput ) }'
+
       let res = await sendRequest( archivedUser.token, { query, variables: { streamInput:  { name: 'Trying to create stream', description: '💩', isPublic:false } } } )
       expect( res.body.errors ).to.exist
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+
       res = await sendRequest( archivedUser.token, { query, variables: { streamInput:  { name: 'Trying to create stream', description: '💩', isPublic:true } } } )
       expect( res.body.errors ).to.exist
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
 
-    it ( 'Should fail to add apps', async () => {
+    it ( 'Should be forbidden to add apps', async () => {
       const query = 'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
       const variables = { myApp: { name: 'Test App', public: true, description: 'Test App Description', scopes: [ 'streams:read' ], redirectUrl: 'lol://what' } }
 
@@ -1257,7 +1263,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
 
-    it ( 'Should fail to send email invites', async () => {
+    it ( 'Should be forbidden to send email invites', async () => {
       const res = await sendRequest( archivedUser.token, {
         query: 'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
         variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
@@ -1266,21 +1272,16 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
 
-    it ( 'Should fail to create object', async () => {
-      let objs = [ ]
-      for ( let i = 0; i < 10; i++ ) {
-        if ( i % 2 === 0 ) objs.push( { applicationId: i, type: 'Point', x: i, y: 1, z: i * 0.42, extra: { super: true, arr: [ 1, 2, 3, 4 ] } } )
-        else if ( i % 3 === 0 ) objs.push( { applicationId: i, type: 'Line', start: { x: i, y: 1, z: i * 0.42 }, end: { x: 0, y: 2, z: i * i }, extra: { super: false, arr: [ 12, 23, 34, 42, { imp: [ 'possible', 'this', 'sturcture', 'is' ] } ] } } )
-        else objs.push( { cool: [ 's', 't', [ 'u', 'f', 'f', i ], { that: true } ], iValue: i + i / 3 } )
-      }
+    it ( 'Should be forbidden to create object', async () => {
+      let objects = generateManyObjects( 10 )
 
-      const res = await sendRequest( archivedUser.token, { query: `mutation( $objs: [JSONObject]! ) { objectCreate( objectInput: {streamId:"${ts1}", objects: $objs} ) }`, variables: { objs: objs } } )
+      const res = await sendRequest( archivedUser.token, { query: `mutation( $objs: [JSONObject]! ) { objectCreate( objectInput: {streamId:"${ts1}", objects: $objs} ) }`, variables: { objs: objects.objs } } )
 
       expect( res.body.errors ).to.exist
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
     } )
 
-    it ( 'Should fail to create commit', async () => {
+    it ( 'Should be forbidden to create commit', async () => {
       const commit = {
         message : 'what a message for a first commit',
         streamId : streamId,
@@ -1290,6 +1291,49 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       let res = await sendRequest( archivedUser.token, { query: 'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }', variables: { myCommit: commit } } )
       expect( res.body.errors ).to.exist
       expect( res.body.errors[0].message ).to.equal( 'You do not have the required server role'  )
+    } )
+
+    it ( 'Should be forbidden to upload via rest API', async () => {
+      let objects =  generateManyObjects( 2 )
+      let res = await chai
+        .request( expressApp )
+        .post( `/objects/${streamId}` )
+        .set( 'Authorization', archivedUser.token )
+        .set( 'Content-type', 'multipart/form-data' )
+        .attach( 'batch1', Buffer.from( JSON.stringify( objects.objs ), 'utf8' ) )
+      expect( res ).to.have.status( 401 )
+    } )
+
+    it ( 'Should be forbidden to download from private stream it had access to via rest API', async () => {
+      // even if the object doesn't exist, so im not creating it...
+      let res = await chai
+        .request( expressApp )
+        .get( '/objects/thisIs/bogus' )
+        .set( 'Authorization', archivedUser.token )
+      expect( res ).to.have.status( 401 )
+    } )
+
+    it ( 'Should be able to download from public stream via rest API', async () => {
+      const streamRes = await sendRequest( userA.token, { query: 'mutation { streamCreate( stream: { name: "Mark will read this", description: "🥔", isPublic:true } ) }' } )
+      const grantRes = await sendRequest( userA.token, {
+        query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${streamRes.body.data.streamCreate}", userId: "${archivedUser.id}" role: "stream:contributor"}) }`
+      } )
+      expect ( grantRes.body.data.streamGrantPermission ).to.equal( true )
+      let objects =  generateManyObjects( 2 )
+      let res = await chai
+        .request( expressApp )
+        .post( `/objects/${streamRes.body.data.streamCreate}` )
+        .set( 'Authorization', userA.token )
+        .set( 'Content-type', 'multipart/form-data' )
+        .attach( 'batch1', Buffer.from( JSON.stringify( objects.objs ), 'utf8' ) )
+      expect( res ).to.have.status( 201 )
+
+      res = await chai
+        .request( expressApp )
+        .get( `/objects/${streamRes.body.data.streamCreate}/${objects.objs[0].id}` )
+        .set( 'Authorization', archivedUser.token )
+      expect( res ).to.have.status( 200 )
+      expect( res.body[0].id ).to.equal( objects.objs[0].id )
     } )
   } )
 } )
