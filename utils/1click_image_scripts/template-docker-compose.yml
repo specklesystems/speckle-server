@@ -23,6 +23,16 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
 
+  minio:
+    image: "minio/minio"
+    command: server /data --console-address ":9001"
+    restart: always
+    volumes:
+      - ./minio-data:/data
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
   ####
   # Speckle Server
   #######
@@ -51,7 +61,7 @@ services:
       POSTGRES_DB: "speckle"
 
       REDIS_URL: "redis://redis"
-      WAIT_HOSTS: "postgres:5432, redis:6379"
+      WAIT_HOSTS: "postgres:5432, redis:6379, minio:9000"
 
       EMAIL: "false"
       EMAIL_HOST: "TODO"
@@ -62,18 +72,46 @@ services:
 
       EMAIL_SECURE: "false"
 
+      S3_ENDPOINT: "http://minio:9000"
+      S3_ACCESS_KEY: "minioadmin"
+      S3_SECRET_KEY: "minioadmin"
+      S3_BUCKET: "speckle-server"
+      S3_CREATE_BUCKET: "true"
+
   speckle-preview-service:
     image: speckle/speckle-preview-service:2
     restart: always
     mem_limit: "1000m"
     memswap_limit: "1000m"
+    command: ["bash", "-c", "/wait && node bin/www"]
+
     environment:
       DEBUG: "preview-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+      WAIT_HOSTS: "postgres:5432"
 
   speckle-webhook-service:
     image: speckle/speckle-webhook-service:2
     restart: always
+    command: ["bash", "-c", "/wait && node main.js"]
     environment:
       DEBUG: "webhook-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+      WAIT_HOSTS: "postgres:5432"
+
+  fileimport-service:
+    image: speckle/speckle-fileimport-service:2
+    restart: always
+    command: ["bash", "-c", "/wait && node src/daemon.js"]
+    environment:
+      DEBUG: "fileimport-service:*"
+      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+      WAIT_HOSTS: "postgres:5432, minio:9000"
+
+      S3_ENDPOINT: "http://minio:9000"
+      S3_ACCESS_KEY: "minioadmin"
+      S3_SECRET_KEY: "minioadmin"
+      S3_BUCKET: "speckle-server"
+
+      SPECKLE_SERVER_URL: "http://speckle-server:3000"
+      
