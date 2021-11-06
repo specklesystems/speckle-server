@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development DEBUG=speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
-    "test": "cross-env PORT=3001 NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test nyc --reporter html --reporter lcov mocha -s 0 --timeout 10000 --exit",
+    "test": "cross-env PORT=0 NODE_ENV=test POSTGRES_URL=postgres://localhost/speckle2_test nyc --reporter html --reporter lcov mocha -s 0 --timeout 10000 --exit",
     "test:report": "npm run test -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml"
   },
   "dependencies": {
