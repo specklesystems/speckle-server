@@ -159,6 +159,105 @@
             </template>
             Show viewer help
           </v-tooltip>
+
+          <v-menu top close-on-click offset-y style="z-index: 100" v-if="$route.params.branchName.includes('wip')">
+            <template #activator="{ on: onMenu, attrs: menuAttrs }">
+              <v-tooltip top>
+                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
+                  
+                  <v-btn  
+                    small
+                    v-bind="{ ...tooltipAttrs, ...menuAttrs }"
+                    v-on="{ ...onTooltip, ...onMenu }"
+                  >
+                    <v-icon small>mdi-layers-triple</v-icon>
+                  </v-btn>
+                </template>
+                Select Analysis Layer
+              </v-tooltip>
+            </template>
+            <v-list dense>
+              
+              <v-list-item v-for="vis in branches.names" @click="showVis(vis)"  
+              :style= "[!display.branchName.includes(vis) ? {} : { background: '#757575' }]">
+                <v-list-item-title>{{ vis }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
+          <v-tooltip top >
+            <template #activator="{ on, attrs }">
+              <v-btn  v-bind="attrs" small @click="slideSwitch(-1)" v-on="on">
+                <v-icon small>mdi-arrow-left-bold</v-icon>
+              </v-btn>
+            </template>
+            Previous slide
+          </v-tooltip>
+          
+          <input v-model="display.message" readonly class="pl-2 pr-2 mr-0.5" style="color: white; text-align: center; opacity: 0.8 "  />
+
+          <v-tooltip top >
+            <template #activator="{ on, attrs }">
+              <v-btn  v-bind="attrs" small @click="slideSwitch(1)" v-on="on">
+                <v-icon small>mdi-arrow-right-bold</v-icon>
+              </v-btn>
+            </template>
+            Next slide
+          </v-tooltip>
+
+          <!-- TOFIX: ACCESS COLOR AS PRIMARY -->
+          <input v-model="actions.currentMessage" 
+            v-if="$route.params.branchName.includes('wip')"
+            placeholder="type description here" 
+            class="pl-2 pr-2 mr-0.5" 
+            style="color: white; text-align: center;  background: #047EFB; opacity: 0.8 "  />
+
+          <v-tooltip top v-if="$route.params.branchName.includes('wip')">
+            <template #activator="{ on, attrs }">
+              <v-btn color="primary"  v-bind="attrs" small @click="slideCreate()" v-on="on">
+                <v-icon small>mdi-movie-open-plus-outline</v-icon>
+              </v-btn>
+            </template>
+            Create a slide
+          </v-tooltip>
+
+          <v-menu top close-on-click offset-y style="z-index: 100" v-if="$route.params.branchName.includes('wip')">
+            <template #activator="{ on: onMenu, attrs: menuAttrs }">
+              <v-tooltip top >
+                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
+                  <v-btn color="error"  
+                    v-bind="{ ...tooltipAttrs, ...menuAttrs }" 
+                    small  
+                    v-on="{ ...onTooltip, ...onMenu }">
+                    <v-icon small>mdi-content-save</v-icon>
+                  </v-btn>
+                </template>
+                Save presentation
+                </v-tooltip>
+              </template>
+            <v-list dense>
+              
+              <v-list-item @click="save_pres(1)">
+                <v-list-item-title>Save as draft</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="save_pres(2)">
+                <v-list-item-title>Save and publish</v-list-item-title>
+              </v-list-item>
+
+            </v-list>
+          </v-menu>
+
+          <v-tooltip top v-if="$route.params.branchName.includes('wip')">
+            <template #activator="{ on, attrs }">
+              <v-btn color="error"  v-bind="attrs" small @click="delete_pres()" v-on="on">
+                <v-icon small>mdi-delete-outline</v-icon>
+              </v-btn>
+            </template>
+            Delete presentation
+          </v-tooltip>
+
+
+
           <v-dialog
             v-model="showObjectDetails"
             width="500"
@@ -220,7 +319,7 @@
 import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 import ObjectSimpleViewer from './ObjectSimpleViewer'
-import StreamQuery from '../graphql/stream.gql'
+import gql from 'graphql-tag'
 export default {
   components: { ObjectSimpleViewer },
   props: {
@@ -229,6 +328,14 @@ export default {
       default: false
     },
     objectUrl: {
+      type: String,
+      default: null
+    },
+    objectExistingUrl: {
+      type: String,
+      default: null
+    },
+    branchId: {
       type: String,
       default: null
     },
@@ -245,9 +352,42 @@ export default {
       default: false
     }
   },
+  apollo: {
+    branchQuery: {
+      query: gql`
+        query smth($id: String!) {
+          stream(id: $id) {
+            id
+            isPublic
+            name
+            branches {
+              totalCount
+              items {
+                id
+                name
+                description
+                commits {
+                  items {
+                    id
+                    referencedObject
+                    branchName
+                  }
+                }
+              }
+            }
+          }
+        }
+      `,
+      update: (data) => data.stream.branches.items,
+      variables() {
+        return {
+          id: this.$route.params.streamId ,
+        }
+      }
+    }
+  },
   data() {
     return {
-      streamQuery: StreamQuery,
       hasLoadedModel: false,
       loadProgress: 0,
       fullScreen: false,
@@ -257,7 +397,14 @@ export default {
       selectedObjects: [],
       showObjectDetails: false,
       hasImg: false,
-      namedViews: []
+      namedViews: [],
+
+      branchQuery: null,
+      branches: {names:[], url: [], uuid:[], objId:[], visible:[] },
+      display: {index: [], branchName: [], message:"" },
+      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null },
+      slidesSaved: []
+
     }
   },
   computed: {
@@ -343,7 +490,7 @@ export default {
   methods: {
     async getPreviewImage(angle) {
       angle = angle || 0
-      let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      let previewUrl = this.objectExistingUrl.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')
@@ -380,7 +527,7 @@ export default {
         throttle(
           function (args) {
             this.loadProgress = args.progress * 100
-            this.zoomEx()
+            //this.zoomEx()
           }.bind(this),
           200
         )
@@ -391,12 +538,35 @@ export default {
         this.selectedObjects.push(...objects)
         this.$emit('selection', this.selectedObjects)
       })
+      
     },
     load() {
-      if (!this.objectUrl) return
+      //if (!this.objectUrl) return
       this.hasLoadedModel = true
-      window.__viewer.loadObject(this.objectUrl)
-      window.__viewerLastLoadedUrl = this.objectUrl
+      //window.__viewer.loadObject(this.objectUrl)
+      window.__viewerLastLoadedUrl = this.objectExistingUrl
+
+      let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
+      this.branchQuery.forEach(obj=> { // run loop for each branch name
+        if (obj.name == this.$route.params.branchName) { // get details of current branhc (could be in props)
+          //this.branch_id = obj.id
+          //this.branch_name = obj.name
+          //this.branch_description = obj.description 
+        }
+        
+        //// fill all the branch lists and upload objects
+        if (!obj.name.includes('presentations/') && obj.commits.items[0]) {
+          console.log(obj)
+          this.branches.names.push(obj.name) 
+          this.branches.visible.push(0) 
+          this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
+          this.branches.objId.push(obj.commits.items[0].referencedObject)
+          this.branches.uuid.push([])
+        }
+          
+      })
+      console.log(this.branches)
+      this.loadProgress = 100
       this.setupEvents()
     },
     unloadData() {
@@ -415,7 +585,143 @@ export default {
       navigator.clipboard.writeText(frameCode).then(() => {
         //TODO: Show vuetify notification
       })
-    }
+    },
+    
+
+
+
+    showVis(name){
+      let index = this.branches.names.indexOf(name) 
+      let index_past = this.branches.names.indexOf(this.actions.pastBranch) 
+      let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId 
+
+      // assign previous objects to a previously switched branch 
+      window.__viewer.sceneManager.objects.forEach(obj=> {
+        let assigned = 0
+        this.branches.uuid.forEach(item =>{ // go through each branch (list of objects)
+          if (item.includes(obj.uuid)) {
+            assigned = 1
+            return
+          }
+        })
+        if (assigned == 0) this.branches.uuid[index_past].push(obj.uuid)
+      })
+      ////////////////////////////////////////////// SHOW or upload DATA 
+      if (!this.branches.visible[index] == 1  )  {
+        this.branches.visible[index] = 1 
+        this.display.index.push(index)
+        this.display.branchName.push(name)
+        var sub_count = 0
+        if (this.branches.uuid[index].length>0){ // if uuids are loaded
+          console.log(this.branches.uuid[index])
+          this.branches.uuid[index].forEach(obj => { //going through each object (if uuid loaded)
+            let exists = 0
+            window.__viewer.sceneManager.objects.forEach(sub_obj => { // find uuid in existing scene objects
+              if (sub_obj.uuid == obj) {
+                this.hide(sub_obj, 1) 
+                exists +=1 
+                return 
+              }
+            })
+            if (exists ==0){ 
+              window.__viewer.loadObject(start_url + "/objects/" +  this.branches.objId[index])
+            }
+            sub_count += 1
+          })
+        }else{
+          window.__viewer.loadObject(start_url + "/objects/" +  this.branches.objId[index])
+        }
+      } else {    //////////////////////////////////////////////  HIDE DATA
+        this.branches.visible[index] = 0 
+        this.display.index.splice(this.display.index.indexOf(index), 1)
+        this.display.branchName.splice(this.display.index.indexOf(index), 1)
+        var sub_count = 0
+        this.branches.uuid[index].forEach(obj => { //going through each branch
+          window.__viewer.sceneManager.objects.forEach(sub_obj => { // find uuid in existing scene objects
+            if (sub_obj.uuid == obj) {
+              this.hide(sub_obj, 0) 
+              return 
+            }
+          })
+           sub_count += 1
+        })
+      }
+      console.log("Displayed branches: " + this.display.branchName.toString())
+      this.actions.pastBranch = name
+
+    },
+    hide(obj,i){
+      //console.log(obj)
+      if (i==0) {
+        obj.visible = false 
+        if (obj.scale) obj.scale.x=0, obj.scale.y=0, obj.scale.z=0
+      }
+      if (i==1) {
+        obj.visible = true
+        if (obj.scale) obj.scale.x=1, obj.scale.y=1, obj.scale.z=1
+      }
+    },
+    slideSwitch(num){
+
+    },
+    slideCreate(){
+      let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
+      let contr = window.__viewer.sceneManager.viewer.controls
+      
+      let slide = {
+        user_message: "DO NOT EDIT THIS FIELD", 
+        cam_position: { x: cam[12],y: cam[13],z: cam[14] }, 
+        target: contr._target, 
+        visibilities: this.branches.visible, 
+        msg: this.currentMessage
+      }
+      this.slidesSaved.push( JSON.parse(JSON.stringify(slide)) )
+      this.actions.currentMessage = "Slide #" + this.slidesSaved.length.toString() + " added!"
+      this.actions.currentSlideNum +=1
+    },
+    save_pres(num){
+      if (num==1){ // keep draft
+        this.$apollo.mutate({
+          mutation: gql`
+            mutation branchUpdate($params: BranchUpdateInput!) {
+              branchUpdate(branch: $params)
+            }
+          `,
+          variables: {
+            params: {
+              streamId: this.$route.params.streamId,
+              id: this.branchId,
+              name: this.$route.params.branchName,
+              description: JSON.stringify(this.slidesSaved)
+            }
+          }
+        })
+      }
+      if (num==2){ // save and publish
+      let new_name = this.$route.params.branchName.replace(" wip","").replace("wip ","").replace("wip","")
+        this.$apollo.mutate({
+          mutation: gql`
+            mutation branchUpdate($params: BranchUpdateInput!) {
+              branchUpdate(branch: $params)
+            }
+          `,
+          variables: {
+            params: {
+              streamId: this.$route.params.streamId,
+              id: this.branchId,
+              name: new_name,
+              description: JSON.stringify(this.slidesSaved)
+            }
+          }
+        })
+        window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+new_name)
+      }
+    },
+    delete_pres(){
+
+    },
+
+
   }
 }
 </script>

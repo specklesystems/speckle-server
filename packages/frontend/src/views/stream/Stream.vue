@@ -152,7 +152,7 @@
                 exact
               >
                 <v-list-item-icon>
-                  <v-icon v-if="item.name !== 'main'" small style="padding-top: 10px">
+                  <v-icon v-if="item.name !== 'main' " small style="padding-top: 10px">
                     mdi-source-branch
                   </v-icon>
                   <v-icon v-else small style="padding-top: 10px" class="primary--text">
@@ -198,10 +198,14 @@
                   exact
                 >
                   <v-list-item-icon>
-                    <v-icon small style="padding-top: 10px">mdi-source-branch</v-icon>
+                    <v-icon v-if="item.name.includes('presentations')" small style="padding-top: 10px"> mdi-play-box-outline   </v-icon>
+                    <v-icon v-else small style="padding-top: 10px"> mdi-source-branch  </v-icon>
                   </v-list-item-icon>
                   <v-list-item-content>
-                    <v-list-item-title>
+                    <v-list-item-title v-if="item.name.includes('presentations')">
+                      {{ kid.displayName }}
+                    </v-list-item-title>
+                    <v-list-item-title v-else>
                       {{ kid.displayName }} ({{ kid.commits.totalCount }})
                     </v-list-item-title>
                     <v-list-item-subtitle class="caption">

@@ -44,11 +44,14 @@
       <v-col v-else-if="stream && stream.branch" cols="12" class="pa-0 ma-0">
         <branch-edit-dialog ref="editBranchDialog" />
 
-        <div v-if="latestCommitObjectUrl || $route.params.branchName.includes('abracadabra')" style="height: 60vh">
+        <div v-if="latestCommitObjectUrl && !$route.params.branchName.includes('presentations/')" style="height: 60vh">
           <renderer :object-url="latestCommitObjectUrl" :object-main-url="latestCommitObjectMainUrl" show-selection-helper />
         </div>
+        <div v-if="$route.params.branchName.includes('presentations/')" style="height: 60vh">
+          <renderer-presentation :object-url="latestCommitObjectUrl" :object-existing-url="latestExistingCommitUrl" :branch-id="branchId" show-selection-helper />
+        </div>
 
-        <v-list v-if="stream.branch.commits.items.length > 0 || $route.params.branchName.includes('abracadabra')" class="pa-0 ma-0">
+        <v-list v-if="stream.branch.commits.items.length > 0 && !$route.params.branchName.includes('presentations/')" class="pa-0 ma-0">
           <list-item-commit
             :commit="latestCommit"
             :stream-id="streamId"
@@ -72,7 +75,7 @@
       </v-col>
 
       <no-data-placeholder
-        v-if="( !$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0) && !$route.params.branchName.includes('abracadabra')"
+        v-if="( !$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0) && !$route.params.branchName.includes('presentations/')"
       >
         <h2 class="space-grotesk">Branch "{{ stream.branch.name }}" has no commits.</h2>
       </no-data-placeholder>
@@ -88,6 +91,8 @@
 <script>
 import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
+import StreamQuery from '@/graphql/stream.gql'
+//import RendererPresentation from '../../components/RendererPresentation.vue'
 
 export default {
   name: 'Branch',
@@ -96,7 +101,8 @@ export default {
     BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
-    Renderer: () => import('@/components/Renderer')
+    Renderer: () => import('@/components/Renderer'),
+    RendererPresentation: () => import('@/components/RendererPresentation')
   },
   data() {
     return {
@@ -123,6 +129,15 @@ export default {
           branchName: 'main'
         }
       }
+    },
+    streamQuery: {
+      query: StreamQuery,
+      update: (data) => data.stream,
+      variables() {
+        return {
+          id: this.$route.params.streamId,
+        }
+      },
     },
     $subscribe: {
       commitCreated: {
@@ -153,6 +168,9 @@ export default {
     streamId() {
       return this.$route.params.streamId
     },
+    branchId() {
+      return this.stream.branch.id
+    },
     latestCommitObjectUrl() {
       if (
         this.stream &&
@@ -171,6 +189,15 @@ export default {
         this.streamMain.branch.commits.items.length > 0
       )
         return `${window.location.origin}/streams/${this.streamMain.id}/objects/${this.streamMain.branch.commits.items[0].referencedObject}`
+      else return null
+    },
+    latestExistingCommitUrl() {
+      if (
+        this.streamQuery &&
+        this.streamQuery.commits.items &&
+        this.streamQuery.commits.items.length > 0
+      )
+        return `${window.location.origin}/streams/${this.streamQuery.id}/objects/${this.streamQuery.commits.items[0].referencedObject}`
       else return null
     },
     latestCommit() {

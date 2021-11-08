@@ -186,6 +186,12 @@ export default class Viewer extends EventEmitter {
     this.loaders.push( loader )
     await loader.load()
   }
+  createCube() {
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshBasicMaterial( { color: 0x047EFB } );
+    const cube = new THREE.Mesh( geometry, material );
+    this.scene.add( cube );
+  }
 
   dispose() {
     // TODO
