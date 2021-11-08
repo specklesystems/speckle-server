@@ -100,7 +100,8 @@ export default {
               action = 'skip'
             else action = 'combine'
           } //stream, branch, commit
-          else if (curr.actionType.includes('_update')) action = 'combine'
+          else if (curr.actionType.includes('_update') || curr.actionType === 'commit_create')
+            action = 'combine'
         }
         if (action === 'combine') {
           prev[prev.length - 1].push(curr)
@@ -109,6 +110,7 @@ export default {
         }
         return prev
       }, [])
+      // console.log(groupedTimeline)
       this.groupedActivity = groupedActivity
     },
     infiniteHandler($state) {
