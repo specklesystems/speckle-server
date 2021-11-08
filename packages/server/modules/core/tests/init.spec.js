@@ -9,12 +9,11 @@ const knex = require( `${appRoot}/db/knex` )
 const expect = chai.expect
 
 // NOTE:
-// These tests check that the initialisation routine of the whole server
+// These tests check that the initialization routine of the whole server
 // correctly registers some scopes and roles. At the time of writing, there are
 // 11 scopes and 5 roles. These might increase in the future with additional
 // modules being added.
-describe( 'Initialisation Logic @init-logic', ( ) => {
-
+describe( 'Initialization Logic @init-logic', ( ) => {
   describe( 'First init', ( ) => {
     before( async ( ) => {
       await init()
@@ -24,17 +23,17 @@ describe( 'Initialisation Logic @init-logic', ( ) => {
       // no rollback here!
     } )
 
-    it( 'shoud have a lotta scopes', async() => {
+    it( 'should have a lotta scopes', async() => {
       let res = await knex( 'scopes' ).select()
       expect( res.length ).to.be.greaterThan( 10 )
     } )
 
-    it( 'shoud have some roles', async() => {
+    it( 'should have some roles', async() => {
       let res = await knex( 'user_roles' ).select()
       expect( res.length ).to.be.greaterThan( 4 )
     } )
 
-    it( 'shoud have some apps', async() => {
+    it( 'should have some apps', async() => {
       let res = await knex( 'server_apps' ).select()
       expect( res.length ).to.be.greaterThan( 2 )
     } )
@@ -49,17 +48,17 @@ describe( 'Initialisation Logic @init-logic', ( ) => {
       await knex.migrate.rollback() // we rollback here :)
     } )
 
-    it( 'shoud have a lotta scopes second time round too!', async() => {
+    it( 'should have a lotta scopes second time round too!', async() => {
       let res = await knex( 'scopes' ).select()
       expect( res.length ).to.be.greaterThan( 10 )
     } )
 
-    it( 'shoud have some roles second time round!', async() => {
+    it( 'should have some roles second time round!', async() => {
       let res = await knex( 'user_roles' ).select()
       expect( res.length ).to.be.greaterThan( 4 )
     } )
 
-    it( 'shoud have some apps second time rountd', async() => {
+    it( 'should have some apps second time round', async() => {
       let res = await knex( 'server_apps' ).select()
       expect( res.length ).to.be.greaterThan( 2 )
     } )

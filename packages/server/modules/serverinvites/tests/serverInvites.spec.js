@@ -16,7 +16,7 @@ const { createAndSendInvite, getInviteById, getInviteByEmail, validateInvite, us
 const { createStream, getStream, getStreamUsers, getUserStreams } = require( `${appRoot}/modules/core/services/streams` )
 const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 
-const serverAddress = 'http://localhost:3300'
+let serverAddress
 
 describe( 'Server Invites @server-invites', ( ) => {
   let myApp
@@ -192,8 +192,12 @@ describe( 'Server Invites @server-invites', ( ) => {
       await knex.migrate.latest( )
 
       let { app } = await init()
+      myApp = app
 
-      let { server } = await startHttp( myApp, 3300 )
+      let { server } = await startHttp( myApp, 0 )
+      app.on( 'appStarted', () => {
+        serverAddress = `http://localhost:${server.address().port}`
+      } )
       testServer = server
 
       actor.id = await createUser( actor )

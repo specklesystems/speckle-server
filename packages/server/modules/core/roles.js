@@ -25,6 +25,14 @@ module.exports = [
     weight: 100,
     public: false
   },
+  {
+    name: 'server:archived-user',
+    description: 'No longer has access to the server.',
+    resourceTarget: 'server',
+    aclTableName: 'server_acl',
+    weight: 10,
+    public: false
+  },
   /**
    * Roles for streams.
    */
