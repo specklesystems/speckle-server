@@ -175,8 +175,8 @@ export default {
       return this.stream.branch.description
     },
     presentationData() {
-      if (this.stream.branch.presentationData) return this.stream.branch.presentationData
-      else return "" 
+      if (this.stream.branch.presentationData) return JSON.stringify(this.stream.branch.presentationData)
+      else return null 
     },
     latestCommitObjectUrl() {
       if (

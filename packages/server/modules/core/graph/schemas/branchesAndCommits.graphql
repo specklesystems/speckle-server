@@ -15,7 +15,7 @@ type Branch {
   author: User
   description: String
   commits(limit: Int! = 25, cursor: String): CommitCollection
-  presentationData: String
+  presentationData: JSONObject
 }
 
 type Commit {
@@ -133,7 +133,7 @@ input BranchCreateInput {
   streamId: String!
   name: String!
   description: String
-  presentationData: String
+  presentationData: JSONObject
 }
 
 input BranchUpdateInput {
@@ -141,7 +141,7 @@ input BranchUpdateInput {
   id: String!
   name: String
   description: String
-  presentationData: String
+  presentationData: JSONObject
 }
 
 input BranchDeleteInput {

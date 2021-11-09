@@ -42,7 +42,7 @@
     </v-alert>
     <div
       style="position: absolute; "
-      v-bind:style= "[loadProgress>=99 ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
+      :style= "[maximized ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
       id="rendererparent"
       ref="rendererparent"
       :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}` "
@@ -92,6 +92,7 @@
             <v-icon v-else small>mdi-cube</v-icon>
             ({{ selectedObjects.length }})
           </v-btn>
+          
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
@@ -164,7 +165,7 @@
             Show viewer help
           </v-tooltip>
 
-          <v-menu top close-on-click offset-y style="z-index: 100" v-if="!branchDesc || !branchDesc.includes('--ready--')">
+          <v-menu top close-on-click offset-y style="z-index: 100" >
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
@@ -191,7 +192,7 @@
 
           <v-tooltip top >
             <template #activator="{ on, attrs }">
-              <v-btn  v-bind="attrs" small @click="slideSwitch(-1)" v-on="on">
+              <v-btn  v-bind="attrs" small @click="slideSwitch(-1,-100)" v-on="on">
                 <v-icon small>mdi-arrow-left-bold</v-icon>
               </v-btn>
             </template>
@@ -202,7 +203,7 @@
 
           <v-tooltip top >
             <template #activator="{ on, attrs }">
-              <v-btn  v-bind="attrs" small @click="slideSwitch(1)" v-on="on">
+              <v-btn  v-bind="attrs" small @click="slideSwitch(1,-100)" v-on="on">
                 <v-icon small>mdi-arrow-right-bold</v-icon>
               </v-btn>
             </template>
@@ -261,13 +262,43 @@
               </v-card-text>
             </v-card>
           </v-dialog>
+          <v-dialog
+            v-model="showPublishDialog"
+            width="500"
+            :fullscreen="$vuetify.breakpoint.smAndDown"
+            >
+            <v-card>
+              <v-toolbar>
+                <v-toolbar-title>Confirmation</v-toolbar-title>
+                <v-spacer></v-spacer>
+                <v-btn icon @click="showPublishDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+              </v-toolbar>
+
+              <v-card-text class="pt-2">
+                You can always convert it back to draft by removing specials symbols 
+                from the branch name
+              </v-card-text>
+              <v-btn @click="publish_pres()"
+              color="primary"
+              text
+              rounded
+              align="center"
+            >
+              PUBLISH
+            </v-btn>
+              <v-sheet>
+                <div>
+                </div>
+              </v-sheet>
+            </v-card>
+          </v-dialog>
         </v-btn-toggle>
       </v-card>
     </div>
 
     <v-navigation-drawer 
       permanent
-      :mini-variant="hasLoadedModel ? false : true"
+      :mini-variant="maximized ? false : true"
       :expand-on-hover="false"
       floating
       :color="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
@@ -276,38 +307,42 @@
       class="overlay-abs"
       fixed
       mini-variant-width="56"
+      :fullscreen="$vuetify.breakpoint.smAndDown"
     >
-      <v-toolbar class="transparent elevation-0" v-show="hasLoadedModel ">
-        <v-toolbar-title class="space-grotesk primary--text">
+      <v-toolbar class="transparent elevation-0" v-show="hasLoadedModel " link @click="maximized=!maximized">
+        <v-toolbar-title class="space-grotesk primary--text" >
             <v-img
               class="mt-2 hover-tada"
               width="24"
               src="@/assets/specklebrick.png"
               style="display: inline-block"
             />
-            <span class="pb-4 pl-1"><b>  {{$route.params.branchName.split("presentations/")[1]}}</b></span>
+            <span class="pb-4 pl-1" v-show="maximized">
+              <b>  {{$route.params.branchName.split("presentations/")[1]}}</b></span> 
           
         </v-toolbar-title>
       </v-toolbar>
 
-      <v-list v-show="hasLoadedModel " >
+      <v-list v-show="maximized" >
 
         <v-list-item v-for="slide in slidesSaved" link style="height: 59px" class="pr-0 mr-0">
-          <v-list-item-content >
-            <v-list-item-title style="text-align: left;" > {{slide.index+1}}. {{slide.msg}} </v-list-item-title>
+          <v-list-item-content  @click="slideSwitch(-100,slide.index)">
+            <v-list-item-title style="text-align: left;" :class= "[slide.index == actions.currentSlideNum ? 'primary--text' : '' ]"> 
+              {{slide.index+1}}. {{slide.msg}} 
+              </v-list-item-title>
             <v-list-item-subtitle style="text-align: left;" class="caption">{{slide.msgSecondary}}</v-list-item-subtitle>
           </v-list-item-content>
-          <v-btn small style="height: 100%; " class="elevation-0"  @click="slideDelete(slide.index)">
+          <v-btn small style="height: 100%; " class="elevation-0" v-if="status==0" @click="slideDelete(slide.index)">
             <v-icon color="error" small>mdi-delete-outline</v-icon>
           </v-btn>
         </v-list-item>
 
         <v-divider></v-divider>
 
-        <v-list-item class="pr-0 mr-0 pl-0 " style="height: 59px"> 
+        <v-list-item class="pr-0 mr-0 pl-0 " style="height: 59px" v-if="status==0"> 
           <v-list-item-content > 
             <input v-model="actions.currentMessage" 
-            v-if="!branchDesc || !branchDesc.includes('--ready--')"
+            
             placeholder="type description here" 
             class="ml-0 pl-4 mr-0 pr-2" 
             style="color: white; text-align: left; background-color:#383838 ; opacity: 0.8; outline: none; height: 59px  "  />
@@ -320,12 +355,13 @@
       </v-list>
 
       <template #append >
-        <v-list dense v-show="hasLoadedModel " v-if="!branchDesc || !branchDesc.includes('--ready--')" >
+        <v-list dense v-if="maximized && status==0"  >
 
-          <v-list-item @click="save_pres()" class="primary" >
+          <v-list-item @click="showPublishDialog = !showPublishDialog" class="primary" >
             <v-list-item-content>
               <v-list-item-title>Publish presentation</v-list-item-title>
             </v-list-item-content>
+
           </v-list-item>
 
         </v-list>
@@ -365,7 +401,7 @@ export default {
     },
     presentationData: {
       type: String,
-      default: ""
+      default: null
     },
     unloadTrigger: {
       type: Number,
@@ -427,12 +463,14 @@ export default {
       hasImg: false,
       namedViews: [],
 
-      loaded: false,
+      maximized: false,
+      showPublishDialog: false,
+      status: 0,
       branchQuery: null,
       branches: {names:[], url: [], uuid:[], objId:[], visible:[] },
       display: {index: [], branchName: [], message:"" },
-      actions: {pastBranch: null, currentMessage: null, currentSlideNum: -1 },
-      slidesSaved: []
+      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null },
+      slidesSaved: null
 
     }
   },
@@ -572,7 +610,10 @@ export default {
     load() {
       //console.log(this.presentationData)
       //console.log(this.branchDesc)
-      if (this.branchDesc) this.slidesSaved = JSON.parse(JSON.parse(this.branchDesc)[1])
+      if (this.presentationData) {
+        this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
+        if(this.$route.params.branchName.includes("✓")) this.status = 1; else this.status = 0
+      }
       else this.slidesSaved = []
       console.log(this.slidesSaved)
       //if (!this.objectUrl) return
@@ -582,12 +623,6 @@ export default {
 
       let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
       this.branchQuery.forEach(obj=> { // run loop for each branch name
-        if (obj.name == this.$route.params.branchName) { // get details of current branhc (could be in props)
-          //this.branch_id = obj.id
-          //this.branch_name = obj.name
-          //this.branch_description = obj.description 
-        }
-        
         //// fill all the branch lists and upload objects
         if (!obj.name.includes('presentations/') && obj.commits.items[0]) {
           console.log(obj)
@@ -601,7 +636,7 @@ export default {
       })
       console.log(this.branches)
       this.loadProgress = 100
-      this.loaded = true
+      this.maximized = true
       this.setupEvents()
     },
     unloadData() {
@@ -644,8 +679,9 @@ export default {
         this.branches.visible[index] = 0 
         this.display.index.splice(this.display.index.indexOf(index), 1)
         this.display.branchName.splice(this.display.branchName.indexOf(name), 1)
-        
+
         window.__viewer.sceneManager.removeAllObjects()
+        console.log(window.__viewer.sceneManager.objects)
         this.display.branchName.forEach(obj=> { // branches still displayed
           var sub_count = 0
           this.branches.names.forEach(br =>{ 
@@ -653,6 +689,7 @@ export default {
             sub_count +=1
           })
         })
+        
       }
       console.log("Displayed branches: " + this.display.branchName.toString())
       //if (act ==0) this.actions.pastBranch = name
@@ -669,11 +706,25 @@ export default {
         if (obj.scale) obj.scale.x=1, obj.scale.y=1, obj.scale.z=1
       }
     },
-    slideSwitch(num){
+    slideSwitch(num,id){
       // update slider counter, display message, update branches (visibility)
+      if (!this.actions.currentSlideNum && this.actions.currentSlideNum!=0 && num>-50) { // set the starting number
+        //console.log("switch with arrows")
+        if (num==1) this.actions.currentSlideNum = -1
+        else this.actions.currentSlideNum = this.slidesSaved.length
+
+      } 
+      if (num<-50) this.actions.currentSlideNum = id // if num (arrow switcher) is ignored
+      else this.actions.currentSlideNum += num
+
+      console.log(this.actions.currentSlideNum)
+
       
-      this.actions.currentSlideNum += num
       if (this.actions.currentSlideNum >=this.slidesSaved.length) this.actions.currentSlideNum = 0
+      if (this.actions.currentSlideNum <0) this.actions.currentSlideNum = this.slidesSaved.length -1
+
+      console.log(this.actions.currentSlideNum)
+
       let index = this.actions.currentSlideNum
       this.actions.currentMessage = ""
 
@@ -692,8 +743,6 @@ export default {
         var count = 0
         this.slidesSaved[index].branches.forEach(obj=>{ // look at each branch data for the slide
           if (this.slidesSaved[index].visibilities[count] == 1 ) {
-            console.log(obj)
-            console.log(this.slidesSaved[index].visibilities[count])
             this.showVis(obj)
           }
           count +=1
@@ -703,9 +752,11 @@ export default {
     slideCreate(){
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
+      var len = 0
+      if (this.slidesSaved) len = this.slidesSaved.length
       
       let slide = {
-        index: this.slidesSaved.length,
+        index: len,
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, 
         target: contr._target, 
         branches: this.branches.names, 
@@ -717,8 +768,8 @@ export default {
       this.actions.currentSlideNum = this.slidesSaved.length-1
       this.display.message = this.slidesSaved[this.slidesSaved.length-1].msg
 
-      let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) // to eliminate "observer" type
-      let slides_ready = JSON.stringify(['--ready--'].concat(JSON.stringify(this.slidesSaved)))
+      let slides_draft = {status:'--draft--', json: JSON.stringify(this.slidesSaved) } // to eliminate "observer" type
+      //console.log(typeof(slides_draft))
 
       this.$apollo.mutate({
         mutation: gql`
@@ -731,17 +782,17 @@ export default {
             streamId: this.$route.params.streamId,
             id: this.branchId,
             name: this.$route.params.branchName,
-            description: slides_draft, //this.branchDesc,
+            description: this.branchDesc,
             presentationData: slides_draft
           }
         }
       })
 
     },
-    save_pres(){
-      let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) // to eliminate "observer" type
-      let slides_ready = JSON.stringify(['--ready--'].concat(JSON.stringify(this.slidesSaved)))
-      console.log(slides_ready)
+    publish_pres(){
+      let slides_ready = {status:'--ready--', json: JSON.stringify(this.slidesSaved) } 
+      let new_name = this.$route.params.branchName +" "+ "✓"
+      //console.log(slides_ready)
       // save and publish
         this.$apollo.mutate({
           mutation: gql`
@@ -753,13 +804,16 @@ export default {
             params: {
               streamId: this.$route.params.streamId,
               id: this.branchId,
-              name: this.$route.params.branchName,
-              description: slides_ready,
+              name: new_name,
+              description: this.branchDesc,
               presentationData: slides_ready
             }
           }
         })
-        window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)
+        this.$emit('refetch-branches')
+        //this.$matomo && this.$matomo.trackPageView('branch/create')
+        this.$router.push( `/streams/${this.$route.params.streamId}/branches/${new_name}` )
+        //window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)
     },
     slideDelete(index){
       
@@ -772,8 +826,8 @@ export default {
         })
       }
 
-      let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) 
-      
+      let slides_draft = {status:'--draft--', json: JSON.stringify(this.slidesSaved) } // to eliminate "observer" type
+
       this.$apollo.mutate({
         mutation: gql`
           mutation branchUpdate($params: BranchUpdateInput!) {
@@ -785,7 +839,7 @@ export default {
             streamId: this.$route.params.streamId,
             id: this.branchId,
             name: this.$route.params.branchName,
-            description: slides_draft, //this.branchDesc,
+            description: this.branchDesc,
             presentationData: slides_draft
           }
         }

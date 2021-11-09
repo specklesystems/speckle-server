@@ -61,7 +61,7 @@ export default {
         (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
       description: null,
-      presentationData: ""
+      presentationData: null
     }
   },
   computed: {},
