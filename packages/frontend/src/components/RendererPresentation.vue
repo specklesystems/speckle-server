@@ -1,5 +1,7 @@
 <template lang="html">
+
   <v-sheet style="height: 100%; position: relative" class="transparent">
+
     <v-menu v-if="!embeded" bottom left close-on-click offset-y>
       <template #activator="{ on: onMenu, attrs: menuAttrs }">
         <v-tooltip left color="primary">
@@ -39,9 +41,11 @@
       {{ alertMessage }}
     </v-alert>
     <div
+      style="position: absolute; "
+      v-bind:style= "[loadProgress>=99 ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
       id="rendererparent"
       ref="rendererparent"
-      :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}`"
+      :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}` "
     >
       <v-fade-transition>
         <div v-show="!hasLoadedModel" class="overlay cover-all">
@@ -205,59 +209,6 @@
             Next slide
           </v-tooltip>
 
-          <!-- TOFIX: ACCESS COLOR AS PRIMARY -->
-          <input v-model="actions.currentMessage" 
-            v-if="!branchDesc || !branchDesc.includes('--ready--')"
-            placeholder="type description here" 
-            class="pl-2 pr-2 mr-0.5" 
-            style="color: white; text-align: center;  background: #047EFB; opacity: 0.8 "  />
-
-          <v-tooltip top v-if="!branchDesc || !branchDesc.includes('--ready--')">
-            <template #activator="{ on, attrs }">
-              <v-btn color="primary"  v-bind="attrs" small @click="slideCreate()" v-on="on">
-                <v-icon small>mdi-movie-open-plus-outline</v-icon>
-              </v-btn>
-            </template>
-            Create a slide
-          </v-tooltip>
-
-          <v-menu top close-on-click offset-y style="z-index: 100" v-if="!branchDesc || !branchDesc.includes('--ready--')">
-            <template #activator="{ on: onMenu, attrs: menuAttrs }">
-              <v-tooltip top >
-                <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
-                  <v-btn color="error"  
-                    v-bind="{ ...tooltipAttrs, ...menuAttrs }" 
-                    small  
-                    v-on="{ ...onTooltip, ...onMenu }">
-                    <v-icon small>mdi-content-save</v-icon>
-                  </v-btn>
-                </template>
-                Save presentation
-                </v-tooltip>
-              </template>
-            <v-list dense>
-              
-              <v-list-item @click="save_pres(1)">
-                <v-list-item-title>Save as draft</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="save_pres(2)">
-                <v-list-item-title>Save and publish</v-list-item-title>
-              </v-list-item>
-
-            </v-list>
-          </v-menu>
-
-          <v-tooltip top v-if="!branchDesc || !branchDesc.includes('--ready--')">
-            <template #activator="{ on, attrs }">
-              <v-btn color="error"  v-bind="attrs" small @click="delete_pres()" v-on="on">
-                <v-icon small>mdi-delete-outline</v-icon>
-              </v-btn>
-            </template>
-            Delete presentation
-          </v-tooltip>
-
-
-
           <v-dialog
             v-model="showObjectDetails"
             width="500"
@@ -313,6 +264,94 @@
         </v-btn-toggle>
       </v-card>
     </div>
+
+
+    <v-navigation-drawer 
+      permanent
+      :mini-variant="loadProgress>=99 ? false : true"
+      :expand-on-hover="false"
+      floating
+      :color="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
+      :dark="$vuetify.theme.dark"
+      style="z-index: 200"
+      class="overlay-abs "
+      fixed
+      :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}` "
+      mini-variant-width="56"
+    >
+      <v-toolbar class="transparent elevation-0">
+        <v-toolbar-title class="space-grotesk primary--text">
+          <router-link to="/" class="text-decoration-none">
+            <v-img
+              class="mt-2 hover-tada"
+              width="24"
+              src="@/assets/specklebrick.png"
+              style="display: inline-block"
+            />
+          </router-link>
+          <router-link
+            to="/"
+            class="text-decoration-none"
+            style="position: relative; top: -4px; margin-left: 20px"
+          >
+            <span class="pb-4"><b>{{$route.params.branchName.split("presentation/")[1]}}</b></span>
+          </router-link>
+        </v-toolbar-title>
+      </v-toolbar>
+
+      <v-list v-show="hasLoadedModel && loadProgress >= 99">
+
+        <v-list-item link to="/" style="height: 59px">
+          <v-list-item-content>
+            <v-list-item-title>Feed</v-list-item-title>
+            <v-list-item-subtitle class="caption">Latest events.</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+
+        <v-divider></v-divider>
+
+        <v-list-item >
+            <input v-model="actions.currentMessage" 
+            v-if="!branchDesc || !branchDesc.includes('--ready--')"
+            placeholder="type description here" 
+            class="ml-0 pl-2 mr-0 pr-2" 
+            style="color: white; text-align: left; background-color:#383838 ; opacity: 0.8; outline: none  "  />
+            <v-btn>
+            <v-list-item-icon @click="slideCreate()">
+              <v-icon small class="ml-1" style="text-align:left" >mdi-movie-open-plus-outline</v-icon>
+            </v-list-item-icon>
+            </v-btn>
+          </v-list-item>
+
+        
+       
+      </v-list>
+
+      <template #append >
+        <v-list dense v-show="hasLoadedModel && loadProgress >= 99" v-if="!branchDesc || !branchDesc.includes('--ready--')" >
+
+          <v-list-item @click="delete_pres()">
+            <v-list-item-icon>
+              <v-icon small class="ml-1">mdi-delete-outline</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Delete presentation</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+          
+
+          <v-list-item @click="save_pres(2)" class="primary" >
+            <v-list-item-content>
+              <v-list-item-title>Publish presentation</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+
+        </v-list>
+      </template>
+    </v-navigation-drawer>
+
+    
   </v-sheet>
 </template>
 <script>
@@ -407,6 +446,7 @@ export default {
       hasImg: false,
       namedViews: [],
 
+      loaded: false,
       branchQuery: null,
       branches: {names:[], url: [], uuid:[], objId:[], visible:[] },
       display: {index: [], branchName: [], message:"" },
@@ -580,6 +620,7 @@ export default {
       })
       console.log(this.branches)
       this.loadProgress = 100
+      this.loaded = true
       this.setupEvents()
     },
     unloadData() {
@@ -733,7 +774,7 @@ export default {
             }
           }
         })
-        //window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)
+        window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)
       }
     },
     delete_pres(){
