@@ -265,83 +265,64 @@
       </v-card>
     </div>
 
-
     <v-navigation-drawer 
       permanent
-      :mini-variant="loadProgress>=99 ? false : true"
+      :mini-variant="hasLoadedModel ? false : true"
       :expand-on-hover="false"
       floating
       :color="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
       :dark="$vuetify.theme.dark"
       style="z-index: 200"
-      class="overlay-abs "
+      class="overlay-abs"
       fixed
-      :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}` "
       mini-variant-width="56"
     >
-      <v-toolbar class="transparent elevation-0">
+      <v-toolbar class="transparent elevation-0" v-show="hasLoadedModel ">
         <v-toolbar-title class="space-grotesk primary--text">
-          <router-link to="/" class="text-decoration-none">
             <v-img
               class="mt-2 hover-tada"
               width="24"
               src="@/assets/specklebrick.png"
               style="display: inline-block"
             />
-          </router-link>
-          <router-link
-            to="/"
-            class="text-decoration-none"
-            style="position: relative; top: -4px; margin-left: 20px"
-          >
-            <span class="pb-4"><b>{{$route.params.branchName.split("presentation/")[1]}}</b></span>
-          </router-link>
+            <span class="pb-4 pl-1"><b>  {{$route.params.branchName.split("presentations/")[1]}}</b></span>
+          
         </v-toolbar-title>
       </v-toolbar>
 
-      <v-list v-show="hasLoadedModel && loadProgress >= 99">
+      <v-list v-show="hasLoadedModel " >
 
-        <v-list-item link to="/" style="height: 59px">
-          <v-list-item-content>
-            <v-list-item-title>Feed</v-list-item-title>
-            <v-list-item-subtitle class="caption">Latest events.</v-list-item-subtitle>
+        <v-list-item v-for="slide in slidesSaved" link style="height: 59px" class="pr-0 mr-0">
+          <v-list-item-content >
+            <v-list-item-title style="text-align: left;" > {{slide.index+1}}. {{slide.msg}} </v-list-item-title>
+            <v-list-item-subtitle style="text-align: left;" class="caption">{{slide.msgSecondary}}</v-list-item-subtitle>
           </v-list-item-content>
+          <v-btn small style="height: 100%; " class="elevation-0"  @click="slideDelete(slide.index)">
+            <v-icon color="error" small>mdi-delete-outline</v-icon>
+          </v-btn>
         </v-list-item>
 
         <v-divider></v-divider>
 
-        <v-list-item >
+        <v-list-item class="pr-0 mr-0 pl-0 " style="height: 59px"> 
+          <v-list-item-content > 
             <input v-model="actions.currentMessage" 
             v-if="!branchDesc || !branchDesc.includes('--ready--')"
             placeholder="type description here" 
-            class="ml-0 pl-2 mr-0 pr-2" 
-            style="color: white; text-align: left; background-color:#383838 ; opacity: 0.8; outline: none  "  />
-            <v-btn>
-            <v-list-item-icon @click="slideCreate()">
-              <v-icon small class="ml-1" style="text-align:left" >mdi-movie-open-plus-outline</v-icon>
-            </v-list-item-icon>
-            </v-btn>
-          </v-list-item>
+            class="ml-0 pl-4 mr-0 pr-2" 
+            style="color: white; text-align: left; background-color:#383838 ; opacity: 0.8; outline: none; height: 59px  "  />
+          </v-list-item-content>
+          <v-btn small class="elevation-0 pt-0 mt-0" style="height: 59px" @click="slideCreate()">
+            <v-icon color="primary" small>mdi-movie-open-plus-outline</v-icon>
+          </v-btn>
+        </v-list-item>
 
-        
-       
       </v-list>
 
       <template #append >
-        <v-list dense v-show="hasLoadedModel && loadProgress >= 99" v-if="!branchDesc || !branchDesc.includes('--ready--')" >
+        <v-list dense v-show="hasLoadedModel " v-if="!branchDesc || !branchDesc.includes('--ready--')" >
 
-          <v-list-item @click="delete_pres()">
-            <v-list-item-icon>
-              <v-icon small class="ml-1">mdi-delete-outline</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Delete presentation</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-
-          
-
-          <v-list-item @click="save_pres(2)" class="primary" >
+          <v-list-item @click="save_pres()" class="primary" >
             <v-list-item-content>
               <v-list-item-title>Publish presentation</v-list-item-title>
             </v-list-item-content>
@@ -724,6 +705,7 @@ export default {
       let contr = window.__viewer.sceneManager.viewer.controls
       
       let slide = {
+        index: this.slidesSaved.length,
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, 
         target: contr._target, 
         branches: this.branches.names, 
@@ -731,33 +713,36 @@ export default {
         msg: this.actions.currentMessage
       }
       this.slidesSaved.push( JSON.parse(JSON.stringify(slide)) )
-      this.actions.currentMessage = "Slide #" + this.slidesSaved.length.toString() + " added!"
-      this.actions.currentSlideNum +=1
+      this.actions.currentMessage = ""
+      this.actions.currentSlideNum = this.slidesSaved.length-1
+      this.display.message = this.slidesSaved[this.slidesSaved.length-1].msg
+
+      let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) // to eliminate "observer" type
+      let slides_ready = JSON.stringify(['--ready--'].concat(JSON.stringify(this.slidesSaved)))
+
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation branchUpdate($params: BranchUpdateInput!) {
+            branchUpdate(branch: $params)
+          }
+        `,
+        variables: {
+          params: {
+            streamId: this.$route.params.streamId,
+            id: this.branchId,
+            name: this.$route.params.branchName,
+            description: slides_draft, //this.branchDesc,
+            presentationData: slides_draft
+          }
+        }
+      })
+
     },
-    save_pres(num){
+    save_pres(){
       let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) // to eliminate "observer" type
       let slides_ready = JSON.stringify(['--ready--'].concat(JSON.stringify(this.slidesSaved)))
       console.log(slides_ready)
-
-      if (num==1){ // keep draft
-        this.$apollo.mutate({
-          mutation: gql`
-            mutation branchUpdate($params: BranchUpdateInput!) {
-              branchUpdate(branch: $params)
-            }
-          `,
-          variables: {
-            params: {
-              streamId: this.$route.params.streamId,
-              id: this.branchId,
-              name: this.$route.params.branchName,
-              description: slides_draft, //this.branchDesc,
-              presentationData: slides_draft
-            }
-          }
-        })
-      }
-      if (num==2){ // save and publish
+      // save and publish
         this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
@@ -775,10 +760,37 @@ export default {
           }
         })
         window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)
-      }
     },
-    delete_pres(){
+    slideDelete(index){
+      
+      if(this.slidesSaved) {
+        this.slidesSaved.splice(index, 1)
+        var count = 0
+        this.slidesSaved.forEach(obj=>{ //reset indices 
+          obj.index = count
+          count +=1
+        })
+      }
 
+      let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) 
+      
+      this.$apollo.mutate({
+        mutation: gql`
+          mutation branchUpdate($params: BranchUpdateInput!) {
+            branchUpdate(branch: $params)
+          }
+        `,
+        variables: {
+          params: {
+            streamId: this.$route.params.streamId,
+            id: this.branchId,
+            name: this.$route.params.branchName,
+            description: slides_draft, //this.branchDesc,
+            presentationData: slides_draft
+          }
+        }
+      })
+      
     },
 
 
