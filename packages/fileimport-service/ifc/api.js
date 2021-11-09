@@ -95,13 +95,14 @@ module.exports = class ServerAPI {
     return await query
   }
 
-  async createBranch( { name, description, streamId, authorId } ) {
+  async createBranch( { name, description, streamId, authorId, presentationData } ) {
       let branch = {}
       branch.id = crs( { length: 10 } )
       branch.streamId = streamId
       branch.authorId = authorId
       branch.name = name.toLowerCase( )
       branch.description = description
+      branch.presentationData = presentationData
 
       await Branches( ).returning( 'id' ).insert( branch )
 

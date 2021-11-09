@@ -60,7 +60,8 @@ export default {
         (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',
         (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
-      description: null
+      description: null,
+      presentationData: ""
     }
   },
   computed: {},
@@ -89,7 +90,8 @@ export default {
             params: {
               streamId: this.$route.params.streamId,
               name: this.name.toLowerCase(),
-              description: this.description
+              description: this.description,
+              presentationData: this.presentationData
             }
           }
         })

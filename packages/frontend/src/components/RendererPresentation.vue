@@ -160,7 +160,7 @@
             Show viewer help
           </v-tooltip>
 
-          <v-menu top close-on-click offset-y style="z-index: 100" v-if="$route.params.branchName.includes('wip')">
+          <v-menu top close-on-click offset-y style="z-index: 100" v-if="!branchDesc || !branchDesc.includes('--ready--')">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
@@ -207,12 +207,12 @@
 
           <!-- TOFIX: ACCESS COLOR AS PRIMARY -->
           <input v-model="actions.currentMessage" 
-            v-if="$route.params.branchName.includes('wip')"
+            v-if="!branchDesc || !branchDesc.includes('--ready--')"
             placeholder="type description here" 
             class="pl-2 pr-2 mr-0.5" 
             style="color: white; text-align: center;  background: #047EFB; opacity: 0.8 "  />
 
-          <v-tooltip top v-if="$route.params.branchName.includes('wip')">
+          <v-tooltip top v-if="!branchDesc || !branchDesc.includes('--ready--')">
             <template #activator="{ on, attrs }">
               <v-btn color="primary"  v-bind="attrs" small @click="slideCreate()" v-on="on">
                 <v-icon small>mdi-movie-open-plus-outline</v-icon>
@@ -221,7 +221,7 @@
             Create a slide
           </v-tooltip>
 
-          <v-menu top close-on-click offset-y style="z-index: 100" v-if="$route.params.branchName.includes('wip')">
+          <v-menu top close-on-click offset-y style="z-index: 100" v-if="!branchDesc || !branchDesc.includes('--ready--')">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top >
                 <template #activator="{ on: onTooltip, attrs: tooltipAttrs }">
@@ -247,7 +247,7 @@
             </v-list>
           </v-menu>
 
-          <v-tooltip top v-if="$route.params.branchName.includes('wip')">
+          <v-tooltip top v-if="!branchDesc || !branchDesc.includes('--ready--')">
             <template #activator="{ on, attrs }">
               <v-btn color="error"  v-bind="attrs" small @click="delete_pres()" v-on="on">
                 <v-icon small>mdi-delete-outline</v-icon>
@@ -339,6 +339,14 @@ export default {
       type: String,
       default: null
     },
+    branchDesc: {
+      type: String,
+      default: null
+    },
+    presentationData: {
+      type: String,
+      default: ""
+    },
     unloadTrigger: {
       type: Number,
       default: 0
@@ -402,7 +410,7 @@ export default {
       branchQuery: null,
       branches: {names:[], url: [], uuid:[], objId:[], visible:[] },
       display: {index: [], branchName: [], message:"" },
-      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null },
+      actions: {pastBranch: null, currentMessage: null, currentSlideNum: -1 },
       slidesSaved: []
 
     }
@@ -541,6 +549,11 @@ export default {
       
     },
     load() {
+      //console.log(this.presentationData)
+      //console.log(this.branchDesc)
+      if (this.branchDesc) this.slidesSaved = JSON.parse(JSON.parse(this.branchDesc)[1])
+      else this.slidesSaved = []
+      console.log(this.slidesSaved)
       //if (!this.objectUrl) return
       this.hasLoadedModel = true
       //window.__viewer.loadObject(this.objectUrl)
@@ -592,62 +605,35 @@ export default {
 
     showVis(name){
       let index = this.branches.names.indexOf(name) 
-      let index_past = this.branches.names.indexOf(this.actions.pastBranch) 
-      let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId 
+      //let index_past = this.branches.names.indexOf(this.actions.pastBranch) 
+      let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
 
-      // assign previous objects to a previously switched branch 
-      window.__viewer.sceneManager.objects.forEach(obj=> {
-        let assigned = 0
-        this.branches.uuid.forEach(item =>{ // go through each branch (list of objects)
-          if (item.includes(obj.uuid)) {
-            assigned = 1
-            return
-          }
-        })
-        if (assigned == 0) this.branches.uuid[index_past].push(obj.uuid)
-      })
       ////////////////////////////////////////////// SHOW or upload DATA 
       if (!this.branches.visible[index] == 1  )  {
+        console.log("show "+ name)
         this.branches.visible[index] = 1 
         this.display.index.push(index)
         this.display.branchName.push(name)
-        var sub_count = 0
-        if (this.branches.uuid[index].length>0){ // if uuids are loaded
-          console.log(this.branches.uuid[index])
-          this.branches.uuid[index].forEach(obj => { //going through each object (if uuid loaded)
-            let exists = 0
-            window.__viewer.sceneManager.objects.forEach(sub_obj => { // find uuid in existing scene objects
-              if (sub_obj.uuid == obj) {
-                this.hide(sub_obj, 1) 
-                exists +=1 
-                return 
-              }
-            })
-            if (exists ==0){ 
-              window.__viewer.loadObject(start_url + "/objects/" +  this.branches.objId[index])
-            }
-            sub_count += 1
-          })
-        }else{
-          window.__viewer.loadObject(start_url + "/objects/" +  this.branches.objId[index])
-        }
+        
+        window.__viewer.loadObject(this.branches.url[index])
+
       } else {    //////////////////////////////////////////////  HIDE DATA
+        console.log("hide "+ name)
         this.branches.visible[index] = 0 
         this.display.index.splice(this.display.index.indexOf(index), 1)
-        this.display.branchName.splice(this.display.index.indexOf(index), 1)
-        var sub_count = 0
-        this.branches.uuid[index].forEach(obj => { //going through each branch
-          window.__viewer.sceneManager.objects.forEach(sub_obj => { // find uuid in existing scene objects
-            if (sub_obj.uuid == obj) {
-              this.hide(sub_obj, 0) 
-              return 
-            }
+        this.display.branchName.splice(this.display.branchName.indexOf(name), 1)
+        
+        window.__viewer.sceneManager.removeAllObjects()
+        this.display.branchName.forEach(obj=> { // branches still displayed
+          var sub_count = 0
+          this.branches.names.forEach(br =>{ 
+            if (br == obj ) window.__viewer.loadObject(this.branches.url[sub_count])
+            sub_count +=1
           })
-           sub_count += 1
         })
       }
       console.log("Displayed branches: " + this.display.branchName.toString())
-      this.actions.pastBranch = name
+      //if (act ==0) this.actions.pastBranch = name
 
     },
     hide(obj,i){
@@ -662,24 +648,56 @@ export default {
       }
     },
     slideSwitch(num){
+      // update slider counter, display message, update branches (visibility)
+      
+      this.actions.currentSlideNum += num
+      if (this.actions.currentSlideNum >=this.slidesSaved.length) this.actions.currentSlideNum = 0
+      let index = this.actions.currentSlideNum
+      this.actions.currentMessage = ""
 
+      // clean the scene and reset branch visibilities 
+      window.__viewer.sceneManager.removeAllObjects()
+      var count = 0
+      this.branches.visible.forEach(br=>{ 
+        if (br == 1) this.showVis(this.branches.names[count])
+        count +=1
+       })
+
+      this.display.message = this.slidesSaved[index].msg
+      window.__viewer.interactions.setLookAt(this.slidesSaved[index].cam_position,this.slidesSaved[index].target)
+
+      if (this.slidesSaved[index].branches && this.slidesSaved[index].branches.length>0){ // look into the slide data
+        var count = 0
+        this.slidesSaved[index].branches.forEach(obj=>{ // look at each branch data for the slide
+          if (this.slidesSaved[index].visibilities[count] == 1 ) {
+            console.log(obj)
+            console.log(this.slidesSaved[index].visibilities[count])
+            this.showVis(obj)
+          }
+          count +=1
+        })
+      }
     },
     slideCreate(){
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
       
       let slide = {
-        user_message: "DO NOT EDIT THIS FIELD", 
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, 
         target: contr._target, 
+        branches: this.branches.names, 
         visibilities: this.branches.visible, 
-        msg: this.currentMessage
+        msg: this.actions.currentMessage
       }
       this.slidesSaved.push( JSON.parse(JSON.stringify(slide)) )
       this.actions.currentMessage = "Slide #" + this.slidesSaved.length.toString() + " added!"
       this.actions.currentSlideNum +=1
     },
     save_pres(num){
+      let slides_draft = JSON.stringify(['--draft--'].concat(JSON.stringify(this.slidesSaved))) // to eliminate "observer" type
+      let slides_ready = JSON.stringify(['--ready--'].concat(JSON.stringify(this.slidesSaved)))
+      console.log(slides_ready)
+
       if (num==1){ // keep draft
         this.$apollo.mutate({
           mutation: gql`
@@ -692,13 +710,13 @@ export default {
               streamId: this.$route.params.streamId,
               id: this.branchId,
               name: this.$route.params.branchName,
-              description: JSON.stringify(this.slidesSaved)
+              description: slides_draft, //this.branchDesc,
+              presentationData: slides_draft
             }
           }
         })
       }
       if (num==2){ // save and publish
-      let new_name = this.$route.params.branchName.replace(" wip","").replace("wip ","").replace("wip","")
         this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
@@ -709,12 +727,13 @@ export default {
             params: {
               streamId: this.$route.params.streamId,
               id: this.branchId,
-              name: new_name,
-              description: JSON.stringify(this.slidesSaved)
+              name: this.$route.params.branchName,
+              description: slides_ready,
+              presentationData: slides_ready
             }
           }
         })
-        window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+new_name)
+        //window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)
       }
     },
     delete_pres(){
