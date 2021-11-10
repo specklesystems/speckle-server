@@ -45,7 +45,7 @@ jobs:
           ECR_REPOSITORY: ${{ matrix.cxName }}
           IMAGE_TAG: v${{ github.sha }}
         run: |
-          docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f packages/${{ matrix.package }}/Dockerfile .
+          docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f packages/${{ matrix.package }}/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           
