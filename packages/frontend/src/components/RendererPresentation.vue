@@ -619,6 +619,7 @@ export default {
       let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
 
       ////////////////////////////////////////////////
+      let something = null
       if (something) { //} (this.status == 1){
         var count = 0
         this.branchQuery.forEach(obj=> { // run loop for each branch name

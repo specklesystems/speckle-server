@@ -45,7 +45,7 @@
         <branch-edit-dialog ref="editBranchDialog" />
 
         <div v-if="latestCommitObjectUrl && !$route.params.branchName.includes('presentations/')" style="height: 60vh">
-          <renderer :object-url="latestCommitObjectUrl" :object-main-url="latestCommitObjectMainUrl" show-selection-helper />
+          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
         <div v-if="$route.params.branchName.includes('presentations/')" style="height: 60vh">
           <renderer-presentation :object-url="latestCommitObjectUrl" :object-existing-url="latestExistingCommitUrl" :branch-id="branchId" :branch-desc="branchDesc" :presentation-data="presentationData" show-selection-helper />
@@ -75,13 +75,13 @@
       </v-col>
 
       <no-data-placeholder
-        v-if="( !$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0) && !$route.params.branchName.includes('presentations/')"
+        v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0 && !$route.params.branchName.includes('presentations/') "
       >
         <h2 class="space-grotesk">Branch "{{ stream.branch.name }}" has no commits.</h2>
       </no-data-placeholder>
     </v-row>
     <error-placeholder
-      v-if="!$apollo.loading && (error || stream.branch === null)"
+      v-if="!$apollo.loading && (error || stream.branch === null) && !$route.params.branchName.includes('presentations/')"
       error-type="404"
     >
       <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
@@ -92,12 +92,11 @@
 import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
 import StreamQuery from '@/graphql/stream.gql'
-//import RendererPresentation from '../../components/RendererPresentation.vue'
 
 export default {
   name: 'Branch',
   components: {
-    ListItemCommit: () => { import('@/components/ListItemCommit') },
+    ListItemCommit: () => import('@/components/ListItemCommit'),
     BranchEditDialog: () => import('@/components/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
@@ -117,16 +116,6 @@ export default {
         return {
           streamId: this.streamId,
           branchName: this.$route.params.branchName.toLowerCase()
-        }
-      }
-    },
-    streamMain: {
-      query: branchQuery,
-      update: (data) => data.stream,
-      variables() {
-        return {
-          streamId: this.streamId,
-          branchName: 'main'
         }
       }
     },
@@ -153,7 +142,7 @@ export default {
         },
         result() {
           this.$apollo.queries.stream.refetch()
-          this.$apollo.queries.streamMain.refetch()
+          this.$apollo.queries.streamQuery.refetch()
         },
         error(err) {
           console.log(err)
@@ -186,16 +175,6 @@ export default {
         this.stream.branch.commits.items.length > 0
       )
         return `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.branch.commits.items[0].referencedObject}`
-      else return null
-    },
-    latestCommitObjectMainUrl() {
-      if (
-        this.streamMain &&
-        this.streamMain.branch &&
-        this.streamMain.branch.commits.items &&
-        this.streamMain.branch.commits.items.length > 0
-      )
-        return `${window.location.origin}/streams/${this.streamMain.id}/objects/${this.streamMain.branch.commits.items[0].referencedObject}`
       else return null
     },
     latestExistingCommitUrl() {
@@ -238,6 +217,7 @@ export default {
         } else {
           this.$emit('refetch-branches')
           this.$apollo.queries.stream.refetch()
+          this.$apollo.queries.streamQuery.refetch()
         }
       })
     }
