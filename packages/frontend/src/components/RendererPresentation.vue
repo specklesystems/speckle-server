@@ -42,7 +42,7 @@
     </v-alert>
     <div
       style="position: absolute; "
-      :style= "[maximized ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
+      :style= "[ (maximized&& loadProgress==100 && allLoaded ==1) ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
       id="rendererparent"
       ref="rendererparent"
       :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}` "
@@ -77,7 +77,7 @@
       ></v-progress-linear>
 
       <v-card
-        v-show="hasLoadedModel && loadProgress >= 99"
+        v-show="hasLoadedModel && loadProgress >= 99 && allLoaded ==1"
         style="position: absolute; bottom: 0px; z-index: 2; width: 100%"
         class="pa-0 text-center transparent elevation-0 pb-3"
       >
@@ -124,10 +124,6 @@
               </v-list-item>
               <v-list-item @click="setView('right')">
                 <v-list-item-title>Right</v-list-item-title>
-              </v-list-item>
-              <v-divider v-if="namedViews.length !== 0"></v-divider>
-              <v-list-item v-for="view in namedViews" :key="view.id" @click="setNamedView(view.id)">
-                <v-list-item-title>{{ view.name }}</v-list-item-title>
               </v-list-item>
             </v-list>
           </v-menu>
@@ -178,7 +174,7 @@
                     <v-icon small>mdi-layers-triple</v-icon>
                   </v-btn>
                 </template>
-                Select Analysis Layer
+                Select Layer
               </v-tooltip>
             </template>
             <v-list dense>
@@ -298,7 +294,7 @@
 
     <v-navigation-drawer 
       permanent
-      :mini-variant="maximized ? false : true"
+      :mini-variant="maximized && loadProgress==100 && allLoaded ==1 ? false : true"
       :expand-on-hover="false"
       floating
       :color="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
@@ -317,13 +313,13 @@
               src="@/assets/specklebrick.png"
               style="display: inline-block"
             />
-            <span class="pb-4 pl-1" v-show="maximized">
+            <span class="pb-4 pl-1" v-show="maximized && loadProgress==100 && allLoaded ==1">
               <b>  {{$route.params.branchName.split("presentations/")[1]}}</b></span> 
           
         </v-toolbar-title>
       </v-toolbar>
 
-      <v-list v-show="maximized" >
+      <v-list v-show="maximized && loadProgress==100 && allLoaded ==1" >
 
         <v-list-item v-for="slide in slidesSaved" link style="height: 59px" class="pr-0 mr-0">
           <v-list-item-content  @click="slideSwitch(-100,slide.index)">
@@ -355,7 +351,7 @@
       </v-list>
 
       <template #append >
-        <v-list dense v-if="maximized && status==0"  >
+        <v-list dense v-if="maximized && status==0 && loadProgress==100 && allLoaded ==1"  >
 
           <v-list-item @click="showPublishDialog = !showPublishDialog" class="primary" >
             <v-list-item-content>
@@ -488,6 +484,7 @@ export default {
       hasImg: false,
       namedViews: [],
 
+      allLoaded: 0,
       maximized: false,
       showPublishDialog: false,
       status: 0,
@@ -533,6 +530,13 @@ export default {
       if (newVal >= 99) {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
+      }
+      if (newVal==100 && this.allLoaded ==1) {
+        setTimeout(() => { // to avoid "ghost items"
+          window.__viewer.sceneManager.objects.forEach(item=>{
+            this.hide(item,0) 
+          })
+        },1000)
       }
     },
     objectQuery(val){
@@ -674,19 +678,21 @@ export default {
 
       //this.branchQuery.forEach(obj=> { // run loop for each branch name // OLD
       let range = Array.from(new Array(this.branchQuery.length+2), (x, i) => i )
+      var temp = []
       for (let i in range){
         setTimeout(() => {
+          
           console.log(i-1)
           var obj = this.branchQuery[i-1]
-          //console.log(obj)
           //// fill all the branch lists and upload objects
           if (obj && !obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
 
             if (this.objectQuery) {
-              if (this.objectQuery.object && this.objectQuery.object.data) this.branches.uuid.push(this.objectQuery.object.data) //fill this list 1 iteration later
-              else this.branches.uuid.push([]) 
+              if (this.objectQuery.object && this.objectQuery.object.data) temp.push(this.objectQuery.object.data) //fill this list 1 iteration later
+              else temp.push([]) 
             }
             console.log("Loading branch: " + obj.name)
+            window.__viewer.loadObject(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
 
             this.branches.names.push(obj.name) 
             this.branches.visible.push(0) 
@@ -695,9 +701,28 @@ export default {
 
             this.actions.objectId = obj.commits.items[0].referencedObject
             this.$apollo.queries.objectQuery.refetch()
+            this.loadProgress = 90
             
-          }else if (i==range[range.length-1]) this.branches.uuid.push(this.objectQuery.object.data) //add the last item
-        }, i++ * 500);
+          }else if (i==range[range.length-1]) {
+            temp.push(this.objectQuery.object.data) //add the last item
+            //console.log(temp)
+
+            temp.forEach(obj=>{ // all of uuid s
+              //console.log(obj['@data'])
+              this.branches.uuid.push([])
+              if (obj['@data']){
+                obj['@data'].forEach(sub_obj=>{
+                  var count = 0
+                  sub_obj.forEach(item=>{
+                    this.branches.uuid[this.branches.uuid.length-1].push(sub_obj[count].referencedId)
+                    count +=1
+                  })
+                })
+              } 
+            })
+            this.allLoaded = 1
+          }
+        }, i++ * 1000);
       } //) OLD
 
       console.log(this.branches)
@@ -728,10 +753,7 @@ export default {
 
 
     showVis(name){
-      console.log(this.objectQuery)
-      //console.log(window.__viewer.sceneManager.objects)
       let index = this.branches.names.indexOf(name) 
-      //let index_past = this.branches.names.indexOf(this.actions.pastBranch) 
       let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
 
       ////////////////////////////////////////////// SHOW or upload DATA 
@@ -740,29 +762,19 @@ export default {
         this.branches.visible[index] = 1 
         this.display.index.push(index)
         this.display.branchName.push(name)
-        
-        window.__viewer.loadObject(this.branches.url[index])
-
       } else {    //////////////////////////////////////////////  HIDE DATA
         console.log("hide "+ name)
         this.branches.visible[index] = 0 
         this.display.index.splice(this.display.index.indexOf(index), 1)
         this.display.branchName.splice(this.display.branchName.indexOf(name), 1)
-
-        window.__viewer.sceneManager.removeAllObjects()
-        console.log(window.__viewer.sceneManager.objects)
-        this.display.branchName.forEach(obj=> { // branches still displayed
-          var sub_count = 0
-          this.branches.names.forEach(br =>{ 
-            if (br == obj ) window.__viewer.loadObject(this.branches.url[sub_count])
-            sub_count +=1
-          })
-        })
-        
       }
       console.log("Displayed branches: " + this.display.branchName.toString())
-      console.log(window.__viewer)
-      //if (act ==0) this.actions.pastBranch = name
+
+      this.branches.uuid[index].forEach(obj=>{
+        window.__viewer.sceneManager.objects.forEach(item=>{
+          if (item.uuid == obj) this.hide(item, this.branches.visible[index]) //reverse visibility
+        })
+      })
 
     },
     hide(obj,i){
@@ -778,17 +790,13 @@ export default {
     },
     slideSwitch(num,id){
       // update slider counter, display message, update branches (visibility)
-      if (!this.actions.currentSlideNum && this.actions.currentSlideNum!=0 && num>-50) { // set the starting number, if using the arrows
+      if (!this.actions.currentSlideNum && this.actions.currentSlideNum!=0 ) { // set the starting number, important if using the arrows
         //console.log("switch with arrows")
         if (num==1) this.actions.currentSlideNum = -1
         else this.actions.currentSlideNum = this.slidesSaved.length
-
       } 
-      if (num<-50) this.actions.currentSlideNum = id // if num (arrow switcher) is ignored, clicking on a slide from the list 
+      if (num<-50) this.actions.currentSlideNum = id // if num (arrow switcher) is ignored, slide was clicked from the list 
       else this.actions.currentSlideNum += num
-
-      console.log(this.actions.currentSlideNum)
-
       
       if (this.actions.currentSlideNum >=this.slidesSaved.length) this.actions.currentSlideNum = 0
       if (this.actions.currentSlideNum <0) this.actions.currentSlideNum = this.slidesSaved.length -1
@@ -798,8 +806,10 @@ export default {
       let index = this.actions.currentSlideNum
       this.actions.currentMessage = ""
 
-      // clean the scene and reset branch visibilities 
-      window.__viewer.sceneManager.removeAllObjects()
+      // reset branch visibilities 
+      this.display.index = []
+      this.display.branchName = []
+
       var count = 0
       this.branches.visible.forEach(br=>{ 
         if (br == 1) this.showVis(this.branches.names[count])
@@ -895,6 +905,7 @@ export default {
           count +=1
         })
       }
+      this.display.message = this.slidesSaved[index].msg
 
       let slides_draft = {status:'--draft--', json: JSON.stringify(this.slidesSaved) } // to eliminate "observer" type
 
