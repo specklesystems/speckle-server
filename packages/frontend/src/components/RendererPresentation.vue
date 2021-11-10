@@ -376,6 +376,7 @@ import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 import ObjectSimpleViewer from './ObjectSimpleViewer'
 import gql from 'graphql-tag'
+
 export default {
   components: { ObjectSimpleViewer },
   props: {
@@ -448,6 +449,30 @@ export default {
           id: this.$route.params.streamId ,
         }
       }
+    },
+    objectQuery: {
+      query: gql`
+        query object($streamId: String!, $id: String!){
+          stream(id: $streamId) {
+            id
+            object(id: $id) {
+              totalChildrenCount
+              id
+              data
+            }
+          }
+        }
+      `,
+      update: (data) => data.stream,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          id: this.actions.objectId
+        }
+      },
+      skip() {
+        return this.actions.objectId == null
+      }
     }
   },
   data() {
@@ -467,9 +492,10 @@ export default {
       showPublishDialog: false,
       status: 0,
       branchQuery: null,
+      objectQuery: null,
       branches: {names:[], url: [], uuid:[], objId:[], visible:[] },
       display: {index: [], branchName: [], message:"" },
-      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null },
+      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null },
       slidesSaved: null
 
     }
@@ -508,6 +534,9 @@ export default {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
       }
+    },
+    objectQuery(val){
+      //console.log(val)
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
@@ -608,6 +637,7 @@ export default {
       
     },
     load() {
+      window.__viewer.sceneManager.removeAllObjects()
       if (this.presentationData) {
         this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
         if(this.$route.params.branchName.includes("✓")) this.status = 1; else this.status = 0
@@ -619,43 +649,62 @@ export default {
       let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
 
       ////////////////////////////////////////////////
+      /*
       let something = null
       if (something) { //} (this.status == 1){
         var count = 0
         this.branchQuery.forEach(obj=> { // run loop for each branch name
           //// fill all the branch lists and upload objects
-          if (!obj.name.includes('presentations/') && obj.commits.items[0]) {
+          if (!obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
             if (this.branches.uuid && this.branches.uuid[this.branches.uuid.length-1] && this.branches.uuid[this.branches.uuid.length-1].length == 0) {
-              console.log(window.__viewer.sceneManager.objects)
+              //console.log(window.__viewer.sceneManager.objects)
             }
 
-            console.log("Loading branch: " + obj.name)
             this.branches.names.push(obj.name) 
             this.branches.visible.push(1) 
             this.branches.objId.push(obj.commits.items[0].referencedObject)
-            this.branches.uuid.push([])
+            this.branches.uuid.push(obj.commits.items[0].id)
             this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
             window.__viewer.loadObject(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
           }
           count += 1
         })
-      }
-      /////////////////////////////////////////////////////
-      this.branchQuery.forEach(obj=> { // run loop for each branch name
-        //// fill all the branch lists and upload objects
-        if (!obj.name.includes('presentations/') && obj.commits.items[0]) {
+      }*/
+      /////////////////////////////////////////////////////  getting objects and uuid
+
+      //this.branchQuery.forEach(obj=> { // run loop for each branch name // OLD
+      let range = Array.from(new Array(this.branchQuery.length+2), (x, i) => i )
+      for (let i in range){
+        setTimeout(() => {
+          console.log(i-1)
+          var obj = this.branchQuery[i-1]
           //console.log(obj)
-          this.branches.names.push(obj.name) 
-          this.branches.visible.push(0) 
-          this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
-          this.branches.objId.push(obj.commits.items[0].referencedObject)
-          this.branches.uuid.push([])
-        }
-      })
-      //console.log(this.branches)
+          //// fill all the branch lists and upload objects
+          if (obj && !obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
+
+            if (this.objectQuery) {
+              if (this.objectQuery.object && this.objectQuery.object.data) this.branches.uuid.push(this.objectQuery.object.data) //fill this list 1 iteration later
+              else this.branches.uuid.push([]) 
+            }
+            console.log("Loading branch: " + obj.name)
+
+            this.branches.names.push(obj.name) 
+            this.branches.visible.push(0) 
+            this.branches.objId.push(obj.commits.items[0].referencedObject)
+            this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
+
+            this.actions.objectId = obj.commits.items[0].referencedObject
+            this.$apollo.queries.objectQuery.refetch()
+            
+          }else if (i==range[range.length-1]) this.branches.uuid.push(this.objectQuery.object.data) //add the last item
+        }, i++ * 500);
+      } //) OLD
+
+      console.log(this.branches)
       this.loadProgress = 100
       this.maximized = true
       this.setupEvents()
+
     },
     unloadData() {
       window.__viewer.sceneManager.removeAllObjects()
@@ -679,7 +728,8 @@ export default {
 
 
     showVis(name){
-      console.log(window.__viewer.sceneManager.objects)
+      console.log(this.objectQuery)
+      //console.log(window.__viewer.sceneManager.objects)
       let index = this.branches.names.indexOf(name) 
       //let index_past = this.branches.names.indexOf(this.actions.pastBranch) 
       let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
@@ -830,7 +880,7 @@ export default {
             }
           }
         })
-        this.$emit('refetch-branches')
+        //this.$emit('refetch-branches')
         //this.$matomo && this.$matomo.trackPageView('branch/create')
         this.$router.push( `/streams/${this.$route.params.streamId}/branches/${new_name}` )
         //window.location.href = (window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/"+ this.$route.params.branchName)

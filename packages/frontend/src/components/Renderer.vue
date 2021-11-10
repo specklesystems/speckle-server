@@ -293,7 +293,6 @@ export default {
       if (newVal >= 99) {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
-        console.log(window.__viewer.sceneManager.objects)
       }
     }
   },
