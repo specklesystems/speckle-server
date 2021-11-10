@@ -275,8 +275,8 @@
               </v-toolbar>
 
               <v-card-text class="pt-2">
-                You can always convert it back to draft by removing specials symbols 
-                from the branch name
+                You can always convert it back to draft by removing 
+                specials symbols from the branch name
               </v-card-text>
               <v-btn @click="publish_pres()"
               color="primary"
@@ -608,33 +608,50 @@ export default {
       
     },
     load() {
-      //console.log(this.presentationData)
-      //console.log(this.branchDesc)
       if (this.presentationData) {
         this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
         if(this.$route.params.branchName.includes("✓")) this.status = 1; else this.status = 0
       }
       else this.slidesSaved = []
       console.log(this.slidesSaved)
-      //if (!this.objectUrl) return
       this.hasLoadedModel = true
-      //window.__viewer.loadObject(this.objectUrl)
       window.__viewerLastLoadedUrl = this.objectExistingUrl
-
       let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
+
+      ////////////////////////////////////////////////
+      if (something) { //} (this.status == 1){
+        var count = 0
+        this.branchQuery.forEach(obj=> { // run loop for each branch name
+          //// fill all the branch lists and upload objects
+          if (!obj.name.includes('presentations/') && obj.commits.items[0]) {
+            if (this.branches.uuid && this.branches.uuid[this.branches.uuid.length-1] && this.branches.uuid[this.branches.uuid.length-1].length == 0) {
+              console.log(window.__viewer.sceneManager.objects)
+            }
+
+            console.log("Loading branch: " + obj.name)
+            this.branches.names.push(obj.name) 
+            this.branches.visible.push(1) 
+            this.branches.objId.push(obj.commits.items[0].referencedObject)
+            this.branches.uuid.push([])
+            this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
+            window.__viewer.loadObject(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
+          }
+          count += 1
+        })
+      }
+      /////////////////////////////////////////////////////
       this.branchQuery.forEach(obj=> { // run loop for each branch name
         //// fill all the branch lists and upload objects
         if (!obj.name.includes('presentations/') && obj.commits.items[0]) {
-          console.log(obj)
+          //console.log(obj)
           this.branches.names.push(obj.name) 
           this.branches.visible.push(0) 
           this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
           this.branches.objId.push(obj.commits.items[0].referencedObject)
           this.branches.uuid.push([])
         }
-          
       })
-      console.log(this.branches)
+      //console.log(this.branches)
       this.loadProgress = 100
       this.maximized = true
       this.setupEvents()
@@ -661,6 +678,7 @@ export default {
 
 
     showVis(name){
+      console.log(window.__viewer.sceneManager.objects)
       let index = this.branches.names.indexOf(name) 
       //let index_past = this.branches.names.indexOf(this.actions.pastBranch) 
       let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
@@ -692,6 +710,7 @@ export default {
         
       }
       console.log("Displayed branches: " + this.display.branchName.toString())
+      console.log(window.__viewer)
       //if (act ==0) this.actions.pastBranch = name
 
     },
@@ -708,13 +727,13 @@ export default {
     },
     slideSwitch(num,id){
       // update slider counter, display message, update branches (visibility)
-      if (!this.actions.currentSlideNum && this.actions.currentSlideNum!=0 && num>-50) { // set the starting number
+      if (!this.actions.currentSlideNum && this.actions.currentSlideNum!=0 && num>-50) { // set the starting number, if using the arrows
         //console.log("switch with arrows")
         if (num==1) this.actions.currentSlideNum = -1
         else this.actions.currentSlideNum = this.slidesSaved.length
 
       } 
-      if (num<-50) this.actions.currentSlideNum = id // if num (arrow switcher) is ignored
+      if (num<-50) this.actions.currentSlideNum = id // if num (arrow switcher) is ignored, clicking on a slide from the list 
       else this.actions.currentSlideNum += num
 
       console.log(this.actions.currentSlideNum)
