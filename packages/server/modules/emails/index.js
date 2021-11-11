@@ -41,7 +41,6 @@ exports.init = async ( app, options ) => {
   } else {
     debug( 'speckle:modules' )( '📧 Failed to initialise email provider. Server functionality will be limited.' )
   }
-
 }
 
 exports.finalize = async () => {

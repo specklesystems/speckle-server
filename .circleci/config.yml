@@ -38,9 +38,9 @@ workflows:
 jobs:
   test_server:
     docker:
-      - image: 'circleci/node:12'
+      - image: 'cimg/node:14.18'
       - image: 'circleci/redis:6'
-      - image: 'circleci/postgres:12'
+      - image: 'cimg/postgres:12.8'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
