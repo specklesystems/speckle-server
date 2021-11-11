@@ -4,7 +4,6 @@
  */
 
 
-
 export default class ObjectLoader {
 
   /**
@@ -220,7 +219,7 @@ export default class ObjectLoader {
     let tSTART = Date.now()
 
     if ( this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
-      // TODO: safari issue https://github.com/jakearchibald/idb-keyval
+      await safariFix()
       let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
       idbOpenRequest.onupgradeneeded = () => idbOpenRequest.result.createObjectStore('objects');
       this.cacheDB = await this.promisifyIdbRequest( idbOpenRequest )
@@ -451,4 +450,24 @@ export default class ObjectLoader {
 
     return this.promisifyIdbRequest( store.transaction )
   }
+}
+
+
+// Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+function safariFix() {
+  const isSafari =
+    !navigator.userAgentData &&
+    /Safari\//.test(navigator.userAgent) &&
+    !/Chrom(e|ium)\//.test(navigator.userAgent)
+
+  // No point putting other browsers or older versions of Safari through this mess.
+  if (!isSafari || !indexedDB.databases) return Promise.resolve()
+
+  let intervalId
+
+  return new Promise( ( resolve ) => {
+    const tryIdb = () => indexedDB.databases().finally(resolve)
+    intervalId = setInterval(tryIdb, 100)
+    tryIdb()
+  }).finally( () => clearInterval(intervalId) )
 }

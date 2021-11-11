@@ -20,9 +20,9 @@ const ColoredMaterial = new THREE.MeshStandardMaterial( {
 export function filterAndColorObject( obj, filter ) {
     if ( !filter )
       return obj.clone()
-    if ( !passesAndFilter( obj.userData, filter.and ) )
+    if ( !passesFilter( obj.userData, filter.filterBy ) )
     {
-      if ( filter.wireframeFilter && obj.type === 'Mesh' ) {
+      if ( filter.ghostOthers && obj.type === 'Mesh' ) {
         let clone = obj.clone()
         // clone.material = WireframeMaterial
         clone.material = obj.material.clone()
@@ -35,11 +35,11 @@ export function filterAndColorObject( obj, filter ) {
     }
 
     let clone = obj.clone()
-    if ( filter.colors ) {
-      if ( filter.colors.type === 'category' ) {
-        clone.material = colorWithCategory( obj.userData, filter.colors )
-      } else if ( filter.colors.type === 'gradient' ) {
-        clone.material = colorWithGradient( obj.userData, filter.colors )
+    if ( filter.colorBy ) {
+      if ( filter.colorBy.type === 'category' ) {
+        clone.material = colorWithCategory( obj.userData, filter.colorBy )
+      } else if ( filter.colorBy.type === 'gradient' ) {
+        clone.material = colorWithGradient( obj, filter.colorBy )
       }
     }
 
@@ -87,7 +87,8 @@ function colorWithCategory( obj, colors ) {
   return material
 }
 
-function colorWithGradient( obj, colors ) {
+function colorWithGradient( threejsObj, colors ) {
+  let obj = threejsObj.userData
   let rainbow = new Rainbow( )
   if ( 'minValue' in colors && 'maxValue' in colors )
     rainbow.setNumberRange( colors.minValue, colors.maxValue )
@@ -97,8 +98,7 @@ function colorWithGradient( obj, colors ) {
   let objValue = getObjectProperty( obj, colors.property )
   objValue = Number( objValue )
   if ( Number.isNaN( objValue ) ) {
-    // TODO: have different behaviour for missing values?
-    objValue = 0
+    return WireframeMaterial
   }
   
   let material = ColoredMaterial.clone()
@@ -106,20 +106,12 @@ function colorWithGradient( obj, colors ) {
   return material
 }
 
-function passesAndFilter( obj, andFilter ) {
-  if ( !andFilter ) return true
-  for ( let filterKey in andFilter ) {
+function passesFilter( obj, filterBy ) {
+  if ( !filterBy ) return true
+  for ( let filterKey in filterBy ) {
     let objValue = getObjectProperty( obj, filterKey )
 
-    // let keyParts = filterKey.split( '.' )
-    // let crtObj = obj
-    // for ( let i = 0; i < keyParts.length - 1; i++ ) {
-    //   if ( !( keyParts[i] in crtObj ) ) return false
-    //   crtObj = crtObj[ keyParts[i] ]
-    //   if ( crtObj.constructor !== Object ) return false
-    // }
-    // let attributeName = keyParts[ keyParts.length - 1 ]
-    let passesFilter = filterValue( objValue, andFilter[ filterKey ] )
+    let passesFilter = filterValue( objValue, filterBy[ filterKey ] )
     if ( !passesFilter ) return false
   }
   return true
@@ -132,6 +124,10 @@ function filterValue( objValue, valueFilter ) {
 
   // Dictionary value filter can specify ranges with `lte` and `gte` fields (LowerThanOrEqual, GreaterThanOrEqual)
   if ( valueFilter.constructor === Object ) {
+    if ( 'not' in valueFilter && Array.isArray( valueFilter.not ) ) {
+      if ( valueFilter.not.includes( objValue ) )
+        return false
+    }
     if ( 'lte' in valueFilter && objValue > valueFilter.lte )
       return false
     if ( 'gte' in valueFilter && objValue < valueFilter.gte )

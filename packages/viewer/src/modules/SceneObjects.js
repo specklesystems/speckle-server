@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
+// import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import debounce from 'lodash.debounce'
 import { filterAndColorObject } from './Filtering'
 
@@ -118,18 +119,6 @@ export default class SceneObjects {
     return propInfo
   }
 
-  async setFilteredView() {
-    if ( !this.isInitialLoading ) {
-      await this.applyFilter()
-      return
-    }
-
-    this.isInitialLoading = false
-    await this.applyFilter()
-    this.scene.add( this.filteredObjects )
-    this.scene.remove( this.allObjects )
-  }
-
   async applyFilterToGroup( threejsGroup, filter ) {
     let ret = new THREE.Group()
     ret.name = 'filtered_' + threejsGroup.name
@@ -155,7 +144,7 @@ export default class SceneObjects {
         child.geometry.dispose()
     }
     threejsGroup.clear()
-    console.log("Dispose in: ", Date.now() - t0)
+    // console.log( 'Dispose in: ', Date.now() - t0 )
   }
 
   async applyFilter( filter ) {

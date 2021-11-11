@@ -195,6 +195,14 @@ export default class Viewer extends EventEmitter {
     delete this.loaders[ url ]
   }
 
+  async applyFilter( filter ) {
+    return await this.sceneManager.sceneObjects.applyFilter( filter )
+  }
+
+  async getObjectsProperties() {
+    return await this.sceneManager.sceneObjects.getObjectsProperties()
+  }
+
   dispose() {
     // TODO
   }
