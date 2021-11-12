@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import debounce from 'lodash.debounce'
 import SceneObjects from './SceneObjects'
 
@@ -43,18 +42,13 @@ export default class SceneObjectManager {
     } )
 
     this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
-    this.pointMaterial = new THREE.PointsMaterial(
-      { size: 2, sizeAttenuation: false, color: 0x7F7F7F }
-    )
+    
+    this.pointMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, color: 0x7F7F7F } )
 
-    this.pointVertexColorsMaterial = new THREE.PointsMaterial( {
-      size: 2, sizeAttenuation: false, vertexColors: true
-    } )
+    this.pointVertexColorsMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: true } )
 
-    // this.objectIds = []
     this.postLoad = debounce( () => { this._postLoadFunction() }, 20, { maxWait: 5000 } )
     this.skipPostLoad = skipPostLoad
-
     this.loaders = []
   }
 
@@ -121,7 +115,7 @@ export default class SceneObjectManager {
       // Is it a transparent material?
       if ( renderMat.opacity !== 1 ) {
         let material = this.transparentMaterial.clone()
-        // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+        material.clippingPlanes = this.viewer.sectionBox.planes
 
         material.color = color
         material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -130,7 +124,7 @@ export default class SceneObjectManager {
       // It's not a transparent material!
       } else {
         let material = this.solidMaterial.clone()
-        // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+        material.clippingPlanes = this.viewer.sectionBox.planes
 
         material.color = color
         material.metalness = renderMat.metalness
@@ -143,7 +137,7 @@ export default class SceneObjectManager {
     } else {
       // If we don't have defined material, just use the default
       let material = this.solidMaterial.clone()
-      // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+      material.clippingPlanes = this.viewer.sectionBox.planes
 
       return this.addSingleSolid( wrapper, material )
     }
@@ -204,6 +198,7 @@ export default class SceneObjectManager {
 
       this._normaliseColor( color )
       let material = this.pointMaterial.clone()
+      material.clippingPlanes = this.viewer.sectionBox.planes
       // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
       material.color = color
@@ -285,11 +280,10 @@ export default class SceneObjectManager {
   }
 
   async _postLoadFunction() {
-    console.log("POST_LOAD")
     if ( this.skipPostLoad ) return
+    this.viewer.sectionBox.off()
     await this.sceneObjects.applyFilter()
     this.viewer.interactions.zoomExtents( undefined, false )
-    // this.viewer.interactions.hideSectionBox()
     this.viewer.reflectionsNeedUpdate = false
   }
 
@@ -303,7 +297,7 @@ export default class SceneObjectManager {
   }
 
   _argbToRGB( argb ) {
-    return '#'+ ( '000000' + ( argb & 0xFFFFFF ).toString( 16 ) ).slice( -6 )
+    return '#' + ( '000000' + ( argb & 0xFFFFFF ).toString( 16 ) ).slice( -6 )
   }
 
   _normaliseColor( color ) {

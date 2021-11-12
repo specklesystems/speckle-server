@@ -248,6 +248,9 @@ export default class SceneObjects {
       let groupGeometry = BufferGeometryUtils.mergeBufferGeometries( materialIdToBufferGeometry[ materialId ] )
       await this.asyncPause()
       let groupMaterial = materialIdToMaterial[ materialId ]
+      // // console.log( this.viewer.sectionBox.planes )
+      // // groupMaterial.clippingPlanes = [ this.viewer.sectionBox.planes[0], this.viewer.sectionBox.planes[1] ]
+      // groupMaterial.clippingPlanes = [ ...this.viewer.sectionBox.planes ]
       let groupMesh = new THREE.Mesh( groupGeometry, groupMaterial )
       groupMesh.userData = null
       groupedObjects.add( groupMesh )

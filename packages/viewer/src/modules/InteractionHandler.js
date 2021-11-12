@@ -6,21 +6,16 @@ export default class InteractionHandler {
 
   constructor( viewer ) {
     this.viewer = viewer
-
-    //this.sectionBox = new SectionBox( this.viewer )
-    //this.sectionBox.toggle() // switch off
-
     this.preventSelection = false
-
     this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.viewer.sceneManager.userObjects, sectionBox: this.sectionBox } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    //this.selectionMeshMaterial.clippingPlanes = this.sectionBox.planes
+    this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
-    //this.selectionLineMaterial.clippingPlanes = this.sectionBox.planes
+    this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
     this.selectionEdgesMaterial = new THREE.LineBasicMaterial( { color: 0x23F3BD } )
-    //this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes
+    this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add( this.selectedObjects )
@@ -30,12 +25,16 @@ export default class InteractionHandler {
 
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
-
-    // this.viewer.sceneManager.materials.forEach( mat => mat.clippingPlanes = this.sectionBox.planes )
   }
 
   _handleDoubleClick( objs ) {
-    if ( !objs || objs.length === 0 ) this.zoomExtents()
+    if ( !objs || objs.length === 0 ) { 
+      if( this.viewer.sectionBox.display.visible ) {
+        this.zoomToObject( this.viewer.sectionBox.cube )
+      } else {
+        this.zoomExtents() 
+      }
+    }
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
     this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null )

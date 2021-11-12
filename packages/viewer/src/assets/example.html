@@ -20,8 +20,8 @@
   </style>
 </head>
 
-<body>
-  <div class="container">
+<body style="xxxbackground: #232323">
+  <div class="container" >
     <div class="row" style="padding-top: 20px">
       <div class="twelve columns">
         <h3>Viewer</h3>
@@ -33,7 +33,7 @@
       <div class="twelve columns">
         <button onclick="v.postprocessing = !v.postprocessing">Postprocessing Toggle</button>
         <button onclick="v.interactions.zoomExtents()">Zoom Extents</button>
-        <button onclick="v.interactions.toggleSectionBox()">Toggle Section Box</button>
+        <button onclick="v.toggleSectionBox()">Toggle Section Box</button>
         <button onclick="v.interactions.rotateCamera(undefined, undefined, false)">Rotate</button>
         <button onclick="viewerScreenshot()">Screenshot</button>
       </div>

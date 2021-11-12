@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 
 import CameraControls from 'camera-controls'
+import { HOLD_EVENT_TYPE, ElementHold, KeyboardKeyHold } from 'hold-event'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
@@ -10,9 +11,11 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import InteractionHandler from './InteractionHandler'
 
+import SectionBox from './SectionBoxNew'
+
 export default class Viewer extends EventEmitter {
 
-  constructor( { container, postprocessing = true, reflections = true, showStats = false } ) {
+  constructor( { container, postprocessing = false, reflections = true, showStats = false } ) {
     super()
 
     window.THREE = THREE
@@ -46,7 +49,8 @@ export default class Viewer extends EventEmitter {
 
     CameraControls.install( { THREE: THREE } )
     this.controls = new CameraControls( this.camera, this.renderer.domElement )
-    this.controls.maxPolarAngle = Math.PI / 2
+    this.controls.maxPolarAngle = Math.PI / 1.5
+    this.setupWASDControls()
 
     this.composer = new EffectComposer( this.renderer )
 
@@ -62,9 +66,6 @@ export default class Viewer extends EventEmitter {
     this.controls.addEventListener( 'wake', () => { this.pauseSSAO = true } )
     this.controls.addEventListener( 'sleep', () => { this.pauseSSAO = false; this.needsRender = true } )
 
-    // Keeps track of loaded objects
-    this.sceneManager = new ObjectManager( this )
-
     if ( showStats ) {
       this.stats = new Stats()
       this.container.appendChild( this.stats.dom )
@@ -72,54 +73,104 @@ export default class Viewer extends EventEmitter {
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
 
+    this.mouseOverRenderer = false
+    this.renderer.domElement.addEventListener( 'mouseover', () => { this.mouseOverRenderer = true } )
+    this.renderer.domElement.addEventListener( 'mouseout', () => { this.mouseOverRenderer = false } )
+    
+    this.loaders = {}
+
+    this.sectionBox = new SectionBox( this )
+    this.sectionBox.off()
+
+    this.sceneManager = new ObjectManager( this )
     this.interactions = new InteractionHandler( this )
 
-    this.needsRender = true
     this.sceneLights()
     this.animate()
-
-    this.loaders = {}
+    this.onWindowResize()
+    this.needsRender = true
   }
 
   sceneLights() {
-    let ambientLight = new THREE.AmbientLight( 0xffffff )
-    this.scene.add( ambientLight )
 
-    const lights = []
-    lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-    lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-    lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-    lights[ 3 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
+    dirLight.color.setHSL( 0.1, 1, 0.95 )
+    dirLight.position.set( -1, 1.75, 1 )
+    dirLight.position.multiplyScalar( 1000 )
+    this.scene.add( dirLight )
+    
+    const dirLight2 = new THREE.DirectionalLight( 0xffffff, 0.9 )
+    dirLight2.color.setHSL( 0.1, 1, 0.95 )
+    dirLight2.position.set( 0, -1.75, 1 )
+    dirLight2.position.multiplyScalar( 1000 )
+    this.scene.add( dirLight2 )
 
-    let factor = 1000
-    lights[ 0 ].position.set( 1 * factor, 1 * factor, 1 * factor )
-    lights[ 1 ].position.set( 1 * factor, -1 * factor, 1 * factor )
-    lights[ 2 ].position.set( -1 * factor, -1 * factor, 1 * factor )
-    lights[ 3 ].position.set( -1 * factor, 1 * factor, 1 * factor )
-
-    this.scene.add( lights[ 0 ] )
-    this.scene.add( lights[ 1 ] )
-    this.scene.add( lights[ 2 ] )
-    this.scene.add( lights[ 3 ] )
-
-    // let sphereSize = 0.2
-    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
-    // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
-
-
-    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.2 )
-    hemiLight.color.setHSL( 1, 1, 1 )
-    hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
-    hemiLight.up.set( 0, 0, 1 )
-    this.scene.add( hemiLight )
+    const hemiLight2 = new THREE.HemisphereLight( 0xffffff, new THREE.Color( '#232323' ), 1.9 )
+    hemiLight2.color.setHSL( 1, 1, 1 )
+    // hemiLight2.groundColor = new THREE.Color( '#232323' )
+    hemiLight2.up.set( 0, 0, 1 )
+    this.scene.add( hemiLight2 )
 
     let axesHelper = new THREE.AxesHelper( 1 )
     this.scene.add( axesHelper )
 
-    let group = new THREE.Group()
-    this.scene.add( group )
+    return
+
+
+    // let ambientLight = new THREE.AmbientLight( 0xffffff )
+    // this.scene.add( ambientLight )
+
+    // const lights = []
+    // lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    // lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    // lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    // lights[ 3 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+
+    // let factor = 1000
+    // lights[ 0 ].position.set( 1 * factor, 1 * factor, 1 * factor )
+    // lights[ 1 ].position.set( 1 * factor, -1 * factor, 1 * factor )
+    // lights[ 2 ].position.set( -1 * factor, -1 * factor, 1 * factor )
+    // lights[ 3 ].position.set( -1 * factor, 1 * factor, 1 * factor )
+
+    // this.scene.add( lights[ 0 ] )
+    // this.scene.add( lights[ 1 ] )
+    // this.scene.add( lights[ 2 ] )
+    // this.scene.add( lights[ 3 ] )
+
+    // // let sphereSize = 0.2
+    // // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
+    // // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
+    // // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
+    // // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
+
+
+    // const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.2 )
+    // hemiLight.color.setHSL( 1, 1, 1 )
+    // hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
+    // hemiLight.up.set( 0, 0, 1 )
+    // this.scene.add( hemiLight )
+
+    
+    // let group = new THREE.Group()
+    // this.scene.add( group )
+  }
+
+  setupWASDControls() {
+    const KEYCODE = {
+      W: 87,
+      A: 65,
+      S: 83,
+      D: 68
+    }
+    
+    const wKey = new KeyboardKeyHold( KEYCODE.W, 16.666 )
+    const aKey = new KeyboardKeyHold( KEYCODE.A, 16.666 )
+    const sKey = new KeyboardKeyHold( KEYCODE.S, 16.666 )
+    const dKey = new KeyboardKeyHold( KEYCODE.D, 16.666 )
+    aKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.truck( -0.01 * event.deltaTime, 0, false ) }.bind( this ) )
+    dKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.truck(   0.01 * event.deltaTime, 0, false ) }.bind( this ) )
+    wKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.forward(   0.01 * event.deltaTime, false ) }.bind( this ) )
+    sKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.forward( -0.01 * event.deltaTime, false ) }.bind( this ) )
   }
 
   onWindowResize() {
@@ -182,6 +233,10 @@ export default class Viewer extends EventEmitter {
       // console.log('renderer')
       this.renderer.render( this.scene, this.camera )
     }
+  }
+
+  toggleSectionBox() {
+    this.sectionBox.toggle()
   }
 
   async loadObject( url, token ) {
