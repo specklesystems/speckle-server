@@ -17,12 +17,11 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
 
   app.post( '/auth/local/login', session, sessionAppId, async ( req, res, next ) => {
     try {
-      const lowercaseEmail = req.body.email.toLowerCase()
-      let valid = await validatePasssword( { email: lowercaseEmail, password: req.body.password } )
+      let valid = await validatePasssword( { email: req.body.email, password: req.body.password } )
 
       if ( !valid ) throw new Error( 'Invalid credentials' )
 
-      let user = await getUserByEmail( { email: lowercaseEmail } )
+      let user = await getUserByEmail( { email: req.body.email } )
       if ( !user ) throw new Error( 'Invalid credentials' )
 
       if ( req.body.suuid && user.suuid !== req.body.suuid ) {
