@@ -17,11 +17,12 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
 
   app.post( '/auth/local/login', session, sessionAppId, async ( req, res, next ) => {
     try {
-      let valid = await validatePasssword( { email: req.body.email, password: req.body.password } )
+      const lowercaseEmail = req.body.email.toLowerCase()
+      let valid = await validatePasssword( { email: lowercaseEmail, password: req.body.password } )
 
       if ( !valid ) throw new Error( 'Invalid credentials' )
 
-      let user = await getUserByEmail( { email: req.body.email } )
+      let user = await getUserByEmail( { email: lowercaseEmail } )
       if ( !user ) throw new Error( 'Invalid credentials' )
 
       if ( req.body.suuid && user.suuid !== req.body.suuid ) {
@@ -43,6 +44,7 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
         throw new Error( 'Password missing' )
 
       let user = req.body
+      user.email = user.email.toLowerCase()
 
       if ( serverInfo.inviteOnly && !req.session.inviteId ) {
         throw new Error( 'This server is invite only. Please provide an invite id.' )
