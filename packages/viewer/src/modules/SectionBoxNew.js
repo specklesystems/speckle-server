@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
+import { Box3 } from 'three'
 
 export default class SectionBox {
 
@@ -143,7 +144,6 @@ export default class SectionBox {
   }
 
   _clickHandler( args ) {
-    console.log( 'clikcer', this.dragging )
     if( this.orbiting || this.dragging ) return
     if( args.length === 0 && !this.dragging )  {
       this._attachControlsToBox()
@@ -239,12 +239,6 @@ export default class SectionBox {
 
   _generateOrUpdatePlanes() {
     this.planes = this.planes || [ new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane(), new THREE.Plane() ]
-    // this.helpers = this.helpers || [ new THREE.PlaneHelper( this.planes[0], 1, 0xffff00 ), new THREE.PlaneHelper( this.planes[1], 1, 0xffff00 ), new THREE.PlaneHelper( this.planes[2], 1, 0xffff00 ), new THREE.PlaneHelper( this.planes[3], 1, 0xffff00 ), new THREE.PlaneHelper( this.planes[4], 1, 0xffff00 ), new THREE.PlaneHelper( this.planes[5], 1, 0xffff00 ) ]
-
-    if( !this.helpersAdded ) {
-      // this.helpers.forEach( helper => this.display.add( helper ) )
-      this.helpersAdded = true
-    } 
 
     let index = 0
     let boxArr = this.boxGeometry.attributes.position
@@ -293,11 +287,57 @@ export default class SectionBox {
     
   }
 
-  setBox( box ) {
+  setBox( ) {
+    let box = null
+    console.log(this.viewer.interactions.selectedObjects.children.length )
+    console.log(this.viewer.sceneManager.sceneObjects.allObjects.children.length )
+    if( this.viewer.interactions.selectedObjects.children.length !== 0 ) {
+      box = new THREE.Box3( ).setFromObject(this.viewer.interactions.selectedObjects)
+    } else if( this.viewer.sceneManager.sceneObjects.allObjects.children.length !== 0 ){
+      box = new THREE.Box3( ).setFromObject(this.viewer.sceneManager.sceneObjects.allObjects)
+    } else {
+      box = new Box3( new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+    }
+    if(box.min.x === Infinity) {
+      box = new Box3( new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+    }
+    const dist = box.min.distanceTo(box.max)
+
+    const x1 = box.min.x - (box.max.x-box.min.x) * 0.05 // - dist * 0.05
+    const y1 = box.min.y - (box.max.y-box.min.y) * 0.05 // - dist * 0.05
+    const z1 = box.min.z - (box.max.z-box.min.z) * 0.05 // - dist * 0.05
+    const x2 = box.max.x + (box.max.x-box.min.x) * 0.05 // + dist * 0.05
+    const y2 = box.max.y + (box.max.y-box.min.y) * 0.05 // + dist * 0.05
+    const z2 = box.max.z + (box.max.z-box.min.z) * 0.05 // + dist * 0.05
     
+    const newVertices = [
+      x1, y1, z1, 
+      x2, y1, z1, 
+      x2, y2, z1, 
+      x1, y2, z1, 
+      x1, y1, z2, 
+      x2, y1, z2, 
+      x2, y2, z2, 
+      x1, y2, z2, 
+    ]
+
+    let boxVerts = this.boxGeometry.attributes.position.array
+    for(let i = 0; i < newVertices.length; i++) {
+      boxVerts[i] = newVertices[i]
+    }
+
+    this.boxGeometry.attributes.position.needsUpdate = true
+    this.boxGeometry.computeVertexNormals()
+    this.boxGeometry.computeBoundingBox()
+    this.boxGeometry.computeBoundingSphere()
+    this._generateOrUpdatePlanes()
+    this._attachControlsToBox()
+    this.boxHelper.update()
+    this.viewer.needsRender = true
   }
 
   toggle() {
+    this.setBox()
     this.display.visible = !this.display.visible
     this.viewer.renderer.localClippingEnabled = this.display.visible
     this.viewer.needsRender = true
