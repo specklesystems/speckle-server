@@ -27,7 +27,7 @@ const _ensureAtleastOneAdminRemains = async ( userId ) => {
   }
 }
 
-const userByEmailQuery = email => Users( ).where( 'email', 'ilike', `%${email}` )
+const userByEmailQuery = email => Users( ).whereRaw( 'lower(email) = lower(?)',[ email ] )
 
 
 module.exports = {
