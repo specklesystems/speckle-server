@@ -10,6 +10,7 @@ import ObjectManager from './SceneObjectManager'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import InteractionHandler from './InteractionHandler'
+import CameraHandler from './context/cameras'
 
 import SectionBox from './SectionBoxNew'
 
@@ -26,45 +27,20 @@ export default class Viewer extends EventEmitter {
     this.postprocessing = postprocessing
     this.scene = new THREE.Scene()
 
-    this.camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight )
-    this.camera.up.set( 0, 0, 1 )
-    this.camera.position.set( 1, 1, 1 )
-    this.camera.updateProjectionMatrix()
-
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, preserveDrawingBuffer: true } )
     this.renderer.setClearColor( 0xcccccc, 0 )
     this.renderer.setPixelRatio( window.devicePixelRatio )
     this.renderer.setSize( this.container.offsetWidth, this.container.offsetHeight )
     this.container.appendChild( this.renderer.domElement )
 
-    // commented out because the ssao flash is annoying
-    // this.renderer.gammaFactor = 2.2
-    // this.renderer.outputEncoding = THREE.sRGBEncoding
+    
+    this.cameraHandler = new CameraHandler(this)
 
     this.reflections = reflections
     this.reflectionsNeedUpdate = true
     const cubeRenderTarget = new THREE.WebGLCubeRenderTarget( 512, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter } )
     this.cubeCamera = new THREE.CubeCamera( 0.1, 10_000, cubeRenderTarget )
     this.scene.add( this.cubeCamera )
-
-    CameraControls.install( { THREE: THREE } )
-    this.controls = new CameraControls( this.camera, this.renderer.domElement )
-    this.controls.maxPolarAngle = Math.PI / 1.5
-    this.setupWASDControls()
-
-    this.composer = new EffectComposer( this.renderer )
-
-    this.ssaoPass = new SSAOPass( this.scene, this.camera, this.container.offsetWidth, this.container.offsetHeight )
-    this.ssaoPass.kernelRadius = 0.03
-    this.ssaoPass.kernelSize = 16
-    this.ssaoPass.minDistance = 0.0002
-    this.ssaoPass.maxDistance = 10
-    this.ssaoPass.output = SSAOPass.OUTPUT.Default
-    this.composer.addPass( this.ssaoPass )
-
-    this.pauseSSAO = false
-    this.controls.addEventListener( 'wake', () => { this.pauseSSAO = true } )
-    this.controls.addEventListener( 'sleep', () => { this.pauseSSAO = false; this.needsRender = true } )
 
     if ( showStats ) {
       this.stats = new Stats()
@@ -155,37 +131,17 @@ export default class Viewer extends EventEmitter {
     // this.scene.add( group )
   }
 
-  setupWASDControls() {
-    const KEYCODE = {
-      W: 87,
-      A: 65,
-      S: 83,
-      D: 68
-    }
-    
-    const wKey = new KeyboardKeyHold( KEYCODE.W, 16.666 )
-    const aKey = new KeyboardKeyHold( KEYCODE.A, 16.666 )
-    const sKey = new KeyboardKeyHold( KEYCODE.S, 16.666 )
-    const dKey = new KeyboardKeyHold( KEYCODE.D, 16.666 )
-    aKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.truck( -0.01 * event.deltaTime, 0, false ) }.bind( this ) )
-    dKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.truck(   0.01 * event.deltaTime, 0, false ) }.bind( this ) )
-    wKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.forward(   0.01 * event.deltaTime, false ) }.bind( this ) )
-    sKey.addEventListener( 'holding', function( event ) { if( this.mouseOverRenderer === false ) return; this.controls.forward( -0.01 * event.deltaTime, false ) }.bind( this ) )
-  }
-
   onWindowResize() {
-    this.camera.aspect = this.container.offsetWidth / this.container.offsetHeight
-    this.camera.updateProjectionMatrix()
     this.renderer.setSize( this.container.offsetWidth, this.container.offsetHeight )
-    this.composer.setSize( this.container.offsetWidth, this.container.offsetHeight )
+    // this.composer.setSize( this.container.offsetWidth, this.container.offsetHeight )
+    this.needsRender = true
   }
 
   animate() {
-    // requestAnimationFrame( this.animate.bind( this ) )
-    // this.controls.update()
-    //
     const delta = this.clock.getDelta()
-    const hasControlsUpdated = this.controls.update( delta )
+    
+    const hasControlsUpdated = this.cameraHandler.controls.update( delta )
+    // const hasOrthoControlsUpdated = this.cameraHandler.cameras[1].controls.update( delta )
 
     requestAnimationFrame( this.animate.bind( this ) )
 
@@ -222,17 +178,8 @@ export default class Viewer extends EventEmitter {
       this.reflectionsNeedUpdate = false
     }
 
-    // Render as usual
-    // TODO: post processing SSAO sucks so much currently it's off by default
-    // if ( this.postprocessing && !this.pauseSSAO && !this.renderer.localClippingEnabled ){
-    if ( this.postprocessing && !this.pauseSSAO ) {
-      // console.log('composer')
-      this.composer.render( this.scene, this.camera )
-    }
-    else {
-      // console.log('renderer')
-      this.renderer.render( this.scene, this.camera )
-    }
+    this.renderer.render( this.scene, this.cameraHandler.activeCam.camera )
+
   }
 
   toggleSectionBox() {

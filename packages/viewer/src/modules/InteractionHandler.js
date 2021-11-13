@@ -50,6 +50,7 @@ export default class InteractionHandler {
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
 
+    console.log(objs)
     
     let selType = objs[0].object.type
     
@@ -111,16 +112,6 @@ export default class InteractionHandler {
     this.viewer.needsRender = true
   }
 
-  hideSectionBox() {
-    //if ( !this.sectionBox.display.visible ) return
-    //this.toggleSectionBox( )
-  }
-
-  showSectionBox() {
-    //if ( this.sectionBox.display.visible ) return
-    //this.toggleSectionBox( )
-  }
-
   zoomToObject( target, fit = 1.2, transition = true ) {
     const box = new THREE.Box3().setFromObject( target )
     this.zoomToBox( box, fit, transition )
@@ -131,7 +122,7 @@ export default class InteractionHandler {
     //   this.zoomToObject( this.sectionBox.boxMesh )
     //   return
     // }
-    if ( this.viewer.sceneManager.allObjects.length === 0 )  {
+    if ( this.viewer.sceneManager.sceneObjects.allObjects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box, fit, transition )
       return
@@ -139,10 +130,13 @@ export default class InteractionHandler {
 
     let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
     this.zoomToBox( box, fit, transition )
-    this.viewer.controls.setBoundary( box )
+    // this.viewer.controls.setBoundary( box )
   }
 
   zoomToBox( box, fit = 1.2, transition = true ) {
+    if(box.max.x === Infinity || box.max.x === -Infinity) {
+      box = new THREE.Box3( new THREE.Vector3( -10,-10,-10 ), new THREE.Vector3( 10,10,10 ) )
+    }
     const fitOffset = fit
 
     const size = box.getSize( new THREE.Vector3() )
@@ -150,18 +144,18 @@ export default class InteractionHandler {
     box.getBoundingSphere( target )
     target.radius = target.radius * fitOffset
 
-    this.viewer.controls.fitToSphere( target, transition )
+    this.viewer.cameraHandler.activeCam.controls.fitToSphere( target, transition )
 
-    const maxSize = Math.max( size.x, size.y, size.z )
-    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
-    const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
-    const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+    // const maxSize = Math.max( size.x, size.y, size.z )
+    // const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
+    // const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
+    // const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
 
-    this.viewer.controls.minDistance = distance / 100
-    this.viewer.controls.maxDistance = distance * 100
-    this.viewer.camera.near = distance / 100
-    this.viewer.camera.far = distance * 100
-    this.viewer.camera.updateProjectionMatrix()
+    // this.viewer.controls.minDistance = distance / 100
+    // this.viewer.controls.maxDistance = distance * 100
+    // this.viewer.camera.near = distance / 100
+    // this.viewer.camera.far = distance * 100
+    // this.viewer.camera.updateProjectionMatrix()
   }
 
   /**
@@ -194,29 +188,29 @@ export default class InteractionHandler {
 
     switch ( side ) {
     case 'front':
-      this.viewer.controls.rotateTo( 0, DEG90, transition )
+      this.viewer.cameraHandler.activeCam.controls.rotateTo( 0, DEG90, transition )
       break
 
     case 'back':
-      this.viewer.controls.rotateTo( DEG180, DEG90, transition )
+      this.viewer.cameraHandler.activeCam.controls.rotateTo( DEG180, DEG90, transition )
       break
 
     case 'up':
     case 'top':
-      this.viewer.controls.rotateTo( 0, 0, transition )
+      this.viewer.cameraHandler.activeCam.controls.rotateTo( 0, 0, transition )
       break
 
     case 'down':
     case 'bottom':
-      this.viewer.controls.rotateTo( 0, DEG180, transition )
+      this.viewer.cameraHandler.activeCam.controls.rotateTo( 0, DEG180, transition )
       break
 
     case 'right':
-      this.viewer.controls.rotateTo( DEG90, DEG90, transition )
+      this.viewer.cameraHandler.activeCam.controls.rotateTo( DEG90, DEG90, transition )
       break
 
     case 'left':
-      this.viewer.controls.rotateTo( -DEG90, DEG90, transition )
+      this.viewer.cameraHandler.activeCam.controls.rotateTo( -DEG90, DEG90, transition )
       break
     }
   }
@@ -236,11 +230,11 @@ export default class InteractionHandler {
     let target = view.target
     let position = view.origin
 
-    this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
+    this.viewer.cameraHandler.activeCam.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
   }
 
   setLookAt( position, target, transition = true ) {
     if ( !position || !target ) return
-    this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
+    this.viewer.cameraHandler.activeCam.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
   }
 }

@@ -20,7 +20,8 @@ export default class SceneObjectManager {
       roughness: 1,
       metalness: 0,
       side: THREE.DoubleSide,
-      envMap: this.viewer.cubeCamera.renderTarget.texture
+      envMap: this.viewer.cubeCamera.renderTarget.texture,
+      clippingPlanes: this.viewer.sectionBox.planes
     } )
 
     this.transparentMaterial = new THREE.MeshStandardMaterial( {
@@ -31,21 +32,23 @@ export default class SceneObjectManager {
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 0.4,
-      envMap: this.viewer.cubeCamera.renderTarget.texture
+      envMap: this.viewer.cubeCamera.renderTarget.texture,
+      clippingPlanes: this.viewer.sectionBox.planes
     } )
 
     this.solidVertexMaterial = new THREE.MeshBasicMaterial( {
       color: 0xffffff,
       vertexColors: THREE.VertexColors,
       side: THREE.DoubleSide,
-      reflectivity: 0
+      reflectivity: 0,
+      clippingPlanes: this.viewer.sectionBox.planes
     } )
 
-    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
+    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
     
-    this.pointMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, color: 0x7F7F7F } )
+    this.pointMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
 
-    this.pointVertexColorsMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: true } )
+    this.pointVertexColorsMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: true, clippingPlanes: this.viewer.sectionBox.planes } )
 
     this.postLoad = debounce( () => { this._postLoadFunction() }, 20, { maxWait: 5000 } )
     this.skipPostLoad = skipPostLoad

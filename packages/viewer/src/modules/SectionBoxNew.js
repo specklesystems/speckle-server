@@ -10,16 +10,12 @@ export default class SectionBox {
 
     this.viewer.renderer.localClippingEnabled = true
 
-    this.orbiting = false
     this.dragging = false
     this.display = new THREE.Group()
     this.viewer.scene.add( this.display )
-    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true } )
-    this.viewer.controls.addEventListener( 'controlend', () => { this.orbiting = false } )
 
     // box
     this.boxGeometry = this._generateSimpleCube( 5, 5, 5 )
-    // this.material = new THREE.MeshBasicMaterial()
     this.material = new THREE.MeshStandardMaterial( { color: 0x00ffff, opacity:0, wireframe: true, side: THREE.DoubleSide } )
     this.cube = new THREE.Mesh( this.boxGeometry, this.material )
     this.cube.visible = false
@@ -29,32 +25,23 @@ export default class SectionBox {
     this.boxHelper = new THREE.BoxHelper( this.cube, 0x0A66FF )
     this.display.add( this.boxHelper )
 
-
+    // we're attaching the gizmo mover to this sphere in the box centre
     let sphere = new THREE.SphereGeometry( 0.01, 10, 10 )
     this.sphere = new THREE.Mesh( sphere, new THREE.MeshStandardMaterial( { color:0x00ffff } ) )
     this.display.add( this.sphere )    
 
     // plane
     this.plane = new THREE.PlaneGeometry( 1, 1 )
-    this.hoverPlane = new THREE.Mesh( this.plane, new THREE.MeshStandardMaterial( { transparent: true, side: THREE.DoubleSide, opacity: 0, color: 0x0A66FF, metalness: 0.1, roughness: 0.75 } ) )
+    this.hoverPlane = new THREE.Mesh( this.plane, new THREE.MeshStandardMaterial( { transparent: true, side: THREE.DoubleSide, opacity: 0.05, color: 0x0A66FF, metalness: 0.1, roughness: 0.75 } ) )
     this.hoverPlane.visible = false
     this.display.add( this.hoverPlane )
 
     window.cube = this.cube 
-
-    // controls
-    this.controls = new TransformControls( this.viewer.camera, this.viewer.renderer.domElement )
-    this.controls.setSize( 0.75 )
-    this.display.add( this.controls )
-
-
-    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.cube, hover: true } )
     
-    // this.selectionHelper.on( 'hovered', args => { } )
-
-    this.dragging = false 
-
-    let sidesSimple = {
+    this.dragging = false
+    this._setupControls()
+    
+    this.sidesSimple = {
       '256': { verts: [ 1, 2, 5, 6 ], axis:'x' },
       '152': { verts: [ 1, 2, 5, 6 ], axis:'x' },
       '407': { verts: [ 0, 3, 4, 7 ], axis:'x' },
@@ -69,33 +56,42 @@ export default class SectionBox {
       '647': { verts: [ 4, 5, 7, 6 ], axis:'z' }
     }
 
-    this.sidesSimple = sidesSimple
-
     this._generateOrUpdatePlanes()
 
+    this.currentRange = null
+    this.prevPosition = null
+    
+    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.cube, hover: true } )
+    this.selectionHelper.on( 'object-clicked', this._clickHandler.bind( this ) )
+
+    this._attachControlsToBox()
+
+    this.viewer.on('projection-change', function() { this._setupControls(); this._attachControlsToBox(); }.bind(this) )
+  }
+
+  _setupControls() {
+    this.controls?.dispose()
+    this.controls?.detach()
+    this.controls = new TransformControls( this.viewer.cameraHandler.activeCam.camera, this.viewer.renderer.domElement )
+    this.controls.setSize( 0.75 )
+    this.display.add( this.controls )
+    this.controls.addEventListener( 'change', this._draggingChangeHandler.bind( this ) )
     this.controls.addEventListener( 'dragging-changed', ( event ) => {
       let val = !!event.value
       if( val ) {
         this.dragging = val
         this.viewer.interactions.preventSelection = val
-        this.viewer.controls.enabled = !val
+        this.viewer.cameraHandler.enabled = !val
       } else {
         setTimeout( ()=> {
           this.dragging = val
           this.viewer.interactions.preventSelection = val
-          this.viewer.controls.enabled = !val
+          this.viewer.cameraHandler.enabled = !val
         }, 100 )
         
       }
     } )
-
-    this.currentRange = null
-    this.prevPosition = null
-
-    this.controls.addEventListener( 'change', this._draggingChangeHandler.bind( this ) )
-    this.selectionHelper.on( 'object-clicked', this._clickHandler.bind( this ) )
-
-    this._attachControlsToBox()
+    this.viewer.needsRender = true
   }
 
   _draggingChangeHandler( ) {
@@ -144,7 +140,7 @@ export default class SectionBox {
   }
 
   _clickHandler( args ) {
-    if( this.orbiting || this.dragging ) return
+    if( this.viewer.cameraHandler.orbiting || this.dragging ) return
     if( args.length === 0 && !this.dragging )  {
       this._attachControlsToBox()
       return
@@ -281,10 +277,6 @@ export default class SectionBox {
     this.controls.showX = true
     this.controls.showY = true
     this.controls.showZ = true
-  }
-
-  setPlanesFromBox( box ) {
-    
   }
 
   setBox( ) {

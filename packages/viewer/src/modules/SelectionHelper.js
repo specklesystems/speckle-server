@@ -19,12 +19,6 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
 
-    // Handle clicks during camera moves
-    this.orbiting = false
-
-    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true } )
-    this.viewer.controls.addEventListener( 'sleep', () => { this.orbiting = false } )
-
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
     this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null
@@ -33,27 +27,27 @@ export default class SelectionHelper extends EventEmitter {
     // this.hoverObj = null
 
     // optional param allows for hover
-    if ( typeof _options !== 'undefined' && _options.hover ) {
-      // doesn't feel good when debounced, might be necessary tho
-      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
-        let hovered = this.getClickedObjects( e )
+    // if ( typeof _options !== 'undefined' && _options.hover ) {
+    //   // doesn't feel good when debounced, might be necessary tho
+    //   this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
+    //     let hovered = this.getClickedObjects( e )
 
-        // dragging event, this shouldn't be under the "hover option"
-        if ( this.pointerDown ) {
-          this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
-          return
-        }
+    //     // dragging event, this shouldn't be under the "hover option"
+    //     if ( this.pointerDown ) {
+    //       this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
+    //       return
+    //     }
 
-        this.emit( 'hovered', hovered, e )
-      },0 ) )
-    }
+    //     this.emit( 'hovered', hovered, e )
+    //   },0 ) )
+    // }
 
     // dragging event, this shouldn't be under the "hover option"
     if ( typeof _options !== 'undefined' && _options.hover ) {
       this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce( ( e ) => {
         this.pointerDown = true
 
-        if ( this.orbiting ) return
+        if ( this.viewer.cameraHandler.orbiting ) return
 
         this.emit( 'mouse-down', this.getClickedObjects( e ) )
       }, 100 ) )
@@ -74,7 +68,7 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
       let delta = new Date().getTime() - mdTime
       this.pointerDown = false
-      if ( this.orbiting && delta > 250 ) return
+      if ( this.viewer.cameraHandler.orbiting && delta > 250 ) return
 
       let selectionObjects = this.getClickedObjects( e )
 
@@ -132,7 +126,7 @@ export default class SelectionHelper extends EventEmitter {
 
   getClickedObjects( e ) {
     const normalizedPosition = this._getNormalisedClickPosition( e )
-    this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
+    this.raycaster.setFromCamera( normalizedPosition, this.viewer.cameraHandler.activeCam.camera )
 
     let targetObjects
     if ( this.subset ) {
@@ -149,7 +143,6 @@ export default class SelectionHelper extends EventEmitter {
         return box.containsPoint( obj.point )
       } )
     }
-
     return intersectedObjects
   }
 

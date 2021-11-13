@@ -54,7 +54,7 @@
     "yargs": "^17.2.1"
   },
   "dependencies": {
-    "camera-controls": "^1.33.0",
+    "camera-controls": "^1.33.1",
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
     "rainbowvis.js": "^1.0.1",
