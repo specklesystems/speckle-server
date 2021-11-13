@@ -62,7 +62,6 @@ export default class SectionBox {
     
     this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.cube, hover: true } )
     this.selectionHelper.on( 'object-clicked', this._clickHandler.bind( this ) )
-
     this._attachControlsToBox()
 
     this.viewer.on('projection-change', function() { this._setupControls(); this._attachControlsToBox(); }.bind(this) )

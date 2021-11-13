@@ -117,6 +117,7 @@ export default class CameraHandler {
     this.orthoCamera.right = width / 2
     this.orthoCamera.top = height / 2
     this.orthoCamera.bottom = height / -2
+    this.orthoCamera.far = this.camera.far
     this.orthoCamera.updateProjectionMatrix()   
     this.orthoCamera.position.copy(this.camera.position)
     this.orthoCamera.quaternion.copy(this.camera.quaternion)

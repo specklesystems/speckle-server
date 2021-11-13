@@ -213,6 +213,6 @@ export default class Viewer extends EventEmitter {
   }
 
   dispose() {
-    // TODO
+    // TODO: currently it's easier to simply refresh the page
   }
 }

@@ -152,16 +152,19 @@ export default class InteractionHandler {
 
     this.viewer.cameraHandler.activeCam.controls.fitToSphere( target, transition )
 
-    // const maxSize = Math.max( size.x, size.y, size.z )
-    // const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
-    // const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
-    // const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+    const maxSize = Math.max( size.x, size.y, size.z )
+    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.cameraHandler.camera.fov / 360 ) )
+    const fitWidthDistance = fitHeightDistance / this.viewer.cameraHandler.camera.aspect
+    const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
 
-    // this.viewer.controls.minDistance = distance / 100
-    // this.viewer.controls.maxDistance = distance * 100
-    // this.viewer.camera.near = distance / 100
-    // this.viewer.camera.far = distance * 100
-    // this.viewer.camera.updateProjectionMatrix()
+    this.viewer.cameraHandler.controls.minDistance = distance / 100
+    this.viewer.cameraHandler.controls.maxDistance = distance * 100
+    this.viewer.cameraHandler.camera.near = distance / 100
+    this.viewer.cameraHandler.camera.far = distance * 100
+    this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    this.viewer.cameraHandler.orthoCamera.near = distance / 100
+    this.viewer.cameraHandler.orthoCamera.far = distance * 100
+    this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
   }
 
   /**
