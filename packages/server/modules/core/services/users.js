@@ -27,6 +27,8 @@ const _ensureAtleastOneAdminRemains = async ( userId ) => {
   }
 }
 
+const userByEmailQuery = email => Users( ).whereRaw( 'lower(email) = lower(?)',[ email ] )
+
 
 module.exports = {
 
@@ -46,7 +48,7 @@ module.exports = {
     }
     delete user.password
 
-    let usr = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
+    let usr = await userByEmailQuery( user.email ).select( 'id' ).first( )
     if ( usr ) throw new Error( 'Email taken. Try logging in?' )
 
     let res = await Users( ).returning( 'id' ).insert( user )
@@ -71,7 +73,7 @@ module.exports = {
   },
 
   async findOrCreateUser( { user, rawProfile } ) {
-    let existingUser = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
+    let existingUser = await userByEmailQuery( user.email ).select( 'id' ).first( )
 
     if ( existingUser ) {
       if ( user.suuid ) {
@@ -103,7 +105,7 @@ module.exports = {
   },
 
   async getUserByEmail( { email } ) {
-    let user = await Users( ).where( { email: email.toLowerCase() } ).select( '*' ).first( )
+    let user = await userByEmailQuery( email ).select( '*' ).first( )
     if ( !user ) return null
     delete user.passwordDigest
     return user
@@ -148,7 +150,7 @@ module.exports = {
   },
 
   async validatePasssword( { email, password } ) {
-    let { passwordDigest } = await Users( ).where( { email: email.toLowerCase() } ).select( 'passwordDigest' ).first( )
+    let { passwordDigest } = await userByEmailQuery( email ).select( 'passwordDigest' ).first( )
     return bcrypt.compare( password, passwordDigest )
   },
 
