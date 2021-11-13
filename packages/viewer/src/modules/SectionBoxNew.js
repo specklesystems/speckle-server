@@ -16,13 +16,14 @@ export default class SectionBox {
 
     // box
     this.boxGeometry = this._generateSimpleCube( 5, 5, 5 )
-    this.material = new THREE.MeshStandardMaterial( { color: 0x00ffff, opacity:0, wireframe: true, side: THREE.DoubleSide } )
+    this.material = new THREE.MeshStandardMaterial( { color: 0x00ffff, opacity:0, wireframe: false, side: THREE.DoubleSide } )
     this.cube = new THREE.Mesh( this.boxGeometry, this.material )
     this.cube.visible = false
 
     this.display.add( this.cube )
 
     this.boxHelper = new THREE.BoxHelper( this.cube, 0x0A66FF )
+    this.boxHelper.material.opacity = 0.4
     this.display.add( this.boxHelper )
 
     // we're attaching the gizmo mover to this sphere in the box centre
@@ -32,11 +33,9 @@ export default class SectionBox {
 
     // plane
     this.plane = new THREE.PlaneGeometry( 1, 1 )
-    this.hoverPlane = new THREE.Mesh( this.plane, new THREE.MeshStandardMaterial( { transparent: true, side: THREE.DoubleSide, opacity: 0.05, color: 0x0A66FF, metalness: 0.1, roughness: 0.75 } ) )
+    this.hoverPlane = new THREE.Mesh( this.plane, new THREE.MeshStandardMaterial( { transparent: true, side: THREE.DoubleSide, opacity: 0.1, wireframe: false, color: 0x0A66FF, metalness: 0.1, roughness: 0.75 } ) )
     this.hoverPlane.visible = false
     this.display.add( this.hoverPlane )
-
-    window.cube = this.cube 
     
     this.dragging = false
     this._setupControls()
@@ -143,9 +142,11 @@ export default class SectionBox {
     if( this.viewer.cameraHandler.orbiting || this.dragging ) return
     if( args.length === 0 && !this.dragging )  {
       this._attachControlsToBox()
+      this.boxHelper.material.opacity = 0.5
       return
     }
 
+    this.boxHelper.material.opacity = 0.3
     this.hoverPlane.visible = true
     let side = this.sidesSimple[`${args[0].face.a}${args[0].face.b}${args[0].face.c}`]
     this.controls.showX = side.axis === 'x'

@@ -27,20 +27,20 @@ export default class SelectionHelper extends EventEmitter {
     // this.hoverObj = null
 
     // optional param allows for hover
-    // if ( typeof _options !== 'undefined' && _options.hover ) {
-    //   // doesn't feel good when debounced, might be necessary tho
-    //   this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
-    //     let hovered = this.getClickedObjects( e )
+    if ( typeof _options !== 'undefined' && _options.hover ) {
+      // doesn't feel good when debounced, might be necessary tho
+      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
+        let hovered = this.getClickedObjects( e )
 
-    //     // dragging event, this shouldn't be under the "hover option"
-    //     if ( this.pointerDown ) {
-    //       this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
-    //       return
-    //     }
+        // dragging event, this shouldn't be under the "hover option"
+        if ( this.pointerDown ) {
+          this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
+          return
+        }
 
-    //     this.emit( 'hovered', hovered, e )
-    //   },0 ) )
-    // }
+        this.emit( 'hovered', hovered, e )
+      },0 ) )
+    }
 
     // dragging event, this shouldn't be under the "hover option"
     if ( typeof _options !== 'undefined' && _options.hover ) {
@@ -59,16 +59,18 @@ export default class SelectionHelper extends EventEmitter {
     }
 
     // Handle mouseclicks
-
     let mdTime
     this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( ) => {
       mdTime = new Date().getTime()
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      if( this.viewer.cameraHandler.orbiting ) return
+
       let delta = new Date().getTime() - mdTime
       this.pointerDown = false
-      if ( this.viewer.cameraHandler.orbiting && delta > 250 ) return
+      
+      if ( delta > 250 ) return
 
       let selectionObjects = this.getClickedObjects( e )
 
@@ -136,9 +138,9 @@ export default class SelectionHelper extends EventEmitter {
     }
     let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
 
-
-    if ( this.sectionBox && this.sectionBox.display.visible ) {
-      let box = new THREE.Box3().setFromObject( this.sectionBox.boxMesh )
+    // filters objects in section box mode
+    if ( this.viewer.sectionBox.display.visible ) {
+      let box = new THREE.Box3().setFromObject( this.viewer.sectionBox.cube )
       intersectedObjects = intersectedObjects.filter( obj => {
         return box.containsPoint( obj.point )
       } )

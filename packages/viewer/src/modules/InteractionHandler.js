@@ -25,6 +25,12 @@ export default class InteractionHandler {
 
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
+
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && this.viewer.mouseOverRenderer){
+        this.deselectObjects()
+      }
+    })
   }
 
   _handleDoubleClick( objs ) {
@@ -41,6 +47,8 @@ export default class InteractionHandler {
   }
 
   _handleSelect( objs ) {
+    console.log(this.viewer.cameraHandler.orbiting )
+    if(this.viewer.cameraHandler.orbiting ) return
     if ( this.preventSelection ) return
 
     if ( objs.length === 0 ) {
@@ -49,8 +57,6 @@ export default class InteractionHandler {
     }
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
-
-    console.log(objs)
     
     let selType = objs[0].object.type
     

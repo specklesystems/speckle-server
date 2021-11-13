@@ -39,8 +39,20 @@ export default class CameraHandler {
     ]
 
     this.orbiting = false
-    this.controls.addEventListener('wake', () => { this.orbiting = true } )
-    this.controls.addEventListener('controlend', () => { this.orbiting = false } )
+    this.controls.addEventListener('wake', () => { 
+      // console.log( 'orbiting')
+      this.orbiting = true 
+    } )
+    
+    this.controls.addEventListener('controlend', () => { 
+      // console.log( 'controlend')
+      // this.orbiting = false 
+    } )
+    
+    this.controls.addEventListener('rest', () => { 
+      // console.log( 'rest')
+      setTimeout( () => { this.orbiting = false }, 400 ) 
+    } )
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
     this.onWindowResize()

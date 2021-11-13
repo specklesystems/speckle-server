@@ -20,7 +20,7 @@
   </style>
 </head>
 
-<body style="xxxbackground: #232323">
+<body style="background: #232323">
   <div class="container" >
     <div class="row" style="padding-top: 20px">
       <div class="twelve columns">
@@ -43,7 +43,7 @@
         <button class="" onclick="loadData()" style="width:49%">Load Object URL</button>
       </div>
       <div class="twelve columns">
-        <button onclick="v.sceneManager.removeAllObjects()">Dispose Everything</button>
+        <button onclick="v.unloadAll()">Dispose Everything</button>
         View:
         <button onclick="v.interactions.rotateTo('top')">Top</button>
         <button onclick="v.interactions.rotateTo('front')">Front</button>

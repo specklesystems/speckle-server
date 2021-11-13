@@ -197,6 +197,13 @@ export default class Viewer extends EventEmitter {
     delete this.loaders[ url ]
   }
 
+  async unloadAll() {
+    for(let key of Object.keys(this.loaders)) {
+      await this.loaders[key].unload()
+      delete this.loaders[key]
+    }
+  }
+
   async applyFilter( filter ) {
     return await this.sceneManager.sceneObjects.applyFilter( filter )
   }
