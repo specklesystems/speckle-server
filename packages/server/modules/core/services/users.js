@@ -40,6 +40,7 @@ module.exports = {
 
   async createUser( user ) {
     user.id = crs( { length: 10 } )
+    user.email = user.email.toLowerCase()
 
     if ( user.password ) {
       if ( user.password.length < 8 ) throw new Error( 'Password to short; needs to be 8 characters or longer.' )
