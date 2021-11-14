@@ -183,8 +183,24 @@ export default class Viewer extends EventEmitter {
     this.sectionBox.toggle()
   }
 
+  sectionBoxOff() {
+    this.sectionBox.off()
+  }
+
+  sectionBoxOn() {
+    this.sectionBox.on()
+  }
+
+  zoomExtents( fit, transition ) {
+    this.interactions.zoomExtents( fit, transition )
+  }
+
   setProjectionMode( mode ) {
     this.cameraHandler.activeCam = mode
+  }
+
+  toggleCameras() {
+    this.cameraHandler.toggleCameras()
   }
 
   async loadObject( url, token ) {

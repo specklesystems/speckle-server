@@ -109,10 +109,18 @@ export default class CameraHandler {
     this.orthoCamera.top = height / 2
     this.orthoCamera.bottom = height / -2
     this.orthoCamera.far = this.camera.far
+    this.orthoCamera.near = 0.0001
     this.orthoCamera.updateProjectionMatrix()   
     this.orthoCamera.position.copy( this.camera.position )
     this.orthoCamera.quaternion.copy( this.camera.quaternion )
+    
     this.controls.camera = this.orthoCamera
+    
+    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
+    if( box.containsPoint( this.orthoCamera.position ) ) {
+      this.viewer.zoomExtents()
+    }
+    
     this.viewer.emit( 'projection-change', 'ortho' )
   }
 

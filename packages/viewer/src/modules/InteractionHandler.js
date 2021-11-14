@@ -122,7 +122,7 @@ export default class InteractionHandler {
 
   zoomToBox( box, fit = 1.2, transition = true ) {
     if( box.max.x === Infinity || box.max.x === -Infinity ) {
-      box = new THREE.Box3( new THREE.Vector3( -5,-5,-5 ), new THREE.Vector3( 5,5,5 ) )
+      box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
     }
     const fitOffset = fit
 
@@ -130,8 +130,8 @@ export default class InteractionHandler {
     let target = new THREE.Sphere()
     box.getBoundingSphere( target )
     target.radius = target.radius * fitOffset
-
-    this.viewer.cameraHandler.activeCam.controls.fitToSphere( target, transition )
+    
+    this.viewer.cameraHandler.controls.fitToSphere( target, transition )
 
     const maxSize = Math.max( size.x, size.y, size.z )
     const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.cameraHandler.camera.fov / 360 ) )
@@ -143,13 +143,22 @@ export default class InteractionHandler {
     this.viewer.cameraHandler.camera.near = distance / 100
     this.viewer.cameraHandler.camera.far = distance * 100
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
-    this.viewer.cameraHandler.orthoCamera.near = distance / 100
-    this.viewer.cameraHandler.orthoCamera.far = distance * 100
-    this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
+    
+    if( this.viewer.cameraHandler.activeCam.name === 'ortho' ) {
+      if( box.containsPoint( this.viewer.cameraHandler.orthoCamera.position ) ) {
+        let p = this.viewer.cameraHandler.orthoCamera.position
+        this.viewer.cameraHandler.controls.setPosition( p.x * target.radius, p.y * target.radius, p.z * target.radius, false )
+      }
+
+      this.viewer.cameraHandler.orthoCamera.near = distance / 100
+      this.viewer.cameraHandler.orthoCamera.far = distance * 100
+      this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
+    }
+    
   }
 
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {
-    this.viewer.controls.rotate( azimuthAngle, polarAngle, transition )
+    this.viewer.cameraHandler.controls.rotate( azimuthAngle, polarAngle, transition )
   }
 
   screenshot() {
