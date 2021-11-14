@@ -30,7 +30,7 @@ export default class Viewer extends EventEmitter {
     this.container.appendChild( this.renderer.domElement )
 
     
-    this.cameraHandler = new CameraHandler(this)
+    this.cameraHandler = new CameraHandler( this )
 
     this.reflections = reflections
     this.reflectionsNeedUpdate = true
@@ -183,6 +183,10 @@ export default class Viewer extends EventEmitter {
     this.sectionBox.toggle()
   }
 
+  setProjectionMode( mode ) {
+    this.cameraHandler.activeCam = mode
+  }
+
   async loadObject( url, token ) {
     let loader = new ViewerObjectLoader( this, url, token )
     this.loaders[ url ] = loader
@@ -195,7 +199,7 @@ export default class Viewer extends EventEmitter {
   }
 
   async unloadAll() {
-    for(let key of Object.keys(this.loaders)) {
+    for( let key of Object.keys( this.loaders ) ) {
       await this.loaders[key].unload()
       delete this.loaders[key]
     }
@@ -210,6 +214,6 @@ export default class Viewer extends EventEmitter {
   }
 
   dispose() {
-    // TODO: currently it's easier to simply refresh the page
+    // TODO: currently it's easier to simply refresh the page :)
   }
 }

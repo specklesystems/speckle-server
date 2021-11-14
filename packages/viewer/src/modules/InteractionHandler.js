@@ -197,7 +197,7 @@ export default class InteractionHandler {
   }
 
   getViews() {
-    return this.viewer.sceneManager.views.map( v => { return { name: v.applicationId, id: v.id } } )
+    return this.viewer.sceneManager.views.map( v => { return { name: v.applicationId, id: v.id, view: v } } )
   }
 
   setView( id, transition = true  ) {

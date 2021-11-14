@@ -53,9 +53,9 @@ export default class SelectionHelper extends EventEmitter {
       }, 100 ) )
     }
 
-    this.sectionBox = null
-    if ( typeof _options !== 'undefined' && _options.sectionBox ) {
-      this.sectionBox = _options.sectionBox
+    this.checkForSectionBoxInclusion = true
+    if ( typeof _options !== 'undefined' && _options.checkForSectionBoxInclusion ) {
+      this.sectionBox = _options.checkForSectionBoxInclusion
     }
 
     // Handle mouseclicks
@@ -139,7 +139,7 @@ export default class SelectionHelper extends EventEmitter {
     let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
 
     // filters objects in section box mode
-    if ( this.viewer.sectionBox.display.visible ) {
+    if ( this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion ) {
       let box = new THREE.Box3().setFromObject( this.viewer.sectionBox.cube )
       intersectedObjects = intersectedObjects.filter( obj => {
         return box.containsPoint( obj.point )

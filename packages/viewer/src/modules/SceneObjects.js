@@ -1,7 +1,5 @@
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
-// import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
-import debounce from 'lodash.debounce'
 import FilteringManager from './Filtering'
 
 /**

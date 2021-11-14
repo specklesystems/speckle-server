@@ -1,5 +1,5 @@
 import ObjectLoader from '@speckle/objectloader'
-import Converter from './Converter'
+import Converter from './converter/Converter'
 
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.

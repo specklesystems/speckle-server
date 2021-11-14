@@ -29,6 +29,7 @@ export default class SectionBox {
     // we're attaching the gizmo mover to this sphere in the box centre
     let sphere = new THREE.SphereGeometry( 0.01, 10, 10 )
     this.sphere = new THREE.Mesh( sphere, new THREE.MeshStandardMaterial( { color:0x00ffff } ) )
+    this.sphere.visible = false
     this.display.add( this.sphere )    
 
     // plane
@@ -61,18 +62,19 @@ export default class SectionBox {
     this.prevPosition = null
     this.attachedToBox = true
 
-    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.cube, hover: true } )
+    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.cube, hover: true, checkForSectionBoxInclusion: false } )
     this.selectionHelper.on( 'object-clicked', this._clickHandler.bind( this ) )
     this.selectionHelper.on( 'hovered', ( objs ) =>{
-      if( !this.attachedToBox ) return
-      if( objs.length === 0 ) {
-        this.controls.visible = false
-        this.viewer.needsRender = true
-      }
-      else if( objs.length !== 0 ) {
-        this.controls.visible = true
-        this.viewer.needsRender = true
-      }
+      // TODO: cannot get this to work reliably
+      // if( !this.attachedToBox ) return
+      // if( objs.length === 0 ) {
+      //   this.controls.visible = false
+      //   this.viewer.needsRender = true
+      // }
+      // else if( objs.length !== 0 ) {
+      //   this.controls.visible = true
+      //   this.viewer.needsRender = true
+      // }
     } )
 
     document.addEventListener( 'keydown', ( e ) => {

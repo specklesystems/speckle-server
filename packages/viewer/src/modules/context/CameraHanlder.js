@@ -53,10 +53,11 @@ export default class CameraHandler {
   }
 
   set activeCam( val ) {
-    if( val === 'perspective' )
+    if( val === 'perspective' ) 
       this.setPerspectiveCameraOn()
-    if( val === 'ortho' )
+    else if( val === 'ortho' )
       this.setOrthoCameraOn()
+    else throw new Error( `'${val}' projection mode is invalid. Try with 'perspective' or 'ortho'.` )
   }
 
   set enabled( val ) {
