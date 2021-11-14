@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
-import FilteringManager from './Filtering'
+import FilteringManager from './FilteringManager'
 
 /**
  * Container for the scene objects, to allow loading/unloading/filtering/coloring/grouping
