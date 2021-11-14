@@ -14,7 +14,7 @@ const {
   revokePermissionsStream
 } = require( '../../services/streams' )
 
-const { authorizeResolver, validateScopes, pubsub } = require( `${appRoot}/modules/shared` )
+const { authorizeResolver, validateScopes, validateServerRole, pubsub } = require( `${appRoot}/modules/shared` )
 const { saveActivity } = require( `${appRoot}/modules/activitystream/services` )
 
 // subscription events
@@ -41,6 +41,7 @@ module.exports = {
         throw new ForbiddenError( 'You are not authorised.' )
 
       if ( !stream.isPublic ) {
+        await validateServerRole( context, 'server:user' )
         await validateScopes( context.scopes, 'streams:read' )
         await authorizeResolver( context.userId, args.id, 'stream:reviewer' )
       }

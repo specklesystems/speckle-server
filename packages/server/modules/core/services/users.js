@@ -18,6 +18,17 @@ const countAdminUsers = async ( ) => {
   let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
   return parseInt ( count )
 } 
+const _ensureAtleastOneAdminRemains = async ( userId ) => {
+  if ( await countAdminUsers() === 1 ){
+    let currentAdmin = await Acl( ).where( { role: 'server:admin' } ).first()
+    if ( currentAdmin.userId == userId ) {
+      throw new Error( 'Cannot remove the last admin role from the server' )
+    }
+  }
+}
+
+const userByEmailQuery = email => Users( ).whereRaw( 'lower(email) = lower(?)',[ email ] )
+
 
 module.exports = {
 
@@ -36,7 +47,7 @@ module.exports = {
     }
     delete user.password
 
-    let usr = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
+    let usr = await userByEmailQuery( user.email ).select( 'id' ).first( )
     if ( usr ) throw new Error( 'Email taken. Try logging in?' )
 
     let res = await Users( ).returning( 'id' ).insert( user )
@@ -61,7 +72,7 @@ module.exports = {
   },
 
   async findOrCreateUser( { user, rawProfile } ) {
-    let existingUser = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
+    let existingUser = await userByEmailQuery( user.email ).select( 'id' ).first( )
 
     if ( existingUser ) {
       if ( user.suuid ) {
@@ -93,7 +104,7 @@ module.exports = {
   },
 
   async getUserByEmail( { email } ) {
-    let user = await Users( ).where( { email: email.toLowerCase() } ).select( '*' ).first( )
+    let user = await userByEmailQuery( email ).select( '*' ).first( )
     if ( !user ) return null
     delete user.passwordDigest
     return user
@@ -138,13 +149,14 @@ module.exports = {
   },
 
   async validatePasssword( { email, password } ) {
-    let { passwordDigest } = await Users( ).where( { email: email.toLowerCase() } ).select( 'passwordDigest' ).first( )
+    let { passwordDigest } = await userByEmailQuery( email ).select( 'passwordDigest' ).first( )
     return bcrypt.compare( password, passwordDigest )
   },
 
   async deleteUser( id ) {
     //TODO: check for the last admin user to survive
     debug( 'speckle:db' )( 'Deleting user ' + id )
+    await _ensureAtleastOneAdminRemains( id )
     let streams = await knex.raw(
       `
       -- Get the stream ids with only this user as owner
@@ -199,16 +211,15 @@ module.exports = {
 
   async unmakeUserAdmin( { userId } ){
     // dont delete last admin role
-    if ( await countAdminUsers() === 1 ){
-      let currentAdmin = await Acl( ).where( { role: 'server:admin' } ).first()
-      if ( currentAdmin.userId == userId ) {
-        throw new Error( 'Cannot remove the last admin role from the server' )
-      }
-    }
-
+    await _ensureAtleastOneAdminRemains( userId )
     await changeUserRole( { userId, role:'server:user' } )
   },
 
+  async archiveUser( { userId } ){
+    // dont change last admin to archived
+    await _ensureAtleastOneAdminRemains( userId )
+    await changeUserRole( { userId, role:'server:archived-user' } )
+  },
 
   async countUsers ( searchQuery=null ){
     let query = Users()

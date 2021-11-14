@@ -78,10 +78,9 @@ async function validateServerRole( context, requiredRole ) {
 
   if ( role === null ) new ApolloError( 'Invalid server role specified' )
   if ( myRole === null ) new ForbiddenError( 'You do not have the required server role (null)' )
-  if ( myRole.weight >= role.weight )
-    return true
-  else
-    throw new ForbiddenError( 'You do not have the required server role' )
+  if ( myRole.weight >= role.weight ) return true
+
+  throw new ForbiddenError( 'You do not have the required server role' )
 }
 
 /**

@@ -22,7 +22,6 @@ const { getStreamHistory, getCommitHistory, getObjectHistory, getUserHistory, ge
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
 describe( 'Server stats services @stats-services', function() {
-
   before( async function() {
     this.timeout( 10000 )
 
@@ -92,10 +91,9 @@ describe( 'Server stats services @stats-services', function() {
     expect( res[0].count ).to.be.a( 'number' )
     expect( res[0].count ).to.equal( params.numUsers )
   } )
-
 } )
 
-let addr = `http://localhost:3333`
+let addr
 
 describe( 'Server stats api @stats-api', function() {
   let testServer
@@ -132,7 +130,10 @@ describe( 'Server stats api @stats-api', function() {
     await knex.migrate.latest( )
 
     let { app } = await init( )
-    let { server } = await startHttp( app, 3333 )
+    let { server } = await startHttp( app, 0 )
+    app.on( 'appStarted', () => {
+      addr = `http://localhost:${server.address().port}`
+    } )
     testServer = server
 
     adminUser.id = await createUser( adminUser )
@@ -144,7 +145,6 @@ describe( 'Server stats api @stats-api', function() {
     notAdminUser.badToken = `Bearer ${( await createPersonalAccessToken( notAdminUser.id, 'test token user A', [ 'streams:read' ] ) )}`
 
     await seedDb( params )
-
   } )
 
   after( async function() {
@@ -153,11 +153,9 @@ describe( 'Server stats api @stats-api', function() {
   } )
 
   it( 'Should not get stats if user is not admin', async() => {
-
     let res = await sendRequest( adminUser.badToken, { query: fullQuery } )
     expect( res.body.errors ).to.exist
     expect( res.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
-
   } )
 
   it( 'Should not get stats if user is not admin even if the token has the correct scopes', async() => {
@@ -195,9 +193,7 @@ describe( 'Server stats api @stats-api', function() {
     expect( res.body.data.serverStats.streamHistory ).to.be.an( 'array' )
     expect( res.body.data.serverStats.commitHistory ).to.be.an( 'array' )
     expect( res.body.data.serverStats.userHistory ).to.be.an( 'array' )
-
   } )
-
 } )
 
 async function seedDb( { numUsers = 10, numStreams = 10, numObjects = 10, numCommits = 10 } = {} ) {
@@ -231,7 +227,6 @@ async function seedDb( { numUsers = 10, numStreams = 10, numObjects = 10, numCom
     } )
     commits.push( id )
   }
-
 }
 
 function createManyObjects( num, noise ) {

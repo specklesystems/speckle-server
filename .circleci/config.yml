@@ -33,14 +33,14 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: ams3_ci
+              only: ci/fileimport
   
 jobs:
   test_server:
     docker:
-      - image: 'circleci/node:12'
+      - image: 'cimg/node:14.18'
       - image: 'circleci/redis:6'
-      - image: 'circleci/postgres:12'
+      - image: 'cimg/postgres:12.8'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -97,6 +97,9 @@ jobs:
       - run:
           name: Build Webhook Service
           command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
+      - run:
+          name: Build FileImport Service
+          command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
       - run:
           name: Deploy
           command: |
