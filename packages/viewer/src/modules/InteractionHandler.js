@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import SectionBox from './SectionBox'
 import SelectionHelper from './SelectionHelper'
 
 export default class InteractionHandler {
@@ -26,11 +25,11 @@ export default class InteractionHandler {
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
 
-    document.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape' && this.viewer.mouseOverRenderer){
+    document.addEventListener( 'keydown', ( e ) => {
+      if( e.key === 'Escape' && this.viewer.mouseOverRenderer ) {
         this.deselectObjects()
       }
-    })
+    } )
   }
 
   _handleDoubleClick( objs ) {
@@ -47,8 +46,8 @@ export default class InteractionHandler {
   }
 
   _handleSelect( objs ) {
-    console.log(this.viewer.cameraHandler.orbiting )
-    if(this.viewer.cameraHandler.orbiting ) return
+    console.log( this.viewer.cameraHandler.orbiting )
+    if( this.viewer.cameraHandler.orbiting ) return
     if ( this.preventSelection ) return
 
     if ( objs.length === 0 ) {
@@ -100,34 +99,16 @@ export default class InteractionHandler {
     this.viewer.emit( 'select', this.selectedObjectsUserData )
   }
 
-  toggleSectionBox() {
-    this.sectionBox.toggle()
-    if ( this.sectionBox.display.visible ) {
-      if ( this.selectedObjects.children.length === 0 ) {
-        this.sectionBox.setBox( this.viewer.sceneManager.getSceneBoundingBox() )
-        this.zoomExtents()
-      }
-      else {
-        let box = new THREE.Box3().setFromObject( this.selectedObjects )
-        this.sectionBox.setBox( box )
-        this.zoomToBox( box )
-      }
-    } else {
-      this.preventSelection = false
-    }
-    this.viewer.needsRender = true
-  }
-
   zoomToObject( target, fit = 1.2, transition = true ) {
     const box = new THREE.Box3().setFromObject( target )
     this.zoomToBox( box, fit, transition )
   }
 
   zoomExtents( fit = 1.2, transition = true ) {
-    // if ( this.sectionBox.display.visible ) {
-    //   this.zoomToObject( this.sectionBox.boxMesh )
-    //   return
-    // }
+    if ( this.viewer.sectionBox.display.visible ) {
+      this.zoomToObject( this.viewer.sectionBox.cube )
+      return
+    }
     if ( this.viewer.sceneManager.sceneObjects.allObjects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box, fit, transition )
@@ -140,8 +121,8 @@ export default class InteractionHandler {
   }
 
   zoomToBox( box, fit = 1.2, transition = true ) {
-    if(box.max.x === Infinity || box.max.x === -Infinity) {
-      box = new THREE.Box3( new THREE.Vector3( -10,-10,-10 ), new THREE.Vector3( 10,10,10 ) )
+    if( box.max.x === Infinity || box.max.x === -Infinity ) {
+      box = new THREE.Box3( new THREE.Vector3( -5,-5,-5 ), new THREE.Vector3( 5,5,5 ) )
     }
     const fitOffset = fit
 
@@ -165,15 +146,6 @@ export default class InteractionHandler {
     this.viewer.cameraHandler.orthoCamera.near = distance / 100
     this.viewer.cameraHandler.orthoCamera.far = distance * 100
     this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
-  }
-
-  /**
-   * Allows camera to go "underneath" or not. By default, this function will set
-   * the max polar angle to Pi, allowing the camera to look from down upwards.
-   * @param {[type]} angle [description]
-   */
-  setMaxPolarAngle( angle = Math.PI ) {
-    this.viewer.controls.maxPolarAngle = angle
   }
 
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {

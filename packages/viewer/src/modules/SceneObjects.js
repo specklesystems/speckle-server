@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 // import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
 import debounce from 'lodash.debounce'
-import { filterAndColorObject } from './Filtering'
+import FilteringManager from './Filtering'
 
 /**
  * Container for the scene objects, to allow loading/unloading/filtering/coloring/grouping
@@ -38,6 +38,7 @@ export default class SceneObjects {
     this.groupedSolidObjects.name = 'groupedSolidObjects'
     this.allObjects.add( this.groupedSolidObjects )
 
+    this.filteringManager = new FilteringManager( this.viewer )
     this.filteredObjects = null
 
     this.appliedFilter = null
@@ -125,7 +126,7 @@ export default class SceneObjects {
 
     for ( let obj of threejsGroup.children ) {
       await this.asyncPause()
-      let filteredObj = filterAndColorObject( obj, filter )
+      let filteredObj = this.filteringManager.filterAndColorObject( obj, filter )
       if ( filteredObj )
         ret.add( filteredObj )
     }
@@ -248,9 +249,6 @@ export default class SceneObjects {
       let groupGeometry = BufferGeometryUtils.mergeBufferGeometries( materialIdToBufferGeometry[ materialId ] )
       await this.asyncPause()
       let groupMaterial = materialIdToMaterial[ materialId ]
-      // // console.log( this.viewer.sectionBox.planes )
-      // // groupMaterial.clippingPlanes = [ this.viewer.sectionBox.planes[0], this.viewer.sectionBox.planes[1] ]
-      // groupMaterial.clippingPlanes = [ ...this.viewer.sectionBox.planes ]
       let groupMesh = new THREE.Mesh( groupGeometry, groupMaterial )
       groupMesh.userData = null
       groupedObjects.add( groupMesh )

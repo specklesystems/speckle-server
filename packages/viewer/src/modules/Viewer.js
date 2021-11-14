@@ -1,18 +1,14 @@
 import * as THREE from 'three'
 
-import CameraControls from 'camera-controls'
-import { HOLD_EVENT_TYPE, ElementHold, KeyboardKeyHold } from 'hold-event'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ObjectManager from './SceneObjectManager'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import InteractionHandler from './InteractionHandler'
-import CameraHandler from './context/cameras'
+import CameraHandler from './context/CameraHanlder'
 
-import SectionBox from './SectionBoxNew'
+import SectionBox from './SectionBox'
 
 export default class Viewer extends EventEmitter {
 
@@ -64,6 +60,7 @@ export default class Viewer extends EventEmitter {
     this.sceneLights()
     this.animate()
     this.onWindowResize()
+    this.interactions.zoomExtents()
     this.needsRender = true
   }
 

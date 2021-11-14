@@ -109,7 +109,7 @@ export default class SceneObjectManager {
 
   }
 
-  addSolid( wrapper, addToScene = true ) {
+  addSolid( wrapper, _addToScene = true ) {
     // Do we have a defined material?
     if ( wrapper.meta.renderMaterial ) {
       let renderMat = wrapper.meta.renderMaterial
@@ -240,10 +240,6 @@ export default class SceneObjectManager {
     }
 
     return group
-  }
-
-  removeObject( id ) {
-    // TODO
   }
 
   async removeImportedObject( importedUrl ) {
