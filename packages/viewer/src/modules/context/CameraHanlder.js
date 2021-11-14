@@ -120,7 +120,6 @@ export default class CameraHandler {
     if( box.containsPoint( this.orthoCamera.position ) ) {
       this.viewer.zoomExtents()
     }
-    
     this.viewer.emit( 'projection-change', 'ortho' )
   }
 
@@ -132,7 +131,16 @@ export default class CameraHandler {
     this.controls.distance = this.previousDistance
     this.controls.camera = this.camera
     this.controls.zoomTo( 1 )
+    this.enableRotations()
     this.viewer.emit( 'projection-change', 'perspective' )
+  }
+
+  disableRotations() {
+    this.controls.mouseButtons.left = CameraControls.ACTION.TRUCK
+  }
+
+  enableRotations() {
+    this.controls.mouseButtons.left = CameraControls.ACTION.ROTATE
   }
 
   setupWASDControls() {

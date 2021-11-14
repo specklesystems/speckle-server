@@ -177,31 +177,60 @@ export default class InteractionHandler {
     const DEG180 = Math.PI
 
     switch ( side ) {
-    case 'front':
-      this.viewer.cameraHandler.activeCam.controls.rotateTo( 0, DEG90, transition )
-      break
+      case 'front':
+        this.viewer.cameraHandler.controls.rotateTo( 0, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'back':
-      this.viewer.cameraHandler.activeCam.controls.rotateTo( DEG180, DEG90, transition )
-      break
+      case 'back':
+        this.viewer.cameraHandler.controls.rotateTo( DEG180, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'up':
-    case 'top':
-      this.viewer.cameraHandler.activeCam.controls.rotateTo( 0, 0, transition )
-      break
+      case 'up':
+      case 'top':
+        this.viewer.cameraHandler.controls.rotateTo( 0, 0, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'down':
-    case 'bottom':
-      this.viewer.cameraHandler.activeCam.controls.rotateTo( 0, DEG180, transition )
-      break
+      case 'down':
+      case 'bottom':
+        this.viewer.cameraHandler.controls.rotateTo( 0, DEG180, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'right':
-      this.viewer.cameraHandler.activeCam.controls.rotateTo( DEG90, DEG90, transition )
-      break
+      case 'right':
+        this.viewer.cameraHandler.controls.rotateTo( DEG90, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'left':
-      this.viewer.cameraHandler.activeCam.controls.rotateTo( -DEG90, DEG90, transition )
-      break
+      case 'left':
+        this.viewer.cameraHandler.controls.rotateTo( -DEG90, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
+      
+      case '3d':
+      case '3D':
+      default: {
+        let box 
+        if ( this.viewer.sceneManager.sceneObjects.allObjects.children.length === 0 ) 
+          box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+        else 
+          box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
+        if( box.max.x === Infinity || box.max.x === -Infinity ) {
+            box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+        }
+        this.viewer.cameraHandler.controls.setPosition( box.max.x, box.max.y, box.max.z, transition )
+        this.zoomExtents()
+        this.viewer.cameraHandler.enableRotations()
+        break
+      }
     }
   }
 

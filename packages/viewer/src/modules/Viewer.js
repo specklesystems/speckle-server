@@ -199,7 +199,7 @@ export default class Viewer extends EventEmitter {
     this.cameraHandler.activeCam = mode
   }
 
-  toggleCameras() {
+  toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
   }
 
