@@ -301,9 +301,9 @@
       :dark="$vuetify.theme.dark"
       style="z-index: 200"
       class="overlay-abs"
+      :class=" fullScreen ? 'fullscreen' : '' "
       fixed
       mini-variant-width="56"
-      :fullscreen="$vuetify.breakpoint.smAndDown"
     >
       <v-toolbar class="transparent elevation-0" v-show="hasLoadedModel " link @click="maximized=!maximized">
         <v-toolbar-title class="space-grotesk primary--text" >
@@ -537,7 +537,7 @@ export default {
         //cosole.log(window.__viewer.sceneManager.objects)
         setTimeout(() => { // to avoid "ghost items"
           window.__viewer.sceneManager.objects.forEach(item=>{
-            cosole.log(item)
+            //cosole.log(item)
             this.hide(item,0) 
           })
         },1000)
