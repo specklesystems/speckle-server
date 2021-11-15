@@ -169,6 +169,7 @@ export default class SceneObjects {
       this.objectsInScene = this.allObjects
     } else {
       // A filter is to be applied
+      this.filteringManager.initFilterOperation()
 
       let newFilteredObjects = new THREE.Group()
       newFilteredObjects.name = 'FilteredObjects'
@@ -204,6 +205,8 @@ export default class SceneObjects {
     this.appliedFilter = filter
     this.viewer.needsRender = true
 
+
+    return { colorLegend: this.filteringManager.colorLegend }
   }
 
   async groupSolidObjects( threejsGroup ) {

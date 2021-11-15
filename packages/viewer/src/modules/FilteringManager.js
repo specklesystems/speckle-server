@@ -20,8 +20,10 @@ export default class FilteringManager {
       transparent: false,
       clippingPlanes: this.viewer.sectionBox.planes
     } )
-  }
 
+    this.colorLegend = {}
+  }
+  
   filterAndColorObject( obj, filter ) {
     if ( !filter )
       return obj.clone()
@@ -86,6 +88,9 @@ export default class FilteringManager {
       color = `hsl(${colorHue}, 50%, 30%)`
     }
   
+    if ( objValue !== undefined && objValue !== null )
+      this.colorLegend[ objValue.toString() ] = color
+
     let material = this.ColoredMaterial.clone()
     material.color = new THREE.Color( color )
     return material
@@ -141,6 +146,10 @@ export default class FilteringManager {
   
     // Can also filter by specific value
     return objValue === valueFilter
+  }
+
+  initFilterOperation() {
+    this.colorLegend = {}
   }
 }
 

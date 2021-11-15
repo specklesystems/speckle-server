@@ -236,8 +236,8 @@ export default class Viewer extends EventEmitter {
     return await this.sceneManager.sceneObjects.applyFilter( filter )
   }
 
-  async getObjectsProperties() {
-    return await this.sceneManager.sceneObjects.getObjectsProperties()
+  getObjectsProperties() {
+    return this.sceneManager.sceneObjects.getObjectsProperties()
   }
 
   dispose() {

@@ -8,7 +8,7 @@ import Converter from './converter/Converter'
 export default class ViewerObjectLoader {
 
 
-  constructor( parent, objectUrl, authToken, enableCahcing ) {
+  constructor( parent, objectUrl, authToken, enableCaching ) {
     this.objectUrl = objectUrl
     this.viewer = parent
     this.token = null
@@ -39,7 +39,7 @@ export default class ViewerObjectLoader {
       token: this.token,
       streamId: this.streamId,
       objectId: this.objectId,
-      options: { enableCahcing: enableCahcing }
+      options: { enableCaching: enableCaching }
     } )
 
     this.converter = new Converter( this.loader )
