@@ -207,6 +207,7 @@ export default class Viewer extends EventEmitter {
     let loader = new ViewerObjectLoader( this, url, token, enableCaching )
     this.loaders[ url ] = loader
     await loader.load()
+    return
   }
 
   async cancelLoad( url, unload = false ) {
@@ -220,6 +221,7 @@ export default class Viewer extends EventEmitter {
   async unloadObject( url ) {
     await this.loaders[ url ].unload()
     delete this.loaders[ url ]
+    return
   }
 
   async unloadAll() {
@@ -227,6 +229,7 @@ export default class Viewer extends EventEmitter {
       await this.loaders[key].unload()
       delete this.loaders[key]
     }
+    return
   }
 
   async applyFilter( filter ) {
