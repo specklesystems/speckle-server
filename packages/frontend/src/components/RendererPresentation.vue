@@ -531,13 +531,29 @@ export default {
         let views = window.__viewer.interactions.getViews()
         this.namedViews.push(...views)
       }
+      //console.log(newVal)
+      //console.log(this.allLoaded)
       if (newVal==100 && this.allLoaded ==1) {
+        //cosole.log(window.__viewer.sceneManager.objects)
         setTimeout(() => { // to avoid "ghost items"
           window.__viewer.sceneManager.objects.forEach(item=>{
+            cosole.log(item)
             this.hide(item,0) 
           })
         },1000)
       }
+    },
+    allLoaded(newVal){
+      if (newVal==1 && this.loadProgress ==100) {
+        //cosole.log(window.__viewer.sceneManager.objects)
+        setTimeout(() => { // to avoid "ghost items"
+          window.__viewer.sceneManager.objects.forEach(item=>{
+            //console.log(item)
+            this.hide(item,0) 
+          })
+        },1000)
+      }
+      
     },
     objectQuery(val){
       //console.log(val)
@@ -627,7 +643,7 @@ export default {
         throttle(
           function (args) {
             this.loadProgress = args.progress * 100
-            //this.zoomEx()
+            this.zoomEx()
           }.bind(this),
           200
         )
@@ -705,7 +721,7 @@ export default {
             
           }else if (i==range[range.length-1]) {
             temp.push(this.objectQuery.object.data) //add the last item
-            //console.log(temp)
+            console.log("LAST ROUND")
 
             temp.forEach(obj=>{ // all of uuid s
               //console.log(obj['@data'])
@@ -721,6 +737,8 @@ export default {
               } 
             })
             this.allLoaded = 1
+            console.log(this.allLoaded)
+            console.log(this.loadProgress)
           }
         }, i++ * 1000);
       } //) OLD
