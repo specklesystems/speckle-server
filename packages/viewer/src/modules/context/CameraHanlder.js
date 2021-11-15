@@ -116,10 +116,19 @@ export default class CameraHandler {
     
     this.controls.camera = this.orthoCamera
     
+    // fit the camera inside, so we don't have clipping plane issues. 
+    // WIP implementation
+    let camPos = this.orthoCamera.position
     let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
-    if( box.containsPoint( this.orthoCamera.position ) ) {
-      this.viewer.zoomExtents()
+    let sphere = new THREE.Sphere()
+    box.getBoundingSphere( sphere )
+
+    let dist = sphere.distanceToPoint( camPos )
+    if( dist < 0 ) {
+      dist *= -1
+      this.controls.setPosition( camPos.x + dist, camPos.y + dist, camPos.z + dist )
     }
+
     this.viewer.emit( 'projection-change', 'ortho' )
   }
 

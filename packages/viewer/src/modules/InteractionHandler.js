@@ -145,14 +145,17 @@ export default class InteractionHandler {
     this.viewer.cameraHandler.camera.updateProjectionMatrix()
     
     if( this.viewer.cameraHandler.activeCam.name === 'ortho' ) {
-      if( box.containsPoint( this.viewer.cameraHandler.orthoCamera.position ) ) {
-        let p = this.viewer.cameraHandler.orthoCamera.position
-        this.viewer.cameraHandler.controls.setPosition( p.x * target.radius, p.y * target.radius, p.z * target.radius, false )
-      }
-
-      this.viewer.cameraHandler.orthoCamera.near = distance / 100
       this.viewer.cameraHandler.orthoCamera.far = distance * 100
       this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
+      
+      // fit the camera inside, so we don't have clipping plane issues. 
+      // WIP implementation
+      let camPos = this.viewer.cameraHandler.orthoCamera.position
+      let dist = target.distanceToPoint( camPos )
+      if( dist < 0 ) {
+        dist *= -1
+        this.viewer.cameraHandler.controls.setPosition( camPos.x + dist, camPos.y + dist, camPos.z + dist )
+      }
     }
     
   }
