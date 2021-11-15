@@ -103,6 +103,7 @@ export default class ViewerObjectLoader {
   }
 
   async unload( ) {
+    this.cancel = true
     await this.viewer.sceneManager.removeImportedObject( this.objectUrl )
   }
 

@@ -214,6 +214,7 @@ export default class Viewer extends EventEmitter {
     if( unload ) {
       await this.unloadObject( url )
     }
+    return
   }
 
   async unloadObject( url ) {
