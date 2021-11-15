@@ -8,7 +8,7 @@ import Converter from './converter/Converter'
 export default class ViewerObjectLoader {
 
 
-  constructor( parent, objectUrl, authToken ) {
+  constructor( parent, objectUrl, authToken, enableCahcing ) {
     this.objectUrl = objectUrl
     this.viewer = parent
     this.token = null
@@ -38,7 +38,8 @@ export default class ViewerObjectLoader {
       serverUrl: this.serverUrl,
       token: this.token,
       streamId: this.streamId,
-      objectId: this.objectId
+      objectId: this.objectId,
+      options: { enableCahcing: enableCahcing }
     } )
 
     this.converter = new Converter( this.loader )
@@ -57,7 +58,7 @@ export default class ViewerObjectLoader {
       this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
       await this.existingAsyncPause
       this.existingAsyncPause = null
-      if (Date.now() - this.lastAsyncPause > 500) console.log("VObjLoader Event loop lag: ", Date.now() - this.lastAsyncPause)
+      if ( Date.now() - this.lastAsyncPause > 500 ) console.log( 'VObjLoader Event loop lag: ', Date.now() - this.lastAsyncPause )
     }
   }
 

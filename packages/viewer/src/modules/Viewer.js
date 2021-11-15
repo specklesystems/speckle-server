@@ -203,8 +203,8 @@ export default class Viewer extends EventEmitter {
     this.cameraHandler.toggleCameras()
   }
 
-  async loadObject( url, token ) {
-    let loader = new ViewerObjectLoader( this, url, token )
+  async loadObject( url, token, enableCaching = true ) {
+    let loader = new ViewerObjectLoader( this, url, token, enableCaching )
     this.loaders[ url ] = loader
     await loader.load()
   }
