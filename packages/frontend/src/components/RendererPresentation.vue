@@ -178,10 +178,16 @@
               </v-tooltip>
             </template>
             <v-list dense>
-              
-              <v-list-item v-for="vis in branches.names" @click="showVis(vis)"  
+
+              <v-list-item v-for="(vis,index) in branches.names" link style="height:40px" class="pr-0 mr-0"
               :style= "[!display.branchName.includes(vis) ? {} : { background: '#757575' }]">
-                <v-list-item-title>{{ vis }}</v-list-item-title>
+                <v-list-item-content   @click="showVis(vis)" >
+                  <v-list-item-title style="text-align: left;" >{{ vis }}</v-list-item-title>
+                </v-list-item-content>
+                  <v-btn small style="height: 100%; " 
+                    class="elevation-0" @click="addBranchAnimation(vis)">
+                    <v-icon :color= "branches.animated[index]==0 ? 'white' : 'primary'"  small>mdi-animation-outline</v-icon>
+                  </v-btn>
               </v-list-item>
             </v-list>
           </v-menu>
@@ -490,7 +496,7 @@ export default {
       status: 0,
       branchQuery: null,
       objectQuery: null,
-      branches: {names:[], url: [], uuid:[], objId:[], visible:[] },
+      branches: {names:[], id:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
       display: {index: [], branchName: [], message:"" },
       actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null },
       slidesSaved: null
@@ -714,6 +720,7 @@ export default {
             this.branches.visible.push(0) 
             this.branches.objId.push(obj.commits.items[0].referencedObject)
             this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
+            this.branches.animated.push(0)
 
             this.actions.objectId = obj.commits.items[0].referencedObject
             this.$apollo.queries.objectQuery.refetch()
@@ -767,14 +774,11 @@ export default {
       })
     },
     
-
-
-
     showVis(name){
       let index = this.branches.names.indexOf(name) 
       let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
 
-      ////////////////////////////////////////////// SHOW or upload DATA 
+      ////////////////////////////////////////////// SHOW DATA 
       if (!this.branches.visible[index] == 1  )  {
         console.log("show "+ name)
         this.branches.visible[index] = 1 
@@ -790,9 +794,15 @@ export default {
 
       this.branches.uuid[index].forEach(obj=>{
         window.__viewer.sceneManager.objects.forEach(item=>{
-          if (item.uuid == obj) this.hide(item, this.branches.visible[index]) //reverse visibility
+          if (item.uuid == obj) this.hide(item, this.branches.visible[index]) //set new visibility
         })
       })
+
+      /////// if branch is animated 
+      if (this.branches.visible[index] ==1 && this.branches.animated[index] == 1){
+        this.animate(this.branches.uuid[index])
+
+      }
 
     },
     hide(obj,i){
@@ -805,6 +815,7 @@ export default {
         obj.visible = true
         if (obj.scale) obj.scale.x=1, obj.scale.y=1, obj.scale.z=1
       }
+      window.__viewer.needsRender = true
     },
     slideSwitch(num,id){
       // update slider counter, display message, update branches (visibility)
@@ -846,8 +857,30 @@ export default {
           count +=1
         })
       }
+
+      ///// set selection
+      /*
+      if(this.slidesSaved[index] && this.slidesSaved[index].selected && this.slidesSaved[index].selected.length ){
+        this.selectedObjects = []
+          this.slidesSaved[index].selected.forEach(obj=> {
+            window.__viewer.sceneManager.objects.forEach(item=> {
+              if (item.uuid == obj)  this.selectedObjects.push(item)
+            })
+        })
+        this.$emit('selection', this.selectedObjects)
+        console.log(this.selectedObjects)
+      }
+      */
     },
     slideCreate(){
+      //console.log(this.selectedObjects)
+      /*
+      var selectedIds = []
+      this.selectedObjects.forEach((obj)=> {
+        selectedIds.push(obj.id)
+      })
+      */
+
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
       var len = 0
@@ -859,7 +892,8 @@ export default {
         target: contr._target, 
         branches: this.branches.names, 
         visibilities: this.branches.visible, 
-        msg: this.actions.currentMessage
+        msg: this.actions.currentMessage,
+        //selected: selectedIds,
       }
       this.slidesSaved.push( JSON.parse(JSON.stringify(slide)) )
       this.actions.currentMessage = ""
@@ -923,7 +957,8 @@ export default {
           count +=1
         })
       }
-      this.display.message = this.slidesSaved[index].msg
+      if (this.slidesSaved[index] && this.slidesSaved[index].msg) this.display.message = this.slidesSaved[index].msg
+      else this.display.message = ""
 
       let slides_draft = {status:'--draft--', json: JSON.stringify(this.slidesSaved) } // to eliminate "observer" type
 
@@ -944,6 +979,37 @@ export default {
         }
       })
       
+    },
+    addBranchAnimation(name){
+      let index = this.branches.names.indexOf(name) 
+      let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
+      ////////////////////////////////////////////// ADD DATA 
+      if (!this.branches.animated[index] == 1 ) this.branches.animated[index] = 1  
+      else this.branches.animated[index] = 0
+      console.log(this.branches.animated[index])
+    },
+    animate(objects){ 
+      /// ?? how to stop animation?
+      //      if (item.uuid == obj) this.hide(item, this.branches.visible[index]) 
+      let range = []
+      if(objects) range = Array.from(new Array(objects.length), (x, i) => i )
+      for (let i in range) {
+        setTimeout(() => {
+          i-=1
+          console.log(i)
+          // hide all objects in the layer
+          var count = 0
+          objects.forEach(obj=> {
+            window.__viewer.sceneManager.objects.forEach(item=>{
+              if (item.uuid == obj ) this.hide(item,0)
+              if (item.uuid == obj && count == i) this.hide(item,1)
+            })
+            count+=1
+          })
+
+        }, 
+        i++ * 200);
+      } 
     },
 
 
