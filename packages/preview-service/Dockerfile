@@ -2,7 +2,7 @@
 
 
 # build stage
-FROM node:14.16-buster-slim as build-stage
+FROM node:16.13-bullseye-slim as build-stage
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -31,7 +31,7 @@ RUN npm run build-fe
 
 
 
-FROM node:14.16.0-buster-slim as node
+FROM node:16.13-bullseye-slim as node
 
 RUN apt-get update && apt-get install -y \
   tini \

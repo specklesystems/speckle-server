@@ -7,7 +7,6 @@ version: 2.1
 # run jobs/workflows on correct package changes (not all...)
 
 workflows:
-  version: 2.1
   test:
     jobs:
       - test_server
@@ -38,7 +37,7 @@ workflows:
 jobs:
   test_server:
     docker:
-      - image: 'cimg/node:14.18'
+      - image: 'cimg/node:16.13'
       - image: 'circleci/redis:6'
       - image: 'cimg/postgres:12.8'
         environment:
@@ -51,7 +50,7 @@ jobs:
       PGDATABASE: speckle2_test
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
-      STRATEGY_LOCAL: true
+      STRATEGY_LOCAL: 'true'
       CANONICAL_URL: 'http://localhost:3000'
     # Note: some of these commands need to be run in the server package folder.
     steps:
