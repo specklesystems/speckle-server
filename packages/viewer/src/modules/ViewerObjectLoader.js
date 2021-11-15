@@ -46,6 +46,7 @@ export default class ViewerObjectLoader {
 
     this.lastAsyncPause = Date.now()
     this.existingAsyncPause = null
+    this.cancel = false
   }
 
   async asyncPause() {
@@ -69,6 +70,11 @@ export default class ViewerObjectLoader {
     let viewerLoads = 0
     let firstObjectPromise = null
     for await ( let obj of this.loader.getObjectIterator() ) {
+      if( this.cancel ) {
+        this.viewer.emit( 'load-progress', { progress: 1, id: this.objectId, url: this.objectUrl } ) // to hide progress bar, easier on the frontend
+        this.viewer.emit( 'load-cancelled', { id: this.objectId, url: this.objectUrl } )
+        return
+      }
       await this.converter.asyncPause()
       if ( first ) {
         firstObjectPromise = this.converter.traverseAndConvert( obj, async ( objectWrapper ) => {
@@ -98,5 +104,9 @@ export default class ViewerObjectLoader {
 
   async unload( ) {
     await this.viewer.sceneManager.removeImportedObject( this.objectUrl )
+  }
+
+  cancelLoad() {
+    this.cancel = true
   }
 }

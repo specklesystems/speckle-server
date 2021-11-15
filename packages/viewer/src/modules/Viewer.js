@@ -209,6 +209,13 @@ export default class Viewer extends EventEmitter {
     await loader.load()
   }
 
+  async cancelLoad( url, unload = false ) {
+    this.loaders[url].cancelLoad()
+    if( unload ) {
+      await this.unloadObject( url )
+    }
+  }
+
   async unloadObject( url ) {
     await this.loaders[ url ].unload()
     delete this.loaders[ url ]
