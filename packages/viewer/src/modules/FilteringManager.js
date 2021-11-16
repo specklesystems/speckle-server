@@ -32,12 +32,11 @@ export default class FilteringManager {
     {
       if ( filter.ghostOthers && obj.type === 'Mesh' ) {
         let clone = obj.clone()
-        // clone.material = WireframeMaterial
         clone.material = obj.material.clone()
         clone.material.clippingPlanes = null
         clone.material.transparent = true
         clone.material.opacity = 0.05
-        // clone.userData = null
+        clone.userData = { hidden: true }
         return clone
       }
       return null

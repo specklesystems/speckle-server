@@ -6,10 +6,11 @@ export default class InteractionHandler {
   constructor( viewer ) {
     this.viewer = viewer
     this.preventSelection = false
-    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.viewer.sceneManager.userObjects, sectionBox: this.sectionBox } )
+    
+    this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: false } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
-
+    // console.log(this.viewer.sceneManager.allObjects)
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
     this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
@@ -46,9 +47,8 @@ export default class InteractionHandler {
   }
 
   _handleSelect( objs ) {
-    console.log( this.viewer.cameraHandler.orbiting )
     if( this.viewer.cameraHandler.orbiting ) return
-    if ( this.preventSelection ) return
+    if( this.preventSelection ) return
 
     if ( objs.length === 0 ) {
       this.deselectObjects()
@@ -90,6 +90,12 @@ export default class InteractionHandler {
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
     this.viewer.emit( 'select', this.selectedObjectsUserData )
+  }
+
+  getParentBlock( block ) {
+    if( block.parent instanceof THREE.Group && block.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) )
+      return this.getParentBlock( block.parent )
+    else return block
   }
 
   deselectObjects() {

@@ -12,6 +12,7 @@ export default class SectionBox {
 
     this.dragging = false
     this.display = new THREE.Group()
+    this.display.name = 'SectionBox'
     this.viewer.scene.add( this.display )
 
     // box
@@ -62,7 +63,7 @@ export default class SectionBox {
     this.prevPosition = null
     this.attachedToBox = true
 
-    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.cube, hover: true, checkForSectionBoxInclusion: false } )
+    this.selectionHelper = new SelectionHelper( this.viewer, { subset: [ this.cube ], hover: false, checkForSectionBoxInclusion: false } )
     this.selectionHelper.on( 'object-clicked', this._clickHandler.bind( this ) )
     this.selectionHelper.on( 'hovered', ( objs ) =>{
       // TODO: cannot get this to work reliably

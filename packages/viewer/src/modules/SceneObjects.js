@@ -216,10 +216,11 @@ export default class SceneObjects {
         acc.push( ...this.flattenGroup( child ) )
         
       } else {
-        acc.push( child )
+        acc.push( child.clone() )
       }
     }
     for( let element of acc ) { 
+      element.geometry = element.geometry.clone()
       element.geometry.applyMatrix4( group.matrix )
     }
     return acc
@@ -234,6 +235,7 @@ export default class SceneObjects {
       let meshes = []
       if( obj instanceof THREE.Group ) {    
         meshes = this.flattenGroup( obj )
+
       } else {
         meshes = [ obj ]
       }

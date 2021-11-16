@@ -31,7 +31,6 @@ export default class SelectionHelper extends EventEmitter {
       // doesn't feel good when debounced, might be necessary tho
       this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
         let hovered = this.getClickedObjects( e )
-
         // dragging event, this shouldn't be under the "hover option"
         if ( this.pointerDown ) {
           this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
@@ -129,15 +128,13 @@ export default class SelectionHelper extends EventEmitter {
   getClickedObjects( e ) {
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.cameraHandler.activeCam.camera )
-
-    let targetObjects
-    if ( this.subset ) {
-      targetObjects = this._getGroupChildren( this.subset )
-    } else {
-      targetObjects = this.viewer.sceneManager.filteredObjects // .filter( obj => !!obj.userData )
-    }
+    let targetObjects = this.subset ? this.subset : this.viewer.sceneManager.filteredObjects
+    
+    console.log(this.name, targetObjects)
+    
     let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
-
+    
+    console.log( this.name, intersectedObjects )
     // filters objects in section box mode
     if ( this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion ) {
       let box = new THREE.Box3().setFromObject( this.viewer.sectionBox.cube )
