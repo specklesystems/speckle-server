@@ -2,6 +2,7 @@
 
   <v-sheet style="height: 100%; position: relative" class="transparent">
 
+
     <v-menu v-if="!embeded" bottom left close-on-click offset-y>
       <template #activator="{ on: onMenu, attrs: menuAttrs }">
         <v-tooltip left color="primary">
@@ -62,7 +63,7 @@
               small
               @click="load()"
             >
-              <v-icon>mdi-play</v-icon>
+              <v-icon>mdi-play-pause</v-icon>
             </v-btn>
           </div>
         </div>
@@ -174,24 +175,26 @@
                     <v-icon small>mdi-layers-triple</v-icon>
                   </v-btn>
                 </template>
-                Select Layer
+                Select/animate Layer 
               </v-tooltip>
             </template>
+            
             <v-list dense>
-
-              <v-list-item v-for="(vis,index) in branches.names" link style="height:40px" class="pr-0 mr-0"
+              <v-list-item v-for="(vis,index) in branches.names" link style="height:40px; " class="pr-0 mr-0 pt-0 mb-0"
               :style= "[!display.branchName.includes(vis) ? {} : { background: '#757575' }]">
-                <v-list-item-content   @click="showVis(vis)" >
-                  <v-list-item-title style="text-align: left;" >{{ vis }}</v-list-item-title>
+                <v-list-item-content @click="showVis(vis)" >
+                  <v-list-item-title style="text-align: left;"  >{{ vis }}</v-list-item-title>
                 </v-list-item-content>
-                  <v-btn small style="height: 100%; " 
-                    class="elevation-0" @click="addBranchAnimation(vis)">
-                    <v-icon :color= "branches.animated[index]==0 ? 'white' : 'primary'"  small>mdi-animation-outline</v-icon>
+
+                <v-btn small style="height: 100%;" class="elevation-0; rounded-0" @click="addBranchAnimation(vis)"
+                :style="[branches.animated[index]==0 ? {} : { background: '#757575' }]">
+                    <v-icon style="opacity: 0.9" :color= "branches.animated[index]==0 ? 'white' : 'white'" small >
+                      mdi-animation-outline</v-icon>
                   </v-btn>
+                  
               </v-list-item>
             </v-list>
           </v-menu>
-
           <v-tooltip top >
             <template #activator="{ on, attrs }">
               <v-btn  v-bind="attrs" small @click="slideSwitch(-1,-100)" v-on="on">
@@ -298,6 +301,7 @@
       </v-card>
     </div>
 
+
     <v-navigation-drawer 
       permanent
       :mini-variant="maximized && loadProgress==100 && allLoaded ==1 ? false : true"
@@ -334,7 +338,7 @@
               </v-list-item-title>
             <v-list-item-subtitle style="text-align: left;" class="caption">{{slide.msgSecondary}}</v-list-item-subtitle>
           </v-list-item-content>
-          <v-btn small style="height: 100%; " class="elevation-0" v-if="status==0" @click="slideDelete(slide.index)">
+          <v-btn small style="height: 100%; " class="elevation-0 rounded-0" v-if="status==0" @click="slideDelete(slide.index)">
             <v-icon color="error" small>mdi-delete-outline</v-icon>
           </v-btn>
         </v-list-item>
@@ -370,7 +374,6 @@
       </template>
     </v-navigation-drawer>
 
-    
   </v-sheet>
 </template>
 <script>
@@ -706,6 +709,7 @@ export default {
           
           console.log(i-1)
           var obj = this.branchQuery[i-1]
+          //this.loadProgress = 90
           //// fill all the branch lists and upload objects
           if (obj && !obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
 
@@ -748,7 +752,7 @@ export default {
             console.log(this.loadProgress)
           }
         }, i++ * 1000);
-      } //) OLD
+      } 
 
       console.log(this.branches)
       this.loadProgress = 100
@@ -792,17 +796,18 @@ export default {
       }
       console.log("Displayed branches: " + this.display.branchName.toString())
 
-      this.branches.uuid[index].forEach(obj=>{
-        window.__viewer.sceneManager.objects.forEach(item=>{
-          if (item.uuid == obj) this.hide(item, this.branches.visible[index]) //set new visibility
-        })
-      })
-
       /////// if branch is animated 
       if (this.branches.visible[index] ==1 && this.branches.animated[index] == 1){
+        console.log("show and animate")
         this.animate(this.branches.uuid[index])
-
+      }else {
+        this.branches.uuid[index].forEach(obj=>{
+          window.__viewer.sceneManager.objects.forEach(item=>{
+            if (item.uuid == obj) this.hide(item, this.branches.visible[index]) //set new visibility
+          })
+        })
       }
+      
 
     },
     hide(obj,i){
@@ -986,7 +991,21 @@ export default {
       ////////////////////////////////////////////// ADD DATA 
       if (!this.branches.animated[index] == 1 ) this.branches.animated[index] = 1  
       else this.branches.animated[index] = 0
-      console.log(this.branches.animated[index])
+      //console.log(this.branches.animated[index])
+      if (this.branches.visible[index] == 1 && this.branches.animated[index] == 1){
+        this.branches.uuid[index].forEach(obj=>{
+          window.__viewer.sceneManager.objects.forEach(item=>{
+            if (item.uuid == obj) this.hide(item, 0) //set new visibility
+          })
+        })
+        this.animate(this.branches.uuid[index])
+      } else if (this.branches.visible[index] == 1 && this.branches.animated[index] == 0){
+        this.branches.uuid[index].forEach(obj=>{
+          window.__viewer.sceneManager.objects.forEach(item=>{
+            if (item.uuid == obj) this.hide(item, 1) //set new visibility
+          })
+        })
+      }
     },
     animate(objects){ 
       /// ?? how to stop animation?
