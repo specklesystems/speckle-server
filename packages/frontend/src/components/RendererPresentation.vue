@@ -673,19 +673,46 @@ export default {
       }
       else this.slidesSaved = []
       console.log(this.slidesSaved)
+
+      var listBranchesInPresentation = []
+      var listBranchesInPresentationQuery = []
+      if (this.status==1) {
+        this.slidesSaved.forEach(obj=>{
+          let count = 0
+          obj.branchesIds.forEach(item=>{
+            if (obj.visibilities && obj.visibilities[count]==1 && !listBranchesInPresentation.includes(item)) listBranchesInPresentation.push(item)
+            count+=1
+          })
+        })
+      }
+      console.log(listBranchesInPresentation)
+      
+      this.branchQuery.forEach(obj=>{
+        if (listBranchesInPresentation.includes(obj.id)) listBranchesInPresentationQuery.push(obj)
+      })
+      
+      console.log(listBranchesInPresentationQuery)
+
+
       this.hasLoadedModel = true
       window.__viewerLastLoadedUrl = this.objectExistingUrl
       let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
 
       /////////////////////////////////////////////////////  getting objects and uuid
 
-      let range = Array.from(new Array(this.branchQuery.length+2), (x, i) => i )
+      let branchNumber = 0
+      if (this.status ==0) branchNumber = this.branchQuery.length
+      else branchNumber = listBranchesInPresentationQuery.length
+
+      let range = Array.from(new Array(branchNumber + 2), (x, i) => i )
       var temp = []
       for (let i in range){
         setTimeout(() => {
           i-=1
           console.log(i)
-          var obj = this.branchQuery[i]
+          var obj = null
+          if (this.status ==0) obj = this.branchQuery[i]
+          else obj = listBranchesInPresentationQuery[i]
           //// fill all the branch lists and upload objects
           if (obj && !obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
 
@@ -706,10 +733,8 @@ export default {
             this.branches.objId.push(obj.commits.items[0].referencedObject)
             this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
             this.branches.animated.push(0)
-          
-            
+
             this.loadProgress = 90
-            
             
           }else if (i==range[range.length-1]) {
             temp.push(this.objectQuery.object.data) //add the last item
@@ -729,6 +754,7 @@ export default {
                   })
                 })
               } 
+              // if uuids either not found or are the same as in the previous braanch record
               if (count_parallel>0 && this.branches.uuid[count_parallel] && (!this.branches.uuid[count_parallel][0] || ( this.branches.uuid[count_parallel].length==this.branches.uuid[count_parallel-1].length && this.branches.uuid[count_parallel][0]==this.branches.uuid[count_parallel-1][0])) ){
                 this.branches.names.splice(count_parallel,1)
                 this.branches.ids.splice(count_parallel,1)
@@ -845,8 +871,18 @@ export default {
       var count = 0
       this.branches.visible.forEach(br=>{ 
         if (br == 1) this.showVis(this.branches.names[count])
-        if(this.slidesSaved[index].animated && this.slidesSaved[index].animated[count]) this.branches.animated[count] = this.slidesSaved[index].animated[count]
-        else this.branches.animated[count] = 0
+        ///// SLIDES LIST OF BRANCHES IS NOT SYNC WITH CURRENTLY LOADED BRANCHES
+        let sub_count = 0
+        this.slidesSaved[index].branchesIds.forEach(slideItem=>{
+          if (this.branches.ids[count] == slideItem){
+            if(this.slidesSaved[index].animated && this.slidesSaved[index].animated[sub_count]) this.branches.animated[count] = this.slidesSaved[index].animated[sub_count]
+            else this.branches.animated[count] = 0
+            if(this.slidesSaved[index].animated) console.log(this.slidesSaved[index].animated[sub_count])
+            if(this.slidesSaved[index].animated) console.log(this.branches.names[count] + "  animated: " + this.branches.animated[count] )
+          }
+          sub_count+=1
+        })
+        
         count +=1
        })
       // set camera view 
