@@ -370,4 +370,12 @@ export default class SectionBox {
     this.viewer.needsRender = true
   }
 
+  displayOff() {
+    this.display.visible = false
+  }
+
+  displayOn() {
+    this.display.visible = true
+  }
+
 }

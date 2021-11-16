@@ -10,9 +10,9 @@ export default class FilteringManager {
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 0.04,
-      wireframe: true,
-      clippingPlanes: this.viewer.sectionBox.planes
+      wireframe: true
     } )
+    // console.log(this.viewer.sectionBox.planes)
     
     this.ColoredMaterial = new THREE.MeshStandardMaterial( {
       color: 0x7080A0,
@@ -33,6 +33,7 @@ export default class FilteringManager {
         let clone = obj.clone()
         // clone.material = WireframeMaterial
         clone.material = obj.material.clone()
+        clone.material.clippingPlanes = null
         clone.material.transparent = true
         clone.material.opacity = 0.05
         clone.userData = null
@@ -45,8 +46,10 @@ export default class FilteringManager {
     if ( filter.colorBy ) {
       if ( filter.colorBy.type === 'category' ) {
         clone.material = this.colorWithCategory( obj.userData, filter.colorBy )
+        clone.material.clippingPlanes = this.viewer.sectionBox.planes
       } else if ( filter.colorBy.type === 'gradient' ) {
         clone.material = this.colorWithGradient( obj, filter.colorBy )
+        clone.material.clippingPlanes = this.viewer.sectionBox.planes
       }
     }
     return clone

@@ -165,7 +165,17 @@ export default class InteractionHandler {
   }
 
   screenshot() {
-    return this.viewer.renderer.domElement.toDataURL( 'image/png' )
+    let sectionBoxVisible = this.viewer.sectionBox.display.visible
+    if( sectionBoxVisible ) { 
+      this.viewer.sectionBox.displayOff()
+      this.viewer.needsRender = true
+      this.viewer.render()
+    }
+    const screenshot =  this.viewer.renderer.domElement.toDataURL( 'image/png' )
+    if( sectionBoxVisible ) {
+      this.viewer.sectionBox.displayOn()
+    }
+    return screenshot
   }
 
   /**
