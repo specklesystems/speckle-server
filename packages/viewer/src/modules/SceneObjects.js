@@ -209,35 +209,61 @@ export default class SceneObjects {
     return { colorLegend: this.filteringManager.colorLegend }
   }
 
+  flattenGroup( group ) {
+    let acc = []
+    for( let child of group.children ) {
+      if( child instanceof THREE.Group ) {
+        acc.push( ...this.flattenGroup( child ) )
+        
+      } else {
+        acc.push( child )
+      }
+    }
+    for( let element of acc ) { 
+      element.geometry.applyMatrix4( group.matrix )
+    }
+    return acc
+  }
+
   async groupSolidObjects( threejsGroup ) {
     let materialIdToBufferGeometry = {}
     let materialIdToMaterial = {}
     let materialIdToMeshes = {}
 
-    for ( let mesh of threejsGroup.children ) {
-      let m = mesh.material
-      let materialId = `${m.type}/${m.vertexColors}/${m.color.toJSON()}/${m.side}/${m.transparent}/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}`
-
-      if ( !( materialId in materialIdToBufferGeometry ) ) {
-        materialIdToBufferGeometry[ materialId ] = []
-        materialIdToMaterial[ materialId ] = m
-        materialIdToMeshes[ materialId ] = []
+    for ( let obj of threejsGroup.children ) {
+      let meshes = []
+      if( obj instanceof THREE.Group ) {    
+        meshes = this.flattenGroup( obj )
+      } else {
+        meshes = [ obj ]
       }
 
-      materialIdToBufferGeometry[ materialId ].push( mesh.geometry )
-      materialIdToMeshes[ materialId ].push( mesh )
+      for( let mesh of meshes ) {
+        let m = mesh.material
+        let materialId = `${m.type}/${m.vertexColors}/${m.color.toJSON()}/${m.side}/${m.transparent}/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}`
 
-      // Max 1024 objects per group (mergeBufferGeometries is sync and can freeze for large data)
-      if ( materialIdToBufferGeometry[ materialId ].length >= 1024 ) {
-        let archivedMaterialId = `arch//${materialId}//${mesh.id}`
-        materialIdToBufferGeometry[ archivedMaterialId ] = materialIdToBufferGeometry[ materialId ]
-        materialIdToMaterial[ archivedMaterialId ] = materialIdToMaterial[ materialId ]
-        materialIdToMeshes[ archivedMaterialId ] = materialIdToMeshes[ materialId ]
-        delete materialIdToBufferGeometry[ materialId ]
-        delete materialIdToMaterial[ materialId ]
-        delete materialIdToMeshes[ materialId ]
+        if ( !( materialId in materialIdToBufferGeometry ) ) {
+          materialIdToBufferGeometry[ materialId ] = []
+          materialIdToMaterial[ materialId ] = m
+          materialIdToMeshes[ materialId ] = []
+        }
+
+        materialIdToBufferGeometry[ materialId ].push( mesh.geometry )
+        materialIdToMeshes[ materialId ].push( mesh )
+
+        // Max 1024 objects per group (mergeBufferGeometries is sync and can freeze for large data)
+        if ( materialIdToBufferGeometry[ materialId ].length >= 1024 ) {
+          let archivedMaterialId = `arch//${materialId}//${mesh.id}`
+          materialIdToBufferGeometry[ archivedMaterialId ] = materialIdToBufferGeometry[ materialId ]
+          materialIdToMaterial[ archivedMaterialId ] = materialIdToMaterial[ materialId ]
+          materialIdToMeshes[ archivedMaterialId ] = materialIdToMeshes[ materialId ]
+          delete materialIdToBufferGeometry[ materialId ]
+          delete materialIdToMaterial[ materialId ]
+          delete materialIdToMeshes[ materialId ]
+        }
       }
     }
+    
     
     let groupedObjects = new THREE.Group()
     groupedObjects.name = 'GroupedSolidObjects'

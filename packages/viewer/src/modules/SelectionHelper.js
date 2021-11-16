@@ -134,7 +134,7 @@ export default class SelectionHelper extends EventEmitter {
     if ( this.subset ) {
       targetObjects = this._getGroupChildren( this.subset )
     } else {
-      targetObjects = this.viewer.sceneManager.filteredObjects.filter( obj => !!obj.userData )
+      targetObjects = this.viewer.sceneManager.filteredObjects // .filter( obj => !!obj.userData )
     }
     let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
 

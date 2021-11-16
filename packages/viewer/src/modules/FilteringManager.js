@@ -27,6 +27,7 @@ export default class FilteringManager {
   filterAndColorObject( obj, filter ) {
     if ( !filter )
       return obj.clone()
+    
     if ( !this.passesFilter( obj.userData, filter.filterBy ) )
     {
       if ( filter.ghostOthers && obj.type === 'Mesh' ) {
@@ -36,12 +37,13 @@ export default class FilteringManager {
         clone.material.clippingPlanes = null
         clone.material.transparent = true
         clone.material.opacity = 0.05
-        clone.userData = null
+        // clone.userData = null
         return clone
       }
       return null
     }
 
+    // TODO: Cristi rezolva jmecheria
     let clone = obj.clone()
     if ( filter.colorBy ) {
       if ( filter.colorBy.type === 'category' ) {
