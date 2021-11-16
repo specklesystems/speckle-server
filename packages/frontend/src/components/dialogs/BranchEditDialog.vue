@@ -14,7 +14,9 @@
         <v-spacer></v-spacer>
         <v-btn icon @click="show = false"><v-icon>mdi-close</v-icon></v-btn>
       </v-toolbar>
-
+      <v-alert v-show="error" dismissible type="error">
+        {{ error }}
+      </v-alert>
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
         <v-card-text>
           <v-text-field
@@ -25,6 +27,10 @@
             required
             autofocus
           ></v-text-field>
+          <p class="caption">
+            Tip: you can create nested branches by using "/" as a separator in their names. E.g.,
+            "mep/stage-1" or "arch/sketch-design".
+          </p>
           <v-textarea v-model="branch.description" rows="2" label="Description"></v-textarea>
         </v-card-text>
         <v-card-actions>
@@ -79,7 +85,8 @@ export default {
       ],
       isEdit: false,
       pendingDelete: false,
-      allBranchNames: []
+      allBranchNames: [],
+      error: null
     }
   },
   apollo: {
@@ -125,6 +132,7 @@ export default {
   methods: {
     async deleteBranch() {
       this.loading = true
+      this.error = null
       this.$matomo && this.$matomo.trackPageView('branch/delete')
       try {
         await this.$apollo.mutate({
@@ -141,16 +149,18 @@ export default {
           }
         })
       } catch (e) {
-        console.log(e)
+        this.error = e.message
       }
 
       this.loading = false
-
-      this.resolve({
-        result: true,
-        deleted: true
-      })
-      this.dialog = false
+      this.showDelete = false
+      if (!this.error) {
+        this.resolve({
+          result: true,
+          deleted: true
+        })
+        this.dialog = false
+      }
     },
     open(branch) {
       this.dialog = true

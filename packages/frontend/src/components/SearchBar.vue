@@ -101,8 +101,7 @@ export default {
       this.streams.items = []
       this.search = ''
 
-      if (val && this.gotostreamonclick)
-        this.$router.push({ name: 'stream', params: { stream: val } })
+      if (val && this.gotostreamonclick) this.$router.push(`/streams/${val.id}`)
     },
     search(val) {
       if (val === '42') this.liff = true

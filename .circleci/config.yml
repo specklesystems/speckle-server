@@ -27,14 +27,14 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
-  cristi-ci-test:
+  ci-test:
     jobs:
       - docker_build_and_deploy:
           context: main-builds
           filters:
             branches:
-              only: cristi/ci-new-dep
-
+              only: ams3_ci
+  
 jobs:
   test_server:
     docker:
@@ -61,11 +61,17 @@ jobs:
           working_directory: 'packages/server'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
       - run:
-          command: 'npm run test'
+          command: 'npm run test:report'
           working_directory: 'packages/server'
       - run:
           command: 'bash <(curl -s https://codecov.io/bash)'
           working_directory: 'packages/server'
+
+      - store_test_results:
+          path: packages/server/reports
+
+      - store_artifacts:
+          path: packages/server/reports/test-results.xml
 
   docker_build_and_deploy:
     docker:
@@ -98,8 +104,14 @@ jobs:
             if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_RELEASE} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=AMS3 K8S_NAMESPACE=${K8S_NAMESPACE_AMS3_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
             else
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_LATEST} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_LATEST} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_3_LATEST} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_4_LATEST} ./.circleci/deploy_in_new_setup.sh
+              env K8S_CLUSTER=AMS3 K8S_NAMESPACE=${K8S_NAMESPACE_AMS3_1_LATEST} ./.circleci/deploy_in_new_setup.sh
             fi
       - run:
           name: Test deployment
