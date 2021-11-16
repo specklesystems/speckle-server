@@ -58,34 +58,41 @@ export default class InteractionHandler {
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
     
     let selType = objs[0].object.type
-    
+    let rootBlock = null
     if ( objs[0].object.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
       selType = 'Block'
+      rootBlock = this.getParentBlock( objs[0].object.parent )
     }
 
     switch ( selType ) {
-    case 'Block': 
-      // TODO: maybe just leave the bounding box for now
-      break
-    case 'Mesh':
-      this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
-      break
-    case 'Line':
-      this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
-      break
-    case 'Point':
-      console.warn( 'Point selection not implemented.' )
-      return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
+      case 'Block': {
+        let blockObjs = this.getBlockObjectsCloned( rootBlock )
+        for( let child of blockObjs ) {          
+          child.material = this.selectionMeshMaterial
+          this.selectedObjects.add( child )
+        }
+        break
+      }
+      case 'Mesh':
+        this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        break
+      case 'Line':
+        this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        break
+      case 'Point':
+        console.warn( 'Point selection not implemented.' )
+        return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
     }
-
-    this.selectedObjectsUserData.push( objs[0].object.userData )
 
     let box 
     if ( selType === 'Block' ) {
-      box = new THREE.BoxHelper( objs[0].object.parent, 0x23F3BD )
+      this.selectedObjectsUserData.push( rootBlock.userData )
+      box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
     } else {
+      this.selectedObjectsUserData.push( objs[0].object.userData )
       box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     }
+    
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
@@ -93,9 +100,24 @@ export default class InteractionHandler {
   }
 
   getParentBlock( block ) {
-    if( block.parent instanceof THREE.Group && block.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) )
+    if( block.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
       return this.getParentBlock( block.parent )
+    }
     else return block
+  }
+
+  getBlockObjectsCloned( block, objects = [] ) {
+    for( let child of block.children ) {
+      if( child instanceof THREE.Group ) {
+        objects.push( ...this.getBlockObjectsCloned( child ) )
+      } else {
+        objects.push( child.clone() )
+      }
+    }
+    for( let child of objects ) {
+      child.geometry = child.geometry.clone().applyMatrix4( block.matrix )
+    }
+    return objects
   }
 
   deselectObjects() {

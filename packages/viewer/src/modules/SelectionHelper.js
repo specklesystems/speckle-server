@@ -130,11 +130,8 @@ export default class SelectionHelper extends EventEmitter {
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.cameraHandler.activeCam.camera )
     let targetObjects = this.subset ? this.subset : this.viewer.sceneManager.filteredObjects
     
-    console.log(this.name, targetObjects)
-    
     let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
     
-    console.log( this.name, intersectedObjects )
     // filters objects in section box mode
     if ( this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion ) {
       let box = new THREE.Box3().setFromObject( this.viewer.sectionBox.cube )
