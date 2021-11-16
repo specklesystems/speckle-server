@@ -147,7 +147,8 @@ export default class Viewer extends EventEmitter {
       this.needsRender = false
       if ( this.stats ) this.stats.begin()
       this.render()
-      document.getElementById( 'info-draws' ).textContent = '' + this.renderer.info.render.calls
+      if(this.stats && document.getElementById( 'info-draws' ))
+        document.getElementById( 'info-draws' ).textContent = '' + this.renderer.info.render.calls
       if ( this.stats ) this.stats.end()
     }
 

@@ -44,7 +44,8 @@
       :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}`"
     >
       <v-fade-transition>
-        <div v-show="!hasLoadedModel" class="overlay cover-all">
+        <!-- <div v-show="!hasLoadedModel" class="overlay cover-all"> -->
+        <div v-show="loadProgress < 99" class="overlay cover-all">
           <transition name="fade">
             <div v-show="hasImg" ref="cover" class="overlay-abs bg-img"></div>
           </transition>
@@ -322,13 +323,16 @@ export default {
     this.$refs.rendererparent.appendChild(renderDomElement)
 
     if (!window.__viewer) {
-      window.__viewer = new Viewer({ container: renderDomElement })
+      // let v = new Viewer({ container: renderDomElement, showStats: false })
+      // console.log(v)
+      // window.v = v
+      window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
     }
 
     window.__viewer.onWindowResize()
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
-      window.__viewer.sceneManager.removeAllObjects()
+      window.__viewer.unloadAll()
       window.__viewerLastLoadedUrl = null
       this.getPreviewImage().then().catch()
     } else {
@@ -378,7 +382,7 @@ export default {
       window.__viewer.interactions.setView(id)
     },
     sectionToggle() {
-      window.__viewer.interactions.toggleSectionBox()
+      window.__viewer.toggleSectionBox()
     },
     setupEvents() {
       window.__viewer.on('load-warning', ({ message }) => {
