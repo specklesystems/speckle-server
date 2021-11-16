@@ -264,13 +264,22 @@
                 <v-icon class="mr-2">mdi-cursor-default-click-outline</v-icon>
                 <b>Double clicking on the background</b>
                 will focus again the entire scene.
+                <br />
+                <br />
+                <v-icon class="mr-2">mdi-layers-triple</v-icon>
+                <b>Selecting the layer from the list</b>
+                will show/hide the objects.
+                <br />
+                <br />
+                <v-icon class="mr-2">mdi-animation-outline</v-icon>
+                <b>Selecting the animation trigger of the layer</b>
+                will animate all objects it contains.
               </v-card-text>
             </v-card>
           </v-dialog>
           <v-dialog
             v-model="showPublishDialog"
             width="500"
-            :fullscreen="$vuetify.breakpoint.smAndDown"
             >
             <v-card>
               <v-toolbar>
@@ -286,7 +295,6 @@
               <v-btn @click="publish_pres()"
               color="primary"
               text
-              rounded
               align="center"
             >
               PUBLISH
@@ -704,7 +712,7 @@ export default {
       if (this.status ==0) branchNumber = this.branchQuery.length
       else branchNumber = listBranchesInPresentationQuery.length
 
-      let range = Array.from(new Array(branchNumber + 2), (x, i) => i )
+      let range = Array.from(new Array(branchNumber + 1), (x, i) => i )
       var temp = []
       for (let i in range){
         setTimeout(() => {
