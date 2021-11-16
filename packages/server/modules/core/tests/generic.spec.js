@@ -11,7 +11,6 @@ const expect = chai.expect
 const { validateServerRole, contextApiTokenHelper, validateScopes, authorizeResolver } = require( '../../shared' )
 
 describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
-
   before( async ( ) => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
@@ -74,11 +73,9 @@ describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
 
     let test = await validateServerRole( { auth: true, role: 'server:admin' }, 'server:user' )
     expect( test ).to.equal( true )
-
   } )
 
   it( 'Resolver Authorization Should fail nicely when roles & resources are wanky', async ( ) => {
-
     try {
       let res = await authorizeResolver( null, 'foo', 'bar' )
       assert.fail( 'resolver authorization should have thrown' )
@@ -92,7 +89,5 @@ describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
     } catch ( e ) {
 
     }
-
   } )
-
 } )

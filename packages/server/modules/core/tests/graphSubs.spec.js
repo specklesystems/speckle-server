@@ -19,10 +19,9 @@ const knex = require( `${appRoot}/db/knex` )
 const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
 
-// const addr = `http://localhost:${process.env.PORT || 3000}`
-// const wsAddr = `ws://localhost:${process.env.PORT || 3000}`
-const addr = `http://localhost:${process.env.PORT}/graphql`
-const wsAddr = `ws://localhost:${process.env.PORT}/graphql`
+let addr
+let wsAddr
+let childPort = null
 
 describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow8charsplease' }
@@ -56,12 +55,28 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
     console.log( '  Starting server... this might take a bit.' )
     serverProcess = childProcess.spawn( /^win/.test( process.platform ) ? 'npm.cmd' : 'npm', [ 'run', 'dev:server:test' ], { cwd: appRoot.path } )
 
+    const reg = /running at 0.0.0.0:([0-9]*)/
     serverProcess.stderr.on( 'data', ( data ) => {
       // uncomment this line to understand a bit more what's happening...
       // console.error( `stderr: ${data}` )
+      // ok this is going to be a dirt hack, but I have no better idea ATM
+      let match = `${data}`.match( reg )
+
+      if ( !childPort && match ) {
+        childPort = parseInt( match[1] )
+      }
     } )
 
-    await sleep( 3000 )
+    // lets wait for the server is starting up
+    while ( true ) {
+      if ( childPort ) {
+        console.log( `Child server started at PORT ${childPort} ` )
+        addr = `http://localhost:${childPort}/graphql`
+        wsAddr = `ws://localhost:${childPort}/graphql`
+        break
+      }
+      await sleep( 1000 )
+    }
 
     userA.id = await createUser( userA )
     let token = await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] )

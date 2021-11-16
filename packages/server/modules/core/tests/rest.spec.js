@@ -21,7 +21,6 @@ const { createPersonalAccessToken } = require( '../services/tokens' )
 const { createStream } = require( '../services/streams' )
 
 describe( 'Upload/Download Routes @api-rest', ( ) => {
-
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wowwow8charsplease' }
   let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wowwow8charsplease' }
 
@@ -55,12 +54,15 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
   } )
 
   it( 'Should not allow download requests without an authorization token or valid streamId', async ( ) => {
-
     // invalid token and streamId
     let res = await chai.request( expressApp ).get( '/objects/wow_hack/null' ).set( 'Authorization', 'this is a hoax' )
-    expect( res ).to.have.status( 404 )
+    expect( res ).to.have.status( 401 )
 
-    // invalid token
+    // private stream snooping is forbidden
+    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/maybeSomethingIsHere` ).set( 'Authorization', 'this is a hoax' )
+    expect( res ).to.have.status( 401 )
+
+    // invalid token for public stream works
     res = await chai.request( expressApp ).get( `/objects/${testStream.id}/null` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 404 )
 
@@ -89,7 +91,6 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
     // should not allow user b to access user a's private stream
     res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', userB.token )
     expect( res ).to.have.status( 401 )
-
   } )
 
   it( 'Should not allow getting an object that is not part of the stream', async ( ) => {
@@ -179,7 +180,6 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
   } ).timeout( 5000 )
 
   it( 'Should properly download an object, with all its children, into a text/plain response', ( done ) => {
-
     let res = request( expressApp )
       .get( `/objects/${testStream.id}/${parentId}` )
       .set( 'Authorization', userA.token )
@@ -205,7 +205,6 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
           done( err )
         }
       } )
-
   } )
 
   it( 'Should properly download a list of objects', ( done ) => {
@@ -271,7 +270,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
         if ( err ) done( err )
         try {
           let o = JSON.parse( res.body )
-          expect( Object.keys(o).length ).to.equal( objectIds.length )
+          expect( Object.keys( o ).length ).to.equal( objectIds.length )
           for ( let i = 0; i < objBatches[0].length; i++ ) {
             assert( o[objBatches[0][i].id] === true, 'Server is missing an object' )
           }
@@ -284,7 +283,6 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
         }
       } )
   } )
-
 } )
 
 function createManyObjects( amount, noise ) {

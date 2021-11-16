@@ -132,6 +132,7 @@ export default {
       'branch_delete',
       'commit_create',
       'commit_update',
+      'commit_receive',
       'commit_delete',
       'stream_permissions_add',
       'stream_permissions_remove'

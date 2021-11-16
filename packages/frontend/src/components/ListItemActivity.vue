@@ -191,54 +191,64 @@
           <v-container>
             <v-row class="align-center">
               <v-col sm="10" cols="12">
-                <v-row
-                  v-for="activityItem in activityGroup"
-                  :key="activityItem.time"
-                  class="no-gutters"
-                >
-                  <v-col>
-                    <v-card-text class="pa-5">
-                      <div>
-                        <v-chip :to="url" :color="lastActivityBrief.color">
-                          <v-icon small class="mr-2 float-left" light>
-                            {{ lastActivityBrief.icon }}
-                          </v-icon>
-                          {{ lastActivity.resourceId }}
-                        </v-chip>
-                        <span class="mx-3 body-2 font-italic">
-                          {{ lastActivityBrief.actionText }}
-                        </span>
-                        <span v-if="lastActivity.actionType !== 'commit_delete' && commit">
-                          <v-chip
-                            :to="`/streams/${lastActivity.streamId}/branches/${commit.branchName}`"
-                            small
-                            color="primary"
-                          >
-                            <v-icon small class="float-left" light>mdi-source-branch</v-icon>
-                            {{ commit.branchName }}
-                          </v-chip>
-                          <span v-if="lastActivity.actionType === 'commit_create'">
-                            <span class="mx-3 body-2 font-italic">from</span>
-                            <source-app-avatar :application-name="commit.sourceApplication" />
-                          </span>
-                        </span>
-                        <span v-if="lastActivity.actionType !== 'commit_delete' && !commit">
-                          [commit deleted]
-                        </span>
-                      </div>
-                      <div v-if="activityItem.info.commit && activityItem.info.commit.message" class="mt-3 body-1">
-                        {{ activityItem.info.commit.message }}
-                      </div>
-                      <!-- <div class="mt-3 body-1">
+                <v-card-text class="pa-5">
+                  <div>
+                    <v-chip :to="url" :color="lastActivityBrief.color">
+                      <v-icon small class="mr-2 float-left" light>
+                        {{ lastActivityBrief.icon }}
+                      </v-icon>
+                      {{ lastActivity.resourceId }}
+                    </v-chip>
+                    <span class="mx-3 body-2 font-italic">
+                      {{ lastActivityBrief.actionText }}
+                    </span>
+                    <span v-if="lastActivity.actionType !== 'commit_delete' && commit">
+                      <v-chip
+                        :to="`/streams/${lastActivity.streamId}/branches/${commit.branchName}`"
+                        small
+                        color="primary"
+                      >
+                        <v-icon small class="float-left" light>mdi-source-branch</v-icon>
+                        {{ commit.branchName }}
+                      </v-chip>
+                      <span v-if="lastActivity.actionType === 'commit_create'">
+                        <span class="mx-3 body-2 font-italic">from</span>
+                        <source-app-avatar :application-name="commit.sourceApplication" />
+                      </span>
+                      <span v-if="lastActivity.actionType === 'commit_receive'">
+                        <span class="mx-3 body-2 font-italic">in</span>
+                        <source-app-avatar
+                          :application-name="lastActivity.info.sourceApplication"
+                        />
+                      </span>
+                    </span>
+                    <span v-if="lastActivity.actionType !== 'commit_delete' && !commit">
+                      [commit deleted]
+                    </span>
+                  </div>
+                  <div
+                    v-if="lastActivity.info.commit && lastActivity.info.commit.message"
+                    class="mt-3 body-1"
+                  >
+                    {{ lastActivity.info.commit.message }}
+                  </div>
+                  <!-- NOTE: currently assumes all commits are on the same branch
+                  can't easily group them by branch as that info is not in the activity stream -->
+                  <router-link
+                    v-if="activityGroup.length > 1"
+                    :to="`/streams/${lastActivity.streamId}/branches/${commit.branchName}`"
+                    class="mt-5 caption"
+                  >
+                    SEE ALL {{ activityGroup.length }} COMMITS
+                  </router-link>
+                  <!-- <div class="mt-3 body-1">
                         <div
                           v-for="activityItem in activityGroup"
                           :key="activityItem.time"
                           v-html="updatedDescription(activityItem)"
                         ></div>
                       </div> -->
-                    </v-card-text>
-                  </v-col>
-                </v-row>
+                </v-card-text>
               </v-col>
 
               <v-col sm="2" cols="12">
@@ -470,6 +480,13 @@ export default {
             icon: 'mdi-timeline-text-outline',
             captionText: 'updated a commit in',
             actionText: 'commit updated in',
+            color: 'primary'
+          }
+        case 'commit_receive':
+          return {
+            icon: 'mdi-source-branch-sync',
+            captionText: 'received',
+            actionText: 'commit received from',
             color: 'primary'
           }
         case 'commit_delete':

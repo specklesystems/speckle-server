@@ -15,7 +15,6 @@ const expect = chai.expect
 const knex = require( `${appRoot}/db/knex` )
 
 describe( 'Auth @auth', ( ) => {
-
   describe( 'Local authN & authZ (token endpoints)', ( ) => {
     let expressApp, testServer
     let userId
@@ -25,9 +24,12 @@ describe( 'Auth @auth', ( ) => {
       await knex.migrate.latest( )
 
       let { app } = await init( )
-      let { server } = await startHttp( app )
+      let { server } = await startHttp( app, 0 )
       expressApp = app
       testServer = server
+      app.on( 'appStarted', () => {
+        serverAddress = `http://localhost:${server.address().port}`
+      } )
     } )
 
     after( async ( ) => {
@@ -52,7 +54,6 @@ describe( 'Auth @auth', ( ) => {
     } )
 
     it( 'Should not register a new user without an invite id in an invite id only server', async() => {
-
       await updateServerInfo( { inviteOnly: true } )
 
       // No invite
@@ -97,7 +98,6 @@ describe( 'Auth @auth', ( ) => {
     } )
 
     it( 'Should redirect login with access code (speckle frontend)', async ( ) => {
-
       let appId = 'sdm'
       let challenge = 'random'
 
@@ -109,11 +109,9 @@ describe( 'Auth @auth', ( ) => {
 
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
       expect( accessCode ).to.be.a( 'string' )
-
     } )
 
     it( 'Should redirect registration with access code (speckle frontend)', async ( ) => {
-
       let appId = 'sdm'
       let challenge = 'random'
 
@@ -125,11 +123,9 @@ describe( 'Auth @auth', ( ) => {
 
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
       expect( accessCode ).to.be.a( 'string' )
-
     } )
 
     it( 'Should exchange a token for an access code (speckle frontend)', async ( ) => {
-
       let appId = 'spklwebapp'
       let appSecret = 'spklwebapp'
       let challenge = 'spklwebapp'
@@ -149,7 +145,6 @@ describe( 'Auth @auth', ( ) => {
 
       expect( tokenResponse.body.token ).to.exist
       expect( tokenResponse.body.refreshToken ).to.exist
-
     } )
 
     it( 'Should not exchange a token for an access code with a different app', async ( ) => {
@@ -207,7 +202,6 @@ describe( 'Auth @auth', ( ) => {
     } )
 
     it( 'Should refresh a token (speckle frontend)', async ( ) => {
-
       let appId = 'spklwebapp'
       let challenge = 'random'
 
@@ -237,7 +231,6 @@ describe( 'Auth @auth', ( ) => {
     } )
 
     it( 'Should not refresh a token with bad juju inputs (speckle frontend)', async ( ) => {
-
       let appId = 'spklwebapp'
       let challenge = 'random'
 
@@ -268,7 +261,6 @@ describe( 'Auth @auth', ( ) => {
         .post( '/auth/token' )
         .send( { refreshToken: tokenResponse.body.refreshToken, appId: 'sdm', appSecret: 'sdm' } )
         .expect( 401 )
-
     } )
 
     let frontendCredentials
@@ -303,7 +295,6 @@ describe( 'Auth @auth', ( ) => {
     } )
 
     it( 'Should not get an access code on bad requests', async() => {
-
       // Spoofed app
       let response = await request( expressApp )
         .get( `/auth/accesscode?appId=lol&challenge=${crs( { length: 20 } )}&token=${frontendCredentials.token}` )
@@ -321,40 +312,30 @@ describe( 'Auth @auth', ( ) => {
     } )
 
     it( 'Should not freak out on malformed logout request', async() => {
-
       let response = await request( expressApp )
         .post( '/auth/logout' )
         .send( { adsfadsf: frontendCredentials.token } )
         .expect( 400 )
-
     } )
 
     it( 'Should invalidate tokens on logout', async() => {
-
       let response = await request( expressApp )
         .post( '/auth/logout' )
         .send( { ... frontendCredentials } )
         .expect( 200 )
-
     } )
 
     it( 'ServerInfo Query should return the auth strategies available', async ( ) => {
-
       const query = 'query sinfo { serverInfo { authStrategies { id name icon url color } } }'
       const res = await sendRequest( null, { query } )
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.serverInfo.authStrategies ).to.be.an( 'array' )
-
     } )
-
   } )
-
 } )
 
-const serverAddress = `http://localhost:${process.env.PORT || 3000}`
+let serverAddress
 
 function sendRequest( auth, obj, address = serverAddress ) {
-
   return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
-
 }
