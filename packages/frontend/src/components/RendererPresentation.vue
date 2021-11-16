@@ -499,7 +499,7 @@ export default {
       status: 0,
       branchQuery: null,
       objectQuery: null,
-      branches: {names:[], id:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
+      branches: {names:[], ids:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
       display: {index: [], branchName: [], message:"" },
       actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null },
       slidesSaved: null
@@ -677,39 +677,15 @@ export default {
       window.__viewerLastLoadedUrl = this.objectExistingUrl
       let start_url =   window.location.origin + "/streams/" + this.$route.params.streamId //+ "/branches/"  //"http://localhost:3000/streams/57ff4b8873/branches/ "
 
-      ////////////////////////////////////////////////
-      /*
-      let something = null
-      if (something) { //} (this.status == 1){
-        var count = 0
-        this.branchQuery.forEach(obj=> { // run loop for each branch name
-          //// fill all the branch lists and upload objects
-          if (!obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
-            if (this.branches.uuid && this.branches.uuid[this.branches.uuid.length-1] && this.branches.uuid[this.branches.uuid.length-1].length == 0) {
-              //console.log(window.__viewer.sceneManager.objects)
-            }
-
-            this.branches.names.push(obj.name) 
-            this.branches.visible.push(1) 
-            this.branches.objId.push(obj.commits.items[0].referencedObject)
-            this.branches.uuid.push(obj.commits.items[0].id)
-            this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
-            window.__viewer.loadObject(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
-          }
-          count += 1
-        })
-      }*/
       /////////////////////////////////////////////////////  getting objects and uuid
 
-      //this.branchQuery.forEach(obj=> { // run loop for each branch name // OLD
       let range = Array.from(new Array(this.branchQuery.length+2), (x, i) => i )
       var temp = []
       for (let i in range){
         setTimeout(() => {
-          
-          console.log(i-1)
-          var obj = this.branchQuery[i-1]
-          //this.loadProgress = 90
+          i-=1
+          console.log(i)
+          var obj = this.branchQuery[i]
           //// fill all the branch lists and upload objects
           if (obj && !obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
 
@@ -717,25 +693,32 @@ export default {
               if (this.objectQuery.object && this.objectQuery.object.data) temp.push(this.objectQuery.object.data) //fill this list 1 iteration later
               else temp.push([]) 
             }
+          
+            this.actions.objectId = obj.commits.items[0].referencedObject
+            this.$apollo.queries.objectQuery.refetch()
+
             console.log("Loading branch: " + obj.name)
             window.__viewer.loadObject(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
-
+          
             this.branches.names.push(obj.name) 
+            this.branches.ids.push(obj.id) 
             this.branches.visible.push(0) 
             this.branches.objId.push(obj.commits.items[0].referencedObject)
             this.branches.url.push(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
             this.branches.animated.push(0)
-
-            this.actions.objectId = obj.commits.items[0].referencedObject
-            this.$apollo.queries.objectQuery.refetch()
+          
+            
             this.loadProgress = 90
+            
             
           }else if (i==range[range.length-1]) {
             temp.push(this.objectQuery.object.data) //add the last item
             console.log("LAST ROUND")
 
+            var count = 0
+            var count_parallel = 0
             temp.forEach(obj=>{ // all of uuid s
-              //console.log(obj['@data'])
+            
               this.branches.uuid.push([])
               if (obj['@data']){
                 obj['@data'].forEach(sub_obj=>{
@@ -746,12 +729,24 @@ export default {
                   })
                 })
               } 
+              if (count_parallel>0 && this.branches.uuid[count_parallel] && (!this.branches.uuid[count_parallel][0] || ( this.branches.uuid[count_parallel].length==this.branches.uuid[count_parallel-1].length && this.branches.uuid[count_parallel][0]==this.branches.uuid[count_parallel-1][0])) ){
+                this.branches.names.splice(count_parallel,1)
+                this.branches.ids.splice(count_parallel,1)
+                this.branches.visible.splice(count_parallel,1)
+                this.branches.objId.splice(count_parallel,1)
+                this.branches.url.splice(count_parallel,1)
+                this.branches.animated.splice(count_parallel,1)
+                this.branches.uuid.splice(count_parallel,1)
+                count_parallel-=1
+              }
+              count +=1
+              count_parallel +=1
             })
             this.allLoaded = 1
             console.log(this.allLoaded)
             console.log(this.loadProgress)
           }
-        }, i++ * 1000);
+        }, i++ * 2000);
       } 
 
       console.log(this.branches)
@@ -778,8 +773,10 @@ export default {
       })
     },
     
-    showVis(name){
-      let index = this.branches.names.indexOf(name) 
+    showVis(name, id){
+      let index = 0
+      if(name=="") index = this.branches.ids.indexOf(id), name = this.branches.names[index]
+      else index = this.branches.names.indexOf(name) 
       let start_url = window.location.origin + "/streams/" + this.$route.params.streamId 
 
       ////////////////////////////////////////////// SHOW DATA 
@@ -840,25 +837,28 @@ export default {
       let index = this.actions.currentSlideNum
       this.actions.currentMessage = ""
 
-      // reset branch visibilities 
+      // reset branch visibilities to none
       this.display.index = []
       this.display.branchName = []
 
+      // hide all visible branches, same with animation
       var count = 0
       this.branches.visible.forEach(br=>{ 
         if (br == 1) this.showVis(this.branches.names[count])
+        if(this.slidesSaved[index].animated && this.slidesSaved[index].animated[count]) this.branches.animated[count] = this.slidesSaved[index].animated[count]
+        else this.branches.animated[count] = 0
         count +=1
        })
-
+      // set camera view 
       this.display.message = this.slidesSaved[index].msg
       window.__viewer.interactions.setLookAt(this.slidesSaved[index].cam_position,this.slidesSaved[index].target)
 
-      if (this.slidesSaved[index].branches && this.slidesSaved[index].branches.length>0){ // look into the slide data
+      // set necessary branches to visible, same with animation
+      if (this.slidesSaved[index].branchesIds && this.slidesSaved[index].branchesIds.length>0){ // look into the slide data
         var count = 0
-        this.slidesSaved[index].branches.forEach(obj=>{ // look at each branch data for the slide
-          if (this.slidesSaved[index].visibilities[count] == 1 ) {
-            this.showVis(obj)
-          }
+        this.slidesSaved[index].branchesIds.forEach(obj=>{ // look at each branch data for the slide
+          if (this.slidesSaved[index].visibilities[count] == 1 ) this.showVis("",obj)
+          //if (this.slidesSaved[index].animated[count] == 1 ) this.showVis("",obj)
           count +=1
         })
       }
@@ -878,13 +878,6 @@ export default {
       */
     },
     slideCreate(){
-      //console.log(this.selectedObjects)
-      /*
-      var selectedIds = []
-      this.selectedObjects.forEach((obj)=> {
-        selectedIds.push(obj.id)
-      })
-      */
 
       let cam = window.__viewer.sceneManager.viewer.camera.matrix.elements
       let contr = window.__viewer.sceneManager.viewer.controls
@@ -896,9 +889,10 @@ export default {
         cam_position: { x: cam[12],y: cam[13],z: cam[14] }, 
         target: contr._target, 
         branches: this.branches.names, 
+        branchesIds: this.branches.ids, 
         visibilities: this.branches.visible, 
         msg: this.actions.currentMessage,
-        //selected: selectedIds,
+        animated: this.branches.animated,
       }
       this.slidesSaved.push( JSON.parse(JSON.stringify(slide)) )
       this.actions.currentMessage = ""
