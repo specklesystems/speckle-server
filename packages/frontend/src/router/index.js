@@ -226,11 +226,11 @@ const routes = [
             component: () => import('@/views/admin/AdminUsers.vue'),
             props: (route) => ({ ...route.query, ...route.props })
           },
-          // {
-          //   name: 'Admin | Streams',
-          //   path: 'streams',
-          //   component: () => import('@/views/admin/AdminStreams.vue')
-          // },
+          {
+            name: 'Admin | Streams',
+            path: 'streams',
+            component: () => import('@/views/admin/AdminStreams.vue')
+          },
           {
             name: 'Admin | Settings',
             path: 'settings',
