@@ -179,8 +179,8 @@
               </v-tooltip>
             </template>
             
-            <v-list dense>
-              <v-list-item v-for="(vis,index) in branches.names" link style="height:40px; " class="pr-0 mr-0 pt-0 mb-0"
+            <v-list dense >
+              <v-list-item  @click.stop v-for="(vis,index) in branches.names" link style="height:40px; " class="pr-0 mr-0 pt-0 mb-0"
               :style= "[!display.branchName.includes(vis) ? {} : { background: '#757575' }]">
                 <v-list-item-content @click="showVis(vis)" >
                   <v-list-item-title style="text-align: left;"  >{{ vis }}</v-list-item-title>
@@ -509,7 +509,7 @@ export default {
       objectQuery: null,
       branches: {names:[], ids:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
       display: {index: [], branchName: [], animated: [], message:"" },
-      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null, objectIds:[] },
+      actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null, objectIds:[], alreadyAnimated: [] },
       slidesSaved: null
 
     }
@@ -780,22 +780,20 @@ export default {
 
       ////////////////////////////////////////////// SHOW DATA 
       if (!this.branches.visible[index] == 1  )  {
-        console.log("show "+ name)
+        //console.log("show "+ name)
         this.branches.visible[index] = 1 
         this.display.index.push(index)
         this.display.branchName.push(name)
       } else {    //////////////////////////////////////////////  HIDE DATA
-        console.log("hide "+ name)
+        //console.log("hide "+ name)
         this.branches.visible[index] = 0 
         this.display.index.splice(this.display.index.indexOf(index), 1)
         this.display.branchName.splice(this.display.branchName.indexOf(name), 1)
       }
-      console.log("Displayed branches: " + this.display.branchName.toString())
 
-      /////// if branch is animated 
+      /////// if branch is animated, animate only if not already on
       if (this.branches.visible[index] ==1 && this.branches.animated[index] == 1){
-        console.log("show and animate")
-        this.animate(this.branches.uuid[index])
+        if (!this.actions.alreadyAnimated.includes(this.branches.names[index])) this.animate(this.branches.uuid[index],this.branches.names[index])
       }else if(this.branches.uuid[index] && this.branches.uuid[index][0]) {
         this.branches.uuid[index].forEach(obj=>{
           window.__viewer.sceneManager.objects.forEach(item=>{
@@ -803,8 +801,7 @@ export default {
           })
         })
       }
-      
-
+     
     },
     hide(obj,i){
       //console.log(obj)
@@ -832,21 +829,28 @@ export default {
       let index = this.actions.currentSlideNum
       this.actions.currentMessage = ""
       // reset scene branch visibilities and animations to none
+      this.actions.alreadyAnimated = [...this.display.animated]
       this.display.index = []
       this.display.branchName = []
       this.display.animated = []
+      
       // hide all visible branches, remove all animation
       var count = 0 //for branches in the scene 
       this.branches.visible.forEach(br=>{ 
         if (br == 1) this.showVis(this.branches.names[count])
         if (this.branches.animated[count] == 1) this.branches.animated[count] = 0
         ///// set animations and visibilities; SLIDES LIST OF BRANCHES IS NOT SYNC WITH CURRENTLY LOADED BRANCHES 
-        let sub_count = 0 // for slides - list of branches inside each
+        let sub_count = 0 // for slides, list of branches inside each
         this.slidesSaved[index].branchesIds.forEach(slideItem=>{
           if (this.branches.ids[count] == slideItem){
             //animation setting
-            if(this.slidesSaved[index].animated && this.slidesSaved[index].animated[sub_count]) this.branches.animated[count] = this.slidesSaved[index].animated[sub_count]
-            else this.branches.animated[count] = 0
+            if(this.slidesSaved[index].animated && this.slidesSaved[index].animated[sub_count]) {
+              this.branches.animated[count] = this.slidesSaved[index].animated[sub_count]
+              this.display.animated.push(this.branches.names[count])//, console.log(this.display.animated)
+            } else {
+              this.branches.animated[count] = 0
+              this.display.animated.splice(this.display.animated.indexOf(this.branches.names[count]), 1)//, console.log(this.display.animated)
+            }
             // visibility switch if the branch became visible
             if (this.slidesSaved[index].visibilities && this.slidesSaved[index].visibilities[sub_count] && this.slidesSaved[index].visibilities[sub_count]==1) this.showVis("",slideItem)
           }
@@ -965,7 +969,7 @@ export default {
             if (item.uuid == obj) this.hide(item, 0) //set new visibility
           })
         })
-        this.animate(this.branches.uuid[index])
+        this.animate(this.branches.uuid[index],this.branches.names[index])
       // if branch is visible and animation removed: show all objects
       } else if (this.branches.visible[index] == 1 && this.branches.animated[index] == 0){
         this.branches.uuid[index].forEach(obj=>{
@@ -975,19 +979,28 @@ export default {
         })
       }
     },
-    animate(objects){ 
+    animate(objects, brName){ 
       /// ?? how to stop animation?
+      var startSlide = this.actions.currentSlideNum
       let range = []
       if(objects) range = Array.from(new Array(objects.length), (x, i) => i )
       for (let i in range) {
         setTimeout(() => {
           i-=1
+          // stop if slide was hanged, and this branch is not anymore animated
+          console.log(brName)
+          console.log(this.display.animated)
+          if (startSlide != this.actions.currentSlideNum && !this.display.animated.includes(brName)) i = -1
           // hide all objects in the layer
           var count = 0
           objects.forEach(obj=> {
             window.__viewer.sceneManager.objects.forEach(item=>{
               if (item.uuid == obj && count != i && item.visible ==1 ) this.hide(item,0)
-              else if (item.uuid == obj && count == i && item.visible ==0) this.hide(item,1)
+              else if (item.uuid == obj && count == i && item.visible ==0) {
+                this.hide(item,1)
+                // if animation finished, remove from "already animated" list
+                //if (i==objects.length-1) this.actions.alreadyAnimated.splice(this.actions.alreadyAnimated.indexOf(brName),1)
+              }
             })
             count+=1
           })
