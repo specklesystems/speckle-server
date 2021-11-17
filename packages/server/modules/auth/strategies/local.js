@@ -44,19 +44,21 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
 
       let user = req.body
 
-      if ( serverInfo.inviteOnly && !req.session.inviteId ) {
-        throw new Error( 'This server is invite only. Please provide an invite id.' )
-      }
-
-      if ( req.session.inviteId ) {
-        const valid = await validateInvite( { id: req.session.inviteId, email: user.email } )
-        if ( !valid )
+      let userId
+      // go ahead with register
+      if ( !serverInfo.inviteOnly ){
+        userId = await createUser( user )
+      } else {
+        if ( !req.session.inviteId )
+          throw new Error( 'This server is invite only. Please provide an invite id.' )
+        
+        if ( !await validateInvite( { id: req.session.inviteId, email: user.email } ) )
           throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
 
+        userId = await createUser( user )
         await useInvite( { id: req.session.inviteId, email: user.email } )
       }
 
-      let userId = await createUser( user )
       req.user = { id: userId, email: user.email }
 
       return next( )
