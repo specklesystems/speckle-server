@@ -10,14 +10,13 @@ const BranchCommits = ( ) => knex( 'branch_commits' )
 
 module.exports = {
 
-  async createBranch( { name, description, streamId, authorId, presentationData } ) {
+  async createBranch( { name, description, streamId, authorId } ) {
     let branch = {}
     branch.id = crs( { length: 10 } )
     branch.streamId = streamId
     branch.authorId = authorId
     branch.name = name.toLowerCase( )
     branch.description = description
-    branch.presentationData = presentationData
 
     if ( name ) module.exports.validateBranchName( { name } )
 
@@ -29,9 +28,9 @@ module.exports = {
     return branch.id
   },
 
-  async updateBranch( { id, name, description, presentationData } ) {
+  async updateBranch( { id, name, description } ) {
     if ( name ) module.exports.validateBranchName( { name } )
-    return await Branches( ).where( { id: id } ).update( { name: name ? name.toLowerCase( ) : name, description: description, presentationData: presentationData } )
+    return await Branches( ).where( { id: id } ).update( { name: name ? name.toLowerCase( ) : name, description: description } )
   },
 
   validateBranchName( { name } ) {

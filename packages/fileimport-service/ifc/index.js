@@ -24,8 +24,7 @@ async function parseAndCreateCommit( { data, streamId, branchName = 'uploads', u
       name: branchName, 
       streamId: streamId,
       description: branchName === 'uploads' ? 'File upload branch' : null,
-      authorId: userId,
-      presentationData: null
+      authorId: userId
     } )
   }
 

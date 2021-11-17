@@ -48,7 +48,7 @@
           <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
         </div>
         <div v-if="$route.params.branchName.includes('presentations/')" style="height: 60vh">
-          <renderer-presentation :object-url="latestCommitObjectUrl" :object-existing-url="latestExistingCommitUrl" :branch-id="branchId" :branch-desc="branchDesc" :presentation-data="presentationData" show-selection-helper />
+          <renderer-presentation :object-id="latestCommitObjectId" :object-url="latestCommitObjectUrl" :object-existing-url="latestExistingCommitUrl" :branch-name="$route.params.branchName" :branch-id="branchId" :branch-desc="branchDesc" show-selection-helper />
         </div>
 
         <v-list v-if="stream.branch.commits.items.length > 0 && !$route.params.branchName.includes('presentations/')" class="pa-0 ma-0">
@@ -163,10 +163,6 @@ export default {
     branchDesc() {
       return this.stream.branch.description
     },
-    presentationData() {
-      if (this.stream.branch.presentationData) return JSON.stringify(this.stream.branch.presentationData)
-      else return null 
-    },
     latestCommitObjectUrl() {
       if (
         this.stream &&
@@ -175,6 +171,16 @@ export default {
         this.stream.branch.commits.items.length > 0
       )
         return `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.branch.commits.items[0].referencedObject}`
+      else return null
+    },
+    latestCommitObjectId() {
+      if (
+        this.stream &&
+        this.stream.branch &&
+        this.stream.branch.commits.items &&
+        this.stream.branch.commits.items.length > 0
+      )
+        return `${this.stream.branch.commits.items[0].referencedObject}`
       else return null
     },
     latestExistingCommitUrl() {

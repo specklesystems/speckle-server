@@ -289,8 +289,8 @@
               </v-toolbar>
 
               <v-card-text class="pt-2">
-                You can always convert it back to draft by removing 
-                specials symbols from the branch name
+                This will remove editing tools from this branch. You can always convert it back to draft 
+                by removing specials symbols from the branch name
               </v-card-text>
               <v-btn @click="publish_pres()"
               color="primary"
@@ -370,16 +370,15 @@
 
       <template #append >
         <v-list dense v-if="maximized && status==0 && loadProgress==100 && allLoaded ==1"  >
-
-          <v-list-item @click="showPublishDialog = !showPublishDialog" class="primary" >
-            <v-list-item-content>
-              <v-list-item-title>Publish presentation</v-list-item-title>
-            </v-list-item-content>
-
-          </v-list-item>
+          <v-btn @click="showPublishDialog = !showPublishDialog" width="128px" class="primary rounded-0" >Publish</v-btn>
+          <v-divider class="vertical-divider"
+              vertical>
+            </v-divider>
+          <v-btn @click="save_pres()" width="127px" class="primary rounded-0" > Save</v-btn>
 
         </v-list>
       </template>
+
     </v-navigation-drawer>
 
   </v-sheet>
@@ -389,6 +388,8 @@ import throttle from 'lodash.throttle'
 import { Viewer } from '@speckle/viewer'
 import ObjectSimpleViewer from './ObjectSimpleViewer'
 import gql from 'graphql-tag'
+import objectQueryGlobals from '../graphql/objectSingle.gql'
+import crs from 'crypto-random-string'
 
 export default {
   components: { ObjectSimpleViewer },
@@ -401,6 +402,10 @@ export default {
       type: String,
       default: null
     },
+    objectId: {
+      type: String,
+      default: null
+    },
     objectExistingUrl: {
       type: String,
       default: null
@@ -410,10 +415,6 @@ export default {
       default: null
     },
     branchDesc: {
-      type: String,
-      default: null
-    },
-    presentationData: {
       type: String,
       default: null
     },
@@ -486,6 +487,23 @@ export default {
       skip() {
         return this.actions.objectId == null
       }
+    },
+    object: {
+      query: objectQueryGlobals,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          id: this.objectId
+        }
+      },
+      update(data) {
+        delete data.stream.object.data.__closure
+        this.globalsArray = this.nestedGlobals(data.stream.object.data)
+        return data.stream.object
+      },
+      skip() {
+        return this.objectId == null
+      }
     }
   },
   data() {
@@ -510,11 +528,45 @@ export default {
       branches: {names:[], ids:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
       display: {index: [], branchName: [], animated: [], message:"" },
       actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null, objectIds:[], alreadyAnimated: [] },
-      slidesSaved: null
+      slidesSaved: null,
+
+      
+      sample: {
+        Region: 'London',
+        Latitude: '0',
+        Longitude: '0',
+        'Project Code': 'TX-023',
+        Climate: {
+          'Summer DBT [C]': 35,
+          'Summer WBT [C]': 20,
+          'Winter DBT [C]': -4,
+          'Winter WBT [C]': -4
+        }
+      },
+      globalsArray: [],
+      globalsAreValid: true,
+      saveDialog: false,
+      deleteEntries: false,
+      saveValid: true,
+      saveLoading: false,
+      nameRules: [(v) => (v && v.length >= -1) || 'Message must be at least -1 characters'],
+      saveMessage: null,
+      saveError: null,
 
     }
   },
   computed: {
+    canSave() {
+      return (
+        this.globalsAreValid //&& (this.userRole === 'stream:contributor' || this.userRole === 'stream:owner')
+      )
+    },
+    globalsCommit() {
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      this.globalsAreValid = true
+      let base = this.globalsToBase(this.globalsArray)
+      return base
+    },
     isSmall() {
       return this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
     },
@@ -635,6 +687,8 @@ export default {
       //TODO: Remove overflow from window
       document.body.classList.add('no-scrollbar')
     }
+
+    
   },
   beforeDestroy() {
     // NOTE: here's where we juggle the container div out, and do cleanup on the
@@ -698,15 +752,25 @@ export default {
       
     },
     load() {
-      this.$apollo.queries.objectQuery.refetch()
-
-      window.__viewer.sceneManager.removeAllObjects()
-      if (this.presentationData) {
-        this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
-        if(this.$route.params.branchName.includes("✓")) this.status = 1; else this.status = 0
+      /// for "globals"
+      // if no commits yet
+      if (!this.objectId) {
+        console.log("no commits read")
+        this.globalsArray = this.nestedGlobals(this.sample)
       }
+      //console.log(this.globalsArray)
+
+      let commitData = null
+      this.globalsArray.forEach(obj=>{
+        if (obj.key =="json" && obj.value && obj.value.length>0) commitData = [...obj.value]
+      })
+      console.log(commitData)
+      
+      if(this.$route.params.branchName.includes("✓")) this.status = 1; else this.status = 0
+        //  this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
+      if (commitData)  this.slidesSaved = commitData
       else this.slidesSaved = []
-      console.log(this.slidesSaved)
+      //console.log(this.slidesSaved)
       //get unique branch ids from the presentation slides
       var listBranchesInPresentation = []
       var listBranchesInPresentationQuery = []
@@ -734,7 +798,7 @@ export default {
       obj.forEach(obj=>{
         //// fill all the branch lists and upload objects
         if (obj && !obj.name.includes('presentations/') && obj.name!='globals' && obj.commits.items[0]) {
-          console.log("Loading branch: " + obj.name)
+          //console.log("Loading branch: " + obj.name)
           window.__viewer.loadObject(start_url + "/objects/" +   obj.commits.items[0].referencedObject)
           this.branches.names.push(obj.name) 
           this.branches.ids.push(obj.id) 
@@ -749,7 +813,7 @@ export default {
         }
         i+=1
       })
-      console.log(this.branches)
+      //console.log(this.branches)
       this.maximized = true
       this.setupEvents()
 
@@ -883,30 +947,18 @@ export default {
       this.actions.currentSlideNum = this.slidesSaved.length-1
       this.display.message = this.slidesSaved[this.slidesSaved.length-1].msg
 
-      let slides_draft = {status:'--draft--', json: JSON.stringify(this.slidesSaved) } // to eliminate the "observer" type
-      //console.log(typeof(slides_draft))
-
-      this.$apollo.mutate({
-        mutation: gql`
-          mutation branchUpdate($params: BranchUpdateInput!) {
-            branchUpdate(branch: $params)
-          }
-        `,
-        variables: {
-          params: {
-            streamId: this.$route.params.streamId,
-            id: this.branchId,
-            name: this.$route.params.branchName,
-            description: this.branchDesc,
-            presentationData: slides_draft
-          }
-        }
-      })
+      let slides_draft = {status:'--draft--', json: [...this.slidesSaved] } // to eliminate the "observer" type
+      this.globalsArray = this.nestedGlobals( {status:'--draft--', json: [...this.slidesSaved] } )
 
     },
+    save_pres(){
+      this.saveGlobals()  
+      window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + this.$route.params.branchName 
+    },
     publish_pres(){
-      let slides_ready = {status:'--ready--', json: JSON.stringify(this.slidesSaved) } 
+      let slides_ready = {status:'--ready--', json: [...this.slidesSaved] } 
       let new_name = this.$route.params.branchName +" "+ "✓"
+      
       this.$apollo.mutate({
         mutation: gql`
           mutation branchUpdate($params: BranchUpdateInput!) {
@@ -918,12 +970,15 @@ export default {
             streamId: this.$route.params.streamId,
             id: this.branchId,
             name: new_name,
-            description: this.branchDesc,
-            presentationData: slides_ready
+            description: this.branchDesc
           }
         }
       })
-      this.$router.push( `/streams/${this.$route.params.streamId}/branches/${new_name}` )
+
+      this.saveGlobals()
+      window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + new_name 
+      //this.$router.push( `/streams/${this.$route.params.streamId}/branches/${new_name}` )
+      /// doesn't refresh properly
     },
     slideDelete(index){
       if(this.slidesSaved) {
@@ -937,23 +992,8 @@ export default {
       if (this.slidesSaved[index] && this.slidesSaved[index].msg) this.display.message = this.slidesSaved[index].msg
       else this.display.message = ""
 
-      let slides_draft = {status:'--draft--', json: JSON.stringify(this.slidesSaved) } // to eliminate "observer" type
-      this.$apollo.mutate({
-        mutation: gql`
-          mutation branchUpdate($params: BranchUpdateInput!) {
-            branchUpdate(branch: $params)
-          }
-        `,
-        variables: {
-          params: {
-            streamId: this.$route.params.streamId,
-            id: this.branchId,
-            name: this.$route.params.branchName,
-            description: this.branchDesc,
-            presentationData: slides_draft
-          }
-        }
-      })
+      let slides_draft = {status:'--draft--', json: [...this.slidesSaved]  } // to eliminate "observer" type
+      this.globalsArray = this.nestedGlobals( {status:'--draft--', json: [...this.slidesSaved] } )
       
     },
     addBranchAnimation(name){
@@ -980,16 +1020,13 @@ export default {
       }
     },
     animate(objects, brName){ 
-      /// ?? how to stop animation?
       var startSlide = this.actions.currentSlideNum
       let range = []
       if(objects) range = Array.from(new Array(objects.length), (x, i) => i )
       for (let i in range) {
         setTimeout(() => {
           i-=1
-          // stop if slide was hanged, and this branch is not anymore animated
-          console.log(brName)
-          console.log(this.display.animated)
+          // stop if slide was changed, and this branch is not anymore animated
           if (startSlide != this.actions.currentSlideNum && !this.display.animated.includes(brName)) i = -1
           // hide all objects in the layer
           var count = 0
@@ -1009,6 +1046,181 @@ export default {
         i++ * 100);
       } 
     },
+    //////////////////////////////////////////////////////////////////////////////////////// GLOBALS APPROACH 
+    async saveGlobals() {
+      //if (!this.$refs.form.validate()) return 
+      let commitObject = this.globalsToBase(this.globalsArray)
+      //console.log(commitObject)
+
+      try {
+        this.loading = true
+        //this.$matomo && this.$matomo.trackPageView('globals/save')
+        let res = await this.$apollo.mutate({
+          mutation: gql`
+            mutation ObjectCreate($params: ObjectCreateInput!) {
+              objectCreate(objectInput: $params)
+            }
+          `,
+          variables: {
+            params: {
+              streamId: this.$route.params.streamId,
+              objects: [ commitObject ]
+            }
+          }
+        })
+
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation CommitCreate($commit: CommitCreateInput!) {
+              commitCreate(commit: $commit)
+            }
+          `,
+          variables: {
+            commit: {
+              streamId: this.$route.params.streamId,
+              branchName: this.$route.params.branchName,
+              objectId: res.data.objectCreate[0],
+              message: "presentation updated",
+              sourceApplication: 'web'
+            }
+          }
+        })
+        this.saveLoading = false
+        this.saveDialog = false
+      } catch (err) {
+        this.saveLoading = false
+        this.saveError = err
+        console.log("error")
+      }
+    },
+    
+    nestedGlobals(data) {
+      if (!data) return []
+      let entries = Object.entries(data)
+      let arr = []
+      for (let [key, val] of entries) {
+        if (key.startsWith('__')) continue
+        if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
+
+        if (!Array.isArray(val) && typeof val === 'object' && val !== null) {
+          if (val.speckle_type && val.speckle_type === 'reference') {
+            arr.push({
+              key,
+              valid: true,
+              id: crs({ length: 10 }),
+              value: val,
+              globals: this.nestedGlobals(val),
+              type: 'object' //TODO: handle references
+            })
+          } else {
+            arr.push({
+              key,
+              valid: true,
+              id: crs({ length: 10 }),
+              value: val,
+              globals: this.nestedGlobals(val),
+              type: 'object'
+            })
+          }
+        } else {
+          arr.push({
+            key,
+            valid: true,
+            id: crs({ length: 10 }),
+            value: val,
+            type: 'field'
+          })
+        }
+        //console.log(arr)
+      }
+
+      return arr
+    },
+    globalsToBase(arr) {
+      let base = {
+        // eslint-disable-next-line camelcase
+        speckle_type: 'Base',
+        id: null
+      }
+
+      for (let entry of arr) {
+
+        if (!entry.value && !entry.globals) continue
+
+        if (entry.valid !== true) {
+          this.globalsAreValid = false
+          return null
+        }
+
+        if (Array.isArray(entry.value)) base[entry.key] = entry.value
+        else if (entry.type == 'object') {
+          base[entry.key] = this.globalsToBase(entry.globals)
+        } else if (typeof entry.value === 'string' && entry.value.includes(',')) {
+          base[entry.key] = entry.value
+            .replace(/\s/g, '')
+            .split(',')
+            .map((el) => (isNaN(el) ? el : parseFloat(el)))
+        } else if (typeof entry.value === 'boolean') {
+          base[entry.key] = entry.value
+        } else {
+          base[entry.key] = isNaN(entry.value) ? entry.value : parseFloat(entry.value)
+        }
+      }
+
+      return base
+    },
+    resetGlobals() {
+      this.deleteEntries = false
+      this.globalsArray = this.object?.data
+        ? this.nestedGlobals(this.object.data)
+        : this.nestedGlobals(this.sample)
+    },
+    clearGlobals() {
+      this.globalsArray = this.nestedGlobals({ placeholder: 'something cool goes here...' })
+    },
+    addProp(kwargs) {
+      let globals = this.getNestedGlobals(kwargs.path)
+      globals.splice(globals.length, 0, kwargs.field)
+    },
+    removeProp(kwargs) {
+      let globals = this.getNestedGlobals(kwargs.path)
+      globals.splice(kwargs.index, 1)
+    },
+    fieldToObject(kwargs) {
+      let globals = this.getNestedGlobals(kwargs.path)
+
+      globals.splice(kwargs.index, 1, kwargs.obj)
+    },
+    objectToField(kwargs) {
+      let globals = this.getNestedGlobals(kwargs.path)
+
+      globals.splice(kwargs.index, 1, ...kwargs.fields)
+    },
+    getNestedGlobals(path) {
+      let entry = this.globalsArray
+      if (!path) return entry
+
+      let depth = path.length
+
+      if (depth > 0) {
+        let id = path.shift()
+        entry = entry.find((e) => e.id == id)
+      }
+
+      if (depth > 1) {
+        path.forEach((id) => {
+          entry = entry.globals.find((e) => e.id == id)
+        })
+      }
+
+      if (!Array.isArray(entry)) entry = entry.globals
+
+      return entry
+    },
+
+
+
+
 
   }
 }

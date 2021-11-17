@@ -7,7 +7,6 @@ query Stream($streamId: String!, $branchName: String!) {
       id
       name
       description
-      presentationData
       commits {
         totalCount
         cursor

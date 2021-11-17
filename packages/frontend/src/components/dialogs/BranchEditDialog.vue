@@ -189,8 +189,7 @@ export default {
             streamId: this.$route.params.streamId,
             id: this.branch.id,
             name: this.branch.name,
-            description: this.branch.description,
-            presentationData: this.branch.presentationData
+            description: this.branch.description
           }
         }
       })
