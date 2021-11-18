@@ -1,11 +1,8 @@
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
-const bcrypt = require( 'bcrypt' )
-const crs = require( 'crypto-random-string' )
 const roles = require( `${appRoot}/modules/core/roles.js` )
 
 const Users = ( ) => knex( 'users' )
-const Acl = ( ) => knex( 'server_acl' )
 
 // tableName, columnName that need migration
 const migrationTargets = [
@@ -64,49 +61,11 @@ const streamAclMigration =  async ( { lowerUser, upperUser } ) => {
   await Promise.all( upperAcl.map( async upperStreamAcl => await _migrateSingleStreamAccess( { lowerUser, upperUser, upperStreamAcl } ) ) )
 }
 
-
 const createMigrations = ( { lowerUser, upperUser } ) => migrationTargets.map( ( [ tableName, columnName ] ) => {
   migrateColumnValue( tableName, columnName, upperUser,lowerUser ) } ) 
 
 
 const userByEmailQuery = email => Users( ).where( { email } )
-const createUser = async user => {
-  user.id = crs( { length: 10 } )
-
-  if ( user.password ) {
-    let pwdigest =await bcrypt.hash( user.password, 10 )
-    user.passwordDigest = pwdigest
-  }
-  delete user.password
-
-  let usr = await userByEmailQuery( user.email ).select( 'id' ).first( )
-  if ( usr ) throw new Error( 'Email taken. Try logging in?' )
-
-  let res = await Users( ).returning( 'id' ).insert( user )
-    
-  let userRole = 'server:user' 
-
-  await Acl( ).insert( { userId: res[ 0 ], role: userRole } )
-
-  return res[ 0 ]
-}
-
-const createData = async ( ) => {
-  const users = [
-    { email: 'asdf@asdf.asdf', password: '12345678', name: 'Asdf Asdf' } ,
-    { email: 'AsDf@asdf.asdf', password: '12345678', name: 'Asdf Asdf' } ,
-    { email: 'fdsa@asdf.asdf', password: '12345678', name: 'Asdf Asdf' } ,
-    { email: 'Fdsa@asdf.asdf', password: '12345678', name: 'Asdf Asdf' } 
-  ]
-  await Promise.all( users.map( async user => {
-    try {
-      let userId = await createUser( user )
-      console.log( userId )
-    } catch ( err ) {
-      console.log( err )
-    }  
-  } ) )
-}
 
 const getDuplicateUsers = async ( ) => {
   let duplicates = await knex.raw( 'select lower(email) as lowered, count(id) as reg_count from users group by lowered having count(id) > 1' )
@@ -125,6 +84,7 @@ const getDuplicateUsers = async ( ) => {
 
 const runMigrations = async ( ) => {
   const duplicateUsers = await getDuplicateUsers( )
+  console.log( duplicateUsers )
   await Promise.all( duplicateUsers.map( async userDouble => {
     const migrations = createMigrations( userDouble )
     await Promise.all( migrations.map( async migrationStep => await migrationStep ) )
@@ -132,13 +92,13 @@ const runMigrations = async ( ) => {
     await streamAclMigration( userDouble )
 
     // remove the now defunct user
-    await Users( ).where( { email: userDouble.upperUser.email } ).delete( )
+    await userByEmailQuery( userDouble.upperUser.email ).delete( )
   } ) )
 }
 
 ( async function () {
   try {
-    await createData()
+    // await createData()
     await runMigrations()
   } catch ( err ) {
     console.log( err )
