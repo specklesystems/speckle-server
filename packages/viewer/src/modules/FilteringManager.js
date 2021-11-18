@@ -30,30 +30,53 @@ export default class FilteringManager {
     
     if ( !this.passesFilter( obj.userData, filter.filterBy ) )
     {
-      if ( filter.ghostOthers && obj.type === 'Mesh' ) {
+      if ( filter.ghostOthers ) {
         let clone = obj.clone()
-        clone.material = obj.material.clone()
-        clone.material.clippingPlanes = null
-        clone.material.transparent = true
-        clone.material.opacity = 0.05
-        clone.userData = { hidden: true }
+        this.ghostObject( clone )
         return clone
       }
       return null
     }
 
-    // TODO: Cristi rezolva jmecheria
     let clone = obj.clone()
     if ( filter.colorBy ) {
       if ( filter.colorBy.type === 'category' ) {
-        clone.material = this.colorWithCategory( obj.userData, filter.colorBy )
-        clone.material.clippingPlanes = this.viewer.sectionBox.planes
+        let newMaterial = this.colorWithCategory( obj, filter.colorBy )
+        this.setMaterial( clone, newMaterial )
       } else if ( filter.colorBy.type === 'gradient' ) {
-        clone.material = this.colorWithGradient( obj, filter.colorBy )
-        clone.material.clippingPlanes = this.viewer.sectionBox.planes
+        let newMaterial = this.colorWithGradient( obj, filter.colorBy )
+        this.setMaterial( clone, newMaterial )
       }
     }
     return clone
+  }
+
+  ghostObject( clone ) {
+    clone.userData = { hidden: true }
+
+    if ( clone.type === 'Group' ) {
+      for ( let child of clone.children ) {
+        this.ghostObject( child )
+      }
+    } else if ( clone.type === 'Mesh' ) {
+      clone.material = clone.material.clone()
+      clone.material.clippingPlanes = null
+      clone.material.transparent = true
+      clone.material.opacity = 0.05
+    } else {
+      clone.visible = false
+    }
+  }
+
+  setMaterial ( clone, material ) {
+    if ( clone.type === 'Group' ) {
+      for ( let child of clone.children ) {
+        this.setMaterial( child, material )
+      }
+    } else if ( clone.material !== undefined ) {
+      clone.material = material
+      clone.material.clippingPlanes = this.viewer.sectionBox.planes
+    }
   }
 
   getObjectProperty( obj, property ) {
@@ -69,7 +92,8 @@ export default class FilteringManager {
       return crtObj[ attributeName ]
   }
   
-  colorWithCategory( obj, colors ) {
+  colorWithCategory( threejsObj, colors ) {
+    let obj = threejsObj.userData
     let defaultValue = colors.default
     let color = defaultValue
     let objValue = this.getObjectProperty( obj, colors.property )
