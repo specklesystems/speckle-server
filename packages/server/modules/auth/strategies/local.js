@@ -44,20 +44,27 @@ module.exports = async ( app, session, sessionAppId, finalizeAuth ) => {
 
       let user = req.body
 
-      if ( serverInfo.inviteOnly && !req.session.inviteId ) {
+      // 1. if the server is invite only you must have an invite
+      if ( serverInfo.inviteOnly && !req.session.inviteId )
         throw new Error( 'This server is invite only. Please provide an invite id.' )
-      }
 
+      // 2. if you have an invite it must be valid, both for invite only and public servers
       if ( req.session.inviteId ) {
-        const valid = await validateInvite( { id: req.session.inviteId, email: user.email } )
-        if ( !valid )
+        const isInviteValid = await validateInvite( { id: req.session.inviteId, email: user.email } ) 
+        if ( !isInviteValid )
           throw new Error( 'Invite email mismatch. Please use the original email the invite was sent to register.' )
-
-        await useInvite( { id: req.session.inviteId, email: user.email } )
       }
 
+      // 3. at this point we know, that we have one of these cases:
+      //    * the server is invite only and the user has a valid invite
+      //    * the server public and the user has a valid invite
+      //    * the server public and the user doesn't have an invite
+      // so we go ahead and register the user
       let userId = await createUser( user )
       req.user = { id: userId, email: user.email }
+
+      // 4. if the user had an invite, its used up
+      if ( req.session.inviteId ) await useInvite( { id: req.session.inviteId, email: user.email } )
 
       return next( )
     } catch ( err ) {
