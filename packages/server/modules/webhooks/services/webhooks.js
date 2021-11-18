@@ -3,6 +3,7 @@
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 const crs = require( 'crypto-random-string' )
+const { capture } = require(`${appRoot}/logging/posthogHelper`)
 
 const WebhooksConfig = ( ) => knex( 'webhooks_config' )
 const WebhooksEvents = ( ) => knex( 'webhooks_events' )
@@ -99,6 +100,8 @@ module.exports = {
         delete eventPayload.user.email
       }
     }
+
+    capture(event, eventPayload)
 
     let { rows } = await knex.raw( `
       SELECT * FROM webhooks_config WHERE "streamId" = ?

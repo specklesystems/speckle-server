@@ -6,7 +6,7 @@ const express = require( 'express' )
 const appRoot = require( 'app-root-path' )
 
 const cors = require( 'cors' )
-const { matomoMiddleware } = require( `${appRoot}/logging/posthogHelper` )
+const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
 const { contextMiddleware, validateScopes, authorizeResolver } = require( `${appRoot}/modules/shared` )
 
 const { getStream } = require( '../core/services/streams' )

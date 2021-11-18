@@ -5,7 +5,7 @@ const Busboy = require( 'busboy' )
 const debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
 
-const { matomoMiddleware } = require( `${appRoot}/logging/posthogHelper` )
+const { matomoMiddleware } = require( `${appRoot}/logging/matomoHelper` )
 const { contextMiddleware } = require( `${appRoot}/modules/shared` )
 const { validatePermissionsWriteStream } = require( './authUtils' )
 

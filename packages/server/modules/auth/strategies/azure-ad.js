@@ -9,6 +9,7 @@ const appRoot = require( 'app-root-path' )
 const { findOrCreateUser, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
 const { validateInvite, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
+const { identify } = require(`${appRoot}/logging/posthogHelper`)
 
 module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
 
@@ -55,6 +56,7 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
           let myUser = await findOrCreateUser( { user: user, rawProfile: req.user._json } )
           // ID is used later for verifying access token
           req.user.id = myUser.id
+          identify(myUser)
           return next()
         }
 
@@ -63,6 +65,7 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
           let myUser = await findOrCreateUser( { user: user, rawProfile: req.user._json } )
           // ID is used later for verifying access token
           req.user.id = myUser.id
+          identify(myUser)
           return next()
         }
 
@@ -80,6 +83,7 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
         let myUser = await findOrCreateUser( { user: user, rawProfile: req.user._json } )
         // ID is used later for verifying access token
         req.user.id = myUser.id
+        identify(myUser)
 
         // use the invite
         await useInvite( { id: req.session.inviteId, email: user.email } )
