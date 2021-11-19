@@ -26,15 +26,10 @@ exports.up = async ( knex ) => {
     [ 'stream_activity' , 'userId' ],
   ]
 
-  const migrateColumnValue = async( tableName, columnName, oldUser, newUser ) => {
-    try {
-      const query = knex( tableName ).where( { [columnName]: oldUser.id } ).update( { [columnName]: newUser.id } ) 
-      console.log( `${query}` )
-      await query
-    } catch ( err ) {
-      console.log( err )
-    }
-  }
+  const migrateColumnValue = async( tableName, columnName, oldUser, newUser ) =>
+    await knex( tableName )
+      .where( { [columnName]: oldUser.id } )
+      .update( { [columnName]: newUser.id } ) 
 
   const serverAclMigration = async ( { lowerUser, upperUser } ) => {
     const oldAcl = await knex( 'server_acl' ).where( { userId: upperUser.id } ).first()
