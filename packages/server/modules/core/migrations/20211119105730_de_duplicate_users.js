@@ -1,3 +1,4 @@
+// /* istanbul ignore file */
 /*
 This migration is fixing the duplicate user problem reported 
 
