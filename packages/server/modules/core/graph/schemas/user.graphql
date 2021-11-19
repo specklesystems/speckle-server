@@ -65,6 +65,9 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:delete")
 
+  adminDeleteUser(userConfirmation: UserDeleteInput!): Boolean!
+    @hasRole(role: "server:admin")
+
   userRoleChange(userRoleInput: UserRoleInput!): Boolean!
     @hasRole(role: "server:admin")
 }

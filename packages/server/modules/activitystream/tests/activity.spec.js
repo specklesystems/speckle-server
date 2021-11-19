@@ -13,7 +13,7 @@ const knex = require( `${appRoot}/db/knex` )
 const expect = chai.expect
 chai.use( chaiHttp )
 
-const serverAddress = `http://localhost:${process.env.PORT || 3000}`
+let serverAddress
 
 
 describe( 'Activity @activity', () => {
@@ -67,10 +67,15 @@ describe( 'Activity @activity', () => {
     await knex.migrate.latest()
 
     let { app } = await init( )
-    let { server } = await startHttp( app )
+    let { server } = await startHttp( app, 0 )
 
     testServer = server
 
+    app.on( 'appStarted', () => {
+      serverAddress = `http://localhost:${server.address().port}`
+    } )
+
+  
     // create users and tokens
     userIz.id = await createUser( userIz )
     let token = await createPersonalAccessToken( userIz.id, 'izz test token', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] )

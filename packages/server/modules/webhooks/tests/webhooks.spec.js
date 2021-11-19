@@ -14,8 +14,7 @@ const { createStream, getStream, grantPermissionsStream } = require( '../../core
 const expect = chai.expect
 chai.use( chaiHttp )
 
-const port = 3420
-const serverAddress = `http://localhost:${port}`
+let serverAddress 
 
 
 describe( 'Webhooks @webhooks', () => {
@@ -46,7 +45,10 @@ describe( 'Webhooks @webhooks', () => {
     await knex.migrate.rollback( )
     await knex.migrate.latest( )
     let { app } = await init()
-    let { server } = await startHttp( app, port )
+    let { server } = await startHttp( app, 0 )
+    app.on( 'appStarted', () => {
+      serverAddress = `http://localhost:${server.address().port}`
+    } )
     testServer = server
 
     userOne.id = await createUser( userOne )
