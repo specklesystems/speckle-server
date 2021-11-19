@@ -1,8 +1,7 @@
 // /* istanbul ignore file */
 /*
 This migration is fixing the duplicate user problem reported 
-
-https://speckle.community/t/re-error-in-grasshopper-while-receiving-data-you-dont-have-access-to-stream-xxxxx-on-server-https-speckle-xyz-or-the-stream-does-not-exist/2040/4
+https://speckle.community/t/error-in-grasshopper-while-receiving-data-you-dont-have-access-to-stream-xxxxx-on-server-https-speckle-xyz-or-the-stream-does-not-exist/2003
 */
 
 exports.up = async ( knex ) => {
