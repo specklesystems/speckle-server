@@ -2,39 +2,47 @@
   <div style="display: inline-block">
     <v-menu v-if="loggedIn" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
-        <v-avatar
-          v-if="user"
-          class="ma-1"
-          color="grey lighten-3"
-          :size="size"
-          v-bind="attrs"
-          v-on="on"
-        >
-          <v-img v-if="avatar" :src="avatar" />
-          <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-        </v-avatar>
-        <v-avatar v-else class="ma-1" :size="size" v-bind="attrs" v-on="on">
-          <v-img contain src="/logo.svg"></v-img>
-        </v-avatar>
-      </template>
-      <v-card v-if="user" style="width: 200px" :to="isSelf ? '/profile' : '/profile/' + id">
-        <v-card-text v-if="!$apollo.loading" class="text-center">
-          <v-avatar class="my-4" color="grey lighten-3" :size="40">
-            <v-img v-if="avatar" :src="avatar" />
-            <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
+        <div v-bind="attrs" v-on="on">
+          <user-avatar-icon
+            v-if="userById"
+            :size="size"
+            :avatar="userById.avatar"
+            :seed="id"
+            v-bind="attrs"
+            class="ma-1"
+          ></user-avatar-icon>
+          <v-avatar v-else class="ma-1" :size="size">
+            <v-img contain src="/logo.svg"></v-img>
           </v-avatar>
-          <br />
-          <b>{{ user.name }}</b>
-          <v-divider class="ma-4"></v-divider>
-          {{ user.company }}
-          <br />
-          {{
-            user.bio ? user.bio : 'This user prefers to keep an air of mystery around themselves.'
-          }}
-          <br />
+        </div>
+      </template>
+      <v-card
+        v-if="userById && showHover"
+        style="width: 200px"
+        :to="isSelf ? '/profile' : '/profile/' + id"
+      >
+        <v-card-text v-if="!$apollo.loading" class="text-center">
+          <user-avatar-icon class="my-4" :size="40" :avatar="avatar" :seed="id"></user-avatar-icon>
+
+          <!-- Uncomment when email verification is in place -->
+          <!-- <div v-if="userById.verified" class="mb-1">
+            <v-chip color="primary" small>
+              <v-icon small class="mr-2">mdi-shield</v-icon>
+              verified email
+            </v-chip>
+          </div> -->
+
+          <div>
+            <b>{{ userById.name }}</b>
+          </div>
+          <div class="caption">
+            {{ userById.company }}
+            <br />
+            {{ userById.bio ? 'Bio: ' + userById.bio : '' }}
+          </div>
         </v-card-text>
       </v-card>
-      <v-card v-else>
+      <v-card v-else-if="showHover">
         <v-card-text class="text-xs">
           <b>Speckle Ghost</b>
           <br />
@@ -42,19 +50,28 @@
         </v-card-text>
       </v-card>
     </v-menu>
-    <v-avatar v-else class="ma-1" color="grey lighten-3" :size="size">
-      <v-img v-if="avatar" :src="avatar" />
-      <v-img v-else :src="`https://robohash.org/` + id + `.png?size=40x40`" />
-    </v-avatar>
+    <user-avatar-icon
+      v-else
+      class="ma-1"
+      :size="size"
+      :avatar="avatar"
+      :seed="id"
+    ></user-avatar-icon>
   </div>
 </template>
 <script>
-import userQuery from '../graphql/userById.gql'
+import userByIdQuery from '../graphql/userById.gql'
+import UserAvatarIcon from '@/components/UserAvatarIcon'
 
 export default {
+  components: { UserAvatarIcon },
   props: {
     avatar: String,
     name: String,
+    showHover: {
+      type: Boolean,
+      default: true
+    },
     size: {
       type: Number,
       default: 42
@@ -73,8 +90,8 @@ export default {
     }
   },
   apollo: {
-    user: {
-      query: userQuery,
+    userById: {
+      query: userByIdQuery,
       variables() {
         return {
           id: this.id
@@ -82,6 +99,9 @@ export default {
       },
       skip() {
         return !this.loggedIn
+      },
+      update: (data) => {
+        return data.user
       }
     }
   }

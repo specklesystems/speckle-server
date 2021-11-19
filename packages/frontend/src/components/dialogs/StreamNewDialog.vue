@@ -1,24 +1,37 @@
 <template>
   <v-card>
-    <v-card-title>New Stream</v-card-title>
+    <v-toolbar color="primary" dark flat>
+      <v-app-bar-nav-icon style="pointer-events: none">
+        <v-icon>mdi-plus-box</v-icon>
+      </v-app-bar-nav-icon>
+      <v-toolbar-title>Create a New Stream</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn icon @click="$emit('close')"><v-icon>mdi-close</v-icon></v-btn>
+    </v-toolbar>
     <v-form ref="form" v-model="valid" lazy-validation class="px-2" @submit.prevent="createStream">
       <v-card-text>
-        <p class="">
-          <b>Stream Info:</b>
-          Name & Description
-        </p>
         <v-text-field
           v-model="name"
           :rules="nameRules"
           validate-on-blur
-          required
           autofocus
-          label="Stream Name"
+          label="Stream Name (optional)"
         />
         <v-textarea v-model="description" rows="1" row-height="15" label="Description (optional)" />
+        <v-switch
+          v-model="isPublic"
+          v-tooltip="
+            isPublic
+              ? `Anyone can view this stream. It is also visible on your profile page. Only collaborators
+          can edit it.`
+              : `Only collaborators can access this stream.`
+          "
+          inset
+          :label="`${isPublic ? 'Public stream' : 'Private stream'}`"
+        />
+
         <p class="mt-5">
-          <b>Collaborators:</b>
-          Share this stream with your colleagues!
+          <b>Share this stream with your colleagues now! 🤙</b>
         </p>
         <v-text-field
           v-model="search"
@@ -71,10 +84,17 @@
           <span class="caption">{{ user.name }}</span>
         </v-chip>
       </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" :disabled="!valid" :loading="isLoading" elevation="0" type="submit">
-          Create
+      <v-card-actions class="pb-3">
+        <v-btn
+          color="primary"
+          block
+          large
+          :disabled="!valid"
+          :loading="isLoading"
+          elevation="0"
+          type="submit"
+        >
+          Create Stream
         </v-btn>
       </v-card-actions>
     </v-form>
@@ -119,7 +139,7 @@ export default {
       valid: false,
       search: null,
       nameRules: [],
-      isPublic: true,
+      isPublic: false,
       collabs: [],
       isLoading: false
     }
@@ -134,9 +154,12 @@ export default {
   },
   mounted() {
     this.nameRules = [
-      (v) => !!v || 'Stream name is required.',
-      (v) => (v && v.length <= 150) || 'Name must be less than 150 characters',
-      (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
+      (v) =>
+        !v ||
+        (v.length <= 150 && v.length >= 3) ||
+        'Stream name must be between 3 and 150 characters.'
+      // (v) => (!v && v.length <= 150) || 'Name must be less than 150 characters',
+      // (v) => (!v && v.length >= 3) || 'Name must be at least 3 characters'
     ]
   },
   methods: {
@@ -168,7 +191,8 @@ export default {
           variables: {
             myStream: {
               name: this.name,
-              isPublic: this.isPublic
+              isPublic: this.isPublic,
+              description: this.description
             }
           }
         })

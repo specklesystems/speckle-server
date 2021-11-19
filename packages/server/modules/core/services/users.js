@@ -11,6 +11,14 @@ const Acl = ( ) => knex( 'server_acl' )
 const debug = require( 'debug' )
 const { deleteStream } = require( './streams' )
 
+
+const changeUserRole = async ( { userId, role } ) => await Acl().where( { userId: userId } ).update( { role:role } )
+
+const countAdminUsers = async ( ) => {
+  let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
+  return parseInt ( count )
+} 
+
 module.exports = {
 
   /*
@@ -20,9 +28,8 @@ module.exports = {
   */
 
   async createUser( user ) {
-    let [ { count } ] = await Acl( ).where( { role: 'server:admin' } ).count( )
-
     user.id = crs( { length: 10 } )
+    user.email = user.email.toLowerCase()
 
     if ( user.password ) {
       if ( user.password.length < 8 ) throw new Error( 'Password to short; needs to be 8 characters or longer.' )
@@ -34,12 +41,10 @@ module.exports = {
     if ( usr ) throw new Error( 'Email taken. Try logging in?' )
 
     let res = await Users( ).returning( 'id' ).insert( user )
+    
+    let userRole = await countAdminUsers () === 0 ? 'server:admin' : 'server:user' 
 
-    if ( parseInt( count ) === 0 ) {
-      await Acl( ).insert( { userId: res[ 0 ], role: 'server:admin' } )
-    } else {
-      await Acl( ).insert( { userId: res[ 0 ], role: 'server:user' } )
-    }
+    await Acl( ).insert( { userId: res[ 0 ], role: userRole } )
 
     let loggedUser = { ...user }
     delete loggedUser.passwordDigest
@@ -60,7 +65,6 @@ module.exports = {
     let existingUser = await Users( ).select( 'id' ).where( { email: user.email } ).first( )
 
     if ( existingUser ) {
-
       if ( user.suuid ) {
         await module.exports.updateUser( existingUser.id, { suuid: user.suuid } )
       }
@@ -90,7 +94,7 @@ module.exports = {
   },
 
   async getUserByEmail( { email } ) {
-    let user = await Users( ).where( { email: email } ).select( '*' ).first( )
+    let user = await Users( ).where( { email: email.toLowerCase() } ).select( '*' ).first( )
     if ( !user ) return null
     delete user.passwordDigest
     return user
@@ -135,11 +139,12 @@ module.exports = {
   },
 
   async validatePasssword( { email, password } ) {
-    let { passwordDigest } = await Users( ).where( { email: email } ).select( 'passwordDigest' ).first( )
+    let { passwordDigest } = await Users( ).where( { email: email.toLowerCase() } ).select( 'passwordDigest' ).first( )
     return bcrypt.compare( password, passwordDigest )
   },
 
   async deleteUser( id ) {
+    //TODO: check for the last admin user to survive
     debug( 'speckle:db' )( 'Deleting user ' + id )
     let streams = await knex.raw(
       `
@@ -167,5 +172,57 @@ module.exports = {
     }
     
     return await Users( ).where( { id: id } ).del( )
+  },
+
+  async getUsers ( limit = 10, offset = 0, searchQuery = null ) {
+    // sanitize limit
+    const maxLimit = 200
+    if ( limit > maxLimit ) limit = maxLimit
+  
+    let query = Users ( )
+
+    if ( searchQuery ) {
+      query.where( queryBuilder => {
+        queryBuilder
+          .where( 'email', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'name', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'company', 'ILIKE', `%${searchQuery}%` )
+      } )
+    }
+    let users = await query.limit( limit ).offset( offset ) 
+    users.map( user => delete user.passwordDigest )
+    return users
+  },
+
+  async makeUserAdmin( { userId } ){
+    await changeUserRole( { userId, role:'server:admin' } )
+  },
+
+  async unmakeUserAdmin( { userId } ){
+    // dont delete last admin role
+    if ( await countAdminUsers() === 1 ){
+      let currentAdmin = await Acl( ).where( { role: 'server:admin' } ).first()
+      if ( currentAdmin.userId == userId ) {
+        throw new Error( 'Cannot remove the last admin role from the server' )
+      }
+    }
+
+    await changeUserRole( { userId, role:'server:user' } )
+  },
+
+
+  async countUsers ( searchQuery=null ){
+    let query = Users()
+    if ( searchQuery ) {
+      query.where( queryBuilder => {
+        queryBuilder
+          .where( 'email', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'name', 'ILIKE', `%${searchQuery}%` )
+          .orWhere( 'company', 'ILIKE', `%${searchQuery}%` )
+      } )
+    }
+    
+    let [ userCount ] = await query.count() 
+    return parseInt( userCount.count )
   }
 }

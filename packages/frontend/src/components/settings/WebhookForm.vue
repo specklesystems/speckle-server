@@ -38,16 +38,18 @@
         :label="enabled ? 'Enabled' : 'Disabled'"
         hint="Get notified when this webhook is triggered"
         persistent-hint
+        v-if="webhook != null"
       />
     </v-form>
 
     <v-divider class="mt-4 mb-3" />
 
     <v-card-actions v-if="webhook != null">
-      <v-btn outlined color="success" type="submit" :disabled="!valid" @click="saveChanges">
+      <v-spacer></v-spacer>
+      <v-btn color="error" text @click="showDelete = true">Delete Webhook</v-btn>
+      <v-btn color="primary" type="submit" :disabled="!valid" @click="saveChanges">
         Save Changes
       </v-btn>
-      <v-btn color="error" text @click="showDelete = true">Delete Webhook</v-btn>
       <v-dialog v-model="showDelete" max-width="500">
         <v-card>
           <v-card-title>Are you sure?</v-card-title>
@@ -62,9 +64,9 @@
         </v-card>
       </v-dialog>
     </v-card-actions>
-
     <v-card-actions v-else>
-      <v-btn outlined color="success" type="submit" :disabled="!valid" @click="addWebhook">
+      <v-spacer></v-spacer>
+      <v-btn color="primary" type="submit" :disabled="!valid" @click="addWebhook">
         Add Webhook
       </v-btn>
     </v-card-actions>
@@ -130,6 +132,7 @@ export default {
       'branch_delete',
       'commit_create',
       'commit_update',
+      'commit_receive',
       'commit_delete',
       'stream_permissions_add',
       'stream_permissions_remove'
@@ -186,13 +189,15 @@ export default {
       })
       this.$emit('refetch-webhooks')
       this.$emit('update:loading', false)
-      this.$router.push({ name: 'webhooks' })
+      this.$emit('close')
     },
     async addWebhook() {
+      console.log('test')
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/create')
+      console.log('test')
 
-      await this.$apollo.mutate({
+      let res = await this.$apollo.mutate({
         mutation: gql`
           mutation webhookCreate($params: WebhookCreateInput!) {
             webhookCreate(webhook: $params)
@@ -210,9 +215,11 @@ export default {
         }
       })
 
+      console.log( res)
+
       this.$emit('refetch-webhooks')
       this.$emit('update:loading', false)
-      this.$router.push({ name: 'webhooks' })
+      this.$emit('close')
     },
     async deleteWebhook() {
       this.$emit('update:loading', true)
@@ -231,7 +238,7 @@ export default {
 
       this.$emit('refetch-webhooks')
       this.$emit('update:loading', false)
-      this.$router.push({ name: 'webhooks' })
+      this.$emit('close')
     }
   }
 }

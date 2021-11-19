@@ -6,75 +6,52 @@
       :elevation="hover ? 5 : 1"
       style="transition: all 0.2s ease-in-out"
     >
-      <img
-        ref="cover"
-        :class="`${hover ? '' : 'grasycale-img'} preview-img`"
-        :src="currentPreviewImg"
-      />
-      <v-card-title class="">{{ stream.name }}</v-card-title>
-      <v-card-text>
-        <span class="caption mb-2 font-italic">
-          Updated
-          <timeago :datetime="stream.updatedAt"></timeago>
-        </span>
-        <v-chip small outlined class="ml-3">
-          <v-icon small left>mdi-account-key-outline</v-icon>
-          {{ stream.role.split(':')[1] }}
-        </v-chip>
-        <v-btn
-          v-tooltip="
-            stream.branches.totalCount + ' branch' + (stream.branches.totalCount === 1 ? '' : 'es')
-          "
-          plain
-          color="primary"
-          text
-          class="px-0 ml-3"
-          small
-          :to="'/streams/' + stream.id + '/branches'"
-        >
-          <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
-          {{ stream.branches.totalCount }}
-        </v-btn>
-
-        <v-btn
-          v-tooltip="
-            stream.commits.totalCount + ' commit' + (stream.commits.totalCount === 1 ? '' : 's')
-          "
-          plain
-          color="primary"
-          text
-          class="px-0"
-          small
-          :to="'/streams/' + stream.id + '/branches/main/commits'"
-        >
-          <v-icon small class="mr-2 float-left">mdi-source-commit</v-icon>
-          {{ stream.commits.totalCount }}
-        </v-btn>
-        <div class="mt-3 caption text-truncate">
-          {{ stream.description }}
+      <preview-image :url="`/preview/${stream.id}`" :color="hover"></preview-image>
+      <v-toolbar class="transparent elevation-0" dense>
+        <v-toolbar-title>{{ stream.name }}</v-toolbar-title>
+        <v-spacer />
+      </v-toolbar>
+      <v-card-text class="transparent elevation-0 mt-0 pt-0" dense>
+        <v-toolbar-title>
+          <v-chip small class="mr-1" v-if="stream.role">
+            <v-icon small left>mdi-account-key-outline</v-icon>
+            {{ stream.role.split(':')[1] }}
+          </v-chip>
+          <v-chip small class="mr-1">
+            Updated
+            <timeago :datetime="stream.updatedAt" class="ml-1"></timeago>
+          </v-chip>
+          <v-chip small v-if="stream.branches">
+            <v-icon small class="mr-2 float-left">mdi-source-branch</v-icon>
+            {{ stream.branches.totalCount }}
+          </v-chip>
+        </v-toolbar-title>
+        <div class="mt-3 mb-1 caption text-truncate">
+          {{ stream.description || 'No description' }}
         </div>
-      </v-card-text>
-      <v-card-text class="pt-0">
-        <user-avatar
-          v-for="user in stream.collaborators.slice(0, 4)"
-          :id="user.id"
-          :key="user.id"
-          :avatar="user.avatar"
-          :size="30"
-          :name="user.name"
-        />
-        <v-avatar v-if="stream.collaborators.length > 4" size="30" color="grey">
-          <span class="white--text">+{{ stream.collaborators.length - 4 }}</span>
-        </v-avatar>
+        <div v-if="stream.collaborators">
+          <user-avatar
+            v-for="user in stream.collaborators.slice(0, 4)"
+            :id="user.id"
+            :key="user.id"
+            :avatar="user.avatar"
+            :size="30"
+            :name="user.name"
+          />
+          <v-avatar v-if="stream.collaborators.length > 4" size="30" color="grey">
+            <span class="white--text">+{{ stream.collaborators.length - 4 }}</span>
+          </v-avatar>
+        </div>
       </v-card-text>
     </v-card>
   </v-hover>
 </template>
 <script>
 import UserAvatar from '../components/UserAvatar'
+import PreviewImage from '@/components/PreviewImage'
 
 export default {
-  components: { UserAvatar },
+  components: { UserAvatar, PreviewImage },
   props: {
     stream: {
       type: Object,
@@ -82,48 +59,6 @@ export default {
         return {}
       }
     }
-  },
-  data() {
-    return {
-      currentPreviewImg: '/loadingImage.png'
-    }
-  },
-  mounted() {
-    this.getPreviewImage().then().catch()
-  },
-  methods: {
-    async getPreviewImage() {
-      let previewUrl = `/preview/${this.stream.id}`
-      const res = await fetch(previewUrl, {
-        headers: localStorage.getItem('AuthToken')
-          ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
-          : {}
-      })
-      const blob = await res.blob()
-      this.currentPreviewImg = URL.createObjectURL(blob)
-    }
   }
 }
 </script>
-<style scoped>
-.grasycale-img {
-  transition: all 0.3s;
-  filter: grayscale(100%);
-}
-
-.preview-img {
-  height: 180px;
-  width: 100%;
-  object-fit: cover;
-}
-
-.stream-link a {
-  /* color: inherit; */
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.stream-link a:hover {
-  text-decoration: underline;
-}
-</style>

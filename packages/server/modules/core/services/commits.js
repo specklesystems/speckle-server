@@ -121,8 +121,18 @@ module.exports = {
     return module.exports.getCommitsByBranchId( { branchId: myBranch.id, limit, cursor } )
   },
 
-  async getCommitsTotalCountByStreamId( { streamId } ) {
-    let [ res ] = await StreamCommits( ).count( ).where( 'streamId', streamId )
+  async getCommitsTotalCountByStreamId( { streamId, ignoreGlobalsBranch } ) {
+    let query = StreamCommits( )
+      .count( )
+      .join( 'branch_commits', 'stream_commits.commitId', 'branch_commits.commitId' )
+      .join( 'branches', 'branches.id', 'branch_commits.branchId' )
+      .where( 'stream_commits.streamId', streamId )
+    
+    if ( ignoreGlobalsBranch )
+      query.andWhere( 'branches.name', '!=', 'globals' )
+
+    // let [ res ] = await StreamCommits( ).count( ).where( 'streamId', streamId )
+    let [ res ] = await query
     return parseInt( res.count )
   },
 

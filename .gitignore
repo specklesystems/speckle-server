@@ -16,3 +16,6 @@ test-queries
 packages/viewer/example/*.js
 packages/viewer/example/*.js.map
 packages/frontend/schema.graphql
+.tool-versions
+
+packages/server/reports*

@@ -1,51 +1,64 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card :loading="loading" class="pa-4">
-      <template slot="progress">
-        <v-progress-linear indeterminate></v-progress-linear>
-      </template>
-      <div v-if="branch && branch.name !== 'main'">
-        <v-card-title>Edit Branch</v-card-title>
-        <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
-          <v-card-text>
-            <v-text-field
-              v-model="branch.name"
-              label="Name"
-              :rules="nameRules"
-              validate-on-blur
-              required
-              autofocus
-            ></v-text-field>
-            <v-textarea v-model="branch.description" rows="2" label="Description"></v-textarea>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="cancel">Cancel</v-btn>
-            <v-btn color="primary" text :disabled="!valid" type="submit">Save</v-btn>
-          </v-card-actions>
-        </v-form>
-        <v-card-actions class="error--text body-2 pa-2">
-          <v-btn block x-small text color="error" @click="showDelete = true">Delete Branch</v-btn>
-          <v-dialog v-model="showDelete" max-width="500">
-            <v-card>
-              <v-card-title>Are you sure?</v-card-title>
-              <v-card-text>
-                You cannot undo this action. The branch
-                <b>{{ branch.name }}</b>
-                will be permanently deleted.
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn @click="showDelete = false">Cancel</v-btn>
-                <v-btn color="error" text @click="deleteBranch">Delete</v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
+  <v-dialog
+    v-model="show"
+    width="500"
+    :fullscreen="$vuetify.breakpoint.smAndDown"
+    @keydown.esc="cancel"
+  >
+    <v-card v-if="branch && branch.name !== 'main'" :loading="loading">
+      <v-toolbar color="primary" dark flat>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-pencil</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>Edit Branch</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="show = false"><v-icon>mdi-close</v-icon></v-btn>
+      </v-toolbar>
+      <v-alert v-show="error" dismissible type="error">
+        {{ error }}
+      </v-alert>
+      <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
+        <v-card-text>
+          <v-text-field
+            v-model="branch.name"
+            label="Name"
+            :rules="nameRules"
+            validate-on-blur
+            required
+            autofocus
+          ></v-text-field>
+          <p class="caption">
+            Tip: you can create nested branches by using "/" as a separator in their names. E.g.,
+            "mep/stage-1" or "arch/sketch-design".
+          </p>
+          <v-textarea v-model="branch.description" rows="2" label="Description"></v-textarea>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text small color="error" @click="showDelete = true">Delete</v-btn>
+          <v-btn color="primary" :disabled="!valid" type="submit">Save</v-btn>
         </v-card-actions>
-      </div>
-      <div v-else>
-        <v-card-text>You cannot edit the main branch.</v-card-text>
-      </div>
+      </v-form>
+      <v-card-actions class="error--text body-2 pa-2">
+        <v-dialog v-model="showDelete" max-width="500">
+          <v-card>
+            <v-card-title>Are you sure?</v-card-title>
+            <v-card-text>
+              You cannot undo this action. The branch
+              <b>{{ branch.name }}</b>
+              will be permanently deleted.
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn @click="showDelete = false">Cancel</v-btn>
+              <v-btn color="error" text @click="deleteBranch">Delete</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-card-actions>
+    </v-card>
+    <v-card v-else>
+      <v-card-text>You cannot edit the main branch.</v-card-text>
     </v-card>
   </v-dialog>
 </template>
@@ -63,6 +76,8 @@ export default {
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
         (v) =>
+          !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
+        (v) =>
           (v && this.allBranchNames.findIndex((e) => e === v) === -1) ||
           'A branch with this name already exists',
         (v) => (v && v.length <= 100) || 'Name must be less than 100 characters',
@@ -70,7 +85,8 @@ export default {
       ],
       isEdit: false,
       pendingDelete: false,
-      allBranchNames: []
+      allBranchNames: [],
+      error: null
     }
   },
   apollo: {
@@ -116,6 +132,7 @@ export default {
   methods: {
     async deleteBranch() {
       this.loading = true
+      this.error = null
       this.$matomo && this.$matomo.trackPageView('branch/delete')
       try {
         await this.$apollo.mutate({
@@ -132,16 +149,18 @@ export default {
           }
         })
       } catch (e) {
-        console.log(e)
+        this.error = e.message
       }
 
       this.loading = false
-
-      this.resolve({
-        result: true,
-        deleted: true
-      })
-      this.dialog = false
+      this.showDelete = false
+      if (!this.error) {
+        this.resolve({
+          result: true,
+          deleted: true
+        })
+        this.dialog = false
+      }
     },
     open(branch) {
       this.dialog = true

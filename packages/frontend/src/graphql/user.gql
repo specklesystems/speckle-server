@@ -13,8 +13,12 @@ query {
     streams {
       totalCount
     }
-    commits {
+    commits(limit: 1) {
       totalCount
+      items {
+        id
+        createdAt
+      }
     }
   }
 }

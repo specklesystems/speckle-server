@@ -137,6 +137,29 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       } )
     } )
 
+    describe ( 'User role change', () => {
+      it ( 'User role is changed', async () => {
+        let queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
+        expect( queriedUserB.body.data.user.role ).to.equal( 'server:user' )
+        let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
+        await sendRequest( userA.token, { query } )
+        queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
+        expect( queriedUserB.body.data.user.role ).to.equal( 'server:admin' )
+        expect( queriedUserB.body.data )
+        query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:user"})}`
+        await sendRequest( userA.token, { query } )
+        queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
+        expect( queriedUserB.body.data.user.role ).to.equal( 'server:user' )
+      } )
+
+      it ( 'Onyl admins can change user role', async () => {
+        let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
+        let res = await sendRequest( userB.token, { query } )
+        let queriedUserB = await sendRequest( userA.token, { query: ` { user(id:"${userB.id}") { id name email role } }` } )
+        expect( res.body.errors ).to.exist
+        expect( queriedUserB.body.data.user.role ).to.equal( 'server:user' )
+      } )
+    } )
     describe( 'Streams', ( ) => {
       it( 'Should create some streams', async ( ) => {
         const resS1 = await sendRequest( userA.token, { query: 'mutation { streamCreate(stream: { name: "TS1 (u A) Private", description: "Hello World", isPublic:false } ) }' } )
@@ -334,6 +357,36 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         let res2 = await sendRequest( userB.token, { query: 'mutation( $myCommit: CommitUpdateInput! ) { commitUpdate( commit: $myCommit ) }', variables: { myCommit: updatePayload } } )
         expect( res2 ).to.be.json
         expect( res2.body.errors ).to.exist
+      } )
+
+      it( 'Should create a read receipt', async () => {
+        let res = await sendRequest( userA.token, { query: 'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }' , variables: {
+          input: {
+            streamId: ts1,
+            commitId: c1.id,
+            sourceApplication: 'tests',
+            message: 'Irrelevant!'
+          }
+        } 
+        } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.commitReceive ).to.equal( true )
+
+        let res3 = await sendRequest( null, { query: 'mutation($input: CommitReceivedInput!) { commitReceive(input: $input) }' , variables: {
+          input: {
+            streamId: ts1,
+            commitId: c1.id,
+            sourceApplication: 'tests',
+            message: 'Irrelevant!'
+          }
+        } 
+        } )
+        
+        expect( res3 ).to.be.json
+        expect( res3.body.errors ).to.exist
+        expect( res3.body.errors[0].extensions.code ).to.equal( 'FORBIDDEN' )
       } )
 
       it( 'Should delete a commit', async ( ) => {
@@ -635,16 +688,29 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       } )
 
       it( 'Should not search for some users if bad request', async ( ) => {
-        const query_lim = 'query { userSearch( query: "mi" ) { cursor items { id name } } } '
-        let res = await sendRequest( userB.token, { query: query_lim } )
+        const queryLim = 'query { userSearch( query: "mi" ) { cursor items { id name } } } '
+        let res = await sendRequest( userB.token, { query: queryLim } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.exist
 
-        const query_pagination = 'query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } '
-        res = await sendRequest( userB.token, { query: query_pagination } )
+        const queryPagination = 'query { userSearch( query: "matteo", limit: 200 ) { cursor items { id name } } } '
+        res = await sendRequest( userB.token, { query: queryPagination } )
         expect( res ).to.be.json
         expect( res.body.errors ).to.exist
       } )
+
+      it ( 'Query users', async () => {
+        const queryUsers = 'query { users( limit: 2, query: "matteo") {totalCount, items {id name}}}'
+        let res = await sendRequest( userA.token, { query: queryUsers } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data.users.items.length ).to.equal( 2 )
+        expect( res.body.data.users.totalCount ).to.equal( 10 )
+
+        res = await sendRequest( userC.token, { query: queryUsers } )
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.exist
+      } )      
     } )
 
     describe( 'Streams', ( ) => {

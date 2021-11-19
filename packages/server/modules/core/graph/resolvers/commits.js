@@ -20,6 +20,10 @@ const {
   getCommitsTotalCountByBranchId
 } = require( '../../services/commits' )
 
+
+const { getStream } = require( '../../services/streams' )
+const { getUser } = require( '../../services/users' )
+
 // subscription events
 const COMMIT_CREATED = 'COMMIT_CREATED'
 const COMMIT_UPDATED = 'COMMIT_UPDATED'
@@ -32,8 +36,8 @@ module.exports = {
     async commits( parent, args, context, info ) {
       if ( args.limit && args.limit > 100 )
         throw new UserInputError( 'Cannot return more than 100 items, please use pagination.' )
-      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor } )
-      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id } )
+      let { commits: items, cursor } = await getCommitsByStreamId( { streamId: parent.id, limit: args.limit, cursor: args.cursor, ignoreGlobalsBranch: true } )
+      let totalCount = await getCommitsTotalCountByStreamId( { streamId: parent.id, ignoreGlobalsBranch: true } )
 
       return { items, cursor, totalCount }
     },
@@ -124,6 +128,30 @@ module.exports = {
       }
 
       return updated
+    },
+
+    async commitReceive( parent, args, context, info ) {
+      // if stream is private, check if the user has access to it
+      let stream = await getStream( { streamId: args.input.streamId } )
+      
+      if ( !stream.public ) {
+        await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )  
+      }
+
+      let commit = await getCommitById( { id: args.input.commitId } )
+      let user = await getUser( context.userId )
+
+      await saveActivity( {
+        streamId: args.input.streamId,
+        resourceType: 'commit',
+        resourceId: args.input.commitId,
+        actionType: 'commit_receive',
+        userId: context.userId,
+        info: { sourceApplication: args.input.sourceApplication, message: args.input.message },
+        message: `Commit ${args.input.commitId} was received by ${user.name}`,
+      } )
+      
+      return true
     },
 
     async commitDelete( parent, args, context, info ) {

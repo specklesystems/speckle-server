@@ -1,6 +1,14 @@
 <template>
   <v-dialog v-model="show" width="500" @keydown.esc="cancel">
-    <v-card v-if="user" class="pa-4">
+    <v-card v-if="user">
+      <v-toolbar color="primary" dark flat>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-account</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>Edit Profile</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon @click="show = false"><v-icon>mdi-close</v-icon></v-btn>
+      </v-toolbar>
       <v-card-title class="subtitle-1">Edit Profile</v-card-title>
       <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="agree">
         <v-card-text class="pl-2 pr-2 pt-0 pb-0">

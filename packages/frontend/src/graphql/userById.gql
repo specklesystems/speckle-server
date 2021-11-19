@@ -6,34 +6,9 @@ query User($id: String!) {
     bio
     company
     avatar
-    streams {
-      totalCount
-      items {
-        id
-        name
-        role
-        isPublic
-        createdAt
-        updatedAt
-        collaborators {
-          id
-          name
-          avatar
-        }
-        commits(limit: 1) {
-          totalCount
-          items{
-            id
-            referencedObject
-          }
-        }
-        branches {
-          totalCount
-        }
-      }
-    }
-    commits {
-      totalCount
-    }
+    verified
+    profiles
+    role
+    suuid
   }
 }

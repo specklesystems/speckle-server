@@ -19,7 +19,6 @@ const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services
 const serverAddress = 'http://localhost:3300'
 
 describe( 'Server Invites @server-invites', ( ) => {
-
   let myApp
 
   describe( 'Services @server-invites-services', () => {
@@ -43,15 +42,16 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     it( 'should create an invite', async() => {
-
       let inviteId = await createAndSendInvite( { email:'didimitrie@gmail.com', inviterId: actor.id, message: 'Hey, join!' } )
       expect( inviteId ).to.be.a( 'string' )
-
     } )
 
+    it( 'should store invited email as lowercase', async() => {
+      let inviteId = await createAndSendInvite( { email:'GerGO@gmaIl.com', inviterId: actor.id, message: 'Hey, join!' } )
+      expect( inviteId ).to.be.a( 'string' )
+    } )
 
     it( 'should not allow multiple invites for the same email', async() => {
-
       let inviteId = await createAndSendInvite( { email:'cat@speckle.systems', inviterId: actor.id, message: 'Hey, join!' } )
 
       try {
@@ -61,9 +61,11 @@ describe( 'Server Invites @server-invites', ( ) => {
       }
       assert.fail( 'should not allow multiple invites for the same email' )
     } )
+    it( 'low multiple invites for the same email regardles of casing', () => {
+      return createAndSendInvite( { email:'dIdImItrIe@gmaIl.com', inviterId: actor.id, message: 'Hey, join!' } ).then( ( result ) => {} ).catch( ( result ) => { expect( result.message ).to.equal( 'Already invited!' ) } )
+    } )
 
     it( 'should not allow self invites', async() => {
-
       try {
         await createAndSendInvite( { email: 'didimitrie-100@gmail.com', inviterId: actor.id } )
       } catch ( e ) {
@@ -73,7 +75,6 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     it( 'should not allow invites from no user', async() => {
-
       try {
         await createAndSendInvite( { email: 'didimitrie233-100@gmail.com', inviterId: 'fake' } )
       } catch ( e ) {
@@ -83,7 +84,6 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     it( 'should not allow invites with a too long message', async() => {
-
       try {
         let inviteId = await createAndSendInvite( {
           email: '123456@gmail.com',
@@ -111,7 +111,6 @@ describe( 'Server Invites @server-invites', ( ) => {
       expect( invite.email ).to.equal( 'badger@speckle.systems' )
       expect( invite.used ).to.equal( false )
       expect( invite.inviterId ).to.equal( actor.id )
-
     } )
 
     it( 'should get an invite by email', async() => {
@@ -127,7 +126,7 @@ describe( 'Server Invites @server-invites', ( ) => {
     it( 'should validate an invite', async() => {
       let inviteId = await createAndSendInvite( { email:'raven@speckle.systems', inviterId: actor.id, message: 'Hey, join!' } )
 
-      const valid = await validateInvite( { email: 'raven@speckle.systems', id: inviteId } )
+      const valid = await validateInvite( { email: 'rAvEn@specklE.sYstems', id: inviteId } )
       const invalid = await validateInvite( { email: 'bunny@speckle.systems', id: inviteId } )
 
       expect( valid ).to.equal( true )
@@ -144,14 +143,14 @@ describe( 'Server Invites @server-invites', ( ) => {
       // pass
       }
 
-      let result =  await useInvite( { id: inviteId, email:'crow@speckle.systems' } )
+      let result =  await useInvite( { id: inviteId, email:'crOw@specKle.systeMs' } )
 
-      let invite = await getInviteByEmail( { email: 'crow@speckle.systems' } )
+      let invite = await getInviteByEmail( { email: 'crow@speCkle.syStems' } )
       expect( result ).equals( true )
       expect( invite.used ).equals( true )
 
       try {
-        await useInvite( { id: inviteId, email:'crow@speckle.systems' } )
+        await useInvite( { id: inviteId, email:'CrOw@speckle.systems' } )
         assert.fail( 'Should not be able to use an already used invite.' )
       } catch ( e ) {
         //pass
@@ -209,7 +208,6 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     it( 'should create a server invite', async() => {
-
       const res = await sendRequest( testToken, {
         query: 'mutation inviteToServer($input: ServerInviteCreateInput!) { serverInviteCreate( input: $input ) }',
         variables: { input: { email: 'cabbages@speckle.systems', message: 'wow!' } }
@@ -220,7 +218,6 @@ describe( 'Server Invites @server-invites', ( ) => {
     } )
 
     it( 'should create a stream invite', async() => {
-
       let stream = { name: 'test', description:'wow' }
       stream.id = await createStream( { ...stream, ownerId: actor.id } )
 
@@ -232,14 +229,11 @@ describe( 'Server Invites @server-invites', ( ) => {
       expect( res.body.errors ).to.not.exist
       expect( res.body.data.streamInviteCreate ).to.equal( true )
     } )
-
   } )
 } )
 
 function sendRequest( auth, obj, address = serverAddress ) {
-
   return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
-
 }
 
 const longInviteMessage =
