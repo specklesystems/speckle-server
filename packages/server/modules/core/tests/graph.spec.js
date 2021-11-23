@@ -340,6 +340,14 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res.body.data.streamDelete ).to.equal( true )
       } )
 
+      it ( 'Should query streams', async ( ) => {
+        let streamResults = await sendRequest( userA.token, {
+          query: '{ streams(limit: 200) { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.errors ).to.exist
+        expect( streamResults.body.errors[ 0 ].extensions.code ).to.equal( 'BAD_USER_INPUT' )
+      } )
+
       it ( 'Should be forbidden to query admin streams if not admin', async ( ) => {
         let res = await sendRequest( userC.token, {
           query: '{ adminStreams { totalCount items { id name } } }'
@@ -369,6 +377,12 @@ describe( 'GraphQL API Core @core-api', ( ) => {
           query: '{ adminStreams { totalCount items { id name } } }'
         } )
         expect( streamResults.body.data.adminStreams.totalCount ).to.equal( 9 )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams(limit: 200) { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.errors ).to.exist
+        expect( streamResults.body.errors[ 0 ].extensions.code ).to.equal( 'BAD_USER_INPUT' )
 
         streamResults = await sendRequest( userA.token, {
           query: '{ adminStreams(limit: 2) { totalCount items { id name } } }'
