@@ -229,7 +229,8 @@ const routes = [
           {
             name: 'Admin | Streams',
             path: 'streams',
-            component: () => import('@/views/admin/AdminStreams.vue')
+            component: () => import('@/views/admin/AdminStreams.vue'),
+            props: (route) => ({ ...route.query, ...route.props })
           },
           {
             name: 'Admin | Settings',
