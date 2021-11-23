@@ -323,6 +323,14 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
       } )
 
+      it( 'Should fail to delete streams if not admin', async ( ) => {
+        const res = await sendRequest( userB.token, { query: `mutation { streamsDelete( ids:"[${ts4}]")}` } )
+        expect( res ).to.be.json
+
+        expect( res.body.errors ).to.exist
+        expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
+      } )
+
       it( 'Should delete a stream', async ( ) => {
         const res = await sendRequest( userB.token, { query: `mutation { streamDelete( id:"${ts4}")}` } )
 
@@ -330,6 +338,84 @@ describe( 'GraphQL API Core @core-api', ( ) => {
         expect( res.body.errors ).to.not.exist
         expect( res.body.data ).to.have.property( 'streamDelete' )
         expect( res.body.data.streamDelete ).to.equal( true )
+      } )
+
+      it ( 'Should be forbidden to query admin streams if not admin', async ( ) => {
+        let res = await sendRequest( userC.token, {
+          query: '{ adminStreams { totalCount items { id name } } }'
+        } )
+        expect( res ).to.be.json
+
+        expect( res.body.errors ).to.exist
+        expect( res.body.errors[ 0 ].extensions.code ).to.equal( 'FORBIDDEN' )
+      } )
+
+      it ( 'Should query admin streams', async ( ) => {
+        let streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams { totalCount items { id name } } }'
+        } )
+
+        expect( streamResults.body.data.adminStreams.totalCount ).to.equal( 4 )
+
+        await Promise.all( [
+          await sendRequest( userC.token, { query: 'mutation { streamCreate(stream: { name: "Admin TS1 (u A) Private", description: "Hello World", isPublic:false } ) }' } ),
+          await sendRequest( userA.token, { query: 'mutation { streamCreate(stream: { name: "Admin TS2 (u A)", description: "Hello Darkness", isPublic:true } ) }' } ),
+          await sendRequest( userB.token, { query: 'mutation { streamCreate(stream: { name: "Admin TS3 (u B) Private", description: "Hello Pumba", isPublic:false } ) }' } ),
+          await sendRequest( userB.token, { query: 'mutation { streamCreate(stream: { name: "Admin TS4 (u B)", description: "Hello Julian", isPublic:true } ) }' } ),
+          await sendRequest( userB.token, { query: 'mutation { streamCreate(stream: { name: "Admin TS5 (u B)", description: "Hello King", isPublic:true } ) }' } )
+        ] )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.totalCount ).to.equal( 9 )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams(limit: 2) { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.totalCount ).to.equal( 9 )
+        expect( streamResults.body.data.adminStreams.items.length ).to.equal( 2 )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams(offset: 5) { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.items.length ).to.equal( 4 )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.totalCount ).to.equal( 5 )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams( orderBy: "updatedAt,asc" ) { totalCount items { id name updatedAt } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.items.pop().name ).to.equal( 'Admin TS5 (u B)' )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams( visibility: "private" ) { totalCount items { id name isPublic } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.items )
+          .to.satisfy( ( streams ) => streams.every( stream => !stream.isPublic ) )
+
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams( visibility: "public" ) { totalCount items { id name isPublic } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.items )
+          .to.satisfy( ( streams ) => streams.every( stream => stream.isPublic ) )
+      } )
+
+      it( 'Should delete streams', async ( ) => {
+        streamResults = await sendRequest( userA.token, {
+          query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
+        } )
+        expect( streamResults.body.data.adminStreams.totalCount ).to.equal( 5 )
+        const streamIds =  streamResults.body.data.adminStreams.items.map( stream => stream.id )
+        const res = await sendRequest( userA.token, { query: 'mutation ( $ids: [String!] ){ streamsDelete( ids: $ids )}', variables:{ ids: streamIds } } )
+
+        expect( res ).to.be.json
+        expect( res.body.errors ).to.not.exist
+        expect( res.body.data ).to.have.property( 'streamsDelete' )
+        expect( res.body.data.streamsDelete ).to.equal( true )
       } )
     } )
 
