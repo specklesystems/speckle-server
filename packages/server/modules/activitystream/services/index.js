@@ -32,6 +32,7 @@ module.exports = {
       }
       dispatchStreamEvent( { streamId, event: actionType, eventPayload: webhooksPayload } )
     }
+    
   },
 
   async getStreamActivity( { streamId, actionType, after, before, cursor, limit } ) {
