@@ -30,7 +30,7 @@ export default class Coverter {
     if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
       await new Promise( resolve => setTimeout( resolve, 0 ) )
-      if ( Date.now() - this.lastAsyncPause > 200 ) console.log( 'CONV Event loop lag: ', Date.now() - this.lastAsyncPause )
+      // if ( Date.now() - this.lastAsyncPause > 200 ) console.log( 'CONV Event loop lag: ', Date.now() - this.lastAsyncPause )
     }
   }
 
