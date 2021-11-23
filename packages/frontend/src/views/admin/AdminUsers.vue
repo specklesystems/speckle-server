@@ -141,8 +141,8 @@ export default {
         items: [],
         totalCount: 0
       },
-      currentPage: 1,
-      searchQuery: null,
+      // currentPage: 1,
+      // searchQuery: null,
       showConfirmDialog: false,
       showDeleteDialog: false,
       manipulatedUser: null,
@@ -152,6 +152,22 @@ export default {
   computed: {
     queryLimit() {
       return parseInt(this.limit)
+    },
+    currentPage: {
+      get() {
+        return parseInt(this.page)
+      },
+      set(newPage) {
+        this.paginateNext(newPage)
+      }
+    },
+    searchQuery: {
+      get() {
+        return this.q
+      },
+      set: debounce(function (q) {
+        this.applySearch(q)
+      }, 500)
     },
     queryOffset() {
       return (this.page - 1) * this.queryLimit
@@ -167,21 +183,12 @@ export default {
       return roleItems
     }
   },
-  watch: {
-    currentPage: function (newPage) {
-      this.paginateNext(newPage)
-    },
-    searchQuery: debounce(function (newQuery) {
-      this.applySearch(newQuery)
-    }, 1000)
-  },
   methods: {
     initiateDeleteUser(user) {
       this.showDeleteDialog = true
       this.manipulatedUser = user
     },
     async deleteUser(user) {
-      console.log('deleting', user.email)
       await this.$apollo.mutate({
         mutation: gql`
           mutation($userEmail: String!) {
