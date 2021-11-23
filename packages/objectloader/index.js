@@ -226,7 +226,7 @@ export default class ObjectLoader {
     }
 
     const rootObjJson = await this.getRawRootObject()
-    console.log("Root in: ", Date.now() - tSTART)
+    // console.log("Root in: ", Date.now() - tSTART)
 
     yield `${this.objectId}\t${rootObjJson}`
 
