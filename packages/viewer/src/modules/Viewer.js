@@ -66,66 +66,65 @@ export default class Viewer extends EventEmitter {
 
   sceneLights() {
 
-    const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
-    dirLight.color.setHSL( 0.1, 1, 0.95 )
-    dirLight.position.set( -1, 1.75, 1 )
-    dirLight.position.multiplyScalar( 1000 )
-    this.scene.add( dirLight )
+    // const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
+    // dirLight.color.setHSL( 0.1, 1, 0.95 )
+    // dirLight.position.set( -1, 1.75, 1 )
+    // dirLight.position.multiplyScalar( 1000 )
+    // this.scene.add( dirLight )
     
-    const dirLight2 = new THREE.DirectionalLight( 0xffffff, 0.9 )
-    dirLight2.color.setHSL( 0.1, 1, 0.95 )
-    dirLight2.position.set( 0, -1.75, 1 )
-    dirLight2.position.multiplyScalar( 1000 )
-    this.scene.add( dirLight2 )
+    // const dirLight2 = new THREE.DirectionalLight( 0xffffff, 0.9 )
+    // dirLight2.color.setHSL( 0.1, 1, 0.95 )
+    // dirLight2.position.set( 0, -1.75, 1 )
+    // dirLight2.position.multiplyScalar( 1000 )
+    // this.scene.add( dirLight2 )
 
-    const hemiLight2 = new THREE.HemisphereLight( 0xffffff, new THREE.Color( '#232323' ), 1.9 )
-    hemiLight2.color.setHSL( 1, 1, 1 )
-    // hemiLight2.groundColor = new THREE.Color( '#232323' )
-    hemiLight2.up.set( 0, 0, 1 )
-    this.scene.add( hemiLight2 )
+    // const hemiLight2 = new THREE.HemisphereLight( 0xffffff, new THREE.Color( '#232323' ), 1.9 )
+    // hemiLight2.color.setHSL( 1, 1, 1 )
+    // // hemiLight2.groundColor = new THREE.Color( '#232323' )
+    // hemiLight2.up.set( 0, 0, 1 )
+    // this.scene.add( hemiLight2 )
 
-    let axesHelper = new THREE.AxesHelper( 1 )
-    this.scene.add( axesHelper )
+    // let axesHelper = new THREE.AxesHelper( 1 )
+    // this.scene.add( axesHelper )
 
-    return
-
-
-    // let ambientLight = new THREE.AmbientLight( 0xffffff )
-    // this.scene.add( ambientLight )
-
-    // const lights = []
-    // lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-    // lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-    // lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-    // lights[ 3 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
-
-    // let factor = 1000
-    // lights[ 0 ].position.set( 1 * factor, 1 * factor, 1 * factor )
-    // lights[ 1 ].position.set( 1 * factor, -1 * factor, 1 * factor )
-    // lights[ 2 ].position.set( -1 * factor, -1 * factor, 1 * factor )
-    // lights[ 3 ].position.set( -1 * factor, 1 * factor, 1 * factor )
-
-    // this.scene.add( lights[ 0 ] )
-    // this.scene.add( lights[ 1 ] )
-    // this.scene.add( lights[ 2 ] )
-    // this.scene.add( lights[ 3 ] )
-
-    // // let sphereSize = 0.2
-    // // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
-    // // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
-    // // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
-    // // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
+    // return
 
 
-    // const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.2 )
-    // hemiLight.color.setHSL( 1, 1, 1 )
-    // hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
-    // hemiLight.up.set( 0, 0, 1 )
-    // this.scene.add( hemiLight )
+    let ambientLight = new THREE.AmbientLight( 0xffffff )
+    this.scene.add( ambientLight )
+
+    const lights = []
+    lights[ 0 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    lights[ 1 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    lights[ 2 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+    lights[ 3 ] = new THREE.PointLight( 0xffffff, 0.21, 0 )
+
+    let factor = 1000
+    lights[ 0 ].position.set( 1 * factor, 1 * factor, 1 * factor )
+    lights[ 1 ].position.set( 1 * factor, -1 * factor, 1 * factor )
+    lights[ 2 ].position.set( -1 * factor, -1 * factor, 1 * factor )
+    lights[ 3 ].position.set( -1 * factor, 1 * factor, 1 * factor )
+
+    this.scene.add( lights[ 0 ] )
+    this.scene.add( lights[ 1 ] )
+    this.scene.add( lights[ 2 ] )
+    this.scene.add( lights[ 3 ] )
+
+    // let sphereSize = 0.2
+    // this.scene.add( new THREE.PointLightHelper( lights[ 0 ], sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 1 ], sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 2 ], sphereSize ) )
+    // this.scene.add( new THREE.PointLightHelper( lights[ 3 ], sphereSize ) )
+
+    const hemiLight = new THREE.HemisphereLight( 0xffffff, 0x0, 0.2 )
+    hemiLight.color.setHSL( 1, 1, 1 )
+    hemiLight.groundColor.setHSL( 0.095, 1, 0.75 )
+    hemiLight.up.set( 0, 0, 1 )
+    this.scene.add( hemiLight )
 
     
-    // let group = new THREE.Group()
-    // this.scene.add( group )
+    let group = new THREE.Group()
+    this.scene.add( group )
   }
 
   onWindowResize() {

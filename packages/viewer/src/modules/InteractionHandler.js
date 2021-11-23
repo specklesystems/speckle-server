@@ -159,12 +159,14 @@ export default class InteractionHandler {
     box.getBoundingSphere( target )
     target.radius = target.radius * fitOffset
     
-    this.viewer.cameraHandler.controls.fitToSphere( target, transition )
-
     const maxSize = Math.max( size.x, size.y, size.z )
-    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.cameraHandler.camera.fov / 360 ) )
-    const fitWidthDistance = fitHeightDistance / this.viewer.cameraHandler.camera.aspect
+    const camFov = this.viewer.cameraHandler.camera.fov ? this.viewer.cameraHandler.camera.fov : 55
+    const camAspect = this.viewer.cameraHandler.camera.aspect ? this.viewer.cameraHandler.camera.aspect : 1.2
+    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camFov / 360 ) )
+    const fitWidthDistance = fitHeightDistance / camAspect
     const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+    
+    this.viewer.cameraHandler.controls.fitToSphere( target, transition )
 
     this.viewer.cameraHandler.controls.minDistance = distance / 100
     this.viewer.cameraHandler.controls.maxDistance = distance * 100

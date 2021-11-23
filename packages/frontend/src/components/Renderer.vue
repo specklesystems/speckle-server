@@ -47,11 +47,17 @@
         <!-- <div v-show="!hasLoadedModel" class="overlay cover-all"> -->
         <div v-show="loadProgress < 99" class="overlay cover-all">
           <transition name="fade">
-            <div v-show="hasImg" ref="cover" class="overlay-abs bg-img"></div>
+            <div
+              v-show="hasImg"
+              ref="cover"
+              class="overlay-abs bg-img"
+              :style="`opacity: ${100 - loadProgress}`"
+            ></div>
           </transition>
           <div class="overlay-abs radial-bg"></div>
           <div class="overlay-abs" style="pointer-events: none">
             <v-btn
+              v-show="loadProgress === 0"
               color="primary"
               class="vertical-center"
               style="pointer-events: all"
@@ -88,6 +94,15 @@
             <span v-if="!isSmall">Selection Details</span>
             <v-icon v-else small>mdi-cube</v-icon>
             ({{ selectedObjects.length }})
+          </v-btn>
+          <v-btn
+            v-tooltip="`Toggle between perspective or ortho camera.`"
+            small
+            :color="`${perspectiveMode ? 'blue' : ''}`"
+            @click="toggleCamera()"
+          >
+            <v-icon small>mdi-perspective-less</v-icon>
+            <!-- <span class="caption">Perspective</span> -->
           </v-btn>
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
@@ -259,7 +274,8 @@ export default {
       selectedObjects: [],
       showObjectDetails: false,
       hasImg: false,
-      namedViews: []
+      namedViews: [],
+      perspectiveMode: true
     }
   },
   computed: {
@@ -323,27 +339,28 @@ export default {
     this.$refs.rendererparent.appendChild(renderDomElement)
 
     if (!window.__viewer) {
-      // let v = new Viewer({ container: renderDomElement, showStats: false })
-      // console.log(v)
-      // window.v = v
       window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
     }
 
     window.__viewer.onWindowResize()
+    window.__viewer.onWindowResize()
+    window.__viewer.cameraHandler.onWindowResize()
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
-      window.__viewer.unloadAll()
       window.__viewerLastLoadedUrl = null
-      this.getPreviewImage().then().catch()
+      await this.getPreviewImage()
+      await window.__viewer.unloadAll()
     } else {
       this.hasLoadedModel = true
       this.loadProgress = 100
       this.setupEvents()
     }
-    if (this.$route.query.embed) {
-      this.fullScreen = true
-      //TODO: Remove overflow from window
-      document.body.classList.add('no-scrollbar')
+
+    let persp = localStorage.getItem('cameramode')
+    if (!persp) {
+      this.perspectiveMode = true
+    } else {
+      this.perspectiveMode = persp === 'perspective'
     }
   },
   beforeDestroy() {
@@ -371,6 +388,11 @@ export default {
       const imgUrl = URL.createObjectURL(blob)
       if (this.$refs.cover) this.$refs.cover.style.backgroundImage = `url('${imgUrl}')`
       this.hasImg = true
+    },
+    toggleCamera() {
+      window.__viewer.toggleCameraProjection()
+      this.perspectiveMode = !this.perspectiveMode
+      localStorage.setItem('cameramode', this.perspectiveMode === true ? 'perspective' : 'ortho')
     },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
@@ -417,7 +439,7 @@ export default {
       this.setupEvents()
     },
     unloadData() {
-      window.__viewer.sceneManager.removeAllObjects()
+      window.__viewer.unloadAll()
       this.hasLoadedModel = false
       this.loadProgress = 0
       this.namedViews.splice(0, this.namedViews.length)

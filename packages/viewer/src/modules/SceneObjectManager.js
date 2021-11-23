@@ -237,7 +237,6 @@ export default class SceneObjectManager {
       group.applyMatrix4( wrapper.extras.scaleMatrix )
       // this.objectIds.push()
       this.sceneObjects.allSolidObjects.add( group )
-      console.log( group )
     }
 
     return group
