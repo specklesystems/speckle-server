@@ -348,9 +348,8 @@ export default {
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
       await this.getPreviewImage()
-      console.log(window.__viewerLastLoadedUrl, this.hasLoadedModel)
       if (window.__viewerLastLoadedUrl && !this.hasLoadedModel) {
-        console.log('unloading')
+        // console.log('unloading')
         await window.__viewer.unloadAll()
       }
       window.__viewerLastLoadedUrl = null
