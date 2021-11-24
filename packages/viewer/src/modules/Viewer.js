@@ -146,7 +146,7 @@ export default class Viewer extends EventEmitter {
       this.needsRender = false
       if ( this.stats ) this.stats.begin()
       this.render()
-      if(this.stats && document.getElementById( 'info-draws' ))
+      if( this.stats && document.getElementById( 'info-draws' ) )
         document.getElementById( 'info-draws' ).textContent = '' + this.renderer.info.render.calls
       if ( this.stats ) this.stats.end()
     }
@@ -229,6 +229,7 @@ export default class Viewer extends EventEmitter {
       await this.loaders[key].unload()
       delete this.loaders[key]
     }
+    await this.applyFilter( null )
     return
   }
 
