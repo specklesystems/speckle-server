@@ -55,6 +55,7 @@
     "yargs": "^17.2.1"
   },
   "dependencies": {
+    "@speckle/objectloader": "file:../objectloader",
     "camera-controls": "^1.33.1",
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
