@@ -38,7 +38,7 @@
     "@babel/preset-env": "7.15.8",
     "@babel/preset-react": "7.14.5",
     "@babel/preset-typescript": "7.15.0",
-    "@speckle/objectloader": "@speckle/objectloader",
+    "@speckle/objectloader": "^2.2.0",
     "babel-jest": "27.2.5",
     "babel-loader": "^8.0.0-beta.4",
     "babel-plugin-add-module-exports": "1.0.4",
