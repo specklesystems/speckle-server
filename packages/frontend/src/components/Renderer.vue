@@ -328,6 +328,7 @@ export default {
     // - juggle the container div out of this component's dom when the component is managed out by vue
     // - juggle the container div back in of this component's dom when it's back.
     let renderDomElement = document.getElementById('renderer')
+    this.hasLoadedModel = false
 
     if (!renderDomElement) {
       renderDomElement = document.createElement('div')
@@ -343,25 +344,23 @@ export default {
     }
 
     window.__viewer.onWindowResize()
-    window.__viewer.onWindowResize()
     window.__viewer.cameraHandler.onWindowResize()
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
-      window.__viewerLastLoadedUrl = null
       await this.getPreviewImage()
-      await window.__viewer.unloadAll()
+      console.log(window.__viewerLastLoadedUrl, this.hasLoadedModel)
+      if (window.__viewerLastLoadedUrl && !this.hasLoadedModel) {
+        console.log('unloading')
+        await window.__viewer.unloadAll()
+      }
+      window.__viewerLastLoadedUrl = null
     } else {
       this.hasLoadedModel = true
       this.loadProgress = 100
       this.setupEvents()
     }
 
-    let persp = localStorage.getItem('cameramode')
-    if (!persp) {
-      this.perspectiveMode = true
-    } else {
-      this.perspectiveMode = persp === 'perspective'
-    }
+    if (window.__viewer.cameraHandler.activeCam === 'ortho') this.perspectiveMode = false
   },
   beforeDestroy() {
     // NOTE: here's where we juggle the container div out, and do cleanup on the
@@ -392,7 +391,6 @@ export default {
     toggleCamera() {
       window.__viewer.toggleCameraProjection()
       this.perspectiveMode = !this.perspectiveMode
-      localStorage.setItem('cameramode', this.perspectiveMode === true ? 'perspective' : 'ortho')
     },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
