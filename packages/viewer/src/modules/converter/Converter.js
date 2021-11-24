@@ -46,7 +46,7 @@ export default class Coverter {
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
-    if ( typeof obj !== 'object' ) return
+    if ( obj === null || typeof obj !== 'object' ) return
     if ( obj.referencedId ) obj = await this.resolveReference( obj )
 
     let childrenConversionPromisses = []
