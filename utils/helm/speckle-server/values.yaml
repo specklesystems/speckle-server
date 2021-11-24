@@ -1,18 +1,97 @@
 
 namespace: speckle-test
 
-domain: example.com
-
-server:
-  replicaCount: 1
-  authGoogle: false
-  email: false
-
+domain: localhost
 
 db:
+  # postgres_url: secret -> postgres_url
   customCertificate: true
   certificateConfigMapName: postgres-certificate
   # Create configmap with:
   # kubectl --namespace=[NAMESPACE] create configmap postgres-certificate --from-file=[/path/to/ca-certificate.crt]
+  PGSSLMODE: require
+
+s3:
+  endpoint: ""
+  bucket: ""
+  access_key: ""
+  # secret_key: secret -> s3_secret_key
+
+#redis:
+  # redis_url: secret -> redis_url
+
+server:
+  replicas: 1
+  auth:
+    local:
+      enabled: true
+    google:
+      enabled: false
+      client_id: ""
+      # client_secret: secret -> `google_client_secret`
+    github:
+      enabled: false
+      client_id: ""
+      # client_secret: secret -> `github_client_secret`
+    azure_ad:
+      enabled: false
+      org_name: ""
+      identity_metadata: ""
+      issuer: ""
+      client_id: ""
+      # client_secret: secret -> `azure_ad_client_secret`
+  email:
+    enabled: false
+    host: ""
+    port: ""
+    username: ""
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 3Gi
+
+  sentry_dns: ""
+  disable_tracking: false
+  disable_tracing: false
+
+frontend:
+  replicas: 1
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+preview_service:
+  replicas: 1
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: 1000m
+    memory: 4Gi
+
+webhook_service:
+  replicas: 1
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+fileimport_service:
+  replicas: 1
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+
 
 secretName: server-vars
