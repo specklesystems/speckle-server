@@ -7,7 +7,7 @@ metadata:
     app: speckle-frontend
     project: speckle-server
 spec:
-  replicas: 1
+  replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels:
       app: speckle-frontend
@@ -20,4 +20,8 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-frontend:v{{ .Chart.AppVersion }}
+        image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
+        resources:
+          requests: {{ .Values.frontend.requests }}
+          limits: {{ .Values.frontend.limits }}
+

@@ -4,7 +4,7 @@ metadata:
   name: speckle-server
   namespace: {{ .Values.namespace }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
     nginx.ingress.kubernetes.io/proxy-body-size: "100m"
     nginx.org/client-max-body-size: "100m"
     nginx.ingress.kubernetes.io/use-regex: "true"

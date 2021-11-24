@@ -7,7 +7,7 @@ metadata:
     app: speckle-preview-service
     project: speckle-server
 spec:
-  replicas: 1
+  replicas: {{ .Values.preview_service.replicas }}
   selector:
     matchLabels:
       app: speckle-preview-service
@@ -27,14 +27,10 @@ spec:
 
       containers:
       - name: main
-        image: speckle/speckle-preview-service:v{{ .Chart.AppVersion }}
+        image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
         resources:
-          requests:
-            memory: "2Gi"
-            cpu: "500m"
-          limits:
-            memory: "3Gi"
-            cpu: "1000m"
+          requests: {{ .Values.preview_service.requests }}
+          limits: {{ .Values.preview_service.limits }}
 
         {{- if .Values.db.customCertificate }}
         volumeMounts:

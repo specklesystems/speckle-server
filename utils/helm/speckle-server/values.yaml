@@ -1,7 +1,8 @@
-
 namespace: speckle-test
 
 domain: localhost
+
+docker_image_tag: v2.3.3
 
 db:
   # postgres_url: secret -> postgres_url
@@ -18,10 +19,11 @@ s3:
   # secret_key: secret -> s3_secret_key
 
 #redis:
-  # redis_url: secret -> redis_url
+# redis_url: secret -> redis_url
 
 server:
   replicas: 1
+  # session_secret: secret -> `session_secret`
   auth:
     local:
       enabled: true
@@ -45,6 +47,7 @@ server:
     host: ""
     port: ""
     username: ""
+    # password: secret -> `email_password`
   requests:
     cpu: 500m
     memory: 1Gi
@@ -91,7 +94,5 @@ fileimport_service:
   limits:
     cpu: 1000m
     memory: 2Gi
-
-
 
 secretName: server-vars
