@@ -18,10 +18,15 @@ spec:
         app: speckle-frontend
         project: speckle-server
     spec:
+      priorityClassName: high-priority
+
       containers:
       - name: main
         image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
         resources:
-          requests: {{ .Values.frontend.requests }}
-          limits: {{ .Values.frontend.limits }}
-
+          requests:
+            cpu: {{ .Values.frontend.requests.cpu }}
+            memory: {{ .Values.frontend.requests.memory }}
+          limits:
+            cpu: {{ .Values.frontend.limits.cpu }}
+            memory: {{ .Values.frontend.limits.memory }}

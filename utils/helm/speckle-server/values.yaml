@@ -6,10 +6,8 @@ docker_image_tag: v2.3.3
 
 db:
   # postgres_url: secret -> postgres_url
-  customCertificate: true
-  certificateConfigMapName: postgres-certificate
-  # Create configmap with:
-  # kubectl --namespace=[NAMESPACE] create configmap postgres-certificate --from-file=[/path/to/ca-certificate.crt]
+  useCertificate: false
+  certificate: "" # Multi-line string with the contents of `ca-certificate.crt`
   PGSSLMODE: require
 
 s3:
@@ -96,3 +94,6 @@ fileimport_service:
     memory: 2Gi
 
 secretName: server-vars
+
+enable_prometheus_monitoring: false
+cert_manager_issuer: letsencrypt-staging

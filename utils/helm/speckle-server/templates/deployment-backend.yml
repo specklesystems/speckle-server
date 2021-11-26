@@ -20,11 +20,11 @@ spec:
     spec:
       priorityClassName: high-priority
 
-      {{- if .Values.db.customCertificate }}
+      {{- if .Values.db.useCertificate }}
       volumes:
         - name: postgres-certificate
           configMap:
-            name: {{ .Values.db.certificateConfigMapName }}
+            name: postgres-certificate
       {{- end }}
 
       containers:
@@ -32,10 +32,14 @@ spec:
         image: speckle/speckle-server:{{ .Values.docker_image_tag }}
 
         resources:
-          requests: {{ .Values.server.requests }}
-          limits: {{ .Values.server.limits }}
+          requests:
+            cpu: {{ .Values.server.requests.cpu }}
+            memory: {{ .Values.server.requests.memory }}
+          limits:
+            cpu: {{ .Values.server.limits.cpu }}
+            memory: {{ .Values.server.limits.memory }}
 
-        {{- if .Values.db.customCertificate }}
+        {{- if .Values.db.useCertificate }}
         volumeMounts:
         - name: postgres-certificate
           mountPath: /postgres-certificate
@@ -73,12 +77,13 @@ spec:
           - name: PGSSLMODE
             value: {{ .Values.db.PGSSLMODE }}
 
-          {{- if .Values.db.customCertificate }}
+          {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
           # *** S3 Object Storage ***
+          {{- if .Values.s3.endpoint }}
           - name: S3_ENDPOINT
             value: {{ .Values.s3.endpoint }}
           - name: S3_ACCESS_KEY
@@ -90,6 +95,7 @@ spec:
               secretKeyRef:
                 name: {{ .Values.secretName }}
                 key: s3_secret_key
+          {{- end }}
 
           # *** Authentication ***
 
