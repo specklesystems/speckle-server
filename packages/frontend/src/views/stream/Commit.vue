@@ -154,7 +154,34 @@ export default {
           id: this.$route.params.commitId
         }
       }
-    }
+    },
+    // commitActivitiy: {
+    //   query: `
+    //   query CommitActivity($streamid: String!, $id: String!) {
+    //     stream(id: $streamid) {
+    //       id
+    //       commit(id: $id) {
+    //         id
+    //         activity(actionType: "commit_receive", limit: 200) {
+    //           items {
+    //             info
+    //             time
+    //             userId
+    //             message
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    //   `,
+    //   variables() {
+    //     return {
+    //       streamid: this.$route.params.streamId,
+    //       id: this.$route.params.commitId
+    //     }
+    //   },
+    //   update:(data) => data.stream.commit.activity
+    // }
   },
   computed: {
     loggedInUserId() {
