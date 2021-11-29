@@ -140,7 +140,7 @@ module.exports = {
 
   async getStreams( { offset, limit, orderBy, visibility, searchQuery } ) {
     let query = knex
-      .column( 'streams.*', knex.raw( 'sum(pg_column_size(objects.data)) as size' ) )
+      .column( 'streams.*', knex.raw( 'coalesce(sum(pg_column_size(objects.data)),0) as size' ) )
       .select()
       .from( 'streams' )
       .leftJoin( 'objects', 'streams.id', 'objects.streamId' )

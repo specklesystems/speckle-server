@@ -96,7 +96,6 @@
               style="cursor: pointer; min-height: 33px; line-height: 33px"
               :class="`grey ${$vuetify.theme.dark ? 'darken-3' : 'lighten-3'} rounded-xl px-2`"
             >
-              <v-icon small>mdi-call-received</v-icon>
               <user-avatar
                 v-for="user in stream.collaborators.slice(0, 3)"
                 v-show="$vuetify.breakpoint.smAndUp"
