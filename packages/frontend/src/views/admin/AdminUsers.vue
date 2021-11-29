@@ -27,7 +27,9 @@
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
-              {{ user.name }}
+              <router-link class="text-h6" :to="`/profile/${user.id}`" target="_blank">
+                {{ user.name }}
+              </router-link>
             </v-list-item-title>
 
             <span class="caption">

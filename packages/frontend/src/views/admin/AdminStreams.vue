@@ -65,14 +65,18 @@
       </div>
     </v-card-subtitle>
     <v-list v-if="!$apollo.loading" rounded>
-      <v-list-item-group>
+      <v-list-item-group class="ml-6">
         <v-list-item v-for="stream in adminStreams.items" :key="stream.id" two-line>
           <v-list-item-content>
-            <v-list-item-title>{{ stream.name }}</v-list-item-title>
-            <v-list-item-subtitle>
+            <v-list-item-title>
+              <router-link class="text-h6" :to="`/streams/${stream.id}`" target="_blank">
+                {{ stream.name }}
+              </router-link>
+            </v-list-item-title>
+            <v-list-item-subtitle class="mx-2">
               {{ stream.description ? stream.description : 'Stream has no description' }}
             </v-list-item-subtitle>
-            <div class="mt-2">
+            <div class="mt-1 ml-1">
               <v-chip small>
                 <v-icon small>
                   {{ stream.isPublic ? 'mdi-lock-open-variant-outline' : 'mdi-lock-outline' }}
