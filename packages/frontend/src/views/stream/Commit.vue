@@ -10,6 +10,7 @@
       <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
         <portal to="streamActionsBar">
           <v-btn
+            text
             v-if="
               stream &&
               stream.role !== 'stream:reviewer' &&
@@ -31,6 +32,7 @@
           </v-btn>
 
           <v-btn class="ml-2"
+            text
             v-if="
               stream &&
               stream.role !== 'stream:reviewer' &&
@@ -245,7 +247,7 @@ export default {
   watch: {
     stream(val) {
       if (!val) return
-      if (val.commit.branchName === 'globals')
+      if (val && val.commit && val.commit.branchName && val.commit.branchName === 'globals')
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
     }
   },
@@ -289,7 +291,10 @@ export default {
             }
           `,
           variables: {
-            myCommit: { ...dialog.commit }
+            myCommit: { 
+              streamId: this.stream.id,
+              id: this.stream.commit.id
+             }
           }
         })
         .then(() => {
@@ -299,6 +304,8 @@ export default {
           // Error
           console.error(error)
         })
+        this.showDeleteDialog =  false
+        this.$router.push(`/streams/` + this.$route.params.streamId )
     }
   }
 }
