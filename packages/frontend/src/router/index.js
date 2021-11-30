@@ -102,7 +102,7 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('@/views/stream/BranchNew.vue'),
+            component: () => import('@/views/stream/Branch.vue'),
             beforeEnter: (to, from, next) => {
               if (to.params.branchName.toLowerCase() !== to.params.branchName)
                 return next(
