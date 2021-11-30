@@ -4,7 +4,7 @@
     :style="`${serverInfo.inviteOnly ? 'border: 2px solid #047EFB' : ''}`"
     rounded="lg"
   >
-    <div v-show="serverInfo.inviteOnly" class="caption text-center" style="background: #047EFB">
+    <div v-show="serverInfo.inviteOnly" class="caption text-center" style="background: #047efb">
       <v-icon small>mdi-shield-alert-outline</v-icon>
       This Speckle server is invite only.
     </div>
@@ -81,7 +81,8 @@
 <script>
 import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
-import Strategies from '../../components/auth/Strategies'
+import Strategies from '@/components/auth/Strategies'
+import { isEmailValid } from '@/auth-helpers'
 
 export default {
   name: 'Login',
@@ -119,7 +120,7 @@ export default {
       passwordRules: [(v) => !!v || 'Required'],
       emailRules: [
         (v) => !!v || 'E-mail is required',
-        (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
+        (v) => isEmailValid(v) || 'E-mail must be valid'
       ]
     },
     registrationError: false,
