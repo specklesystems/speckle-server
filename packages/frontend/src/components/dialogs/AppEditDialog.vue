@@ -196,7 +196,7 @@ export default {
 
       if (!this.$refs.form.validate()) return
 
-      this.$matomo && this.$matomo.trackPageView('user/app/update') ///// not sure what it is
+      //this.$matomo && this.$matomo.trackPageView('user/app/update') ///// not sure what it is
       try {
         
         let res = await this.$apollo.mutate({

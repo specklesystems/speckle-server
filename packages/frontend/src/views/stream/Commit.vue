@@ -282,7 +282,7 @@ export default {
       })
     },
     deleteCommit() {
-      this.$matomo && this.$matomo.trackPageView('commit/delete')
+      //this.$matomo && this.$matomo.trackPageView('commit/delete')
       this.$apollo
         .mutate({
           mutation: gql`
