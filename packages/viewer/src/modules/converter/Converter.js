@@ -313,15 +313,23 @@ export default class Coverter {
 
       let k = 0
       while ( k < faces.length ) {
-        if ( faces[ k ] === 1 ) { // QUAD FACE
+      let n = faces[ k ]
+      if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
+
+        if ( n === 4 ) { // QUAD FACE
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
           indices.push( faces[ k + 1 ], faces[ k + 3 ], faces[ k + 4 ] )
-          k += 5
-        } else if ( faces[ k ] === 0 ) { // TRIANGLE FACE
+        } else if ( n === 3 ) { // TRIANGLE FACE
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-          k += 4
-        } else throw new Error( `Mesh type not supported. Face topology indicator: ${faces[k]}` )
-      }
+        } else { //N-GON FACE
+          //TODO triangulate n-gon face.
+
+          //There is no need to throw an exception here, unsupported faces will simply be ignored.
+          //throw new Error( `Mesh type not supported. Face topology indicator: ${faces[k]}` )
+        }
+
+      k += n + 1
+    }
       buffer.setIndex( indices )
 
       buffer.setAttribute(
