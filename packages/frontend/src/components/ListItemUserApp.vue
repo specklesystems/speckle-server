@@ -49,7 +49,7 @@
           app. Existing users will not be able to use it anymore.
           <v-divider class="my-3"></v-divider>
           <v-btn text color="error" @click="revokeApp">Delete</v-btn>
-          <v-btn @click="showRevokeConfirm = false">Cancel</v-btn>
+          <v-btn text @click="showRevokeConfirm = false">Cancel</v-btn>
         </v-alert>
       </v-card>
     </v-dialog>

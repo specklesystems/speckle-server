@@ -29,6 +29,28 @@
             </v-icon>
             <span class="hidden-md-and-down">Edit</span>
           </v-btn>
+
+          <v-btn class="ml-2"
+            v-if="
+              stream &&
+              stream.role !== 'stream:reviewer' &&
+              stream.commit.authorId === loggedInUserId
+            "
+            v-tooltip="'Edit commit'"
+            elevation="0"
+            color="error"
+            small
+            rounded
+            :fab="$vuetify.breakpoint.mdAndDown"
+            dark
+            @click="showDeleteDialog = true"
+          >
+            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+              mdi-delete
+            </v-icon>
+            <span class="hidden-md-and-down">Delete</span>
+          </v-btn>
+
         </portal>
         <portal to="streamTitleBar">
           <div>
@@ -121,11 +143,26 @@
       </error-placeholder>
     </v-row>
     <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
+
+    <v-dialog v-model="showDeleteDialog" width="500">
+      <v-card class="pa-0 transparent">
+        <v-alert type="info" class="ma-0">
+          <h3>Are you sure?</h3>
+          You cannot undo this action. This will permanently delete the commit
+          <v-chip :to="`/streams/${$route.params.streamId}/commits/${stream&&stream.commit ? stream.commit.id : null}`" color="primary" @click="showDeleteDialog=false"> 
+            <v-icon small class="mr-2 float-left" light> mdi-timeline-remove-outline </v-icon> 
+            {{ stream&&stream.commit ? stream.commit.id : null }} 
+          </v-chip>
+          <v-divider class="my-3"></v-divider>
+          <v-btn text class="error--text" @click="deleteCommit">Delete</v-btn>
+          <v-btn text @click="showDeleteDialog = false">Cancel</v-btn>
+        </v-alert>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
 import gql from 'graphql-tag'
-
 import streamCommitQuery from '@/graphql/commit.gql'
 
 export default {
@@ -142,7 +179,8 @@ export default {
   },
   data: () => ({
     loadedModel: false,
-    selectionData: []
+    selectionData: [],
+    showDeleteDialog: false
   }),
   apollo: {
     stream: {
@@ -240,6 +278,27 @@ export default {
             console.error(error)
           })
       })
+    },
+    deleteCommit() {
+      this.$matomo && this.$matomo.trackPageView('commit/delete')
+      this.$apollo
+        .mutate({
+          mutation: gql`
+            mutation commitUpdate($myCommit: CommitDeleteInput!) {
+              commitDelete(commit: $myCommit)
+            }
+          `,
+          variables: {
+            myCommit: { ...dialog.commit }
+          }
+        })
+        .then(() => {
+          this.$apollo.queries.stream.refetch()
+        })
+        .catch((error) => {
+          // Error
+          console.error(error)
+        })
     }
   }
 }
