@@ -11,7 +11,7 @@
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
     <v-card-text v-if="apps && apps.length !== 0">
       <v-list two-line class="transparent">
-        <list-item-user-app v-for="app in apps" :key="app.id" :app="app" @deleted="refreshList" />
+        <list-item-user-app v-for="app in apps" :key="app.id" :app="app" @app-edited="refreshList" @deleted="refreshList"  />
       </v-list>
     </v-card-text>
     <v-card-text v-else>You have no apps.</v-card-text>
