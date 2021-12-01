@@ -27,6 +27,12 @@
           </v-container>
         </v-card-text>
         <v-card-actions>
+          <v-btn text color="error" @click="emitDelete" class="aligh: left">
+            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+              mdi-delete
+            </v-icon>
+            <span class="ml-1" >Delete commit</span>
+            </v-btn>
           <v-spacer></v-spacer>
           <v-btn text @click="cancel">Cancel</v-btn>
           <v-btn :disabled="!valid" color="primary" text type="submit">Save</v-btn>
@@ -99,6 +105,9 @@ export default {
         result: false
       })
       this.dialog = false
+    },
+    emitDelete() {
+      this.$emit('show-delete')
     }
   }
 }

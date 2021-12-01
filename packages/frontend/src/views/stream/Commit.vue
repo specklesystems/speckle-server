@@ -30,29 +30,6 @@
             </v-icon>
             <span class="hidden-md-and-down">Edit</span>
           </v-btn>
-
-          <v-btn class="ml-2"
-            text
-            v-if="
-              stream &&
-              stream.role !== 'stream:reviewer' &&
-              stream.commit.authorId === loggedInUserId
-            "
-            v-tooltip="'Edit commit'"
-            elevation="0"
-            color="error"
-            small
-            rounded
-            :fab="$vuetify.breakpoint.mdAndDown"
-            dark
-            @click="showDeleteDialog = true"
-          >
-            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
-              mdi-delete
-            </v-icon>
-            <span class="hidden-md-and-down">Delete</span>
-          </v-btn>
-
         </portal>
         <portal to="streamTitleBar">
           <div>
@@ -144,7 +121,7 @@
         <h2>Commit {{ $route.params.commitId }} not found.</h2>
       </error-placeholder>
     </v-row>
-    <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
+    <commit-edit-dialog ref="commitDialog" @show-delete="showDeleteDialog=true"></commit-edit-dialog>
 
     <v-dialog v-model="showDeleteDialog" width="500">
       <v-card class="pa-0 transparent">
@@ -283,6 +260,9 @@ export default {
     },
     deleteCommit() {
       //this.$matomo && this.$matomo.trackPageView('commit/delete')
+      let commitBranch = null
+      if (this.stream && this.stream.commit && this.stream.commit.branchName && this.stream.commit.branchName) commitBranch = this.stream.commit.branchName
+
       this.$apollo
         .mutate({
           mutation: gql`
@@ -305,7 +285,8 @@ export default {
           console.error(error)
         })
         this.showDeleteDialog =  false
-        this.$router.push(`/streams/` + this.$route.params.streamId )
+        window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
+        //this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch )
     }
   }
 }
