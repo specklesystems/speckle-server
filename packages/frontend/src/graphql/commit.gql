@@ -1,5 +1,5 @@
-query Stream($streamid: String!, $id: String!) {
-  stream(id: $streamid) {
+query Stream($streamId: String!, $id: String!) {
+  stream(id: $streamId) {
     id
     name
     role

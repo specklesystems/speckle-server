@@ -160,7 +160,8 @@ import gql from 'graphql-tag'
 import debounce from 'lodash.debounce'
 import crs from 'crypto-random-string'
 
-import Strategies from '../../components/auth/Strategies'
+import Strategies from '@/components/auth/Strategies'
+import { isEmailValid } from '@/auth-helpers'
 
 export default {
   name: 'Registration',
@@ -213,7 +214,7 @@ export default {
         ],
         emailRules: [
           (v) => !!v || 'E-mail is required',
-          (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
+          (v) => isEmailValid(v) || 'E-mail must be valid'
         ]
       },
       passwordStrength: 1,

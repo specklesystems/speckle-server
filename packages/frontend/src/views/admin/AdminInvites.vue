@@ -87,7 +87,10 @@
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
 import StreamSearchBar from '@/components/SearchBar'
+import { isEmailValid } from '@/auth-helpers'
+
 export default {
+  name: 'AdminInvites',
   components: { StreamSearchBar },
   data() {
     return {
@@ -155,10 +158,6 @@ export default {
     remove(item) {
       this.chips.splice(this.chips.indexOf(item), 1)
     },
-    validateEmail(email) {
-      const re = /^\S+@\S+\.\S+$/
-      return re.test(email)
-    },
     keyDownHandler(val) {
       if (!(val.key === ' ' || val.key === ',' || val.key === 'Enter')) return
       this.validateAndCreateChips()
@@ -168,7 +167,7 @@ export default {
       if (!this.emails || this.emails === '') return
       let splitEmails = this.emails.split(/[ ,]+/)
       for (let email of splitEmails) {
-        let valid = this.validateEmail(email) && this.chips.indexOf(email) === -1
+        let valid = isEmailValid(email) && this.chips.indexOf(email) === -1
         if (valid) {
           this.chips.push(email)
         } else {
