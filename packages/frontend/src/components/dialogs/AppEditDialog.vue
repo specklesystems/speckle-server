@@ -1,8 +1,8 @@
 <template>
-  <v-card class="pa-4">
+  <v-card class="pa-4" >
     <v-card-title>Edit App</v-card-title>
-
     <v-form v-show="!appUpdateResult" ref="form" v-model="valid" @submit.prevent="editApp">
+      
       <v-card-text>
         <v-text-field
           v-model="name"
@@ -44,7 +44,12 @@
           persistent-hint
           hint="A short description of your application."
         ></v-textarea>
+        <v-alert type="info" class="mt-5 ">
+          <b>Note:</b> After editing an app, all users will need to authorise it again 
+          (existing tokens will be invalidated).
+        </v-alert>
         <v-card-actions>
+          
           <v-spacer></v-spacer>
 
           <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
@@ -103,6 +108,10 @@ export default {
     appDescription: {
       type: String,
       default: null
+    },
+    appDialog: {
+      type: Boolean,
+      default: false
     }
   },
   apollo: {
@@ -170,6 +179,11 @@ export default {
       appUpdateResult: null
     }
   },
+  watch:{
+    appDialog(val){
+      if(val==0) this.clearAndClose() //if dialog was closed, on opening always show the initial editing form
+    }
+  },
   computed: {
     rootUrl() {
       return window.location.origin
@@ -189,10 +203,11 @@ export default {
     clearAndClose() {
       this.appUpdateResult = null
       //this.name = null
-      this.selectedScopes = []
+      //this.selectedScopes = []
       this.$emit('close')
     },
     async editApp() {
+      //console.log(this.scopes)
 
       if (!this.$refs.form.validate()) return
 

@@ -36,8 +36,8 @@
           delete
         </v-btn>
       </div>
-      <v-dialog v-model="appDialog" width="500">
-        <app-edit-dialog :appId="app.id" :app-name="app.name" :app-secret="app.secret" :app-url="app.redirectUrl" :app-description="app.description" @app-edited="emitEdits()" @close="appDialog = false" />
+      <v-dialog v-model="appDialog" width="500" >
+        <app-edit-dialog :appId="app.id" :app-name="app.name" :app-secret="app.secret" :app-url="app.redirectUrl" :app-description="app.description" :app-dialog="appDialog" @app-edited="emitEdits()" @close="appDialog = false" />
       </v-dialog>
     </v-list-item-action>
     <v-dialog v-model="showRevokeConfirm" width="500">
