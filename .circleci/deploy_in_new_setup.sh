@@ -13,11 +13,8 @@ K8S_SERVER=${!K8S_SERVER_VARIABLE}
 
 # K8S_NAMESPACE
 
-IMAGE_VERSION_TAG=$CIRCLE_SHA1
+IMAGE_VERSION_TAG=$(./get_version.sh)
 
-if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
-    IMAGE_VERSION_TAG=$CIRCLE_TAG
-fi
 
 echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
 
