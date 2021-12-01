@@ -12,13 +12,12 @@ chai.use( chaiHttp )
 
 
 const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
-const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
+const { createStream, getStream, updateStream, deleteStream, deleteStreams, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
 const { createBranch, getBranchByNameAndStreamId, updateBranch, deleteBranchById } = require( '../services/branches' )
 const { createObject, createObjects } = require( '../services/objects' )
 const { createCommitByBranchName } = require( '../services/commits' )
 
 describe( 'Streams @core-streams', ( ) => {
-
   let userOne = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
@@ -100,7 +99,6 @@ describe( 'Streams @core-streams', ( ) => {
   } )
 
   describe( 'Sharing: Grant & Revoke permissions', ( ) => {
-
     before( async ( ) => {
       userTwo.id = await createUser( userTwo )
     } )
@@ -200,7 +198,6 @@ describe( 'Streams @core-streams', ( ) => {
       su = await getStream( { streamId: s.id } )
       expect( su.updatedAt ).to.not.equal( s.updatedAt )
     } )
-
   } )
 } )
 

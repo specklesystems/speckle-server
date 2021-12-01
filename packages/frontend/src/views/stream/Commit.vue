@@ -150,7 +150,7 @@ export default {
       query: streamCommitQuery,
       variables() {
         return {
-          streamid: this.$route.params.streamId,
+          streamId: this.$route.params.streamId,
           id: this.$route.params.commitId
         }
       }

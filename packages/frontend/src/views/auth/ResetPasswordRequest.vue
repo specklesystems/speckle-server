@@ -37,8 +37,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-// import debounce from 'lodash.debounce'
-// import crs from 'crypto-random-string'
+import { isEmailValid } from '@/auth-helpers'
 
 export default {
   name: 'ResetPasswordRequest',
@@ -75,7 +74,7 @@ export default {
       validation: {
         emailRules: [
           (v) => !!v || 'E-mail is required',
-          (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
+          (v) => isEmailValid(v) || 'E-mail must be valid'
         ]
       },
       success: false,
