@@ -184,7 +184,7 @@
 
         <!-- COMMITS -->
         <v-card
-          v-else-if="lastActivity.resourceType === 'commit'"
+          v-else-if="lastActivity.resourceType === 'commit' && commit"
           class="activity-card"
           :flat="$vuetify.theme.dark"
         >
@@ -208,7 +208,9 @@
                         small
                         color="primary"
                       >
-                        <v-icon small class="float-left" light>mdi-source-branch</v-icon>
+                        <v-icon v-if="commit" small class="float-left" light>
+                          mdi-source-branch
+                        </v-icon>
                         {{ commit.branchName }}
                       </v-chip>
                       <span v-if="lastActivity.actionType === 'commit_create'">

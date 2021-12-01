@@ -4,21 +4,20 @@
  */
 
 
-
 export default class ObjectLoader {
 
   /**
    * Creates a new object loader instance.
    * @param {*} param0
    */
-  constructor( { serverUrl, streamId, token, objectId, options = { fullyTraverseArrays: false, excludeProps: [ ] } } ) {
+  constructor( { serverUrl, streamId, token, objectId, options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [ ] } } ) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
     this.serverUrl = serverUrl || window.location.origin
     this.streamId = streamId
     this.objectId = objectId
-    console.log('Object loader constructor called!!!')
+    console.log('Object loader constructor called!')
     try {
       this.token = token || localStorage.getItem( 'AuthToken' )
     } catch (error) {
@@ -33,7 +32,8 @@ export default class ObjectLoader {
       this.headers['Authorization'] = `Bearer ${this.token}`
     }
 
-    this.requestUrl = `${this.serverUrl}/objects/${this.streamId}/${this.objectId}`
+    this.requestUrlRootObj = `${this.serverUrl}/objects/${this.streamId}/${this.objectId}/single`
+    this.requestUrlChildren = `${this.serverUrl}/api/getobjects/${this.streamId}`
     this.promises = []
     this.intervals = {}
     this.buffer = []
@@ -41,6 +41,28 @@ export default class ObjectLoader {
     this.totalChildrenCount = 0
     this.traversedReferencesCount = 0
     this.options = options
+    this.options.numConnections = this.options.numConnections || 4
+
+    this.cacheDB = null
+
+    this.lastAsyncPause = Date.now()
+    this.existingAsyncPause = null
+
+  }
+
+  async asyncPause() {
+    // Don't freeze the UI
+    // while ( this.existingAsyncPause ) {
+    //   await this.existingAsyncPause
+    // }
+    if ( Date.now() - this.lastAsyncPause >= 100 ) {
+      this.lastAsyncPause = Date.now()
+      this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
+      await this.existingAsyncPause
+      this.existingAsyncPause = null
+      if (Date.now() - this.lastAsyncPause > 500) console.log("Loader Event loop lag: ", Date.now() - this.lastAsyncPause)
+    }
+
   }
 
   dispose() {
@@ -177,11 +199,15 @@ export default class ObjectLoader {
   }
 
   async * getObjectIterator(  ) {
+    let t0 = Date.now()
+    let count = 0
     for await ( let line of this.getRawObjectIterator() ) {
       let { id, obj } = this.processLine( line )
       this.buffer[ id ] = obj
+      count += 1
       yield obj
     }
+    console.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
   processLine( chunk ) {
@@ -190,31 +216,258 @@ export default class ObjectLoader {
   }
 
   async * getRawObjectIterator() {
-    const decoder = new TextDecoder()
-    const response = await fetch( this.requestUrl, { headers: this.headers } )
-    const reader = response.body.getReader()
-    let { value: chunk, done: readerDone } = await reader.read()
-    chunk = chunk ? decoder.decode( chunk ) : ''
+    let tSTART = Date.now()
 
-    let re = /\r\n|\n|\r/gm
-    let startIndex = 0
+    if ( this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
+      await safariFix()
+      let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
+      idbOpenRequest.onupgradeneeded = () => idbOpenRequest.result.createObjectStore('objects');
+      this.cacheDB = await this.promisifyIdbRequest( idbOpenRequest )
+    }
 
+    const rootObjJson = await this.getRawRootObject()
+    // console.log("Root in: ", Date.now() - tSTART)
+
+    yield `${this.objectId}\t${rootObjJson}`
+
+    const rootObj = JSON.parse(rootObjJson)
+    if ( !rootObj.__closure ) return
+
+    let childrenIds = Object.keys(rootObj.__closure).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
+    if ( childrenIds.length === 0 ) return
+
+    let splitHttpRequests = []
+
+    if ( childrenIds.length > 50 ) {
+      // split into 5%, 15%, 40%, 40% (5% for the high priority children: the ones with lower minDepth)
+      let splitBeforeCacheCheck = [ [], [], [], [] ]
+      let crtChildIndex = 0
+      
+      for ( ; crtChildIndex < 0.05 * childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[0].push( childrenIds[ crtChildIndex ] )
+      }
+      for ( ; crtChildIndex < 0.2 * childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[1].push( childrenIds[ crtChildIndex ] )
+      }
+      for ( ; crtChildIndex < 0.6 * childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[2].push( childrenIds[ crtChildIndex ] )
+      }
+      for ( ; crtChildIndex < childrenIds.length; crtChildIndex++ ) {
+        splitBeforeCacheCheck[3].push( childrenIds[ crtChildIndex ] )
+      }
+
+
+      console.log("Cache check for: ", splitBeforeCacheCheck)
+
+      let newChildren = []
+      let nextCachePromise = this.cacheGetObjects( splitBeforeCacheCheck[ 0 ] )
+      
+      for ( let i = 0; i < 4; i++ ) {
+        let cachedObjects = await nextCachePromise
+        if ( i < 3 ) nextCachePromise = this.cacheGetObjects( splitBeforeCacheCheck[ i + 1 ] )
+
+        let sortedCachedKeys = Object.keys(cachedObjects).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
+        for ( let id of sortedCachedKeys ) {
+          yield `${id}\t${cachedObjects[ id ]}`
+        }
+        let newChildrenForBatch = splitBeforeCacheCheck[i].filter( id => !( id in cachedObjects ) )
+        newChildren.push( ...newChildrenForBatch )
+      }
+
+      if ( newChildren.length === 0 ) return
+
+      if ( newChildren.length <= 50 ) {
+        // we have almost all of children in the cache. do only 1 requests for the remaining new children
+        splitHttpRequests.push( newChildren )
+      } else {
+        // we now set up the batches for 4 http requests, starting from `newChildren` (already sorted by priority)
+        splitHttpRequests = [ [], [], [], [] ]
+        crtChildIndex = 0
+
+        for ( ; crtChildIndex < 0.05 * newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[0].push( newChildren[ crtChildIndex ] )
+        }
+        for ( ; crtChildIndex < 0.2 * newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[1].push( newChildren[ crtChildIndex ] )
+        }
+        for ( ; crtChildIndex < 0.6 * newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[2].push( newChildren[ crtChildIndex ] )
+        }
+        for ( ; crtChildIndex < newChildren.length; crtChildIndex++ ) {
+          splitHttpRequests[3].push( newChildren[ crtChildIndex ] )
+        }
+      }
+
+    } else {
+      // small object with <= 50 children. check cache and make only 1 request
+      const cachedObjects = await this.cacheGetObjects( childrenIds )
+      let sortedCachedKeys = Object.keys(cachedObjects).sort( (a, b) => rootObj.__closure[a] - rootObj.__closure[b] )
+      for ( let id of sortedCachedKeys ) {
+        yield `${id}\t${cachedObjects[ id ]}`
+      }
+      childrenIds = childrenIds.filter(id => !( id in cachedObjects ) )
+      if ( childrenIds.length === 0 ) return
+
+      // only 1 http request with the remaining children ( <= 50 )
+      splitHttpRequests.push( childrenIds )
+    }
+
+    // Starting http requests for batches in `splitHttpRequests`
+
+    const decoders = []
+    const readers = []
+    const readPromisses = []
+    const startIndexes = []
+    const readBuffers = []
+    const finishedRequests = []
+
+    for (let i = 0; i < splitHttpRequests.length; i++) {
+      decoders.push(new TextDecoder())
+      readers.push( null )
+      readPromisses.push( null )
+      startIndexes.push( 0 )
+      readBuffers.push( '' )
+      finishedRequests.push( false )
+
+      fetch(
+        this.requestUrlChildren,
+        {
+          method: 'POST',
+          headers: { ...this.headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify( { objects: JSON.stringify( splitHttpRequests[i] ) } )
+        }
+      ).then( crtResponse => {
+        let crtReader = crtResponse.body.getReader()
+        readers[i] = crtReader
+        let crtReadPromise = crtReader.read().then(x => { x.reqId = i; return x })
+        readPromisses[i] = crtReadPromise
+      })
+    }
+    
     while ( true ) {
-      let result = re.exec( chunk )
-      if ( !result ) {
-        if ( readerDone ) break
-        let remainder = chunk.substr( startIndex )
-        ;( { value: chunk, done: readerDone } = await reader.read() ) // PS: semicolon of doom
-        chunk = remainder + ( chunk ? decoder.decode( chunk ) : '' )
-        startIndex = re.lastIndex = 0
+      let validReadPromises = readPromisses.filter(x => x != null)
+      if ( validReadPromises.length === 0 ) {
+        // Check if all requests finished
+        if ( finishedRequests.every(x => x) ) {
+          break
+        }
+        // Sleep 10 ms
+        await new Promise( ( resolve ) => {
+          setTimeout( resolve, 10 )
+        } )
         continue
       }
-      yield chunk.substring( startIndex, result.index )
-      startIndex = re.lastIndex
-    }
 
-    if ( startIndex < chunk.length ) {
-      yield chunk.substr( startIndex )
+      // Wait for data on any running request
+      let data = await Promise.any( validReadPromises )
+      let { value: crtDataChunk, done: readerDone, reqId } = data
+      finishedRequests[ reqId ] = readerDone
+
+      // Replace read promise on this request with a new `read` call
+      if ( !readerDone ) {
+         let crtReadPromise = readers[ reqId ].read().then(x => { x.reqId = reqId; return x })
+         readPromisses[ reqId ] = crtReadPromise
+      } else {
+        // This request finished. "Flush any non-newline-terminated text"
+        if ( readBuffers[ reqId ].length > 0 ) {
+          yield readBuffers[ reqId ]
+          readBuffers[ reqId ] = ''
+        }
+        // no other read calls for this request
+        readPromisses[ reqId ] = null
+      }
+
+      if ( !crtDataChunk )
+        continue
+
+      crtDataChunk = decoders[ reqId ].decode( crtDataChunk )
+      let unprocessedText = readBuffers[ reqId ] + crtDataChunk
+      let unprocessedLines = unprocessedText.split(/\r\n|\n|\r/)
+      let remainderText = unprocessedLines.pop()
+      readBuffers[ reqId ] = remainderText
+
+      for ( let line of unprocessedLines ) {
+        yield line
+      }
+      this.cacheStoreObjects(unprocessedLines)
     }
   }
+
+  async getRawRootObject() {
+    const cachedRootObject = await this.cacheGetObjects( [ this.objectId ] )
+    if ( cachedRootObject[ this.objectId ] )
+      return cachedRootObject[ this.objectId ]
+    const response = await fetch( this.requestUrlRootObj, { headers: this.headers } )
+    const responseText = await response.text()
+    this.cacheStoreObjects( [ `${this.objectId}\t${responseText}` ] )
+    return responseText
+  }
+
+  promisifyIdbRequest(request) {
+    return new Promise((resolve, reject) => {
+      request.oncomplete = request.onsuccess = () => resolve(request.result);
+      request.onabort = request.onerror = () => reject(request.error);
+    })
+  }
+
+  async cacheGetObjects(ids) {
+    if ( !this.options.enableCaching || !window.indexedDB ) {
+      return {}
+    }
+
+    let ret = {}
+
+    for (let i = 0; i < ids.length; i += 500) {
+      let idsChunk = ids.slice(i, i + 500)
+      let t0 = Date.now()
+
+      let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
+      let idbChildrenPromises = idsChunk.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
+      let cachedData = await Promise.all(idbChildrenPromises)
+ 
+      // console.log("Cache check for : ", idsChunk.length, Date.now() - t0)
+
+      for ( let cachedObj of cachedData ) {
+        if ( !cachedObj.data ) // non-existent objects are retrieved with `undefined` data
+          continue
+        ret[ cachedObj.id ] = cachedObj.data
+      }
+    }
+
+    return ret
+  }
+
+  cacheStoreObjects(objects) {
+    if ( !this.options.enableCaching || !window.indexedDB ) {
+      return {}
+    }
+
+    let store = this.cacheDB.transaction('objects', 'readwrite').objectStore('objects')
+    for ( let obj of objects ) {
+      let idAndData = obj.split( '\t' )
+      store.put(idAndData[1], idAndData[0])
+    }
+
+    return this.promisifyIdbRequest( store.transaction )
+  }
+}
+
+
+// Credits and more info: https://github.com/jakearchibald/safari-14-idb-fix
+function safariFix() {
+  const isSafari =
+    !navigator.userAgentData &&
+    /Safari\//.test(navigator.userAgent) &&
+    !/Chrom(e|ium)\//.test(navigator.userAgent)
+
+  // No point putting other browsers or older versions of Safari through this mess.
+  if (!isSafari || !indexedDB.databases) return Promise.resolve()
+
+  let intervalId
+
+  return new Promise( ( resolve ) => {
+    const tryIdb = () => indexedDB.databases().finally(resolve)
+    intervalId = setInterval(tryIdb, 100)
+    tryIdb()
+  }).finally( () => clearInterval(intervalId) )
 }

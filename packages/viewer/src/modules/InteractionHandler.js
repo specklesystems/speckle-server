@@ -1,26 +1,21 @@
 import * as THREE from 'three'
-import SectionBox from './SectionBox'
 import SelectionHelper from './SelectionHelper'
 
 export default class InteractionHandler {
 
   constructor( viewer ) {
     this.viewer = viewer
-
-    this.sectionBox = new SectionBox( this.viewer )
-    this.sectionBox.toggle() // switch off
-
     this.preventSelection = false
-
-    this.selectionHelper = new SelectionHelper( this.viewer, { subset: this.viewer.sceneManager.userObjects, sectionBox: this.sectionBox } )
+    
+    this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: false } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
-    this.selectionMeshMaterial.clippingPlanes = this.sectionBox.planes
-
+    this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // console.log(this.viewer.sceneManager.allObjects)
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
-    this.selectionLineMaterial.clippingPlanes = this.sectionBox.planes
+    this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
     this.selectionEdgesMaterial = new THREE.LineBasicMaterial( { color: 0x23F3BD } )
-    this.selectionEdgesMaterial.clippingPlanes = this.sectionBox.planes
+    this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add( this.selectedObjects )
@@ -31,18 +26,29 @@ export default class InteractionHandler {
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
 
-    this.viewer.sceneManager.materials.forEach( mat => mat.clippingPlanes = this.sectionBox.planes )
+    document.addEventListener( 'keydown', ( e ) => {
+      if( e.key === 'Escape' && this.viewer.mouseOverRenderer ) {
+        this.deselectObjects()
+      }
+    } )
   }
 
   _handleDoubleClick( objs ) {
-    if ( !objs || objs.length === 0 ) this.zoomExtents()
+    if ( !objs || objs.length === 0 ) { 
+      if( this.viewer.sectionBox.display.visible ) {
+        this.zoomToObject( this.viewer.sectionBox.cube )
+      } else {
+        this.zoomExtents() 
+      }
+    }
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
     this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null )
   }
 
   _handleSelect( objs ) {
-    if ( this.preventSelection ) return
+    if( this.viewer.cameraHandler.orbiting ) return
+    if( this.preventSelection ) return
 
     if ( objs.length === 0 ) {
       this.deselectObjects()
@@ -50,41 +56,68 @@ export default class InteractionHandler {
     }
 
     if ( !this.selectionHelper.multiSelect ) this.deselectObjects()
-
     
     let selType = objs[0].object.type
-    
+    let rootBlock = null
     if ( objs[0].object.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
       selType = 'Block'
+      rootBlock = this.getParentBlock( objs[0].object.parent )
     }
 
     switch ( selType ) {
-    case 'Block': 
-      // TODO: maybe just leave the bounding box for now
-      break
-    case 'Mesh':
-      this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
-      break
-    case 'Line':
-      this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
-      break
-    case 'Point':
-      console.warn( 'Point selection not implemented.' )
-      return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
+      case 'Block': {
+        let blockObjs = this.getBlockObjectsCloned( rootBlock )
+        for( let child of blockObjs ) {          
+          child.material = this.selectionMeshMaterial
+          this.selectedObjects.add( child )
+        }
+        break
+      }
+      case 'Mesh':
+        this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        break
+      case 'Line':
+        this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        break
+      case 'Point':
+        console.warn( 'Point selection not implemented.' )
+        return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
     }
-
-    this.selectedObjectsUserData.push( objs[0].object.userData )
 
     let box 
     if ( selType === 'Block' ) {
-      box = new THREE.BoxHelper( objs[0].object.parent, 0x23F3BD )
+      this.selectedObjectsUserData.push( rootBlock.userData )
+      box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
     } else {
+      this.selectedObjectsUserData.push( objs[0].object.userData )
       box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     }
+    
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
     this.viewer.emit( 'select', this.selectedObjectsUserData )
+  }
+
+  getParentBlock( block ) {
+    if( block.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
+      return this.getParentBlock( block.parent )
+    }
+    else return block
+  }
+
+  getBlockObjectsCloned( block, objects = [] ) {
+    for( let child of block.children ) {
+      if( child instanceof THREE.Group ) {
+        objects.push( ...this.getBlockObjectsCloned( child ) )
+      } else {
+        objects.push( child.clone() )
+      }
+    }
+    for( let child of objects ) {
+      child.geometry = child.geometry.clone().applyMatrix4( block.matrix )
+    }
+    return objects
   }
 
   deselectObjects() {
@@ -94,92 +127,85 @@ export default class InteractionHandler {
     this.viewer.emit( 'select', this.selectedObjectsUserData )
   }
 
-  toggleSectionBox() {
-    this.sectionBox.toggle()
-    if ( this.sectionBox.display.visible ) {
-      if ( this.selectedObjects.children.length === 0 ) {
-        this.sectionBox.setBox( this.viewer.sceneManager.getSceneBoundingBox() )
-        this.zoomExtents()
-      }
-      else {
-        let box = new THREE.Box3().setFromObject( this.selectedObjects )
-        this.sectionBox.setBox( box )
-        this.zoomToBox( box )
-      }
-    } else {
-      this.preventSelection = false
-    }
-    this.viewer.needsRender = true
-  }
-
-  hideSectionBox() {
-    if ( !this.sectionBox.display.visible ) return
-    this.toggleSectionBox( )
-  }
-
-  showSectionBox() {
-    if ( this.sectionBox.display.visible ) return
-    this.toggleSectionBox( )
-  }
-
   zoomToObject( target, fit = 1.2, transition = true ) {
     const box = new THREE.Box3().setFromObject( target )
     this.zoomToBox( box, fit, transition )
   }
 
   zoomExtents( fit = 1.2, transition = true ) {
-    if ( this.sectionBox.display.visible ) {
-      this.zoomToObject( this.sectionBox.boxMesh )
+    if ( this.viewer.sectionBox.display.visible ) {
+      this.zoomToObject( this.viewer.sectionBox.cube )
       return
     }
-    if ( this.viewer.sceneManager.objects.length === 0 )  {
+    if ( this.viewer.sceneManager.sceneObjects.allObjects.length === 0 )  {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box, fit, transition )
       return
     }
 
-    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.userObjects )
+    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
     this.zoomToBox( box, fit, transition )
-    this.viewer.controls.setBoundary( box )
+    // this.viewer.controls.setBoundary( box )
   }
 
   zoomToBox( box, fit = 1.2, transition = true ) {
+    if( box.max.x === Infinity || box.max.x === -Infinity ) {
+      box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+    }
     const fitOffset = fit
 
     const size = box.getSize( new THREE.Vector3() )
     let target = new THREE.Sphere()
     box.getBoundingSphere( target )
     target.radius = target.radius * fitOffset
-
-    this.viewer.controls.fitToSphere( target, transition )
-
+    
     const maxSize = Math.max( size.x, size.y, size.z )
-    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * this.viewer.camera.fov / 360 ) )
-    const fitWidthDistance = fitHeightDistance / this.viewer.camera.aspect
+    const camFov = this.viewer.cameraHandler.camera.fov ? this.viewer.cameraHandler.camera.fov : 55
+    const camAspect = this.viewer.cameraHandler.camera.aspect ? this.viewer.cameraHandler.camera.aspect : 1.2
+    const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camFov / 360 ) )
+    const fitWidthDistance = fitHeightDistance / camAspect
     const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance )
+    
+    this.viewer.cameraHandler.controls.fitToSphere( target, transition )
 
-    this.viewer.controls.minDistance = distance / 100
-    this.viewer.controls.maxDistance = distance * 100
-    this.viewer.camera.near = distance / 100
-    this.viewer.camera.far = distance * 100
-    this.viewer.camera.updateProjectionMatrix()
-  }
-
-  /**
-   * Allows camera to go "underneath" or not. By default, this function will set
-   * the max polar angle to Pi, allowing the camera to look from down upwards.
-   * @param {[type]} angle [description]
-   */
-  setMaxPolarAngle( angle = Math.PI ) {
-    this.viewer.controls.maxPolarAngle = angle
+    this.viewer.cameraHandler.controls.minDistance = distance / 100
+    this.viewer.cameraHandler.controls.maxDistance = distance * 100
+    this.viewer.cameraHandler.camera.near = distance / 100
+    this.viewer.cameraHandler.camera.far = distance * 100
+    this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    
+    if( this.viewer.cameraHandler.activeCam.name === 'ortho' ) {
+      this.viewer.cameraHandler.orthoCamera.far = distance * 100
+      this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
+      
+      // fit the camera inside, so we don't have clipping plane issues. 
+      // WIP implementation
+      let camPos = this.viewer.cameraHandler.orthoCamera.position
+      let dist = target.distanceToPoint( camPos )
+      if( dist < 0 ) {
+        dist *= -1
+        this.viewer.cameraHandler.controls.setPosition( camPos.x + dist, camPos.y + dist, camPos.z + dist )
+      }
+    }
+    
   }
 
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {
-    this.viewer.controls.rotate( azimuthAngle, polarAngle, transition )
+    this.viewer.cameraHandler.controls.rotate( azimuthAngle, polarAngle, transition )
   }
 
   screenshot() {
-    return this.viewer.renderer.domElement.toDataURL( 'image/png' )
+    let sectionBoxVisible = this.viewer.sectionBox.display.visible
+    if( sectionBoxVisible ) { 
+      this.viewer.sectionBox.displayOff()
+      this.viewer.needsRender = true
+      this.viewer.render()
+    }
+    const screenshot =  this.viewer.renderer.domElement.toDataURL( 'image/png' )
+    if( sectionBoxVisible ) {
+      this.viewer.sectionBox.displayOn()
+    }
+    return screenshot
   }
 
   /**
@@ -194,36 +220,65 @@ export default class InteractionHandler {
     const DEG180 = Math.PI
 
     switch ( side ) {
-    case 'front':
-      this.viewer.controls.rotateTo( 0, DEG90, transition )
-      break
+      case 'front':
+        this.viewer.cameraHandler.controls.rotateTo( 0, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'back':
-      this.viewer.controls.rotateTo( DEG180, DEG90, transition )
-      break
+      case 'back':
+        this.viewer.cameraHandler.controls.rotateTo( DEG180, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'up':
-    case 'top':
-      this.viewer.controls.rotateTo( 0, 0, transition )
-      break
+      case 'up':
+      case 'top':
+        this.viewer.cameraHandler.controls.rotateTo( 0, 0, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'down':
-    case 'bottom':
-      this.viewer.controls.rotateTo( 0, DEG180, transition )
-      break
+      case 'down':
+      case 'bottom':
+        this.viewer.cameraHandler.controls.rotateTo( 0, DEG180, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'right':
-      this.viewer.controls.rotateTo( DEG90, DEG90, transition )
-      break
+      case 'right':
+        this.viewer.cameraHandler.controls.rotateTo( DEG90, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
 
-    case 'left':
-      this.viewer.controls.rotateTo( -DEG90, DEG90, transition )
-      break
+      case 'left':
+        this.viewer.cameraHandler.controls.rotateTo( -DEG90, DEG90, transition )
+        if( this.viewer.cameraHandler.activeCam.name === 'ortho' )
+          this.viewer.cameraHandler.disableRotations()
+        break
+      
+      case '3d':
+      case '3D':
+      default: {
+        let box 
+        if ( this.viewer.sceneManager.sceneObjects.allObjects.children.length === 0 ) 
+          box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+        else 
+          box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
+        if( box.max.x === Infinity || box.max.x === -Infinity ) {
+            box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+        }
+        this.viewer.cameraHandler.controls.setPosition( box.max.x, box.max.y, box.max.z, transition )
+        this.zoomExtents()
+        this.viewer.cameraHandler.enableRotations()
+        break
+      }
     }
   }
 
   getViews() {
-    return this.viewer.sceneManager.views.map( v => { return { name: v.applicationId, id: v.id } } )
+    return this.viewer.sceneManager.views.map( v => { return { name: v.applicationId, id: v.id, view: v } } )
   }
 
   setView( id, transition = true  ) {
@@ -237,11 +292,11 @@ export default class InteractionHandler {
     let target = view.target
     let position = view.origin
 
-    this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
+    this.viewer.cameraHandler.activeCam.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
   }
 
   setLookAt( position, target, transition = true ) {
     if ( !position || !target ) return
-    this.viewer.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
+    this.viewer.cameraHandler.activeCam.controls.setLookAt( position.x, position.y, position.z, target.x, target.y, target.z, transition )
   }
 }
