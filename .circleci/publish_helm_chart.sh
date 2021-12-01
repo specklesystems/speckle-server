@@ -4,7 +4,7 @@ set -e
 
 echo "$PWD"
 
-RELEASE_VERSION=$(./get_version.sh)
+RELEASE_VERSION=$(./.circleci/get_version.sh)
 
 echo "Releasing $RELEASE_VERSION"
 

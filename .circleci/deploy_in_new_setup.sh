@@ -13,7 +13,7 @@ K8S_SERVER=${!K8S_SERVER_VARIABLE}
 
 # K8S_NAMESPACE
 
-IMAGE_VERSION_TAG=$(./get_version.sh)
+IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
 
 echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt

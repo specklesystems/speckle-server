@@ -5,7 +5,7 @@ set -e
 
 TARGET_SPECKLE_DEPLOYMENT=$SPECKLE_K8S_DEPLOYMENT
 
-IMAGE_VERSION_TAG=$(./get_version.sh)
+IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
 
 echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt

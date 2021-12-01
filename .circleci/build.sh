@@ -3,7 +3,7 @@
 set -e
 
 DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG-$SPECKLE_SERVER_PACKAGE
-IMAGE_VERSION_TAG=$(./get_version.sh)
+IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
 docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_VERSION_TAG -t $DOCKER_IMAGE_TAG:latest . -f packages/$SPECKLE_SERVER_PACKAGE/Dockerfile
 docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
