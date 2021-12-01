@@ -29,7 +29,7 @@ workflows:
               ignore: /.*/
   ci-test:
     jobs:
-      - helm_push:
+      - docker_build_and_deploy:
           context: main-builds
           filters:
             branches:
@@ -100,9 +100,14 @@ jobs:
       - run:
           name: Build FileImport Service
           command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
+
+      - add_ssh_keys:
+          fingerprints:
+            - "18:74:c4:b9:dc:66:b2:66:1d:81:56:0d:0a:87:9b:b1"
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
+
       - run:
           name: Deploy
           command: |

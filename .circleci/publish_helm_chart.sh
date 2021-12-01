@@ -2,11 +2,9 @@
 
 set -e
 
-echo "$PWD"
-
 RELEASE_VERSION=$(./.circleci/get_version.sh)
 
-echo "Releasing $RELEASE_VERSION"
+echo "Releasing Helm Chart version $RELEASE_VERSION"
 
 git config --global user.email "devops+circleci@speckle.systems"
 git config --global user.name "CI"
@@ -23,5 +21,5 @@ sed -i 's/docker_image_tag: [^\s]*/docker_image_tag: '$RELEASE_VERSION'/g' ~/hel
 cd ~/helm
 
 git add .
-#git commit -m "CircleCI commit"
-#git push
+git commit -m "CircleCI commit"
+git push
