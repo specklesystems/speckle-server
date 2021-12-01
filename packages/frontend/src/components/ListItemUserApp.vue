@@ -37,7 +37,7 @@
         </v-btn>
       </div>
       <v-dialog v-model="appDialog" width="500" >
-        <app-edit-dialog :appId="app.id" :app-name="app.name" :app-secret="app.secret" :app-url="app.redirectUrl" :app-description="app.description" :app-dialog="appDialog" @app-edited="emitEdits()" @close="appDialog = false" />
+        <app-edit-dialog :app-id="app.id" :app-name="app.name" :app-secret="app.secret" :app-url="app.redirectUrl" :app-description="app.description" :app-scopes="appScopesList" :app-dialog="appDialog" @app-edited="emitEdits()" @close="appDialog = false" />
       </v-dialog>
     </v-list-item-action>
     <v-dialog v-model="showRevokeConfirm" width="500">
@@ -67,11 +67,44 @@ export default {
       default: () => {}
     }
   },
+  apollo: {
+    appScopes: {
+      query: gql`
+        query($id: String!) {
+          app(id: $id) {
+            id
+            name
+            secret
+            scopes{
+              name
+            }
+          }
+        }
+      `,
+      variables() {
+        return { id: this.app.id }
+      },
+      update: (data) => data.app.scopes,
+      skip() {
+        return !this.app.id
+      }
+    }
+  },
   data() {
     return {
       showRevokeConfirm: false,
       showSecret: false,
-      appDialog: false
+      appDialog: false,
+      appScopesList: []
+    }
+  },
+  watch:{
+    appScopes(val){
+      let scopeList = []
+      val.forEach(obj=>{
+        scopeList.push( obj.name )
+        })
+      this.appScopesList = [...scopeList]
     }
   },
   methods: {

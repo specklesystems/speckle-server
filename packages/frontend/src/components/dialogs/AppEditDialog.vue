@@ -52,8 +52,8 @@
           
           <v-spacer></v-spacer>
 
-          <v-btn text color="error" @click="clearAndClose">Cancel</v-btn>
-          <v-btn type="submit" :disabled="!valid">Save</v-btn>
+          <v-btn text  @click="clearAndClose">Cancel</v-btn>
+          <v-btn text color="primary" type="submit" :disabled="!valid">Save</v-btn>
         </v-card-actions>
       </v-card-text>
     </v-form>
@@ -109,6 +109,10 @@ export default {
       type: String,
       default: null
     },
+    appScopes: {
+      type: Array,
+      default: null
+    },
     appDialog: {
       type: Boolean,
       default: false
@@ -154,9 +158,9 @@ export default {
       nameRules: [
         (v) => !!v || 'Name is required',
         (v) => (v && v.length <= 60) || 'Name must be less than 60 characters',
-        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
+        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters',
       ],
-      selectedScopes: [],
+      selectedScopes: this.appScopes,
       selectedScopesRules: [
         (v) => !!v || 'Scopes are required',
         (v) => (v && v.length >= 1) || 'Scopes are required'
@@ -182,6 +186,32 @@ export default {
   watch:{
     appDialog(val){
       if(val==0) this.clearAndClose() //if dialog was closed, on opening always show the initial editing form
+    },
+    // after any change, check if inputs are the same as already saved
+    valid(){
+      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===this.description) { 
+        this.valid = false 
+      } else this.valid = true
+    },
+    name(val){
+      if (this.appName===val && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===this.description) { 
+        this.valid = false 
+      } else this.valid = true
+    },
+    selectedScopes(val){
+      if (this.appName===this.name && this.appScopes===val && this.appUrl===this.redirectUrl && this.appDescription===this.description) { 
+        this.valid = false 
+      } else this.valid = true
+    },
+    redirectUrl(val){
+      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===val && this.appDescription===this.description) { 
+        this.valid = false
+      } else this.valid = true
+    },
+    description(val){
+      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===val) { 
+        this.valid = false
+      } else this.valid = true
     }
   },
   computed: {
@@ -197,6 +227,9 @@ export default {
         arr.push({ divider: true })
       }
       return arr
+    },
+    similarity(){
+      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===this.description) this.valid = false
     }
   },
   methods: {
@@ -207,11 +240,9 @@ export default {
       this.$emit('close')
     },
     async editApp() {
-      //console.log(this.scopes)
-
       if (!this.$refs.form.validate()) return
 
-      //this.$matomo && this.$matomo.trackPageView('user/app/update') ///// not sure what it is
+      //this.$matomo && this.$matomo.trackPageView('user/app/update') 
       try {
         
         let res = await this.$apollo.mutate({
@@ -233,9 +264,8 @@ export default {
         
         this.appUpdateResult = res.data.appUpdate 
         //this.name = null
-        this.selectedScopes = []
+        //this.selectedScopes = []
         this.$emit('app-edited')
-
 
       } catch (e) {
         // TODO: how do we catch and display errors?
