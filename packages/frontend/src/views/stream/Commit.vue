@@ -259,7 +259,7 @@ export default {
       })
     },
     deleteCommit() {
-      //this.$matomo && this.$matomo.trackPageView('commit/delete')
+      this.$matomo && this.$matomo.trackPageView('commit/delete')
       let commitBranch = null
       if (this.stream && this.stream.commit && this.stream.commit.branchName && this.stream.commit.branchName) commitBranch = this.stream.commit.branchName
 

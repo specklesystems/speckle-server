@@ -242,7 +242,7 @@ export default {
     async editApp() {
       if (!this.$refs.form.validate()) return
 
-      //this.$matomo && this.$matomo.trackPageView('user/app/update') 
+      this.$matomo && this.$matomo.trackPageView('user/app/update') 
       try {
         
         let res = await this.$apollo.mutate({
