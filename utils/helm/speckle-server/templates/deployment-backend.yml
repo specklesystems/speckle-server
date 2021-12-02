@@ -57,7 +57,7 @@ spec:
           - name: SESSION_SECRET
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.secretName }}
+                name: "{{ .Values.secretName }}"
                 key: session_secret
 
           # *** Redis ***
@@ -75,7 +75,7 @@ spec:
                 key: postgres_url
 
           - name: PGSSLMODE
-            value: {{ .Values.db.PGSSLMODE }}
+            value: "{{ .Values.db.PGSSLMODE }}"
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
@@ -160,11 +160,11 @@ spec:
           - name: EMAIL
             value: "true"
           - name: EMAIL_HOST
-            value: {{ .Values.server.email.host }}
+            value: "{{ .Values.server.email.host }}"
           - name: EMAIL_PORT
-            value: {{ .Values.server.email.port }}
+            value: "{{ .Values.server.email.port }}"
           - name: EMAIL_USERNAME
-            value: {{ .Values.server.email.username }}
+            value: "{{ .Values.server.email.username }}"
           - name: EMAIL_PASSWORD
             valueFrom:
               secretKeyRef:
