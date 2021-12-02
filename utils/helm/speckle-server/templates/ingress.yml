@@ -9,6 +9,7 @@ metadata:
     nginx.org/client-max-body-size: "100m"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
     - {{ .Values.domain }}
