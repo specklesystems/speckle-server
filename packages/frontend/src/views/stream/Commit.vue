@@ -285,8 +285,8 @@ export default {
           console.error(error)
         })
         this.showDeleteDialog =  false
-        window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
-        //this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch )
+        //window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
+        this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch )
     }
   }
 }
