@@ -218,7 +218,7 @@ export default class Coverter {
     let cF = scale ? getConversionFactor( obj.units ) : 1
     let definition = await this.resolveReference( obj.blockDefinition )
 
-    const matrix = new THREE.Matrix4().set( ...obj.transform )
+    const matrix = new THREE.Matrix4().set( ...( Array.isArray( obj.transform ) ? obj.transform : obj.transform.value ) )
     let geoms = []
     for ( let obj of definition.geometry ) {
       // Note: we are passing scale = false to the conversion of all objects, as scaling *needs* to happen
