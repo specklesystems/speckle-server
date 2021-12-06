@@ -1,0 +1,185 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-server
+    project: speckle-server
+spec:
+  replicas: {{ .Values.server.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-server
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-server
+        project: speckle-server
+    spec:
+      priorityClassName: high-priority
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+
+      containers:
+      - name: main
+        image: speckle/speckle-server:{{ .Values.docker_image_tag }}
+
+        resources:
+          requests:
+            cpu: {{ .Values.server.requests.cpu }}
+            memory: {{ .Values.server.requests.memory }}
+          limits:
+            cpu: {{ .Values.server.limits.cpu }}
+            memory: {{ .Values.server.limits.memory }}
+
+        {{- if .Values.db.useCertificate }}
+        volumeMounts:
+        - name: postgres-certificate
+          mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: CANONICAL_URL
+            value: https://{{ .Values.domain }}
+
+          - name: PORT
+            value: "3000"
+          - name: DEBUG
+            value: "speckle:*"
+
+          - name: SESSION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: "{{ .Values.secretName }}"
+                key: session_secret
+
+          # *** Redis ***
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: redis_url
+
+          # *** PostgreSQL Database ***
+          - name: POSTGRES_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: postgres_url
+
+          - name: PGSSLMODE
+            value: "{{ .Values.db.PGSSLMODE }}"
+
+          {{- if .Values.db.useCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+          # *** S3 Object Storage ***
+          {{- if .Values.s3.endpoint }}
+          - name: S3_ENDPOINT
+            value: {{ .Values.s3.endpoint }}
+          - name: S3_ACCESS_KEY
+            value: {{ .Values.s3.access_key }}
+          - name: S3_BUCKET
+            value: {{ .Values.s3.bucket }}
+          - name: S3_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: s3_secret_key
+          {{- end }}
+
+          # *** Authentication ***
+
+          # Local Auth
+          {{- if .Values.server.auth.local.enabled }}
+          - name: STRATEGY_LOCAL
+            value: "true"
+          {{- else }}
+          - name: STRATEGY_LOCAL
+            value: "false"
+          {{- end }}
+
+          # Google Auth
+          {{- if .Values.server.auth.google.enabled }}
+          - name: STRATEGY_GOOGLE
+            value: "true"
+          - name: GOOGLE_CLIENT_ID
+            value: {{ .Values.server.auth.google.client_id }}
+          - name: GOOGLE_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: google_client_secret
+          {{- end }}
+
+          # Github Auth
+          {{- if .Values.server.auth.github.enabled }}
+          - name: STRATEGY_GITHUB
+            value: "true"
+          - name: GITHUB_CLIENT_ID
+            value: {{ .Values.server.auth.github.client_id }}
+          - name: GITHUB_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: github_client_secret
+          {{- end }}
+
+          # AzureAD Auth
+          {{- if .Values.server.auth.azure_ad.enabled }}
+          - name: STRATEGY_AZURE_AD
+            value: "true"
+          - name: AZURE_AD_ORG_NAME
+            value: {{ .Values.server.auth.azure_ad.org_name }}
+          - name: AZURE_AD_IDENTITY_METADATA
+            value: {{ .Values.server.auth.azure_ad.identity_metadata }}
+          - name: AZURE_AD_ISSUER
+            value: {{ .Values.server.auth.azure_ad.issuer }}
+          - name: AZURE_AD_CLIENT_ID
+            value: {{ .Values.server.auth.azure_ad.client_id }}
+          - name: AZURE_AD_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: azure_ad_client_secret
+          {{- end }}
+
+
+          # *** Email ***
+
+          {{- if .Values.server.email.enabled }}
+          - name: EMAIL
+            value: "true"
+          - name: EMAIL_HOST
+            value: "{{ .Values.server.email.host }}"
+          - name: EMAIL_PORT
+            value: "{{ .Values.server.email.port }}"
+          - name: EMAIL_USERNAME
+            value: "{{ .Values.server.email.username }}"
+          - name: EMAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: email_password
+          {{- end }}
+
+          # *** Tracking / Tracing ***
+          - name: SENTRY_DSN
+            value: {{ .Values.server.sentry_dns }}
+          {{- if .Values.server.disable_tracing }}
+          - name: DISABLE_TRACING
+            value: "true"
+          {{- end }}
+          {{- if .Values.server.disable_tracking }}
+          - name: DISABLE_TRACKING
+            value: "true"
+          {{- end }}
