@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
+import SceneObjects from './SceneObjects'
 
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
@@ -9,18 +10,9 @@ export default class SceneObjectManager {
   constructor( viewer, skipPostLoad = false ) {
     this.viewer = viewer
     this.scene = viewer.scene
-    this.userObjects = new THREE.Group()
-    this.solidObjects = new THREE.Group()
-    this.lineObjects = new THREE.Group()
-    this.pointObjects = new THREE.Group()
-    this.transparentObjects = new THREE.Group()
     this.views = []
 
-    this.userObjects.add( this.solidObjects )
-    this.userObjects.add( this.transparentObjects )
-    this.userObjects.add( this.lineObjects )
-    this.userObjects.add( this.pointObjects )
-    this.scene.add( this.userObjects )
+    this.sceneObjects = new SceneObjects( viewer )
 
     this.solidMaterial = new THREE.MeshStandardMaterial( {
       color: 0x8D9194,
@@ -28,7 +20,8 @@ export default class SceneObjectManager {
       roughness: 1,
       metalness: 0,
       side: THREE.DoubleSide,
-      envMap: this.viewer.cubeCamera.renderTarget.texture
+      envMap: this.viewer.cubeCamera.renderTarget.texture,
+      clippingPlanes: this.viewer.sectionBox.planes
     } )
 
     this.transparentMaterial = new THREE.MeshStandardMaterial( {
@@ -39,34 +32,41 @@ export default class SceneObjectManager {
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 0.4,
-      envMap: this.viewer.cubeCamera.renderTarget.texture
+      envMap: this.viewer.cubeCamera.renderTarget.texture,
+      clippingPlanes: this.viewer.sectionBox.planes
     } )
 
     this.solidVertexMaterial = new THREE.MeshBasicMaterial( {
       color: 0xffffff,
       vertexColors: THREE.VertexColors,
       side: THREE.DoubleSide,
-      reflectivity: 0
+      reflectivity: 0,
+      clippingPlanes: this.viewer.sectionBox.planes
     } )
 
-    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F } )
-    this.pointMaterial = new THREE.PointsMaterial(
-      { size: 2, sizeAttenuation: false, color: 0x7F7F7F }
-    )
+    this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
+    
+    this.pointMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
 
-    this.pointVertexColorsMaterial = new THREE.PointsMaterial( {
-      size: 2, sizeAttenuation: false, vertexColors: true
-    } )
+    this.pointVertexColorsMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: true, clippingPlanes: this.viewer.sectionBox.planes } )
 
-    this.objectIds = []
-    this.postLoad = debounce( () => { this._postLoadFunction() }, 200 )
+    this.postLoad = debounce( () => { this._postLoadFunction() }, 20, { maxWait: 5000 } )
     this.skipPostLoad = skipPostLoad
-
     this.loaders = []
   }
 
-  get objects() {
-    return [ ...this.solidObjects.children, ...this.transparentObjects.children, ...this.lineObjects.children, ...this.pointObjects.children ]
+  get allObjects() {
+    return [ ...this.sceneObjects.allSolidObjects.children, ...this.sceneObjects.allTransparentObjects.children, ...this.sceneObjects.allLineObjects.children, ...this.sceneObjects.allPointObjects.children ]
+  }
+
+  get filteredObjects() {
+    let ret = []
+    for ( let objectGroup of this.sceneObjects.objectsInScene.children ) {
+      if ( objectGroup.name === 'GroupedSolidObjects' )
+        continue
+      ret.push( ...objectGroup.children )
+    }
+    return ret.filter( obj => !obj.userData.hidden )
   }
 
   get materials() {
@@ -83,6 +83,8 @@ export default class SceneObjectManager {
   // the TODO ones (colour by property).
   addObject( wrapper, addToScene = true ) {
     if ( !wrapper || !wrapper.bufferGeometry ) return
+
+    // this.postLoad()
 
     switch ( wrapper.geometryType ) {
     case 'View':
@@ -105,10 +107,9 @@ export default class SceneObjectManager {
       return this.addBlock( wrapper, addToScene )
     }
 
-    this.postLoad()
   }
 
-  addSolid( wrapper, addToScene = true ) {
+  addSolid( wrapper, _addToScene = true ) {
     // Do we have a defined material?
     if ( wrapper.meta.renderMaterial ) {
       let renderMat = wrapper.meta.renderMaterial
@@ -117,7 +118,7 @@ export default class SceneObjectManager {
       // Is it a transparent material?
       if ( renderMat.opacity !== 1 ) {
         let material = this.transparentMaterial.clone()
-        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+        material.clippingPlanes = this.viewer.sectionBox.planes
 
         material.color = color
         material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
@@ -126,7 +127,7 @@ export default class SceneObjectManager {
       // It's not a transparent material!
       } else {
         let material = this.solidMaterial.clone()
-        material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+        material.clippingPlanes = this.viewer.sectionBox.planes
 
         material.color = color
         material.metalness = renderMat.metalness
@@ -139,7 +140,7 @@ export default class SceneObjectManager {
     } else {
       // If we don't have defined material, just use the default
       let material = this.solidMaterial.clone()
-      material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+      material.clippingPlanes = this.viewer.sectionBox.planes
 
       return this.addSingleSolid( wrapper, material )
     }
@@ -147,11 +148,12 @@ export default class SceneObjectManager {
 
   addSingleSolid( wrapper, material, addToScene = true ) {
     const mesh = new THREE.Mesh( wrapper.bufferGeometry, material ? material : this.solidMaterial )
+    // mesh.matrixAutoUpdate = false
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( mesh.uuid )
-      this.solidObjects.add( mesh )
+      // this.objectIds.push( mesh.uuid )
+      this.sceneObjects.allSolidObjects.add( mesh )
     }
     return mesh
   }
@@ -161,8 +163,8 @@ export default class SceneObjectManager {
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( mesh.uuid )
-      this.transparentObjects.add( mesh )
+      // this.objectIds.push( mesh.uuid )
+      this.sceneObjects.allTransparentObjects.add( mesh )
     }
     return mesh
   }
@@ -172,8 +174,8 @@ export default class SceneObjectManager {
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( line.uuid )
-      this.lineObjects.add( line )
+      // this.objectIds.push( line.uuid )
+      this.sceneObjects.allLineObjects.add( line )
     }
     return line
   }
@@ -183,8 +185,8 @@ export default class SceneObjectManager {
     dot.userData = wrapper.meta
     dot.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( dot.uuid )
-      this.pointObjects.add( dot )
+      // this.objectIds.push( dot.uuid )
+      this.sceneObjects.allPointObjects.add( dot )
     }
     return dot
   }
@@ -199,7 +201,8 @@ export default class SceneObjectManager {
 
       this._normaliseColor( color )
       let material = this.pointMaterial.clone()
-      material.clippingPlanes = this.viewer.interactions.sectionBox.planes
+      material.clippingPlanes = this.viewer.sectionBox.planes
+      // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
       material.color = color
 
@@ -211,8 +214,8 @@ export default class SceneObjectManager {
     clouds.userData = wrapper.meta
     clouds.uuid = wrapper.meta.id
     if ( addToScene ) {
-      this.objectIds.push( clouds.uuid )
-      this.pointObjects.add( clouds )
+      // this.objectIds.push( clouds.uuid )
+      this.sceneObjects.allPointObjects.add( clouds )
     }
     return clouds
   }
@@ -232,15 +235,28 @@ export default class SceneObjectManager {
     if ( addToScene ) {
       // Note: only apply the scale transform if this block is going to be added to the scene. otherwise it means it's a child of a nested block.
       group.applyMatrix4( wrapper.extras.scaleMatrix )
-      this.objectIds.push()
-      this.solidObjects.add( group )
+      // this.objectIds.push()
+      this.sceneObjects.allSolidObjects.add( group )
     }
 
     return group
   }
 
-  removeObject( id ) {
-    // TODO
+  async removeImportedObject( importedUrl ) {
+    for ( let objGroup of this.sceneObjects.allObjects.children ) {
+      let toRemove = objGroup.children.filter( obj => obj.userData?.__importedUrl === importedUrl )
+      toRemove.forEach( obj => {
+        if ( obj.material )
+          obj.material.dispose()
+        if ( obj.geometry )
+          obj.geometry.dispose()
+        objGroup.remove( obj )
+      } )
+  
+    }
+    this.views = this.views.filter( v => v.__importedUrl !== importedUrl )
+
+    await this.sceneObjects.applyFilter( undefined, true )
   }
 
   removeAllObjects() {
@@ -249,24 +265,25 @@ export default class SceneObjectManager {
         obj.geometry.dispose()
       }
     }
-    this.solidObjects.clear()
-    this.transparentObjects.clear()
-    this.lineObjects.clear()
-    this.pointObjects.clear()
+    this.sceneObjects.allSolidObjects.clear()
+    this.sceneObjects.allTransparentObjects.clear()
+    this.sceneObjects.allLineObjects.clear()
+    this.sceneObjects.allPointObjects.clear()
 
     this.viewer.interactions.deselectObjects()
     this.viewer.interactions.hideSectionBox()
-    this.objectIds = []
+    //this.objectIds = []
     this.views = []
 
     this._postLoadFunction()
   }
 
-  _postLoadFunction() {
+  async _postLoadFunction() {
     if ( this.skipPostLoad ) return
-    this.viewer.interactions.zoomExtents()
-    this.viewer.interactions.hideSectionBox()
-    this.viewer.reflectionsNeedUpdate = true
+    this.viewer.sectionBox.off()
+    await this.sceneObjects.applyFilter()
+    this.viewer.interactions.zoomExtents( undefined, false )
+    this.viewer.reflectionsNeedUpdate = false
   }
 
   getSceneBoundingBox() {
@@ -279,7 +296,7 @@ export default class SceneObjectManager {
   }
 
   _argbToRGB( argb ) {
-    return '#'+ ( '000000' + ( argb & 0xFFFFFF ).toString( 16 ) ).slice( -6 )
+    return '#' + ( '000000' + ( argb & 0xFFFFFF ).toString( 16 ) ).slice( -6 )
   }
 
   _normaliseColor( color ) {

@@ -49,6 +49,7 @@
             <v-list-item-subtitle class="caption">Edit server user details.</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
+
         <v-list-item link to="/admin/invites">
           <v-list-item-icon>
             <v-icon small class="mt-1">mdi-account-multiple-plus-outline</v-icon>
@@ -56,6 +57,16 @@
           <v-list-item-content>
             <v-list-item-title>Server invites</v-list-item-title>
             <v-list-item-subtitle class="caption">Manage server invitations.</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+
+        <v-list-item link to="/admin/streams">
+          <v-list-item-icon>
+            <v-icon small class="mt-1">mdi-blur</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Streams</v-list-item-title>
+            <v-list-item-subtitle class="caption">Manage streams.</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
       </v-list>

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: speckle-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-server
+    project: speckle-server
+spec:
+  selector:
+    app: speckle-server
+    project: speckle-server
+  ports:
+    - protocol: TCP
+      name: web
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: speckle-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-frontend
+    project: speckle-server
+spec:
+  selector:
+    app: speckle-frontend
+    project: speckle-server
+  ports:
+    - protocol: TCP
+      name: www
+      port: 80
+      targetPort: 80

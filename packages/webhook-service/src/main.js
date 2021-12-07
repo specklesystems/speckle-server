@@ -3,7 +3,7 @@
 const crypto = require( 'crypto' )
 const knex = require( './knex' )
 
-const { makeNetworkRequest } = require( './webhookCaller' )
+const { makeNetworkRequest, isLocalNetworkUrl } = require( './webhookCaller' )
 
 async function startTask() {
   let { rows } = await knex.raw( `

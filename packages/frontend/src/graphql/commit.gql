@@ -1,5 +1,5 @@
-query Stream($streamid: String!, $id: String!) {
-  stream(id: $streamid) {
+query Stream($streamId: String!, $id: String!) {
+  stream(id: $streamId) {
     id
     name
     role
@@ -13,14 +13,14 @@ query Stream($streamid: String!, $id: String!) {
       createdAt
       branchName
       sourceApplication
-      activity(actionType: "commit_receive", limit: 200) {
-        items {
-          info
-          time
-          userId
-          message
-        }
-      }
+      # activity(actionType: "commit_receive", limit: 200) {
+      #   items {
+      #     info
+      #     time
+      #     userId
+      #     message
+      #   }
+      # }
     }
   }
 }

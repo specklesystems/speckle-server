@@ -32,8 +32,8 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: ci/fileimport
-  
+              only: cristi/nonexistent
+
 jobs:
   test_server:
     docker:
@@ -46,7 +46,7 @@ jobs:
           POSTGRES_USER: speckle
     environment:
       NODE_ENV: test
-      DATABASE_URL: 'postgres://speckle:speckle@localhost:5432/speckle2_test'
+      DATABASE_URL: "postgres://speckle:speckle@localhost:5432/speckle2_test"
       PGDATABASE: speckle2_test
       PGUSER: speckle
       SESSION_SECRET: 'keyboard cat'
@@ -56,15 +56,15 @@ jobs:
     steps:
       - checkout
       - run:
-          command: 'npm install'
-          working_directory: 'packages/server'
-      - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
+          command: "npm install"
+          working_directory: "packages/server"
+      - run: "dockerize -wait tcp://localhost:5432 -timeout 1m"
       - run:
-          command: 'npm run test:report'
-          working_directory: 'packages/server'
+          command: "npm run test:report"
+          working_directory: "packages/server"
       - run:
-          command: 'bash <(curl -s https://codecov.io/bash)'
-          working_directory: 'packages/server'
+          command: "bash <(curl -s https://codecov.io/bash)"
+          working_directory: "packages/server"
 
       - store_test_results:
           path: packages/server/reports
@@ -99,11 +99,20 @@ jobs:
       - run:
           name: Build FileImport Service
           command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
+
+      - add_ssh_keys:
+          fingerprints:
+            - "18:74:c4:b9:dc:66:b2:66:1d:81:56:0d:0a:87:9b:b1"
+      - run:
+          name: Publish Helm Chart
+          command: ./.circleci/publish_helm_chart.sh
+
       - run:
           name: Deploy
           command: |
             ./.circleci/deploy.sh
-            if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
+            RELEASE_VERSION=$(./.circleci/get_version.sh)
+            if [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_RELEASE} ./.circleci/deploy_in_new_setup.sh
@@ -119,7 +128,8 @@ jobs:
           name: Test deployment
           command: |
             ./utils/test-deployment/install_prerequisites.sh
-            if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
+            RELEASE_VERSION=$(./.circleci/get_version.sh)
+            if [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               ./utils/test-deployment/run_tests.py https://speckle.xyz
               ./utils/test-deployment/run_tests.py ${SPECKLE_URL_TOR1_1_RELEASE}
             else

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-webhook-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-webhook-service
+    project: speckle-server
+spec:
+  replicas: {{ .Values.webhook_service.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-webhook-service
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-webhook-service
+        project: speckle-server
+    spec:
+      priorityClassName: low-priority
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+
+      containers:
+      - name: main
+        image: speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}
+
+        resources:
+          requests:
+            cpu: {{ .Values.webhook_service.requests.cpu }}
+            memory: {{ .Values.webhook_service.requests.memory }}
+          limits:
+            cpu: {{ .Values.webhook_service.limits.cpu }}
+            memory: {{ .Values.webhook_service.limits.memory }}
+
+        {{- if .Values.db.useCertificate }}
+        volumeMounts:
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: PG_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: postgres_url
+
+          - name: DEBUG
+            value: "webhook-service:*"
+
+          {{- if .Values.db.useCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
