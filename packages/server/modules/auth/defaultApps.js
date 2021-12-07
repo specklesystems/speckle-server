@@ -17,6 +17,7 @@ module.exports = async () => {
   await registerOrUpdateApp( { ...SpeckleApiExplorer } )
   await registerOrUpdateApp( { ...SpeckleDesktopApp } )
   await registerOrUpdateApp( { ...SpeckleExcel } )
+  await registerOrUpdateApp( { ...SpeckleCarbonCalculator } )
 }
 
 async function registerOrUpdateApp( app ) {
@@ -103,5 +104,16 @@ let SpeckleExcel = {
   public: true,
   redirectUrl: 'https://speckle-excel.netlify.app',
   scopes: [ 'streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read' ]
+}
+
+let SpeckleCarbonCalculator = {
+  id: 'carbon',
+  secret: 'carbon',
+  name: 'Speckle Carbon',
+  description: 'Carbon Calculator.',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'https://act.speckle.arup.com',
+  scopes: 'all'
 }
 
