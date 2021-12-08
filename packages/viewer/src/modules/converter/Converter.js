@@ -102,16 +102,16 @@ export default class Coverter {
           await callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
         }
       }
-    }
 
-    // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
-    if ( displayValue && obj.speckle_type.toLowerCase().includes( 'builtelements' ) ) {
-      if ( obj['elements'] ) {
+      // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
+      if ( obj.speckle_type.toLowerCase().includes( 'builtelements' ) && obj['elements'] ) {
         childrenConversionPromisses.push( this.traverseAndConvert( obj['elements'], callback, scale ) )
         this.activePromises += childrenConversionPromisses.length
         await Promise.all( childrenConversionPromisses )
         this.activePromises -= childrenConversionPromisses.length
       }
+
+      // If the object has a display value, don't iterate all properties
       return
     }
 
