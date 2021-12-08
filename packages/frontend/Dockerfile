@@ -1,7 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 
 # build stage
-FROM node:14.16-buster-slim as build-stage
+FROM node:16.13-bullseye-slim as build-stage
 
 ARG VUE_APP_GRAPHQL_WS
 
@@ -22,7 +22,7 @@ RUN npm run build
 
 
 # production stage
-FROM openresty/openresty:1.19.3.2-buster as production-stage
+FROM openresty/openresty:1.19.9.1-bullseye as production-stage
 COPY --from=build-stage /opt/frontend/dist /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 COPY packages/frontend/nginx/nginx.conf /etc/nginx/conf.d

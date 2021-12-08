@@ -151,6 +151,47 @@ module.exports = {
     return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString( ) : null }
   },
 
+  async getStreams( { offset, limit, orderBy, visibility, searchQuery } ) {
+    let query = knex
+      .column( 'streams.*', knex.raw( 'coalesce(sum(pg_column_size(objects.data)),0) as size' ) )
+      .select()
+      .from( 'streams' )
+      .leftJoin( 'objects', 'streams.id', 'objects.streamId' )
+      .groupBy( 'streams.id' )
+
+    let countQuery = Streams( )
+    
+    if ( searchQuery ) {
+      const whereFunc = function () {
+        this.where( 'streams.name', 'ILIKE', `%${ searchQuery }%` )
+          .orWhere( 'streams.description', 'ILIKE', `%${searchQuery}%` )
+      } 
+      query.where( whereFunc )
+      countQuery.where( whereFunc )
+    }
+    if ( visibility && visibility !== 'all' ) {
+      if ( ![ 'private', 'public' ].includes( visibility ) ) throw new Error( 'Stream visibility should be either private, public or all' )
+      let isPublic = visibility === 'public'
+      const publicFunc = function() {
+        this.where( { isPublic } )
+      }
+      query.andWhere( publicFunc )
+      countQuery.andWhere( publicFunc )
+    }
+    let [ res ] = await countQuery.count( )
+    let count = parseInt( res.count )
+
+    if ( !count ) return { streams: [], totalCount: 0 }
+
+    orderBy = orderBy || 'updatedAt,desc'
+    
+    let [ columnName, order ] = orderBy.split( ',' )
+
+    let rows = await query.orderBy( `${columnName}`, order ).offset( offset ).limit( limit )
+
+    return { streams: rows, totalCount: count }
+  },
+
   async getUserStreamsCount( { userId, publicOnly, searchQuery } ) {
     publicOnly = publicOnly !== false //defaults to true if not provided
 
@@ -181,7 +222,7 @@ module.exports = {
         .orderBy( 'stream_acl.role' )
 
     return await query
-  }
+  },
 }
 
 const adjectives = [

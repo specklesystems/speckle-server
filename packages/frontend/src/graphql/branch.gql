@@ -1,13 +1,11 @@
-query Stream($streamId: String!, $branchName: String!) {
+query Stream($streamId: String!, $branchName: String!, $cursor: String) {
   stream(id: $streamId) {
     id
-    name
-    role
     branch(name: $branchName) {
       id
       name
       description
-      commits {
+      commits(cursor: $cursor) {
         totalCount
         cursor
         items {

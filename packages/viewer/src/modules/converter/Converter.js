@@ -1,5 +1,8 @@
+import { chunk } from 'lodash'
 import * as THREE from 'three'
-import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
+// import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'
+
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 
@@ -16,6 +19,19 @@ export default class Coverter {
 
     this.objectLoader = objectLoader
     this.curveSegmentLength = 0.1
+
+    this.lastAsyncPause = Date.now()
+    this.activePromises = 0
+    this.maxChildrenPromises = 200
+  }
+
+  async asyncPause() {
+    // Don't freeze the UI when doing all those traversals
+    if ( Date.now() - this.lastAsyncPause >= 100 ) {
+      this.lastAsyncPause = Date.now()
+      await new Promise( resolve => setTimeout( resolve, 0 ) )
+      // if ( Date.now() - this.lastAsyncPause > 200 ) console.log( 'CONV Event loop lag: ', Date.now() - this.lastAsyncPause )
+    }
   }
 
   /**
@@ -26,8 +42,11 @@ export default class Coverter {
    * @return {[type]}            [description]
    */
   async traverseAndConvert( obj, callback, scale = true ) {
+    //console.log("Active promises: ", this.activePromises)
+    await this.asyncPause()
+
     // Exit on primitives (string, ints, bools, bigints, etc.)
-    if ( typeof obj !== 'object' ) return
+    if ( obj === null || typeof obj !== 'object' ) return
     if ( obj.referencedId ) obj = await this.resolveReference( obj )
 
     let childrenConversionPromisses = []
@@ -36,10 +55,16 @@ export default class Coverter {
     if ( Array.isArray( obj ) ) {
       for ( let element of obj ) {
         if ( typeof element !== 'object' ) break // exit early for non-object based arrays
-        let childPromise = this.traverseAndConvert( element, callback, scale )
-        childrenConversionPromisses.push( childPromise )
+        if ( this.activePromises >= this.maxChildrenPromises ) {
+          await this.traverseAndConvert( element, callback, scale )
+        } else {
+          let childPromise = this.traverseAndConvert( element, callback, scale )
+          childrenConversionPromisses.push( childPromise )
+        }
       }
+      this.activePromises += childrenConversionPromisses.length
       await Promise.all( childrenConversionPromisses )
+      this.activePromises -= childrenConversionPromisses.length
       return
     }
 
@@ -48,7 +73,7 @@ export default class Coverter {
     
     if ( this[`${type}ToBufferGeometry`] ) {
       try {
-        callback( await this[`${type}ToBufferGeometry`]( obj.data || obj, scale ) )
+        await callback( await this[`${type}ToBufferGeometry`]( obj.data || obj, scale ) )
         return
       } catch ( e ) {
         console.warn( `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`, e )
@@ -65,7 +90,7 @@ export default class Coverter {
         if ( !displayValue.units ) displayValue.units = obj.units
         try {
           let { bufferGeometry } = await this.convert( displayValue, scale )
-          callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
+          await callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
         } catch ( e ) {
           console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
         }
@@ -74,7 +99,7 @@ export default class Coverter {
           let val = await this.resolveReference( element )
           if ( !val.units ) val.units = obj.units
           let { bufferGeometry } = await this.convert( val, scale )
-          callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
+          await callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
         }
       }
     }
@@ -83,7 +108,9 @@ export default class Coverter {
     if ( displayValue && obj.speckle_type.toLowerCase().includes( 'builtelements' ) ) {
       if ( obj['elements'] ) {
         childrenConversionPromisses.push( this.traverseAndConvert( obj['elements'], callback, scale ) )
+        this.activePromises += childrenConversionPromisses.length
         await Promise.all( childrenConversionPromisses )
+        this.activePromises -= childrenConversionPromisses.length
       }
       return
     }
@@ -93,10 +120,16 @@ export default class Coverter {
     for ( let prop in target ) {
       if ( prop === 'bbox' ) continue
       if ( typeof target[prop] !== 'object' ) continue
-      let childPromise = this.traverseAndConvert( target[prop], callback, scale )
-      childrenConversionPromisses.push( childPromise )
+      if ( this.activePromises >= this.maxChildrenPromises ) {
+        await this.traverseAndConvert( target[prop], callback, scale )
+      } else {
+        let childPromise = this.traverseAndConvert( target[prop], callback, scale )
+        childrenConversionPromisses.push( childPromise )
+      }
     }
+    this.activePromises += childrenConversionPromisses.length
     await Promise.all( childrenConversionPromisses )
+    this.activePromises -= childrenConversionPromisses.length
   }
 
   /**
@@ -130,11 +163,15 @@ export default class Coverter {
     // Handles pre-chunking objects, or arrs that have not been chunked
     if ( !arr[0].referencedId ) return arr
 
-    let dechunked = []
+    let chunked = []
     for ( let ref of arr ) {
       let real = await this.objectLoader.getObject( ref.referencedId )
-      dechunked.push( ...real.data )
+      chunked.push( real.data )
+      // await this.asyncPause()
     }
+
+    let dechunked = [].concat( ...chunked )
+
     return dechunked
   }
 
@@ -144,8 +181,11 @@ export default class Coverter {
    * @return {[type]}     [description]
    */
   async resolveReference( obj ) {
-    if ( obj.referencedId )
-      return await this.objectLoader.getObject( obj.referencedId )
+    if ( obj.referencedId ) {
+      let resolvedObj = await this.objectLoader.getObject( obj.referencedId )
+      // this.asyncPause()
+      return resolvedObj
+    }
     else return obj
   }
 
@@ -178,7 +218,7 @@ export default class Coverter {
     let cF = scale ? getConversionFactor( obj.units ) : 1
     let definition = await this.resolveReference( obj.blockDefinition )
 
-    const matrix = new THREE.Matrix4().set( ...obj.transform )
+    const matrix = new THREE.Matrix4().set( ...( Array.isArray( obj.transform ) ? obj.transform : obj.transform.value ) )
     let geoms = []
     for ( let obj of definition.geometry ) {
       // Note: we are passing scale = false to the conversion of all objects, as scaling *needs* to happen
@@ -256,6 +296,8 @@ export default class Coverter {
   }
 
   async MeshToBufferGeometry( obj, scale = true ) {
+    // await this.asyncPause()
+
     try {
       if ( !obj ) return
 
@@ -271,15 +313,23 @@ export default class Coverter {
 
       let k = 0
       while ( k < faces.length ) {
-        if ( faces[ k ] === 1 ) { // QUAD FACE
+      let n = faces[ k ]
+      if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
+
+        if ( n === 4 ) { // QUAD FACE
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
           indices.push( faces[ k + 1 ], faces[ k + 3 ], faces[ k + 4 ] )
-          k += 5
-        } else if ( faces[ k ] === 0 ) { // TRIANGLE FACE
+        } else if ( n === 3 ) { // TRIANGLE FACE
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-          k += 4
-        } else throw new Error( `Mesh type not supported. Face topology indicator: ${faces[k]}` )
-      }
+        } else { //N-GON FACE
+          //TODO triangulate n-gon face.
+
+          //There is no need to throw an exception here, unsupported faces will simply be ignored.
+          //throw new Error( `Mesh type not supported. Face topology indicator: ${faces[k]}` )
+        }
+
+      k += n + 1
+    }
       buffer.setIndex( indices )
 
       buffer.setAttribute(
@@ -308,7 +358,7 @@ export default class Coverter {
 
 
       buffer.computeVertexNormals( )
-      buffer.computeFaceNormals( )
+      //buffer.computeFaceNormals( )
       buffer.computeBoundingSphere( )
 
       // delete obj.vertices

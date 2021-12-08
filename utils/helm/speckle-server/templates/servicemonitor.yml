@@ -1,0 +1,18 @@
+{{ if .Values.enable_prometheus_monitoring }}
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: speckle-server
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-server
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      project: speckle-server
+  endpoints:
+  - port: web
+
+{{ end }}

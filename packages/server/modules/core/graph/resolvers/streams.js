@@ -5,13 +5,14 @@ const appRoot = require( 'app-root-path' )
 const {
   createStream,
   getStream,
+  getStreams,
   updateStream,
   deleteStream,
   getUserStreams,
   getUserStreamsCount,
   getStreamUsers,
   grantPermissionsStream,
-  revokePermissionsStream
+  revokePermissionsStream,
 } = require( '../../services/streams' )
 
 const { authorizeResolver, validateScopes, validateServerRole, pubsub } = require( `${appRoot}/modules/shared` )
@@ -29,6 +30,35 @@ function sleep( ms ) {
   } )
 }
 
+const _deleteStream = async ( parent, args, context, info ) => {
+  await saveActivity( {
+    streamId: args.id,
+    resourceType: 'stream',
+    resourceId: args.id,
+    actionType: 'stream_delete',
+    userId: context.userId,
+    info: { },
+    message: 'Stream deleted'
+  } )
+
+  // Notify any listeners on the streamId
+  await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, streamId: args.id } )
+
+  // Notify all stream users
+  let users = await getStreamUsers( { streamId: args.id } )
+
+  for ( let user of users ) {
+    await pubsub.publish( USER_STREAM_REMOVED, { userStreamRemoved: { id: args.id }, ownerId: user.id } )
+  }
+
+  // delay deletion by a bit so we can do auth checks
+  await sleep( 250 )
+
+  // Delete after event so we can do authz
+  await deleteStream( { streamId: args.id } )
+  return true
+}
+
 module.exports = {
   Query: {
 
@@ -38,7 +68,7 @@ module.exports = {
         throw new ApolloError( 'Stream not found' )
 
       if ( !stream.isPublic && context.auth === false )
-        throw new ForbiddenError( 'You are not authorised.' )
+        throw new ForbiddenError( 'You are not authorized.' )
 
       if ( !stream.isPublic ) {
         await validateServerRole( context, 'server:user' )
@@ -57,6 +87,15 @@ module.exports = {
 
       let { cursor, streams } = await getUserStreams( { userId: context.userId, limit: args.limit, cursor: args.cursor, publicOnly: false, searchQuery: args.query } )
       return { totalCount, cursor: cursor, items: streams }
+    },
+
+    async adminStreams( parent, args, context, info ) {
+      if ( args.limit && args.limit > 50 )
+        throw new UserInputError( 'Cannot return more than 50 items at a time.' )
+
+      let { streams, totalCount } = await getStreams( 
+        { offset: args.offset, limit: args.limit, orderBy: args.orderBy, publicOnly: args.publicOnly, searchQuery: args.query, visibility: args.visibility } )
+      return { totalCount, items: streams }
     }
 
   },
@@ -66,8 +105,12 @@ module.exports = {
     async collaborators( parent, args, context, info ) {
       let users = await getStreamUsers( { streamId: parent.id } )
       return users
-    }
+    },
 
+    // async size ( parent, args, context, info ) {
+    //   let size = await streamSize( { streamId: parent.id } )
+    //   return size
+    // }
   },
 
   User: {
@@ -127,33 +170,16 @@ module.exports = {
 
     async streamDelete( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.id, 'stream:owner' )
+      return await _deleteStream( parent, args, context, info )
+    },
 
-      await saveActivity( {
-        streamId: args.id,
-        resourceType: 'stream',
-        resourceId: args.id,
-        actionType: 'stream_delete',
-        userId: context.userId,
-        info: { },
-        message: 'Stream deleted'
-      } )
-
-      // Notify any listeners on the streamId
-      await pubsub.publish( STREAM_DELETED, { streamDeleted: { streamId: args.id }, streamId: args.id } )
-
-      // Notify all stream users
-      let users = await getStreamUsers( { streamId: args.id } )
-
-      for ( let user of users ) {
-        await pubsub.publish( USER_STREAM_REMOVED, { userStreamRemoved: { id: args.id }, ownerId: user.id } )
-      }
-
-      // delay deletion by a bit so we can do auth checks
-      await sleep( 250 )
-
-      // Delete after event so we can do authz
-      await deleteStream( { streamId: args.id } )
-      return true
+    async streamsDelete( parent, args, context, info ) {
+      const results = await Promise.all( args.ids.map( async id => {
+        let newArgs = { ...args }
+        newArgs.id = id
+        return await _deleteStream( parent, newArgs, context, info )
+      } ) )
+      return results.every( res => res === true )
     },
 
     async streamGrantPermission( parent, args, context, info ) {

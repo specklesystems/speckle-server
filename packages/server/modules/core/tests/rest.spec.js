@@ -66,7 +66,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
     res = await chai.request( expressApp ).get( `/objects/${testStream.id}/null` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 404 )
 
-    // invalid streamid
+    // invalid streamId
     res = await chai.request( expressApp ).get( `/objects/${'thisDoesNotExist'}/null` ).set( 'Authorization', userA.token )
     expect( res ).to.have.status( 404 )
 
@@ -120,7 +120,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
     res = await chai.request( expressApp ).post( `/objects/${testStream.id}` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
-    // invalid streamid
+    // invalid streamId
     res = await chai.request( expressApp ).post( `/objects/${'thisDoesNotExist'}` ).set( 'Authorization', userA.token )
     expect( res ).to.have.status( 401 )
   } )
