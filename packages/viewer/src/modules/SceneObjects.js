@@ -229,7 +229,6 @@ export default class SceneObjects {
     let materialIdToBufferGeometry = {}
     let materialIdToMaterial = {}
     let materialIdToMeshes = {}
-    let groups = []
 
     let groupedObjects = new THREE.Group()
     groupedObjects.name = 'GroupedSolidObjects'
@@ -238,12 +237,6 @@ export default class SceneObjects {
       let meshes = []
       if( obj instanceof THREE.Group ) {    
         meshes = this.flattenGroup( obj )
-
-        // let groupedChildren = await this.groupSolidObjects( obj )
-        // groupedChildren.applyMatrix4( obj.matrix )
-        // groupedChildren.userData = null
-// 
-        // groups.push( groupedChildren )
       } else {
         meshes = [ obj ]
       }
@@ -284,11 +277,6 @@ export default class SceneObjects {
         }
       }
     }
-    
-    
-
-    for( let group of groups )
-      groupedObjects.add( group )
 
     await this.asyncPause()
 
