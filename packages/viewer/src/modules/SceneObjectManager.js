@@ -240,8 +240,6 @@ export default class SceneObjectManager {
         g.meta.renderMaterial = wrapper.meta.renderMaterial
       }
       let res = this.addObject( g, false )
-      // if (wrapper.meta.renderMaterial)
-      //   console.log( wrapper, '-->', g, ' --> ', res )
       if ( res )
         group.add( res ) 
     } )
@@ -298,12 +296,10 @@ export default class SceneObjectManager {
 
   async _postLoadFunction() {
     if ( this.skipPostLoad ) return
-    // console.log( 'PostLoad start' )
     this.viewer.sectionBox.off()
     await this.sceneObjects.applyFilter()
     this.viewer.interactions.zoomExtents( undefined, false )
     this.viewer.reflectionsNeedUpdate = false
-    // console.log( 'PostLoad done' )
   }
 
   getSceneBoundingBox() {

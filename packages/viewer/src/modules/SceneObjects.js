@@ -53,7 +53,6 @@ export default class SceneObjects {
   async asyncPause() {
     // Don't freeze the UI when doing all those traversals
     if ( Date.now() - this.lastAsyncPause >= 100 ) {
-      // if (Date.now() - this.lastAsyncPause > 200 ) console.log("FREEZED for ", Date.now() - this.lastAsyncPause)
       await new Promise( resolve => setTimeout( resolve, 0 ) )
       this.lastAsyncPause = Date.now()
     }
@@ -143,7 +142,6 @@ export default class SceneObjects {
         child.geometry.dispose()
     }
     threejsGroup.clear()
-    // console.log( 'Dispose in: ', Date.now() - t0 )
   }
 
   async applyFilter( filter ) {
@@ -152,9 +150,7 @@ export default class SceneObjects {
     
     if ( filter === null ) {
       // Remove filters, use allObjects
-      // let t0 = Date.now()
       let newGoupedSolidObjects = await this.groupSolidObjects( this.allSolidObjects )
-      // console.log( 'Grouped in ', Date.now() - t0 )
       
       if ( this.groupedSolidObjects !== null ) {
         this.disposeAndClearGroup( this.groupedSolidObjects )

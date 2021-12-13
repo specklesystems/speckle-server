@@ -14,7 +14,6 @@ export default class InteractionHandler {
     this.selectionMeshMaterial.polygonOffset = true
     this.selectionMeshMaterial.polygonOffsetFactor = -0.1
 
-    // console.log(this.viewer.sceneManager.allObjects)
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
     this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 

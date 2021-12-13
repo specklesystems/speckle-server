@@ -30,7 +30,6 @@ export default class Coverter {
     if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
       await new Promise( resolve => setTimeout( resolve, 0 ) )
-      // if ( Date.now() - this.lastAsyncPause > 200 ) console.log( 'CONV Event loop lag: ', Date.now() - this.lastAsyncPause )
     }
   }
 
@@ -42,7 +41,6 @@ export default class Coverter {
    * @return {[type]}            [description]
    */
   async traverseAndConvert( obj, callback, scale = true ) {
-    //console.log("Active promises: ", this.activePromises)
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -244,7 +242,6 @@ export default class Coverter {
       'position',
       new THREE.Float32BufferAttribute( !scale || conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
 
-    // TODO: checkout colours
     let colorsRaw = await this.dechunk( obj.colors )
 
     if ( colorsRaw && colorsRaw.length !== 0 ) {
