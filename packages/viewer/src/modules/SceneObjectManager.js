@@ -36,17 +36,6 @@ export default class SceneObjectManager {
       clippingPlanes: this.viewer.sectionBox.planes
     } )
 
-    this.solidVertexMaterialNew = new THREE.MeshStandardMaterial( {
-      color: 0x8D9194,
-      emissive: 0x0,
-      roughness: 1,
-      metalness: 0,
-      side: THREE.DoubleSide,
-      envMap: this.viewer.cubeCamera.renderTarget.texture,
-      vertexColors: true,
-      clippingPlanes: this.viewer.sectionBox.planes
-    } )
-
     this.solidVertexMaterial = new THREE.MeshBasicMaterial( {
       color: 0xffffff,
       vertexColors: THREE.VertexColors,
@@ -54,7 +43,6 @@ export default class SceneObjectManager {
       reflectivity: 0,
       clippingPlanes: this.viewer.sectionBox.planes
     } )
-    // this.solidVertexMaterial = this.solidVertexMaterialNew
 
     this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
     
