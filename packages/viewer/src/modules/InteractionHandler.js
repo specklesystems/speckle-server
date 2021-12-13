@@ -10,6 +10,10 @@ export default class InteractionHandler {
     this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: false } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // Fix overlapping faces flickering
+    this.selectionMeshMaterial.polygonOffset = true
+    this.selectionMeshMaterial.polygonOffsetFactor = -0.1
+
     // console.log(this.viewer.sceneManager.allObjects)
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
     this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes

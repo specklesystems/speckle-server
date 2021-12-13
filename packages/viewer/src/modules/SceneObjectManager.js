@@ -36,6 +36,17 @@ export default class SceneObjectManager {
       clippingPlanes: this.viewer.sectionBox.planes
     } )
 
+    this.solidVertexMaterialNew = new THREE.MeshStandardMaterial( {
+      color: 0x8D9194,
+      emissive: 0x0,
+      roughness: 1,
+      metalness: 0,
+      side: THREE.DoubleSide,
+      envMap: this.viewer.cubeCamera.renderTarget.texture,
+      vertexColors: true,
+      clippingPlanes: this.viewer.sectionBox.planes
+    } )
+
     this.solidVertexMaterial = new THREE.MeshBasicMaterial( {
       color: 0xffffff,
       vertexColors: THREE.VertexColors,
@@ -43,6 +54,7 @@ export default class SceneObjectManager {
       reflectivity: 0,
       clippingPlanes: this.viewer.sectionBox.planes
     } )
+    // this.solidVertexMaterial = this.solidVertexMaterialNew
 
     this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
     
@@ -224,8 +236,14 @@ export default class SceneObjectManager {
     let group = new THREE.Group()
     
     wrapper.bufferGeometry.forEach( g => {
+      if ( wrapper.meta.renderMaterial && !g.meta.renderMaterial ) {
+        g.meta.renderMaterial = wrapper.meta.renderMaterial
+      }
       let res = this.addObject( g, false )
-      group.add( res ) 
+      // if (wrapper.meta.renderMaterial)
+      //   console.log( wrapper, '-->', g, ' --> ', res )
+      if ( res )
+        group.add( res ) 
     } )
 
     group.applyMatrix4( wrapper.extras.transformMatrix )
@@ -280,10 +298,12 @@ export default class SceneObjectManager {
 
   async _postLoadFunction() {
     if ( this.skipPostLoad ) return
+    // console.log( 'PostLoad start' )
     this.viewer.sectionBox.off()
     await this.sceneObjects.applyFilter()
     this.viewer.interactions.zoomExtents( undefined, false )
     this.viewer.reflectionsNeedUpdate = false
+    // console.log( 'PostLoad done' )
   }
 
   getSceneBoundingBox() {

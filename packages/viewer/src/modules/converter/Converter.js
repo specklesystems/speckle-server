@@ -89,8 +89,8 @@ export default class Coverter {
         displayValue = await this.resolveReference( displayValue )
         if ( !displayValue.units ) displayValue.units = obj.units
         try {
-          let { bufferGeometry } = await this.convert( displayValue, scale )
-          await callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
+          let convertedElement = await this.convert( displayValue, scale )
+          await callback( new ObjectWrapper( convertedElement.bufferGeometry, obj, convertedElement.geometryType ) ) // use the parent's metadata!
         } catch ( e ) {
           console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
         }
@@ -98,8 +98,8 @@ export default class Coverter {
         for ( let element of displayValue ) {
           let val = await this.resolveReference( element )
           if ( !val.units ) val.units = obj.units
-          let { bufferGeometry } = await this.convert( val, scale )
-          await callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
+          let convertedElement = await this.convert( val, scale )
+          await callback( new ObjectWrapper( convertedElement.bufferGeometry, { renderMaterial: val.renderMaterial, ...obj }, convertedElement.geometryType ) )
         }
       }
 
@@ -296,8 +296,6 @@ export default class Coverter {
   }
 
   async MeshToBufferGeometry( obj, scale = true ) {
-    // await this.asyncPause()
-
     try {
       if ( !obj ) return
 
@@ -313,8 +311,8 @@ export default class Coverter {
 
       let k = 0
       while ( k < faces.length ) {
-      let n = faces[ k ]
-      if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
+        let n = faces[ k ]
+        if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
 
         if ( n === 4 ) { // QUAD FACE
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
@@ -328,8 +326,8 @@ export default class Coverter {
           //throw new Error( `Mesh type not supported. Face topology indicator: ${faces[k]}` )
         }
 
-      k += n + 1
-    }
+        k += n + 1
+      }
       buffer.setIndex( indices )
 
       buffer.setAttribute(
