@@ -1,8 +1,7 @@
 <template>
-  <v-card class="pa-4" >
+  <v-card class="pa-4">
     <v-card-title>Edit App</v-card-title>
     <v-form v-show="!appUpdateResult" ref="form" v-model="valid" @submit.prevent="editApp">
-      
       <v-card-text>
         <v-text-field
           v-model="name"
@@ -13,6 +12,8 @@
           validate-on-blur
           required
           autofocus
+          @input="checkValidity()"
+          @focus="checkValidity()"
         ></v-text-field>
         <v-select
           v-model="selectedScopes"
@@ -26,6 +27,8 @@
           :items="parsedScopes"
           chips
           :menu-props="{ maxWidth: 420 }"
+          @input="checkValidity()"
+          @focus="checkValidity()"
         ></v-select>
         <v-text-field
           v-model="redirectUrl"
@@ -37,35 +40,31 @@
           label="Redirect url"
           :rules="redirectUrlRules"
           required
+          @input="checkValidity()"
+          @focus="checkValidity()"
         ></v-text-field>
         <v-textarea
           v-model="description"
           label="Description"
           persistent-hint
           hint="A short description of your application."
+          @input="checkValidity()"
+          @focus="checkValidity()"
         ></v-textarea>
-        <v-alert type="info" class="mt-5 ">
-          <b>Note:</b> After editing an app, all users will need to authorise it again 
-          (existing tokens will be invalidated).
+        <v-alert type="info" class="mt-5">
+          <b>Note:</b>
+          After editing an app, all users will need to authorise it again (existing tokens will be
+          invalidated).
         </v-alert>
         <v-card-actions>
-          
           <v-spacer></v-spacer>
-
-          <v-btn text  @click="clearAndClose">Cancel</v-btn>
+          <v-btn text @click="clearAndClose">Cancel</v-btn>
           <v-btn text color="primary" type="submit" :disabled="!valid">Save</v-btn>
         </v-card-actions>
       </v-card-text>
     </v-form>
     <v-card-text v-show="appUpdateResult">
-      <div v-if="app" class="text-center my-5">
-        <h2 class="mb-5 font-weight-normal">Your new app's details:</h2>
-        App Id:
-        <code class="subtitle-1 pa-3 my-4">{{ app.id }}</code>
-        <v-divider class="mt-5 pt-5" />
-        App Secret:
-        <code class="subtitle-1 pa-3 my-4">{{ app.secret }}</code>
-      </div>
+      <p>App updated!</p>
       <v-alert type="info">
         <p>
           <b>Note:</b>
@@ -158,7 +157,7 @@ export default {
       nameRules: [
         (v) => !!v || 'Name is required',
         (v) => (v && v.length <= 60) || 'Name must be less than 60 characters',
-        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters',
+        (v) => (v && v.length >= 3) || 'Name must be at least 3 characters'
       ],
       selectedScopes: this.appScopes,
       selectedScopesRules: [
@@ -183,37 +182,6 @@ export default {
       appUpdateResult: null
     }
   },
-  watch:{
-    appDialog(val){
-      if(val==0) this.clearAndClose() //if dialog was closed, on opening always show the initial editing form
-    },
-    // after any change, check if inputs are the same as already saved
-    valid(){
-      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===this.description) { 
-        this.valid = false 
-      } else this.valid = true
-    },
-    name(val){
-      if (this.appName===val && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===this.description) { 
-        this.valid = false 
-      } else this.valid = true
-    },
-    selectedScopes(val){
-      if (this.appName===this.name && this.appScopes===val && this.appUrl===this.redirectUrl && this.appDescription===this.description) { 
-        this.valid = false 
-      } else this.valid = true
-    },
-    redirectUrl(val){
-      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===val && this.appDescription===this.description) { 
-        this.valid = false
-      } else this.valid = true
-    },
-    description(val){
-      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===val) { 
-        this.valid = false
-      } else this.valid = true
-    }
-  },
   computed: {
     rootUrl() {
       return window.location.origin
@@ -227,24 +195,35 @@ export default {
         arr.push({ divider: true })
       }
       return arr
-    },
-    similarity(){
-      if (this.appName===this.name && this.appScopes===this.selectedScopes && this.appUrl===this.redirectUrl && this.appDescription===this.description) this.valid = false
+    }
+  },
+  watch: {
+    appDialog(val) {
+      if (val == 0) this.clearAndClose() //if dialog was closed, on opening always show the initial editing form
     }
   },
   methods: {
     clearAndClose() {
       this.appUpdateResult = null
-      //this.name = null
-      //this.selectedScopes = []
       this.$emit('close')
+    },
+    checkValidity() {
+      if (
+        this.appName === this.name &&
+        this.appScopes === this.selectedScopes &&
+        this.appUrl === this.redirectUrl &&
+        this.appDescription === this.description
+      ) {
+        this.valid = false
+      } else {
+        this.valid = true
+      }
     },
     async editApp() {
       if (!this.$refs.form.validate()) return
 
-      this.$matomo && this.$matomo.trackPageView('user/app/update') 
+      this.$matomo && this.$matomo.trackPageView('user/app/update')
       try {
-        
         let res = await this.$apollo.mutate({
           mutation: gql`
             mutation($app: AppUpdateInput!) {
@@ -261,12 +240,11 @@ export default {
             }
           }
         })
-        
-        this.appUpdateResult = res.data.appUpdate 
+
+        this.appUpdateResult = res.data.appUpdate
         //this.name = null
         //this.selectedScopes = []
         this.$emit('app-edited')
-
       } catch (e) {
         // TODO: how do we catch and display errors?
         console.log(e)

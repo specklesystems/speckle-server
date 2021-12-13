@@ -36,8 +36,18 @@
           delete
         </v-btn>
       </div>
-      <v-dialog v-model="appDialog" width="500" >
-        <app-edit-dialog :app-id="app.id" :app-name="app.name" :app-secret="app.secret" :app-url="app.redirectUrl" :app-description="app.description" :app-scopes="appScopesList" :app-dialog="appDialog" @app-edited="emitEdits()" @close="appDialog = false" />
+      <v-dialog v-model="appDialog" width="500">
+        <app-edit-dialog
+          :app-id="app.id"
+          :app-name="app.name"
+          :app-secret="app.secret"
+          :app-url="app.redirectUrl"
+          :app-description="app.description"
+          :app-scopes="appScopesList"
+          :app-dialog="appDialog"
+          @app-edited="emitEdits()"
+          @close="appDialog = false"
+        />
       </v-dialog>
     </v-list-item-action>
     <v-dialog v-model="showRevokeConfirm" width="500">
@@ -60,7 +70,7 @@ import gql from 'graphql-tag'
 import AppEditDialog from './dialogs/AppEditDialog'
 
 export default {
-  components: {AppEditDialog},
+  components: { AppEditDialog },
   props: {
     app: {
       type: Object,
@@ -75,7 +85,7 @@ export default {
             id
             name
             secret
-            scopes{
+            scopes {
               name
             }
           }
@@ -98,12 +108,12 @@ export default {
       appScopesList: []
     }
   },
-  watch:{
-    appScopes(val){
+  watch: {
+    appScopes(val) {
       let scopeList = []
-      val.forEach(obj=>{
-        scopeList.push( obj.name )
-        })
+      val.forEach((obj) => {
+        scopeList.push(obj.name)
+      })
       this.appScopesList = [...scopeList]
     }
   },
@@ -124,7 +134,7 @@ export default {
         console.log(e)
       }
     },
-    emitEdits(){
+    emitEdits() {
       this.$emit('app-edited')
     }
   }

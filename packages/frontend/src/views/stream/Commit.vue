@@ -10,13 +10,13 @@
       <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
         <portal to="streamActionsBar">
           <v-btn
-            text
             v-if="
               stream &&
               stream.role !== 'stream:reviewer' &&
               stream.commit.authorId === loggedInUserId
             "
             v-tooltip="'Edit commit'"
+            text
             elevation="0"
             color="primary"
             small
@@ -121,16 +121,25 @@
         <h2>Commit {{ $route.params.commitId }} not found.</h2>
       </error-placeholder>
     </v-row>
-    <commit-edit-dialog ref="commitDialog" @show-delete="showDeleteDialog=true"></commit-edit-dialog>
+    <commit-edit-dialog
+      ref="commitDialog"
+      @show-delete="showDeleteDialog = true"
+    ></commit-edit-dialog>
 
     <v-dialog v-model="showDeleteDialog" width="500">
       <v-card class="pa-0 transparent">
         <v-alert type="info" class="ma-0">
           <h3>Are you sure?</h3>
           You cannot undo this action. This will permanently delete the commit
-          <v-chip :to="`/streams/${$route.params.streamId}/commits/${stream&&stream.commit ? stream.commit.id : null}`" color="primary" @click="showDeleteDialog=false"> 
-            <v-icon small class="mr-2 float-left" light> mdi-timeline-remove-outline </v-icon> 
-            {{ stream&&stream.commit ? stream.commit.id : null }} 
+          <v-chip
+            :to="`/streams/${$route.params.streamId}/commits/${
+              stream && stream.commit ? stream.commit.id : null
+            }`"
+            color="primary"
+            @click="showDeleteDialog = false"
+          >
+            <v-icon small class="mr-2 float-left" light>mdi-timeline-remove-outline</v-icon>
+            {{ stream && stream.commit ? stream.commit.id : null }}
           </v-chip>
           <v-divider class="my-3"></v-divider>
           <v-btn text class="error--text" @click="deleteCommit">Delete</v-btn>
@@ -171,7 +180,7 @@ export default {
           id: this.$route.params.commitId
         }
       }
-    },
+    }
     // commitActivitiy: {
     //   query: `
     //   query CommitActivity($streamid: String!, $id: String!) {
@@ -261,7 +270,13 @@ export default {
     deleteCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/delete')
       let commitBranch = null
-      if (this.stream && this.stream.commit && this.stream.commit.branchName && this.stream.commit.branchName) commitBranch = this.stream.commit.branchName
+      if (
+        this.stream &&
+        this.stream.commit &&
+        this.stream.commit.branchName &&
+        this.stream.commit.branchName
+      )
+        commitBranch = this.stream.commit.branchName
 
       this.$apollo
         .mutate({
@@ -271,10 +286,10 @@ export default {
             }
           `,
           variables: {
-            myCommit: { 
+            myCommit: {
               streamId: this.stream.id,
               id: this.stream.commit.id
-             }
+            }
           }
         })
         .then(() => {
@@ -284,9 +299,10 @@ export default {
           // Error
           console.error(error)
         })
-        this.showDeleteDialog =  false
-        window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
-        //this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch )
+      this.showDeleteDialog = false
+      window.location.href =
+        window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
+      //this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch )
     }
   }
 }
