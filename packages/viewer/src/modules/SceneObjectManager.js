@@ -224,8 +224,12 @@ export default class SceneObjectManager {
     let group = new THREE.Group()
     
     wrapper.bufferGeometry.forEach( g => {
+      if ( wrapper.meta.renderMaterial && !g.meta.renderMaterial ) {
+        g.meta.renderMaterial = wrapper.meta.renderMaterial
+      }
       let res = this.addObject( g, false )
-      group.add( res ) 
+      if ( res )
+        group.add( res ) 
     } )
 
     group.applyMatrix4( wrapper.extras.transformMatrix )
