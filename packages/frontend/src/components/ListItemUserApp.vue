@@ -26,10 +26,29 @@
       </v-list-item-subtitle>
     </v-list-item-content>
     <v-list-item-action>
-      <v-btn small text color="error" @click="showRevokeConfirm = true">
-        <v-icon small class="mr-2">mdi-delete</v-icon>
-        delete
-      </v-btn>
+      <div>
+        <v-btn small text color="primary" @click="appDialog = true">
+          <v-icon small class="mr-2">mdi-cog-outline</v-icon>
+          edit
+        </v-btn>
+        <v-btn small text color="error" @click="showRevokeConfirm = true">
+          <v-icon small class="mr-2">mdi-delete</v-icon>
+          delete
+        </v-btn>
+      </div>
+      <v-dialog v-model="appDialog" width="500">
+        <app-edit-dialog
+          :app-id="app.id"
+          :app-name="app.name"
+          :app-secret="app.secret"
+          :app-url="app.redirectUrl"
+          :app-description="app.description"
+          :app-scopes="appScopesList"
+          :app-dialog="appDialog"
+          @app-edited="emitEdits()"
+          @close="appDialog = false"
+        />
+      </v-dialog>
     </v-list-item-action>
     <v-dialog v-model="showRevokeConfirm" width="500">
       <v-card class="pa-0 transparent">
@@ -40,7 +59,7 @@
           app. Existing users will not be able to use it anymore.
           <v-divider class="my-3"></v-divider>
           <v-btn text color="error" @click="revokeApp">Delete</v-btn>
-          <v-btn @click="showRevokeConfirm = false">Cancel</v-btn>
+          <v-btn text @click="showRevokeConfirm = false">Cancel</v-btn>
         </v-alert>
       </v-card>
     </v-dialog>
@@ -48,19 +67,54 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import AppEditDialog from './dialogs/AppEditDialog'
 
 export default {
-  components: {},
+  components: { AppEditDialog },
   props: {
     app: {
       type: Object,
       default: () => {}
     }
   },
+  apollo: {
+    appScopes: {
+      query: gql`
+        query($id: String!) {
+          app(id: $id) {
+            id
+            name
+            secret
+            scopes {
+              name
+            }
+          }
+        }
+      `,
+      variables() {
+        return { id: this.app.id }
+      },
+      update: (data) => data.app.scopes,
+      skip() {
+        return !this.app.id
+      }
+    }
+  },
   data() {
     return {
       showRevokeConfirm: false,
-      showSecret: false
+      showSecret: false,
+      appDialog: false,
+      appScopesList: []
+    }
+  },
+  watch: {
+    appScopes(val) {
+      let scopeList = []
+      val.forEach((obj) => {
+        scopeList.push(obj.name)
+      })
+      this.appScopesList = [...scopeList]
     }
   },
   methods: {
@@ -79,6 +133,9 @@ export default {
       } catch (e) {
         console.log(e)
       }
+    },
+    emitEdits() {
+      this.$emit('app-edited')
     }
   }
 }
