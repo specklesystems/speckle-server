@@ -267,7 +267,7 @@ export default {
           })
       })
     },
-    async deleteCommit() {
+    deleteCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/delete')
       let commitBranch = null
       if (
@@ -278,8 +278,8 @@ export default {
       )
         commitBranch = this.stream.commit.branchName
 
-      try {
-        await this.$apollo.mutate({
+      this.$apollo
+        .mutate({
           mutation: gql`
             mutation commitUpdate($myCommit: CommitDeleteInput!) {
               commitDelete(commit: $myCommit)
@@ -292,12 +292,13 @@ export default {
             }
           }
         })
-
-        this.$apollo.queries.stream.refetch()
-      } catch (err) {
-        console.error(err)
-      }
-
+        .then(() => {
+          this.$apollo.queries.stream.refetch()
+        })
+        .catch((error) => {
+          // Error
+          console.error(error)
+        })
       this.showDeleteDialog = false
       //window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
       this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch)
