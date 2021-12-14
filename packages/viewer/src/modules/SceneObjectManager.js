@@ -50,7 +50,7 @@ export default class SceneObjectManager {
 
     this.pointVertexColorsMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: true, clippingPlanes: this.viewer.sectionBox.planes } )
 
-    this.postLoad = debounce( () => { this._postLoadFunction() }, 20, { maxWait: 5000 } )
+    this.postLoad = debounce( () => { this.postLoadFunction() }, 20, { maxWait: 5000 } )
     this.skipPostLoad = skipPostLoad
     this.loaders = []
   }
@@ -279,10 +279,10 @@ export default class SceneObjectManager {
     //this.objectIds = []
     this.views = []
 
-    this._postLoadFunction()
+    this.postLoadFunction()
   }
 
-  async _postLoadFunction() {
+  async postLoadFunction() {
     if ( this.skipPostLoad ) return
     this.viewer.sectionBox.off()
     await this.sceneObjects.applyFilter()
