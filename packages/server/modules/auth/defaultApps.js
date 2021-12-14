@@ -18,6 +18,7 @@ module.exports = async () => {
   await registerOrUpdateApp( { ...SpeckleDesktopApp } )
   await registerOrUpdateApp( { ...SpeckleExcel } )
   await registerOrUpdateApp( { ...SpeckleCarbonCalculator } )
+  await registerOrUpdateApp( { ...SpeckleProjectSetupApp } )
 }
 
 async function registerOrUpdateApp( app ) {
@@ -117,3 +118,13 @@ let SpeckleCarbonCalculator = {
   scopes: 'all'
 }
 
+let SpeckleProjectSetupApp = {
+  id: 'projects',
+  secret: 'projects',
+  name: 'Project Setup App',
+  description: 'An app to manage streams across a project!',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'https://projects.speckle.arup.com',
+  scopes: 'all'
+}
