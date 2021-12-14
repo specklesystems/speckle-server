@@ -108,16 +108,15 @@ export default class Coverter {
         await Promise.all( childrenConversionPromisses )
         this.activePromises -= childrenConversionPromisses.length
       }
-
-      // If the object has a display value, don't iterate all properties
-      return
     }
 
     // Last attempt: iterate through all object keys and see if we can display anything!
     // traverses the object in case there's any sub-objects we can convert.
     for ( let prop in target ) {
       if ( prop === 'bbox' ) continue
-      if ( typeof target[prop] !== 'object' ) continue
+      if ( [ 'displayMesh', '@displayMesh', 'displayValue', '@displayValue' ].includes( prop ) ) continue
+      if ( typeof target[prop] !== 'object' || target[prop] === null ) continue
+
       if ( this.activePromises >= this.maxChildrenPromises ) {
         await this.traverseAndConvert( target[prop], callback, scale )
       } else {
