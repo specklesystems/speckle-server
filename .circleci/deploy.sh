@@ -7,6 +7,9 @@ TARGET_SPECKLE_DEPLOYMENT=$SPECKLE_K8S_DEPLOYMENT
 
 IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
+if [[ "$IMAGE_VERSION_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  TARGET_SPECKLE_DEPLOYMENT=$SPECKLE_K8S_DEPLOYMENT_PROD
+fi
 
 echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
 
