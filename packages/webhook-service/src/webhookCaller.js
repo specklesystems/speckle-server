@@ -26,7 +26,7 @@ async function isLocalNetworkUrl( url ) {
 }
 
 async function makeNetworkRequest( { url, data, headersData } ) {
-  if ( process.env.ALLOW_LOCAL_NETWORK !== 'true' && isLocalNetworkUrl( url ) ) {
+  if ( process.env.ALLOW_LOCAL_NETWORK !== 'true' && ( await isLocalNetworkUrl( url ) ) ) {
     return {
       success: false,
       error: 'Local network requests are not allowed. To allow, use ALLOW_LOCAL_NETWORK=true environment variable',
