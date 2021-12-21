@@ -9,6 +9,9 @@ extend type Query {
   """
   streams( query: String, limit: Int = 25, cursor: String ): StreamCollection
     @hasScope(scope: "streams:read")
+
+  adminStreams( offset: Int = 0, query: String, orderBy: String, visibility: String, limit: Int = 25 ): StreamCollection
+    @hasRole(role: "server:admin")
 }
 
 type Stream {
@@ -23,6 +26,7 @@ type Stream {
   createdAt: DateTime!
   updatedAt: DateTime!
   collaborators: [ StreamCollaborator ]!
+  size: String
 }
 
 extend type User {
@@ -66,6 +70,9 @@ extend type Mutation {
   streamDelete( id: String! ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+
+  streamsDelete( ids: [String!] ): Boolean!
+    @hasRole(role: "server:admin")
   """
   Grants permissions to a user on a given stream.
   """

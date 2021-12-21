@@ -4,7 +4,11 @@
     :height="height"
     :class="`${color ? '' : 'grasycale-img'} preview-img`"
     :src="currentPreviewImg"
-    :gradient="`to top right, ${$vuetify.theme.dark ? 'rgba(100,115,201,.33), rgba(25,32,72,.7)' : 'rgba(100,115,231,.15), rgba(25,32,72,.05)'}`"
+    :gradient="`to top right, ${
+      $vuetify.theme.dark
+        ? 'rgba(100,115,201,.33), rgba(25,32,72,.7)'
+        : 'rgba(100,115,231,.1), rgba(25,32,72,.05)'
+    }`"
   />
 </template>
 <script>
@@ -38,8 +42,12 @@ export default {
           ? { Authorization: `Bearer ${localStorage.getItem('AuthToken')}` }
           : {}
       })
-      const blob = await res.blob()
-      this.currentPreviewImg = URL.createObjectURL(blob)
+      try {
+        const blob = await res.blob()
+        this.currentPreviewImg = URL.createObjectURL(blob)
+      } catch (err) {
+        console.log(err)
+      }
     }
   }
 }
@@ -52,7 +60,13 @@ export default {
 
 .preview-img {
   width: 100%;
+  opacity: 0.8;
   object-fit: cover;
+  transition: all 0.2s ease;
+}
+
+.preview-img:hover{
+  opacity: 1;
 }
 
 .stream-link a {

@@ -1,0 +1,12 @@
+{{ if .Values.db.useCertificate }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-certificate
+  namespace: {{ .Values.namespace }}
+data:
+  ca-certificate.crt: |
+{{ .Values.db.certificate | indent 4 }}
+
+{{ end }}

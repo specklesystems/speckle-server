@@ -7,7 +7,7 @@ extend type Query {
   """
   Get users from the server in a paginated view. The query search for matches in name, company and email.
   """
-  users(limit: Int!=25, offset: Int!=0, query: String=null) : UserCollection
+  users(limit: Int! = 25, offset: Int! = 0, query: String=null) : UserCollection
   userSearch(
     query: String!
     limit: Int! = 25

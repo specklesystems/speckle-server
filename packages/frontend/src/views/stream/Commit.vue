@@ -16,6 +16,7 @@
               stream.commit.authorId === loggedInUserId
             "
             v-tooltip="'Edit commit'"
+            text
             elevation="0"
             color="primary"
             small
@@ -120,12 +121,36 @@
         <h2>Commit {{ $route.params.commitId }} not found.</h2>
       </error-placeholder>
     </v-row>
-    <commit-edit-dialog ref="commitDialog"></commit-edit-dialog>
+    <commit-edit-dialog
+      ref="commitDialog"
+      @show-delete="showDeleteDialog = true"
+    ></commit-edit-dialog>
+
+    <v-dialog v-model="showDeleteDialog" width="500">
+      <v-card class="pa-0 transparent">
+        <v-alert type="info" class="ma-0">
+          <h3>Are you sure?</h3>
+          You cannot undo this action. This will permanently delete the commit
+          <v-chip
+            :to="`/streams/${$route.params.streamId}/commits/${
+              stream && stream.commit ? stream.commit.id : null
+            }`"
+            color="primary"
+            @click="showDeleteDialog = false"
+          >
+            <v-icon small class="mr-2 float-left" light>mdi-timeline-remove-outline</v-icon>
+            {{ stream && stream.commit ? stream.commit.id : null }}
+          </v-chip>
+          <v-divider class="my-3"></v-divider>
+          <v-btn text class="error--text" @click="deleteCommit">Delete</v-btn>
+          <v-btn text @click="showDeleteDialog = false">Cancel</v-btn>
+        </v-alert>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 <script>
 import gql from 'graphql-tag'
-
 import streamCommitQuery from '@/graphql/commit.gql'
 
 export default {
@@ -142,7 +167,8 @@ export default {
   },
   data: () => ({
     loadedModel: false,
-    selectionData: []
+    selectionData: [],
+    showDeleteDialog: false
   }),
   apollo: {
     stream: {
@@ -150,11 +176,11 @@ export default {
       query: streamCommitQuery,
       variables() {
         return {
-          streamid: this.$route.params.streamId,
+          streamId: this.$route.params.streamId,
           id: this.$route.params.commitId
         }
       }
-    },
+    }
     // commitActivitiy: {
     //   query: `
     //   query CommitActivity($streamid: String!, $id: String!) {
@@ -207,7 +233,7 @@ export default {
   watch: {
     stream(val) {
       if (!val) return
-      if (val.commit.branchName === 'globals')
+      if (val && val.commit && val.commit.branchName && val.commit.branchName === 'globals')
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
     }
   },
@@ -240,6 +266,42 @@ export default {
             console.error(error)
           })
       })
+    },
+    deleteCommit() {
+      this.$matomo && this.$matomo.trackPageView('commit/delete')
+      let commitBranch = null
+      if (
+        this.stream &&
+        this.stream.commit &&
+        this.stream.commit.branchName &&
+        this.stream.commit.branchName
+      )
+        commitBranch = this.stream.commit.branchName
+
+      this.$apollo
+        .mutate({
+          mutation: gql`
+            mutation commitUpdate($myCommit: CommitDeleteInput!) {
+              commitDelete(commit: $myCommit)
+            }
+          `,
+          variables: {
+            myCommit: {
+              streamId: this.stream.id,
+              id: this.stream.commit.id
+            }
+          }
+        })
+        .then(() => {
+          this.$apollo.queries.stream.refetch()
+        })
+        .catch((error) => {
+          // Error
+          console.error(error)
+        })
+      this.showDeleteDialog = false
+      //window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
+      this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch)
     }
   }
 }

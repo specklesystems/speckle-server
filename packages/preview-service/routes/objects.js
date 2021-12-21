@@ -45,4 +45,18 @@ router.get( '/:streamId/:objectId', async function( req, res, next ) {
 
 } )
 
+
+router.get( '/:streamId/:objectId/single', async ( req, res ) => {
+  let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
+
+  if ( !obj ) {
+    return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+  }
+
+  console.log( `Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}` )
+
+  res.send( obj.data )
+} )
+
+
 module.exports = router

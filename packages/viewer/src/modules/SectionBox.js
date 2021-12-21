@@ -97,6 +97,7 @@ export default class SectionBox {
     this.display.add( this.controls )
     this.controls.addEventListener( 'change', this._draggingChangeHandler.bind( this ) )
     this.controls.addEventListener( 'dragging-changed', ( event ) => {
+      if ( !this.display.visible ) return
       let val = !!event.value
       if( val ) {
         this.dragging = val
@@ -114,6 +115,7 @@ export default class SectionBox {
   }
 
   _draggingChangeHandler( ) {
+    if ( !this.display.visible ) return
     this.boxHelper.update()
     this._generateOrUpdatePlanes()
 
