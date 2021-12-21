@@ -5,6 +5,7 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
+import MeshTriangulationHelper from './MeshTriangulationHelper'
 
 /**
  * Utility class providing some top level conversion methods.
@@ -70,7 +71,7 @@ export default class Coverter {
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
-    
+
     if ( this[`${type}ToBufferGeometry`] ) {
       try {
         await callback( await this[`${type}ToBufferGeometry`]( obj.data || obj, scale ) )
@@ -313,23 +314,20 @@ export default class Coverter {
 
       let k = 0
       while ( k < faces.length ) {
-      let n = faces[ k ]
-      if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
+        let n = faces[ k ]
+        if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
 
-        if ( n === 4 ) { // QUAD FACE
-          indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-          indices.push( faces[ k + 1 ], faces[ k + 3 ], faces[ k + 4 ] )
-        } else if ( n === 3 ) { // TRIANGLE FACE
-          indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-        } else { //N-GON FACE
-          //TODO triangulate n-gon face.
+          if ( n === 3 ) { // TRIANGLE FACE
+            indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
+          } else { //Quad or N-GON FACE
+            const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
+            for( let t = 0; t < triangulation.length; t += 3 ) {
+              indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
+            }
+          }
 
-          //There is no need to throw an exception here, unsupported faces will simply be ignored.
-          //throw new Error( `Mesh type not supported. Face topology indicator: ${faces[k]}` )
-        }
-
-      k += n + 1
-    }
+        k += n + 1
+      }
       buffer.setIndex( indices )
 
       buffer.setAttribute(
