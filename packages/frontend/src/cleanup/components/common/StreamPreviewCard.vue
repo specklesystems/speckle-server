@@ -29,36 +29,17 @@
         <div class="mt-3 mb-1 caption text-truncate">
           {{ stream.description || 'No description' }}
         </div>
-        <div v-if="stream.collaborators">
-          <user-avatar
-            v-for="user in stream.collaborators.slice(0, 4)"
-            :id="user.id"
-            :key="user.id"
-            :avatar="user.avatar"
-            :size="30"
-            :name="user.name"
-          />
-          <v-avatar v-if="stream.collaborators.length > 4" size="30" color="grey">
-            <span class="white--text">+{{ stream.collaborators.length - 4 }}</span>
-          </v-avatar>
-        </div>
+        <collaborators-display :stream="stream" />
       </v-card-text>
     </v-card>
   </v-hover>
 </template>
 <script>
-import UserAvatar from '../components/UserAvatar'
-import PreviewImage from '@/components/PreviewImage'
-
 export default {
-  components: { UserAvatar, PreviewImage },
-  props: {
-    stream: {
-      type: Object,
-      default: function () {
-        return {}
-      }
-    }
-  }
+  components: {
+    PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
+    CollaboratorsDisplay: () => import('@/cleanup/components/stream/CollaboratorsDisplay')
+  },
+  props: ['stream']
 }
 </script>

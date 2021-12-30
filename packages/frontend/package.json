@@ -23,6 +23,7 @@
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
     "tween": "^0.9.0",
+    "uuid": "^8.3.2",
     "v-tooltip": "^2.0.3",
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.6.1",

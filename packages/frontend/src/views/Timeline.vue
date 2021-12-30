@@ -1,56 +1,8 @@
 <template>
-  <v-container
-    :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`"
-    fluid
-    pt-4
-    pr-0
-  >
-    <v-navigation-drawer
-      v-model="activityNav"
-      app
-      fixed
-      :permanent="activityNav && !$vuetify.breakpoint.smAndDown"
-      :style="`${!$vuetify.breakpoint.xsOnly ? 'left: 56px' : ''}`"
-    >
-      <main-nav-actions :open-new-stream="newStreamDialog" />
-
-      <v-list v-if="streams && streams.items.length > 0" color="transparent" dense>
-        <v-subheader class="mt-3 ml-2">Recently updated streams</v-subheader>
-        <v-list-item
-          v-for="(s, i) in streams.items"
-          v-if="streams.items"
-          :key="i"
-          :to="'streams/' + s.id"
-        >
-          <v-list-item-content>
-            <v-list-item-title>
-              {{ s.name }}
-            </v-list-item-title>
-            <v-list-item-subtitle class="caption">
-              <i>
-                Updated
-                <timeago :datetime="s.updatedAt"></timeago>
-              </i>
-            </v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-
-    <v-app-bar app :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px' : ''}`" flat>
-      <v-app-bar-nav-icon @click="activityNav = !activityNav"></v-app-bar-nav-icon>
-      <v-toolbar-title class="space-grotesk pl-0">
-        <v-icon class="hidden-xs-only">mdi-clock-fast</v-icon>
-        Feed
-      </v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-toolbar-items v-if="$vuetify.breakpoint.smAndDown" style="margin-right: -18px">
-        <v-btn color="primary" depressed @click="newStreamDialog++">
-          <v-icon>mdi-plus-box</v-icon>
-        </v-btn>
-      </v-toolbar-items>
-    </v-app-bar>
-
+  <v-container fluid>
+    <portal to="title">
+      <div class="font-weight-bold">Feed</div>
+    </portal>
     <v-row class="pr-4">
       <v-col v-if="$apollo.loading && !timeline">
         <div class="my-5">
@@ -122,32 +74,12 @@
         cols="12"
         lg="4"
         class="mt-7"
+        style="position: sticky; top: 64px"
       >
-        <latest-blogposts></latest-blogposts>
-        <v-card rounded="lg" class="mt-2">
-          <v-card-text class="caption">
-            <p class="mb-0">
-              At
-              <a href="https://speckle.systems" target="_blank" class="text-decoration-none">
-                Speckle
-              </a>
-              we're working tirelessly to bring you the best open source data platform for AEC. Tell
-              us what you think on our
-              <a href="https://speckle.community" target="_blank" class="text-decoration-none">
-                forum
-              </a>
-              , and don't forget to give us a ⭐️ on
-              <a
-                href="https://github.com/specklesystems/speckle-sharp"
-                target="_blank"
-                class="text-decoration-none"
-              >
-                Github
-              </a>
-              !
-            </p>
-          </v-card-text>
-        </v-card>
+        <div class="sticky-top">
+          <latest-blogposts></latest-blogposts>
+
+        </div>
       </v-col>
     </v-row>
   </v-container>
@@ -162,7 +94,6 @@ export default {
     InfiniteLoading: () => import('vue-infinite-loading'),
     ListItemActivity: () => import('@/components/ListItemActivity'),
     LatestBlogposts: () => import('@/components/LatestBlogposts'),
-    MainNavActions: () => import('@/components/MainNavActions'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
   },
   props: {
@@ -302,6 +233,10 @@ export default {
 </script>
 
 <style>
+.sticky-top {
+  position: sticky;
+  top: 68px;
+}
 .recent-streams a {
   text-decoration: none;
 }
@@ -309,8 +244,4 @@ export default {
 .recent-streams .v-list-item__title {
   font-family: 'Space Grotesk' !important;
 }
-
-/* .recent-streams a:hover {
-  text-decoration: underline;
-} */
 </style>

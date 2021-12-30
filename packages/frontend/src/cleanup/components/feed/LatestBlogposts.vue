@@ -42,6 +42,26 @@
         <v-icon small>mdi-arrow-right</v-icon>
       </v-btn>
     </v-toolbar>
+    <v-card rounded="lg" class="mt-2">
+      <v-card-text class="caption">
+        <p class="mb-0">
+          At
+          <a href="https://speckle.systems" target="_blank" class="text-decoration-none">Speckle</a>
+          we're working tirelessly to bring you the best open source data platform for AEC. Tell us
+          what you think on our
+          <a href="https://speckle.community" target="_blank" class="text-decoration-none">forum</a>
+          , and don't forget to give us a ⭐️ on
+          <a
+            href="https://github.com/specklesystems/speckle-sharp"
+            target="_blank"
+            class="text-decoration-none"
+          >
+            Github
+          </a>
+          !
+        </p>
+      </v-card-text>
+    </v-card>
   </v-card>
 </template>
 <script>

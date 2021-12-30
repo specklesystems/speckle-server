@@ -33,6 +33,9 @@ Vue.use(VueMatomo, {
   userId: localStorage.getItem('suuid')
 })
 
+// import UniqueId from 'vue-unique-id'
+// Vue.use(UniqueId)
+
 import VueApexCharts from 'vue-apexcharts'
 Vue.use(VueApexCharts)
 
@@ -49,6 +52,11 @@ Vue.filter('capitalize', (value) => {
   value = value.toString()
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
+
+Vue.prototype.$eventHub = new Vue()
+
+// adds copy to clipboard on vue instance
+import './plugins/userIdHelpers'
 
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')

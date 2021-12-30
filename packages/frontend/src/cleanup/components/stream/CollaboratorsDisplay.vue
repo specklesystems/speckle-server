@@ -1,0 +1,47 @@
+<template>
+  <div class="d-inline">
+    <user-avatar
+      v-for="collab in collaborators.slice(0, collaborators.length > 5 ? 4 : 5)"
+      :id="collab.id"
+      :key="collab.id"
+      :size="25"
+      :avatar="collab.avatar"
+      :name="collab.name"
+    ></user-avatar>
+    <v-btn
+      v-if="collaborators.length > 5"
+      v-tooltip="`${collaborators.length - 4} more collaborators`"
+      icon
+      small
+      :to="`/streams/${stream.id}/collaborators`"
+      class="mt-1"
+    >
+      <span class="caption">+{{ collaborators.length - 4 }}</span>
+    </v-btn>
+    <v-btn
+      v-if="collaborators.length <= 5"
+      v-tooltip="'Manage collaborators'"
+      icon
+      x-small
+      :to="`/streams/${stream.id}/collaborators`"
+      class="ml-2 mt-1"
+    >
+      <v-avatar>
+        <v-icon>mdi-account-plus</v-icon>
+      </v-avatar>
+    </v-btn>
+  </div>
+</template>
+<script>
+export default {
+  components: {
+    UserAvatar: () => import('@/cleanup/components/common/UserAvatar')
+  },
+  props: ['stream'],
+  computed: {
+    collaborators() {
+      return this.stream ? this.stream.collaborators : []
+    }
+  }
+}
+</script>

@@ -57,30 +57,32 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/views/Frontend.vue'),
+    component: () => import('@/cleanup/Main.vue'),
     children: [
       {
         path: '',
         name: 'home',
         meta: {
-          title: 'Home | Speckle'
+          title: 'Home | Speckle',
+          showBottomNavActions: true
         },
-        component: () => import('@/views/Timeline.vue')
+        component: () => import('@/cleanup/pages/Feed.vue')
       },
       {
         path: 'streams',
         name: 'streams',
         meta: {
-          title: 'Streams | Speckle'
+          title: 'Streams | Speckle',
+          showBottomNavActions: true
         },
-        component: () => import('@/views/Streams.vue')
+        component: () => import('@/cleanup/pages/Streams.vue')
       },
       {
         path: 'streams/:streamId',
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/views/stream/Stream.vue'),
+        component: () => import('@/cleanup/pages/stream/Stream.vue'),
         children: [
           {
             path: '',
@@ -88,9 +90,8 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Details.vue')
+            component: () => import('@/cleanup/pages/stream/StreamHome.vue')
           },
-
           {
             path: 'branches/',
             name: 'branches',
@@ -102,7 +103,7 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('@/views/stream/Branch.vue'),
+            component: () => import('@/cleanup/pages/stream/Branch.vue'),
             beforeEnter: (to, from, next) => {
               if (to.params.branchName.toLowerCase() !== to.params.branchName)
                 return next(
@@ -117,7 +118,7 @@ const routes = [
             meta: {
               title: 'Commit | Speckle'
             },
-            component: () => import('@/views/stream/Commit.vue')
+            component: () => import('@/cleanup/pages/stream/Commit.vue')
           },
           {
             path: 'objects/:objectId',
@@ -195,7 +196,8 @@ const routes = [
         path: 'profile',
         name: 'profile',
         meta: {
-          title: 'Your Profile | Speckle'
+          title: 'Your Profile | Speckle',
+          showBottomNavActions: true
         },
         component: () => import('@/views/Profile.vue')
       },
@@ -203,7 +205,8 @@ const routes = [
         path: 'profile/:userId',
         name: 'user profile',
         meta: {
-          title: 'User Profile | Speckle'
+          title: 'User Profile | Speckle',
+          showBottomNavActions: true
         },
         component: () => import('@/views/ProfileUser.vue')
       },
@@ -276,9 +279,9 @@ const router = new VueRouter({
   mode: 'history',
   // base: process.env.BASE_URL,
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    return { x: 0, y: 0 }
-  }
+  // scrollBehavior(to, from, savedPosition) {
+  //   return { x: 0, y: 0 }
+  // }
 })
 
 router.beforeEach((to, from, next) => {

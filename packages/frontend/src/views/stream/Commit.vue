@@ -1,73 +1,51 @@
 <template>
   <div>
-    <v-row no-gutters>
-      <v-col v-if="$apollo.queries.stream.loading" cols="12" class="ma-0 pa-0">
+    <v-row v-if="$apollo.queries.stream.loading" no-gutters>
+      <v-col cols="12" class="ma-0 pa-0">
         <v-card>
           <v-skeleton-loader type="list-item-avatar, card-avatar, article"></v-skeleton-loader>
         </v-card>
       </v-col>
+    </v-row>
+    <v-row v-if="stream">
+      <portal to="streamTitleBar">
+        <commit-toolbar :stream="stream" @edit-commit="showCommitEditDialog = true" />
+      </portal>
+    </v-row>
+    <div style="height: 100vh; width: 100%; top: -64px; position: absolute">
+      <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
+    </div>
 
-      <v-col v-else-if="stream.commit" cols="12" class="ma-0 pa-0">
-        <portal to="streamActionsBar">
-          <v-btn
-            v-if="
-              stream &&
-              stream.role !== 'stream:reviewer' &&
-              stream.commit.authorId === loggedInUserId
-            "
-            v-tooltip="'Edit commit'"
-            text
-            elevation="0"
-            color="primary"
-            small
-            rounded
-            :fab="$vuetify.breakpoint.mdAndDown"
-            dark
-            @click="editCommit"
+    <div v-if="stream" cols="12" class="ma-0 pa-0" style="position: relative; top: -64px">
+      <portal to="nav">
+        <v-list v-if="stream" style="padding-left: 10px" nav dense class="mt-0 pt-0" expand>
+          <v-list-item
+            link
+            :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
+            class=""
           >
-            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
-              mdi-pencil
-            </v-icon>
-            <span class="hidden-md-and-down">Edit</span>
-          </v-btn>
-        </portal>
-        <portal to="streamTitleBar">
-          <div>
-            <router-link
-              v-tooltip="'Go to branch ' + stream.commit.branchName"
-              :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
-              class="text-decoration-none space-grotesk"
-            >
-              <v-icon small class="primary--text mr-1 mb-1">mdi-source-branch</v-icon>
-              <b>{{ stream.commit.branchName }}</b>
-            </router-link>
-            /
-            <v-icon small class="mr-1">mdi-source-commit</v-icon>
-            <span v-tooltip="'Commit message'" class="space-grotesk mr-2">
-              {{ stream.commit.message }}
-            </span>
-            <user-avatar
-              :id="stream.commit.authorId"
-              :avatar="stream.commit.authorAvatar"
-              :name="stream.commit.authorName"
-              :size="22"
-              class="hidden-sm-and-down"
-            />
-            <v-chip small class="mx-1">
-              <timeago :datetime="stream.commit.createdAt"></timeago>
-            </v-chip>
-            <source-app-avatar
-              :application-name="stream.commit.sourceApplication"
-              class="hidden-sm-and-down"
-            />
-          </div>
-        </portal>
-
-        <div style="height: 60vh">
-          <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
-        </div>
-
-        <v-card elevation="0" rounded="lg">
+            <v-list-item-icon>
+              <v-icon small class>mdi-arrow-left-drop-circle</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title class="font-weight-bold">
+                <v-icon small class="mr-1 caption">mdi-source-branch</v-icon>
+                {{ stream.commit.branchName }}
+              </v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item>
+            <v-list-item-icon>
+              <v-icon small class>mdi-new</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title class="font-weight-bold">
+                TODO: Insert commit menu; mostly viewer based
+              </v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+        <v-card v-if="false" rounded="lg" style="width: 100%" class="transparent elevation-0">
           <!-- Selected object -->
           <v-expand-transition>
             <v-sheet v-show="selectionData.length !== 0" class="pa-4" color="transparent">
@@ -114,8 +92,9 @@
             </v-card-text>
           </v-card>
         </v-card>
-      </v-col>
-    </v-row>
+      </portal>
+    </div>
+
     <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
       <error-placeholder error-type="404">
         <h2>Commit {{ $route.params.commitId }} not found.</h2>
@@ -157,17 +136,17 @@ export default {
   name: 'Branch',
   components: {
     CommitEditDialog: () => import('@/components/dialogs/CommitEditDialog'),
-    UserAvatar: () => import('@/components/UserAvatar'),
     ObjectSpeckleViewer: () => import('@/components/ObjectSpeckleViewer'),
     ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
     Renderer: () => import('@/components/Renderer'),
-    SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
-    CommitReceivedReceipts: () => import('@/components/CommitReceivedReceipts')
+    CommitReceivedReceipts: () => import('@/components/CommitReceivedReceipts'),
+    CommitToolbar: () => import('@/cleanup/toolbars/CommitToolbar')
   },
   data: () => ({
     loadedModel: false,
     selectionData: [],
+    showCommitEditDialg: false,
     showDeleteDialog: false
   }),
   apollo: {
@@ -181,33 +160,6 @@ export default {
         }
       }
     }
-    // commitActivitiy: {
-    //   query: `
-    //   query CommitActivity($streamid: String!, $id: String!) {
-    //     stream(id: $streamid) {
-    //       id
-    //       commit(id: $id) {
-    //         id
-    //         activity(actionType: "commit_receive", limit: 200) {
-    //           items {
-    //             info
-    //             time
-    //             userId
-    //             message
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    //   `,
-    //   variables() {
-    //     return {
-    //       streamid: this.$route.params.streamId,
-    //       id: this.$route.params.commitId
-    //     }
-    //   },
-    //   update:(data) => data.stream.commit.activity
-    // }
   },
   computed: {
     loggedInUserId() {
@@ -223,11 +175,11 @@ export default {
     commitObject() {
       return {
         speckle_type: 'reference',
-        referencedId: this.stream.commit.referencedObject
+        referencedId: this.stream?.commit.referencedObject
       }
     },
     commitObjectUrl() {
-      return `${window.location.origin}/streams/${this.stream.id}/objects/${this.commitObject.referencedId}`
+      return `${window.location.origin}/streams/${this.stream?.id}/objects/${this.commitObject.referencedId}`
     }
   },
   watch: {

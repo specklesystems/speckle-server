@@ -26,8 +26,8 @@ export default new Vuetify({
         warning: '#FF9100', //orange
         info: '#313BCF', //dark blue
         success: '#4caf50',
-        background: '#eeeeee',
-        text: '#FFFFFF'
+        text: '#FFFFFF',
+        // background: '#eeeeee',
       },
       dark: {
         primary: '#047EFB', //blue
@@ -37,7 +37,7 @@ export default new Vuetify({
         warning: '#FF9100', //orange
         info: '#313BCF', //dark blue
         success: '#4caf50',
-        background: '#3a3b3c'
+        // background: '#3a3b3c'
       }
     }
   }

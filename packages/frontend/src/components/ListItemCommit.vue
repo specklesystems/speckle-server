@@ -1,5 +1,5 @@
 <template>
-  <v-list-item class="xxx-elevation-10">
+  <v-list-item>
     <v-list-item-icon class="pl-4">
       <user-avatar
         :id="commit.authorId"
@@ -50,12 +50,13 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import UserAvatar from './UserAvatar'
-import SourceAppAvatar from './SourceAppAvatar'
-import CommitReceivedReceipts from './CommitReceivedReceipts'
 
 export default {
-  components: { UserAvatar, SourceAppAvatar, CommitReceivedReceipts },
+  components: {
+    UserAvatar: () => import('@/cleanup/components/common/UserAvatar'),
+    SourceAppAvatar: () => import('@/cleanup/components/common/SourceAppAvatar'),
+    CommitReceivedReceipts: () => import('@/cleanup/components/common/CommitReceivedReceipts')
+  },
   props: {
     commit: {
       type: Object,
@@ -102,7 +103,7 @@ export default {
         }
       },
       skip() {
-        if (!this.streamId || !this.commit) return true
+        if (!this.streamId || !this.commit || !this.showReceivedReceipts) return true
         return false
       }
     }

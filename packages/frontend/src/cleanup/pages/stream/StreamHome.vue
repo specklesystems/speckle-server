@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-row v-if="stream && stream.commits.totalCount !== 0" class="pa-3">
+    <v-row v-if="stream && stream.commits.totalCount !== 0" class="px-3">
       <v-col cols="12" class="pa-4">
         <v-card :to="`/streams/${$route.params.streamId}/commits/${stream.commits.items[0].id}`">
           <preview-image
@@ -26,10 +26,6 @@
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Latest Active Branches</v-toolbar-title>
-            <v-spacer />
-            <!-- <v-app-bar-nav-icon>
-              <v-icon>mdi-plus-circle</v-icon>
-            </v-app-bar-nav-icon> -->
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px">
             The stream's last three updated branches
@@ -241,21 +237,14 @@ export default {
     }
   },
   computed: {
-    latestCommitObjectUrl() {
-      if (this.stream && this.stream.commits.items.length > 0)
-        return `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.commits.items[0].referencedObject}`
-      else return null
-    },
     latestBranches() {
       if (!this.stream) return []
-
       let branches = this.stream.branches.items
         .filter((br) => br.name !== 'globals' && br.commits.totalCount !== 0)
         .slice()
         .sort(
           (a, b) => new Date(b.commits.items[0].createdAt) - new Date(a.commits.items[0].createdAt)
         )
-
       return branches.slice(0, 3)
     },
     loggedIn() {
