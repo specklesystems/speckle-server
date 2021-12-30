@@ -1,10 +1,5 @@
 <template>
   <div class="ml-2">
-    <!-- <v-breadcrumbs large :items="navItems">
-      <template #divider>
-        <v-icon>mdi-chevron-right</v-icon>
-      </template>
-    </v-breadcrumbs> -->
     <div v-if="true">
       /
       <router-link

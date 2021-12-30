@@ -21,6 +21,11 @@ Vue.use(VueFilterDateParse)
 import VueFilterDateFormat from '@vuejs-community/vue-filter-date-format'
 Vue.use(VueFilterDateFormat)
 
+import PerfectScrollbar from 'vue2-perfect-scrollbar'
+import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
+
+Vue.use(PerfectScrollbar)
+
 import VTooltip from 'v-tooltip'
 Vue.use(VTooltip, { defaultDelay: 300 })
 
@@ -53,6 +58,7 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
+// Event hub
 Vue.prototype.$eventHub = new Vue()
 
 // adds copy to clipboard on vue instance

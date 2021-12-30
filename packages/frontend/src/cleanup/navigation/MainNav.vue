@@ -4,7 +4,7 @@
     <v-card
       class="space-grotesk primary--text text-h6 pt-5 mb-2 px-5 elevation-0"
       :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
-      style="position: sticky; top: 0; z-index: 10; width: 99%"
+      style="position: sticky; top: 0; z-index: 6; width: 100%"
     >
       <router-link to="/" class="text-decoration-none">
         <v-img

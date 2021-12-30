@@ -2,12 +2,13 @@
   <v-card class="transparent elevation-5 rounded-md overflow-hidden d-inline-block">
     <v-btn
       v-show="showVisReset"
-      v-tooltip="`Reset visibility`"
+      v-tooltip="`Resets all applied filters`"
       tile
       small
       @click="resetVisibility()"
     >
-      <v-icon small>mdi-filter-off-outline</v-icon>
+      <!-- <v-icon small>mdi-filter-off-outline</v-icon> -->
+      Show All
     </v-btn>
     <v-btn
       v-tooltip="`Toggle between perspective or ortho camera.`"

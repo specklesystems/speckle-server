@@ -6,7 +6,6 @@
       </portal>
 
       <portal to="nav">
-
         <v-list v-if="stream" nav dense class="mt-0 pt-0">
           <v-list-item
             link
@@ -33,9 +32,9 @@
           :stream-id="stream.id"
         />
 
-        <views-display :views="views" />
+        <views-display v-if="views.length !== 0" :views="views" />
 
-        <filters />
+        <filters :props="objectProperties" :source-application="stream.commit.sourceApplication" />
       </portal>
 
       <div style="height: 100vh; width: 100%; top: -64px; position: absolute">

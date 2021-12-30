@@ -7,7 +7,9 @@
       :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
       width="325"
     >
-      <main-nav />
+      <!-- <perfect-scrollbar :options="{ suppressScrollX: true }"> -->
+        <main-nav />
+      <!-- </perfect-scrollbar> -->
       <template v-if="$route.meta.showBottomNavActions" #append>
         <main-nav-bottom />
       </template>
@@ -84,3 +86,14 @@ export default {
   }
 }
 </script>
+<style scoped>
+.ps {
+  height: 100%;
+  -ms-overflow-style: none; /* for Internet Explorer, Edge */
+  scrollbar-width: none; /* for Firefox */
+  overflow-y: scroll;
+}
+.ps::-webkit-scrollbar {
+  display: none;
+}
+</style>
