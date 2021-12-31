@@ -232,22 +232,26 @@ export default {
       this.calls++
       if (this.calls !== 2) return
       console.log('load start')
-      await window.__viewer.loadObject(
-        `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.commit.referencedObject}`
-      )
-      window.__viewer.zoomExtents(undefined, false)
-      this.loadedModel = true
-      console.log('load end')
-      try {
-        this.objectProperties = await window.__viewer.getObjectsProperties()
-      } catch (e) {
-        this.$eventHub.$emit('notification', {
-          text: 'Failed to get object properties from viewer.'
-        })
-      }
-      this.views.splice(0, this.views.length)
-      console.log()
-      this.views.push(...window.__viewer.sceneManager.views)
+      // TODO: issue when freshly logged in, this throws an error
+      // that window.__viewer is null.
+      this.$nextTick(async () => {
+        await window.__viewer.loadObject(
+          `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.commit.referencedObject}`
+        )
+        window.__viewer.zoomExtents(undefined, false)
+        this.loadedModel = true
+        console.log('load end')
+        try {
+          this.objectProperties = await window.__viewer.getObjectsProperties()
+        } catch (e) {
+          this.$eventHub.$emit('notification', {
+            text: 'Failed to get object properties from viewer.'
+          })
+        }
+        this.views.splice(0, this.views.length)
+        console.log()
+        this.views.push(...window.__viewer.sceneManager.views)
+      })
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100

@@ -39,8 +39,11 @@
     </v-list-item>
     <v-scroll-y-transition>
       <div v-show="expand">
-        <div v-if="activeFilter" class="px-0">
-          <filter-active :filter="activeFilter" />
+        <div v-if="activeFilter && activeFilter.data.type === 'string'">
+          <filter-category-active :filter="activeFilter" />
+        </div>
+        <div v-if="activeFilter && activeFilter.data.type === 'number'">
+          <filter-numeric-active :filter="activeFilter" />
         </div>
         <div v-show="activeFilter === null">
           <v-subheader>TODO: reccommended filters</v-subheader>
@@ -56,7 +59,7 @@
               style="position: sticky; top: 110px; z-index: 6"
             />
             <div v-for="filter in matchingFilters" :key="filter.targetKey">
-              <filter-single :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
+              <filter-row-select :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
             </div>
           </div>
         </div>
@@ -67,8 +70,9 @@
 <script>
 export default {
   components: {
-    FilterSingle: () => import('@/cleanup/components/viewer/FilterSingle'),
-    FilterActive: () => import('@/cleanup/components/viewer/FilterActive')
+    FilterRowSelect: () => import('@/cleanup/components/viewer/FilterRowSelect'),
+    FilterCategoryActive: () => import('@/cleanup/components/viewer/FilterCategoryActive'),
+    FilterNumericActive: () => import('@/cleanup/components/viewer/FilterNumericActive')
   },
   props: {
     props: {
@@ -175,7 +179,6 @@ export default {
         filter.data = this.props[key]
         filters.push(filter)
       }
-      console.log(filters)
       this.allFilters = filters
     }
   }
@@ -189,8 +192,5 @@ export default {
 .list-overlay-light {
   background: rgba(235, 235, 235, 1);
   z-index: 5;
-}
-.ps {
-  height: 50vh;
 }
 </style>

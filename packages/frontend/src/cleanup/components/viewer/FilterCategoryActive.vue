@@ -2,7 +2,12 @@
   <div class="mt-3">
     <portal to="filter-actions">
       <v-list-item-action class="pa-0 ma-0">
-        <v-btn v-tooltip="''" small icon @click.stop="colorBy = !colorBy">
+        <v-btn
+          v-tooltip="'Set colors automatically based on each property'"
+          small
+          icon
+          @click.stop="colorBy = !colorBy"
+        >
           <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">mdi-palette</v-icon>
         </v-btn>
       </v-list-item-action>
@@ -22,21 +27,21 @@
       </v-col>
       <v-col
         v-tooltip="type.fullName"
-        cols="8"
+        cols="7"
         :class="`caption text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
         style="line-height: 24px"
       >
         {{ type.name }}
       </v-col>
       <v-col
-        cols="3"
+        cols="4"
         :class="`caption text-truncate text-right px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
         style="line-height: 24px"
       >
         <div
           v-if="colorBy"
-          class="d-inline-block rounded"
-          :style="`width: 10px; height: 10px`"
+          class="d-inline-block rounded mr-3 mt-1 elevation-3"
+          :style="`width: 8px; height: 8px; background:${legend[type.fullName]};`"
         ></div>
         <v-btn
           v-tooltip="'Toggle visibility'"
@@ -74,8 +79,7 @@ export default {
     filter: {
       type: Object,
       default: () => null
-    },
-    active: { type: Boolean, default: false }
+    }
   },
   data() {
     return {
@@ -84,7 +88,7 @@ export default {
       typeMap: [],
       colorBy: false,
       appliedFilter: {},
-      legend: null
+      legend: {}
     }
   },
   watch: {
@@ -96,7 +100,6 @@ export default {
         ? { type: 'category', property: this.filter.targetKey }
         : null
       let res = await window.__viewer.applyFilter(this.appliedFilter)
-      console.log(res)
       this.mashColorLegend(res.colorLegend)
     }
   },
@@ -107,9 +110,18 @@ export default {
     window.__viewer.applyFilter(null)
   },
   methods: {
-    mashColorLegend(thanksCristi) {
-      if (!thanksCristi) return
-      // TODO
+    mashColorLegend(colorLegend) {
+      // just adds to our colors
+      if (!colorLegend) return
+      let keys = Object.keys(colorLegend)
+      for (const key of keys) {
+        if (!this.legend[key]) this.$set(this.legend, key, colorLegend[key])
+        //this.legend[key] = colorLegend[key]
+        // const idx = this.legend.indexOf((o) => o.name === key)
+        // if (idx === -1) {
+        //   this.legend.push({ name: key, color: colorLegend[key] })
+        // }
+      }
     },
     async toggleFilter(type) {
       let indx = this.filtered.indexOf(type)
@@ -117,9 +129,10 @@ export default {
       else this.filtered.splice(indx, 1)
       this.hidden.splice(0, this.hidden.length)
       if (this.filtered.length === 0) {
-        window.__viewer.applyFilter(
+        let res = window.__viewer.applyFilter(
           this.colorBy ? { colorBy: { type: 'category', property: this.filter.targetKey } } : null
         )
+        this.mashColorLegend(res.colorLegend)
         this.appliedFilter = {}
       } else {
         let filterObj = {
@@ -139,9 +152,10 @@ export default {
       else this.hidden.splice(indx, 1)
       this.filtered.splice(0, this.filtered.length)
       if (this.hidden.length === 0) {
-        window.__viewer.applyFilter(
+        let res = await window.__viewer.applyFilter(
           this.colorBy ? { colorBy: { type: 'category', property: this.filter.targetKey } } : null
         )
+        this.mashColorLegend(res.colorLegend)
         this.appliedFilter = {}
       } else {
         let filterObj = {
