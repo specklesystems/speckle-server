@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <portal to="nav">
     <div v-if="!loggedIn" class="px-4 mt-2">
       <v-btn large block color="primary" to="/authn/login">Log In</v-btn>
     </div>
@@ -187,7 +187,7 @@
         @refetch-branches="$apollo.queries.branchQuery.refetch()"
       />
     </v-dialog>
-  </div>
+  </portal>
 </template>
 <script>
 import gql from 'graphql-tag'

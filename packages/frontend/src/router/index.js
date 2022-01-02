@@ -279,14 +279,20 @@ const router = new VueRouter({
   mode: 'history',
   // base: process.env.BASE_URL,
   routes,
-  // scrollBehavior(to, from, savedPosition) {
-  //   return { x: 0, y: 0 }
-  // }
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { x: 0, y: 0 }
+    }
+  }
 })
 
 router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
+  router.app.$eventHub.$emit('page-load', true)
+
   if (
     !uuid &&
     !to.matched.some(({ name }) => name === 'stream' || name === 'commit' || name === 'branch') && //allow public streams to be viewed
@@ -316,6 +322,7 @@ router.beforeEach((to, from, next) => {
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
 router.afterEach((to) => {
+  router.app.$eventHub.$emit('page-load', false)
   if (localStorage.getItem('shouldRedirectTo') === to.path)
     localStorage.removeItem('shouldRedirectTo')
 

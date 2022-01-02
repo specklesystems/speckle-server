@@ -1,25 +1,45 @@
 <template>
   <div v-if="stream">
-    <portal to="title">
-      <router-link
-        v-show="true || (!streamNav && !$vuetify.breakpoint.smAndDown)"
-        class="text-decoration-none space-grotesk"
-        :to="`/streams/${stream.id}`"
-      >
-        <b>{{ stream.name }}</b>
-      </router-link>
-      <portal-target v-if="stream" name="streamTitleBar" slim style="display: inline-block">
-        <!-- child routes can teleport things here -->
-        <div v-if="stream">
-          <span v-tooltip="stream.updatedAt.toString()" class="caption ml-2">
-            Last Updated
+    <portal to="toolbar">
+      <div class="d-flex align-center">
+        <!-- <div class="text-truncate flex-shrink-0">
+        <router-link v-tooltip="'all streams'" to="/streams" class="text-decoration-none mx-1">
+          <v-icon small class="primary--text mb-1">mdi-folder-multiple</v-icon>
+        </router-link>
+      </div> -->
+        <div class="text-truncate">
+          <router-link
+            v-tooltip="stream.name"
+            class="text-decoration-none space-grotesk mx-1"
+            :to="`/streams/${stream.id}`"
+          >
+            <v-icon small class="primary--text mb-1 mr-1">mdi-folder</v-icon>
+            <b>{{ stream.name }}</b>
+          </router-link>
+        </div>
+        <div
+          v-tooltip="
+            `Last updated: ${new Date(stream.updatedAt).toLocaleString()}<br>
+          Commits: ${stream.commits.totalCount} <br>
+          Branches: ${stream.branches.totalCount}`
+          "
+          class="d-none d-sm-inline-block text-truncate"
+        >
+          <span class="caption mx-2">
+            Updated
             <timeago :datetime="stream.updatedAt"></timeago>
+            <v-icon style="font-size: 11px" class="ml-1">mdi-source-commit</v-icon>
+            {{ stream.commits.totalCount }}
+            <v-icon style="font-size: 11px" class="ml-1">mdi-source-branch</v-icon>
+            {{ stream.branches.totalCount }}
           </span>
-          <v-chip small class="ml-2">{{ stream.commits.totalCount }} Commits</v-chip>
-          <v-chip small class="ml-2">{{ stream.branches.totalCount }} Branches</v-chip>
+          <!-- <v-chip small class="ml-2">{{ stream.commits.totalCount }} Commits</v-chip> -->
+          <!-- <v-chip small class="ml-2">{{ stream.branches.totalCount }} Branches</v-chip> -->
+        </div>
+        <div class="d-none d-sm-inline-block">
           <collaborators-display :stream="stream" />
         </div>
-      </portal-target>
+      </div>
     </portal>
     <portal to="actions">
       <v-btn

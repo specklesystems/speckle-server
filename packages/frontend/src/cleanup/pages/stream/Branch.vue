@@ -1,14 +1,12 @@
 <template>
   <div class="">
-    <portal to="streamTitleBar">
-      <branch-toolbar
-        v-if="stream && stream.branch"
-        :stream="stream"
-        @edit-branch="branchEditDialog = true"
-      />
-    </portal>
-    <v-row class="px-3">
-      <v-col v-if="stream && stream.branch" cols="12" class="pa-4">
+    <branch-toolbar
+      v-if="stream && stream.branch"
+      :stream="stream"
+      @edit-branch="branchEditDialog = true"
+    />
+    <v-row no-gutters>
+      <v-col v-if="stream && stream.branch" cols="12">
         <v-row v-if="stream.branch.commits.items.length > 0">
           <v-col cols="12">
             <v-card>
@@ -144,22 +142,10 @@
         @infinite="infiniteHandler"
       >
         <div slot="no-more">
-          <v-col>
-            <v-toolbar flat class="transparent">
-              <v-toolbar-title>
-                You've reached the end - this branch has no more commits.
-              </v-toolbar-title>
-            </v-toolbar>
-          </v-col>
+          <v-col>You've reached the end - this branch has no more commits.</v-col>
         </div>
         <div slot="no-results">
-          <v-col>
-            <v-toolbar flat class="transparent">
-              <v-toolbar-title>
-                You've reached the end - this branch has no more commits.
-              </v-toolbar-title>
-            </v-toolbar>
-          </v-col>
+          <v-col>You've reached the end - this branch has no more commits.</v-col>
         </div>
       </infinite-loading>
 

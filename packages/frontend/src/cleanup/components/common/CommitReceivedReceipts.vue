@@ -17,7 +17,7 @@
 
       <user-avatar
         v-for="userId in receivedUsersUnique.slice(0, 2)"
-        v-show="$vuetify.breakpoint.smAndUp"
+        xxxv-show="$vuetify.breakpoint.smAndUp"
         :id="userId"
         :key="userId"
         :show-hover="false"
@@ -26,16 +26,16 @@
 
       <v-avatar
         v-if="receivedUsersUnique.length > 2"
-        v-show="$vuetify.breakpoint.smAndUp"
+        xxxv-show="$vuetify.breakpoint.smAndUp"
         class="ml-1"
         size="20"
         color="primary"
       >
         <span class="white--text caption">+{{ receivedUsersUnique.length - 2 }}</span>
       </v-avatar>
-      <v-avatar v-show="$vuetify.breakpoint.xsOnly" class="ml-1" size="25" color="primary">
+      <!-- <v-avatar v-show="$vuetify.breakpoint.xsOnly" class="ml-1" size="25" color="primary">
         <span class="white--text caption">{{ receivedUsersUnique.length }}</span>
-      </v-avatar>
+      </v-avatar> -->
     </div>
     <v-dialog
       v-model="showAllActivityDialog"

@@ -27,8 +27,9 @@
         :class="`caption text-truncatexxx px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
         style="line-height: 24px"
       >
-        {{ filter.data.objectCount }} elements; min: {{ Math.round(filter.data.minValue, 2) }}; max:
-        {{ Math.round(filter.data.maxValue, 2) }}
+        {{ filter.data.objectCount }} elements; min:
+        {{ Math.round(filter.data.minValue, 2) | prettynum }}; max:
+        {{ Math.round(filter.data.maxValue, 2) | prettynum }}
         <v-btn
           v-show="range[0] !== filter.data.minValue || range[1] !== filter.data.maxValue"
           v-tooltip="'Reset'"
@@ -113,12 +114,12 @@ export default {
         filterBy: {},
         colorBy: this.colorBy
           ? {
-              type: 'gradient',
-              property: this.filter.targetKey,
-              minValue: this.range[0],
-              maxValue: this.range[1],
-              gradientColors: ['#3F5EFB', '#FC466B']
-            }
+            type: 'gradient',
+            property: this.filter.targetKey,
+            minValue: this.range[0],
+            maxValue: this.range[1],
+            gradientColors: ['#3F5EFB', '#FC466B']
+          }
           : null,
         ghostOthers: true
       }

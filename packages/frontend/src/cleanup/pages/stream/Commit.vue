@@ -1,12 +1,10 @@
 <template>
   <div>
     <div v-if="stream && stream.commit">
-      <portal to="streamTitleBar">
-        <commit-toolbar :stream="stream" @edit-commit="showCommitEditDialog = true" />
-      </portal>
+      <commit-toolbar :stream="stream" @edit-commit="showCommitEditDialog = true" />
 
       <portal to="nav">
-        <v-list v-if="stream" nav dense class="mt-0 pt-0">
+        <v-list nav dense class="mt-0 pt-0">
           <v-list-item
             link
             :to="`/streams/${stream.id}/branches/${stream.commit.branchName}`"
@@ -37,12 +35,18 @@
         <filters :props="objectProperties" :source-application="stream.commit.sourceApplication" />
       </portal>
 
-      <div style="height: 100vh; width: 100%; top: -64px; position: absolute">
+      <div style="height: 100vh; width: 100%; top: -64px; left: 0px; position: absolute">
         <viewer
           @viewer-init="loadModel()"
           @load-progress="captureProgress"
           @selection="captureSelect"
         />
+      </div>
+      <div
+        style="width: calc(100% + 0px); bottom: 12px; left: 0px; position: absolute"
+        class="d-flex justify-center"
+      >
+        <viewer-controls :show-vis-reset="showVisReset" @visibility-reset="visReset()" />
       </div>
 
       <!-- Preview image -->
@@ -53,6 +57,7 @@
             height: 100vh;
             width: 100%;
             top: -64px;
+            left: 0px;
             position: absolute;
             opacity: 0.7;
             filter: blur(4px);
@@ -73,13 +78,6 @@
           color="primary"
         ></v-progress-linear>
       </div>
-    </div>
-
-    <div
-      style="position: absolute; bottom: 10px; z-index: 100; width: 100%"
-      class="px-5 d-flex align-center justify-center"
-    >
-      <viewer-controls :show-vis-reset="showVisReset" @visibility-reset="visReset()" />
     </div>
 
     <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
@@ -222,12 +220,6 @@ export default {
     })
   },
   methods: {
-    test() {
-      console.log('test')
-    },
-    test2() {
-      console.log('test 2')
-    },
     async loadModel() {
       this.calls++
       if (this.calls !== 2) return

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <v-row v-if="stream && stream.commits.totalCount !== 0" class="px-3">
-      <v-col cols="12" class="pa-4">
+    <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
+      <v-col cols="12">
         <v-card :to="`/streams/${$route.params.streamId}/commits/${stream.commits.items[0].id}`">
           <preview-image
             :height="320"
@@ -15,8 +15,7 @@
         </v-card>
         <v-list class="pa-0 ma-0"></v-list>
       </v-col>
-      <v-col cols="12" class="" style="height: 20px"></v-col>
-
+      <v-col cols="12" style="height: 20px"></v-col>
       <v-col
         cols="12"
         :xl="loggedIn ? 4 : 12"
@@ -30,7 +29,7 @@
           <v-card-title class="caption" style="margin-top: -30px">
             The stream's last three updated branches
           </v-card-title>
-          <v-row class="pa-4 mt-0">
+          <v-row class="mt-0">
             <v-col
               v-for="branch in latestBranches"
               :key="branch.name"
@@ -66,7 +65,7 @@
         </v-card>
       </v-col>
 
-      <v-col v-if="loggedIn" cols="12" xl="8" class="pr-4">
+      <v-col v-if="loggedIn" cols="12" xl="8">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Stream Feed</v-toolbar-title>
@@ -74,7 +73,7 @@
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px">Recent activity log</v-card-title>
         </v-card>
-        <div style="margin-top: -42px">
+        <div xxstyle="margin-top: -42px" class="mr-0">
           <stream-activity></stream-activity>
         </div>
       </v-col>

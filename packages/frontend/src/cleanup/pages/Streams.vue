@@ -1,15 +1,17 @@
 <template>
-  <v-container fluid>
-    <portal to="title">
+  <div>
+    <portal to="toolbar">
       <span class="font-weight-bold mr-2">Your Streams</span>
       <span class="caption">{{ streams ? streams.totalCount : '...' }}</span>
-      <v-btn-toggle v-model="streamFilter" tile color="primary" group mandatory>
-        <v-btn small icon disabled><v-icon small>mdi-filter</v-icon></v-btn>
-        <v-btn small text>All</v-btn>
-        <v-btn small text>Owner</v-btn>
-        <v-btn small text>Contributor</v-btn>
-        <v-btn small text>Reviewer</v-btn>
-      </v-btn-toggle>
+      <div class="d-none d-md-inline-block">
+        <v-btn-toggle v-model="streamFilter" tile color="primary" group mandatory>
+          <v-btn small icon disabled><v-icon small>mdi-filter</v-icon></v-btn>
+          <v-btn small text>All</v-btn>
+          <v-btn small text>Owner</v-btn>
+          <v-btn small text>Contributor</v-btn>
+          <v-btn small text>Reviewer</v-btn>
+        </v-btn-toggle>
+      </div>
       <!-- {{ streamFilter }} {{ filteredStreams.length }} -->
     </portal>
     <!-- No streams -->
@@ -43,17 +45,8 @@
       </no-data-placeholder>
     </v-row>
     <!-- Streams display -->
-    <v-row v-if="streams && streams.items.length > 0" class="px-1">
-      <v-col
-        v-for="(stream, i) in streams.items"
-        v-if="checkFilter(stream.role)"
-        :key="i"
-        cols="12"
-        sm="6"
-        md="6"
-        lg="4"
-        xl="3"
-      >
+    <v-row v-if="streams && streams.items.length > 0">
+      <v-col v-for="(stream, i) in filteredStreams" :key="i" cols="12" sm="6" md="6" lg="4" xl="3">
         <stream-preview-card :key="i + 'card'" :stream="stream"></stream-preview-card>
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
@@ -71,7 +64,7 @@
         </infinite-loading>
       </v-col>
     </v-row>
-  </v-container>
+  </div>
 </template>
 <script>
 import streamsQuery from '@/graphql/streams.gql'

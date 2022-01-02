@@ -1,4 +1,7 @@
 import Vue from 'vue'
+// Event hub
+Vue.prototype.$eventHub = new Vue()
+
 import App from './App.vue'
 
 import { createProvider } from './vue-apollo'
@@ -57,9 +60,6 @@ Vue.filter('capitalize', (value) => {
   value = value.toString()
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
-
-// Event hub
-Vue.prototype.$eventHub = new Vue()
 
 // adds copy to clipboard on vue instance
 import './plugins/userIdHelpers'

@@ -4,7 +4,7 @@
       v-for="collab in collaborators.slice(0, collaborators.length > 5 ? 4 : 5)"
       :id="collab.id"
       :key="collab.id"
-      :size="25"
+      :size="size"
       :avatar="collab.avatar"
       :name="collab.name"
     ></user-avatar>
@@ -37,7 +37,11 @@ export default {
   components: {
     UserAvatar: () => import('@/cleanup/components/common/UserAvatar')
   },
-  props: ['stream'],
+  // props: ['stream'],
+  props: {
+    stream: { type: Object, default: () => null },
+    size: { type: Number, default: 20 }
+  },
   computed: {
     collaborators() {
       return this.stream ? this.stream.collaborators : []

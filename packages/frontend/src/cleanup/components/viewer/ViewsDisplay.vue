@@ -1,6 +1,11 @@
 <template>
   <v-list dense nav class="mt-0 py-0 mb-3">
-    <v-list-item :class="`px-2 list-overlay`" active @click="expand = !expand">
+    <v-list-item
+      :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
+      active
+      style="position: sticky; top: 82px"
+      @click="expand = !expand"
+    >
       <v-list-item-action>
         <v-icon small>mdi-camera</v-icon>
       </v-list-item-action>
@@ -48,7 +53,12 @@ export default {
 }
 </script>
 <style scoped>
-.list-overlay {
-  background: rgba(120, 120, 120, 0.09);
+.list-overlay-dark {
+  background: rgba(40, 40, 40, 1);
+  z-index: 5;
+}
+.list-overlay-light {
+  background: rgba(235, 235, 235, 1);
+  z-index: 5;
 }
 </style>

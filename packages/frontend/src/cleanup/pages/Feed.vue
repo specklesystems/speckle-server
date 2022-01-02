@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <portal to="title">
+    <portal to="toolbar">
       <div class="font-weight-bold">Feed</div>
     </portal>
     <v-row class="px-1">

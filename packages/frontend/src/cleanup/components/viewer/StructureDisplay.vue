@@ -3,7 +3,7 @@
     <v-list-item
       :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
       active
-      style="position: sticky; top: 64px"
+      style="position: sticky; top: 82px"
       @click="expand = !expand"
     >
       <v-list-item-action>

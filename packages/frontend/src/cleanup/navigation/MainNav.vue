@@ -2,8 +2,10 @@
   <div>
     <!-- Speckle Logo -->
     <v-card
-      class="space-grotesk primary--text text-h6 pt-5 mb-2 px-5 elevation-0"
-      :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'}`"
+      class="space-grotesk primary--text text-h6 py-5 mb-2 px-5"
+      :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} ${
+        shadowSpeckle ? 'elevation-5' : 'elevation-0'
+      }`"
       style="position: sticky; top: 0; z-index: 6; width: 100%"
     >
       <router-link to="/" class="text-decoration-none">
@@ -122,11 +124,16 @@ export default {
   data() {
     return {
       newStreamDialog: false,
-      inviteUsersDialog: false
+      inviteUsersDialog: false,
+      shadowSpeckle: false
     }
   },
   mounted() {
-    this.$eventHub.$on('show-new-stream-dialog', () => (this.newStreamDialog = true))
+    let navContent = [...document.getElementsByClassName('v-navigation-drawer__content')][0]
+    navContent.addEventListener('scroll', (e) => {
+      if (navContent.scrollTop > 50) this.shadowSpeckle = true
+      else this.shadowSpeckle = false
+    })
   },
   methods: {
     switchTheme() {

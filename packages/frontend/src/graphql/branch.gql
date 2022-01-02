@@ -1,6 +1,7 @@
 query Stream($streamId: String!, $branchName: String!, $cursor: String) {
   stream(id: $streamId) {
     id
+    name
     branch(name: $branchName) {
       id
       name

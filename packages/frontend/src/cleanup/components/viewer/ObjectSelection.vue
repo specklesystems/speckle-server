@@ -2,7 +2,7 @@
   <v-list dense nav class="py-0 mb-3">
     <v-list-item
       :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
-      style="position: sticky; top: 64px"
+      style="position: sticky; top: 82px"
       @click="expand = !expand && props.length !== 0"
     >
       <v-list-item-action>

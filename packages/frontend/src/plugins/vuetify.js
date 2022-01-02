@@ -27,7 +27,7 @@ export default new Vuetify({
         info: '#313BCF', //dark blue
         success: '#4caf50',
         text: '#FFFFFF',
-        // background: '#eeeeee',
+        background: '#f5f6f7'
       },
       dark: {
         primary: '#047EFB', //blue

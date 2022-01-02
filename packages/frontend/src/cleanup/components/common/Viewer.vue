@@ -1,10 +1,6 @@
 <template lang="html">
   <div style="height: 100%; position: relative" class="transparent">
-    <div
-      id="rendererparent"
-      ref="rendererparent"
-      :class="`${$vuetify.theme.dark ? 'dark' : 'grey lighten-5'}`"
-    ></div>
+    <div id="rendererparent" ref="rendererparent"></div>
   </div>
 </template>
 <script>

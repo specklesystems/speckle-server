@@ -7,24 +7,34 @@
       :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
       width="325"
     >
-      <!-- <perfect-scrollbar :options="{ suppressScrollX: true }"> -->
-        <main-nav />
-      <!-- </perfect-scrollbar> -->
+      <main-nav />
       <template v-if="$route.meta.showBottomNavActions" #append>
         <main-nav-bottom />
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar app class="pa-0 elevation-0 transparent" fixed hide-on-scroll scroll-threshold="50">
-      <v-card class="flex-grow-1 d-flex elevation-3 flex-column">
-        <div class="d-flex flex-grow-1 align-center">
+    <v-app-bar
+      app
+      class="elevation-0 transparent"
+      flat
+      hide-on-scroll
+      scroll-threshold="100"
+      style="margin-top: 4px"
+    >
+      <v-card class="d-flex flex-grow-1 overflow-hidden align-center elevation-4">
+        <div>
           <v-app-bar-nav-icon @click.stop="drawer = !drawer">
-            <v-icon>{{ drawer ? 'mdi-minus' : 'mdi-menu' }}</v-icon>
+            <v-icon>{{ drawer ? 'mdi-backburger' : 'mdi-menu' }}</v-icon>
           </v-app-bar-nav-icon>
-          <portal-target name="title"></portal-target>
-          <v-spacer></v-spacer>
+        </div>
+        <div class="d-flex align-center overflow-hidden" style="flex-grow: 1">
+          <portal-target name="toolbar" class="text-truncate" />
+        </div>
+        <div class="text-right">
           <portal-target name="actions">
             <v-text-field
+              class="float-right"
+              style="width: 100%"
               placeholder="Search Streams"
               prepend-inner-icon="mdi-magnify"
               hide-details
@@ -37,11 +47,14 @@
       </v-card>
     </v-app-bar>
     <v-main class="background">
-      <transition name="fade">
-        <router-view></router-view>
-      </transition>
+      <v-container fluid class="px-4">
+        <transition name="fade">
+          <router-view></router-view>
+        </transition>
+      </v-container>
     </v-main>
     <global-toast />
+    <global-loading />
   </v-app>
 </template>
 <script>
@@ -52,7 +65,8 @@ export default {
   components: {
     MainNav: () => import('@/cleanup/navigation/MainNav'),
     MainNavBottom: () => import('@/cleanup/navigation/MainNavBottom'),
-    GlobalToast: () => import('@/cleanup/components/common/GlobalToast')
+    GlobalToast: () => import('@/cleanup/components/common/GlobalToast'),
+    GlobalLoading: () => import('@/cleanup/components/common/GlobalLoading')
   },
   apollo: {
     serverInfo: {
@@ -82,6 +96,9 @@ export default {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
+    },
+    onScroll(e) {
+      console.log(e)
     }
   }
 }
