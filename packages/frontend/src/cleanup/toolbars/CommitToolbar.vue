@@ -76,7 +76,7 @@
         </v-btn>
         <v-dialog v-model="showCommitInfo">
           <v-card>
-            <v-toolbar color="" flat>
+            <v-toolbar flat>
               <v-app-bar-nav-icon style="pointer-events: none">
                 <v-icon>mdi-pencil</v-icon>
               </v-app-bar-nav-icon>
@@ -84,7 +84,7 @@
               <v-spacer></v-spacer>
               <v-btn icon @click="showCommitInfo = false"><v-icon>mdi-close</v-icon></v-btn>
             </v-toolbar>
-            <v-card-text>
+            <v-card-text class="mt-2">
               <div class="pa-2">Commit message: {{ stream.commit.message }}</div>
               <v-divider />
               <div class="pa-2">

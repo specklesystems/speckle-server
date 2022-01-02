@@ -36,14 +36,10 @@
       </portal>
 
       <div style="height: 100vh; width: 100%; top: -64px; left: 0px; position: absolute">
-        <viewer
-          @viewer-init="loadModel()"
-          @load-progress="captureProgress"
-          @selection="captureSelect"
-        />
+        <viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
       <div
-        style="width: calc(100% + 0px); bottom: 12px; left: 0px; position: absolute"
+        style="width: calc(100% + 0px); bottom: 12px; left: 0px; position: absolute; z-index: 100"
         class="d-flex justify-center"
       >
         <viewer-controls :show-vis-reset="showVisReset" @visibility-reset="visReset()" />
@@ -115,7 +111,6 @@ export default {
     loadedModel: false,
     loadProgress: 0,
     showCommitEditDialog: false,
-    calls: 0,
     selectionData: [],
     views: [],
     objectProperties: null,
@@ -134,7 +129,7 @@ export default {
         }
       },
       result() {
-        this.loadModel()
+        setTimeout(() => this.loadModel(), 200)
       }
     }
   },
@@ -146,18 +141,6 @@ export default {
         name: '',
         streamId: this.stream.id
       }
-    },
-    typeMap() {
-      if (!this.objectProperties) return []
-      let typeMap = []
-      for (let key of Object.keys(this.objectProperties.speckle_type.uniqueValues)) {
-        let shortName = key.split('.').reverse()[0]
-        typeMap.push({
-          key: shortName,
-          count: this.objectProperties.speckle_type.uniqueValues[key]
-        })
-      }
-      return typeMap
     }
   },
   watch: {
@@ -170,6 +153,8 @@ export default {
     }
   },
   async mounted() {
+    this.waitForViewerInterval = null
+
     this.$eventHub.$on('hide-objects', (ids) => {
       this.isolatedObjects = []
       this.hiddenObjects = [...new Set([...this.hiddenObjects, ...ids])]
@@ -221,29 +206,30 @@ export default {
   },
   methods: {
     async loadModel() {
-      this.calls++
-      if (this.calls !== 2) return
-      console.log('load start')
-      // TODO: issue when freshly logged in, this throws an error
-      // that window.__viewer is null.
-      this.$nextTick(async () => {
-        await window.__viewer.loadObject(
-          `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.commit.referencedObject}`
-        )
-        window.__viewer.zoomExtents(undefined, false)
-        this.loadedModel = true
-        console.log('load end')
-        try {
-          this.objectProperties = await window.__viewer.getObjectsProperties()
-        } catch (e) {
-          this.$eventHub.$emit('notification', {
-            text: 'Failed to get object properties from viewer.'
-          })
-        }
-        this.views.splice(0, this.views.length)
-        console.log()
-        this.views.push(...window.__viewer.sceneManager.views)
-      })
+      if (!window.__viewer) {
+        this.$eventHub.$emit('notification', {
+          text: 'Error in rendering page (no __viewer found). Please refresh.'
+        })
+      }
+      // // TODO: issue when freshly logged in, this throws an error
+      // // that window.__viewer is null.
+      // this.$nextTick(async () => {
+      await window.__viewer.loadObject(
+        `${window.location.origin}/streams/${this.stream.id}/objects/${this.stream.commit.referencedObject}`
+      )
+      window.__viewer.zoomExtents(undefined, false)
+      this.loadedModel = true
+      try {
+        this.objectProperties = await window.__viewer.getObjectsProperties()
+      } catch (e) {
+        this.$eventHub.$emit('notification', {
+          text: 'Failed to get object properties from viewer.'
+        })
+      }
+      this.views.splice(0, this.views.length)
+      console.log()
+      this.views.push(...window.__viewer.sceneManager.views)
+      // })
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100

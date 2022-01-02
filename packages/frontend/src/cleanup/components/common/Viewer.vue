@@ -33,14 +33,13 @@ export default {
       renderDomElement = document.createElement('div')
       renderDomElement.id = 'renderer'
     }
+    if (!window.__viewer) {
+      window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
+    }
 
     this.domElement = renderDomElement
     this.domElement.style.display = 'inline-block'
     this.$refs.rendererparent.appendChild(renderDomElement)
-
-    if (!window.__viewer) {
-      window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
-    }
 
     await window.__viewer.unloadAll()
 
@@ -61,8 +60,9 @@ export default {
   methods: {
     setupEvents() {
       window.__viewer.on('load-warning', ({ message }) => {
-        this.alertMessage = message
-        this.showAlert = true
+        this.$eventHub.$emit('notification', {
+          text: message
+        })
       })
 
       window.__viewer.on('load-progress', (args) => this.$emit('load-progress', args))

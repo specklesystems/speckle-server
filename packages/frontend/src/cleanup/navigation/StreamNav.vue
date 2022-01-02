@@ -144,6 +144,7 @@
           <v-list-item-title>Globals</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
+      <portal-target name="stream-globals-nav" />
 
       <v-list-item link :to="`/streams/${stream.id}/uploads`">
         <v-list-item-icon>

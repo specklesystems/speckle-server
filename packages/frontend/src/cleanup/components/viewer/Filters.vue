@@ -46,17 +46,22 @@
           <filter-numeric-active :filter="activeFilter" />
         </div>
         <div v-show="activeFilter === null">
-          <v-subheader>TODO: reccommended filters</v-subheader>
+          <div v-if="topFilters.length !== 0">
+            <v-subheader>Reccommended filters (based on source application)</v-subheader>
+            <div v-for="filter in topFilters" :key="filter.targetKey">
+              <filter-row-select :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
+            </div>
+          </div>
           <div class="">
             <v-text-field
               v-model="filterSearch"
               solo
               dense
-              placeholder="Search filters"
+              placeholder="Search all filters"
               append-icon="mdi-magnify"
               hide-details
               class="my-2"
-              style="position: sticky; top: 110px; z-index: 6"
+              style="position: sticky; top: 122px; z-index: 6"
             />
             <div v-for="filter in matchingFilters" :key="filter.targetKey">
               <filter-row-select :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
@@ -87,7 +92,6 @@ export default {
   data() {
     return {
       expand: true,
-      defaultFilters: [{ targetKey: 'speckle_type', name: 'Speckle Type' }],
       revitFilters: ['type', 'family', 'level'],
       allFilters: [],
       activeFilter: null,
@@ -95,6 +99,19 @@ export default {
     }
   },
   computed: {
+    topFilters() {
+      if (this.allFilters.length === 0) return []
+      let arr = []
+      arr.push(this.allFilters.find((f) => f.name === 'Object Type'))
+      if (this.sourceApplication.toLowerCase().includes('revit')) {
+        arr.push(this.allFilters.find((f) => f.name === 'Level'))
+        arr.push(this.allFilters.find((f) => f.name === 'family'))
+        arr.push(this.allFilters.find((f) => f.name === 'type'))
+        arr.push(this.allFilters.find((f) => f.name === 'Area'))
+        arr.push(this.allFilters.find((f) => f.name === 'Volume'))
+      }
+      return arr.filter((el) => el !== null)
+    },
     matchingFilters() {
       if (this.filterSearch === null) return this.allFilters
       else {

@@ -129,22 +129,13 @@ const routes = [
             component: () => import('@/views/stream/Object.vue')
           },
           {
-            path: 'activity/',
-            name: 'activity',
-            meta: {
-              title: 'Stream Activity | Speckle'
-            },
-            props: true,
-            component: () => import('@/views/stream/Activity.vue')
-          },
-          {
             path: 'collaborators/',
             name: 'collaborators',
             meta: {
               title: 'Stream Collaborators | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/CollaboratorsManage.vue')
+            component: () => import('@/cleanup/pages/stream/Collaborators.vue')
           },
           {
             path: 'settings/',
@@ -171,7 +162,7 @@ const routes = [
               title: 'Stream Uploads | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Uploads.vue')
+            component: () => import('@/cleanup/pages/stream/Uploads.vue')
           },
           {
             path: 'globals/',
@@ -180,7 +171,7 @@ const routes = [
               title: 'Globals | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Globals.vue')
+            component: () => import('@/cleanup/pages/stream/Globals.vue')
           },
           {
             path: 'globals/:commitId',
@@ -188,7 +179,7 @@ const routes = [
             meta: {
               title: 'Globals | Speckle'
             },
-            component: () => import('@/views/stream/Globals.vue')
+            component: () => import('@/cleanup/pages/stream/Globals.vue')
           }
         ]
       },

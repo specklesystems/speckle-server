@@ -13,15 +13,8 @@
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar
-      app
-      class="elevation-0 transparent"
-      flat
-      hide-on-scroll
-      scroll-threshold="100"
-      style="margin-top: 4px"
-    >
-      <v-card class="d-flex flex-grow-1 overflow-hidden align-center elevation-4">
+    <v-app-bar app class="elevation-0 transparent" flat style="margin-top: 4px">
+      <v-card class="d-flex flex-grow-1 overflow-hidden align-center elevation-2">
         <div>
           <v-app-bar-nav-icon @click.stop="drawer = !drawer">
             <v-icon>{{ drawer ? 'mdi-backburger' : 'mdi-menu' }}</v-icon>

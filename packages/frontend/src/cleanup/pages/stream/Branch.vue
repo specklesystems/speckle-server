@@ -26,32 +26,13 @@
               <div style="position: absolute; top: 10px; left: 12px">
                 <source-app-avatar :application-name="latestCommit.sourceApplication" />
               </div>
-              <v-list-item class="elevation-0">
-                <v-list-item-icon class="">
-                  <user-avatar
-                    :id="latestCommit.authorId"
-                    :avatar="latestCommit.authorAvatar"
-                    :name="latestCommit.authorName"
-                    :size="40"
-                  />
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <router-link
-                    class="text-decoration-none"
-                    :to="`/streams/${streamId}/commits/${latestCommit.id}`"
-                  >
-                    <v-list-item-title class="mt-0 pt-0 py-1">
-                      {{ latestCommit.message }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle class="caption">
-                      <b>{{ latestCommit.authorName }}</b>
-                      &nbsp;
-                      <timeago :datetime="latestCommit.createdAt"></timeago>
-                      <!-- ({{ commitDate }}) -->
-                    </v-list-item-subtitle>
-                  </router-link>
-                </v-list-item-content>
-              </v-list-item>
+
+              <list-item-commit
+                transparent
+                :show-source-app="false"
+                :commit="latestCommit"
+                :stream-id="streamId"
+              ></list-item-commit>
             </v-card>
           </v-col>
           <v-col cols="12">
@@ -91,32 +72,12 @@
               <div style="position: absolute; top: 10px; left: 12px">
                 <source-app-avatar :application-name="commit.sourceApplication" />
               </div>
-              <v-list-item class="elevation-0">
-                <v-list-item-icon class="">
-                  <user-avatar
-                    :id="commit.authorId"
-                    :avatar="commit.authorAvatar"
-                    :name="commit.authorName"
-                    :size="40"
-                  />
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <router-link
-                    class="text-decoration-none"
-                    :to="`/streams/${streamId}/commits/${commit.id}`"
-                  >
-                    <v-list-item-title class="mt-0 pt-0 py-1">
-                      {{ commit.message }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle class="caption">
-                      <b>{{ commit.authorName }}</b>
-                      &nbsp;
-                      <timeago :datetime="commit.createdAt"></timeago>
-                      <!-- ({{ commitDate }}) -->
-                    </v-list-item-subtitle>
-                  </router-link>
-                </v-list-item-content>
-              </v-list-item>
+              <list-item-commit
+                transparent
+                :show-source-app="false"
+                :commit="commit"
+                :stream-id="streamId"
+              ></list-item-commit>
             </v-card>
           </v-col>
         </v-row>
@@ -130,7 +91,6 @@
                 :stream-id="streamId"
                 show-received-receipts
                 class="mb-1 rounded"
-                :xxxclass="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-3'}`"
               ></list-item-commit>
             </v-list>
           </v-col>
@@ -180,13 +140,12 @@ export default {
   name: 'Branch',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
-    ListItemCommit: () => import('@/components/ListItemCommit'),
-    BranchEditDialog: () => import('@/cleanup/dialogs/BranchEditDialog'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
+    BranchEditDialog: () => import('@/cleanup/dialogs/BranchEditDialog'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     CommitReceivedReceipts: () => import('@/cleanup/components/common/CommitReceivedReceipts'),
-    UserAvatar: () => import('@/cleanup/components/common/UserAvatar'),
     SourceAppAvatar: () => import('@/cleanup/components/common/SourceAppAvatar'),
     BranchToolbar: () => import('@/cleanup/toolbars/BranchToolbar')
   },

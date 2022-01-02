@@ -10,6 +10,7 @@
           <list-item-commit
             :commit="stream.commits.items[0]"
             :stream-id="$route.params.streamId"
+            transparent
             class="elevation-0"
           ></list-item-commit>
         </v-card>
@@ -55,10 +56,10 @@
                     :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"
                   ></v-badge>
                 </v-toolbar>
-                <list-item-commit
+                <!-- <list-item-commit
                   :commit="branch.commits.items[0]"
                   :stream-id="$route.params.streamId"
-                ></list-item-commit>
+                ></list-item-commit> -->
               </v-card>
             </v-col>
           </v-row>
@@ -94,7 +95,7 @@ export default {
   name: 'Details',
   components: {
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
-    ListItemCommit: () => import('@/components/ListItemCommit'),
+    ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
     PreviewImage: () => import('@/components/PreviewImage'),
     StreamActivity: () => import('@/views/stream/Activity')
   },

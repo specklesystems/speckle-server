@@ -33,8 +33,6 @@
             <v-icon style="font-size: 11px" class="ml-1">mdi-source-branch</v-icon>
             {{ stream.branches.totalCount }}
           </span>
-          <!-- <v-chip small class="ml-2">{{ stream.commits.totalCount }} Commits</v-chip> -->
-          <!-- <v-chip small class="ml-2">{{ stream.branches.totalCount }} Branches</v-chip> -->
         </div>
         <div class="d-none d-sm-inline-block">
           <collaborators-display :stream="stream" />

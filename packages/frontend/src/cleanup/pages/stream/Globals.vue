@@ -79,33 +79,18 @@
       <v-row>
         <!-- Help -->
         <v-col cols="12">
-          <v-card
-            v-if="true"
-            elevation="0"
-            rounded="lg"
-            :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
-          >
-            <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`">
-              <v-toolbar-title>
-                <v-icon class="mr-2" small>mdi-earth</v-icon>
-                <span class="d-inline-block">What are Globals?</span>
-              </v-toolbar-title>
-            </v-toolbar>
-
+          <section-card>
             <v-card-text>
-              <p class="caption">
-                Globals are useful for storing design values, project requirements, notes, or any
-                info you want to keep track of alongside your geometry. Read more on stream global
-                variables
-                <a href="https://speckle.guide/user/web.html#globals" target="_blank">here</a>
-                .
-                <v-divider class="my-2"></v-divider>
-                <b>Global editor help:</b>
-                Drag and drop fields in and out of groups as you please. Click the box icon next to
-                any field to turn it into a nested group of fields.
-              </p>
+              Globals are useful for storing design values, project requirements, notes, or any info
+              you want to keep track of alongside your geometry. Read more on stream global
+              variables
+              <a href="https://speckle.guide/user/web.html#globals" target="_blank">here</a>
+              .
+              <v-divider class="my-2"></v-divider>
+              <b>Global editor help:</b>
+              Drag and drop fields in and out of groups as you please. Click the box icon next to
+              any field to turn it into a nested group of fields.
             </v-card-text>
-
             <v-alert
               v-if="!(stream.role === 'stream:contributor') && !(stream.role === 'stream:owner')"
               class="my-3"
@@ -115,50 +100,24 @@
               You are free to play around with the globals here, but you do not have the required
               stream permission to save your changes.
             </v-alert>
-          </v-card>
+          </section-card>
         </v-col>
         <!-- History -->
         <v-col cols="12" md="4">
-          <v-card
-            v-if="!$apollo.loading"
-            elevation="0"
-            rounded="lg"
-            :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} pa-0`"
-            style="overflow: hidden"
-          >
-            <v-toolbar
-              class="elevation-"
-              flat
-              :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`"
-            >
-              <v-toolbar-title style="cursor: pointer" @click="showHistory = !showHistory">
-                <v-icon small class="mr-2">mdi-history</v-icon>
-                Globals History ({{ branch.commits.totalCount }})
-              </v-toolbar-title>
-              <v-spacer></v-spacer>
-              <v-btn icon class="mr-1" @click="showHistory = !showHistory">
-                <v-icon>
-                  {{ !showHistory ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
-                </v-icon>
-              </v-btn>
-            </v-toolbar>
-
-            <v-list
-              v-show="showHistory"
-              v-if="branch.commits.totalCount !== 0"
-              class="pa-0 transparent"
-              dense
-            >
+          <section-card expandable>
+            <template slot="header">Globals History ({{ branch.commits.totalCount }})</template>
+            <v-list v-if="branch.commits.totalCount !== 0" class="pa-0 transparent" dense>
               <list-item-commit
                 v-for="item in branch.commits.items"
                 :key="item.id"
                 :route="`/streams/${streamId}/globals/${item.id}`"
                 :commit="item"
                 :stream-id="streamId"
+                transparent
               />
             </v-list>
             <div v-else class="pa-2">No globals saved yet.</div>
-          </v-card>
+          </section-card>
         </v-col>
         <v-col cols="12" md="8">
           <!-- Builder -->
@@ -184,7 +143,8 @@ export default {
   name: 'Globals',
   components: {
     GlobalsBuilder: () => import('@/components/GlobalsBuilder'),
-    ListItemCommit: () => import('@/components/ListItemCommit'),
+    ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
+    SectionCard: () => import('@/cleanup/components/common/SectionCard'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
   },
   apollo: {

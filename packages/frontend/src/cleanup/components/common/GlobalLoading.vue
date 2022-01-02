@@ -7,11 +7,7 @@
 export default {
   data() {
     return {
-      show: false,
-      snack: false,
-      text: null,
-      actionName: null,
-      to: null
+      show: false
     }
   },
   watch: {},
@@ -19,12 +15,6 @@ export default {
     this.$eventHub.$on('page-load', (status) => {
       this.show = status
     })
-    // this.$eventHub.$on('notification', (args) => {
-    //   this.snack = true
-    //   this.text = args.text
-    //   this.actionName = args.action ? args.action.name : null
-    //   this.to = args.action ? args.action.to : null
-    // })
   }
 }
 </script>
