@@ -1,0 +1,86 @@
+# version: "2"
+# services:
+
+#   # Jaeger
+#   jaeger-all-in-one:
+#     image: jaegertracing/all-in-one:latest
+#     ports:
+#       - "16686:16686"
+#       - "14268"
+#       - "14250"
+
+#   # Zipkin
+#   zipkin-all-in-one:
+#     image: openzipkin/zipkin:latest
+#     ports:
+#       - "9411:9411"
+
+#   # Collector
+#   otel-collector:
+#     image: otel/opentelemetry-collector:latest
+#     command: ["--config=/etc/otel-collector-config.yaml", "${OTELCOL_ARGS}"]
+#     volumes:
+#       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+#     ports:
+#       - "4317"
+#       - "4318"
+#       # - "14250:14250"
+#       # - "55680:55680"
+#       # - "55690:55690"
+#       # - "1888:1888"   # pprof extension
+#       # - "8888:8888"   # Prometheus metrics exposed by the collector
+#       # - "8889:8889"   # Prometheus exporter metrics
+#       - "13133:13133" # health_check extension
+#       # - "4317"        # OTLP gRPC receiver
+#       # - "55670:55679" # zpages extension
+#     # depends_on:
+#       # - jaeger-all-in-one
+#       # - zipkin-all-in-one
+
+#   prometheus:
+#     # container_name: prometheus
+#     image: prom/prometheus:latest
+#     volumes:
+#       - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+#     ports:
+#       - "9090:9090"
+
+
+version: "3"
+services:
+  # Collector
+  collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/conf/collector-config.yaml", "--log-level=DEBUG"]
+    volumes:
+      - ./collector-config.yaml:/conf/collector-config.yaml
+    ports:
+      - "9464:9464"
+      - "55680:55680"
+      - "55681:55681"
+    depends_on:
+      - jaeger-all-in-one
+      - zipkin-all-in-one
+
+  # Zipkin
+  zipkin-all-in-one:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268"
+      - "14250"
+
+  # Prometheus
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"

@@ -3,6 +3,8 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
+const { tracer } = require( `${appRoot}/openTelemetry` )
+
 const Streams = ( ) => knex( 'streams' )
 const Acl = ( ) => knex( 'stream_acl' )
 
@@ -139,6 +141,13 @@ module.exports = {
   },
 
   async getStreams( { offset, limit, orderBy, visibility, searchQuery } ) {
+    const span = tracer().startSpan( 'I name you admin streams', {
+      kind: 1, // server
+      attributes: { key: 'HELLO SPECKLE' },
+    } )
+    // Annotate our span to capture metadata about the operation
+    span.addEvent( 'getting admin streams' )
+
     let query = knex
       .column( 'streams.*', knex.raw( 'coalesce(sum(pg_column_size(objects.data)),0) as size' ) )
       .select()
@@ -176,6 +185,7 @@ module.exports = {
 
     let rows = await query.orderBy( `${columnName}`, order ).offset( offset ).limit( limit )
 
+    span.end()
     return { streams: rows, totalCount: count }
   },
 

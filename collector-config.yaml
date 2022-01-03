@@ -1,0 +1,96 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:        
+        cors_allowed_origins:
+        - http://localhost:3000
+        - http://localhost:8080
+
+exporters:
+  logging:
+    loglevel: debug
+    sampling_initial: 5
+    sampling_thereafter: 200
+  zipkin:
+    endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
+  prometheus:
+    endpoint: "0.0.0.0:9464"
+  jaeger:
+    endpoint: "jaeger-all-in-one:14250"
+    timeout: 30s
+    # tls:
+    #   ca_file: /asdf/asdf
+    # tls:
+    #   insecure: true
+
+processors:
+  batch:
+  # queued_retry:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [jaeger, zipkin, logging]
+      processors: [batch]
+    # metrics:
+    #   receivers: [otlp]
+    #   exporters: [prometheus]
+    #   processors: [batch]
+
+# receivers:
+#   otlp:
+#     protocols:
+#       # grpc:
+#       http:
+#         endpoint: "localhost:4318"
+#         cors_allowed_headers:
+#           - "*"
+
+# exporters:
+#   logging:
+#     loglevel: debug
+#     sampling_initial: 5
+#     sampling_thereafter: 200
+
+# # exporters:
+# #   prometheus:
+# #     endpoint: "0.0.0.0:8889"
+# #     const_labels:
+# #       label1: value1
+# #   logging:
+
+# #   zipkin:
+# #     endpoint: "http://zipkin-all-in-one:9411/api/v2/spans"
+# #     format: proto
+
+# #   jaeger:
+# #     endpoint: jaeger-all-in-one:14250
+# #     tls:
+# #       insecure: true
+
+# processors:
+#   batch:
+
+# extensions:
+#   health_check:
+#   pprof:
+#     endpoint: :1888
+#   zpages:
+#     endpoint: :55679
+
+# service:
+#   # extensions: [pprof, zpages, health_check]
+#   extensions: [pprof, zpages, health_check]
+#   pipelines:
+#     traces:
+#       receivers: [otlp]
+#       processors: [batch]
+#       exporters: [logging]
+#       # exporters: [logging, zipkin, jaeger]
+#     metrics:
+#       receivers: [otlp]
+#       processors: [batch]
+#       exporters: [logging]
+#       # exporters: [logging, prometheus]

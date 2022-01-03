@@ -1,11 +1,13 @@
 /* istanbul ignore file */
 'use strict'
+const appRoot = require( 'app-root-path' )
+const OTel = require( `${appRoot}/openTelemetry` )
+OTel.setup()
 
 const http = require( 'http' )
 const url = require( 'url' )
 const express = require( 'express' )
 const compression = require( 'compression' )
-const appRoot = require( 'app-root-path' )
 const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const path = require( 'path' )
@@ -16,6 +18,7 @@ const Tracing = require( '@sentry/tracing' )
 const Logging = require( `${appRoot}/logging` )
 const { startup: MatStartup } = require( `${appRoot}/logging/matomoHelper` )
 const prometheusClient = require( 'prom-client' )
+
 
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
@@ -33,8 +36,11 @@ let graphqlServer
 exports.init = async ( ) => {
   const app = express( )
 
+
   Logging( app )
   MatStartup()
+
+  app.use( OTel.otelMiddleware )
 
   // Initialise prometheus metrics
   prometheusClient.register.clear()

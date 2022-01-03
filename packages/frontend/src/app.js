@@ -1,6 +1,10 @@
 import Vue from 'vue'
 import App from './App.vue'
 
+import { configureTracer } from './tracer'
+
+configureTracer()
+
 import { createProvider } from './vue-apollo'
 import { checkAccessCodeAndGetTokens, prefetchUserAndSetSuuid } from './auth-helpers'
 
