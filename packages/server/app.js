@@ -121,9 +121,6 @@ exports.startHttp = async ( app, customPortOverride ) => {
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT || 3000
 
-  if ( customPortOverride ) port = customPortOverride
-
-  app.set( 'port', port )
 
   let frontendHost = process.env.FRONTEND_HOST || 'localhost'
   let frontendPort = process.env.FRONTEND_PORT || 8080
@@ -137,7 +134,6 @@ exports.startHttp = async ( app, customPortOverride ) => {
 
     debug( 'speckle:startup' )( '✨ Proxying frontend (dev mode):' )
     debug( 'speckle:startup' )( `👉 main application: http://localhost:${port}/` )
-
   }
 
   // Production mode
@@ -147,6 +143,9 @@ exports.startHttp = async ( app, customPortOverride ) => {
 
   let server = http.createServer( app )
 
+  if ( customPortOverride || customPortOverride === 0 ) port = customPortOverride
+  app.set( 'port', port )
+
   // Final apollo server setup
   graphqlServer.installSubscriptionHandlers( server )
   graphqlServer.applyMiddleware( { app: app } )
@@ -155,6 +154,7 @@ exports.startHttp = async ( app, customPortOverride ) => {
 
   server.on( 'listening', ( ) => {
     debug( 'speckle:startup' )( `🚀 My name is Speckle Server, and I'm running at ${server.address().address}:${server.address().port}` )
+    app.emit( 'appStarted' )
   } )
 
   server.listen( port, bindAddress )

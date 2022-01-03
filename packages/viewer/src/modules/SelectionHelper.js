@@ -18,12 +18,7 @@ export default class SelectionHelper extends EventEmitter {
     super()
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
-
-    // Handle clicks during camera moves
-    this.orbiting = false
-
-    this.viewer.controls.addEventListener( 'wake', () => { this.orbiting = true } )
-    this.viewer.controls.addEventListener( 'sleep', () => { this.orbiting = false } )
+    this.raycaster.params.Line.threshold = 0.1
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
@@ -37,7 +32,6 @@ export default class SelectionHelper extends EventEmitter {
       // doesn't feel good when debounced, might be necessary tho
       this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
         let hovered = this.getClickedObjects( e )
-
         // dragging event, this shouldn't be under the "hover option"
         if ( this.pointerDown ) {
           this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
@@ -53,28 +47,30 @@ export default class SelectionHelper extends EventEmitter {
       this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce( ( e ) => {
         this.pointerDown = true
 
-        if ( this.orbiting ) return
+        if ( this.viewer.cameraHandler.orbiting ) return
 
         this.emit( 'mouse-down', this.getClickedObjects( e ) )
       }, 100 ) )
     }
 
-    this.sectionBox = null
-    if ( typeof _options !== 'undefined' && _options.sectionBox ) {
-      this.sectionBox = _options.sectionBox
+    this.checkForSectionBoxInclusion = true
+    if ( typeof _options !== 'undefined' && _options.checkForSectionBoxInclusion ) {
+      this.sectionBox = _options.checkForSectionBoxInclusion
     }
 
     // Handle mouseclicks
-
     let mdTime
     this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( ) => {
       mdTime = new Date().getTime()
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      if( this.viewer.cameraHandler.orbiting ) return
+
       let delta = new Date().getTime() - mdTime
       this.pointerDown = false
-      if ( this.orbiting && delta > 250 ) return
+      
+      if ( delta > 250 ) return
 
       let selectionObjects = this.getClickedObjects( e )
 
@@ -132,18 +128,18 @@ export default class SelectionHelper extends EventEmitter {
 
   getClickedObjects( e ) {
     const normalizedPosition = this._getNormalisedClickPosition( e )
-    this.raycaster.setFromCamera( normalizedPosition, this.viewer.camera )
-
-    let intersectedObjects = this.raycaster.intersectObjects( this.subset ? this._getGroupChildren( this.subset ) : this.viewer.sceneManager.objects )
-
-
-    if ( this.sectionBox && this.sectionBox.display.visible ) {
-      let box = new THREE.Box3().setFromObject( this.sectionBox.boxMesh )
+    this.raycaster.setFromCamera( normalizedPosition, this.viewer.cameraHandler.activeCam.camera )
+    let targetObjects = this.subset ? this.subset : this.viewer.sceneManager.filteredObjects
+    
+    let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
+    
+    // filters objects in section box mode
+    if ( this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion ) {
+      let box = new THREE.Box3().setFromObject( this.viewer.sectionBox.cube )
       intersectedObjects = intersectedObjects.filter( obj => {
         return box.containsPoint( obj.point )
       } )
     }
-
     return intersectedObjects
   }
 

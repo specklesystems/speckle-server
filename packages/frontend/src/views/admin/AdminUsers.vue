@@ -2,8 +2,8 @@
   <v-card>
     <v-toolbar flat>
       <v-toolbar-title>
-        Server Users Admin
-        <span v-if="users">(showing {{ users.items.length }} of {{ users.totalCount }} users)</span>
+        Server users
+        <span v-if="users">({{ users.items.length }} of {{ users.totalCount }} users)</span>
       </v-toolbar-title>
     </v-toolbar>
     <v-text-field
@@ -27,7 +27,9 @@
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
-              {{ user.name }}
+              <router-link class="text-h6" :to="`/profile/${user.id}`" target="_blank">
+                {{ user.name }}
+              </router-link>
             </v-list-item-title>
 
             <span class="caption">
@@ -43,13 +45,18 @@
               No company info
             </span>
           </v-list-item-content>
-          <v-list-item-action>
+          <v-list-item-action class="pt-2">
             <v-select
               :value="user.role"
               :items="availableRoles"
               label="user role"
               @change="changeUserRole(user, ...arguments)"
             ></v-select>
+          </v-list-item-action>
+          <v-list-item-action>
+            <v-btn icon @click="initiateDeleteUser(user)">
+              <v-icon>mdi-delete-outline</v-icon>
+            </v-btn>
           </v-list-item-action>
         </v-list-item>
         <div class="text-center">
@@ -82,7 +89,30 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="error" text @click="cancelRoleChange">Cancel</v-btn>
-          <v-btn color="primary" text @click="proceedRoleChange">Proceed</v-btn>
+          <v-btn color="primary" text @click="proceedRoleChange">
+            Change role to {{ roleLookupTable[newRole] }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="showDeleteDialog" persistent max-width="600px">
+      <v-card v-if="showDeleteDialog">
+        <v-toolbar flat class="mb-6">
+          <v-toolbar-title>Confirm user deletion</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text>
+          <v-alert type="error">
+            Confirm deletion of
+            <b>{{ manipulatedUser.name }}</b>
+            's account from the server.
+            <br />
+            Streams, where {{ manipulatedUser.name }} is the only owner, will also be deleted.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="showDeleteDialog = false">Cancel</v-btn>
+          <v-btn color="error" text @click="deleteUser(manipulatedUser)">Delete</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -106,16 +136,17 @@ export default {
     return {
       roleLookupTable: {
         'server:user': 'User',
-        'server:admin': 'Admin'
-        // 'server:archived_user': 'Archived'
+        'server:admin': 'Admin',
+        'server:archived-user': 'Archived'
       },
       users: {
         items: [],
         totalCount: 0
       },
-      currentPage: 1,
-      searchQuery: null,
+      // currentPage: 1,
+      // searchQuery: null,
       showConfirmDialog: false,
+      showDeleteDialog: false,
       manipulatedUser: null,
       newRole: null
     }
@@ -123,6 +154,22 @@ export default {
   computed: {
     queryLimit() {
       return parseInt(this.limit)
+    },
+    currentPage: {
+      get() {
+        return parseInt(this.page)
+      },
+      set(newPage) {
+        this.paginateNext(newPage)
+      }
+    },
+    searchQuery: {
+      get() {
+        return this.q
+      },
+      set: debounce(function (q) {
+        this.applySearch(q)
+      }, 500)
     },
     queryOffset() {
       return (this.page - 1) * this.queryLimit
@@ -138,20 +185,34 @@ export default {
       return roleItems
     }
   },
-  watch: {
-    currentPage: function (newPage) {
-      this.paginateNext(newPage)
-    },
-    searchQuery: debounce(function (newQuery) {
-      this.applySearch(newQuery)
-    }, 1000)
-  },
   methods: {
+    initiateDeleteUser(user) {
+      this.showDeleteDialog = true
+      this.manipulatedUser = user
+    },
+    async deleteUser(user) {
+      await this.$apollo.mutate({
+        mutation: gql`
+          mutation($userEmail: String!) {
+            adminDeleteUser(userConfirmation: { email: $userEmail })
+          }
+        `,
+        variables: {
+          userEmail: user.email
+        },
+        update: () => {
+          this.$apollo.queries.users.refetch()
+        },
+        error: (err) => {
+          console.log(err)
+        }
+      })
+      this.resetManipulatedUser()
+      this.showDeleteDialog = false
+    },
     changeUserRole(user, args) {
       this.manipulatedUser = user
       this.newRole = args
-      console.log(user.role)
-      console.log(this.newRole)
 
       this.showConfirmDialog = true
     },
@@ -172,7 +233,7 @@ export default {
     async updateUserRole(userId, newRole) {
       await this.$apollo.mutate({
         mutation: gql`
-          mutation ($userId: String!, $newRole: String!) {
+          mutation($userId: String!, $newRole: String!) {
             userRoleChange(userRoleInput: { id: $userId, role: $newRole })
           }
         `,

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-frontend
+    project: speckle-server
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-frontend
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-frontend
+        project: speckle-server
+    spec:
+      priorityClassName: high-priority
+
+      containers:
+      - name: main
+        image: speckle/speckle-frontend:{{ .Values.docker_image_tag }}
+        resources:
+          requests:
+            cpu: {{ .Values.frontend.requests.cpu }}
+            memory: {{ .Values.frontend.requests.memory }}
+          limits:
+            cpu: {{ .Values.frontend.limits.cpu }}
+            memory: {{ .Values.frontend.limits.memory }}

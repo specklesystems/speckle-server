@@ -1,0 +1,78 @@
+{{- if .Values.s3.endpoint }}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: speckle-fileimport-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: speckle-fileimport-service
+    project: speckle-server
+spec:
+  replicas: {{ .Values.fileimport_service.replicas }}
+  selector:
+    matchLabels:
+      app: speckle-fileimport-service
+      project: speckle-server
+  template:
+    metadata:
+      labels:
+        app: speckle-fileimport-service
+        project: speckle-server
+    spec:
+      priorityClassName: low-priority
+
+      {{- if .Values.db.useCertificate }}
+      volumes:
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}
+
+      containers:
+      - name: main
+        image: speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}
+
+        resources:
+          requests:
+            cpu: {{ .Values.fileimport_service.requests.cpu }}
+            memory: {{ .Values.fileimport_service.requests.memory }}
+          limits:
+            cpu: {{ .Values.fileimport_service.limits.cpu }}
+            memory: {{ .Values.fileimport_service.limits.memory }}
+
+        {{- if .Values.db.useCertificate }}
+        volumeMounts:
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
+        {{- end }}
+
+        env:
+          - name: PG_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: postgres_url
+
+          - name: DEBUG
+            value: "fileimport-service:*"
+
+          {{- if .Values.db.useCertificate }}
+          - name: NODE_EXTRA_CA_CERTS
+            value: "/postgres-certificate/ca-certificate.crt"
+          {{- end }}
+
+
+          - name: S3_ENDPOINT
+            value: {{ .Values.s3.endpoint }}
+          - name: S3_ACCESS_KEY
+            value: {{ .Values.s3.access_key }}
+          - name: S3_BUCKET
+            value: {{ .Values.s3.bucket }}
+          - name: S3_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.secretName }}
+                key: s3_secret_key
+
+{{- end }}

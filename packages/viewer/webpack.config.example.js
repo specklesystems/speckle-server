@@ -46,11 +46,12 @@ const config = {
     extensions: [ '.json', '.js' ],
   },
   devServer: {
-    contentBase: path.join( __dirname, 'example' ),
+    static: path.join( __dirname, 'example' ),
     compress: false,
     port: 9000,
-    serveIndex: true,
-    writeToDisk: true
+    devMiddleware: {
+      writeToDisk: true
+    }
   }
 }
 

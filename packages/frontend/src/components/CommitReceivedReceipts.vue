@@ -7,7 +7,7 @@
   >
     <div
       style="cursor: pointer; min-height: 33px; line-height: 33px"
-      :class="`grey ${$vuetify.theme.dark ? 'darken-3' : 'lighten-3'} rounded-xl px-2`"
+      :class="`${$vuetify.theme.dark ? 'black' : 'white'} rounded-xl px-2`"
     >
       <v-icon small>mdi-call-received</v-icon>
 

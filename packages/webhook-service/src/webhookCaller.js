@@ -1,12 +1,41 @@
 'use strict'
 
+const dns = require( 'dns' )
+const isIpPrivate = require( 'private-ip' )
+
 // Ignore invalid/self-signed https certificate errors for the entire process
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 const fetch = require( 'node-fetch' )
 var debug = require( 'debug' )( 'speckle' )
 
+async function isLocalNetworkUrl( url ) {
+  let parsedUrl = new URL( url )
+  let hostname = parsedUrl.hostname
+  let ip = await new Promise( ( resolve, reject ) => {
+    dns.lookup( hostname, ( err, addr, fam ) => {
+      if ( err ) {
+        reject( err )
+      } else {
+        resolve( addr )
+      }
+    } )
+  } )
+
+  return isIpPrivate( ip )
+}
+
 async function makeNetworkRequest( { url, data, headersData } ) {
+  if ( process.env.ALLOW_LOCAL_NETWORK !== 'true' && ( await isLocalNetworkUrl( url ) ) ) {
+    return {
+      success: false,
+      error: 'Local network requests are not allowed. To allow, use ALLOW_LOCAL_NETWORK=true environment variable',
+      duration: 0,
+      responseCode: null,
+      responseBody: null
+    }
+  }
+
   let httpSuccessCodes = [ 200 ]
   let headers = { 'Content-Type': 'application/json' }
   for ( let k in headersData ) headers[ k ] = headersData[ k ]
@@ -45,5 +74,5 @@ async function makeNetworkRequest( { url, data, headersData } ) {
   }
 }
 
-module.exports = { makeNetworkRequest }
+module.exports = { makeNetworkRequest, isLocalNetworkUrl }
 

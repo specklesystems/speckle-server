@@ -1,4 +1,4 @@
-FROM node:14.15.4-alpine3.12@sha256:55bf28ea11b18fd914e1242835ea3299ec76f5a034e8c6e42b2ede70064e338c as node
+FROM node:16.13-bullseye-slim as node
 
 FROM node as build
 # Having multiple steps in builder doesn't increase the final image size

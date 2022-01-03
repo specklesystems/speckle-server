@@ -13,11 +13,8 @@ K8S_SERVER=${!K8S_SERVER_VARIABLE}
 
 # K8S_NAMESPACE
 
-IMAGE_VERSION_TAG=$CIRCLE_SHA1
+IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
-if [[ "$CIRCLE_TAG" =~ ^v.* ]]; then
-    IMAGE_VERSION_TAG=$CIRCLE_TAG
-fi
 
 echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
 
@@ -54,6 +51,14 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --namespace=$K8S_NAMESPACE \
   set image deployment/speckle-webhook-service main=$DOCKER_IMAGE_TAG-webhook-service:$IMAGE_VERSION_TAG
 
+./kubectl \
+  --kubeconfig=/dev/null \
+  --server=$K8S_SERVER \
+  --certificate-authority=k8s_cert.crt \
+  --token=$K8S_TOKEN \
+  --namespace=$K8S_NAMESPACE \
+  set image deployment/speckle-fileimport-service main=$DOCKER_IMAGE_TAG-fileimport-service:$IMAGE_VERSION_TAG
+
 
 # Wait for rollout to complete
 ./kubectl \
@@ -87,3 +92,11 @@ echo "$K8S_CLUSTER_CERTIFICATE" | base64 --decode > k8s_cert.crt
   --token=$K8S_TOKEN \
   --namespace=$K8S_NAMESPACE \
   rollout status -w deployment/speckle-webhook-service --timeout=10m
+
+./kubectl \
+  --kubeconfig=/dev/null \
+  --server=$K8S_SERVER \
+  --certificate-authority=k8s_cert.crt \
+  --token=$K8S_TOKEN \
+  --namespace=$K8S_NAMESPACE \
+  rollout status -w deployment/speckle-fileimport-service --timeout=10m

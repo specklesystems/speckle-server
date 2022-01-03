@@ -44,6 +44,7 @@
 <script>
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
+import { isEmailValid } from '@/auth-helpers'
 
 export default {
   name: 'StreamInviteDialog',
@@ -73,7 +74,7 @@ export default {
       validation: {
         emailRules: [
           (v) => !!v || 'E-mail is required',
-          (v) => /.+@.+\..+/.test(v) || 'E-mail must be valid'
+          (v) => isEmailValid(v) || 'E-mail must be valid'
         ],
         messageRules: [
           (v) => {
