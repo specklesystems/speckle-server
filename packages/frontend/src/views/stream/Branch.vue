@@ -37,9 +37,20 @@
         <span class="hidden-md-and-down">Edit</span>
       </v-btn>
     </portal>
+
+    <div v-if="stream && stream.branch.name.includes('presentations/') && stream.branch.commits.items.length == 0" style="height: 60vh">
+      <renderer-presentation 
+      :object-url="latestCommitObjectUrl" 
+      :object-id="latestCommitObjectId" 
+      :object-existing-url="latestExistingCommitUrl" 
+      :branch-name="stream.branch.name" 
+      :branch-id="stream.branch.id" 
+      :branch-desc="stream.branch.description"  />
+    </div>
+
     <v-row no-gutters>
       <v-col v-if="stream && stream.branch" cols="12" class="pa-4">
-        <v-row v-if="stream.branch.commits.items.length > 0">
+        <v-row v-if="stream.branch.commits.items.length > 0 ">
           <v-col cols="12">
              <v-card>
               <router-link :to="`/streams/${streamId}/commits/${latestCommit.id}`">
@@ -150,14 +161,7 @@
         </v-row>
       </v-col>
       <v-col v-if="stream && stream.branch && listMode" cols="12" class="pa-0 ma-0">
-        <v-list v-if="stream.branch.commits.items.length > 0 && !$route.params.branchName.includes('presentations/')" class="pa-0 ma-0">
-
-        <div v-if="latestCommitObjectUrl && !$route.params.branchName.includes('presentations/')" style="height: 60vh">
-          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
-        </div>
-        <div v-if="$route.params.branchName.includes('presentations/')" style="height: 60vh">
-          <renderer-presentation :object-id="latestCommitObjectId" :object-url="latestCommitObjectUrl" :object-existing-url="latestExistingCommitUrl" :branch-name="$route.params.branchName" :branch-id="branchId" :branch-desc="branchDesc" show-selection-helper />
-        </div>
+        <v-list v-if="stream.branch.commits.items.length > 0 " class="pa-0 ma-0">
           <list-item-commit
             v-for="item in allPreviousCommits"
             :key="item.id"
@@ -169,15 +173,18 @@
       </v-col>
 
       <infinite-loading
-        v-if="stream && stream.branch.commits.totalCount !== 0"
+        v-if="stream && (stream.branch.commits.totalCount !== 0 || stream.branch.commits.totalCount == 0) "
         spinner="waveDots"
         @infinite="infiniteHandler"
       >
         <div slot="no-more">
           <v-col>
             <v-toolbar flat class="transparent">
-              <v-toolbar-title>
+              <v-toolbar-title v-if="stream && stream.branch.commits.totalCount !== 0">
                 You've reached the end - this branch has no more commits.
+              </v-toolbar-title>
+              <v-toolbar-title v-else>
+                Start building your presentation and click "Save" to create first commit.
               </v-toolbar-title>
             </v-toolbar>
           </v-col>
@@ -185,8 +192,11 @@
         <div slot="no-results">
           <v-col>
             <v-toolbar flat class="transparent">
-              <v-toolbar-title>
+              <v-toolbar-title v-if="stream && stream.branch.commits.totalCount !== 0">
                 You've reached the end - this branch has no more commits.
+              </v-toolbar-title>
+              <v-toolbar-title v-else>
+                Start building your presentation and click "Save" to create first commit. 
               </v-toolbar-title>
             </v-toolbar>
           </v-col>
@@ -199,14 +209,12 @@
 
       <branch-edit-dialog ref="editBranchDialog" />
 
-      <no-data-placeholder
-        v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0 && !$route.params.branchName.includes('presentations/') "
-      >
+      <no-data-placeholder v-if="!$apollo.loading && stream && stream.branch && stream.branch.commits.totalCount === 0 && !$route.params.branchName.includes('presentations/') " >
         <h2 class="space-grotesk">Branch "{{ stream.branch.name }}" has no commits.</h2>
       </no-data-placeholder>
     </v-row>
     <error-placeholder
-      v-if="!$apollo.loading && (error || stream.branch === null) && !$route.params.branchName.includes('presentations/')"
+      v-if="!$apollo.loading && (error || stream.branch === null)"
       error-type="404"
     >
       <h2>{{ error || `Branch "${$route.params.branchName}" does not exist.` }}</h2>
@@ -342,12 +350,14 @@ export default {
       else return null
     },
     latestCommit() {
-      if (this.stream.branch.commits.items && this.stream.branch.commits.items.length > 0)
+      //if (this.stream && this.stream.branch && this.stream.branch.name && this.stream.branch.name.includes('presentations/') && this.streamQuery && this.streamQuery.commits && this.streamQuery.commits.items )
+      //  return this.streamQuery.commits.items[0]
+      if (this.stream && this.stream.branch && this.stream.branch.commits && this.stream.branch.commits.items && this.stream.branch.commits.items.length > 0)
         return this.stream.branch.commits.items[0]
       else return null
     },
     allPreviousCommits() {
-      if (this.stream.branch.commits.items && this.stream.branch.commits.items.length > 0)
+      if (this.stream && this.stream.branch && this.stream.branch.commits && this.stream.branch.commits.items && this.stream.branch.commits.items.length > 0)
         return this.stream.branch.commits.items.slice(1)
       else return null
     }

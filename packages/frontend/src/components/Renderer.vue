@@ -306,7 +306,7 @@ export default {
     fullScreen() {
       setTimeout(() => {
         window.__viewer.onWindowResize()
-        window.__viewer.cameraHandler.onWindowResize()
+        //window.__viewer.cameraHandler.onWindowResize()
       }, 20)
     },
     loadProgress(newVal) {
@@ -338,8 +338,9 @@ export default {
     if (!window.__viewer) {
       window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
     }
-    //window.__viewer.onWindowResize()
-    window.__viewer.cameraHandler.onWindowResize()
+    window.__viewer.onWindowResize()
+    console.log(window.__viewer)
+    //window.__viewer.cameraHandler.onWindowResize()
 
     if (window.__viewerLastLoadedUrl !== this.objectUrl) {
       await this.getPreviewImage()
@@ -354,7 +355,8 @@ export default {
       this.setupEvents()
     }
 
-    if (window.__viewer.cameraHandler.activeCam === 'ortho') this.perspectiveMode = false
+    //if (window.__viewer.cameraHandler.activeCam === 'ortho') this.perspectiveMode = false
+    if (window.__viewer.activeCam === 'ortho') this.perspectiveMode = false
   },
   beforeDestroy() {
     // NOTE: here's where we juggle the container div out, and do cleanup on the

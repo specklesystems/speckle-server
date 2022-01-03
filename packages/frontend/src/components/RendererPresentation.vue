@@ -42,11 +42,11 @@
       {{ alertMessage }}
     </v-alert>
     <div
-      style="position: absolute; "
-      :style= "[ (maximized&& loadProgress==100 && allLoaded ==1) ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
       id="rendererparent"
       ref="rendererparent"
       :class="`${fullScreen ? 'fullscreen' : ''} ${darkMode ? 'dark' : ''}` "
+      style="position: absolute; "
+      :style= "[ (maximized&& loadProgress==100 && allLoaded ==1) ? {'padding-left': '128px'} : {'padding-left': '28px'} ]"
     >
       <v-fade-transition>
         <div v-show="!hasLoadedModel" class="overlay cover-all">
@@ -93,7 +93,15 @@
             <v-icon v-else small>mdi-cube</v-icon>
             ({{ selectedObjects.length }})
           </v-btn>
-          
+          <v-btn
+            v-tooltip="`Toggle between perspective or ortho camera.`"
+            small
+            :color="`${perspectiveMode ? 'blue' : ''}`"
+            @click="toggleCamera()"
+          >
+            <v-icon small>mdi-perspective-less</v-icon>
+            <!-- <span class="caption">Perspective</span> -->
+          </v-btn>
           <v-menu top close-on-click offset-y style="z-index: 100">
             <template #activator="{ on: onMenu, attrs: menuAttrs }">
               <v-tooltip top>
@@ -332,7 +340,7 @@
               style="display: inline-block"
             />
             <span class="pb-4 pl-1" v-show="maximized && loadProgress==100 && allLoaded ==1">
-              <b>  {{$route.params.branchName.split("presentations/")[1]}}</b></span> 
+              <b>  {{branchId.split("presentations/")[1]}}</b></span> 
           
         </v-toolbar-title>
       </v-toolbar>
@@ -411,6 +419,10 @@ export default {
       default: null
     },
     branchId: {
+      type: String,
+      default: null
+    },
+    branchName: {
       type: String,
       default: null
     },
@@ -529,6 +541,8 @@ export default {
       display: {index: [], branchName: [], animated: [], message:"" },
       actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null, objectIds:[], alreadyAnimated: [] },
       slidesSaved: null,
+      perspectiveMode: true,
+      new_branch_name: "",
 
       
       sample: {
@@ -552,6 +566,7 @@ export default {
       nameRules: [(v) => (v && v.length >= -1) || 'Message must be at least -1 characters'],
       saveMessage: null,
       saveError: null,
+      newCommitId: null
 
     }
   },
@@ -561,12 +576,12 @@ export default {
         this.globalsAreValid //&& (this.userRole === 'stream:contributor' || this.userRole === 'stream:owner')
       )
     },
-    globalsCommit() {
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      this.globalsAreValid = true
-      let base = this.globalsToBase(this.globalsArray)
-      return base
-    },
+    //globalsCommit() {
+    //  // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+    //  this.globalsAreValid = true
+    //  let base = this.globalsToBase(this.globalsArray)
+    //  return base
+    //},
     isSmall() {
       return this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
     },
@@ -580,7 +595,7 @@ export default {
       if (object) return base + `&object=${object}`
       var commit = this.$route.params.commitId
       if (commit) return base + `&commit=${commit}`
-      var branch = this.$route.params.branchName
+      var branch = this.branchName
       if (branch) return base + `&branch=${encodeURI(branch)}`
       return base
     },
@@ -650,6 +665,13 @@ export default {
       this.actions.objectId = this.actions.objectIds[0]
       this.$apollo.queries.objectQuery.refetch()
       this.allLoaded = 1
+    },
+    newCommitId(val){
+      console.log("New commit! " + val.data.commitCreate)
+      if (this.new_branch_name.includes("✓")){
+        //console.log("something")
+        window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/commits/" + val.data.commitCreate 
+      }
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
@@ -687,8 +709,8 @@ export default {
       //TODO: Remove overflow from window
       document.body.classList.add('no-scrollbar')
     }
+    if (window.__viewer.activeCam === 'ortho') this.perspectiveMode = false
 
-    
   },
   beforeDestroy() {
     // NOTE: here's where we juggle the container div out, and do cleanup on the
@@ -701,7 +723,8 @@ export default {
   methods: {
     async getPreviewImage(angle) {
       angle = angle || 0
-      let previewUrl = this.objectExistingUrl.replace('streams', 'preview') + '/' + angle
+      let previewUrl = null
+      if (this.objectExistingUrl) previewUrl = this.objectExistingUrl.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')
@@ -715,6 +738,10 @@ export default {
       const imgUrl = URL.createObjectURL(blob)
       if (this.$refs.cover) this.$refs.cover.style.backgroundImage = `url('${imgUrl}')`
       this.hasImg = true
+    },
+    toggleCamera() {
+      window.__viewer.toggleCameraProjection()
+      this.perspectiveMode = !this.perspectiveMode
     },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
@@ -758,7 +785,7 @@ export default {
         console.log("no commits read")
         this.globalsArray = this.nestedGlobals(this.sample)
       }
-      //console.log(this.globalsArray)
+      else console.log(this.objectId)
 
       let commitData = null
       this.globalsArray.forEach(obj=>{
@@ -766,7 +793,7 @@ export default {
       })
       console.log(commitData)
       
-      if(this.$route.params.branchName.includes("✓")) this.status = 1; else this.status = 0
+      if(this.branchName.includes("✓")) this.status = 1; else this.status = 0
         //  this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
       if (commitData)  this.slidesSaved = commitData
       else this.slidesSaved = []
@@ -953,13 +980,14 @@ export default {
     },
     save_pres(){
       this.saveGlobals()  
-      window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + this.$route.params.branchName 
+      //window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/commits/" + this.branchName 
     },
-    publish_pres(){
+    async publish_pres(){
       let slides_ready = {status:'--ready--', json: [...this.slidesSaved] } 
-      let new_name = this.$route.params.branchName +" "+ "✓"
+      this.new_branch_name = this.branchName +" "+ "✓"
+      console.log(this.branchId)
       
-      this.$apollo.mutate({
+      await this.$apollo.mutate({
         mutation: gql`
           mutation branchUpdate($params: BranchUpdateInput!) {
             branchUpdate(branch: $params)
@@ -969,16 +997,13 @@ export default {
           params: {
             streamId: this.$route.params.streamId,
             id: this.branchId,
-            name: new_name,
+            name: this.new_branch_name,
             description: this.branchDesc
           }
         }
       })
-
       this.saveGlobals()
-      window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + new_name 
-      //this.$router.push( `/streams/${this.$route.params.streamId}/branches/${new_name}` )
-      /// doesn't refresh properly
+      //window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + new_name 
     },
     slideDelete(index){
       if(this.slidesSaved) {
@@ -1050,7 +1075,10 @@ export default {
     async saveGlobals() {
       //if (!this.$refs.form.validate()) return 
       let commitObject = this.globalsToBase(this.globalsArray)
-      //console.log(commitObject)
+      console.log(commitObject)
+      if (!this.new_branch_name || this.new_branch_name.length<2){
+        this.new_branch_name = this.branchName
+      }
 
       try {
         this.loading = true
@@ -1068,8 +1096,9 @@ export default {
             }
           }
         })
+        console.log(res)
 
-        await this.$apollo.mutate({
+        this.newCommitId = await this.$apollo.mutate({
           mutation: gql`
             mutation CommitCreate($commit: CommitCreateInput!) {
               commitCreate(commit: $commit)
@@ -1078,9 +1107,9 @@ export default {
           variables: {
             commit: {
               streamId: this.$route.params.streamId,
-              branchName: this.$route.params.branchName,
+              branchName: this.new_branch_name,
               objectId: res.data.objectCreate[0],
-              message: "presentation updated",
+              message: "Presentation updated",
               sourceApplication: 'web'
             }
           }
@@ -1090,7 +1119,7 @@ export default {
       } catch (err) {
         this.saveLoading = false
         this.saveError = err
-        console.log("error")
+        console.log(err)
       }
     },
     

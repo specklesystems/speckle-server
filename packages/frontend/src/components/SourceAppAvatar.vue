@@ -41,6 +41,7 @@ export default {
       if (appname.includes('unreal')) return 'brown'
       if (appname.includes('python')) return 'yellow darken-1'
       if (appname.includes('.net')) return 'purple darken-2'
+      if (appname.includes('web')) return 'grey'
       return 'grey'
     },
     shortName() {
@@ -60,6 +61,7 @@ export default {
       if (appname.includes('unreal')) return 'UE'
       if (appname.includes('python')) return 'PY'
       if (appname.includes('.net')) return '.NET'
+      if (appname.includes('web')) return 'WEB'
       return appname
     }
   }

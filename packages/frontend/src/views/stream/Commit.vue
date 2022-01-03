@@ -63,8 +63,22 @@
           </div>
         </portal>
 
-        <div style="height: 60vh">
+        <!--<div style="height: 60vh">
           <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
+        </div>!-->
+        
+        <div v-if="commitObjectUrl && !stream.commit.branchName.includes('presentations/')" style="height: 60vh">
+          <renderer :object-url="commitObjectUrl" @selection="handleSelection" />
+        </div>
+        <div v-if="stream.commit.branchName.includes('presentations/') && branch" style="height: 60vh">
+          <renderer-presentation 
+          :object-url="commitObjectUrl" 
+          :object-id="commitObject.referencedId" 
+          :object-existing-url="commitObjectUrl" 
+          :branch-name="stream.commit.branchName" 
+          :branch-id="branch.id" 
+          :branch-desc="branch.description" 
+          @selection="handleSelection" />
         </div>
 
         <v-card elevation="0" rounded="lg">
@@ -91,7 +105,7 @@
             </v-sheet>
           </v-expand-transition>
           <!-- Object explorer -->
-          <v-card class="pa-4" rounded="lg" color="transparent">
+          <v-card v-if="!stream.commit.branchName.includes('presentations/')" class="pa-4" rounded="lg" color="transparent">
             <v-toolbar flat class="transparent">
               <v-app-bar-nav-icon style="pointer-events: none">
                 <v-icon>mdi-database</v-icon>
@@ -152,6 +166,7 @@
 <script>
 import gql from 'graphql-tag'
 import streamCommitQuery from '@/graphql/commit.gql'
+import branchQuery from '@/graphql/branch.gql'
 
 export default {
   name: 'Branch',
@@ -161,6 +176,7 @@ export default {
     ObjectSpeckleViewer: () => import('@/components/ObjectSpeckleViewer'),
     ObjectSimpleViewer: () => import('@/components/ObjectSimpleViewer'),
     Renderer: () => import('@/components/Renderer'),
+    RendererPresentation: () => import('@/components/RendererPresentation'),
     SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     CommitReceivedReceipts: () => import('@/components/CommitReceivedReceipts')
@@ -179,6 +195,20 @@ export default {
           streamId: this.$route.params.streamId,
           id: this.$route.params.commitId
         }
+      }
+    },
+    branch: {
+      prefetch: true,
+      query: branchQuery,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          branchName: this.stream.commit.branchName
+        }
+      },
+      update: (data) => data.stream.branch,
+      skip() {
+        return this.stream == null
       }
     }
     // commitActivitiy: {
@@ -232,6 +262,7 @@ export default {
   },
   watch: {
     stream(val) {
+      this.$apollo.queries.branch.refetch()
       if (!val) return
       if (val && val.commit && val.commit.branchName && val.commit.branchName === 'globals')
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
