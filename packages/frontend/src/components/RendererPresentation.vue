@@ -285,34 +285,6 @@
               </v-card-text>
             </v-card>
           </v-dialog>
-          <v-dialog
-            v-model="showPublishDialog"
-            width="500"
-            >
-            <v-card>
-              <v-toolbar>
-                <v-toolbar-title>PUBLISH</v-toolbar-title>
-                <v-spacer></v-spacer>
-                <v-btn icon @click="showPublishDialog = false"><v-icon>mdi-close</v-icon></v-btn>
-              </v-toolbar>
-
-              <v-card-text class="pt-2">
-                Publishing the presentation will remove editing tools from display. You can always convert it back to draft 
-                by removing specials symbols from the commit message (EDIT function at the top right corner).
-              </v-card-text>
-              <v-btn @click="publish_pres()"
-              color="primary"
-              text
-              align="center"
-            >
-              PUBLISH
-            </v-btn>
-              <v-sheet>
-                <div>
-                </div>
-              </v-sheet>
-            </v-card>
-          </v-dialog>
         </v-btn-toggle>
       </v-card>
     </div>
@@ -537,7 +509,6 @@ export default {
 
       allLoaded: 0,
       maximized: false,
-      showPublishDialog: false,
       branchQuery: null,
       objectQuery: null,
       branches: {names:[], ids:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
@@ -773,7 +744,6 @@ export default {
         )
       )
       window.__viewer.on('select', (objects) => {
-        // console.log(objects)
         this.selectedObjects.splice(0, this.selectedObjects.length)
         this.selectedObjects.push(...objects)
         this.$emit('selection', this.selectedObjects)
@@ -796,11 +766,9 @@ export default {
       })
       console.log(commitData)
       
-      //if(this.commitMsg.includes("✓")) this.status = 1; else this.status = 0
-        //  this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
       if (commitData)  this.slidesSaved = commitData
       else this.slidesSaved = []
-      //console.log(this.slidesSaved)
+      
       //get unique branch ids from the presentation slides
       var listBranchesInPresentation = []
       var listBranchesInPresentationQuery = []
@@ -843,7 +811,6 @@ export default {
         }
         i+=1
       })
-      //console.log(this.branches)
       this.maximized = true
       this.setupEvents()
 
@@ -982,31 +949,12 @@ export default {
 
     },
     save_pres(){
-      this.saveGlobals(0)  
-      //window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/commits/" + this.branchName 
+      this.saveGlobals(0) 
     },
     async publish_pres(){
       let slides_ready = {status: 1, json: [...this.slidesSaved] } 
-      //this.new_commitMsg = "✓" +" "+ "Presentation updated: " + this.slidesSaved.length.toString() + " slides"
       console.log(this.branchId)
-      /*
-      await this.$apollo.mutate({
-        mutation: gql`
-          mutation commitUpdate($params: CommitUpdateInput!) {
-            commitUpdate(commit: $params)
-          }
-        `,
-        variables: {
-          params: {
-            streamId: this.$route.params.streamId,
-            id: this.$route.params.commitId,
-            message: this.new_commitMsg
-          }
-        }
-      })
-      */
       this.saveGlobals(1)
-      //window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + new_name 
     },
     slideDelete(index){
       if(this.slidesSaved) {
@@ -1095,7 +1043,7 @@ export default {
       try {
         
         this.loading = true
-        //this.$matomo && this.$matomo.trackPageView('globals/save')
+        this.$matomo && this.$matomo.trackPageView('presentation/save')
         let res = await this.$apollo.mutate({
           mutation: gql`
             mutation ObjectCreate($params: ObjectCreateInput!) {
@@ -1131,7 +1079,7 @@ export default {
         if (val==1){
           
           this.loading = true
-          //this.$matomo && this.$matomo.trackPageView('globals/save')
+          this.$matomo && this.$matomo.trackPageView('presentation/publish')
           let res2 = await this.$apollo.mutate({
             mutation: gql`
               mutation ObjectCreate($params: ObjectCreateInput!) {
@@ -1164,7 +1112,6 @@ export default {
               }
             }
           })
-          //this.status_updated = 1
         }
 
         this.saveLoading = false
