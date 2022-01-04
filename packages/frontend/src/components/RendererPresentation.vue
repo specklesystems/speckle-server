@@ -188,13 +188,13 @@
             </template>
             
             <v-list dense >
-              <v-list-item  @click.stop v-for="(vis,index) in branches.names" link style="height:40px; " class="pr-0 mr-0 pt-0 mb-0"
+              <v-list-item  @click.stop v-for="(vis,index) in branches.names" link style="height:40px; " :class="`${status==0 ? 'pr-0 mr-0 pt-0 mb-0' : 'pr-0 mr-4 pt-0 mb-0'}`"
               :style= "[!display.branchName.includes(vis) ? {} : { background: '#757575' }]">
                 <v-list-item-content @click="showVis(vis)" >
                   <v-list-item-title style="text-align: left;"  >{{ vis }}</v-list-item-title>
                 </v-list-item-content>
 
-                <v-btn small style="height: 100%;" class="elevation-0; rounded-0" @click="addBranchAnimation(vis)"
+                <v-btn v-if="status==0" small style="height: 100%;" class="elevation-0; rounded-0" @click="addBranchAnimation(vis)"
                 :style="[!display.animated.includes(vis) ? {} : { background: '#757575' }]">
                     <v-icon style="opacity: 0.9" color="white" small >
                       mdi-animation-outline</v-icon>
