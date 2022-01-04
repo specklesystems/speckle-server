@@ -291,14 +291,14 @@
             >
             <v-card>
               <v-toolbar>
-                <v-toolbar-title>Confirmation</v-toolbar-title>
+                <v-toolbar-title>PUBLISH</v-toolbar-title>
                 <v-spacer></v-spacer>
                 <v-btn icon @click="showPublishDialog = false"><v-icon>mdi-close</v-icon></v-btn>
               </v-toolbar>
 
               <v-card-text class="pt-2">
-                This will remove editing tools from this branch. You can always convert it back to draft 
-                by removing specials symbols from the branch name
+                Publishing the presentation will remove editing tools from display. You can always convert it back to draft 
+                by removing specials symbols from the commit message (EDIT function at the top right corner).
               </v-card-text>
               <v-btn @click="publish_pres()"
               color="primary"
@@ -378,7 +378,7 @@
 
       <template #append >
         <v-list dense v-if="maximized && status==0 && loadProgress==100 && allLoaded ==1"  >
-          <v-btn @click="showPublishDialog = !showPublishDialog" width="128px" class="primary rounded-0" >Publish</v-btn>
+          <v-btn @click="publish_pres()" width="128px" class="primary rounded-0" >Publish</v-btn>
           <v-divider class="vertical-divider"
               vertical>
             </v-divider>
@@ -412,6 +412,10 @@ export default {
     },
     objectId: {
       type: String,
+      default: null
+    },
+    status: {
+      type: Number,
       default: null
     },
     objectExistingUrl: {
@@ -534,7 +538,6 @@ export default {
       allLoaded: 0,
       maximized: false,
       showPublishDialog: false,
-      status: 0,
       branchQuery: null,
       objectQuery: null,
       branches: {names:[], ids:[], url: [], uuid:[], objId:[], visible:[], animated:[] },
@@ -542,7 +545,6 @@ export default {
       actions: {pastBranch: null, currentMessage: null, currentSlideNum: null, objectId: null, objectIds:[], alreadyAnimated: [] },
       slidesSaved: null,
       perspectiveMode: true,
-      new_branch_name: "",
 
       
       sample: {
@@ -558,6 +560,7 @@ export default {
         }
       },
       globalsArray: [],
+      globalsArray2: [],
       globalsAreValid: true,
       saveDialog: false,
       deleteEntries: false,
@@ -566,7 +569,9 @@ export default {
       nameRules: [(v) => (v && v.length >= -1) || 'Message must be at least -1 characters'],
       saveMessage: null,
       saveError: null,
-      newCommitId: null
+      newCommitId: null,
+      newCommitId2: null,
+      status_updated: 0
 
     }
   },
@@ -666,12 +671,9 @@ export default {
       this.$apollo.queries.objectQuery.refetch()
       this.allLoaded = 1
     },
-    newCommitId(val){
-      console.log("New commit! " + val.data.commitCreate)
-      if (this.new_branch_name.includes("✓")){
-        //console.log("something")
-        window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/commits/" + val.data.commitCreate 
-      }
+    newCommitId2(){
+      console.log("New published commit! " + this.newCommitId2.data.commitCreate)
+      window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/commits/" + this.newCommitId2.data.commitCreate 
     }
   },
   // TODO: pause rendering on destroy, reinit on mounted.
@@ -786,6 +788,7 @@ export default {
         this.globalsArray = this.nestedGlobals(this.sample)
       }
       else console.log(this.objectId)
+      console.log(this.status)
 
       let commitData = null
       this.globalsArray.forEach(obj=>{
@@ -793,7 +796,7 @@ export default {
       })
       console.log(commitData)
       
-      if(this.branchName.includes("✓")) this.status = 1; else this.status = 0
+      //if(this.commitMsg.includes("✓")) this.status = 1; else this.status = 0
         //  this.slidesSaved = JSON.parse(JSON.parse(this.presentationData).json)
       if (commitData)  this.slidesSaved = commitData
       else this.slidesSaved = []
@@ -974,35 +977,35 @@ export default {
       this.actions.currentSlideNum = this.slidesSaved.length-1
       this.display.message = this.slidesSaved[this.slidesSaved.length-1].msg
 
-      let slides_draft = {status:'--draft--', json: [...this.slidesSaved] } // to eliminate the "observer" type
-      this.globalsArray = this.nestedGlobals( {status:'--draft--', json: [...this.slidesSaved] } )
+      let slides_draft = {status: 0, json: [...this.slidesSaved] } // to eliminate the "observer" type
+      this.globalsArray = this.nestedGlobals( {status: 0, json: [...this.slidesSaved] } )
 
     },
     save_pres(){
-      this.saveGlobals()  
+      this.saveGlobals(0)  
       //window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/commits/" + this.branchName 
     },
     async publish_pres(){
-      let slides_ready = {status:'--ready--', json: [...this.slidesSaved] } 
-      this.new_branch_name = this.branchName +" "+ "✓"
+      let slides_ready = {status: 1, json: [...this.slidesSaved] } 
+      //this.new_commitMsg = "✓" +" "+ "Presentation updated: " + this.slidesSaved.length.toString() + " slides"
       console.log(this.branchId)
-      
+      /*
       await this.$apollo.mutate({
         mutation: gql`
-          mutation branchUpdate($params: BranchUpdateInput!) {
-            branchUpdate(branch: $params)
+          mutation commitUpdate($params: CommitUpdateInput!) {
+            commitUpdate(commit: $params)
           }
         `,
         variables: {
           params: {
             streamId: this.$route.params.streamId,
-            id: this.branchId,
-            name: this.new_branch_name,
-            description: this.branchDesc
+            id: this.$route.params.commitId,
+            message: this.new_commitMsg
           }
         }
       })
-      this.saveGlobals()
+      */
+      this.saveGlobals(1)
       //window.location.href = window.location.origin + "/streams/" + this.$route.params.streamId + "/branches/" + new_name 
     },
     slideDelete(index){
@@ -1017,8 +1020,8 @@ export default {
       if (this.slidesSaved[index] && this.slidesSaved[index].msg) this.display.message = this.slidesSaved[index].msg
       else this.display.message = ""
 
-      let slides_draft = {status:'--draft--', json: [...this.slidesSaved]  } // to eliminate "observer" type
-      this.globalsArray = this.nestedGlobals( {status:'--draft--', json: [...this.slidesSaved] } )
+      let slides_draft = {status: 0, json: [...this.slidesSaved]  } // to eliminate "observer" type
+      this.globalsArray = this.nestedGlobals( {status: 0, json: [...this.slidesSaved] } )
       
     },
     addBranchAnimation(name){
@@ -1071,16 +1074,26 @@ export default {
         i++ * 100);
       } 
     },
-    //////////////////////////////////////////////////////////////////////////////////////// GLOBALS APPROACH 
-    async saveGlobals() {
+    //////////////////////////////////////////////////////////////////////////////////////// GLOBALS APPROACH ///////////////////////////////////////////////////////////////
+
+    async saveGlobals(val) {
       //if (!this.$refs.form.validate()) return 
       let commitObject = this.globalsToBase(this.globalsArray)
       console.log(commitObject)
-      if (!this.new_branch_name || this.new_branch_name.length<2){
-        this.new_branch_name = this.branchName
-      }
+
+      //extract and modify data from globalsArray
+      let globalsArray_data = null
+      this.globalsArray.forEach(obj=>{
+        if (obj.key =="json" && obj.value && obj.value.length>0) globalsArray_data = [...obj.value]
+      })
+      this.globalsArray2 = this.nestedGlobals( {status: 1, json: [...globalsArray_data] } )
+      let commitObject2 = this.globalsToBase(this.globalsArray2)
+      console.log(commitObject2)
+
+      let slide_num = this.slidesSaved.length.toString()
 
       try {
+        
         this.loading = true
         //this.$matomo && this.$matomo.trackPageView('globals/save')
         let res = await this.$apollo.mutate({
@@ -1097,7 +1110,7 @@ export default {
           }
         })
         console.log(res)
-
+        
         this.newCommitId = await this.$apollo.mutate({
           mutation: gql`
             mutation CommitCreate($commit: CommitCreateInput!) {
@@ -1107,13 +1120,53 @@ export default {
           variables: {
             commit: {
               streamId: this.$route.params.streamId,
-              branchName: this.new_branch_name,
+              branchName: this.branchName,
               objectId: res.data.objectCreate[0],
-              message: "Presentation updated",
+              message: slide_num[slide_num.length-1]==1 ? "Presentation updated: " + slide_num + ' slide' : "Presentation updated: " + slide_num + ' slides' ,
               sourceApplication: 'web'
             }
           }
         })
+
+        if (val==1){
+          
+          this.loading = true
+          //this.$matomo && this.$matomo.trackPageView('globals/save')
+          let res2 = await this.$apollo.mutate({
+            mutation: gql`
+              mutation ObjectCreate($params: ObjectCreateInput!) {
+                objectCreate(objectInput: $params)
+              }
+            `,
+            variables: {
+              params: {
+                streamId: this.$route.params.streamId,
+                objects: [ commitObject2 ]
+              }
+            }
+          })
+          console.log(res2)
+
+        
+          this.newCommitId2 = await this.$apollo.mutate({ // will rewrite the commit ID for link redirecting
+            mutation: gql`
+              mutation CommitCreate($commit: CommitCreateInput!) {
+                commitCreate(commit: $commit)
+              }
+            `,
+            variables: {
+              commit: {
+                streamId: this.$route.params.streamId,
+                branchName: this.branchName,
+                objectId: res2.data.objectCreate[0],
+                message: slide_num[slide_num.length-1]==1 ? "PUBLISHED: " + slide_num + ' slide' : "PUBLISHED: " + slide_num + ' slides' ,
+                sourceApplication: 'web'
+              }
+            }
+          })
+          //this.status_updated = 1
+        }
+
         this.saveLoading = false
         this.saveDialog = false
       } catch (err) {

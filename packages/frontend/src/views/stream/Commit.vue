@@ -74,6 +74,7 @@
           <renderer-presentation 
           :object-url="commitObjectUrl" 
           :object-id="commitObject.referencedId" 
+          :status="status"
           :object-existing-url="commitObjectUrl" 
           :branch-name="stream.commit.branchName" 
           :branch-id="branch.id" 
@@ -167,6 +168,8 @@
 import gql from 'graphql-tag'
 import streamCommitQuery from '@/graphql/commit.gql'
 import branchQuery from '@/graphql/branch.gql'
+import objectQueryGlobals from '../../graphql/objectSingle.gql'
+import crs from 'crypto-random-string'
 
 export default {
   name: 'Branch',
@@ -184,7 +187,9 @@ export default {
   data: () => ({
     loadedModel: false,
     selectionData: [],
-    showDeleteDialog: false
+    showDeleteDialog: false,
+    globalsArray: null,
+    status: 0
   }),
   apollo: {
     stream: {
@@ -209,6 +214,22 @@ export default {
       update: (data) => data.stream.branch,
       skip() {
         return this.stream == null
+      }
+    },
+    object: {
+      query: objectQueryGlobals,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          id: this.stream.commit.referencedObject
+        }
+      },
+      update(data) {
+        this.globalsArray = this.nestedGlobals(data.stream.object.data)
+        return data.stream.object
+      },
+      skip() {
+        return this.stream == null || this.stream.commit == null || this.stream.commit.referencedObject == null
       }
     }
     // commitActivitiy: {
@@ -263,9 +284,18 @@ export default {
   watch: {
     stream(val) {
       this.$apollo.queries.branch.refetch()
+      this.$apollo.queries.object.refetch()
       if (!val) return
       if (val && val.commit && val.commit.branchName && val.commit.branchName === 'globals')
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
+    },
+    globalsArray(val){
+      console.log(val)
+      val.forEach(obj=>{
+        console.log(obj)
+        if (obj.key =="status" && obj.value) this.status = obj.value
+      })
+      console.log(this.status)
     }
   },
   methods: {
@@ -333,6 +363,48 @@ export default {
       this.showDeleteDialog = false
       //window.location.href = window.origin + `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch //go to branch page, refresh all
       this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch)
+    },
+    nestedGlobals(data) {
+      if (!data) return []
+      let entries = Object.entries(data)
+      let arr = []
+      for (let [key, val] of entries) {
+        if (key.startsWith('__')) continue
+        if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
+
+        if (!Array.isArray(val) && typeof val === 'object' && val !== null) {
+          if (val.speckle_type && val.speckle_type === 'reference') {
+            arr.push({
+              key,
+              valid: true,
+              id: crs({ length: 10 }),
+              value: val,
+              globals: this.nestedGlobals(val),
+              type: 'object' //TODO: handle references
+            })
+          } else {
+            arr.push({
+              key,
+              valid: true,
+              id: crs({ length: 10 }),
+              value: val,
+              globals: this.nestedGlobals(val),
+              type: 'object'
+            })
+          }
+        } else {
+          arr.push({
+            key,
+            valid: true,
+            id: crs({ length: 10 }),
+            value: val,
+            type: 'field'
+          })
+        }
+        //console.log(arr)
+      }
+
+      return arr
     }
   }
 }

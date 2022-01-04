@@ -42,6 +42,7 @@
       <renderer-presentation 
       :object-url="latestCommitObjectUrl" 
       :object-id="latestCommitObjectId" 
+      :status="status"
       :object-existing-url="latestExistingCommitUrl" 
       :branch-name="stream.branch.name" 
       :branch-id="stream.branch.id" 
@@ -245,7 +246,8 @@ export default {
     return {
       dialogEdit: false,
       error: null,
-      listMode: false
+      listMode: false,
+      status: 0
     }
   },
   apollo: {
