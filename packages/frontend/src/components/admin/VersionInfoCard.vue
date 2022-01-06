@@ -5,10 +5,10 @@
       <v-spacer></v-spacer>
       <v-btn icon href="https://github.com/specklesystems/speckle-server/releases" target="_blank">
         <span v-if="isLatestVersion" class="text--h6 success--text">
-          <v-icon size="medium" color="success" v-tooltip="'Up to date.'">mdi-check-bold</v-icon>
+          <v-icon v-tooltip="'Up to date.'" size="medium" color="success">mdi-check-bold</v-icon>
         </span>
         <span v-else class="warning--text">
-          <v-icon size="medium" color="warning" v-tooltip="'There is a newer version available!'">
+          <v-icon v-tooltip="'There is a newer version available!'" size="medium" color="warning">
             mdi-alert
           </v-icon>
         </span>
@@ -37,7 +37,7 @@ import gql from 'graphql-tag'
 
 export default {
   name: 'VersionInfoCard',
-  components: { },
+  components: {},
   data() {
     return {
       versionInfo: {
@@ -73,7 +73,7 @@ export default {
       return fetch('https://api.github.com/repos/specklesystems/speckle-server/releases/latest')
         .then(async (res) => {
           var x = await res.json()
-          return x.tag_name.split('v')[1]
+          return x.tag_name
         })
         .catch((err) => console.error('error fetch', err))
     }

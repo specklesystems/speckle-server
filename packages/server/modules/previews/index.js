@@ -42,7 +42,7 @@ exports.init = ( app, options ) => {
       await createObjectPreview( { streamId, objectId, priority: 0 } )
     }
 
-    if ( previewInfo.previewStatus != 2 || !previewInfo.preview ) {
+    if ( !previewInfo || previewInfo.previewStatus != 2 || !previewInfo.preview ) {
       return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 

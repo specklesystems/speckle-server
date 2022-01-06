@@ -329,7 +329,7 @@ export default {
       return `background-color: ${this.$vuetify.theme.themes[theme].background};`
     },
     isDevServer() {
-      return this.serverInfo.version[0] !== 'v' ? true : false
+      return this.serverInfo.version.match(/^[0-9]+\.[0-9]+\.[0-9]+$/) ? false : true
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null

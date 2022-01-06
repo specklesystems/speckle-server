@@ -53,7 +53,6 @@ export default class SceneObjects {
   async asyncPause() {
     // Don't freeze the UI when doing all those traversals
     if ( Date.now() - this.lastAsyncPause >= 100 ) {
-      // if (Date.now() - this.lastAsyncPause > 200 ) console.log("FREEZED for ", Date.now() - this.lastAsyncPause)
       await new Promise( resolve => setTimeout( resolve, 0 ) )
       this.lastAsyncPause = Date.now()
     }
@@ -143,7 +142,6 @@ export default class SceneObjects {
         child.geometry.dispose()
     }
     threejsGroup.clear()
-    // console.log( 'Dispose in: ', Date.now() - t0 )
   }
 
   async applyFilter( filter ) {
@@ -153,6 +151,7 @@ export default class SceneObjects {
     if ( filter === null ) {
       // Remove filters, use allObjects
       let newGoupedSolidObjects = await this.groupSolidObjects( this.allSolidObjects )
+      
       if ( this.groupedSolidObjects !== null ) {
         this.disposeAndClearGroup( this.groupedSolidObjects )
         this.allObjects.remove( this.groupedSolidObjects )
@@ -231,18 +230,31 @@ export default class SceneObjects {
     let materialIdToMaterial = {}
     let materialIdToMeshes = {}
 
+    let groupedObjects = new THREE.Group()
+    groupedObjects.name = 'GroupedSolidObjects'
+
     for ( let obj of threejsGroup.children ) {
       let meshes = []
       if( obj instanceof THREE.Group ) {    
         meshes = this.flattenGroup( obj )
-
       } else {
         meshes = [ obj ]
       }
 
       for( let mesh of meshes ) {
         let m = mesh.material
-        let materialId = `${m.type}/${m.vertexColors}/${m.color.toJSON()}/${m.side}/${m.transparent}/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}`
+
+        // Pass-through non mesh materials (blocks can contain lines, that end up here)
+        if ( !( m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshBasicMaterial ) ) {
+          // if ( mesh.type === 'Line' ) continue
+          // if ( groupedObjects.children.length >= 2 ) continue
+          groupedObjects.add( mesh.clone() )
+          continue
+        }
+
+        let materialId = `${m.type}/${m.vertexColors}/${m.color.toJSON()}/${m.side}/${m.transparent}/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}/${m.wireframe}`
+
+        materialId += `--${Object.keys( mesh.geometry.attributes ).toString()}--${!!mesh.geometry.index}`
 
         if ( !( materialId in materialIdToBufferGeometry ) ) {
           materialIdToBufferGeometry[ materialId ] = []
@@ -265,18 +277,14 @@ export default class SceneObjects {
         }
       }
     }
-    
-    
-    let groupedObjects = new THREE.Group()
-    groupedObjects.name = 'GroupedSolidObjects'
 
     await this.asyncPause()
 
     for ( let materialId in materialIdToBufferGeometry ) {
       await this.asyncPause()
-      // TODO: does this handle transforms well ?
       let groupGeometry = BufferGeometryUtils.mergeBufferGeometries( materialIdToBufferGeometry[ materialId ] )
       await this.asyncPause()
+
       let groupMaterial = materialIdToMaterial[ materialId ]
       let groupMesh = new THREE.Mesh( groupGeometry, groupMaterial )
       groupMesh.userData = null
