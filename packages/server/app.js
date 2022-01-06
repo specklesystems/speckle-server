@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 const appRoot = require( 'app-root-path' )
-const OTel = require( `${appRoot}/openTelemetry` )
+const OTel = require( `${appRoot}/logging/openTelemetry` )
 OTel.setup()
 
 const http = require( 'http' )
@@ -39,8 +39,6 @@ exports.init = async ( ) => {
 
   Logging( app )
   MatStartup()
-
-  app.use( OTel.otelMiddleware )
 
   // Initialise prometheus metrics
   prometheusClient.register.clear()

@@ -15,18 +15,16 @@ const {
   IORedisInstrumentation,
 } = require( '@opentelemetry/instrumentation-ioredis' )
 const { GraphQLInstrumentation } = require( '@opentelemetry/instrumentation-graphql' )
-const { AlwaysOnSampler } = require( '@opentelemetry/core' )
 const { Resource } = require( '@opentelemetry/resources' )
 const { SemanticResourceAttributes } = require( '@opentelemetry/semantic-conventions' )
 const { KnexInstrumentation} = require( '@opentelemetry/instrumentation-knex' )
 const { B3Propagator } = require( '@opentelemetry/propagator-b3' )
-const { ZoneContextManager } = require( '@opentelemetry/context-zone' )
 
 const opentelemetry = require( '@opentelemetry/api' )
 
 // Not functionally required but gives some insight what happens behind the scenes
-const { diag, DiagConsoleLogger, DiagLogLevel } = opentelemetry
-diag.setLogger( new DiagConsoleLogger(), DiagLogLevel.INFO )
+// const { diag, DiagConsoleLogger, DiagLogLevel } = opentelemetry
+// diag.setLogger( new DiagConsoleLogger(), DiagLogLevel.INFO )
 
 
 exports.setup = () => {
@@ -41,7 +39,7 @@ exports.setup = () => {
     } ),
   } )
 
-  provider.addSpanProcessor( new SimpleSpanProcessor( new ConsoleSpanExporter() ) )
+  // provider.addSpanProcessor( new SimpleSpanProcessor( new ConsoleSpanExporter() ) )
   provider.addSpanProcessor(
     new BatchSpanProcessor( exporter, {
       // The maximum queue size. After the size is reached spans are dropped.
@@ -56,7 +54,6 @@ exports.setup = () => {
   )
 
   provider.register( {
-    // contextManager: new ZoneContextManager(),
     propagator: new B3Propagator()
   } )
 
@@ -74,15 +71,9 @@ exports.setup = () => {
       new ExpressInstrumentation(),
       new RedisInstrumentation(),
       new IORedisInstrumentation( {
-      // see under for available configuration
       } ),
     ],
   } )
 }
 
 exports.tracer = () => opentelemetry.trace.getTracer( 'speckle-server' )
-
-
-exports.otelMiddleware = ( req, res, next ) => {
-  next()
-}
