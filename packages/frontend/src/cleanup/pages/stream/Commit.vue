@@ -22,7 +22,13 @@
           </v-list-item>
         </v-list>
 
-        <object-selection :objects="selectionData" :stream-id="stream.id" />
+        <v-scroll-y-transition>
+          <object-selection
+            v-show="selectionData.length !== 0"
+            :objects="selectionData"
+            :stream-id="stream.id"
+          />
+        </v-scroll-y-transition>
 
         <structure-display
           :obj="commitObject"
@@ -42,7 +48,7 @@
         style="width: calc(100% + 0px); bottom: 12px; left: 0px; position: absolute; z-index: 100"
         class="d-flex justify-center"
       >
-        <viewer-controls :show-vis-reset="showVisReset" @visibility-reset="visReset()" />
+        <viewer-controls />
       </div>
 
       <!-- Preview image -->
@@ -75,7 +81,6 @@
         ></v-progress-linear>
       </div>
     </div>
-
     <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
       <error-placeholder error-type="404">
         <h2>Commit {{ $route.params.commitId }} not found.</h2>
@@ -153,59 +158,11 @@ export default {
     }
   },
   async mounted() {
-    this.waitForViewerInterval = null
 
-    this.$eventHub.$on('hide-objects', (ids) => {
-      this.isolatedObjects = []
-      this.hiddenObjects = [...new Set([...this.hiddenObjects, ...ids])]
-      window.__viewer.applyFilter({
-        filterBy: { id: { not: this.hiddenObjects } },
-        ghostOthers: false
-      })
-      if (this.isolatedObjects.length !== 0 || this.hiddenObjects.length !== 0)
-        this.showVisReset = true
-      else this.showVisReset = false
-    })
-    this.$eventHub.$on('show-objects', (ids) => {
-      this.hiddenObjects = this.hiddenObjects.filter((id) => ids.indexOf(id) === -1)
-      if (this.hiddenObjects.length === 0) window.__viewer.applyFilter(null)
-      else
-        window.__viewer.applyFilter({
-          filterBy: { id: { not: this.hiddenObjects } },
-          ghostOthers: false
-        })
-      if (this.isolatedObjects.length !== 0 || this.hiddenObjects.length !== 0)
-        this.showVisReset = true
-      else this.showVisReset = false
-    })
-    this.$eventHub.$on('isolate-objects', (ids) => {
-      this.hiddenObjects = []
-      this.isolatedObjects = [...new Set([...this.isolatedObjects, ...ids])]
-      window.__viewer.applyFilter({
-        filterBy: { id: this.isolatedObjects },
-        ghostOthers: true
-      })
-      if (this.isolatedObjects.length !== 0 || this.hiddenObjects.length !== 0)
-        this.showVisReset = true
-      else this.showVisReset = false
-    })
-    this.$eventHub.$on('unisolate-objects', (ids) => {
-      this.isolatedObjects = this.isolatedObjects.filter((id) => ids.indexOf(id) === -1)
-      if (this.isolatedObjects.length === 0) {
-        this.$eventHub.$emit('filter-reset')
-        this.showVisReset = false
-        return window.__viewer.applyFilter(null)
-      }
-      window.__viewer.applyFilter({
-        filterBy: { id: this.isolatedObjects },
-        ghostOthers: true
-      })
-
-      this.showVisReset = true
-    })
   },
   methods: {
     async loadModel() {
+      console.log(`Model load called`)
       if (!window.__viewer) {
         this.$eventHub.$emit('notification', {
           text: 'Error in rendering page (no __viewer found). Please refresh.'

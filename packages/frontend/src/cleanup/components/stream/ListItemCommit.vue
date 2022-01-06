@@ -2,12 +2,7 @@
   <div>
     <div :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`">
       <div class="flex-shrink-0">
-        <user-avatar
-          :id="commit.authorId"
-          :avatar="commit.authorAvatar"
-          :name="commit.authorName"
-          :size="30"
-        />
+        <user-avatar :id="commit.authorId" :size="30" />
       </div>
       <div class="text-body-1 ml-4 text-truncate">
         <router-link

@@ -2,11 +2,6 @@
   <div v-if="stream">
     <portal to="toolbar">
       <div class="d-flex align-center">
-        <!-- <div class="text-truncate flex-shrink-0">
-        <router-link v-tooltip="'all streams'" to="/streams" class="text-decoration-none mx-1">
-          <v-icon small class="primary--text mb-1">mdi-folder-multiple</v-icon>
-        </router-link>
-      </div> -->
         <div class="text-truncate">
           <router-link
             v-tooltip="stream.name"
@@ -17,15 +12,19 @@
             <b>{{ stream.name }}</b>
           </router-link>
         </div>
-        <div
-          v-tooltip="
-            `Last updated: ${new Date(stream.updatedAt).toLocaleString()}<br>
+        <div class="d-none d-sm-inline-block text-truncate">
+          <v-chip v-if="stream.role" v-tooltip="'Your role'" small class="ml-1">
+            <v-icon small left>mdi-account-key-outline</v-icon>
+            {{ stream.role.split(':')[1] }}
+          </v-chip>
+          <span
+            v-tooltip="
+              `Last updated: ${new Date(stream.updatedAt).toLocaleString()}<br>
           Commits: ${stream.commits.totalCount} <br>
           Branches: ${stream.branches.totalCount}`
-          "
-          class="d-none d-sm-inline-block text-truncate"
-        >
-          <span class="caption mx-2">
+            "
+            class="caption mx-1"
+          >
             Updated
             <timeago :datetime="stream.updatedAt"></timeago>
             <v-icon style="font-size: 11px" class="ml-1">mdi-source-commit</v-icon>

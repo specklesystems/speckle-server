@@ -1,6 +1,8 @@
 <template>
   <v-card rounded="lg" style="overflow: hidden" class="transparent elevation-0">
-    <p class="caption">Latest Tutorials:</p>
+    <v-toolbar class="" rounded="lg" dense flat>
+      <v-toolbar-title class="body-2">Latest Tutorials:</v-toolbar-title>
+    </v-toolbar>
     <div v-for="post in posts" :key="post.uuid">
       <v-hover v-slot="{ hover }">
         <v-card class="my-5">

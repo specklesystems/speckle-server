@@ -3,11 +3,12 @@
     <v-btn
       v-show="showVisReset"
       v-tooltip="`Resets all applied filters`"
+      :zzzdisabled="!showVisReset"
       tile
       small
       @click="resetVisibility()"
     >
-      <!-- <v-icon small>mdi-filter-off-outline</v-icon> -->
+      <v-icon small class="mr-2">mdi-eye</v-icon>
       Show All
     </v-btn>
     <v-btn
@@ -30,7 +31,7 @@
     <v-btn v-tooltip="'Overlay another commit'" tile small color="primary">
       <v-icon small>mdi-plus</v-icon>
     </v-btn>
-    <!-- <v-btn tile color="primary" zzzsmall @click="sectionToggle()">
+    <!-- <v-btn tile color="primary" small @click="sectionToggle()">
       <v-icon small class="mr-2">mdi-comment-outline</v-icon>
       Comments
     </v-btn> -->
@@ -39,12 +40,16 @@
 <script>
 export default {
   props: {
-    showVisReset: { type: Boolean, default: false }
+    small: { type: Boolean, default: false }
   },
   data() {
     return {
-      fullScreen: false
+      fullScreen: false,
+      showVisReset: false
     }
+  },
+  mounted() {
+    this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
   },
   methods: {
     toggleCamera() {
@@ -52,7 +57,8 @@ export default {
     },
     resetVisibility() {
       window.__viewer.applyFilter(null)
-      this.$emit('visibility-reset')
+      this.showVisReset = false
+      this.$eventHub.$emit('visibility-reset')
     },
     zoomEx() {
       window.__viewer.zoomExtents()

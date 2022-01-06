@@ -113,20 +113,22 @@ const routes = [
             }
           },
           {
-            path: 'commits/:commitId',
+            path: 'commits/:resourceId*',
             name: 'commit',
             meta: {
-              title: 'Commit | Speckle'
+              title: 'Commit | Speckle',
+              resizableNavbar: true
             },
-            component: () => import('@/cleanup/pages/stream/Commit.vue')
+            component: () => import('@/cleanup/pages/stream/CommitObjectViewer.vue')
           },
           {
-            path: 'objects/:objectId',
+            path: 'objects/:resourceId*',
             name: 'objects',
             meta: {
-              title: 'Object | Speckle'
+              title: 'Object | Speckle',
+              resizableNavbar: true
             },
-            component: () => import('@/views/stream/Object.vue')
+            component: () => import('@/cleanup/pages/stream/CommitObjectViewer.vue')
           },
           {
             path: 'collaborators/',
@@ -144,7 +146,7 @@ const routes = [
               title: 'Stream Settings | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Settings.vue')
+            component: () => import('@/cleanup/pages/stream/Settings.vue')
           },
           {
             path: 'webhooks/',
@@ -153,7 +155,7 @@ const routes = [
               title: 'Webhooks | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Webhooks.vue')
+            component: () => import('@/cleanup/pages/stream/Webhooks.vue')
           },
           {
             path: 'uploads/',
@@ -190,7 +192,7 @@ const routes = [
           title: 'Your Profile | Speckle',
           showBottomNavActions: true
         },
-        component: () => import('@/views/Profile.vue')
+        component: () => import('@/cleanup/pages/user/ProfileSelf.vue')
       },
       {
         path: 'profile/:userId',
@@ -199,7 +201,7 @@ const routes = [
           title: 'User Profile | Speckle',
           showBottomNavActions: true
         },
-        component: () => import('@/views/ProfileUser.vue')
+        component: () => import('@/cleanup/pages/user/Profile.vue')
       },
       {
         path: 'admin',
@@ -207,34 +209,34 @@ const routes = [
           title: 'Admin | Overview'
         },
         redirect: 'admin/dashboard',
-        component: () => import('@/views/admin/Admin.vue'),
+        component: () => import('@/cleanup/pages/admin/Admin.vue'),
         children: [
           {
             name: 'Admin | Overview',
             path: 'dashboard',
-            component: () => import('@/views/admin/AdminOverview.vue')
+            component: () => import('@/cleanup/pages/admin/Dashboard.vue')
           },
           {
             name: 'Admin | Users',
             path: 'users',
-            component: () => import('@/views/admin/AdminUsers.vue'),
+            component: () => import('@/cleanup/pages/admin/Users.vue'),
             props: (route) => ({ ...route.query, ...route.props })
           },
           {
             name: 'Admin | Streams',
             path: 'streams',
-            component: () => import('@/views/admin/AdminStreams.vue'),
+            component: () => import('@/cleanup/pages/admin/Streams.vue'),
             props: (route) => ({ ...route.query, ...route.props })
           },
           {
             name: 'Admin | Settings',
             path: 'settings',
-            component: () => import('@/views/admin/AdminSettings.vue')
+            component: () => import('@/cleanup/pages/admin/ServerSettings.vue')
           },
           {
             name: 'Admin | Invites',
             path: 'invites',
-            component: () => import('@/views/admin/AdminInvites.vue')
+            component: () => import('@/cleanup/pages/admin/Invites.vue')
           }
         ]
       }

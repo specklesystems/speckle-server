@@ -2,7 +2,7 @@
   <div>
     <portal to="toolbar">
       <span class="font-weight-bold mr-2">Your Streams</span>
-      <span class="caption">{{ streams ? streams.totalCount : '...' }}</span>
+      <span class="caption">({{ streams ? streams.totalCount : '...' }})</span>
       <div class="d-none d-md-inline-block">
         <v-btn-toggle v-model="streamFilter" tile color="primary" group mandatory>
           <v-btn small icon disabled><v-icon small>mdi-filter</v-icon></v-btn>
@@ -12,7 +12,6 @@
           <v-btn small text>Reviewer</v-btn>
         </v-btn-toggle>
       </div>
-      <!-- {{ streamFilter }} {{ filteredStreams.length }} -->
     </portal>
     <!-- No streams -->
     <v-row v-if="streams && streams.items.length === 0">
@@ -86,7 +85,7 @@ export default {
   },
   data() {
     return {
-      streamFilter: null,
+      streamFilter: 1,
       infiniteId: 0
     }
   },

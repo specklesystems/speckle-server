@@ -2,11 +2,15 @@
   <v-hover v-slot="{ hover }">
     <v-card
       :to="'/streams/' + stream.id"
-      color=""
-      :elevation="hover ? 5 : 1"
+      class="rounded-lg"
+      :elevation="hover ? 10 : 1"
       style="transition: all 0.2s ease-in-out"
     >
-      <preview-image :url="`/preview/${stream.id}`" :color="hover"></preview-image>
+      <preview-image
+        :url="`/preview/${stream.id}`"
+        :color="hover"
+        :height="previewHeight"
+      ></preview-image>
       <v-toolbar class="transparent elevation-0" dense>
         <v-toolbar-title>{{ stream.name }}</v-toolbar-title>
         <v-spacer />
@@ -29,7 +33,11 @@
         <div class="mt-3 mb-1 caption text-truncate">
           {{ stream.description || 'No description' }}
         </div>
-        <collaborators-display :stream="stream" />
+        <collaborators-display
+          v-if="stream.collaborators"
+          :stream="stream"
+          :link-to-collabs="false"
+        />
       </v-card-text>
     </v-card>
   </v-hover>
@@ -40,6 +48,11 @@ export default {
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     CollaboratorsDisplay: () => import('@/cleanup/components/stream/CollaboratorsDisplay')
   },
-  props: ['stream']
+  props: {
+    stream: { type: Object, default: () => null },
+    previewHeight: { type: Number, default: () => 180 },
+    showCollabs: { type: Boolean, default: true },
+    showDescription: { type: Boolean, default: true }
+  }
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div style="display: inline-block">
-    <v-menu v-if="loggedIn" offset-x open-on-hover>
+    <v-menu v-if="$loggedIn()" offset-x open-on-hover>
       <template #activator="{ on, attrs }">
         <div v-bind="attrs" v-on="on">
           <user-avatar-icon
@@ -16,29 +16,33 @@
           </v-avatar>
         </div>
       </template>
-      <v-card
-        v-if="userById && showHover"
-        style="width: 200px"
-        :to="isSelf ? '/profile' : '/profile/' + id"
-      >
-        <v-card-text v-if="!$apollo.loading" class="text-center">
-          <user-avatar-icon class="my-4" :size="40" :avatar="avatar" :seed="id"></user-avatar-icon>
-
-          <!-- Uncomment when email verification is in place -->
-          <!-- <div v-if="userById.verified" class="mb-1">
-            <v-chip color="primary" small>
-              <v-icon small class="mr-2">mdi-shield</v-icon>
-              verified email
-            </v-chip>
-          </div> -->
-
+      <v-card v-if="userById && showHover" style="width: 200px">
+        <v-card-text v-if="!$apollo.loading">
           <div>
-            <b>{{ userById.name }}</b>
+            <b>
+              {{ userById.name }}
+              <v-icon
+                v-if="userById.verified"
+                v-tooltip="'Verfied email'"
+                x-small
+                class="mr-2 primary--text"
+              >
+                mdi-shield-check
+              </v-icon>
+            </b>
           </div>
-          <div class="caption">
-            {{ userById.company }}
-            <br />
-            {{ userById.bio ? 'Bio: ' + userById.bio : '' }}
+          <div class="caption mt-2">
+            <div>
+              <v-icon x-small>mdi-domain</v-icon>
+              {{ userById.company ? userById.company : 'No company info.' }}
+            </div>
+            <div v-if="userById.bio" class="text-truncate">
+              <v-icon x-small>mdi-information-outline</v-icon>
+              {{ userById.bio }}
+            </div>
+          </div>
+          <div class="mt-2">
+            <v-btn x-small block :to="isSelf ? '/profile' : '/profile/' + id">View profile</v-btn>
           </div>
         </v-card-text>
       </v-card>
@@ -66,8 +70,8 @@ import UserAvatarIcon from '@/cleanup/components/common/UserAvatarIcon'
 export default {
   components: { UserAvatarIcon },
   props: {
-    avatar: String,
-    name: String,
+    avatar: { type: String, default: null },
+    name: { type: String, default: null },
     showHover: {
       type: Boolean,
       default: true
@@ -84,9 +88,6 @@ export default {
   computed: {
     isSelf() {
       return this.id === localStorage.getItem('uuid')
-    },
-    loggedIn() {
-      return localStorage.getItem('uuid') !== null
     }
   },
   apollo: {
@@ -98,7 +99,7 @@ export default {
         }
       },
       skip() {
-        return !this.loggedIn
+        return !this.$loggedIn
       },
       update: (data) => {
         return data.user

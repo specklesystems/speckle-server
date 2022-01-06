@@ -56,7 +56,7 @@ export default {
     if (!this.obj) {
       return
     }
-    if (this.obj.referencedId) this.getRealObject()
+    if (this.obj.referencedId || this.obj.referencedObject ) this.getRealObject()
     else {
       this.wasReference = false
       this.generateKVPs()
@@ -81,7 +81,7 @@ export default {
         `,
         variables: {
           streamId: this.streamId,
-          id: this.obj.referencedId
+          id: this.obj.referencedId || this.obj.referencedObject
         }
       })
       this.realObject = result.data.stream.object.data

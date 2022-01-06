@@ -1,6 +1,7 @@
 query webhooks($streamId: String!) {
   stream(id: $streamId) {
     id
+    name
     role
     webhooks {
       items {

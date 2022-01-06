@@ -1,13 +1,18 @@
 <template>
-  <v-card :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-`">
-    <v-toolbar flat>
-      <v-toolbar-title>General Info</v-toolbar-title>
-    </v-toolbar>
+  <section-card expandable>
+    <template #header>General Info</template>
     <v-row class="d-flex justify-space-around mt-4">
-      <v-col cols="6" sm="6" md="3" v-for="(value, name) in serverStats" :key="name" class="flex-grow-1">
+      <v-col
+        v-for="(value, name) in serverStats"
+        :key="name"
+        cols="6"
+        sm="6"
+        md="3"
+        class="flex-grow-1"
+      >
         <h4 class="primary--text text--lighten-2 text-center">Total {{ name }}</h4>
         <v-tooltip bottom color="primary" :disabled="value < 1000">
-          <template v-slot:activator="{ on, attrs }">
+          <template #activator="{ on, attrs }">
             <p
               class="primary--text text-h3 text-md-h2 text-lg-h1 text-center"
               v-bind="attrs"
@@ -20,16 +25,18 @@
         </v-tooltip>
       </v-col>
     </v-row>
-  </v-card>
+  </section-card>
 </template>
 
 <script>
-import AnimatedNumber from '@/components/AnimatedNumber'
 import gql from 'graphql-tag'
 
 export default {
   name: 'GeneralInfoCard',
-  components: { AnimatedNumber },
+  components: {
+    AnimatedNumber: () => import('@/components/AnimatedNumber'),
+    SectionCard: () => import('@/cleanup/components/common/SectionCard')
+  },
   apollo: {
     serverStats: {
       query: gql`

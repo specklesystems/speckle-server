@@ -82,21 +82,30 @@ export default {
           key,
           value: obj,
           type: 'object',
-          extras: []
+          extras: ['open']
         }
       })
     }
+  },
+  mounted() {
+    this.$eventHub.$on('visibility-reset', () => {
+      this.isolatedObjects.splice(0, this.isolatedObjects.length)
+      this.isolated = false
+    })
   },
   methods: {
     isolateSelection() {
       this.isolated = !this.isolated
       this.$eventHub.$emit('filter-reset')
       if (this.isolated) {
+        this.$eventHub.$emit('show-visreset', true)
+        this.$eventHub.$emit('selection-filters', true)
         window.__viewer.applyFilter({
           filterBy: { id: this.objects.map((o) => o.id) },
           ghostOthers: true
         })
       } else {
+        this.$eventHub.$emit('show-visreset', false)
         window.__viewer.applyFilter(null)
       }
     }

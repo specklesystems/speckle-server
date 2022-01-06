@@ -1,6 +1,6 @@
 <template>
   <v-card :class="`elevation-${elevation} rounded-lg overflow-hidden ${funky ? 'funky' : ''}`">
-    <v-toolbar v-show="hasHeaderSlot || hasActionsSlot" flat>
+    <v-toolbar v-show="hasHeaderSlot || hasActionsSlot || expandable" flat :dense="dense">
       <v-toolbar-title class="text-subtitle-1">
         <slot name="header"></slot>
       </v-toolbar-title>
@@ -23,8 +23,9 @@ export default {
   props: {
     expand: { type: Boolean, default: true },
     expandable: { type: Boolean, default: false },
-    elevation: { type: Number, default: 0 },
-    funky: { type: Boolean, default: false }
+    elevation: { type: Number, default: 2 },
+    funky: { type: Boolean, default: false },
+    dense: { type: Boolean, default: false }
   },
   data() {
     return {

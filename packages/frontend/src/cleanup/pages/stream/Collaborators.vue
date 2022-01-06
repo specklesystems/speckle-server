@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="px-0 py-0">
+  <v-container fluid class="px-0 py-0" xxxstyle="max-width: 768px">
     <portal v-if="stream" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
@@ -14,7 +14,7 @@
         </div>
         <div class="text-truncate flex-shrink-0">
           /
-          <v-icon small class="mr-2 hidden-xs-only">mdi-account-multiple</v-icon>
+          <v-icon small class="mr-2 mb-1 hidden-xs-only">mdi-account-multiple</v-icon>
           <span class="space-grotesk">Collaborators</span>
         </div>
       </div>
@@ -322,7 +322,10 @@ export default {
           this.stream.collaborators.splice(index, 1)
         }
       } catch (e) {
-        console.log(e)
+        // console.log(e)
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
       }
       this.$apollo.queries.stream.refetch()
       this.loading = false
@@ -362,7 +365,9 @@ export default {
           }
         })
       } catch (e) {
-        console.log(e)
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
       }
     },
     showStreamInviteDialog() {

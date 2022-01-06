@@ -47,9 +47,13 @@
         </div>
         <div v-show="activeFilter === null">
           <div v-if="topFilters.length !== 0">
-            <v-subheader>Reccommended filters (based on source application)</v-subheader>
-            <div v-for="filter in topFilters" :key="filter.targetKey">
-              <filter-row-select :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
+            <v-subheader>Reccommended filters:</v-subheader>
+            <div v-for="(filter, index) in topFilters" :key="index">
+              <filter-row-select
+                v-if="filter"
+                :filter="filter"
+                @active-toggle="(e) => (activeFilter = e)"
+              />
             </div>
           </div>
           <div class="">
@@ -110,7 +114,7 @@ export default {
         arr.push(this.allFilters.find((f) => f.name === 'Area'))
         arr.push(this.allFilters.find((f) => f.name === 'Volume'))
       }
-      return arr.filter((el) => el !== null)
+      return arr.filter((el) => !!el)
     },
     matchingFilters() {
       if (this.filterSearch === null) return this.allFilters
@@ -132,6 +136,12 @@ export default {
     if (this.props) {
       this.parseAndSetFilters()
     }
+    this.$eventHub.$on('structure-filters', () => {
+      this.activeFilter = null
+    })
+    this.$eventHub.$on('selection-filters', () => {
+      this.activeFilter = null
+    })
   },
   methods: {
     parseAndSetFilters() {

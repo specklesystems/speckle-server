@@ -1,37 +1,13 @@
 <template>
   <div>
-    <!-- Speckle Logo -->
-    <v-card
-      class="space-grotesk primary--text text-h6 py-5 mb-2 px-5"
-      :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} ${
-        shadowSpeckle ? 'elevation-5' : 'elevation-0'
-      }`"
-      style="position: sticky; top: 0; z-index: 6; width: 100%"
-    >
-      <router-link to="/" class="text-decoration-none">
-        <v-img
-          class="mt-2 hover-tada"
-          width="20"
-          src="@/assets/specklebrick.png"
-          style="display: inline-block"
-        />
-      </router-link>
-      <router-link
-        to="/"
-        class="text-decoration-none"
-        style="position: relative; top: -2px; margin-left: 38px"
-      >
-        <span class="pb-4"><b>Speckle</b></span>
-      </router-link>
-    </v-card>
+    <main-logo :shadow="shadowSpeckle" :expanded="expanded" @hide-drawer="$emit('hide-drawer')" />
 
     <portal-target name="nav">
       <!-- Main Actions -->
-      <v-list dense nav>
-        <v-subheader>Actions</v-subheader>
-        <v-list-item class="primary" dark @click="newStreamDialog = true">
+      <v-list v-if="true" dense nav class="mb-0 pb-0">
+        <v-list-item class="primary elevation-5" dark @click="newStreamDialog = true">
           <v-list-item-icon>
-            <v-icon small class="">mdi-plus-box</v-icon>
+            <v-icon class="">mdi-folder-plus</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>New Stream</v-list-item-title>
@@ -39,18 +15,17 @@
         </v-list-item>
         <v-list-item @click="inviteUsersDialog = true">
           <v-list-item-icon>
-            <v-icon small class="">mdi-email</v-icon>
+            <v-icon class="">mdi-email</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>Send Invite</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
+        <v-divider />
       </v-list>
 
       <!-- Main Navigation -->
-
-      <v-list dense nav>
-        <v-subheader>Navigation</v-subheader>
+      <v-list dense nav class="mt-0 pt-012">
         <v-list-item link to="/">
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-clock-outline</v-icon>
@@ -60,6 +35,7 @@
             <v-list-item-subtitle class="caption">Latest events</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
+        <portal-target name="subnav-feed" />
         <v-list-item link to="/streams">
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-folder-outline</v-icon>
@@ -69,7 +45,8 @@
             <v-list-item-subtitle class="caption">All your streams</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item v-if="user && user.role === 'server:admin'" link to="/admin">
+        <portal-target name="subnav-streams" />
+        <v-list-item v-if="user && user.role === 'server:admin'" exact link to="/admin">
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-cog-outline</v-icon>
           </v-list-item-icon>
@@ -78,8 +55,9 @@
             <v-list-item-subtitle class="caption">Server Management</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
+        <portal-target name="subnav-admin" />
 
-        <v-list-item v-if="user" link to="/profile">
+        <v-list-item v-if="user" link exact to="/profile">
           <v-list-item-icon>
             <user-avatar-icon
               class="mt-1"
@@ -94,6 +72,7 @@
             <v-list-item-subtitle class="caption">Settings & Security</v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
+        <portal-target name="subnav-profile" />
       </v-list>
     </portal-target>
 
@@ -112,10 +91,12 @@
 import userQuery from '@/graphql/user.gql'
 export default {
   components: {
+    MainLogo: () => import('@/cleanup/navigation/MainLogo'),
     NewStream: () => import('@/cleanup/dialogs/NewStream'),
     ServerInvites: () => import('@/cleanup/dialogs/ServerInvites'),
     UserAvatarIcon: () => import('@/cleanup/components/common/UserAvatarIcon')
   },
+  props: { expanded: { type: Boolean, default: false }, drawer: { type: Boolean, default: true } },
   apollo: {
     user: {
       query: userQuery

@@ -1,9 +1,17 @@
 <template>
   <portal to="nav">
-    <div v-if="!loggedIn" class="px-4 mt-2">
-      <v-btn large block color="primary" to="/authn/login">Log In</v-btn>
+    <div v-if="!loggedIn" class="px-4 my-2">
+      <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
     </div>
-    <v-list v-if="stream" style="padding-left: 10px" nav dense class="mt-0 pt-0" expand>
+    <v-list
+      v-if="stream"
+      :key="`super-unclick-me`"
+      style="padding-left: 10px"
+      nav
+      dense
+      class="mt-0 pt-0"
+      expand
+    >
       <v-list-item link :to="`/streams`" exact class="">
         <v-list-item-icon>
           <v-icon small class>mdi-arrow-left-drop-circle</v-icon>

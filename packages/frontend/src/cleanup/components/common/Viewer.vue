@@ -47,6 +47,10 @@ export default {
     window.__viewer.cameraHandler.onWindowResize()
     this.setupEvents()
     this.$emit('viewer-init')
+    this.$eventHub.$on('resize-viewer', () => {
+      window.__viewer.onWindowResize()
+      window.__viewer.cameraHandler.onWindowResize()
+    })
   },
   beforeDestroy() {
     // NOTE: here's where we juggle the container div out, and do cleanup on the
