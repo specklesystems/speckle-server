@@ -17,7 +17,7 @@ const {
 const { GraphQLInstrumentation } = require( '@opentelemetry/instrumentation-graphql' )
 const { Resource } = require( '@opentelemetry/resources' )
 const { SemanticResourceAttributes } = require( '@opentelemetry/semantic-conventions' )
-const { KnexInstrumentation} = require( '@opentelemetry/instrumentation-knex' )
+const { KnexInstrumentation } = require( '@opentelemetry/instrumentation-knex' )
 const { B3Propagator } = require( '@opentelemetry/propagator-b3' )
 
 const opentelemetry = require( '@opentelemetry/api' )
@@ -26,10 +26,12 @@ const opentelemetry = require( '@opentelemetry/api' )
 // const { diag, DiagConsoleLogger, DiagLogLevel } = opentelemetry
 // diag.setLogger( new DiagConsoleLogger(), DiagLogLevel.INFO )
 
+const collectorUrl = process.env.OTEL_URL 
 
 exports.setup = () => {
   const exporter = new OTLPTraceExporter( {
     // url: '<your-collector-endpoint>/v1/traces', // url is optional and can be omitted - default is http://localhost:55681/v1/traces
+    url: collectorUrl,
     headers: {}, // an optional object containing custom headers to be sent with each request
     concurrencyLimit: 10, // an optional limit on pending requests
   } )
@@ -39,20 +41,21 @@ exports.setup = () => {
     } ),
   } )
 
-  // provider.addSpanProcessor( new SimpleSpanProcessor( new ConsoleSpanExporter() ) )
-  provider.addSpanProcessor(
-    new BatchSpanProcessor( exporter, {
+  if ( collectorUrl ){
+    provider.addSpanProcessor( new SimpleSpanProcessor( new ConsoleSpanExporter() ) )
+    provider.addSpanProcessor(
+      new BatchSpanProcessor( exporter, {
       // The maximum queue size. After the size is reached spans are dropped.
-      maxQueueSize: 100,
-      // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
-      maxExportBatchSize: 10,
-      // The interval between two consecutive exports
-      scheduledDelayMillis: 500,
-      // How long the export can run before it is cancelled
-      exportTimeoutMillis: 30000
-    } )
-  )
-
+        maxQueueSize: 100,
+        // The maximum batch size of every export. It must be smaller or equal to maxQueueSize.
+        maxExportBatchSize: 10,
+        // The interval between two consecutive exports
+        scheduledDelayMillis: 500,
+        // How long the export can run before it is cancelled
+        exportTimeoutMillis: 30000
+      } )
+    )
+  }
   provider.register( {
     propagator: new B3Propagator()
   } )

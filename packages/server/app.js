@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 const appRoot = require( 'app-root-path' )
+require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 const OTel = require( `${appRoot}/logging/openTelemetry` )
 OTel.setup()
 
@@ -22,7 +23,6 @@ const prometheusClient = require( 'prom-client' )
 
 const { ApolloServer, ForbiddenError } = require( 'apollo-server-express' )
 
-require( 'dotenv' ).config( { path: `${appRoot}/.env` } )
 
 const { contextApiTokenHelper } = require( './modules/shared' )
 const knex = require( './db/knex' )
