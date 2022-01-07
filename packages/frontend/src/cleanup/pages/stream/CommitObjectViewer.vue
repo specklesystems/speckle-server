@@ -292,9 +292,11 @@ export default {
     },
     async addResource(resId) {
       this.showAddOverlay = false
-      let existing = this.resources.findIndex( res => res.id === resId )
-      if(existing!==-1) {
-        this.$eventHub.$emit('notification', { text: `${resId.length === 10 ? 'Commit' : 'Object'} is already loaded.` } )
+      let existing = this.resources.findIndex((res) => res.id === resId)
+      if (existing !== -1) {
+        this.$eventHub.$emit('notification', {
+          text: `${resId.length === 10 ? 'Commit' : 'Object'} is already loaded.`
+        })
         return
       }
       let resource = {
@@ -305,10 +307,24 @@ export default {
       this.resources.push(resource)
 
       // TODO add to url
+      console.log(this.$route.query)
+      let fullQuery = { ...this.$route.query }
+      delete fullQuery.overlay
       if (this.$route.query.overlay) {
-        // TODO
+        let arr = this.$route.query.overlay
+          .split(',')
+          .map((id) => id.replace(/\s+/g, ''))
+          .filter((id) => id && id !== '' && id !== resource.id)
+        arr.push(resId)
+        this.$router.replace({
+          path: this.$route.path,
+          query: { overlay: arr.join(','), ...fullQuery }
+        })
       } else {
-        // TODO
+        this.$router.replace({
+          path: this.$route.path,
+          query: { overlay: resId, ...fullQuery }
+        })
       }
 
       this.loadModel(
@@ -334,14 +350,14 @@ export default {
       this.setFilters()
       this.setViews()
       if (this.$route.query.overlay) {
-        console.log(this.$route.query.overlay)
         let arr = this.$route.query.overlay
           .split(',')
           .map((id) => id.replace(/\s+/g, ''))
           .filter((id) => id && id !== '' && id !== resource.id)
 
-        let fullQuery = { ...this.$route.params.query }
+        let fullQuery = { ...this.$route.query }
         delete fullQuery.overlay
+        console.log(fullQuery, this.$route.query)
         if (arr.length !== 0)
           this.$router.replace({
             path: this.$route.path,
