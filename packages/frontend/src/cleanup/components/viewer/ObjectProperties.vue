@@ -2,7 +2,12 @@
   <div>
     <div v-if="!loading">
       <div v-for="kvp in limitedKVPs" :key="kvp.key">
-        <object-properties-row :prop="kvp" :stream-id="streamId" :parent="realObject" />
+        <object-properties-row
+          :prop="kvp"
+          :stream-id="streamId"
+          :parent="realObject"
+          :ref-id="kvp.refId"
+        />
       </div>
       <div v-if="currItems < kvps.length">
         <v-btn
@@ -56,7 +61,7 @@ export default {
     if (!this.obj) {
       return
     }
-    if (this.obj.referencedId || this.obj.referencedObject ) this.getRealObject()
+    if (this.obj.referencedId || this.obj.referencedObject) this.getRealObject()
     else {
       this.wasReference = false
       this.generateKVPs()
@@ -109,7 +114,8 @@ export default {
           type,
           extras,
           length: type === 'array' ? value.length : null,
-          visible: true
+          visible: true,
+          refId: value?.referencedId
         })
       }
     }

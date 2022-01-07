@@ -40,7 +40,9 @@
         x-small
         icon
         class="mr-1"
-        @click="toggleVisibility()"
+        target="_blank"
+        :href="`/streams/${streamId}/objects/${refId}`"
+        @xxxxclick="toggleVisibility()"
       >
         <v-icon class="grey--text" style="font-size: 11px">mdi-open-in-new</v-icon>
       </v-btn>
@@ -88,7 +90,7 @@ export default {
   components: {
     ObjectProperties: () => import('@/cleanup/components/viewer/ObjectProperties')
   },
-  props: ['prop', 'streamId', 'parent'],
+  props: ['prop', 'streamId', 'parent', 'refId'],
   data() {
     return {
       expanded: false,

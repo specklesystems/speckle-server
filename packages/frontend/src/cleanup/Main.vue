@@ -8,11 +8,7 @@
       :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
       :width="navWidth"
     >
-      <div
-        v-show="$route.meta.resizableNavbar"
-        class="nav-resizer"
-        :class="`${$vuetify.theme.dark ? 'grey' : 'grey'}`"
-      ></div>
+      <div v-show="$route.meta.resizableNavbar" class="nav-resizer"></div>
       <main-nav :expanded="drawer" @hide-drawer="drawer = false" />
       <template #append>
         <main-nav-bottom />
@@ -167,14 +163,15 @@ export default {
   position: absolute;
   top: 0;
   right: 0;
-  width: 4px;
+  width: 0px;
   height: 100%;
   z-index: 100000;
-  transition: all 0.3s ease;
-  opacity: 0.03;
+  transition: all 0.6s ease;
+  opacity: 0.01;
+  border: 4px solid royalblue;
 }
 .nav-resizer:hover {
   opacity: 0.5;
-  width: 4px;
+  width: 0px;
 }
 </style>

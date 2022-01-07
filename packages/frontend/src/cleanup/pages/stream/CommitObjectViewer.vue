@@ -1,14 +1,12 @@
 <template>
   <div>
-    <div v-if="isMultiple || isCommit || isObject">
+    <div v-if="(isMultiple || isCommit || isObject) && !singleResourceError">
       <commit-toolbar
         v-if="isCommit"
         :stream="resources[0].data"
         @edit-commit="showCommitEditDialog = true"
       />
-
       <object-toolbar v-if="isObject" :stream="resources[0].data" />
-
       <multiple-resources-toolbar
         v-if="isMultiple"
         :stream="{ name: resources[0].data.name, id: $route.params.streamId }"
@@ -62,7 +60,9 @@
             <v-divider v-if="isMultiple && selectionData.length !== 0" :key="'two'" class="my-4" />
           </transition-group>
         </v-scroll-y-transition>
+
         <v-subheader v-if="isMultiple" class="caption">Loaded commits/objects:</v-subheader>
+
         <structure-display
           v-for="(resource, index) in resources"
           :key="index"
@@ -93,9 +93,12 @@
             filter: blur(4px);
           "
           :height="420"
-          :url="`/preview/${$route.params.streamId}/objects/${resources[0].data.commit.referencedObject}`"
+          :url="`/preview/${$route.params.streamId}/objects/${
+            isCommit ? resources[0].data.commit.referencedObject : resources[0].data.object.id
+          }`"
         ></preview-image>
       </v-fade-transition>
+
       <div style="height: 100vh; width: 100%; top: -64px; left: 0px; position: absolute">
         <viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
@@ -103,7 +106,7 @@
         style="width: calc(100% + 0px); bottom: 12px; left: 0px; position: absolute; z-index: 100"
         class="d-flex justify-center"
       >
-        <viewer-controls />
+        <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
       <!-- Progress bar -->
       <div
@@ -118,12 +121,21 @@
       </div>
     </div>
 
-    <!-- <v-row v-if="!$apollo.queries.stream.loading && !stream.commit" justify="center">
+    <div v-else-if="singleResourceError">
       <error-placeholder error-type="404">
-        <h2>Commit {{ $route.params.commitId }} not found.</h2>
+        <h2>
+          <code>{{ $route.params.resourceId }}</code>
+          not found.
+        </h2>
       </error-placeholder>
-    </v-row> -->
-
+    </div>
+    <v-dialog v-model="showAddOverlay" width="800" :fullscreen="$vuetify.breakpoint.smAndDown">
+      <stream-overlay-viewer
+        :stream-id="$route.params.streamId"
+        @add-resource="addResource"
+        @close="showAddOverlay = false"
+      />
+    </v-dialog>
     <v-dialog
       v-if="isCommit"
       v-model="showCommitEditDialog"
@@ -144,6 +156,7 @@ export default {
     ObjectToolbar: () => import('@/cleanup/toolbars/ObjectToolbar'),
     MultipleResourcesToolbar: () => import('@/cleanup/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
+    StreamOverlayViewer: () => import('@/cleanup/dialogs/StreamOverlayViewer'),
     Viewer: () => import('@/cleanup/components/common/Viewer'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
@@ -164,7 +177,8 @@ export default {
     isolatedObjects: [],
     showVisReset: false,
     resourceType: null,
-    resources: []
+    resources: [],
+    showAddOverlay: false
   }),
   computed: {
     isCommit() {
@@ -182,13 +196,8 @@ export default {
       if (this.resources.length > 1) return true
       return false
     },
-    commitObject() {
-      if (!this.stream) return null
-      return {
-        referencedId: this.stream.commit.referencedObject,
-        name: '',
-        streamId: this.stream.id
-      }
+    singleResourceError() {
+      return this.resources.length === 1 && this.resources[0].data.error
     }
   },
   watch: {
@@ -281,8 +290,30 @@ export default {
       this.setFilters()
       this.setViews()
     },
-    async addResource(res) {
-      // TODO
+    async addResource(resId) {
+      this.showAddOverlay = false
+      let existing = this.resources.findIndex( res => res.id === resId )
+      if(existing!==-1) {
+        this.$eventHub.$emit('notification', { text: `${resId.length === 10 ? 'Commit' : 'Object'} is already loaded.` } )
+        return
+      }
+      let resource = {
+        type: resId.length === 10 ? 'commit' : 'object',
+        id: resId,
+        data: resId.length === 10 ? await this.loadCommit(resId) : await this.loadObject(resId)
+      }
+      this.resources.push(resource)
+
+      // TODO add to url
+      if (this.$route.query.overlay) {
+        // TODO
+      } else {
+        // TODO
+      }
+
+      this.loadModel(
+        resource.type === 'commit' ? resource.data.commit.referencedObject : resource.data.object.id
+      )
     },
     async removeResource(resource) {
       let index = this.resources.findIndex((res) => resource.id === res.id)

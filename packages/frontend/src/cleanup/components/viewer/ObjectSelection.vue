@@ -16,6 +16,19 @@
       </v-list-item-content>
       <v-list-item-action class="pa-0 ma-0">
         <v-btn
+          v-show="objects.length > 1"
+          v-tooltip="'Open selection in a new window'"
+          :disabled="objects.length === 0 && !isolated"
+          small
+          icon
+          target="_blank"
+          :href="getSelectionUrl()"
+        >
+          <v-icon small>mdi-open-in-new</v-icon>
+        </v-btn>
+      </v-list-item-action>
+      <v-list-item-action class="pa-0 ma-0">
+        <v-btn
           v-tooltip="'Isolate selected objects'"
           :disabled="objects.length === 0 && !isolated"
           small
@@ -34,7 +47,7 @@
     <v-expand-transition>
       <div v-show="expand" class="mt-3">
         <div v-for="prop in props" :key="prop.value.id">
-          <object-properties-row :prop="prop" :stream-id="streamId" />
+          <object-properties-row :prop="prop" :stream-id="streamId" :ref-id="prop.refId" />
         </div>
         <v-subheader v-show="props.length === 1" class="caption grey--text">
           <v-icon
@@ -82,7 +95,8 @@ export default {
           key,
           value: obj,
           type: 'object',
-          extras: ['open']
+          extras: ['open'],
+          refId: obj.id
         }
       })
     }
@@ -108,6 +122,14 @@ export default {
         this.$eventHub.$emit('show-visreset', false)
         window.__viewer.applyFilter(null)
       }
+    },
+    getSelectionUrl() {
+      if (this.objects.length < 2) return ''
+      let url = `/streams/${this.streamId}/objects/${this.objects[0].id}?overlay=${this.objects
+        .slice(1)
+        .map((o) => o.id)
+        .join(',')}`
+      return url
     }
   }
 }

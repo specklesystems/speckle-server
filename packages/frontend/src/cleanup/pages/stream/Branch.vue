@@ -63,7 +63,7 @@
               <router-link :to="`/streams/${streamId}/commits/${commit.id}`">
                 <preview-image
                   :height="180"
-                  :url="`/preview/${$route.params.streamId}/commits/${commit.id}`"
+                  :url="`/preview/${streamId}/commits/${commit.id}`"
                 ></preview-image>
               </router-link>
               <div style="position: absolute; top: 10px; right: 20px">

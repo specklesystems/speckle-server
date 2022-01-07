@@ -11,11 +11,12 @@
           <b class="d-none d-lg-inline">{{ stream.name }}</b>
         </router-link>
       </div>
-      <div class="text-truncate flex-shrink-0 mx-1">
+      <div class="text-truncate flex-shrink-0 mx-1 d-inline-flex">
         /
-        <div class="text-decoration-none space-grotesk font-weight-bold">
+        <div class="text-decoration-none space-grotesk">
           <v-icon small class="mx-1 primary--text" style="font-size: 13px">mdi-cube-outline</v-icon>
           <b class="d-none d-sm-inline">Object</b>
+          <code class="ml-2">{{ stream.object.id }}</code>
         </div>
       </div>
       <div class="text-truncate flex-shrink-0 hidden-sm-and-up">
@@ -41,11 +42,6 @@
 </template>
 <script>
 export default {
-  components: {
-    SourceAppAvatar: () => import('@/cleanup/components/common/SourceAppAvatar'),
-    UserAvatar: () => import('@/cleanup/components/common/UserAvatar'),
-    CommitReceivedReceipts: () => import('@/cleanup/components/common/CommitReceivedReceipts')
-  },
   props: ['stream'],
   data() {
     return { showInfo: false }

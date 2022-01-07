@@ -6,11 +6,13 @@
       </div>
       <div class="text-body-1 ml-4 text-truncate">
         <router-link
+          v-if="links"
           class="text-decoration-none"
           :to="route ? route : `/streams/${streamId}/commits/${commit.id}`"
         >
           {{ commit.message }}
         </router-link>
+        <span v-else>{{ commit.message }}</span>
         <div class="caption text-truncate">
           <b>{{ commit.authorName }}</b>
           &nbsp;
@@ -24,13 +26,18 @@
           :stream-id="streamId"
           :commit-id="commit.id"
         />
-        <span v-if="commit.branchName" class="caption">
+        <span v-if="commit.branchName && showBranch" class="caption">
           <v-chip
+            v-if="links"
             v-tooltip="`On branch '${commit.branchName}'`"
             small
             color="primary"
             :to="`/streams/${streamId}/branches/${commit.branchName}`"
           >
+            <v-icon small class="mr-2">mdi-source-branch</v-icon>
+            {{ commit.branchName }}
+          </v-chip>
+          <v-chip v-else small>
             <v-icon small class="mr-2">mdi-source-branch</v-icon>
             {{ commit.branchName }}
           </v-chip>
@@ -70,9 +77,17 @@ export default {
       type: Boolean,
       default: true
     },
+    showBranch: {
+      type: Boolean,
+      default: true
+    },
     transparent: {
       type: Boolean,
       default: false
+    },
+    links: {
+      type: Boolean,
+      default: true
     }
   },
   apollo: {

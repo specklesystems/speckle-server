@@ -28,7 +28,13 @@
     <v-btn tile small @click="fullScreen = !fullScreen">
       <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
     </v-btn>
-    <v-btn v-tooltip="'Overlay another commit'" tile small color="primary">
+    <v-btn
+      v-tooltip="'Overlay another commit'"
+      tile
+      small
+      color="primary"
+      @click="$emit('show-add-overlay')"
+    >
       <v-icon small>mdi-plus</v-icon>
     </v-btn>
     <!-- <v-btn tile color="primary" small @click="sectionToggle()">
