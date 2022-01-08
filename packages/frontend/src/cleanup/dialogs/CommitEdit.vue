@@ -95,6 +95,9 @@ export default {
       valid: true
     }
   },
+  mounted() {
+    console.log(this.stream)
+  },
   methods: {
     async editCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/update')

@@ -46,17 +46,18 @@
         text
         rounded
         @click="shareStream = true"
+        class="mr-1"
       >
-        <v-icon v-if="!stream.isPublic" small class="mr-2 grey--text">mdi-lock</v-icon>
-        <v-icon v-else small class="mr-2 grey--text">mdi-lock-open</v-icon>
-        <v-icon small class="mr-2">mdi-share-variant</v-icon>
+        <v-icon v-if="!stream.isPublic" x-small class="mr-1 grey--text">mdi-lock</v-icon>
+        <v-icon v-else x-small class="mr-1 grey--text">mdi-lock-open</v-icon>
+        <v-icon small class="primary--text">mdi-share-variant</v-icon>
       </v-btn>
     </portal>
     <v-dialog v-model="shareStream" max-width="600" :fullscreen="$vuetify.breakpoint.xsOnly">
       <share-stream-dialog
         :stream="stream"
         @close="shareStream = false"
-        @visibility-change="$apollo.queries.stream.refetch()"
+        @visibility-changexxxx="$apollo.queries.stream.refetch()"
       />
     </v-dialog>
   </div>

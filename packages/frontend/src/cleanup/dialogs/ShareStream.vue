@@ -34,7 +34,7 @@
           @focus="copyToClipboard"
         ></v-text-field>
         <v-text-field
-          v-if="$route.params.commitId"
+          v-if="$route.params.resourceId && $route.params.resourceId.length === 10"
           ref="commitUrl"
           dark
           filled
@@ -42,10 +42,49 @@
           hint="Commit url copied to clipboard. Most connectors can receive a specific commit by using this url."
           style="color: blue"
           prepend-inner-icon="mdi-source-commit"
-          :value="streamUrl + '/commits/' + $route.params.commitId"
+          :value="streamUrl + '/commits/' + $route.params.resourceId"
+          @focus="copyToClipboard"
+        ></v-text-field>
+        <v-text-field
+          v-if="$route.params.resourceId && $route.params.resourceId.length !== 10"
+          ref="commitUrl"
+          dark
+          filled
+          rounded
+          hint="Object url copied to clipboard. Most connectors can receive a specific object by using this url."
+          style="color: blue"
+          prepend-inner-icon="mdi-cube-outline"
+          :value="streamUrl + '/objects/' + $route.params.resourceId"
           @focus="copyToClipboard"
         ></v-text-field>
       </v-card-text>
+    </v-sheet>
+    <v-sheet v-if="$route.params.resourceId">
+      <v-toolbar dark flat>
+        <v-app-bar-nav-icon style="pointer-events: none">
+          <v-icon>mdi-camera</v-icon>
+        </v-app-bar-nav-icon>
+        <v-toolbar-title>Embed Viewer</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <span v-if="!stream.isPublic" class="caption">
+          Viewer embedding only works if the stream is public.
+        </span>
+      </v-toolbar>
+      <div v-if="stream.isPublic">
+        <v-card-text>
+          <div class="caption mx-1 pb-2">
+            Copy the code below to embed an iframe of this model in your webpage or document.
+          </div>
+          <v-text-field
+            dense
+            :value="getIframeUrl()"
+            hint="Copied to clipboard!"
+            filled
+            rounded
+            @focus="copyToClipboard"
+          ></v-text-field>
+        </v-card-text>
+      </div>
     </v-sheet>
     <v-sheet v-if="stream" :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`">
       <v-toolbar v-if="stream.role === 'stream:owner'" class="transparent" rounded flat>
@@ -145,6 +184,7 @@
   </v-card>
 </template>
 <script>
+import gql from 'graphql-tag'
 export default {
   components: {
     UserAvatar: () => import('@/components/UserAvatar')
@@ -167,6 +207,14 @@ export default {
       e.target.select()
       document.execCommand('copy')
     },
+    getIframeUrl() {
+      let resourceId = this.$route.params.resourceId
+      if (!resourceId) return null
+      let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
+      return `<iframe src="${base}&${resourceId.length === 10 ? 'commit' : 'object'}=${
+        this.$route.params.resourceId
+      }" width=600 height=400 />"`
+    },
     async changeVisibility() {
       this.swapPermsLoading = true
       try {
@@ -184,7 +232,9 @@ export default {
           }
         })
       } catch (e) {
-        console.log(e)
+        this.$eventHub.$emit('notification', {
+          text: e.message ? e.message : 'Something went wrong.'
+        })
         this.stream.isPublic = !this.stream.isPublic
       }
       this.swapPermsLoading = false

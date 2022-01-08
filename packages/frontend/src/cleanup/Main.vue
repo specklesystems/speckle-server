@@ -24,7 +24,7 @@
       style="margin-top: 4px"
     >
       <v-card
-        class="d-flex flex-grow-1 overflow-hidden align-center elevation-4"
+        class="d-flex flex-grow-1 overflow-hidden align-center elevation-4 rounded-lg"
         style="height: 48px"
       >
         <div v-if="!drawer">

@@ -29,7 +29,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" sm="6" md="4">
-        <infinite-loading spinner="waveDots" :xxxxdistance="10" @infinite="infiniteHandler">
+        <infinite-loading spinner="waveDots" @infinite="infiniteHandler">
           <div slot="no-more">
             <v-col>You've reached the end - no more commits.</v-col>
           </div>

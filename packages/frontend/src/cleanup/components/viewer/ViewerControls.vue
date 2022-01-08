@@ -1,47 +1,57 @@
 <template>
-  <v-card class="transparent elevation-5 rounded-md overflow-hidden d-inline-block">
-    <v-btn
-      v-show="showVisReset"
-      v-tooltip="`Resets all applied filters`"
-      :zzzdisabled="!showVisReset"
-      tile
-      small
-      @click="resetVisibility()"
+  <div>
+    <v-card
+      class="transparent elevation-0 rounded-md d-inline-block flex-grow-1 justify-center text-center"
     >
-      <v-icon small class="mr-2">mdi-eye</v-icon>
-      Show All
-    </v-btn>
-    <v-btn
-      v-tooltip="`Toggle between perspective or ortho camera.`"
-      tile
-      small
-      @click="toggleCamera()"
-    >
-      <v-icon small>mdi-perspective-less</v-icon>
-    </v-btn>
-    <v-btn tile small @click="zoomEx()">
-      <v-icon small>mdi-cube-scan</v-icon>
-    </v-btn>
-    <v-btn tile small @click="sectionToggle()">
-      <v-icon small>mdi-scissors-cutting</v-icon>
-    </v-btn>
-    <v-btn tile small @click="fullScreen = !fullScreen">
-      <v-icon small>{{ fullScreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen' }}</v-icon>
-    </v-btn>
-    <v-btn
-      v-tooltip="'Overlay another commit'"
-      tile
-      small
-      color="primary"
-      @click="$emit('show-add-overlay')"
-    >
-      <v-icon small>mdi-plus</v-icon>
-    </v-btn>
-    <!-- <v-btn tile color="primary" small @click="sectionToggle()">
-      <v-icon small class="mr-2">mdi-comment-outline</v-icon>
-      Comments
-    </v-btn> -->
-  </v-card>
+      <v-btn
+        v-show="showVisReset"
+        v-tooltip="`Resets all applied filters`"
+        :zzzdisabled="!showVisReset"
+        xxxtile
+        :small="small"
+        rounded
+        class="mr-2"
+        @click="resetVisibility()"
+      >
+        <v-icon small class="mr-2">mdi-eye</v-icon>
+        Show All
+      </v-btn>
+      <v-btn
+        v-tooltip="`Toggle between perspective or ortho camera.`"
+        xxxtile
+        :small="small"
+        rounded
+        class="mr-2"
+        @click="toggleCamera()"
+      >
+        <v-icon small>mdi-perspective-less</v-icon>
+      </v-btn>
+      <v-btn xxxtile :small="small" rounded class="mr-2" @click="zoomEx()">
+        <v-icon small>mdi-cube-scan</v-icon>
+      </v-btn>
+      <v-btn
+        v-tooltip="`Toggle section box`"
+        xxxtile
+        :small="small"
+        rounded
+        class="mr-2"
+        @click="sectionToggle()"
+      >
+        <v-icon small>mdi-scissors-cutting</v-icon>
+      </v-btn>
+      <v-btn
+        v-tooltip="'Overlay another commit or object'"
+        xxxtile
+        color="primary"
+        :small="small"
+        rounded
+        class="mr-2"
+        @click="$emit('show-add-overlay')"
+      >
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
+    </v-card>
+  </div>
 </template>
 <script>
 export default {
@@ -75,3 +85,10 @@ export default {
   }
 }
 </script>
+<style scoped>
+.abs {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+}
+</style>

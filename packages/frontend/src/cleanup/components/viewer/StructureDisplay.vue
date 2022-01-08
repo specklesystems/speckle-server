@@ -3,7 +3,6 @@
     <v-list-item
       v-if="!resource.data.error"
       :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-0`"
-      active
       style="position: sticky; top: 82px"
       @click="expand = !expand"
     >
@@ -42,7 +41,6 @@
         </v-btn>
       </v-list-item-action>
     </v-list-item>
-
     <v-list-item v-else class="warning" dark>
       <v-list-item-action>
         <v-icon small>mdi-alert</v-icon>
@@ -68,6 +66,7 @@
     <div v-if="!resource.data.error">
       <v-expand-transition>
         <div v-show="expand" class="mt-3">
+          <!-- <div v-if="isMultiple && resource.type === 'commit'">TODO: info</div> -->
           <object-properties
             :obj="{
               referencedId:
@@ -101,7 +100,7 @@ export default {
   },
   data() {
     return {
-      expand: this.expand,
+      expand: this.expandInitial,
       hiddenObjects: [],
       isolatedObjects: [],
       isolated: false,

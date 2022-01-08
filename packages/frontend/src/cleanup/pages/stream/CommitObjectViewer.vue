@@ -10,6 +10,7 @@
       <multiple-resources-toolbar
         v-if="isMultiple"
         :stream="{ name: resources[0].data.name, id: $route.params.streamId }"
+        :resources="resources"
       />
 
       <portal to="nav">
@@ -68,7 +69,7 @@
           :key="index"
           :resource="resource"
           :is-multiple="isMultiple"
-          :expand-initial="isMultiple"
+          :expand-initial="!isMultiple"
           @remove="removeResource"
         />
 
@@ -142,7 +143,7 @@
       width="500"
       :fullscreen="$vuetify.breakpoint.smAndDown"
     >
-      <commit-edit :stream="resources[0].data.stream" @close="showCommitEditDialog = false" />
+      <commit-edit :stream="resources[0].data" @close="showCommitEditDialog = false" />
     </v-dialog>
   </div>
 </template>
@@ -156,7 +157,7 @@ export default {
     ObjectToolbar: () => import('@/cleanup/toolbars/ObjectToolbar'),
     MultipleResourcesToolbar: () => import('@/cleanup/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
-    StreamOverlayViewer: () => import('@/cleanup/dialogs/StreamOverlayViewer'),
+    StreamOverlayViewer: () => import('@/cleanup/components/viewer/dialogs/AddOverlay'),
     Viewer: () => import('@/cleanup/components/common/Viewer'),
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),

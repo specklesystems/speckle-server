@@ -20,11 +20,14 @@
           Multiple Resources
         </div>
       </div>
+      <!-- <div>
+        <v-btn icon><v-icon small>mdi-information</v-icon></v-btn>
+      </div> -->
     </div>
   </portal>
 </template>
 <script>
 export default {
-  props: ['stream']
+  props: ['stream', 'resources']
 }
 </script>

@@ -109,7 +109,6 @@
               </div>
               <v-divider />
               <div class="pa-2">
-                Received:
                 <commit-received-receipts :commit-id="stream.commit.id" :stream-id="stream.id" />
               </div>
               <div class="pa-2">
@@ -120,7 +119,6 @@
                     stream.commit.authorId === $userId()
                   "
                   v-tooltip="'Edit commit'"
-                  
                   elevation="0"
                   color="primary"
                   small
@@ -154,14 +152,6 @@ export default {
   data() {
     return { showCommitInfo: false }
   },
-  computed: {
-    commitDate() {
-      if (!this.stream.commit) return null
-      let date = new Date(this.stream.commit.createdAt)
-      let options = { year: 'numeric', month: 'long', day: 'numeric' }
-
-      return date.toLocaleString(undefined, options)
-    }
-  }
+  computed: {}
 }
 </script>
