@@ -51,13 +51,13 @@
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading :identifier="infiniteId" class="" @infinite="infiniteHandler">
           <div slot="no-more">
-            <v-card class="pa-4">
-              The end. {{ streamFilter !== 1 ? 'Remove filters to see more.' : '' }}
-            </v-card>
+            The end - no more streams to display.
+            {{ streamFilter !== 1 ? 'Remove filters to see more.' : '' }}
           </div>
           <div slot="no-results">
             <v-card class="pa-4">
-              The end. {{ streamFilter !== 1 ? 'Remove filters to see more.' : '' }}
+              The end - no more streams to display.
+              {{ streamFilter !== 1 ? 'Remove filters to see more.' : '' }}
             </v-card>
           </div>
         </infinite-loading>

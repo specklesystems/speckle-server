@@ -121,7 +121,7 @@ export default {
   },
   mounted() {
     let navContent = [...document.getElementsByClassName('v-navigation-drawer__content')][0]
-    navContent.addEventListener('scroll', (e) => {
+    navContent.addEventListener('scroll', () => {
       if (navContent.scrollTop > 50) this.shadowSpeckle = true
       else this.shadowSpeckle = false
     })

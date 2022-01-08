@@ -32,7 +32,7 @@
                 </v-list-item>
                 <v-list-item
                   v-if="user && !hasManager"
-                  :href="`speckle://accounts?add_server_account=${this.rootUrl}`"
+                  :href="`speckle://accounts?add_server_account=${rootUrl}`"
                   link
                   :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} mb-4`"
                 >

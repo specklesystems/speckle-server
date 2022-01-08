@@ -84,6 +84,27 @@ export default {
     },
     user: {
       query: userQuery
+    },
+    $subscribe: {
+      userStreamAdded: {
+        query: gql`
+          subscription userStreamAdded {
+            userStreamAdded
+          }
+        `,
+        result({ data }) {
+          console.log(data)
+          if (!data) return
+          if (this.$route.params.streamId === data.userStreamAdded.id) return
+          this.$eventHub.$emit('notification', {
+            text: `You've got a new stream!`,
+            action: {
+              name: 'View Stream',
+              to: `/streams/${data.userStreamAdded.id}`
+            }
+          })
+        }
+      }
     }
   },
   data() {
@@ -96,7 +117,7 @@ export default {
     }
   },
   watch: {
-    $route(to, from) {
+    $route(to) {
       if (!to.meta.resizableNavbar) {
         this.navWidth = this.navRestWidth
       }

@@ -161,80 +161,80 @@ export default {
         else this.error = err
       }
     },
-    $subscribe: {
-      streamUpdated: {
-        query: gql`
-          subscription($streamId: String!) {
-            streamUpdated(streamId: $streamId)
-          }
-        `,
-        variables() {
-          return {
-            streamId: this.$route.params.streamId
-          }
-        },
-        result() {
-          this.$apollo.queries.stream.refetch()
-        },
-        skip() {
-          return !this.loggedIn
-        }
-      },
-      branchCreated: {
-        query: gql`
-          subscription($streamId: String!) {
-            branchCreated(streamId: $streamId)
-          }
-        `,
-        variables() {
-          return {
-            streamId: this.$route.params.streamId
-          }
-        },
-        result() {
-          this.$apollo.queries.stream.refetch()
-        },
-        skip() {
-          return !this.loggedIn
-        }
-      },
-      branchDeleted: {
-        query: gql`
-          subscription($streamId: String!) {
-            branchDeleted(streamId: $streamId)
-          }
-        `,
-        variables() {
-          return {
-            streamId: this.$route.params.streamId
-          }
-        },
-        result() {
-          this.$apollo.queries.stream.refetch()
-        },
-        skip() {
-          return !this.loggedIn
-        }
-      },
-      commitCreated: {
-        query: gql`
-          subscription($streamId: String!) {
-            commitCreated(streamId: $streamId)
-          }
-        `,
-        variables() {
-          return {
-            streamId: this.$route.params.streamId
-          }
-        },
-        result() {
-          this.$apollo.queries.stream.refetch()
-        },
-        skip() {
-          return !this.loggedIn
-        }
-      }
-    }
+    // $subscribe: {
+    //   streamUpdated: {
+    //     query: gql`
+    //       subscription($streamId: String!) {
+    //         streamUpdated(streamId: $streamId)
+    //       }
+    //     `,
+    //     variables() {
+    //       return {
+    //         streamId: this.$route.params.streamId
+    //       }
+    //     },
+    //     result() {
+    //       this.$apollo.queries.stream.refetch()
+    //     },
+    //     skip() {
+    //       return !this.loggedIn
+    //     }
+    //   },
+    //   branchCreated: {
+    //     query: gql`
+    //       subscription($streamId: String!) {
+    //         branchCreated(streamId: $streamId)
+    //       }
+    //     `,
+    //     variables() {
+    //       return {
+    //         streamId: this.$route.params.streamId
+    //       }
+    //     },
+    //     result() {
+    //       this.$apollo.queries.stream.refetch()
+    //     },
+    //     skip() {
+    //       return !this.loggedIn
+    //     }
+    //   },
+    //   branchDeleted: {
+    //     query: gql`
+    //       subscription($streamId: String!) {
+    //         branchDeleted(streamId: $streamId)
+    //       }
+    //     `,
+    //     variables() {
+    //       return {
+    //         streamId: this.$route.params.streamId
+    //       }
+    //     },
+    //     result() {
+    //       this.$apollo.queries.stream.refetch()
+    //     },
+    //     skip() {
+    //       return !this.loggedIn
+    //     }
+    //   },
+    //   commitCreated: {
+    //     query: gql`
+    //       subscription($streamId: String!) {
+    //         commitCreated(streamId: $streamId)
+    //       }
+    //     `,
+    //     variables() {
+    //       return {
+    //         streamId: this.$route.params.streamId
+    //       }
+    //     },
+    //     result() {
+    //       this.$apollo.queries.stream.refetch()
+    //     },
+    //     skip() {
+    //       return !this.loggedIn
+    //     }
+    //   }
+    // }
   },
   computed: {
     latestBranches() {

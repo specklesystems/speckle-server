@@ -91,10 +91,18 @@ export default {
             streamId: this.$route.params.streamId
           }
         },
-        result(args) {
-          if (!args.data.branchCreated) return
-          this.snackbar = true
-          this.snackbarInfo = { ...args.data.branchCreated, type: 'branch' }
+        result({ data }) {
+          if (!data.branchCreated) return
+          console.log(data.branchCreated)
+          this.$eventHub.$emit('notification', {
+            text: `A new branch was created!`,
+            action: {
+              name: 'View Branch',
+              to: `/streams/${this.$route.params.streamId}/branches/${data.branchCreated.name}`
+            }
+          })
+          // this.snackbar = true
+          // this.snackbarInfo = { ...data.branchCreated, type: 'branch' }
         },
         skip() {
           return !this.loggedIn
@@ -111,11 +119,19 @@ export default {
             streamId: this.$route.params.streamId
           }
         },
-        result(commitInfo) {
-          if (!commitInfo.data.commitCreated) return
-          console.log(commitInfo)
+        result({ data }) {
+          if (!data.commitCreated) return
+          console.log(data)
           this.snackbar = true
-          this.snackbarInfo = { ...commitInfo.data.commitCreated, type: 'commit' }
+          this.snackbarInfo = { ...data.commitCreated, type: 'commit' }
+
+          this.$eventHub.$emit('notification', {
+            text: `A new commit was created!`,
+            action: {
+              name: 'View Commit',
+              to: `/streams/${this.$route.params.streamId}/commits/${data.commitCreated.id}`
+            }
+          })
         },
         skip() {
           return !this.loggedIn
