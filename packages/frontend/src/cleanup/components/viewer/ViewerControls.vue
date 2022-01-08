@@ -7,7 +7,6 @@
         v-show="showVisReset"
         v-tooltip="`Resets all applied filters`"
         :zzzdisabled="!showVisReset"
-        xxxtile
         :small="small"
         rounded
         class="mr-2"
@@ -18,7 +17,6 @@
       </v-btn>
       <v-btn
         v-tooltip="`Toggle between perspective or ortho camera.`"
-        xxxtile
         :small="small"
         rounded
         class="mr-2"
@@ -26,12 +24,12 @@
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn>
-      <v-btn xxxtile :small="small" rounded class="mr-2" @click="zoomEx()">
-        <v-icon small>mdi-cube-scan</v-icon>
+      <canonical-views :small="small" />
+      <v-btn v-tooltip="'Zoom extents'" :small="small" rounded class="mr-2" @click="zoomEx()">
+        <v-icon small>mdi-arrow-expand</v-icon>
       </v-btn>
       <v-btn
         v-tooltip="`Toggle section box`"
-        xxxtile
         :small="small"
         rounded
         class="mr-2"
@@ -41,7 +39,6 @@
       </v-btn>
       <v-btn
         v-tooltip="'Overlay another commit or object'"
-        xxxtile
         color="primary"
         :small="small"
         rounded
@@ -55,6 +52,9 @@
 </template>
 <script>
 export default {
+  components: {
+    CanonicalViews: () => import('@/cleanup/components/viewer/CanonicalViews')
+  },
   props: {
     small: { type: Boolean, default: false }
   },
