@@ -237,6 +237,17 @@ export default {
       }
     }
 
+    if (
+      this.resources.length === 1 &&
+      this.resources[0].type === 'commit' &&
+      this.resources[0].data.commit.branchName === 'globals'
+    ) {
+      this.$router.push(
+        `/streams/${this.$route.params.streamId}/globals/${this.resources[0].data.commit.id}`
+      )
+      return
+    }
+
     this.$eventHub.$emit('page-load', false)
     setTimeout(() => {
       for (const resource of this.resources) {
