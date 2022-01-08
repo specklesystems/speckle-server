@@ -98,6 +98,44 @@
             </div>
           </v-card-text>
         </section-card>
+        <v-dialog v-model="deleteDialog" width="500" @keydown.esc="deleteDialog = false">
+          <v-card>
+            <v-toolbar class="error mb-4">
+              <v-toolbar-title>Deleting Stream '{{ stream.name }}'</v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-toolbar-items>
+                <v-btn icon @click="deleteDialog = false">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </v-toolbar-items>
+            </v-toolbar>
+
+            <v-card-text>
+              Type the name of the stream below to confirm you really want to delete it. All data
+              will be removed, and existing collaborators will not be able to access it.
+              <v-divider class="my-2"></v-divider>
+              <b>You cannot undo this action.</b>
+
+              <v-text-field
+                v-model="streamNameConfirm"
+                label="Confirm stream name"
+                class="pt-10"
+              ></v-text-field>
+            </v-card-text>
+            <v-card-actions>
+              <!-- <v-btn text color="primary" @click="deleteDialog = false">Cancel</v-btn> -->
+              <v-btn
+                block
+                class="mr-3"
+                color="error"
+                :disabled="streamNameConfirm !== stream.name"
+                @click="deleteStream"
+              >
+                delete
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-col>
     </v-row>
   </v-container>

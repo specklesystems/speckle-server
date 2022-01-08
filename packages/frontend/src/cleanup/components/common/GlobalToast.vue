@@ -27,7 +27,6 @@ export default {
         this.text = null
         this.actionName = null
         this.to = null
-        console.log('clearing toast')
       }
     }
   },

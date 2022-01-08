@@ -46,6 +46,16 @@
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-streams" />
+        <v-list-item link to="/commits">
+          <v-list-item-icon>
+            <v-icon class="mt-2">mdi-source-commit</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Commits</v-list-item-title>
+            <v-list-item-subtitle class="caption">Your latest commits</v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <portal-target name="subnav-commits" />
         <v-list-item v-if="user && user.role === 'server:admin'" exact link to="/admin">
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-cog-outline</v-icon>
@@ -115,6 +125,7 @@ export default {
       if (navContent.scrollTop > 50) this.shadowSpeckle = true
       else this.shadowSpeckle = false
     })
+    this.$eventHub.$on('show-new-stream-dialog', () => (this.newStreamDialog = true))
   },
   methods: {
     switchTheme() {

@@ -73,7 +73,7 @@ export default {
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     StreamPreviewCard: () => import('@/cleanup/components/common/StreamPreviewCard'),
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
+    NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder')
   },
   apollo: {
     streams: {

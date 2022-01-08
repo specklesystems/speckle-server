@@ -63,17 +63,23 @@ const routes = [
         path: '',
         name: 'home',
         meta: {
-          title: 'Home | Speckle',
-          showBottomNavActions: true
+          title: 'Home | Speckle'
         },
         component: () => import('@/cleanup/pages/Feed.vue')
+      },
+      {
+        path: '/commits',
+        name: 'commits',
+        meta: {
+          title: 'Commits | Speckle'
+        },
+        component: () => import('@/cleanup/pages/Commits.vue')
       },
       {
         path: 'streams',
         name: 'streams',
         meta: {
-          title: 'Streams | Speckle',
-          showBottomNavActions: true
+          title: 'Streams | Speckle'
         },
         component: () => import('@/cleanup/pages/Streams.vue')
       },
@@ -189,8 +195,7 @@ const routes = [
         path: 'profile',
         name: 'profile',
         meta: {
-          title: 'Your Profile | Speckle',
-          showBottomNavActions: true
+          title: 'Your Profile | Speckle'
         },
         component: () => import('@/cleanup/pages/user/ProfileSelf.vue')
       },
@@ -198,8 +203,7 @@ const routes = [
         path: 'profile/:userId',
         name: 'user profile',
         meta: {
-          title: 'User Profile | Speckle',
-          showBottomNavActions: true
+          title: 'User Profile | Speckle'
         },
         component: () => import('@/cleanup/pages/user/Profile.vue')
       },

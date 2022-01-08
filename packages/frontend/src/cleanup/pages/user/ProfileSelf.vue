@@ -1,6 +1,6 @@
 <template>
   <v-container class="pa-0" fluid>
-    <portal to="toolbar">Your Profile</portal>
+    <portal to="toolbar"><b>Your Profile</b></portal>
     <portal to="subnav-profile">
       <v-list class="ml-12 pr-0" dense nav subheader>
         <v-list-item @click="signOut()">

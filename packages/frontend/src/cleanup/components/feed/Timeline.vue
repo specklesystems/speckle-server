@@ -1,92 +1,72 @@
 <template>
-  <v-container fluid>
-    <portal to="title">
-      <div class="font-weight-bold">Feed</div>
-    </portal>
-    <v-row class="pr-4">
-      <v-col v-if="$apollo.loading && !timeline">
-        <div class="my-5">
+  <v-row dense>
+    <v-col v-if="$apollo.loading && !timeline">
+      <div class="my-5">
+        <v-timeline align-top dense>
+          <v-timeline-item v-for="i in 6" :key="i" medium>
+            <v-skeleton-loader type="article"></v-skeleton-loader>
+          </v-timeline-item>
+        </v-timeline>
+      </div>
+    </v-col>
+
+    <v-col
+      v-else-if="timeline && timeline.items.length > 0"
+      cols="12"
+      :style="`${$vuetify.breakpoint.xsOnly ? 'margin-left: -20px;' : ''}`"
+    >
+      <div>
+        <div v-if="timeline" key="activity-list">
           <v-timeline align-top dense>
-            <v-timeline-item v-for="i in 6" :key="i" medium>
-              <v-skeleton-loader type="article"></v-skeleton-loader>
-            </v-timeline-item>
+            <list-item-activity
+              v-for="activity in groupedTimeline"
+              :key="activity.time"
+              :activity="activity"
+              :activity-group="activity"
+              class="my-1"
+            ></list-item-activity>
+            <infinite-loading
+              v-if="timeline && timeline.items.length < timeline.totalCount"
+              @infinite="infiniteHandler"
+            >
+              <div slot="no-more">This is all your activity!</div>
+              <div slot="no-results">There are no ctivities to load</div>
+            </infinite-loading>
           </v-timeline>
         </div>
-      </v-col>
+      </div>
+    </v-col>
+    <v-col v-else cols="12">
+      <no-data-placeholder v-if="quickUser">
+        <h2>Welcome {{ quickUser.name.split(' ')[0] }}!</h2>
+        <p class="caption">
+          Once you will create a stream and start sending some data, your activity will show up
+          here.
+        </p>
 
-      <v-col
-        v-else-if="timeline && timeline.items.length > 0"
-        cols="12"
-        lg="8"
-        class="pr-2"
-        :style="`${$vuetify.breakpoint.xsOnly ? 'margin-left: -20px;' : ''}`"
-      >
-        <div>
-          <div v-if="timeline" key="activity-list">
-            <v-timeline align-top dense>
-              <list-item-activity
-                v-for="activity in groupedTimeline"
-                :key="activity.time"
-                :activity="activity"
-                :activity-group="activity"
-                class="my-1"
-              ></list-item-activity>
-              <infinite-loading
-                v-if="timeline && timeline.items.length < timeline.totalCount"
-                @infinite="infiniteHandler"
-              >
-                <div slot="no-more">This is all your activity!</div>
-                <div slot="no-results">There are no ctivities to load</div>
-              </infinite-loading>
-            </v-timeline>
-          </div>
-        </div>
-      </v-col>
-      <v-col v-else cols="12">
-        <no-data-placeholder v-if="quickUser">
-          <h2>Welcome {{ quickUser.name.split(' ')[0] }}!</h2>
-          <p class="caption">
-            Once you will create a stream and start sending some data, your activity will show up
-            here.
-          </p>
-
-          <template #actions>
-            <v-list rounded class="transparent">
-              <v-list-item
-                link
-                class="primary mb-4"
-                dark
-                @click="$eventHub.$emit('show-new-stream-dialog')"
-              >
-                <v-list-item-icon>
-                  <v-icon>mdi-plus-box</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title>Create a new stream!</v-list-item-title>
-                  <v-list-item-subtitle class="caption">
-                    Streams are like folders, or data repositories.
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-          </template>
-        </no-data-placeholder>
-      </v-col>
-
-      <v-col
-        v-show="$vuetify.breakpoint.lgAndUp"
-        v-if="timeline && timeline.items.length > 0"
-        cols="12"
-        lg="4"
-        class="mt-7"
-        style="position: sticky; top: 64px"
-      >
-        <div class="sticky-top">
-          <latest-blogposts></latest-blogposts>
-        </div>
-      </v-col>
-    </v-row>
-  </v-container>
+        <template #actions>
+          <v-list rounded class="transparent">
+            <v-list-item
+              link
+              class="primary mb-4"
+              dark
+              @click="$eventHub.$emit('show-new-stream-dialog')"
+            >
+              <v-list-item-icon>
+                <v-icon>mdi-plus-box</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Create a new stream!</v-list-item-title>
+                <v-list-item-subtitle class="caption">
+                  Streams are like folders, or data repositories.
+                </v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </template>
+      </no-data-placeholder>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
@@ -96,9 +76,8 @@ export default {
   name: 'Timeline',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
-    ListItemActivity: () => import('@/components/ListItemActivity'),
-    LatestBlogposts: () => import('@/components/LatestBlogposts'),
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
+    ListItemActivity: () => import('@/cleanup/components/feed/ListItemActivity2'),
+    NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder')
   },
   props: {
     type: String
@@ -199,7 +178,11 @@ export default {
               action = 'skip'
             else action = 'combine'
           } //stream, branch, commit
-          else if (curr.actionType.includes('_update') || curr.actionType === 'commit_create')
+          else if (
+            curr.actionType.includes('_update') ||
+            curr.actionType === 'commit_create' ||
+            curr.actionType === 'commit_received'
+          )
             action = 'combine'
         }
         if (action === 'combine') {
@@ -235,17 +218,3 @@ export default {
   }
 }
 </script>
-
-<style>
-.sticky-top {
-  position: sticky;
-  top: 68px;
-}
-.recent-streams a {
-  text-decoration: none;
-}
-
-.recent-streams .v-list-item__title {
-  font-family: 'Space Grotesk' !important;
-}
-</style>
