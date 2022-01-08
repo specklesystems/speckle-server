@@ -1,11 +1,12 @@
 /**
  * Set of functions to triangulate n-gon faces (i.e. polygon faces with an arbitrary (n) number of vertices).
- * This class is a javascript fork of https://github.com/specklesystems/speckle-sharp/blob/main/Objects/Objects/Utils/MeshTriangulationHelper.cs
+ * This class is a JavaScript port of https://github.com/specklesystems/speckle-sharp/blob/main/Objects/Objects/Utils/MeshTriangulationHelper.cs
  */
 export default class MeshTriangulationHelper {
 
   /**
    * Calculates the triangulation of the face at given faceIndex.
+   * @remarks This implementation is based the ear clipping method proposed by "Christer Ericson (2005) <i>Real-Time Collision Detection</i>.
    * @param {Number}   faceIndex      The index of the face's cardinality indicator `n`
    * @param {Number[]}   faces      The list of faces in the mesh
    * @param {Number[]}   vertices   The list of vertices in the mesh
