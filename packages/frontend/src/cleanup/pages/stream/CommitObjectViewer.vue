@@ -104,8 +104,10 @@
         <viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
       <div
-        style="width: calc(100% + 0px); bottom: 12px; left: 0px; position: absolute; z-index: 100"
-        class="d-flex justify-center"
+        :style="`width: 100%; bottom: 12px; left: 0px; position: ${
+          $isMobile() ? 'fixed' : 'absolute'
+        }; z-index: 100`"
+        :class="`d-flex justify-center`"
       >
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
@@ -150,6 +152,7 @@
 <script>
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
+import Viewer from '@/cleanup/components/common/Viewer' // do not import async
 
 export default {
   components: {
@@ -158,7 +161,7 @@ export default {
     MultipleResourcesToolbar: () => import('@/cleanup/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
     StreamOverlayViewer: () => import('@/cleanup/components/viewer/dialogs/AddOverlay'),
-    Viewer: () => import('@/cleanup/components/common/Viewer'),
+    Viewer,
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     ViewerControls: () => import('@/cleanup/components/viewer/ViewerControls'),
@@ -288,7 +291,6 @@ export default {
       }
     },
     async loadModel(objectId) {
-      console.log(`Model load called`)
       if (!window.__viewer) {
         this.$eventHub.$emit('notification', {
           text: 'Error in rendering page (no __viewer found). Please refresh.'
@@ -319,7 +321,6 @@ export default {
       this.resources.push(resource)
 
       // TODO add to url
-      console.log(this.$route.query)
       let fullQuery = { ...this.$route.query }
       delete fullQuery.overlay
       if (this.$route.query.overlay) {
@@ -369,7 +370,6 @@ export default {
 
         let fullQuery = { ...this.$route.query }
         delete fullQuery.overlay
-        console.log(fullQuery, this.$route.query)
         if (arr.length !== 0)
           this.$router.replace({
             path: this.$route.path,

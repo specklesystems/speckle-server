@@ -16,8 +16,8 @@
     </v-navigation-drawer>
 
     <v-app-bar
-      hide-on-scroll
-      scroll-treshold="300"
+      xxx-hide-on-scroll
+      xxx-scroll-treshold="300"
       app
       class="elevation-0 transparent"
       flat

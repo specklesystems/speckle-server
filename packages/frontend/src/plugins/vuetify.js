@@ -4,9 +4,10 @@ import Vuetify from 'vuetify/lib'
 
 Vue.use(Vuetify)
 
-let darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+let darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)').matches
 let hasDarkMode = localStorage.getItem('darkModeEnabled')
 if (!hasDarkMode && darkMediaQuery) {
+  console.log('setting dark mode')
   localStorage.setItem('darkModeEnabled', 'dark')
 }
 

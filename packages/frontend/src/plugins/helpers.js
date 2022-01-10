@@ -7,3 +7,7 @@ Vue.prototype.$userId = function () {
 Vue.prototype.$loggedIn = function () {
   return localStorage.getItem('uuid') !== null
 }
+
+Vue.prototype.$isMobile = function () {
+  return window.matchMedia('(any-hover: none)').matches
+}

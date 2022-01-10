@@ -1,8 +1,6 @@
 <template>
   <div>
-    <v-card
-      class="transparent elevation-0 rounded-md d-inline-block flex-grow-1 justify-center text-center"
-    >
+    <v-card class="transparent elevation-0">
       <v-btn
         v-show="showVisReset"
         v-tooltip="`Resets all applied filters`"

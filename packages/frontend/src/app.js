@@ -61,8 +61,8 @@ Vue.filter('capitalize', (value) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
 
-// adds copy to clipboard on vue instance
-import './plugins/userIdHelpers'
+// adds various helper methods
+import '@/plugins/helpers'
 
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')
