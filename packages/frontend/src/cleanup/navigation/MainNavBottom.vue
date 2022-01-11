@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="elevation-10">
     <portal-target name="nav-bottom">
       <v-list nav dense :class="`pt-0 my-0 ${$loggedIn() ? 'pb-0' : ''}`">
         <v-list-item class="d-flex flex-grow-1 justify-center">
