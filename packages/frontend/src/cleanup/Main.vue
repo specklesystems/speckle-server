@@ -11,7 +11,9 @@
       <div v-show="$route.meta.resizableNavbar" class="nav-resizer"></div>
       <main-nav :expanded="drawer" @hide-drawer="drawer = false" />
       <template #append>
-        <main-nav-bottom />
+        <div :style="`${$isMobile() ? 'padding-bottom: 58px' : ''}`" class="elevation-10">
+          <main-nav-bottom />
+        </div>
       </template>
     </v-navigation-drawer>
 
