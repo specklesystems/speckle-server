@@ -1,6 +1,6 @@
 {
   "name": "@speckle/frontend",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -23,6 +23,7 @@
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
     "tween": "^0.9.0",
+    "uuid": "^8.3.2",
     "v-tooltip": "^2.0.3",
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.6.1",
@@ -31,6 +32,7 @@
     "vue-matomo": "^3.14.0-0",
     "vue-router": "^3.4.9",
     "vue-timeago": "^5.1.2",
+    "vue2-perfect-scrollbar": "^1.5.2",
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.3.21",
     "vuetify-image-input": "^19.1.0",

@@ -34,7 +34,7 @@
 
             <span class="caption">
               <v-icon x-small>mdi-email-outline</v-icon>
-              {{ user.email }}
+              {{ user.email }} | {{user.verified}}
             </span>
             <span v-if="user.company" class="caption">
               <v-icon x-small>mdi-domain</v-icon>

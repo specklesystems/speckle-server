@@ -328,22 +328,22 @@ export default {
       {
         title: 'Create Revit models from Rhino',
         image: 'rhino-revit-tutorial.png',
-        link: 'https://speckle.guide/user/interop-rhino-revit.html'
+        link: 'https://speckle.systems/tutorials/getting-rhino-geometry-into-revit/'
       },
       {
-        title: 'View 3d models online',
+        title: 'Map AutoCAD Blocks to Revit families with Dynamo',
         image: 'viewer-tutorial.png',
-        link: 'https://speckle.guide/user/web.html#_3d-viewer'
+        link: 'https://speckle.systems/tutorials/mapping-autocad-blocks-to-revit-families-via-dynamo/'
       },
       {
         title: 'Analyse Revit models in Grasshopper',
         image: 'revit-gh-tutorial.png',
-        link: 'https://speckle.guide/user/interop-revit-gh.html'
+        link: 'https://speckle.systems/tutorials/process-revit-bim-models-in-grasshopper/'
       },
       {
         title: 'See more in our tutorials portal!',
         image: 'tutorials.png',
-        link: 'https://speckle.guide/user/tutorials.html'
+        link: 'https://speckle.systems/tutorials/'
       }
     ],
     tutorialsDev: [
