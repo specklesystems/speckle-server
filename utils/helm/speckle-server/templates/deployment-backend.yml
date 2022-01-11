@@ -45,6 +45,33 @@ spec:
           mountPath: /postgres-certificate
         {{- end }}
 
+        # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+
+        terminationGracePeriodSeconds: 310
+
+        livenessProbe:
+          # account for long-running migrations
+          initialDelaySeconds: 600
+          periodSeconds: 60
+          exec:
+            command:
+              - node
+              - -e
+              - require('request')('http://localhost:3000/graphql?query={serverInfo{version}}', (e,r,b) => process.exit(b.toLowerCase().includes('error')))
+
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          exec:
+            command:
+              - node
+              - -e
+              - require('request')('http://localhost:3000/graphql?query={serverInfo{version}}', (e,r,b) => process.exit(b.toLowerCase().includes('error')))
+
         env:
           - name: CANONICAL_URL
             value: https://{{ .Values.domain }}
@@ -95,6 +122,9 @@ spec:
               secretKeyRef:
                 name: {{ .Values.secretName }}
                 key: s3_secret_key
+          - name: S3_CREATE_BUCKET
+            value: "{{ .Values.s3.create_bucket }}"
+
           {{- end }}
 
           # *** Authentication ***

@@ -31,6 +31,18 @@ spec:
       - name: main
         image: speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}
 
+        # Should be > webhook max call time ( ~= 10 seconds )
+        terminationGracePeriodSeconds: 30
+
+        livenessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          exec:
+            command:
+              - node
+              - -e
+              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 30 * 1000)
+
         resources:
           requests:
             cpu: {{ .Values.webhook_service.requests.cpu }}

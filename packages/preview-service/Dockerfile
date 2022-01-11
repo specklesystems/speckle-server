@@ -55,5 +55,4 @@ COPY --from=build-stage /opt/preview-service /opt/preview-service
 WORKDIR /opt/preview-service
 
 
-ENTRYPOINT [ "tini", "--" ]
 CMD ["node", "bin/www"]

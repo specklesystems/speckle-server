@@ -9,8 +9,12 @@ const { spawn } = require( 'child_process' )
 
 const ServerAPI = require( '../ifc/api' )
 
+const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
+
 const TMP_FILE_PATH = '/tmp/file_to_import'
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
+
+let shouldExit = false
 
 async function startTask() {
   let { rows } = await knex.raw( `
@@ -155,8 +159,15 @@ function runProcessWithTimeout( cmd, cmdArgs, extraEnv, timeoutMs ) {
 }
 
 async function tick() {
+  if ( shouldExit ) {
+    process.exit( 0 )
+  }
+  
   try {
     let task = await startTask()
+
+    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now() )
+
     if ( !task ) {
       setTimeout( tick, 1000 )
       return
@@ -175,6 +186,12 @@ async function tick() {
 
 async function main() {
   console.log( 'Starting FileUploads Service...' )
+  
+  process.on( 'SIGTERM', () => {
+    shouldExit = true
+    console.log( 'Shutting down...' )
+  } )
+
   tick()
 }
 

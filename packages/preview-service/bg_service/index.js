@@ -5,6 +5,12 @@ const knex = require( '../knex' )
 const fetch = require( 'node-fetch' )
 const ObjectPreview = ( ) => knex( 'object_preview' )
 const Previews = ( ) => knex( 'previews' )
+const fs = require( 'fs' )
+
+let shouldExit = false
+
+const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
+
 
 async function startTask() {
   let { rows } = await knex.raw( `
@@ -72,8 +78,15 @@ async function doTask( task ) {
 }
 
 async function tick() {
+  if ( shouldExit ) {
+    process.exit( 0 )
+  }
+
   try {
     let task = await startTask()
+
+    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now() )
+
     if ( !task ) {
       setTimeout( tick, 1000 )
       return
@@ -91,6 +104,11 @@ async function tick() {
 
 async function startPreviewService() {
   console.log( '📸 Started Preview Service' )
+
+  process.on( 'SIGTERM', () => {
+    shouldExit = true
+    console.log( 'Shutting down...' )
+  } )
 
   tick()
 }

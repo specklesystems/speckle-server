@@ -33,6 +33,18 @@ spec:
       - name: main
         image: speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}
 
+        # Should be > File import timeout to allow finishing up imports
+        terminationGracePeriodSeconds: 610
+
+        livenessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          exec:
+            command:
+              - node
+              - -e
+              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 15 * 60 * 1000)
+
         resources:
           requests:
             cpu: {{ .Values.fileimport_service.requests.cpu }}

@@ -20,5 +20,4 @@ RUN npm ci
 
 COPY packages/server .
 
-ENTRYPOINT [ "tini", "--" ]
 CMD ["node", "bin/www"]
