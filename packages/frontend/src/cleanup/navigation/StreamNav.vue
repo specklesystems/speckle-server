@@ -23,7 +23,9 @@
       <!-- <v-divider></v-divider> -->
       <!-- <v-subheader>DESC</v-subheader> -->
       <div class="caption px-3 my-4">
-        <span v-html="parsedDescription"></span>
+        <perfect-scrollbar style="max-height: 100px" :options="{ suppressScrollX: true }">
+          <span v-html="parsedDescription"></span>
+        </perfect-scrollbar>
         <router-link
           v-if="stream.role === 'stream:owner'"
           :to="`/streams/${$route.params.streamId}/settings`"
