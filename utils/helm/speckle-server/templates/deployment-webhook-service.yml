@@ -27,12 +27,12 @@ spec:
             name: postgres-certificate
       {{- end }}
 
+      # Should be > webhook max call time ( ~= 10 seconds )
+      terminationGracePeriodSeconds: 30
+
       containers:
       - name: main
         image: speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}
-
-        # Should be > webhook max call time ( ~= 10 seconds )
-        terminationGracePeriodSeconds: 30
 
         livenessProbe:
           initialDelaySeconds: 60

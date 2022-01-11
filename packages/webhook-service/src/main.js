@@ -88,7 +88,7 @@ async function tick() {
   try {
     let task = await startTask()
 
-    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now() )
+    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {} )
 
     if ( !task ) {
       setTimeout( tick, 1000 )

@@ -27,12 +27,12 @@ spec:
             name: postgres-certificate
       {{- end }}
 
+      # Should be > preview generation time ( 1 hour for good measure )
+      terminationGracePeriodSeconds: 3600
+
       containers:
       - name: main
         image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
-
-        # Should be > preview generation time ( 1 hour for good measure )
-        terminationGracePeriodSeconds: 3600
 
         livenessProbe:
           initialDelaySeconds: 60

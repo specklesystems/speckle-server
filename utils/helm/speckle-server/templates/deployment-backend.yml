@@ -27,6 +27,8 @@ spec:
             name: postgres-certificate
       {{- end }}
 
+      terminationGracePeriodSeconds: 310
+
       containers:
       - name: main
         image: speckle/speckle-server:{{ .Values.docker_image_tag }}
@@ -51,7 +53,6 @@ spec:
             exec:
               command: ["sleep", "5"]
 
-        terminationGracePeriodSeconds: 310
 
         livenessProbe:
           # account for long-running migrations
