@@ -143,7 +143,7 @@ export default class ObjectLoader {
 
     // 2) Iterate through obj
     for( let prop in obj ) {
-      if( typeof obj[prop] !== 'object' ) continue // leave alone primitive props
+      if( typeof obj[prop] !== 'object' || obj[prop] === null ) continue // leave alone primitive props
 
       if( obj[prop].referencedId ) {
         obj[prop] = await this.getObject( obj[prop].referencedId )
@@ -242,7 +242,7 @@ export default class ObjectLoader {
       // split into 5%, 15%, 40%, 40% (5% for the high priority children: the ones with lower minDepth)
       let splitBeforeCacheCheck = [ [], [], [], [] ]
       let crtChildIndex = 0
-      
+
       for ( ; crtChildIndex < 0.05 * childrenIds.length; crtChildIndex++ ) {
         splitBeforeCacheCheck[0].push( childrenIds[ crtChildIndex ] )
       }
@@ -261,7 +261,7 @@ export default class ObjectLoader {
 
       let newChildren = []
       let nextCachePromise = this.cacheGetObjects( splitBeforeCacheCheck[ 0 ] )
-      
+
       for ( let i = 0; i < 4; i++ ) {
         let cachedObjects = await nextCachePromise
         if ( i < 3 ) nextCachePromise = this.cacheGetObjects( splitBeforeCacheCheck[ i + 1 ] )
@@ -343,7 +343,7 @@ export default class ObjectLoader {
         readPromisses[i] = crtReadPromise
       })
     }
-    
+
     while ( true ) {
       let validReadPromises = readPromisses.filter(x => x != null)
       if ( validReadPromises.length === 0 ) {
@@ -424,7 +424,7 @@ export default class ObjectLoader {
       let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
       let idbChildrenPromises = idsChunk.map( id => this.promisifyIdbRequest( store.get( id ) ).then( data => ( { id, data } ) ) )
       let cachedData = await Promise.all(idbChildrenPromises)
- 
+
       // console.log("Cache check for : ", idsChunk.length, Date.now() - t0)
 
       for ( let cachedObj of cachedData ) {
