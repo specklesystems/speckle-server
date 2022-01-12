@@ -10,6 +10,7 @@ const logger = require( 'morgan-debug' )
 const bodyParser = require( 'body-parser' )
 const path = require( 'path' )
 const debug = require( 'debug' )
+const { createTerminus } = require( '@godaddy/terminus' )
 
 const Sentry = require( '@sentry/node' )
 const Tracing = require( '@sentry/tracing' )
@@ -151,6 +152,22 @@ exports.startHttp = async ( app, customPortOverride ) => {
   graphqlServer.applyMiddleware( { app: app } )
 
   app.use( Sentry.Handlers.errorHandler( ) )
+
+  // large timeout to allow large downloads on slow connections to finish
+  createTerminus( server, {
+    signals: [ 'SIGTERM', 'SIGINT' ],
+    timeout: 5 * 60 * 1000,
+    beforeShutdown: () => {
+      debug( 'speckle:shutdown' )( 'Shutting down (signal received)...' )
+    },
+    onSignal: () => {
+      // Other custom cleanup after connections are finished
+    },
+    onShutdown: () => {
+      debug( 'speckle:shutdown' )( 'Shutdown completed' )
+      process.exit( 0 )
+    }
+  } )
 
   server.on( 'listening', ( ) => {
     debug( 'speckle:startup' )( `🚀 My name is Speckle Server, and I'm running at ${server.address().address}:${server.address().port}` )

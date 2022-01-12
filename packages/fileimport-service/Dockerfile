@@ -17,5 +17,4 @@ RUN npm ci
 
 COPY packages/fileimport-service .
 
-ENTRYPOINT [ "tini", "--" ]
 CMD ["node", "src/daemon.js"]

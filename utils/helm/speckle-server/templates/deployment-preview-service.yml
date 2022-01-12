@@ -27,9 +27,21 @@ spec:
             name: postgres-certificate
       {{- end }}
 
+      # Should be > preview generation time ( 1 hour for good measure )
+      terminationGracePeriodSeconds: 3600
+
       containers:
       - name: main
         image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
+
+        livenessProbe:
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          exec:
+            command:
+              - node
+              - -e
+              - process.exit(Date.now() - require('fs').readFileSync('/tmp/last_successful_query', 'utf8') > 3600 * 1000)
 
         resources:
           requests:
