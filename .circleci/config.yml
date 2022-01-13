@@ -99,6 +99,9 @@ jobs:
       - run:
           name: Build FileImport Service
           command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
+      - run:
+          name: Build Test Container
+          command: env FOLDER=utils SPECKLE_SERVER_PACKAGE=test-deployment ./.circleci/build.sh
 
       - add_ssh_keys:
           fingerprints:
