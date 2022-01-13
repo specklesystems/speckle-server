@@ -84,21 +84,21 @@ jobs:
           command: |
             curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
             chmod u+x ./kubectl
-      # - run:
-      #     name: Build Frontend
-      #     command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
-      # - run:
-      #     name: Build Server
-      #     command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
-      # - run:
-      #     name: Build Object Preview Service
-      #     command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
-      # - run:
-      #     name: Build Webhook Service
-      #     command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
-      # - run:
-      #     name: Build FileImport Service
-      #     command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
+      - run:
+          name: Build Frontend
+          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
+      - run:
+          name: Build Server
+          command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
+      - run:
+          name: Build Object Preview Service
+          command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
+      - run:
+          name: Build Webhook Service
+          command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
+      - run:
+          name: Build FileImport Service
+          command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
       - run:
           name: Build Test Container
           command: env FOLDER=utils SPECKLE_SERVER_PACKAGE=test-deployment ./.circleci/build.sh
