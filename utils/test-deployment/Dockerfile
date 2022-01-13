@@ -1,6 +1,6 @@
 FROM python:3.8-slim
 
-COPY install_prerequisites.sh requirements.txt run_tests.py ./
+COPY utils/test-deployment .
 RUN ./install_prerequisites.sh
 
 CMD [ "./run_tests.py" ]
