@@ -14,6 +14,7 @@ s3:
   endpoint: ""
   bucket: ""
   access_key: ""
+  create_bucket: "false"
   # secret_key: secret -> s3_secret_key
 
 #redis:
