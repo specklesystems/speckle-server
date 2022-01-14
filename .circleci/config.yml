@@ -32,7 +32,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: gergo/bogus
+              only: gergo/helmChartTest
 
 jobs:
   test_server:
