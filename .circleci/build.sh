@@ -2,11 +2,11 @@
 
 set -e
 
+# enables building the test-deployment container with the same script
+# defaults to packages for minimal intervention in the ci config
 FOLDER="${FOLDER:-packages}"
 
 DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG-$SPECKLE_SERVER_PACKAGE
-
-echo $DOCKER_IMAGE_TAG
 
 IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
