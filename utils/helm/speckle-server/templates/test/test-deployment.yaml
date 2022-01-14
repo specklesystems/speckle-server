@@ -17,7 +17,7 @@ spec:
         - name: SPECKLE_SERVER
           value: https://{{ .Values.domain }}
         - name: SERVER_VERSION
-          value: "2.3.1"
+          value: "2.3.2"
           # value: {{ .Values.docker_image_tag }}
   restartPolicy: Never
 {{- end }}
