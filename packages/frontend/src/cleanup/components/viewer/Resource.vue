@@ -193,11 +193,11 @@ export default {
 </script>
 <style scoped>
 .list-overlay-dark {
-  background: rgba(40, 40, 40, 1);
+  background: rgba(40, 40, 40, 0.5);
   z-index: 5;
 }
 .list-overlay-light {
-  background: rgba(235, 235, 235, 1);
+  background: rgba(235, 235, 235, 0.5);
   z-index: 5;
 }
 </style>

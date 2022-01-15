@@ -62,15 +62,10 @@
           </transition-group>
         </v-scroll-y-transition>
 
-        <v-subheader v-if="isMultiple" class="caption">Loaded commits/objects:</v-subheader>
-
-        <structure-display
-          v-for="(resource, index) in resources"
-          :key="index"
-          :resource="resource"
-          :is-multiple="isMultiple"
-          :expand-initial="!isMultiple"
+        <resource-group
+          :resources="resources"
           @remove="removeResource"
+          @add-resource="addResource"
         />
 
         <v-divider v-if="isMultiple" class="my-4" />
@@ -156,17 +151,17 @@ import Viewer from '@/cleanup/components/common/Viewer' // do not import async
 
 export default {
   components: {
+    Viewer,
     CommitToolbar: () => import('@/cleanup/toolbars/CommitToolbar'),
     ObjectToolbar: () => import('@/cleanup/toolbars/ObjectToolbar'),
     MultipleResourcesToolbar: () => import('@/cleanup/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
     StreamOverlayViewer: () => import('@/cleanup/components/viewer/dialogs/AddOverlay'),
-    Viewer,
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     ViewerControls: () => import('@/cleanup/components/viewer/ViewerControls'),
     ObjectSelection: () => import('@/cleanup/components/viewer/ObjectSelection'),
-    StructureDisplay: () => import('@/cleanup/components/viewer/StructureDisplay'),
+    ResourceGroup: () => import('@/cleanup/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/cleanup/components/viewer/ViewsDisplay'),
     Filters: () => import('@/cleanup/components/viewer/Filters')
   },
