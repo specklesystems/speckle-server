@@ -165,9 +165,9 @@ export default class FilteringManager {
         if ( valueFilter.not.includes( objValue ) )
           return false
       }
-      if ( 'lte' in valueFilter && objValue > valueFilter.lte )
+      if ( 'lte' in valueFilter && !( objValue <= valueFilter.lte ) )
         return false
-      if ( 'gte' in valueFilter && objValue < valueFilter.gte )
+      if ( 'gte' in valueFilter && !( objValue >= valueFilter.gte ) )
         return false
       return true
     }

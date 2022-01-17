@@ -247,6 +247,8 @@ export default class SceneObjectManager {
   }
 
   async removeImportedObject( importedUrl ) {
+    this.viewer.interactions.deselectObjects()
+
     for ( let objGroup of this.sceneObjects.allObjects.children ) {
       let toRemove = objGroup.children.filter( obj => obj.userData?.__importedUrl === importedUrl )
       toRemove.forEach( obj => {
@@ -261,25 +263,6 @@ export default class SceneObjectManager {
     this.views = this.views.filter( v => v.__importedUrl !== importedUrl )
 
     await this.sceneObjects.applyFilter( undefined, true )
-  }
-
-  removeAllObjects() {
-    for ( let obj of this.objects ) {
-      if ( obj.geometry ) {
-        obj.geometry.dispose()
-      }
-    }
-    this.sceneObjects.allSolidObjects.clear()
-    this.sceneObjects.allTransparentObjects.clear()
-    this.sceneObjects.allLineObjects.clear()
-    this.sceneObjects.allPointObjects.clear()
-
-    this.viewer.interactions.deselectObjects()
-    this.viewer.interactions.hideSectionBox()
-    //this.objectIds = []
-    this.views = []
-
-    this.postLoadFunction()
   }
 
   async postLoadFunction() {

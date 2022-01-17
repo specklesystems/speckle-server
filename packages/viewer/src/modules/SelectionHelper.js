@@ -60,11 +60,13 @@ export default class SelectionHelper extends EventEmitter {
 
     // Handle mouseclicks
     let mdTime
-    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( ) => {
+    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+      e.preventDefault()
       mdTime = new Date().getTime()
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      e.preventDefault()
       if( this.viewer.cameraHandler.orbiting ) return
 
       let delta = new Date().getTime() - mdTime
