@@ -19,6 +19,8 @@ module.exports = async () => {
   await registerOrUpdateApp( { ...SpeckleExcel } )
   await registerOrUpdateApp( { ...SpeckleCarbonCalculator } )
   await registerOrUpdateApp( { ...SpeckleProjectSetupApp } )
+  await registerOrUpdateApp( { ...SpeckleProjectSetupApp } )
+  await registerOrUpdateApp( { ...SpeckleFuseApp } )
 }
 
 async function registerOrUpdateApp( app ) {
@@ -127,4 +129,15 @@ let SpeckleProjectSetupApp = {
   public: true,
   redirectUrl: 'https://projects.speckle.arup.com',
   scopes: 'all'
+}
+
+let SpeckleFuseApp = {
+  id: 'fuse',
+  secret: 'fuse',
+  name: 'Fuse-Speckle-Connector',
+  description: 'Fuse auth with Speckle production',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'https://arup-fuse-ie-speckle-app.azurewebsites.net/login',
+  scopes: [ 'streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read' ]
 }
