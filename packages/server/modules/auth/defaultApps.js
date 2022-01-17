@@ -19,7 +19,6 @@ module.exports = async () => {
   await registerOrUpdateApp( { ...SpeckleExcel } )
   await registerOrUpdateApp( { ...SpeckleCarbonCalculator } )
   await registerOrUpdateApp( { ...SpeckleProjectSetupApp } )
-  await registerOrUpdateApp( { ...SpeckleProjectSetupApp } )
   await registerOrUpdateApp( { ...SpeckleFuseApp } )
 }
 
