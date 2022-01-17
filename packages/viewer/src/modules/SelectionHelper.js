@@ -86,7 +86,11 @@ export default class SelectionHelper extends EventEmitter {
     this.touchLocation
 
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
-    this.viewer.renderer.domElement.addEventListener( 'touchend', ( ) => {
+    this.viewer.renderer.domElement.addEventListener( 'touchend', ( e ) => {
+      // Ignore the first `touchend` when pinch-zooming (so we don't consider double-tap)
+      if ( e.targetTouches.length > 0 ) {
+        return
+      }
       let currentTime = new Date().getTime()
       let tapLength = currentTime - this.lastTap
       clearTimeout( this.tapTimeout )
