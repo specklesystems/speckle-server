@@ -258,8 +258,8 @@ export default class Viewer extends EventEmitter {
 
   }
 
-  getObjectsProperties() {
-    return this.sceneManager.sceneObjects.getObjectsProperties()
+  getObjectsProperties( includeAll = true ) {
+    return this.sceneManager.sceneObjects.getObjectsProperties( includeAll )
   }
 
   dispose() {

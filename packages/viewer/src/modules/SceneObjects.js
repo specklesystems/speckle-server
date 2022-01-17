@@ -59,7 +59,7 @@ export default class SceneObjects {
     }
   }
 
-  getObjectsProperties() {
+  getObjectsProperties( includeAll = true ) {
     let flattenObject = function( obj ) {
       let flatten = {}
       for ( let k in obj ) {
@@ -81,8 +81,10 @@ export default class SceneObjects {
       return flatten
     }
 
+    let targetObjects = includeAll ? this.allObjects : this.objectsInScene
+
     let propValues = {}
-    for ( let objGroup of this.objectsInScene.children ) {
+    for ( let objGroup of targetObjects.children ) {
       for ( let threeObj of objGroup.children ) {
         let obj = flattenObject( threeObj.userData )
         for ( let prop of Object.keys( obj ) ) {

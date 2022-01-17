@@ -9,8 +9,8 @@ export default class FilteringManager {
       color: 0x7080A0,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.04,
-      wireframe: true
+      opacity: 0.2,
+      wireframe: false
     } )
     // console.log(this.viewer.sectionBox.planes)
     
