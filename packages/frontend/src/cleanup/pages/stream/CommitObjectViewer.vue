@@ -50,6 +50,7 @@
           </v-list-item>
         </v-list>
 
+        <!-- Selection info -->
         <v-scroll-y-transition>
           <transition-group>
             <object-selection
@@ -62,6 +63,7 @@
           </transition-group>
         </v-scroll-y-transition>
 
+        <!-- Loaded resources  -->
         <resource-group
           :resources="resources"
           @remove="removeResource"
@@ -70,8 +72,10 @@
 
         <v-divider v-if="isMultiple" class="my-4" />
 
+        <!-- Views display -->
         <views-display v-if="views.length !== 0" :views="views" />
 
+        <!-- Filters display -->
         <filters :props="objectProperties" :source-application="'asdf'" />
       </portal>
 
@@ -107,15 +111,24 @@
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
       <!-- Progress bar -->
-      <div
-        v-if="!loadedModel"
-        style="height: 100vh; width: 20%; top: 45%; left: 40%; position: absolute"
-      >
+      <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
         <v-progress-linear
           v-model="loadProgress"
           :indeterminate="loadProgress >= 99 && !loadedModel"
           color="primary"
         ></v-progress-linear>
+      </div>
+      <div
+        v-show="(viewerBusy && loadedModel)"
+        class="pl-2 pb-2"
+        style="width: 100%; bottom: 12px; left: 0; position: absolute; z-index: 10000000"
+      >
+        <v-progress-circular
+          :size="20"
+          indeterminate
+          color="primary"
+          class="mr-2"
+        ></v-progress-circular>
       </div>
     </div>
 
@@ -177,7 +190,8 @@ export default {
     showVisReset: false,
     resourceType: null,
     resources: [],
-    showAddOverlay: false
+    showAddOverlay: false,
+    viewerBusy: false
   }),
   computed: {
     isCommit() {
@@ -255,6 +269,7 @@ export default {
             ? resource.data.commit.referencedObject
             : resource.data.object.id
         )
+        window.__viewer.on('busy', (val) => (this.viewerBusy = val))
       }
     }, 300)
   },

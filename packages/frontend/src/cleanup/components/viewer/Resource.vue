@@ -109,6 +109,7 @@ export default {
   },
   computed: {},
   mounted() {
+    // handles sub-resource stuff: individual rows toggling things
     this.$eventHub.$on('hide-objects', (ids) => {
       this.$eventHub.$emit('structure-filters', true)
       this.isolatedObjects = []
@@ -121,6 +122,7 @@ export default {
         this.$eventHub.$emit('show-visreset', true)
       else this.$eventHub.$emit('show-visreset', false)
     })
+
     this.$eventHub.$on('show-objects', (ids) => {
       this.$eventHub.$emit('structure-filters', true)
       this.hiddenObjects = this.hiddenObjects.filter((id) => ids.indexOf(id) === -1)
@@ -137,6 +139,7 @@ export default {
         this.$eventHub.$emit('show-visreset', true)
       else this.$eventHub.$emit('show-visreset', false)
     })
+
     this.$eventHub.$on('isolate-objects', (ids) => {
       this.$eventHub.$emit('structure-filters', true)
       this.hiddenObjects = []
@@ -149,6 +152,7 @@ export default {
         this.$eventHub.$emit('show-visreset', true)
       else this.$eventHub.$emit('show-visreset', false)
     })
+    
     this.$eventHub.$on('unisolate-objects', (ids) => {
       this.$eventHub.$emit('structure-filters', true)
       this.isolatedObjects = this.isolatedObjects.filter((id) => ids.indexOf(id) === -1)

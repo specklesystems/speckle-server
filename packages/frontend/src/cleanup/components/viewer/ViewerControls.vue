@@ -59,11 +59,13 @@ export default {
   data() {
     return {
       fullScreen: false,
-      showVisReset: false
+      showVisReset: false,
+      viewerBusy: false
     }
   },
   mounted() {
     this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
+    // window.__viewer.on('busy', (val) => (this.viewerBusy = val))
   },
   methods: {
     toggleCamera() {
