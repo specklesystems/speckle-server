@@ -91,10 +91,13 @@ if (AuthToken) {
     })
 }
 
+import store from '@/store'
+
 function initVue() {
   new Vue({
     router,
     vuetify,
+    store,
     apolloProvider: createProvider(),
     render: (h) => h(App)
   }).$mount('#app')

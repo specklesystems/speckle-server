@@ -36,7 +36,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.3.21",
     "vuetify-image-input": "^19.1.0",
-    "vuex": "^3.6.0"
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
     "@mdi/font": "^5.8.55",

@@ -59,22 +59,26 @@ export default {
   data() {
     return {
       fullScreen: false,
-      showVisReset: false,
       viewerBusy: false
+    }
+  },
+  computed: {
+    showVisReset() {
+      return (
+        (this.$store.state.isolateKey !== null && this.$store.state.isolateValues.length !== 0) ||
+        (this.$store.state.hideKey !== null && this.$store.state.hideValues.length !== 0)
+      )
     }
   },
   mounted() {
     this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
-    // window.__viewer.on('busy', (val) => (this.viewerBusy = val))
   },
   methods: {
     toggleCamera() {
       window.__viewer.toggleCameraProjection()
     },
     resetVisibility() {
-      window.__viewer.applyFilter(null)
-      this.showVisReset = false
-      this.$eventHub.$emit('visibility-reset')
+      this.$store.commit('resetFilter')
     },
     zoomEx() {
       window.__viewer.zoomExtents()

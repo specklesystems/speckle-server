@@ -116,11 +116,6 @@ export default {
       let keys = Object.keys(colorLegend)
       for (const key of keys) {
         if (!this.legend[key]) this.$set(this.legend, key, colorLegend[key])
-        //this.legend[key] = colorLegend[key]
-        // const idx = this.legend.indexOf((o) => o.name === key)
-        // if (idx === -1) {
-        //   this.legend.push({ name: key, color: colorLegend[key] })
-        // }
       }
     },
     async toggleFilter(type) {

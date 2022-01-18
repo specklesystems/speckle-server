@@ -175,10 +175,10 @@ export default class FilteringManager {
         return false
       }
 
-      if ( 'not_includes' in valueFilter && Array.isArray( valueFilter.not_includes ) ) {
+      if ( 'excludes' in valueFilter && Array.isArray( valueFilter.excludes ) ) {
         if ( !objValue || !Array.isArray( objValue ) )
           return true
-        for ( let testValue of valueFilter.not_includes )
+        for ( let testValue of valueFilter.excludes )
           if ( objValue.includes( testValue ) )
             return false
         return true
