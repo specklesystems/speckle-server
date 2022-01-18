@@ -61,6 +61,8 @@ The 3 optional parameters are:
    - An array of values: An object passes the filter if its value is in the array
    - A range of values, specified by `{ 'gte': value1, 'lte': value2 }` (greater than or equal, lower than or equal)
    - An exclusion list, specified by `{ 'not': excludedValuesArray }`
+   - For array inclusion, `{ includes: [value1, value2, ...] }` matches if the object property is of type array and it includes at least one of the values
+   - For array non-inclusion, `{ not_includes: [value1, value2, ...] }` will match everything except arrays that include any of the specified values
 
  - `colorBy`: A dictionary that makes all objects colored based on a property value. Two types of coloring are supported:
    - Gradient (from a numeric property): `{ 'type': 'gradient', 'property': propertyName, 'minValue': propertyMinValue, 'maxValue': propertyMaxValue, 'gradientColors': [color1, color2] }`
