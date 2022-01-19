@@ -110,6 +110,11 @@ async function startPreviewService() {
     console.log( 'Shutting down...' )
   } )
 
+  process.on( 'SIGINT', () => {
+    shouldExit = true
+    console.log( 'Shutting down...' )
+  } )
+
   tick()
 }
 
