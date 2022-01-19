@@ -8,18 +8,56 @@ on:
       - main
 
 jobs:
-  docker:
-    name: Docker
+  buildDockerImage:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: ['prod', 'hs2']
+        package: ['server', 'frontend', 'preview-service']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build Docker Image
+        run: |
+          docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_TAG -t ${{ matrix.package }}:latest -f packages/${{ matrix.package }}/Dockerfile .
+          docker save ${{ matrix.package }}:latest -o ${{ matrix.package }}.tar
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Upload Build Assets
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.package }}
+          path: ${{ matrix.package }}.tar
+          mime-type: application/octet-stream
+
+  deploy:
+    needs: [ buildDockerImage ]
+    name: Deploy to ${{ matrix.environment }} for ${{ matrix.package }}
+    runs-on: ubuntu-latest
+    environment: 
+      name: ${{ matrix.environment }}
+      url: ${{ matrix.url }}
+    strategy:
+      matrix:
+        environment: ['prod', 'hs2', 'staging']
         package: ['server', 'frontend', 'preview-service']
         include:
           - environment: prod
             region: eu-west-1
+            accessKey: AWS_ACCESS_KEY_ID
+            secretAccessKey: AWS_SECRET_ACCESS_KEY
+            url: https://v2.speckle.arup.com
           - environment: hs2
             region: eu-west-2
+            accessKey: AWS_ACCESS_KEY_ID
+            secretAccessKey: AWS_SECRET_ACCESS_KEY
+            url: https://hs2.speckle.arup.com
+          - environment: staging
+            region: eu-west-1
+            accessKey: STAGING_AWS_ACCESS_KEY_ID
+            secretAccessKey: STAGING_AWS_SECRET_ACCESS_KEY
+            url: https://v2.speckle-staging.speckle.arup.com
           - package: 'server'
             cxName: 'spec-cx-server'
             serviceName: 'specklev2'
@@ -28,36 +66,43 @@ jobs:
             serviceName: 'specklev2-frontend'
           - package: 'preview-service'
             cxName: 'spec-cx-preview'
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      # Download the Docker image tar
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ matrix.package }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ matrix.region }}
+          aws-access-key-id: ${{ secrets[matrix.accessKey] }}
+          aws-secret-access-key: ${{ secrets[matrix.secretAccessKey] }}
+          aws-region: eu-west-1
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ matrix.cxName }}
-          IMAGE_TAG: v${{ github.sha }}
-        run: |
-          docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f packages/${{ matrix.package }}/Dockerfile .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           
       - name: Download task definition
         if: matrix.package != 'preview-service'
         run: |
           aws ecs describe-task-definition --task-definition specklev2-${{ matrix.package }}-${{ matrix.environment }} --query taskDefinition > task-definition.json
+
+      - name: Load Docker Image and push to AWS
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ matrix.cxName }}
+          IMAGE_TAG: v${{ github.sha }}
+        id: build-image
+        run: |
+          docker load -i ${{ matrix.package }}.tar
+          docker tag ${{ matrix.package }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag ${{ matrix.package }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::${{ matrix.package }}:${{ github.sha }}"
           
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
