@@ -101,7 +101,6 @@ export default {
   data() {
     return {
       expand: this.expandInitial
-      // isolated: false
     }
   },
   computed: {

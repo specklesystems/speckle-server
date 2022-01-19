@@ -11,7 +11,7 @@
         @click="resetVisibility()"
       >
         <v-icon small class="mr-2">mdi-eye</v-icon>
-        Show All
+        Reset Filters
       </v-btn>
       <v-btn
         v-tooltip="`Toggle between perspective or ortho camera.`"
@@ -64,10 +64,12 @@ export default {
   },
   computed: {
     showVisReset() {
-      return (
-        (this.$store.state.isolateKey !== null && this.$store.state.isolateValues.length !== 0) ||
-        (this.$store.state.hideKey !== null && this.$store.state.hideValues.length !== 0)
-      )
+      // return (
+      //   (this.$store.state.isolateKey !== null && this.$store.state.isolateValues.length !== 0) ||
+      //   (this.$store.state.hideKey !== null && this.$store.state.hideValues.length !== 0) ||
+      //   (this.$store.state.isolateCategoryKey !== null && this.$store.state.isolateCategoryValues.length !== 0)
+      // )
+      return !!this.$store.state.appliedFilter
     }
   },
   mounted() {

@@ -6,7 +6,7 @@
           v-tooltip="'Set colors automatically based on each property'"
           small
           icon
-          @click.stop="colorBy = !colorBy"
+          @click.stop="toggleColors()"
         >
           <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">mdi-palette</v-icon>
         </v-btn>
@@ -41,7 +41,7 @@
         <div
           v-if="colorBy"
           class="d-inline-block rounded mr-3 mt-1 elevation-3"
-          :style="`width: 8px; height: 8px; background:${legend[type.fullName]};`"
+          :style="`width: 8px; height: 8px; background:${$store.state.colorLegend[type.fullName]};`"
         ></div>
         <v-btn
           v-tooltip="'Toggle visibility'"
@@ -62,10 +62,18 @@
           @click="toggleFilter(type.fullName)"
         >
           <v-icon
-            :class="`${filtered.indexOf(type.fullName) !== -1 ? 'primary--text' : 'grey--text'}`"
+            :class="`${
+              $store.state.isolateCategoryValues.indexOf(type.fullName) !== -1
+                ? 'primary--text'
+                : 'grey--text'
+            }`"
             style="font-size: 11px"
           >
-            {{ !filtered.indexOf(type.fullName) !== -1 ? 'mdi-filter' : 'mdi-filter' }}
+            {{
+              !$store.state.isolateCategoryValues.indexOf(type.fullName) !== -1
+                ? 'mdi-filter'
+                : 'mdi-filter'
+            }}
           </v-icon>
         </v-btn>
       </v-col>
@@ -86,28 +94,25 @@ export default {
       hidden: [],
       filtered: [],
       typeMap: [],
-      colorBy: false,
       appliedFilter: {},
       legend: {}
+    }
+  },
+  computed: {
+    colorBy() {
+      return this.$store.state.appliedFilter && this.$store.state.appliedFilter.colorBy
     }
   },
   watch: {
     filter(newVal) {
       this.generateTypeMap(newVal)
-    },
-    async colorBy(newVal) {
-      this.appliedFilter.colorBy = newVal
-        ? { type: 'category', property: this.filter.targetKey }
-        : null
-      let res = await window.__viewer.applyFilter(this.appliedFilter)
-      this.mashColorLegend(res.colorLegend)
     }
   },
   mounted() {
     this.generateTypeMap(this.filter)
   },
   beforeDestroy() {
-    window.__viewer.applyFilter(null)
+    this.$store.commit('resetFilter')
   },
   methods: {
     mashColorLegend(colorLegend) {
@@ -118,28 +123,16 @@ export default {
         if (!this.legend[key]) this.$set(this.legend, key, colorLegend[key])
       }
     },
+    async toggleColors() {
+      this.$store.commit('toggleColorByCategory', { filterKey: this.filter.targetKey })
+    },
     async toggleFilter(type) {
-      let indx = this.filtered.indexOf(type)
-      if (indx === -1) this.filtered.push(type)
-      else this.filtered.splice(indx, 1)
-      this.hidden.splice(0, this.hidden.length)
-      if (this.filtered.length === 0) {
-        let res = window.__viewer.applyFilter(
-          this.colorBy ? { colorBy: { type: 'category', property: this.filter.targetKey } } : null
-        )
-        this.mashColorLegend(res.colorLegend)
-        this.appliedFilter = {}
-      } else {
-        let filterObj = {
-          filterBy: {},
-          colorBy: this.colorBy ? { type: 'category', property: this.filter.targetKey } : null,
-          ghostOthers: true
-        }
-        filterObj.filterBy[this.filter.targetKey] = this.filtered
-        let res = await window.__viewer.applyFilter(filterObj)
-        this.mashColorLegend(res.colorLegend)
-        this.appliedFilter = filterObj
-      }
+      this.$store.commit('isolateCategoryToggle', {
+        colorBy: this.colorBy,
+        filterKey: this.filter.targetKey,
+        filterValue: type,
+        allValues: this.typeMap.map((t) => t.fullName)
+      })
     },
     async toggleVisibility(type) {
       let indx = this.hidden.indexOf(type)
