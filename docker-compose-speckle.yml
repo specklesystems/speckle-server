@@ -45,8 +45,8 @@ services:
       dockerfile: packages/preview-service/Dockerfile
     image: speckle/speckle-preview-service:local
     restart: always
-    mem_limit: "1000m"
-    memswap_limit: "1000m"
+    mem_limit: "3000m"
+    memswap_limit: "3000m"
     environment:
       DEBUG: "preview-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
