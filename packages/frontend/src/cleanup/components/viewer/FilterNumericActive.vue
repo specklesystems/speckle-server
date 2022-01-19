@@ -53,7 +53,7 @@
       >
         Invalid values (min value equals to max value).
       </v-col>
-      <v-col v-else cols="12" class="mt-5 py-5 px-5">
+      <!-- <v-col v-else cols="12" class="mt-5 py-5 px-5">
         <v-range-slider
           v-model="range"
           dense
@@ -68,6 +68,29 @@
         >
           <template #thumb-label="{ value }">{{ value | prettynum }}</template>
         </v-range-slider>
+      </v-col> -->
+      <v-col ref="parent" cols="12" class="px-3 py-3">
+        <HistogramSlider
+          :key="width"
+          :width="width"
+          :bar-height="100"
+          :data="filter.data.allValues"
+          :bar-width="4"
+          :bar-gap="6"
+          :handle-size="18"
+          :max="filter.data.maxValue"
+          :min="filter.data.minValue"
+          force-edges
+          :keyboard="false"
+          :bar-radius="2"
+          :prettify="prettify"
+          :colors="['#3F5EFB', '#FC466B']"
+          :clip="false"
+          :font-size="10"
+          grid-text-color="grey"
+          drag-interval
+          @finish="setFilterHistogram"
+        />
       </v-col>
     </v-row>
   </div>
@@ -85,7 +108,8 @@ export default {
   data() {
     return {
       range: [0, 1],
-      colorBy: true
+      colorBy: true,
+      width: 300
     }
   },
   watch: {
@@ -101,17 +125,31 @@ export default {
     this.$set(this.range, 0, this.filter.data.minValue)
     this.$set(this.range, 1, this.filter.data.maxValue)
     this.setFilter()
+    this.width = this.$refs.parent.clientWidth - 24
+    this.$eventHub.$on('resize-viewer', () => {
+      this.width = this.$refs.parent.clientWidth - 24
+    })
   },
   beforeDestroy() {
-    window.__viewer.applyFilter(null)
+    this.$store.commit('resetFilter')
   },
   methods: {
+    async setFilterHistogram(e) {
+      this.$store.commit('setNumericFilter', {
+        filterKey: this.filter.targetKey,
+        minValue: e.from,
+        maxValue: e.to
+      })
+    },
     async setFilter() {
       this.$store.commit('setNumericFilter', {
         filterKey: this.filter.targetKey,
         minValue: this.range[0],
         maxValue: this.range[1]
       })
+    },
+    prettify(num) {
+      return this.$options.filters.prettynum(num)
     }
   }
 }

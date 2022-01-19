@@ -28,6 +28,7 @@
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.6.1",
     "vue-apollo": "^3.0.5",
+    "vue-histogram-slider": "^0.3.8",
     "vue-infinite-loading": "^2.4.5",
     "vue-matomo": "^3.14.0-0",
     "vue-router": "^3.4.9",

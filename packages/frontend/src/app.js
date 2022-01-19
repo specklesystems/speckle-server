@@ -44,6 +44,11 @@ Vue.use(VueMatomo, {
 // import UniqueId from 'vue-unique-id'
 // Vue.use(UniqueId)
 
+import HistogramSlider from 'vue-histogram-slider'
+import 'vue-histogram-slider/dist/histogram-slider.css'
+
+Vue.component(HistogramSlider.name, HistogramSlider)
+
 import VueApexCharts from 'vue-apexcharts'
 Vue.use(VueApexCharts)
 
