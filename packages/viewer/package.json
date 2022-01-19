@@ -56,6 +56,7 @@
   "dependencies": {
     "@speckle/objectloader": "^2.2.0",
     "camera-controls": "^1.33.1",
+    "geo-three": "0.0.15",
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
     "rainbowvis.js": "^1.0.1",

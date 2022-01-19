@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import * as Geo from 'geo-three'
 
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
@@ -61,9 +62,65 @@ export default class Viewer extends EventEmitter {
     this.animate()
     this.onWindowResize()
     this.interactions.zoomExtents()
+    this.addMap()
     this.needsRender = true
 
     this.inProgressOperations = 0
+  }
+
+  addMap(){
+    
+
+        //////////////////
+    
+		//var DEV_MAPBOX_API_KEY = "pk.eyJ1IjoidGVudG9uZSIsImEiOiJjazBwNHU4eDQwZzE4M2VzOGhibWY5NXo5In0.8xpF1DEcT6Y4000vNhjj1g";
+		var DEV_MAPBOX_API_KEY = "pk.eyJ1Ijoia2F0LXNwZWNrbGUiLCJhIjoiY2t5bG9wbDZzMXkyYTJwbjg2djJjcTFqdyJ9.iSzkqsbL5PDoJrXAaBxGaQ";
+    var DEV_HEREMAPS_APP_ID = "HqSchC7XT2PA9qCfxzFq";
+		var DEV_HEREMAPS_APP_CODE = "5rob9QcZ70J-m18Er8-rIA";
+		var DEV_BING_API_KEY = "AuViYD_FXGfc3dxc0pNa8ZEJxyZyPq1lwOLPCOydV3f0tlEVH-HKMgxZ9ilcRj-T";
+		var DEV_MAPTILER_API_KEY = "B9bz5tIKxl4beipiIbR0";
+		var OPEN_MAP_TILES_SERVER_MAP = "";
+    
+    // adding map tiles
+    var providers = [
+			["Vector OpenSteet Maps", new Geo.OpenStreetMapsProvider()],
+			["Vector OpenTile Maps", new Geo.OpenMapTilesProvider(OPEN_MAP_TILES_SERVER_MAP)],
+			["Vector Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckylpizpk5vzd14q8fgls9e1r", Geo.MapBoxProvider.STYLE)], //mapbox/streets-v10
+			["Vector Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.day")],
+			["Vector Here Maps Night", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.night")],
+			["Vector Here Maps Terrain", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "terrain.day")],
+			["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)],
+			["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")],
+			["Vector Map Tiler Outdoor", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "outdoor", "png")],	
+			["Satellite Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false)],
+			["Satellite Map Box Labels", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/satellite-streets-v10", Geo.MapBoxProvider.STYLE, "jpg70")],
+			["Satellite Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "satellite.day", "jpg")],
+			["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)],
+			["Satellite Maps Tiler Labels", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "hybrid", "jpg")],
+			["Satellite Maps Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "satellite", "jpg")],
+			["Height Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw")],
+			["Height Map Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "terrain-rgb", "png")],
+			["Debug Height Map Box", new Geo.HeightDebugProvider(new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw"))],
+			["Debug", new Geo.DebugProvider()]
+		];
+
+    var modes = [
+			["Planar", Geo.MapView.PLANAR],
+			["Height", Geo.MapView.HEIGHT],
+			// ["Martini", Geo.MapView.MARTINI],
+			["Height Shader", Geo.MapView.HEIGHT_SHADER],
+			["Spherical", Geo.MapView.SPHERICAL]
+		];
+
+    let index = 2
+    var map = new Geo.MapView(modes[0][1], providers[index][1], providers[index][1]);
+    this.scene.add(map);
+    console.log(this.cameraHandler.camera.position)
+    //this.interactions.setLookAt(5000,5000,10,5000,5000,0,true)
+    //this.cameraHandler.camera.position.set(50,50,50)
+    //console.log(this.cameraHandler.camera.position) 
+    //console.log(this.cameraHandler.activeCam.camera.position)
+    
   }
 
   sceneLights() {
@@ -156,6 +213,7 @@ export default class Viewer extends EventEmitter {
   }
 
   render() {
+    //console.log(this.cameraHandler.activeCam.camera.position)
     if ( this.reflections && this.reflectionsNeedUpdate ) {
       // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
       // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
