@@ -135,27 +135,11 @@ export default {
       })
     },
     async toggleVisibility(type) {
-      let indx = this.hidden.indexOf(type)
-      if (indx === -1) this.hidden.push(type)
-      else this.hidden.splice(indx, 1)
-      this.filtered.splice(0, this.filtered.length)
-      if (this.hidden.length === 0) {
-        let res = await window.__viewer.applyFilter(
-          this.colorBy ? { colorBy: { type: 'category', property: this.filter.targetKey } } : null
-        )
-        this.mashColorLegend(res.colorLegend)
-        this.appliedFilter = {}
-      } else {
-        let filterObj = {
-          filterBy: {},
-          colorBy: this.colorBy ? { type: 'category', property: this.filter.targetKey } : null,
-          ghostOthers: false
-        }
-        filterObj.filterBy[this.filter.targetKey] = { not: this.hidden }
-        let res = await window.__viewer.applyFilter(filterObj)
-        this.mashColorLegend(res.colorLegend)
-        this.appliedFilter = filterObj
-      }
+      this.$store.commit('hideCategoryToggle', {
+        colorBy: this.colorBy,
+        filterKey: this.filter.targetKey,
+        filterValue: type
+      })
     },
     generateTypeMap(filter) {
       if (filter.data.type !== 'string') return []

@@ -85,8 +85,6 @@ export default {
   data() {
     return {
       range: [0, 1],
-      appliedFilter: {},
-      legend: {},
       colorBy: true
     }
   },
@@ -109,22 +107,11 @@ export default {
   },
   methods: {
     async setFilter() {
-      console.log(this.range)
-      let filterObj = {
-        filterBy: {},
-        colorBy: this.colorBy
-          ? {
-            type: 'gradient',
-            property: this.filter.targetKey,
-            minValue: this.range[0],
-            maxValue: this.range[1],
-            gradientColors: ['#3F5EFB', '#FC466B']
-          }
-          : null,
-        ghostOthers: true
-      }
-      filterObj.filterBy[this.filter.targetKey] = { gte: this.range[0], lte: this.range[1] }
-      await window.__viewer.applyFilter(filterObj)
+      this.$store.commit('setNumericFilter', {
+        filterKey: this.filter.targetKey,
+        minValue: this.range[0],
+        maxValue: this.range[1]
+      })
     }
   }
 }

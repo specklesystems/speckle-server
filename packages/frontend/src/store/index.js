@@ -15,7 +15,9 @@ const store = new Vuex.Store({
     hideValues: [],
     colorLegend: {},
     isolateCategoryKey: null,
-    isolateCategoryValues: []
+    isolateCategoryValues: [],
+    hideCategoryKey: null,
+    hideCategoryValues: []
   },
   mutations: {
     isolateObjects(state, { filterKey, filterValues }) {
@@ -80,6 +82,9 @@ const store = new Vuex.Store({
     },
     async isolateCategoryToggle(state, { filterKey, filterValue, allValues, colorBy = false }) {
       this.commit('resetInternalHideIsolateObjectState')
+      state.hideCategoryKey = null
+      state.hideCategoryValues = []
+
       if (filterKey !== state.isolateCategoryKey) state.isolateCategoryValues = []
       state.isolateCategoryKey = filterKey
 
@@ -114,7 +119,38 @@ const store = new Vuex.Store({
       let res = await window.__viewer.applyFilter(state.appliedFilter)
       state.colorLegend = res.colorLegend
     },
-    async toggleColorBy(state, { filterKey }) {
+    async hideCategoryToggle(state, { filterKey, filterValue, colorBy = false }) {
+      this.commit('resetInternalHideIsolateObjectState')
+      state.isolateCategoryKey = null
+      state.isolateCategoryValues = []
+      if (filterKey !== state.hideCategoryKey) state.hideCategoryValues = []
+      state.hideCategoryKey = filterKey
+
+      let indx = state.hideCategoryValues.indexOf(filterValue)
+      if (indx === -1) state.hideCategoryValues.push(filterValue)
+      else state.hideCategoryValues.splice(indx, 1)
+
+      if (state.hideCategoryValues.length === 0 && !colorBy) {
+        state.appliedFilter = null
+        window.__viewer.applyFilter(state.appliedFilter)
+        return
+      }
+
+      if (state.hideCategoryValues.length === 0 && colorBy) {
+        state.appliedFilter = {
+          colorBy: { type: 'category', property: filterKey }
+        }
+      }
+      if (state.hideCategoryValues.length !== 0) {
+        state.appliedFilter = {
+          filterBy: { [filterKey]: { not: state.hideCategoryValues } },
+          colorBy: colorBy ? { type: 'category', property: filterKey } : null
+        }
+      }
+      let res = await window.__viewer.applyFilter(state.appliedFilter)
+      state.colorLegend = res.colorLegend
+    },
+    async toggleColorByCategory(state, { filterKey }) {
       if (state.appliedFilter && state.appliedFilter.colorBy) {
         state.appliedFilter.colorBy = null
       } else
@@ -125,6 +161,20 @@ const store = new Vuex.Store({
       let res = await window.__viewer.applyFilter(state.appliedFilter)
       state.colorLegend = res.colorLegend
     },
+    setNumericFilter(
+      state,
+      { filterKey, minValue, maxValue, gradientColors = ['#3F5EFB', '#FC466B'] }
+    ) {
+      this.commit('resetInternalHideIsolateObjectState')
+      this.commit('resetInternalCategoryObjectState')
+      state.appliedFilter = {
+        ghostOthers: true,
+        colorBy: { type: 'gradient', property: filterKey, minValue, maxValue, gradientColors },
+        filterBy: { [filterKey]: { gte: minValue, lte: maxValue } }
+      }
+      console.log(state.appliedFilter)
+      window.__viewer.applyFilter(state.appliedFilter)
+    },
     resetInternalHideIsolateObjectState(state) {
       state.isolateKey = null
       state.isolateValues = []
@@ -134,6 +184,8 @@ const store = new Vuex.Store({
     resetInternalCategoryObjectState(state) {
       state.isolateCategoryKey = null
       state.isolateCategoryValues = []
+      state.hideCategoryKey = null
+      state.hideCategoryValues = []
     },
     resetFilter(state) {
       this.commit('resetInternalHideIsolateObjectState')
