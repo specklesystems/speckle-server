@@ -102,7 +102,7 @@ jobs:
           docker tag ${{ matrix.package }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::${{ matrix.package }}:${{ github.sha }}"
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
