@@ -76,7 +76,15 @@
         <views-display v-if="views.length !== 0" :views="views" />
 
         <!-- Filters display -->
-        <filters :props="objectProperties" :source-application="'asdf'" />
+        <filters
+          :props="objectProperties"
+          :source-application="
+            resources
+              .filter((r) => r.type === 'commit')
+              .map((r) => r.data.commit.sourceApplication)
+              .join(',')
+          "
+        />
       </portal>
 
       <!-- Preview image -->
@@ -119,7 +127,7 @@
         ></v-progress-linear>
       </div>
       <div
-        v-show="(viewerBusy && loadedModel)"
+        v-show="viewerBusy && loadedModel"
         class="pl-2 pb-2"
         style="width: 100%; bottom: 12px; left: 0; position: absolute; z-index: 10000000"
       >

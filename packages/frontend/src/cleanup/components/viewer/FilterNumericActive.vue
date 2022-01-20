@@ -30,20 +30,6 @@
         {{ filter.data.objectCount }} elements; min:
         {{ Math.round(filter.data.minValue, 2) | prettynum }}; max:
         {{ Math.round(filter.data.maxValue, 2) | prettynum }}
-        <v-btn
-          v-show="range[0] !== filter.data.minValue || range[1] !== filter.data.maxValue"
-          v-tooltip="'Reset'"
-          x-small
-          icon
-          class="mr-1 float-right"
-          @click="
-            $set(range, 0, filter.data.minValue)
-            $set(range, 1, filter.data.maxValue)
-            setFilter()
-          "
-        >
-          <v-icon class="grey--text mt-1" style="font-size: 12px">mdi-refresh</v-icon>
-        </v-btn>
       </v-col>
       <v-col
         v-if="filter.data.maxValue === filter.data.minValue"
@@ -53,23 +39,7 @@
       >
         Invalid values (min value equals to max value).
       </v-col>
-      <!-- <v-col v-else cols="12" class="mt-5 py-5 px-5">
-        <v-range-slider
-          v-model="range"
-          dense
-          hide-details
-          thumb-label="always"
-          color="primary"
-          :step="0.01"
-          :max="filter.data.maxValue"
-          :min="filter.data.minValue"
-          :class="`${colorBy ? 'super-slider' : ''}`"
-          @change="setFilter()"
-        >
-          <template #thumb-label="{ value }">{{ value | prettynum }}</template>
-        </v-range-slider>
-      </v-col> -->
-      <v-col ref="parent" cols="12" class="px-3 py-3">
+      <v-col v-else ref="parent" cols="12" class="px-3 py-3">
         <HistogramSlider
           :key="width"
           :width="width"
@@ -80,12 +50,13 @@
           :handle-size="18"
           :max="filter.data.maxValue"
           :min="filter.data.minValue"
+          :step="filter.data.minValue / 10"
           force-edges
           :keyboard="false"
           :bar-radius="2"
           :prettify="prettify"
           :colors="['#3F5EFB', '#FC466B']"
-          :clip="false"
+          :clip="true"
           :font-size="10"
           grid-text-color="grey"
           drag-interval
@@ -97,7 +68,6 @@
 </template>
 <script>
 export default {
-  components: {},
   props: {
     filter: {
       type: Object,
@@ -127,7 +97,7 @@ export default {
     this.setFilter()
     this.width = this.$refs.parent.clientWidth - 24
     this.$eventHub.$on('resize-viewer', () => {
-      this.width = this.$refs.parent.clientWidth - 24
+      this.width = this.$refs.parent?.clientWidth - 24
     })
   },
   beforeDestroy() {
