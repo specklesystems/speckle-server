@@ -73,13 +73,15 @@ export default {
       type: Object,
       default: () => null
     },
-    active: { type: Boolean, default: false }
+    active: { type: Boolean, default: false },
+    preventFirstSet: { type: Boolean, default: false }
   },
   data() {
     return {
       range: [0, 1],
       colorBy: true,
-      width: 300
+      width: 300,
+      preventFirstSetInternal: this.preventFirstSet
     }
   },
   watch: {
@@ -105,6 +107,10 @@ export default {
   },
   methods: {
     async setFilterHistogram(e) {
+      if (this.preventFirstSetInternal) {
+        this.preventFirstSetInternal = false
+        return
+      }
       this.$store.commit('setNumericFilter', {
         filterKey: this.filter.targetKey,
         minValue: e.from,
@@ -112,6 +118,10 @@ export default {
       })
     },
     async setFilter() {
+      if (this.preventFirstSetInternal) {
+        this.preventFirstSetInternal = false
+        return
+      }
       this.$store.commit('setNumericFilter', {
         filterKey: this.filter.targetKey,
         minValue: this.range[0],

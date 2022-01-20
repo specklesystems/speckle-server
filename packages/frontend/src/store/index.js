@@ -174,6 +174,56 @@ const store = new Vuex.Store({
       }
       window.__viewer.applyFilter(state.appliedFilter)
     },
+    async setFilterDirect(state, { filter }) {
+      let filterBy = filter.filterBy
+      if (filterBy && filterBy.__parents) {
+        if (filterBy.__parents.includes) {
+          this.commit('isolateObjects', {
+            filterKey: '__parents',
+            filterValues: filterBy.__parents.includes
+          })
+          return
+        }
+        if (filterBy.__parents.excludes) {
+          this.commit('hideObjects', {
+            filterKey: '__parents',
+            filterValues: filterBy.__parents.excludes
+          })
+          return
+        }
+      } else if (filter.ghostOthers) {
+        // means it's isolate by category or numeric filter
+        if (filter.colorBy && filter.colorBy.type === 'gradient') {
+          this.commit('setNumericFilter', {
+            filterKey: Object.keys(filter.filterBy)[0],
+            minValue: filter.filterBy[Object.keys(filter.filterBy)[0]].gte,
+            maxValue: filter.filterBy[Object.keys(filter.filterBy)[0]].lte
+          })
+        } else {
+          let values = filterBy[Object.keys(filter.filterBy)[0]]
+          for (const val of values) {
+            let f = {
+              filterKey: Object.keys(filter.filterBy)[0],
+              filterValue: val,
+              allValues: [],
+              colorBy: filter.colorBy
+            }
+            this.commit('isolateCategoryToggle', f)
+          }
+        }
+      } else {
+        let values = filterBy[Object.keys(filter.filterBy)[0]].not
+        for (const val of values) {
+          let f = {
+            filterKey: Object.keys(filter.filterBy)[0],
+            filterValue: val,
+            allValues: [],
+            colorBy: filter.colorBy
+          }
+          this.commit('hideCategoryToggle', f)
+        }
+      }
+    },
     resetInternalHideIsolateObjectState(state) {
       state.isolateKey = null
       state.isolateValues = []

@@ -242,10 +242,12 @@ export default {
       }
       let fullQuery = { ...this.$route.query }
       delete fullQuery.filter
-      this.$router.replace({
-        path: this.$route.path,
-        query: { ...fullQuery, filter: encodeURIComponent(JSON.stringify(val)) }
-      })
+      this.$router
+        .replace({
+          path: this.$route.path,
+          query: { ...fullQuery, filter: encodeURIComponent(JSON.stringify(val)) }
+        })
+        .catch(() => {})
     }
   },
   async mounted() {
@@ -285,14 +287,18 @@ export default {
       )
       return
     }
-    console.log('mounted')
+
     this.$eventHub.$emit('page-load', false)
     this.firstCallToCam = true
     this.camToSet = null
+    this.filterToSet = null
 
     if (this.$route.query && this.$route.query.c) {
-      let posArr = JSON.parse(decodeURIComponent(this.$route.query.c))
-      this.camToSet = posArr
+      this.camToSet = JSON.parse(decodeURIComponent(this.$route.query.c))
+    }
+
+    if (this.$route.query && this.$route.query.filter) {
+      this.filterToSet = JSON.parse(decodeURIComponent(this.$route.query.filter))
     }
 
     setTimeout(() => {
@@ -321,6 +327,14 @@ export default {
             this.camToSet = null
           }, 200)
         }
+
+        if (!val && this.filterToSet) {
+          setTimeout(() => {
+            this.$store.commit('setFilterDirect', { filter: this.filterToSet })
+            // window.__viewer.applyFilter(this.filterToSet)
+            this.filterToSet = null
+          }, 200)
+        }
       })
 
       window.__viewer.cameraHandler.controls.addEventListener(
@@ -344,7 +358,6 @@ export default {
             window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
             controls._zoom
           ]
-          console.log(c)
           let fullQuery = { ...this.$route.query }
           delete fullQuery.c
           this.$router
