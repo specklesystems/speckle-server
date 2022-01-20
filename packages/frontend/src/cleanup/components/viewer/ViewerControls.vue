@@ -58,17 +58,11 @@ export default {
   },
   data() {
     return {
-      fullScreen: false,
-      viewerBusy: false
+      fullScreen: false
     }
   },
   computed: {
     showVisReset() {
-      // return (
-      //   (this.$store.state.isolateKey !== null && this.$store.state.isolateValues.length !== 0) ||
-      //   (this.$store.state.hideKey !== null && this.$store.state.hideValues.length !== 0) ||
-      //   (this.$store.state.isolateCategoryKey !== null && this.$store.state.isolateCategoryValues.length !== 0)
-      // )
       return !!this.$store.state.appliedFilter
     }
   },

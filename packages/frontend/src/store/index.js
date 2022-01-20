@@ -172,7 +172,6 @@ const store = new Vuex.Store({
         colorBy: { type: 'gradient', property: filterKey, minValue, maxValue, gradientColors },
         filterBy: { [filterKey]: { gte: minValue, lte: maxValue } }
       }
-      console.log(state.appliedFilter)
       window.__viewer.applyFilter(state.appliedFilter)
     },
     resetInternalHideIsolateObjectState(state) {

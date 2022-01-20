@@ -8,8 +8,11 @@
     <v-col
       v-tooltip="prop.key"
       cols="5"
-      :class="`caption text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+      :class="`caption ${
+        prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : ''
+      } text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
       style="line-height: 24px"
+      @click="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
     >
       {{ prop.key.startsWith('@') ? prop.key.substring(1) : prop.key }}
     </v-col>
@@ -77,7 +80,7 @@
       </v-btn>
     </v-col>
     <v-scroll-y-transition>
-      <v-col v-if="expanded" cols="12">
+      <v-col v-if="expanded && (prop.type === 'object' || prop.type === 'array')" cols="12">
         <object-properties :obj="prop.value" :stream-id="streamId" />
       </v-col>
     </v-scroll-y-transition>
@@ -163,6 +166,9 @@ export default {
 }
 </script>
 <style scoped>
+.hover-cursor:hover {
+  cursor: pointer;
+}
 .property-row {
   transition: all 0.3s ease;
   background: rgba(120, 120, 120, 0.05);

@@ -51,7 +51,11 @@
           @click="toggleVisibility(type.fullName)"
         >
           <v-icon class="grey--text" style="font-size: 11px">
-            {{ hidden.indexOf(type.fullName) === -1 ? 'mdi-eye' : 'mdi-eye-off' }}
+            {{
+              $store.state.hideCategoryValues.indexOf(type.fullName) === -1
+                ? 'mdi-eye'
+                : 'mdi-eye-off'
+            }}
           </v-icon>
         </v-btn>
         <v-btn

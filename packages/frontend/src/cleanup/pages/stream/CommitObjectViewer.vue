@@ -166,6 +166,7 @@
   </div>
 </template>
 <script>
+import debounce from 'lodash.debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/cleanup/components/common/Viewer' // do not import async
@@ -228,6 +229,23 @@ export default {
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
         return
       }
+    },
+    '$store.state.appliedFilter'(val) {
+      if (!val) {
+        let fullQuery = { ...this.$route.query }
+        delete fullQuery.filter
+        this.$router.replace({
+          path: this.$route.path,
+          query: { ...fullQuery }
+        })
+        return
+      }
+      let fullQuery = { ...this.$route.query }
+      delete fullQuery.filter
+      this.$router.replace({
+        path: this.$route.path,
+        query: { ...fullQuery, filter: encodeURIComponent(JSON.stringify(val)) }
+      })
     }
   },
   async mounted() {
@@ -267,8 +285,16 @@ export default {
       )
       return
     }
-
+    console.log('mounted')
     this.$eventHub.$emit('page-load', false)
+    this.firstCallToCam = true
+    this.camToSet = null
+
+    if (this.$route.query && this.$route.query.c) {
+      let posArr = JSON.parse(decodeURIComponent(this.$route.query.c))
+      this.camToSet = posArr
+    }
+
     setTimeout(() => {
       for (const resource of this.resources) {
         if (resource.data.error) continue
@@ -277,8 +303,59 @@ export default {
             ? resource.data.commit.referencedObject
             : resource.data.object.id
         )
-        window.__viewer.on('busy', (val) => (this.viewerBusy = val))
       }
+      window.__viewer.on('busy', (val) => {
+        this.viewerBusy = val
+        if (!val && this.camToSet) {
+          setTimeout(() => {
+            if (this.camToSet[6] === 1) {
+              window.__viewer.toggleCameraProjection()
+            }
+            window.__viewer.interactions.setLookAt(
+              { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
+              { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
+            )
+            if (this.camToSet[6] === 1) {
+              window.__viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+            }
+            this.camToSet = null
+          }, 200)
+        }
+      })
+
+      window.__viewer.cameraHandler.controls.addEventListener(
+        'rest',
+        debounce(() => {
+          if (this.firstCallToCam) {
+            this.firstCallToCam = false
+            return
+          }
+          if (this.camToSet) return
+          let controls = window.__viewer.cameraHandler.activeCam.controls
+          let pos = controls.getPosition()
+          let target = controls.getTarget()
+          let c = [
+            Math.round(pos.x, 5),
+            Math.round(pos.y, 5),
+            Math.round(pos.z, 5),
+            Math.round(target.x, 5),
+            Math.round(target.y, 5),
+            Math.round(target.z, 5),
+            window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
+            controls._zoom
+          ]
+          console.log(c)
+          let fullQuery = { ...this.$route.query }
+          delete fullQuery.c
+          this.$router
+            .replace({
+              path: this.$route.path,
+              query: { ...fullQuery, c: encodeURIComponent(JSON.stringify(c)) }
+            })
+            .catch(() => {})
+        }, 1000)
+      )
+      // TODO: check query params for filter and camera pos and set them
     }, 300)
   },
   methods: {
