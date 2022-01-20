@@ -90,6 +90,4 @@ const createEmailVerification = async ({ email }) => {
   return verification.id
 }
 
-module.exports= {
-  sendEmailVerification
-}
+module.exports = { sendEmailVerification }
