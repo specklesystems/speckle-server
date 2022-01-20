@@ -48,6 +48,7 @@ export default {
         'displayMesh',
         'displayValue',
         '__importedUrl',
+        // '__parents', // TODO: uncomment before release
         'totalChildrenCount'
       ]
     }

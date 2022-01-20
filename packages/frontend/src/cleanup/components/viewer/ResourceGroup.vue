@@ -58,7 +58,7 @@
               <span v-else><v-icon x-small>mdi-source-commit</v-icon>{{ res.id }}</span>
             </a>
             <!-- eslint-disable-next-line prettier/prettier -->
-        <span v-if="removedResources.length > 1 && index < removedResources.length - 1">,&nbsp;
+            <span v-if="removedResources.length > 1 && index < removedResources.length - 1">,&nbsp;
             </span>
           </span>
         </div>

@@ -41,7 +41,7 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
    */
-  async traverseAndConvert( obj, callback, scale = true, parents = {} ) {
+  async traverseAndConvert( obj, callback, scale = true, parents = [] ) {
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -68,7 +68,7 @@ export default class Coverter {
     }
 
     // Keep track of parents. An object is his own parent, for the simplicity of working with subtrees
-    obj.__parents = { ...parents, [obj.id]: 1 }
+    obj.__parents = [ ...parents, obj.id ]
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
