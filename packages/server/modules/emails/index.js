@@ -64,10 +64,10 @@ exports.finalize = async () => {
 }
 
 exports.sendEmail = async ({ from, to, subject, text, html }) => {
-  // if the transport takes a while to resolve, it is possible to
-  // trigger a false error
+  // note, the transporter is only initialized with the app init step
   if (!transporter) {
     errorDebug('No email transport present. Cannot send emails.')
+    return false
   }
   try {
     const emailFrom = process.env.EMAIL_FROM || 'no-reply@speckle.systems'

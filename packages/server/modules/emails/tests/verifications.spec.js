@@ -4,6 +4,7 @@ const chaiHttp = require('chai-http')
 
 const appRoot = require('app-root-path')
 const { init, startHttp } = require(`${appRoot}/app`)
+const request = require('supertest')
 
 const expect = chai.expect
 chai.use(chaiHttp)
@@ -22,6 +23,10 @@ const {
 const Verifications = () => knex('email_verifications')
 
 describe('Email verifications @emails', () => {
+  let expressApp
+
+
+
   const userA = {
     'name': 'd1',
     'email': 'd.1@speckle.systems',
@@ -37,7 +42,8 @@ describe('Email verifications @emails', () => {
     await knex.migrate.rollback()
     await knex.migrate.latest()
 
-    await init()
+    let { app } = await init()
+    expressApp = app
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${(await createPersonalAccessToken(userA.id, 'test token user A', ['server:setup', 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email']))}`
@@ -58,9 +64,36 @@ describe('Email verifications @emails', () => {
       expect(verifications).to.have.lengthOf(1)
 
       const ver = verifications[0]
-      const expectedVerificationUrl = `${process.env.CANONICAL_URL}/verifyemail?t=${ver.id}`
-      
+      const expectedVerificationUrl = `${process.env.CANONICAL_URL}/auth/verifyemail?t=${ver.id}`
+
       expect(sentResult.message).to.contain(expectedVerificationUrl)
+
+      await request(expressApp)
+        .post('/auth/emailverification/request')
+        .send({ email: userA.email })
+        .set('Authorization', userA.token)
+        .expect(200)
+    })
+    it('Should fail to send verification unauthenticated / not the same user',
+      async () => {
+        await request(expressApp)
+          .post('/auth/emailverification/request')
+          .send({ email: userA.email })
+          .expect(403)
+
+        await request(expressApp)
+          .post('/auth/emailverification/request')
+          .send({ email: userA.email })
+          .set('Authorization', userB.token)
+          .expect(403)
+      })
+    it('Should return 500 if email service is misconfigured', async () => {
+      process.env.EMAIL = 'false'
+      await request(expressApp)
+        .post('/auth/emailverification/request')
+        .send({ email: userA.email })
+        .set('Authorization', userA.token)
+        .expect(500)
     })
   })
 })

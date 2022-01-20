@@ -30,57 +30,52 @@ const sendEmailVerification = async ({ recipient }) => {
 const prepareMessage = async ({ verificationLink, serverInfo }) => {
   const subject = `Speckle Server ${serverInfo.name} email verification`
   const text = `
-    Hello!
+Hello!
 
-    You have just registered to ${serverInfo.name} Speckle Server,
-     or initiated the email verification process manually.
+You have just registered to ${serverInfo.name} Speckle Server,
+ or initiated the email verification process manually.
 
-    To finalize the verification process, follow the link below:
+To finalize the verification process, follow the link below:
 
-    ${verificationLink}
+${verificationLink}
 
-    Warm regards,
-    Speckle
-    ---
-    This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL},
-     deployed and managed by ${serverInfo.company}.
+Warm regards,
+Speckle
+---
+This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL},
+ deployed and managed by ${serverInfo.company}.
   `
 
   const html = `
-    Hello!
-    <br>
-    <br>
+Hello!
+<br>
+<br>
 
-    You have just registered to ${serverInfo.name} Speckle Server,
-     or initiated the email verification process manually.
-    
-    <br>
-    <br>
-    
-    To finalize the verification process,
-     please <b><a href="${verificationLink}" rel="notrack">click here</a>!</b>
-    <br>
-    <br>
+You have just registered to ${serverInfo.name} Speckle Server,
+ or initiated the email verification process manually.
 
-    If this message looks suspicious,
-     please contact the server admin
-      ${serverInfo.adminContact ?? 'hello@speckle.systems'}
-    <br>
-    <br>
-    Warm regards,
-    <br>
-    Speckle 
-    <br>
-    <br>
-    <img 
-     src="https://speckle.systems/content/images/2021/02/logo_big-1.png"
-     style="width:30px; height:30px;">
-    <br>
-    <br>
-    <caption style="size:8px; color:#7F7F7F; width:400px; text-align: left;">
-    This email was sent from ${serverInfo.name} at ${process.env.CANONICAL_URL},
-     deployed and managed by ${serverInfo.company}.
-    </caption>
+<br>
+<br>
+
+To finalize the verification process,
+ please <b><a href="${verificationLink}" rel="notrack">click here</a>!</b>
+<br>
+<br>
+Warm regards,
+<br>
+Speckle 
+<br>
+<br>
+<img 
+ src="https://speckle.systems/content/images/2021/02/logo_big-1.png"
+ style="width:30px; height:30px;">
+<br>
+<br>
+<caption style="size:8px; color:#7F7F7F; width:400px; text-align: left;">
+This email was sent from the
+ <a href="${process.env.CANONICAL_URL}">${serverInfo.name}</a>,
+ deployed and managed by ${serverInfo.company}.
+</caption>
   `
 
   return { text, html, subject }
@@ -94,10 +89,6 @@ const createEmailVerification = async ({ email }) => {
   await Verifications().insert(verification)
   return verification.id
 }
-
-(async function main() {
-  await sendEmailVerification({ 'recipient': 'gergo@jedlicska.com' })
-})()
 
 module.exports= {
   sendEmailVerification
