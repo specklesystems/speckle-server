@@ -87,13 +87,49 @@ describe('Email verifications @emails', () => {
           .set('Authorization', userB.token)
           .expect(403)
       })
-    it('Should return 500 if email service is misconfigured', async () => {
-      process.env.EMAIL = 'false'
+  })
+  describe('Use email verification', () => {
+    it('Should not verify without a token', async () => {
       await request(expressApp)
-        .post('/auth/emailverification/request')
-        .send({ email: userA.email })
-        .set('Authorization', userA.token)
-        .expect(500)
+        .get('/auth/verifyemail')
+        .expect(400)
+      
+      await request(expressApp)
+        .get('/auth/verifyemail?t=')
+        .expect(400)
+    })
+    it('Should not verify with an invalid token', async () => {
+      await request(expressApp)
+        .get('/auth/verifyemail?t=bogus')
+        .expect(404)
+    })
+    it('Should not verify with a expired token', async () => {
+      // current expiry is 24h
+      const yesterday = new Date(new Date().getTime() - (24 * 60 * 60 * 1000));
+      const expiredVerification = {
+        id: 'imexpiredlikeamontholdcartonofmilk',
+        email: 'who@cares.about',
+        createdAt: yesterday
+      }
+      await Verifications().insert(expiredVerification)
+
+      await request(expressApp)
+        .get(`/auth/verifyemail?t=${expiredVerification.id}`)
+        .expect(400)
+
+      await Verifications().where({ id: expiredVerification.id }).del()
+    })
+
+    it('Should verify with a valid token and redirect to /', async () => {
+      let verifications = await Verifications().where({ email: userA.email })
+      expect(verifications).to.have.lengthOf(2)
+
+      await request(expressApp)
+        .get(`/auth/verifyemail?t=${verifications[0].id}`)
+        .expect(302)
+
+      verifications = await Verifications().where({ email: userA.email })
+      expect(verifications).to.have.lengthOf(1)
     })
   })
 })
