@@ -71,6 +71,7 @@
   },
   "devDependencies": {
     "@apollo/client": "^3.3.6",
+    "@wemake-services/eslint-config-javascript": "^1.0.0",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
     "apollo-link": "^1.2.14",

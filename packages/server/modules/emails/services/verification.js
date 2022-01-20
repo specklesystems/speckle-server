@@ -14,7 +14,7 @@ const sendEmailVerification = async ({ recipient }) => {
   const serverInfo = await getServerInfo()
   const verificationId = await createEmailVerification({ 'email': recipient })
   const verificationLink = new URL(
-     `/verifyemail?t=${verificationId}`, process.env.CANONICAL_URL,
+     `auth/verifyemail?t=${verificationId}`, process.env.CANONICAL_URL,
   )
   const { text, html, subject } = await prepareMessage(
     { verificationLink, serverInfo },

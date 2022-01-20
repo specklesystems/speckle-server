@@ -49,18 +49,14 @@ const initTransporter = async () => {
   if (process.env.EMAIL === 'true') return await initSmtpTransporter()
 
   modulesDebug(
-    `
-    📧 Email provider is not configured.
-     Server functionality will be limited.
-    `,
+    `📧 Email provider is not configured. Server functionality will be limited.`,
   )
 }
 
-const transporterPromise = initTransporter()
-transporterPromise.then((value) => { transporter = value })
-
-exports.init = async (__, ___) => {
+exports.init = async (app, __) => {
   modulesDebug('📧 Init emails module')
+  transporter = await initTransporter()
+  require( './rest' )( app )
 }
 
 exports.finalize = async () => {
@@ -70,8 +66,6 @@ exports.finalize = async () => {
 exports.sendEmail = async ({ from, to, subject, text, html }) => {
   // if the transport takes a while to resolve, it is possible to
   // trigger a false error
-  await transporterPromise
-
   if (!transporter) {
     errorDebug('No email transport present. Cannot send emails.')
   }
