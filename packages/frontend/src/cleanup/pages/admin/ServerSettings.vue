@@ -31,6 +31,17 @@
             ></v-text-field>
           </div>
         </div>
+        <p class="mt-2">{{ defaultGlobals.label }}</p>
+        <div class="flex-grow-1">
+          <v-textarea
+            v-model="defaultGlobalsString"
+            persistent-hint
+            :hint="defaultGlobals.hint"
+            :rules="rules.checkGlobals()"
+            class="ma-0 body-2"
+            rows="2"
+          ></v-textarea>
+        </div>
       </v-card-text>
       <v-card-actions>
         <v-btn block color="primary" :loading="loading" @click="saveEdit">Save</v-btn>
@@ -77,8 +88,34 @@ export default {
           label: 'Invite-Only mode',
           hint: 'Only users with an invitation will be able to join',
           type: 'boolean'
+        },
+        createDefaultGlobals: {
+          label: 'Add default globals on stream creation',
+          hint:
+            'Automatically add the specified set of globals to all streams created on this server',
+          type: 'boolean'
         }
-      }
+      },
+      defaultGlobals: {
+        label: 'Default globals',
+        hint:
+          'A json string containing a set of default globals and their default values, to be added to all streams on this server on stream creation'
+      },
+      rules: {
+        checkGlobals() {
+          return [
+            (v) => {
+              try {
+                JSON.parse(v)
+              } catch (e) {
+                return 'Invalid JSON string'
+              }
+              return true
+            }
+          ]
+        }
+      },
+      errors: []
     }
   },
   apollo: {
@@ -92,6 +129,8 @@ export default {
             adminContact
             termsOfService
             inviteOnly
+            createDefaultGlobals
+            defaultGlobals
           }
         }
       `,
@@ -99,6 +138,16 @@ export default {
         delete data.serverInfo.__typename
         this.serverModifications = Object.assign({}, data.serverInfo)
         return data.serverInfo
+      }
+    }
+  },
+  computed: {
+    defaultGlobalsString: {
+      set: function (value) {
+        this.serverModifications.defaultGlobals = JSON.parse(value)
+      },
+      get: function () {
+        return JSON.stringify(this.serverModifications.defaultGlobals)
       }
     }
   },
