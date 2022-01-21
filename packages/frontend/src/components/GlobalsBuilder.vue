@@ -1,11 +1,12 @@
 <template>
-  <v-card elevation="0" rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`">
-    <v-toolbar :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`" flat>
-      <v-toolbar-title v-if="commitMessage">
-        Current:
-        <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
-        {{ commitMessage }}
-      </v-toolbar-title>
+  <!-- <v-card elevation="0" rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"> -->
+  <section-card>
+    <template slot="header">
+      Current:
+      <v-icon dense class="text-subtitle-1">mdi-source-commit</v-icon>
+      {{ commitMessage }}
+    </template>
+    <template slot="actions">
       <v-spacer />
       <v-btn v-tooltip="'Clear all globals'" color="error" icon class="mr-2" @click="clearGlobals">
         <v-icon>mdi-close</v-icon>
@@ -26,7 +27,7 @@
       >
         save
       </v-btn>
-    </v-toolbar>
+    </template>
     <v-card-text>
       <globals-entry
         v-if="!$apollo.loading"
@@ -42,7 +43,6 @@
         <v-skeleton-loader type="list-item-three-line" />
       </div>
     </v-card-text>
-
     <v-dialog v-model="saveDialog" max-width="500">
       <v-card :loading="saveLoading">
         <template slot="progress">
@@ -71,7 +71,7 @@
         </v-form>
       </v-card>
     </v-dialog>
-  </v-card>
+  </section-card>
 </template>
 
 <script>
@@ -82,6 +82,7 @@ import objectQuery from '../graphql/objectSingle.gql'
 export default {
   name: 'GlobalsBuilder',
   components: {
+    SectionCard: () => import('@/cleanup/components/common/SectionCard'),
     GlobalsEntry: () => import('../components/GlobalsEntry')
   },
   apollo: {
@@ -213,6 +214,7 @@ export default {
         })
         this.saveLoading = false
         this.saveDialog = false
+        this.$emit('new-commit')
       } catch (err) {
         this.saveLoading = false
         this.saveError = err

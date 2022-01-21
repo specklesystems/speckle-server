@@ -2,6 +2,10 @@
 
 const crypto = require( 'crypto' )
 const knex = require( './knex' )
+const fs = require( 'fs' )
+
+let shouldExit = false
+const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
 const { makeNetworkRequest, isLocalNetworkUrl } = require( './webhookCaller' )
 
@@ -77,8 +81,15 @@ async function doTask( task ) {
 }
 
 async function tick() {
+  if ( shouldExit ) {
+    process.exit( 0 )
+  }
+
   try {
     let task = await startTask()
+
+    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {} )
+
     if ( !task ) {
       setTimeout( tick, 1000 )
       return
@@ -97,6 +108,12 @@ async function tick() {
 
 async function main() {
   console.log( 'Starting Webhook Service...' )
+
+  process.on( 'SIGTERM', () => {
+    shouldExit = true
+    console.log( 'Shutting down...' )
+  } )
+
   tick()
 }
 

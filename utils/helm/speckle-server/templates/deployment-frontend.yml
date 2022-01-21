@@ -30,3 +30,16 @@ spec:
           limits:
             cpu: {{ .Values.frontend.limits.cpu }}
             memory: {{ .Values.frontend.limits.memory }}
+
+        # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5

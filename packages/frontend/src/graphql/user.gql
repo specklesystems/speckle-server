@@ -1,6 +1,7 @@
 query {
   user {
     id
+    suuid
     email
     name
     bio

@@ -50,7 +50,7 @@ export default class SceneObjectManager {
 
     this.pointVertexColorsMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, vertexColors: true, clippingPlanes: this.viewer.sectionBox.planes } )
 
-    this.postLoad = debounce( () => { this._postLoadFunction() }, 20, { maxWait: 5000 } )
+    this.postLoad = debounce( () => { this.postLoadFunction() }, 20, { maxWait: 5000 } )
     this.skipPostLoad = skipPostLoad
     this.loaders = []
   }
@@ -224,8 +224,12 @@ export default class SceneObjectManager {
     let group = new THREE.Group()
     
     wrapper.bufferGeometry.forEach( g => {
+      if ( wrapper.meta.renderMaterial && !g.meta.renderMaterial ) {
+        g.meta.renderMaterial = wrapper.meta.renderMaterial
+      }
       let res = this.addObject( g, false )
-      group.add( res ) 
+      if ( res )
+        group.add( res ) 
     } )
 
     group.applyMatrix4( wrapper.extras.transformMatrix )
@@ -243,6 +247,8 @@ export default class SceneObjectManager {
   }
 
   async removeImportedObject( importedUrl ) {
+    this.viewer.interactions.deselectObjects()
+
     for ( let objGroup of this.sceneObjects.allObjects.children ) {
       let toRemove = objGroup.children.filter( obj => obj.userData?.__importedUrl === importedUrl )
       toRemove.forEach( obj => {
@@ -259,26 +265,7 @@ export default class SceneObjectManager {
     await this.sceneObjects.applyFilter( undefined, true )
   }
 
-  removeAllObjects() {
-    for ( let obj of this.objects ) {
-      if ( obj.geometry ) {
-        obj.geometry.dispose()
-      }
-    }
-    this.sceneObjects.allSolidObjects.clear()
-    this.sceneObjects.allTransparentObjects.clear()
-    this.sceneObjects.allLineObjects.clear()
-    this.sceneObjects.allPointObjects.clear()
-
-    this.viewer.interactions.deselectObjects()
-    this.viewer.interactions.hideSectionBox()
-    //this.objectIds = []
-    this.views = []
-
-    this._postLoadFunction()
-  }
-
-  async _postLoadFunction() {
+  async postLoadFunction() {
     if ( this.skipPostLoad ) return
     this.viewer.sectionBox.off()
     await this.sceneObjects.applyFilter()

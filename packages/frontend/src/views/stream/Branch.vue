@@ -260,6 +260,24 @@ export default {
         error(err) {
           console.log(err)
         }
+      },
+      commitDeleted: {
+        query: gql`
+          subscription($streamId: String!) {
+            commitDeleted(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.streamId
+          }
+        },
+        result() {
+          this.$apollo.queries.stream.refetch()
+        },
+        error(err) {
+          console.log(err)
+        }
       }
     }
   },

@@ -1,5 +1,7 @@
 <template>
-  <v-container :style="`${ !$vuetify.breakpoint.xsOnly ? 'padding-left: 56px;' : ''} max-width: 1024px;`" >
+  <v-container
+    :style="`${!$vuetify.breakpoint.xsOnly ? 'padding-left: 56px;' : ''} max-width: 1024px;`"
+  >
     <!-- <v-container :fluid="$vuetify.breakpoint.mdAndDown"> -->
     <v-row>
       <v-col

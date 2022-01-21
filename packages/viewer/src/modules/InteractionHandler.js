@@ -10,7 +10,10 @@ export default class InteractionHandler {
     this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: false } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
-    // console.log(this.viewer.sceneManager.allObjects)
+    // Fix overlapping faces flickering
+    this.selectionMeshMaterial.polygonOffset = true
+    this.selectionMeshMaterial.polygonOffsetFactor = -0.1
+
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
     this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
@@ -137,13 +140,13 @@ export default class InteractionHandler {
       this.zoomToObject( this.viewer.sectionBox.cube )
       return
     }
-    if ( this.viewer.sceneManager.sceneObjects.allObjects.length === 0 )  {
+    if ( this.viewer.sceneManager.sceneObjects.objectsInScene.length === 0 ) {
       let box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
       this.zoomToBox( box, fit, transition )
       return
     }
 
-    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.allObjects )
+    let box = new THREE.Box3().setFromObject( this.viewer.sceneManager.sceneObjects.objectsInScene )
     this.zoomToBox( box, fit, transition )
     // this.viewer.controls.setBoundary( box )
   }

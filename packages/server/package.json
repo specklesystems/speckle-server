@@ -18,6 +18,7 @@
     "test:report": "npm run test -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml"
   },
   "dependencies": {
+    "@godaddy/terminus": "^4.9.0",
     "@sentry/node": "^5.29.2",
     "@sentry/tracing": "^5.29.2",
     "apollo-server-express": "^2.19.0",

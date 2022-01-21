@@ -4,8 +4,12 @@
       <v-skeleton-loader type="card"></v-skeleton-loader>
     </div>
     <div v-else>
-      <v-card rounded="lg" :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-5`" style="overflow: hidden;">
-        <v-toolbar flat color="red" dark>
+      <v-card
+        rounded="lg"
+        :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-5`"
+        style="overflow: hidden"
+      >
+        <v-toolbar flat class="error--text" dark dense>
           <v-toolbar-title>Delete Account</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon @click="showDelete = !showDelete"><v-icon>mdi-chevron-down</v-icon></v-btn>

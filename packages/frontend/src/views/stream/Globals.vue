@@ -1,8 +1,27 @@
 <template>
   <div>
+    <portal to="toolbar">
+      <div class="d-flex align-center">
+        <div class="text-truncate">
+          <router-link
+            v-tooltip="stream.name"
+            class="text-decoration-none space-grotesk mx-1"
+            :to="`/streams/${stream.id}`"
+          >
+            <v-icon small class="primary--text mb-1 mr-1">mdi-folder</v-icon>
+            <b>{{ stream.name }}</b>
+          </router-link>
+        </div>
+        <div class="text-truncate flex-shrink-0">
+          /
+          <v-icon small class="mx-1 mb-1 hidden-xs-only">mdi-earth</v-icon>
+          <span class="space-grotesk" style="max-width: 80%">Globals Variables</span>
+        </div>
+      </div>
+    </portal>
     <no-data-placeholder
-      :show-message="false"
       v-if="!objectId && !$apollo.loading && !revealBuilder"
+      :show-message="false"
     >
       <h2>There are no global variables in this stream.</h2>
       <p class="caption">
@@ -10,9 +29,15 @@
         (city, adress, lat & long coordinates), custom project names or tags, or any other numbers
         or text that you want to keep track of.
       </p>
-      <template v-slot:actions>
+      <template #actions>
         <v-list rounded class="transparent">
-          <v-list-item link class="primary mb-4" dark @click="createGlobals()" v-if="stream.role!=='stream:reviewer'">
+          <v-list-item
+            v-if="stream.role !== 'stream:reviewer'"
+            link
+            class="primary mb-4"
+            dark
+            @click="createGlobals()"
+          >
             <v-list-item-icon>
               <v-icon>mdi-plus-box</v-icon>
             </v-list-item-icon>
@@ -23,7 +48,7 @@
 
           <v-list-item v-else class="warning" dark>
             <v-list-item-icon>
-              <v-icon  small>mdi-lock</v-icon>
+              <v-icon small>mdi-lock</v-icon>
             </v-list-item-icon>
             <v-list-item-content class="caption">
               You do not have enough permissions to create globals.
@@ -50,101 +75,104 @@
       </template>
     </no-data-placeholder>
 
-    <v-container style="max-width: 768px">
-      <portal to="streamTitleBar">
-        <div style="display: inline-block">
-          <v-icon small class="mx-1 hidden-xs-only">mdi-earth</v-icon>
-          <span class="space-grotesk" style="max-width: 80%">Globals</span>
-        </div>
-      </portal>
-
-      <div v-if="objectId || revealBuilder">
+    <div v-if="objectId || revealBuilder">
+      <v-row>
         <!-- Help -->
-
-        <v-card
-          elevation="0"
-          rounded="lg"
-          :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
-        >
-          <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`">
-            <v-toolbar-title>
-              <v-icon class="mr-2" small>mdi-earth</v-icon>
-              <span class="d-inline-block">What are Globals?</span>
-            </v-toolbar-title>
-          </v-toolbar>
-
-          <v-card-text>
-            <p class="caption">
-              Globals are useful for storing design values, project requirements, notes, or any info
-              you want to keep track of alongside your geometry. Read more on stream global
-              variables
-              <a href="https://speckle.guide/user/web.html#globals" target="_blank">here</a>
-              .
-              <v-divider class="my-2"></v-divider>
-              <b>Global editor help:</b>
-              Drag and drop fields in and out of groups as you please. Click the box icon next to
-              any field to turn it into a nested group of fields.
-            </p>
-          </v-card-text>
-
-          <v-alert
-            v-if="!(stream.role === 'stream:contributor') && !(stream.role === 'stream:owner')"
-            class="my-3"
-            dense
-            type="warning"
+        <v-col cols="12">
+          <v-card
+            v-if="true"
+            elevation="0"
+            rounded="lg"
+            :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''}`"
           >
-            You are free to play around with the globals here, but you do not have the required
-            stream permission to save your changes.
-          </v-alert>
-        </v-card>
+            <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`">
+              <v-toolbar-title>
+                <v-icon class="mr-2" small>mdi-earth</v-icon>
+                <span class="d-inline-block">What are Globals?</span>
+              </v-toolbar-title>
+            </v-toolbar>
 
+            <v-card-text>
+              <p class="caption">
+                Globals are useful for storing design values, project requirements, notes, or any
+                info you want to keep track of alongside your geometry. Read more on stream global
+                variables
+                <a href="https://speckle.guide/user/web.html#globals" target="_blank">here</a>
+                .
+                <v-divider class="my-2"></v-divider>
+                <b>Global editor help:</b>
+                Drag and drop fields in and out of groups as you please. Click the box icon next to
+                any field to turn it into a nested group of fields.
+              </p>
+            </v-card-text>
+
+            <v-alert
+              v-if="!(stream.role === 'stream:contributor') && !(stream.role === 'stream:owner')"
+              class="my-3"
+              dense
+              type="warning"
+            >
+              You are free to play around with the globals here, but you do not have the required
+              stream permission to save your changes.
+            </v-alert>
+          </v-card>
+        </v-col>
         <!-- History -->
-        <v-card
-          v-if="!$apollo.loading && branch.commits.items.length"
-          elevation="0"
-          rounded="lg"
-          :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} my-2 pa-0`"
-          style="overflow: hidden"
-        >
-          <v-toolbar
-            class="elevation-"
-            flat
-            :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`"
+        <v-col cols="12" md="4">
+          <v-card
+            v-if="!$apollo.loading"
+            elevation="0"
+            rounded="lg"
+            :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} pa-0`"
+            style="overflow: hidden"
           >
-            <v-toolbar-title @click="showHistory = !showHistory" style="cursor: pointer">
-              <v-icon small class="mr-2">mdi-history</v-icon>
-              Globals History ({{ branch.commits.totalCount }})
-            </v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn icon @click="showHistory = !showHistory" class="mr-1">
-              <v-icon>
-                {{ !showHistory ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
-              </v-icon>
-            </v-btn>
-          </v-toolbar>
+            <v-toolbar
+              class="elevation-"
+              flat
+              :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''}`"
+            >
+              <v-toolbar-title style="cursor: pointer" @click="showHistory = !showHistory">
+                <v-icon small class="mr-2">mdi-history</v-icon>
+                Globals History ({{ branch.commits.totalCount }})
+              </v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-btn icon class="mr-1" @click="showHistory = !showHistory">
+                <v-icon>
+                  {{ !showHistory ? 'mdi-chevron-down' : 'mdi-chevron-up' }}
+                </v-icon>
+              </v-btn>
+            </v-toolbar>
 
-          <v-list class="pa-0 transparent" dense v-show="showHistory">
-            <list-item-commit
-              v-for="item in branch.commits.items"
-              :key="item.id"
-              :route="`/streams/${streamId}/globals/${item.id}`"
-              :commit="item"
-              :stream-id="streamId"
-            />
-          </v-list>
-        </v-card>
-
-        <!-- Builder -->
-        <globals-builder
-          :branch-name="branchName"
-          :stream-id="streamId"
-          :object-id="objectId"
-          :commit-message="commit ? commit.message : null"
-          :user-role="stream.role"
-          @new-commit="newCommit"
-        />
-      </div>
-    </v-container>
+            <v-list
+              v-show="showHistory"
+              v-if="branch.commits.totalCount !== 0"
+              class="pa-0 transparent"
+              dense
+            >
+              <list-item-commit
+                v-for="item in branch.commits.items"
+                :key="item.id"
+                :route="`/streams/${streamId}/globals/${item.id}`"
+                :commit="item"
+                :stream-id="streamId"
+              />
+            </v-list>
+            <div v-else class="pa-2">No globals saved yet.</div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="8">
+          <!-- Builder -->
+          <globals-builder
+            :branch-name="branchName"
+            :stream-id="streamId"
+            :object-id="objectId"
+            :commit-message="commit ? commit.message : null"
+            :user-role="stream.role"
+            @new-commit="newCommit"
+          />
+        </v-col>
+      </v-row>
+    </div>
   </div>
 </template>
 
@@ -194,7 +222,7 @@ export default {
       branchName: 'globals', //TODO: handle multipile globals branches,
       revealBuilder: false,
       loading: false,
-      showHistory: false
+      showHistory: true
     }
   },
   computed: {

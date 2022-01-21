@@ -57,7 +57,7 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/views/Frontend.vue'),
+    component: () => import('@/cleanup/Main.vue'),
     children: [
       {
         path: '',
@@ -65,7 +65,15 @@ const routes = [
         meta: {
           title: 'Home | Speckle'
         },
-        component: () => import('@/views/Timeline.vue')
+        component: () => import('@/cleanup/pages/Feed.vue')
+      },
+      {
+        path: '/commits',
+        name: 'commits',
+        meta: {
+          title: 'Commits | Speckle'
+        },
+        component: () => import('@/cleanup/pages/Commits.vue')
       },
       {
         path: 'streams',
@@ -73,14 +81,14 @@ const routes = [
         meta: {
           title: 'Streams | Speckle'
         },
-        component: () => import('@/views/Streams.vue')
+        component: () => import('@/cleanup/pages/Streams.vue')
       },
       {
         path: 'streams/:streamId',
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/views/stream/Stream.vue'),
+        component: () => import('@/cleanup/pages/stream/Stream.vue'),
         children: [
           {
             path: '',
@@ -88,9 +96,8 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/views/stream/Details.vue')
+            component: () => import('@/cleanup/pages/stream/StreamHome.vue')
           },
-
           {
             path: 'branches/',
             name: 'branches',
@@ -102,7 +109,7 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('@/views/stream/Branch.vue'),
+            component: () => import('@/cleanup/pages/stream/Branch.vue'),
             beforeEnter: (to, from, next) => {
               if (to.params.branchName.toLowerCase() !== to.params.branchName)
                 return next(
@@ -112,29 +119,22 @@ const routes = [
             }
           },
           {
-            path: 'commits/:commitId',
+            path: 'commits/:resourceId*',
             name: 'commit',
             meta: {
-              title: 'Commit | Speckle'
+              title: 'Commit | Speckle',
+              resizableNavbar: true
             },
-            component: () => import('@/views/stream/Commit.vue')
+            component: () => import('@/cleanup/pages/stream/CommitObjectViewer.vue')
           },
           {
-            path: 'objects/:objectId',
+            path: 'objects/:resourceId*',
             name: 'objects',
             meta: {
-              title: 'Object | Speckle'
+              title: 'Object | Speckle',
+              resizableNavbar: true
             },
-            component: () => import('@/views/stream/Object.vue')
-          },
-          {
-            path: 'activity/',
-            name: 'activity',
-            meta: {
-              title: 'Stream Activity | Speckle'
-            },
-            props: true,
-            component: () => import('@/views/stream/Activity.vue')
+            component: () => import('@/cleanup/pages/stream/CommitObjectViewer.vue')
           },
           {
             path: 'collaborators/',
@@ -143,7 +143,7 @@ const routes = [
               title: 'Stream Collaborators | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/CollaboratorsManage.vue')
+            component: () => import('@/cleanup/pages/stream/Collaborators.vue')
           },
           {
             path: 'settings/',
@@ -152,7 +152,7 @@ const routes = [
               title: 'Stream Settings | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Settings.vue')
+            component: () => import('@/cleanup/pages/stream/Settings.vue')
           },
           {
             path: 'webhooks/',
@@ -161,7 +161,7 @@ const routes = [
               title: 'Webhooks | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Webhooks.vue')
+            component: () => import('@/cleanup/pages/stream/Webhooks.vue')
           },
           {
             path: 'uploads/',
@@ -170,7 +170,7 @@ const routes = [
               title: 'Stream Uploads | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Uploads.vue')
+            component: () => import('@/cleanup/pages/stream/Uploads.vue')
           },
           {
             path: 'globals/',
@@ -179,7 +179,7 @@ const routes = [
               title: 'Globals | Speckle'
             },
             props: true,
-            component: () => import('@/views/stream/Globals.vue')
+            component: () => import('@/cleanup/pages/stream/Globals.vue')
           },
           {
             path: 'globals/:commitId',
@@ -187,7 +187,7 @@ const routes = [
             meta: {
               title: 'Globals | Speckle'
             },
-            component: () => import('@/views/stream/Globals.vue')
+            component: () => import('@/cleanup/pages/stream/Globals.vue')
           }
         ]
       },
@@ -197,7 +197,7 @@ const routes = [
         meta: {
           title: 'Your Profile | Speckle'
         },
-        component: () => import('@/views/Profile.vue')
+        component: () => import('@/cleanup/pages/user/ProfileSelf.vue')
       },
       {
         path: 'profile/:userId',
@@ -205,7 +205,7 @@ const routes = [
         meta: {
           title: 'User Profile | Speckle'
         },
-        component: () => import('@/views/ProfileUser.vue')
+        component: () => import('@/cleanup/pages/user/Profile.vue')
       },
       {
         path: 'admin',
@@ -213,34 +213,34 @@ const routes = [
           title: 'Admin | Overview'
         },
         redirect: 'admin/dashboard',
-        component: () => import('@/views/admin/Admin.vue'),
+        component: () => import('@/cleanup/pages/admin/Admin.vue'),
         children: [
           {
             name: 'Admin | Overview',
             path: 'dashboard',
-            component: () => import('@/views/admin/AdminOverview.vue')
+            component: () => import('@/cleanup/pages/admin/Dashboard.vue')
           },
           {
             name: 'Admin | Users',
             path: 'users',
-            component: () => import('@/views/admin/AdminUsers.vue'),
+            component: () => import('@/cleanup/pages/admin/Users.vue'),
             props: (route) => ({ ...route.query, ...route.props })
           },
           {
             name: 'Admin | Streams',
             path: 'streams',
-            component: () => import('@/views/admin/AdminStreams.vue'),
+            component: () => import('@/cleanup/pages/admin/Streams.vue'),
             props: (route) => ({ ...route.query, ...route.props })
           },
           {
             name: 'Admin | Settings',
             path: 'settings',
-            component: () => import('@/views/admin/AdminSettings.vue')
+            component: () => import('@/cleanup/pages/admin/ServerSettings.vue')
           },
           {
             name: 'Admin | Invites',
             path: 'invites',
-            component: () => import('@/views/admin/AdminInvites.vue')
+            component: () => import('@/cleanup/pages/admin/Invites.vue')
           }
         ]
       }
@@ -277,13 +277,19 @@ const router = new VueRouter({
   // base: process.env.BASE_URL,
   routes,
   scrollBehavior(to, from, savedPosition) {
-    return { x: 0, y: 0 }
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { x: 0, y: 0 }
+    }
   }
 })
 
 router.beforeEach((to, from, next) => {
   let uuid = localStorage.getItem('uuid')
   let redirect = localStorage.getItem('shouldRedirectTo')
+  router.app.$eventHub.$emit('page-load', true)
+
   if (
     !uuid &&
     !to.matched.some(({ name }) => name === 'stream' || name === 'commit' || name === 'branch') && //allow public streams to be viewed
@@ -313,6 +319,7 @@ router.beforeEach((to, from, next) => {
 
 //TODO: include stream name in page title eg `My Cool Stream | Speckle`
 router.afterEach((to) => {
+  router.app.$eventHub.$emit('page-load', false)
   if (localStorage.getItem('shouldRedirectTo') === to.path)
     localStorage.removeItem('shouldRedirectTo')
 

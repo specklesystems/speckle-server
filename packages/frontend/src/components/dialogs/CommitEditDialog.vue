@@ -1,5 +1,10 @@
 <template>
-  <v-dialog v-model="show" width="500" @keydown.esc="cancel" :fullscreen="$vuetify.breakpoint.smAndDown">
+  <v-dialog
+    v-model="show"
+    width="500"
+    :fullscreen="$vuetify.breakpoint.smAndDown"
+    @keydown.esc="cancel"
+  >
     <v-card>
       <v-toolbar color="primary" dark flat>
         <v-app-bar-nav-icon style="pointer-events: none">
@@ -27,6 +32,12 @@
           </v-container>
         </v-card-text>
         <v-card-actions>
+          <v-btn text color="error" class="aligh: left" @click="emitDelete">
+            <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+              mdi-delete
+            </v-icon>
+            <span class="ml-1">Delete commit</span>
+          </v-btn>
           <v-spacer></v-spacer>
           <v-btn text @click="cancel">Cancel</v-btn>
           <v-btn :disabled="!valid" color="primary" text type="submit">Save</v-btn>
@@ -99,6 +110,9 @@ export default {
         result: false
       })
       this.dialog = false
+    },
+    emitDelete() {
+      this.$emit('show-delete')
     }
   }
 }

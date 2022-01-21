@@ -9,6 +9,7 @@ var logger = require( 'morgan' )
 var indexRouter = require( './routes/index' )
 var previewRouter = require( './routes/preview' )
 var objectsRouter = require( './routes/objects' )
+var apiRouter = require( './routes/api' )
 const prometheusClient = require( 'prom-client' )
 
 prometheusClient.register.clear()
@@ -25,6 +26,7 @@ app.use( express.static( path.join( __dirname, 'public' ) ) )
 app.use( '/', indexRouter )
 app.use( '/preview', previewRouter )
 app.use( '/objects', objectsRouter )
+app.use( '/api', apiRouter )
 
 // Expose prometheus metrics
 app.get( '/metrics', async ( req, res ) => {
