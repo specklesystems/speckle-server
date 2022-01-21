@@ -31,7 +31,6 @@ export default class Coverter {
     if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
       await new Promise( resolve => setTimeout( resolve, 0 ) )
-      // if ( Date.now() - this.lastAsyncPause > 200 ) console.log( 'CONV Event loop lag: ', Date.now() - this.lastAsyncPause )
     }
   }
 
@@ -42,8 +41,7 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
    */
-  async traverseAndConvert( obj, callback, scale = true ) {
-    //console.log("Active promises: ", this.activePromises)
+  async traverseAndConvert( obj, callback, scale = true, parents = [] ) {
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -57,9 +55,9 @@ export default class Coverter {
       for ( let element of obj ) {
         if ( typeof element !== 'object' ) break // exit early for non-object based arrays
         if ( this.activePromises >= this.maxChildrenPromises ) {
-          await this.traverseAndConvert( element, callback, scale )
+          await this.traverseAndConvert( element, callback, scale, parents )
         } else {
-          let childPromise = this.traverseAndConvert( element, callback, scale )
+          let childPromise = this.traverseAndConvert( element, callback, scale, parents )
           childrenConversionPromisses.push( childPromise )
         }
       }
@@ -68,6 +66,9 @@ export default class Coverter {
       this.activePromises -= childrenConversionPromisses.length
       return
     }
+
+    // Keep track of parents. An object is his own parent, for the simplicity of working with subtrees
+    obj.__parents = [ ...parents, obj.id ]
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
@@ -90,8 +91,8 @@ export default class Coverter {
         displayValue = await this.resolveReference( displayValue )
         if ( !displayValue.units ) displayValue.units = obj.units
         try {
-          let { bufferGeometry } = await this.convert( displayValue, scale )
-          await callback( new ObjectWrapper( bufferGeometry, obj ) ) // use the parent's metadata!
+          let convertedElement = await this.convert( displayValue, scale )
+          await callback( new ObjectWrapper( convertedElement.bufferGeometry, obj, convertedElement.geometryType ) ) // use the parent's metadata!
         } catch ( e ) {
           console.warn( `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}` )
         }
@@ -99,32 +100,35 @@ export default class Coverter {
         for ( let element of displayValue ) {
           let val = await this.resolveReference( element )
           if ( !val.units ) val.units = obj.units
-          let { bufferGeometry } = await this.convert( val, scale )
-          await callback( new ObjectWrapper( bufferGeometry, { renderMaterial: val.renderMaterial, ...obj } ) )
+          let convertedElement = await this.convert( val, scale )
+          await callback( new ObjectWrapper( convertedElement.bufferGeometry, { renderMaterial: val.renderMaterial, ...obj }, convertedElement.geometryType ) )
         }
       }
-    }
 
-    // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
-    if ( displayValue && obj.speckle_type.toLowerCase().includes( 'builtelements' ) ) {
-      if ( obj['elements'] ) {
-        childrenConversionPromisses.push( this.traverseAndConvert( obj['elements'], callback, scale ) )
-        this.activePromises += childrenConversionPromisses.length
-        await Promise.all( childrenConversionPromisses )
-        this.activePromises -= childrenConversionPromisses.length
+      // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
+      if ( obj.speckle_type.toLowerCase().includes( 'builtelements' ) ) {
+        if ( obj['elements'] ) {
+          childrenConversionPromisses.push( this.traverseAndConvert( obj['elements'], callback, scale, obj.__parents ) )
+          this.activePromises += childrenConversionPromisses.length
+          await Promise.all( childrenConversionPromisses )
+          this.activePromises -= childrenConversionPromisses.length
+        }
+        
+        return
       }
-      return
     }
 
     // Last attempt: iterate through all object keys and see if we can display anything!
     // traverses the object in case there's any sub-objects we can convert.
     for ( let prop in target ) {
-      if ( prop === 'bbox' ) continue
-      if ( typeof target[prop] !== 'object' ) continue
+      if ( prop === '__parents' || prop === 'bbox' ) continue
+      if ( [ 'displayMesh', '@displayMesh', 'displayValue', '@displayValue' ].includes( prop ) ) continue
+      if ( typeof target[prop] !== 'object' || target[prop] === null ) continue
+
       if ( this.activePromises >= this.maxChildrenPromises ) {
-        await this.traverseAndConvert( target[prop], callback, scale )
+        await this.traverseAndConvert( target[prop], callback, scale, obj.__parents )
       } else {
-        let childPromise = this.traverseAndConvert( target[prop], callback, scale )
+        let childPromise = this.traverseAndConvert( target[prop], callback, scale, obj.__parents )
         childrenConversionPromisses.push( childPromise )
       }
     }
@@ -245,7 +249,6 @@ export default class Coverter {
       'position',
       new THREE.Float32BufferAttribute( !scale || conversionFactor === 1 ? vertices : vertices.map( v => v * conversionFactor ), 3 ) )
 
-    // TODO: checkout colours
     let colorsRaw = await this.dechunk( obj.colors )
 
     if ( colorsRaw && colorsRaw.length !== 0 ) {
@@ -297,8 +300,6 @@ export default class Coverter {
   }
 
   async MeshToBufferGeometry( obj, scale = true ) {
-    // await this.asyncPause()
-
     try {
       if ( !obj ) return
 
@@ -317,14 +318,14 @@ export default class Coverter {
         let n = faces[ k ]
         if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
 
-          if ( n === 3 ) { // TRIANGLE FACE
-            indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-          } else { //Quad or N-GON FACE
-            const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
-            for( let t = 0; t < triangulation.length; t += 3 ) {
-              indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
-            }
+        if ( n === 3 ) { // TRIANGLE FACE
+          indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
+        } else { //Quad or N-GON FACE
+          const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
+          for( let t = 0; t < triangulation.length; t += 3 ) {
+            indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
           }
+        }
 
         k += n + 1
       }

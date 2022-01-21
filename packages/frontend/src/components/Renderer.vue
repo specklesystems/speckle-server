@@ -309,7 +309,10 @@ export default {
       this.unloadData()
     },
     fullScreen() {
-      setTimeout(() => window.__viewer.onWindowResize(), 20)
+      setTimeout(() => {
+        window.__viewer.onWindowResize()
+        window.__viewer.cameraHandler.onWindowResize()
+      }, 20)
     },
     loadProgress(newVal) {
       if (newVal >= 99) {

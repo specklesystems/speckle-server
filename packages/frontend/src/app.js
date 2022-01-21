@@ -1,4 +1,7 @@
 import Vue from 'vue'
+// Event hub
+Vue.prototype.$eventHub = new Vue()
+
 import App from './App.vue'
 
 import { createProvider } from './vue-apollo'
@@ -21,6 +24,11 @@ Vue.use(VueFilterDateParse)
 import VueFilterDateFormat from '@vuejs-community/vue-filter-date-format'
 Vue.use(VueFilterDateFormat)
 
+import PerfectScrollbar from 'vue2-perfect-scrollbar'
+import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
+
+Vue.use(PerfectScrollbar)
+
 import VTooltip from 'v-tooltip'
 Vue.use(VTooltip, { defaultDelay: 300 })
 
@@ -32,6 +40,14 @@ Vue.use(VueMatomo, {
   router: router,
   userId: localStorage.getItem('suuid')
 })
+
+// import UniqueId from 'vue-unique-id'
+// Vue.use(UniqueId)
+
+import HistogramSlider from 'vue-histogram-slider'
+import 'vue-histogram-slider/dist/histogram-slider.css'
+
+Vue.component(HistogramSlider.name, HistogramSlider)
 
 import VueApexCharts from 'vue-apexcharts'
 Vue.use(VueApexCharts)
@@ -49,6 +65,9 @@ Vue.filter('capitalize', (value) => {
   value = value.toString()
   return value.charAt(0).toUpperCase() + value.slice(1)
 })
+
+// adds various helper methods
+import '@/plugins/helpers'
 
 let AuthToken = localStorage.getItem('AuthToken')
 let RefreshToken = localStorage.getItem('RefreshToken')
@@ -77,10 +96,13 @@ if (AuthToken) {
     })
 }
 
+import store from '@/store'
+
 function initVue() {
   new Vue({
     router,
     vuetify,
+    store,
     apolloProvider: createProvider(),
     render: (h) => h(App)
   }).$mount('#app')

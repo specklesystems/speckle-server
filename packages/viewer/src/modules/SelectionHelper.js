@@ -18,6 +18,7 @@ export default class SelectionHelper extends EventEmitter {
     super()
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
+    this.raycaster.params.Line.threshold = 0.1
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
@@ -59,11 +60,13 @@ export default class SelectionHelper extends EventEmitter {
 
     // Handle mouseclicks
     let mdTime
-    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( ) => {
+    this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+      e.preventDefault()
       mdTime = new Date().getTime()
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
+      e.preventDefault()
       if( this.viewer.cameraHandler.orbiting ) return
 
       let delta = new Date().getTime() - mdTime
@@ -83,7 +86,11 @@ export default class SelectionHelper extends EventEmitter {
     this.touchLocation
 
     this.viewer.renderer.domElement.addEventListener( 'touchstart', ( e ) => { this.touchLocation = e.targetTouches[0] } )
-    this.viewer.renderer.domElement.addEventListener( 'touchend', ( ) => {
+    this.viewer.renderer.domElement.addEventListener( 'touchend', ( e ) => {
+      // Ignore the first `touchend` when pinch-zooming (so we don't consider double-tap)
+      if ( e.targetTouches.length > 0 ) {
+        return
+      }
       let currentTime = new Date().getTime()
       let tapLength = currentTime - this.lastTap
       clearTimeout( this.tapTimeout )

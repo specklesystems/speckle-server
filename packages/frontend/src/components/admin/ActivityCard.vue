@@ -3,8 +3,8 @@
     <v-toolbar flat>
       <v-toolbar-title>Usage Stats</v-toolbar-title>
     </v-toolbar>
-    <v-row dense v-if="!$apollo.loading" class="mt-2">
-      <v-col cols="12" sm="6" v-if="value.data" v-for="value in graphSeries" :key="value.name">
+    <v-row v-if="!$apollo.loading" dense class="mt-2">
+      <v-col v-for="value in graphSeries" v-if="value.data" :key="value.name" cols="12" sm="6">
         <p class="text-center caption primary--text">
           <v-icon x-small color="primary" class="mr-1">{{ icons[value.name] }}</v-icon>
           {{ capitalize(value.name.split('History')[0]) }} history
@@ -21,7 +21,7 @@ import { formatNumber } from '@/formatNumber.js'
 
 export default {
   name: 'ActivityCard',
-  components: { },
+  components: {},
   data() {
     return {
       icons: {
@@ -93,14 +93,7 @@ export default {
               cssClass: 'apexcharts-xaxis-label text-center'
             },
             offsetX: 0,
-            offsetY: 0,
-            // format: undefined,
-            // formatter: undefined,
-            // datetimeUTC: true,
-            // datetimeFormatter: {
-            //   year: 'yyyy',
-            //   month: 'M/yy'
-            // }
+            offsetY: 0
           }
         },
         yaxis: {
@@ -146,16 +139,16 @@ export default {
   },
   computed: {
     graphSeries() {
-      var result = []
-      var months = this.past12Months()
+      let result = []
+      let months = this.past12Months()
       if (this.serverStats) {
         result = Object.keys(this.serverStats).map((key) => {
-          var category = this.serverStats[key]
-          var processed = []
+          let category = this.serverStats[key]
+          let processed = []
           months?.forEach((month) => {
-            var totalCount = 0
+            let totalCount = 0
             category.forEach((value) => {
-              var date = this.parseISOString(value.created_month)
+              let date = this.parseISOString(value.created_month)
               if (this.isSameMonth(month, date)) {
                 totalCount = value.count
               }
@@ -173,10 +166,10 @@ export default {
       return word[0].toUpperCase() + word.slice(1).toLowerCase()
     },
     past12Months() {
-      var now = new Date(Date.now())
-      var dates = []
+      let now = new Date(Date.now())
+      let dates = []
       for (let i = 0; i < 12; i++) {
-        var d = new Date(now.getFullYear(), now.getMonth() - i, 2)
+        let d = new Date(now.getFullYear(), now.getMonth() - i, 2)
         dates.push(d)
       }
       return dates
@@ -188,7 +181,7 @@ export default {
       )
     },
     parseISOString(s) {
-      var b = s.split(/\D+/)
+      let b = s.split(/\D+/)
       return new Date(Date.UTC(b[0], --b[1], b[2], b[3], b[4], b[5], b[6]))
     },
     isoFormatDMY(d) {
@@ -200,9 +193,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.apexcharts-xaxis-label {
-  color: #8ab16f;
-}
-</style>

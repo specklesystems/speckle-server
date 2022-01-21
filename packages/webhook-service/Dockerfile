@@ -17,5 +17,4 @@ RUN npm ci
 
 COPY packages/webhook-service/src .
 
-ENTRYPOINT [ "tini", "--" ]
 CMD ["node", "main.js"]

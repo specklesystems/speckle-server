@@ -7,7 +7,7 @@
       </div>
     </portal>
 
-    <v-alert type="warning" v-if="stream.role !== 'stream:owner'">
+    <v-alert v-if="stream.role !== 'stream:owner'" type="warning">
       Your permission level ({{ stream.role }}) is not high enough to edit this stream's details.
     </v-alert>
 
@@ -43,8 +43,8 @@
           />
 
           <v-switch
-            inset
             v-model="isPublic"
+            inset
             class="mt-5"
             :label="isPublic ? 'Public (Link Sharing)' : 'Private'"
             :hint="
@@ -64,7 +64,11 @@
       </v-card-actions>
     </v-card>
 
-    <v-card :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-2`" elevation="0" rounded="lg">
+    <v-card
+      :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} mt-2`"
+      elevation="0"
+      rounded="lg"
+    >
       <v-toolbar flat :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : ''} mb-2`">
         <v-toolbar-title>
           <v-icon class="mr-2" small>mdi-bomb</v-icon>
@@ -77,11 +81,11 @@
           <v-list-item-action>
             <v-btn
               color="error"
-              @click="deleteDialog = true"
               fab
               dark
               small
               :disabled="stream.role !== 'stream:owner'"
+              @click="deleteDialog = true"
             >
               <v-icon>mdi-delete-forever</v-icon>
             </v-btn>
@@ -148,8 +152,7 @@ import gql from 'graphql-tag'
 
 export default {
   name: 'StreamSettings',
-  components: {
-  },
+  components: {},
   apollo: {
     stream: {
       query: gql`

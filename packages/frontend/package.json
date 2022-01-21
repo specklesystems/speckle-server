@@ -1,6 +1,6 @@
 {
   "name": "@speckle/frontend",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -19,22 +19,25 @@
     "dompurify": "^2.2.4",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
-    "marked": "^1.2.6",
+    "marked": "^2.0.0",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
     "tween": "^0.9.0",
+    "uuid": "^8.3.2",
     "v-tooltip": "^2.0.3",
     "vue": "^2.6.12",
     "vue-apexcharts": "^1.6.1",
     "vue-apollo": "^3.0.5",
+    "vue-histogram-slider": "^0.3.8",
     "vue-infinite-loading": "^2.4.5",
     "vue-matomo": "^3.14.0-0",
     "vue-router": "^3.4.9",
     "vue-timeago": "^5.1.2",
+    "vue2-perfect-scrollbar": "^1.5.2",
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.3.21",
     "vuetify-image-input": "^19.1.0",
-    "vuex": "^3.6.0"
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
     "@mdi/font": "^5.8.55",

@@ -1,24 +1,21 @@
 <template>
   <div>
-    <portal to="streamTitleBar">
-      <div>
-        <span class="space-grotesk" v-if="stream">{{$vuetify.breakpoint.xsOnly ? stream.name : 'Stream Home'}}</span>
-      </div>
-    </portal>
-    <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
-      <v-col cols="12" class="pa-0 ma-0">
-        <div style="height: 50vh" v-if="latestCommitObjectUrl">
-          <renderer :object-url="latestCommitObjectUrl" show-selection-helper />
-        </div>
-        <v-list class="pa-0 ma-0">
+    <v-row v-if="stream && stream.commits.totalCount !== 0" class="pa-3">
+      <v-col cols="12" class="pa-4">
+        <v-card :to="`/streams/${$route.params.streamId}/commits/${stream.commits.items[0].id}`">
+          <preview-image
+            :height="320"
+            :url="`/preview/${$route.params.streamId}/commits/${stream.commits.items[0].id}`"
+          ></preview-image>
           <list-item-commit
             :commit="stream.commits.items[0]"
             :stream-id="$route.params.streamId"
-            class="elevation-3"
+            class="elevation-0"
           ></list-item-commit>
-        </v-list>
+        </v-card>
+        <v-list class="pa-0 ma-0"></v-list>
       </v-col>
-      <v-col cols="12" class="" style="height: 40px"></v-col>
+      <v-col cols="12" class="" style="height: 20px"></v-col>
 
       <v-col
         cols="12"
@@ -30,18 +27,21 @@
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Latest Active Branches</v-toolbar-title>
             <v-spacer />
+            <!-- <v-app-bar-nav-icon>
+              <v-icon>mdi-plus-circle</v-icon>
+            </v-app-bar-nav-icon> -->
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px">
             The stream's last three updated branches
           </v-card-title>
-          <v-row class="pa-4 mt-1">
+          <v-row class="pa-4 mt-0">
             <v-col
+              v-for="branch in latestBranches"
+              :key="branch.name"
               cols="12"
               sm="4"
               md="4"
               :xl="loggedIn ? 12 : 4"
-              v-for="branch in latestBranches"
-              :key="branch.name"
             >
               <v-card :to="`/streams/${$route.params.streamId}/branches/${branch.name}`">
                 <preview-image
@@ -70,7 +70,7 @@
         </v-card>
       </v-col>
 
-      <v-col cols="12" xl="8" class="pr-4" v-if="loggedIn">
+      <v-col v-if="loggedIn" cols="12" xl="8" class="pr-4">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
             <v-toolbar-title>Stream Feed</v-toolbar-title>
@@ -93,16 +93,12 @@
   </div>
 </template>
 <script>
-import streamBranchesQuery from '@/graphql/streamBranches.gql'
 import gql from 'graphql-tag'
 
 export default {
   name: 'Details',
   components: {
-    UserAvatar: () => import('@/components/UserAvatar'),
-    SourceAppAvatar: () => import('@/components/SourceAppAvatar'),
     NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
-    Renderer: () => import('@/components/Renderer'),
     ListItemCommit: () => import('@/components/ListItemCommit'),
     PreviewImage: () => import('@/components/PreviewImage'),
     StreamActivity: () => import('@/views/stream/Activity')

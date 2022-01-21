@@ -1,5 +1,5 @@
 <template>
-  <v-container style="max-width: 768px">
+  <v-container fluid style="max-width: 768px">
     <portal to="streamTitleBar">
       <div>
         <v-icon small class="mr-2 hidden-xs-only">mdi-account-multiple</v-icon>

@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: packages/frontend/Dockerfile
+    image: speckle/speckle-frontend:local
     restart: always
     ports:
       - "0.0.0.0:80:80"
@@ -13,6 +14,7 @@ services:
     build:
       context: .
       dockerfile: packages/server/Dockerfile
+    image: speckle/speckle-server:local
     restart: always
     environment:
       # TODO: Change this to the URL of the speckle server, as accessed from the network
@@ -41,9 +43,10 @@ services:
     build:
       context: .
       dockerfile: packages/preview-service/Dockerfile
+    image: speckle/speckle-preview-service:local
     restart: always
-    mem_limit: "1000m"
-    memswap_limit: "1000m"
+    mem_limit: "3000m"
+    memswap_limit: "3000m"
     environment:
       DEBUG: "preview-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
@@ -52,15 +55,17 @@ services:
     build:
       context: .
       dockerfile: packages/webhook-service/Dockerfile
+    image: speckle/speckle-webhook-service:local
     restart: always
     environment:
       DEBUG: "webhook-service:*"
       PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
-  
+
   fileimport-service:
     build:
       context: .
       dockerfile: packages/fileimport-service/Dockerfile
+    image: speckle/speckle-fileimport-service:local
     restart: always
     environment:
       DEBUG: "fileimport-service:*"
@@ -72,4 +77,3 @@ services:
       S3_BUCKET: "speckle-server"
 
       SPECKLE_SERVER_URL: "http://speckle-server:3000"
-      

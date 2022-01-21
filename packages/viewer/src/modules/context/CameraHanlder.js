@@ -39,7 +39,7 @@ export default class CameraHandler {
     ]
 
     this.orbiting = false
-    this.controls.addEventListener( 'wake', () => { this.orbiting = true } )
+    this.controls.addEventListener( 'transitionstart', () => { this.orbiting = true } )
     // note: moved to new controls event called "rest"
     this.controls.addEventListener( 'controlend', () => { } )
     this.controls.addEventListener( 'rest', () => { setTimeout( () => { this.orbiting = false }, 400 ) } )

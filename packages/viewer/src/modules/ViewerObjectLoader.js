@@ -50,16 +50,10 @@ export default class ViewerObjectLoader {
   }
 
   async asyncPause() {
-    // while ( this.existingAsyncPause ) {
-    //   await this.existingAsyncPause
-    // }
     // Don't freeze the UI
     if ( Date.now() - this.lastAsyncPause >= 100 ) {
       this.lastAsyncPause = Date.now()
-      this.existingAsyncPause = new Promise( resolve => setTimeout( resolve, 0 ) )
-      await this.existingAsyncPause
-      this.existingAsyncPause = null
-      if ( Date.now() - this.lastAsyncPause > 500 ) console.log( 'VObjLoader Event loop lag: ', Date.now() - this.lastAsyncPause )
+      await new Promise( resolve => setTimeout( resolve, 0 ) )
     }
   }
 
@@ -94,7 +88,7 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
-    await this.viewer.sceneManager.postLoad()
+    await this.viewer.sceneManager.postLoadFunction()
 
     if ( viewerLoads === 0 ) {
       console.warn( `Viewer: no 3d objects found in object ${this.objectId}` )

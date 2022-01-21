@@ -9,8 +9,8 @@ export default class FilteringManager {
       color: 0x7080A0,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: 0.04,
-      wireframe: true
+      opacity: 0.2,
+      wireframe: false
     } )
     // console.log(this.viewer.sectionBox.planes)
     
@@ -165,9 +165,28 @@ export default class FilteringManager {
         if ( valueFilter.not.includes( objValue ) )
           return false
       }
-      if ( 'lte' in valueFilter && objValue > valueFilter.lte )
+
+      if ( 'includes' in valueFilter && Array.isArray( valueFilter.includes ) ) {
+        if ( !objValue || !Array.isArray( objValue ) )
+          return false
+        for ( let testValue of valueFilter.includes )
+          if ( objValue.includes( testValue ) )
+            return true
         return false
-      if ( 'gte' in valueFilter && objValue < valueFilter.gte )
+      }
+
+      if ( 'excludes' in valueFilter && Array.isArray( valueFilter.excludes ) ) {
+        if ( !objValue || !Array.isArray( objValue ) )
+          return true
+        for ( let testValue of valueFilter.excludes )
+          if ( objValue.includes( testValue ) )
+            return false
+        return true
+      }
+
+      if ( 'lte' in valueFilter && !( objValue <= valueFilter.lte ) )
+        return false
+      if ( 'gte' in valueFilter && !( objValue >= valueFilter.gte ) )
         return false
       return true
     }

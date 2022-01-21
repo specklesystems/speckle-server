@@ -62,6 +62,8 @@ export default class Viewer extends EventEmitter {
     this.onWindowResize()
     this.interactions.zoomExtents()
     this.needsRender = true
+
+    this.inProgressOperations = 0
   }
 
   sceneLights() {
@@ -204,10 +206,16 @@ export default class Viewer extends EventEmitter {
   }
 
   async loadObject( url, token, enableCaching = true ) {
-    let loader = new ViewerObjectLoader( this, url, token, enableCaching )
-    this.loaders[ url ] = loader
-    await loader.load()
-    return
+    try {
+      if ( ++this.inProgressOperations === 1 ) this.emit( 'busy', true )
+
+      let loader = new ViewerObjectLoader( this, url, token, enableCaching )
+      this.loaders[ url ] = loader
+      await loader.load()
+    } finally {
+       if ( --this.inProgressOperations === 0 ) this.emit( 'busy', false )
+    }
+
   }
 
   async cancelLoad( url, unload = false ) {
@@ -219,9 +227,14 @@ export default class Viewer extends EventEmitter {
   }
 
   async unloadObject( url ) {
-    await this.loaders[ url ].unload()
-    delete this.loaders[ url ]
-    return
+    try {
+      if ( ++this.inProgressOperations === 1 ) this.emit( 'busy', true )
+
+      await this.loaders[ url ].unload()
+      delete this.loaders[ url ]
+    } finally {
+       if ( --this.inProgressOperations === 0 ) this.emit( 'busy', false )
+    }
   }
 
   async unloadAll() {
@@ -234,11 +247,19 @@ export default class Viewer extends EventEmitter {
   }
 
   async applyFilter( filter ) {
-    return await this.sceneManager.sceneObjects.applyFilter( filter )
+    try {
+      if ( ++this.inProgressOperations === 1 ) this.emit( 'busy', true )
+
+      this.interactions.deselectObjects()
+      return await this.sceneManager.sceneObjects.applyFilter( filter )
+    } finally {
+       if ( --this.inProgressOperations === 0 ) this.emit( 'busy', false )
+    }
+
   }
 
-  getObjectsProperties() {
-    return this.sceneManager.sceneObjects.getObjectsProperties()
+  getObjectsProperties( includeAll = true ) {
+    return this.sceneManager.sceneObjects.getObjectsProperties( includeAll )
   }
 
   dispose() {

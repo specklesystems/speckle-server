@@ -4,18 +4,18 @@
       <v-col cols="12" lg="6" md="6" xl="6" class="d-flex flex-column justify-center align-center">
         <v-card flat tile color="transparent" class="pa-0">
           <div class="d-flex flex-column justify-space-between align-center mb-10">
-            <v-img contain max-height="200" src="@/assets/emptybox.png" v-if="!errorType"></v-img>
+            <v-img v-if="!errorType" contain max-height="200" src="@/assets/emptybox.png"></v-img>
             <v-img
+              v-else-if="errorType == 'access'"
               contain
               max-height="200"
               src="@/assets/lockbox.png"
-              v-else-if="errorType == 'access'"
             ></v-img>
             <v-img
+              v-else-if="errorType == '404'"
               contain
               max-height="200"
               src="@/assets/404box.png"
-              v-else-if="errorType == '404'"
             ></v-img>
           </div>
           <div class="text-center mb-2 space-grotesk">
@@ -24,7 +24,16 @@
           <v-container style="max-width: 500px">
             <slot name="actions">
               <v-list rounded class="transparent">
-                <v-list-item link class="primary mb-4 no-overlay" dark :to="`${$route.params.streamId && errorType !== '404' && errorType !== 'access' ? '/streams/' + $route.params.streamId : '/'}`">
+                <v-list-item
+                  link
+                  class="primary mb-4 no-overlay"
+                  dark
+                  :to="`${
+                    $route.params.streamId && errorType !== '404' && errorType !== 'access'
+                      ? '/streams/' + $route.params.streamId
+                      : '/'
+                  }`"
+                >
                   <v-list-item-icon>
                     <v-icon>mdi-home</v-icon>
                   </v-list-item-icon>

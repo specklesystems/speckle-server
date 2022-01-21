@@ -1,5 +1,5 @@
 query Streams($cursor: String) {
-  streams(cursor: $cursor) {
+  streams(cursor: $cursor, limit:3 ) {
     totalCount
     cursor
     items {
