@@ -245,7 +245,7 @@ export default {
       this.$router
         .replace({
           path: this.$route.path,
-          query: { ...fullQuery, filter: encodeURIComponent(JSON.stringify(val)) }
+          query: { ...fullQuery, filter: JSON.stringify(val) }
         })
         .catch(() => {})
     }
@@ -294,11 +294,11 @@ export default {
     this.filterToSet = null
 
     if (this.$route.query && this.$route.query.c) {
-      this.camToSet = JSON.parse(decodeURIComponent(this.$route.query.c))
+      this.camToSet = JSON.parse(this.$route.query.c)
     }
 
     if (this.$route.query && this.$route.query.filter) {
-      this.filterToSet = JSON.parse(decodeURIComponent(this.$route.query.filter))
+      this.filterToSet = JSON.parse(this.$route.query.filter)
     }
 
     setTimeout(() => {
@@ -349,21 +349,22 @@ export default {
           let pos = controls.getPosition()
           let target = controls.getTarget()
           let c = [
-            Math.round(pos.x, 5),
-            Math.round(pos.y, 5),
-            Math.round(pos.z, 5),
-            Math.round(target.x, 5),
-            Math.round(target.y, 5),
-            Math.round(target.z, 5),
+            parseFloat(pos.x.toFixed(5)),
+            parseFloat(pos.y.toFixed(5)),
+            parseFloat(pos.z.toFixed(5)),
+            parseFloat(target.x.toFixed(5)),
+            parseFloat(target.y.toFixed(5)),
+            parseFloat(target.z.toFixed(5)),
             window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
             controls._zoom
           ]
+          console.log(c)
           let fullQuery = { ...this.$route.query }
           delete fullQuery.c
           this.$router
             .replace({
               path: this.$route.path,
-              query: { ...fullQuery, c: encodeURIComponent(JSON.stringify(c)) }
+              query: { ...fullQuery, c: JSON.stringify(c) }
             })
             .catch(() => {})
         }, 1000)
