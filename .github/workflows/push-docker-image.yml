@@ -79,7 +79,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets[matrix.accessKey] }}
           aws-secret-access-key: ${{ secrets[matrix.secretAccessKey] }}
-          aws-region: eu-west-1
+          aws-region: ${{ matrix.region }}
 
       - name: Login to Amazon ECR
         id: login-ecr
