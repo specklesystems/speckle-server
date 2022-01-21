@@ -5,6 +5,7 @@
 </template>
 <script>
 import { Viewer } from '@speckle/viewer'
+import throttle from 'lodash.throttle'
 
 export default {
   data() {
@@ -69,7 +70,10 @@ export default {
         })
       })
 
-      window.__viewer.on('load-progress', (args) => this.$emit('load-progress', args))
+      window.__viewer.on(
+        'load-progress',
+        throttle((args) => this.$emit('load-progress', args), 250)
+      )
       window.__viewer.on('select', (objects) => this.$emit('selection', objects))
     }
   }
