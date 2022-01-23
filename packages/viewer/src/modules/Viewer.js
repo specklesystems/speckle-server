@@ -68,61 +68,6 @@ export default class Viewer extends EventEmitter {
     this.inProgressOperations = 0
   }
 
-  addMap(){
-    
-
-        //////////////////
-    
-		//var DEV_MAPBOX_API_KEY = "pk.eyJ1IjoidGVudG9uZSIsImEiOiJjazBwNHU4eDQwZzE4M2VzOGhibWY5NXo5In0.8xpF1DEcT6Y4000vNhjj1g";
-		var DEV_MAPBOX_API_KEY = "pk.eyJ1Ijoia2F0LXNwZWNrbGUiLCJhIjoiY2t5bG9wbDZzMXkyYTJwbjg2djJjcTFqdyJ9.iSzkqsbL5PDoJrXAaBxGaQ";
-    var DEV_HEREMAPS_APP_ID = "HqSchC7XT2PA9qCfxzFq";
-		var DEV_HEREMAPS_APP_CODE = "5rob9QcZ70J-m18Er8-rIA";
-		var DEV_BING_API_KEY = "AuViYD_FXGfc3dxc0pNa8ZEJxyZyPq1lwOLPCOydV3f0tlEVH-HKMgxZ9ilcRj-T";
-		var DEV_MAPTILER_API_KEY = "B9bz5tIKxl4beipiIbR0";
-		var OPEN_MAP_TILES_SERVER_MAP = "";
-    
-    // adding map tiles
-    var providers = [
-			["Vector OpenSteet Maps", new Geo.OpenStreetMapsProvider()],
-			["Vector OpenTile Maps", new Geo.OpenMapTilesProvider(OPEN_MAP_TILES_SERVER_MAP)],
-			["Vector Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckylpizpk5vzd14q8fgls9e1r", Geo.MapBoxProvider.STYLE)], //mapbox/streets-v10
-			["Vector Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.day")],
-			["Vector Here Maps Night", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.night")],
-			["Vector Here Maps Terrain", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "terrain.day")],
-			["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)],
-			["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")],
-			["Vector Map Tiler Outdoor", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "outdoor", "png")],	
-			["Satellite Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false)],
-			["Satellite Map Box Labels", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/satellite-streets-v10", Geo.MapBoxProvider.STYLE, "jpg70")],
-			["Satellite Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "satellite.day", "jpg")],
-			["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)],
-			["Satellite Maps Tiler Labels", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "hybrid", "jpg")],
-			["Satellite Maps Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "satellite", "jpg")],
-			["Height Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw")],
-			["Height Map Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "terrain-rgb", "png")],
-			["Debug Height Map Box", new Geo.HeightDebugProvider(new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw"))],
-			["Debug", new Geo.DebugProvider()]
-		];
-
-    var modes = [
-			["Planar", Geo.MapView.PLANAR],
-			["Height", Geo.MapView.HEIGHT],
-			// ["Martini", Geo.MapView.MARTINI],
-			["Height Shader", Geo.MapView.HEIGHT_SHADER],
-			["Spherical", Geo.MapView.SPHERICAL]
-		];
-
-    let index = 2
-    var map = new Geo.MapView(modes[0][1], providers[index][1], providers[index][1]);
-    this.scene.add(map);
-    console.log(this.cameraHandler.camera.position)
-    //this.interactions.setLookAt(5000,5000,10,5000,5000,0,true)
-    //this.cameraHandler.camera.position.set(50,50,50)
-    //console.log(this.cameraHandler.camera.position) 
-    //console.log(this.cameraHandler.activeCam.camera.position)
-    
-  }
-
   sceneLights() {
 
     // const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
@@ -274,6 +219,78 @@ export default class Viewer extends EventEmitter {
        if ( --this.inProgressOperations === 0 ) this.emit( 'busy', false )
     }
 
+  }
+  async addMap( val ) {
+
+    var selectedObject = this.scene.getObjectByName("Mapbox map")
+    this.scene.remove( selectedObject );
+    this.animate();
+
+		//var DEV_MAPBOX_API_KEY = "pk.eyJ1IjoidGVudG9uZSIsImEiOiJjazBwNHU4eDQwZzE4M2VzOGhibWY5NXo5In0.8xpF1DEcT6Y4000vNhjj1g";
+		var DEV_MAPBOX_API_KEY = "pk.eyJ1Ijoia2F0LXNwZWNrbGUiLCJhIjoiY2t5bG9wbDZzMXkyYTJwbjg2djJjcTFqdyJ9.iSzkqsbL5PDoJrXAaBxGaQ";
+    var DEV_HEREMAPS_APP_ID = "HqSchC7XT2PA9qCfxzFq";
+		var DEV_HEREMAPS_APP_CODE = "5rob9QcZ70J-m18Er8-rIA";
+		var DEV_BING_API_KEY = "AuViYD_FXGfc3dxc0pNa8ZEJxyZyPq1lwOLPCOydV3f0tlEVH-HKMgxZ9ilcRj-T";
+		var DEV_MAPTILER_API_KEY = "B9bz5tIKxl4beipiIbR0";
+		var OPEN_MAP_TILES_SERVER_MAP = "";
+    
+    // adding map tiles
+    var providers = [
+			["Vector OpenSteet Maps", new Geo.OpenStreetMapsProvider()],
+			["Vector OpenTile Maps", new Geo.OpenMapTilesProvider(OPEN_MAP_TILES_SERVER_MAP)],
+			["Vector Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckylpizpk5vzd14q8fgls9e1r", Geo.MapBoxProvider.STYLE)], //basic: kat-speckle/ckyrgjmb9d62k14nwxqk1qk1n //mapbox/streets-v10 //satellite: kat-speckle/ckylpizpk5vzd14q8fgls9e1r
+			["Vector Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.day")],
+			["Vector Here Maps Night", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.night")],
+			["Vector Here Maps Terrain", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "terrain.day")],
+			["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)],
+			["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")],
+			["Vector Map Tiler Outdoor", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "outdoor", "png")],	
+			["Satellite Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false)],
+			["Satellite Map Box Labels", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/satellite-streets-v10", Geo.MapBoxProvider.STYLE, "jpg70")],
+			["Satellite Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "satellite.day", "jpg")],
+			["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)],
+			["Satellite Maps Tiler Labels", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "hybrid", "jpg")],
+			["Satellite Maps Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "satellite", "jpg")],
+			["Height Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw")],
+			["Height Map Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "terrain-rgb", "png")],
+			["Debug Height Map Box", new Geo.HeightDebugProvider(new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw"))],
+			["Debug", new Geo.DebugProvider()]
+		];
+    var new_providers = [
+			["Vector Mapbox", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckyrgjmb9d62k14nwxqk1qk1n", Geo.MapBoxProvider.STYLE)],
+			["Satellite Mapbox", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckylpizpk5vzd14q8fgls9e1r", Geo.MapBoxProvider.STYLE)],
+    ]
+    
+    var modes = [
+			["Planar", Geo.MapView.PLANAR],
+			["Height", Geo.MapView.HEIGHT],
+			// ["Martini", Geo.MapView.MARTINI],
+			["Height Shader", Geo.MapView.HEIGHT_SHADER],
+			["Spherical", Geo.MapView.SPHERICAL]
+		];
+    
+    console.log(val)
+    if (val ==0 || val==1){
+      var map = new Geo.MapView(modes[0][1], new_providers[val][1], new_providers[val][1]);
+      map.name = "Mapbox map"
+      this.scene.add(map);
+      map.rotation.x += 90*Math.PI/180;
+      
+      var scale = 1; //meters
+      map.scale.set(map.scale.x*scale,map.scale.y*scale,map.scale.z*scale)
+      // https://latest.speckle.dev/streams/8b29ca2b2e/objects/288f67a0a45b2a4c3bd01f7eb3032495
+
+      // What maps support zoom over level 10-20?
+      //How to translate coordinates to distance for moving the map?
+      map.position.y += -5753040*scale*1.1665;
+      this.animate();
+    }
+  }
+  removeMap(){
+    //console.log(this.scene.children[11])
+    var selectedObject = this.scene.getObjectByName("Mapbox map")
+    this.scene.remove( selectedObject );
+    this.animate();
   }
 
   async cancelLoad( url, unload = false ) {
