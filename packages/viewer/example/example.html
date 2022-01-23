@@ -43,11 +43,11 @@
         <button class="" onclick="loadData()" style="width:49%">Load Object URL</button>
       </div>
       <div class="twelve columns">
-        <input id="zeroCoordInput" type="text" name="zeroCoord" placeholder="Xval, Yval" style="width:49%"
-          value="https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f" />
-        <button class="" onclick="v.addMap(0)" style="width:16%">Add vector map</button>
-        <button class="" onclick="v.addMap(1)" style="width:16%">Add satellite map</button>
-        <button class="" onclick="v.removeMap()" style="width:16%">Remove maps</button>
+        <input id="zeroCoordInputX" type="text" name="zeroCoordX" placeholder="Xval" style="width:24.25%" value="0" />
+        <input id="zeroCoordInputY" type="text" name="zeroCoordY" placeholder="Yval" style="width:24.25%"
+          value="6710921.16" />
+        <select id="providerColor" style="width: 24.25%; height: 40px;" onclick="v.addMap()"></select>
+        <button class="" onclick="v.removeMap()" style="width:24.25%">Remove maps</button>
       </div>
       <div class="twelve columns">
         <button onclick="v.unloadAll()">Dispose Everything</button>
