@@ -133,7 +133,7 @@
           top: -64px;
           left: 0px;
           position: absolute;
-          z-index: 1000;
+          z-index: 4;
           pointer-events: none;
         "
       >
