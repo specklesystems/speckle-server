@@ -6,25 +6,44 @@
   >
     <div
       v-for="user in users"
-      :ref="`userbubble-${user.uuid}`"
+      :ref="`user-bubble-${user.uuid}`"
       :key="user.uuid"
       :class="`absolute-pos rounded-pill elevation-4 grey ${
         $vuetify.theme.dark ? 'darken-4' : 'lighten-3'
       }`"
-      :style="`opacity: ${user.hidden ? '0.2' : 1}; border: 3px solid #047EFB !important;`"
+      :style="`opacity: ${user.hidden ? '0.2' : 1};`"
     >
       <div @click="setUser(user)">
         <user-avatar :id="user.id" :show-hover="false" :size="32" :margin="false"></user-avatar>
         <span
           v-if="user.status === 'writing'"
           class="ellipsis-anim ml-1 mr-3"
-          style="position: relative; top: -2px"
+          style="position: relative; xxtop: -2px"
         >
           <span>.</span>
           <span>.</span>
           <span>.</span>
         </span>
       </div>
+    </div>
+    <!-- Note: hidden, unhide for debugging -->
+    <div
+      v-for="user in users"
+      :ref="`user-target-${user.uuid}`"
+      :key="user.uuid + 'target'"
+      :class="`absolute-pos rounded-pill primary`"
+      :style="` opacity: ${
+        user.hidden ? '0.2' : 1
+      }; transform-origin:center; width: 10px; height:10px; pointer-events:none`"
+    ></div>
+    <div
+      v-for="user in users"
+      :ref="`user-arrow-${user.uuid}`"
+      :key="user.uuid + 'arrow'"
+      :class="`absolute-pos d-flex align-center justify-center`"
+      :style="`pointer-events:none; transform-origin:center; width: 32px; height:32px; transform: rotateY(0) rotate(90deg)`"
+    >
+      <v-icon class="primary--text" style="position: relative; top: -90%">mdi-navigation-outline</v-icon>
     </div>
   </div>
 </template>
@@ -59,7 +78,6 @@ export default {
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
           // it's easier to test like this though :)
           if (data.userCommentActivity.status === 'disconnect') {
-            console.log('disconnect')
             this.users = this.users.filter((u) => u.uuid !== data.userCommentActivity.uuid)
             return
           }
@@ -98,7 +116,7 @@ export default {
     this.raycaster = new THREE.Raycaster()
     window.__viewer.cameraHandler.controls.addEventListener(
       'update',
-      throttle(this.updateBubbles, 1000)
+      throttle(this.updateBubbles, 120)
     )
     this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
     window.addEventListener('beforeunload', async (e) => {
@@ -108,7 +126,6 @@ export default {
   },
   async beforeDestroy() {
     await this.sendDisconnect()
-    console.log('before destry')
     window.clearInterval(this.updateInterval)
   },
   methods: {
@@ -199,7 +216,7 @@ export default {
 
       let cam = window.__viewer.cameraHandler.activeCam.camera
       for (let user of this.users) {
-        if (!this.$refs[`userbubble-${user.uuid}`]) continue
+        if (!this.$refs[`user-bubble-${user.uuid}`]) continue
 
         let box = new THREE.Box3().setFromObject(
           window.__viewer.sceneManager.sceneObjects.objectsInScene
@@ -217,8 +234,6 @@ export default {
             .multiplyScalar(fraction > distCamTarget ? distCamTarget : fraction)
         )
 
-        // let p = new THREE.Vector3(user.camera[0], user.camera[1], user.camera[2]) // cam.location
-        // let p = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5]) // cam.target
         let p = target // cam.target
         p.project(cam)
 
@@ -234,7 +249,33 @@ export default {
         if (y > this.$refs.parent.clientHeight - padding - 34)
           y = this.$refs.parent.clientHeight - padding - 34
 
-        this.$refs[`userbubble-${user.uuid}`][0].style.transform = `translate(${x}px,${y}px)`
+        this.$refs[`user-bubble-${user.uuid}`][0].style.transform = `translate(${x}px,${y}px)`
+
+        let actualTarget = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5])
+        actualTarget.project(cam)
+        let targetX = (actualTarget.x * 0.5 + 0.5) * this.$refs.parent.clientWidth
+        let targetY = (actualTarget.y * -0.5 + 0.5) * this.$refs.parent.clientHeight
+        this.$refs[
+          `user-target-${user.uuid}`
+        ][0].style.transform = `translate(-50%, -50%) translate(${targetX}px,${targetY}px)`
+
+        let dir = new THREE.Vector3()
+        const p1 = new THREE.Vector3(x + 16, y + 16, 0)
+        const p2 = new THREE.Vector3(targetX, targetY, 0)
+        dir.subVectors(p2, p1).normalize()
+        let angle = dir.angleTo(new THREE.Vector3(1, 0, 0))
+
+        const cross = new THREE.Vector3()
+        cross.crossVectors(p1, p2).normalize()
+        // const norm =
+        const dot = new THREE.Vector3(0, 0, 1).dot(cross)
+
+        if (dot < 0) angle = -angle
+        let deg = (angle * 180) / Math.PI + 90
+
+        this.$refs[
+          `user-arrow-${user.uuid}`
+        ][0].style.transform = `translate(${x}px,${y}px) rotate(${deg}deg)`
       }
     }
   }
@@ -246,7 +287,8 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.6s ease;
+  transition: all 0.3s ease;
+  transform-origin: center;
 }
 
 .ellipsis-anim span {
@@ -254,7 +296,7 @@ export default {
   opacity: 0;
   -webkit-animation: ellipsis-dot 1s infinite;
   animation: ellipsis-dot 1s infinite;
-  font-size: 3em;
+  font-size: 1em;
   line-height: 10px;
   user-select: none;
 }
