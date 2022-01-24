@@ -16,9 +16,8 @@
       </v-list-item-content>
       <v-list-item-action class="pa-0 ma-0">
         <v-btn
-          v-show="objects.length > 1"
           v-tooltip="'Open selection in a new window'"
-          :disabled="objects.length === 0 && !isolated"
+          :disabled="objects.length === 0 && isolated"
           small
           icon
           target="_blank"
@@ -35,7 +34,7 @@
           icon
           @click.stop="isolateSelection()"
         >
-          <v-icon small :class="`${isolated ? 'primary--text' : ''}`">mdi-filter</v-icon>
+          <v-icon small :class="`${!isolated ? 'primary--text' : ''}`">mdi-filter</v-icon>
         </v-btn>
       </v-list-item-action>
       <v-list-item-action class="pa-0 ma-0">
@@ -80,9 +79,7 @@ export default {
   },
   data() {
     return {
-      expand: true,
-      isolated: false,
-      isolatedObjects: []
+      expand: true
     }
   },
   computed: {
@@ -99,29 +96,21 @@ export default {
           refId: obj.id
         }
       })
+    },
+    isolated() {
+      let ids = this.objects.map((o) => o.id)
+      ids.forEach((val) => {
+        if (this.$store.state.isolateValues.indexOf(val) === -1) return false
+      })
+      return true
     }
-  },
-  mounted() {
-    this.$eventHub.$on('visibility-reset', () => {
-      this.isolatedObjects.splice(0, this.isolatedObjects.length)
-      this.isolated = false
-    })
   },
   methods: {
     isolateSelection() {
-      this.isolated = !this.isolated
-      this.$eventHub.$emit('filter-reset')
-      if (this.isolated) {
-        this.$eventHub.$emit('show-visreset', true)
-        this.$eventHub.$emit('selection-filters', true)
-        window.__viewer.applyFilter({
-          filterBy: { id: this.objects.map((o) => o.id) },
-          ghostOthers: true
-        })
-      } else {
-        this.$eventHub.$emit('show-visreset', false)
-        window.__viewer.applyFilter(null)
-      }
+      let ids = this.objects.map((o) => o.id)
+      if (!this.isolated)
+        this.$store.commit('unisolateObjects', { filterKey: '__parents', filterValues: ids })
+      else this.$store.commit('isolateObjects', { filterKey: '__parents', filterValues: ids })
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''

@@ -11,7 +11,7 @@
         @click="resetVisibility()"
       >
         <v-icon small class="mr-2">mdi-eye</v-icon>
-        Show All
+        Reset Filters
       </v-btn>
       <v-btn
         v-tooltip="`Toggle between perspective or ortho camera.`"
@@ -58,8 +58,12 @@ export default {
   },
   data() {
     return {
-      fullScreen: false,
-      showVisReset: false
+      fullScreen: false
+    }
+  },
+  computed: {
+    showVisReset() {
+      return !!this.$store.state.appliedFilter
     }
   },
   mounted() {
@@ -70,9 +74,7 @@ export default {
       window.__viewer.toggleCameraProjection()
     },
     resetVisibility() {
-      window.__viewer.applyFilter(null)
-      this.showVisReset = false
-      this.$eventHub.$emit('visibility-reset')
+      this.$store.commit('resetFilter')
     },
     zoomEx() {
       window.__viewer.zoomExtents()

@@ -8,8 +8,11 @@
     <v-col
       v-tooltip="prop.key"
       cols="5"
-      :class="`caption text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+      :class="`caption ${
+        prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : ''
+      } text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
       style="line-height: 24px"
+      @click="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
     >
       {{ prop.key.startsWith('@') ? prop.key.substring(1) : prop.key }}
     </v-col>
@@ -66,8 +69,8 @@
         class="mr-1"
         @click="toggleFilter()"
       >
-        <v-icon :class="`${filtered ? 'primary--text' : 'grey--text'}`" style="font-size: 11px">
-          {{ !filtered ? 'mdi-filter' : 'mdi-filter' }}
+        <v-icon :class="`${isolated ? 'primary--text' : 'grey--text'}`" style="font-size: 11px">
+          {{ !isolated ? 'mdi-filter' : 'mdi-filter' }}
         </v-icon>
       </v-btn>
       <v-btn v-tooltip="'Expand/collapse property'" x-small icon @click="expanded = !expanded">
@@ -77,7 +80,7 @@
       </v-btn>
     </v-col>
     <v-scroll-y-transition>
-      <v-col v-if="expanded" cols="12">
+      <v-col v-if="expanded && (prop.type === 'object' || prop.type === 'array')" cols="12">
         <object-properties :obj="prop.value" :stream-id="streamId" />
       </v-col>
     </v-scroll-y-transition>
@@ -94,8 +97,6 @@ export default {
   data() {
     return {
       expanded: false,
-      visible: true,
-      filtered: false,
       id: uuidv4()
     }
   },
@@ -111,50 +112,63 @@ export default {
         default:
           return 'mdi-numeric'
       }
+    },
+    visible() {
+      if (this.prop.type === 'object') {
+        return this.$store.state.hideValues.indexOf(this.prop.value.referencedId) === -1
+      }
+      if (this.prop.type === 'array') {
+        let ids = this.prop.value.map((o) => o.referencedId)
+        let targetIds = this.$store.state.hideValues.filter((val) => ids.indexOf(val) !== -1)
+        if (targetIds.length === 0) return true
+        else return false // return "partial" or "full", depending on state
+      }
+      return true
+    },
+    isolated() {
+      if (this.prop.type === 'object') {
+        return this.$store.state.isolateValues.indexOf(this.prop.value.referencedId) !== -1
+      }
+      if (this.prop.type === 'array') {
+        let ids = this.prop.value.map((o) => o.referencedId)
+        let targetIds = this.$store.state.isolateValues.filter((val) => ids.indexOf(val) !== -1)
+        if (targetIds.length === 0) return false
+        else return true // return "partial" or "full", depending on state
+      }
+      return false
     }
   },
-  mounted() {
-    this.$eventHub.$on('filter-reset', () => {
-      this.filtered = false
-    })
-    this.$eventHub.$on('vis-reset', () => {
-      this.visible = true
-    })
-  },
+  mounted() {},
   methods: {
     toggleVisibility() {
-      this.visible = !this.visible
-      if (this.filtered && !this.visible) this.filtered = false
       let targetIds
       if (this.prop.type === 'object') targetIds = [this.prop.value.referencedId]
       if (this.prop.type === 'array') {
         targetIds = this.prop.value.map((o) => o.referencedId)
       }
 
-      if (!this.visible) this.$eventHub.$emit('hide-objects', targetIds)
-      else this.$eventHub.$emit('show-objects', targetIds)
-      this.$eventHub.$emit('filter-reset')
+      if (this.visible)
+        this.$store.commit('hideObjects', { filterKey: '__parents', filterValues: targetIds })
+      else this.$store.commit('showObjects', { filterKey: '__parents', filterValues: targetIds })
     },
     toggleFilter() {
-      this.filtered = !this.filtered
-      if (this.filtered && !this.visible) {
-        this.visible = true
-        // TODO: remove visibility filter
-      }
-
       let targetIds
       if (this.prop.type === 'object') targetIds = [this.prop.value.referencedId]
       if (this.prop.type === 'array') {
         targetIds = this.prop.value.map((o) => o.referencedId)
       }
-      if (this.filtered) this.$eventHub.$emit('isolate-objects', targetIds)
-      else this.$eventHub.$emit('unisolate-objects', targetIds)
-      this.$eventHub.$emit('vis-reset')
+
+      if (this.isolated)
+        this.$store.commit('unisolateObjects', { filterKey: '__parents', filterValues: targetIds })
+      else this.$store.commit('isolateObjects', { filterKey: '__parents', filterValues: targetIds })
     }
   }
 }
 </script>
 <style scoped>
+.hover-cursor:hover {
+  cursor: pointer;
+}
 .property-row {
   transition: all 0.3s ease;
   background: rgba(120, 120, 120, 0.05);

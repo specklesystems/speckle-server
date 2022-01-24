@@ -50,6 +50,7 @@
           </v-list-item>
         </v-list>
 
+        <!-- Selection info -->
         <v-scroll-y-transition>
           <transition-group>
             <object-selection
@@ -62,22 +63,28 @@
           </transition-group>
         </v-scroll-y-transition>
 
-        <v-subheader v-if="isMultiple" class="caption">Loaded commits/objects:</v-subheader>
-
-        <structure-display
-          v-for="(resource, index) in resources"
-          :key="index"
-          :resource="resource"
-          :is-multiple="isMultiple"
-          :expand-initial="!isMultiple"
+        <!-- Loaded resources  -->
+        <resource-group
+          :resources="resources"
           @remove="removeResource"
+          @add-resource="addResource"
         />
 
         <v-divider v-if="isMultiple" class="my-4" />
 
+        <!-- Views display -->
         <views-display v-if="views.length !== 0" :views="views" />
 
-        <filters :props="objectProperties" :source-application="'asdf'" />
+        <!-- Filters display -->
+        <filters
+          :props="objectProperties"
+          :source-application="
+            resources
+              .filter((r) => r.type === 'commit')
+              .map((r) => r.data.commit.sourceApplication)
+              .join(',')
+          "
+        />
       </portal>
 
       <!-- Preview image -->
@@ -112,15 +119,24 @@
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
       <!-- Progress bar -->
-      <div
-        v-if="!loadedModel"
-        style="height: 100vh; width: 20%; top: 45%; left: 40%; position: absolute"
-      >
+      <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
         <v-progress-linear
           v-model="loadProgress"
           :indeterminate="loadProgress >= 99 && !loadedModel"
           color="primary"
         ></v-progress-linear>
+      </div>
+      <div
+        v-show="viewerBusy && loadedModel"
+        class="pl-2 pb-2"
+        style="width: 100%; bottom: 12px; left: 0; position: absolute; z-index: 10000000"
+      >
+        <v-progress-circular
+          :size="20"
+          indeterminate
+          color="primary"
+          class="mr-2"
+        ></v-progress-circular>
       </div>
     </div>
 
@@ -150,23 +166,24 @@
   </div>
 </template>
 <script>
+import debounce from 'lodash.debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/cleanup/components/common/Viewer' // do not import async
 
 export default {
   components: {
+    Viewer,
     CommitToolbar: () => import('@/cleanup/toolbars/CommitToolbar'),
     ObjectToolbar: () => import('@/cleanup/toolbars/ObjectToolbar'),
     MultipleResourcesToolbar: () => import('@/cleanup/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
     StreamOverlayViewer: () => import('@/cleanup/components/viewer/dialogs/AddOverlay'),
-    Viewer,
     ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     ViewerControls: () => import('@/cleanup/components/viewer/ViewerControls'),
     ObjectSelection: () => import('@/cleanup/components/viewer/ObjectSelection'),
-    StructureDisplay: () => import('@/cleanup/components/viewer/StructureDisplay'),
+    ResourceGroup: () => import('@/cleanup/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/cleanup/components/viewer/ViewsDisplay'),
     Filters: () => import('@/cleanup/components/viewer/Filters')
   },
@@ -182,7 +199,8 @@ export default {
     showVisReset: false,
     resourceType: null,
     resources: [],
-    showAddOverlay: false
+    showAddOverlay: false,
+    viewerBusy: false
   }),
   computed: {
     isCommit() {
@@ -211,6 +229,25 @@ export default {
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
         return
       }
+    },
+    '$store.state.appliedFilter'(val) {
+      if (!val) {
+        let fullQuery = { ...this.$route.query }
+        delete fullQuery.filter
+        this.$router.replace({
+          path: this.$route.path,
+          query: { ...fullQuery }
+        })
+        return
+      }
+      let fullQuery = { ...this.$route.query }
+      delete fullQuery.filter
+      this.$router
+        .replace({
+          path: this.$route.path,
+          query: { ...fullQuery, filter: JSON.stringify(val) }
+        })
+        .catch(() => {})
     }
   },
   async mounted() {
@@ -252,6 +289,18 @@ export default {
     }
 
     this.$eventHub.$emit('page-load', false)
+    this.firstCallToCam = true
+    this.camToSet = null
+    this.filterToSet = null
+
+    if (this.$route.query && this.$route.query.c) {
+      this.camToSet = JSON.parse(this.$route.query.c)
+    }
+
+    if (this.$route.query && this.$route.query.filter) {
+      this.filterToSet = JSON.parse(this.$route.query.filter)
+    }
+
     setTimeout(() => {
       for (const resource of this.resources) {
         if (resource.data.error) continue
@@ -261,6 +310,66 @@ export default {
             : resource.data.object.id
         )
       }
+      window.__viewer.on('busy', (val) => {
+        this.viewerBusy = val
+        if (!val && this.camToSet) {
+          setTimeout(() => {
+            if (this.camToSet[6] === 1) {
+              window.__viewer.toggleCameraProjection()
+            }
+            window.__viewer.interactions.setLookAt(
+              { x: this.camToSet[0], y: this.camToSet[1], z: this.camToSet[2] }, // position
+              { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
+            )
+            if (this.camToSet[6] === 1) {
+              window.__viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+            }
+            this.camToSet = null
+          }, 200)
+        }
+
+        if (!val && this.filterToSet) {
+          setTimeout(() => {
+            this.$store.commit('setFilterDirect', { filter: this.filterToSet })
+            // window.__viewer.applyFilter(this.filterToSet)
+            this.filterToSet = null
+          }, 200)
+        }
+      })
+
+      window.__viewer.cameraHandler.controls.addEventListener(
+        'rest',
+        debounce(() => {
+          if (this.firstCallToCam) {
+            this.firstCallToCam = false
+            return
+          }
+          if (this.camToSet) return
+          let controls = window.__viewer.cameraHandler.activeCam.controls
+          let pos = controls.getPosition()
+          let target = controls.getTarget()
+          let c = [
+            parseFloat(pos.x.toFixed(5)),
+            parseFloat(pos.y.toFixed(5)),
+            parseFloat(pos.z.toFixed(5)),
+            parseFloat(target.x.toFixed(5)),
+            parseFloat(target.y.toFixed(5)),
+            parseFloat(target.z.toFixed(5)),
+            window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
+            controls._zoom
+          ]
+          console.log(c)
+          let fullQuery = { ...this.$route.query }
+          delete fullQuery.c
+          this.$router
+            .replace({
+              path: this.$route.path,
+              query: { ...fullQuery, c: JSON.stringify(c) }
+            })
+            .catch(() => {})
+        }, 1000)
+      )
+      // TODO: check query params for filter and camera pos and set them
     }, 300)
   },
   methods: {
