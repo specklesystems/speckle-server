@@ -73,12 +73,13 @@ export default class Viewer extends EventEmitter {
     
     // adding map tiles
     this.map_providers = [
-			["Vector Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE)], //works (custom token)
-			["Satellite Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false)], //works (custom token)
-			["Satellite Map Box Labels", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/satellite-streets-v10", Geo.MapBoxProvider.STYLE, "jpg70")], //works (custom token)
-
+      ["No map"],
 			["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)], //works
 			["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)], //works
+			["Vector Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE)], //works (custom token)
+			//["3D Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckysf2np4dttn14qpfa1uopnz", Geo.MapBoxProvider.STYLE)], //works (custom token)
+			["Satellite Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false)], //works (custom token)
+			//["Satellite Map Box Labels", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/satellite-streets-v10", Geo.MapBoxProvider.STYLE, "jpg70")], //works (custom token)
 
 			["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")], //works
 			["Vector Map Tiler Outdoor", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "outdoor", "png")],	//works
@@ -333,60 +334,53 @@ export default class Viewer extends EventEmitter {
   addMapsList(){
     var providerColor = document.getElementById("providerColor");
 
-    for (var i = 0; i < this.map_providers.length + 1 ; i++) {
+    for (var i = 0; i < this.map_providers.length ; i++) {
       var option = document.createElement("option");
-      if (i>0) option.innerHTML = this.map_providers[i-1][0];
-      else option.innerHTML = "No map";
+      option.innerHTML = this.map_providers[i][0];
       providerColor.appendChild(option);
     }
   }
   async addMap() {
-
-    //TODO: activate only on new selection, not just a click
     // example building https://latest.speckle.dev/streams/8b29ca2b2e/objects/288f67a0a45b2a4c3bd01f7eb3032495
 
     this.removeMap();
-    this.animate();
 
     var providerColor = document.getElementById("providerColor");
     if (providerColor.selectedIndex >0){
-      //set selected map provider
-      providerColor.onchange = function (event) {
-        if (map !== undefined) {
-          map.setProvider(this.map_providers[event.target.selectedIndex][1]);
-        }
-      };
 
-      //create and add map to scene
-      var map = new Geo.MapView(this.map_modes[0][1], this.map_providers[providerColor.selectedIndex-1][1], this.map_providers[providerColor.selectedIndex-1][1]);
-      map.name = "Base map"
-      this.scene.add(map);
-      map.rotation.x += 90*Math.PI/180;
-      
-      // get and transform coordinates
-      var coord_x = Number(document.getElementById( 'zeroCoordInputX' ).value)
-      var coord_y = Number(document.getElementById( 'zeroCoordInputY' ).value)
-      var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_x,coord_y); // 51.506810732490656, -0.0892642750895124
+        //create and add map to scene
+        var map = new Geo.MapView(this.map_modes[0][1], this.map_providers[providerColor.selectedIndex][1], this.map_providers[providerColor.selectedIndex][1]);
+        map.name = "Base map"
+        this.scene.add(map);
+        map.rotation.x += 90*Math.PI/180;
 
-      //set units and scale (1 = meters)
-      var scale = 0.001; //meters
-      var scale_units = "m"
-      var mapUnits = document.getElementById("mapUnits");
-      
-      scale_units = mapUnits.value;
-      scale = getConversionFactor(scale_units);
-            
-      map.scale.set(map.scale.x*scale, map.scale.y*scale, map.scale.z*scale)
-      map.position.x -= coords_transformed.x*scale; // to the East
-      map.position.y -= coords_transformed.y*scale; // to the North 
-      this.animate();
+        //set selected map provider
+        await map.setProvider(this.map_providers[providerColor.selectedIndex][1]);
+
+        // get and transform coordinates
+        var coord_x = Number(document.getElementById( 'zeroCoordInputX' ).value)
+        var coord_y = Number(document.getElementById( 'zeroCoordInputY' ).value)
+        var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_x,coord_y); // 51.506810732490656, -0.0892642750895124
+
+        //set units and scale (1 = meters)
+        var scale = 0.001; //mm
+        var scale_units = "mm"
+        
+        scale_units = document.getElementById("mapUnits").value;
+        scale = getConversionFactor(scale_units);
+              
+        map.scale.set(map.scale.x/scale, map.scale.y/scale, map.scale.z/scale)
+        map.position.x -= coords_transformed.x/scale; // to the East
+        map.position.y -= coords_transformed.y/scale; // to the North 
+        
+        this.interactions.rotateCamera(0.001) //to activate map loading
+
     }
-    //TODO: keep rendering until the map is loaded
 
   }
   removeMap(){
     var selectedObject = this.scene.getObjectByName("Base map")
     this.scene.remove( selectedObject );
-    this.animate();
+    this.render();
   }
 }
