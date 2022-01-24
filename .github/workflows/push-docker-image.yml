@@ -66,8 +66,10 @@ jobs:
             serviceName: 'specklev2-frontend'
           - package: 'preview-service'
             cxName: 'spec-cx-preview'
+            serviceName: 'specklev2-preview-service'
           - package: 'webhook-service'
             cxName: 'spec-cx-webhook'
+            serviceName: 'specklev2-webhook-service'
     
     steps:
       # Download the Docker image tar
