@@ -31,8 +31,8 @@
           v-for="(resource, index) in resources"
           :key="index"
           :resource="resource"
-          :is-multiple="resources.length !== 0"
-          :expand-initial="resources.length === 0"
+          :is-multiple="resources.length > 1"
+          :expand-initial="resources.length === 1"
           @remove="
             (e) => {
               $emit('remove', e)

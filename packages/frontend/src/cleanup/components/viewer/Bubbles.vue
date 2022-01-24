@@ -8,17 +8,17 @@
       v-for="user in users"
       :ref="`user-bubble-${user.uuid}`"
       :key="user.uuid"
-      :class="`absolute-pos rounded-pill elevation-4 grey ${
-        $vuetify.theme.dark ? 'darken-4' : 'lighten-3'
+      class="absolute-pos rounded-pill"
+      :style="`opacity: ${user.hidden ? '0.2' : 1}; border: 2px solid ${
+        $vuetify.theme.dark ? '#047EFB' : '#047EFB'
       }`"
-      :style="`opacity: ${user.hidden ? '0.2' : 1};`"
     >
       <div @click="setUser(user)">
         <user-avatar :id="user.id" :show-hover="false" :size="32" :margin="false"></user-avatar>
         <span
           v-if="user.status === 'writing'"
-          class="ellipsis-anim ml-1 mr-3"
-          style="position: relative; xxtop: -2px"
+          class="ellipsis-anim ml-1 mr-3 primary--text"
+          style="position: absolute"
         >
           <span>.</span>
           <span>.</span>
@@ -43,7 +43,11 @@
       :class="`absolute-pos d-flex align-center justify-center`"
       :style="`pointer-events:none; transform-origin:center; width: 32px; height:32px; transform: rotateY(0) rotate(90deg)`"
     >
-      <v-icon class="primary--text" style="position: relative; top: -90%">mdi-navigation-outline</v-icon>
+      <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
+      <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
+      <v-icon class="primary--text" large style="position: relative; right: -77%">
+        mdi-menu-right
+      </v-icon>
     </div>
   </div>
 </template>
@@ -215,67 +219,62 @@ export default {
       if (!this.$refs.parent) return
 
       let cam = window.__viewer.cameraHandler.activeCam.camera
+      cam.updateProjectionMatrix()
+
       for (let user of this.users) {
         if (!this.$refs[`user-bubble-${user.uuid}`]) continue
 
-        let box = new THREE.Box3().setFromObject(
-          window.__viewer.sceneManager.sceneObjects.objectsInScene
-        )
-        let fraction = box.max.distanceTo(box.min) / 3
-
         let location = new THREE.Vector3(user.camera[0], user.camera[1], user.camera[2])
         let target = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5])
-        let distCamTarget = location.distanceTo(target)
+        let camDir = new THREE.Vector3().subVectors(target, location)
 
-        target.add(
-          location
-            .clone()
-            .normalize()
-            .multiplyScalar(fraction > distCamTarget ? distCamTarget : fraction)
+        camDir.project(cam)
+        // camDir.normalize()
+        target.project(cam)
+        // target.normalize()
+
+        let bubbleLoc = new THREE.Vector3(
+          (camDir.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
+          (camDir.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
+          0
         )
+        let targetLoc = new THREE.Vector3(
+          (target.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
+          (target.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
+          0
+        )
+        let dir2D = new THREE.Vector3()
+          .subVectors(targetLoc, bubbleLoc)
+          .normalize()
+          .multiplyScalar(70)
+        let newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
 
-        let p = target // cam.target
-        p.project(cam)
+        // TODO: clamp sides
+        // const paddingX = 42
+        // const paddingY = 64
 
-        // convert to div xy space
-        let x = (p.x * 0.5 + 0.5) * this.$refs.parent.clientWidth
-        let y = (p.y * -0.5 + 0.5) * this.$refs.parent.clientHeight
+        // if (newTarget.x < paddingX) newTarget.setX(paddingX)
+        // if (newTarget.x > this.$refs.parent.clientWidth - paddingX)
+        //   newTarget.setX(this.$refs.parent.clientWidth - paddingX)
 
-        // clamp sides
-        const padding = 42
-        if (x < padding) x = padding
-        if (y < padding + 34) y = padding + 34
-        if (x > this.$refs.parent.clientWidth - padding) x = this.$refs.parent.clientWidth - padding
-        if (y > this.$refs.parent.clientHeight - padding - 34)
-          y = this.$refs.parent.clientHeight - padding - 34
+        // if (newTarget.y < paddingY) newTarget.setX(paddingY)
+        // if (newTarget.y > this.$refs.parent.clientWidth - paddingY)
+        //   newTarget.setX(this.$refs.parent.clientWidth - paddingY)
 
-        this.$refs[`user-bubble-${user.uuid}`][0].style.transform = `translate(${x}px,${y}px)`
+        this.$refs[
+          `user-bubble-${user.uuid}`
+        ][0].style.transform = `translate(-50%, -50%) translate(${newTarget.x + 16}px,${
+          newTarget.y + 16
+        }px)`
 
-        let actualTarget = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5])
-        actualTarget.project(cam)
-        let targetX = (actualTarget.x * 0.5 + 0.5) * this.$refs.parent.clientWidth
-        let targetY = (actualTarget.y * -0.5 + 0.5) * this.$refs.parent.clientHeight
         this.$refs[
           `user-target-${user.uuid}`
-        ][0].style.transform = `translate(-50%, -50%) translate(${targetX}px,${targetY}px)`
+        ][0].style.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
 
-        let dir = new THREE.Vector3()
-        const p1 = new THREE.Vector3(x + 16, y + 16, 0)
-        const p2 = new THREE.Vector3(targetX, targetY, 0)
-        dir.subVectors(p2, p1).normalize()
-        let angle = dir.angleTo(new THREE.Vector3(1, 0, 0))
-
-        const cross = new THREE.Vector3()
-        cross.crossVectors(p1, p2).normalize()
-        // const norm =
-        const dot = new THREE.Vector3(0, 0, 1).dot(cross)
-
-        if (dot < 0) angle = -angle
-        let deg = (angle * 180) / Math.PI + 90
-
+        const angle = Math.atan2(targetLoc.y - 16 - newTarget.y, targetLoc.x - 16 - newTarget.x)
         this.$refs[
           `user-arrow-${user.uuid}`
-        ][0].style.transform = `translate(${x}px,${y}px) rotate(${deg}deg)`
+        ][0].style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
       }
     }
   }
@@ -296,7 +295,7 @@ export default {
   opacity: 0;
   -webkit-animation: ellipsis-dot 1s infinite;
   animation: ellipsis-dot 1s infinite;
-  font-size: 1em;
+  font-size: 1.5em;
   line-height: 10px;
   user-select: none;
 }

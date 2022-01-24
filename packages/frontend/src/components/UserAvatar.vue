@@ -5,7 +5,6 @@
         <div v-bind="attrs" v-on="on">
           <user-avatar-icon
             v-if="userById"
-            v-tooltip="userById.name"
             :size="size"
             :avatar="userById.avatar"
             :seed="id"
