@@ -88,7 +88,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
           
       - name: Download task definition
-        if: matrix.package != 'preview-service'
         run: |
           aws ecs describe-task-definition --task-definition specklev2-${{ matrix.package }}-${{ matrix.environment }} --query taskDefinition > task-definition.json
 
@@ -108,7 +107,6 @@ jobs:
           
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
-        if: matrix.package != 'preview-service'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
@@ -117,7 +115,6 @@ jobs:
           
           
       - name: Deploy Amazon ECS task definition
-        if:  matrix.package != 'preview-service' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
