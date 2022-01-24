@@ -1,0 +1,8 @@
+{
+    "name": "Speckle Dev Environment",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "postStartCommand": "npm install && npx lerna bootstrap && npx lerna run build && docker-compose -f docker-compose-deps.yml up -d && cp packages/server/.env-example packages/server/.env && npx lerna run dev --parallel",
+    "remoteUser": "vscode"
+}
