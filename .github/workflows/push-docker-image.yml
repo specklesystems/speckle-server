@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['server', 'frontend', 'preview-service']
+        package: ['server', 'frontend', 'preview-service', 'webhook-service']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -66,6 +66,8 @@ jobs:
             serviceName: 'specklev2-frontend'
           - package: 'preview-service'
             cxName: 'spec-cx-preview'
+          - package: 'webhook-service'
+            cxName: 'spec-cx-webhook'
     
     steps:
       # Download the Docker image tar
