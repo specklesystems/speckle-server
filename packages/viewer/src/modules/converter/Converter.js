@@ -321,9 +321,14 @@ export default class Coverter {
         if ( n === 3 ) { // TRIANGLE FACE
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
         } else { //Quad or N-GON FACE
-          const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
-          for( let t = 0; t < triangulation.length; t += 3 ) {
-            indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
+          if( n === 4) { // Handle quads the old way
+            indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
+            indices.push( faces[ k + 1 ], faces[ k + 3 ], faces[ k + 4 ] )          
+          } else { // Anything else goes through the magic box
+            const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
+            for( let t = 0; t < triangulation.length; t += 3 ) {
+              indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
+            }
           }
         }
 
