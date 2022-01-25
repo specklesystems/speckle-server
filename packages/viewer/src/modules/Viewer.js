@@ -12,6 +12,7 @@ import CameraHandler from './context/CameraHanlder'
 import SectionBox from './SectionBox'
 
 import { Units, getConversionFactor } from './converter/Units'
+import {OSM3} from './osmthree'
 
 export default class Viewer extends EventEmitter {
 
@@ -361,7 +362,7 @@ export default class Viewer extends EventEmitter {
         var coord_x = Number(document.getElementById( 'zeroCoordInputX' ).value)
         var coord_y = Number(document.getElementById( 'zeroCoordInputY' ).value)
         var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_x,coord_y); // 51.506810732490656, -0.0892642750895124
-
+        console.log(coords_transformed)
         //set units and scale (1 = meters)
         var scale = 0.001; //mm
         var scale_units = "mm"
@@ -377,6 +378,7 @@ export default class Viewer extends EventEmitter {
 
     }
 
+    	window.OSM3.makeBuildings( this.scene, [ 114.15, 22.2675, 114.165, 22.275 ], { scale: 1 } );
   }
   removeMap(){
     var selectedObject = this.scene.getObjectByName("Base map")
