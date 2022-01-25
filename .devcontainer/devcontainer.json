@@ -3,6 +3,12 @@
     "build": {
         "dockerfile": "Dockerfile"
     },
-    "postStartCommand": "npm install && npx lerna bootstrap && npx lerna run build && docker-compose -f docker-compose-deps.yml up -d && cp packages/server/.env-example packages/server/.env && npx lerna run dev --parallel",
-    "remoteUser": "vscode"
+    "extensions": [
+        "ms-azuretools.vscode-docker"
+    ],
+    "runArgs": ["--init"],
+    "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
+    "remoteUser": "node",
+    "overrideCommand": false,
+    "postStartCommand": "npm install && npx lerna bootstrap && npx lerna run build && docker-compose -f docker-compose-deps.yml up -d && cp packages/server/.env-example packages/server/.env",
 }
