@@ -258,7 +258,7 @@ export default {
         })
       }
       this.deleteDialog = false
-      this.$router.push({ path: '/streams' })
+      this.$router.push({ path: '/streams?refresh=true' })
     }
   }
 }

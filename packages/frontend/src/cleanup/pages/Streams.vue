@@ -107,6 +107,12 @@ export default {
       this.infiniteId++
     }
   },
+  mounted() {
+    if (this.$route.query.refresh) {
+      this.$apollo.queries.streams.refetch()
+      this.$router.replace({ path: this.$route.path, query: null })
+    }
+  },
   methods: {
     checkFilter(role) {
       if (this.streamFilter === 1) return true
