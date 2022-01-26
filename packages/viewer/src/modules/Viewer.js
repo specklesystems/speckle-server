@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import * as Geo from 'geo-three'
 import {OSM3} from './osmthree'
 //import {Sky} from 'three-sky/src/Sky.js'
+const { Sky } = require("three-sky/src/Sky.js");
 
 
 import Stats from 'three/examples/jsm/libs/stats.module.js'
@@ -81,11 +82,11 @@ export default class Viewer extends EventEmitter {
 			//["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD),], //works
 			//["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)], //works
 			["Mapbox Streets", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
-			["Mapbox Light", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0xa3a3a3], //works (custom token)
+			["Mapbox Monochrome", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckyse56qx2w4h14pe0555b6mt", Geo.MapBoxProvider.STYLE), 0xa4adbf], //works (custom token)
 			["Mapbox Satellite", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
 
 			["Mapbox Streets 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
-			["Mapbox Light 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0xa3a3a3], //works (custom token)
+			["Mapbox Monochrome 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckyse56qx2w4h14pe0555b6mt", Geo.MapBoxProvider.STYLE), 0xa4adbf], //works (custom token)
 			["Mapbox Satellite 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
 
 			//["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")], //works
@@ -423,10 +424,11 @@ export default class Viewer extends EventEmitter {
     });
     this.render();
   }
-  /*
+  
   initSky() {
         //const Sky = require('three-sky');
 				// Add Sky
+        const Sky = require('three-sky');
 				this.sky = new Sky();
 				this.sky.scale.setScalar( 450000 );
 				this.scene.add( sky );
@@ -479,5 +481,5 @@ export default class Viewer extends EventEmitter {
 
 			}
 
-  */
+  
 }
