@@ -28,8 +28,9 @@
         dense
       ></v-text-field>
       <div v-if="!$apollo.loading">
-        <div v-for="(user, index) in users.items" :key="index">
+        <div v-for="user in users.items" :key="user.id">
           <user-list-item
+            :key="user.id"
             :user="user"
             :roles="availableRoles"
             @change-role="changeUserRole"
