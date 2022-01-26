@@ -60,6 +60,7 @@
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
     "rainbowvis.js": "^1.0.1",
-    "three": "^0.134.0"
+    "three": "^0.134.0",
+    "three-sky": "^1.1.3"
   }
 }

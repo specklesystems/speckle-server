@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import * as Geo from 'geo-three'
+import {OSM3} from './osmthree'
+//import {Sky} from 'three-sky/src/Sky.js'
+
 
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
@@ -12,7 +15,6 @@ import CameraHandler from './context/CameraHanlder'
 import SectionBox from './SectionBox'
 
 import { Units, getConversionFactor } from './converter/Units'
-import {OSM3} from './osmthree'
 
 export default class Viewer extends EventEmitter {
 
@@ -71,33 +73,25 @@ export default class Viewer extends EventEmitter {
 		var DEV_BING_API_KEY = "AuViYD_FXGfc3dxc0pNa8ZEJxyZyPq1lwOLPCOydV3f0tlEVH-HKMgxZ9ilcRj-T";
 		var DEV_MAPTILER_API_KEY = "B9bz5tIKxl4beipiIbR0"; //from example; https://www.maptiler.com/cloud/ "Free account for personal use and evaluation."
 		var OPEN_MAP_TILES_SERVER_MAP = "";
+    var sky, sun;
     
     // adding map tiles
     this.map_providers = [
       ["No map"],
-			["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD)], //works
-			["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)], //works
-			["Vector Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE)], //works (custom token)
-			//["3D Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckysf2np4dttn14qpfa1uopnz", Geo.MapBoxProvider.STYLE)], //works (custom token)
-			["Satellite Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false)], //works (custom token)
-			//["Satellite Map Box Labels", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/satellite-streets-v10", Geo.MapBoxProvider.STYLE, "jpg70")], //works (custom token)
+			//["Vector Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.ROAD),], //works
+			//["Satellite Bing Maps", new Geo.BingMapsProvider(DEV_BING_API_KEY, Geo.BingMapsProvider.AERIAL)], //works
+			["Mapbox Streets", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
+			["Mapbox Light", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0xa3a3a3], //works (custom token)
+			["Mapbox Satellite", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
 
-			["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")], //works
-			["Vector Map Tiler Outdoor", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "outdoor", "png")],	//works
+			["Mapbox Streets 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
+			["Mapbox Light 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0xa3a3a3], //works (custom token)
+			["Mapbox Satellite 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
 
-			["Vector OpenSteet Maps", new Geo.OpenStreetMapsProvider()] // works until specific zoom
-			//["Vector Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.day")], // works until specific zoom
-			//["Vector Here Maps Night", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "base", "normal.night")], // works until specific zoom
-			//["Vector Here Maps Terrain", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "terrain.day")], // works until specific zoom
-			//["Satellite Here Maps", new Geo.HereMapsProvider(DEV_HEREMAPS_APP_ID, DEV_HEREMAPS_APP_CODE, "aerial", "satellite.day", "jpg")], // works until specific zoom
+			//["Vector Map Tiler Basic", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "basic", "png")], //works
+			//["Vector Map Tiler Outdoor", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "outdoor", "png")],	//works
+			//["Vector OpenSteet Maps", new Geo.OpenStreetMapsProvider()] // works until specific zoom
 
-			//["Vector OpenTile Maps", new Geo.OpenMapTilesProvider(OPEN_MAP_TILES_SERVER_MAP)],// N/A
-			//["Satellite Maps Tiler Labels", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "maps", "hybrid", "jpg")], //works but low resolution
-			//["Satellite Maps Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "satellite", "jpg")], //works but low resolution
-			//["Height Map Box", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw")], //works (custom token)
-			//["Height Map Tiler", new Geo.MapTilerProvider(DEV_MAPTILER_API_KEY, "tiles", "terrain-rgb", "png")], // N/A
-			//["Debug Height Map Box", new Geo.HeightDebugProvider(new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.terrain-rgb", Geo.MapBoxProvider.MAP_ID, "pngraw"))], //N/A
-			//["Debug", new Geo.DebugProvider()] //custom
 		];
     
     this.map_modes = [
@@ -114,6 +108,7 @@ export default class Viewer extends EventEmitter {
     this.interactions.zoomExtents()
     this.addUnitsList()
     this.addMapsList()
+    //this.initSky()
     this.needsRender = true
 
     this.inProgressOperations = 0
@@ -268,6 +263,7 @@ export default class Viewer extends EventEmitter {
       await loader.load()
     } finally {
        if ( --this.inProgressOperations === 0 ) this.emit( 'busy', false )
+       console.log(this.scene)
     }
 
   }
@@ -343,46 +339,145 @@ export default class Viewer extends EventEmitter {
   }
   async addMap() {
     // example building https://latest.speckle.dev/streams/8b29ca2b2e/objects/288f67a0a45b2a4c3bd01f7eb3032495
-
+    var providerColor = document.getElementById("providerColor");
     this.removeMap();
 
-    var providerColor = document.getElementById("providerColor");
-    if (providerColor.selectedIndex >0){
+    if (providerColor.selectedIndex <=3 ) this.hideBuild(); // hide if there should NOT be buildings
+    if (providerColor.selectedIndex >3 && !this.scene.getObjectByName("OSM 3d buildings"))  this.addBuildings(); // add if there should be buildings, but not are in the scene yet
+    if (providerColor.selectedIndex >3 && this.scene.getObjectByName("OSM 3d buildings"))   this.showBuild(); // show and change color if there should be buildings, and they are already in the scene
 
+    if (providerColor.selectedIndex >0){
         //create and add map to scene
         var map = new Geo.MapView(this.map_modes[0][1], this.map_providers[providerColor.selectedIndex][1], this.map_providers[providerColor.selectedIndex][1]);
         map.name = "Base map"
         this.scene.add(map);
-        map.rotation.x += 90*Math.PI/180;
+        map.rotation.x += Math.PI/2;
 
         //set selected map provider
         await map.setProvider(this.map_providers[providerColor.selectedIndex][1]);
 
-        // get and transform coordinates
-        var coord_x = Number(document.getElementById( 'zeroCoordInputX' ).value)
-        var coord_y = Number(document.getElementById( 'zeroCoordInputY' ).value)
-        var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_x,coord_y); // 51.506810732490656, -0.0892642750895124
-        console.log(coords_transformed)
-        //set units and scale (1 = meters)
-        var scale = 0.001; //mm
-        var scale_units = "mm"
-        
-        scale_units = document.getElementById("mapUnits").value;
-        scale = getConversionFactor(scale_units);
+        var coords = this.getCoords()[0];
+        var scale = this.getScale();
+        //console.log(coords)
               
         map.scale.set(map.scale.x/scale, map.scale.y/scale, map.scale.z/scale)
-        map.position.x -= coords_transformed.x/scale; // to the East
-        map.position.y -= coords_transformed.y/scale; // to the North 
+        map.position.x -= coords.x/scale; // to the East
+        map.position.y -= coords.y/scale; // to the North 
         
         this.interactions.rotateCamera(0.001) //to activate map loading
-
     }
+  }
+  getScale(){
+    var scale = 0.001; //mm
+    var scale_units = "mm"
+    scale_units = document.getElementById("mapUnits").value;
+    scale = getConversionFactor(scale_units);
+    return scale
+  }
+  getCoords(){
+    // get and transform coordinates
+    var coord_x = Number(document.getElementById( 'zeroCoordInputX' ).value)
+    var coord_y = Number(document.getElementById( 'zeroCoordInputY' ).value)
+    var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_x,coord_y)
+    return [coords_transformed, coord_x, coord_y]; // 51.506810732490656, -0.0892642750895124
+  }
+  addBuildings(){
+    var scale = this.getScale();
+    var coord_x = this.getCoords()[1];
+    var coord_y = this.getCoords()[2];
 
-    	window.OSM3.makeBuildings( this.scene, [ 114.15, 22.2675, 114.165, 22.275 ], { scale: 1 } );
+    var color = 0x8D9194; //grey
+    //color = 0xa3a3a3; //light grey
+    //color = 0x4287f5; //blue
+    color = this.map_providers[providerColor.selectedIndex][2]
+
+    //var material = this.sceneManager.solidMaterial;
+    let material = this.sceneManager.solidMaterial.clone()
+    material.color = new THREE.Color(color);
+    window.OSM3.makeBuildings( this.scene, [ coord_y-0.01, coord_x-0.01, coord_y+0.01, coord_x+0.01 ], { scale: scale, color: color, material: material } );
+    
+    this.render();
   }
   removeMap(){
     var selectedObject = this.scene.getObjectByName("Base map")
-    this.scene.remove( selectedObject );
+    this.scene.remove( selectedObject );    
     this.render();
   }
+  hideBuild(){
+    this.scene.traverse(function(child) {
+      if (child.name === "OSM 3d buildings") {
+        child.visible = false;
+      }
+    });
+    this.render();
+  }
+  showBuild(){
+    var c = this.map_providers[providerColor.selectedIndex][2]
+    var mat = this.sceneManager.solidMaterial.clone()
+    this.scene.traverse(function(child) {
+      if (child.name === "OSM 3d buildings") {
+        mat.color = new THREE.Color(c);
+        child.material = mat;
+        child.visible = true;
+      }
+    });
+    this.render();
+  }
+  /*
+  initSky() {
+        //const Sky = require('three-sky');
+				// Add Sky
+				this.sky = new Sky();
+				this.sky.scale.setScalar( 450000 );
+				this.scene.add( sky );
+
+				this.sun = new THREE.Vector3();
+
+				/// GUI
+
+				const effectController = {
+					turbidity: 10,
+					rayleigh: 3,
+					mieCoefficient: 0.005,
+					mieDirectionalG: 0.7,
+					elevation: 2,
+					azimuth: 180,
+					exposure: renderer.toneMappingExposure
+				};
+
+				function guiChanged() {
+
+					const uniforms = sky.material.uniforms;
+					uniforms[ 'turbidity' ].value = effectController.turbidity;
+					uniforms[ 'rayleigh' ].value = effectController.rayleigh;
+					uniforms[ 'mieCoefficient' ].value = effectController.mieCoefficient;
+					uniforms[ 'mieDirectionalG' ].value = effectController.mieDirectionalG;
+
+					const phi = THREE.MathUtils.degToRad( 90 - effectController.elevation );
+					const theta = THREE.MathUtils.degToRad( effectController.azimuth );
+
+					sun.setFromSphericalCoords( 1, phi, theta );
+
+					uniforms[ 'sunPosition' ].value.copy( sun );
+
+					renderer.toneMappingExposure = effectController.exposure;
+					renderer.render( this.scene, camera );
+
+				}
+
+				const gui = new GUI();
+
+				gui.add( effectController, 'turbidity', 0.0, 20.0, 0.1 ).onChange( guiChanged );
+				gui.add( effectController, 'rayleigh', 0.0, 4, 0.001 ).onChange( guiChanged );
+				gui.add( effectController, 'mieCoefficient', 0.0, 0.1, 0.001 ).onChange( guiChanged );
+				gui.add( effectController, 'mieDirectionalG', 0.0, 1, 0.001 ).onChange( guiChanged );
+				gui.add( effectController, 'elevation', 0, 90, 0.1 ).onChange( guiChanged );
+				gui.add( effectController, 'azimuth', - 180, 180, 0.1 ).onChange( guiChanged );
+				gui.add( effectController, 'exposure', 0, 1, 0.0001 ).onChange( guiChanged );
+
+				guiChanged();
+
+			}
+
+  */
 }

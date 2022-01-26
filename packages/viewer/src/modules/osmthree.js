@@ -1,3 +1,5 @@
+const { RAD2DEG } = require("three/src/math/MathUtils");
+
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
  * Copyright (c) 2011, Sun Ning.
@@ -512,13 +514,31 @@ module.exports = geohash;
 },{}],2:[function(require,module,exports){
 
 
-function constructor( readyCallback, scale, origin, options ) {
-  console.log(readyCallback)
+function constructor( scene, scale, origin, options ) {
+  //console.log(options)
+  /*
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(200, 500, 300);
+  scene.add(directionalLight); 
+  */
+  //console.log(scene)
+
+  //console.log(scale)
+  //console.log(origin)
+  //console.log(origin[0])
+  //console.log(origin[1])
+  //console.log((origin[2]+origin[0])/2)
+  //console.log((origin[3]+origin[1])/2)
 	var 
 		options = options || {},
-		_readyCallback = readyCallback,
+		_readyCallback = scene,
 		_scale = scale,
-		_origin = lonLatToWorld( origin[0], origin[1] ),
+    _color = options.color || 0xf0f0f0,
+    _material = options.material,
+		_origin = lonLatToWorld( (origin[2]+origin[0])/2, (origin[3]+origin[1])/2 ),
 		_meshCallback = options.meshCallback || createMesh,
 		_defaultColor = options.defaultColor || 0xf0f0f0;
 
@@ -535,7 +555,7 @@ function constructor( readyCallback, scale, origin, options ) {
       //console.log(bldg)
 			if (bldg) { 
 				//if (_readyCallback) _readyCallback( _meshCallback.call( this, bldg, items[i] ) );
-        createMesh( bldg, [], readyCallback );
+        createMesh( bldg, [], scene, scale, _color, _material );
 			}
 			//currVerLen = geom.vertices.length;
 			//geom.vertices = geom.vertices.concat( bldg.vertices );
@@ -566,7 +586,7 @@ function constructor( readyCallback, scale, origin, options ) {
 	}
 
 
-	function createMesh( geom, osmData,scene ) {
+	function createMesh( geom, osmData, scene, scale, color, material ) {
 		//	return new THREE.Mesh( geom, new THREE.MeshLambertMaterial() );
     /*
 		var face,
@@ -589,16 +609,21 @@ function constructor( readyCallback, scale, origin, options ) {
 			( face.normal.y === 1 ) ? face.materialIndex = rci
 								    : face.materialIndex = wci;
 		}
-    */
-		var m = new THREE.Mesh( geom, new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) );
-    m.geometry.computeBoundingBox();
-
-    console.log( m.geometry.boundingBox );
 		//m.footprint = osmData.footprint;
+    */
+    //console.log(geom)
+		//var m = new THREE.Mesh( geom, new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) ); ShadowMaterial();
+    //var material = new THREE.MeshBasicMaterial({ color: color });
+		var m = new THREE.Mesh( geom, material );
+    m.name = "OSM 3d buildings"
+
     scene.add(m)
-    console.log(scene)
-    //console.log(mats)
-    //console.log(m)
+    //console.log(scene)
+    m.rotation.x += Math.PI/2;
+    m.scale.set(m.scale.x/scale, m.scale.y/scale, m.scale.z/scale)
+    //m.geometry.computeBoundingBox();
+    //console.log( m.geometry.boundingBox );
+
 		return m;
 	}
 
@@ -636,6 +661,7 @@ function constructor( readyCallback, scale, origin, options ) {
 			pathPoints.push( lonLatToScene( item.footprint[i+1], item.footprint[i] ) );
 		}
 
+    //pathPoints.reverse()
 		path = new THREE.ShapePath();
     //console.log(pathPoints)
     if (pathPoints.length>1) {
@@ -647,18 +673,22 @@ function constructor( readyCallback, scale, origin, options ) {
     }
     //console.log(path)
 		shapes = path.toShapes(); // isCCW, noHoles
-    console.log(shapes)
+    //console.log(shapes)
 
 		extrudePath = new THREE.CurvePath();
 		extrudePath.add( new THREE.LineCurve3( new THREE.Vector3(0,0,0), new THREE.Vector3(0,bldgHeight,0) ) );
-    
-    console.log(extrudePath)
 
 		eg = new THREE.ExtrudeGeometry( shapes, {
-			extrudePath: extrudePath,
-			material: 0
+			extrudePath: extrudePath
+			//steps: 2,
+      //depth: 16,
+      //bevelEnabled: true,
+      //bevelThickness: 1,
+      //bevelSize: 1,
+      //bevelOffset: 0,
+      //bevelSegments: 1
 		})
-    console.log(eg)
+    //console.log(eg)
 
 		return eg;
 
@@ -744,11 +774,11 @@ module.exports = {
   getRadius: function(points) {
     var minLat = 90, maxLat = -90;
     for (var i = 0, il = points.length; i < il; i += 2) {
-      minLat = min(minLat, points[i]);
-      maxLat = max(maxLat, points[i]);
+      minLat = Math.min(minLat, points[i]);
+      maxLat = Math.max(maxLat, points[i]);
     }
-
-    return (maxLat-minLat) / RAD * 6378137 / 2 <<0; // 6378137 = Earth radius
+    //sconsole.log(RAD2DEG)
+    return (maxLat-minLat) / RAD2DEG * 6378137 / 2 <<0; // 6378137 = Earth radius
   },
 
   materialColors: {
@@ -916,7 +946,7 @@ module.exports = {
     }
 
     if (item.roofHeight) {
-      item.height = max(0, item.height-item.roofHeight);
+      item.height = Math.max(0, item.height-item.roofHeight);
     } else {
       item.roofHeight = 0;
     }
@@ -1015,14 +1045,16 @@ function makeBuildings( callback, bbox, params ) {
 	var 
 		buildOpts = {},
 		params = params || {}, 
-		origin = params.origin || [ bbox[0], bbox[1] ],  		// an array, [ lon, lat ], describing the poisition of the scene's origin
+		origin = params.origin || [ bbox[0], bbox[1], bbox[2], bbox[3] ],  		// an array, [ lon, lat ], describing the poisition of the scene's origin
 		units = params.units || 'meter', 						// 'meter', 'foot', 'inch', or 'millimeter'
-		scale = params.scale || 1.0,  							// float describing how much to scale the units for the scene
+		scale = params.scale || 1.0,  						// float describing how much to scale the units for the scene
 		onDataReady = params.onDataReady || false;				// called when data is loaded from Overpass, before THREE objects are created
 
 	buildOpts.mergeGeometry = params.mergeGeometry || false;  	// create one big Geometry and Mesh with all the buildings
 	buildOpts.defaultColor = params.defaultColor || false;		// most buildings will be this color - default is 0xF0F0F0
 	buildOpts.meshFunction = params.meshFunction || false;		// custom function for creating the THREE.Mesh objects
+  buildOpts.color = params.color || 0xffffff;
+  buildOpts.material = params.material;
 
 	var 
 		builder = new Builder( callback, scale, origin, buildOpts ),
