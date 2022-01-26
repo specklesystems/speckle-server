@@ -48,6 +48,11 @@
       </v-card>
     </v-app-bar>
     <v-main class="background">
+      <email-verification-banner
+        v-if="!user.verified"
+        :user="user"
+        class="my-2 mx-4"
+      ></email-verification-banner>
       <v-container fluid class="px-4">
         <transition name="fade">
           <router-view></router-view>
@@ -68,7 +73,10 @@ export default {
     MainNavBottom: () => import('@/cleanup/navigation/MainNavBottom'),
     SearchBar: () => import('@/cleanup/components/common/SearchBar'),
     GlobalToast: () => import('@/cleanup/components/common/GlobalToast'),
-    GlobalLoading: () => import('@/cleanup/components/common/GlobalLoading')
+    GlobalLoading: () => import('@/cleanup/components/common/GlobalLoading'),
+    EmailVerificationBanner: () => {
+      return import('@/cleanup/components/user/EmailVerificationBanner')
+    }
   },
   apollo: {
     serverInfo: {
