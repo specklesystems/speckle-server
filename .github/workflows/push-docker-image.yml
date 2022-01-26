@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: ['server', 'frontend', 'preview-service']
+        package: ['server', 'frontend', 'preview-service', 'webhook-service']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -41,7 +41,7 @@ jobs:
     strategy:
       matrix:
         environment: ['prod', 'hs2', 'staging']
-        package: ['server', 'frontend', 'preview-service']
+        package: ['server', 'frontend', 'preview-service', 'webhook-service']
         include:
           - environment: prod
             region: eu-west-1
@@ -66,6 +66,10 @@ jobs:
             serviceName: 'specklev2-frontend'
           - package: 'preview-service'
             cxName: 'spec-cx-preview'
+            serviceName: 'specklev2-preview-service'
+          - package: 'webhook-service'
+            cxName: 'spec-cx-webhook'
+            serviceName: 'specklev2-webhook-service'
     
     steps:
       # Download the Docker image tar
@@ -86,7 +90,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
           
       - name: Download task definition
-        if: matrix.package != 'preview-service'
         run: |
           aws ecs describe-task-definition --task-definition specklev2-${{ matrix.package }}-${{ matrix.environment }} --query taskDefinition > task-definition.json
 
@@ -106,7 +109,6 @@ jobs:
           
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
-        if: matrix.package != 'preview-service'
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
@@ -115,7 +117,6 @@ jobs:
           
           
       - name: Deploy Amazon ECS task definition
-        if:  matrix.package != 'preview-service' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
