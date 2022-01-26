@@ -1,33 +1,33 @@
-const appRoot = require('app-root-path')
-require('dotenv').config({ 'path': `${appRoot}/.env` })
-const crs = require('crypto-random-string')
+const appRoot = require( 'app-root-path' )
+require( 'dotenv' ).config( { 'path': `${appRoot}/.env` } )
+const crs = require( 'crypto-random-string' )
 
-const knex = require(`${appRoot}/db/knex`)
-const Verifications = () => knex('email_verifications')
+const knex = require( `${appRoot}/db/knex` )
+const Verifications = () => knex( 'email_verifications' )
 
-const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { sendEmail } = require(`${appRoot}/modules/emails`)
+const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
+const { sendEmail } = require( `${appRoot}/modules/emails` )
 
-const sendEmailVerification = async ({ recipient }) => {
+const sendEmailVerification = async ( { recipient } ) => {
   // we need to validate email here, since we'll send it out,
   // even if technically there is no chance ATM that an incorrect addr comes in
   const serverInfo = await getServerInfo()
-  const verificationId = await createEmailVerification({ 'email': recipient })
+  const verificationId = await createEmailVerification( { 'email': recipient } )
   const verificationLink = new URL(
-     `auth/verifyemail?t=${verificationId}`, process.env.CANONICAL_URL,
+    `auth/verifyemail?t=${verificationId}`, process.env.CANONICAL_URL,
   )
   const { text, html, subject } = await prepareMessage(
     { verificationLink, serverInfo },
   )
-  return await sendEmail({
+  return await sendEmail( {
     'to': recipient,
     subject,
     text,
     html,
-  })
+  } )
 }
 
-const prepareMessage = async ({ verificationLink, serverInfo }) => {
+const prepareMessage = async ( { verificationLink, serverInfo } ) => {
   const subject = `Speckle Server ${serverInfo.name} email verification`
   const text = `
 Hello!
@@ -81,12 +81,12 @@ This email was sent from the
   return { text, html, subject }
 }
 
-const createEmailVerification = async ({ email }) => {
+const createEmailVerification = async ( { email } ) => {
   const verification = {
-    'id': crs({ 'length': 20 }),
+    'id': crs( { 'length': 20 } ),
     email,
   }
-  await Verifications().insert(verification)
+  await Verifications().insert( verification )
   return verification.id
 }
 
