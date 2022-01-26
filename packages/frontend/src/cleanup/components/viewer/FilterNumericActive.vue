@@ -30,20 +30,6 @@
         {{ filter.data.objectCount }} elements; min:
         {{ Math.round(filter.data.minValue, 2) | prettynum }}; max:
         {{ Math.round(filter.data.maxValue, 2) | prettynum }}
-        <v-btn
-          v-show="range[0] !== filter.data.minValue || range[1] !== filter.data.maxValue"
-          v-tooltip="'Reset'"
-          x-small
-          icon
-          class="mr-1 float-right"
-          @click="
-            $set(range, 0, filter.data.minValue)
-            $set(range, 1, filter.data.maxValue)
-            setFilter()
-          "
-        >
-          <v-icon class="grey--text mt-1" style="font-size: 12px">mdi-refresh</v-icon>
-        </v-btn>
       </v-col>
       <v-col
         v-if="filter.data.maxValue === filter.data.minValue"
@@ -53,41 +39,49 @@
       >
         Invalid values (min value equals to max value).
       </v-col>
-      <v-col v-else cols="12" class="mt-5 py-5 px-5">
-        <v-range-slider
-          v-model="range"
-          dense
-          hide-details
-          thumb-label="always"
-          color="primary"
-          :step="0.01"
+      <v-col v-else ref="parent" cols="12" class="px-3 py-3">
+        <HistogramSlider
+          :key="width"
+          :width="width"
+          :bar-height="100"
+          :data="filter.data.allValues"
+          :bar-width="4"
+          :bar-gap="6"
+          :handle-size="18"
           :max="filter.data.maxValue"
           :min="filter.data.minValue"
-          :class="`${colorBy ? 'super-slider' : ''}`"
-          @change="setFilter()"
-        >
-          <template #thumb-label="{ value }">{{ value | prettynum }}</template>
-        </v-range-slider>
+          :step="filter.data.minValue / 10"
+          force-edges
+          :keyboard="false"
+          :bar-radius="2"
+          :prettify="prettify"
+          :colors="['#3F5EFB', '#FC466B']"
+          :clip="true"
+          :font-size="10"
+          grid-text-color="grey"
+          drag-interval
+          @finish="setFilterHistogram"
+        />
       </v-col>
     </v-row>
   </div>
 </template>
 <script>
 export default {
-  components: {},
   props: {
     filter: {
       type: Object,
       default: () => null
     },
-    active: { type: Boolean, default: false }
+    active: { type: Boolean, default: false },
+    preventFirstSet: { type: Boolean, default: false }
   },
   data() {
     return {
       range: [0, 1],
-      appliedFilter: {},
-      legend: {},
-      colorBy: true
+      colorBy: true,
+      width: 300,
+      preventFirstSetInternal: this.preventFirstSet
     }
   },
   watch: {
@@ -103,28 +97,39 @@ export default {
     this.$set(this.range, 0, this.filter.data.minValue)
     this.$set(this.range, 1, this.filter.data.maxValue)
     this.setFilter()
+    this.width = this.$refs.parent.clientWidth - 24
+    this.$eventHub.$on('resize-viewer', () => {
+      this.width = this.$refs.parent?.clientWidth - 24
+    })
   },
   beforeDestroy() {
-    window.__viewer.applyFilter(null)
+    this.$store.commit('resetFilter')
   },
   methods: {
-    async setFilter() {
-      console.log(this.range)
-      let filterObj = {
-        filterBy: {},
-        colorBy: this.colorBy
-          ? {
-            type: 'gradient',
-            property: this.filter.targetKey,
-            minValue: this.range[0],
-            maxValue: this.range[1],
-            gradientColors: ['#3F5EFB', '#FC466B']
-          }
-          : null,
-        ghostOthers: true
+    async setFilterHistogram(e) {
+      if (this.preventFirstSetInternal) {
+        this.preventFirstSetInternal = false
+        return
       }
-      filterObj.filterBy[this.filter.targetKey] = { gte: this.range[0], lte: this.range[1] }
-      await window.__viewer.applyFilter(filterObj)
+      this.$store.commit('setNumericFilter', {
+        filterKey: this.filter.targetKey,
+        minValue: e.from,
+        maxValue: e.to
+      })
+    },
+    async setFilter() {
+      if (this.preventFirstSetInternal) {
+        this.preventFirstSetInternal = false
+        return
+      }
+      this.$store.commit('setNumericFilter', {
+        filterKey: this.filter.targetKey,
+        minValue: this.range[0],
+        maxValue: this.range[1]
+      })
+    },
+    prettify(num) {
+      return this.$options.filters.prettynum(num)
     }
   }
 }

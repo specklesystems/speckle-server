@@ -41,13 +41,13 @@
           <v-row dense>
             <v-col cols="12">
               <v-text-field
+                id="email"
                 v-model="form.email"
                 label="your email"
                 :rules="validation.emailRules"
                 filled
                 single-line
                 prepend-icon="mdi-email"
-                id="email"
                 name="email"
                 type="email"
                 autocomplete="username"
@@ -77,11 +77,11 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                id="new-password"
                 v-model="form.password"
                 label="password"
                 type="password"
                 autocomplete="new-password"
-                id="new-password"
                 :rules="validation.passwordRules"
                 filled
                 single-line
@@ -92,11 +92,11 @@
             </v-col>
             <v-col cols="12" sm="6">
               <v-text-field
+                id="confirm-password"
                 v-model="form.passwordConf"
                 label="confirm password"
                 type="password"
                 autocomplete="new-password"
-                id="confirm-password"
                 :rules="validation.passwordRules"
                 filled
                 single-line
@@ -119,7 +119,11 @@
                     height="5"
                     class="mt-1 mb-0"
                     :color="`${
-                      passwordStrength >= 75 ? 'green' : passwordStrength >= 50 ? 'orange' : 'red'
+                      passwordStrength >= 75 && this.form.password === this.form.passwordConf
+                        ? 'green'
+                        : passwordStrength >= 50 && this.form.password === this.form.passwordConf
+                        ? 'orange'
+                        : 'red'
                     }`"
                   ></v-progress-linear>
                 </v-col>
@@ -127,7 +131,7 @@
                   {{
                     this.pwdSuggestions
                       ? this.pwdSuggestions
-                      : this.form.password
+                      : this.form.password && this.form.password === this.form.passwordConf
                       ? 'Looks good.'
                       : null
                   }}

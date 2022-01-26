@@ -19,3 +19,5 @@ packages/frontend/schema.graphql
 .tool-versions
 
 packages/server/reports*
+
+**/venv/**
