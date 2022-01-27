@@ -31,7 +31,7 @@ jobs:
       with:
         push: true
         tags: arupspecklev2prodacr.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_73a639fd04ba47a3903c9115378e0f81 }}/arupspecklev2prodacr/preview-service:${{ github.sha }}
-        file: ./Dockerfile
+        file: ./packages/server/Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
