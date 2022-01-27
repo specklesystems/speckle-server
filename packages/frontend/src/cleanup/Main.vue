@@ -51,7 +51,7 @@
       <email-verification-banner
         v-if="!user.verified"
         :user="user"
-        class="my-2 mx-4"
+        class="my-2 mx-4 email-banner"
       ></email-verification-banner>
       <v-container fluid class="px-4">
         <transition name="fade">
@@ -204,5 +204,8 @@ export default {
 .nav-resizer:hover {
   opacity: 0.5;
   width: 0px;
+}
+.email-banner {
+  z-index: 2;
 }
 </style>
