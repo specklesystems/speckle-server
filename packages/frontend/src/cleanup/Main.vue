@@ -49,7 +49,7 @@
     </v-app-bar>
     <v-main class="background">
       <email-verification-banner
-        v-if="!user.verified"
+        v-if="user && !user.verified"
         :user="user"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
@@ -74,9 +74,7 @@ export default {
     SearchBar: () => import('@/cleanup/components/common/SearchBar'),
     GlobalToast: () => import('@/cleanup/components/common/GlobalToast'),
     GlobalLoading: () => import('@/cleanup/components/common/GlobalLoading'),
-    EmailVerificationBanner: () => {
-      return import('@/cleanup/components/user/EmailVerificationBanner')
-    }
+    EmailVerificationBanner: () => import('@/cleanup/components/user/EmailVerificationBanner')
   },
   apollo: {
     serverInfo: {
