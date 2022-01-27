@@ -113,7 +113,7 @@ export default class Coverter {
           await Promise.all( childrenConversionPromisses )
           this.activePromises -= childrenConversionPromisses.length
         }
-        
+
         return
       }
     }
@@ -318,23 +318,21 @@ export default class Coverter {
         let n = faces[ k ]
         if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
 
-        if ( n === 3 ) { // TRIANGLE FACE
+        if ( n === 3 ) { // Triangle face
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-        } else { //Quad or N-GON FACE
-          if( n === 4) { // Handle quads the old way
-            indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-            indices.push( faces[ k + 1 ], faces[ k + 3 ], faces[ k + 4 ] )          
-          } else { // Anything else goes through the magic box
-            const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
-            for( let t = 0; t < triangulation.length; t += 3 ) {
-              indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
-            }
-          }
+        } else { // Quad or N-gon face
+          const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
+          indices.push( ...triangulation )
         }
 
         k += n + 1
       }
-      buffer.setIndex( indices )
+
+      if ( vertices.length >= 65535 || indices.length >= 65535 ) {
+        buffer.setIndex( new THREE.Uint32BufferAttribute( indices, 1 ) )
+      } else {
+        buffer.setIndex( new THREE.Uint16BufferAttribute ( indices, 1 ) )
+      }
 
       buffer.setAttribute(
         'position',
