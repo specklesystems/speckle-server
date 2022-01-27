@@ -3,7 +3,7 @@ const knex = require( `${appRoot}/db/knex` )
 
 const { getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { contextMiddleware } = require( `${appRoot}/modules/shared` )
-const { sendEmailVerification } = require( '../services/verification' )
+const { sendEmailVerification, isVerificationValid } = require( '../services/verification' )
 
 const Verifications = () => knex( 'email_verifications' )
 const Users = () => knex( 'users' )
@@ -35,6 +35,8 @@ module.exports = ( app ) => {
 
         return res.status( 200 ).send( 'Email verification initiated.' )
       } catch ( error ) {
+        if ( error.message.includes( 'You already have a valid' ) ) 
+          return res.status( 400 ).send( error.message )
         return res.status( 500 ).send( error.message )
       }
     },
@@ -51,8 +53,7 @@ module.exports = ( app ) => {
       return res.status( 404 ).send( 'No verification with this token.' )
     }
 
-    const timeDiff = Math.abs( Date.now() - new Date( verification.createdAt ) )
-    if ( timeDiff > 8.64e+7 ) {
+    if ( !isVerificationValid( verification ) ) {
       return res
         .status( 400 )
         .send( 'Verification expired, please request a new one.' )

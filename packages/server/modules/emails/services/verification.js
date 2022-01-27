@@ -12,6 +12,10 @@ const sendEmailVerification = async ( { recipient } ) => {
   // we need to validate email here, since we'll send it out,
   // even if technically there is no chance ATM that an incorrect addr comes in
   const serverInfo = await getServerInfo()
+  const existingVerifications = await Verifications()
+    .where( { 'email': recipient } )
+  if ( existingVerifications.some( ver => isVerificationValid( ver ) ) ) 
+    throw new Error( 'You already have a valid verification message, please check your inbox' )
   const verificationId = await createEmailVerification( { 'email': recipient } )
   const verificationLink = new URL(
     `auth/verifyemail?t=${verificationId}`, process.env.CANONICAL_URL,
@@ -25,6 +29,11 @@ const sendEmailVerification = async ( { recipient } ) => {
     text,
     html,
   } )
+}
+
+const isVerificationValid = ( { createdAt } ) => {
+  const timeDiff = Math.abs( Date.now() - new Date( createdAt ) )
+  return timeDiff < 8.64e+7
 }
 
 const prepareMessage = async ( { verificationLink, serverInfo } ) => {
@@ -90,4 +99,4 @@ const createEmailVerification = async ( { email } ) => {
   return verification.id
 }
 
-module.exports = { sendEmailVerification }
+module.exports = { sendEmailVerification, isVerificationValid }

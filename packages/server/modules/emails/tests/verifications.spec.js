@@ -68,6 +68,8 @@ describe( 'Email verifications @emails', () => {
 
       expect( sentResult.message ).to.contain( expectedVerificationUrl )
 
+      await Verifications( ).where( { id: ver.id } ).del()
+
       await request( expressApp )
         .post( '/auth/emailverification/request' )
         .send( { email: userA.email } )
@@ -87,6 +89,23 @@ describe( 'Email verifications @emails', () => {
           .set( 'Authorization', userB.token )
           .expect( 403 )
       } )
+    it( 'Should not create a new verification while the previous is valid', async () => {
+      await request( expressApp )
+        .post( '/auth/emailverification/request' )
+        .send( { email: userA.email } )
+        .set( 'Authorization', userA.token )
+        .expect( 400 )
+    } )
+    it( 'Should create a new verification if the previous is invalid', async () => {
+      await Verifications().where( { email: userA.email } )
+        .update( { createdAt: new Date( 0 ) } )
+
+      await request( expressApp )
+        .post( '/auth/emailverification/request' )
+        .send( { email: userA.email } )
+        .set( 'Authorization', userA.token )
+        .expect( 200 )
+    } )
   } )
   describe( 'Use email verification', () => {
     it( 'Should not verify without a token', async () => {
@@ -125,7 +144,7 @@ describe( 'Email verifications @emails', () => {
       expect( verifications ).to.have.lengthOf( 2 )
 
       await request( expressApp )
-        .get( `/auth/verifyemail?t=${verifications[0].id}` )
+        .get( `/auth/verifyemail?t=${verifications[1].id}` )
         .expect( 302 )
 
       verifications = await Verifications().where( { email: userA.email } )
