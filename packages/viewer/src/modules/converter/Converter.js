@@ -41,7 +41,7 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
    */
-  async traverseAndConvert( obj, callback, scale = true, parents = {} ) {
+  async traverseAndConvert( obj, callback, scale = true, parents = [] ) {
     await this.asyncPause()
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
@@ -68,7 +68,7 @@ export default class Coverter {
     }
 
     // Keep track of parents. An object is his own parent, for the simplicity of working with subtrees
-    obj.__parents = { ...parents, [obj.id]: 1 }
+    obj.__parents = [ ...parents, obj.id ]
 
     // If we can convert it, we should invoke the respective conversion routine.
     const type = this.getSpeckleType( obj )
@@ -113,7 +113,7 @@ export default class Coverter {
           await Promise.all( childrenConversionPromisses )
           this.activePromises -= childrenConversionPromisses.length
         }
-        
+
         return
       }
     }
@@ -318,18 +318,21 @@ export default class Coverter {
         let n = faces[ k ]
         if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
 
-        if ( n === 3 ) { // TRIANGLE FACE
+        if ( n === 3 ) { // Triangle face
           indices.push( faces[ k + 1 ], faces[ k + 2 ], faces[ k + 3 ] )
-        } else { //Quad or N-GON FACE
+        } else { // Quad or N-gon face
           const triangulation = MeshTriangulationHelper.triangulateFace( k, faces, vertices )
-          for( let t = 0; t < triangulation.length; t += 3 ) {
-            indices.push( triangulation[ t ], triangulation[ t + 1 ], triangulation[ t + 2 ] )
-          }
+          indices.push( ...triangulation )
         }
 
         k += n + 1
       }
-      buffer.setIndex( indices )
+
+      if ( vertices.length >= 65535 || indices.length >= 65535 ) {
+        buffer.setIndex( new THREE.Uint32BufferAttribute( indices, 1 ) )
+      } else {
+        buffer.setIndex( new THREE.Uint16BufferAttribute ( indices, 1 ) )
+      }
 
       buffer.setAttribute(
         'position',

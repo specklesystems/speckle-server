@@ -14,7 +14,7 @@ export default class MeshTriangulationHelper {
    */
   static triangulateFace( faceIndex, faces, vertices ) {
     let n = faces[faceIndex]
-    if ( n <= 3 ) n += 3 // 0 -> 3, 1 -> 4
+    if ( n < 3 ) n += 3 // 0 -> 3, 1 -> 4
 
     //Converts from relative to absolute index (returns index in mesh.vertices list)
     function asIndex( v ) {
@@ -145,7 +145,8 @@ export default class MeshTriangulationHelper {
    */
   static triangleIsCCW( referenceNormal, a, b, c )
   {
-    const triangleNormal = c.sub( a ).cross( b.sub( a ) ).getNormal()
+    let triangleNormal = c.sub( a ).cross( b.sub( a ) )
+    triangleNormal.normalize()
     return referenceNormal.dot( triangleNormal ) > 0.0
   }
 
@@ -162,42 +163,26 @@ class Vector3 {
     this.z = z
   }
 
-
-  getNormal( )
-  {
-    const scale = 1.0 / Math.sqrt( this.squareSum() )
-    return new Vector3( this.x * scale, this.y * scale, this.z * scale )
-  }
-
   add( v ) {
-    this.x += v.x
-    this.y += v.y
-    this.z += v.z
-    return this
+    return new Vector3( this.x + v.x, this.y + v.y, this.z + v.z )
   }
 
   sub( v ) {
-    this.x -= v.x
-    this.y -= v.y
-    this.z -= v.z
-    return this
+    return new Vector3( this.x - v.x, this.y - v.y, this.z - v.z )
   }
 
   mul( n ) {
-    this.x *= n
-    this.y *= n
-    this.z *= n
-    return this
+    return new Vector3( this.x - n, this.y - n, this.z - n )
   }
 
   dot( v ) { return this.x * v.x + this.y * v.y + this.z * v.z }
 
   cross( v ) {
-    this.x = this.y * v.z - this.z * v.y
-    this.y = this.z * v.x - this.x * v.z
-    this.z = this.x * v.y - this.y * v.x
+    const nx = this.y * v.z - this.z * v.y
+    const ny = this.z * v.x - this.x * v.z
+    const nz = this.x * v.y - this.y * v.x
 
-    return this
+    return new Vector3( nx,ny,nz )
   }
 
   squareSum( ) {
@@ -206,7 +191,9 @@ class Vector3 {
 
   normalize() {
     const scale = 1.0 / Math.sqrt( this.squareSum() )
-    return this.mul( scale )
+    this.x *= scale
+    this.y *= scale
+    this.z *= scale
   }
 
 

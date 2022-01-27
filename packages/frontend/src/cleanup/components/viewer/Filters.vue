@@ -43,7 +43,7 @@
           <filter-category-active :filter="activeFilter" />
         </div>
         <div v-if="activeFilter && activeFilter.data.type === 'number'">
-          <filter-numeric-active :filter="activeFilter" />
+          <filter-numeric-active :filter="activeFilter" :prevent-first-set="preventFirstSet"/>
         </div>
         <div v-show="activeFilter === null">
           <div v-if="topFilters.length !== 0">
@@ -99,7 +99,9 @@ export default {
       revitFilters: ['type', 'family', 'level'],
       allFilters: [],
       activeFilter: null,
-      filterSearch: null
+      filterSearch: null,
+      trySetPresetFilter: false,
+      preventFirstSet: false
     }
   },
   computed: {
@@ -129,7 +131,19 @@ export default {
   },
   watch: {
     props(newVal) {
-      if (newVal) this.parseAndSetFilters()
+      if (newVal) {
+        this.parseAndSetFilters()
+      }
+    },
+    '$store.state.appliedFilter'(val) {
+      if (this.trySetPresetFilter) return
+      if (this.$store.state.appliedFilter && this.$store.state.appliedFilter.filterBy) {
+        let key = Object.keys(this.$store.state.appliedFilter.filterBy)[0]
+        let presetFilter = this.allFilters.find((f) => f.targetKey === key)
+        if (presetFilter) this.activeFilter = presetFilter
+        this.trySetPresetFilter = true
+        this.preventFirstSet = true
+      }
     }
   },
   mounted() {

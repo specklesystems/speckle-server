@@ -165,6 +165,25 @@ export default class FilteringManager {
         if ( valueFilter.not.includes( objValue ) )
           return false
       }
+
+      if ( 'includes' in valueFilter && Array.isArray( valueFilter.includes ) ) {
+        if ( !objValue || !Array.isArray( objValue ) )
+          return false
+        for ( let testValue of valueFilter.includes )
+          if ( objValue.includes( testValue ) )
+            return true
+        return false
+      }
+
+      if ( 'excludes' in valueFilter && Array.isArray( valueFilter.excludes ) ) {
+        if ( !objValue || !Array.isArray( objValue ) )
+          return true
+        for ( let testValue of valueFilter.excludes )
+          if ( objValue.includes( testValue ) )
+            return false
+        return true
+      }
+
       if ( 'lte' in valueFilter && !( objValue <= valueFilter.lte ) )
         return false
       if ( 'gte' in valueFilter && !( objValue >= valueFilter.gte ) )

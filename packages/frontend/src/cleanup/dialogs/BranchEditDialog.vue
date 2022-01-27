@@ -47,7 +47,7 @@
         </v-toolbar>
         <v-card-text class="mt-4">
           You cannot undo this action. The branch
-          <code>{{ editableBranch.name }}</code>
+          <code>{{ stream.branch.name }}</code>
           will be permanently deleted. To confirm, type its name below:
           <v-text-field
             v-model="branchNameConfirmation"
@@ -61,7 +61,7 @@
           <v-btn
             color="error"
             text
-            :disabled="branchNameConfirmation !== editableBranch.name"
+            :disabled="branchNameConfirmation !== stream.branch.name"
             @click="deleteBranch()"
           >
             Delete
@@ -124,10 +124,12 @@ export default {
         }
       },
       update(data) {
-        return data.stream.branches.items.filter((b) => b.name !== this.branch.name)
+        return data.stream.branches.items
+          .filter((b) => b.name !== this.stream.branch.name)
+          .map((b) => b.name)
       },
       skip() {
-        return this.branch == null
+        return this.stream.branch == null
       }
     }
   },
@@ -137,7 +139,7 @@ export default {
       this.error = null
       this.$matomo && this.$matomo.trackPageView('branch/delete')
       try {
-        await this.$apollo.mutate({
+        let res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchDelete($params: BranchDeleteInput!) {
               branchDelete(branch: $params)
@@ -146,12 +148,14 @@ export default {
           variables: {
             params: {
               streamId: this.$route.params.streamId,
-              id: this.branch.id
+              id: this.stream.branch.id
             }
           }
         })
+        if (!res.data.branchDelete) throw new Error('Something went wrong!')
       } catch (err) {
         this.$eventHub.$emit('notification', { text: err.message })
+        return
       }
 
       this.loading = false
@@ -161,11 +165,13 @@ export default {
     },
     async updateBranch() {
       if (!this.$refs.form.validate()) return
-
-      this.loading = true
-      this.$matomo && this.$matomo.trackPageView('branch/update')
       try {
-        await this.$apollo.mutate({
+        if (this.allBranchNames.indexOf(this.editableBranch.name) !== -1)
+          throw new Error('Branch already exists. Please choose a different name.')
+
+        this.loading = true
+        this.$matomo && this.$matomo.trackPageView('branch/update')
+        let res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
               branchUpdate(branch: $params)
@@ -180,6 +186,7 @@ export default {
             }
           }
         })
+        if (!res.data.branchUpdate) throw new Error('Something went wrong!')
       } catch (err) {
         this.$eventHub.$emit('notification', { text: err.message })
       }

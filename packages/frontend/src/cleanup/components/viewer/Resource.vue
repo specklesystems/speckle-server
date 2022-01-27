@@ -100,93 +100,28 @@ export default {
   },
   data() {
     return {
-      expand: this.expandInitial,
-      hiddenObjects: [],
-      isolatedObjects: [],
-      isolated: false,
-      hidden: false
+      expand: this.expandInitial
     }
   },
-  computed: {},
-  mounted() {
-    this.$eventHub.$on('hide-objects', (ids) => {
-      this.$eventHub.$emit('structure-filters', true)
-      this.isolatedObjects = []
-      this.hiddenObjects = [...new Set([...this.hiddenObjects, ...ids])]
-      window.__viewer.applyFilter({
-        filterBy: { id: { not: this.hiddenObjects } },
-        ghostOthers: false
-      })
-      if (this.isolatedObjects.length !== 0 || this.hiddenObjects.length !== 0)
-        this.$eventHub.$emit('show-visreset', true)
-      else this.$eventHub.$emit('show-visreset', false)
-    })
-    this.$eventHub.$on('show-objects', (ids) => {
-      this.$eventHub.$emit('structure-filters', true)
-      this.hiddenObjects = this.hiddenObjects.filter((id) => ids.indexOf(id) === -1)
-      if (this.hiddenObjects.length === 0) {
-        this.$eventHub.$emit('filter-reset')
-        this.$eventHub.$emit('show-visreset', false)
-        window.__viewer.applyFilter(null)
-      } else
-        window.__viewer.applyFilter({
-          filterBy: { id: { not: this.hiddenObjects } },
-          ghostOthers: false
-        })
-      if (this.isolatedObjects.length !== 0 || this.hiddenObjects.length !== 0)
-        this.$eventHub.$emit('show-visreset', true)
-      else this.$eventHub.$emit('show-visreset', false)
-    })
-    this.$eventHub.$on('isolate-objects', (ids) => {
-      this.$eventHub.$emit('structure-filters', true)
-      this.hiddenObjects = []
-      this.isolatedObjects = [...new Set([...this.isolatedObjects, ...ids])]
-      window.__viewer.applyFilter({
-        filterBy: { id: this.isolatedObjects },
-        ghostOthers: true
-      })
-      if (this.isolatedObjects.length !== 0 || this.hiddenObjects.length !== 0)
-        this.$eventHub.$emit('show-visreset', true)
-      else this.$eventHub.$emit('show-visreset', false)
-    })
-    this.$eventHub.$on('unisolate-objects', (ids) => {
-      this.$eventHub.$emit('structure-filters', true)
-      this.isolatedObjects = this.isolatedObjects.filter((id) => ids.indexOf(id) === -1)
-      if (this.isolatedObjects.length === 0) {
-        this.$eventHub.$emit('filter-reset')
-        this.$eventHub.$emit('show-visreset', false)
-        return window.__viewer.applyFilter(null)
-      }
-      window.__viewer.applyFilter({
-        filterBy: { id: this.isolatedObjects },
-        ghostOthers: true
-      })
-
-      this.$eventHub.$emit('show-visreset', true)
-    })
+  computed: {
+    isolated() {
+      let id =
+        this.resource.type === 'commit'
+          ? this.resource.data.commit.referencedObject
+          : this.resource.data.object.id
+      return this.$store.state.isolateValues.indexOf(id) !== -1
+    }
   },
   methods: {
     isolate() {
-      this.isolated = !this.isolated
-      if (!this.isolated) {
-        window.__viewer.applyFilter(null)
-        this.$eventHub.$emit('show-visreset', false)
-        return
-      }
-      this.hidden = false
-      window.__viewer.applyFilter({
-        filterBy: {
-          __importedUrl: [
-            `${window.location.origin}/streams/${this.resource.data.id}/objects/${
-              this.resource.type === 'commit'
-                ? this.resource.data.commit.referencedObject
-                : this.resource.data.object.id
-            }`
-          ]
-        },
-        ghostOthers: true
-      })
-      this.$eventHub.$emit('show-visreset', true)
+      let id =
+        this.resource.type === 'commit'
+          ? this.resource.data.commit.referencedObject
+          : this.resource.data.object.id
+
+      if (this.isolated)
+        this.$store.commit('unisolateObjects', { filterKey: '__parents', filterValues: [id] })
+      else this.$store.commit('isolateObjects', { filterKey: '__parents', filterValues: [id] })
     }
   }
 }
