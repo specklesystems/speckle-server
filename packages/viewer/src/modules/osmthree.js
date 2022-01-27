@@ -524,19 +524,12 @@ function constructor( scene, scale, origin, options ) {
   directionalLight.position.set(200, 500, 300);
   scene.add(directionalLight); 
   */
-  //console.log(scene)
-
-  //console.log(scale)
-  //console.log(origin)
-  //console.log(origin[0])
-  //console.log(origin[1])
-  //console.log((origin[2]+origin[0])/2)
-  //console.log((origin[3]+origin[1])/2)
 	var 
 		options = options || {},
 		_readyCallback = scene,
 		_scale = scale,
     _color = options.color || 0xf0f0f0,
+    _name = options.name,
     _material = options.material,
 		_origin = lonLatToWorld( (origin[2]+origin[0])/2, (origin[3]+origin[1])/2 ),
 		_meshCallback = options.meshCallback || createMesh,
@@ -555,7 +548,7 @@ function constructor( scene, scale, origin, options ) {
       //console.log(bldg)
 			if (bldg) { 
 				//if (_readyCallback) _readyCallback( _meshCallback.call( this, bldg, items[i] ) );
-        createMesh( bldg, [], scene, scale, _color, _material );
+        createMesh( bldg, [], scene, scale, _name, _material );
 			}
 			//currVerLen = geom.vertices.length;
 			//geom.vertices = geom.vertices.concat( bldg.vertices );
@@ -586,7 +579,7 @@ function constructor( scene, scale, origin, options ) {
 	}
 
 
-	function createMesh( geom, osmData, scene, scale, color, material ) {
+	function createMesh( geom, osmData, scene, scale, name, material ) {
 		//	return new THREE.Mesh( geom, new THREE.MeshLambertMaterial() );
     /*
 		var face,
@@ -615,10 +608,9 @@ function constructor( scene, scale, origin, options ) {
 		//var m = new THREE.Mesh( geom, new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) ); ShadowMaterial();
     //var material = new THREE.MeshBasicMaterial({ color: color });
 		var m = new THREE.Mesh( geom, material );
-    m.name = "OSM 3d buildings"
+    m.name = name
 
     scene.add(m)
-    //console.log(scene)
     m.rotation.x += Math.PI/2;
     m.scale.set(m.scale.x/scale, m.scale.y/scale, m.scale.z/scale)
     //m.geometry.computeBoundingBox();
@@ -1055,6 +1047,7 @@ function makeBuildings( callback, bbox, params ) {
 	buildOpts.meshFunction = params.meshFunction || false;		// custom function for creating the THREE.Mesh objects
   buildOpts.color = params.color || 0xffffff;
   buildOpts.material = params.material;
+  buildOpts.name = params.name;
 
 	var 
 		builder = new Builder( callback, scale, origin, buildOpts ),
