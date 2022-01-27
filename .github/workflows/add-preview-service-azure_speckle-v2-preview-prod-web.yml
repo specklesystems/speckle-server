@@ -6,7 +6,7 @@ name: Build and deploy container app to Azure Web App - speckle-v2-preview-prod-
 on:
   push:
     branches:
-      - add-preview-service-azure
+      - main
   workflow_dispatch:
 
 jobs:
