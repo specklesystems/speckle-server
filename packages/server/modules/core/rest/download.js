@@ -26,7 +26,7 @@ module.exports = ( app ) => {
     let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
     if ( !obj ) {
-      return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+      return res.status( 404 ).send( 'Failed to find object.' )
     }
 
     let simpleText = req.headers.accept === 'text/plain'
@@ -65,7 +65,7 @@ module.exports = ( app ) => {
     let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
     if ( !obj ) {
-      return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+      return res.status( 404 ).send( 'Failed to find object.' )
     }
 
     debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}` )
