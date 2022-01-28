@@ -531,6 +531,7 @@ function constructor( scene, scale, origin, options ) {
     _color = options.color || 0xf0f0f0,
     _name = options.name,
     _material = options.material,
+    _rotation = options.rotation,
 		_origin = lonLatToWorld( (origin[2]+origin[0])/2, (origin[3]+origin[1])/2 ),
 		_meshCallback = options.meshCallback || createMesh,
 		_defaultColor = options.defaultColor || 0xf0f0f0;
@@ -548,7 +549,7 @@ function constructor( scene, scale, origin, options ) {
       //console.log(bldg)
 			if (bldg) { 
 				//if (_readyCallback) _readyCallback( _meshCallback.call( this, bldg, items[i] ) );
-        createMesh( bldg, [], scene, scale, _name, _material );
+        createMesh( bldg, [], scene, scale, _name, _material, _rotation );
 			}
 			//currVerLen = geom.vertices.length;
 			//geom.vertices = geom.vertices.concat( bldg.vertices );
@@ -579,7 +580,7 @@ function constructor( scene, scale, origin, options ) {
 	}
 
 
-	function createMesh( geom, osmData, scene, scale, name, material ) {
+	function createMesh( geom, osmData, scene, scale, name, material, rotation ) {
 		//	return new THREE.Mesh( geom, new THREE.MeshLambertMaterial() );
     /*
 		var face,
@@ -612,7 +613,19 @@ function constructor( scene, scale, origin, options ) {
 
     scene.add(m)
     m.rotation.x += Math.PI/2;
-    m.scale.set(m.scale.x/scale, m.scale.y/scale, m.scale.z/scale)
+    m.scale.set(1/scale, 1/scale, 1/scale)
+
+    // bring mesh to zero coord and rotate
+    var movingVector = new THREE.Vector3(m.position.x, m.position.y, 0) //get vector to correct location on the map
+    m.position.x -= movingVector.x
+    m.position.y -= movingVector.y
+    m.rotation.y += rotation; //rotate around (0,0,0)
+
+    // move mesh back, but rotate the initial vector as well
+    var rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3(0,0,1), rotation) //rotate vector same as the map
+    m.position.x += rotatedVector.x
+    m.position.y += rotatedVector.y
+
     //m.geometry.computeBoundingBox();
     //console.log( m.geometry.boundingBox );
 
@@ -1048,6 +1061,7 @@ function makeBuildings( callback, bbox, params ) {
   buildOpts.color = params.color || 0xffffff;
   buildOpts.material = params.material;
   buildOpts.name = params.name;
+  buildOpts.rotation = params.rotation;
 
 	var 
 		builder = new Builder( callback, scale, origin, buildOpts ),

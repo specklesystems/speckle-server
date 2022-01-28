@@ -66,10 +66,10 @@ export default class SceneSurroundings {
         // example building https://latest.speckle.dev/streams/8b29ca2b2e/objects/288f67a0a45b2a4c3bd01f7eb3032495
         var providerColor = document.getElementById("providerColor");
         this.removeMap();
+        this.hideBuild();
 
-        if (providerColor.selectedIndex <=3 ) this.hideBuild(); // hide if there should NOT be buildings
         if (providerColor.selectedIndex >3 && !this.viewer.scene.getObjectByName("OSM 3d buildings"))  this.addBuildings(); // add if there should be buildings, but not are in the scene yet
-        if (providerColor.selectedIndex >3 && this.viewer.scene.getObjectByName("OSM 3d buildings"))   this.showBuild(); // show and change color if there should be buildings, and they are already in the scene
+        if (providerColor.selectedIndex >3 && this.viewer.scene.getObjectByName("OSM 3d buildings"))   this.showBuild(); // show and change color, scale, rotation if there should be buildings, and they are already in the scene
 
         if (providerColor.selectedIndex >0){
             //create and add map to scene
@@ -89,7 +89,7 @@ export default class SceneSurroundings {
 
             map.rotation.y += rotationNorth; //rotate around (0,0,0)
 
-            var movingVector = new THREE.Vector3(coords.x/scale, coords.y/scale, 0) //get vector to location on the map
+            var movingVector = new THREE.Vector3(coords.x/scale, coords.y/scale, 0) //get vector to correct location on the map
             var rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3(0,0,1), rotationNorth) //rotate vector same as the map
             map.position.x -= rotatedVector.x
             map.position.y -= rotatedVector.y
@@ -98,24 +98,28 @@ export default class SceneSurroundings {
         }
     }
     getScale(){
+        var scale = 1; //mm
+        var scale_units = "m"
         if (document.getElementById("mapUnits")){
-            var scale = 0.001; //mm
-            var scale_units = "mm"
             scale_units = document.getElementById("mapUnits").value;
             scale = getConversionFactor(scale_units);
-            return scale
         }
-        else return 1
+        return scale
     }
     getCoords(){
         if (document.getElementById("zeroCoordInputX") && document.getElementById("zeroCoordInputY")){
             // get and transform coordinates
-            var coord_x = Number(document.getElementById( 'zeroCoordInputX' ).value)
-            var coord_y = Number(document.getElementById( 'zeroCoordInputY' ).value)
-            var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_x,coord_y)
-            return [coords_transformed, coord_x, coord_y]; // 51.506810732490656, -0.0892642750895124
+            var coord_lat = Number(document.getElementById( 'zeroCoordInputX' ).value)
+            var coord_lon = Number(document.getElementById( 'zeroCoordInputY' ).value)
+            var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
+            return [coords_transformed, coord_lat, coord_lon]; // 51.506810732490656, -0.0892642750895124
         }
-        else return [51.506810732490656, -0.0892642750895124]
+        else {
+            var coord_lat = 51.506810732490656
+            var coord_lon = -0.0892642750895124
+            var coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
+            return [coords_transformed, coord_lat, coord_lon]
+        }
     }
     rotationNorth(){
         if (document.getElementById("North angle")){
@@ -126,19 +130,30 @@ export default class SceneSurroundings {
     }
     addBuildings(){
         var scale = this.getScale();
-        var coord_x = this.getCoords()[1];
-        var coord_y = this.getCoords()[2];
+
+        var coord_lat = this.getCoords()[1];
+        var coord_lon = this.getCoords()[2];
+
+        // calculate meters per degree ratio for lat&lon - to get bbox RADxRAD (m) for API expressed in degrees
+        var coords_world_origin = Geo.UnitsUtils.datumsToSpherical(coord_lat, coord_lon)        //{x: -9936.853648995217, y: 6711437.084992493}
+        var coords_world_origin_lat = Geo.UnitsUtils.datumsToSpherical(coord_lat+1, coord_lon).y
+        var coords_world_origin_lon = Geo.UnitsUtils.datumsToSpherical(coord_lat, coord_lon+1).x
+        var lat_coeff = Math.abs(coords_world_origin_lat - coords_world_origin.y)               // 111319.49079327358
+        var lon_coeff = Math.abs(coords_world_origin_lon - coords_world_origin.x)               // 180850.16131539177
+
+        var rad = 1500 // in selected units. e.g. meters
 
         var color = 0x8D9194; //grey
         //color = 0xa3a3a3; //light grey
         //color = 0x4287f5; //blue
         color = this.map_providers[providerColor.selectedIndex][2]
-
-        //var material = this.sceneManager.solidMaterial;
         let material = this.viewer.sceneManager.solidMaterial.clone()
         material.color = new THREE.Color(color);
-        window.OSM3.makeBuildings( this.viewer.scene, [ coord_y-0.01, coord_x-0.01, coord_y+0.01, coord_x+0.01 ], { scale: scale, color: color, material: material, name: "OSM 3d buildings" } );
-        
+
+        var rotationNorth = this.rotationNorth();
+
+        window.OSM3.makeBuildings( this.viewer.scene, [ coord_lon - rad/lon_coeff, coord_lat - rad/lat_coeff, coord_lon + rad/lon_coeff, coord_lat + rad/lat_coeff ], { scale: scale, color: color, material: material, rotation: rotationNorth, name: "OSM 3d buildings" } );
+
         this.viewer.render();
     }
     removeMap(){
@@ -155,15 +170,37 @@ export default class SceneSurroundings {
         this.viewer.render();
     }
     showBuild(){
+        console.log("show build")
         var c = this.map_providers[providerColor.selectedIndex][2]
         var mat = this.viewer.sceneManager.solidMaterial.clone()
+        var rotationNorth = this.rotationNorth();
+        var scale = this.getScale();
+
         this.viewer.scene.traverse(function(child) {
-        if (child.name === "OSM 3d buildings") {
-            mat.color = new THREE.Color(c);
-            child.material = mat;
-            child.visible = true;
-        }
+            if (child.name === "OSM 3d buildings") {
+                mat.color = new THREE.Color(c);
+                child.material = mat;
+                child.visible = true;
+
+                var movingVector = new THREE.Vector3(0, 0, 0)
+                var rotatedVector = new THREE.Vector3(0, 0, 0)
+                
+                // bring mesh to zero coord and rotate
+                movingVector = new THREE.Vector3(child.position.x, child.position.y, 0) //get vector to correct location on the map
+                child.position.x -= movingVector.x
+                child.position.y -= movingVector.y
+                child.rotation.y += rotationNorth-child.rotation.y; //rotate around (0,0,0)
+
+                // move mesh back, but rotate the initial vector as well
+                rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3(0,0,1), rotationNorth-child.rotation.y) //rotate vector same as the map
+                child.position.x += rotatedVector.x
+                child.position.y += rotatedVector.y
+
+                //adjust scale
+                child.scale.set(1/scale, 1/scale, 1/scale)
+            }
         });
         this.viewer.render();
     }
+
 }
