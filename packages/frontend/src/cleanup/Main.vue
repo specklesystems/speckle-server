@@ -101,8 +101,7 @@ export default {
           }
         `,
         result({ data }) {
-          console.log(data)
-          if (!data) return
+          if (!data || !data.userStreamAdded) return
           if (this.$route.params.streamId === data.userStreamAdded.id) return
           this.$eventHub.$emit('notification', {
             text: `You've got a new stream!`,
