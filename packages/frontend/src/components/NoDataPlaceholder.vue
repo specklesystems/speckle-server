@@ -3,7 +3,7 @@
     <v-row justify="center" style="margin-top: 50px" dense>
       <v-col cols="12" lg="6" md="6" xl="6" class="d-flex flex-column justify-center align-center">
         <v-card flat tile color="transparent" class="pa-0">
-          <div class="d-flex flex-column justify-space-between align-center mb-10" v-if="showImage">
+          <div v-if="showImage" class="d-flex flex-column justify-space-between align-center mb-10">
             <v-img contain max-height="200" src="@/assets/emptybox.png"></v-img>
           </div>
           <div class="text-center mb-2 space-grotesk">
@@ -14,10 +14,10 @@
               <v-list rounded class="transparent">
                 <v-list-item
                   v-if="user && !hasManager"
-                  href="https://releases.speckle.dev/manager/SpeckleManager%20Setup.exe"
                   link
                   class="primary mb-4"
                   dark
+                  @click="downloadManager"
                 >
                   <v-list-item-icon>
                     <v-icon class="pt-4">mdi-download</v-icon>
@@ -174,6 +174,22 @@ export default {
   beforeDestroy() {
     clearInterval(this.checkAccountTimer)
   },
-  methods: {}
+  methods: {
+    async downloadManager() {
+      let url = `https://releases.speckle.dev/manager/SpeckleManager Setup.exe`
+
+      let a = document.createElement('a')
+      document.body.appendChild(a)
+      a.style = 'display: none'
+      a.href = url
+      a.download = 'SpeckleManager Setup.exe'
+      a.click()
+      document.body.removeChild(a)
+
+      this.$mixpanel.track('Manager Download', {
+        os: 'win'
+      })
+    }
+  }
 }
 </script>
