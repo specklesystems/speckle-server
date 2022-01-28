@@ -331,7 +331,6 @@ export default {
         if (!val && this.filterToSet) {
           setTimeout(() => {
             this.$store.commit('setFilterDirect', { filter: this.filterToSet })
-            // window.__viewer.applyFilter(this.filterToSet)
             this.filterToSet = null
           }, 200)
         }
@@ -358,7 +357,6 @@ export default {
             window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
             controls._zoom
           ]
-          console.log(c)
           let fullQuery = { ...this.$route.query }
           delete fullQuery.c
           this.$router
@@ -369,7 +367,6 @@ export default {
             .catch(() => {})
         }, 1000)
       )
-      // TODO: check query params for filter and camera pos and set them
     }, 300)
   },
   methods: {
