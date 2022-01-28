@@ -48,6 +48,7 @@ export default {
       this.$refs.userDeleteDialog.open(this.user).then((dialog) => {
         if (!dialog.result) return
 
+        this.$mixpanel.track('User Action', { type: 'action', name: 'delete', hostApp: 'web' })
         this.$matomo && this.$matomo.trackPageView('user/delete')
 
         this.isLoading = true

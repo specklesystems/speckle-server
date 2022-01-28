@@ -304,6 +304,7 @@ export default {
     async removeUser(user) {
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('stream/remove-collaborator')
+      this.$mixpanel.track('Permission Action', { type: 'action', name: 'remove', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -346,6 +347,7 @@ export default {
     },
     async grantPermissionUser(user) {
       this.$matomo && this.$matomo.trackPageView('stream/add-collaborator')
+      this.$mixpanel.track('Permission Action', { type: 'action', name: 'add', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`

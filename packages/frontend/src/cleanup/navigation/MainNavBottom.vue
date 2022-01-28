@@ -59,11 +59,13 @@ export default {
   },
   methods: {
     signOut() {
+      this.$mixpanel.track('Log Out', { type: 'action', hostApp: 'web' })
       signOut()
     },
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
+      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
     }
   }
 }

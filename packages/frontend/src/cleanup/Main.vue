@@ -136,11 +136,20 @@ export default {
   },
   mounted() {
     this.setNavResizeEvents()
+
+    let distinct_id = localStorage.getItem('distinct_id')
+    if (distinct_id !== null) {
+      this.$mixpanel.identify(distinct_id)
+    }
+
+    this.$mixpanel.track('Visit Web App')
   },
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
+
+      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
     },
     setNavResizeEvents() {
       const minSize = this.borderSize

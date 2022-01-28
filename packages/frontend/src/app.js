@@ -41,6 +41,15 @@ Vue.use(VueMatomo, {
   userId: localStorage.getItem('suuid')
 })
 
+import VueMixpanel from 'vue-mixpanel'
+Vue.use(VueMixpanel, {
+  token: 'acd87c5a50b56df91a795e999812a3a4',
+  config: {
+    // eslint-disable-next-line camelcase
+    api_host: 'https://analytics.speckle.systems'
+  }
+})
+
 // import UniqueId from 'vue-unique-id'
 // Vue.use(UniqueId)
 

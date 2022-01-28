@@ -1,4 +1,4 @@
-import crs from 'crypto-random-string'
+import crypto from 'crypto'
 
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
@@ -36,12 +36,18 @@ export async function prefetchUserAndSetSuuid() {
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ query: `{ user { id suuid streams { totalCount } } }` })
+      body: JSON.stringify({ query: `{ user { id email suuid streams { totalCount } } }` })
     })
 
     let data = (await testResponse.json()).data
     if (data.user) {
+      // eslint-disable-next-line camelcase
+      let distinct_id =
+        '@' +
+        crypto.createHash('md5').update(data.user.email.toLowerCase()).digest('hex').toUpperCase()
+
       localStorage.setItem('suuid', data.user.suuid)
+      localStorage.setItem('distinct_id', distinct_id)
       localStorage.setItem('uuid', data.user.id)
       localStorage.setItem('stcount', data.user.streams.totalCount)
       return data

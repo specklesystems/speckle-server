@@ -199,6 +199,7 @@ export default {
         if (!dialog.result) return
 
         this.$matomo && this.$matomo.trackPageView('commit/update')
+        this.$mixpanel.track('Commit Action', { type: 'action', name: 'update', hostApp: 'web' })
         this.$apollo
           .mutate({
             mutation: gql`
@@ -221,6 +222,7 @@ export default {
     },
     deleteCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/delete')
+      this.$mixpanel.track('Commit Action', { type: 'action', name: 'delete', hostApp: 'web' })
       let commitBranch = null
       if (
         this.stream &&

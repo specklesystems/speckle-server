@@ -34,11 +34,11 @@
         deletable-chips
       />
       <v-switch
+        v-if="webhook != null"
         v-model="enabled"
         :label="enabled ? 'Enabled' : 'Disabled'"
         hint="Get notified when this webhook is triggered"
         persistent-hint
-        v-if="webhook != null"
       />
     </v-form>
 
@@ -166,6 +166,7 @@ export default {
     async saveChanges() {
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/update')
+      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update', hostApp: 'web' })
 
       let params = {
         id: this.webhook.id,
@@ -195,6 +196,7 @@ export default {
       console.log('test')
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/create')
+      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create', hostApp: 'web' })
       console.log('test')
 
       let res = await this.$apollo.mutate({
@@ -215,7 +217,7 @@ export default {
         }
       })
 
-      console.log( res)
+      console.log(res)
 
       this.$emit('refetch-webhooks')
       this.$emit('update:loading', false)
@@ -224,6 +226,7 @@ export default {
     async deleteWebhook() {
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/delete')
+      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'delete', hostApp: 'web' })
 
       await this.$apollo.mutate({
         mutation: gql`

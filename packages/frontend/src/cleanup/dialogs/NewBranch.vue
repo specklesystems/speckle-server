@@ -72,6 +72,7 @@ export default {
 
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('branch/create')
+      this.$mixpanel.track('Branch Action', { type: 'action', name: 'create', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`

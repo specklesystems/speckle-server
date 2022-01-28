@@ -101,6 +101,7 @@ export default {
   methods: {
     async editCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/update')
+      this.$mixpanel.track('Commit Action', { type: 'action', name: 'update', hostApp: 'web' })
       this.loading = true
       try {
         await this.$apollo.mutate({
@@ -121,6 +122,7 @@ export default {
     },
     async deleteCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/delete')
+      this.$mixpanel.track('Commit Action', { type: 'action', name: 'delete', hostApp: 'web' })
       let commitBranch = this.stream.commit.branchName
       try {
         await this.$apollo.mutate({

@@ -72,6 +72,7 @@ export default {
       this.$apollo.queries.user.refetch()
     },
     signOut() {
+      this.$mixpanel.track('Log Out', { type: 'action', hostApp: 'web' })
       signOut()
     }
   }

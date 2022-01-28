@@ -200,6 +200,9 @@ export default {
       return `${window.location.origin}/streams/${this.$route.params.streamId}`
     }
   },
+  mounted() {
+    this.$mixpanel.track('Share Stream', { type: 'action', hostApp: 'web' })
+  },
   methods: {
     copyToClipboard(e) {
       // this.$clipboard(e.target.value)

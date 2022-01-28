@@ -211,6 +211,7 @@ export default {
     async save() {
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('stream/update')
+      this.$mixpanel.track('Stream Action', { type: 'action', name: 'update', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -237,6 +238,7 @@ export default {
     },
     async deleteStream() {
       this.$matomo && this.$matomo.trackPageView('stream/delete')
+      this.$mixpanel.track('Stream Action', { type: 'action', name: 'delete', hostApp: 'web' })
       this.loadingDelete = true
       try {
         await this.$apollo.mutate({

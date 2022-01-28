@@ -221,7 +221,7 @@ export default {
     },
     async editApp() {
       if (!this.$refs.form.validate()) return
-
+      this.$mixpanel.track('App Action', { type: 'action', name: 'update', hostApp: 'web' })
       this.$matomo && this.$matomo.trackPageView('user/app/update')
       try {
         let res = await this.$apollo.mutate({

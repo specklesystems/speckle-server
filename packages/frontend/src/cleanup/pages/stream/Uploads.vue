@@ -227,6 +227,12 @@ export default {
       const index = this.files.findIndex((f) => f.name === file)
       this.files.splice(index, 1)
       this.$apollo.queries.streamUploads.refetch()
+      this.$mixpanel.track('File Action', {
+        type: 'action',
+        name: 'upload',
+        count: this.files.length,
+        hostApp: 'web'
+      })
     }
   }
 }

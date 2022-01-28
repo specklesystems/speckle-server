@@ -74,6 +74,7 @@ export default {
     async save() {
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('stream/update')
+      this.$mixpanel.track('Stream Action', { type: 'action', name: 'update', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`

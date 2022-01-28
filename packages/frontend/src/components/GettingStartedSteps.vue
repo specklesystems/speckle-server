@@ -333,7 +333,8 @@ export default {
       {
         title: 'Map AutoCAD Blocks to Revit families with Dynamo',
         image: 'viewer-tutorial.png',
-        link: 'https://speckle.systems/tutorials/mapping-autocad-blocks-to-revit-families-via-dynamo/'
+        link:
+          'https://speckle.systems/tutorials/mapping-autocad-blocks-to-revit-families-via-dynamo/'
       },
       {
         title: 'Analyse Revit models in Grasshopper',
@@ -372,6 +373,11 @@ export default {
   computed: {},
   mounted() {
     this.$matomo && this.$matomo.trackEvent('onboarding', 'start')
+    this.$mixpanel.track('Web Onboarding', {
+      step: this.onboarding,
+      type: 'action',
+      hostApp: 'web'
+    })
   },
   methods: {
     skip() {
@@ -387,10 +393,20 @@ export default {
     prev() {
       this.onboarding--
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
+      this.$mixpanel.track('Web Onboarding', {
+        step: this.onboarding,
+        type: 'action',
+        hostApp: 'web'
+      })
     },
     next() {
       this.onboarding++
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
+      this.$mixpanel.track('Web Onboarding', {
+        step: this.onboarding,
+        type: 'action',
+        hostApp: 'web'
+      })
     },
     nextUser() {
       this.isDev = false
