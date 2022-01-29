@@ -15,9 +15,9 @@
           block
           plain
           :class="`grey ${$vuetify.theme.dark ? 'darken-3' : 'lighten-2'}`"
-          @click="currItems += maxItems"
+          @click.stop="currItems += maxItems"
         >
-          Load More ({{ kvps.length - currItems }})
+          Show More ({{ kvps.length - currItems }})
         </v-btn>
       </div>
     </div>

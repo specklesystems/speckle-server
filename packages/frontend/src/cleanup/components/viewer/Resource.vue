@@ -12,7 +12,7 @@
       </v-list-item-action>
       <v-list-item-content>
         <v-list-item-title>
-          {{ resource.type === 'commit' ? resource.data.commit.message : 'Object' }}
+          {{ resource.type === 'commit' ? 'Commit ' + resource.data.commit.id : 'Object' }}
         </v-list-item-title>
       </v-list-item-content>
       <v-list-item-action
@@ -128,11 +128,11 @@ export default {
 </script>
 <style scoped>
 .list-overlay-dark {
-  background: rgba(40, 40, 40, 0.5);
+  background: rgb(40, 40, 40);
   z-index: 5;
 }
 .list-overlay-light {
-  background: rgba(235, 235, 235, 0.5);
+  background: rgb(235, 235, 235);
   z-index: 5;
 }
 </style>

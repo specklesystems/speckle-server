@@ -1,5 +1,11 @@
 <template>
-  <v-row no-gutters class="my-1 property-row rounded-lg">
+  <v-row
+    no-gutters
+    :class="`my-1 py-1 property-row rounded-lg ${
+      prop.type === 'object' || prop.type === 'array' ? (expanded ? 'border-blue' : 'border') : ''
+    } ${prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : ''}`"
+    @click.stop="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
+  >
     <v-col cols="1" class="text-center">
       <v-icon small style="font-size: 12px" :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`">
         {{ icon }}
@@ -12,7 +18,6 @@
         prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : ''
       } text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
       style="line-height: 24px"
-      @click="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
     >
       {{ prop.key.startsWith('@') ? prop.key.substring(1) : prop.key }}
     </v-col>
@@ -45,9 +50,8 @@
         class="mr-1"
         target="_blank"
         :href="`/streams/${streamId}/objects/${refId}`"
-        @xxxxclick="toggleVisibility()"
       >
-        <v-icon class="grey--text" style="font-size: 11px">mdi-open-in-new</v-icon>
+        <v-icon class="grey--text" style="font-size: 12px">mdi-open-in-new</v-icon>
       </v-btn>
       <v-btn
         v-if="prop.extras.includes('visibility')"
@@ -55,9 +59,9 @@
         x-small
         icon
         class="mr-1"
-        @click="toggleVisibility()"
+        @click.stop="toggleVisibility()"
       >
-        <v-icon class="grey--text" style="font-size: 11px">
+        <v-icon class="grey--text" style="font-size: 12px">
           {{ visible ? 'mdi-eye' : 'mdi-eye-off' }}
         </v-icon>
       </v-btn>
@@ -67,14 +71,14 @@
         x-small
         icon
         class="mr-1"
-        @click="toggleFilter()"
+        @click.stop="toggleFilter()"
       >
-        <v-icon :class="`${isolated ? 'primary--text' : 'grey--text'}`" style="font-size: 11px">
+        <v-icon :class="`${isolated ? 'primary--text' : 'grey--text'}`" style="font-size: 12px">
           {{ !isolated ? 'mdi-filter' : 'mdi-filter' }}
         </v-icon>
       </v-btn>
-      <v-btn v-tooltip="'Expand/collapse property'" x-small icon @click="expanded = !expanded">
-        <v-icon :class="`${expanded ? 'primary--text' : 'grey--text'}`" style="font-size: 11px">
+      <v-btn v-tooltip="'Expand/collapse property'" x-small icon @click.stop="expanded = !expanded">
+        <v-icon :class="`${expanded ? 'grey--text' : 'grey--text'}`" style="font-size: 12px">
           {{ expanded ? 'mdi-minus-box' : 'mdi-plus-box' }}
         </v-icon>
       </v-btn>
@@ -169,11 +173,21 @@ export default {
 .hover-cursor:hover {
   cursor: pointer;
 }
+.border-blue {
+  border: solid rgba(131, 131, 131, 0.753);
+  border-width: 0px 0px 0px 2px;
+}
+.border {
+  border: solid #047ffb;
+  /* border: solid #047efb; */
+  border-width: 0px 0px 0px 2px;
+}
 .property-row {
   transition: all 0.3s ease;
-  background: rgba(120, 120, 120, 0.05);
+  padding: 0 0px 0 4px;
 }
 .property-row:hover {
-  background: rgba(120, 120, 120, 0.09);
+  /* border: 1px solid rgba(120, 120, 120, 0.1); */
+  /* background: rgba(120, 120, 120, 0.09); */
 }
 </style>

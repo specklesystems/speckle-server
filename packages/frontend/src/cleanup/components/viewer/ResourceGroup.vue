@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-list v-if="resources.length > 1" dense nav class="mt-0 py-0 mb-3">
+    <v-list v-if="resources.length > 0" dense nav class="mt-0 py-0 mb-3">
       <v-list-item
         :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-3`"
         style="position: sticky; top: 82px"
@@ -16,7 +16,7 @@
           </v-icon>
         </v-list-item-action>
         <v-list-item-content>
-          <v-list-item-title>Loaded Resources</v-list-item-title>
+          <v-list-item-title>Data</v-list-item-title>
         </v-list-item-content>
         <v-list-item-action class="pa-0 ma-0">
           <v-btn small icon @click.stop="expand = !expand">
