@@ -2,7 +2,7 @@
   <div>
     <v-list v-if="resources.length > 0" dense nav class="mt-0 py-0 mb-3">
       <v-list-item
-        :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-3`"
+        :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
         style="position: sticky; top: 82px"
         @click="expand = !expand"
       >
@@ -31,8 +31,8 @@
           v-for="(resource, index) in resources"
           :key="index"
           :resource="resource"
-          :is-multiple="resources.length !== 0"
-          :expand-initial="resources.length === 0"
+          :is-multiple="resources.length > 1"
+          :expand-initial="resources.length === 1"
           @remove="
             (e) => {
               $emit('remove', e)

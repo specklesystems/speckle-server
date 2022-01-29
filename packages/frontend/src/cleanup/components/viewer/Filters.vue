@@ -43,19 +43,9 @@
           <filter-category-active :filter="activeFilter" />
         </div>
         <div v-if="activeFilter && activeFilter.data.type === 'number'">
-          <filter-numeric-active :filter="activeFilter" :prevent-first-set="preventFirstSet"/>
+          <filter-numeric-active :filter="activeFilter" :prevent-first-set="preventFirstSet" />
         </div>
         <div v-show="activeFilter === null">
-          <div v-if="topFilters.length !== 0">
-            <v-subheader>Reccommended filters:</v-subheader>
-            <div v-for="(filter, index) in topFilters" :key="index">
-              <filter-row-select
-                v-if="filter"
-                :filter="filter"
-                @active-toggle="(e) => (activeFilter = e)"
-              />
-            </div>
-          </div>
           <div class="">
             <v-text-field
               v-model="filterSearch"
@@ -67,6 +57,17 @@
               class="my-2"
               style="position: sticky; top: 122px; z-index: 6"
             />
+            <div v-if="topFilters.length !== 0 && !filterSearch">
+              <v-subheader>Reccommended filters:</v-subheader>
+              <div v-for="(filter, index) in topFilters" :key="index">
+                <filter-row-select
+                  v-if="filter"
+                  :filter="filter"
+                  @active-toggle="(e) => (activeFilter = e)"
+                />
+              </div>
+            </div>
+            <v-subheader>{{ filterSearch ? 'Matching' : 'Other' }} filters:</v-subheader>
             <div v-for="filter in matchingFilters" :key="filter.targetKey">
               <filter-row-select :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
             </div>
