@@ -549,7 +549,7 @@ function constructor( scene, scale, origin, options ) {
       //console.log(bldg)
 			if (bldg) { 
 				//if (_readyCallback) _readyCallback( _meshCallback.call( this, bldg, items[i] ) );
-        createMesh( bldg, [], scene, scale, _name, _material, _rotation );
+        createMesh( bldg, [(origin[3]+origin[1])/2, (origin[2]+origin[0])/2], scene, scale, _name, _material, _rotation );
 			}
 			//currVerLen = geom.vertices.length;
 			//geom.vertices = geom.vertices.concat( bldg.vertices );
@@ -580,7 +580,7 @@ function constructor( scene, scale, origin, options ) {
 	}
 
 
-	function createMesh( geom, osmData, scene, scale, name, material, rotation ) {
+	function createMesh( geom, origin, scene, scale, name, material, rotation ) {
 		//	return new THREE.Mesh( geom, new THREE.MeshLambertMaterial() );
     /*
 		var face,
@@ -610,6 +610,7 @@ function constructor( scene, scale, origin, options ) {
     //var material = new THREE.MeshBasicMaterial({ color: color });
 		var m = new THREE.Mesh( geom, material );
     m.name = name
+    m.userData.coords = new THREE.Vector3(origin[0],origin[1],0)
 
     scene.add(m)
     m.rotation.x += Math.PI/2;
