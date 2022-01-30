@@ -3,7 +3,7 @@
     no-gutters
     :class="`my-1 py-1 property-row rounded-lg ${$vuetify.theme.dark ? 'black-bg' : 'white-bg'} ${
       prop.type === 'object' || prop.type === 'array' ? (expanded ? 'border-blue' : 'border') : ''
-    } ${prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : 'normal-cursor'}`"
+    } ${prop.type === 'object' || prop.type === 'array' ? 'hover-cursor property-row-hover' : 'normal-cursor'}`"
     @click.stop="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
   >
     <v-col cols="1" class="text-center">
@@ -199,8 +199,8 @@ export default {
   background: rgb(30, 30, 30);
 }
 
-.property-row:hover {
+.property-row-hover:hover {
   /* border: 1px solid rgba(120, 120, 120, 0.1); */
-  /* background: rgba(120, 120, 120, 0.09); */
+  background: rgba(120, 120, 120, 0.03);
 }
 </style>
