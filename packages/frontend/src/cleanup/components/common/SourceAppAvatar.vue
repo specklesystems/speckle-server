@@ -4,7 +4,6 @@
     small
     class="ma-1 caption white--text no-hover"
     :color="color"
-    :size="size"
   >
     {{ shortName }}
   </v-chip>
@@ -12,10 +11,6 @@
 <script>
 export default {
   props: {
-    size: {
-      type: Number,
-      default: 30
-    },
     applicationName: {
       type: String,
       default: '?'

@@ -1,46 +1,53 @@
 <template>
-  <div>
-    <v-list v-if="resources.length > 0" dense nav class="mt-0 py-0 mb-3">
-      <v-list-item
-        :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
-        style="position: sticky; top: 82px"
-        @click="expand = !expand"
-      >
-        <v-list-item-action>
-          <v-icon small>
-            {{
-              resources.length < 10
-                ? 'mdi-numeric-' + resources.length + '-box-multiple'
-                : 'mdi-numeric-9-plus-box-multiple'
-            }}
-          </v-icon>
-        </v-list-item-action>
-        <v-list-item-content>
-          <v-list-item-title>Data</v-list-item-title>
-        </v-list-item-content>
-        <v-list-item-action class="pa-0 ma-0">
-          <v-btn small icon @click.stop="expand = !expand">
-            <v-icon>{{ expand ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
-          </v-btn>
-        </v-list-item-action>
-      </v-list-item>
-    </v-list>
+  <div class="mb-2">
     <v-expand-transition>
-      <div v-show="expand" class="mt-3">
-        <resource
+      <div v-show="expand" class="">
+        <div v-for="(resource, index) in resources" :key="index">
+          <commit-info-resource
+            v-if="resource.type === 'commit'"
+            :resource="resource"
+            @remove="
+              (e) => {
+                $emit('remove', e)
+                removedResources.push(e)
+              }
+            "
+          ></commit-info-resource>
+          <object-info-resource
+            v-if="resource.type === 'object'"
+            :resource="resource"
+            @remove="
+              (e) => {
+                $emit('remove', e)
+                removedResources.push(e)
+              }
+            "
+          ></object-info-resource>
+        </div>
+        <div class="px-2 mb-2">
+          <v-btn
+            v-tooltip="'Overlay another commit or object'"
+            block
+            rounded
+            class="primary"
+            @click="$emit('show-add-overlay')"
+          >
+            add
+          </v-btn>
+        </div>
+        <!-- <resource
           v-for="(resource, index) in resources"
           :key="index"
           :resource="resource"
           :is-multiple="resources.length > 1"
-          :expand-initial="resources.length === 1"
+          :expand-initial="resources.length === 1 || true"
           @remove="
             (e) => {
               $emit('remove', e)
               removedResources.push(e)
             }
           "
-        />
-
+        /> -->
         <div v-show="removedResources.length !== 0" class="px-3 caption pb-5">
           Removed resources:
           <span v-for="(res, index) in removedResources" :key="index" v-tooltip="'Click to re-add'">
@@ -69,7 +76,8 @@
 <script>
 export default {
   components: {
-    Resource: () => import('@/cleanup/components/viewer/Resource')
+    CommitInfoResource: () => import('@/cleanup/components/viewer/CommitInfoResource'),
+    ObjectInfoResource: () => import('@/cleanup/components/viewer/ObjectInfoResource')
   },
   props: {
     resources: { type: Array, default: () => [] }

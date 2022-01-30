@@ -55,7 +55,7 @@
               append-icon="mdi-magnify"
               hide-details
               class="my-2"
-              style="position: sticky; top: 122px; z-index: 6"
+              style="position: sticky; top: 128px; z-index: 6"
             />
             <div v-if="topFilters.length !== 0 && !filterSearch">
               <v-subheader>Reccommended filters:</v-subheader>
@@ -96,7 +96,7 @@ export default {
   },
   data() {
     return {
-      expand: true,
+      expand: false,
       revitFilters: ['type', 'family', 'level'],
       allFilters: [],
       activeFilter: null,

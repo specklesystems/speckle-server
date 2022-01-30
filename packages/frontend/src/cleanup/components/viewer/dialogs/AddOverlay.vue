@@ -115,7 +115,6 @@ export default {
     }
   },
   async mounted() {
-    console.log(this.streamId)
     let res = await this.$apollo.query({
       query: gql`
         query {

@@ -45,11 +45,11 @@ export default {
       loading: false,
       ignoredProps: [
         '__closure',
-        'displayMesh',
-        'displayValue',
+        // 'displayMesh',
+        // 'displayValue',
         '__importedUrl',
-        // '__parents', // TODO: uncomment before release
-        'totalChildrenCount'
+        '__parents'
+        // 'totalChildrenCount'
       ]
     }
   },
@@ -108,9 +108,10 @@ export default {
           !this.realObject.speckle_type?.includes('Objects')
         )
           extras.push('visibility')
-        // if (value)
+
         this.kvps.push({
-          key,
+          key: this.cleanKey(key),
+          originalKey: key,
           value,
           type,
           extras,
@@ -119,6 +120,11 @@ export default {
           refId: value?.referencedId
         })
       }
+    },
+    cleanKey(key) {
+      if (key === 'totalChildrenCount') return 'children count'
+      if (key === 'speckle_type') return 'type'
+      return key
     }
   }
 }

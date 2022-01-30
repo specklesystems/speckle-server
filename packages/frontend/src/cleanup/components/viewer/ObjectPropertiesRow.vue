@@ -1,9 +1,9 @@
 <template>
   <v-row
     no-gutters
-    :class="`my-1 py-1 property-row rounded-lg ${
+    :class="`my-1 py-1 property-row rounded-lg ${$vuetify.theme.dark ? 'black-bg' : 'white-bg'} ${
       prop.type === 'object' || prop.type === 'array' ? (expanded ? 'border-blue' : 'border') : ''
-    } ${prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : ''}`"
+    } ${prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : 'normal-cursor'}`"
     @click.stop="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
   >
     <v-col cols="1" class="text-center">
@@ -12,14 +12,16 @@
       </v-icon>
     </v-col>
     <v-col
-      v-tooltip="prop.key"
+      v-tooltip="prop.originalKey"
       cols="5"
       :class="`caption ${
         prop.type === 'object' || prop.type === 'array' ? 'hover-cursor' : ''
       } text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
       style="line-height: 24px"
     >
-      {{ prop.key.startsWith('@') ? prop.key.substring(1) : prop.key }}
+      <span :class="`${expanded ? 'font-weight-bold' : ''}`">
+        {{ prop.key.startsWith('@') ? prop.key.substring(1) : prop.key }}
+      </span>
     </v-col>
     <v-col
       v-if="prop.type !== 'object' && prop.type !== 'array'"
@@ -78,8 +80,8 @@
         </v-icon>
       </v-btn>
       <v-btn v-tooltip="'Expand/collapse property'" x-small icon @click.stop="expanded = !expanded">
-        <v-icon :class="`${expanded ? 'grey--text' : 'grey--text'}`" style="font-size: 12px">
-          {{ expanded ? 'mdi-minus-box' : 'mdi-plus-box' }}
+        <v-icon :class="`${expanded ? 'grey--text' : 'primary--text'}`" style="font-size: 12px">
+          {{ expanded ? 'mdi-minus' : 'mdi-plus' }}
         </v-icon>
       </v-btn>
     </v-col>
@@ -173,6 +175,9 @@ export default {
 .hover-cursor:hover {
   cursor: pointer;
 }
+.normal-cursor:hover {
+  cursor: auto !important;
+}
 .border-blue {
   border: solid rgba(131, 131, 131, 0.753);
   border-width: 0px 0px 0px 2px;
@@ -186,6 +191,14 @@ export default {
   transition: all 0.3s ease;
   padding: 0 0px 0 4px;
 }
+
+.white-bg {
+  background: white;
+}
+.black-bg {
+  background: rgb(30, 30, 30);
+}
+
 .property-row:hover {
   /* border: 1px solid rgba(120, 120, 120, 0.1); */
   /* background: rgba(120, 120, 120, 0.09); */

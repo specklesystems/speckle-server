@@ -1,13 +1,7 @@
 <template>
   <div>
-    <v-row v-if="stream" dense>
-      <v-col
-        v-for="commit in stream.branch.commits.items"
-        :key="commit.id + 'card'"
-        cols="12"
-        sm="6"
-        md="4"
-      >
+    <v-row v-if="commits.length != 0" dense>
+      <v-col v-for="commit in commits" :key="commit.id + 'card'" cols="12" sm="6" md="4">
         <v-card @click.stop="$emit('add-resource', commit.id)">
           <preview-image
             :height="180"
@@ -53,83 +47,52 @@ export default {
     SourceAppAvatar: () => import('@/cleanup/components/common/SourceAppAvatar')
   },
   props: ['streamId', 'branchName'],
-  apollo: {
-    stream: {
-      query: gql`
-        query($streamId: String!, $branchName: String!, $cursor: String) {
-          stream(id: $streamId) {
-            id
-            branch(name: $branchName) {
-              name
-              commits(cursor: $cursor, limit: 2) {
-                totalCount
-                cursor
-                items {
-                  sourceApplication
-                  id
-                  createdAt
-                  authorId
-                  branchName
-                  message
-                  referencedObject
-                }
-              }
-            }
-          }
-        }
-      `,
-      variables() {
-        return { streamId: this.streamId, branchName: this.branchName }
-      },
-      skip() {
-        return !this.streamId
-      }
+  data() {
+    return {
+      skip: true,
+      cursor: new Date().toISOString(),
+      commits: []
     }
   },
-  data() {
-    return {}
+  async mounted() {
+    this.fetchBranchCommits()
   },
-  async mounted() {},
   methods: {
-    infiniteHandler($state) {
-      this.$apollo.queries.stream.fetchMore({
-        variables: {
-          cursor: this.stream.branch.commits.cursor,
-          streamId: this.streamId,
-          branchName: this.branchName
-        },
-        // Transform the previous result with new data
-        updateQuery: (previousResult, { fetchMoreResult }) => {
-          const newItems = fetchMoreResult.stream.branch.commits.items
-          if (newItems.length === 0) $state.complete()
-          else $state.loaded()
-
-          let allItems = [...previousResult.stream.branch.commits.items]
-          for (const commit of newItems) {
-            if (allItems.findIndex((c) => c.id === commit.id) === -1) allItems.push(commit)
-          }
-
-          return {
-            stream: {
-              __typename: previousResult.stream.__typename,
-              name: previousResult.stream.name,
-              id: previousResult.stream.id,
-              branch: {
-                id: fetchMoreResult.stream.branch.id,
-                name: fetchMoreResult.stream.branch.name,
-                description: fetchMoreResult.stream.branch.description,
-                __typename: previousResult.stream.branch.__typename,
-                commits: {
-                  __typename: previousResult.stream.branch.commits.__typename,
-                  cursor: fetchMoreResult.stream.branch.commits.cursor,
-                  totalCount: fetchMoreResult.stream.branch.commits.totalCount,
-                  items: allItems
+    async fetchBranchCommits() {
+      let res = await this.$apollo.query({
+        query: gql`
+          query {
+            stream(id: "${this.streamId}") {
+              id
+              branch(name: "${this.branchName}") {
+                name
+                commits( cursor: "${this.cursor}", limit: 2) {
+                  totalCount
+                  cursor
+                  items {
+                    sourceApplication
+                    id
+                    createdAt
+                    authorId
+                    branchName
+                    message
+                    referencedObject
+                  }
                 }
               }
             }
           }
-        }
+        `
       })
+      let items = res.data.stream.branch.commits.items
+      this.cursor = res.data.stream.branch.commits.cursor
+      items.forEach((item) => this.commits.push(item))
+      return items
+    },
+    async infiniteHandler($state) {
+      let items = await this.fetchBranchCommits()
+      if (items.length === 0) $state.complete()
+      else $state.loaded()
     }
   }
 }

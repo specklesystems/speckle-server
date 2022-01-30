@@ -93,8 +93,8 @@ export default {
 
 .background-light {
   background: #8e9eab;
-  background: -webkit-linear-gradient(to top, #eeeeee, #b0d3ec);
-  background: linear-gradient(to top, #ffffff, #c8e8ff);
+  background: -webkit-linear-gradient(to top right, #eeeeee, #c8e8ff);
+  background: linear-gradient(to top right, #ffffff, #c8e8ff);
 }
 
 .background-dark {

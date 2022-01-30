@@ -1,10 +1,9 @@
 <template>
   <v-chip
-    small
+    v-tooltip="`Source Application: ${applicationName ? applicationName : 'unknown'}`"
+    x-small
     class="ma-1 caption white--text no-hover"
     :color="color"
-    :size="size"
-    v-tooltip="`Source Application: ${applicationName ? applicationName : 'unknown'}`"
   >
     {{ shortName }}
   </v-chip>
@@ -12,10 +11,6 @@
 <script>
 export default {
   props: {
-    size: {
-      type: Number,
-      default: 30
-    },
     applicationName: {
       type: String,
       default: '?'
