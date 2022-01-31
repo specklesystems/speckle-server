@@ -49,7 +49,6 @@ export default {
         if (!dialog.result) return
 
         this.$mixpanel.track('User Action', { type: 'action', name: 'delete', hostApp: 'web' })
-        this.$mixpanel.people.set('Account deleted', true)
         this.$matomo && this.$matomo.trackPageView('user/delete')
 
         this.isLoading = true
