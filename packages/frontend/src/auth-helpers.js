@@ -104,6 +104,7 @@ export async function signOut(mixpanelInstance) {
 
   if (mixpanelInstance) {
     mixpanelInstance.track('Log Out', { type: 'action', hostApp: 'web' })
+    mixpanelInstance.reset()
   }
 }
 
