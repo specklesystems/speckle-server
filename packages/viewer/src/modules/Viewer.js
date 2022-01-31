@@ -60,8 +60,6 @@ export default class Viewer extends EventEmitter {
     this.sceneManager = new ObjectManager( this )
     this.interactions = new InteractionHandler( this )
 
-    this.surroundings = new SceneSurroundings( this )
-
     this.sceneLights()
     this.animate()
     this.onWindowResize()
@@ -271,13 +269,12 @@ export default class Viewer extends EventEmitter {
   dispose() {
     // TODO: currently it's easier to simply refresh the page :)
   }
-
-  addMapAndBuild(){
-    this.surroundings.addMap(this)
-  }
-  removeMapAndBuild(){
-    this.surroundings.removeMap(this)
-    this.surroundings.hideBuild(this)
+  
+  addMapAndBuild(index, lat, lon, north, api){
+    if (api == 0) removeMapAndBuild()
+    else {
+      this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
+    }
   }
 
 }

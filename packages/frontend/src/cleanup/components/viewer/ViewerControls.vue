@@ -23,6 +23,12 @@
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn>
       <canonical-views :small="small" />
+      <base-map-views 
+        :small="small"
+        :lat="lat" 
+        :lon="lon" 
+        :north="north"
+        :api="api"  />
       <v-btn v-tooltip="'Zoom extents'" :small="small" rounded class="mr-2" @click="zoomEx()">
         <v-icon small>mdi-arrow-expand</v-icon>
       </v-btn>
@@ -51,10 +57,15 @@
 <script>
 export default {
   components: {
-    CanonicalViews: () => import('@/cleanup/components/viewer/CanonicalViews')
+    CanonicalViews: () => import('@/cleanup/components/viewer/CanonicalViews'),
+    BaseMapViews: () => import('@/cleanup/components/viewer/BaseMapViews')
   },
   props: {
-    small: { type: Boolean, default: false }
+    small: { type: Boolean, default: false },
+    lat: {type: Number, default: 0},
+    lon: {type: Number, default: 0},
+    north: {type: Number, default: 0},
+    api: {type: String, default: ""}
   },
   data() {
     return {

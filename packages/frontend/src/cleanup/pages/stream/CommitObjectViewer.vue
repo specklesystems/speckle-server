@@ -116,7 +116,12 @@
         }; z-index: 100`"
         :class="`d-flex justify-center`"
       >
-        <viewer-controls @show-add-overlay="showAddOverlay = true" />
+        <viewer-controls 
+          :lat="baseMapArray[0].lat" 
+          :lon="baseMapArray[0].lon" 
+          :north="baseMapArray[0].north"
+          :api="baseMapArray[0].api"
+          @show-add-overlay="showAddOverlay = true" />
       </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
@@ -170,6 +175,9 @@ import debounce from 'lodash.debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/cleanup/components/common/Viewer' // do not import async
+import branchQuery from '@/graphql/branch.gql'
+import objectQuery from '@/graphql/objectSingle.gql'
+import crs from 'crypto-random-string'
 
 export default {
   components: {
@@ -200,8 +208,42 @@ export default {
     resourceType: null,
     resources: [],
     showAddOverlay: false,
-    viewerBusy: false
+    viewerBusy: false,
+    baseMapArray: [{lat:0, lon:0, north:0, api: ""}]
   }),
+  apollo: {
+    branch: {
+      query: branchQuery,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          branchName: 'globals'
+        }
+      },
+      update(data) {
+        return data.stream.branch
+      },
+      skip() {
+        return this.$route.params.streamId == null 
+      }
+    },
+    object: {
+      query: objectQuery,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          id: this.branch.commits.items[0].referencedObject
+        }
+      },
+      update(data) {
+        this.baseMapArray = this.nestedGlobals(data.stream.object.data)
+        return data.stream.object
+      },
+      skip() {
+        return this.branch == null || this.branch.commits.items[0].referencedObject == null
+      }
+    }
+  },
   computed: {
     isCommit() {
       if (this.resources.length === 0) return false
@@ -229,6 +271,11 @@ export default {
         this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
         return
       }
+    },
+    branch(val){
+      if (val){
+          this.$apollo.queries.object.refetch()
+        }
     },
     '$store.state.appliedFilter'(val) {
       if (!val) {
@@ -358,7 +405,7 @@ export default {
             window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
             controls._zoom
           ]
-          console.log(c)
+          //console.log(c)
           let fullQuery = { ...this.$route.query }
           delete fullQuery.c
           this.$router
@@ -511,6 +558,25 @@ export default {
     captureSelect(selectionData) {
       this.selectionData.splice(0, this.selectionData.length)
       this.selectionData.push(...selectionData)
+    },
+    nestedGlobals(data) {
+      if (!data) return []
+      let entries = Object.entries(data)
+
+      for (let [key, val] of entries) {
+        if (key.startsWith('__')) continue
+        if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
+
+        if (key=="Project Base Point LAT") this.baseMapArray[0].lat = Number(val)
+        if (key=="Project Base Point LON") this.baseMapArray[0].lon = Number(val)
+        if (key=="Angle to true north") this.baseMapArray[0].north = Number(val)
+        if (key=="Mapbox API") this.baseMapArray[0].api = val
+
+        if (!Array.isArray(val) && typeof val === 'object' && val !== null) {
+          let data_nested = this.nestedGlobals(val)
+        }
+      }
+      return this.baseMapArray
     }
   }
 }

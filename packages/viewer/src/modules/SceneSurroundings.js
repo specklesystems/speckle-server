@@ -6,23 +6,27 @@ import { Units, getConversionFactor } from './converter/Units'
 
 export default class SceneSurroundings {
 
-  constructor( viewer ) {
+  constructor( viewer, index, lat, lon, north, api ) {
     this.viewer = viewer
     this.interactions = new InteractionHandler( this.viewer )
-    
-    //Speckle token for localhost only
-    let DEV_MAPBOX_API_KEY = "pk.eyJ1Ijoia2F0LXNwZWNrbGUiLCJhIjoiY2t5cm1oZDZmMHZkbTJxbzVhdnkxeGYzaCJ9.JXufxeNiDCDDi5JgzUrsbQ" 
 
+        
+    this.DEV_MAPBOX_API_KEY = api
+    this.north = north
+    this.selectedMapIndex = index
+    this.lat = lat
+    this.lon = lon
+    
     // adding map tiles
     this.map_providers = [
       ["No map"],
-      ["Mapbox Streets", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
-      ["Mapbox Monochrome", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckyse56qx2w4h14pe0555b6mt", Geo.MapBoxProvider.STYLE), 0xa4adbf], //works (custom token)
-      ["Mapbox Satellite", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
+      ["Mapbox Streets", new Geo.MapBoxProvider(this.DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
+      ["Mapbox Monochrome", new Geo.MapBoxProvider(this.DEV_MAPBOX_API_KEY, "kat-speckle/ckyse56qx2w4h14pe0555b6mt", Geo.MapBoxProvider.STYLE), 0xa4adbf], //works (custom token)
+      ["Mapbox Satellite", new Geo.MapBoxProvider(this.DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
 
-      ["Mapbox Streets 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
-      ["Mapbox Monochrome 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "kat-speckle/ckyse56qx2w4h14pe0555b6mt", Geo.MapBoxProvider.STYLE), 0xa4adbf], //works (custom token)
-      ["Mapbox Satellite 3D Buildings", new Geo.MapBoxProvider(DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
+      ["Mapbox Streets 3D Buildings", new Geo.MapBoxProvider(this.DEV_MAPBOX_API_KEY, "mapbox/streets-v10", Geo.MapBoxProvider.STYLE), 0x8D9194], //works (custom token)
+      ["Mapbox Monochrome 3D Buildings", new Geo.MapBoxProvider(this.DEV_MAPBOX_API_KEY, "kat-speckle/ckyse56qx2w4h14pe0555b6mt", Geo.MapBoxProvider.STYLE), 0xa4adbf], //works (custom token)
+      ["Mapbox Satellite 3D Buildings", new Geo.MapBoxProvider(this.DEV_MAPBOX_API_KEY, "mapbox.satellite", Geo.MapBoxProvider.MAP_ID, "jpg70", false),0x595755], //works (custom token)
 
       ]
     
@@ -36,6 +40,7 @@ export default class SceneSurroundings {
     
     this.addUnitsList()
     this.addMapsList()
+    this.addMap()
 
   }
 
@@ -65,12 +70,18 @@ export default class SceneSurroundings {
   selectedMap(){
     let selected = 3
     let providerColor = document.getElementById("providerColor")
-    if (providerColor) selected = providerColor.selectedIndex
+    if (this.selectedMapIndex) selected = this.selectedMapIndex
+    else if (providerColor) selected = providerColor.selectedIndex
     return selected
   }
   addMap() {
     // example building https://latest.speckle.dev/streams/8b29ca2b2e/objects/288f67a0a45b2a4c3bd01f7eb3032495
+
     let selectedMap = this.selectedMap()
+    let coords = this.getCoords()[0]
+    let scale = this.getScale()
+    let rotationNorth = this.rotationNorth()
+
     this.removeMap()
     this.hideBuild()
 
@@ -86,10 +97,6 @@ export default class SceneSurroundings {
 
       //set selected map provider
       map.setProvider(this.map_providers[selectedMap][1])
-
-      let coords = this.getCoords()[0]
-      let scale = this.getScale()
-      let rotationNorth = this.rotationNorth()
           
       map.scale.set(map.scale.x/scale, map.scale.y/scale, map.scale.z/scale)
 
@@ -113,22 +120,24 @@ export default class SceneSurroundings {
     return scale
   }
   getCoords(){
-    if (document.getElementById("zeroCoordInputX") && document.getElementById("zeroCoordInputY")){
-      // get and transform coordinates
-      let coord_lat = Number(document.getElementById( 'zeroCoordInputX' ).value)
-      let coord_lon = Number(document.getElementById( 'zeroCoordInputY' ).value)
-      let coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
-      return [coords_transformed, coord_lat, coord_lon] // 51.506810732490656, -0.0892642750895124
+    let coord_lat = 51.499268
+    let coord_lon = -0.122141
+    let coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
+    if (this.lat && this.lon) {
+      coord_lat = this.lat
+      coord_lon = this.lon
+      coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
     }
-    else {
-      let coord_lat = 51.506810732490656
-      let coord_lon = -0.0892642750895124
-      let coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
-      return [coords_transformed, coord_lat, coord_lon]
+    else if (document.getElementById("zeroCoordInputX") && document.getElementById("zeroCoordInputY")){
+      coord_lat = Number(document.getElementById( 'zeroCoordInputX' ).value)
+      coord_lon = Number(document.getElementById( 'zeroCoordInputY' ).value)
+      coords_transformed = Geo.UnitsUtils.datumsToSpherical(coord_lat,coord_lon)
     }
+    return [coords_transformed, coord_lat, coord_lon]
   }
   rotationNorth(){
-    if (document.getElementById("North angle")){
+    if (this.north) return this.north
+    else if (document.getElementById("North angle")){
       let angle = Number(document.getElementById("North angle").value)
       return -angle*Math.PI/180
     }
