@@ -80,7 +80,7 @@ export async function getTokenFromAccessCode(accessCode) {
  * Signs out the current session
  * @return {null}
  */
-export async function signOut() {
+export async function signOut(mixpanelInstance) {
   await fetch('/auth/logout', {
     method: 'POST',
     headers: {
@@ -96,9 +96,15 @@ export async function signOut() {
   localStorage.removeItem('RefreshToken')
   localStorage.removeItem('suuid')
   localStorage.removeItem('uuid')
+  localStorage.removeItem('distinct_id')
+  localStorage.removeItem('stcount')
   localStorage.removeItem('onboarding')
 
   window.location = '/'
+
+  if (mixpanelInstance) {
+    mixpanelInstance.track('Log Out', { type: 'action', hostApp: 'web' })
+  }
 }
 
 export async function refreshToken() {

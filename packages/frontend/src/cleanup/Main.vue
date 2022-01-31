@@ -144,6 +144,8 @@ export default {
     }
 
     this.$mixpanel.track('Visit Web App')
+
+    this.$mixpanel.mixpanel.register({ server_id: this.$mixpanelServerId })
   },
   methods: {
     switchTheme() {

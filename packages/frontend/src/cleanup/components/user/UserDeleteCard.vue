@@ -67,7 +67,7 @@ export default {
           })
           .then(() => {
             this.isLoading = false
-            signOut()
+            signOut(this.$mixpanel)
           })
       })
     }

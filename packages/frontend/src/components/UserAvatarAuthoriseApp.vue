@@ -45,7 +45,7 @@ export default {
   },
   methods: {
     signOut() {
-      signOut()
+      signOut(this.$mixpanel)
     }
   }
 }
