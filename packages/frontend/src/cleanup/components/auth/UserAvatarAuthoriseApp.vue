@@ -10,8 +10,8 @@
 </template>
 <script>
 import { signOut } from '@/auth-helpers'
-import userQuery from '../graphql/userById.gql'
-import UserAvatarIcon from '@/components/UserAvatarIcon'
+import userQuery from '@/graphql/userById.gql'
+import UserAvatarIcon from '@/cleanup/components/common/UserAvatarIcon'
 
 export default {
   components: { UserAvatarIcon },

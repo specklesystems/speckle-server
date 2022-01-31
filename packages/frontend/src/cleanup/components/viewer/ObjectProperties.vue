@@ -123,7 +123,7 @@ export default {
     },
     cleanKey(key) {
       if (key === 'totalChildrenCount') return 'children count'
-      if (key === 'speckle_type') return 'type'
+      if (key === 'speckle_type') return 'speckle type'
       return key
     }
   }

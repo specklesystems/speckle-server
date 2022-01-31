@@ -8,7 +8,7 @@ const routes = [
     path: '/authn',
     name: 'Auth',
     redirect: '/authn/login',
-    component: () => import('@/views/Auth.vue'),
+    component: () => import('@/cleanup/pages/auth/Auth.vue'),
     children: [
       {
         path: 'login',
@@ -16,7 +16,7 @@ const routes = [
         meta: {
           title: 'Login | Speckle'
         },
-        component: () => import('@/views/auth/Login.vue')
+        component: () => import('@/cleanup/pages/auth/Login.vue')
       },
       {
         path: 'register',
@@ -24,7 +24,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('@/views/auth/Registration.vue')
+        component: () => import('@/cleanup/pages/auth/Registration.vue')
       },
       {
         path: 'resetpassword',
@@ -32,7 +32,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('@/views/auth/ResetPasswordRequest.vue')
+        component: () => import('@/cleanup/pages/auth/ResetPasswordRequest.vue')
       },
       {
         path: 'resetpassword/finalize',
@@ -40,7 +40,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('@/views/auth/ResetPasswordFinalization.vue')
+        component: () => import('@/cleanup/pages/auth/ResetPasswordFinalization.vue')
       },
       {
         path: 'verify/:appId/:challenge',
@@ -48,7 +48,7 @@ const routes = [
         meta: {
           title: 'Authorizing App | Speckle'
         },
-        component: () => import('@/views/auth/AuthorizeApp.vue')
+        component: () => import('@/cleanup/pages/auth/AuthorizeApp.vue')
       }
     ]
   },

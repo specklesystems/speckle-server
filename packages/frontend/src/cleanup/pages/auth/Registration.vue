@@ -164,7 +164,7 @@ import gql from 'graphql-tag'
 import debounce from 'lodash.debounce'
 import crs from 'crypto-random-string'
 
-import Strategies from '@/components/auth/Strategies'
+import Strategies from '@/cleanup/components/auth/Strategies'
 import { isEmailValid } from '@/auth-helpers'
 
 export default {

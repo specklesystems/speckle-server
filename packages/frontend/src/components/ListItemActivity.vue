@@ -276,10 +276,10 @@
 </template>
 
 <script>
-import UserAvatar from './UserAvatar'
+import UserAvatar from '@/cleanup/components/common/UserAvatar'
 import UserPill from './UserPill'
-import SourceAppAvatar from './SourceAppAvatar'
-import PreviewImage from './PreviewImage'
+import SourceAppAvatar from '@/cleanup/components/common/SourceAppAvatar'
+import PreviewImage from '@/cleanup/components/common/PreviewImage'
 import gql from 'graphql-tag'
 
 export default {

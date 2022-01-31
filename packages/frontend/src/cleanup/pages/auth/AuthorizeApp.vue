@@ -66,8 +66,8 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import UserAvatar from '../../components/UserAvatarAuthoriseApp'
-import UserAvatarIcon from '@/components/UserAvatarIcon'
+import UserAvatar from '@/cleanup/components/auth/UserAvatarAuthoriseApp'
+import UserAvatarIcon from '@/cleanup/components/common/UserAvatarIcon'
 
 export default {
   name: 'AuthorizeApp',
