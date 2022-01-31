@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "knex": "^0.95.7",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "pg": "^8.6.0",
     "private-ip": "^2.3.3"
   },
