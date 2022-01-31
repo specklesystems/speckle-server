@@ -41,16 +41,16 @@
         </router-link>
       </div>
       <div class="text-truncate flex-shrink-0 hidden-xs-only">
-        <user-avatar
+        <!-- <user-avatar
           :id="stream.commit.authorId"
           :avatar="stream.commit.authorAvatar"
           :name="stream.commit.authorName"
           :size="20"
-        />
-        <span class="caption mr-1">
+        /> -->
+        <!-- <span class="caption mr-1">
           <timeago :datetime="stream.commit.createdAt"></timeago>
-        </span>
-        <source-app-avatar :application-name="stream.commit.sourceApplication" />
+        </span> -->
+        <!-- <source-app-avatar :application-name="stream.commit.sourceApplication" /> -->
         <commit-received-receipts :commit-id="stream.commit.id" :stream-id="stream.id" />
         <v-btn
           v-if="stream && stream.role !== 'stream:reviewer' && stream.commit.authorId === $userId()"

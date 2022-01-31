@@ -1,6 +1,10 @@
 <template lang="html">
   <div style="height: 100%; position: relative" class="transparent">
-    <div id="rendererparent" ref="rendererparent"></div>
+    <div
+      id="rendererparent"
+      ref="rendererparent"
+      :class="`background-${$vuetify.theme.dark ? 'dark' : 'light'}`"
+    ></div>
   </div>
 </template>
 <script>
@@ -86,6 +90,19 @@ export default {
   width: 100%;
   height: 100%;
 }
+
+.background-light {
+  background: #8e9eab;
+  background: -webkit-linear-gradient(to top right, #eeeeee, #c8e8ff);
+  background: linear-gradient(to top right, #ffffff, #c8e8ff);
+}
+
+.background-dark {
+  background: #141e30;
+  background: -webkit-linear-gradient(to top, #243b55, #141e30);
+  background: linear-gradient(to top, #243b55, #141e30);
+}
+
 #renderer {
   position: absolute;
   top: 0;

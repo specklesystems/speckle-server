@@ -4,7 +4,7 @@
       <v-col cols="12">
         <v-card :to="`/streams/${$route.params.streamId}/commits/${stream.commits.items[0].id}`">
           <preview-image
-            :height="320"
+            :height="420"
             :url="`/preview/${$route.params.streamId}/commits/${stream.commits.items[0].id}`"
           ></preview-image>
           <list-item-commit
@@ -19,9 +19,9 @@
       <v-col cols="12" style="height: 20px"></v-col>
       <v-col
         cols="12"
-        :xl="loggedIn ? 4 : 12"
-        class="pa-0 ma-0"
-        :order="`${$vuetify.breakpoint.xlOnly ? 'last' : ''}`"
+        xl="4"
+        :order="`${$vuetify.breakpoint.xl ? 'last' : ''}`"
+        :class="`${$vuetify.breakpoint.xl ? 'pl-4' : ''}`"
       >
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
@@ -37,7 +37,7 @@
               cols="12"
               sm="4"
               md="4"
-              :xl="loggedIn ? 12 : 4"
+              xl="12"
             >
               <v-card :to="`/streams/${$route.params.streamId}/branches/${branch.name}`">
                 <preview-image
@@ -56,16 +56,11 @@
                     :color="`grey ${$vuetify.theme.dark ? 'darken-1' : 'lighten-1'}`"
                   ></v-badge>
                 </v-toolbar>
-                <!-- <list-item-commit
-                  :commit="branch.commits.items[0]"
-                  :stream-id="$route.params.streamId"
-                ></list-item-commit> -->
               </v-card>
             </v-col>
           </v-row>
         </v-card>
       </v-col>
-
       <v-col v-if="loggedIn" cols="12" xl="8">
         <v-card class="transparent elevation-0">
           <v-toolbar class="transparent elevation-0">
@@ -74,7 +69,7 @@
           </v-toolbar>
           <v-card-title class="caption" style="margin-top: -30px">Recent activity log</v-card-title>
         </v-card>
-        <div xxstyle="margin-top: -42px" class="mr-0">
+        <div class="mr-0">
           <stream-activity></stream-activity>
         </div>
       </v-col>

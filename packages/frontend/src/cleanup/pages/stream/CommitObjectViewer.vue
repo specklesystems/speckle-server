@@ -50,33 +50,22 @@
           </v-list-item>
         </v-list>
 
-        <!-- Selection info -->
-        <v-scroll-y-transition>
-          <transition-group>
-            <object-selection
-              v-show="selectionData.length !== 0"
-              :key="'one'"
-              :objects="selectionData"
-              :stream-id="$route.params.streamId"
-            />
-            <v-divider v-if="isMultiple && selectionData.length !== 0" :key="'two'" class="my-4" />
-          </transition-group>
-        </v-scroll-y-transition>
-
         <!-- Loaded resources  -->
         <resource-group
           :resources="resources"
           @remove="removeResource"
           @add-resource="addResource"
+          @show-add-overlay="showAddOverlay = true"
         />
 
-        <v-divider v-if="isMultiple" class="my-4" />
+        <!-- <v-divider v-if="isMultiple" class="my-4" /> -->
 
         <!-- Views display -->
-        <views-display v-if="views.length !== 0" :views="views" />
+        <views-display v-if="views.length !== 0" :views="views" class="mt-4" />
 
         <!-- Filters display -->
         <filters
+          class="mt-4"
           :props="objectProperties"
           :source-application="
             resources
@@ -110,6 +99,28 @@
       <div style="height: 100vh; width: 100%; top: -64px; left: 0px; position: absolute">
         <viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
+
+      <div
+        style="
+          height: 100vh;
+          width: 100%;
+          top: -64px;
+          left: 22px;
+          position: absolute;
+          z-index: 10;
+          pointer-events: none;
+        "
+      >
+        <object-selection
+          v-show="selectionData.length !== 0"
+          :key="'one'"
+          :objects="selectionData"
+          :stream-id="$route.params.streamId"
+          @clear-selection="selectionData = []"
+        />
+      </div>
+
+      <!-- Viewer controls -->
       <div
         :style="`width: 100%; bottom: 12px; left: 0px; position: ${
           $isMobile() ? 'fixed' : 'absolute'
@@ -118,6 +129,7 @@
       >
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
+
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
         <v-progress-linear
@@ -148,7 +160,12 @@
         </h2>
       </error-placeholder>
     </div>
-    <v-dialog v-model="showAddOverlay" width="800" :fullscreen="$vuetify.breakpoint.smAndDown">
+    <v-dialog
+      v-model="showAddOverlay"
+      width="800"
+      :fullscreen="$vuetify.breakpoint.smAndDown"
+      style="z-index: 10000"
+    >
       <stream-overlay-viewer
         :stream-id="$route.params.streamId"
         @add-resource="addResource"
@@ -331,7 +348,6 @@ export default {
         if (!val && this.filterToSet) {
           setTimeout(() => {
             this.$store.commit('setFilterDirect', { filter: this.filterToSet })
-            // window.__viewer.applyFilter(this.filterToSet)
             this.filterToSet = null
           }, 200)
         }
@@ -358,7 +374,6 @@ export default {
             window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
             controls._zoom
           ]
-          console.log(c)
           let fullQuery = { ...this.$route.query }
           delete fullQuery.c
           this.$router
@@ -369,7 +384,6 @@ export default {
             .catch(() => {})
         }, 1000)
       )
-      // TODO: check query params for filter and camera pos and set them
     }, 300)
   },
   methods: {
