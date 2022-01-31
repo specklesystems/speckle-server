@@ -4,6 +4,10 @@ Vue.prototype.$userId = function () {
   return localStorage.getItem('uuid')
 }
 
+Vue.prototype.$mixpanelId = function () {
+  return localStorage.getItem('distinct_id')
+}
+
 Vue.prototype.$loggedIn = function () {
   return localStorage.getItem('uuid') !== null
 }

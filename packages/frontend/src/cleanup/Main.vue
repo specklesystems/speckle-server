@@ -137,9 +137,10 @@ export default {
   mounted() {
     this.setNavResizeEvents()
 
-    let distinct_id = localStorage.getItem('distinct_id')
-    if (distinct_id !== null) {
-      this.$mixpanel.identify(distinct_id)
+    let mixpanelId = this.$mixpanelId()
+    if (mixpanelId !== null) {
+      this.$mixpanel.identify(mixpanelId)
+      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
     }
 
     this.$mixpanel.track('Visit Web App')

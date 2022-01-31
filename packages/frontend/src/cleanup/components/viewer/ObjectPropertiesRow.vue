@@ -3,7 +3,11 @@
     no-gutters
     :class="`my-1 py-1 property-row rounded-lg ${$vuetify.theme.dark ? 'black-bg' : 'white-bg'} ${
       prop.type === 'object' || prop.type === 'array' ? (expanded ? 'border-blue' : 'border') : ''
-    } ${prop.type === 'object' || prop.type === 'array' ? 'hover-cursor property-row-hover' : 'normal-cursor'}`"
+    } ${
+      prop.type === 'object' || prop.type === 'array'
+        ? 'hover-cursor property-row-hover'
+        : 'normal-cursor'
+    }`"
     @click.stop="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
   >
     <v-col cols="1" class="text-center">

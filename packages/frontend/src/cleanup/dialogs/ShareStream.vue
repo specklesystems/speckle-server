@@ -201,7 +201,11 @@ export default {
     }
   },
   mounted() {
-    this.$mixpanel.track('Share Stream', { type: 'action', hostApp: 'web' })
+    this.$mixpanel.track('Share Stream', {
+      type: 'action',
+      location: this.$route.name,
+      hostApp: 'web'
+    })
   },
   methods: {
     copyToClipboard(e) {
