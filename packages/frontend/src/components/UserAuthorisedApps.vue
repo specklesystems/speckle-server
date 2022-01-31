@@ -93,7 +93,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.user.authorizedApps.filter(app => app.id !== 'spklwebapp')
+      update: (data) => data.user.authorizedApps.filter((app) => app.id !== 'spklwebapp')
     }
   },
   computed: {
@@ -113,6 +113,7 @@ export default {
     async revokeAccess() {
       this.showRevokeDialog = false
       this.$matomo && this.$matomo.trackPageView('user/app/revoke')
+      this.$mixpanel.track('App Action', { type: 'action', name: 'revoke', hostApp: 'web' })
       await this.$apollo.mutate({
         mutation: gql`
           mutation{ appRevokeAccess(appId: "${this.appToRevoke.id}")}

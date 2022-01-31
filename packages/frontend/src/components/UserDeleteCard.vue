@@ -53,6 +53,7 @@ export default {
         if (!dialog.result) return
 
         this.$matomo && this.$matomo.trackPageView('user/delete')
+        this.$mixpanel.track('User Action', { type: 'action', name: 'delete', hostApp: 'web' })
 
         this.isLoading = true
         this.$apollo

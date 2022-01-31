@@ -176,6 +176,8 @@ export default {
       if (!this.$refs.form.validate()) return
 
       this.$matomo && this.$matomo.trackPageView('user/app/create')
+      this.$mixpanel.track('App Action', { type: 'action', name: 'create', hostApp: 'web' })
+
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`

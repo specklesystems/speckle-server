@@ -142,6 +142,7 @@ export default {
         if (!dialog.result) return
 
         this.$matomo && this.$matomo.trackPageView('user/update')
+        this.$mixpanel.track('User Action', { type: 'action', name: 'update', hostApp: 'web' })
 
         this.isLoading = true
         this.$apollo

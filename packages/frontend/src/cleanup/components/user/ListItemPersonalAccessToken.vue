@@ -55,6 +55,7 @@ export default {
   },
   methods: {
     async revokeToken() {
+      this.$mixpanel.track('Token Action', { type: 'action', name: 'delete', hostApp: 'web' })
       this.$matomo && this.$matomo.trackPageView('user/token/revoke')
       try {
         await this.$apollo.mutate({

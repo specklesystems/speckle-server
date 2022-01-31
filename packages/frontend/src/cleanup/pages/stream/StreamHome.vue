@@ -89,9 +89,9 @@ import gql from 'graphql-tag'
 export default {
   name: 'Details',
   components: {
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
+    NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder'),
     ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
-    PreviewImage: () => import('@/components/PreviewImage'),
+    PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     StreamActivity: () => import('@/views/stream/Activity')
   },
   data() {

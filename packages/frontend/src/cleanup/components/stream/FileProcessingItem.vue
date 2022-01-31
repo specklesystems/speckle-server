@@ -106,6 +106,7 @@ export default {
   },
   methods: {
     async downloadOriginalFile() {
+      this.$mixpanel.track('File Action', { type: 'action', name: 'download', hostApp: 'web' })
       let res = await fetch(`/api/file/${this.fileId}`, {
         headers: {
           Authorization: localStorage.getItem('AuthToken')

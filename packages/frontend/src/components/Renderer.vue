@@ -333,6 +333,8 @@ export default {
     let renderDomElement = document.getElementById('renderer')
     this.hasLoadedModel = false
 
+    this.$mixpanel.track('Viewer Action', { type: 'action', name: 'load', hostApp: 'web' })
+
     if (!renderDomElement) {
       renderDomElement = document.createElement('div')
       renderDomElement.id = 'renderer'
@@ -393,18 +395,39 @@ export default {
     toggleCamera() {
       window.__viewer.toggleCameraProjection()
       this.perspectiveMode = !this.perspectiveMode
+      this.$mixpanel.track('Viewer Action', {
+        type: 'action',
+        name: 'toggle camera',
+        hostApp: 'web'
+      })
     },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
+      this.$mixpanel.track('Viewer Action', {
+        type: 'action',
+        name: 'zoom extents',
+        hostApp: 'web'
+      })
     },
     setView(view) {
       window.__viewer.interactions.rotateTo(view)
+      this.$mixpanel.track('Viewer Action', { type: 'action', name: 'set view', hostApp: 'web' })
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)
+      this.$mixpanel.track('Viewer Action', {
+        type: 'action',
+        name: 'set named view',
+        hostApp: 'web'
+      })
     },
     sectionToggle() {
       window.__viewer.toggleSectionBox()
+      this.$mixpanel.track('Viewer Action', {
+        type: 'action',
+        name: 'section toggle',
+        hostApp: 'web'
+      })
     },
     setupEvents() {
       window.__viewer.on('load-warning', ({ message }) => {

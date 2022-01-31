@@ -19,7 +19,8 @@
         </v-alert>
         <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="sendInvite">
           <v-card-text class="pb-0 mb-0">
-            We will send an invite to the email below - once they accept, they will also gain access to this stream!
+            We will send an invite to the email below - once they accept, they will also gain access
+            to this stream!
           </v-card-text>
           <v-card-text class="pt-0 mt-0">
             <v-text-field
@@ -112,6 +113,7 @@ export default {
 
       this.$matomo && this.$matomo.trackPageView('invite/stream/create')
       this.$matomo && this.$matomo.trackEvent('invite', 'stream')
+      this.$mixpanel.track('Invite Send', { type: 'action', source: 'stream', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`

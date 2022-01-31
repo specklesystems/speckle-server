@@ -158,6 +158,8 @@ export default {
     let inviteId = urlParams.get('inviteId')
     this.inviteId = inviteId
 
+    this.$mixpanel.track('Visit Log In')
+
     if (!appId) this.appId = 'spklwebapp'
     else this.appId = appId
 
@@ -191,6 +193,7 @@ export default {
         })
 
         if (res.redirected) {
+          this.$mixpanel.track('Log In', { type: 'action', hostApp: 'web' })
           window.location = res.url
           return
         }

@@ -23,8 +23,7 @@ export default {
 }
 </script>
 <style lang="css">
-
-.v-timeline:before{
+.v-timeline:before {
   top: 40px !important;
 }
 

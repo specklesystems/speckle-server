@@ -120,6 +120,7 @@ export default {
   methods: {
     async revokeApp() {
       this.$matomo && this.$matomo.trackPageView('user/app/revoke')
+      this.$mixpanel.track('App Action', { type: 'action', name: 'delete', hostApp: 'web' })
       try {
         await this.$apollo.mutate({
           mutation: gql`

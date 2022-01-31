@@ -1,7 +1,8 @@
 <template>
   <v-card class="elevation-0 mt-3 mb-5 transparent">
     <v-card-text class="">
-      Here you can review the apps that you have granted access to. If something looks suspcious, revoke the access!
+      Here you can review the apps that you have granted access to. If something looks suspcious,
+      revoke the access!
       <v-btn
         v-if="!hasManager"
         plain
@@ -92,7 +93,7 @@ export default {
           }
         }
       `,
-      update: (data) => data.user.authorizedApps.filter(app => app.id !== 'spklwebapp')
+      update: (data) => data.user.authorizedApps.filter((app) => app.id !== 'spklwebapp')
     }
   },
   computed: {
@@ -111,6 +112,7 @@ export default {
     },
     async revokeAccess() {
       this.showRevokeDialog = false
+      this.$mixpanel.track('App Action', { type: 'action', name: 'revoke', hostApp: 'web' })
       this.$matomo && this.$matomo.trackPageView('user/app/revoke')
       await this.$apollo.mutate({
         mutation: gql`

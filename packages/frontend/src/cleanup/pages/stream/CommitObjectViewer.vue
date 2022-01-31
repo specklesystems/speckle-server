@@ -442,7 +442,12 @@ export default {
         data: resId.length === 10 ? await this.loadCommit(resId) : await this.loadObject(resId)
       }
       this.resources.push(resource)
-
+      this.$mixpanel.track('Viewer Action', {
+        type: 'action',
+        name: 'add',
+        resourceType: resource.type,
+        hostApp: 'web'
+      })
       // TODO add to url
       let fullQuery = { ...this.$route.query }
       delete fullQuery.overlay
@@ -478,6 +483,13 @@ export default {
             ? resource.data.commit.referencedObject
             : resource.data.object.id
         }`
+
+        this.$mixpanel.track('Viewer Action', {
+          type: 'action',
+          name: 'remove',
+          resourceType: resource.type,
+          hostApp: 'web'
+        })
 
         await window.__viewer.unloadObject(url)
         window.__viewer.zoomExtents(undefined, true)
