@@ -26,8 +26,8 @@
       {{ serverInfo.version }}
     </div>
     <div class="flex-grow-1 text-right">
-      <v-btn icon small @click="$emit('hide-drawer')">
-        <v-icon>mdi-chevron-left</v-icon>
+      <v-btn v-tooltip="'Close sidebar'" icon small @click="$emit('hide-drawer')">
+        <v-icon x-small>mdi-close</v-icon>
       </v-btn>
     </div>
   </v-card>

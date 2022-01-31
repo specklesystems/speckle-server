@@ -163,6 +163,7 @@ export default {
       this.showDelete = false
       this.$eventHub.$emit('notification', { text: 'Branch deleted' })
       this.$router.push(`/streams/` + this.$route.params.streamId)
+      this.$eventHub.$emit('branch-refresh')
     },
     async updateBranch() {
       if (!this.$refs.form.validate()) return

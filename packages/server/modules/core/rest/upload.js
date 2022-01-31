@@ -71,7 +71,7 @@ module.exports = ( app ) => {
 
           let promise = createObjectsBatched( req.params.streamId, objs ).catch( e => {
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: ${e.message}` )
-            if ( !requestDropped ) res.status( 400 ).send( e.message )
+            if ( !requestDropped ) res.status( 400 ).send( 'Error inserting object in the database. Check server logs for details' )
             requestDropped = true
           } )
           promises.push( promise )
@@ -110,7 +110,7 @@ module.exports = ( app ) => {
 
           let promise = createObjectsBatched( req.params.streamId, objs ).catch( e => {
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: ${e.message}` )
-            if ( !requestDropped ) res.status( 400 ).send( e.message )
+            if ( !requestDropped ) res.status( 400 ).send( 'Error inserting object in the database. Check server logs for details' )
             requestDropped = true
           } )
           promises.push( promise )

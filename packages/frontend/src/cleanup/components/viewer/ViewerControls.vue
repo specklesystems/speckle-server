@@ -35,16 +35,6 @@
       >
         <v-icon small>mdi-scissors-cutting</v-icon>
       </v-btn>
-      <v-btn
-        v-tooltip="'Overlay another commit or object'"
-        color="primary"
-        :small="small"
-        rounded
-        class="mr-2"
-        @click="$emit('show-add-overlay')"
-      >
-        <v-icon>mdi-plus</v-icon>
-      </v-btn>
     </v-card>
   </div>
 </template>

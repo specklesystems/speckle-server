@@ -7,6 +7,7 @@
       floating
       :class="`grey ${$vuetify.theme.dark ? 'darken-4' : 'lighten-4'} elevation-1`"
       :width="navWidth"
+      style="z-index: 100"
     >
       <div v-show="$route.meta.resizableNavbar" class="nav-resizer"></div>
       <main-nav :expanded="drawer" @hide-drawer="drawer = false" />
@@ -101,8 +102,7 @@ export default {
           }
         `,
         result({ data }) {
-          console.log(data)
-          if (!data) return
+          if (!data || !data.userStreamAdded) return
           if (this.$route.params.streamId === data.userStreamAdded.id) return
           this.$eventHub.$emit('notification', {
             text: `You've got a new stream!`,
