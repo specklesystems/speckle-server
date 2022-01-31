@@ -196,7 +196,7 @@ export default {
     MultipleResourcesToolbar: () => import('@/cleanup/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
     StreamOverlayViewer: () => import('@/cleanup/components/viewer/dialogs/AddOverlay'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    ErrorPlaceholder: () => import('@/cleanup/components/common/ErrorPlaceholder'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     ViewerControls: () => import('@/cleanup/components/viewer/ViewerControls'),
     ObjectSelection: () => import('@/cleanup/components/viewer/ObjectSelection'),

@@ -75,7 +75,7 @@
 
 <script>
 import gql from 'graphql-tag'
-import webhookQuery from '../../graphql/webhook.gql'
+import webhookQuery from '@/graphql/webhook.gql'
 
 export default {
   name: 'WebhookForm',

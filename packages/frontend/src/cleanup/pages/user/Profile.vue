@@ -32,7 +32,7 @@
   </v-container>
 </template>
 <script>
-import ListItemStream from '@/components/ListItemStream'
+import ListItemStream from '@/cleanup/components/user/ListItemStream'
 import gql from 'graphql-tag'
 
 export default {

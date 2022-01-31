@@ -12,7 +12,7 @@
   </v-app>
 </template>
 <script>
-import ErrorPlaceholder from '../components/ErrorPlaceholder'
+import ErrorPlaceholder from '@/cleanup/components/common/ErrorPlaceholder'
 export default {
   components: {
     ErrorPlaceholder

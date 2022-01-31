@@ -220,9 +220,9 @@ import userSearchQuery from '@/graphql/userSearch.gql'
 export default {
   components: {
     UserAvatar: () => import('@/cleanup/components/common/UserAvatar'),
-    StreamInviteDialog: () => import('@/components/dialogs/StreamInviteDialog'),
     UserRole: () => import('@/cleanup/components/stream/UserRole'),
-    SectionCard: () => import('@/cleanup/components/common/SectionCard')
+    SectionCard: () => import('@/cleanup/components/common/SectionCard'),
+    StreamInviteDialog: () => import('@/cleanup/dialogs/StreamInviteDialog')
   },
   data: () => ({
     search: '',

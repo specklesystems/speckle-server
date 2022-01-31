@@ -110,7 +110,7 @@ export default {
     this.api.posts
       .browse({
         filter: 'tag:tutorials',
-        limit: 3
+        limit: 5
       })
       .then((posts) => {
         this.posts = posts

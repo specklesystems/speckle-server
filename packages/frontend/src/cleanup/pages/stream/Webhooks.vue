@@ -241,9 +241,9 @@ import webhooksQuery from '@/graphql/webhooks.gql'
 export default {
   name: 'Webhooks',
   components: {
-    WebhookForm: () => import('@/components/settings/WebhookForm'),
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    WebhookForm: () => import('@/cleanup/components/stream/WebhookForm'),
+    NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder'),
+    ErrorPlaceholder: () => import('@/cleanup/components/common/ErrorPlaceholder'),
     SectionCard: () => import('@/cleanup/components/common/SectionCard')
   },
   apollo: {

@@ -140,8 +140,8 @@ export default {
   name: 'Branch',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder'),
+    ErrorPlaceholder: () => import('@/cleanup/components/common/ErrorPlaceholder'),
     ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
     BranchEditDialog: () => import('@/cleanup/dialogs/BranchEditDialog'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),

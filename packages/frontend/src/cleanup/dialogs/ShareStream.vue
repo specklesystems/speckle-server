@@ -187,7 +187,7 @@
 import gql from 'graphql-tag'
 export default {
   components: {
-    UserAvatar: () => import('@/components/UserAvatar')
+    UserAvatar: () => import('@/cleanup/components/common/UserAvatar')
   },
   props: ['stream'],
   data() {

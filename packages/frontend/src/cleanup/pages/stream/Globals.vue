@@ -142,10 +142,10 @@ import branchQuery from '@/graphql/branch.gql'
 export default {
   name: 'Globals',
   components: {
-    GlobalsBuilder: () => import('@/components/GlobalsBuilder'),
+    GlobalsBuilder: () => import('@/cleanup/components/stream/globals/GlobalsBuilder'),
     ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
     SectionCard: () => import('@/cleanup/components/common/SectionCard'),
-    NoDataPlaceholder: () => import('@/components/NoDataPlaceholder')
+    NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder')
   },
   apollo: {
     stream: {

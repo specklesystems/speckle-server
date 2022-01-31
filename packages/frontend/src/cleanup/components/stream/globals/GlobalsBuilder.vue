@@ -77,13 +77,13 @@
 <script>
 import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
-import objectQuery from '../graphql/objectSingle.gql'
+import objectQuery from '@/graphql/objectSingle.gql'
 
 export default {
   name: 'GlobalsBuilder',
   components: {
     SectionCard: () => import('@/cleanup/components/common/SectionCard'),
-    GlobalsEntry: () => import('../components/GlobalsEntry')
+    GlobalsEntry: () => import('@/cleanup/components/stream/globals/GlobalsEntry')
   },
   apollo: {
     object: {

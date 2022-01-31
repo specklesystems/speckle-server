@@ -128,8 +128,8 @@ import gql from 'graphql-tag'
 export default {
   name: 'Webhooks',
   components: {
-    FileUploadItem: () => import('@/components/FileUploadItem'),
-    FileProcessingItem: () => import('@/cleanup/components/stream/FileProcessingItem'),
+    FileUploadItem: () => import('@/cleanup/components/stream/uploads/FileUploadItem'),
+    FileProcessingItem: () => import('@/cleanup/components/stream/uploads/FileProcessingItem'),
     SectionCard: () => import('@/cleanup/components/common/SectionCard')
   },
   apollo: {

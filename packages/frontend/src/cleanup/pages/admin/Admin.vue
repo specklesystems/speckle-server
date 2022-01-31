@@ -25,7 +25,7 @@ import gql from 'graphql-tag'
 export default {
   name: 'AdminPanel',
   components: {
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    ErrorPlaceholder: () => import('@/cleanup/components/common/ErrorPlaceholder'),
     AdminNav: () => import('@/cleanup/navigation/AdminNav')
   },
   data() {

@@ -30,7 +30,7 @@ import gql from 'graphql-tag'
 export default {
   name: 'Stream',
   components: {
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    ErrorPlaceholder: () => import('@/cleanup/components/common/ErrorPlaceholder'),
     StreamNav: () => import('@/cleanup/navigation/StreamNav'),
     StreamToolbar: () => import('@/cleanup/toolbars/StreamToolbar')
   },

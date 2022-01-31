@@ -103,7 +103,7 @@ export default {
   components: {
     CommitEdit: () => import('@/cleanup/dialogs/CommitEdit'),
     Viewer: () => import('@/cleanup/components/common/Viewer'),
-    ErrorPlaceholder: () => import('@/components/ErrorPlaceholder'),
+    ErrorPlaceholder: () => import('@/cleanup/components/common/ErrorPlaceholder'),
     CommitToolbar: () => import('@/cleanup/toolbars/CommitToolbar'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
     ViewerControls: () => import('@/cleanup/components/viewer/ViewerControls'),

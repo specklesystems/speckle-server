@@ -47,8 +47,8 @@
   </v-hover>
 </template>
 <script>
-import UserAvatar from '../components/UserAvatar'
-import PreviewImage from '@/components/PreviewImage'
+import UserAvatar from '@/cleanup/components/common/UserAvatar'
+import PreviewImage from '@/cleanup/components/common/PreviewImage'
 
 export default {
   components: { UserAvatar, PreviewImage },
