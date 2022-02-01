@@ -9,7 +9,7 @@ const routes = [
     meta: {
       title: 'Embed View | Speckle'
     },
-    component: () => import('@/views/EmbedViewer.vue')
+    component: () => import('@/embed/EmbedViewer.vue')
   }
 ]
 
