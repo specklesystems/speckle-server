@@ -333,7 +333,7 @@ export default {
     let renderDomElement = document.getElementById('renderer')
     this.hasLoadedModel = false
 
-    this.$mixpanel.track('Viewer Action', { type: 'action', name: 'load', hostApp: 'web' })
+    this.$mixpanel.track('Viewer Action', { type: 'action', name: 'load' })
 
     if (!renderDomElement) {
       renderDomElement = document.createElement('div')
@@ -411,7 +411,7 @@ export default {
     },
     setView(view) {
       window.__viewer.interactions.rotateTo(view)
-      this.$mixpanel.track('Viewer Action', { type: 'action', name: 'set view', hostApp: 'web' })
+      this.$mixpanel.track('Viewer Action', { type: 'action', name: 'set view' })
     },
     setNamedView(id) {
       window.__viewer.interactions.setView(id)

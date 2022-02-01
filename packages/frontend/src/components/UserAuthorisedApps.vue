@@ -113,7 +113,7 @@ export default {
     async revokeAccess() {
       this.showRevokeDialog = false
       this.$matomo && this.$matomo.trackPageView('user/app/revoke')
-      this.$mixpanel.track('App Action', { type: 'action', name: 'revoke', hostApp: 'web' })
+      this.$mixpanel.track('App Action', { type: 'action', name: 'revoke' })
       await this.$apollo.mutate({
         mutation: gql`
           mutation{ appRevokeAccess(appId: "${this.appToRevoke.id}")}

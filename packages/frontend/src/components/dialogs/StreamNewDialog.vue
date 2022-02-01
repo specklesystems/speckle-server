@@ -181,7 +181,7 @@ export default {
 
       this.isLoading = true
       this.$matomo && this.$matomo.trackPageView('stream/create')
-      this.$mixpanel.track('Stream Action', { type: 'action', name: 'create', hostApp: 'web' })
+      this.$mixpanel.track('Stream Action', { type: 'action', name: 'create' })
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`

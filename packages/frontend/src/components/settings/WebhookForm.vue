@@ -166,7 +166,7 @@ export default {
     async saveChanges() {
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/update')
-      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update', hostApp: 'web' })
+      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update' })
 
       let params = {
         id: this.webhook.id,
@@ -196,7 +196,7 @@ export default {
       console.log('test')
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/create')
-      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create', hostApp: 'web' })
+      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create' })
       console.log('test')
 
       let res = await this.$apollo.mutate({
@@ -226,7 +226,7 @@ export default {
     async deleteWebhook() {
       this.$emit('update:loading', true)
       this.$matomo && this.$matomo.trackPageView('stream/webhook/delete')
-      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'delete', hostApp: 'web' })
+      this.$mixpanel.track('Webhook Action', { type: 'action', name: 'delete' })
 
       await this.$apollo.mutate({
         mutation: gql`
