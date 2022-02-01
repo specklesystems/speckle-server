@@ -1,7 +1,7 @@
 // /* istanbul ignore file */
 exports.up = async ( knex ) => {
   await knex.schema.alterTable( 'server_config', table => {
-    table.string( 'mapboxAPI', 1024 )
+    table.string( 'mapboxAPI', 1024 ).defaultTo( 'n/a' )
   } )
 }
 

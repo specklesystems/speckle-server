@@ -28,10 +28,10 @@
 export default {
   props: {
     small: { type: Boolean, default: false },
-    lat: {type: Number, default: 0},
-    lon: {type: Number, default: 0},
-    north: {type: Number, default: 0},
-    api: {type: String, default: ""}
+    lat: { type: Number, default: 0 },
+    lon: { type: Number, default: 0 },
+    north: { type: Number, default: 0 },
+    api: { type: String, default: '' }
   },
   data() {
     return {

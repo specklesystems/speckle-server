@@ -7,7 +7,7 @@
       {{ commitMessage }}
     </template>
     <template slot="actions">
-      <v-spacer/>
+      <v-spacer />
       <v-btn v-tooltip="'Clear all globals'" color="error" icon class="mr-2" @click="clearGlobals">
         <v-icon>mdi-close</v-icon>
       </v-btn>
@@ -146,8 +146,7 @@ export default {
         BaseMap: {
           'Angle to true north': 0,
           'Project Base Point LAT': 51.499268,
-          'Project Base Point LON': -0.122141,
-          'Mapbox API': 0,
+          'Project Base Point LON': -0.122141
         }
       },
       saveValid: false,

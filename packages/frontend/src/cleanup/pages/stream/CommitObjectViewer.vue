@@ -116,12 +116,13 @@
         }; z-index: 100`"
         :class="`d-flex justify-center`"
       >
-        <viewer-controls 
-          :lat="baseMapArray[0].lat" 
-          :lon="baseMapArray[0].lon" 
+        <viewer-controls
+          :lat="baseMapArray[0].lat"
+          :lon="baseMapArray[0].lon"
           :north="baseMapArray[0].north"
           :api="baseMapArray[0].api"
-          @show-add-overlay="showAddOverlay = true" />
+          @show-add-overlay="showAddOverlay = true"
+        />
       </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
@@ -209,7 +210,7 @@ export default {
     resources: [],
     showAddOverlay: false,
     viewerBusy: false,
-    baseMapArray: [{lat:0, lon:0, north:0, api: ""}]
+    baseMapArray: [{ lat: 0, lon: 0, north: 0, api: '' }]
   }),
   apollo: {
     branch: {
@@ -224,7 +225,7 @@ export default {
         return data.stream.branch
       },
       skip() {
-        return this.$route.params.streamId == null 
+        return this.$route.params.streamId == null
       }
     },
     object: {
@@ -278,7 +279,7 @@ export default {
         return
       }
     },
-    branch(val){
+    branch(val) {
       if (val) this.$apollo.queries.object.refetch()
     },
     '$store.state.appliedFilter'(val) {
@@ -571,16 +572,15 @@ export default {
         if (key.startsWith('__')) continue
         if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
 
-        if (key=="Project Base Point LAT") this.baseMapArray[0].lat = Number(val)
-        if (key=="Project Base Point LON") this.baseMapArray[0].lon = Number(val)
-        if (key=="Angle to true north") this.baseMapArray[0].north = Number(val)
-        if (key=="Mapbox API") this.baseMapArray[0].api = val
+        if (key == 'Project Base Point LAT') this.baseMapArray[0].lat = Number(val)
+        if (key == 'Project Base Point LON') this.baseMapArray[0].lon = Number(val)
+        if (key == 'Angle to true north') this.baseMapArray[0].north = Number(val)
 
         if (!Array.isArray(val) && typeof val === 'object' && val !== null) {
           let data_nested = this.nestedGlobals(val)
         }
       }
-      if (this.baseMapArray[0].api.length < 10) this.baseMapArray[0].api = this.server
+      this.baseMapArray[0].api = this.server
       return this.baseMapArray
     }
   }

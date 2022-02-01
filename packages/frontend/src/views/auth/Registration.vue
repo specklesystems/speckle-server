@@ -180,6 +180,7 @@ export default {
             adminContact
             termsOfService
             inviteOnly
+            mapboxAPI
             scopes {
               name
               description

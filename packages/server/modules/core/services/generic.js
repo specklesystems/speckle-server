@@ -30,11 +30,11 @@ module.exports = {
     return await Roles( ).select( '*' ).where( { public: true } )
   },
 
-  async updateServerInfo( { name, company, description, adminContact, termsOfService, inviteOnly } ) {
+  async updateServerInfo( { name, company, description, adminContact, termsOfService, inviteOnly, mapboxAPI } ) {
     let serverInfo = await Info( ).select( '*' ).first( )
     if ( !serverInfo )
-      return await Info( ).insert( { name, company, description, adminContact, termsOfService, inviteOnly, completed: true } )
+      return await Info( ).insert( { name, company, description, adminContact, termsOfService, inviteOnly, mapboxAPI, completed: true } )
     else
-      return await Info( ).where( { id: 0 } ).update( { name, company, description, adminContact, termsOfService, inviteOnly, completed: true } )
+      return await Info( ).where( { id: 0 } ).update( { name, company, description, adminContact, termsOfService, inviteOnly, mapboxAPI, completed: true } )
   }
 }

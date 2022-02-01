@@ -270,19 +270,18 @@ export default class Viewer extends EventEmitter {
     // TODO: currently it's easier to simply refresh the page :)
   }
   
-  addMapAndBuild(index, lat, lon, north, api){
-    if (this.surroundings) {
-      this.surroundings.selectedMap(index)
+  addMapAndBuild( index, lat, lon, north, api ) {
+    if ( this.surroundings ) {
+      this.surroundings.selectedMap( index )
       this.surroundings.addMap()
     }else {
-      if (index != 0) this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
+      if ( index !== 0 ) this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
     }
-
   }
-  removeMapAndBuild(){
-    if (this.surroundings) {
-      this.surroundings.removeMap(this)
-      this.surroundings.hideBuild(this)
+  removeMapAndBuild() {
+    if ( this.surroundings ) {
+      this.surroundings.removeMap( this )
+      this.surroundings.hideBuild( this )
     }
   }
 
