@@ -15,7 +15,7 @@
 
 <script>
 import gql from 'graphql-tag'
-import { formatNumber } from '@/formatNumber.js'
+import { formatNumber } from '@/plugins/formatNumber.js'
 
 export default {
   name: 'ActivityCard',

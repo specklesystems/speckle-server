@@ -1,8 +1,5 @@
 <template>
-  <v-app
-    id="speckle-auth"
-    :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`"
-  >
+  <v-app :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`">
     <v-container fill-height fluid>
       <v-row align="center" justify="center">
         <v-col v-if="showBlurb" cols="12" md="6" lg="6" xl="4" class="hidden-sm-and-down">
@@ -31,7 +28,6 @@ export default {
   },
   computed: {
     showBlurb() {
-      // return true
       return this.$route.name === 'Login' || this.$route.name === 'Register'
     }
   },
@@ -53,16 +49,3 @@ export default {
   }
 }
 </script>
-<style scoped>
-.background-light {
-  background: #8e9eab;
-  background: -webkit-linear-gradient(to top right, #eeeeee, #c8e8ff);
-  background: linear-gradient(to top right, #ffffff, #c8e8ff);
-}
-
-.background-dark {
-  background: #141e30;
-  background: -webkit-linear-gradient(to top left, #243b55, #141e30);
-  background: linear-gradient(to top left, #243b55, #141e30);
-}
-</style>

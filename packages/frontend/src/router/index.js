@@ -252,7 +252,7 @@ const routes = [
     meta: {
       title: 'Error | Speckle'
     },
-    component: () => import('@/views/Error.vue')
+    component: () => import('@/cleanup/pages/common/Error.vue')
   },
   {
     path: '/onboarding',
@@ -260,7 +260,7 @@ const routes = [
     meta: {
       title: 'Getting Started | Speckle'
     },
-    component: () => import('@/views/GettingStartedView.vue')
+    component: () => import('@/cleanup/pages/onboarding/Onboarding.vue')
   },
   {
     path: '*',
@@ -268,7 +268,7 @@ const routes = [
     meta: {
       title: 'Not Found | Speckle'
     },
-    component: () => import('@/views/NotFound.vue')
+    component: () => import('@/cleanup/pages/common/NotFound.vue')
   }
 ]
 

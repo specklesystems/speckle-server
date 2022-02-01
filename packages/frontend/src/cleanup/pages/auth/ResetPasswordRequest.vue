@@ -8,7 +8,9 @@
     </v-alert>
     <v-alert v-model="success" :icon="null" text>
       <v-row align="center">
-        <v-col class="grow">Done! We've sent you instructions on how to reset your password at {{ form.email }}.</v-col>
+        <v-col class="grow">
+          Done! We've sent you instructions on how to reset your password at {{ form.email }}.
+        </v-col>
       </v-row>
     </v-alert>
     <v-card-text v-if="!success" class="pb-7">

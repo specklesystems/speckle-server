@@ -13,7 +13,7 @@
   </v-app>
 </template>
 <script>
-import GettingStartedSteps from '../components/GettingStartedSteps.vue'
+import GettingStartedSteps from '@/cleanup/components/onboarding/GettingStartedSteps.vue'
 export default {
   components: { GettingStartedSteps }
 }

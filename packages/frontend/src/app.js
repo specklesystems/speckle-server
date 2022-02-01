@@ -63,7 +63,7 @@ Vue.use(VueApexCharts)
 
 Vue.component('Apexchart', VueApexCharts)
 
-import { formatNumber } from './formatNumber'
+import { formatNumber } from './plugins/formatNumber'
 // Filter to turn any number into a nice string like '10k', '5.5m'
 // Accepts 'max' parameter to set it's formatting while being animated
 Vue.filter('prettynum', formatNumber)

@@ -92,7 +92,7 @@ export default {
     NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder'),
     ListItemCommit: () => import('@/cleanup/components/stream/ListItemCommit'),
     PreviewImage: () => import('@/cleanup/components/common/PreviewImage'),
-    StreamActivity: () => import('@/views/stream/Activity')
+    StreamActivity: () => import('@/cleanup/components/stream/Activity')
   },
   data() {
     return {

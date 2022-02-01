@@ -1,5 +1,5 @@
 <template>
-  <v-app id="speckle-auth">
+  <v-app :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`">
     <v-container fill-height fluid>
       <v-row align="center" justify="center">
         <v-col cols="12" md="8">

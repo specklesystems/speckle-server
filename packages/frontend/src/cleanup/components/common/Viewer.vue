@@ -92,18 +92,6 @@ export default {
   height: 100%;
 }
 
-.background-light {
-  background: #8e9eab;
-  background: -webkit-linear-gradient(to top right, #eeeeee, #c8e8ff);
-  background: linear-gradient(to top right, #ffffff, #c8e8ff);
-}
-
-.background-dark {
-  background: #141e30;
-  background: -webkit-linear-gradient(to top, #243b55, #141e30);
-  background: linear-gradient(to top, #243b55, #141e30);
-}
-
 #renderer {
   position: absolute;
   top: 0;
