@@ -22,17 +22,19 @@ module.exports = ( app ) => {
       return res.status( hasStreamAccess.status ).end()
     }
 
-    let busboy = new Busboy( { headers: req.headers } )
+    let busboy = Busboy( { headers: req.headers } )
     let totalProcessed = 0
     let last = {}
 
     let promises = [ ]
     let requestDropped = false
 
-    busboy.on( 'file', ( fieldname, file, filename, encoding, mimetype ) => {
+    busboy.on( 'file', ( name, file, info ) => {
+      const { filename, encoding, mimeType } = info
+
       if ( requestDropped ) return
 
-      if ( mimetype === 'application/gzip' ) {
+      if ( mimeType === 'application/gzip' ) {
         let buffer = [ ]
 
         file.on( 'data', ( data ) => {
@@ -80,7 +82,7 @@ module.exports = ( app ) => {
 
           debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzippedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB, dropped=${requestDropped})` )
         } )
-      } else if ( mimetype === 'text/plain' || mimetype === 'application/json' || mimetype === 'application/octet-stream' ) {
+      } else if ( mimeType === 'text/plain' || mimeType === 'application/json' || mimeType === 'application/octet-stream' ) {
         let buffer = ''
 
         file.on( 'data', ( data ) => {
@@ -119,7 +121,7 @@ module.exports = ( app ) => {
           debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${buffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB, dropped=${requestDropped})` )
         } )
       } else {
-        debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Invalid ContentType header: ${mimetype}` )
+        debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Invalid ContentType header: ${mimeType}` )
         if ( !requestDropped ) res.status( 400 ).send( 'Invalid ContentType header. This route only accepts "application/gzip", "text/plain" or "application/json".' )
         requestDropped = true
       }

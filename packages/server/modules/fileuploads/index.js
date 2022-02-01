@@ -102,9 +102,10 @@ exports.init = async ( app, options ) => {
     }
 
     let fileUploadPromises = []
-    let busboy = new Busboy( { headers: req.headers } )
+    let busboy = Busboy( { headers: req.headers } )
     
-    busboy.on( 'file', function( fieldname, file, filename, encoding, mimetype ) {
+    busboy.on( 'file', ( name, file, info ) => {
+      const { filename, encoding, mimeType } = info
       let promise = uploadFile( {
         streamId: req.params.streamId,
         branchName: req.params.branchName || '',

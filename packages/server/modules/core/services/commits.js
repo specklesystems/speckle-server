@@ -25,7 +25,7 @@ module.exports = {
     }
 
     // Create main table entry
-    let [ id ] = await Commits( ).returning( 'id' ).insert( {
+    let [ { id } ] = await Commits( ).returning( 'id' ).insert( {
       id: crs( { length: 10 } ),
       referencedObject: objectId,
       author: authorId,
@@ -36,12 +36,12 @@ module.exports = {
     } )
 
     // Link it to a branch
-    await BranchCommits( ).insert( {branchId: branchId, commitId: id} )
+    await BranchCommits( ).insert( { branchId: branchId, commitId: id } )
     // Link it to a stream
-    await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
+    await StreamCommits( ).insert( { streamId: streamId,commitId: id } )
 
     // update stream updated at
-    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
     return id
   },
 
