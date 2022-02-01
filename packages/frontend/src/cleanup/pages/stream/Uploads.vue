@@ -230,8 +230,7 @@ export default {
       this.$mixpanel.track('File Action', {
         type: 'action',
         name: 'upload',
-        count: this.files.length,
-        hostApp: 'web'
+        count: this.files.length
       })
     }
   }

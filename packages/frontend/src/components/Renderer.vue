@@ -397,16 +397,14 @@ export default {
       this.perspectiveMode = !this.perspectiveMode
       this.$mixpanel.track('Viewer Action', {
         type: 'action',
-        name: 'toggle camera',
-        hostApp: 'web'
+        name: 'toggle camera'
       })
     },
     zoomEx() {
       window.__viewer.interactions.zoomExtents()
       this.$mixpanel.track('Viewer Action', {
         type: 'action',
-        name: 'zoom extents',
-        hostApp: 'web'
+        name: 'zoom extents'
       })
     },
     setView(view) {
@@ -417,16 +415,14 @@ export default {
       window.__viewer.interactions.setView(id)
       this.$mixpanel.track('Viewer Action', {
         type: 'action',
-        name: 'set named view',
-        hostApp: 'web'
+        name: 'set named view'
       })
     },
     sectionToggle() {
       window.__viewer.toggleSectionBox()
       this.$mixpanel.track('Viewer Action', {
         type: 'action',
-        name: 'section toggle',
-        hostApp: 'web'
+        name: 'section toggle'
       })
     },
     setupEvents() {

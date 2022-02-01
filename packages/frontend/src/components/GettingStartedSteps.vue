@@ -375,8 +375,7 @@ export default {
     this.$matomo && this.$matomo.trackEvent('onboarding', 'start')
     this.$mixpanel.track('Web Onboarding', {
       step: this.onboarding,
-      type: 'action',
-      hostApp: 'web'
+      type: 'action'
     })
   },
   methods: {
@@ -395,8 +394,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
       this.$mixpanel.track('Web Onboarding', {
         step: this.onboarding,
-        type: 'action',
-        hostApp: 'web'
+        type: 'action'
       })
     },
     next() {
@@ -404,8 +402,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
       this.$mixpanel.track('Web Onboarding', {
         step: this.onboarding,
-        type: 'action',
-        hostApp: 'web'
+        type: 'action'
       })
     },
     nextUser() {

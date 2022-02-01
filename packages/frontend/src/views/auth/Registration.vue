@@ -308,8 +308,7 @@ export default {
         if (res.redirected) {
           this.$mixpanel.track('Sign Up', {
             isInvite: this.inviteId !== null,
-            type: 'action',
-            hostApp: 'web'
+            type: 'action'
           })
           window.location = res.url
           return

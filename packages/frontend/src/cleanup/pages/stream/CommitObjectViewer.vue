@@ -445,8 +445,7 @@ export default {
       this.$mixpanel.track('Viewer Action', {
         type: 'action',
         name: 'add',
-        resourceType: resource.type,
-        hostApp: 'web'
+        resourceType: resource.type
       })
       // TODO add to url
       let fullQuery = { ...this.$route.query }
@@ -487,8 +486,7 @@ export default {
         this.$mixpanel.track('Viewer Action', {
           type: 'action',
           name: 'remove',
-          resourceType: resource.type,
-          hostApp: 'web'
+          resourceType: resource.type
         })
 
         await window.__viewer.unloadObject(url)

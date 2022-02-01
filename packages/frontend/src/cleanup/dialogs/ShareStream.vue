@@ -203,8 +203,7 @@ export default {
   mounted() {
     this.$mixpanel.track('Share Stream', {
       type: 'action',
-      location: this.$route.name,
-      hostApp: 'web'
+      location: this.$route.name
     })
   },
   methods: {

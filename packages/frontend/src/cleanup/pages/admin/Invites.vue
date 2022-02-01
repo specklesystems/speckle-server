@@ -232,8 +232,7 @@ export default {
       this.$matomo && this.$matomo.trackEvent('invite', 'server')
       this.$mixpanel.track('Invite Send', {
         type: 'action',
-        source: streamId ? 'stream' : 'server',
-        hostApp: 'web'
+        source: streamId ? 'stream' : 'server'
       })
     }
   }
