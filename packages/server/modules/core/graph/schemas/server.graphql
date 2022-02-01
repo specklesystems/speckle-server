@@ -16,6 +16,7 @@ type ServerInfo {
   scopes: [Scope]!
   inviteOnly: Boolean
   version: String
+  mapboxAPI: String
 }
 
 """
@@ -48,4 +49,5 @@ input ServerInfoUpdateInput {
   adminContact: String
   termsOfService: String
   inviteOnly: Boolean
+  mapboxAPI: String
 }

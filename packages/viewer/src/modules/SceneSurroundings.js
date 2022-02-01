@@ -67,9 +67,10 @@ export default class SceneSurroundings {
       }
     }
   }
-  selectedMap(){
-    let selected = 3
+  selectedMap(index = -1){
+    let selected = 0
     let providerColor = document.getElementById("providerColor")
+    if (index >= 0) this.selectedMapIndex = index
     if (this.selectedMapIndex) selected = this.selectedMapIndex
     else if (providerColor) selected = providerColor.selectedIndex
     return selected

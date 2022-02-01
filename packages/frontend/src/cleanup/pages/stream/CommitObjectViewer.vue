@@ -177,7 +177,7 @@ import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/cleanup/components/common/Viewer' // do not import async
 import branchQuery from '@/graphql/branch.gql'
 import objectQuery from '@/graphql/objectSingle.gql'
-import crs from 'crypto-random-string'
+import serverQuery from '@/graphql/server.gql'
 
 export default {
   components: {
@@ -236,11 +236,17 @@ export default {
         }
       },
       update(data) {
-        this.baseMapArray = this.nestedGlobals(data.stream.object.data)
+        this.nestedGlobals(data.stream.object.data)
         return data.stream.object
       },
       skip() {
         return this.branch == null || this.branch.commits.items[0].referencedObject == null
+      }
+    },
+    server: {
+      query: serverQuery,
+      update(data) {
+        return data.serverInfo.mapboxAPI
       }
     }
   },
@@ -273,9 +279,7 @@ export default {
       }
     },
     branch(val){
-      if (val){
-          this.$apollo.queries.object.refetch()
-        }
+      if (val) this.$apollo.queries.object.refetch()
     },
     '$store.state.appliedFilter'(val) {
       if (!val) {
@@ -576,6 +580,7 @@ export default {
           let data_nested = this.nestedGlobals(val)
         }
       }
+      if (this.baseMapArray[0].api.length < 10) this.baseMapArray[0].api = this.server
       return this.baseMapArray
     }
   }

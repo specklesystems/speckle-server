@@ -271,9 +271,18 @@ export default class Viewer extends EventEmitter {
   }
   
   addMapAndBuild(index, lat, lon, north, api){
-    if (api == 0) removeMapAndBuild()
-    else {
-      this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
+    if (this.surroundings) {
+      this.surroundings.selectedMap(index)
+      this.surroundings.addMap()
+    }else {
+      if (index != 0) this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
+    }
+
+  }
+  removeMapAndBuild(){
+    if (this.surroundings) {
+      this.surroundings.removeMap(this)
+      this.surroundings.hideBuild(this)
     }
   }
 

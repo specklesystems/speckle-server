@@ -88,6 +88,7 @@ export default {
             description
             adminContact
             version
+            mapboxAPI
           }
         }
       `
