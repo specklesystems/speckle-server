@@ -14,7 +14,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import UserAvatar from './UserAvatar'
+import UserAvatar from '@/cleanup/components/common/UserAvatar'
 
 export default {
   components: { UserAvatar },

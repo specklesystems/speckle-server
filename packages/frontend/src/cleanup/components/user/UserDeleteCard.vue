@@ -27,7 +27,7 @@
 <script>
 import gql from 'graphql-tag'
 import UserDeleteDialog from '@/cleanup/dialogs/UserDeleteDialog'
-import { signOut } from '@/auth-helpers'
+import { signOut } from '@/plugins/authHelpers'
 
 export default {
   components: { UserDeleteDialog },

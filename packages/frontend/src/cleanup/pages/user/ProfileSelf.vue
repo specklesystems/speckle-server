@@ -49,7 +49,7 @@
 </template>
 <script>
 import userQuery from '@/graphql/user.gql'
-import { signOut } from '@/auth-helpers'
+import { signOut } from '@/plugins/authHelpers'
 export default {
   name: 'Profile',
   components: {

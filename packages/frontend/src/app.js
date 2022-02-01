@@ -5,7 +5,7 @@ Vue.prototype.$eventHub = new Vue()
 import App from './App.vue'
 
 import { createProvider } from './vue-apollo'
-import { checkAccessCodeAndGetTokens, prefetchUserAndSetSuuid } from './auth-helpers'
+import { checkAccessCodeAndGetTokens, prefetchUserAndSetSuuid } from '@/plugins/authHelpers'
 
 import router from './router'
 import vuetify from './plugins/vuetify'

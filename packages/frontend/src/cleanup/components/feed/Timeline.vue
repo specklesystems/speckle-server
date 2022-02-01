@@ -76,7 +76,7 @@ export default {
   name: 'Timeline',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
-    ListItemActivity: () => import('@/cleanup/components/feed/ListItemActivity2'),
+    ListItemActivity: () => import('@/cleanup/components/activity/ListItemActivity'),
     NoDataPlaceholder: () => import('@/cleanup/components/common/NoDataPlaceholder')
   },
   props: {

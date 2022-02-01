@@ -277,7 +277,7 @@
 
 <script>
 import UserAvatar from '@/cleanup/components/common/UserAvatar'
-import UserPill from './UserPill'
+import UserPill from '@/cleanup/components/activity/UserPill'
 import SourceAppAvatar from '@/cleanup/components/common/SourceAppAvatar'
 import PreviewImage from '@/cleanup/components/common/PreviewImage'
 import gql from 'graphql-tag'

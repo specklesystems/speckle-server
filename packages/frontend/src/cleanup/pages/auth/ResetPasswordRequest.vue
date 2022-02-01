@@ -37,7 +37,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import { isEmailValid } from '@/auth-helpers'
+import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
   name: 'ResetPasswordRequest',

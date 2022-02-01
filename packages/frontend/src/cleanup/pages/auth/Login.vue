@@ -81,8 +81,8 @@
 <script>
 import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
-import Strategies from '@/components/auth/Strategies'
-import { isEmailValid } from '@/auth-helpers'
+import Strategies from '@/cleanup/components/auth/Strategies'
+import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
   name: 'Login',

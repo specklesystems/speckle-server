@@ -45,7 +45,7 @@
   </div>
 </template>
 <script>
-import { signOut } from '@/auth-helpers'
+import { signOut } from '@/plugins/authHelpers'
 import userQuery from '@/graphql/user.gql'
 
 export default {

@@ -9,7 +9,7 @@
   </div>
 </template>
 <script>
-import { signOut } from '@/auth-helpers'
+import { signOut } from '@/plugins/authHelpers'
 import userQuery from '@/graphql/userById.gql'
 import UserAvatarIcon from '@/cleanup/components/common/UserAvatarIcon'
 

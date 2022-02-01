@@ -36,7 +36,7 @@
 <script>
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
-import { isEmailValid } from '@/auth-helpers'
+import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
   name: 'ServerInviteDialog',

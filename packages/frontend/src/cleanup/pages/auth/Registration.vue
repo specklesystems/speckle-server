@@ -165,7 +165,7 @@ import debounce from 'lodash.debounce'
 import crs from 'crypto-random-string'
 
 import Strategies from '@/cleanup/components/auth/Strategies'
-import { isEmailValid } from '@/auth-helpers'
+import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
   name: 'Registration',
