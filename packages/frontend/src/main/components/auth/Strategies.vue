@@ -7,7 +7,7 @@
     </v-card-title>
     <v-card-text class="pb-5">
       <template v-for="s in strategies">
-        <v-col :key="s.name" cols="12" class="text-center py-1 my-0">
+        <v-col :key="s.name" cols="12" class="text-center py-1 my-0" @click="trackSignIn(s.name)">
           <v-btn
             dark
             block
@@ -37,6 +37,15 @@ export default {
     let urlParams = new URLSearchParams(window.location.search)
     let inviteId = urlParams.get('inviteId')
     this.inviteId = inviteId
+  },
+  methods: {
+    trackSignIn(strategyName) {
+      this.$mixpanel.track('Sign In', {
+        isInvite: this.inviteId !== null,
+        type: 'action',
+        provider: strategyName
+      })
+    }
   }
 }
 </script>

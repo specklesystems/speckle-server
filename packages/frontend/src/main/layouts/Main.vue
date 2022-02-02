@@ -130,19 +130,18 @@ export default {
   mounted() {
     this.setNavResizeEvents()
 
+    this.$mixpanel.register({ server_id: this.$mixpanelServerId(), hostApp: 'web' })
     let mixpanelId = this.$mixpanelId()
     if (mixpanelId !== null) {
       this.$mixpanel.identify(mixpanelId)
       this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
     }
     this.$mixpanel.track('Visit Web App')
-    this.$mixpanel.register({ server_id: this.$mixpanelServerId, hostApp: 'web' })
   },
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
       localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
-
       this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
     },
     setNavResizeEvents() {

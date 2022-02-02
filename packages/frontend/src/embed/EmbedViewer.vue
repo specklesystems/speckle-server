@@ -179,7 +179,7 @@ export default {
       await window.__viewer.loadObject(this.objectUrl)
       window.__viewer.zoomExtents(undefined, true)
       this.loadedModel = true
-      this.$mixpanel.track('Web Onboarding', {
+      this.$mixpanel.track('Embedded Model Load', {
         step: this.onboarding,
         type: 'action'
       })

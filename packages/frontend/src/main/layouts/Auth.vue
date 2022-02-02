@@ -46,6 +46,9 @@ export default {
         }
       `
     }
+  },
+  mounted() {
+    this.$mixpanel.register({ server_id: this.$mixpanelServerId(), hostApp: 'web' })
   }
 }
 </script>
