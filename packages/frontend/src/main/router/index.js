@@ -269,16 +269,16 @@ const routes = [
       title: 'Not Found | Speckle'
     },
     component: () => import('@/main/pages/common/NotFound.vue')
-  },
+  }
   // NOTE: only used for local debugging of the full embed app.
   // (I might be missing something obvious though!)
-  {
-    path: '/embed*',
-    meta: {
-      title: 'Embed View | Speckle'
-    },
-    component: () => import('@/embed/EmbedViewer.vue')
-  }
+  // {
+  //   path: '/embed*',
+  //   meta: {
+  //     title: 'Embed View | Speckle'
+  //   },
+  //   component: () => import('@/embed/EmbedViewer.vue')
+  // }
 ]
 
 const router = new VueRouter({
