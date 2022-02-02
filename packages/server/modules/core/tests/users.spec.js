@@ -197,7 +197,7 @@ describe( 'Actors & Tokens @user-services', () => {
       let branchCommits = await getCommitsByBranchName( { streamId: multiOwnerStream.id, branchName: 'ballmer/dev' } )
       expect( branchCommits.commits.length ).to.equal( 1 )
 
-      let commit = await getCommitById( { id: commitId } )
+      let commit = await getCommitById( { streamId: multiOwnerStream.id, id: commitId } )
       expect( commit ).to.be.not.null
 
       let commitsByStreamId = await getCommitsByStreamId( { streamId: multiOwnerStream.id } )
