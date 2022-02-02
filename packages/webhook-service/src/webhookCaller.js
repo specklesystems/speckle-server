@@ -3,9 +3,6 @@
 const dns = require( 'dns' )
 const isIpPrivate = require( 'private-ip' )
 
-// Ignore invalid/self-signed https certificate errors for the entire process
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-
 const fetch = require( 'node-fetch' )
 var debug = require( 'debug' )( 'speckle' )
 

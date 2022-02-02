@@ -163,7 +163,7 @@ exports.init = ( app, options ) => {
       return res.sendFile( `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png` )
     }
 
-    let commit = await getCommitById( { id: req.params.commitId } )
+    let commit = await getCommitById( { streamId: req.params.streamId, id: req.params.commitId } )
     if ( !commit ) {
       return res.sendFile( `${appRoot}/modules/previews/assets/no_preview.png` )
     }
