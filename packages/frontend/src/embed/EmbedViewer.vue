@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import Viewer from '@/cleanup/components/common/Viewer.vue'
+import Viewer from '@/main/components/common/Viewer.vue'
 import { getCommit, getLatestBranchCommit, getServerInfo } from '@/embed/speckleUtils'
 
 export default {
@@ -110,16 +110,16 @@ export default {
       return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.objectId}`
     },
     goToServerUrl() {
-      var stream = this.input.stream
-      var base = `${window.location.origin}/streams/${stream}/`
+      let stream = this.input.stream
+      let base = `${window.location.origin}/streams/${stream}/`
 
-      var commit = this.input.commit
+      let commit = this.input.commit
       if (commit) return base + `commits/${commit}`
 
-      var object = this.objectId
+      let object = this.objectId
       if (object) return base + `objects/${object}`
 
-      var branch = this.input.branch
+      let branch = this.input.branch
       if (branch) return base + `branches/${encodeURI(branch)}`
 
       return base
@@ -157,7 +157,6 @@ export default {
       try {
         let res = await getLatestBranchCommit(this.input.stream, this.input.branch)
         let data = res.data
-        console.log(data)
         let latestCommit = data.stream.branch.commits.items[0] || data.stream.branch.commit
         if (!latestCommit) {
           this.error = 'No commit for this branch'
@@ -172,7 +171,6 @@ export default {
         return
       }
     }
-    console.log(this.objectUrl)
     this.getPreviewImage()
   },
   mounted() {},
@@ -181,7 +179,10 @@ export default {
       await window.__viewer.loadObject(this.objectUrl)
       window.__viewer.zoomExtents(undefined, true)
       this.loadedModel = true
-      // console.log(this.loadedModel)
+      this.$mixpanel.track('Web Onboarding', {
+        step: this.onboarding,
+        type: 'action'
+      })
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100
