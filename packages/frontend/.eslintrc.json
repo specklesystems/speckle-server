@@ -36,6 +36,8 @@
     "keyword-spacing": 2,
     "semi": "off",
     "indent": ["error", 2, { "SwitchCase": 1 }],
+    "no-var": 1,
+    "no-console": 1,
     "space-unary-ops": [
       2,
       {

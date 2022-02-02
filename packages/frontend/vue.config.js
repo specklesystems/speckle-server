@@ -5,7 +5,7 @@ module.exports = {
   productionSourceMap: false,
   pages: {
     app: {
-      entry: 'src/app.js',
+      entry: 'src/main/app.js',
       title: 'Speckle',
       template: 'public/app.html',
       filename: 'app.html'
