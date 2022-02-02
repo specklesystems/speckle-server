@@ -242,6 +242,12 @@ export default class Viewer extends EventEmitter {
   }
 
   async unloadAll() {
+    // remove map and buildings
+    if ( this.surroundings ) {
+      await this.surroundings.removeMap()
+      await this.surroundings.removeBuild()
+    }
+
     for( let key of Object.keys( this.loaders ) ) {
       await this.loaders[key].unload()
       delete this.loaders[key]
@@ -270,19 +276,12 @@ export default class Viewer extends EventEmitter {
     // TODO: currently it's easier to simply refresh the page :)
   }
   
-  addMapAndBuild( index, lat, lon, north, api ) {
-    if ( this.surroundings ) {
-      this.surroundings.selectedMap( index )
-      this.surroundings.addMap()
-    }else {
+  async addMapAndBuild( index, lat, lon, north, api ) {
+    if ( this.surroundings ) this.surroundings.selectedMap( index )
+    else {
       if ( index !== 0 ) this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
     }
-  }
-  removeMapAndBuild() {
-    if ( this.surroundings ) {
-      this.surroundings.removeMap( this )
-      this.surroundings.hideBuild( this )
-    }
+    await this.surroundings.addMap()
   }
 
 }

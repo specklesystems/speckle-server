@@ -40,7 +40,6 @@ export default class SceneSurroundings {
     
     this.addUnitsList()
     this.addMapsList()
-    this.addMap()
 
   }
 
@@ -75,7 +74,7 @@ export default class SceneSurroundings {
     else if ( providerColor ) selected = providerColor.selectedIndex
     return selected
   }
-  addMap() {
+  async addMap() {
     // example building https://latest.speckle.dev/streams/8b29ca2b2e/objects/288f67a0a45b2a4c3bd01f7eb3032495
 
     let selectedMap = this.selectedMap()
@@ -86,7 +85,7 @@ export default class SceneSurroundings {
     this.removeMap()
     this.hideBuild()
 
-    if ( selectedMap > 3 && !this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )  this.addBuildings() // add if there should be buildings, but not are in the scene yet
+    if ( selectedMap > 3 && !this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )  await this.addBuildings() // add if there should be buildings, but not are in the scene yet
     if ( selectedMap > 3 && this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )   this.showBuild() // show and change color, scale, rotation if there should be buildings, and they are already in the scene
 
     if ( selectedMap > 0 ) {
@@ -144,7 +143,7 @@ export default class SceneSurroundings {
     }
     else return 0
   }
-  addBuildings() {
+  async addBuildings() {
     let scale = this.getScale()
 
     let coord_lat = this.getCoords()[1]
@@ -173,9 +172,16 @@ export default class SceneSurroundings {
 
     this.viewer.render()
   }
-  removeMap() {
+  async removeMap() {
     let selectedObject = this.viewer.scene.getObjectByName( 'Base map' )
     this.viewer.scene.remove( selectedObject )    
+    this.viewer.render()
+  }
+  async removeBuild() {
+    let objects = [ ...this.viewer.scene.children ]
+    for ( let i = 0, len = objects.length; i < len; i++ ) {
+      if ( objects[i].name === 'OSM 3d buildings' ) this.viewer.scene.remove( objects[i] )
+    }
     this.viewer.render()
   }
   hideBuild() {
@@ -232,6 +238,10 @@ export default class SceneSurroundings {
       }
     } )
     this.viewer.render()
+  }
+  changeMapOpacity( val = 0.5 ) {
+    let selectedObject = this.viewer.scene.getObjectByName( 'Base map' )
+    selectedObject.material.opacity = val
   }
 
 }
