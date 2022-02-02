@@ -1,6 +1,6 @@
-const { RAD2DEG } = require("three/src/math/MathUtils");
+const { RAD2DEG } = require( 'three/src/math/MathUtils' );
 
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+( function e( t,n,r ) {function s( o,u ) {if( !n[o] ) {if( !t[o] ) {let a = typeof require === 'function' && require; if( !u && a )return a( o,!0 ); if( i )return i( o,!0 ); throw new Error( 'Cannot find module \'' + o + '\'' )}let f = n[o] = { exports:{} }; t[o][0].call( f.exports,function( e ) {let n = t[o][1][e]; return s( n ? n : e )},f,f.exports,e,t,n,r )}return n[o].exports}var i = typeof require === 'function' && require; for( let o = 0; o < r.length; o++ )s( r[o] ); return s} )( { 1:[ function( require,module,exports ) {
 /**
  * Copyright (c) 2011, Sun Ning.
  *
@@ -26,13 +26,13 @@ const { RAD2DEG } = require("three/src/math/MathUtils");
  *
  */
 
-var BASE32_CODES = "0123456789bcdefghjkmnpqrstuvwxyz";
-var BASE32_CODES_DICT = {};
-for (var i = 0; i < BASE32_CODES.length; i++) {
-  BASE32_CODES_DICT[BASE32_CODES.charAt(i)] = i;
+let BASE32_CODES = '0123456789bcdefghjkmnpqrstuvwxyz'
+let BASE32_CODES_DICT = {}
+for ( let i = 0; i < BASE32_CODES.length; i++ ) {
+  BASE32_CODES_DICT[BASE32_CODES.charAt( i )] = i
 }
 
-var ENCODE_AUTO = 'auto';
+let ENCODE_AUTO = 'auto'
 /**
  * Significant Figure Hash Length
  *
@@ -45,7 +45,7 @@ var ENCODE_AUTO = 'auto';
  * @type Array
  */
 //     Desired sig figs:  0  1  2  3  4   5   6   7   8   9  10
-var SIGFIG_HASH_LENGTH = [0, 5, 7, 8, 11, 12, 13, 15, 16, 17, 18];
+let SIGFIG_HASH_LENGTH = [ 0, 5, 7, 8, 11, 12, 13, 15, 16, 17, 18 ]
 /**
  * Encode
  *
@@ -57,20 +57,20 @@ var SIGFIG_HASH_LENGTH = [0, 5, 7, 8, 11, 12, 13, 15, 16, 17, 18];
  * @param {Number} numberOfChars
  * @returns {String}
  */
-var encode = function (latitude, longitude, numberOfChars) {
-  if (numberOfChars === ENCODE_AUTO) {
-    if (typeof(latitude) === 'number' || typeof(longitude) === 'number') {
-      throw new Error('string notation required for auto precision.');
+let encode = function ( latitude, longitude, numberOfChars ) {
+  if ( numberOfChars === ENCODE_AUTO ) {
+    if ( typeof ( latitude ) === 'number' || typeof ( longitude ) === 'number' ) {
+      throw new Error( 'string notation required for auto precision.' )
     }
-    var decSigFigsLat = latitude.split('.')[1].length;
-    var decSigFigsLong = longitude.split('.')[1].length;
-    var numberOfSigFigs = Math.max(decSigFigsLat, decSigFigsLong);
-    numberOfChars = SIGFIG_HASH_LENGTH[numberOfSigFigs];
-  } else if (numberOfChars === undefined) {
-    numberOfChars = 9;
+    let decSigFigsLat = latitude.split( '.' )[1].length
+    let decSigFigsLong = longitude.split( '.' )[1].length
+    let numberOfSigFigs = Math.max( decSigFigsLat, decSigFigsLong )
+    numberOfChars = SIGFIG_HASH_LENGTH[numberOfSigFigs]
+  } else if ( numberOfChars === undefined ) {
+    numberOfChars = 9
   }
 
-  var chars = [],
+  let chars = [],
   bits = 0,
   bitsTotal = 0,
   hash_value = 0,
@@ -78,39 +78,39 @@ var encode = function (latitude, longitude, numberOfChars) {
   minLat = -90,
   maxLon = 180,
   minLon = -180,
-  mid;
-  while (chars.length < numberOfChars) {
-    if (bitsTotal % 2 === 0) {
-      mid = (maxLon + minLon) / 2;
-      if (longitude > mid) {
-        hash_value = (hash_value << 1) + 1;
-        minLon = mid;
+  mid
+  while ( chars.length < numberOfChars ) {
+    if ( bitsTotal % 2 === 0 ) {
+      mid = ( maxLon + minLon ) / 2
+      if ( longitude > mid ) {
+        hash_value = ( hash_value << 1 ) + 1
+        minLon = mid
       } else {
-        hash_value = (hash_value << 1) + 0;
-        maxLon = mid;
+        hash_value = ( hash_value << 1 ) + 0
+        maxLon = mid
       }
     } else {
-      mid = (maxLat + minLat) / 2;
-      if (latitude > mid) {
-        hash_value = (hash_value << 1) + 1;
-        minLat = mid;
+      mid = ( maxLat + minLat ) / 2
+      if ( latitude > mid ) {
+        hash_value = ( hash_value << 1 ) + 1
+        minLat = mid
       } else {
-        hash_value = (hash_value << 1) + 0;
-        maxLat = mid;
+        hash_value = ( hash_value << 1 ) + 0
+        maxLat = mid
       }
     }
 
-    bits++;
-    bitsTotal++;
-    if (bits === 5) {
-      var code = BASE32_CODES[hash_value];
-      chars.push(code);
-      bits = 0;
-      hash_value = 0;
+    bits++
+    bitsTotal++
+    if ( bits === 5 ) {
+      let code = BASE32_CODES[hash_value]
+      chars.push( code )
+      bits = 0
+      hash_value = 0
     }
   }
-  return chars.join('');
-};
+  return chars.join( '' )
+}
 
 /**
  * Encode Integer
@@ -122,41 +122,41 @@ var encode = function (latitude, longitude, numberOfChars) {
  * @param {Number} bitDepth
  * @returns {Number}
  */
-var encode_int = function (latitude, longitude, bitDepth) {
+let encode_int = function ( latitude, longitude, bitDepth ) {
 
-  bitDepth = bitDepth || 52;
+  bitDepth = bitDepth || 52
 
-  var bitsTotal = 0,
+  let bitsTotal = 0,
   maxLat = 90,
   minLat = -90,
   maxLon = 180,
   minLon = -180,
   mid,
-  combinedBits = 0;
+  combinedBits = 0
 
-  while (bitsTotal < bitDepth) {
-    combinedBits *= 2;
-    if (bitsTotal % 2 === 0) {
-      mid = (maxLon + minLon) / 2;
-      if (longitude > mid) {
-        combinedBits += 1;
-        minLon = mid;
+  while ( bitsTotal < bitDepth ) {
+    combinedBits *= 2
+    if ( bitsTotal % 2 === 0 ) {
+      mid = ( maxLon + minLon ) / 2
+      if ( longitude > mid ) {
+        combinedBits += 1
+        minLon = mid
       } else {
-        maxLon = mid;
+        maxLon = mid
       }
     } else {
-      mid = (maxLat + minLat) / 2;
-      if (latitude > mid) {
-        combinedBits += 1;
-        minLat = mid;
+      mid = ( maxLat + minLat ) / 2
+      if ( latitude > mid ) {
+        combinedBits += 1
+        minLat = mid
       } else {
-        maxLat = mid;
+        maxLat = mid
       }
     }
-    bitsTotal++;
+    bitsTotal++
   }
-  return combinedBits;
-};
+  return combinedBits
+}
 
 /**
  * Decode Bounding Box
@@ -165,41 +165,41 @@ var encode_int = function (latitude, longitude, bitDepth) {
  * @param {String} hash_string
  * @returns {Array}
  */
-var decode_bbox = function (hash_string) {
-  var isLon = true,
+let decode_bbox = function ( hash_string ) {
+  let isLon = true,
   maxLat = 90,
   minLat = -90,
   maxLon = 180,
   minLon = -180,
-  mid;
+  mid
 
-  var hashValue = 0;
-  for (var i = 0, l = hash_string.length; i < l; i++) {
-    var code = hash_string[i].toLowerCase();
-    hashValue = BASE32_CODES_DICT[code];
+  let hashValue = 0
+  for ( let i = 0, l = hash_string.length; i < l; i++ ) {
+    let code = hash_string[i].toLowerCase()
+    hashValue = BASE32_CODES_DICT[code]
 
-    for (var bits = 4; bits >= 0; bits--) {
-      var bit = (hashValue >> bits) & 1;
-      if (isLon) {
-        mid = (maxLon + minLon) / 2;
-        if (bit === 1) {
-          minLon = mid;
+    for ( let bits = 4; bits >= 0; bits-- ) {
+      let bit = ( hashValue >> bits ) & 1
+      if ( isLon ) {
+        mid = ( maxLon + minLon ) / 2
+        if ( bit === 1 ) {
+          minLon = mid
         } else {
-          maxLon = mid;
+          maxLon = mid
         }
       } else {
-        mid = (maxLat + minLat) / 2;
-        if (bit === 1) {
-          minLat = mid;
+        mid = ( maxLat + minLat ) / 2
+        if ( bit === 1 ) {
+          minLat = mid
         } else {
-          maxLat = mid;
+          maxLat = mid
         }
       }
-      isLon = !isLon;
+      isLon = !isLon
     }
   }
-  return [minLat, minLon, maxLat, maxLon];
-};
+  return [ minLat, minLon, maxLat, maxLon ]
+}
 
 /**
  * Decode Bounding Box Integer
@@ -209,42 +209,42 @@ var decode_bbox = function (hash_string) {
  * @param {Number} bitDepth
  * @returns {Array}
  */
-var decode_bbox_int = function (hashInt, bitDepth) {
+let decode_bbox_int = function ( hashInt, bitDepth ) {
 
-  bitDepth = bitDepth || 52;
+  bitDepth = bitDepth || 52
 
-  var maxLat = 90,
+  let maxLat = 90,
   minLat = -90,
   maxLon = 180,
-  minLon = -180;
+  minLon = -180
 
-  var latBit = 0, lonBit = 0;
-  var step = bitDepth / 2;
+  let latBit = 0, lonBit = 0
+  let step = bitDepth / 2
 
-  for (var i = 0; i < step; i++) {
+  for ( let i = 0; i < step; i++ ) {
 
-    lonBit = get_bit(hashInt, ((step - i) * 2) - 1);
-    latBit = get_bit(hashInt, ((step - i) * 2) - 2);
+    lonBit = get_bit( hashInt, ( ( step - i ) * 2 ) - 1 )
+    latBit = get_bit( hashInt, ( ( step - i ) * 2 ) - 2 )
 
-    if (latBit === 0) {
-      maxLat = (maxLat + minLat) / 2;
+    if ( latBit === 0 ) {
+      maxLat = ( maxLat + minLat ) / 2
     }
     else {
-      minLat = (maxLat + minLat) / 2;
+      minLat = ( maxLat + minLat ) / 2
     }
 
-    if (lonBit === 0) {
-      maxLon = (maxLon + minLon) / 2;
+    if ( lonBit === 0 ) {
+      maxLon = ( maxLon + minLon ) / 2
     }
     else {
-      minLon = (maxLon + minLon) / 2;
+      minLon = ( maxLon + minLon ) / 2
     }
   }
-  return [minLat, minLon, maxLat, maxLon];
-};
+  return [ minLat, minLon, maxLat, maxLon ]
+}
 
-function get_bit(bits, position) {
-  return (bits / Math.pow(2, position)) & 0x01;
+function get_bit( bits, position ) {
+  return ( bits / Math.pow( 2, position ) ) & 0x01
 }
 
 /**
@@ -255,15 +255,15 @@ function get_bit(bits, position) {
  * @param {String} hashString
  * @returns {Object}
  */
-var decode = function (hashString) {
-  var bbox = decode_bbox(hashString);
-  var lat = (bbox[0] + bbox[2]) / 2;
-  var lon = (bbox[1] + bbox[3]) / 2;
-  var latErr = bbox[2] - lat;
-  var lonErr = bbox[3] - lon;
-  return {latitude: lat, longitude: lon,
-          error: {latitude: latErr, longitude: lonErr}};
-};
+let decode = function ( hashString ) {
+  let bbox = decode_bbox( hashString )
+  let lat = ( bbox[0] + bbox[2] ) / 2
+  let lon = ( bbox[1] + bbox[3] ) / 2
+  let latErr = bbox[2] - lat
+  let lonErr = bbox[3] - lon
+  return { latitude: lat, longitude: lon,
+          error: { latitude: latErr, longitude: lonErr } }
+}
 
 /**
  * Decode Integer
@@ -274,15 +274,15 @@ var decode = function (hashString) {
  * @param {Number} bitDepth
  * @returns {Object}
  */
-var decode_int = function (hash_int, bitDepth) {
-  var bbox = decode_bbox_int(hash_int, bitDepth);
-  var lat = (bbox[0] + bbox[2]) / 2;
-  var lon = (bbox[1] + bbox[3]) / 2;
-  var latErr = bbox[2] - lat;
-  var lonErr = bbox[3] - lon;
-  return {latitude: lat, longitude: lon,
-          error: {latitude: latErr, longitude: lonErr}};
-};
+let decode_int = function ( hash_int, bitDepth ) {
+  let bbox = decode_bbox_int( hash_int, bitDepth )
+  let lat = ( bbox[0] + bbox[2] ) / 2
+  let lon = ( bbox[1] + bbox[3] ) / 2
+  let latErr = bbox[2] - lat
+  let lonErr = bbox[3] - lon
+  return { latitude: lat, longitude: lon,
+          error: { latitude: latErr, longitude: lonErr } }
+}
 
 /**
  * Neighbor
@@ -296,14 +296,14 @@ var decode_int = function (hash_int, bitDepth) {
  * @param {Array} Direction as a 2D normalized vector.
  * @returns {String}
  */
-var neighbor = function (hashString, direction) {
-  var lonLat = decode(hashString);
-  var neighborLat = lonLat.latitude
-    + direction[0] * lonLat.error.latitude * 2;
-  var neighborLon = lonLat.longitude
-    + direction[1] * lonLat.error.longitude * 2;
-  return encode(neighborLat, neighborLon, hashString.length);
-};
+let neighbor = function ( hashString, direction ) {
+  let lonLat = decode( hashString )
+  let neighborLat = lonLat.latitude
+    + direction[0] * lonLat.error.latitude * 2
+  let neighborLon = lonLat.longitude
+    + direction[1] * lonLat.error.longitude * 2
+  return encode( neighborLat, neighborLon, hashString.length )
+}
 
 /**
  * Neighbor Integer
@@ -316,13 +316,13 @@ var neighbor = function (hashString, direction) {
  * @param {String} hash_string
  * @returns {Array}
 */
-var neighbor_int = function(hash_int, direction, bitDepth) {
-    bitDepth = bitDepth || 52;
-    var lonlat = decode_int(hash_int, bitDepth);
-    var neighbor_lat = lonlat.latitude + direction[0] * lonlat.error.latitude * 2;
-    var neighbor_lon = lonlat.longitude + direction[1] * lonlat.error.longitude * 2;
-    return encode_int(neighbor_lat, neighbor_lon, bitDepth);
-};
+let neighbor_int = function( hash_int, direction, bitDepth ) {
+    bitDepth = bitDepth || 52
+    let lonlat = decode_int( hash_int, bitDepth )
+    let neighbor_lat = lonlat.latitude + direction[0] * lonlat.error.latitude * 2
+    let neighbor_lon = lonlat.longitude + direction[1] * lonlat.error.longitude * 2
+    return encode_int( neighbor_lat, neighbor_lon, bitDepth )
+}
 
 /**
  * Neighbors
@@ -334,38 +334,38 @@ var neighbor_int = function(hash_int, direction, bitDepth) {
  * @param {String} hash_string
  * @returns {encoded neighborHashList|Array}
  */
-var neighbors = function(hash_string){
+let neighbors = function( hash_string ) {
 
-    var hashstringLength = hash_string.length;
+    let hashstringLength = hash_string.length
 
-    var lonlat = decode(hash_string);
-    var lat = lonlat.latitude;
-    var lon = lonlat.longitude;
-    var latErr = lonlat.error.latitude * 2;
-    var lonErr = lonlat.error.longitude * 2;
+    let lonlat = decode( hash_string )
+    let lat = lonlat.latitude
+    let lon = lonlat.longitude
+    let latErr = lonlat.error.latitude * 2
+    let lonErr = lonlat.error.longitude * 2
 
-    var neighbor_lat,
-        neighbor_lon;
+    let neighbor_lat,
+        neighbor_lon
 
-    var neighborHashList = [
-                            encodeNeighbor(1,0),
-                            encodeNeighbor(1,1),
-                            encodeNeighbor(0,1),
-                            encodeNeighbor(-1,1),
-                            encodeNeighbor(-1,0),
-                            encodeNeighbor(-1,-1),
-                            encodeNeighbor(0,-1),
-                            encodeNeighbor(1,-1)
-                            ];
+    let neighborHashList = [
+                            encodeNeighbor( 1,0 ),
+                            encodeNeighbor( 1,1 ),
+                            encodeNeighbor( 0,1 ),
+                            encodeNeighbor( -1,1 ),
+                            encodeNeighbor( -1,0 ),
+                            encodeNeighbor( -1,-1 ),
+                            encodeNeighbor( 0,-1 ),
+                            encodeNeighbor( 1,-1 )
+                            ]
 
-    function encodeNeighbor(neighborLatDir, neighborLonDir){
-        neighbor_lat = lat + neighborLatDir * latErr;
-        neighbor_lon = lon + neighborLonDir * lonErr;
-        return encode(neighbor_lat, neighbor_lon, hashstringLength);
+    function encodeNeighbor( neighborLatDir, neighborLonDir ) {
+        neighbor_lat = lat + neighborLatDir * latErr
+        neighbor_lon = lon + neighborLonDir * lonErr
+        return encode( neighbor_lat, neighbor_lon, hashstringLength )
     }
 
-    return neighborHashList;
-};
+    return neighborHashList
+}
 
 /**
  * Neighbors Integer
@@ -378,38 +378,38 @@ var neighbors = function(hash_string){
  * @param {Number} bitDepth
  * @returns {encode_int'd neighborHashIntList|Array}
  */
-var neighbors_int = function(hash_int, bitDepth){
+let neighbors_int = function( hash_int, bitDepth ) {
 
-    bitDepth = bitDepth || 52;
+    bitDepth = bitDepth || 52
 
-    var lonlat = decode_int(hash_int, bitDepth);
-    var lat = lonlat.latitude;
-    var lon = lonlat.longitude;
-    var latErr = lonlat.error.latitude * 2;
-    var lonErr = lonlat.error.longitude * 2;
+    let lonlat = decode_int( hash_int, bitDepth )
+    let lat = lonlat.latitude
+    let lon = lonlat.longitude
+    let latErr = lonlat.error.latitude * 2
+    let lonErr = lonlat.error.longitude * 2
 
-    var neighbor_lat,
-        neighbor_lon;
+    let neighbor_lat,
+        neighbor_lon
 
-    var neighborHashIntList = [
-                            encodeNeighbor_int(1,0),
-                            encodeNeighbor_int(1,1),
-                            encodeNeighbor_int(0,1),
-                            encodeNeighbor_int(-1,1),
-                            encodeNeighbor_int(-1,0),
-                            encodeNeighbor_int(-1,-1),
-                            encodeNeighbor_int(0,-1),
-                            encodeNeighbor_int(1,-1)
-                            ];
+    let neighborHashIntList = [
+                            encodeNeighbor_int( 1,0 ),
+                            encodeNeighbor_int( 1,1 ),
+                            encodeNeighbor_int( 0,1 ),
+                            encodeNeighbor_int( -1,1 ),
+                            encodeNeighbor_int( -1,0 ),
+                            encodeNeighbor_int( -1,-1 ),
+                            encodeNeighbor_int( 0,-1 ),
+                            encodeNeighbor_int( 1,-1 )
+                            ]
 
-    function encodeNeighbor_int(neighborLatDir, neighborLonDir){
-        neighbor_lat = lat + neighborLatDir * latErr;
-        neighbor_lon = lon + neighborLonDir * lonErr;
-        return encode_int(neighbor_lat, neighbor_lon, bitDepth);
+    function encodeNeighbor_int( neighborLatDir, neighborLonDir ) {
+        neighbor_lat = lat + neighborLatDir * latErr
+        neighbor_lon = lon + neighborLonDir * lonErr
+        return encode_int( neighbor_lat, neighbor_lon, bitDepth )
     }
 
-    return neighborHashIntList;
-};
+    return neighborHashIntList
+}
 
 
 /**
@@ -423,33 +423,33 @@ var neighbors_int = function(hash_int, bitDepth){
  * @param {Number} numberOfChars
  * @returns {bboxes.hashList|Array}
  */
-var bboxes = function (minLat, minLon, maxLat, maxLon, numberOfChars) {
-  numberOfChars = numberOfChars || 9;
+let bboxes = function ( minLat, minLon, maxLat, maxLon, numberOfChars ) {
+  numberOfChars = numberOfChars || 9
 
-  var hashSouthWest = encode(minLat, minLon, numberOfChars);
-  var hashNorthEast = encode(maxLat, maxLon, numberOfChars);
+  let hashSouthWest = encode( minLat, minLon, numberOfChars )
+  let hashNorthEast = encode( maxLat, maxLon, numberOfChars )
 
-  var latLon = decode(hashSouthWest);
+  let latLon = decode( hashSouthWest )
 
-  var perLat = latLon.error.latitude * 2;
-  var perLon = latLon.error.longitude * 2;
+  let perLat = latLon.error.latitude * 2
+  let perLon = latLon.error.longitude * 2
 
-  var boxSouthWest = decode_bbox(hashSouthWest);
-  var boxNorthEast = decode_bbox(hashNorthEast);
+  let boxSouthWest = decode_bbox( hashSouthWest )
+  let boxNorthEast = decode_bbox( hashNorthEast )
 
-  var latStep = Math.round((boxNorthEast[0] - boxSouthWest[0]) / perLat);
-  var lonStep = Math.round((boxNorthEast[1] - boxSouthWest[1]) / perLon);
+  let latStep = Math.round( ( boxNorthEast[0] - boxSouthWest[0] ) / perLat )
+  let lonStep = Math.round( ( boxNorthEast[1] - boxSouthWest[1] ) / perLon )
 
-  var hashList = [];
+  let hashList = []
 
-  for (var lat = 0; lat <= latStep; lat++) {
-    for (var lon = 0; lon <= lonStep; lon++) {
-      hashList.push(neighbor(hashSouthWest, [lat, lon]));
+  for ( let lat = 0; lat <= latStep; lat++ ) {
+    for ( let lon = 0; lon <= lonStep; lon++ ) {
+      hashList.push( neighbor( hashSouthWest, [ lat, lon ] ) )
     }
   }
 
-  return hashList;
-};
+  return hashList
+}
 
 /**
  * Bounding Boxes Integer
@@ -462,35 +462,35 @@ var bboxes = function (minLat, minLon, maxLat, maxLon, numberOfChars) {
  * @param {Number} bitDepth
  * @returns {bboxes_int.hashList|Array}
  */
-var bboxes_int = function(minLat, minLon, maxLat, maxLon, bitDepth){
-    bitDepth = bitDepth || 52;
+let bboxes_int = function( minLat, minLon, maxLat, maxLon, bitDepth ) {
+    bitDepth = bitDepth || 52
 
-    var hashSouthWest = encode_int(minLat, minLon, bitDepth);
-    var hashNorthEast = encode_int(maxLat, maxLon, bitDepth);
+    let hashSouthWest = encode_int( minLat, minLon, bitDepth )
+    let hashNorthEast = encode_int( maxLat, maxLon, bitDepth )
 
-    var latlon = decode_int(hashSouthWest, bitDepth);
+    let latlon = decode_int( hashSouthWest, bitDepth )
 
-    var perLat = latlon.error.latitude * 2;
-    var perLon = latlon.error.longitude * 2;
+    let perLat = latlon.error.latitude * 2
+    let perLon = latlon.error.longitude * 2
 
-    var boxSouthWest = decode_bbox_int(hashSouthWest, bitDepth);
-    var boxNorthEast = decode_bbox_int(hashNorthEast, bitDepth);
+    let boxSouthWest = decode_bbox_int( hashSouthWest, bitDepth )
+    let boxNorthEast = decode_bbox_int( hashNorthEast, bitDepth )
 
-    var latStep = Math.round((boxNorthEast[0] - boxSouthWest[0])/perLat);
-    var lonStep = Math.round((boxNorthEast[1] - boxSouthWest[1])/perLon);
+    let latStep = Math.round( ( boxNorthEast[0] - boxSouthWest[0] ) / perLat )
+    let lonStep = Math.round( ( boxNorthEast[1] - boxSouthWest[1] ) / perLon )
 
-    var hashList = [];
+    let hashList = []
 
-    for(var lat = 0; lat <= latStep; lat++){
-        for(var lon = 0; lon <= lonStep; lon++){
-            hashList.push(neighbor_int(hashSouthWest,[lat, lon], bitDepth));
+    for( let lat = 0; lat <= latStep; lat++ ) {
+        for( let lon = 0; lon <= lonStep; lon++ ) {
+            hashList.push( neighbor_int( hashSouthWest,[ lat, lon ], bitDepth ) )
         }
     }
 
-    return hashList;
-};
+    return hashList
+}
 
-var geohash = {
+let geohash = {
   'ENCODE_AUTO': ENCODE_AUTO,
   'encode': encode,
   'encode_uint64': encode_int, // keeping for backwards compatibility, will deprecate
@@ -507,11 +507,11 @@ var geohash = {
   'neighbors_int': neighbors_int,
   'bboxes': bboxes,
   'bboxes_int': bboxes_int
-};
+}
 
-module.exports = geohash;
+module.exports = geohash
 
-},{}],2:[function(require,module,exports){
+},{} ],2:[ function( require,module,exports ) {
 
 
 function constructor( scene, scale, origin, options ) {
@@ -531,25 +531,26 @@ function constructor( scene, scale, origin, options ) {
     _color = options.color || 0xf0f0f0,
     _name = options.name,
     _material = options.material,
+    _visibility = options.visibility,
     _rotation = options.rotation,
-		_origin = lonLatToWorld( (origin[2]+origin[0])/2, (origin[3]+origin[1])/2 ),
+		_origin = lonLatToWorld( ( origin[2] + origin[0] ) / 2, ( origin[3] + origin[1] ) / 2 ),
 		_meshCallback = options.meshCallback || createMesh,
-		_defaultColor = options.defaultColor || 0xf0f0f0;
+		_defaultColor = options.defaultColor || 0xf0f0f0
 
 
 	this.build = function( items ) {
 
-		var bldg, currVerLen,
+		let bldg, currVerLen,
 			mats = [],
-			ids = [];
+			ids = []
 			//geom = new THREE.Geometry();
 
-		for ( var i=0, len=items.length; i < len; i++ ) {
-			bldg = makeBldgGeom( items[i] );
+		for ( let i = 0, len = items.length; i < len; i++ ) {
+			bldg = makeBldgGeom( items[i] )
       //console.log(bldg)
-			if (bldg) { 
+			if ( bldg ) { 
 				//if (_readyCallback) _readyCallback( _meshCallback.call( this, bldg, items[i] ) );
-        createMesh( bldg, [(origin[3]+origin[1])/2, (origin[2]+origin[0])/2], scene, scale, _name, _material, _rotation );
+        createMesh( bldg, [ ( origin[3] + origin[1] ) / 2, ( origin[2] + origin[0] ) / 2 ], scene, scale, _name, _material, _rotation, _visibility )
 			}
 			//currVerLen = geom.vertices.length;
 			//geom.vertices = geom.vertices.concat( bldg.vertices );
@@ -568,19 +569,19 @@ function constructor( scene, scale, origin, options ) {
 
 
 	function updateFaces( faces, len ) {
-		for ( var i=0, flen = faces.length; i < flen; i++ ) {
-			faces[i].a += len;
-			faces[i].b += len;
-			faces[i].c += len;
+		for ( let i = 0, flen = faces.length; i < flen; i++ ) {
+			faces[i].a += len
+			faces[i].b += len
+			faces[i].c += len
 			if ( faces[i].d ) {
-				faces[i].d += len;
+				faces[i].d += len
 			}
 		}
-		return faces;
+		return faces
 	}
 
 
-	function createMesh( geom, origin, scene, scale, name, material, rotation ) {
+	function createMesh( geom, origin, scene, scale, name, material, rotation, visibility ) {
 		//	return new THREE.Mesh( geom, new THREE.MeshLambertMaterial() );
     /*
 		var face,
@@ -608,81 +609,82 @@ function constructor( scene, scale, origin, options ) {
     //console.log(geom)
 		//var m = new THREE.Mesh( geom, new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) ); ShadowMaterial();
     //var material = new THREE.MeshBasicMaterial({ color: color });
-		var m = new THREE.Mesh( geom, material );
+		let m = new THREE.Mesh( geom, material )
     m.name = name
-    m.userData.coords = new THREE.Vector3(origin[0],origin[1],0)
+    m.userData.coords = new THREE.Vector3( origin[0],origin[1],0 )
 
-    scene.add(m)
-    m.rotation.x += Math.PI/2;
-    m.scale.set(1/scale, 1/scale, 1/scale)
+    scene.add( m )
+    m.visible = visibility
+    m.rotation.x += Math.PI / 2
+    m.scale.set( 1 / scale, 1 / scale, 1 / scale )
 
     // bring mesh to zero coord and rotate
-    var movingVector = new THREE.Vector3(m.position.x, m.position.y, 0) //get vector to correct location on the map
+    let movingVector = new THREE.Vector3( m.position.x, m.position.y, 0 ) //get vector to correct location on the map
     m.position.x -= movingVector.x
     m.position.y -= movingVector.y
-    m.rotation.y += rotation; //rotate around (0,0,0)
+    m.rotation.y += rotation //rotate around (0,0,0)
 
     // move mesh back, but rotate the initial vector as well
-    var rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3(0,0,1), rotation) //rotate vector same as the map
+    let rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3( 0,0,1 ), rotation ) //rotate vector same as the map
     m.position.x += rotatedVector.x
     m.position.y += rotatedVector.y
 
     //m.geometry.computeBoundingBox();
     //console.log( m.geometry.boundingBox );
 
-		return m;
+		return m
 	}
 
 
 	function lonLatToWorld( lon, lat ) {
-		var x, y, pointX, pointY, latRad, mercN,
+		let x, y, pointX, pointY, latRad, mercN,
 			worldWidth = 40075000,
-			worldHeight = 40008000;
+			worldHeight = 40008000
 
-		x = ( lon + 180 ) * ( worldWidth / 360);
-		latRad = lat*Math.PI/180;
-		mercN = Math.log( Math.tan((Math.PI/4)+(latRad/2)));
-		y = (worldHeight/2)-(worldHeight*mercN/(2*Math.PI));
+		x = ( lon + 180 ) * ( worldWidth / 360 )
+		latRad = lat * Math.PI / 180
+		mercN = Math.log( Math.tan( ( Math.PI / 4 ) + ( latRad / 2 ) ) )
+		y = ( worldHeight / 2 ) - ( worldHeight * mercN / ( 2 * Math.PI ) )
 		return [ x, y ]
 	}
 
 
 	function lonLatToScene( lon, lat ) {
-		var point = lonLatToWorld( lon, lat );
+		let point = lonLatToWorld( lon, lat )
 		// This looks weird, and it is kind of a hack, but it's done because of the way THREE.ExtrudeGeometry converts
 		// Vector2 x,y coordinates into x,z coordinates in Vector3 objects.  +x +y goes to -z,-x.  This effectively rotates
 		// the geometries, putting them in the correct quadrant.   Doing an actual rotation might be cleaner, but, well.
-		return new THREE.Vector2( _origin[1] - point[1], _origin[0] - point[0] );
+		return new THREE.Vector2( _origin[1] - point[1], _origin[0] - point[0] )
 	}
 
 
 	function makeBldgGeom( item ) {
 		// Create a path
-		var pointX, pointY, extrudePath, eg,
+		let pointX, pointY, extrudePath, eg,
 			path, shapes,
 			bldgHeight = item.height,
-			pathPoints = [];
+			pathPoints = []
 		
-		for ( var i = 0, last = item.footprint.length-1; i < last; i+=2 ) {
-			pathPoints.push( lonLatToScene( item.footprint[i+1], item.footprint[i] ) );
+		for ( var i = 0, last = item.footprint.length - 1; i < last; i += 2 ) {
+			pathPoints.push( lonLatToScene( item.footprint[i + 1], item.footprint[i] ) )
 		}
 
     //pathPoints.reverse()
-		path = new THREE.ShapePath();
+		path = new THREE.ShapePath()
     //console.log(pathPoints)
-    if (pathPoints.length>1) {
-      path.moveTo(pathPoints[0].x, pathPoints[0].y);
-      for (var i = 0, il = pathPoints.length; i < il; i++) {
-        if (i<pathPoints.length-1) path.lineTo(pathPoints[i+1].x, pathPoints[i+1].y);
-        else path.lineTo(pathPoints[0].x, pathPoints[0].y)
+    if ( pathPoints.length > 1 ) {
+      path.moveTo( pathPoints[0].x, pathPoints[0].y )
+      for ( var i = 0, il = pathPoints.length; i < il; i++ ) {
+        if ( i < pathPoints.length - 1 ) path.lineTo( pathPoints[i + 1].x, pathPoints[i + 1].y )
+        else path.lineTo( pathPoints[0].x, pathPoints[0].y )
       }
     }
     //console.log(path)
-		shapes = path.toShapes(); // isCCW, noHoles
+		shapes = path.toShapes() // isCCW, noHoles
     //console.log(shapes)
 
-		extrudePath = new THREE.CurvePath();
-		extrudePath.add( new THREE.LineCurve3( new THREE.Vector3(0,0,0), new THREE.Vector3(0,bldgHeight,0) ) );
+		extrudePath = new THREE.CurvePath()
+		extrudePath.add( new THREE.LineCurve3( new THREE.Vector3( 0,0,0 ), new THREE.Vector3( 0,bldgHeight,0 ) ) )
 
 		eg = new THREE.ExtrudeGeometry( shapes, {
 			extrudePath: extrudePath
@@ -693,26 +695,26 @@ function constructor( scene, scale, origin, options ) {
       //bevelSize: 1,
       //bevelOffset: 0,
       //bevelSegments: 1
-		})
+		} )
     //console.log(eg)
 
-		return eg;
+		return eg
 
 	}
 
 }
 
-module.exports = constructor;
-},{}],3:[function(require,module,exports){
+module.exports = constructor
+},{} ],3:[ function( require,module,exports ) {
 
-var YARD_TO_METER = 0.9144,
+let YARD_TO_METER = 0.9144,
     FOOT_TO_METER = 0.3048,
     INCH_TO_METER = 0.0254,
     METERS_PER_LEVEL = 3,
     DEFAULT_HEIGHT = 5,
 
     clockwise = 'CW',
-    counterClockwise = 'CCW';
+    counterClockwise = 'CCW'
 
 
 module.exports = {
@@ -727,64 +729,64 @@ module.exports = {
   counterClockwise: counterClockwise,
 
   // detect winding direction: clockwise or counter clockwise
-  getWinding: function(points) {
-    var x1, y1, x2, y2,
+  getWinding: function( points ) {
+    let x1, y1, x2, y2,
       a = 0,
-      i, il;
-    for (i = 0, il = points.length-3; i < il; i += 2) {
-      x1 = points[i];
-      y1 = points[i+1];
-      x2 = points[i+2];
-      y2 = points[i+3];
-      a += x1*y2 - x2*y1;
+      i, il
+    for ( i = 0, il = points.length - 3; i < il; i += 2 ) {
+      x1 = points[i]
+      y1 = points[i + 1]
+      x2 = points[i + 2]
+      y2 = points[i + 3]
+      a += x1 * y2 - x2 * y1
     }
-    return (a/2) > 0 ? this.clockwise : this.counterClockwise;
+    return ( a / 2 ) > 0 ? this.clockwise : this.counterClockwise
   },
 
   // enforce a polygon winding direcetion. Needed for proper backface culling.
-  makeWinding: function(points, direction) {
-    var winding = this.getWinding(points);
-    if (winding === direction) {
-      return points;
+  makeWinding: function( points, direction ) {
+    let winding = this.getWinding( points )
+    if ( winding === direction ) {
+      return points
     }
-    var revPoints = [];
-    for (var i = points.length-2; i >= 0; i -= 2) {
-      revPoints.push(points[i], points[i+1]);
+    let revPoints = []
+    for ( let i = points.length - 2; i >= 0; i -= 2 ) {
+      revPoints.push( points[i], points[i + 1] )
     }
-    return revPoints;
+    return revPoints
   },
 
-  toMeters: function(str) {
-    str = '' + str;
-    var value = parseFloat(str);
-    if (value === str) {
-      return value <<0;
+  toMeters: function( str ) {
+    str = '' + str
+    let value = parseFloat( str )
+    if ( value === str ) {
+      return value << 0
     }
-    if (~str.indexOf('m')) {
-      return value <<0;
+    if ( ~str.indexOf( 'm' ) ) {
+      return value << 0
     }
-    if (~str.indexOf('yd')) {
-      return value*this.YARD_TO_METER <<0;
+    if ( ~str.indexOf( 'yd' ) ) {
+      return value * this.YARD_TO_METER << 0
     }
-    if (~str.indexOf('ft')) {
-      return value*this.FOOT_TO_METER <<0;
+    if ( ~str.indexOf( 'ft' ) ) {
+      return value * this.FOOT_TO_METER << 0
     }
-    if (~str.indexOf('\'')) {
-      var parts = str.split('\'');
-      var res = parts[0]*this.FOOT_TO_METER + parts[1]*this.INCH_TO_METER;
-      return res <<0;
+    if ( ~str.indexOf( '\'' ) ) {
+      let parts = str.split( '\'' )
+      let res = parts[0] * this.FOOT_TO_METER + parts[1] * this.INCH_TO_METER
+      return res << 0
     }
-    return value <<0;
+    return value << 0
   },
 
-  getRadius: function(points) {
-    var minLat = 90, maxLat = -90;
-    for (var i = 0, il = points.length; i < il; i += 2) {
-      minLat = Math.min(minLat, points[i]);
-      maxLat = Math.max(maxLat, points[i]);
+  getRadius: function( points ) {
+    let minLat = 90, maxLat = -90
+    for ( let i = 0, il = points.length; i < il; i += 2 ) {
+      minLat = Math.min( minLat, points[i] )
+      maxLat = Math.max( maxLat, points[i] )
     }
     //sconsole.log(RAD2DEG)
-    return (maxLat-minLat) / RAD2DEG * 6378137 / 2 <<0; // 6378137 = Earth radius
+    return ( maxLat - minLat ) / RAD2DEG * 6378137 / 2 << 0 // 6378137 = Earth radius
   },
 
   materialColors: {
@@ -841,177 +843,177 @@ module.exports = {
   // limestone
   // straw
 
-  getMaterialColor: function(str) {
-    str = str.toLowerCase();
-    if (str[0] === '#') {
-      return str;
+  getMaterialColor: function( str ) {
+    str = str.toLowerCase()
+    if ( str[0] === '#' ) {
+      return str
     }
-    return this.materialColors[this.baseMaterials[str] || str] || null;
+    return this.materialColors[this.baseMaterials[str] || str] || null
   },
 
   // aligns and cleans up properties in place
-  alignProperties: function(prop) {
-    var item = {};
+  alignProperties: function( prop ) {
+    let item = {}
 
-    prop = prop || {};
+    prop = prop || {}
 
-    item.height = this.toMeters(prop.height);
-    if (!item.height) {
-      if (prop['building:height']) {
-        item.height = this.toMeters(prop['building:height']);
+    item.height = this.toMeters( prop.height )
+    if ( !item.height ) {
+      if ( prop['building:height'] ) {
+        item.height = this.toMeters( prop['building:height'] )
       }
-      if (prop.levels) {
-        item.height = prop.levels*this.METERS_PER_LEVEL <<0;
+      if ( prop.levels ) {
+        item.height = prop.levels * this.METERS_PER_LEVEL << 0
       }
-      if (prop['building:levels']) {
-        item.height = prop['building:levels']*this.METERS_PER_LEVEL <<0;
+      if ( prop['building:levels'] ) {
+        item.height = prop['building:levels'] * this.METERS_PER_LEVEL << 0
       }
-      if (!item.height) {
-        item.height = DEFAULT_HEIGHT;
+      if ( !item.height ) {
+        item.height = DEFAULT_HEIGHT
       }
     }
 
-    item.minHeight = this.toMeters(prop.min_height);
-    if (!item.min_height) {
-      if (prop['building:min_height']) {
-        item.minHeight = this.toMeters(prop['building:min_height']);
+    item.minHeight = this.toMeters( prop.min_height )
+    if ( !item.min_height ) {
+      if ( prop['building:min_height'] ) {
+        item.minHeight = this.toMeters( prop['building:min_height'] )
       }
-      if (prop.min_level) {
-        item.minHeight = prop.min_level*this.METERS_PER_LEVEL <<0;
+      if ( prop.min_level ) {
+        item.minHeight = prop.min_level * this.METERS_PER_LEVEL << 0
       }
-      if (prop['building:min_level']) {
-        item.minHeight = prop['building:min_level']*this.METERS_PER_LEVEL <<0;
+      if ( prop['building:min_level'] ) {
+        item.minHeight = prop['building:min_level'] * this.METERS_PER_LEVEL << 0
       }
     }
 
-    item.wallColor = prop.wallColor || prop.color;
-    if (!item.wallColor) {
-      if (prop.color) {
-        item.wallColor = prop.color;
+    item.wallColor = prop.wallColor || prop.color
+    if ( !item.wallColor ) {
+      if ( prop.color ) {
+        item.wallColor = prop.color
       }
-      if (prop['building:material']) {
-        item.wallColor = this.getMaterialColor(prop['building:material']);
+      if ( prop['building:material'] ) {
+        item.wallColor = this.getMaterialColor( prop['building:material'] )
       }
-      if (prop['building:facade:material']) {
-        item.wallColor = this.getMaterialColor(prop['building:facade:material']);
+      if ( prop['building:facade:material'] ) {
+        item.wallColor = this.getMaterialColor( prop['building:facade:material'] )
       }
-      if (prop['building:cladding']) {
-        item.wallColor = this.getMaterialColor(prop['building:cladding']);
+      if ( prop['building:cladding'] ) {
+        item.wallColor = this.getMaterialColor( prop['building:cladding'] )
       }
       // wall color
-      if (prop['building:color']) {
-        item.wallColor = prop['building:color'];
+      if ( prop['building:color'] ) {
+        item.wallColor = prop['building:color']
       }
-      if (prop['building:colour']) {
-        item.wallColor = prop['building:colour'];
+      if ( prop['building:colour'] ) {
+        item.wallColor = prop['building:colour']
       }
     }
 
-    item.roofColor = prop.roofColor;
-    if (!item.roofColor) {
-      if (prop['roof:material']) {
-        item.roofColor = this.getMaterialColor(prop['roof:material']);
+    item.roofColor = prop.roofColor
+    if ( !item.roofColor ) {
+      if ( prop['roof:material'] ) {
+        item.roofColor = this.getMaterialColor( prop['roof:material'] )
       }
-      if (prop['building:roof:material']) {
-        item.roofColor = this.getMaterialColor(prop['building:roof:material']);
+      if ( prop['building:roof:material'] ) {
+        item.roofColor = this.getMaterialColor( prop['building:roof:material'] )
       }
       // roof color
-      if (prop['roof:color']) {
-        item.roofColor = prop['roof:color'];
+      if ( prop['roof:color'] ) {
+        item.roofColor = prop['roof:color']
       }
-      if (prop['roof:colour']) {
-        item.roofColor = prop['roof:colour'];
+      if ( prop['roof:colour'] ) {
+        item.roofColor = prop['roof:colour']
       }
-      if (prop['building:roof:color']) {
-        item.roofColor = prop['building:roof:color'];
+      if ( prop['building:roof:color'] ) {
+        item.roofColor = prop['building:roof:color']
       }
-      if (prop['building:roof:colour']) {
-        item.roofColor = prop['building:roof:colour'];
+      if ( prop['building:roof:colour'] ) {
+        item.roofColor = prop['building:roof:colour']
       }
     }
 
-    switch (prop['building:shape']) {
+    switch ( prop['building:shape'] ) {
       case 'cone':
       case 'cylinder':
-        item.shape = prop['building:shape'];
-      break;
+        item.shape = prop['building:shape']
+      break
 
       case 'dome':
-        item.shape = 'dome';
-      break;
+        item.shape = 'dome'
+      break
 
       case 'sphere':
-        item.shape = 'cylinder';
-      break;
+        item.shape = 'cylinder'
+      break
     }
 
-    if ((prop['roof:shape'] === 'cone' || prop['roof:shape'] === 'dome') && prop['roof:height']) {
-      item.shape = 'cylinder';
-      item.roofShape = prop['roof:shape'];
-      item.roofHeight = this.toMeters(prop['roof:height']);
+    if ( ( prop['roof:shape'] === 'cone' || prop['roof:shape'] === 'dome' ) && prop['roof:height'] ) {
+      item.shape = 'cylinder'
+      item.roofShape = prop['roof:shape']
+      item.roofHeight = this.toMeters( prop['roof:height'] )
     }
 
-    if (item.roofHeight) {
-      item.height = Math.max(0, item.height-item.roofHeight);
+    if ( item.roofHeight ) {
+      item.height = Math.max( 0, item.height - item.roofHeight )
     } else {
-      item.roofHeight = 0;
+      item.roofHeight = 0
     }
 
-    return item;
+    return item
   }
-};
+}
 
-},{}],4:[function(require,module,exports){
+},{} ],4:[ function( require,module,exports ) {
 
 
 // Loader is responsible for fetching data from the Overpass API
 
 function constructor() {
 
-	var OSM_XAPI_URL = 'http://overpass-api.de/api/interpreter?data=[out:json];(way[%22building%22]({s},{w},{n},{e});node(w);way[%22building:part%22=%22yes%22]({s},{w},{n},{e});node(w);relation[%22building%22]({s},{w},{n},{e});way(r);node(w););out;';
+	let OSM_XAPI_URL = 'http://overpass-api.de/api/interpreter?data=[out:json];(way[%22building%22]({s},{w},{n},{e});node(w);way[%22building:part%22=%22yes%22]({s},{w},{n},{e});node(w);relation[%22building%22]({s},{w},{n},{e});way(r);node(w););out;'
   // http://overpass-api.de/api/interpreter?data=[out:json];(way[%22building%22](-0.0892642750895124,51.506810732490656,-0.09,51.6);node(w);way[%22building:part%22=%22yes%22](-0.0892642750895124,51.506810732490656,-0.09,51.6);node(w);relation[%22building%22](-0.0892642750895124,51.506810732490656,-0.09,51.6);way(r);node(w););out;
-	var req = new XMLHttpRequest();
+	let req = new XMLHttpRequest()
 
-	function xhr(url, param, callback) {
+	function xhr( url, param, callback ) {
 
-		url = url.replace(/\{ *([\w_]+) *\}/g, function(tag, key) {
-			return param[key] || tag;
-		});
+		url = url.replace( /\{ *([\w_]+) *\}/g, function( tag, key ) {
+			return param[key] || tag
+		} )
 
 		req.onerror = function() {
-			req.status = 500;
-			req.statusText = 'Error';
-		};
+			req.status = 500
+			req.statusText = 'Error'
+		}
 
 		req.ontimeout = function() {
-			req.status = 408;
-			req.statusText = 'Timeout';
-		};
+			req.status = 408
+			req.statusText = 'Timeout'
+		}
 
 		req.onprogress = function() {
-		};
+		}
 
 		req.onload = function() {
-			req.status = 200;
-			req.statusText = 'Ok';
-		};
+			req.status = 200
+			req.statusText = 'Ok'
+		}
 
 		req.onreadystatechange = function() {
-			if (req.readyState !== 4) {
-			  return;
+			if ( req.readyState !== 4 ) {
+			  return
 			}
-			if (!req.status || req.status < 200 || req.status > 299) {
-			  return;
+			if ( !req.status || req.status < 200 || req.status > 299 ) {
+			  return
 			}
-			if (callback && req.responseText) {
-			  callback( JSON.parse(req.responseText) );
+			if ( callback && req.responseText ) {
+			  callback( JSON.parse( req.responseText ) )
 			}
 		}
 
-		req.open('GET', url);
-		req.send(null);
+		req.open( 'GET', url )
+		req.send( null )
 
-	};
+	}
 
 
 	// load fetches data from the Overpass API for the given bounding box
@@ -1020,24 +1022,24 @@ function constructor() {
 	// 	callback 	--> a callback function to be called when the data is returned
 	this.load = function( bbox, callback ) {
     //console.log(bbox)
-		var params = {
+		let params = {
 			e: bbox[2],
 			n: bbox[3],
 			s: bbox[1],
 			w: bbox[0]
 		}
-		xhr( OSM_XAPI_URL, params, callback );
+		xhr( OSM_XAPI_URL, params, callback )
 	}
 
 }
 
-module.exports = constructor;
-},{}],5:[function(require,module,exports){
+module.exports = constructor
+},{} ],5:[ function( require,module,exports ) {
 
-var Loader = require("./loader.js"),
-	Parser = require("./parser.js"),
-	Builder = require("./builder.js"),
-	ngeo = require('ngeohash');   // TEMPORARY!  Or maybe not?
+let Loader = require( './loader.js' ),
+	Parser = require( './parser.js' ),
+	Builder = require( './builder.js' ),
+	ngeo = require( 'ngeohash' )   // TEMPORARY!  Or maybe not?
 
 // makeBuildings fetches data from the Overpass API and builds three.js 3d models of buildings for everything
 // found within the given bounding box.
@@ -1054,22 +1056,23 @@ function makeBuildings( callback, bbox, params ) {
 		origin = params.origin || [ bbox[0], bbox[1], bbox[2], bbox[3] ],  		// an array, [ lon, lat ], describing the poisition of the scene's origin
 		units = params.units || 'meter', 						// 'meter', 'foot', 'inch', or 'millimeter'
 		scale = params.scale || 1.0,  						// float describing how much to scale the units for the scene
-		onDataReady = params.onDataReady || false;				// called when data is loaded from Overpass, before THREE objects are created
+		onDataReady = params.onDataReady || false				// called when data is loaded from Overpass, before THREE objects are created
 
-	buildOpts.mergeGeometry = params.mergeGeometry || false;  	// create one big Geometry and Mesh with all the buildings
-	buildOpts.defaultColor = params.defaultColor || false;		// most buildings will be this color - default is 0xF0F0F0
-	buildOpts.meshFunction = params.meshFunction || false;		// custom function for creating the THREE.Mesh objects
-  buildOpts.color = params.color || 0xffffff;
-  buildOpts.material = params.material;
-  buildOpts.name = params.name;
-  buildOpts.rotation = params.rotation;
+	buildOpts.mergeGeometry = params.mergeGeometry || false  	// create one big Geometry and Mesh with all the buildings
+	buildOpts.defaultColor = params.defaultColor || false		// most buildings will be this color - default is 0xF0F0F0
+	buildOpts.meshFunction = params.meshFunction || false		// custom function for creating the THREE.Mesh objects
+  buildOpts.color = params.color || 0xffffff
+  buildOpts.material = params.material
+  buildOpts.name = params.name
+  buildOpts.rotation = params.rotation
+  buildOpts.visibility = params.visibility
 
-	var 
+	let 
 		builder = new Builder( callback, scale, origin, buildOpts ),
 		parser = new Parser( builder.build, onDataReady ),
-		loader = new Loader();
+		loader = new Loader()
 	
-	loader.load( bbox, parser.parse );
+	loader.load( bbox, parser.parse )
 
 }
 
@@ -1077,11 +1080,11 @@ function makeBuildings( callback, bbox, params ) {
 // Just gets the building data from the Overpass API and calls the callback, passing in the building data.
 function fetchBldgData( callback, bbox, params ) {
 
-	var onDataReady = params.onDataReady || false,
+	let onDataReady = params.onDataReady || false,
 		parser = new Parser( callback, onDataReady ),
-		loader = new Loader();
+		loader = new Loader()
 
-	loader.load( bbox, parser.parse );
+	loader.load( bbox, parser.parse )
 
 }
 
@@ -1089,25 +1092,25 @@ function fetchBldgData( callback, bbox, params ) {
 // Given some building data, creates meshes and calls the callback when it's done
 function buildBldgs( callback, buildingData, params ) {
 
-	var buildOpts = {},
+	let buildOpts = {},
 		scale = params.scale || 1.0,
-		origin = params.origin || findDefaultOrigin( buildingData );
+		origin = params.origin || findDefaultOrigin( buildingData )
 	
-	buildOpts.mergeGeometry = params.mergeGeometry || false;
-	buildOpts.defaultColor = params.defaultColor || false;
-	buildOpts.meshFunction = params.meshFunction || false;
+	buildOpts.mergeGeometry = params.mergeGeometry || false
+	buildOpts.defaultColor = params.defaultColor || false
+	buildOpts.meshFunction = params.meshFunction || false
 		
-	var builder = new Builder( callback, scale, origin, buildOpts );
+	let builder = new Builder( callback, scale, origin, buildOpts )
 
-	builder.build( buildingData );
+	builder.build( buildingData )
 
 }
 
 
 // 
 function findDefaultOrigin( bldgs ) {
-	console.log( bldgs );
-	return [ 0, 0 ];
+	console.log( bldgs )
+	return [ 0, 0 ]
 }
 
 
@@ -1131,148 +1134,148 @@ window.ngeo = ngeo // TEMPORARY!!!!!
 // 	     Export more fine-grained functions/modules within OSMthree that allow control over what happens and when, e.g. with Promises.
 //		 	(should these maintain state?  Probably not, they should accept arguments, I think. ) 
 
-},{"./builder.js":2,"./loader.js":4,"./parser.js":6,"ngeohash":1}],6:[function(require,module,exports){
+},{ './builder.js':2,'./loader.js':4,'./parser.js':6,'ngeohash':1 } ],6:[ function( require,module,exports ) {
 
-var importer = require('./importer.js' );
+let importer = require( './importer.js' )
 
 function constructor( finalCallback, filterCallback ) {
 
-	var _nodes = {},
+	let _nodes = {},
 		_ways = {},
 		_relations = {},
-		MAP_DATA = [];
+		MAP_DATA = []
 
 
-	function isBuilding(data) {
-		var tags = data.tags;
-		return (tags && !tags.landuse &&
-		  (tags.building || tags['building:part']) && (!tags.layer || tags.layer >= 0));
+	function isBuilding( data ) {
+		let tags = data.tags
+		return ( tags && !tags.landuse &&
+		  ( tags.building || tags['building:part'] ) && ( !tags.layer || tags.layer >= 0 ) )
 	}
 
 
-	function getRelationWays(members) {
-		var m, outer, inner = [];
-		for (var i = 0, il = members.length; i < il; i++) {
-		  m = members[i];
-		  if (m.type !== 'way' || !_ways[m.ref]) {
-		    continue;
+	function getRelationWays( members ) {
+		let m, outer, inner = []
+		for ( let i = 0, il = members.length; i < il; i++ ) {
+		  m = members[i]
+		  if ( m.type !== 'way' || !_ways[m.ref] ) {
+		    continue
 		  }
-		  if (!m.role || m.role === 'outer') {
-		    outer = _ways[m.ref];
-		    continue;
+		  if ( !m.role || m.role === 'outer' ) {
+		    outer = _ways[m.ref]
+		    continue
 		  }
-		  if (m.role === 'inner' || m.role === 'enclave') {
-		    inner.push(_ways[m.ref]);
-		    continue;
+		  if ( m.role === 'inner' || m.role === 'enclave' ) {
+		    inner.push( _ways[m.ref] )
+		    continue
 		  }
 		}
 
 		//  if (outer && outer.tags) {
-		if (outer) { // allows tags to be attached to relation - instead of outer way
-		  return { outer:outer, inner:inner };
+		if ( outer ) { // allows tags to be attached to relation - instead of outer way
+		  return { outer:outer, inner:inner }
 		}
 	}
 
 
-	function getFootprint(points) {
-	    if (!points) {
-	      return;
+	function getFootprint( points ) {
+	    if ( !points ) {
+	      return
 	    }
 
-	    var footprint = [], p;
-	    for (var i = 0, il = points.length; i < il; i++) {
-	      	p = _nodes[ points[i] ];
-	      	footprint.push(p[0], p[1]);
+	    let footprint = [], p
+	    for ( let i = 0, il = points.length; i < il; i++ ) {
+	      	p = _nodes[ points[i] ]
+	      	footprint.push( p[0], p[1] )
 	    }
 
 	    // do not close polygon yet
-	    if (footprint[footprint.length-2] !== footprint[0] && footprint[footprint.length-1] !== footprint[1]) {
-	      	footprint.push(footprint[0], footprint[1]);
+	    if ( footprint[footprint.length - 2] !== footprint[0] && footprint[footprint.length - 1] !== footprint[1] ) {
+	      	footprint.push( footprint[0], footprint[1] )
 	    }
 
 	    // can't span a polygon with just 2 points (+ start & end)
-	    if (footprint.length < 8) {
-	      	return;
+	    if ( footprint.length < 8 ) {
+	      	return
 	    }
 
-	    return footprint;
+	    return footprint
 	}
 
 
 
-	function mergeItems(dst, src) {
-	    for (var p in src) {
-	      if (src.hasOwnProperty(p)) {
-	        dst[p] = src[p];
+	function mergeItems( dst, src ) {
+	    for ( let p in src ) {
+	      if ( src.hasOwnProperty( p ) ) {
+	        dst[p] = src[p]
 	      }
 	    }
-	    return dst;
+	    return dst
 	}
 
 
-	function filterItem(item, footprint) {
-	    var res = importer.alignProperties(item.tags);
-	    res.tags = item.tags;  // Keeping the raw tags too
-	    if (item.id) {
-	      res.id = item.id;
+	function filterItem( item, footprint ) {
+	    let res = importer.alignProperties( item.tags )
+	    res.tags = item.tags  // Keeping the raw tags too
+	    if ( item.id ) {
+	      res.id = item.id
 	    }
 
-	    if (footprint) {
-	      res.footprint = importer.makeWinding(footprint, importer.clockwise);
+	    if ( footprint ) {
+	      res.footprint = importer.makeWinding( footprint, importer.clockwise )
 	    }
 
-	    if (res.shape === 'cone' || res.shape === 'cylinder') {
-	      res.radius = importer.getRadius(res.footprint);
+	    if ( res.shape === 'cone' || res.shape === 'cylinder' ) {
+	      res.radius = importer.getRadius( res.footprint )
 	    }
 
-	    return res;
+	    return res
 	}
 
 
-	function processNode(node) {
-		_nodes[node.id] = [node.lat, node.lon];
+	function processNode( node ) {
+		_nodes[node.id] = [ node.lat, node.lon ]
 	}
 
 
-	function processWay(way) {
-		if (isBuilding(way)) {
-		  	var item, footprint;
-		  	if ( footprint = getFootprint(way.nodes) ) {
-		    	item = filterItem(way, footprint);
-		    	MAP_DATA.push(item);
+	function processWay( way ) {
+		if ( isBuilding( way ) ) {
+		  	let item, footprint
+		  	if ( footprint = getFootprint( way.nodes ) ) {
+		    	item = filterItem( way, footprint )
+		    	MAP_DATA.push( item )
 		  	}
-		  	return;
+		  	return
 		}
 
-		var tags = way.tags;
-		if (!tags || (!tags.highway && !tags.railway && !tags.landuse)) { // TODO: add more filters
-		  	_ways[way.id] = way;
+		let tags = way.tags
+		if ( !tags || ( !tags.highway && !tags.railway && !tags.landuse ) ) { // TODO: add more filters
+		  	_ways[way.id] = way
 		}
 	}
 
 
-	function processRelation(relation) {
-		var relationWays, outerWay, holes = [],
-		  	item, relItem, outerFootprint, innerFootprint;
-		if (!isBuilding(relation) ||
-		  	(relation.tags.type !== 'multipolygon' && relation.tags.type !== 'building') ) {
-		  	return;
+	function processRelation( relation ) {
+		let relationWays, outerWay, holes = [],
+		  	item, relItem, outerFootprint, innerFootprint
+		if ( !isBuilding( relation ) ||
+		  	( relation.tags.type !== 'multipolygon' && relation.tags.type !== 'building' ) ) {
+		  	return
 		}
 
-		if ((relationWays = getRelationWays(relation.members))) {
-		  	relItem = filterItem(relation);
-		  	if ((outerWay = relationWays.outer)) {
-		    	if (outerFootprint = getFootprint(outerWay.nodes)) {
-			      	item = filterItem(outerWay, outerFootprint);
-			      	for (var i = 0, il = relationWays.inner.length; i < il; i++) {
-			        	if ((innerFootprint = getFootprint(relationWays.inner[i].nodes))) {
-			          		holes.push( importer.makeWinding(innerFootprint, importer.counterClockwise) );
+		if ( ( relationWays = getRelationWays( relation.members ) ) ) {
+		  	relItem = filterItem( relation )
+		  	if ( ( outerWay = relationWays.outer ) ) {
+		    	if ( outerFootprint = getFootprint( outerWay.nodes ) ) {
+			      	item = filterItem( outerWay, outerFootprint )
+			      	for ( let i = 0, il = relationWays.inner.length; i < il; i++ ) {
+			        	if ( ( innerFootprint = getFootprint( relationWays.inner[i].nodes ) ) ) {
+			          		holes.push( importer.makeWinding( innerFootprint, importer.counterClockwise ) )
 			        	}
 			      	}
-			      	if (holes.length) {
-			        	item.holes = holes;
+			      	if ( holes.length ) {
+			        	item.holes = holes
 			      	}
-			      	MAP_DATA.push( mergeItems(item, relItem) );
+			      	MAP_DATA.push( mergeItems( item, relItem ) )
 		    	}
 		  	}
 		}
@@ -1280,22 +1283,22 @@ function constructor( finalCallback, filterCallback ) {
 
 
 	this.parse = function( osmData ) {
-		var item, buildData;
-		for ( var i = 0, len = osmData.elements.length; i < len; i++ ) {
-			item = osmData.elements[i];
+		let item, buildData
+		for ( let i = 0, len = osmData.elements.length; i < len; i++ ) {
+			item = osmData.elements[i]
 			switch ( item.type ) {
-				case 'node': processNode( item ); break;
-				case 'way': processWay( item ); break;
-				case 'relation': processRelation( item ); break;
+				case 'node': processNode( item ); break
+				case 'way': processWay( item ); break
+				case 'relation': processRelation( item ); break
 			}
 		}
 		( filterCallback ) ? buildData = filterCallback.call( this, MAP_DATA )
-						   : buildData = MAP_DATA;
-		finalCallback.apply( this, [ buildData ] );
+						   : buildData = MAP_DATA
+		finalCallback.apply( this, [ buildData ] )
 	}
 
 
 }
 
-module.exports = constructor;
-},{"./importer.js":3}]},{},[5])
+module.exports = constructor
+},{ './importer.js':3 } ] },{},[ 5 ] )

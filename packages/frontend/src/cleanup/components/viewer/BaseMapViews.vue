@@ -21,6 +21,13 @@
           {{ item.title }}
         </v-list-item-title>
       </v-list-item>
+      <v-switch
+        v-model="switch1"
+        inset
+        :label="`3D`"
+        class="ml-2 pa-1"
+        @click="setBuildings()"
+      ></v-switch>
     </v-list>
   </v-menu>
 </template>
@@ -37,18 +44,19 @@ export default {
     return {
       items: [
         { index: 0, title: 'No map' },
-        { index: 1, title: 'Mapbox Streets' },
-        { index: 2, title: 'Mapbox Monochrome' },
-        { index: 3, title: 'Mapbox Satellite' },
-        { index: 4, title: 'Mapbox Streets 3D Buildings' },
-        { index: 5, title: 'Mapbox Monochrome 3D Buildings' },
-        { index: 6, title: 'Mapbox Satellite 3D Buildings' }
-      ]
+        { index: 1, title: 'Mapbox Light' },
+        { index: 2, title: 'Mapbox Dark' }
+      ],
+      switch1: false
     }
   },
   methods: {
     setSurroundings(index) {
-      window.__viewer.addMapAndBuild(index, this.lat, this.lon, this.north, this.api)
+      window.__viewer.addMapAndBuild(index, this.lat, this.lon, this.north, this.api, this.switch1)
+    },
+    setBuildings() {
+      if (this.switch1 == false) window.__viewer.hideBuild()
+      if (this.switch1 == true) window.__viewer.showBuild()
     }
   }
 }

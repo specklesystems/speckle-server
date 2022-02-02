@@ -276,12 +276,27 @@ export default class Viewer extends EventEmitter {
     // TODO: currently it's easier to simply refresh the page :)
   }
   
-  async addMapAndBuild( index, lat, lon, north, api ) {
-    if ( this.surroundings ) this.surroundings.selectedMap( index )
-    else {
-      if ( index !== 0 ) this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api )
+  async addMapAndBuild( index, lat, lon, north, api, build ) {
+    if ( this.surroundings ) {
+      this.surroundings.selectedMap( index )
+      this.surroundings.getBuildings3d( build )
+      await this.surroundings.addMap()
+    }else { // if non-existing
+      this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api, build )
+      await this.surroundings.addMap()
     }
-    await this.surroundings.addMap()
+  }
+  hideBuild() {
+    if ( this.surroundings ) {
+      this.surroundings.getBuildings3d( false )
+      this.surroundings.hideBuild()
+    }
+  }
+  showBuild() {
+    if ( this.surroundings ) {
+      this.surroundings.getBuildings3d( true )
+      this.surroundings.showBuild()
+    }
   }
 
 }
