@@ -15,7 +15,7 @@ router.get( '/:streamId/:objectId', async function( req, res, next ) {
   let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
   if ( !obj ) {
-    return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+    return res.status( 404 ).send( 'Failed to find object.' )
   }
 
   let simpleText = req.headers.accept === 'text/plain'
@@ -50,7 +50,7 @@ router.get( '/:streamId/:objectId/single', async ( req, res ) => {
   let obj = await getObject( { streamId: req.params.streamId, objectId: req.params.objectId } )
 
   if ( !obj ) {
-    return res.status( 404 ).send( `Failed to find object ${req.params.objectId}.` )
+    return res.status( 404 ).send( 'Failed to find object.' )
   }
 
   console.log( `Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}` )

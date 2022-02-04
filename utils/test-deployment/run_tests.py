@@ -44,4 +44,16 @@ server_info = client.server.get()
 assert isinstance(server_info, ServerInfo), "GraphQL ServerInfo query error"
 print(f"GraphQL operation succeeded. Server name: {server_info.name}")
 
+# Test that the deployed server version matches the expected version
+SERVER_VERSION = ''
+if len(sys.argv) > 2:
+    SERVER_VERSION = sys.argv[2]
+if not SERVER_VERSION:
+    SERVER_VERSION = os.getenv('SERVER_VERSION')
+if SERVER_VERSION:
+    assert server_info.version == SERVER_VERSION, f"The deployed version {server_info.version} doesn't match the expected {SERVER_VERSION}"
+    print(f"Server version {SERVER_VERSION} is deployed and available")
+else:
+    print("Not testing server version, since it an expected value was not provided via env var or command-line argument")
+
 print('Deployment tests PASS')

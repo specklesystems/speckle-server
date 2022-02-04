@@ -36,12 +36,12 @@ module.exports = {
     } )
 
     // Link it to a branch
-    await BranchCommits( ).insert( {branchId: branchId, commitId: id} )
+    await BranchCommits( ).insert( { branchId: branchId, commitId: id } )
     // Link it to a stream
-    await StreamCommits( ).insert( {streamId: streamId,commitId: id} )
+    await StreamCommits( ).insert( { streamId: streamId,commitId: id } )
 
     // update stream updated at
-    await Streams().where( {id: streamId} ).update( {updatedAt: knex.fn.now()} )
+    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
     return id
   },
 
@@ -59,14 +59,15 @@ module.exports = {
     return await Commits( ).where( { id: id } ).update( { message: message } )
   },
 
-  async getCommitById( { id } ) {
+  async getCommitById( { streamId, id } ) {
     let query = await Commits( )
       .columns( [ { id: 'commits.id' }, 'message', 'referencedObject', 'sourceApplication', 'totalChildrenCount', 'parents', 'commits.createdAt', { branchName: 'branches.name' }, { authorName: 'users.name' }, { authorId: 'users.id' }, { authorAvatar: 'users.avatar' } ] )
       .select( )
+      .join( 'stream_commits', 'commits.id', 'stream_commits.commitId' )
       .join( 'branch_commits', 'commits.id', 'branch_commits.commitId' )
       .join( 'branches', 'branches.id', 'branch_commits.branchId' )
       .leftJoin( 'users', 'commits.author', 'users.id' )
-      .where( { 'commits.id': id } )
+      .where( { 'stream_commits.streamId': streamId, 'commits.id': id } )
       .first( )
     return await query
   },

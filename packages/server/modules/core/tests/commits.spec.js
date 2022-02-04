@@ -32,7 +32,6 @@ const {
 } = require( '../services/commits' )
 
 describe( 'Commits @core-commits', ( ) => {
-
   let user = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie4342@gmail.com',
@@ -103,11 +102,10 @@ describe( 'Commits @core-commits', ( ) => {
 
     let res = await deleteCommit( { id: tempCommit } )
     expect( res ).to.equal( 1 )
-
   } )
 
   it( 'Should get a commit by id', async ( ) => {
-    let cm = await getCommitById( { id: commitId1 } )
+    let cm = await getCommitById( { streamId: stream.id, id: commitId1 } )
     expect( cm.message ).to.equal( 'FIRST COMMIT YOOOOOO' )
     expect( cm.authorId ).to.equal( user.id )
   } )
@@ -187,7 +185,7 @@ describe( 'Commits @core-commits', ( ) => {
     let { commits: branchCommits } = await getCommitsByBranchName( { streamId: stream.id, branchName: 'main', limit: 2 } )
     let branchCommit = branchCommits[0]
 
-    let idCommit = await getCommitById( { id: commitId3 } )
+    let idCommit = await getCommitById( { streamId: stream.id, id: commitId3 } )
 
     for ( let commit of [ userCommit, serverCommit, branchCommit, idCommit ] ) {
       expect( commit ).to.have.property( 'sourceApplication' )
@@ -207,7 +205,7 @@ describe( 'Commits @core-commits', ( ) => {
   } )
 
   it( 'Should have an array of parents', async() => {
-    let commits = [ await getCommitById( { id: commitId3 } ), await await getCommitById( { id: commitId2 } ) ]
+    let commits = [ await getCommitById( { streamId: stream.id, id: commitId3 } ), await getCommitById( { streamId: stream.id, id: commitId2 } ) ]
 
     for ( let commit of commits ) {
       expect( commit ).to.have.property( 'parents' )

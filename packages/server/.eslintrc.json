@@ -1,4 +1,7 @@
 {
+  // "extends": [
+  //   "@wemake-services/javascript"
+  // ]
   "env": {
     "browser": true,
     "commonjs": true,

@@ -46,38 +46,39 @@ module.exports = ( app ) => {
 
           let gzippedBuffer = Buffer.concat( buffer )
           if ( gzippedBuffer.length > MAX_FILE_SIZE ) {
-            requestDropped = true
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
-            return res.status( 400 ).send( `File size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+            if ( !requestDropped ) res.status( 400 ).send( `File size too large (${gzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+            requestDropped = true
           }
 
           let gunzippedBuffer = zlib.gunzipSync( gzippedBuffer ).toString( )
           if ( gunzippedBuffer.length > MAX_FILE_SIZE ) {
-            requestDropped = true
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
-            return res.status( 400 ).send( `File size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+            if ( !requestDropped ) res.status( 400 ).send( `File size too large (${gunzippedBuffer.length} > ${MAX_FILE_SIZE})` )
+            requestDropped = true
           }
 
           try {
             objs = JSON.parse( gunzippedBuffer )
           } catch ( e ) {
-            requestDropped = true
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch not in JSON format` )
-            return res.status( 400 ).send( 'Failed to parse data.' )
+            if ( !requestDropped ) res.status( 400 ).send( 'Failed to parse data.' )
+            requestDropped = true
           }
 
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
 
           let promise = createObjectsBatched( req.params.streamId, objs ).catch( e => {
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: ${e.message}` )
+            if ( !requestDropped ) res.status( 400 ).send( 'Error inserting object in the database. Check server logs for details' )
             requestDropped = true
-            return res.status( 400 ).send( e.message )
           } )
           promises.push( promise )
 
           await promise
 
-          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzippedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${gunzippedBuffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB, dropped=${requestDropped})` )
         } )
       } else if ( mimetype === 'text/plain' || mimetype === 'application/json' || mimetype === 'application/octet-stream' ) {
         let buffer = ''
@@ -92,33 +93,35 @@ module.exports = ( app ) => {
           let objs = [ ]
 
           if ( buffer.length > MAX_FILE_SIZE ) {
-            requestDropped = true
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch size too large (${buffer.length} > ${MAX_FILE_SIZE})` )
-            return res.status( 400 ).send( `File size too large (${buffer.length} > ${MAX_FILE_SIZE})` )
+            if ( !requestDropped ) res.status( 400 ).send( `File size too large (${buffer.length} > ${MAX_FILE_SIZE})` )
+            requestDropped = true
           }
 
           try {
             objs = JSON.parse( buffer )
           } catch ( e ) {
-            requestDropped = true
             debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: Batch not in JSON format` )
-            return res.status( 400 ).send( 'Failed to parse data.' )
+            if ( !requestDropped ) res.status( 400 ).send( 'Failed to parse data.' )
+            requestDropped = true
           }
           last = objs[ objs.length - 1 ]
           totalProcessed += objs.length
 
           let promise = createObjectsBatched( req.params.streamId, objs ).catch( e => {
+            debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Upload error: ${e.message}` )
+            if ( !requestDropped ) res.status( 400 ).send( 'Error inserting object in the database. Check server logs for details' )
             requestDropped = true
-            return res.status( 400 ).send( e.message )
           } )
           promises.push( promise )
 
           await promise
-          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${buffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB)` )
+          debug( 'speckle:info' )( `[User ${req.context.userId || '-'}] Uploaded batch of ${objs.length} objects to stream ${req.params.streamId} (size: ${buffer.length / 1000000} MB, duration: ${( Date.now() - t0 ) / 1000}s, crtMemUsage: ${process.memoryUsage( ).heapUsed / 1024 / 1024} MB, dropped=${requestDropped})` )
         } )
       } else {
+        debug( 'speckle:error' )( `[User ${req.context.userId || '-'}] Invalid ContentType header: ${mimetype}` )
+        if ( !requestDropped ) res.status( 400 ).send( 'Invalid ContentType header. This route only accepts "application/gzip", "text/plain" or "application/json".' )
         requestDropped = true
-        return res.status( 400 ).send( 'Invalid ContentType header. This route only accepts "application/gzip", "text/plain" or "application/json".' )
       }
     } )
 

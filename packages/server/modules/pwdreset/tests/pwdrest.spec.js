@@ -2,12 +2,10 @@
 const chai = require( 'chai' )
 const chaiHttp = require( 'chai-http' )
 const request = require( 'supertest' )
-const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 
-const { init, startHttp } = require( `${appRoot}/app` )
+const { init } = require( `${appRoot}/app` )
 
-const expect = chai.expect
 chai.use( chaiHttp )
 
 const knex = require( `${appRoot}/db/knex` )
@@ -92,8 +90,5 @@ describe( 'Password reset requests @passwordresets', ( ) => {
       .expect( 400 )
 
   } )
-
-
-
 } )
 
