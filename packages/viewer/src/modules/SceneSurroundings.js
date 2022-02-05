@@ -84,8 +84,8 @@ export default class SceneSurroundings {
 
     this.removeMap()
     this.hideBuild()
-    console.log( selectedMap )
-    console.log( build )
+    //console.log( selectedMap )
+    //console.log( build )
 
     if ( !this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )  this.addBuildings() // add if there are no buildings in the scene yet
     if ( this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) && ( build === true && selectedMap !== 0 ) )  this.showBuild() // if there are buildings in the scene: if toggle is TRUE and map is not 0: show and change color, scale, rotation 
@@ -258,7 +258,6 @@ export default class SceneSurroundings {
     console.log( url )
     let client = new XMLHttpRequest()
     let thisContext = this
-    let scale = this.getScale()
 
     client.onreadystatechange = function() {
     if ( this.readyState === 4 && this.status === 200 ) {
@@ -275,8 +274,10 @@ export default class SceneSurroundings {
     let ways = []
     let tags = []
 
-    let relations = []
-    let tags_relations = []
+    //let relations = []
+    //let tags_relations = []
+    let rel_outer_ways = []
+    let rel_outer_ways_tags = []
 
     let ways_part = []
     let nodes = []
@@ -295,19 +296,45 @@ export default class SceneSurroundings {
       }
       // get relations
         if ( feature.type === 'relation' ) {
+          let outer_ways = []
+          let outer_ways_tags = { building: feature.tags['building'], layer: feature.tags['layer'], levels: feature.tags['building:levels'], height: feature.tags['height'] }
           for ( let n = 0; n < feature.members.length; n++ ) {
             // TODO: if several Outer ways, combine them
             if ( feature.members[n].type === 'way' && feature.members[n].role === 'outer' ) {
-              relations.push( { ref: feature.members[n].ref } )
-              if ( feature.tags ) tags_relations.push( { building: feature.tags['building'], layer: feature.tags['layer'], levels: feature.tags['building:levels'], height: feature.tags['height'] } )
-              else tags_relations.push( {} )
+              outer_ways.push( { ref: feature.members[n].ref } )
+
+              //relations.push( { ref: feature.members[n].ref } )
+              //if ( feature.tags ) tags_relations.push( { building: feature.tags['building'], layer: feature.tags['layer'], levels: feature.tags['building:levels'], height: feature.tags['height'] } )
+              //else tags_relations.push( {} )
             }
           }
+          rel_outer_ways.push( outer_ways )
+          rel_outer_ways_tags.push( outer_ways_tags )
         }
       // get nodes (that don't have tags)
       if ( feature.type === 'node' && !feature.tags ) nodes.push( { id: feature.id, lat: feature.lat, lon: feature.lon } )
     }
+    /////////////////// turn relations_OUTER into ways
+    for ( let n = 0; n < rel_outer_ways.length; n++ ) { 
+      // there will be a list of component "ways" in each of rel_outer_ways
+      let full_node_list = []
+
+      for ( let m = 0; m < rel_outer_ways[n].length; m++ ) {
+        for ( let k = 0; k < ways_part.length; k++ ) { 
+          if ( k === ways_part.length ) break
+          if ( rel_outer_ways[n][m].ref === ways_part[k].id ) {
+            Array.prototype.push.apply( full_node_list, ways_part[k].nodes )
+            ways_part.splice( k, 1 ) // remove used ways_parts
+            k -= 1 // reset index
+            break
+          }
+        }
+      }
+      ways.push( { nodes: full_node_list } ), tags.push( { building: rel_outer_ways_tags[n].building, layer: rel_outer_ways_tags[n].layer, levels: rel_outer_ways_tags[n].levels, height: rel_outer_ways_tags[n].height } )
+
+    }
     /////////////////// turn relations into ways
+    /*
     for ( let n = 0; n < relations.length; n++ ) { // go through relations
       for ( let k = 0; k < ways_part.length; k++ ) { // go through ways (that don't have tags)
         if ( k === ways_part.length ) break
@@ -315,11 +342,11 @@ export default class SceneSurroundings {
           ways.push( { nodes: ways_part[k].nodes } ), tags.push( { building: tags_relations[n].building, layer: tags_relations[n].layer, levels: tags_relations[n].levels, height: tags_relations[n].height } )
           ways_part.splice( k, 1 ) // remove used ways_parts
           k -= 1 // reset index
-          //console.log( ways_part.length )
           break
         }
       }
     }
+    */
     this.buildingsAmount = ways.length
     
     ////////////////////////get coords of Ways
