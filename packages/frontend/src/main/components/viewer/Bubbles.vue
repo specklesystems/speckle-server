@@ -59,7 +59,7 @@ import { v4 as uuid } from 'uuid'
 
 export default {
   components: {
-    UserAvatar: () => import('@/cleanup/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar')
   },
   apollo: {
     $subscribe: {

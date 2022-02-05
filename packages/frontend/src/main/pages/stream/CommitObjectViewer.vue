@@ -129,7 +129,19 @@
       >
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
-
+      <div
+        style="
+          height: 100vh;
+          width: 100%;
+          top: -64px;
+          left: 0px;
+          position: absolute;
+          z-index: 4;
+          pointer-events: none;
+        "
+      >
+        <bubbles />
+      </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
         <v-progress-linear
@@ -202,7 +214,8 @@ export default {
     ObjectSelection: () => import('@/main/components/viewer/ObjectSelection'),
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
-    Filters: () => import('@/main/components/viewer/Filters')
+    Filters: () => import('@/main/components/viewer/Filters'),
+    Bubbles: () => import('@/main/components/viewer/Bubbles')
   },
   data: () => ({
     loadedModel: false,

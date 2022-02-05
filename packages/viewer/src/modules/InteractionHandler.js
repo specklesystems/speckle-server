@@ -8,7 +8,7 @@ export default class InteractionHandler {
     this.preventSelection = false
     
     this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: false } )
-    this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
+    this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, side: THREE.DoubleSide, wireframe:false, transparent: true, opacity: 0.3 } )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     // Fix overlapping faces flickering
     this.selectionMeshMaterial.polygonOffset = true
@@ -46,7 +46,7 @@ export default class InteractionHandler {
     }
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
-    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null )
+    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null, objs[0].point )
   }
 
   _handleSelect( objs ) {
@@ -73,14 +73,17 @@ export default class InteractionHandler {
         for( let child of blockObjs ) {          
           child.material = this.selectionMeshMaterial
           this.selectedObjects.add( child )
+          //this.viewer.outlinePass.selectedObjects.push( child )
         }
         break
       }
       case 'Mesh':
         this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        //this.viewer.outlinePass.selectedObjects.push( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
       case 'Line':
         this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        //this.viewer.outlinePass.selectedObjects.push( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
       case 'Point':
         console.warn( 'Point selection not implemented.' )
@@ -99,7 +102,7 @@ export default class InteractionHandler {
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
-    this.viewer.emit( 'select', this.selectedObjectsUserData )
+    this.viewer.emit( 'select', this.selectedObjectsUserData, objs[0].point )
   }
 
   getParentBlock( block ) {

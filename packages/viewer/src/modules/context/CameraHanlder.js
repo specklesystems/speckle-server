@@ -20,7 +20,7 @@ export default class CameraHandler {
 
     CameraControls.install( { THREE: THREE } )
     this.controls = new CameraControls( this.camera, this.viewer.renderer.domElement )
-    this.controls.maxPolarAngle = Math.PI / 1.5
+    this.controls.maxPolarAngle = Math.PI / 2
     this.setupWASDControls()
 
     this.cameras = [
@@ -45,6 +45,11 @@ export default class CameraHandler {
     this.controls.addEventListener( 'rest', () => { setTimeout( () => { this.orbiting = false }, 400 ) } )
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
+    // https://github.com/specklesystems/speckle-server/issues/560
+    // NOTE: To activate this, uncomment the lines below and remove the preventDefaults() from the SelectionHelper class.
+    // Dim's conclusion: not worth it: makes rotations unintuitive in models with context (e.g., https://latest.speckle.dev/streams/4ed51ed832/objects/93648f9789c9a4337d6c9d15b00463b4)
+    // this.viewer.container.addEventListener( 'mousedown', ( event ) => this._setOrbitPoint( event.clientX, event.clientY ) )
+    // this.viewer.container.addEventListener( 'touchstart', ( event ) => this._setOrbitPoint( event.changedTouches[ 0 ].clientX, event.changedTouches[ 0 ].clientY ) )
     this.onWindowResize()
   }
 
@@ -176,5 +181,26 @@ export default class CameraHandler {
     this.orthoCamera.top = fustrumSize / 2
     this.orthoCamera.bottom = -fustrumSize / 2
     this.orthoCamera.updateProjectionMatrix()
+  }
+
+  // https://github.com/specklesystems/speckle-server/issues/560
+  _setOrbitPoint( mouseX, mouseY ) {
+    const elRect = this.viewer.container.getBoundingClientRect()
+    const canvasX = mouseX - elRect.left
+    const canvasY = mouseY - elRect.top
+    const normalizedMouse = new THREE.Vector2( ( canvasX / elRect.width ) * 2.0 - 1.0,( ( elRect.height - canvasY ) / elRect.height ) * 2.0 - 1.0 )
+    const raycaster = new THREE.Raycaster()
+    raycaster.setFromCamera( normalizedMouse, this.camera )
+
+    const intersections = raycaster.intersectObjects( this.viewer.sceneManager.allObjects )
+    if ( intersections.length !== 0 ) {
+      this.controls.setOrbitPoint(
+        intersections[ 0 ].point.x,
+        intersections[ 0 ].point.y,
+        intersections[ 0 ].point.z,
+        false
+      )
+
+    }
   }
 }
