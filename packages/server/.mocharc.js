@@ -28,5 +28,6 @@ console.log( '\n' )
 
 
 module.exports = {
-  spec: testDirs
+  spec: testDirs,
+  require: 'test/hooks.js'
 }

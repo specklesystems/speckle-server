@@ -1,43 +1,28 @@
 /* istanbul ignore file */
-const crypto = require( 'crypto' )
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
-const assert = require( 'assert' )
+const expect = require( 'chai' ).expect
+const request = require( 'supertest' )
+
 const appRoot = require( 'app-root-path' )
 
-const { init, startHttp } = require( `${appRoot}/app` )
+const { beforeEachContext, initializeTestServer } = require( `${appRoot}/test/hooks` )
+const { generateManyObjects } = require( `${appRoot}/test/helpers` )
 
-const expect = chai.expect
-chai.use( chaiHttp )
-
-const knex = require( `${appRoot}/db/knex` )
-
-const { createUser, deleteUser, getUsers, archiveUser, makeUserAdmin } = require( '../services/users' )
+const { createUser, getUsers, archiveUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
-const { createObject, createObjects } = require( '../services/objects' )
 
-let addr
-let wsAddr
-let expressApp
+let app
+let server
+let sendRequest
 
 describe( 'GraphQL API Core @core-api', ( ) => {
   let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wowwowwowwowwow' }
   let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wowwowwowwowwow' }
   let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wowwowwowwowwow' }
-  let testServer
 
   // set up app & two basic users to ping pong permissions around
   before( async ( ) => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-    let { app } = await init( )
-    expressApp = app
-    let { server } = await startHttp( app, 0 )
-    app.on( 'appStarted', () => {
-      addr    = `http://localhost:${server.address().port}`
-      wsAddr = `ws://localhost:${server.address().port}`
-    } )
-    testServer = server
+    ( { app } = await beforeEachContext( ) );
+    ( { server, sendRequest, serverAddress } = await initializeTestServer( app ) )
 
     userA.id = await createUser( userA )
     userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'server:setup', 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
@@ -48,8 +33,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
   } )
 
   after( async ( ) => {
-    await knex.migrate.rollback( )
-    testServer.close( )
+    await server.close( )
   } )
 
   // the stream ids
@@ -1395,8 +1379,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
 
     it ( 'Should be forbidden to upload via rest API', async () => {
       let objects =  generateManyObjects( 2 )
-      let res = await chai
-        .request( expressApp )
+      let res = await request( app )
         .post( `/objects/${streamId}` )
         .set( 'Authorization', archivedUser.token )
         .set( 'Content-type', 'multipart/form-data' )
@@ -1406,8 +1389,7 @@ describe( 'GraphQL API Core @core-api', ( ) => {
 
     it ( 'Should be forbidden to download from private stream it had access to via rest API', async () => {
       // even if the object doesn't exist, so im not creating it...
-      let res = await chai
-        .request( expressApp )
+      let res = await request( app )
         .get( '/objects/thisIs/bogus' )
         .set( 'Authorization', archivedUser.token )
       expect( res ).to.have.status( 401 )
@@ -1420,16 +1402,14 @@ describe( 'GraphQL API Core @core-api', ( ) => {
       } )
       expect ( grantRes.body.data.streamGrantPermission ).to.equal( true )
       let objects =  generateManyObjects( 2 )
-      let res = await chai
-        .request( expressApp )
+      let res = await request( app )
         .post( `/objects/${streamRes.body.data.streamCreate}` )
         .set( 'Authorization', userA.token )
         .set( 'Content-type', 'multipart/form-data' )
         .attach( 'batch1', Buffer.from( JSON.stringify( objects.objs ), 'utf8' ) )
       expect( res ).to.have.status( 201 )
 
-      res = await chai
-        .request( expressApp )
+      res = await request( app )
         .get( `/objects/${streamRes.body.data.streamCreate}/${objects.objs[0].id}` )
         .set( 'Authorization', archivedUser.token )
       expect( res ).to.have.status( 200 )
@@ -1437,54 +1417,3 @@ describe( 'GraphQL API Core @core-api', ( ) => {
     } )
   } )
 } )
-
-/**
- * Sends a graphql request. Convenience wrapper.
- * @param  {string} auth the user's token
- * @param  {string} obj  the query/mutation to send
- * @return {Promise}      the awaitable request
- */
-function sendRequest( auth, obj, address = addr ) {
-  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
-}
-
-// const crypto = require( 'crypto' )
-
-function generateManyObjects( shitTon, noise ) {
-  shitTon = shitTon || 10000
-  noise = noise || Math.random( ) * 100
-
-  let objs = [ ]
-
-  let base = { name: 'base bastard 2', noise: noise, __closure: {} }
-  // objs.push( base )
-  let k = 0
-
-  for ( let i = 0; i < shitTon; i++ ) {
-    let baby = {
-      name: `mr. ${i}`,
-      nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [ i + 42, i, i ] },
-      test: { value: i, secondValue: 'mallard ' + i % 10 },
-      similar: k,
-      even: i % 2 === 0,
-      objArr: [ { a: i }, { b: i * i }, { c: true } ],
-      noise: noise,
-      sortValueA: i,
-      sortValueB: i * 0.42 * i
-    }
-    if ( i % 3 === 0 ) k++
-
-    getAnIdForThisOnePlease( baby )
-
-    base.__closure[ baby.id ] = 1
-
-    objs.push( baby )
-  }
-
-  getAnIdForThisOnePlease( base )
-  return { commit: base, objs: objs }
-}
-
-function getAnIdForThisOnePlease( obj ) {
-  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
-}

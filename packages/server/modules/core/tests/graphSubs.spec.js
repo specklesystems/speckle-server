@@ -1,7 +1,6 @@
 /* eslint-disable no-undef */
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 const appRoot = require( 'app-root-path' )
 const request = require( 'supertest' )
 const gql = require( 'graphql-tag' )
@@ -10,14 +9,12 @@ const { WebSocketLink } = require( 'apollo-link-ws' )
 const { SubscriptionClient } = require( 'subscriptions-transport-ws' )
 const ws = require( 'ws' )
 
-
-const expect = chai.expect
-chai.use( chaiHttp )
-
 const knex = require( `${appRoot}/db/knex` )
 
 const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
+
+const { sleep, noErrors } = require( `${appRoot}/test/helpers` )
 
 let addr
 let wsAddr
@@ -90,7 +87,6 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
   } )
 
   after( async ( ) => {
-    await knex.migrate.rollback( )
     serverProcess.kill( )
   } )
 
@@ -594,20 +590,4 @@ describe( 'GraphQL API Subscriptions @gql-subscriptions', ( ) => {
  */
 function sendRequest( auth, obj, address = addr ) {
   return request( address ).post( '/graphql' ).set( { 'Authorization': auth, 'Accept': 'application/json' } ).send( obj )
-}
-
-function sleep( ms ) {
-  console.log( `\t Sleeping ${ms}ms ` )
-  return new Promise( ( resolve ) => {
-    setTimeout( resolve, ms )
-  } )
-}
-
-/**
- * Checks the response body for errors. To be used in expect assertions.
- * Will throw an error if 'errors' exist.
- * @param {*} res
- */
-function noErrors( res ) {
-  if ( 'errors' in res.body ) throw new Error( `Failed GraphQL request: ${res.body.errors[ 0 ].message}` )
 }
