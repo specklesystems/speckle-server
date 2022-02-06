@@ -381,4 +381,10 @@ export default class SectionBox {
     this.display.visible = true
   }
 
+  getCurrentBox() {
+    if( !this.display.visible ) return null
+    let box = new THREE.Box3().setFromBufferAttribute( this.boxGeometry.attributes.position )
+    return box
+  }
+
 }

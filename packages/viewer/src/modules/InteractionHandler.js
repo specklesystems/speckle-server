@@ -23,6 +23,8 @@ export default class InteractionHandler {
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add( this.selectedObjects )
     this.selectedObjects.renderOrder = 1000
+    this.selectionBox = new THREE.Group()
+    this.viewer.scene.add( this.selectionBox )
 
     this.overlayMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x57f7ff, side: THREE.DoubleSide, wireframe:false, transparent: true, opacity: 0.5 } )
     this.overlayMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
@@ -126,23 +128,29 @@ export default class InteractionHandler {
         return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
     }
 
-    let box 
+    // let box 
     if ( selType === 'Block' ) {
       this.selectedObjectsUserData.push( rootBlock.userData )
       this.selectedRawObjects.push( rootBlock )
-      box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
+      // box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
     } else {
       this.selectedObjectsUserData.push( objs[0].object.userData )
       this.selectedRawObjects.push( objs[0] )
-      box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
+      // box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     }
     
-    box.material = this.selectionEdgesMaterial
-    this.selectedObjects.add( box )
+    let box = new THREE.Box3().setFromObject( this.selectedObjects )
+    let boxHelper = new THREE.Box3Helper( box, 0x047EFB )
+    this.selectionBox.clear()
+    this.selectionBox.add( boxHelper )
     this.viewer.needsRender = true
+    
+    let selectionCenter = new THREE.Vector3()
+    box.getCenter( selectionCenter )
     let selectionInfo = {
       userData: this.selectedObjectsUserData,
-      location: objs[0].point
+      location: objs[0].point,
+      selectionCenter: selectionCenter
     }
     this.viewer.emit( 'select', selectionInfo )
   }
@@ -170,6 +178,7 @@ export default class InteractionHandler {
 
   deselectObjects() {
     this.selectedObjects.clear()
+    this.selectionBox.clear()
     this.selectedObjectsUserData = []
     this.selectedRawObjects = []
     this.viewer.needsRender = true
