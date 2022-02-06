@@ -547,7 +547,7 @@ export default {
     },
     captureSelect(selectionData) {
       this.selectionData.splice(0, this.selectionData.length)
-      this.selectionData.push(...selectionData)
+      this.selectionData.push(...selectionData.userData)
     }
   }
 }

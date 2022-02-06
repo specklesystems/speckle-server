@@ -24,7 +24,14 @@ export default class InteractionHandler {
     this.viewer.scene.add( this.selectedObjects )
     this.selectedObjects.renderOrder = 1000
 
+    this.overlayMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x57f7ff, side: THREE.DoubleSide, wireframe:false, transparent: true, opacity: 0.5 } )
+    this.overlayMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    this.overlaidObjects = new THREE.Group()
+    this.viewer.scene.add( this.overlaidObjects )
+    this.overlaidObjects.renderOrder = 2000
+
     this.selectedObjectsUserData = []
+    this.selectedRawObjects = []
 
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
@@ -34,6 +41,35 @@ export default class InteractionHandler {
         this.deselectObjects()
       }
     } )
+  }
+
+  // used to display objects selected by other users
+  overlayObjects( ids = [] ) {
+    this.overlaidObjects.clear()
+
+    let all = this.viewer.sceneManager.allObjects
+    let subsetToAdd = all.filter( obj => ids.indexOf( obj.uuid ) !== -1 )
+
+    for( let obj of subsetToAdd ) {
+      let selType = obj.type
+      switch( selType ) {
+        case 'Group': {
+          let blockObjs = this.getBlockObjectsCloned( obj )
+          for( let child of blockObjs ) {          
+            child.material = this.overlayMeshMaterial
+            this.overlaidObjects.add( child )
+          }
+          break
+        }
+        case 'Mesh':
+          this.overlaidObjects.add( new THREE.Mesh( obj.geometry, this.overlayMeshMaterial ) )
+          break
+        case 'Line':
+          this.overlaidObjects.add( new THREE.Line( obj.geometry, this.overlayMeshMaterial ) )
+          break
+      }
+    }
+    this.viewer.needsRender = true
   }
 
   _handleDoubleClick( objs ) {
@@ -46,7 +82,7 @@ export default class InteractionHandler {
     }
     else this.zoomToObject( objs[0].object )
     this.viewer.needsRender = true
-    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null, objs[0].point )
+    this.viewer.emit( 'object-doubleclicked', objs && objs.length !== 0 ? objs[0].object : null, objs && objs.length !== 0 ? objs[0].point : null )
   }
 
   _handleSelect( objs ) {
@@ -93,16 +129,22 @@ export default class InteractionHandler {
     let box 
     if ( selType === 'Block' ) {
       this.selectedObjectsUserData.push( rootBlock.userData )
+      this.selectedRawObjects.push( rootBlock )
       box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
     } else {
       this.selectedObjectsUserData.push( objs[0].object.userData )
+      this.selectedRawObjects.push( objs[0] )
       box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     }
     
     box.material = this.selectionEdgesMaterial
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
-    this.viewer.emit( 'select', this.selectedObjectsUserData, objs[0].point )
+    let selectionInfo = {
+      userData: this.selectedObjectsUserData,
+      location: objs[0].point
+    }
+    this.viewer.emit( 'select', selectionInfo )
   }
 
   getParentBlock( block ) {
@@ -129,8 +171,9 @@ export default class InteractionHandler {
   deselectObjects() {
     this.selectedObjects.clear()
     this.selectedObjectsUserData = []
+    this.selectedRawObjects = []
     this.viewer.needsRender = true
-    this.viewer.emit( 'select', this.selectedObjectsUserData )
+    this.viewer.emit( 'select', { userData: [], location: null } )
   }
 
   zoomToObject( target, fit = 1.2, transition = true ) {

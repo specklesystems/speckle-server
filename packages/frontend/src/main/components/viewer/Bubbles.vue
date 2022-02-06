@@ -1,20 +1,20 @@
 <template>
   <div
     ref="parent"
-    style="width: 100%; height: 100%; position: relative; pointer-events: none"
+    style="width: 100%; height: 100%; position: relative; pointer-events: none; overflow: hidden"
     class=""
   >
     <div
       v-for="user in users"
       :ref="`user-bubble-${user.uuid}`"
       :key="user.uuid"
-      class="absolute-pos rounded-pill"
+      class="absolute-pos rounded-pill user-bubble elevation-5"
       :style="`opacity: ${user.hidden ? '0.2' : 1}; border: 2px solid ${
         $vuetify.theme.dark ? '#047EFB' : '#047EFB'
       }`"
     >
-      <div @click="setUser(user)">
-        <user-avatar :id="user.id" :show-hover="false" :size="32" :margin="false"></user-avatar>
+      <div @click="setUserPow(user)">
+        <user-avatar :id="user.id" :show-hover="false" :size="42" :margin="false"></user-avatar>
         <span
           v-if="user.status === 'writing'"
           class="ellipsis-anim ml-1 mr-3 primary--text"
@@ -45,7 +45,7 @@
     >
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
-      <v-icon class="primary--text" large style="position: relative; right: -77%">
+      <v-icon class="primary--text" large style="position: relative; right: -77%; font-size: 3em">
         mdi-menu-right
       </v-icon>
     </div>
@@ -55,7 +55,7 @@
 import gql from 'graphql-tag'
 import throttle from 'lodash.throttle'
 import { v4 as uuid } from 'uuid'
-// import debounce from 'lodash.debounce'
+import debounce from 'lodash.debounce'
 
 export default {
   components: {
@@ -93,6 +93,8 @@ export default {
             user.camera = data.userCommentActivity.camera
             user.status = data.userCommentActivity.status
             user.filter = data.userCommentActivity.filter
+            user.selectionLocation = data.userCommentActivity.selectionLocation
+            user.selection = data.userCommentActivity.selection
             user.lastUpdate = Date.now()
             if (Math.random() < 0.5) user.status = 'writing'
             else user.status = 'viewing'
@@ -102,6 +104,7 @@ export default {
               hidden: false,
               id: data.userCommentActivity.userId,
               lastUpdate: Date.now(),
+              clipped: false,
               ...data.userCommentActivity
             })
           }
@@ -113,6 +116,8 @@ export default {
   data() {
     return {
       uuid: uuid(),
+      selectedIds: [],
+      selectionLocation: null,
       users: []
     }
   },
@@ -122,18 +127,28 @@ export default {
       'update',
       throttle(this.updateBubbles, 120)
     )
-    this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
+    this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 5000)
     window.addEventListener('beforeunload', async (e) => {
       await this.sendDisconnect()
     })
     this.resourceId = this.$route.params.resourceId
+    window.__resourceId = this.$route.params.resourceId
+    window.__viewer.on(
+      'select',
+      debounce((selectionInfo) => {
+        this.selectedIds = selectionInfo.userData.map((o) => o.id)
+        this.selectionLocation = selectionInfo.location
+        this.sendUpdateAndPrune()
+      }, 50)
+    )
+    window.__viewer.on('object-doubleclicked', (selectionInfo) => {})
   },
   async beforeDestroy() {
     await this.sendDisconnect()
     window.clearInterval(this.updateInterval)
   },
   methods: {
-    setUser(user) {
+    setUserPow(user) {
       let camToSet = user.camera
       if (camToSet[6] === 1) {
         window.__viewer.toggleCameraProjection()
@@ -174,6 +189,8 @@ export default {
 
       let data = {
         filter: this.$store.state.appliedFilter,
+        selection: this.selectedIds,
+        selectionLocation: this.selectionLocation,
         camera: c,
         userId: this.$userId(),
         uuid: this.uuid,
@@ -210,24 +227,33 @@ export default {
         `,
         variables: {
           streamId: this.$route.params.streamId,
-          resourceId: this.resourceId,
+          resourceId: this.resourceId || window.__resourceId,
           data: { userId: this.$userId(), uuid: this.uuid, status: 'disconnect' }
         }
       })
+      delete window.__resourceId
     },
     updateBubbles() {
       if (!this.$refs.parent) return
 
       let cam = window.__viewer.cameraHandler.activeCam.camera
       cam.updateProjectionMatrix()
-
+      let selectedObjects = []
       for (let user of this.users) {
         if (!this.$refs[`user-bubble-${user.uuid}`]) continue
+
+        if (user.selection) selectedObjects.push(...user.selection)
 
         let location = new THREE.Vector3(user.camera[0], user.camera[1], user.camera[2])
         let target = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5])
         let camDir = new THREE.Vector3().subVectors(target, location)
 
+        if (user.selectionLocation)
+          target = new THREE.Vector3(
+            user.selectionLocation.x,
+            user.selectionLocation.y,
+            user.selectionLocation.z
+          )
         camDir.project(cam)
         // camDir.normalize()
         target.project(cam)
@@ -250,37 +276,52 @@ export default {
         let newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
 
         // TODO: clamp sides
-        // const paddingX = 42
-        // const paddingY = 64
+        const paddingX = 42
+        const paddingYTop = 86
+        const paddingYBottom = 68
+        let tX = newTarget.x + 16
+        let tY = newTarget.y + 16
+        user.clipped = false
+        if (tX < paddingX) {
+          tX = paddingX
+          user.clipped = true
+        }
+        if (tX > this.$refs.parent.clientWidth - paddingX) {
+          tX = this.$refs.parent.clientWidth - paddingX
+          user.clipped = true
+        }
 
-        // if (newTarget.x < paddingX) newTarget.setX(paddingX)
-        // if (newTarget.x > this.$refs.parent.clientWidth - paddingX)
-        //   newTarget.setX(this.$refs.parent.clientWidth - paddingX)
-
-        // if (newTarget.y < paddingY) newTarget.setX(paddingY)
-        // if (newTarget.y > this.$refs.parent.clientWidth - paddingY)
-        //   newTarget.setX(this.$refs.parent.clientWidth - paddingY)
+        if (tY < paddingYTop) {
+          tY = paddingYTop
+          user.clipped = true
+        }
+        if (tY > this.$refs.parent.clientHeight - paddingYBottom) {
+          tY = this.$refs.parent.clientHeight - paddingYBottom
+          user.clipped = true
+        }
 
         this.$refs[
           `user-bubble-${user.uuid}`
-        ][0].style.transform = `translate(-50%, -50%) translate(${newTarget.x + 16}px,${
-          newTarget.y + 16
-        }px)`
+        ][0].style.transform = `translate(-50%, -50%) translate(${tX}px,${tY}px)`
 
-        this.$refs[
-          `user-target-${user.uuid}`
-        ][0].style.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
+        let uTargetEl = this.$refs[`user-target-${user.uuid}`][0]
+        uTargetEl.style.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
+        uTargetEl.style.opacity = user.clipped ? '0' : '1'
 
         const angle = Math.atan2(targetLoc.y - 16 - newTarget.y, targetLoc.x - 16 - newTarget.x)
-        this.$refs[
-          `user-arrow-${user.uuid}`
-        ][0].style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
+        let uArrowEl = this.$refs[`user-arrow-${user.uuid}`][0]
+        uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
+        uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
+
+      window.__viewer.interactions.overlayObjects(selectedObjects)
     }
   }
 }
 </script>
 <style scoped>
+.user-bubble {
+}
 .absolute-pos {
   pointer-events: auto;
   position: absolute;
@@ -295,7 +336,7 @@ export default {
   opacity: 0;
   -webkit-animation: ellipsis-dot 1s infinite;
   animation: ellipsis-dot 1s infinite;
-  font-size: 1.5em;
+  font-size: 3em;
   line-height: 10px;
   user-select: none;
 }
@@ -303,14 +344,17 @@ export default {
 .ellipsis-anim span:nth-child(1) {
   -webkit-animation-delay: 0s;
   animation-delay: 0s;
+  margin-right: -5px;
 }
 .ellipsis-anim span:nth-child(2) {
   -webkit-animation-delay: 0.1s;
   animation-delay: 0.1s;
+  margin-right: -5px;
 }
 .ellipsis-anim span:nth-child(3) {
   -webkit-animation-delay: 0.2s;
   animation-delay: 0.2s;
+  margin-right: -5px;
 }
 
 @-webkit-keyframes ellipsis-dot {
