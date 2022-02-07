@@ -19,7 +19,7 @@
     "dompurify": "^2.2.4",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
-    "marked": "^2.0.0",
+    "marked": "^4.0.10",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
     "tween": "^0.9.0",
