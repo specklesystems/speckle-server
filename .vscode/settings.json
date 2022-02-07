@@ -39,7 +39,8 @@
   "cSpell.userWords": ["Matomo", "SUPPRESSMSGBOXES", "matomo"],
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "cSpell.words": ["mixpanel"]
 
   // "[javascript]": {
   //   "editor.defaultFormatter": "dbaeumer.vscode-eslint"

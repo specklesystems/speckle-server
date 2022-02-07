@@ -102,7 +102,7 @@ exports.init = async ( ) => {
       res.set( 'Content-Type', prometheusClient.register.contentType )
       res.end( await prometheusClient.register.metrics() )
     } catch ( ex ) {
-      res.status( 500 ).end( ex )
+      res.status( 500 ).end( ex.message )
     }
   } )
 

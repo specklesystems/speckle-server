@@ -48,7 +48,7 @@ module.exports = {
         if ( commits.length !== 0 ) return commits[0]
         throw new ApolloError( 'Cannot retrieve commit (there are no commits in this stream).' )
       }
-      let c = await getCommitById( { id: args.id } )
+      let c = await getCommitById( { streamId: parent.id, id: args.id } )
       return c
     }
 
@@ -105,7 +105,7 @@ module.exports = {
     async commitUpdate( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
-      let commit = await getCommitById( { id: args.commit.id } )
+      let commit = await getCommitById( { streamId: args.commit.streamId, id: args.commit.id } )
       if ( commit.authorId !== context.userId )
         throw new ForbiddenError( 'Only the author of a commit may update it.' )
 
@@ -138,7 +138,7 @@ module.exports = {
         await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )  
       }
 
-      let commit = await getCommitById( { id: args.input.commitId } )
+      let commit = await getCommitById( { streamId: args.input.streamId, id: args.input.commitId } )
       let user = await getUser( context.userId )
 
       await saveActivity( {
@@ -157,7 +157,7 @@ module.exports = {
     async commitDelete( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.commit.streamId, 'stream:contributor' )
 
-      let commit = await getCommitById( { id: args.commit.id } )
+      let commit = await getCommitById( { streamId: args.commit.streamId, id: args.commit.id } )
       if ( commit.authorId !== context.userId )
         throw new ForbiddenError( 'Only the author of a commit may delete it.' )
 

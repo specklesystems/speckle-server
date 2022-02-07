@@ -6,6 +6,8 @@
 
 We're working to stabilize the 2.0 API, and until then there will be breaking changes.
 
+Note that this package contains two vue apps, the main frontend (located under @/main), and the viewer embed app (@/embed).
+
 Notes:
 
 - In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run serve` in the frontend package.
