@@ -20,7 +20,7 @@ module.exports = {
 
     if ( name ) module.exports.validateBranchName( { name } )
 
-    let [ id ] = await Branches( ).returning( 'id' ).insert( branch )
+    let [ { id } ] = await Branches( ).returning( 'id' ).insert( branch )
 
     // update stream updated at
     await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )

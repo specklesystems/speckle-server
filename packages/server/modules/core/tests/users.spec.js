@@ -104,7 +104,7 @@ describe( 'Actors & Tokens @user-services', () => {
       user.passwordDigest = await bcrypt.hash( user.password, 10 )
       delete user.password
 
-      const [ userId ] = await knex( 'users' ).returning( 'id' ).insert( user )
+      const [ { id: userId } ] = await knex( 'users' ).returning( 'id' ).insert( user )
 
       const userByEmail = await getUserByEmail( { email } )
       expect( userByEmail ).to.not.be.null

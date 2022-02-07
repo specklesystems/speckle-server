@@ -7,7 +7,7 @@ const fs = require( 'fs' )
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
-const { makeNetworkRequest, isLocalNetworkUrl } = require( './webhookCaller' )
+const { makeNetworkRequest } = require( './webhookCaller' )
 
 async function startTask() {
   let { rows } = await knex.raw( `
