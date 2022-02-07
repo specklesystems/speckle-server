@@ -8,6 +8,7 @@ query {
     inviteOnly
     version
     termsOfService
+    mapboxAPI
     roles {
       name
       description

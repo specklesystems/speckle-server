@@ -52,6 +52,7 @@ export default {
             company
             adminContact
             termsOfService
+            mapboxAPI
             scopes {
               name
               description

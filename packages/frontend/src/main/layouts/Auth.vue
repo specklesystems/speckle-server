@@ -42,6 +42,7 @@ export default {
             adminContact
             termsOfService
             inviteOnly
+            mapboxAPI
           }
         }
       `

@@ -134,14 +134,19 @@ export default {
       deleteEntries: false,
       sample: {
         Region: 'London',
-        Latitude: '0',
-        Longitude: '0',
+        Latitude: 0,
+        Longitude: 0,
         'Project Code': 'TX-023',
         Climate: {
           'Summer DBT [C]': 35,
           'Summer WBT [C]': 20,
           'Winter DBT [C]': -4,
           'Winter WBT [C]': -4
+        },
+        BaseMap: {
+          'Angle to true north': 0,
+          'Project Base Point LAT': 51.499268,
+          'Project Base Point LON': -0.122141
         }
       },
       saveValid: false,

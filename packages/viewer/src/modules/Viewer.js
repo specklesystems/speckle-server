@@ -7,8 +7,11 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 import InteractionHandler from './InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
+import SceneSurroundings from './SceneSurroundings'
 
 import SectionBox from './SectionBox'
+
+import { Units, getConversionFactor } from './converter/Units'
 
 export default class Viewer extends EventEmitter {
 
@@ -156,6 +159,7 @@ export default class Viewer extends EventEmitter {
   }
 
   render() {
+    //console.log(this.cameraHandler.activeCam.camera.position)
     if ( this.reflections && this.reflectionsNeedUpdate ) {
       // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
       // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
@@ -238,6 +242,13 @@ export default class Viewer extends EventEmitter {
   }
 
   async unloadAll() {
+    // remove map and buildings
+    if ( this.surroundings ) {
+      await this.surroundings.removeMap()
+      await this.surroundings.removeBuild( ) // ISSUE HERE: some objects are not being removed
+    }
+    //
+
     for( let key of Object.keys( this.loaders ) ) {
       await this.loaders[key].unload()
       delete this.loaders[key]
@@ -265,4 +276,28 @@ export default class Viewer extends EventEmitter {
   dispose() {
     // TODO: currently it's easier to simply refresh the page :)
   }
+  
+  async addMapAndBuild( index, lat, lon, north, api, build ) {
+    if ( this.surroundings ) {
+      this.surroundings.selectedMap( index )
+      this.surroundings.getBuildings3d( build )
+      await this.surroundings.addMap()
+    }else { // if non-existing
+      this.surroundings = new SceneSurroundings( this, index, lat, lon, north, api, build )
+      await this.surroundings.addMap()
+    }
+  }
+  hideBuild() {
+    if ( this.surroundings ) {
+      this.surroundings.getBuildings3d( false )
+      this.surroundings.hideBuild()
+    }
+  }
+  showBuild() {
+    if ( this.surroundings ) {
+      this.surroundings.getBuildings3d( true )
+      this.surroundings.showBuild()
+    }
+  }
+
 }

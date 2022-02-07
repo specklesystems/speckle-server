@@ -73,6 +73,10 @@ export default {
           label: 'Terms of service',
           hint: 'Url pointing to the terms of service page'
         },
+        mapboxAPI: {
+          label: 'Mapbox API access token',
+          hint: 'Access token generated using Mapbox account. Will be used to display base maps'
+        },
         inviteOnly: {
           label: 'Invite-Only mode',
           hint: 'Only users with an invitation will be able to join',
@@ -92,6 +96,7 @@ export default {
             adminContact
             termsOfService
             inviteOnly
+            mapboxAPI
           }
         }
       `,
