@@ -245,8 +245,9 @@ export default class Viewer extends EventEmitter {
     // remove map and buildings
     if ( this.surroundings ) {
       await this.surroundings.removeMap()
-      await this.surroundings.removeBuild()
+      await this.surroundings.removeBuild( ) // ISSUE HERE: some objects are not being removed
     }
+    //
 
     for( let key of Object.keys( this.loaders ) ) {
       await this.loaders[key].unload()

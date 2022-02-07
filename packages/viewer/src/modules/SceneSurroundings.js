@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import * as Geo from 'geo-three'
 import InteractionHandler from './InteractionHandler'
 import { Units, getConversionFactor } from './converter/Units'
+import { AnimationObjectGroup } from 'three'
 
 export default class SceneSurroundings {
 
@@ -17,6 +18,7 @@ export default class SceneSurroundings {
     this.lon = lon
     this.buildings3d = build
     this.buildingsAmount = 0
+    this.buildingGroup = null
     
     // adding map tiles
     this.map_providers = [
@@ -87,7 +89,7 @@ export default class SceneSurroundings {
     //console.log( selectedMap )
     //console.log( build )
 
-    if ( !this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )  this.addBuildings() // add if there are no buildings in the scene yet
+    if ( !this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )  await this.addBuildings() // add if there are no buildings in the scene yet
     if ( this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) && ( build === true && selectedMap !== 0 ) )  this.showBuild() // if there are buildings in the scene: if toggle is TRUE and map is not 0: show and change color, scale, rotation 
 
     if ( selectedMap > 0 ) {
@@ -151,53 +153,58 @@ export default class SceneSurroundings {
     this.viewer.scene.remove( selectedObject )    
     this.viewer.render()
   }
+
   async removeBuild() {
-    let objects = this.viewer.scene.children 
-    for ( let i = 0, len = objects.length; i < len; i++ ) {
-      if ( objects[i].name === 'OSM 3d buildings' ) this.viewer.scene.remove( objects[i] )
-    }
+    this.viewer.scene.remove( this.buildingGroup )
     this.viewer.render()
   }
+
   hideBuild() {
     console.log( 'hide buildings' )
     let objects = this.viewer.scene.children 
-    for ( let i = 0, len = objects.length; i < len; i++ ) {
-      if ( objects[i].name === 'OSM 3d buildings' ) objects[i].visible = false
-    }
+    this.viewer.scene.traverse( function( child ) {
+    //for ( let i = 0, len = objects.length; i < len; i++ ) {
+      if ( child.name === 'OSM 3d buildings' ) child.visible = false
+    } )
     this.viewer.render()
   }
   showBuild() {
     console.log( 'show buildings' )
+    console.log( this.viewer.scene.children )
     let selectedMap = this.selectedMap()
     let c = this.map_providers[selectedMap][2]
     let mat = this.viewer.sceneManager.solidMaterial.clone()
+    mat.color = new THREE.Color( c )
     //let rotationNorth = this.rotationNorth()
     //let scale = this.getScale()
 
     if ( this.buildings3d === true && selectedMap !== 0 ) {
       this.viewer.scene.traverse( function( child ) {
         if ( child.name === 'OSM 3d buildings' ) {
-          mat.color = new THREE.Color( c )
-          child.material = mat
-          child.visible = true
-          /*
-          let movingVector = new THREE.Vector3( 0, 0, 0 )
-          let rotatedVector = new THREE.Vector3( 0, 0, 0 )
-          
-          // bring mesh to zero coord and rotate
-          movingVector = new THREE.Vector3( child.position.x, child.position.y, 0 ) //get vector to correct location on the map
-          child.position.x -= movingVector.x
-          child.position.y -= movingVector.y
-          child.rotation.y += rotationNorth - child.rotation.y //rotate around (0,0,0)
+          child.visible = true // visibility of entire group
+          let meshes = child.children
+          for ( let i = 0; i < meshes.length; i++ ) {
+            meshes[i].material = mat
+            //meshes[i].visible = true
+            /* only usefull for dynamic position/rotation adjustment 
+            let movingVector = new THREE.Vector3( 0, 0, 0 )
+            let rotatedVector = new THREE.Vector3( 0, 0, 0 )
+            
+            // bring mesh to zero coord and rotate
+            movingVector = new THREE.Vector3( child.position.x, child.position.y, 0 ) //get vector to correct location on the map
+            child.position.x -= movingVector.x
+            child.position.y -= movingVector.y
+            child.rotation.y += rotationNorth - child.rotation.y //rotate around (0,0,0)
 
-          // move mesh back, but rotate the initial vector as well
-          rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3( 0,0,1 ), rotationNorth - child.rotation.y ) //rotate vector same as the map
-          child.position.x += rotatedVector.x
-          child.position.y += rotatedVector.y
+            // move mesh back, but rotate the initial vector as well
+            rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3( 0,0,1 ), rotationNorth - child.rotation.y ) //rotate vector same as the map
+            child.position.x += rotatedVector.x
+            child.position.y += rotatedVector.y
 
-          //adjust scale
-          child.scale.set( 1 / scale, 1 / scale, 1 / scale )
-          */
+            //adjust scale
+            child.scale.set( 1 / scale, 1 / scale, 1 / scale )
+            */
+          }
 
         }
       } )
@@ -211,10 +218,11 @@ export default class SceneSurroundings {
   }
 
 
-  addBuildings() {
+  async addBuildings() {
+    // TODO: get building height units; fix some complex Relations (e.g. palace building)
     //EPSG:900913
     console.log( 'Get Json' )
-    //let rad = 0.1 // in selected units. e.g. meters
+    this.buildingGroup = new THREE.Group()
 
     let coord_lat = this.getCoords()[1]
     let coord_lon = this.getCoords()[2]
@@ -259,11 +267,40 @@ export default class SceneSurroundings {
     let client = new XMLHttpRequest()
     let thisContext = this
 
-    client.onreadystatechange = function() {
+    client.onreadystatechange = async function() {
     if ( this.readyState === 4 && this.status === 200 ) {
         // Action to be performed when the document is ready:
         let features = JSON.parse( client.responseText ).elements
-        thisContext.jsonAnalyse( features )
+        let objGroup = thisContext.jsonAnalyse( features )
+
+        // add to scene, rotate to XY plane and scale
+        for ( let i = 0; i < objGroup.length; i++ ) {
+          thisContext.buildingGroup.add( objGroup[i] )
+        }
+        thisContext.viewer.scene.add( thisContext.buildingGroup )
+        thisContext.buildingGroup.name = 'OSM 3d buildings'
+
+        // rotation, scale and visibility
+        let scale = thisContext.getScale()
+        let visibility = thisContext.getBuildings3d()
+        let rotationNorth = thisContext.rotationNorth()
+        
+        thisContext.buildingGroup.visible = visibility
+        thisContext.buildingGroup.rotation.x += Math.PI / 2
+        thisContext.buildingGroup.rotation.y -= Math.PI / 2
+        thisContext.buildingGroup.scale.set( 1 / scale, 1 / scale, 1 / scale )
+
+        // bring mesh to zero coord and rotate
+        let movingVector = new THREE.Vector3( thisContext.buildingGroup.position.x, thisContext.buildingGroup.position.y, 0 ) //get vector to correct location on the map
+        thisContext.buildingGroup.position.x -= movingVector.x
+        thisContext.buildingGroup.position.y -= movingVector.y
+        thisContext.buildingGroup.rotation.y += rotationNorth //rotate around (0,0,0)
+
+        // move mesh back, but rotate the initial vector as well
+        let rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3( 0,0,1 ), rotationNorth ) //rotate vector same as the map
+        thisContext.buildingGroup.position.x += rotatedVector.x
+        thisContext.buildingGroup.position.y += rotatedVector.y
+
       }
     }
     client.open( 'GET', url )
@@ -274,8 +311,6 @@ export default class SceneSurroundings {
     let ways = []
     let tags = []
 
-    //let relations = []
-    //let tags_relations = []
     let rel_outer_ways = []
     let rel_outer_ways_tags = []
 
@@ -299,13 +334,9 @@ export default class SceneSurroundings {
           let outer_ways = []
           let outer_ways_tags = { building: feature.tags['building'], layer: feature.tags['layer'], levels: feature.tags['building:levels'], height: feature.tags['height'] }
           for ( let n = 0; n < feature.members.length; n++ ) {
-            // TODO: if several Outer ways, combine them
+            // if several Outer ways, combine them
             if ( feature.members[n].type === 'way' && feature.members[n].role === 'outer' ) {
               outer_ways.push( { ref: feature.members[n].ref } )
-
-              //relations.push( { ref: feature.members[n].ref } )
-              //if ( feature.tags ) tags_relations.push( { building: feature.tags['building'], layer: feature.tags['layer'], levels: feature.tags['building:levels'], height: feature.tags['height'] } )
-              //else tags_relations.push( {} )
             }
           }
           rel_outer_ways.push( outer_ways )
@@ -316,11 +347,10 @@ export default class SceneSurroundings {
     }
     /////////////////// turn relations_OUTER into ways
     for ( let n = 0; n < rel_outer_ways.length; n++ ) { 
-      // there will be a list of component "ways" in each of rel_outer_ways
+      // there will be a list of "ways" in each of rel_outer_ways
       let full_node_list = []
-
       for ( let m = 0; m < rel_outer_ways[n].length; m++ ) {
-        for ( let k = 0; k < ways_part.length; k++ ) { 
+        for ( let k = 0; k < ways_part.length; k++ ) { // find ways_parts with corresponding ID
           if ( k === ways_part.length ) break
           if ( rel_outer_ways[n][m].ref === ways_part[k].id ) {
             Array.prototype.push.apply( full_node_list, ways_part[k].nodes )
@@ -333,23 +363,10 @@ export default class SceneSurroundings {
       ways.push( { nodes: full_node_list } ), tags.push( { building: rel_outer_ways_tags[n].building, layer: rel_outer_ways_tags[n].layer, levels: rel_outer_ways_tags[n].levels, height: rel_outer_ways_tags[n].height } )
 
     }
-    /////////////////// turn relations into ways
-    /*
-    for ( let n = 0; n < relations.length; n++ ) { // go through relations
-      for ( let k = 0; k < ways_part.length; k++ ) { // go through ways (that don't have tags)
-        if ( k === ways_part.length ) break
-        if ( relations[n].ref === ways_part[k].id ) {
-          ways.push( { nodes: ways_part[k].nodes } ), tags.push( { building: tags_relations[n].building, layer: tags_relations[n].layer, levels: tags_relations[n].levels, height: tags_relations[n].height } )
-          ways_part.splice( k, 1 ) // remove used ways_parts
-          k -= 1 // reset index
-          break
-        }
-      }
-    }
-    */
     this.buildingsAmount = ways.length
     
     ////////////////////////get coords of Ways
+    let objectGroup = []
     for ( let i = 0; i < ways.length;  i++ ) { // go through each Way: 2384
       
       let ids = ways[i].nodes
@@ -368,10 +385,12 @@ export default class SceneSurroundings {
           }
         }
       }
-      this.extrudeBuildings( coords, height )
+      let obj = this.extrudeBuildings( coords, height )
+      objectGroup.push( obj )
       coords = null
       height = null
     }    
+    return objectGroup
   }
 
   extrudeBuildings( coords, height ) { 
@@ -388,12 +407,12 @@ export default class SceneSurroundings {
     let geom = new THREE.ExtrudeGeometry( shapes, { extrudePath: extrudePath } )
 
     /////// get model data and create Mesh
-    let scale = this.getScale()
+    //let scale = this.getScale()
     let coord_lat = this.getCoords()[1]
     let coord_lon = this.getCoords()[2]
     let selectedMap = this.selectedMap()
-    let visibility = this.getBuildings3d()
-    let rotationNorth = this.rotationNorth()
+    //let visibility = this.getBuildings3d()
+    //let rotationNorth = this.rotationNorth()
 
     let color = 0x8D9194 //grey
     if ( selectedMap > 0 ) color = this.map_providers[selectedMap][2]
@@ -401,26 +420,10 @@ export default class SceneSurroundings {
     material.color = new THREE.Color( color )
     
     let m = new THREE.Mesh( geom, material )
-    m.name = 'OSM 3d buildings'
-    m.userData.coords = new THREE.Vector3( coord_lon[0], coord_lat[1],0 ) //original coordinates from Globals
+    //m.name = 'OSM 3d buildings'
+    //m.userData.coords = new THREE.Vector3( coord_lon[0], coord_lat[1],0 ) //original coordinates from Globals
     
-    // add to scene, rotate to XY plane and scale
-    this.viewer.scene.add( m )
-    m.visible = visibility
-    m.rotation.x += Math.PI / 2
-    m.rotation.y -= Math.PI / 2
-    m.scale.set( 1 / scale, 1 / scale, 1 / scale )
-
-    // bring mesh to zero coord and rotate
-    let movingVector = new THREE.Vector3( m.position.x, m.position.y, 0 ) //get vector to correct location on the map
-    m.position.x -= movingVector.x
-    m.position.y -= movingVector.y
-    m.rotation.y += rotationNorth //rotate around (0,0,0)
-
-    // move mesh back, but rotate the initial vector as well
-    let rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3( 0,0,1 ), rotationNorth ) //rotate vector same as the map
-    m.position.x += rotatedVector.x
-    m.position.y += rotatedVector.y
+    return m
     
   }
 
