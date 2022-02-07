@@ -104,6 +104,9 @@ export default {
               to: `/streams/${data.userStreamAdded.id}`
             }
           })
+        },
+        skip() {
+          return !this.user
         }
       }
     }

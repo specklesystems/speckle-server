@@ -105,6 +105,9 @@ import gql from 'graphql-tag'
 import userSearchQuery from '../../graphql/userSearch.gql'
 
 export default {
+  components: {
+    UserAvatar: () => import('@/main/components/common/UserAvatar')
+  },
   props: {
     open: {
       type: Boolean,
