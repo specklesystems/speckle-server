@@ -26,7 +26,7 @@ export default class InteractionHandler {
     this.selectionBox = new THREE.Group()
     this.viewer.scene.add( this.selectionBox )
 
-    this.overlayMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x57f7ff, side: THREE.DoubleSide, wireframe:false, transparent: true, opacity: 0.5 } )
+    this.overlayMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x57f7ff, side: THREE.DoubleSide, wireframe:false, transparent: true, opacity: 0.7 } )
     this.overlayMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     this.overlaidObjects = new THREE.Group()
     this.viewer.scene.add( this.overlaidObjects )
@@ -105,38 +105,54 @@ export default class InteractionHandler {
       rootBlock = this.getParentBlock( objs[0].object.parent )
     }
 
+    let objId = selType === 'Block' ? rootBlock.userData.id : objs[0].object.userData.id
+    let objIdIndexCheck = this.selectedObjectsUserData.findIndex( o => o.id === objId )
+    if( objIdIndexCheck !== -1 ) {
+      if( this.selectionHelper.multiSelect ) {
+        // TODO: deselect if in multiple selection mode
+        this.selectedObjectsUserData.splice( objIdIndexCheck, 1 )
+        this.deselectObj( rootBlock ? rootBlock.userData.id : objs[0].object.userData.id )
+      }
+      return
+    }
+
     switch ( selType ) {
       case 'Block': {
         let blockObjs = this.getBlockObjectsCloned( rootBlock )
-        for( let child of blockObjs ) {          
+        for( let child of blockObjs ) {       
+          child.userData = { id: rootBlock.userData.id }
           child.material = this.selectionMeshMaterial
           this.selectedObjects.add( child )
           //this.viewer.outlinePass.selectedObjects.push( child )
         }
         break
       }
-      case 'Mesh':
-        this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
+      case 'Mesh': {
+        let m = new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial )
+        m.userData = { id: objs[0].object.userData.id }
+        this.selectedObjects.add( m )
         //this.viewer.outlinePass.selectedObjects.push( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
-      case 'Line':
-        this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        }
+      case 'Line': {
+        let l = new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial )
+        l.userData = { id: objs[0].object.userData.id }
+        this.selectedObjects.add( l )
         //this.viewer.outlinePass.selectedObjects.push( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
+
+      }
       case 'Point':
         console.warn( 'Point selection not implemented.' )
         return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
     }
 
-    // let box 
     if ( selType === 'Block' ) {
       this.selectedObjectsUserData.push( rootBlock.userData )
       this.selectedRawObjects.push( rootBlock )
-      // box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
     } else {
       this.selectedObjectsUserData.push( objs[0].object.userData )
       this.selectedRawObjects.push( objs[0] )
-      // box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
     }
     
     let box = new THREE.Box3().setFromObject( this.selectedObjects )
@@ -174,6 +190,20 @@ export default class InteractionHandler {
       child.geometry = child.geometry.clone().applyMatrix4( block.matrix )
     }
     return objects
+  }
+
+  deselectObj( id ) {
+    let objToRemove = this.selectedObjects.children.filter( o => o.userData.id === id )
+    for( const o of objToRemove )
+      this.selectedObjects.remove( o )
+      
+    this.selectionBox.clear()
+    if( this.selectedObjects.children.length !== 0 ) {
+      let box = new THREE.Box3().setFromObject( this.selectedObjects )
+      let boxHelper = new THREE.Box3Helper( box, 0x047EFB )
+      this.selectionBox.add( boxHelper )
+    }
+    this.viewer.needsRender = true
   }
 
   deselectObjects() {

@@ -45,7 +45,7 @@
     >
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
-      <v-icon class="primary--text" large style="position: relative; right: -77%; font-size: 3em">
+      <v-icon class="primary--text" large style="position: relative; right: -77%; font-size: 4em">
         mdi-menu-right
       </v-icon>
     </div>
@@ -95,6 +95,8 @@ export default {
             user.filter = data.userCommentActivity.filter
             user.selectionLocation = data.userCommentActivity.selectionLocation
             user.selection = data.userCommentActivity.selection
+            user.selectionCenter = data.userCommentActivity.selectionCenter
+            user.sectionBox = data.userCommentActivity.sectionBox
             user.lastUpdate = Date.now()
             if (Math.random() < 0.5) user.status = 'writing'
             else user.status = 'viewing'
@@ -118,6 +120,7 @@ export default {
       uuid: uuid(),
       selectedIds: [],
       selectionLocation: null,
+      selectionCenter: null,
       users: []
     }
   },
@@ -138,6 +141,7 @@ export default {
       debounce((selectionInfo) => {
         this.selectedIds = selectionInfo.userData.map((o) => o.id)
         this.selectionLocation = selectionInfo.location
+        this.selectionCenter = selectionInfo.selectionCenter
         this.sendUpdateAndPrune()
       }, 50)
     )
@@ -164,6 +168,7 @@ export default {
       else this.$store.commit('resetFilter')
     },
     async sendUpdateAndPrune() {
+      if (!this.$route.params.resourceId) return
       for (let user of this.users) {
         let delta = Date.now() - user.lastUpdate
         if (delta > 20000) {
@@ -191,6 +196,8 @@ export default {
         filter: this.$store.state.appliedFilter,
         selection: this.selectedIds,
         selectionLocation: this.selectionLocation,
+        sectionBox: window.__viewer.sectionBox.getCurrentBox(),
+        selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
         uuid: this.uuid,
