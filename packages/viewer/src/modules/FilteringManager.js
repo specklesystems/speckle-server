@@ -73,7 +73,7 @@ export default class FilteringManager {
       for ( let child of clone.children ) {
         this.setMaterial( child, material )
       }
-    } else if ( clone.material !== undefined ) {
+    } else if ( clone.material !== undefined && material !== undefined ) {
       clone.material = material
       clone.material.clippingPlanes = this.viewer.sectionBox.planes
     }
