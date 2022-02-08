@@ -140,7 +140,7 @@
           pointer-events: none;
         "
       >
-        <bubbles />
+        <bubbles :key="$route.params.resourceId" />
       </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">

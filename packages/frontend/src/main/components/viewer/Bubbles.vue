@@ -6,29 +6,6 @@
   >
     <div
       v-for="user in users"
-      :ref="`user-bubble-${user.uuid}`"
-      :key="user.uuid"
-      class="absolute-pos rounded-pill user-bubble elevation-5"
-      :style="`opacity: ${user.hidden ? '0.2' : 1}; border: 2px solid ${
-        $vuetify.theme.dark ? '#047EFB' : '#047EFB'
-      }`"
-    >
-      <div @click="setUserPow(user)">
-        <user-avatar :id="user.id" :show-hover="false" :size="42" :margin="false"></user-avatar>
-        <span
-          v-if="user.status === 'writing'"
-          class="ellipsis-anim ml-1 mr-3 primary--text"
-          style="position: absolute"
-        >
-          <span>.</span>
-          <span>.</span>
-          <span>.</span>
-        </span>
-      </div>
-    </div>
-    <!-- Note: hidden, unhide for debugging -->
-    <div
-      v-for="user in users"
       :ref="`user-target-${user.uuid}`"
       :key="user.uuid + 'target'"
       :class="`absolute-pos rounded-pill primary`"
@@ -45,9 +22,29 @@
     >
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
-      <v-icon class="primary--text" large style="position: relative; right: -77%; font-size: 4em">
+      <v-icon class="primary--text" large style="position: relative; right: -77%; font-size: 4.2em">
         mdi-menu-right
       </v-icon>
+    </div>
+    <div
+      v-for="sessionUser in users"
+      :ref="`user-bubble-${sessionUser.uuid}`"
+      :key="sessionUser.uuid"
+      class="absolute-pos rounded-pill user-bubble elevation-5"
+      :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 2px solid ${
+        $vuetify.theme.dark ? '#047EFB' : '#047EFB'
+      }`"
+    >
+      <div @click="setUserPow(sessionUser)">
+        <user-avatar
+          :id="sessionUser.id"
+          v-tooltip="sessionUser.name"
+          :show-hover="false"
+          :size="42"
+          :margin="false"
+        ></user-avatar>
+        <text-dots-typing v-if="sessionUser.status === 'writing'" />
+      </div>
     </div>
   </div>
 </template>
@@ -59,9 +56,23 @@ import debounce from 'lodash.debounce'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar'),
+    TextDotsTyping: () => import('@/main/components/common/TextDotsTyping')
   },
   apollo: {
+    user: {
+      query: gql`
+        query {
+          user {
+            id
+            name
+          }
+        }
+      `,
+      skip() {
+        return !this.$loggedIn()
+      }
+    },
     $subscribe: {
       userCommentActivity: {
         query: gql`
@@ -86,7 +97,6 @@ export default {
             return
           }
           if (data.userCommentActivity.uuid === this.uuid) return
-
           let indx = this.users.findIndex((u) => u.uuid === data.userCommentActivity.uuid)
           if (indx !== -1) {
             let user = this.users[indx]
@@ -97,6 +107,7 @@ export default {
             user.selection = data.userCommentActivity.selection
             user.selectionCenter = data.userCommentActivity.selectionCenter
             user.sectionBox = data.userCommentActivity.sectionBox
+            user.name = data.userCommentActivity.name
             user.lastUpdate = Date.now()
             if (Math.random() < 0.5) user.status = 'writing'
             else user.status = 'viewing'
@@ -125,12 +136,21 @@ export default {
     }
   },
   mounted() {
+    // for some reasons, these are not clearly intialised
+    this.users = []
+    this.selectedIds = []
+    this.selectionCenter = null
+    this.selectionLocation = null
+
+    if (!window.__bubblesId) window.__bubblesId = uuid()
+    this.uuid = window.__bubblesId
+
     this.raycaster = new THREE.Raycaster()
     window.__viewer.cameraHandler.controls.addEventListener(
       'update',
       throttle(this.updateBubbles, 120)
     )
-    this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 5000)
+    this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
     window.addEventListener('beforeunload', async (e) => {
       await this.sendDisconnect()
     })
@@ -166,6 +186,11 @@ export default {
       }
       if (user.filter) this.$store.commit('setFilterDirect', { filter: user.filter })
       else this.$store.commit('resetFilter')
+
+      if (user.sectionBox) {
+        window.__viewer.sectionBox.on()
+        window.__viewer.sectionBox.setBox(user.sectionBox, 0)
+      }
     },
     async sendUpdateAndPrune() {
       if (!this.$route.params.resourceId) return
@@ -200,6 +225,7 @@ export default {
         selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
+        name: this.user.name,
         uuid: this.uuid,
         status: 'viewing'
       }
@@ -336,55 +362,5 @@ export default {
   left: 0;
   transition: all 0.3s ease;
   transform-origin: center;
-}
-
-.ellipsis-anim span {
-  font-family: serif !important;
-  opacity: 0;
-  -webkit-animation: ellipsis-dot 1s infinite;
-  animation: ellipsis-dot 1s infinite;
-  font-size: 3em;
-  line-height: 10px;
-  user-select: none;
-}
-
-.ellipsis-anim span:nth-child(1) {
-  -webkit-animation-delay: 0s;
-  animation-delay: 0s;
-  margin-right: -5px;
-}
-.ellipsis-anim span:nth-child(2) {
-  -webkit-animation-delay: 0.1s;
-  animation-delay: 0.1s;
-  margin-right: -5px;
-}
-.ellipsis-anim span:nth-child(3) {
-  -webkit-animation-delay: 0.2s;
-  animation-delay: 0.2s;
-  margin-right: -5px;
-}
-
-@-webkit-keyframes ellipsis-dot {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes ellipsis-dot {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
 }
 </style>
