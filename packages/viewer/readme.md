@@ -63,11 +63,12 @@ The 3 optional parameters are:
    - An exclusion list, specified by `{ 'not': excludedValuesArray }`
 
  - `colorBy`: A dictionary that makes all objects colored based on a property value. Two types of coloring are supported:
-   - Gradient (from a numeric property): `{ 'type': 'gradient', 'property': propertyName, 'minValue': propertyMinValue, 'maxValue': propertyMaxValue, 'gradientColors': [color1, color2] }`
+   - Gradient (from a numeric property): `{ 'type': 'gradient', 'property': propertyName, 'minValue': propertyMinValue, 'maxValue': propertyMaxValue, 'gradientColors': [color1, color2], default: colorForObjectsWithMissingProperty }`
    - Category (for coloring each unique value differently): `{ 'type': 'category', 'property': propertyName, 'values': { value1: color1, value2: color2, ... }, 'default': colorForAnyOtherValue }`. The `values` and the `default` parameters are optional: Random colors are generated if they are ommited.
 
  - `ghostOthers`: A boolean (default `false`). If set to `true`, then the objects that are filtered out are actually shown with very low opacity, so that the remaining objects have a better context.
 
+For `colorBy`, setting a color to `null` will use the original material instead of coloring it.
 
 To remove all filters: `await v.applyFilter( null )`
 

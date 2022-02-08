@@ -1,24 +1,18 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 const assert = require( 'assert' )
 
 const appRoot = require( 'app-root-path' )
-const { init, startHttp } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
+const { beforeEachContext, initializeTestServer } = require( `${appRoot}/test/hooks` )
+const { noErrors } = require( `${appRoot}/test/helpers` )
 const { createPersonalAccessToken } = require( '../../core/services/tokens' )
 const { createWebhook, getStreamWebhooks, getLastWebhookEvents, getWebhook, updateWebhook, deleteWebhook, dispatchStreamEvent } = require( '../services/webhooks' )
 const { createUser } = require( '../../core/services/users' )
-const { createStream, getStream, grantPermissionsStream } = require( '../../core/services/streams' )
-
-const expect = chai.expect
-chai.use( chaiHttp )
-
-let serverAddress 
+const { createStream, grantPermissionsStream } = require( '../../core/services/streams' )
 
 
 describe( 'Webhooks @webhooks', () => {
-  let testServer
+  let server, sendRequest
 
   let userOne = {
     name: 'User',
@@ -42,14 +36,8 @@ describe( 'Webhooks @webhooks', () => {
   }
 
   before( async ( ) => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-    let { app } = await init()
-    let { server } = await startHttp( app, 0 )
-    app.on( 'appStarted', () => {
-      serverAddress = `http://localhost:${server.address().port}`
-    } )
-    testServer = server
+    let { app } = await beforeEachContext( );
+    ( { server, sendRequest } = await initializeTestServer( app ) )
 
     userOne.id = await createUser( userOne )
     streamOne.ownerId = userOne.id
@@ -59,8 +47,7 @@ describe( 'Webhooks @webhooks', () => {
   } )
 
   after( async ( ) => {
-    // await knex.migrate.rollback( )
-    testServer.close( )
+    await server.close( )
   } )
 
   describe( 'Create, Read, Update, Delete Webhooks', ( ) => {
@@ -255,23 +242,3 @@ describe( 'Webhooks @webhooks', () => {
     } )
   } )
 } )
-
-
-/**
- * Sends a graphql request. Convenience wrapper.
- * @param  {string} auth the user's token
- * @param  {string} obj  the query/mutation to send
- * @return {Promise}      the awaitable request
- */
-function sendRequest( auth, obj, address = serverAddress ) {
-  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
-}
-
-/**
- * Checks the response body for errors. To be used in expect assertions.
- * Will throw an error if 'errors' exist.
- * @param {*} res
- */
-function noErrors( res ) {
-  if ( 'errors' in res.body ) throw new Error( `Failed GraphQL request: ${res.body.errors[ 0 ].message}` )
-}

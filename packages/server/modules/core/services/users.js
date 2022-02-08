@@ -55,7 +55,7 @@ module.exports = {
     
     let userRole = await countAdminUsers () === 0 ? 'server:admin' : 'server:user' 
 
-    await Acl( ).insert( { userId: res[ 0 ], role: userRole } )
+    await Acl( ).insert( { userId: res[ 0 ].id, role: userRole } )
 
     let loggedUser = { ...user }
     delete loggedUser.passwordDigest
@@ -69,7 +69,7 @@ module.exports = {
       message: 'User created'
     } )
 
-    return res[ 0 ]
+    return res[ 0 ].id
   },
 
   async findOrCreateUser( { user, rawProfile } ) {

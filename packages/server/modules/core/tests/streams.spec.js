@@ -1,21 +1,17 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 const assert = require( 'assert' )
 
 const appRoot = require( 'app-root-path' )
-const { init } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
 
-const expect = chai.expect
-chai.use( chaiHttp )
-
-
-const { createUser, createPersonalAccessToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/users' )
-const { createStream, getStream, updateStream, deleteStream, deleteStreams, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
-const { createBranch, getBranchByNameAndStreamId, updateBranch, deleteBranchById } = require( '../services/branches' )
-const { createObject, createObjects } = require( '../services/objects' )
+const { createUser } = require( '../services/users' )
+const { createStream, getStream, updateStream, deleteStream, getUserStreams, getStreamUsers, grantPermissionsStream, revokePermissionsStream } = require( '../services/streams' )
+const { createBranch, getBranchByNameAndStreamId, deleteBranchById } = require( '../services/branches' )
+const { createObject } = require( '../services/objects' )
 const { createCommitByBranchName } = require( '../services/commits' )
+
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
+const { sleep } = require( `${appRoot}/test/helpers` )
 
 describe( 'Streams @core-streams', ( ) => {
   let userOne = {
@@ -31,15 +27,9 @@ describe( 'Streams @core-streams', ( ) => {
   }
 
   before( async ( ) => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-    await init()
+    await beforeEachContext( )
 
     userOne.id = await createUser( userOne )
-  } )
-
-  after( async ( ) => {
-    await knex.migrate.rollback( )
   } )
 
   let testStream = {
@@ -200,10 +190,3 @@ describe( 'Streams @core-streams', ( ) => {
     } )
   } )
 } )
-
-function sleep( ms ) {
-  // console.log( `\t Sleeping ${ms}ms ` )
-  return new Promise( ( resolve ) => {
-    setTimeout( resolve, ms )
-  } )
-}

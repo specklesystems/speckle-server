@@ -1,12 +1,10 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const assert = require( 'assert' )
+const expect = require( 'chai' ).expect
 
 const appRoot = require( 'app-root-path' )
 const { init } = require( `${appRoot}/app` )
 const knex = require( `${appRoot}/db/knex` )
-
-const expect = chai.expect
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
 
 // NOTE:
 // These tests check that the initialization routine of the whole server
@@ -16,11 +14,7 @@ const expect = chai.expect
 describe( 'Initialization Logic @init-logic', ( ) => {
   describe( 'First init', ( ) => {
     before( async ( ) => {
-      await init()
-    } )
-
-    after( async ( ) => {
-      // no rollback here!
+      await beforeEachContext()
     } )
 
     it( 'should have a lotta scopes', async() => {
@@ -42,10 +36,6 @@ describe( 'Initialization Logic @init-logic', ( ) => {
   describe( 'Second init', ( ) => {
     before( async ( ) => {
       await init()
-    } )
-
-    after( async ( ) => {
-      await knex.migrate.rollback() // we rollback here :)
     } )
 
     it( 'should have a lotta scopes second time round too!', async() => {

@@ -1,7 +1,6 @@
 'use strict'
 let debug = require( 'debug' )
 const appRoot = require( 'app-root-path' )
-const knex = require( `${appRoot}/db/knex` )
 const { registerOrUpdateScope, registerOrUpdateRole } = require( `${appRoot}/modules/shared` )
 
 exports.init = async ( app, options ) => {

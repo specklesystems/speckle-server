@@ -73,7 +73,7 @@ export default class FilteringManager {
       for ( let child of clone.children ) {
         this.setMaterial( child, material )
       }
-    } else if ( clone.material !== undefined ) {
+    } else if ( clone.material !== undefined && material !== undefined ) {
       clone.material = material
       clone.material.clippingPlanes = this.viewer.sectionBox.planes
     }
@@ -102,7 +102,9 @@ export default class FilteringManager {
       color = customPallete[ objValue ]
     }
   
-    if ( !color ) {
+    if ( color === null ) {
+      return threejsObj.material
+    } else if ( color === undefined ) {
       // compute value hash
       let objValueAsString = '' + objValue
       let hash = 0
@@ -135,7 +137,13 @@ export default class FilteringManager {
     let objValue = this.getObjectProperty( obj, colors.property )
     objValue = Number( objValue )
     if ( Number.isNaN( objValue ) ) {
-      return this.WireframeMaterial
+      let defaultColor = colors.default
+      if ( defaultColor === null ) return threejsObj.material
+      if ( defaultColor === undefined ) return this.WireframeMaterial
+
+      let material = this.ColoredMaterial.clone()
+      material.color = new THREE.Color( defaultColor )
+      return material
     }
     
     let material = this.ColoredMaterial.clone()

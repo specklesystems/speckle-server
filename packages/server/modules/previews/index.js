@@ -77,6 +77,8 @@ exports.init = ( app, options ) => {
       res.sendFile( previewBufferOrFile.file )
     } else {
       res.contentType( 'image/png' )
+      // If the preview is a buffer, it comes from the DB and can be cached on clients
+      res.set( 'Cache-Control', 'private, max-age=604800' )
       res.send( previewBufferOrFile.buffer )  
     }
   }

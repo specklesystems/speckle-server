@@ -1,20 +1,13 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 const request = require( 'supertest' )
 
 const assert = require( 'assert' )
 const crypto = require( 'crypto' )
 const appRoot = require( 'app-root-path' )
-const zlib = require( 'zlib' )
 
-
-const { init, startHttp } = require( `${appRoot}/app` )
-
-const expect = chai.expect
-chai.use( chaiHttp )
-
-const knex = require( `${appRoot}/db/knex` )
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
+const { createManyObjects } = require( `${appRoot}/test/helpers` )
 
 const { createUser } = require( '../services/users' )
 const { createPersonalAccessToken } = require( '../services/tokens' )
@@ -31,13 +24,9 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
 
   let privateTestStream = { name: 'Private Test Stream', isPublic: false }
 
-  let expressApp
+  let app
   before( async ( ) => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-
-    let { app } = await init( )
-    expressApp = app
+    ( { app } = await beforeEachContext( ) )
 
     userA.id = await createUser( userA )
     userA.token = `Bearer ${( await createPersonalAccessToken( userA.id, 'test token user A', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] ) )}`
@@ -49,31 +38,27 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
     privateTestStream.id = await createStream( { ...privateTestStream, ownerId: userA.id } )
   } )
 
-  after( async ( ) => {
-    await knex.migrate.rollback( )
-  } )
-
   it( 'Should not allow download requests without an authorization token or valid streamId', async ( ) => {
     // invalid token and streamId
-    let res = await chai.request( expressApp ).get( '/objects/wow_hack/null' ).set( 'Authorization', 'this is a hoax' )
+    let res = await request( app ).get( '/objects/wow_hack/null' ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
     // private stream snooping is forbidden
-    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/maybeSomethingIsHere` ).set( 'Authorization', 'this is a hoax' )
+    res = await request( app ).get( `/objects/${privateTestStream.id}/maybeSomethingIsHere` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
     // invalid token for public stream works
-    res = await chai.request( expressApp ).get( `/objects/${testStream.id}/null` ).set( 'Authorization', 'this is a hoax' )
+    res = await request( app ).get( `/objects/${testStream.id}/null` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 404 )
 
     // invalid streamId
-    res = await chai.request( expressApp ).get( `/objects/${'thisDoesNotExist'}/null` ).set( 'Authorization', userA.token )
+    res = await request( app ).get( `/objects/${'thisDoesNotExist'}/null` ).set( 'Authorization', userA.token )
     expect( res ).to.have.status( 404 )
 
     // create some objects
     let objBatches = [ createManyObjects( 20 ), createManyObjects( 20 ) ]
 
-    await request( expressApp )
+    await request( app )
       .post( `/objects/${testStream.id}` )
       .set( 'Authorization', userA.token )
       .set( 'Content-type', 'multipart/form-data' )
@@ -81,59 +66,63 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
       .attach( 'batch2', Buffer.from( JSON.stringify( objBatches[ 1 ] ), 'utf8' ) )
 
     // should allow invalid tokens (treat them the same as no tokens?)
-    res = await chai.request( expressApp ).get( `/objects/${testStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', 'this is a hoax' )
+    res = await request( app ).get( `/objects/${testStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 200 )
 
     // should not allow invalid tokens on private streams
-    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', 'this is a hoax' )
+    res = await request( app ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
     // should not allow user b to access user a's private stream
-    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', userB.token )
+    res = await request( app ).get( `/objects/${privateTestStream.id}/${objBatches[0][0].id}` ).set( 'Authorization', userB.token )
     expect( res ).to.have.status( 401 )
   } )
 
   it( 'Should not allow getting an object that is not part of the stream', async ( ) => {
     let objBatch = createManyObjects( 20 )
 
-    await request( expressApp )
+    await request( app )
       .post( `/objects/${privateTestStream.id}` )
       .set( 'Authorization', userA.token )
       .set( 'Content-type', 'multipart/form-data' )
       .attach( 'batch1', Buffer.from( JSON.stringify( objBatch ), 'utf8' ) )
 
     // should allow userA to access privateTestStream object
-    res = await chai.request( expressApp ).get( `/objects/${privateTestStream.id}/${objBatch[0].id}` ).set( 'Authorization', userA.token )
+    res = await request( app ).get( `/objects/${privateTestStream.id}/${objBatch[0].id}` ).set( 'Authorization', userA.token )
     expect( res ).to.have.status( 200 )
   
     // should not allow userB to access privateTestStream object by pretending it's in public stream
-    res = await chai.request( expressApp ).get( `/objects/${testStream.id}/${objBatch[0].id}` ).set( 'Authorization', userB.token )
+    res = await request( app ).get( `/objects/${testStream.id}/${objBatch[0].id}` ).set( 'Authorization', userB.token )
     expect( res ).to.have.status( 404 )
   } )
 
   it( 'Should not allow upload requests without an authorization token or valid streamId', async ( ) => {
     // invalid token and streamId
-    let res = await chai.request( expressApp ).post( '/objects/wow_hack' ).set( 'Authorization', 'this is a hoax' )
+    let res = await request( app ).post( '/objects/wow_hack' ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
     // invalid token
-    res = await chai.request( expressApp ).post( `/objects/${testStream.id}` ).set( 'Authorization', 'this is a hoax' )
+    res = await request( app ).post( `/objects/${testStream.id}` ).set( 'Authorization', 'this is a hoax' )
     expect( res ).to.have.status( 401 )
 
     // invalid streamId
-    res = await chai.request( expressApp ).post( `/objects/${'thisDoesNotExist'}` ).set( 'Authorization', userA.token )
+    res = await request( app ).post( `/objects/${'thisDoesNotExist'}` ).set( 'Authorization', userA.token )
     expect( res ).to.have.status( 401 )
   } )
 
   let parentId
   let numObjs = 5000
-  let objBatches = [ createManyObjects( numObjs ), createManyObjects( numObjs ), createManyObjects( numObjs ) ]
+  let objBatches = [ 
+    createManyObjects( numObjs ),
+    createManyObjects( numObjs ),
+    createManyObjects( numObjs ),
+  ]
 
   it( 'Should properly upload a bunch of objects', async ( ) => {
     parentId = objBatches[ 0 ][ 0 ].id
 
     let res =
-      await request( expressApp )
+      await request( app )
         .post( `/objects/${testStream.id}` )
         .set( 'Authorization', userA.token )
         .set( 'Content-type', 'multipart/form-data' )
@@ -152,7 +141,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
   it( 'Should properly download an object, with all its children, into a application/json response', ( done ) => {
     new Promise( resolve => setTimeout( resolve, 1500 ) ) // avoids race condition
       .then( ( ) => {
-        let res = request( expressApp )
+        let res = request( app )
           .get( `/objects/${testStream.id}/${parentId}` )
           .set( 'Authorization', userA.token )
           .buffer( )
@@ -180,7 +169,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
   } ).timeout( 5000 )
 
   it( 'Should properly download an object, with all its children, into a text/plain response', ( done ) => {
-    let res = request( expressApp )
+    let res = request( app )
       .get( `/objects/${testStream.id}/${parentId}` )
       .set( 'Authorization', userA.token )
       .set( 'Accept', 'text/plain' )
@@ -212,7 +201,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
     for ( let i = 0; i < objBatches[0].length; i++ ) {
       objectIds.push( objBatches[0][i].id )
     }
-    let res = request( expressApp )
+    let res = request( app )
       .post( `/api/getobjects/${testStream.id}` )
       .set( 'Authorization', userA.token )
       .set( 'Accept', 'text/plain' )
@@ -252,7 +241,7 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
       objectIds.push( fakeId )
     }
 
-    let res = request( expressApp )
+    let res = request( app )
       .post( `/api/diff/${testStream.id}` )
       .set( 'Authorization', userA.token )
       .send( { objects: JSON.stringify( objectIds ) } )
@@ -284,27 +273,3 @@ describe( 'Upload/Download Routes @api-rest', ( ) => {
       } )
   } )
 } )
-
-function createManyObjects( amount, noise ) {
-  amount = amount || 10000
-  noise = noise || Math.random( ) * 100
-
-  let objs = [ ]
-
-  let base = { name: 'base bastard 2', noise: noise, __closure: {} }
-  objs.push( base )
-
-  for ( let i = 0; i < amount; i++ ) {
-    let baby = { name: `mr. ${i}` }
-    getId( baby )
-    base.__closure[ baby.id ] = 1
-    objs.push( baby )
-  }
-
-  getId( base )
-  return objs
-}
-
-function getId( obj ) {
-  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
-}

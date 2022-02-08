@@ -1,21 +1,14 @@
 /* istanbul ignore file */
 const bcrypt = require( 'bcrypt' )
 const crs = require( 'crypto-random-string' )
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 
-const { init } = require( `${appRoot}/app` )
-
-const expect = chai.expect
-
-chai.use( chaiHttp )
-
 const knex = require( `${appRoot}/db/knex` )
 
-const { createUser, findOrCreateUser, getUser, getUserByEmail, getUsers, searchUsers, countUsers, updateUser, deleteUser, validatePasssword, updateUserPassword, getUserRole, unmakeUserAdmin, makeUserAdmin } = require( '../services/users' )
-const { createPersonalAccessToken, createAppToken, revokeToken, revokeTokenById, validateToken, getUserTokens } = require( '../services/tokens' )
+const { createUser, findOrCreateUser, getUser, getUserByEmail, searchUsers, updateUser, deleteUser, validatePasssword, updateUserPassword  } = require( '../services/users' )
+const { createPersonalAccessToken, revokeToken, validateToken, getUserTokens } = require( '../services/tokens' )
 const { grantPermissionsStream, createStream, getStream } = require( '../services/streams' )
 
 const {
@@ -28,10 +21,10 @@ const {
   getCommitsByBranchName,
   getCommitById,
   getCommitsByStreamId,
-  deleteCommit,
 } = require( '../services/commits' )
 
-const { createObject, createObjects } = require( '../services/objects' )
+const { createObject } = require( '../services/objects' )
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
 
 describe( 'Actors & Tokens @user-services', () => {
   let myTestActor = {
@@ -43,18 +36,11 @@ describe( 'Actors & Tokens @user-services', () => {
   let otherUser = {}
 
   before( async () => {
-    await knex.migrate.rollback()
-    await knex.migrate.latest()
-    await init()
+    await beforeEachContext( )
 
     let actorId = await createUser( myTestActor )
     myTestActor.id = actorId
   } )
-
-  after( async () => {
-    await knex.migrate.rollback()
-  } )
-
 
   describe( 'Users @core-users', () => {
     it( 'Should create an user', async () => {
@@ -104,7 +90,7 @@ describe( 'Actors & Tokens @user-services', () => {
       user.passwordDigest = await bcrypt.hash( user.password, 10 )
       delete user.password
 
-      const [ userId ] = await knex( 'users' ).returning( 'id' ).insert( user )
+      const [ { id: userId } ] = await knex( 'users' ).returning( 'id' ).insert( user )
 
       const userByEmail = await getUserByEmail( { email } )
       expect( userByEmail ).to.not.be.null
@@ -323,112 +309,5 @@ describe( 'Actors & Tokens @user-services', () => {
       expect( userTokens ).to.be.an( 'array' )
       expect( userTokens ).to.have.lengthOf( 2 )
     } )
-  } )
-} )
-
-
-describe( 'User admin @user-services', () => {
-  let myTestActor = {
-    name: 'Gergo Jedlicska',
-    email: 'gergo@jedlicska.com',
-    password: 'sn3aky-1337-b1m'
-  }
-
-  before( async () => {
-    await knex.migrate.rollback()
-    await knex.migrate.latest()
-    await init()
-
-    let actorId = await createUser( myTestActor )
-    myTestActor.id = actorId
-  } )
-
-  after( async () => {
-    await knex.migrate.rollback()
-  } )
-
-  it( 'First created user should be admin', async () => {
-    let users = await getUsers( 100, 0 )
-    expect( users ).to.be.an( 'array' )
-    expect( users ).to.have.lengthOf( 1 )
-    let firstUser = users[0]
-
-    let userRole = await getUserRole( firstUser.id )
-    expect( userRole ).to.equal( 'server:admin' )
-  } )
-
-  it( 'Count user knows how to count', async () => {
-    expect( await countUsers() ).to.equal( 1 )
-    let newUser = { ...myTestActor }
-    newUser.name = 'Bill Gates'
-    newUser.email = 'bill@gates.com'
-    newUser.password = 'testthebest'
-
-    let actorId = await createUser( newUser )
-
-    expect( await countUsers() ).to.equal( 2 )
-
-    await deleteUser( actorId )
-    expect( await countUsers() ).to.equal( 1 )
-  } )
-
-  it( 'Get users query limit is sanitized to upper limit', async () => {
-    let createNewDroid = ( number ) => {
-      return {
-        name: `${number}`,
-        email: `${number}@droidarmy.com`,
-        password: 'sn3aky-1337-b1m'
-      }
-    }
-
-    let userInputs = Array( 250 ).fill().map( ( v, i ) => createNewDroid( i ) )
-
-    expect( await countUsers() ).to.equal( 1 )
-
-    await Promise.all( userInputs.map( userInput => createUser( userInput ) ) )
-    expect( await countUsers() ).to.equal( 251 )
-
-    let users = await getUsers( 2000000 )
-    expect( users ).to.have.lengthOf( 200 )
-  } )
-
-  it( 'Get users offset is applied', async () => {
-    let users = await getUsers( 200, 200 )
-    expect( users ).to.have.lengthOf( 51 )
-  } )
-
-  it( 'User query filters', async () => {
-    let users = await getUsers( 100, 0, 'gergo' )
-    expect( users ).to.have.lengthOf( 1 )
-    let [ user ] = users
-    expect( user.email ).to.equal( 'gergo@jedlicska.com' )
-  } )
-
-  it( 'Count users applies query', async () => {
-    expect( await countUsers( 'droid' ) ).to.equal( 250 )
-  } )
-
-  it( 'Change user role modifies role', async () => {
-    let [ user ] = await getUsers( 1, 10 )
-
-    let oldRole = await getUserRole( user.id )
-    expect( oldRole ).to.equal( 'server:user' )
-
-    await makeUserAdmin( { userId: user.id } )
-    let newRole = await getUserRole( user.id )
-    expect( newRole ).to.equal( 'server:admin' )
-
-    await unmakeUserAdmin( { userId: user.id } )
-    newRole = await getUserRole( user.id )
-    expect( newRole ).to.equal( 'server:user' )
-  } )
-
-  it( 'Ensure at least one admin remains in the server', async () => {
-    try {
-      await unmakeUserAdmin( { userId: myTestActor.id, role: 'server:admin' } )
-      assert.fail( 'This should have failed' )
-    } catch ( err ) {
-      expect( err.message ).to.equal( 'Cannot remove the last admin role from the server' )
-    }
   } )
 } )

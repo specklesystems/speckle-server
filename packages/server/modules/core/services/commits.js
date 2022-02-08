@@ -25,7 +25,7 @@ module.exports = {
     }
 
     // Create main table entry
-    let [ id ] = await Commits( ).returning( 'id' ).insert( {
+    let [ { id } ] = await Commits( ).returning( 'id' ).insert( {
       id: crs( { length: 10 } ),
       referencedObject: objectId,
       author: authorId,

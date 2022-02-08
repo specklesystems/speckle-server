@@ -18,7 +18,6 @@ const RefreshTokens = ( ) => knex( 'refresh_tokens' )
 module.exports = {
 
   async getApp( { id } ) {
-
     let allScopes = await Scopes( ).select( '*' )
 
     let app = await ServerApps( ).select( '*' ).where( { id: id } ).first( )
@@ -29,11 +28,9 @@ module.exports = {
     app.scopes = allScopes.filter( scope => appScopeNames.indexOf( scope.name ) !== -1 )
     app.author = await Users( ).select( 'id', 'name', 'avatar' ).where( { id: app.authorId } ).first( )
     return app
-
   },
 
   async getAllPublicApps( ) {
-
     let apps = await ServerApps( )
       .select( 'server_apps.id', 'server_apps.name', 'server_apps.description', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
       .where( { public: true } )
@@ -52,7 +49,6 @@ module.exports = {
   },
 
   async getAllAppsCreatedByUser( { userId } ) {
-
     let apps = await ServerApps( )
       .select( 'server_apps.id', 'server_apps.secret', 'server_apps.name', 'server_apps.description', 'server_apps.redirectUrl', 'server_apps.logo', 'server_apps.termsAndConditionsLink', 'users.name as authorName', 'users.id as authorId' )
       .where( { authorId: userId } )
@@ -70,7 +66,6 @@ module.exports = {
   },
 
   async getAllAppsAuthorizedByUser( { userId } ) {
-
     let query = knex.raw( `
       SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description",  sa."trustByDefault", sa."redirectUrl" as "redirectUrl", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
       FROM user_server_app_tokens a
@@ -84,7 +79,6 @@ module.exports = {
   },
 
   async createApp( app ) {
-
     app.id = crs( { length: 10 } )
     app.secret = crs( { length: 10 } )
 
@@ -101,11 +95,9 @@ module.exports = {
     await ServerApps( ).insert( app )
     await ServerAppsScopes( ).insert( scopes.map( s => ( { appId: app.id, scopeName: s } ) ) )
     return { id: app.id, secret: app.secret }
-
   },
 
   async updateApp( { app } ) {
-
     // any app update should nuke everything and force users to re-authorize it.
     await module.exports.revokeExistingAppCredentials( { appId: app.id } )
 
@@ -120,18 +112,15 @@ module.exports = {
     delete app.secret
     delete app.scopes
 
-    let [ res ] = await ServerApps( ).returning( 'id' ).where( { id: app.id } ).update( app )
+    let [ { id } ] = await ServerApps( ).returning( 'id' ).where( { id: app.id } ).update( app )
 
-    return res
-
+    return id
   },
 
   async deleteApp( { id } ) {
-
     await module.exports.revokeExistingAppCredentials( { appId: id } )
 
     return await ServerApps( ).where( { id: id } ).del( )
-
   },
 
   async revokeRefreshToken( { tokenId } ) {
@@ -144,7 +133,6 @@ module.exports = {
   },
 
   async revokeExistingAppCredentials( { appId } ) {
-
     let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId } ).del( )
     let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId } ).del( )
 
@@ -155,11 +143,9 @@ module.exports = {
       .del( )
 
     return resApiTokenDelete
-
   },
 
   async revokeExistingAppCredentialsForUser( { appId, userId } ) {
-
     let resAccessCodeDelete = await AuthorizationCodes( ).where( { appId: appId, userId: userId } ).del( )
     let resRefreshTokenDelete = await RefreshTokens( ).where( { appId: appId, userId: userId } ).del( )
     let resApiTokenDelete = await ApiTokens( )
@@ -169,11 +155,9 @@ module.exports = {
       .del( )
 
     return resApiTokenDelete
-
   },
 
   async createAuthorizationCode( { appId, userId, challenge } ) {
-
     let ac = {
       id: crs( { length: 42 } ),
       appId: appId,
@@ -183,11 +167,9 @@ module.exports = {
 
     await AuthorizationCodes( ).insert( ac )
     return ac.id
-
   },
 
   async createAppTokenFromAccessCode( { appId, appSecret, accessCode, challenge } ) {
-
     let code = await AuthorizationCodes( ).select( ).where( { id: accessCode } ).first( )
 
     if ( !code ) throw new Error( 'Access code not found.' )
@@ -230,11 +212,9 @@ module.exports = {
       token: appToken,
       refreshToken: bareToken.tokenId + bareToken.tokenString
     }
-
   },
 
   async refreshAppToken( { refreshToken, appId, appSecret } ) {
-
     let refreshTokenId = refreshToken.slice( 0, 10 )
     let refreshTokenContent = refreshToken.slice( 10, 42 )
 
@@ -282,6 +262,5 @@ module.exports = {
       token: appToken,
       refreshToken: bareToken.tokenId + bareToken.tokenString
     }
-
   }
 }
