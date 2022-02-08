@@ -1,19 +1,16 @@
 /* istanbul ignore file */
 const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
 const assert = require( 'assert' )
 
 const appRoot = require( 'app-root-path' )
-const { init } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
 
 const expect = chai.expect
-chai.use( chaiHttp )
 
 
 const { createUser } = require( '../services/users' )
-const { createStream, getStream, updateStream, deleteStream } = require( '../services/streams' )
-const { createObject, createObjects, getObject, getObjects } = require( '../services/objects' )
+const { createStream } = require( '../services/streams' )
+const { createObject } = require( '../services/objects' )
 const {
   createBranch,
   updateBranch,
@@ -42,18 +39,11 @@ describe( 'Branches @core-branches', () => {
   }
 
   before( async () => {
-    await knex.migrate.rollback()
-    await knex.migrate.latest()
-
-    await init()
+    await beforeEachContext( )
 
     user.id = await createUser( user )
     stream.id = await createStream( { ...stream, ownerId: user.id } )
     testObject.id = await createObject( stream.id, testObject )
-  } )
-
-  after( async () => {
-    await knex.migrate.rollback()
   } )
 
   let branch = { name: 'dim/dev' }

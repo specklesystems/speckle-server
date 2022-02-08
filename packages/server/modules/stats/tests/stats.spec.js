@@ -1,21 +1,16 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
-const assert = require( 'assert' )
+const expect = require( 'chai' ).expect
 
 const appRoot = require( 'app-root-path' )
-const { init, startHttp } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
 
-const expect = chai.expect
-chai.use( chaiHttp )
-
-const crypto = require( 'crypto' )
 const { createUser } = require( `${appRoot}/modules/core/services/users` )
 const { createPersonalAccessToken } = require( `${appRoot}/modules/core/services/tokens` )
 const { createStream } = require( `${appRoot}/modules/core/services/streams` )
 const { createObjects } = require( `${appRoot}/modules/core/services/objects` )
-const { createCommitByBranchName, createCommitByBranchId } = require( `${appRoot}/modules/core/services/commits` )
+const { createCommitByBranchName } = require( `${appRoot}/modules/core/services/commits` )
+
+const { beforeEachContext, initializeTestServer } = require( `${appRoot}/test/hooks` )
+const { createManyObjects } = require( `${appRoot}/test/helpers` )
 
 const { getStreamHistory, getCommitHistory, getObjectHistory, getUserHistory, getTotalStreamCount, getTotalCommitCount, getTotalObjectCount, getTotalUserCount } = require( '../services' )
 
@@ -25,15 +20,8 @@ describe( 'Server stats services @stats-services', function() {
   before( async function() {
     this.timeout( 10000 )
 
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-
-    await init()
+    await beforeEachContext( )
     await seedDb( params )
-  } )
-
-  after( async() => {
-    await knex.migrate.rollback( )
   } )
 
   it( 'should return the total number of users on this server', async () => {
@@ -93,10 +81,10 @@ describe( 'Server stats services @stats-services', function() {
   } )
 } )
 
-let addr
 
 describe( 'Server stats api @stats-api', function() {
-  let testServer
+  let server
+
   let adminUser = {
     name: 'Dimitrie',
     password: 'TestPasswordSecure',
@@ -126,15 +114,9 @@ describe( 'Server stats api @stats-api', function() {
 
   before( async function() {
     this.timeout( 10000 )
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
 
-    let { app } = await init( )
-    let { server } = await startHttp( app, 0 )
-    app.on( 'appStarted', () => {
-      addr = `http://localhost:${server.address().port}`
-    } )
-    testServer = server
+    let { app } = await beforeEachContext( );
+    ( { server, sendRequest } = await initializeTestServer( app ) )
 
     adminUser.id = await createUser( adminUser )
     adminUser.goodToken = `Bearer ${( await createPersonalAccessToken( adminUser.id, 'test token user A', [ 'server:stats' ] ) )}`
@@ -148,8 +130,7 @@ describe( 'Server stats api @stats-api', function() {
   } )
 
   after( async function() {
-    await knex.migrate.rollback( )
-    testServer.close( )
+    await server.close( )
   } )
 
   it( 'Should not get stats if user is not admin', async() => {
@@ -227,32 +208,4 @@ async function seedDb( { numUsers = 10, numStreams = 10, numObjects = 10, numCom
     } )
     commits.push( id )
   }
-}
-
-function createManyObjects( num, noise ) {
-  num = num || 10000
-  noise = noise || Math.random( ) * 100
-
-  let objs = [ ]
-
-  let base = { name: 'base bastard 2', noise: noise, __closure: {} }
-  objs.push( base )
-  let k = 0
-
-  for ( let i = 0; i < num; i++ ) {
-    let baby = { name: `mr. ${i}`, nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [ i + 42, i, i ] } }
-    getAnId( baby )
-    base.__closure[ baby.id ] = 1
-    objs.push( baby )
-  }
-  getAnId( base )
-  return objs
-}
-
-function getAnId( obj ) {
-  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
-}
-
-function sendRequest( auth, obj, address = addr ) {
-  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
 }

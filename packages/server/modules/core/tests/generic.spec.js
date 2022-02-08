@@ -1,23 +1,15 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
+const expect = require( 'chai' ).expect
 const assert = require( 'assert' )
 
 const appRoot = require( 'app-root-path' )
-const { init } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
-
-const expect = chai.expect
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
 
 const { validateServerRole, contextApiTokenHelper, validateScopes, authorizeResolver } = require( '../../shared' )
 
 describe( 'Generic AuthN & AuthZ controller tests', ( ) => {
   before( async ( ) => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-  } )
-
-  after( async ( ) => {
-    await knex.migrate.rollback( )
+    await beforeEachContext( )
   } )
 
   it( 'Validate scopes', async ( ) => {

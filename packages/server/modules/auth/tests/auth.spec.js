@@ -2,50 +2,39 @@
 const crs = require( 'crypto-random-string' )
 const chai = require( 'chai' )
 const request = require( 'supertest' )
-const assert = require( 'assert' )
 const appRoot = require( 'app-root-path' )
 const { createStream, getStream } = require( `${appRoot}/modules/core/services/streams` )
-const { init, startHttp } = require( `${appRoot}/app` )
 
 const { updateServerInfo } = require( `${appRoot}/modules/core/services/generic` )
 const { getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
 const { createAndSendInvite } = require( `${appRoot}/modules/serverinvites/services` )
+const { beforeEachContext, initializeTestServer } = require( `${appRoot}/test/hooks` )
 const expect = chai.expect
 
-const knex = require( `${appRoot}/db/knex` )
+let app
+let sendRequest
+let server
 
 describe( 'Auth @auth', ( ) => {
   describe( 'Local authN & authZ (token endpoints)', ( ) => {
-    let expressApp, testServer
-    let userId
-
     before( async ( ) => {
-      await knex.migrate.rollback( )
-      await knex.migrate.latest( )
-
-      let { app } = await init( )
-      let { server } = await startHttp( app, 0 )
-      expressApp = app
-      testServer = server
-      app.on( 'appStarted', () => {
-        serverAddress = `http://localhost:${server.address().port}`
-      } )
+      ( { app } = await beforeEachContext( ) );
+      ( { server, sendRequest } = await initializeTestServer( app ) )
     } )
 
     after( async ( ) => {
-      await knex.migrate.rollback( )
-      await testServer.close()
+      await server.close()
     } )
 
     it( 'Should register a new user (speckle frontend)', async ( ) => {
-      await request( expressApp )
+      await request( app )
         .post( '/auth/local/register?challenge=test&suuid=test' )
         .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 302 )
     } )
 
     it( 'Should fail to register a new user w/o password (speckle frontend)', async ( ) => {
-      await request( expressApp )
+      await request( app )
         .post( '/auth/local/register?challenge=test' )
         .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu' } )
         .expect( 400 )
@@ -55,7 +44,7 @@ describe( 'Auth @auth', ( ) => {
       await updateServerInfo( { inviteOnly: true } )
 
       // No invite
-      await request( expressApp )
+      await request( app )
         .post( '/auth/local/register?challenge=test&suuid=test' )
         .send( { email: 'spam@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 400 )
@@ -64,19 +53,19 @@ describe( 'Auth @auth', ( ) => {
       let inviteId = await createAndSendInvite( { email: 'bunny@speckle.systems', inviterId: user.id  } )
 
       // Mismatched invite
-      await request( expressApp )
+      await request( app )
         .post( '/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId )
         .send( { email: 'spam-super@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 400 )
       
       // Invalid inviteId
-      await request( expressApp )
+      await request( app )
         .post( '/auth/local/register?challenge=test&suuid=test&inviteId=' + 'inviteId' )
         .send( { email: 'spam-super@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 400 )
 
       // finally correct
-      await request( expressApp )
+      await request( app )
         .post( '/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId )
         .send( { email: 'bunny@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 302 )
@@ -89,7 +78,7 @@ describe( 'Auth @auth', ( ) => {
       const streamId = await createStream( { ownerId: user.id } ) 
       const inviteId = await createAndSendInvite( { email: 'new@stream.collaborator', inviterId: user.id, resourceTarget: 'streams', resourceId: streamId, role: 'stream:reviewer' } )
 
-      const res = await request( expressApp )
+      const res = await request( app )
         .post( '/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId )
         .send( { email: 'new@stream.collaborator', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
         .expect( 302 )
@@ -101,7 +90,7 @@ describe( 'Auth @auth', ( ) => {
 
     it( 'Should log in (speckle frontend)', async ( ) => {
       let res =
-        await request( expressApp )
+        await request( app )
           .post( '/auth/local/login?challenge=test' )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
           .expect( 302 )
@@ -109,7 +98,7 @@ describe( 'Auth @auth', ( ) => {
 
     it( 'Should fail nicely to log in (speckle frontend)', async ( ) => {
       let res =
-        await request( expressApp )
+        await request( app )
           .post( '/auth/local/login?challenge=test' )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throw' } )
           .expect( 401 )
@@ -120,7 +109,7 @@ describe( 'Auth @auth', ( ) => {
       let challenge = 'random'
 
       let res =
-        await request( expressApp )
+        await request( app )
           .post( `/auth/local/login?challenge=${challenge}` )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
           .expect( 302 )
@@ -134,7 +123,7 @@ describe( 'Auth @auth', ( ) => {
       let challenge = 'random'
 
       let res =
-        await request( expressApp )
+        await request( app )
           .post( `/auth/local/register?challenge=${challenge}` )
           .send( { email: 'spam_2@speckle.systems', name: 'dimitrie stefanescu', company: 'speckle', password: 'roll saving throws' } )
           .expect( 302 )
@@ -149,14 +138,14 @@ describe( 'Auth @auth', ( ) => {
       let challenge = 'spklwebapp'
 
       let res =
-        await request( expressApp )
+        await request( app )
           .post( `/auth/local/login?challenge=${challenge}` )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
           .expect( 302 )
 
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
-      let tokenResponse = await request( expressApp )
+      let tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret, accessCode, challenge } )
         .expect( 200 )
@@ -169,11 +158,11 @@ describe( 'Auth @auth', ( ) => {
       let appId = 'sdm'
       let challenge = 'random'
 
-      let res = await request( expressApp ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
+      let res = await request( app ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
       // Swap the app
-      tokenResponse = await request( expressApp )
+      tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret: appId, accessCode, challenge } )
         .expect( 401 )
@@ -182,11 +171,11 @@ describe( 'Auth @auth', ( ) => {
     it( 'Should not exchange a token for an access code with a wrong challenge', async () => {
       let appId = 'sdm'
       let challenge = 'random'
-      let res = await request( expressApp ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
+      let res = await request( app ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
       // Spoof the challenge
-      let tokenResponse = await request( expressApp )
+      let tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret: 'sdm', accessCode, challenge: 'WRONG' } )
         .expect( 401 )
@@ -195,11 +184,11 @@ describe( 'Auth @auth', ( ) => {
     it( 'Should not exchange a token for an access code with a wrong secret', async () => {
       let appId = 'sdm'
       let challenge = 'random'
-      let res = await request( expressApp ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
+      let res = await request( app ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
       // Spoof the secret
-      tokenResponse = await request( expressApp )
+      tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret: 'spoof', accessCode, challenge } )
         .expect( 401 )
@@ -209,11 +198,11 @@ describe( 'Auth @auth', ( ) => {
     it( 'Should not exchange a token for an access code with a garbage input', async () => {
       let appId = 'sdm'
       let challenge = 'random'
-      let res = await request( expressApp ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
+      let res = await request( app ).post( `/auth/local/login?challenge=${challenge}` ).send( { email: 'spam@speckle.systems', password: 'roll saving throws' } ).expect( 302 )
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
       // Send pure garbage
-      tokenResponse = await request( expressApp )
+      tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { accessCode, challenge } )
         .expect( 401 )
@@ -224,14 +213,14 @@ describe( 'Auth @auth', ( ) => {
       let challenge = 'random'
 
       let res =
-        await request( expressApp )
+        await request( app )
           .post( `/auth/local/login?challenge=${challenge}` )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
           .expect( 302 )
 
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
-      let tokenResponse = await request( expressApp )
+      let tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret: appId, accessCode, challenge } )
         .expect( 200 )
@@ -239,7 +228,7 @@ describe( 'Auth @auth', ( ) => {
       expect( tokenResponse.body.token ).to.exist
       expect( tokenResponse.body.refreshToken ).to.exist
 
-      let refreshTokenResponse = await request( expressApp )
+      let refreshTokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { refreshToken: tokenResponse.body.refreshToken, appId, appSecret: appId } )
         .expect( 200 )
@@ -253,14 +242,14 @@ describe( 'Auth @auth', ( ) => {
       let challenge = 'random'
 
       let res =
-        await request( expressApp )
+        await request( app )
           .post( `/auth/local/login?challenge=${challenge}` )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
           .expect( 302 )
 
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
-      let tokenResponse = await request( expressApp )
+      let tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret: appId, accessCode, challenge } )
         .expect( 200 )
@@ -269,13 +258,13 @@ describe( 'Auth @auth', ( ) => {
       expect( tokenResponse.body.refreshToken ).to.exist
 
       // spoof secret
-      let refreshTokenResponse = await request( expressApp )
+      let refreshTokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'WRONG' } )
         .expect( 401 )
 
       // swap app (use on rt for another app)
-      refreshTokenResponse = await request( expressApp )
+      refreshTokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { refreshToken: tokenResponse.body.refreshToken, appId: 'sdm', appSecret: 'sdm' } )
         .expect( 401 )
@@ -288,14 +277,14 @@ describe( 'Auth @auth', ( ) => {
       let challenge = 'random'
 
       let res =
-        await request( expressApp )
+        await request( app )
           .post( `/auth/local/login?challenge=${challenge}` )
           .send( { email: 'spam@speckle.systems', password: 'roll saving throws' } )
           .expect( 302 )
 
       let accessCode = res.headers.location.split( 'access_code=' )[ 1 ]
 
-      let tokenResponse = await request( expressApp )
+      let tokenResponse = await request( app )
         .post( '/auth/token' )
         .send( { appId, appSecret: appId, accessCode, challenge } )
         .expect( 200 )
@@ -305,7 +294,7 @@ describe( 'Auth @auth', ( ) => {
 
       frontendCredentials = tokenResponse.body
 
-      let response = await request( expressApp )
+      let response = await request( app )
         .get( `/auth/accesscode?appId=explorer&challenge=${crs( { length: 20 } )}&token=${tokenResponse.body.token}` )
         .expect( 302 )
 
@@ -314,30 +303,30 @@ describe( 'Auth @auth', ( ) => {
 
     it( 'Should not get an access code on bad requests', async() => {
       // Spoofed app
-      let response = await request( expressApp )
+      let response = await request( app )
         .get( `/auth/accesscode?appId=lol&challenge=${crs( { length: 20 } )}&token=${frontendCredentials.token}` )
         .expect( 400 )
 
       // Spoofed token
-      response = await request( expressApp )
+      response = await request( app )
         .get( `/auth/accesscode?appId=sdm&challenge=${crs( { length: 20 } )}&token=I_AM_HACZ0R` )
         .expect( 400 )
 
       // No challenge
-      response = await request( expressApp )
+      response = await request( app )
         .get( `/auth/accesscode?appId=explorer&token=${frontendCredentials.token}` )
         .expect( 400 )
     } )
 
     it( 'Should not freak out on malformed logout request', async() => {
-      let response = await request( expressApp )
+      let response = await request( app )
         .post( '/auth/logout' )
         .send( { adsfadsf: frontendCredentials.token } )
         .expect( 400 )
     } )
 
     it( 'Should invalidate tokens on logout', async() => {
-      let response = await request( expressApp )
+      let response = await request( app )
         .post( '/auth/logout' )
         .send( { ... frontendCredentials } )
         .expect( 200 )
@@ -351,9 +340,3 @@ describe( 'Auth @auth', ( ) => {
     } )
   } )
 } )
-
-let serverAddress
-
-function sendRequest( auth, obj, address = serverAddress ) {
-  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
-}

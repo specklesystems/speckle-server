@@ -1,15 +1,11 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 const assert = require( 'assert' )
 
 const appRoot = require( 'app-root-path' )
-const { init } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
 
-const expect = chai.expect
-chai.use( chaiHttp )
-
+const { beforeEachContext } = require( `${appRoot}/test/hooks` )
+const { getAnIdForThisOnePlease } = require( `${appRoot}/test/helpers` )
 
 const { createUser } = require( '../services/users' )
 const { createStream } = require( '../services/streams' )
@@ -48,7 +44,6 @@ let sampleObject = JSON.parse( `{
 }` )
 
 describe( 'Objects @core-objects', ( ) => {
-
   let userOne = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie43@gmail.com',
@@ -61,17 +56,10 @@ describe( 'Objects @core-objects', ( ) => {
   }
 
   before( async ( ) => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest( )
-
-    await init()
+    await beforeEachContext( )
 
     userOne.id = await createUser( userOne )
     stream.id = await createStream( { ...stream, isPublic: false, ownerId: userOne.id } )
-  } )
-
-  after( async ( ) => {
-    await knex.migrate.rollback( )
   } )
 
   it( 'Should create objects', async ( ) => {
@@ -95,7 +83,6 @@ describe( 'Objects @core-objects', ( ) => {
     let ids = await createObjects( stream.id, objs )
 
     expect( ids ).to.have.lengthOf( objCount_1 )
-
   } ).timeout( 30000 )
 
   it( `Should create ${objCount_2} objects`, async ( ) => {
@@ -121,7 +108,6 @@ describe( 'Objects @core-objects', ( ) => {
     myIds.forEach( ( h, i ) => objs2[ i ].id = h )
 
     expect( myIds ).to.have.lengthOf( objCount_2 )
-
   } ).timeout( 30000 )
 
   it( 'Should get a single object', async ( ) => {
@@ -145,7 +131,6 @@ describe( 'Objects @core-objects', ( ) => {
   let parentObjectId
 
   it( 'Should get object children', async ( ) => {
-
     let objs_1 = createManyObjects( 100, 'noise__' )
     let ids = await createObjects( stream.id, objs_1 )
     // console.log( ids )
@@ -185,7 +170,6 @@ describe( 'Objects @core-objects', ( ) => {
     expect( objects.length ).to.equal( 100 )
 
     parentObjectId = ids[ 0 ]
-
   } ).timeout( 30000 )
 
   it( 'should query object children, ascending order', async ( ) => {
@@ -236,7 +220,6 @@ describe( 'Objects @core-objects', ( ) => {
   } )
 
   it( 'should query object children desc on a field with duplicate values, without selecting fields', async ( ) => {
-
     // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc.
     let test3 = await getObjectChildrenQuery( {
       streamId: stream.id,
@@ -302,7 +285,6 @@ describe( 'Objects @core-objects', ( ) => {
     } catch ( err ) {
       // pass
     }
-
   } )
 
   it( 'should query children and sort them by a boolean value ', async ( ) => {
@@ -327,7 +309,6 @@ describe( 'Objects @core-objects', ( ) => {
 
     expect( test.objects[ 0 ].data.nest.duck ).to.equal( true )
     expect( test2.objects[ test2.objects.length - 1 ].data.nest.duck ).to.equal( false ) // last duck should be false
-
   } )
 
   it( 'should query children and sort them by a string value ', async ( ) => {
@@ -358,7 +339,6 @@ describe( 'Objects @core-objects', ( ) => {
     expect( test.objects[ 2 ].data.name ).to.equal( 'mr. 10' ) // remember kids, this is a lexicographical sort
     expect( test.objects[ 4 ].data.name ).to.equal( 'mr. 12' )
     expect( test2.objects[ 0 ].data.name ).to.equal( 'mr. 13' )
-
   } )
 
   it( 'should query children and sort them by id by default ', async ( ) => {
@@ -383,7 +363,6 @@ describe( 'Objects @core-objects', ( ) => {
   } )
 
   it( 'should just order results by something', async ( ) => {
-
     let test = await getObjectChildrenQuery( {
       streamId: stream.id,
       objectId: parentObjectId,
@@ -418,7 +397,6 @@ describe( 'Objects @core-objects', ( ) => {
 
     expect( test3.objects[ 49 ].data.nest.duck ).to.equal( true )
     expect( test4.objects[ 0 ].data.nest.duck ).to.equal( false )
-
   } )
 
   let commitId
@@ -474,11 +452,9 @@ describe( 'Objects @core-objects', ( ) => {
     for ( let i = 0; i < promisses.length; i++ ) {
       await promisses[i]
     }
-
   } )
 } )
 
-const crypto = require( 'crypto' )
 
 function createManyObjects( num, noise ) {
   num = num || 10000
@@ -504,7 +480,7 @@ function createManyObjects( num, noise ) {
     }
 
     if ( i % 3 === 0 ) k++
-    getAnId( baby )
+    getAnIdForThisOnePlease( baby )
 
     base.__closure[ baby.id ] = 1
     if ( i > 1000 )
@@ -513,10 +489,6 @@ function createManyObjects( num, noise ) {
     objs.push( baby )
   }
 
-  getAnId( base )
+  getAnIdForThisOnePlease( base )
   return objs
-}
-
-function getAnId( obj ) {
-  obj.id = obj.id || crypto.createHash( 'md5' ).update( JSON.stringify( obj ) ).digest( 'hex' )
 }

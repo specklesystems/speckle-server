@@ -1,23 +1,19 @@
 /* istanbul ignore file */
-const chai = require( 'chai' )
-const chaiHttp = require( 'chai-http' )
+const expect = require( 'chai' ).expect
 
 const appRoot = require( 'app-root-path' )
 const { createUser } = require( '../../core/services/users' )
 const { createPersonalAccessToken } = require( '../../core/services/tokens' )
 const { createObject } = require( '../../core/services/objects' )
 const { getUserActivity } = require( '../services' )
-const { init, startHttp } = require( `${appRoot}/app` )
-const knex = require( `${appRoot}/db/knex` )
 
-const expect = chai.expect
-chai.use( chaiHttp )
+const { beforeEachContext, initializeTestServer } = require( `${appRoot}/test/hooks` )
+const { noErrors } = require( `${appRoot}/test/helpers` )
 
-let serverAddress
-
+let sendRequest
 
 describe( 'Activity @activity', () => {
-  let testServer
+  let server
 
   let userIz = {
     name: 'Izzy Lyseggen',
@@ -63,19 +59,9 @@ describe( 'Activity @activity', () => {
   }
 
   before( async () => {
-    await knex.migrate.rollback( )
-    await knex.migrate.latest()
+    const { app } = await beforeEachContext( );
+    ( { server, serverAddress, sendRequest } = await initializeTestServer( app ) )
 
-    let { app } = await init( )
-    let { server } = await startHttp( app, 0 )
-
-    testServer = server
-
-    app.on( 'appStarted', () => {
-      serverAddress = `http://localhost:${server.address().port}`
-    } )
-
-  
     // create users and tokens
     userIz.id = await createUser( userIz )
     let token = await createPersonalAccessToken( userIz.id, 'izz test token', [ 'streams:read', 'streams:write', 'users:read', 'users:email', 'tokens:write', 'tokens:read', 'profile:read', 'profile:email' ] )
@@ -89,8 +75,7 @@ describe( 'Activity @activity', () => {
   } )
 
   after( async ( ) => {
-    await knex.migrate.rollback()
-    testServer.close( )
+    await server.close( )
   } )
 
   it( 'Should create activity', async () => {
@@ -195,22 +180,3 @@ describe( 'Activity @activity', () => {
     expect( res.body.errors.length ).to.equal( 1 )
   } )
 } )
-
-/**
- * Sends a graphql request. Convenience wrapper.
- * @param  {string} auth the user's token
- * @param  {string} obj  the query/mutation to send
- * @return {Promise}      the awaitable request
- */
-function sendRequest( auth, obj, address = serverAddress ) {
-  return chai.request( address ).post( '/graphql' ).set( 'Authorization', auth ).send( obj )
-}
-
-/**
- * Checks the response body for errors. To be used in expect assertions.
- * Will throw an error if 'errors' exist.
- * @param {*} res
- */
-function noErrors( res ) {
-  if ( 'errors' in res.body ) throw new Error( `Failed GraphQL request: ${res.body.errors[ 0 ].message}` )
-}
