@@ -113,19 +113,17 @@ jobs:
       - run:
           name: Deploy
           command: |
-            ./.circleci/deploy.sh
             RELEASE_VERSION=$(./.circleci/get_version.sh)
             if [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              ./.circleci/deploy.sh
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_RELEASE} ./.circleci/deploy_in_new_setup.sh
-              env K8S_CLUSTER=AMS3 K8S_NAMESPACE=${K8S_NAMESPACE_AMS3_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
             else
               env K8S_CLUSTER=TOR1 K8S_NAMESPACE=${K8S_NAMESPACE_TOR1_1_LATEST} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_LATEST} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_3_LATEST} ./.circleci/deploy_in_new_setup.sh
               env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_4_LATEST} ./.circleci/deploy_in_new_setup.sh
-              env K8S_CLUSTER=AMS3 K8S_NAMESPACE=${K8S_NAMESPACE_AMS3_1_LATEST} ./.circleci/deploy_in_new_setup.sh
             fi
       - run:
           name: Test deployment
