@@ -24,7 +24,7 @@ module.exports = class IFCParser {
     // Steps: create and store in speckle all the geometries (meshes) from this project and store them 
     // as reference objects in this.productGeo
     this.productGeo = {}
-    await this.createGeometries()    
+    await this.createGeometries()
     console.log( `Geometries created: ${Object.keys( this.productGeo ).length} meshes.` )
     
     // Lastly, traverse the ifc project object and parse it into something friendly; as well as 
@@ -98,12 +98,12 @@ module.exports = class IFCParser {
     
     // If array, traverse all items in it.
     if( Array.isArray( element ) ) {
-      return element.map( async el => await this.traverse( el,recursive, depth + 1 ) )
+      return await Promise.all( element.map( async el => await this.traverse( el,recursive, depth + 1 ) ) )
     }
 
     // If it has no expressID, its either a simple type or a { type, value } object. 
     if( !element.expressID ) {
-      return element.value !== null && element.value !== undefined ? element.value : element
+      return await Promise.resolve( element.value !== null && element.value !== undefined ? element.value : element )
     }
 
     if( this.cache[element.expressID.toString()] ) return this.cache[element.expressID.toString()]
