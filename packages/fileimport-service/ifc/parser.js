@@ -24,14 +24,14 @@ module.exports = class IFCParser {
     // Steps: create and store in speckle all the geometries (meshes) from this project and store them 
     // as reference objects in this.productGeo
     this.productGeo = {}
-    await this.createGeometries()
+    await this.createGeometries()    
     console.log( `Geometries created: ${Object.keys( this.productGeo ).length} meshes.` )
     
     // Lastly, traverse the ifc project object and parse it into something friendly; as well as 
     // replace all its geometries with actual references to speckle meshes from the productGeo map
     
     await this.traverse( this.project, true, 0 )
-    
+  
     let id = await this.serverApi.saveObject( this.project )
     return { id, tCount: Object.keys( this.project.__closure ).length }
   }
@@ -90,7 +90,7 @@ module.exports = class IFCParser {
     }
   }
 
-  async traverse( element, recursive = true, depth = 0 ) {
+  async traverse( element, recursive = true, depth = 0, specialTypes = [ { type: 'IfcProject', key: 'Name' }, { type: 'IfcBuilding', key: 'Name' }, { type: 'IfcSite', key: 'Name' } ] ) {
 
     // Fast exit if null/undefined
     if ( !element ) return
@@ -98,7 +98,7 @@ module.exports = class IFCParser {
     
     // If array, traverse all items in it.
     if( Array.isArray( element ) ) {
-      return await Promise.all( element.map( async el => await this.traverse( el,recursive, depth + 1 ) ) )
+      return await Promise.all( element.map( async el => await this.traverse( el,recursive, depth + 1 , specialTypes ) ) )
     }
 
     // If it has no expressID, its either a simple type or a { type, value } object. 
@@ -112,7 +112,7 @@ module.exports = class IFCParser {
 
     // Traverse all key/value pairs first.
     for( let key of Object.keys( element ) ) {
-      element[key] = await this.traverse( element[key], recursive, depth + 1 )
+      element[key] = await this.traverse( element[key], recursive, depth + 1, specialTypes )
     }
 
     // Assign speckle_type and empty closure table.
@@ -136,15 +136,30 @@ module.exports = class IFCParser {
       } )
     }
 
+    const isSpecial = specialTypes.find( t => t.type === element.speckle_type )
     // Recurse all children
     if ( recursive ) {
 
       if( element.rawSpatialChildren ) {
-        element.spatialChildren = []
+        if( !isSpecial )
+          element.spatialChildren = []
+        let childCount = {
+
+        }
         for( let child of element.rawSpatialChildren ) {
-          let res = await this.traverse( child, recursive, depth + 1 )
+          let res = await this.traverse( child, recursive, depth + 1, specialTypes )
           if( res.referencedId ) {
-            element.spatialChildren.push( res )
+            if( isSpecial ) {
+              let name = child[isSpecial.key]
+              if ( !name || name.length === 0 )
+                name = 'Undefined'
+              if( !childCount[name] )
+                childCount[name] = 0
+              if( childCount[name] > 0 )
+                name += '-' + childCount[name]++
+              element[name] = res
+            } else
+              element.spatialChildren.push( res )
             this.project.__closure[res.referencedId.toString()] = depth 
             element.__closure[res.referencedId.toString()] = 1
             
