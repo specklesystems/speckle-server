@@ -11,7 +11,7 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "scripts": {
-    "dev": "nodemon ./src/daemon.js"
+    "dev": "cross-env S3_BUCKET=speckle-server POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development nodemon ./src/daemon.js"
   },
   "bugs": {
     "url": "https://github.com/specklesystems/speckle-server/issues"
@@ -27,6 +27,7 @@
     "web-ifc": "^0.0.33"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^2.0.13"
   }
 }
