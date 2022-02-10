@@ -50,7 +50,8 @@ This monorepo is the home of the Speckle v2 web packages:
 - [`packages/viewer`](https://github.com/specklesystems/speckle-server/blob/main/packages/viewer): a threejs extension that allows you to display 3D data [![npm version](https://camo.githubusercontent.com/dc69232cc57b77de6554e752dd6dfc60ca0ecdfbe91bdfcbf7c7531a511ec200/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532467669657765722e737667)](https://www.npmjs.com/package/@speckle/viewer)
 - [`packages/objectloader`](https://github.com/specklesystems/speckle-server/blob/main/packages/objectloader): a small js utility class that helps you stream an object and all its sub-components from the Speckle Server API. [![npm version](https://camo.githubusercontent.com/4d4f1e38ce50aaf11b4a3ad8e01ce3eaaa561dc5fd08febbae556f52f1d41097/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532466f626a6563746c6f616465722e737667)](https://www.npmjs.com/package/@speckle/objectloader)
 - [`packages/preview-service`](https://github.com/specklesystems/speckle-server/blob/main/packages/preview-service): generates object previews for Speckle Objects headlessly. This package is meant to be called on by the server.
-- [`webhook-service`](https://github.com/specklesystems/speckle-server/tree/main/packages/webhook-service): the Webhook service
+- [`packages/webhook-service`](https://github.com/specklesystems/speckle-server/tree/main/packages/webhook-service): making external webhook calls
+- [`packages/fileimport-service`](https://github.com/specklesystems/speckle-server/tree/main/packages/fileimport-service): parsing and importing files
 
 ### Other repos
 
@@ -72,7 +73,7 @@ Make sure to also check and ⭐️ these other Speckle repositories:
 
 Have you checked our [dev docs](https://speckle.guide/dev/)?
 
-We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [run in development mode](https://speckle.guide/dev/server-setup.html#run-in-development-mode) chapter.
+We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [Local development environment](https://speckle.guide/dev/server-local-dev.html) page.
 
 ### Contributing
 
