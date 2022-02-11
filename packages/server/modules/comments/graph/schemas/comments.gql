@@ -1,12 +1,30 @@
-
 extend type Mutation {
-  userCommentActivityBroadcast( streamId: String!, resourceId: String!, data: JSONObject) : Boolean!
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
+  userCommentActivityBroadcast(
+    streamId: String!
+    resourceId: String!
+    data: JSONObject
+  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+
+  userCommentCreate(
+    streamId: String!
+    resourceId: String!
+    comment: JSONObject!
+  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 extend type Subscription {
   userCommentActivity(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+
+  userCommentCreated(streamId: String!, resourceId: String!): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+}
+
+type Comment {
+  id: String!
+  text: String!
+  authorId: String!
+  # TBD: how do we index on streams, commits, objects, selected objects, etc.
 }

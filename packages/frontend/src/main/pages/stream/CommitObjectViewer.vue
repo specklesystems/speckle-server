@@ -124,7 +124,7 @@
       <div
         :style="`width: 100%; bottom: 12px; left: 0px; position: ${
           $isMobile() ? 'fixed' : 'absolute'
-        }; z-index: 100`"
+        }; z-index: 20`"
         :class="`d-flex justify-center`"
       >
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
@@ -134,13 +134,17 @@
           height: 100vh;
           width: 100%;
           top: -64px;
-          left: 0px;
+          left: 0;
           position: absolute;
           z-index: 4;
           pointer-events: none;
+          overflow: none;
         "
+        class=""
       >
-        <bubbles :key="$route.params.resourceId" />
+        <bubbles key="a" />
+        <comment-add-overlay key="b" />
+        <comments-overlay key="c" />
       </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
@@ -215,7 +219,9 @@ export default {
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
     Filters: () => import('@/main/components/viewer/Filters'),
-    Bubbles: () => import('@/main/components/viewer/Bubbles')
+    Bubbles: () => import('@/main/components/viewer/Bubbles'),
+    CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay'),
+    CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay')
   },
   data: () => ({
     loadedModel: false,

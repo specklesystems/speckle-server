@@ -1,8 +1,8 @@
 <template>
   <div
     ref="parent"
-    style="width: 100%; height: 100%; position: relative; pointer-events: none; overflow: hidden"
-    class=""
+    style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
+    class=" "
   >
     <div
       v-for="user in users"
@@ -22,7 +22,7 @@
     >
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
-      <v-icon class="primary--text" large style="position: relative; right: -77%; font-size: 4.2em">
+      <v-icon class="primary--text" large style="position: relative; right: -84%; font-size: 4.2em">
         mdi-menu-right
       </v-icon>
     </div>
@@ -31,7 +31,7 @@
       :ref="`user-bubble-${sessionUser.uuid}`"
       :key="sessionUser.uuid"
       class="absolute-pos rounded-pill user-bubble elevation-5"
-      :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 2px solid ${
+      :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 4px solid ${
         $vuetify.theme.dark ? '#047EFB' : '#047EFB'
       }`"
     >
@@ -50,7 +50,6 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import throttle from 'lodash.throttle'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash.debounce'
 
@@ -94,6 +93,7 @@ export default {
           // it's easier to test like this though :)
           if (data.userCommentActivity.status === 'disconnect') {
             this.users = this.users.filter((u) => u.uuid !== data.userCommentActivity.uuid)
+            this.updateBubbles(true)
             return
           }
           if (data.userCommentActivity.uuid === this.uuid) return
@@ -121,7 +121,7 @@ export default {
               ...data.userCommentActivity
             })
           }
-          this.updateBubbles()
+          this.updateBubbles(true)
         }
       }
     }
@@ -146,10 +146,14 @@ export default {
     this.uuid = window.__bubblesId
 
     this.raycaster = new THREE.Raycaster()
-    window.__viewer.cameraHandler.controls.addEventListener(
-      'update',
-      throttle(this.updateBubbles, 120)
+    // window.__viewer.cameraHandler.controls.addEventListener(
+    //   'update',
+    //   throttle(this.updateBubbles, 120)
+    // )
+    window.__viewer.cameraHandler.controls.addEventListener('update', () =>
+      this.updateBubbles(false)
     )
+
     this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
     window.addEventListener('beforeunload', async (e) => {
       await this.sendDisconnect()
@@ -199,6 +203,10 @@ export default {
         if (delta > 20000) {
           user.hidden = true
           user.status = 'stale'
+        }
+        if (delta < 20000) {
+          user.hidden = false
+          user.status = ''
         }
       }
       this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
@@ -266,10 +274,10 @@ export default {
       })
       delete window.__resourceId
     },
-    updateBubbles() {
+    updateBubbles(transition = true) {
       if (!this.$refs.parent) return
 
-      let cam = window.__viewer.cameraHandler.activeCam.camera
+      let cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       let selectedObjects = []
       for (let user of this.users) {
@@ -333,16 +341,28 @@ export default {
           user.clipped = true
         }
 
-        this.$refs[
-          `user-bubble-${user.uuid}`
-        ][0].style.transform = `translate(-50%, -50%) translate(${tX}px,${tY}px)`
-
+        let bubbleEl = this.$refs[`user-bubble-${user.uuid}`][0]
         let uTargetEl = this.$refs[`user-target-${user.uuid}`][0]
+        let uArrowEl = this.$refs[`user-arrow-${user.uuid}`][0]
+
+        if (!bubbleEl || !uTargetEl || !uArrowEl) return // collection can get modified during update
+
+        if (!transition) {
+          bubbleEl.style.transition = ''
+          uTargetEl.style.transition = ''
+          uArrowEl.style.transition = ''
+        } else {
+          bubbleEl.style.transition = 'all 0.3s ease'
+          uTargetEl.style.transition = 'all 0.3s ease'
+          uArrowEl.style.transition = 'all 0.3s ease'
+        }
+
+        bubbleEl.style.transform = `translate(-50%, -50%) translate(${tX}px,${tY}px)`
+
         uTargetEl.style.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
         uTargetEl.style.opacity = user.clipped ? '0' : '1'
 
         const angle = Math.atan2(targetLoc.y - 16 - newTarget.y, targetLoc.x - 16 - newTarget.x)
-        let uArrowEl = this.$refs[`user-arrow-${user.uuid}`][0]
         uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }
@@ -360,7 +380,7 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  transition: all 0.3s ease;
+  /* transition: all 0.3s ease; */
   transform-origin: center;
 }
 </style>

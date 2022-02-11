@@ -24,11 +24,27 @@ module.exports = {
         resourceId: args.resourceId
       } )
       return true
+    },
+    async userCommentCreate( parent, args, context, info ) {
+      console.log( args )
+      // TODO: persist comment
+      await pubsub.publish( 'COMMENT_CREATED', {
+        userCommentCreated: args.comment, 
+        streamId: args.streamId,
+        resourceId: args.resourceId
+      } )
+      return true
     }
   },
   Subscription:{
     userCommentActivity: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_ACTIVITY' ] ), async( payload, variables, context ) => {
+        await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+        return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
+      } )
+    },
+    userCommentCreated: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_CREATED' ] ), async( payload, variables, context ) => {
         await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
         return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
       } )

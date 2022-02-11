@@ -3,10 +3,10 @@
     class="overflow-hidden"
     :style="`width: ${
       $vuetify.breakpoint.xs ? '90%' : '300px'
-    }; height: 100%; position: absolute; padding-top: 72px`"
+    }; height: 100vh; position: absolute; padding-top: 72px`"
   >
     <!-- <v-card class="px-2"> -->
-    <perfect-scrollbar style="height: 100%" :options="{ suppressScrollX: true }">
+    <perfect-scrollbar style="height: 100vh" :options="{ suppressScrollX: true }">
       <div class="d-flex align-center" style="pointer-events: auto">
         <span class="caption">Selection Info</span>
         <v-spacer />

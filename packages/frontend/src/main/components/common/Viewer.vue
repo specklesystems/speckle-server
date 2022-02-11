@@ -1,5 +1,5 @@
 <template lang="html">
-  <div style="height: 100%; position: relative" class="transparent">
+  <div style="height: 100vh; position: relative" class="transparent">
     <div
       id="rendererparent"
       ref="rendererparent"
@@ -89,14 +89,14 @@ export default {
   position: relative;
   display: inline-block;
   width: 100%;
-  height: 100%;
+  height: 100vh;
 }
 
 #renderer {
   position: absolute;
   top: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   z-index: 1;
 }
 
