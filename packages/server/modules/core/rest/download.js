@@ -30,7 +30,7 @@ module.exports = ( app ) => {
 
     let simpleText = req.headers.accept === 'text/plain'
 
-    res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': simpleText ? 'text/plain' : 'application/json' } )
+    res.writeHead( 200, { 'Content-Encoding': 'gzip', 'Content-Type': simpleText ? 'text/plain; charset=UTF-8' : 'application/json' } )
 
     let dbStream = await getObjectChildrenStream( { streamId: req.params.streamId, objectId: req.params.objectId } )
     let speckleObjStream = new SpeckleObjectsStream( simpleText )
