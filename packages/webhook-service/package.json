@@ -16,7 +16,7 @@
     "dev": "cross-env ALLOW_LOCAL_NETWORK=true node src/main.js"
   },
   "dependencies": {
-    "knex": "^1.0.1",
+    "knex": "^1.0.3",
     "node-fetch": "^2.6.1",
     "pg": "^8.6.0",
     "private-ip": "^2.3.3"
