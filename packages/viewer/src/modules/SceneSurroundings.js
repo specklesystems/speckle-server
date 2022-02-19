@@ -86,8 +86,6 @@ export default class SceneSurroundings {
 
     this.removeMap()
     this.hideBuild()
-    //console.log( selectedMap )
-    //console.log( build )
 
     if ( !this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) )  await this.addBuildings() // add if there are no buildings in the scene yet
     if ( this.viewer.scene.getObjectByName( 'OSM 3d buildings' ) && ( build === true && selectedMap !== 0 ) )  this.showBuild() // if there are buildings in the scene: if toggle is TRUE and map is not 0: show and change color, scale, rotation 
@@ -185,25 +183,6 @@ export default class SceneSurroundings {
           let meshes = child.children
           for ( let i = 0; i < meshes.length; i++ ) {
             meshes[i].material = mat
-            //meshes[i].visible = true
-            /* only usefull for dynamic position/rotation adjustment 
-            let movingVector = new THREE.Vector3( 0, 0, 0 )
-            let rotatedVector = new THREE.Vector3( 0, 0, 0 )
-            
-            // bring mesh to zero coord and rotate
-            movingVector = new THREE.Vector3( child.position.x, child.position.y, 0 ) //get vector to correct location on the map
-            child.position.x -= movingVector.x
-            child.position.y -= movingVector.y
-            child.rotation.y += rotationNorth - child.rotation.y //rotate around (0,0,0)
-
-            // move mesh back, but rotate the initial vector as well
-            rotatedVector = movingVector.applyAxisAngle( new THREE.Vector3( 0,0,1 ), rotationNorth - child.rotation.y ) //rotate vector same as the map
-            child.position.x += rotatedVector.x
-            child.position.y += rotatedVector.y
-
-            //adjust scale
-            child.scale.set( 1 / scale, 1 / scale, 1 / scale )
-            */
           }
 
         }
@@ -239,22 +218,6 @@ export default class SceneSurroundings {
     let y1 = coord_lat + rad / lat_coeff
     let x0 = coord_lon - rad / lon_coeff
     let x1 = coord_lon + rad / lon_coeff
-    //console.log( this.getCoords()[0] ) //{x: -13596.673924981229, y: 6710088.186358106}
-    /*
-    let key = 'building'
-    let bounds = {
-      'type': 'Feature',
-      'geometry': {
-        'type': 'Polygon',
-        'coordinates': [ [ [ x0, y1 ], [ x0, y0 ], [ x1, y0 ], [ x1, y1 ], [ x0, y1 ] ] ]
-      },
-      'properties': {}
-    }
-    let queryData =  OSMBuildQuery( key, bounds )
-    */
-    // [out:json][timeout:90];(node["building"](-0.13561572926179283,51.49097244295009,-0.10866627073820717,51.50756355704991);way["building"](-0.13561572926179283,51.49097244295009,-0.10866627073820717,51.50756355704991);relation["building"](-0.13561572926179283,51.49097244295009,-0.10866627073820717,51.50756355704991););out body;>;out skel qt;
-    // https://overpass-api.de/api/interpreter?data=[out:json][timeout:500];(node["building"](51.49851657345265,-0.10273900435130523,51.515104891528665,-0.07578954582771957);way["building"](51.49851657345265,-0.10273900435130523,51.515104891528665,-0.07578954582771957);relation["building"](51.49851657345265,-0.10273900435130523,51.515104891528665,-0.07578954582771957);node["man_made"="bridge"](51.49851657345265,-0.10273900435130523,51.515104891528665,-0.07578954582771957);way["man_made"="bridge"](51.49851657345265,-0.10273900435130523,51.515104891528665,-0.07578954582771957);relation["man_made"="bridge"](51.49851657345265,-0.10273900435130523,51.515104891528665,-0.07578954582771957););out body;>;out skel qt;
-
 
     let bbox = y0.toString() + ',' + x0.toString() + ',' + y1.toString() + ',' + x1.toString()
     let query_start = 'https://overpass-api.de/api/interpreter?data=[out:json][timeout:500];('
@@ -420,8 +383,6 @@ export default class SceneSurroundings {
     material.color = new THREE.Color( color )
     
     let m = new THREE.Mesh( geom, material )
-    //m.name = 'OSM 3d buildings'
-    //m.userData.coords = new THREE.Vector3( coord_lon[0], coord_lat[1],0 ) //original coordinates from Globals
     
     return m
     

@@ -132,6 +132,7 @@
           :lon="baseMapArray[0].lon"
           :north="baseMapArray[0].north"
           :api="baseMapArray[0].api"
+          :map-active="mapActive"
           @show-add-overlay="showAddOverlay = true"
         />
       </div>
@@ -227,7 +228,8 @@ export default {
     resources: [],
     showAddOverlay: false,
     viewerBusy: false,
-    baseMapArray: [{ lat: 0, lon: 0, north: 0, api: '' }]
+    baseMapArray: [{ lat: null, lon: null, north: null, api: '' }],
+    mapActive: true
   }),
   apollo: {
     branch: {
@@ -596,15 +598,23 @@ export default {
         if (key.startsWith('__')) continue
         if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
 
-        if (key == 'Project Base Point LAT') this.baseMapArray[0].lat = Number(val)
-        if (key == 'Project Base Point LON') this.baseMapArray[0].lon = Number(val)
-        if (key == 'Angle to true north') this.baseMapArray[0].north = Number(val)
+        if (key.toLowerCase() == 'project base point lat') this.baseMapArray[0].lat = Number(val)
+        if (key.toLowerCase() == 'project base point lon') this.baseMapArray[0].lon = Number(val)
+        if (key.toLowerCase() == 'angle to true north') this.baseMapArray[0].north = Number(val)
 
         if (!Array.isArray(val) && typeof val === 'object' && val !== null) {
-          let data_nested = this.nestedGlobals(val)
+          this.nestedGlobals(val)
         }
       }
-      this.baseMapArray[0].api = this.server
+      if (this.server) this.baseMapArray[0].api = this.server
+      if (
+        this.baseMapArray[0].lat !== null &&
+        this.baseMapArray[0].lon !== null &&
+        this.baseMapArray[0].north !== null &&
+        this.server !== null
+      ) {
+        this.mapActive = false
+      }
       return this.baseMapArray
     }
   }

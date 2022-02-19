@@ -10,7 +10,7 @@
     nudge-left="10"
   >
     <template #activator="{ on, attrs }">
-      <v-btn :small="small" rounded class="mr-2" v-bind="attrs" v-on="on">
+      <v-btn :disabled="mapActive" :small="small" rounded class="mr-2" v-bind="attrs" v-on="on">
         <v-icon small>mdi-map-legend</v-icon>
       </v-btn>
     </template>
@@ -35,10 +35,11 @@
 export default {
   props: {
     small: { type: Boolean, default: false },
-    lat: { type: Number, default: 0 },
-    lon: { type: Number, default: 0 },
-    north: { type: Number, default: 0 },
-    api: { type: String, default: '' }
+    lat: { type: Number, default: null },
+    lon: { type: Number, default: null },
+    north: { type: Number, default: null },
+    api: { type: String, default: '' },
+    mapActive: { type: Boolean, default: true }
   },
   data() {
     return {

@@ -23,7 +23,14 @@
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn>
       <canonical-views :small="small" />
-      <base-map-views :small="small" :lat="lat" :lon="lon" :north="north" :api="api" />
+      <base-map-views
+        :small="small"
+        :lat="lat"
+        :lon="lon"
+        :north="north"
+        :api="api"
+        :map-active="mapActive"
+      />
       <v-btn v-tooltip="'Zoom extents'" :small="small" rounded class="mr-2" @click="zoomEx()">
         <v-icon small>mdi-arrow-expand</v-icon>
       </v-btn>
@@ -47,10 +54,11 @@ export default {
   },
   props: {
     small: { type: Boolean, default: false },
-    lat: { type: Number, default: 0 },
-    lon: { type: Number, default: 0 },
-    north: { type: Number, default: 0 },
-    api: { type: String, default: '' }
+    lat: { type: Number, default: null },
+    lon: { type: Number, default: null },
+    north: { type: Number, default: null },
+    api: { type: String, default: '' },
+    mapActive: { type: Boolean, default: true }
   },
   data() {
     return {
