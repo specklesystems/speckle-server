@@ -299,7 +299,7 @@ export default class SceneSurroundings {
           for ( let n = 0; n < feature.members.length; n++ ) {
             // if several Outer ways, combine them
             if ( feature.members[n].type === 'way' && feature.members[n].role === 'outer' ) {
-              outer_ways.push( { ref: feature.members[n].ref } )
+              outer_ways.push( { id:feature.id, ref: feature.members[n].ref } )
             }
           }
           rel_outer_ways.push( outer_ways )
@@ -309,17 +309,49 @@ export default class SceneSurroundings {
       if ( feature.type === 'node' && !feature.tags ) nodes.push( { id: feature.id, lat: feature.lat, lon: feature.lon } )
     }
     /////////////////// turn relations_OUTER into ways
+    console.log( rel_outer_ways )
     for ( let n = 0; n < rel_outer_ways.length; n++ ) { 
+      console.log( '________________Relations list #' + n.toString() )
       // there will be a list of "ways" in each of rel_outer_ways
       let full_node_list = []
-      for ( let m = 0; m < rel_outer_ways[n].length; m++ ) {
+      let loop_prevention = 0
+      let local_list_ways = [ ...rel_outer_ways[n] ]
+      let max_loops = 2 * local_list_ways.length
+      for ( let m = local_list_ways.length - 1; m >= 0; m-- ) {
         for ( let k = 0; k < ways_part.length; k++ ) { // find ways_parts with corresponding ID
           if ( k === ways_part.length ) break
-          if ( rel_outer_ways[n][m].ref === ways_part[k].id ) {
-            Array.prototype.push.apply( full_node_list, ways_part[k].nodes )
-            ways_part.splice( k, 1 ) // remove used ways_parts
-            k -= 1 // reset index
-            break
+          if ( local_list_ways[m].ref === ways_part[k].id ) {
+            if ( full_node_list.length === 0 ) {
+              Array.prototype.push.apply( full_node_list, ways_part[k].nodes )
+            } else {
+              
+              if ( ways_part[k].nodes[0] === full_node_list[ full_node_list.length - 1 ] ) { // if first node in list equals last node in full list
+                console.log( '---connect directly' )
+                ways_part[k].nodes.splice( 0, 1 )
+                Array.prototype.push.apply( full_node_list, ways_part[k].nodes )
+                ways_part.splice( k, 1 ) // remove used ways_parts
+                local_list_ways.splice( m, 1 )
+                break
+                
+              } else if ( ways_part[k].nodes[ ways_part[k].nodes.length - 1 ] === full_node_list[ full_node_list.length - 1 ] ) { // if last node in list equals last node in full list
+                console.log( '---reverse and connect' )
+                ways_part[k].nodes.reverse()
+                ways_part[k].nodes.splice( 0, 1 )
+                Array.prototype.push.apply( full_node_list, ways_part[k].nodes )
+                ways_part.splice( k, 1 ) // remove used ways_parts
+                local_list_ways.splice( m, 1 )
+                break
+                
+              } else {
+                console.log( '---push nodes to the beginning of the list' )
+                loop_prevention += 1
+                if ( loop_prevention < max_loops ) {
+                  local_list_ways.unshift( [ ...local_list_ways ][m] ) // add to the beginning of the list
+                  m += 1
+                }
+              }
+            }
+
           }
         }
       }
