@@ -1,15 +1,97 @@
+type Comment {
+  id: String!
+  authorId: String!
+  archived: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  text: String!
+  data: JSONObject!
+  resources: [String]!
+  replies: CommentReplyCollection
+}
+
+type CommentReply {
+  id: String!
+  authorId: String!
+  archived: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  text: String!
+}
+
+type CommentCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Comment]
+}
+
+type CommentReplyCollection {
+  totalCount: Int!
+  cursor: String
+  items: [CommentReply]
+}
+
+input CommentCreateInput {
+  streamId: String!
+  resources: [String]!
+  text: String!
+  data: JSONObject!
+}
+
+input CommentEditInput {
+  streamId: String!
+  id: String!
+  text: String!
+  data: JSONObject!
+}
+
+input ReplyCreateInput {
+  text: String!
+  data: JSONObject!
+}
+
+input ReplyEditInput {
+  id: String!
+  text: String!
+  data: JSONObject!
+}
+
+extend type Stream {
+  comments(limit: Int! = 20, archived: Boolean = false, cursor: String): Boolean
+  comment(id: String!): Comment
+}
+
+extend type Commit {
+  comments(limit: Int! = 20, cursor: String): Boolean
+}
+
+extend type Object {
+  comments(limit: Int! = 20, cursor: String): Boolean
+}
+
 extend type Mutation {
+  # Used for broadcasting real time chat head bubbles and status.
   userCommentActivityBroadcast(
     streamId: String!
     resourceId: String!
     data: JSONObject
   ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 
-  userCommentCreate(
-    streamId: String!
-    resourceId: String!
-    comment: JSONObject!
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  commentCreate(input: CommentCreateInput!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  commentEdit(streamId: String!, comment: JSONObject!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  commentReply(streamId: String!, commentReply: JSONObject!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  commentReplyEdit(streamId: String!, commentReply: JSONObject!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 }
 
 extend type Subscription {
@@ -17,14 +99,11 @@ extend type Subscription {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  userCommentCreated(streamId: String!, resourceId: String!): JSONObject
+  commentCreated(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
-}
 
-type Comment {
-  id: String!
-  text: String!
-  authorId: String!
-  # TBD: how do we index on streams, commits, objects, selected objects, etc.
+  commentReplyCreated(streamId: String!, commentId: String!): JSONObject
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 }

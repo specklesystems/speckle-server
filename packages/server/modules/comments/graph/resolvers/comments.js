@@ -3,9 +3,27 @@ const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const {  getStream } = require( '../../../core/services/streams' )
 
-module.exports = {
-  Query: {},
-  Mutation:{
+module.exports = {  
+  Stream: {
+    async comments( parent, args, context, info ) {
+      // TODO
+    },
+    async comment( parent, args, context, info ) {
+      // TODO
+    }
+  },
+  Commit: {
+    async comments( parent, args, context, info ) {
+      // TODO
+    }
+  },
+  Object: {
+    async comments( parent, args, context, info ) {
+      // TODO
+    }
+  },
+  Mutation: {
+    // Used for broadcasting real time chat head bubbles and status.
     async userCommentActivityBroadcast( parent, args, context, info ) {
       let stream = await getStream( { streamId: args.streamId, userId: context.userId } )
       if ( !stream )
@@ -25,16 +43,33 @@ module.exports = {
       } )
       return true
     },
-    async userCommentCreate( parent, args, context, info ) {
+
+    async commentCreate( parent, args, context, info ) {
+      // TODO: check perms, persist comment
       console.log( args )
-      // TODO: persist comment
+
       await pubsub.publish( 'COMMENT_CREATED', {
-        userCommentCreated: args.comment, 
+        commentCreated: args.comment, 
         streamId: args.streamId,
         resourceId: args.resourceId
       } )
       return true
-    }
+    },
+    async commentEdit( parent, args, context, info ) {
+      // TODO
+    },
+    async commentReply( parent, args, context, info ) {
+      // TODO
+      await pubsub.publish( 'COMMENT_REPLY_CREATED', {
+        commentCreated: args.comment, 
+        streamId: args.streamId,
+        resourceId: args.resourceId
+      } )
+      return true
+    },
+    async commentReplyEdit( parent, args, context, info ) {
+      // TODO
+    },
   },
   Subscription:{
     userCommentActivity: {
@@ -43,8 +78,14 @@ module.exports = {
         return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
       } )
     },
-    userCommentCreated: {
+    commentCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_CREATED' ] ), async( payload, variables, context ) => {
+        await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
+        return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
+      } )
+    },
+    commentReplyCreated: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_REPLY_CREATED' ] ), async( payload, variables, context ) => {
         await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
         return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
       } )
