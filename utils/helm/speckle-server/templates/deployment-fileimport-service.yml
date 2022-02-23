@@ -60,6 +60,9 @@ spec:
         {{- end }}
 
         env:
+          - name: SPECKLE_SERVER_URL
+            value: "http://speckle-server:3000"
+            
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -86,5 +89,6 @@ spec:
               secretKeyRef:
                 name: {{ .Values.secretName }}
                 key: s3_secret_key
+
 
 {{- end }}

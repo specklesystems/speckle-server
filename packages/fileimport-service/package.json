@@ -11,22 +11,23 @@
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
   "scripts": {
-    "dev": "nodemon ./src/daemon.js"
+    "dev": "cross-env S3_BUCKET=speckle-server POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development nodemon ./src/daemon.js"
   },
   "bugs": {
     "url": "https://github.com/specklesystems/speckle-server/issues"
   },
   "dependencies": {
-    "aws-sdk": "^2.996.0",
+    "aws-sdk": "^2.1075.0",
     "bcrypt": "^5.0.1",
     "crypto-random-string": "^3.3.1",
     "eslint": "^7.29.0",
-    "knex": "^1.0.1",
+    "knex": "^1.0.3",
     "node-fetch": "^2.6.5",
     "pg": "^8.7.1",
     "web-ifc": "^0.0.33"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^2.0.13"
   }
 }

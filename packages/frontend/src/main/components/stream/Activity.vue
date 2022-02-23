@@ -14,7 +14,7 @@
           @infinite="infiniteHandler"
         >
           <div slot="no-more">This is all your activity!</div>
-          <div slot="no-results">There are no ctivities to load</div>
+          <div slot="no-results">There are no activities to load</div>
         </infinite-loading>
       </v-timeline>
       <v-timeline v-else-if="$apollo.loading" align-top dense>

@@ -10,13 +10,13 @@
     "serve:setup": "vue-cli-service serve"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.1.0",
+    "@speckle/viewer": "^2.2.6",
     "@tryghost/content-api": "^1.5.12",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
-    "apexcharts": "^3.26.3",
+    "apexcharts": "^3.33.1",
     "crypto-random-string": "^3.3.0",
-    "dompurify": "^2.2.4",
+    "dompurify": "^2.3.6",
     "lodash.debounce": "^4.0.8",
     "lodash.throttle": "^4.1.1",
     "numeral": "^2.0.6",
