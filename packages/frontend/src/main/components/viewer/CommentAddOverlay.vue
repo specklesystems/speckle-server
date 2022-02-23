@@ -71,12 +71,10 @@ export default {
         data: {
           location: this.location,
           camPos: getCamArray(),
-          filters: null,
-          sectionBox: null,
-          selection: null,
-          screenshot: null,
-          targetCommits: null,
-          targetObjects: null
+          filters: null, // TODO
+          sectionBox: null, // TODO
+          selection: null, // TODO
+          screenshot: null // TODO
         }
       }
       if (this.$route.query.overlay)

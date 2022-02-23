@@ -10,6 +10,12 @@ type Comment {
   replies: CommentReplyCollection
 }
 
+type CommentCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Comment]
+}
+
 type CommentReply {
   id: String!
   authorId: String!
@@ -17,12 +23,6 @@ type CommentReply {
   createdAt: DateTime!
   updatedAt: DateTime!
   text: String!
-}
-
-type CommentCollection {
-  totalCount: Int!
-  cursor: String
-  items: [Comment]
 }
 
 type CommentReplyCollection {
@@ -57,21 +57,25 @@ input ReplyEditInput {
 }
 
 extend type Stream {
-  comments(limit: Int! = 20, archived: Boolean = false, cursor: String): Boolean
+  comments(
+    limit: Int! = 20
+    archived: Boolean = false
+    cursor: String
+  ): CommentCollection
   comment(id: String!): Comment
 }
 
 extend type Commit {
-  comments(limit: Int! = 20, cursor: String): Boolean
+  comments(limit: Int! = 20, cursor: String): CommentCollection
 }
 
 extend type Object {
-  comments(limit: Int! = 20, cursor: String): Boolean
+  comments(limit: Int! = 20, cursor: String): CommentCollection
 }
 
 extend type Mutation {
   # Used for broadcasting real time chat head bubbles and status.
-  userCommentActivityBroadcast(
+  commentActivityBroadcast(
     streamId: String!
     resourceId: String!
     data: JSONObject

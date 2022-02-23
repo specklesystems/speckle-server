@@ -23,7 +23,7 @@ module.exports = {
       if ( resource.length === 10 ) {
         await CommitComments().insert( { commit:resource, comment: comment.id } )
       } else {
-        await ObjectComments().insert( { commit:resource, comment: comment.id } )
+        await ObjectComments().insert( { object:resource, comment: comment.id } )
       }
     }
     return comment.id
@@ -33,9 +33,9 @@ module.exports = {
     // TODO
   },
 
-  async archiveComment( {} ) {
-    // TODO
-  },
+  // async archiveComment( {} ) {
+  //   // TODO
+  // },
 
   async createCommentReply( {} ) {
     // TODO
@@ -45,23 +45,23 @@ module.exports = {
     // TODO
   },
 
-  async archiveCommentReply( {} ) {
+  // async archiveCommentReply( {} ) {
+  //   // TODO
+  // },
+
+  async getStreamComments( { streamId, limit, archived, cursor } ) {
     // TODO
   },
 
-  async getStreamComments( {} ) {
+  async getCommitComments( { commitId, limit, archived, cursor } ) {
     // TODO
   },
 
-  async getCommitComments( {} ) {
+  async getObjectComments( { objectId, limit, archived, cursor } ) {
     // TODO
   },
 
-  async getObjectComments( {} ) {
-    // TODO
-  },
-
-  async getCommentReplies( {} ) {
+  async getCommentReplies( { commentId } ) {
     // TODO
   }
 }
