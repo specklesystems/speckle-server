@@ -3,22 +3,12 @@ exports.up = async ( knex ) => {
   await knex.schema.createTable( 'comments', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' ).notNullable().index( )
-    table.boolean( 'archived' ).defaultTo( false ).index( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'text' )
     table.jsonb( 'data' )
-  } )
-
-  // Comments -< Replies
-  await knex.schema.createTable( 'comment_replies', table => {
-    table.string( 'id', 10 ).primary( )
-    table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' ).notNullable().index( )
-    table.boolean( 'archived' ).defaultTo( false ).index( )
-    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
-    table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
-    table.string( 'text' )
-  } )
+    table.string( 'parentComment', 10 ).references( 'id' ).inTable( 'comments' )
+  } }
 
   // Streams >- -< Comments
   // Minor futureproofing: a comment can be written "on top of" multiple resources from multiple streams.

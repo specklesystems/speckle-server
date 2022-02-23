@@ -14,11 +14,13 @@ module.exports = {
     let comment = { ...input }
     delete comment.resources
     delete comment.streamId
-    comment.id = crs( { length:10 } )
+    comment.id = crs( { length: 10 } )
     comment.authorId = userId
     
     await Comments().insert( comment )
+    
     await StreamComments().insert( { stream: input.streamId, comment: comment.id } )
+    
     for ( let resource of input.resources ) {
       if ( resource.length === 10 ) {
         await CommitComments().insert( { commit:resource, comment: comment.id } )
@@ -51,6 +53,17 @@ module.exports = {
 
   async getStreamComments( { streamId, limit, archived, cursor } ) {
     // TODO
+    limit = limit || 25
+    let raw = `SELECT * from stream_comments
+      JOIN comments ON comments.id = stream_comments."comment"
+      WHERE stream_comments.stream = 'a55537c38f'
+      ORDER BY comments."createdAt" DESC
+      LIMIT 25
+      `
+    let query = Comments()
+      .columns( [ 'id', 'authorId', 'archived', 'createdAt', 'updatedAt', 'text', 'data' ] )
+      .select()
+      .join( 'stream_comments', 'comment.id', 'stream_comments.commit' )
   },
 
   async getCommitComments( { commitId, limit, archived, cursor } ) {

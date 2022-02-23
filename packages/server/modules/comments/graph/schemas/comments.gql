@@ -46,14 +46,14 @@ input CommentEditInput {
 }
 
 input ReplyCreateInput {
+  commentId: String!
   text: String!
-  data: JSONObject!
 }
 
 input ReplyEditInput {
   id: String!
   text: String!
-  data: JSONObject!
+  archived: Boolean
 }
 
 extend type Stream {
@@ -66,16 +66,24 @@ extend type Stream {
 }
 
 extend type Commit {
-  comments(limit: Int! = 20, cursor: String): CommentCollection
+  comments(
+    limit: Int! = 20
+    archived: Boolean = false
+    cursor: String
+  ): CommentCollection
 }
 
 extend type Object {
-  comments(limit: Int! = 20, cursor: String): CommentCollection
+  comments(
+    limit: Int! = 20
+    archived: Boolean = false
+    cursor: String
+  ): CommentCollection
 }
 
 extend type Mutation {
   # Used for broadcasting real time chat head bubbles and status.
-  commentActivityBroadcast(
+  userCommentActivityBroadcast(
     streamId: String!
     resourceId: String!
     data: JSONObject
