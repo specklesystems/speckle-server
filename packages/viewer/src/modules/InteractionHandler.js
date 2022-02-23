@@ -130,6 +130,12 @@ export default class InteractionHandler {
     this.viewer.emit( 'select', this.selectedObjectsUserData )
   }
 
+  zoomToObjectId( id ) {
+    let obj = this.viewer.sceneManager.allObjects.find( o => o.uuid === id )
+    if( obj ) this.zoomToObject( obj )
+    else console.warn( `No object with id of ${id} found.` )
+  }
+  
   zoomToObject( target, fit = 1.2, transition = true ) {
     const box = new THREE.Box3().setFromObject( target )
     this.zoomToBox( box, fit, transition )
