@@ -1,14 +1,32 @@
 'use strict'
-
+const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
 const Comments = () => knex( 'comments' )
-const CommentReplies = () => knex( 'comments' )
+const StreamComments = () => knex( 'stream_comments' )
+const CommitComments = () => knex( 'commit_comments' )
+const ObjectComments = () => knex( 'object_comments' )
+const CommentReplies = () => knex( 'comment_replies' )
 
 module.exports = { 
-  async createComment( {} ) {
-    // TODO
+  async createComment( { userId, input } ) {
+    let comment = { ...input }
+    delete comment.resources
+    delete comment.streamId
+    comment.id = crs( { length:10 } )
+    comment.authorId = userId
+    
+    await Comments().insert( comment )
+    await StreamComments().insert( { stream: input.streamId, comment: comment.id } )
+    for ( let resource of input.resources ) {
+      if ( resource.length === 10 ) {
+        await CommitComments().insert( { commit:resource, comment: comment.id } )
+      } else {
+        await ObjectComments().insert( { commit:resource, comment: comment.id } )
+      }
+    }
+    return comment.id
   },
 
   async editComment( {} ) {

@@ -2,11 +2,11 @@ type Comment {
   id: String!
   authorId: String!
   archived: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
   text: String!
   data: JSONObject!
   resources: [String]!
+  createdAt: DateTime
+  updatedAt: DateTime
   replies: CommentReplyCollection
 }
 
@@ -77,7 +77,7 @@ extend type Mutation {
     data: JSONObject
   ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 
-  commentCreate(input: CommentCreateInput!): Boolean!
+  commentCreate(input: CommentCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -85,7 +85,7 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentReply(streamId: String!, commentReply: JSONObject!): Boolean!
+  commentReply(streamId: String!, commentReply: JSONObject!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

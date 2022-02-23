@@ -1,5 +1,4 @@
 'use strict'
-const bcrypt = require( 'bcrypt' )
 const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )

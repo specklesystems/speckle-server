@@ -17,7 +17,7 @@
             :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
             rounded
             autofocus
-            class="transparent elevation-0 caption pb-2"
+            class="transparent elevation-0 pb-2"
             auto-grow
             hide-details
             dense
@@ -26,9 +26,10 @@
             hint="Add a comment"
             style="line-height: 1.25em !important"
             @click:append="addComment()"
+            @keydown.enter.shift.exact.prevent="addComment()"
           ></v-textarea>
           <br />
-          <span class="caption px-4 grey--text"><i>Ctrl/Cmd + s will save the comment.</i></span>
+          <span class="caption px-4 grey--text"><i>Shift + Enter will save the comment.</i></span>
         </v-card>
         <!-- <span class="caption">Hit enter to save.</span> -->
         <!-- <v-btn rounded block small class="mt-2 mb-2">add</v-btn> -->
@@ -63,32 +64,30 @@ export default {
   },
   methods: {
     async addComment() {
-      let comment = {
-        location: this.location,
-        camPos: getCamArray(),
+      let commentInput = {
+        streamId: this.$route.params.streamId,
+        resources: [this.$route.params.resourceId],
         text: this.commentText,
-        filters: null,
-        sectionBox: null,
-        selection: null,
-        screenshot: null,
-        targetCommits: null,
-        targetObjects: null
+        data: {
+          location: this.location,
+          camPos: getCamArray(),
+          filters: null,
+          sectionBox: null,
+          selection: null,
+          screenshot: null,
+          targetCommits: null,
+          targetObjects: null
+        }
       }
+      if (this.$route.query.overlay)
+        commentInput.resources.push(...this.$route.query.overlay.split(','))
       await this.$apollo.mutate({
         mutation: gql`
-          mutation userCommentCreate(
-            $streamId: String!
-            $resourceId: String!
-            $comment: JSONObject!
-          ) {
-            userCommentCreate(streamId: $streamId, resourceId: $resourceId, comment: $comment)
+          mutation commentCreate($input: CommentCreateInput!) {
+            commentCreate(input: $input)
           }
         `,
-        variables: {
-          streamId: this.$route.params.streamId,
-          resourceId: this.$route.params.resourceId,
-          comment
-        }
+        variables: { input: commentInput }
       })
       this.expand = false
       this.visible = false
@@ -134,6 +133,7 @@ export default {
       this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
     },
     updateCommentBubble() {
+      // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
       let cam = window.__viewer.cameraHandler.camera
