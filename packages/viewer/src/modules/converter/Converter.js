@@ -278,7 +278,11 @@ export default class Coverter {
   async BrepToBufferGeometry( obj, scale = true ) {
     try {
       if ( !obj ) return
-      let { bufferGeometry } = await this.MeshToBufferGeometry( await this.resolveReference( obj.displayValue || obj.displayMesh ), scale )
+
+      let displayValue = obj.displayValue || obj.displayMesh
+      if( Array.isArray( displayValue ) ) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
+
+      let { bufferGeometry } = await this.MeshToBufferGeometry( await this.resolveReference( displayValue ), scale )
 
       // deletes known unneeded fields
       // delete obj.displayMesh
@@ -448,8 +452,10 @@ export default class Coverter {
   async CurveToBufferGeometry( object, scale = true ) {
     let obj = {}
     Object.assign( obj, object )
-    obj.displayValue.units = obj.displayValue.units || obj.units
-    const poly = await this.PolylineToBufferGeometry( obj.displayValue, scale )
+    let displayValue = await this.resolveReference( obj.displayValue )
+    displayValue.units = displayValue.units || obj.units
+
+    const poly = await this.PolylineToBufferGeometry( displayValue, scale )
 
     return new ObjectWrapper( poly.bufferGeometry, obj, 'line' )
   }
