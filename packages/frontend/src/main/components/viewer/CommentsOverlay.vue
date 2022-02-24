@@ -1,4 +1,5 @@
 <template>
+  <!-- HIC SVNT DRACONES -->
   <div
     ref="parent"
     style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
@@ -28,18 +29,34 @@
               v-show="comment.expanded"
               class="inline-block"
               style="display: inline-block; overflow: hidden"
-            ></div>
+            >
+              <!-- Management buttons here -->
+              <!-- <v-btn x-small><v-icon small>mdi-archive-arrow-down</v-icon></v-btn> -->
+            </div>
           </v-slide-x-transition>
         </div>
         <v-scroll-y-transition>
           <v-card
             v-show="comment.expanded"
+            :ref="`commentcard-${index}`"
             class="elevation-2 rounded-xl my-1 mt-3"
-            style="width: 300px"
+            style="width: 300px; overflow-y: scroll"
           >
-            <v-card-text v-html="comment.text"></v-card-text>
-            <v-card-actions class="mx-1">
-              <v-btn small class="rounded-xl">reply</v-btn>
+            <div class="px-4 py-4">
+              <!-- <perfect-scrollbar style="height: 300px"> -->
+              <div class="body-2" style="">
+                We’ve just returned from Barcelona, where we had our second retreat - being a remote
+                company, we try to meet at least twice a year IRL to get some better resolution
+                meetings and spend quality time together (like cooking paella while drinking copious
+                amounts of cava). Covid took its toll though, and the formula was incomplete: Izzy
+                you were missed, but rest assured - we’ll photoshop you in all the pics!
+                <br />
+                {{ comment.text }}
+              </div>
+              <!-- </perfect-scrollbar> -->
+            </div>
+            <v-card-actions>
+              <v-btn small class="primary rounded-xl">reply</v-btn>
             </v-card-actions>
           </v-card>
         </v-scroll-y-transition>
@@ -95,9 +112,14 @@ export default {
     expandComment(comment) {
       for (let c of this.comments) {
         if (c === comment) {
-          c.expanded = true
-        } else c.expanded = false
-        if (c.expanded) {
+          c.preventAutoClose = true
+          setTimeout(() => (c.expanded = true), 100)
+          setTimeout(() => (c.preventAutoClose = false), 1000)
+        } else {
+          c.expanded = false
+        }
+
+        if (c === comment) {
           this.setCommentPow(c)
         }
       }
@@ -129,7 +151,6 @@ export default {
       for (let comment of this.comments) {
         index++
         let commentEl = this.$refs[`comment-${index}`][0]
-        // console.log(commentEl)
         if (!commentEl) continue
         let location = new THREE.Vector3(
           comment.data.location.x,
@@ -142,9 +163,41 @@ export default {
           (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
           0
         )
-        commentEl.style.transform = `translate(${commentLocation.x - 20}px,${
-          commentLocation.y - 20
-        }px)`
+        let tX = commentLocation.x - 20
+        let tY = commentLocation.y - 20
+        const paddingX = 10
+        const paddingYTop = 70
+        const paddingYBottom = 80
+
+        if (tX < -40) if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out leftwise
+        if (tX < paddingX) {
+          tX = paddingX
+        }
+
+        if (tX > this.$refs.parent.clientWidth - (paddingX + 50)) {
+          tX = this.$refs.parent.clientWidth - (paddingX + 50)
+          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far down bottomwise
+        }
+        if (tY < 0 && !comment.preventAutoClose) comment.expanded = false // collapse if too far out topwise
+        if (tY < paddingYTop) {
+          tY = paddingYTop
+        }
+        if (tY > this.$refs.parent.clientHeight - paddingYBottom) {
+          tY = this.$refs.parent.clientHeight - paddingYBottom
+          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out rightwards
+        }
+        commentEl.style.transform = `translate(${tX}px,${tY}px)`
+
+        let card = this.$refs[`commentcard-${index}`][0]
+        if (card) {
+          let ot = tY
+          let ph = this.$refs.parent.clientHeight
+          let h = ph - ot - paddingYBottom - 40
+          if (h < 40 && !comment.preventAutoClose) {
+            comment.expanded = false
+          }
+          card.$el.style.maxHeight = `${h}px`
+        }
       }
     }
   }

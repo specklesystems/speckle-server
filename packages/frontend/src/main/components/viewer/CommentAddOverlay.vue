@@ -1,4 +1,5 @@
 <template>
+  <!-- HIC SVNT DRACONES -->
   <div
     ref="parent"
     style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden"
@@ -17,7 +18,7 @@
             :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
             rounded
             autofocus
-            class="transparent elevation-0 pb-2"
+            class="transparent elevation-0 pb-2 body-2"
             auto-grow
             hide-details
             dense
@@ -45,7 +46,7 @@
       <v-slide-x-transition>
         <v-btn
           v-show="!location"
-          v-tooltip="'Add a comment!'"
+          v-tooltip="'Add a comment (shift + c)'"
           icon
           dark
           class="elevation-5 primary pa-0 ma-o"
@@ -76,6 +77,13 @@ export default {
     window.__viewer.on('select', debounce(this.handleSelect, 10))
     window.__viewer.cameraHandler.controls.addEventListener('update', this.updateCommentBubble)
     this.$refs.commentTextArea.calculateInputHeight()
+    document.addEventListener(
+      'keyup',
+      function (e) {
+        console.log(e)
+        if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
+      }.bind(this)
+    )
   },
   methods: {
     async addComment() {
@@ -114,8 +122,8 @@ export default {
       // TODO: typing or not
     },
     toggleExpand() {
-      this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
       this.expand = !this.expand
+      this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
       if (this.expand && !this.location) {
         // TODO: put in middle of screen?
         this.$refs.commentOverlay.style.top = `50%`
@@ -148,10 +156,11 @@ export default {
         0
       )
       this.$refs.commentButton.style.transition = 'all 0.3s ease'
-      this.$refs.commentButton.style.top = `${mappedLocation.y}px`
+      this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
 
       this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
+      this.$refs.commentOverlay.style.transform = `translate(0)`
       this.$refs.commentOverlay.style.top = `${mappedLocation.y + 40}px`
       this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
     },
@@ -171,7 +180,7 @@ export default {
         0
       )
       this.$refs.commentButton.style.transition = ''
-      this.$refs.commentButton.style.top = `${mappedLocation.y}px`
+      this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
 
       this.$refs.commentOverlay.style.transition = ''
