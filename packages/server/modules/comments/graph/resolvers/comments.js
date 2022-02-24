@@ -1,7 +1,7 @@
 const appRoot = require( 'app-root-path' )
 const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
-const {  getStream } = require( '../../../core/services/streams' )
+const {  getStream } = require( `${appRoot}/modules/core/services/streams` )
 
 const { createComment } = require( `${appRoot}/modules/comments/services` )
 
@@ -75,9 +75,9 @@ module.exports = {
       } )
       return true
     },
-    async commentReplyEdit( parent, args, context, info ) {
-      // TODO
-    },
+    // async commentReplyEdit( parent, args, context, info ) {
+    //   // TODO
+    // },
   },
   Subscription:{
     userCommentActivity: {

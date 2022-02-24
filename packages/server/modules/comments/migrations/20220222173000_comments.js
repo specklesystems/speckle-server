@@ -7,8 +7,8 @@ exports.up = async ( knex ) => {
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'text' )
     table.jsonb( 'data' )
-    table.string( 'parentComment', 10 ).references( 'id' ).inTable( 'comments' )
-  } }
+    table.string( 'parentComment', 10 ).references( 'id' ).inTable( 'comments' ).defaultTo( null )
+  } )
 
   // Streams >- -< Comments
   // Minor futureproofing: a comment can be written "on top of" multiple resources from multiple streams.

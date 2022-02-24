@@ -9,6 +9,22 @@ const CommitComments = () => knex( 'commit_comments' )
 const ObjectComments = () => knex( 'object_comments' )
 const CommentReplies = () => knex( 'comment_replies' )
 
+const persistResourceLinks = async ( commentId, resources ) => {
+  for ( const resource of resources ) {
+    switch ( resource.type ) {
+    // having the type as a string here, kinda makes having two N mapping tables useless
+    case 'stream':
+      return await StreamComments().insert( { stream: resource.id, comment: commentId } )
+    case 'commit':
+      return await CommitComments().insert( { commit: resource.id, comment: commentId } )
+    case 'object':
+      return await ObjectComments().insert( { commit: resource.id, comment: commentId } )
+    default:
+      throw Error( `resource type ${resource.type} is not supported as a comment target` )
+    }
+  }
+}
+
 module.exports = { 
   async createComment( { userId, input } ) {
     let comment = { ...input }
@@ -18,16 +34,9 @@ module.exports = {
     comment.authorId = userId
     
     await Comments().insert( comment )
+
+    await persistResourceLinks( comment.id, input.resources )
     
-    await StreamComments().insert( { stream: input.streamId, comment: comment.id } )
-    
-    for ( let resource of input.resources ) {
-      if ( resource.length === 10 ) {
-        await CommitComments().insert( { commit:resource, comment: comment.id } )
-      } else {
-        await ObjectComments().insert( { object:resource, comment: comment.id } )
-      }
-    }
     return comment.id
   },
 
@@ -50,6 +59,10 @@ module.exports = {
   // async archiveCommentReply( {} ) {
   //   // TODO
   // },
+
+  async getComments({ resources }) {
+
+  },
 
   async getStreamComments( { streamId, limit, archived, cursor } ) {
     // TODO
