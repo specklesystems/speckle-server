@@ -203,6 +203,7 @@ import debounce from 'lodash.debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/main/components/common/Viewer' // do not import async
+import { resourceType } from '@/plugins/resourceIdentifier'
 
 export default {
   components: {
@@ -289,10 +290,10 @@ export default {
   async mounted() {
     this.$eventHub.$emit('page-load', true)
     this.resources.push({
-      type: this.$route.params.resourceId.length === 10 ? 'commit' : 'object',
+      type: resourceType(this.$route.params.resourceId),
       id: this.$route.params.resourceId,
       data:
-        this.$route.params.resourceId.length === 10
+        resourceType(this.$route.params.resourceId) === 'commit'
           ? await this.loadCommit(this.$route.params.resourceId)
           : await this.loadObject(this.$route.params.resourceId)
     })
@@ -300,13 +301,14 @@ export default {
     if (this.$route.query.overlay) {
       let ids = this.$route.query.overlay.split(',')
       for (const id of ids) {
-        let cleanedId = id.replace(/\s+/g, '')
+        const cleanedId = id.replace(/\s+/g, '')
         if (!cleanedId || cleanedId === '') continue
+        const resType = resourceType(cleanedId)
         this.resources.push({
-          type: id.length === 10 ? 'commit' : 'object',
+          type: resType,
           id: cleanedId,
           data:
-            cleanedId.length === 10
+            resType === 'commit'
               ? await this.loadCommit(cleanedId)
               : await this.loadObject(cleanedId)
         })
@@ -448,17 +450,19 @@ export default {
     },
     async addResource(resId) {
       this.showAddOverlay = false
+      const resType = resourceType(resId)
       let existing = this.resources.findIndex((res) => res.id === resId)
+
       if (existing !== -1) {
         this.$eventHub.$emit('notification', {
-          text: `${resId.length === 10 ? 'Commit' : 'Object'} is already loaded.`
+          text: `${resType.charAt(0).toUpperCase() + resType.slice(1)} is already loaded.`
         })
         return
       }
       let resource = {
-        type: resId.length === 10 ? 'commit' : 'object',
+        type: resType,
         id: resId,
-        data: resId.length === 10 ? await this.loadCommit(resId) : await this.loadObject(resId)
+        data: resType === 'commit' ? await this.loadCommit(resId) : await this.loadObject(resId)
       }
       this.resources.push(resource)
       this.$mixpanel.track('Viewer Action', {
