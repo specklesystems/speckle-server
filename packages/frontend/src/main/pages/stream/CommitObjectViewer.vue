@@ -143,8 +143,8 @@
         class=""
       >
         <bubbles key="a" />
-        <comment-add-overlay key="b" />
         <comments-overlay key="c" />
+        <comment-add-overlay key="b" />
       </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">

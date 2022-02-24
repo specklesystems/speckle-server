@@ -9,8 +9,8 @@
       :class="`absolute-pos comment-overlay rounded-xl ${expand ? 'expanded' : ''}`"
       :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
     >
-      <div class="px-2">
-        <v-card class="elevation-2 rounded-xl pa-1 my-1">
+      <div class="pa-2">
+        <v-card class="elevation-5 rounded-xl pa-1 my-1">
           <v-textarea
             ref="commentTextArea"
             v-model="commentText"
@@ -42,16 +42,19 @@
       </v-btn>
     </div>
     <portal to="viewercontrols">
-      <v-btn
-        v-tooltip="'Add a comment!'"
-        icon
-        dark
-        class="elevation-5 primary pa-0 ma-o"
-        @click="toggleExpand()"
-      >
-        <v-icon v-if="!expand" dark small>mdi-comment-plus</v-icon>
-        <v-icon v-else dark small>mdi-close</v-icon>
-      </v-btn>
+      <v-slide-x-transition>
+        <v-btn
+          v-show="!location"
+          v-tooltip="'Add a comment!'"
+          icon
+          dark
+          class="elevation-5 primary pa-0 ma-o"
+          @click="toggleExpand()"
+        >
+          <v-icon v-if="!expand" dark small>mdi-comment-plus</v-icon>
+          <v-icon v-else dark small>mdi-close</v-icon>
+        </v-btn>
+      </v-slide-x-transition>
     </portal>
   </div>
 </template>
@@ -76,12 +79,15 @@ export default {
   },
   methods: {
     async addComment() {
+      let camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
       let commentInput = {
         streamId: this.$route.params.streamId,
         resources: [this.$route.params.resourceId],
         text: this.commentText,
         data: {
-          location: this.location,
+          location: this.location
+            ? this.location
+            : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
           camPos: getCamArray(),
           filters: null, // TODO
           sectionBox: null, // TODO
@@ -110,12 +116,19 @@ export default {
     toggleExpand() {
       this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
       this.expand = !this.expand
+      if (this.expand && !this.location) {
+        // TODO: put in middle of screen?
+        this.$refs.commentOverlay.style.top = `50%`
+        this.$refs.commentOverlay.style.left = `50%`
+        this.$refs.commentOverlay.style.transform = `translate(-50%, -50%)`
+      }
     },
     handleSelect(info) {
       if (!info.location) {
         // TODO: deselect event
         this.expand = false
         this.visible = false
+        this.location = null
         return
       }
       if (!this.$refs.commentButton) return
