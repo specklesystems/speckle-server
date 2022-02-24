@@ -35,6 +35,7 @@
       >
         <v-icon small>mdi-scissors-cutting</v-icon>
       </v-btn>
+      <portal-target slim name="viewercontrols"></portal-target>
     </v-card>
   </div>
 </template>

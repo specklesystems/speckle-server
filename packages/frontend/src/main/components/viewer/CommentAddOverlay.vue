@@ -41,6 +41,18 @@
         <v-icon v-else dark small>mdi-close</v-icon>
       </v-btn>
     </div>
+    <portal to="viewercontrols">
+      <v-btn
+        v-tooltip="'Add a comment!'"
+        icon
+        dark
+        class="elevation-5 primary pa-0 ma-o"
+        @click="toggleExpand()"
+      >
+        <v-icon v-if="!expand" dark small>mdi-comment-plus</v-icon>
+        <v-icon v-else dark small>mdi-close</v-icon>
+      </v-btn>
+    </portal>
   </div>
 </template>
 <script>
