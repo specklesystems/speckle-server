@@ -3,9 +3,33 @@ const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const {  getStream } = require( `${appRoot}/modules/core/services/streams` )
 
-const { createComment } = require( `${appRoot}/modules/comments/services` )
+const { getComment, getComments, createComment } = require( `${appRoot}/modules/comments/services` )
+
+const authorizeStreamAccess = async ( { streamId, userId, auth } ) => {
+  const stream = await getStream( { streamId, userId } )
+  if ( !stream )
+    throw new ApolloError( 'Stream not found' )
+
+  if ( !stream.isPublic && auth === false )
+    throw new ForbiddenError( 'You are not authorized.' )
+
+  if ( !stream.isPublic ) {
+    await authorizeResolver( userId, streamId, 'stream:reviewer' )
+  }
+}
 
 module.exports = {  
+  Query: {
+    async comment( parent, args, context, info ) {
+      await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
+      return await getComment( args.id )
+    },
+
+    async comments( parent, args, context, info ) {
+      await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
+      return await getComments( args ) 
+    }
+  },
   Stream: {
     async comments( parent, args, context, info ) {
       // TODO
@@ -32,16 +56,7 @@ module.exports = {
   Mutation: {
     // Used for broadcasting real time chat head bubbles and status. Does not persist anything!
     async userCommentActivityBroadcast( parent, args, context, info ) {
-      let stream = await getStream( { streamId: args.streamId, userId: context.userId } )
-      if ( !stream )
-        throw new ApolloError( 'Stream not found' )
-
-      if ( !stream.isPublic && context.auth === false )
-        throw new ForbiddenError( 'You are not authorized.' )
-
-      if ( !stream.isPublic ) {
-        await authorizeResolver( context.userId, args.streamId, 'stream:reviewer' )
-      }
+      await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
 
       await pubsub.publish( 'COMMENT_ACTIVITY', {
         userCommentActivity: args.data, 

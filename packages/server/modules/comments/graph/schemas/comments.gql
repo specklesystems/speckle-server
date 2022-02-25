@@ -1,3 +1,9 @@
+extend type Query {
+  comment(id: String!, streamId: String!): Comment
+
+  comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String): CommentCollection
+}
+
 type Comment {
   id: String!
   authorId: String!
@@ -13,8 +19,8 @@ type Comment {
 
 type CommentCollection {
   totalCount: Int!
-  cursor: String
-  items: [Comment]
+  cursor: DateTime!
+  items: [Comment]!
 }
 
 type ResourceIdentifier {
@@ -50,7 +56,7 @@ type CommentReplyCollection {
 }
 
 input CommentCreateInput {
-  # streamId: String!
+  streamId: String!
   resources: [ResourceIdentifierInput]!
   text: String!
   data: JSONObject!

@@ -7,6 +7,7 @@ exports.up = async ( knex ) => {
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
     table.string( 'text' )
     table.jsonb( 'data' )
+    table.boolean( 'archived' ).defaultTo( false ).notNullable()
     table.string( 'parentComment', 10 ).references( 'id' ).inTable( 'comments' ).defaultTo( null )
   } )
 

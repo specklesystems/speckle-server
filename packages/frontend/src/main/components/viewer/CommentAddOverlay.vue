@@ -66,6 +66,7 @@ export default {
   methods: {
     async addComment() {
       let commentInput = {
+        streamId: this.$route.params.streamId,
         resources: [
           { type: 'stream', id: this.$route.params.streamId },
           {
