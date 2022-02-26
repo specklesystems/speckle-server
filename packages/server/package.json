@@ -46,6 +46,7 @@
     "lodash.chunk": "^4.2.0",
     "lodash.debounce": "^4.0.8",
     "lodash.get": "^4.4.2",
+    "lodash.intersection": "^4.4.0",
     "lodash.merge": "^4.6.2",
     "lodash.set": "^4.3.2",
     "lodash.values": "^4.3.0",

@@ -62,6 +62,7 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash.debounce'
+import { resourceType } from '@/plugins/resourceIdentifier'
 
 import { getCamArray } from './viewerFrontendHelpers'
 export default {
@@ -90,7 +91,13 @@ export default {
       let camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
       let commentInput = {
         streamId: this.$route.params.streamId,
-        resources: [this.$route.params.resourceId],
+        resources: [
+          { type: 'stream', id: this.$route.params.streamId },
+          {
+            type: this.$route.path.includes('object') ? 'object' : 'commit',
+            id: this.$route.params.resourceId
+          }
+        ],
         text: this.commentText,
         data: {
           location: this.location
@@ -103,8 +110,13 @@ export default {
           screenshot: null // TODO
         }
       }
-      if (this.$route.query.overlay)
-        commentInput.resources.push(...this.$route.query.overlay.split(','))
+      if (this.$route.query.overlay) {
+        commentInput.resources.push(
+          ...this.$route.query.overlay
+            .split(',')
+            .map((res) => ({ id: res, type: resourceType(res) }))
+        )
+      }
       await this.$apollo.mutate({
         mutation: gql`
           mutation commentCreate($input: CommentCreateInput!) {

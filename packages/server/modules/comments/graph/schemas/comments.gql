@@ -1,19 +1,43 @@
+extend type Query {
+  comment(id: String!, streamId: String!): Comment
+
+  comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String): CommentCollection
+}
+
 type Comment {
   id: String!
   authorId: String!
   archived: Boolean!
   text: String!
   data: JSONObject!
-  resources: [String]!
+  resources: [ResourceIdentifier]!
   createdAt: DateTime
   updatedAt: DateTime
   replies: CommentReplyCollection
+  reactions: [String]
 }
 
 type CommentCollection {
   totalCount: Int!
-  cursor: String
-  items: [Comment]
+  cursor: DateTime!
+  items: [Comment]!
+}
+
+type ResourceIdentifier {
+  id: String!
+  type: ResourceType!
+}
+
+input ResourceIdentifierInput {
+  id: String!
+  type: ResourceType!
+}
+
+enum ResourceType {
+  comment
+  object
+  commit
+  stream
 }
 
 type CommentReply {
@@ -33,7 +57,7 @@ type CommentReplyCollection {
 
 input CommentCreateInput {
   streamId: String!
-  resources: [String]!
+  resources: [ResourceIdentifierInput]!
   text: String!
   data: JSONObject!
 }
@@ -101,9 +125,13 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentReplyEdit(streamId: String!, commentReply: JSONObject!): Boolean!
+  commentReactionToggle(streamId: String!, commentId: String!, reaction: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+
+  # commentReplyEdit(streamId: String!, commentReply: JSONObject!): Boolean!
+  #   @hasRole(role: "server:user")
+  #   @hasScope(scope: "streams:read")
 }
 
 extend type Subscription {
