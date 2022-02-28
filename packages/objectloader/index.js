@@ -10,7 +10,7 @@ export default class ObjectLoader {
    * Creates a new object loader instance.
    * @param {*} param0
    */
-  constructor( { serverUrl, streamId, token, objectId, options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [ ] } } ) {
+  constructor( { serverUrl, streamId, token, objectId, options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [ ], fetch:null } } ) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
@@ -47,6 +47,8 @@ export default class ObjectLoader {
 
     this.lastAsyncPause = Date.now()
     this.existingAsyncPause = null
+
+    this.fetch = this.options.fetch || window.fetch
 
   }
 
@@ -329,7 +331,7 @@ export default class ObjectLoader {
       readBuffers.push( '' )
       finishedRequests.push( false )
 
-      fetch(
+      this.fetch(
         this.requestUrlChildren,
         {
           method: 'POST',
@@ -397,7 +399,7 @@ export default class ObjectLoader {
     const cachedRootObject = await this.cacheGetObjects( [ this.objectId ] )
     if ( cachedRootObject[ this.objectId ] )
       return cachedRootObject[ this.objectId ]
-    const response = await fetch( this.requestUrlRootObj, { headers: this.headers } )
+    const response = await this.fetch( this.requestUrlRootObj, { headers: this.headers } )
     const responseText = await response.text()
     this.cacheStoreObjects( [ `${this.objectId}\t${responseText}` ] )
     return responseText
