@@ -11,33 +11,35 @@
       :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
     >
       <div class="pa-2">
-        <v-card class="elevation-5 rounded-xl pa-1 my-1">
-          <v-textarea
-            ref="commentTextArea"
-            v-model="commentText"
-            :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
-            rounded
-            autofocus
-            class="transparent elevation-0 pb-2 body-2"
-            auto-grow
-            hide-details
-            dense
-            placeholder="Type your comment here, and hit enter to save!"
-            append-icon="mdi-send"
-            hint="Add a comment"
-            style="line-height: 1.25em !important"
-            @click:append="addComment()"
-            @keydown.enter.shift.exact.prevent="addComment()"
-          ></v-textarea>
-          <br />
-          <span class="caption px-4 grey--text"><i>Shift + Enter will save the comment.</i></span>
-        </v-card>
+        <v-slide-x-transition>
+          <v-card v-show="expand" class="elevation-5 rounded-xl pa-1 my-1">
+            <v-textarea
+              ref="commentTextArea"
+              v-model="commentText"
+              :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
+              rounded
+              autofocus
+              class="transparent elevation-0 pb-2 body-2"
+              auto-grow
+              hide-details
+              dense
+              placeholder="Type your comment here, and hit enter to save!"
+              append-icon="mdi-send"
+              hint="Add a comment"
+              style="line-height: 1.25em !important"
+              @click:append="addComment()"
+              @keydown.enter.shift.exact.prevent="addComment()"
+            ></v-textarea>
+            <br />
+            <span class="caption px-4 grey--text"><i>Shift + Enter will save the comment.</i></span>
+          </v-card>
+        </v-slide-x-transition>
         <!-- <span class="caption">Hit enter to save.</span> -->
         <!-- <v-btn rounded block small class="mt-2 mb-2">add</v-btn> -->
       </div>
     </div>
     <div v-show="visible" ref="commentButton" class="absolute-pos">
-      <v-btn icon dark class="elevation-5 primary pa-0 ma-o" @click="toggleExpand()">
+      <v-btn large icon dark class="elevation-5 primary pa-0 ma-o" @click="toggleExpand()">
         <v-icon v-if="!expand" dark small>mdi-comment-plus</v-icon>
         <v-icon v-else dark small>mdi-close</v-icon>
       </v-btn>
@@ -49,6 +51,7 @@
           v-tooltip="'Add a comment (shift + c)'"
           icon
           dark
+          large
           class="elevation-5 primary pa-0 ma-o"
           @click="toggleExpand()"
         >
@@ -81,7 +84,7 @@ export default {
     document.addEventListener(
       'keyup',
       function (e) {
-        console.log(e)
+        // console.log(e)
         if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
       }.bind(this)
     )

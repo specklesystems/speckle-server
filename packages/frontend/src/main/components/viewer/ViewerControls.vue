@@ -7,6 +7,7 @@
         :zzzdisabled="!showVisReset"
         :small="small"
         rounded
+        icon
         class="mr-2"
         @click="resetVisibility()"
       >
@@ -17,19 +18,21 @@
         v-tooltip="`Toggle between perspective or ortho camera.`"
         :small="small"
         rounded
+        icon
         class="mr-2"
         @click="toggleCamera()"
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn>
       <canonical-views :small="small" />
-      <v-btn v-tooltip="'Zoom extents'" :small="small" rounded class="mr-2" @click="zoomEx()">
+      <v-btn v-tooltip="'Zoom extents'" :small="small" rounded icon class="mr-2" @click="zoomEx()">
         <v-icon small>mdi-arrow-expand</v-icon>
       </v-btn>
       <v-btn
         v-tooltip="`Toggle section box`"
         :small="small"
         rounded
+        icon
         class="mr-2"
         @click="sectionToggle()"
       >

@@ -9,17 +9,18 @@
       v-for="(comment, index) in comments"
       :key="index"
       :ref="`comment-${index}`"
-      class="absolute-pos rounded-xl caption"
+      :class="`absolute-pos rounded-xl caption`"
+      :style="`pointer-events: none; z-index:${comment.expanded ? '20' : '10'}`"
     >
-      <div class="">
-        <div class="d-flex align-center">
+      <div class="" style="pointer-events: none">
+        <div class="d-flex align-center" style="pointer-events: none">
           <v-btn
-            small
             class="rounded-pill"
+            small
             @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)"
           >
-            <span v-if="!comment.expanded">
-              <v-icon small class="">mdi-comment</v-icon>
+            <span v-if="!comment.expanded" class="primary--text">
+              <v-icon small>mdi-comment</v-icon>
               1
             </span>
             <v-icon v-else small class="">mdi-close</v-icon>
@@ -39,11 +40,11 @@
           <v-card
             v-show="comment.expanded"
             :ref="`commentcard-${index}`"
-            class="elevation-2 rounded-xl my-1 mt-3"
-            style="width: 300px; overflow-y: scroll"
+            class="transparent elevation-0 rounded-xl mt-2"
+            style="width: 400px; overflow-y: scroll"
           >
-            <div class="px-4 py-4">
-              <!-- <perfect-scrollbar style="height: 300px"> -->
+            <comment-thread-viewer :comment="comment" />
+            <!-- <div class="px-4 py-4">
               <div class="body-2" style="">
                 We’ve just returned from Barcelona, where we had our second retreat - being a remote
                 company, we try to meet at least twice a year IRL to get some better resolution
@@ -53,11 +54,10 @@
                 <br />
                 {{ comment.text }}
               </div>
-              <!-- </perfect-scrollbar> -->
             </div>
             <v-card-actions>
               <v-btn small class="primary rounded-xl">reply</v-btn>
-            </v-card-actions>
+            </v-card-actions> -->
           </v-card>
         </v-scroll-y-transition>
       </div>
@@ -65,10 +65,12 @@
   </div>
 </template>
 <script>
+import debounce from 'lodash.debounce'
 import gql from 'graphql-tag'
 
 export default {
   components: {
+    CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer')
     // UserAvatar: () => import('@/main/components/common/UserAvatar'),
     // TextDotsTyping: () => import('@/main/components/common/TextDotsTyping')
   },
@@ -104,6 +106,17 @@ export default {
     }
   },
   mounted() {
+    window.__viewer.on(
+      'select',
+      debounce(
+        function () {
+          for (let c of this.comments) {
+            c.expanded = false
+          }
+        }.bind(this),
+        10
+      )
+    )
     window.__viewer.cameraHandler.controls.addEventListener('update', () =>
       this.updateCommentBubbles()
     )
@@ -169,14 +182,14 @@ export default {
         const paddingYTop = 70
         const paddingYBottom = 80
 
-        if (tX < -40) if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out leftwise
+        if (tX < -300) if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out leftwise
         if (tX < paddingX) {
           tX = paddingX
         }
 
         if (tX > this.$refs.parent.clientWidth - (paddingX + 50)) {
           tX = this.$refs.parent.clientWidth - (paddingX + 50)
-          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far down bottomwise
+          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far down right
         }
         if (tY < 0 && !comment.preventAutoClose) comment.expanded = false // collapse if too far out topwise
         if (tY < paddingYTop) {
@@ -184,7 +197,7 @@ export default {
         }
         if (tY > this.$refs.parent.clientHeight - paddingYBottom) {
           tY = this.$refs.parent.clientHeight - paddingYBottom
-          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out rightwards
+          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out down
         }
         commentEl.style.transform = `translate(${tX}px,${tY}px)`
 
@@ -209,7 +222,7 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-  /* transition: all 0.3s ease; */
+  z-index: 10;
   transform-origin: center;
 }
 .no-mouse-parent {

@@ -71,10 +71,11 @@ module.exports = {
       // console.log( '---', args )
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       let id = await createComment( { userId: context.userId, input: args.input } )
+      console.log( args.input )
       await pubsub.publish( 'COMMENT_CREATED', {
-        commentCreated: args.input, 
+        commentCreated: { ...args.input, authorId: context.userId, createdAt: Date.now() },
         streamId: args.input.streamId,
-        resourceId: args.input.resources[0]
+        resourceId: args.input.resources[1].id // TODO: hack for now
       } )
       return id
     },
