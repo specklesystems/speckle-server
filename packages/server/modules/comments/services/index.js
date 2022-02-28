@@ -7,7 +7,6 @@ const Comments = () => knex( 'comments' )
 const StreamComments = () => knex( 'stream_comments' )
 const CommitComments = () => knex( 'commit_comments' )
 const ObjectComments = () => knex( 'object_comments' )
-const intersection = require( 'lodash.intersection' )
 
 const persistResourceLinks = async ( commentId, resources ) => {
   for ( const resource of resources ) {
@@ -28,17 +27,36 @@ const persistResourceLinks = async ( commentId, resources ) => {
   }
 }
 
-const getCommentsIdsForResource = async ( { id, type } ) => {
+const getResourcesForComment = async ( { id } ) => {
+  // check if comment exists at all
+  const resources = [
+    ( await StreamComments().where( { comment: id } ) ).map( commentLink => ( { id:commentLink.stream, type: 'stream' } ) ),
+    ( await CommitComments().where( { comment: id } ) ).map( commentLink => ( { id:commentLink.commit, type: 'commit' } ) ),
+    ( await ObjectComments().where( { comment: id } ) ).map( commentLink => ( { id:commentLink.object, type: 'object' } ) )
+    // insert the parent comment here too if applicable?
+  ].flat()
+  return resources
+}
+const getCommentsIdsForResource = async ( streamId, { id, type } ) => {
   let commentLinks
   switch ( type ) {
   case 'stream':
-    commentLinks = await StreamComments().where( { stream: id } )
+    throw Error( 'Stream level comments are not supported ATM' )
+    // commentLinks = streamComments
     break
   case 'commit':
     commentLinks = await CommitComments().where( { commit: id } )
     break
   case 'object':
-    commentLinks = await ObjectComments().where( { object: id } )
+    let q = ObjectComments()
+      .join( 'stream_comments', 'object_comments.comment', 'stream_comments.comment' )
+      .where( { object: id, stream: streamId } )
+    commentLinks = await ObjectComments()
+      .join( 'stream_comments', 'object_comments.comment', 'stream_comments.comment' )
+      .where( { object: id, stream: streamId } )
+    break
+  case 'comment':
+    commentLinks = await Comments().returning( 'id' ).where( { parentComment: id } )
     break
   default:
     throw Error( `No comments are supported for ${resource.type}` )
@@ -85,14 +103,21 @@ module.exports = {
     return comment
   },
 
-  async getComments( { resources, limit, cursor } ) {
+  async getComments( { streamId, resources, limit, cursor } ) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
     // and not treat the stream as a resource
-    const commentIds = await Promise.all( resources.map( r => getCommentsIdsForResource( r ) ) )
+    const commentIds = await Promise.all( resources.map( res => getCommentsIdsForResource( streamId, res ) ) )
 
-    const relevantComments = intersection( ...commentIds )
-    const items = await Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' ).limit( limit ) 
-    cursor = items[items.length - 1].createdAt
+    const relevantComments = [ ...new Set( commentIds.flat() ) ]
+    let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
+    if ( cursor ) query = query.where( 'createdAt', '>', cursor )
+    let items = await query.limit( limit )
+    if ( items.length ) {
+      cursor = items[items.length - 1].createdAt
+    } else {
+      cursor = null
+    }
+    items = await Promise.all( items.map( async comment => ( { ...comment, resources: await getResourcesForComment( comment ) } ) ) )
     return { items, cursor, totalCount: relevantComments.length }
   },
 
