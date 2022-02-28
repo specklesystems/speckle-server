@@ -48,7 +48,12 @@ export default class ObjectLoader {
     this.lastAsyncPause = Date.now()
     this.existingAsyncPause = null
 
-    this.fetch = this.options.fetch || window.fetch
+    // we can't simply bind fetch to this.fetch, so instead we have to do some acrobatics: https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
+    this.preferredFetch = options.fetch
+    this.fetch = function(...args) {
+      let currentFetch = this.preferredFetch || fetch
+      return currentFetch(...args)
+    }
 
   }
 
