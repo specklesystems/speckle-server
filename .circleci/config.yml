@@ -32,7 +32,7 @@ workflows:
           context: main-builds
           filters:
             branches:
-              only: gergo/bogus
+              only: gergo/noCD
 
 jobs:
   test_server:
