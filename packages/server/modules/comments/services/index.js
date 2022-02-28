@@ -48,9 +48,6 @@ const getCommentsIdsForResource = async ( streamId, { id, type } ) => {
     commentLinks = await CommitComments().where( { commit: id } )
     break
   case 'object':
-    let q = ObjectComments()
-      .join( 'stream_comments', 'object_comments.comment', 'stream_comments.comment' )
-      .where( { object: id, stream: streamId } )
     commentLinks = await ObjectComments()
       .join( 'stream_comments', 'object_comments.comment', 'stream_comments.comment' )
       .where( { object: id, stream: streamId } )
