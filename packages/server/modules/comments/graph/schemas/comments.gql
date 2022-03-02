@@ -13,7 +13,7 @@ type Comment {
   resources: [ResourceIdentifier]!
   createdAt: DateTime
   updatedAt: DateTime
-  replies: CommentReplyCollection
+  replies(limit: Int = 25, cursor: String): CommentCollection
   reactions: [String]
 }
 
@@ -24,13 +24,13 @@ type CommentCollection {
 }
 
 type ResourceIdentifier {
-  id: String!
-  type: ResourceType!
+  resourceId: String!
+  resourceType: ResourceType!
 }
 
 input ResourceIdentifierInput {
-  id: String!
-  type: ResourceType!
+  resourceId: String!
+  resourceType: ResourceType!
 }
 
 enum ResourceType {
@@ -40,24 +40,25 @@ enum ResourceType {
   stream
 }
 
-type CommentReply {
-  id: String!
-  authorId: String!
-  archived: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  text: String!
-}
-
-type CommentReplyCollection {
-  totalCount: Int!
-  cursor: String
-  items: [CommentReply]
-}
+# type CommentReply {
+#   id: String!
+#   authorId: String!
+#   archived: Boolean!
+#   createdAt: DateTime!
+#   updatedAt: DateTime!
+#   text: String!
+# }
 
 input CommentCreateInput {
   streamId: String!
   resources: [ResourceIdentifierInput]!
+  text: String!
+  data: JSONObject!
+}
+
+input ReplyCreateInput {
+  streamId: String!
+  parentComment: String!
   text: String!
   data: JSONObject!
 }
@@ -69,41 +70,36 @@ input CommentEditInput {
   data: JSONObject!
 }
 
-input ReplyCreateInput {
-  commentId: String!
-  text: String!
-}
-
 input ReplyEditInput {
   id: String!
   text: String!
   archived: Boolean
 }
 
-extend type Stream {
-  comments(
-    limit: Int! = 20
-    archived: Boolean = false
-    cursor: String
-  ): CommentCollection
-  comment(id: String!): Comment
-}
+# extend type Stream {
+#   comments(
+#     limit: Int! = 20
+#     archived: Boolean = false
+#     cursor: String
+#   ): CommentCollection
+#   comment(id: String!): Comment
+# }
 
-extend type Commit {
-  comments(
-    limit: Int! = 20
-    archived: Boolean = false
-    cursor: String
-  ): CommentCollection
-}
+# extend type Commit {
+#   comments(
+#     limit: Int! = 20
+#     archived: Boolean = false
+#     cursor: String
+#   ): CommentCollection
+# }
 
-extend type Object {
-  comments(
-    limit: Int! = 20
-    archived: Boolean = false
-    cursor: String
-  ): CommentCollection
-}
+# extend type Object {
+#   comments(
+#     limit: Int! = 20
+#     archived: Boolean = false
+#     cursor: String
+#   ): CommentCollection
+# }
 
 extend type Mutation {
   # Used for broadcasting real time chat head bubbles and status.
@@ -113,7 +109,7 @@ extend type Mutation {
     data: JSONObject
   ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 
-  commentCreate(input: CommentCreateInput!): String!
+  commentCreate(input: CommentCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -121,7 +117,7 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentReply(streamId: String!, commentReply: JSONObject!): String!
+  commentReply( input: ReplyCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

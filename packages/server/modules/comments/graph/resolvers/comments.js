@@ -30,26 +30,11 @@ module.exports = {
       return await getComments( args ) 
     }
   },
-  Stream: {
-    async comments( parent, args, context, info ) {
-      // TODO
-    },
-    async comment( parent, args, context, info ) {
-      // TODO
-    }
-  },
-  Commit: {
-    async comments( parent, args, context, info ) {
-      // TODO
-    }
-  },
-  Object: {
-    async comments( parent, args, context, info ) {
-      // TODO
-    }
-  },
   Comment: {
     async replies( parent, args, context, info ) {
+      const streamId = parent.resources.filter( r => r.resourceType === 'stream' )[0].resourceId
+      const resources = [ { resourceId: parent.id, resourceType: 'comment' } ]
+      return await getComments( { streamId, resources, limit: args.limit, cursor: args.cursor } )
       // TODO
     }
   },
@@ -83,12 +68,19 @@ module.exports = {
     },
     async commentReply( parent, args, context, info ) {
       // TODO
+      await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
+      // the reply also has to be linked to the stream, for the recursive reply lookup to work
+      let input = { ...args.input, resources: [ 
+        { id: args.input.parentComment, type: 'comment' },
+        { id: args.input.streamId, type: 'stream' }
+      ] }
+      let id = await createComment( { userId: context.userId, input } )
       await pubsub.publish( 'COMMENT_REPLY_CREATED', {
         commentCreated: args.input, 
         streamId: args.streamId,
         resourceId: args.resourceId
       } )
-      return true
+      return id
     },
     // async commentReplyEdit( parent, args, context, info ) {
     //   // TODO

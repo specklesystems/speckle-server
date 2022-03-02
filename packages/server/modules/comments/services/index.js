@@ -3,63 +3,51 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
+const Streams = () => knex( 'streams' )
+const Objects = () => knex( 'objects' )
+const Commits = () => knex( 'commits' )
 const Comments = () => knex( 'comments' )
-const StreamComments = () => knex( 'stream_comments' )
-const CommitComments = () => knex( 'commit_comments' )
-const ObjectComments = () => knex( 'object_comments' )
+const CommentLinks = () => knex( 'comment_links' )
 
-const persistResourceLinks = async ( commentId, resources ) => {
-  for ( const resource of resources ) {
-    switch ( resource.type ) {
-    // having the type as a string here, kinda makes having two N mapping tables useless
-    case 'stream':
-      await StreamComments().insert( { stream: resource.id, comment: commentId } )
-      break
-    case 'commit':
-      await CommitComments().insert( { commit: resource.id, comment: commentId } )
-      break
-    case 'object':
-      await ObjectComments().insert( { object: resource.id, comment: commentId } )
-      break
-    default:
-      throw Error( `resource type ${resource.type} is not supported as a comment target` )
-    }
-  }
-}
+const persistResourceLinks = async ( commentId, resources ) => 
+  Promise.all( resources.map( res => persistResourceLink( commentId, res ) ) )
 
-const getResourcesForComment = async ( { id } ) => {
-  // check if comment exists at all
-  const resources = [
-    ( await StreamComments().where( { comment: id } ) ).map( commentLink => ( { id:commentLink.stream, type: 'stream' } ) ),
-    ( await CommitComments().where( { comment: id } ) ).map( commentLink => ( { id:commentLink.commit, type: 'commit' } ) ),
-    ( await ObjectComments().where( { comment: id } ) ).map( commentLink => ( { id:commentLink.object, type: 'object' } ) )
-    // insert the parent comment here too if applicable?
-  ].flat()
-  return resources
-}
-const getCommentsIdsForResource = async ( streamId, { id, type } ) => {
-  let commentLinks
+const persistResourceLink = async ( commentId, { id, type } ) => {
+  let query
   switch ( type ) {
   case 'stream':
-    throw Error( 'Stream level comments are not supported ATM' )
-    // commentLinks = streamComments
+    query = Streams()
     break
   case 'commit':
-    commentLinks = await CommitComments().where( { commit: id } )
+    query = Commits()
     break
   case 'object':
-    commentLinks = await ObjectComments()
-      .join( 'stream_comments', 'object_comments.comment', 'stream_comments.comment' )
-      .where( { object: id, stream: streamId } )
+    query = Objects()
     break
   case 'comment':
-    commentLinks = await Comments().returning( 'id' ).where( { parentComment: id } )
+    query = Comments()
     break
   default:
-    throw Error( `No comments are supported for ${resource.type}` )
+    throw Error( `resource type ${resource.type} is not supported as a comment target` )
   }
-  return commentLinks.map( l => l.comment )
+  //make sure, that the referenced resource exists
+  if ( !( await query.where( { id } ) ).length ) throw Error ( `${type}: ${id} doesn't exist, you cannot comment on it` )
+  await CommentLinks().insert( { commentId, resourceId: id, resourceType: type } )
 }
+
+const getResourcesForComment = async ( { id } ) =>
+  await CommentLinks().where( { commentId: id } )
+
+const getCommentLinksForResources = async ( streamId, resources ) => {
+  const resourceIds = resources.map( r => r.resourceId )
+  let commentLinks = await CommentLinks().whereIn( 'resourceId', resourceIds )
+  const objectIds = resources.filter( res => res.type === 'object' ).map( r => r.resourceId )
+  if ( objectIds.length ) {
+    const streamObjectIds = ( await Objects().where( { streamId } ).whereIn( 'id', objectIds ) ).map( o => o.resourceId )
+    commentLinks = commentLinks.filter( link => streamObjectIds.includes( link.resourceId ) ) 
+  }
+  return commentLinks
+} 
 
 module.exports = { 
   async createComment( { userId, input } ) {
@@ -84,17 +72,6 @@ module.exports = {
     // TODO
   },
 
-  async createCommentReply( {} ) {
-    // TODO
-  },
-
-  // async editCommentReply( {} ) {
-  //   // TODO
-  // },
-
-  // async archiveCommentReply( {} ) {
-  //   // TODO
-  // },
   async getComment( id ) {
     const [ comment ] = await Comments().where( { id } )
     return comment
@@ -102,10 +79,8 @@ module.exports = {
 
   async getComments( { streamId, resources, limit, cursor } ) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
-    // and not treat the stream as a resource
-    const commentIds = await Promise.all( resources.map( res => getCommentsIdsForResource( streamId, res ) ) )
-
-    const relevantComments = [ ...new Set( commentIds.flat() ) ]
+    const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
+    const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
     let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
     if ( cursor ) query = query.where( 'createdAt', '>', cursor )
     let items = await query.limit( limit )
@@ -145,4 +120,3 @@ module.exports = {
   //   // TODO
   // }
 }
-
