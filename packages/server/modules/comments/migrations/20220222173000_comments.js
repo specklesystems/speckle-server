@@ -21,6 +21,6 @@ exports.up = async ( knex ) => {
 }
 
 exports.down = async ( knex ) => {
-  await knex.schema.dropTableIfExists( 'comments' )
   await knex.schema.dropTableIfExists( 'comment_links' )
+  await knex.schema.dropTableIfExists( 'comments' )
 }
