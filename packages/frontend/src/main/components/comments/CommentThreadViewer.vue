@@ -11,10 +11,10 @@
     <template v-for="(reply, index) in replies">
       <div :key="index" :class="`d-flex px-2 mb-4 align-center`">
         <div :class="`${$userId() === reply.authorId ? 'order-last' : ''}`">
-          <user-avatar :id="reply.authorId" shadow :size="40" />
+          <user-avatar :id="reply.authorId" shadow :size="30" />
         </div>
         <div
-          :class="`mx-2 px-4 py-4 flex-grow-1 body-1 float-left rounded-xl elevation-5 ${
+          :class="`mx-2 px-4 py-2 flex-grow-1 float-left rounded-xl elevation-5 ${
             $userId() === reply.authorId ? 'primary white--text' : 'background'
           }`"
         >
@@ -26,7 +26,7 @@
       <div class="pr-2">
         <user-avatar :id="$userId()" :size="30" />
       </div>
-      <div class="px-0 py-4 flex-grow-1 body-1 float-left">
+      <div class="px-0 py-4 flex-grow-1 float-left">
         <v-text-field
           label="Reply TODO"
           solo

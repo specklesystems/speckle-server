@@ -41,7 +41,7 @@
             v-show="comment.expanded"
             :ref="`commentcard-${index}`"
             class="transparent elevation-0 rounded-xl mt-2"
-            style="width: 400px; overflow-y: scroll"
+            style="width: 300px; overflow-y: scroll"
           >
             <comment-thread-viewer :comment="comment" />
             <!-- <div class="px-4 py-4">
