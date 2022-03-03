@@ -19,7 +19,7 @@ type Comment {
 
 type CommentCollection {
   totalCount: Int!
-  cursor: DateTime!
+  cursor: DateTime
   items: [Comment]!
 }
 
