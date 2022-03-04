@@ -34,9 +34,7 @@
           @focus="copyToClipboard"
         ></v-text-field>
         <v-text-field
-          v-if="
-            $route.params.resourceId && resourceType($route.params.resourceId.length) === 'commit'
-          "
+          v-if="$route.params.resourceId && $resourceType($route.params.resourceId) === 'commit'"
           ref="commitUrl"
           dark
           filled
@@ -187,7 +185,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import { resourceType } from '@/plugins/resourceIdentifier'
+// import { $resourceType } from '@/plugins/resourceIdentifier'
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
@@ -220,7 +218,7 @@ export default {
       let resourceId = this.$route.params.resourceId
       if (!resourceId) return null
       let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
-      return `<iframe src="${base}&${resourceType(resourceId)}=${
+      return `<iframe src="${base}&${this.$resourceType(resourceId)}=${
         this.$route.params.resourceId
       }" width=600 height=400 />"`
     },

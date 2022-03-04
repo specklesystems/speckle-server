@@ -9,58 +9,47 @@
       v-for="(comment, index) in comments"
       :key="index"
       :ref="`comment-${index}`"
-      :class="`absolute-pos rounded-xl caption`"
-      :style="`pointer-events: none; z-index:${comment.expanded ? '20' : '10'}`"
+      :class="`absolute-pos rounded-xl`"
+      :style="`pointer-events: none; z-index:${comment.expanded ? '20' : '10'}; ${
+        hasExpandedComment && !comment.expanded ? 'opacity: 0.1;' : 'opacity: 1;'
+      }`"
     >
       <div class="" style="pointer-events: none">
         <div class="d-flex align-center" style="pointer-events: none">
           <v-btn
-            class="rounded-pill"
             small
+            icon
+            :class="`elevation-5 pa-0 ma-0 ${
+              comment.expanded ? 'dark white--text primary' : 'background'
+            }`"
             @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)"
           >
-            <span v-if="!comment.expanded" class="primary--text">
+            <!-- <span v-if="!comment.expanded" class="primary--text">
               <v-icon small>mdi-comment</v-icon>
               1
-            </span>
-            <v-icon v-else small class="">mdi-close</v-icon>
+            </span> -->
+            <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
+            <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
           </v-btn>
-          <v-slide-x-transition>
-            <div
-              v-show="comment.expanded"
-              class="inline-block"
-              style="display: inline-block; overflow: hidden"
-            >
-              <!-- Management buttons here -->
-              <!-- <v-btn x-small><v-icon small>mdi-archive-arrow-down</v-icon></v-btn> -->
-            </div>
-          </v-slide-x-transition>
+          <!-- <span class="caption ml-2" v-if="!comment.expanded">1 replies</span> -->
         </div>
-        <v-scroll-y-transition>
-          <v-card
-            v-show="comment.expanded"
-            :ref="`commentcard-${index}`"
-            class="transparent elevation-0 rounded-xl mt-2"
-            style="width: 300px; overflow-y: scroll"
-          >
-            <comment-thread-viewer :comment="comment" />
-            <!-- <div class="px-4 py-4">
-              <div class="body-2" style="">
-                We’ve just returned from Barcelona, where we had our second retreat - being a remote
-                company, we try to meet at least twice a year IRL to get some better resolution
-                meetings and spend quality time together (like cooking paella while drinking copious
-                amounts of cava). Covid took its toll though, and the formula was incomplete: Izzy
-                you were missed, but rest assured - we’ll photoshop you in all the pics!
-                <br />
-                {{ comment.text }}
-              </div>
-            </div>
-            <v-card-actions>
-              <v-btn small class="primary rounded-xl">reply</v-btn>
-            </v-card-actions> -->
-          </v-card>
-        </v-scroll-y-transition>
       </div>
+    </div>
+    <div
+      v-for="(comment, index) in comments"
+      v-show="comment.expanded"
+      :key="index + 'card'"
+      :ref="`commentcard-${index}`"
+      :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
+        comment.hovered && false ? 'background elevation-5' : ''
+      }`"
+      :style="`z-index:${comment.expanded ? '20' : '10'}`"
+      @mouseenter="comment.hovered = true"
+      @mouseleave="comment.hovered = false"
+    >
+      <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
+      <comment-thread-viewer :comment="comment" @reply-added="replyAdded" />
+      <!-- </v-card> -->
     </div>
   </div>
 </template>
@@ -94,6 +83,7 @@ export default {
         result({ data }) {
           console.log(data.commentCreated)
           data.commentCreated.expanded = false
+          data.commentCreated.hovered = false
           this.comments.push(data.commentCreated)
           setTimeout(this.updateCommentBubbles, 0)
         }
@@ -103,6 +93,11 @@ export default {
   data() {
     return {
       comments: []
+    }
+  },
+  computed: {
+    hasExpandedComment() {
+      return this.comments.filter((c) => c.expanded).length !== 0
     }
   },
   mounted() {
@@ -126,8 +121,16 @@ export default {
       for (let c of this.comments) {
         if (c === comment) {
           c.preventAutoClose = true
-          setTimeout(() => (c.expanded = true), 100)
-          setTimeout(() => (c.preventAutoClose = false), 1000)
+          setTimeout(() => {
+            c.expanded = true
+          }, 100)
+          setTimeout(() => {
+            this.updateCommentBubbles()
+          }, 200)
+          setTimeout(() => {
+            c.preventAutoClose = false
+            // this.updateCommentBubbles()
+          }, 1000)
         } else {
           c.expanded = false
         }
@@ -149,13 +152,10 @@ export default {
       if (camToSet[6] === 1) {
         window.__viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       }
-      // if (user.filter) this.$store.commit('setFilterDirect', { filter: user.filter })
-      // else this.$store.commit('resetFilter')
-
-      // if (user.sectionBox) {
-      //   window.__viewer.sectionBox.on()
-      //   window.__viewer.sectionBox.setBox(user.sectionBox, 0)
-      // }
+      // TODO: apply filters, section box, etc.
+    },
+    replyAdded() {
+      this.updateCommentBubbles()
     },
     updateCommentBubbles() {
       let index = -1
@@ -202,14 +202,30 @@ export default {
         commentEl.style.transform = `translate(${tX}px,${tY}px)`
 
         let card = this.$refs[`commentcard-${index}`][0]
-        if (card) {
-          let ot = tY
-          let ph = this.$refs.parent.clientHeight
-          let h = ph - ot - paddingYBottom - 40
-          if (h < 40 && !comment.preventAutoClose) {
-            comment.expanded = false
+        let maxHeight = this.$refs.parent.clientHeight - paddingYTop - paddingYBottom
+
+        card.style.maxHeight = `${maxHeight}px`
+        card.style.left = `${tX + 40}px`
+
+        let cardTop = paddingYTop
+
+        if (card.scrollHeight > maxHeight) {
+          card.style.top = `${cardTop}px`
+        } else {
+          cardTop = tY - card.scrollHeight / 2
+
+          // top clip
+          if (cardTop < paddingYTop) cardTop = paddingYTop
+
+          let cardBottom = cardTop + card.clientHeight
+          let maxBottom = this.$refs.parent.clientHeight - paddingYTop - paddingYBottom
+
+          // bottom clip
+          if (cardBottom > maxBottom) {
+            cardTop -= (cardBottom - maxBottom) / 2
           }
-          card.$el.style.maxHeight = `${h}px`
+
+          card.style.top = `${cardTop}px`
         }
       }
     }
@@ -225,10 +241,21 @@ export default {
   z-index: 10;
   transform-origin: center;
 }
+.fixed-pos {
+  pointer-events: auto;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
 .no-mouse-parent {
   pointer-events: none;
 }
 .no-mouse-parent * {
   pointer-events: auto;
+}
+
+.hover-bg {
+  transition: background 0.3s ease;
 }
 </style>

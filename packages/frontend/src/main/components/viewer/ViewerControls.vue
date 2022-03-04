@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card class="transparent elevation-0">
+    <v-card class=" elevation-5 rounded-xl pl-3 py-0">
       <v-btn
         v-show="showVisReset"
         v-tooltip="`Resets all applied filters`"
@@ -37,6 +37,26 @@
         @click="sectionToggle()"
       >
         <v-icon small>mdi-scissors-cutting</v-icon>
+      </v-btn>
+      <v-btn
+        v-tooltip="`Toggle real time user bubbles`"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="sectionToggle()"
+      >
+        <v-icon small>mdi-account</v-icon>
+      </v-btn>
+      <v-btn
+        v-tooltip="`Toggle comments`"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="sectionToggle()"
+      >
+        <v-icon small>mdi-comment-outline</v-icon>
       </v-btn>
       <portal-target slim name="viewercontrols"></portal-target>
     </v-card>

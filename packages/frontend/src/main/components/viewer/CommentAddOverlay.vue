@@ -39,16 +39,23 @@
       </div>
     </div>
     <div v-show="visible" ref="commentButton" class="absolute-pos">
-      <v-btn large icon dark class="elevation-5 primary pa-0 ma-o" @click="toggleExpand()">
-        <v-icon v-if="!expand" dark small>mdi-comment-plus</v-icon>
-        <v-icon v-else dark small>mdi-close</v-icon>
+      <v-btn
+        v-tooltip="'Add a comment (ctrl + shift + c)'"
+        small
+        icon
+        dark
+        class="elevation-5 primary pa-0 ma-0"
+        @click="toggleExpand()"
+      >
+        <v-icon v-if="!expand" dark x-small>mdi-comment-plus</v-icon>
+        <v-icon v-else dark x-small>mdi-close</v-icon>
       </v-btn>
     </div>
     <portal to="viewercontrols">
       <v-slide-x-transition>
         <v-btn
           v-show="!location"
-          v-tooltip="'Add a comment (shift + c)'"
+          v-tooltip="'Add a comment (ctrl + shift + c)'"
           icon
           dark
           large
@@ -176,7 +183,7 @@ export default {
 
       this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
       this.$refs.commentOverlay.style.transform = `translate(0)`
-      this.$refs.commentOverlay.style.top = `${mappedLocation.y + 40}px`
+      this.$refs.commentOverlay.style.top = `${mappedLocation.y + 5}px`
       this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
     },
     updateCommentBubble() {
@@ -199,7 +206,7 @@ export default {
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
 
       this.$refs.commentOverlay.style.transition = ''
-      this.$refs.commentOverlay.style.top = `${mappedLocation.y + 40}px`
+      this.$refs.commentOverlay.style.top = `${mappedLocation.y + 5}px`
       this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
     }
   }

@@ -1,5 +1,5 @@
 <template>
-  <div class="mt-2 pa-1">
+  <div class="mt-2 pa-1 d-flex align-center" style="width: 300px">
     <!-- <div class="d-flex pl-2 xxx-align-center background elevation-2 rounded-xl mb-2">
       <div class="mt-2">
         <user-avatar :id="comment.authorId" :size="30" />
@@ -8,32 +8,38 @@
         Do you agree with a longer comment? {{ comment.text }}
       </div>
     </div> -->
-    <template v-for="(reply, index) in replies">
-      <div :key="index" :class="`d-flex px-2 mb-4 align-center`">
-        <div :class="`${$userId() === reply.authorId ? 'order-last' : ''}`">
-          <user-avatar :id="reply.authorId" shadow :size="30" />
+    <div class="">
+      <template v-for="(reply, index) in replies.slice(0, maxRepl)">
+        <div v-if="index % 3 === 0" :key="index + 'date'" class="d-flex justify-center">
+          <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
+            {{ new Date(Date.now()).toLocaleString() }}
+          </div>
         </div>
         <div
-          :class="`mx-2 px-4 py-2 flex-grow-1 float-left rounded-xl elevation-5 ${
+          :key="index"
+          :class="`d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
             $userId() === reply.authorId ? 'primary white--text' : 'background'
           }`"
         >
-          {{ reply.text }}
+          <div :class="`${$userId() === reply.authorId ? 'order-last' : ''}`">
+            <user-avatar :id="reply.authorId" :size="30" />
+          </div>
+          <div :class="`mx-2 px-4 py-2 flex-grow-1 float-left caption`">
+            {{ reply.text }}
+          </div>
         </div>
-      </div>
-    </template>
-    <div :class="`elevation-4 d-flex px-0 align-center elevation-0 rounded-xl mb-4`">
-      <div class="pr-2">
-        <user-avatar :id="$userId()" :size="30" />
-      </div>
-      <div class="px-0 py-4 flex-grow-1 float-left">
-        <v-text-field
-          label="Reply TODO"
+      </template>
+      <div class="px-0 mb-4">
+        <v-textarea
           solo
           hide-details
-          flat
+          auto-grow
+          rows="1"
+          placeholder="Reply"
+          class="rounded-xl mb-2 caption"
           append-icon="mdi-send"
-        ></v-text-field>
+          @click:append="timeoutEmit"
+        ></v-textarea>
       </div>
     </div>
   </div>
@@ -48,6 +54,7 @@ export default {
   },
   data: function () {
     return {
+      maxRepl: 1,
       replies: [
         {
           authorId: '8ad9fd3601',
@@ -70,8 +77,55 @@ export default {
         {
           authorId: '1fe2c52228',
           text: 'More pasta'
+        },
+        {
+          authorId: '1fe2c52228',
+          text:
+            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
+        },
+        {
+          authorId: '1fe2c52228',
+          text:
+            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
+        },
+        {
+          authorId: '1fe2c52228',
+          text:
+            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
+        },
+        {
+          authorId: '8ad9fd3601',
+          text: 'Still strange though'
+        },
+        {
+          authorId: '1fe2c52228',
+          text: 'More pasta'
+        },
+        {
+          authorId: '8ad9fd3601',
+          text: 'Still strange though'
+        },
+        {
+          authorId: '1fe2c52228',
+          text: 'More pasta'
+        },
+        {
+          authorId: '8ad9fd3601',
+          text: 'Still strange though'
+        },
+        {
+          authorId: '1fe2c52228',
+          text: 'More pasta'
         }
       ]
+    }
+  },
+  methods: {
+    timeoutEmit() {
+      this.maxRepl++
+      setTimeout(() => {
+        this.$emit('reply-added')
+      }, 100)
     }
   }
 }

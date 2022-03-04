@@ -24,3 +24,7 @@ Vue.prototype.$loggedIn = function () {
 Vue.prototype.$isMobile = function () {
   return window.matchMedia('(any-hover: none)').matches
 }
+
+Vue.prototype.$resourceType = function (resourceId) {
+  return resourceId.length === 10 ? 'commit' : 'object'
+}
