@@ -3,59 +3,63 @@ const crs = require( 'crypto-random-string' )
 const appRoot = require( 'app-root-path' )
 const knex = require( `${appRoot}/db/knex` )
 
+const Streams = () => knex( 'streams' )
+const Objects = () => knex( 'objects' )
+const Commits = () => knex( 'commits' )
 const Comments = () => knex( 'comments' )
-const StreamComments = () => knex( 'stream_comments' )
-const CommitComments = () => knex( 'commit_comments' )
-const ObjectComments = () => knex( 'object_comments' )
-const intersection = require( 'lodash.intersection' )
+const CommentLinks = () => knex( 'comment_links' )
 
-const persistResourceLinks = async ( commentId, resources ) => {
-  for ( const resource of resources ) {
-    switch ( resource.type ) {
-    // having the type as a string here, kinda makes having two N mapping tables useless
-    case 'stream':
-      await StreamComments().insert( { stream: resource.id, comment: commentId } )
-      break
-    case 'commit':
-      await CommitComments().insert( { commit: resource.id, comment: commentId } )
-      break
-    case 'object':
-      await ObjectComments().insert( { object: resource.id, comment: commentId } )
-      break
-    default:
-      throw Error( `resource type ${resource.type} is not supported as a comment target` )
-    }
-  }
-}
+const persistResourceLinks = async ( commentId, resources ) => 
+  Promise.all( resources.map( res => persistResourceLink( commentId, res ) ) )
 
-const getCommentsIdsForResource = async ( { id, type } ) => {
-  let commentLinks
-  switch ( type ) {
+const persistResourceLink = async ( commentId, { resourceId, resourceType } ) => {
+  let query
+  switch ( resourceType ) {
   case 'stream':
-    commentLinks = await StreamComments().where( { stream: id } )
+    query = Streams()
     break
   case 'commit':
-    commentLinks = await CommitComments().where( { commit: id } )
+    query = Commits()
     break
   case 'object':
-    commentLinks = await ObjectComments().where( { object: id } )
+    query = Objects()
+    break
+  case 'comment':
+    query = Comments()
     break
   default:
-    throw Error( `No comments are supported for ${resource.type}` )
+    throw Error( `resource type ${resourceType} is not supported as a comment target` )
   }
-  return commentLinks.map( l => l.comment )
+  //make sure, that the referenced resource exists
+  if ( !( await query.where( { id: resourceId } ) ).length ) throw Error ( `${resourceType}: ${resourceId} doesn't exist, you cannot comment on it` )
+  await CommentLinks().insert( { commentId, resourceId, resourceType } )
 }
+
+const getResourcesForComment = async ( { id } ) =>
+  await CommentLinks().where( { commentId: id } )
+
+const getCommentLinksForResources = async ( streamId, resources ) => {
+  const resourceIds = resources.map( r => r.resourceId )
+  let commentLinks = await CommentLinks().whereIn( 'resourceId', resourceIds )
+  const objectIds = resources.filter( res => res.resourceType === 'object' ).map( r => r.resourceId )
+  if ( objectIds.length ) {
+    const streamObjectIds = ( await Objects().where( { streamId } ).whereIn( 'id', objectIds ) ).map( o => o.id )
+    commentLinks = commentLinks.filter( link => streamObjectIds.includes( link.resourceId ) ) 
+  }
+  return commentLinks
+} 
 
 module.exports = { 
   async createComment( { userId, input } ) {
     let comment = { ...input }
+
     delete comment.resources
     delete comment.streamId
+
     comment.id = crs( { length: 10 } )
     comment.authorId = userId
     
     await Comments().insert( comment )
-
     await persistResourceLinks( comment.id, input.resources )
     
     return comment.id
@@ -69,58 +73,24 @@ module.exports = {
     // TODO
   },
 
-  async createCommentReply( {} ) {
-    // TODO
-  },
-
-  // async editCommentReply( {} ) {
-  //   // TODO
-  // },
-
-  // async archiveCommentReply( {} ) {
-  //   // TODO
-  // },
   async getComment( id ) {
-    const [ comment ] = await Comments().where( { id } )
-    return comment
+    let [ comment ] = await Comments().where( { id } )
+    return { ...comment, resources: await getResourcesForComment( comment ) }
   },
 
-  async getComments( { resources, limit, cursor } ) {
+  async getComments( { streamId, resources, limit, cursor } ) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
-    // and not treat the stream as a resource
-    const commentIds = await Promise.all( resources.map( r => getCommentsIdsForResource( r ) ) )
-
-    const relevantComments = intersection( ...commentIds )
-    const items = await Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' ).limit( limit ) 
-    cursor = items[items.length - 1].createdAt
+    const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
+    const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
+    let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
+    if ( cursor ) query = query.where( 'createdAt', '>', cursor )
+    let items = await query.limit( limit )
+    if ( items.length ) {
+      cursor = items[items.length - 1].createdAt
+    } else {
+      cursor = null
+    }
+    items = await Promise.all( items.map( async comment => ( { ...comment, resources: await getResourcesForComment( comment ) } ) ) )
     return { items, cursor, totalCount: relevantComments.length }
-  },
-
-  // async getStreamComments( { streamId, limit, archived, cursor } ) {
-  //   // TODO
-  //   limit = limit || 25
-  //   let raw = `SELECT * from stream_comments
-  //     JOIN comments ON comments.id = stream_comments."comment"
-  //     WHERE stream_comments.stream = 'a55537c38f'
-  //     ORDER BY comments."createdAt" DESC
-  //     LIMIT 25
-  //     `
-  //   let query = Comments()
-  //     .columns( [ 'id', 'authorId', 'archived', 'createdAt', 'updatedAt', 'text', 'data' ] )
-  //     .select()
-  //     .join( 'stream_comments', 'comment.id', 'stream_comments.commit' )
-  // },
-
-  // async getCommitComments( { commitId, limit, archived, cursor } ) {
-  //   // TODO
-  // },
-
-  // async getObjectComments( { objectId, limit, archived, cursor } ) {
-  //   // TODO
-  // },
-
-  // async getCommentReplies( { commentId } ) {
-  //   // TODO
-  // }
+  }
 }
-
