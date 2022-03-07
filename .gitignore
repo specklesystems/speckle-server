@@ -21,3 +21,4 @@ packages/frontend/schema.graphql
 packages/server/reports*
 
 **/venv/**
+**/start/
