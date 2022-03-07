@@ -60,7 +60,7 @@ module.exports = {
       await pubsub.publish( 'COMMENT_CREATED', {
         commentCreated: { ...args.input, authorId: context.userId, createdAt: Date.now() },
         streamId: args.input.streamId,
-        resourceId: args.input.resources[1].id // TODO: hack for now
+        resourceId: args.input.resources[0].resourceId // TODO: hack for now
       } )
       return id
     },

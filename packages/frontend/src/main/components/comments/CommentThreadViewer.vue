@@ -1,14 +1,7 @@
 <template>
   <div class="mt-2 pa-1 d-flex align-center" style="width: 300px">
-    <!-- <div class="d-flex pl-2 xxx-align-center background elevation-2 rounded-xl mb-2">
-      <div class="mt-2">
-        <user-avatar :id="comment.authorId" :size="30" />
-      </div>
-      <div class="px-2 py-2 flex-grow-0 body-2">
-        Do you agree with a longer comment? {{ comment.text }}
-      </div>
-    </div> -->
     <div class="">
+      <!-- <perfect-scrollbar style="height:100%"> -->
       <template v-for="(reply, index) in replies.slice(0, maxRepl)">
         <div v-if="index % 3 === 0" :key="index + 'date'" class="d-flex justify-center">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
@@ -41,6 +34,7 @@
           @click:append="timeoutEmit"
         ></v-textarea>
       </div>
+      <!-- </perfect-scrollbar> -->
     </div>
   </div>
 </template>
