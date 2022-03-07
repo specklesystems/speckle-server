@@ -12,7 +12,9 @@ Comprehensive developer and user documentation can be found in our:
 
 This is a small utility class that helps you stream an object and all its sub-components from the Speckle Server API. It is intended to be used in contexts where you want to "download" the whole object, or iteratively traverse its whole tree.
 
-Here's a sample way on how to use it, pfilfered from the [3d viewer package](../viewer):
+### In the browser
+
+Here's a sample way on how to use it, pilfered from the [3d viewer package](../viewer):
 
 ```js
 
@@ -52,6 +54,19 @@ let loader = new ObjectLoader( {
 
 let obj = await loader.getAndConstructObject( ( e ) => console.log( 'Progress', e ) )
 
+### On the server
+
+Since Node.js does not yet support the [`fetch API`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch), you'll need to provide your own `fetch` function in the options object. Note that `fetch` must return a [Web Stream](https://nodejs.org/api/webstreams.html), so [node-fetch](https://github.com/node-fetch/node-fetch) won't work, but [node/undici's](https://undici.nodejs.org/) implementation will.
+
+```js
+import { fetch } from 'undici'
+
+let loader = new ObjectLoader({
+  serverUrl: 'https://latest.speckle.dev',
+  streamId: '3ed8357f29',
+  objectId: '0408ab9caaa2ebefb2dd7f1f671e7555',
+  options: { enableCaching: false, excludeProps: [], fetch },
+})
 ```
 
 ## Community

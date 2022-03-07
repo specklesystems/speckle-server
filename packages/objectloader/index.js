@@ -10,7 +10,7 @@ export default class ObjectLoader {
    * Creates a new object loader instance.
    * @param {*} param0
    */
-  constructor( { serverUrl, streamId, token, objectId, options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [ ] } } ) {
+  constructor( { serverUrl, streamId, token, objectId, options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [ ], fetch:null } } ) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
 
@@ -47,6 +47,13 @@ export default class ObjectLoader {
 
     this.lastAsyncPause = Date.now()
     this.existingAsyncPause = null
+
+    // we can't simply bind fetch to this.fetch, so instead we have to do some acrobatics: https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
+    this.preferredFetch = options.fetch
+    this.fetch = function(...args) {
+      let currentFetch = this.preferredFetch || fetch
+      return currentFetch(...args)
+    }
 
   }
 
@@ -329,7 +336,7 @@ export default class ObjectLoader {
       readBuffers.push( '' )
       finishedRequests.push( false )
 
-      fetch(
+      this.fetch(
         this.requestUrlChildren,
         {
           method: 'POST',
@@ -397,7 +404,7 @@ export default class ObjectLoader {
     const cachedRootObject = await this.cacheGetObjects( [ this.objectId ] )
     if ( cachedRootObject[ this.objectId ] )
       return cachedRootObject[ this.objectId ]
-    const response = await fetch( this.requestUrlRootObj, { headers: this.headers } )
+    const response = await this.fetch( this.requestUrlRootObj, { headers: this.headers } )
     const responseText = await response.text()
     this.cacheStoreObjects( [ `${this.objectId}\t${responseText}` ] )
     return responseText
