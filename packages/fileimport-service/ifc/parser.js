@@ -31,7 +31,7 @@ module.exports = class IFCParser {
     // replace all its geometries with actual references to speckle meshes from the productGeo map
     
     await this.traverse( this.project, true, 0 )
-    
+  
     let id = await this.serverApi.saveObject( this.project )
     return { id, tCount: Object.keys( this.project.__closure ).length }
   }
@@ -90,7 +90,7 @@ module.exports = class IFCParser {
     }
   }
 
-  async traverse( element, recursive = true, depth = 0 ) {
+  async traverse( element, recursive = true, depth = 0, specialTypes = [ { type: 'IfcProject', key: 'Name' }, { type: 'IfcBuilding', key: 'Name' }, { type: 'IfcSite', key: 'Name' } ] ) {
 
     // Fast exit if null/undefined
     if ( !element ) return
@@ -98,12 +98,12 @@ module.exports = class IFCParser {
     
     // If array, traverse all items in it.
     if( Array.isArray( element ) ) {
-      return element.map( async el => await this.traverse( el,recursive, depth + 1 ) )
+      return await Promise.all( element.map( async el => await this.traverse( el,recursive, depth + 1 , specialTypes ) ) )
     }
 
     // If it has no expressID, its either a simple type or a { type, value } object. 
     if( !element.expressID ) {
-      return element.value !== null && element.value !== undefined ? element.value : element
+      return await Promise.resolve( element.value !== null && element.value !== undefined ? element.value : element )
     }
 
     if( this.cache[element.expressID.toString()] ) return this.cache[element.expressID.toString()]
@@ -112,7 +112,7 @@ module.exports = class IFCParser {
 
     // Traverse all key/value pairs first.
     for( let key of Object.keys( element ) ) {
-      element[key] = await this.traverse( element[key], recursive, depth + 1 )
+      element[key] = await this.traverse( element[key], recursive, depth + 1, specialTypes )
     }
 
     // Assign speckle_type and empty closure table.
@@ -126,6 +126,14 @@ module.exports = class IFCParser {
     // Find children and populate element
     const childrenIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELCONTAINEDINSPATIALSTRUCTURE, 'RelatingStructure', 'RelatedElements' )
     if( childrenIds.length > 0 )  element.rawChildren = childrenIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
+    
+    // Find related property sets
+    const psetsIds = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELDEFINESBYPROPERTIES, 'RelatingPropertyDefinition', 'RelatedObjects' )
+    if( psetsIds.length > 0 )  element.rawPsets = psetsIds.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
+
+    // Find related type properties
+    const typePropsId = this.getAllRelatedItemsOfType( element.expressID, WebIFC.IFCRELDEFINESBYTYPE, 'RelatingType', 'RelatedObjects' )
+    if( typePropsId.length > 0 )  element.rawTypeProps = typePropsId.map( ( childId ) => this.api.GetLine( this.modelId, childId, true ) )
 
     // Lookup geometry in generated geometries object
     if( this.productGeo[element.expressID] ) {
@@ -136,51 +144,16 @@ module.exports = class IFCParser {
       } )
     }
 
+    const isSpecial = specialTypes.find( t => t.type === element.speckle_type )
     // Recurse all children
     if ( recursive ) {
+      await this.processSubElements( element, 'rawSpatialChildren', 'spatialChildren', isSpecial, recursive, depth, specialTypes )
+      await this.processSubElements( element, 'rawChildren', 'children', isSpecial, recursive, depth, specialTypes )
+      await this.processSubElements( element, 'rawPsets', 'propertySets', false, recursive, depth, specialTypes )
+      await this.processSubElements( element, 'rawTypeProps', 'typeProps', false, recursive, depth, specialTypes )
 
-      if( element.rawSpatialChildren ) {
-        element.spatialChildren = []
-        for( let child of element.rawSpatialChildren ) {
-          let res = await this.traverse( child, recursive, depth + 1 )
-          if( res.referencedId ) {
-            element.spatialChildren.push( res )
-            this.project.__closure[res.referencedId.toString()] = depth 
-            element.__closure[res.referencedId.toString()] = 1
-            
-            // adds to parent (this element) the child's closure tree.
-            if( this.closureCache[child.expressID.toString()] ) {
-              for( let key of Object.keys( this.closureCache[child.expressID.toString()] ) ) {
-                element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
-              }
-            }
-          }
-        }
-        delete element.rawSpatialChildren
-      }
-      
-      if ( element.rawChildren ) { 
-        element.children = []
-        for( let child of element.rawChildren ) {
-          let res = await this.traverse( child, recursive, depth + 1 ) 
-          if( res.referencedId ) {
-            element.children.push( res )
-            this.project.__closure[res.referencedId.toString()] = depth 
-            element.__closure[res.referencedId.toString()] = 1
-
-            // adds to parent (this element) the child's closure tree.
-            if( this.closureCache[child.expressID.toString()] ) {
-              for( let key of Object.keys( this.closureCache[child.expressID.toString()] ) ) {
-                element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
-              }
-            }
-          }
-        }
-        delete element.rawChildren
-      }
-
-      if( element.children || element.spatialChildren ) {
-        console.log( `${element.constructor.name} ${element.GlobalId}: children count: ${ element.children ? element.children.length : '0'}; spatial children count: ${element.spatialChildren ? element.spatialChildren.length : '0'} ` )
+      if( element.children || element.spatialChildren || element.propertySets || element.typeProps ) {
+        console.log( `${element.constructor.name} ${element.GlobalId}:\n\tchildren count: ${ element.children ? element.children.length : '0'};\n\tspatial children count: ${element.spatialChildren ? element.spatialChildren.length : '0'};\n\tproperty sets count: ${element.propertySets ? element.propertySets.length : 0};\n\ttype properties: ${element.typeProps ? element.typeProps.length : 0}` )
       }
 
     }
@@ -198,6 +171,41 @@ module.exports = class IFCParser {
     }
   }
 
+
+  async processSubElements( element, key, newKey, isSpecial, recursive, depth, specialTypes ) {
+    if ( element[key] ) {
+      if ( !isSpecial )
+        element[newKey] = []
+      let childCount = {}
+      for ( let child of element[key] ) {
+        let res = await this.traverse( child, recursive, depth + 1, specialTypes )
+        if ( res.referencedId ) {
+          if ( isSpecial ) {
+            let name = child[isSpecial.key]
+            if ( !name || name.length === 0 )
+              name = 'Undefined'
+            if ( !childCount[name] )
+              childCount[name] = 0
+            if ( childCount[name] > 0 )
+              name += '-' + childCount[name]++
+            element[name] = res
+          }
+          else
+            element[newKey].push( res )
+          this.project.__closure[res.referencedId.toString()] = depth
+          element.__closure[res.referencedId.toString()] = 1
+
+          // adds to parent (this element) the child's closure tree.
+          if ( this.closureCache[child.expressID.toString()] ) {
+            for ( let key of Object.keys( this.closureCache[child.expressID.toString()] ) ) {
+              element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
+            }
+          }
+        }
+      }
+      delete element[key]
+    }
+  }
 
   // (c) https://github.com/agviegas/web-ifc-three
   extractVertexData( vertexData ) {
