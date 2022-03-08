@@ -22,7 +22,7 @@
     >
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
-      <v-icon class="primary--text" large style="position: relative; right: -84%; font-size: 4.2em">
+      <v-icon class="primary--text" large style="position: relative; right: -60%; font-size: 4.2em">
         mdi-menu-right
       </v-icon>
     </div>
@@ -40,7 +40,7 @@
           :id="sessionUser.id"
           v-tooltip="sessionUser.name"
           :show-hover="false"
-          :size="42"
+          :size="30"
           :margin="false"
         ></user-avatar>
         <text-dots-typing v-if="sessionUser.status === 'writing'" />
@@ -109,8 +109,8 @@ export default {
             user.sectionBox = data.userCommentActivity.sectionBox
             user.name = data.userCommentActivity.name
             user.lastUpdate = Date.now()
-            if (Math.random() < 0.5) user.status = 'writing'
-            else user.status = 'viewing'
+            // if (Math.random() < 0.5) user.status = 'writing'
+            // else user.status = 'viewing'
           } else {
             this.users.push({
               projectedPos: [0, 0],
