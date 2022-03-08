@@ -2,54 +2,58 @@
   <!-- HIC SVNT DRACONES -->
   <div
     ref="parent"
-    style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; overflow: hidden"
-    class="no-mouse-parent"
+    style="
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+      z-index: 25;
+    "
+    class="no-mouse"
   >
-    <div
-      ref="commentOverlay"
-      :class="`absolute-pos comment-overlay rounded-xl ${expand ? 'expanded' : ''}`"
-      :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
-    >
-      <div class="pa-2">
+    <div v-show="visible" ref="commentButton" class="absolute-pos">
+      <div class="d-flex align-center" style="height: 48px; width: 320px">
+        <v-btn
+          v-tooltip="!expand ? 'Add a comment (ctrl + shift + c)' : 'Cancel'"
+          small
+          icon
+          :dark="!expand"
+          :class="`mouse elevation-5 ${!expand ? 'primary' : 'background'} mr-2`"
+          @click="toggleExpand()"
+        >
+          <v-icon v-if="!expand" dark x-small>mdi-comment-plus</v-icon>
+          <v-icon v-else dark x-small>mdi-close</v-icon>
+        </v-btn>
         <v-slide-x-transition>
-          <v-card v-show="expand" class="elevation-5 rounded-xl pa-1 my-1">
+          <div v-if="expand" style="width: 100%" class="d-flex">
             <v-textarea
-              ref="commentTextArea"
               v-model="commentText"
-              :style="`${!expand ? 'display:none; pointer-events:none;' : ''}`"
-              rounded
-              autofocus
-              class="transparent elevation-0 pb-2 body-2"
-              auto-grow
+              solo
               hide-details
-              dense
-              placeholder="Type your comment here, and hit enter to save!"
+              autofocus
+              auto-grow
+              rows="1"
+              placeholder="Your comment..."
+              class="mouse rounded-xl caption elevation-15"
               append-icon="mdi-send"
-              hint="Add a comment"
-              style="line-height: 1.25em !important"
-              @click:append="addComment()"
               @keydown.enter.shift.exact.prevent="addComment()"
             ></v-textarea>
-            <br />
-            <span class="caption px-4 grey--text"><i>Shift + Enter will save the comment.</i></span>
-          </v-card>
+            <v-btn
+              v-tooltip="'Send comment (shift + enter)'"
+              icon
+              dark
+              large
+              class="mouse elevation-0 primary pa-0 ma-o"
+              style="left: -47px; top: 1px; height: 48px; width: 48px"
+              @click="addComment()"
+            >
+              <v-icon dark small>mdi-send</v-icon>
+            </v-btn>
+          </div>
         </v-slide-x-transition>
-        <!-- <span class="caption">Hit enter to save.</span> -->
-        <!-- <v-btn rounded block small class="mt-2 mb-2">add</v-btn> -->
       </div>
-    </div>
-    <div v-show="visible" ref="commentButton" class="absolute-pos">
-      <v-btn
-        v-tooltip="'Add a comment (ctrl + shift + c)'"
-        small
-        icon
-        dark
-        class="elevation-5 primary pa-0 ma-0"
-        @click="toggleExpand()"
-      >
-        <v-icon v-if="!expand" dark x-small>mdi-comment-plus</v-icon>
-        <v-icon v-else dark x-small>mdi-close</v-icon>
-      </v-btn>
     </div>
     <portal to="viewercontrols">
       <v-slide-x-transition>
@@ -86,7 +90,7 @@ export default {
   mounted() {
     window.__viewer.on('select', debounce(this.handleSelect, 10))
     window.__viewer.cameraHandler.controls.addEventListener('update', this.updateCommentBubble)
-    this.$refs.commentTextArea.calculateInputHeight()
+    // this.$refs.commentTextArea.calculateInputHeight()
     document.addEventListener(
       'keyup',
       function (e) {
@@ -143,13 +147,13 @@ export default {
     },
     toggleExpand() {
       this.expand = !this.expand
-      this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
-      if (this.expand && !this.location) {
-        // TODO: put in middle of screen?
-        this.$refs.commentOverlay.style.top = `50%`
-        this.$refs.commentOverlay.style.left = `50%`
-        this.$refs.commentOverlay.style.transform = `translate(-50%, -50%)`
-      }
+      // this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
+      // if (this.expand && !this.location) {
+      //   // TODO: put in middle of screen?
+      //   this.$refs.commentOverlay.style.top = `50%`
+      //   this.$refs.commentOverlay.style.left = `50%`
+      //   this.$refs.commentOverlay.style.transform = `translate(-50%, -50%)`
+      // }
     },
     handleSelect(info) {
       if (!info.location) {
@@ -179,10 +183,10 @@ export default {
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
 
-      this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
-      this.$refs.commentOverlay.style.transform = `translate(0)`
-      this.$refs.commentOverlay.style.top = `${mappedLocation.y + 5}px`
-      this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
+      // this.$refs.commentOverlay.style.transition = 'all 0.1s ease'
+      // this.$refs.commentOverlay.style.transform = `translate(0)`
+      // this.$refs.commentOverlay.style.top = `${mappedLocation.y + 5}px`
+      // this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
     },
     updateCommentBubble() {
       // TODO: Clamping, etc.
@@ -203,15 +207,15 @@ export default {
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
 
-      this.$refs.commentOverlay.style.transition = ''
-      this.$refs.commentOverlay.style.top = `${mappedLocation.y + 5}px`
-      this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
+      // this.$refs.commentOverlay.style.transition = ''
+      // this.$refs.commentOverlay.style.top = `${mappedLocation.y}px`
+      // this.$refs.commentOverlay.style.left = `${mappedLocation.x}px`
     }
   }
 }
 </script>
 <style scoped>
-::v-deep .v-text-field__slot {
+/* ::v-deep .v-text-field__slot {
   padding-top: 6px;
 }
 ::v-deep .v-input__append-inner {
@@ -225,7 +229,16 @@ export default {
   min-height: none;
   height: 1.25em;
   padding-top: 4px;
+} */
+
+.no-mouse {
+  pointer-events: none;
 }
+
+.mouse {
+  pointer-events: auto;
+}
+
 .no-mouse-parent {
   pointer-events: none;
 }

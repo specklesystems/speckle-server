@@ -6,13 +6,15 @@
     class="d-flex align-center justify-center no-mouse-parent"
   >
     <div
-      v-for="(comment, index) in comments"
+      v-for="(comment, index) in localComments"
       :key="index"
       :ref="`comment-${index}`"
       :class="`absolute-pos rounded-xl`"
-      :style="`pointer-events: none; z-index:${comment.expanded ? '20' : '10'}; ${
-        hasExpandedComment && !comment.expanded ? 'opacity: 0.1;' : 'opacity: 1;'
-      }`"
+      :style="`pointer-events: none; transition: opacity 0.2s ease; z-index:${
+        comment.expanded ? '20' : '10'
+      }; ${hasExpandedComment && !comment.expanded ? 'opacity: 0.1;' : 'opacity: 1;'}`"
+      @mouseenter="comment.hovered = true"
+      @mouseleave="comment.hovered = false"
     >
       <div class="" style="pointer-events: none">
         <div class="d-flex align-center" style="pointer-events: none">
@@ -22,8 +24,9 @@
             :class="`elevation-5 pa-0 ma-0 ${
               comment.expanded ? 'dark white--text primary' : 'background'
             }`"
-            @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)"
+            @click="toggleComment(comment)"
           >
+            <!-- @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)" -->
             <!-- <span v-if="!comment.expanded" class="primary--text">
               <v-icon small>mdi-comment</v-icon>
               1
@@ -36,14 +39,14 @@
       </div>
     </div>
     <div
-      v-for="(comment, index) in comments"
+      v-for="(comment, index) in localComments"
       v-show="comment.expanded"
       :key="index + 'card'"
       :ref="`commentcard-${index}`"
       :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
         comment.hovered && false ? 'background elevation-5' : ''
       }`"
-      :style="`z-index:${comment.expanded ? '20' : '10'}`"
+      :style="`z-index:${comment.expanded ? '20' : '10'};`"
       @mouseenter="comment.hovered = true"
       @mouseleave="comment.hovered = false"
     >
@@ -64,6 +67,52 @@ export default {
     // TextDotsTyping: () => import('@/main/components/common/TextDotsTyping')
   },
   apollo: {
+    comments: {
+      query: gql`
+        query($streamId: String!, $resources: [ResourceIdentifierInput]!) {
+          comments(streamId: $streamId, resources: $resources, limit: 1000) {
+            totalCount
+            cursor
+            items {
+              id
+              authorId
+              text
+              createdAt
+              data
+            }
+          }
+        }
+      `,
+      variables() {
+        let resourceArr = [
+          {
+            resourceType: this.$resourceType(this.$route.params.resourceId),
+            resourceId: this.$route.params.resourceId
+          }
+        ]
+        if (this.$route.query.overlay) {
+          let resIds = this.$route.query.overlay.split(',')
+          for (let resId of resIds)
+            resourceArr.push({
+              resourceType: this.$resourceType(resId),
+              resourceId: resId
+            })
+        }
+
+        return {
+          streamId: this.$route.params.streamId,
+          resources: resourceArr
+        }
+      },
+      result({ data }) {
+        for (let c of data.comments.items) {
+          c.expanded = false
+          c.hovered = false
+          if (this.localComments.findIndex((lc) => c.id === lc.id) === -1)
+            this.localComments.push({ ...c })
+        }
+      }
+    },
     $subscribe: {
       commentCreated: {
         query: gql`
@@ -81,10 +130,10 @@ export default {
           return !this.$loggedIn() || !this.$route.params.resourceId
         },
         result({ data }) {
-          console.log(data.commentCreated)
+          // console.log(data.commentCreated)
           data.commentCreated.expanded = false
           data.commentCreated.hovered = false
-          this.comments.push(data.commentCreated)
+          this.localComments.push(data.commentCreated)
           setTimeout(this.updateCommentBubbles, 0)
         }
       }
@@ -92,12 +141,15 @@ export default {
   },
   data() {
     return {
-      comments: []
+      localComments: []
     }
   },
   computed: {
     hasExpandedComment() {
-      return this.comments.filter((c) => c.expanded).length !== 0
+      return this.localComments.filter((c) => c.expanded).length !== 0
+    },
+    flatComments() {
+      return this.comments ? this.localComments : []
     }
   },
   mounted() {
@@ -105,7 +157,7 @@ export default {
       'select',
       debounce(
         function () {
-          for (let c of this.comments) {
+          for (let c of this.localComments) {
             c.expanded = false
           }
         }.bind(this),
@@ -117,9 +169,9 @@ export default {
     )
   },
   methods: {
-    expandComment(comment) {
-      for (let c of this.comments) {
-        if (c === comment) {
+    toggleComment(comment) {
+      for (let c of this.localComments) {
+        if (c.id === comment.id && comment.expanded === false) {
           c.preventAutoClose = true
           setTimeout(() => {
             c.expanded = true
@@ -135,7 +187,30 @@ export default {
           c.expanded = false
         }
 
-        if (c === comment) {
+        if (c.id === comment.id) {
+          this.setCommentPow(c)
+        }
+      }
+    },
+    expandComment(comment) {
+      for (let c of this.localComments) {
+        if (c.id === comment.id) {
+          c.preventAutoClose = true
+          setTimeout(() => {
+            c.expanded = true
+          }, 100)
+          setTimeout(() => {
+            this.updateCommentBubbles()
+          }, 200)
+          setTimeout(() => {
+            c.preventAutoClose = false
+            // this.updateCommentBubbles()
+          }, 1000)
+        } else {
+          c.expanded = false
+        }
+
+        if (c.id === comment.id) {
           this.setCommentPow(c)
         }
       }
@@ -158,10 +233,11 @@ export default {
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
+      if (!this.comments) return
       let index = -1
       let cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
-      for (let comment of this.comments) {
+      for (let comment of this.localComments) {
         index++
         let commentEl = this.$refs[`comment-${index}`][0]
         if (!commentEl) continue
@@ -195,10 +271,14 @@ export default {
         if (tY < paddingYTop) {
           tY = paddingYTop
         }
+
+        if (!comment.preventAutoClose && tY > this.$refs.parent.clientHeight)
+          comment.expanded = false // collapse if too far out down
+
         if (tY > this.$refs.parent.clientHeight - paddingYBottom) {
           tY = this.$refs.parent.clientHeight - paddingYBottom
-          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out down
         }
+
         commentEl.style.transform = `translate(${tX}px,${tY}px)`
 
         let card = this.$refs[`commentcard-${index}`][0]
