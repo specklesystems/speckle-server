@@ -180,7 +180,7 @@ export default {
         let tY = commentLocation.y - 20
         const paddingX = 10
         const paddingYTop = 70
-        const paddingYBottom = 80
+        const paddingYBottom = 90
 
         if (tX < -300) if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out leftwise
         if (tX < paddingX) {
@@ -218,11 +218,12 @@ export default {
           if (cardTop < paddingYTop) cardTop = paddingYTop
 
           let cardBottom = cardTop + card.clientHeight
-          let maxBottom = this.$refs.parent.clientHeight - paddingYTop - paddingYBottom
+          let maxBottom = this.$refs.parent.clientHeight - 45
 
           // bottom clip
           if (cardBottom > maxBottom) {
             cardTop -= (cardBottom - maxBottom) / 2
+            cardTop = this.$refs.parent.clientHeight - card.clientHeight - 45
           }
 
           card.style.top = `${cardTop}px`
