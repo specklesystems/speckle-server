@@ -1,5 +1,7 @@
 <template>
-  <!-- HIC SVNT DRACONES -->
+  <!-- 
+    HIC SVNT DRACONES
+  -->
   <div
     ref="parent"
     style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
@@ -14,7 +16,11 @@
         :class="`absolute-pos rounded-xl`"
         :style="`pointer-events: none; transition: opacity 0.2s ease; z-index:${
           comment.expanded ? '20' : '10'
-        }; ${hasExpandedComment && !comment.expanded ? 'opacity: 0.1;' : 'opacity: 1;'}`"
+        }; ${
+          hasExpandedComment && !comment.expanded && !comment.hovered
+            ? 'opacity: 0.1;'
+            : 'opacity: 1;'
+        }`"
         @mouseenter="comment.hovered = true"
         @mouseleave="comment.hovered = false"
       >
@@ -42,7 +48,6 @@
       <!-- Comment Threads -->
       <div
         v-for="(comment, index) in localComments"
-        v-show="comment.expanded"
         :key="index + 'card'"
         :ref="`commentcard-${index}`"
         :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
@@ -53,7 +58,11 @@
         @mouseleave="comment.hovered = false"
       >
         <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
-        <comment-thread-viewer :comment="comment" @reply-added="replyAdded" />
+        <v-fade-transition>
+          <div v-show="comment.expanded">
+            <comment-thread-viewer :comment="comment" @reply-added="replyAdded" />
+          </div>
+        </v-fade-transition>
         <!-- </v-card> -->
       </div>
     </div>
@@ -192,6 +201,7 @@ export default {
       for (let c of this.localComments) {
         if (c.id === comment.id && comment.expanded === false) {
           c.preventAutoClose = true
+          this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
           }, 100)
@@ -205,10 +215,6 @@ export default {
         } else {
           c.expanded = false
         }
-
-        if (c.id === comment.id) {
-          this.setCommentPow(c)
-        }
       }
     },
     expandComment(comment) {
@@ -217,7 +223,7 @@ export default {
           c.preventAutoClose = true
           setTimeout(() => {
             c.expanded = true
-          }, 100)
+          }, 500)
           setTimeout(() => {
             this.updateCommentBubbles()
           }, 200)

@@ -1,9 +1,8 @@
 <template>
   <div class="mt-2 pa-1 d-flex align-center" style="width: 300px">
     <div class="">
-      <!-- <perfect-scrollbar style="height:100%"> -->
-      <template v-for="(reply, index) in replies.slice(0, maxRepl)">
-        <div v-if="index % 3 === 0" :key="index + 'date'" class="d-flex justify-center">
+      <template v-for="(reply, index) in thread">
+        <div v-if="index % 3 === 0" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
             {{ new Date(Date.now()).toLocaleString() }}
           </div>
@@ -31,14 +30,14 @@
           placeholder="Reply"
           class="rounded-xl mb-2 caption"
           append-icon="mdi-send"
-          @click:append="timeoutEmit"
+          @click:append="addReply"
         ></v-textarea>
       </div>
-      <!-- </perfect-scrollbar> -->
     </div>
   </div>
 </template>
 <script>
+import gql from 'graphql-tag'
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
@@ -46,81 +45,97 @@ export default {
   props: {
     comment: { type: Object, default: () => null }
   },
+  apollo: {
+    barf: {
+      query: gql`
+        query($streamId: String!, $id: String!) {
+          comment(streamId: $streamId, id: $id) {
+            id
+            replies(limit: 1000) {
+              totalCount
+              cursor
+              items {
+                id
+                text
+                authorId
+                createdAt
+              }
+            }
+          }
+        }
+      `,
+      variables() {
+        return {
+          streamId: this.$route.params.streamId,
+          id: this.comment.id
+        }
+      },
+      skip() {
+        return !this.comment.expanded
+      },
+      // result({ data }) {
+      //   console.log('data')
+      //   console.log(data)
+      // },
+      update: (data) => {
+        console.log(data)
+        return data.comment
+      }
+    }
+  },
   data: function () {
     return {
-      maxRepl: 1,
-      replies: [
-        {
-          authorId: '8ad9fd3601',
-          text:
-            'The translateZ() CSS function repositions an element along the z-axis in 3D space, i.e., closer to or farther away from the viewer.'
-        },
-        {
-          authorId: '1fe2c52228',
-          text:
-            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
-        },
-        {
-          authorId: '1fe2c52228',
-          text: 'Okay, got it.'
-        },
-        {
-          authorId: '8ad9fd3601',
-          text: 'Still strange though'
-        },
-        {
-          authorId: '1fe2c52228',
-          text: 'More pasta'
-        },
-        {
-          authorId: '1fe2c52228',
-          text:
-            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
-        },
-        {
-          authorId: '1fe2c52228',
-          text:
-            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
-        },
-        {
-          authorId: '1fe2c52228',
-          text:
-            'One interesting aspect of a system is that we cannot apply a "divide and conquer" strategy to optimize it for its purpose. If you deal with a problem where all efforts to fix it result in counter-intuitive effects then Systems Thinking can lead to new ideas and may explain why the efforts failed.'
-        },
-        {
-          authorId: '8ad9fd3601',
-          text: 'Still strange though'
-        },
-        {
-          authorId: '1fe2c52228',
-          text: 'More pasta'
-        },
-        {
-          authorId: '8ad9fd3601',
-          text: 'Still strange though'
-        },
-        {
-          authorId: '1fe2c52228',
-          text: 'More pasta'
-        },
-        {
-          authorId: '8ad9fd3601',
-          text: 'Still strange though'
-        },
-        {
-          authorId: '1fe2c52228',
-          text: 'More pasta'
-        }
-      ]
+      replyText: null
+    }
+  },
+  computed: {
+    thread() {
+      // TODO: add the replies in here too
+      return [this.comment]
     }
   },
   methods: {
-    timeoutEmit() {
-      this.maxRepl++
+    async addReply() {
+      if (!this.commentText || this.commentText.length < 5) {
+        this.$eventHub.$emit('notification', {
+          text: `Reply must be at least 5 characters.`
+        })
+        return
+      }
+
+      let commentInput = {
+        streamId: this.$route.params.streamId,
+        resources: [{ resourceId: this.comment.id, resourceType: 'comment' }],
+        text: this.replyText
+      }
+
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation commentCreate($input: CommentCreateInput!) {
+              commentCreate(input: $input)
+            }
+          `,
+          variables: { input: commentInput }
+        })
+      } catch (e) {
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
+      }
+
       setTimeout(() => {
-        this.$emit('reply-added')
+        this.$emit('reply-added') // needed for layout reshuffle in parent
       }, 100)
     }
   }
 }
 </script>
+<style scoped>
+.no-mouse {
+  pointer-events: none;
+}
+.mouse {
+  pointer-events: auto;
+}
+</style>

@@ -1,5 +1,7 @@
 <template>
-  <!-- HIC SVNT DRACONES -->
+  <!-- 
+    HIC SVNT DRACONES
+  -->
   <div
     ref="parent"
     style="
@@ -105,7 +107,7 @@ export default {
     async addComment() {
       if (!this.commentText || this.commentText.length < 5) {
         this.$eventHub.$emit('notification', {
-          text: `10 characters needed for a comment`
+          text: `Comment must be at least 5 characters.`
         })
         return
       }
