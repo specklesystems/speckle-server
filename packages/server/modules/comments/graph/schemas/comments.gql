@@ -8,6 +8,7 @@ type Comment {
   id: String!
   authorId: String!
   archived: Boolean!
+  screenshot: String
   text: String!
   data: JSONObject!
   resources: [ResourceIdentifier]!
@@ -54,6 +55,7 @@ input CommentCreateInput {
   resources: [ResourceIdentifierInput]!
   text: String!
   data: JSONObject!
+  screenshot: String
 }
 
 input ReplyCreateInput {
