@@ -5,14 +5,16 @@ const knex = require( `${appRoot}/db/knex` )
 
 const Streams = () => knex( 'streams' )
 const Objects = () => knex( 'objects' )
+const Branches = ( ) => knex( 'branches' )
 const Commits = () => knex( 'commits' )
 const Comments = () => knex( 'comments' )
 const CommentLinks = () => knex( 'comment_links' )
 
 const persistResourceLinks = async ( commentId, resources ) => 
-  Promise.all( resources.map( res => persistResourceLink( commentId, res ) ) )
+  await Promise.all( resources.map( res => persistResourceLink( commentId, res ) ) )
 
 const persistResourceLink = async ( commentId, { resourceId, resourceType } ) => {
+  //should the resource belonging to the stream stuff be validated here?
   let query
   switch ( resourceType ) {
   case 'stream':
@@ -51,6 +53,14 @@ const getCommentLinksForResources = async ( streamId, resources ) => {
 
 module.exports = { 
   async createComment( { userId, input } ) {
+    const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
+    if ( streamResources.length < 1 ) throw Error( 'Must specify atleast a stream as the comment target' )
+    if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
+
+    const [ stream ] = streamResources
+
+    if ( stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
+
     let comment = { ...input }
 
     delete comment.resources

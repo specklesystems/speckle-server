@@ -35,7 +35,6 @@ module.exports = {
       const streamId = parent.resources.filter( r => r.resourceType === 'stream' )[0].resourceId
       const resources = [ { resourceId: parent.id, resourceType: 'comment' } ]
       return await getComments( { streamId, resources, limit: args.limit, cursor: args.cursor } )
-      // TODO
     }
   },
   Mutation: {
@@ -53,7 +52,6 @@ module.exports = {
 
     async commentCreate( parent, args, context, info ) {
       // TODO: check perms, persist comment
-      // console.log( '---', args )
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       let id = await createComment( { userId: context.userId, input: args.input } )
       console.log( args.input )
