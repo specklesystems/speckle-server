@@ -5,55 +5,70 @@
     style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
     class="d-flex align-center justify-center no-mouse-parent"
   >
-    <div
-      v-for="(comment, index) in localComments"
-      :key="index"
-      :ref="`comment-${index}`"
-      :class="`absolute-pos rounded-xl`"
-      :style="`pointer-events: none; transition: opacity 0.2s ease; z-index:${
-        comment.expanded ? '20' : '10'
-      }; ${hasExpandedComment && !comment.expanded ? 'opacity: 0.1;' : 'opacity: 1;'}`"
-      @mouseenter="comment.hovered = true"
-      @mouseleave="comment.hovered = false"
-    >
-      <div class="" style="pointer-events: none">
-        <div class="d-flex align-center" style="pointer-events: none">
-          <v-btn
-            small
-            icon
-            :class="`elevation-5 pa-0 ma-0 ${
-              comment.expanded ? 'dark white--text primary' : 'background'
-            }`"
-            @click="toggleComment(comment)"
-          >
-            <!-- @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)" -->
-            <!-- <span v-if="!comment.expanded" class="primary--text">
+    <div v-show="showComments">
+      <!-- Comment bubbles -->
+      <div
+        v-for="(comment, index) in localComments"
+        :key="index"
+        :ref="`comment-${index}`"
+        :class="`absolute-pos rounded-xl`"
+        :style="`pointer-events: none; transition: opacity 0.2s ease; z-index:${
+          comment.expanded ? '20' : '10'
+        }; ${hasExpandedComment && !comment.expanded ? 'opacity: 0.1;' : 'opacity: 1;'}`"
+        @mouseenter="comment.hovered = true"
+        @mouseleave="comment.hovered = false"
+      >
+        <div class="" style="pointer-events: none">
+          <div class="d-flex align-center" style="pointer-events: none">
+            <v-btn
+              small
+              icon
+              :class="`elevation-5 pa-0 ma-0 ${
+                comment.expanded ? 'dark white--text primary' : 'background'
+              }`"
+              @click="toggleComment(comment)"
+            >
+              <!-- @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)" -->
+              <!-- <span v-if="!comment.expanded" class="primary--text">
               <v-icon small>mdi-comment</v-icon>
               1
             </span> -->
-            <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
-            <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
-          </v-btn>
-          <!-- <span class="caption ml-2" v-if="!comment.expanded">1 replies</span> -->
+              <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
+              <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
+            </v-btn>
+          </div>
         </div>
       </div>
+      <!-- Comment Threads -->
+      <div
+        v-for="(comment, index) in localComments"
+        v-show="comment.expanded"
+        :key="index + 'card'"
+        :ref="`commentcard-${index}`"
+        :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
+          comment.hovered && false ? 'background elevation-5' : ''
+        }`"
+        :style="`z-index:${comment.expanded ? '20' : '10'};`"
+        @mouseenter="comment.hovered = true"
+        @mouseleave="comment.hovered = false"
+      >
+        <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
+        <comment-thread-viewer :comment="comment" @reply-added="replyAdded" />
+        <!-- </v-card> -->
+      </div>
     </div>
-    <div
-      v-for="(comment, index) in localComments"
-      v-show="comment.expanded"
-      :key="index + 'card'"
-      :ref="`commentcard-${index}`"
-      :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
-        comment.hovered && false ? 'background elevation-5' : ''
-      }`"
-      :style="`z-index:${comment.expanded ? '20' : '10'};`"
-      @mouseenter="comment.hovered = true"
-      @mouseleave="comment.hovered = false"
-    >
-      <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
-      <comment-thread-viewer :comment="comment" @reply-added="replyAdded" />
-      <!-- </v-card> -->
-    </div>
+    <portal to="viewercontrols" :order="5">
+      <v-btn
+        v-tooltip="`Toggle comments (${localComments.length})`"
+        rounded
+        icon
+        class="mr-2"
+        @click="toggleComments()"
+      >
+        <v-icon v-if="showComments" small>mdi-comment-outline</v-icon>
+        <v-icon v-if="!showComments" small>mdi-comment-off-outline</v-icon>
+      </v-btn>
+    </portal>
   </div>
 </template>
 <script>
@@ -141,7 +156,8 @@ export default {
   },
   data() {
     return {
-      localComments: []
+      localComments: [],
+      showComments: true
     }
   },
   computed: {
@@ -169,6 +185,9 @@ export default {
     )
   },
   methods: {
+    toggleComments() {
+      this.showComments = !this.showComments
+    },
     toggleComment(comment) {
       for (let c of this.localComments) {
         if (c.id === comment.id && comment.expanded === false) {
