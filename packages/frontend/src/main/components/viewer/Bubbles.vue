@@ -91,7 +91,7 @@ export default {
         result({ data }) {
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
           // it's easier to test like this though :)
-          if (data.userCommentActivity.status === 'disconnect') {
+          if (data.userCommentActivity.status && data.userCommentActivity.status === 'disconnect') {
             this.users = this.users.filter((u) => u.uuid !== data.userCommentActivity.uuid)
             this.updateBubbles(true)
             return
@@ -225,10 +225,15 @@ export default {
         controls._zoom
       ]
 
+      let selectionLocation = this.selectionLocation
+      if (this.$store.state.selectedComment) {
+        selectionLocation = this.$store.state.selectedComment.data.location
+      }
+
       let data = {
         filter: this.$store.state.appliedFilter,
         selection: this.selectedIds,
-        selectionLocation: this.selectionLocation,
+        selectionLocation,
         sectionBox: window.__viewer.sectionBox.getCurrentBox(),
         selectionCenter: this.selectionCenter,
         camera: c,

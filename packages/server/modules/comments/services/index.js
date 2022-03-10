@@ -53,8 +53,9 @@ const getCommentLinksForResources = async ( streamId, resources ) => {
 
 module.exports = { 
   async createComment( { userId, input } ) {
+    console.log(input)
     const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
-    if ( streamResources.length < 1 ) throw Error( 'Must specify atleast a stream as the comment target' )
+    if ( streamResources.length < 1 ) throw Error( 'Must specify at least a stream as the comment target' )
     if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
 
     const [ stream ] = streamResources

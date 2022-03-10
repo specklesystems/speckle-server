@@ -54,11 +54,11 @@ module.exports = {
       // TODO: check perms, persist comment
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       let id = await createComment( { userId: context.userId, input: args.input } )
-      console.log( args.input )
+      // console.log( args.input )
       await pubsub.publish( 'COMMENT_CREATED', {
-        commentCreated: { ...args.input, authorId: context.userId, createdAt: Date.now() },
+        commentCreated: { ...args.input, authorId: context.userId, id, createdAt: Date.now() },
         streamId: args.input.streamId,
-        resourceId: args.input.resources[0].resourceId // TODO: hack for now
+        resourceId: args.input.resources[1].resourceId // TODO: hack for now
       } )
       return id
     },
@@ -70,14 +70,15 @@ module.exports = {
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       // the reply also has to be linked to the stream, for the recursive reply lookup to work
       let input = { ...args.input, resources: [ 
-        { id: args.input.parentComment, type: 'comment' },
-        { id: args.input.streamId, type: 'stream' }
+        { resourceId: args.input.parentComment, resourceType: 'comment' },
+        { resourceId: args.input.streamId, resourceType: 'stream' }
       ] }
+      // console.log(input.resources)
       let id = await createComment( { userId: context.userId, input } )
       await pubsub.publish( 'COMMENT_REPLY_CREATED', {
-        commentCreated: args.input, 
-        streamId: args.streamId,
-        resourceId: args.resourceId
+        commentReplyCreated: { ...args.input, id, authorId: context.userId, createdAt: Date.now() }, 
+        streamId: args.input.streamId,
+        commentId: args.input.parentComment
       } )
       return id
     },
@@ -101,7 +102,10 @@ module.exports = {
     commentReplyCreated: {
       subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_REPLY_CREATED' ] ), async( payload, variables, context ) => {
         await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
-        return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
+        console.log( 'sub' )
+        console.log( payload )
+        console.log( variables )
+        return payload.streamId === variables.streamId && payload.commentId === variables.commentId
       } )
     }
   }

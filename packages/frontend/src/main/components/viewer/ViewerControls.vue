@@ -4,10 +4,8 @@
       <v-btn
         v-show="showVisReset"
         v-tooltip="`Resets all applied filters`"
-        :zzzdisabled="!showVisReset"
-        :small="small"
+        small
         rounded
-        icon
         class="mr-2"
         @click="resetVisibility()"
       >

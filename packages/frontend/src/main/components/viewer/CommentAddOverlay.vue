@@ -16,7 +16,11 @@
     class="no-mouse"
   >
     <v-slide-x-transition>
-      <div v-show="visible" ref="commentButton" class="absolute-pos">
+      <div
+        v-show="visible && !$store.state.selectedComment"
+        ref="commentButton"
+        class="absolute-pos"
+      >
         <div class="d-flex align-center" style="height: 48px; width: 320px">
           <v-btn
             v-tooltip="!expand ? 'Add a comment (ctrl + shift + c)' : 'Cancel'"
@@ -62,7 +66,7 @@
     <portal to="viewercontrols" :order="100">
       <v-slide-x-transition>
         <v-btn
-          v-show="!location"
+          v-show="!location && !$store.state.selectedComment"
           v-tooltip="'Add a comment (ctrl + shift + c)'"
           icon
           dark
@@ -115,6 +119,7 @@ export default {
       let commentInput = {
         streamId: this.$route.params.streamId,
         resources: [
+          { resourceType: 'stream', resourceId: this.$route.params.streamId },
           {
             resourceType: this.$route.path.includes('object') ? 'object' : 'commit',
             resourceId: this.$route.params.resourceId
@@ -126,11 +131,11 @@ export default {
             ? this.location
             : new THREE.Vector3(camTarget.x, camTarget.y, camTarget.z),
           camPos: getCamArray(),
-          filters: null, // TODO
-          sectionBox: null, // TODO
-          selection: null, // TODO
-          screenshot: null // TODO
-        }
+          filters: this.$store.state.appliedFilter,
+          sectionBox: window.__viewer.sectionBox.getCurrentBox(),
+          selection: null // TODO for later, lazy now
+        },
+        screenshot: window.__viewer.interactions.screenshot()
       }
       if (this.$route.query.overlay) {
         commentInput.resources.push(

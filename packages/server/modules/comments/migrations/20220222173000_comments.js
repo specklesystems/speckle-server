@@ -5,7 +5,7 @@ exports.up = async ( knex ) => {
     table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' ).notNullable().index( )
     table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
-    table.string( 'text' )
+    table.text( 'text' )
     table.text( 'screenshot' )
     table.jsonb( 'data' )
     table.boolean( 'archived' ).defaultTo( false ).notNullable()

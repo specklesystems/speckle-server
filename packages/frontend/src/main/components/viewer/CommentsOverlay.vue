@@ -5,18 +5,20 @@
   <div
     ref="parent"
     style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
-    class="d-flex align-center justify-center no-mouse-parent"
+    class="d-flex align-center justify-center no-mouse"
   >
-    <div v-show="showComments">
+    <div
+      v-show="showComments"
+      style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
+      class="no-mouse"
+    >
       <!-- Comment bubbles -->
       <div
-        v-for="(comment, index) in localComments"
-        :key="index"
-        :ref="`comment-${index}`"
-        :class="`absolute-pos rounded-xl`"
-        :style="`pointer-events: none; transition: opacity 0.2s ease; z-index:${
-          comment.expanded ? '20' : '10'
-        }; ${
+        v-for="comment in localComments"
+        :key="comment.id"
+        :ref="`comment-${comment.id}`"
+        :class="`absolute-pos rounded-xl no-mouse`"
+        :style="`transition: opacity 0.2s ease; z-index:${comment.expanded ? '20' : '10'}; ${
           hasExpandedComment && !comment.expanded && !comment.hovered
             ? 'opacity: 0.1;'
             : 'opacity: 1;'
@@ -27,10 +29,12 @@
         <div class="" style="pointer-events: none">
           <div class="d-flex align-center" style="pointer-events: none">
             <v-btn
+              :ref="`comment-button-${comment.id}`"
+              v-tooltip="comment.expanded ? 'Close comment thread' : 'Open comment thread'"
               small
               icon
-              :class="`elevation-5 pa-0 ma-0 ${
-                comment.expanded ? 'dark white--text primary' : 'background'
+              :class="`elevation-5 pa-0 ma-0 mouse ${
+                comment.expanded || comment.bouncing ? 'dark white--text primary' : 'background'
               }`"
               @click="toggleComment(comment)"
             >
@@ -47,9 +51,9 @@
       </div>
       <!-- Comment Threads -->
       <div
-        v-for="(comment, index) in localComments"
-        :key="index + 'card'"
-        :ref="`commentcard-${index}`"
+        v-for="comment in localComments"
+        :key="comment.id + '-card'"
+        :ref="`commentcard-${comment.id}`"
         :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
           comment.hovered && false ? 'background elevation-5' : ''
         }`"
@@ -60,7 +64,11 @@
         <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
         <v-fade-transition>
           <div v-show="comment.expanded">
-            <comment-thread-viewer :comment="comment" @reply-added="replyAdded" />
+            <comment-thread-viewer
+              :comment="comment"
+              @bounce="bounceComment"
+              @refresh-layout="updateCommentBubbles()"
+            />
           </div>
         </v-fade-transition>
         <!-- </v-card> -->
@@ -132,6 +140,7 @@ export default {
         for (let c of data.comments.items) {
           c.expanded = false
           c.hovered = false
+          c.bouncing = false
           if (this.localComments.findIndex((lc) => c.id === lc.id) === -1)
             this.localComments.push({ ...c })
         }
@@ -155,10 +164,15 @@ export default {
         },
         result({ data }) {
           // console.log(data.commentCreated)
+          if (!data.commentCreated) return
           data.commentCreated.expanded = false
           data.commentCreated.hovered = false
+          data.commentCreated.bouncing = false
           this.localComments.push(data.commentCreated)
-          setTimeout(this.updateCommentBubbles, 0)
+          setTimeout(() => {
+            this.updateCommentBubbles()
+            this.bounceComment(data.commentCreated.id)
+          }, 10)
         }
       }
     }
@@ -185,6 +199,7 @@ export default {
           for (let c of this.localComments) {
             c.expanded = false
           }
+          this.$store.commit('setCommentSelection', { comment: null })
         }.bind(this),
         10
       )
@@ -201,6 +216,7 @@ export default {
       for (let c of this.localComments) {
         if (c.id === comment.id && comment.expanded === false) {
           c.preventAutoClose = true
+          this.$store.commit('setCommentSelection', { comment: c })
           this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
@@ -213,6 +229,7 @@ export default {
             // this.updateCommentBubbles()
           }, 1000)
         } else {
+          if (c.expanded) this.$store.commit('setCommentSelection', { comment: null })
           c.expanded = false
         }
       }
@@ -252,33 +269,48 @@ export default {
       if (camToSet[6] === 1) {
         window.__viewer.cameraHandler.activeCam.controls.zoom(camToSet[7], true)
       }
+      if (comment.data.filters) {
+        this.$store.commit('setFilterDirect', { filter: comment.data.filters })
+      } else {
+        this.$store.commit('resetFilters')
+      }
+
+      if (comment.data.sectionBox) {
+        window.__viewer.sectionBox.setBox(comment.data.sectionBox, 0)
+      } else {
+        // TODO: Toggle section box off
+        // window.__viewer.sectionBox
+      }
       // TODO: apply filters, section box, etc.
-    },
-    replyAdded() {
-      this.updateCommentBubbles()
     },
     updateCommentBubbles() {
       if (!this.comments) return
-      let index = -1
       let cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       for (let comment of this.localComments) {
-        index++
-        let commentEl = this.$refs[`comment-${index}`][0]
+        // get html elements
+        let commentEl = this.$refs[`comment-${comment.id}`][0]
+        let card = this.$refs[`commentcard-${comment.id}`][0]
+
         if (!commentEl) continue
+
         let location = new THREE.Vector3(
           comment.data.location.x,
           comment.data.location.y,
           comment.data.location.z
         )
+
         location.project(cam)
+
         let commentLocation = new THREE.Vector3(
           (location.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
           (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
           0
         )
+
         let tX = commentLocation.x - 20
         let tY = commentLocation.y - 20
+
         const paddingX = 10
         const paddingYTop = 70
         const paddingYBottom = 90
@@ -304,13 +336,18 @@ export default {
           tY = this.$refs.parent.clientHeight - paddingYBottom
         }
 
-        commentEl.style.transform = `translate(${tX}px,${tY}px)`
+        commentEl.style.top = `${tY}px`
+        commentEl.style.left = `${tX}px`
 
-        let card = this.$refs[`commentcard-${index}`][0]
         let maxHeight = this.$refs.parent.clientHeight - paddingYTop - paddingYBottom
 
         card.style.maxHeight = `${maxHeight}px`
+
+        if (tX > this.$refs.parent.clientWidth - (paddingX + 50 + card.scrollWidth)) {
+          tX = this.$refs.parent.clientWidth - (paddingX + 50 + card.scrollWidth)
+        }
         card.style.left = `${tX + 40}px`
+        // card.style.right = '0px'
 
         let cardTop = paddingYTop
 
@@ -334,6 +371,16 @@ export default {
           card.style.top = `${cardTop}px`
         }
       }
+    },
+    bounceComment(id) {
+      let commentEl = this.$refs[`comment-${id}`][0]
+      commentEl.classList.add('tada-once')
+      let comment = this.localComments.find((c) => c.id === id)
+      comment.bouncing = true
+      setTimeout(() => {
+        commentEl.classList.remove('tada-once')
+        comment.bouncing = false
+      }, 2000)
     }
   }
 }
@@ -363,5 +410,11 @@ export default {
 
 .hover-bg {
   transition: background 0.3s ease;
+}
+.no-mouse {
+  pointer-events: none;
+}
+.mouse {
+  pointer-events: auto;
 }
 </style>

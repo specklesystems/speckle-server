@@ -17,9 +17,14 @@ const store = new Vuex.Store({
     isolateCategoryKey: null,
     isolateCategoryValues: [],
     hideCategoryKey: null,
-    hideCategoryValues: []
+    hideCategoryValues: [],
+    selectedComment: null
   },
   mutations: {
+    setCommentSelection(state, { comment }) {
+      if (comment) window.__viewer.interactions.deselectObjects()
+      state.selectedComment = comment
+    },
     isolateObjects(state, { filterKey, filterValues }) {
       state.hideKey = null
       state.hideValues = []

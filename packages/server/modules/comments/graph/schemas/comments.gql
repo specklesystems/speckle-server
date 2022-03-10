@@ -62,7 +62,7 @@ input ReplyCreateInput {
   streamId: String!
   parentComment: String!
   text: String!
-  data: JSONObject!
+  data: JSONObject
 }
 
 input CommentEditInput {

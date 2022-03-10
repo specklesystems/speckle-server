@@ -1,10 +1,11 @@
 <template>
   <div class="mt-2 pa-1 d-flex align-center" style="width: 300px">
-    <div class="">
+    <div class="" style="width: 100%">
       <template v-for="(reply, index) in thread">
-        <div v-if="index % 3 === 0" :key="index + 'date'" class="d-flex justify-center mouse">
+        <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
-            {{ new Date(Date.now()).toLocaleString() }}
+            {{ new Date(reply.createdAt).toLocaleString() }}
+            <timeago :datetime="reply.createdAt" class="font-italic ma-1"></timeago>
           </div>
         </div>
         <div
@@ -23,15 +24,27 @@
       </template>
       <div class="px-0 mb-4">
         <v-textarea
+          v-model="replyText"
           solo
           hide-details
           auto-grow
           rows="1"
-          placeholder="Reply"
+          placeholder="Reply (shift + enter to send)"
           class="rounded-xl mb-2 caption"
           append-icon="mdi-send"
           @click:append="addReply"
+          @keydown.enter.shift.exact.prevent="addReply()"
         ></v-textarea>
+        <v-btn
+          v-tooltip="'Marks this thread as resolved.'"
+          class="float-right"
+          x-small
+          rounded
+          depressed
+          color="error"
+        >
+          Archive
+        </v-btn>
       </div>
     </div>
   </div>
@@ -46,7 +59,7 @@ export default {
     comment: { type: Object, default: () => null }
   },
   apollo: {
-    barf: {
+    replyQuery: {
       query: gql`
         query($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
@@ -70,54 +83,96 @@ export default {
           id: this.comment.id
         }
       },
-      skip() {
-        return !this.comment.expanded
-      },
-      // result({ data }) {
-      //   console.log('data')
-      //   console.log(data)
+      // skip() {
+      //   return !this.comment.expanded
       // },
-      update: (data) => {
-        console.log(data)
-        return data.comment
+      result({ data }) {
+        data.comment.replies.items.forEach((item) => {
+          if (this.localReplies.findIndex((c) => c.id === item.id) === -1)
+            this.localReplies.push(item)
+        })
+        // this.localReplies.push(...data.comment.replies.items)
+      },
+      update: (data) => data.comment
+    },
+    $subscribe: {
+      commentReplyCreated: {
+        query: gql`
+          subscription($streamId: String!, $commentId: String!) {
+            commentReplyCreated(streamId: $streamId, commentId: $commentId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId,
+            commentId: this.comment.id
+          }
+        },
+        // skip() {
+        //   return !this.comment.expanded
+        // },
+        result({ data }) {
+          if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
+          this.localReplies.push({ ...data.commentReplyCreated })
+        }
       }
     }
   },
   data: function () {
     return {
-      replyText: null
+      replyText: null,
+      localReplies: []
     }
   },
   computed: {
     thread() {
       // TODO: add the replies in here too
-      return [this.comment]
+      return [this.comment, ...this.localReplies]
+    }
+  },
+  watch: {
+    'comment.expanded': {
+      deep: true,
+      handler(newVal, oldVal) {
+        if (!newVal) return
+        this.localReplies = []
+        this.$apollo.queries.replyQuery.refetch()
+      }
     }
   },
   methods: {
+    showTime(index) {
+      if (index === 0) return true
+      let curr = new Date(this.thread[index].createdAt)
+      let prev = new Date(this.thread[index - 1].createdAt)
+      let delta = Math.abs(prev - curr)
+      return delta > 450000
+    },
     async addReply() {
-      if (!this.commentText || this.commentText.length < 5) {
+      if (!this.replyText || this.replyText.length < 3) {
         this.$eventHub.$emit('notification', {
-          text: `Reply must be at least 5 characters.`
+          text: `Reply must be at least 3 characters.`
         })
         return
       }
 
-      let commentInput = {
+      let replyInput = {
         streamId: this.$route.params.streamId,
-        resources: [{ resourceId: this.comment.id, resourceType: 'comment' }],
+        parentComment: this.comment.id,
+        // resources: [{ resourceId: this.$route.params.streamId, resourceType: 'stream' }],
         text: this.replyText
       }
 
       try {
         await this.$apollo.mutate({
           mutation: gql`
-            mutation commentCreate($input: CommentCreateInput!) {
-              commentCreate(input: $input)
+            mutation commentReply($input: ReplyCreateInput!) {
+              commentReply(input: $input)
             }
           `,
-          variables: { input: commentInput }
+          variables: { input: replyInput }
         })
+        this.replyText = null
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: e.message
@@ -125,7 +180,7 @@ export default {
       }
 
       setTimeout(() => {
-        this.$emit('reply-added') // needed for layout reshuffle in parent
+        this.$emit('refresh-layout') // needed for layout reshuffle in parent
       }, 100)
     }
   }

@@ -26,6 +26,73 @@ $primary-gradient: linear-gradient(0deg, $primary-darken 0%, $primary-base 40%);
   background: linear-gradient(to top left, #243b55, #141e30) !important;
 }
 
+// TADAs
+.tada-infinte {
+  -webkit-animation-name: tada;
+  animation-name: tada;
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+  animation-iteration-count: infinite;
+}
+
+.tada-once {
+  -webkit-animation-name: tada;
+  animation-name: tada;
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+  animation-iteration-count: 2;
+}
+
+
+@-webkit-keyframes tada {
+  0% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+  10%, 20% {
+    -webkit-transform: scale3d(.8, .8, .8) rotate3d(0, 0, 1, -3deg);
+    transform: scale3d(.8, .8, .8) rotate3d(0, 0, 1, -3deg);
+  }
+  30%, 50%, 70%, 90% {
+    -webkit-transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, 3deg);
+    transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, 3deg);
+  }
+  40%, 60%, 80% {
+    -webkit-transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, -3deg);
+    transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, -3deg);
+  }
+  100% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes tada {
+  0% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+  10%, 20% {
+    -webkit-transform: scale3d(.8, .8, .8) rotate3d(0, 0, 1, -3deg);
+    transform: scale3d(.8, .8, .8) rotate3d(0, 0, 1, -3deg);
+  }
+  30%, 50%, 70%, 90% {
+    -webkit-transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, 3deg);
+    transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, 3deg);
+  }
+  40%, 60%, 80% {
+    -webkit-transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, -3deg);
+    transform: scale3d(1.4, 1.4, 1.4) rotate3d(0, 0, 1, -3deg);
+  }
+  100% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
+
 /* TOOLTIPs */
 
 .tooltip {
