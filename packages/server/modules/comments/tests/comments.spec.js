@@ -9,7 +9,7 @@ const { createStream } = require( `${appRoot}/modules/core/services/streams` )
 const { createCommitByBranchName } = require( `${appRoot}/modules/core/services/commits` )
 
 const { createObject } = require( `${appRoot}/modules/core/services/objects` )
-const { createComment } = require( '../services' )
+const { createComment, getComments } = require( '../services' )
 
 describe( 'Comments @comments', () => {
   let user = {
@@ -46,21 +46,18 @@ describe( 'Comments @comments', () => {
     commitId2 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject2.id, authorId: user.id } )
   } )
 
-  it( 'Should not be allowed to comment without specifying the stream as a resource', async ( ) => {
+  it( 'Should not be allowed to comment without specifying atleast one target resource', async ( ) => {
     return await createComment( { 
       userId: user.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: commitId1, resourceType: 'commit' },
-          { resourceId: testObject1.id, resourceType: 'object' } 
-        ],
+        resources: [],
         text: crs( { length: 10 } ),
         data: { justSome: crs( { length: 10 } ) }
       }
     } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.be.equal( 'Must specify atleast a stream as the comment target' ) )  
+      .catch( error => expect( error.message ).to.be.equal( 'Must specify atleast one resource as the comment target' ) )  
   } )
   it( 'Should not be allowed to comment with mismatching streamId and stream resourceId', async ( ) => {
     return await createComment( { 
@@ -157,6 +154,12 @@ describe( 'Comments @comments', () => {
       .catch( error => expect( error.message ).to.equal( 'resource type flux capacitor is not supported as a comment target' ) )
   } )
 
+  it( 'Should not be able to comment resources that do not belong to the input streamId', async () => {
+    // need to check streamId - commit link
+    // need to check streamId - object link
+    // need to check streamId - stream match
+    // need to check comment reply recursively? that sounds too much of an effort 
+  } )
   it( 'Should be able to comment on valid resources in any permutation', async () => {
     //comment on branches too!!!
     const resourceCombinations = [
@@ -213,8 +216,34 @@ describe( 'Comments @comments', () => {
       expect( commentId ).to.exist
     }
   } )
-  it( 'Should not return the same comment multiple times for multi resource comments' )
+  it( 'Should not return the same comment multiple times for multi resource comments', async () => {
+    const localObjectId = await createObject( stream.id, { testObject: 1 } )
+
+    const commentCount = 3
+    for ( let i = 0; i <= commentCount; i++ ) {
+      await createComment( { 
+        userId: user.id,
+        input: {
+          streamId: stream.id,
+          resources: [
+            { resourceId: stream.id, resourceType: 'stream' },
+            { resourceId: commitId1, resourceType: 'commit' },
+            { resourceId: localObjectId, resourceType: 'object' }
+          ],
+          text: crs( { length: 10 } ),
+          data: { justSome: crs( { length: 10 } ) }
+        }
+      } )
+    }
+
+    const comments = await getComments( { streamId: stream.id, resources: [
+      { resourceId: commitId1, resourceType: 'commit' },
+      { resourceId: localObjectId, resourceType: 'object' }
+    ] } )
+    expect( comments.items ).to.have.lengthOf( commentCount )
+  } )
   it( 'Should handle cursor and limit for queries' )
+  it( 'Should handle very  and limit for queries' )
   it( 'Should return all the referenced resources for a comment' )
   it( 'Should be able to edit a comment text and its context???' )
   it( 'Should not be allowed to edit a not existing comment' )
@@ -224,4 +253,5 @@ describe( 'Comments @comments', () => {
   it( 'Should return archived comments if explicitly asked for them' )
   it( 'Return value from get comments and get comment should match in data' )
   it( 'Should publish events to pubsub, test it by registering a subscriber' )
+  it( 'Should be able to write a short novel as comment text' )
 } )

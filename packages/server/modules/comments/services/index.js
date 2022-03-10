@@ -46,19 +46,23 @@ const getCommentLinksForResources = async ( streamId, resources ) => {
   const objectIds = resources.filter( res => res.resourceType === 'object' ).map( r => r.resourceId )
   if ( objectIds.length ) {
     const streamObjectIds = ( await Objects().where( { streamId } ).whereIn( 'id', objectIds ) ).map( o => o.id )
-    commentLinks = commentLinks.filter( link => streamObjectIds.includes( link.resourceId ) ) 
+    // if a comment link is of type object, check if the object belongs to the stream, other types do not need filtering
+    // since all other types are directly linked to a stream
+    commentLinks = commentLinks.filter( link => link.resourceType === 'object' ? streamObjectIds.includes( link.resourceId ) : true ) 
   }
+  // let commentGroups = {}
+  // for (const link of commentLinks)
   return commentLinks
 } 
 
 module.exports = { 
   async createComment( { userId, input } ) {
+    if ( input.resources.length < 1 ) throw Error( 'Must specify atleast one resource as the comment target' )
+
     const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
-    if ( streamResources.length < 1 ) throw Error( 'Must specify atleast a stream as the comment target' )
     if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
 
     const [ stream ] = streamResources
-
     if ( stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
 
     let comment = { ...input }
