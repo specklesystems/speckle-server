@@ -1,6 +1,10 @@
 <template>
   <div>
-    <v-card class="elevation-5 rounded-xl pl-3 py-0 d-flex align-center" height="44">
+    <v-card
+      class="elevation-5 rounded-xl pl-3 py-0 d-flex align-center"
+      height="44"
+      style="max-width: 100vw; overflow-x: scroll"
+    >
       <v-btn
         v-show="showVisReset"
         v-tooltip="`Resets all applied filters`"

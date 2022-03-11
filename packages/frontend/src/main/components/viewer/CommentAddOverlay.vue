@@ -164,6 +164,7 @@ export default {
       this.expand = false
       this.visible = false
       this.commentText = null
+      this.$store.commit('setAddingCommentState', { addingCommentState: false })
       window.__viewer.interactions.deselectObjects()
     },
     sendStatusUpdate() {
@@ -188,6 +189,7 @@ export default {
         // TODO: deselect event
         this.visible = false
         this.location = null
+        this.$store.commit('setAddingCommentState', { addingCommentState: false })
         return
       }
 
