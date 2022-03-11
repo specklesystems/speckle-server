@@ -1,8 +1,9 @@
 <template>
   <div
     ref="parent"
-    style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
-    class=" "
+    :style="`width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden; opacity: ${
+      $store.state.selectedComment ? '0.2' : '1'
+    };`"
   >
     <div
       v-for="user in users"
@@ -18,7 +19,9 @@
       :ref="`user-arrow-${user.uuid}`"
       :key="user.uuid + 'arrow'"
       :class="`absolute-pos d-flex align-center justify-center`"
-      :style="`pointer-events:none; transform-origin:center; width: 32px; height:32px; transform: rotateY(0) rotate(90deg)`"
+      :style="`opacity: ${
+        user.hidden ? '0.2' : 1
+      }; pointer-events:none; transform-origin:center; width: 32px; height:32px; transform: rotateY(0) rotate(90deg)`"
     >
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
       <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
@@ -100,6 +103,8 @@ export default {
           let indx = this.users.findIndex((u) => u.uuid === data.userCommentActivity.uuid)
           if (indx !== -1) {
             let user = this.users[indx]
+            user.hidden = false
+            user.status = 'viewing'
             user.camera = data.userCommentActivity.camera
             user.status = data.userCommentActivity.status
             user.filter = data.userCommentActivity.filter

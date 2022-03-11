@@ -36,7 +36,7 @@
               :class="`elevation-5 pa-0 ma-0 mouse ${
                 comment.expanded || comment.bouncing ? 'dark white--text primary' : 'background'
               }`"
-              @click="toggleComment(comment)"
+              @click="comment.expanded ? collapseComment(comment) : expandComment(comment)"
             >
               <!-- @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)" -->
               <!-- <span v-if="!comment.expanded" class="primary--text">
@@ -68,6 +68,7 @@
               :comment="comment"
               @bounce="bounceComment"
               @refresh-layout="updateCommentBubbles()"
+              @close="collapseComment"
             />
           </div>
         </v-fade-transition>
@@ -95,8 +96,6 @@ import gql from 'graphql-tag'
 export default {
   components: {
     CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer')
-    // UserAvatar: () => import('@/main/components/common/UserAvatar'),
-    // TextDotsTyping: () => import('@/main/components/common/TextDotsTyping')
   },
   apollo: {
     comments: {
@@ -195,11 +194,11 @@ export default {
     window.__viewer.on(
       'select',
       debounce(
-        function () {
+        function (args) {
           for (let c of this.localComments) {
-            c.expanded = false
+            this.collapseComment(c)
           }
-          this.$store.commit('setCommentSelection', { comment: null })
+          // this.$store.commit('setCommentSelection', { comment: null })
         }.bind(this),
         10
       )
@@ -212,48 +211,32 @@ export default {
     toggleComments() {
       this.showComments = !this.showComments
     },
-    toggleComment(comment) {
+    expandComment(comment) {
       for (let c of this.localComments) {
-        if (c.id === comment.id && comment.expanded === false) {
+        if (c.id === comment.id) {
           c.preventAutoClose = true
           this.$store.commit('setCommentSelection', { comment: c })
           this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
-          }, 100)
-          setTimeout(() => {
             this.updateCommentBubbles()
           }, 200)
           setTimeout(() => {
+            // prevents auto closing from camera moving to comment pow
             c.preventAutoClose = false
-            // this.updateCommentBubbles()
           }, 1000)
         } else {
-          if (c.expanded) this.$store.commit('setCommentSelection', { comment: null })
           c.expanded = false
         }
       }
     },
-    expandComment(comment) {
+    collapseComment(comment) {
       for (let c of this.localComments) {
-        if (c.id === comment.id) {
-          c.preventAutoClose = true
-          setTimeout(() => {
-            c.expanded = true
-          }, 500)
-          setTimeout(() => {
-            this.updateCommentBubbles()
-          }, 200)
-          setTimeout(() => {
-            c.preventAutoClose = false
-            // this.updateCommentBubbles()
-          }, 1000)
-        } else {
+        if (c.id === comment.id && c.expanded) {
           c.expanded = false
-        }
-
-        if (c.id === comment.id) {
-          this.setCommentPow(c)
+          if (c.data.filters) this.$store.commit('resetFilter')
+          if (c.data.sectionBox) window.__viewer.sectionBox.off()
+          this.$store.commit('setCommentSelection', { comment: null })
         }
       }
     },
@@ -272,16 +255,15 @@ export default {
       if (comment.data.filters) {
         this.$store.commit('setFilterDirect', { filter: comment.data.filters })
       } else {
-        this.$store.commit('resetFilters')
+        this.$store.commit('resetFilter')
       }
 
       if (comment.data.sectionBox) {
         window.__viewer.sectionBox.setBox(comment.data.sectionBox, 0)
+        window.__viewer.sectionBox.on()
       } else {
-        // TODO: Toggle section box off
-        // window.__viewer.sectionBox
+        window.__viewer.sectionBox.off()
       }
-      // TODO: apply filters, section box, etc.
     },
     updateCommentBubbles() {
       if (!this.comments) return

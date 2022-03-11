@@ -1,6 +1,15 @@
 <template>
-  <div class="mt-2 pa-1 d-flex align-center" style="width: 300px">
+  <div
+    class="mt-2 pa-1 d-flex align-center"
+    :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'}`"
+  >
     <div class="" style="width: 100%">
+      <template v-if="$vuetify.breakpoint.xs">
+        <v-btn icon class="primary dark float-right ml-2" @click="$emit('close', comment)">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+        <br>
+      </template>
       <template v-for="(reply, index) in thread">
         <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
