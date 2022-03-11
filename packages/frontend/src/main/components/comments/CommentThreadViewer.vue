@@ -1,15 +1,27 @@
 <template>
   <div
-    class="mt-2 pa-1 d-flex align-center"
+    class="mt-2 px-2 py-4"
     :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'}`"
   >
-    <div class="" style="width: 100%">
-      <template v-if="$vuetify.breakpoint.xs">
-        <v-btn icon class="primary dark float-right ml-2" @click="$emit('close', comment)">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-        <br>
-      </template>
+    <div class="text-right mb-5">
+      <!-- <v-btn
+        v-if="$vuetify.breakpoint.xs"
+        icon
+        class="background ml-2 elevation-10"
+        @click="minimise = !minimise"
+      >
+        <v-icon>mdi-minus</v-icon>
+      </v-btn> -->
+      <v-btn
+        v-if="$vuetify.breakpoint.xs"
+        icon
+        class="primary dark ml-2 elevation-10"
+        @click="$emit('close', comment)"
+      >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </div>
+    <div v-show="!minimise" style="width: 100%">
       <template v-for="(reply, index) in thread">
         <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
@@ -130,7 +142,8 @@ export default {
   data: function () {
     return {
       replyText: null,
-      localReplies: []
+      localReplies: [],
+      minimise: false
     }
   },
   computed: {

@@ -8,7 +8,7 @@
     class="d-flex align-center justify-center no-mouse"
   >
     <div
-      v-show="showComments"
+      v-show="showComments && !$store.state.addingComment"
       style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
       class="no-mouse"
     >
@@ -224,6 +224,7 @@ export default {
           setTimeout(() => {
             // prevents auto closing from camera moving to comment pow
             c.preventAutoClose = false
+            this.updateCommentBubbles()
           }, 1000)
         } else {
           c.expanded = false
@@ -297,21 +298,27 @@ export default {
         const paddingYTop = 70
         const paddingYBottom = 90
 
-        if (tX < -300) if (!comment.preventAutoClose) comment.expanded = false // collapse if too far out leftwise
+        if (tX < -300)
+          if (!comment.preventAutoClose && !this.$vuetify.breakpoint.xs) comment.expanded = false // collapse if too far out leftwise
         if (tX < paddingX) {
           tX = paddingX
         }
 
         if (tX > this.$refs.parent.clientWidth - (paddingX + 50)) {
           tX = this.$refs.parent.clientWidth - (paddingX + 50)
-          if (!comment.preventAutoClose) comment.expanded = false // collapse if too far down right
+          if (!comment.preventAutoClose && !this.$vuetify.breakpoint.xs) comment.expanded = false // collapse if too far down right
         }
-        if (tY < 0 && !comment.preventAutoClose) comment.expanded = false // collapse if too far out topwise
+        if (tY < 0 && !comment.preventAutoClose && !this.$vuetify.breakpoint.xs)
+          comment.expanded = false // collapse if too far out topwise
         if (tY < paddingYTop) {
           tY = paddingYTop
         }
 
-        if (!comment.preventAutoClose && tY > this.$refs.parent.clientHeight)
+        if (
+          !comment.preventAutoClose &&
+          tY > this.$refs.parent.clientHeight &&
+          !this.$vuetify.breakpoint.xs
+        )
           comment.expanded = false // collapse if too far out down
 
         if (tY > this.$refs.parent.clientHeight - paddingYBottom) {

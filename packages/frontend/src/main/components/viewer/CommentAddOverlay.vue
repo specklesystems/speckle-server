@@ -21,7 +21,10 @@
         ref="commentButton"
         class="absolute-pos"
       >
-        <div class="d-flex align-center" style="height: 48px; width: 320px">
+        <div
+          class="d-flex align-center"
+          :style="`height: 48px; width: ${$vuetify.breakpoint.xs ? '100vw' : '320px'}`"
+        >
           <v-btn
             v-tooltip="!expand ? 'Add a comment (ctrl + shift + c)' : 'Cancel'"
             small
@@ -176,6 +179,8 @@ export default {
       }
 
       if (!this.location && !this.expand) this.visible = false
+
+      this.$store.commit('setAddingCommentState', { addingCommentState: this.expand })
     },
     handleSelect(info) {
       this.expand = false

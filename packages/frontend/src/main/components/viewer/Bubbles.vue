@@ -2,7 +2,7 @@
   <div
     ref="parent"
     :style="`width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden; opacity: ${
-      $store.state.selectedComment ? '0.2' : '1'
+      $store.state.selectedComment || $store.state.addingComment ? '0.2' : '1'
     };`"
   >
     <div
