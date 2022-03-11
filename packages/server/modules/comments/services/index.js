@@ -50,9 +50,21 @@ const getCommentLinksForResources = async ( streamId, resources ) => {
     // since all other types are directly linked to a stream
     commentLinks = commentLinks.filter( link => link.resourceType === 'object' ? streamObjectIds.includes( link.resourceId ) : true ) 
   }
-  // let commentGroups = {}
-  // for (const link of commentLinks)
-  return commentLinks
+
+  // group comment links by comment ids, so that the resources can be filtered below
+  let commentGroups = {}
+  for ( const link of commentLinks ) {
+    if ( !( link.commentId in commentGroups ) ) commentGroups[link.commentId] = []
+    commentGroups[link.commentId].push( link.resourceId )
+  }
+
+  const relevantCommentIds = Object
+    .keys( commentGroups )
+    .filter( 
+      // make sure, that the given comment targets exactly the same set of resources, as the input requested 
+      commentId => commentGroups[commentId].length === resourceIds.length && resourceIds.every( resId => commentGroups[commentId].includes( resId ) )
+    )
+  return commentLinks.filter( l => relevantCommentIds.includes( l.commentId ) )
 } 
 
 module.exports = { 
@@ -97,8 +109,10 @@ module.exports = {
     const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
     const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
     let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
-    if ( cursor ) query = query.where( 'createdAt', '>', cursor )
-    let items = await query.limit( limit )
+    if ( cursor ) query = query.where( 'createdAt', '>', cursor.toISOString() )
+
+    const defaultLimit = 100
+    let items = await query.limit( limit ?? defaultLimit )
     if ( items.length ) {
       cursor = items[items.length - 1].createdAt
     } else {

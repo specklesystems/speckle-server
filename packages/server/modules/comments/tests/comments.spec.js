@@ -59,8 +59,12 @@ describe( 'Comments @comments', () => {
       .then( () => { throw new Error( 'This should have been rejected' ) } )
       .catch( error => expect( error.message ).to.be.equal( 'Must specify atleast one resource as the comment target' ) )  
   } )
-  it( 'Should not be allowed to comment with mismatching streamId and stream resourceId', async ( ) => {
-    return await createComment( { 
+  it( 'Should not be able to comment resources that do not belong to the input streamId', async ( ) => {
+    // need to check streamId - commit link
+    // need to check streamId - object link
+    // need to check streamId - stream match
+    // need to check comment reply recursively? that sounds too much of an effort 
+    await createComment( { 
       userId: user.id,
       input: {
         streamId: stream.id,
@@ -75,6 +79,9 @@ describe( 'Comments @comments', () => {
     } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
       .catch( error => expect( error.message ).to.be.equal( 'Input streamId doesn\'t match the stream resource.resourceId' ) )
+    
+    //add the checks from above
+    expect( 1 ).to.equal( 2 )
   } )
   it( 'Should not be allowed to comment targeting multiple streams as a resource', async ( ) => {
     return await createComment( { 
@@ -154,12 +161,6 @@ describe( 'Comments @comments', () => {
       .catch( error => expect( error.message ).to.equal( 'resource type flux capacitor is not supported as a comment target' ) )
   } )
 
-  it( 'Should not be able to comment resources that do not belong to the input streamId', async () => {
-    // need to check streamId - commit link
-    // need to check streamId - object link
-    // need to check streamId - stream match
-    // need to check comment reply recursively? that sounds too much of an effort 
-  } )
   it( 'Should be able to comment on valid resources in any permutation', async () => {
     //comment on branches too!!!
     const resourceCombinations = [
@@ -220,7 +221,7 @@ describe( 'Comments @comments', () => {
     const localObjectId = await createObject( stream.id, { testObject: 1 } )
 
     const commentCount = 3
-    for ( let i = 0; i <= commentCount; i++ ) {
+    for ( let i = 0; i < commentCount; i++ ) {
       await createComment( { 
         userId: user.id,
         input: {
@@ -242,12 +243,59 @@ describe( 'Comments @comments', () => {
     ] } )
     expect( comments.items ).to.have.lengthOf( commentCount )
   } )
-  it( 'Should handle cursor and limit for queries' )
+  it( 'Should handle cursor and limit for queries', async ( ) => {
+    const localObjectId = await createObject( stream.id, { testObject: 'something completely different' } )
+
+    let createdComments = []
+    const commentCount = 10
+    for ( let i = 0; i < commentCount; i++ ) {
+      createdComments.push( await createComment( { 
+        userId: user.id,
+        input: {
+          streamId: stream.id,
+          resources: [
+            { resourceId: stream.id, resourceType: 'stream' },
+            { resourceId: commitId1, resourceType: 'commit' },
+            { resourceId: localObjectId, resourceType: 'object' }
+          ],
+          text: crs( { length: 10 } ),
+          data: { justSome: crs( { length: 10 } ) }
+        }
+      } ) )
+      await new Promise( resolve => setTimeout( resolve, 500 ) )
+    } 
+
+    let comments = await getComments( { 
+      streamId: stream.id,
+      resources: [
+        { resourceId: commitId1, resourceType: 'commit' },
+        { resourceId: localObjectId, resourceType: 'object' }
+      ],
+      limit : 2 
+    } )
+    expect( comments.items ).to.have.lengthOf( 2 )
+    expect( createdComments.slice( 0, 2 ) ).deep.to.equal( comments.items.map( c => c.id ) )
+
+    const cursor = comments.items[1].createdAt
+    comments = await getComments( { 
+      streamId: stream.id,
+      resources: [
+        { resourceId: commitId1, resourceType: 'commit' },
+        { resourceId: localObjectId, resourceType: 'object' }
+      ],
+      limit : 2,
+      cursor
+    } )
+    expect( comments.items ).to.have.lengthOf( 2 )
+    expect( createdComments.slice( 2, 4 ) ).deep.to.equal( comments.items.map( c => c.id ) )
+  } )
   it( 'Should handle very  and limit for queries' )
+  it( 'Should properly return replies for a comment' )
   it( 'Should return all the referenced resources for a comment' )
   it( 'Should be able to edit a comment text and its context???' )
   it( 'Should not be allowed to edit a not existing comment' )
   it( 'Should be able to archive a comment' )
+  it( 'Replies to archived comment should be archived, when a parent is archived' )
   it( 'Should not be allowed to archive a not existing comment' )
   it( 'Should not return archived comments in plain queries' )
   it( 'Should return archived comments if explicitly asked for them' )

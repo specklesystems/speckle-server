@@ -3,8 +3,9 @@ exports.up = async ( knex ) => {
   await knex.schema.createTable( 'comments', table => {
     table.string( 'id', 10 ).primary( )
     table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' ).notNullable().index( )
-    table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
-    table.timestamp( 'updatedAt' ).defaultTo( knex.fn.now( ) )
+    // table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
+    table.specificType( 'createdAt', 'TIMESTAMPTZ(3)' ).defaultTo( knex.fn.now( ) )
+    table.specificType( 'updatedAt', 'TIMESTAMPTZ(3)' ).defaultTo( knex.fn.now( ) )
     table.string( 'text' )
     table.text( 'screenshot' )
     table.jsonb( 'data' )

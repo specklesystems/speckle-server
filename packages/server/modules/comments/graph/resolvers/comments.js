@@ -69,8 +69,8 @@ module.exports = {
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       // the reply also has to be linked to the stream, for the recursive reply lookup to work
       let input = { ...args.input, resources: [ 
-        { id: args.input.parentComment, type: 'comment' },
-        { id: args.input.streamId, type: 'stream' }
+        { resourceId: args.input.parentComment, resourceType: 'comment' },
+        { resourceId: args.input.streamId, resourceType: 'stream' }
       ] }
       let id = await createComment( { userId: context.userId, input } )
       await pubsub.publish( 'COMMENT_REPLY_CREATED', {
