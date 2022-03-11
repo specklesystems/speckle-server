@@ -69,6 +69,7 @@
               @bounce="bounceComment"
               @refresh-layout="updateCommentBubbles()"
               @close="collapseComment"
+              @deleted="handleDeletion"
             />
           </div>
         </v-fade-transition>
@@ -265,6 +266,10 @@ export default {
       } else {
         window.__viewer.sectionBox.off()
       }
+    },
+    handleDeletion(comment) {
+      this.collapseComment(comment)
+      this.localComments = this.localComments.filter((c) => c.id !== comment.id)
     },
     updateCommentBubbles() {
       if (!this.comments) return

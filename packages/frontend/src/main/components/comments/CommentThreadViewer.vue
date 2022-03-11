@@ -57,15 +57,36 @@
           @keydown.enter.shift.exact.prevent="addReply()"
         ></v-textarea>
         <v-btn
-          v-tooltip="'Marks this thread as resolved.'"
+          v-tooltip="'Marks this thread as archived.'"
           class="float-right"
           x-small
           rounded
           depressed
           color="error"
+          @click="showArchiveDialog = true"
         >
           Archive
         </v-btn>
+        <v-dialog v-model="showArchiveDialog" max-width="500">
+          <v-card>
+            <v-toolbar color="error" dark flat>
+              <v-app-bar-nav-icon style="pointer-events: none">
+                <v-icon>mdi-pencil</v-icon>
+              </v-app-bar-nav-icon>
+              <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
+              <v-spacer></v-spacer>
+              <v-btn icon @click="showArchiveDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+            </v-toolbar>
+            <v-card-text class="mt-4">
+              This comment thread will be archived. Are you sure?
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
+              <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </div>
     </div>
   </div>
@@ -143,7 +164,8 @@ export default {
     return {
       replyText: null,
       localReplies: [],
-      minimise: false
+      minimise: false,
+      showArchiveDialog: false
     }
   },
   computed: {
@@ -204,6 +226,32 @@ export default {
       setTimeout(() => {
         this.$emit('refresh-layout') // needed for layout reshuffle in parent
       }, 100)
+    },
+    async archiveComment() {
+      // TODO
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation commentArchival($streamId: String!, $commentId: String!) {
+              commentArchival(streamId: $streamId, commentId: $commentId)
+            }
+          `,
+          variables: {
+            streamId: this.$route.params.streamId,
+            commentId: this.comment.id
+          }
+        })
+        this.replyText = null
+        this.showArchiveDialog = false
+        this.$emit('deleted', this.comment)
+        this.$eventHub.$emit('notification', {
+          text: 'Thread archived.'
+        })
+      } catch (e) {
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
+      }
     }
   }
 }
