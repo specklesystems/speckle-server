@@ -46,20 +46,35 @@ const getCommentLinksForResources = async ( streamId, resources ) => {
   const objectIds = resources.filter( res => res.resourceType === 'object' ).map( r => r.resourceId )
   if ( objectIds.length ) {
     const streamObjectIds = ( await Objects().where( { streamId } ).whereIn( 'id', objectIds ) ).map( o => o.id )
-    commentLinks = commentLinks.filter( link => streamObjectIds.includes( link.resourceId ) ) 
+    // if a comment link is of type object, check if the object belongs to the stream, other types do not need filtering
+    // since all other types are directly linked to a stream
+    commentLinks = commentLinks.filter( link => link.resourceType === 'object' ? streamObjectIds.includes( link.resourceId ) : true ) 
   }
-  return commentLinks
+
+  // group comment links by comment ids, so that the resources can be filtered below
+  let commentGroups = {}
+  for ( const link of commentLinks ) {
+    if ( !( link.commentId in commentGroups ) ) commentGroups[link.commentId] = []
+    commentGroups[link.commentId].push( link.resourceId )
+  }
+
+  const relevantCommentIds = Object
+    .keys( commentGroups )
+    .filter( 
+      // make sure, that the given comment targets exactly the same set of resources, as the input requested 
+      commentId => commentGroups[commentId].length === resourceIds.length && resourceIds.every( resId => commentGroups[commentId].includes( resId ) )
+    )
+  return commentLinks.filter( l => relevantCommentIds.includes( l.commentId ) )
 } 
 
 module.exports = { 
   async createComment( { userId, input } ) {
-    console.log(input)
+    if ( input.resources.length < 1 ) throw Error( 'Must specify atleast one resource as the comment target' )
+
     const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
-    if ( streamResources.length < 1 ) throw Error( 'Must specify at least a stream as the comment target' )
     if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
 
     const [ stream ] = streamResources
-
     if ( stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
 
     let comment = { ...input }
@@ -80,8 +95,8 @@ module.exports = {
     // TODO
   },
 
-  async archiveComment( {} ) {
-    // TODO
+  async archiveComment( { commentId, archived = true } ) {
+    return await Comments().where( { id: commentId } ).update( { archived } )
   },
 
   async getComment( id ) {
@@ -89,13 +104,16 @@ module.exports = {
     return { ...comment, resources: await getResourcesForComment( comment ) }
   },
 
-  async getComments( { streamId, resources, limit, cursor } ) {
+  async getComments( { streamId, resources, limit, cursor, archived = false } ) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
     const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
     const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
     let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
-    if ( cursor ) query = query.where( 'createdAt', '>', cursor )
-    let items = await query.limit( limit )
+    if ( cursor ) query = query.where( 'createdAt', '>', cursor.toISOString() )
+
+    if ( !archived ) query = query.andWhere( { archived } )
+    const defaultLimit = 100
+    let items = await query.limit( limit ?? defaultLimit )
     if ( items.length ) {
       cursor = items[items.length - 1].createdAt
     } else {

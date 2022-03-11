@@ -9,7 +9,7 @@ const { createStream } = require( `${appRoot}/modules/core/services/streams` )
 const { createCommitByBranchName } = require( `${appRoot}/modules/core/services/commits` )
 
 const { createObject } = require( `${appRoot}/modules/core/services/objects` )
-const { createComment } = require( '../services' )
+const { createComment, getComments } = require( '../services' )
 
 describe( 'Comments @comments', () => {
   let user = {
@@ -46,24 +46,25 @@ describe( 'Comments @comments', () => {
     commitId2 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject2.id, authorId: user.id } )
   } )
 
-  it( 'Should not be allowed to comment without specifying the stream as a resource', async ( ) => {
+  it( 'Should not be allowed to comment without specifying atleast one target resource', async ( ) => {
     return await createComment( { 
       userId: user.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: commitId1, resourceType: 'commit' },
-          { resourceId: testObject1.id, resourceType: 'object' } 
-        ],
+        resources: [],
         text: crs( { length: 10 } ),
         data: { justSome: crs( { length: 10 } ) }
       }
     } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.be.equal( 'Must specify atleast a stream as the comment target' ) )  
+      .catch( error => expect( error.message ).to.be.equal( 'Must specify atleast one resource as the comment target' ) )  
   } )
-  it( 'Should not be allowed to comment with mismatching streamId and stream resourceId', async ( ) => {
-    return await createComment( { 
+  it( 'Should not be able to comment resources that do not belong to the input streamId', async ( ) => {
+    // need to check streamId - commit link
+    // need to check streamId - object link
+    // need to check streamId - stream match
+    // need to check comment reply recursively? that sounds too much of an effort 
+    await createComment( { 
       userId: user.id,
       input: {
         streamId: stream.id,
@@ -78,6 +79,9 @@ describe( 'Comments @comments', () => {
     } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
       .catch( error => expect( error.message ).to.be.equal( 'Input streamId doesn\'t match the stream resource.resourceId' ) )
+    
+    //add the checks from above
+    expect( 1 ).to.equal( 2 )
   } )
   it( 'Should not be allowed to comment targeting multiple streams as a resource', async ( ) => {
     return await createComment( { 
@@ -213,15 +217,90 @@ describe( 'Comments @comments', () => {
       expect( commentId ).to.exist
     }
   } )
-  it( 'Should not return the same comment multiple times for multi resource comments' )
-  it( 'Should handle cursor and limit for queries' )
+  it( 'Should not return the same comment multiple times for multi resource comments', async () => {
+    const localObjectId = await createObject( stream.id, { testObject: 1 } )
+
+    const commentCount = 3
+    for ( let i = 0; i < commentCount; i++ ) {
+      await createComment( { 
+        userId: user.id,
+        input: {
+          streamId: stream.id,
+          resources: [
+            { resourceId: stream.id, resourceType: 'stream' },
+            { resourceId: commitId1, resourceType: 'commit' },
+            { resourceId: localObjectId, resourceType: 'object' }
+          ],
+          text: crs( { length: 10 } ),
+          data: { justSome: crs( { length: 10 } ) }
+        }
+      } )
+    }
+
+    const comments = await getComments( { streamId: stream.id, resources: [
+      { resourceId: commitId1, resourceType: 'commit' },
+      { resourceId: localObjectId, resourceType: 'object' }
+    ] } )
+    expect( comments.items ).to.have.lengthOf( commentCount )
+  } )
+  it( 'Should handle cursor and limit for queries', async ( ) => {
+    const localObjectId = await createObject( stream.id, { testObject: 'something completely different' } )
+
+    let createdComments = []
+    const commentCount = 10
+    for ( let i = 0; i < commentCount; i++ ) {
+      createdComments.push( await createComment( { 
+        userId: user.id,
+        input: {
+          streamId: stream.id,
+          resources: [
+            { resourceId: stream.id, resourceType: 'stream' },
+            { resourceId: commitId1, resourceType: 'commit' },
+            { resourceId: localObjectId, resourceType: 'object' }
+          ],
+          text: crs( { length: 10 } ),
+          data: { justSome: crs( { length: 10 } ) }
+        }
+      } ) )
+      await new Promise( resolve => setTimeout( resolve, 500 ) )
+    } 
+
+    let comments = await getComments( { 
+      streamId: stream.id,
+      resources: [
+        { resourceId: commitId1, resourceType: 'commit' },
+        { resourceId: localObjectId, resourceType: 'object' }
+      ],
+      limit : 2 
+    } )
+    expect( comments.items ).to.have.lengthOf( 2 )
+    expect( createdComments.slice( 0, 2 ) ).deep.to.equal( comments.items.map( c => c.id ) )
+
+    const cursor = comments.items[1].createdAt
+    comments = await getComments( { 
+      streamId: stream.id,
+      resources: [
+        { resourceId: commitId1, resourceType: 'commit' },
+        { resourceId: localObjectId, resourceType: 'object' }
+      ],
+      limit : 2,
+      cursor
+    } )
+    expect( comments.items ).to.have.lengthOf( 2 )
+    expect( createdComments.slice( 2, 4 ) ).deep.to.equal( comments.items.map( c => c.id ) )
+  } )
+  it( 'Should handle very  and limit for queries' )
+  it( 'Should properly return replies for a comment' )
   it( 'Should return all the referenced resources for a comment' )
   it( 'Should be able to edit a comment text and its context???' )
   it( 'Should not be allowed to edit a not existing comment' )
   it( 'Should be able to archive a comment' )
+  it( 'Replies to archived comment should be archived, when a parent is archived' )
   it( 'Should not be allowed to archive a not existing comment' )
+  it( 'Should not count archived comments in comment total count unless asked' ) 
   it( 'Should not return archived comments in plain queries' )
   it( 'Should return archived comments if explicitly asked for them' )
   it( 'Return value from get comments and get comment should match in data' )
   it( 'Should publish events to pubsub, test it by registering a subscriber' )
+  it( 'Should be able to write a short novel as comment text' )
 } )
