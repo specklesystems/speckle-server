@@ -297,6 +297,7 @@ describe( 'Comments @comments', () => {
   it( 'Should be able to archive a comment' )
   it( 'Replies to archived comment should be archived, when a parent is archived' )
   it( 'Should not be allowed to archive a not existing comment' )
+  it( 'Should not count archived comments in comment total count unless asked' ) 
   it( 'Should not return archived comments in plain queries' )
   it( 'Should return archived comments if explicitly asked for them' )
   it( 'Return value from get comments and get comment should match in data' )

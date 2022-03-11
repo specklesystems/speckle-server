@@ -1,7 +1,7 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
 
-  comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String): CommentCollection
+  comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
 }
 
 type Comment {
@@ -112,6 +112,10 @@ extend type Mutation {
   ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 
   commentCreate(input: CommentCreateInput! ): String!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+
+  commentArchival( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

@@ -95,8 +95,8 @@ module.exports = {
     // TODO
   },
 
-  async archiveComment( {} ) {
-    // TODO
+  async archiveComment( { commentId, archived = true } ) {
+    return await Comments().where( { id: commentId } ).update( { archived } )
   },
 
   async getComment( id ) {
@@ -104,13 +104,14 @@ module.exports = {
     return { ...comment, resources: await getResourcesForComment( comment ) }
   },
 
-  async getComments( { streamId, resources, limit, cursor } ) {
+  async getComments( { streamId, resources, limit, cursor, archived = false } ) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
     const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
     const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
     let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
     if ( cursor ) query = query.where( 'createdAt', '>', cursor.toISOString() )
 
+    if ( !archived ) query = query.andWhere( { archived } )
     const defaultLimit = 100
     let items = await query.limit( limit ?? defaultLimit )
     if ( items.length ) {
