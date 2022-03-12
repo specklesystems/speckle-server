@@ -80,15 +80,15 @@
       <v-fade-transition>
         <preview-image
           v-if="!loadedModel && (isCommit || isObject)"
-          style="
+          :style="`
             height: 100vh;
             width: 100%;
-            top: -64px;
+            ${!$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'}
             left: 0px;
             position: absolute;
             opacity: 0.7;
             filter: blur(4px);
-          "
+          `"
           :height="420"
           :url="`/preview/${$route.params.streamId}/objects/${
             isCommit ? resources[0].data.commit.referencedObject : resources[0].data.object.id
@@ -96,20 +96,23 @@
         ></preview-image>
       </v-fade-transition>
 
-      <div style="height: 100vh; width: 100%; top: -64px; left: 0px; position: absolute">
+      <div
+        :style="`height: 100vh; width: 100%; ${
+          !$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'
+        } left: 0px; position: absolute`"
+      >
         <viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
 
       <div
-        style="
+        :style="`
           height: 100vh;
           width: 100%;
-          top: -64px;
+          ${!$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'}
           left: 22px;
           position: absolute;
           z-index: 10;
-          pointer-events: none;
-        "
+          pointer-events: none;`"
       >
         <object-selection
           v-show="selectionData.length !== 0"
