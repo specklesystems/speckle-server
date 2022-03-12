@@ -4,14 +4,10 @@
     :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'}`"
   >
     <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5">
-      <!-- <v-btn
-        v-if="$vuetify.breakpoint.xs"
-        icon
-        class="background ml-2 elevation-10"
-        @click="minimise = !minimise"
-      >
-        <v-icon>mdi-minus</v-icon>
-      </v-btn> -->
+      <v-btn icon small class="background ml-2 elevation-10" @click="minimise = !minimise">
+        <v-icon v-if="!minimise" small>mdi-minus</v-icon>
+        <v-icon v-else small>mdi-plus</v-icon>
+      </v-btn>
       <v-btn
         icon
         small
@@ -43,7 +39,7 @@
           </div>
         </div>
       </template>
-      <div class="px-0 mb-4">
+      <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-textarea
           v-model="replyText"
           solo
@@ -89,6 +85,12 @@
             </v-card-actions>
           </v-card>
         </v-dialog>
+      </div>
+      <div v-else>
+        <v-btn block depressed color="primary" class="rounded-xl" to="/authn/login">
+          <v-icon small class="mr-1">mdi-account</v-icon>
+          Sign in to reply
+        </v-btn>
       </div>
     </div>
   </div>
@@ -190,7 +192,7 @@ export default {
   watch: {
     'comment.expanded': {
       deep: true,
-      handler(newVal, oldVal) {
+      handler(newVal) {
         if (!newVal) return
         this.localReplies = []
         this.$apollo.queries.replyQuery.refetch()

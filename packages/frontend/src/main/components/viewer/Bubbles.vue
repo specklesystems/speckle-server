@@ -57,8 +57,8 @@
     </div>
     <portal to="viewercontrols" :order="4">
       <v-btn
-        key="bubbles-toggle-button"
         v-show="users.length !== 0"
+        key="bubbles-toggle-button"
         v-tooltip="`Toggle real time user bubbles`"
         small
         rounded
@@ -110,7 +110,7 @@ export default {
           }
         },
         skip() {
-          return !this.$loggedIn() || !this.$route.params.resourceId
+          return !this.$route.params.resourceId || !this.$loggedIn()
         },
         result({ data }) {
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
@@ -238,6 +238,8 @@ export default {
       }
       this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
 
+      if (!this.$loggedIn()) return
+
       let controls = window.__viewer.cameraHandler.activeCam.controls
       let pos = controls.getPosition()
       let target = controls.getTarget()
@@ -288,6 +290,7 @@ export default {
       })
     },
     async sendDisconnect() {
+      if (!this.$loggedIn()) return
       await this.$apollo.mutate({
         mutation: gql`
           mutation userViewerActivityBroadcast(

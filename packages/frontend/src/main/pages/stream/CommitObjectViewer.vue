@@ -385,6 +385,7 @@ export default {
             return
           }
           if (this.camToSet) return
+
           let controls = window.__viewer.cameraHandler.activeCam.controls
           let pos = controls.getPosition()
           let target = controls.getTarget()

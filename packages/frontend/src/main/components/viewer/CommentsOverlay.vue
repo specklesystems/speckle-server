@@ -385,6 +385,7 @@ export default {
             cardTop = this.$refs.parent.clientHeight - card.clientHeight - 45
           }
 
+          if (this.$vuetify.breakpoint.xs) cardTop = paddingYTop
           card.style.top = `${cardTop}px`
         }
       }

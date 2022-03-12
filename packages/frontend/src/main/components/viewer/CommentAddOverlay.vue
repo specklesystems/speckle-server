@@ -39,6 +39,7 @@
           <v-slide-x-transition>
             <div v-if="expand && !$vuetify.breakpoint.xs" style="width: 100%" class="d-flex">
               <v-textarea
+                v-if="$loggedIn()"
                 v-model="commentText"
                 solo
                 hide-details
@@ -51,6 +52,7 @@
                 @keydown.enter.shift.exact.prevent="addComment()"
               ></v-textarea>
               <v-btn
+                v-if="$loggedIn()"
                 v-tooltip="'Send comment (shift + enter)'"
                 icon
                 dark
@@ -61,6 +63,17 @@
               >
                 <v-icon dark small>mdi-send</v-icon>
               </v-btn>
+              <v-btn
+                v-if="!$loggedIn()"
+                block
+                depressed
+                color="primary"
+                class="rounded-xl"
+                to="/authn/login"
+              >
+                <v-icon small class="mr-1">mdi-account</v-icon>
+                Sign in to comment
+              </v-btn>
             </div>
           </v-slide-x-transition>
         </div>
@@ -70,7 +83,11 @@
           class="elevation-0 flat"
           @input="toggleExpand()"
         >
-          <div class="d-flex justify-center" style="position: relative; left: 24px">
+          <div
+            v-if="$loggedIn()"
+            class="d-flex justify-center"
+            style="position: relative; left: 24px"
+          >
             <v-textarea
               v-model="commentText"
               solo
@@ -95,6 +112,17 @@
               <v-icon dark small>mdi-send</v-icon>
             </v-btn>
           </div>
+          <v-btn
+            v-if="!$loggedIn()"
+            block
+            depressed
+            color="primary"
+            class="rounded-xl"
+            to="/authn/login"
+          >
+            <v-icon small class="mr-1">mdi-account</v-icon>
+            Sign in to comment
+          </v-btn>
         </v-dialog>
       </div>
     </v-slide-x-transition>
