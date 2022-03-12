@@ -55,8 +55,8 @@ module.exports = {
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       let id = await createComment( { userId: context.userId, input: args.input } )
       // console.log( args.input )
-      await pubsub.publish( 'COMMENT_CREATED', {
-        commentCreated: { ...args.input, authorId: context.userId, id, createdAt: Date.now() },
+      await pubsub.publish( 'COMMENT_ACTIVITY', {
+        commentActivity: { ...args.input, authorId: context.userId, id, createdAt: Date.now(), action: 'created' },
         streamId: args.input.streamId,
         resourceId: args.input.resources[1].resourceId // TODO: hack for now
       } )
@@ -65,8 +65,13 @@ module.exports = {
     async commentEdit( parent, args, context, info ) {
       // TODO
     },
-    async commentArchival( parent, args, context, info ) {
+    async commentArchive( parent, args, context, info ) {
       await archiveComment( { ...args } )
+      await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
+        commentThreadActivity: { eventType: 'comment-archived' }, 
+        streamId: args.streamId,
+        commentId: args.commentId
+      } )
       return true 
     },
     async commentReply( parent, args, context, info ) {
@@ -79,16 +84,13 @@ module.exports = {
       ] }
       // console.log(input.resources)
       let id = await createComment( { userId: context.userId, input } )
-      await pubsub.publish( 'COMMENT_REPLY_CREATED', {
-        commentReplyCreated: { ...args.input, id, authorId: context.userId, createdAt: Date.now() }, 
+      await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
+        commentThreadActivity: { eventType: 'reply-added', ...args.input, id, authorId: context.userId, createdAt: Date.now() }, 
         streamId: args.input.streamId,
         commentId: args.input.parentComment
       } )
       return id
-    },
-    // async commentReplyEdit( parent, args, context, info ) {
-    //   // TODO
-    // },
+    }
   },
   Subscription:{
     userViewerActivity: {
@@ -97,18 +99,15 @@ module.exports = {
         return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
       } )
     },
-    commentCreated: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_CREATED' ] ), async( payload, variables, context ) => {
+    commentActivity: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_ACTIVITY' ] ), async( payload, variables, context ) => {
         await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
         return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
       } )
     },
-    commentReplyCreated: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_REPLY_CREATED' ] ), async( payload, variables, context ) => {
+    commentThreadActivity: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_THREAD_ACTIVITY' ] ), async( payload, variables, context ) => {
         await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
-        console.log( 'sub' )
-        console.log( payload )
-        console.log( variables )
         return payload.streamId === variables.streamId && payload.commentId === variables.commentId
       } )
     }

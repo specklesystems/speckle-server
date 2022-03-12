@@ -115,7 +115,7 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentArchival( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
+  commentArchive( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -141,11 +141,11 @@ extend type Subscription {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentCreated(streamId: String!, resourceId: String!): JSONObject
+  commentActivity(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentReplyCreated(streamId: String!, commentId: String!): JSONObject
+  commentThreadActivity(streamId: String!, commentId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 }

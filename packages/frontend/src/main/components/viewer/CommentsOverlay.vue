@@ -147,10 +147,10 @@ export default {
       }
     },
     $subscribe: {
-      commentCreated: {
+      commentActivity: {
         query: gql`
           subscription($streamId: String!, $resourceId: String!) {
-            commentCreated(streamId: $streamId, resourceId: $resourceId)
+            commentActivity(streamId: $streamId, resourceId: $resourceId)
           }
         `,
         variables() {
@@ -163,16 +163,22 @@ export default {
           return !this.$loggedIn() || !this.$route.params.resourceId
         },
         result({ data }) {
-          // console.log(data.commentCreated)
-          if (!data.commentCreated) return
-          data.commentCreated.expanded = false
-          data.commentCreated.hovered = false
-          data.commentCreated.bouncing = false
-          this.localComments.push(data.commentCreated)
-          setTimeout(() => {
-            this.updateCommentBubbles()
-            this.bounceComment(data.commentCreated.id)
-          }, 10)
+          if (!data.commentActivity) return
+          // Creation
+          if (data.commentActivity.action === 'created') {
+            data.commentActivity.expanded = false
+            data.commentActivity.hovered = false
+            data.commentActivity.bouncing = false
+            this.localComments.push(data.commentActivity)
+            setTimeout(() => {
+              this.updateCommentBubbles()
+              this.bounceComment(data.commentActivity.id)
+            }, 10)
+          }
+          // Deletion
+          if (data.commentActivity.action === 'deleted') {
+            // TODO
+          }
         }
       }
     }
@@ -195,7 +201,8 @@ export default {
     window.__viewer.on(
       'select',
       debounce(
-        function (args) {
+        function () {
+          // prevents comment collapse if filters are reset (that triggers a deselect event from the viewer)
           if (this.$store.state.preventCommentCollapse) {
             this.$store.commit('setPreventCommentCollapse', { value: false })
             return

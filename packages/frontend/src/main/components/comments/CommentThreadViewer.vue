@@ -133,10 +133,10 @@ export default {
       update: (data) => data.comment
     },
     $subscribe: {
-      commentReplyCreated: {
+      commentThreadActivity: {
         query: gql`
           subscription($streamId: String!, $commentId: String!) {
-            commentReplyCreated(streamId: $streamId, commentId: $commentId)
+            commentThreadActivity(streamId: $streamId, commentId: $commentId)
           }
         `,
         variables() {
@@ -149,13 +149,19 @@ export default {
         //   return !this.comment.expanded
         // },
         result({ data }) {
-          if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
-          else {
-            setTimeout(() => {
-              this.$emit('refresh-layout') // needed for layout reshuffle in parent
-            }, 100)
+          if (data.commentThreadActivity.eventType === 'reply-added') {
+            if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
+            else {
+              setTimeout(() => {
+                this.$emit('refresh-layout') // needed for layout reshuffle in parent
+              }, 100)
+            }
+            this.localReplies.push({ ...data.commentThreadActivity })
+            return
           }
-          this.localReplies.push({ ...data.commentReplyCreated })
+          if (data.commentThreadActivity.eventType === 'comment-archived') {
+            this.$emit('deleted', this.comment)
+          }
         }
       }
     }
@@ -231,8 +237,8 @@ export default {
       try {
         await this.$apollo.mutate({
           mutation: gql`
-            mutation commentArchival($streamId: String!, $commentId: String!) {
-              commentArchival(streamId: $streamId, commentId: $commentId)
+            mutation commentArchive($streamId: String!, $commentId: String!) {
+              commentArchive(streamId: $streamId, commentId: $commentId)
             }
           `,
           variables: {
