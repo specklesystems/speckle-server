@@ -196,6 +196,7 @@ export default {
         if (!newVal) return
         this.localReplies = []
         this.$apollo.queries.replyQuery.refetch()
+        this.$mixpanel.track('Comment Action', { type: 'action', name: 'open' })
       }
     }
   },
@@ -231,6 +232,7 @@ export default {
           variables: { input: replyInput }
         })
         this.replyText = null
+        this.$mixpanel.track('Comment Action', { type: 'action', name: 'reply' })
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: e.message
@@ -263,6 +265,7 @@ export default {
         this.replyText = null
         this.showArchiveDialog = false
         this.$emit('deleted', this.comment)
+        this.$mixpanel.track('Comment Action', { type: 'action', name: 'archive' })
         this.$eventHub.$emit('notification', {
           text: 'Thread archived.'
         })

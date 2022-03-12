@@ -172,12 +172,15 @@ export default {
   },
   methods: {
     async addComment() {
-      if (!this.commentText || this.commentText.length < 5) {
+      if (!this.commentText || this.commentText.length < 1) {
         this.$eventHub.$emit('notification', {
-          text: `Comment must be at least 5 characters.`
+          text: `Comment cannot be empty.`
         })
         return
       }
+
+      this.$mixpanel.track('Comment Action', { type: 'action', name: 'create' })
+
       let camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
       let commentInput = {
         streamId: this.$route.params.streamId,

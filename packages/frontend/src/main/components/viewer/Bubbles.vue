@@ -222,6 +222,7 @@ export default {
         window.__viewer.sectionBox.on()
         window.__viewer.sectionBox.setBox(user.sectionBox, 0)
       }
+      this.$mixpanel.track('Bubbles Action', { type: 'action', name: 'avatar-click' })
     },
     async sendUpdateAndPrune() {
       if (!this.$route.params.resourceId) return
