@@ -56,7 +56,7 @@ module.exports = {
       let id = await createComment( { userId: context.userId, input: args.input } )
       // console.log( args.input )
       await pubsub.publish( 'COMMENT_ACTIVITY', {
-        commentActivity: { ...args.input, authorId: context.userId, id, createdAt: Date.now(), action: 'created' },
+        commentActivity: { ...args.input, authorId: context.userId, id, replies: { totalCount: 0 }, updatedAt: Date.now(), createdAt: Date.now(), eventType: 'comment-added' },
         streamId: args.input.streamId,
         resourceId: args.input.resources[1].resourceId // TODO: hack for now
       } )
@@ -66,6 +66,7 @@ module.exports = {
       // TODO
     },
     async commentArchive( parent, args, context, info ) {
+      await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
       await archiveComment( { ...args } )
       await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'comment-archived' }, 
@@ -85,7 +86,7 @@ module.exports = {
       // console.log(input.resources)
       let id = await createComment( { userId: context.userId, input } )
       await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
-        commentThreadActivity: { eventType: 'reply-added', ...args.input, id, authorId: context.userId, createdAt: Date.now() }, 
+        commentThreadActivity: { eventType: 'reply-added', ...args.input, id, authorId: context.userId, updatedAt: Date.now(), createdAt: Date.now() }, 
         streamId: args.input.streamId,
         commentId: args.input.parentComment
       } )

@@ -100,6 +100,7 @@ $primary-gradient: linear-gradient(0deg, $primary-darken 0%, $primary-base 40%);
   z-index: 10000;
   font-family: 'Roboto', sans-serif !important;
   font-size: 0.75rem !important;
+  pointer-events: none;
 }
 
 .tooltip .tooltip-inner {

@@ -19,7 +19,7 @@
         :ref="`comment-${comment.id}`"
         :class="`absolute-pos rounded-xl no-mouse`"
         :style="`transition: opacity 0.2s ease; z-index:${comment.expanded ? '20' : '10'}; ${
-          hasExpandedComment && !comment.expanded && !comment.hovered
+          hasExpandedComment && !comment.expanded && !comment.hovered && !comment.bouncing
             ? 'opacity: 0.1;'
             : 'opacity: 1;'
         }`"
@@ -29,8 +29,8 @@
         <div class="" style="pointer-events: none">
           <div class="d-flex align-center" style="pointer-events: none">
             <v-btn
+              v-show="!($vuetify.breakpoint.xs && comment.expanded)"
               :ref="`comment-button-${comment.id}`"
-              v-tooltip="comment.expanded ? 'Close comment thread' : 'Open comment thread'"
               small
               icon
               :class="`elevation-5 pa-0 ma-0 mouse ${
@@ -38,14 +38,26 @@
               }`"
               @click="comment.expanded ? collapseComment(comment) : expandComment(comment)"
             >
-              <!-- @click="comment.expanded ? (comment.expanded = false) : expandComment(comment)" -->
-              <!-- <span v-if="!comment.expanded" class="primary--text">
-              <v-icon small>mdi-comment</v-icon>
-              1
-            </span> -->
               <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
               <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
             </v-btn>
+            <v-slide-x-transition>
+              <div
+                v-if="comment.hovered && !comment.expanded"
+                style="position: absolute; left: 30px; width: max-content"
+                class="rounded-xl primary white--text px-2 ml-1 caption"
+              >
+                <timeago :datetime="comment.updatedAt" class="font-italic mr-2"></timeago>
+                <v-icon x-small class="white--text">mdi-comment-outline</v-icon>
+                {{ comment.replies.totalCount + 1 }}
+                <v-icon v-if="comment.data.filters" x-small class="white--text">
+                  mdi-filter-variant
+                </v-icon>
+                <v-icon v-if="comment.data.sectionBox" x-small class="white--text">
+                  mdi-scissors-cutting
+                </v-icon>
+              </div>
+            </v-slide-x-transition>
           </div>
         </div>
       </div>
@@ -78,6 +90,7 @@
     </div>
     <portal to="viewercontrols" :order="5">
       <v-btn
+        key="comment-toggle-button"
         v-tooltip="`Toggle comments (${localComments.length})`"
         rounded
         icon
@@ -110,7 +123,11 @@ export default {
               authorId
               text
               createdAt
+              updatedAt
               data
+              replies {
+                totalCount
+              }
             }
           }
         }
@@ -165,7 +182,7 @@ export default {
         result({ data }) {
           if (!data.commentActivity) return
           // Creation
-          if (data.commentActivity.action === 'created') {
+          if (data.commentActivity.eventType === 'comment-added') {
             data.commentActivity.expanded = false
             data.commentActivity.hovered = false
             data.commentActivity.bouncing = false
@@ -174,10 +191,6 @@ export default {
               this.updateCommentBubbles()
               this.bounceComment(data.commentActivity.id)
             }, 10)
-          }
-          // Deletion
-          if (data.commentActivity.action === 'deleted') {
-            // TODO
           }
         }
       }

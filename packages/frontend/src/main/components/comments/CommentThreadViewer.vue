@@ -12,8 +12,13 @@
       >
         <v-icon>mdi-minus</v-icon>
       </v-btn> -->
-      <v-btn icon class="primary dark ml-2 elevation-10" @click="$emit('close', comment)">
-        <v-icon>mdi-close</v-icon>
+      <v-btn
+        icon
+        small
+        class="primary dark white--text ml-2 elevation-10"
+        @click="$emit('close', comment)"
+      >
+        <v-icon small>mdi-close</v-icon>
       </v-btn>
     </div>
     <div v-show="!minimise" style="width: 100%">
@@ -51,17 +56,19 @@
           @click:append="addReply"
           @keydown.enter.shift.exact.prevent="addReply()"
         ></v-textarea>
-        <v-btn
-          v-tooltip="'Marks this thread as archived.'"
-          class="float-right"
-          x-small
-          rounded
-          depressed
-          color="error"
-          @click="showArchiveDialog = true"
-        >
-          Archive
-        </v-btn>
+        <div class="text-right">
+          <v-btn
+            v-tooltip="'Marks this thread as archived.'"
+            class="white--text mt-2 mr-2"
+            small
+            icon
+            depressed
+            color="error"
+            @click="showArchiveDialog = true"
+          >
+            <v-icon small>mdi-delete-outline</v-icon>
+          </v-btn>
+        </div>
         <v-dialog v-model="showArchiveDialog" max-width="500">
           <v-card>
             <v-toolbar color="error" dark flat>
@@ -229,6 +236,11 @@ export default {
       }
 
       setTimeout(() => {
+        // Shhh.
+        // eslint-disable-next-line vue/no-mutating-props
+        this.comment.replies.totalCount++
+        // eslint-disable-next-line vue/no-mutating-props
+        this.comment.updatedAt = Date.now()
         this.$emit('refresh-layout') // needed for layout reshuffle in parent
       }, 100)
     },

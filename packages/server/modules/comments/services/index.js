@@ -73,9 +73,11 @@ module.exports = {
 
     const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
     if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
-
+    
     const [ stream ] = streamResources
     if ( stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
+
+    const commentResource = input.resources.find( r => r.resourceType === 'comment' )
 
     let comment = { ...input }
 
@@ -87,6 +89,10 @@ module.exports = {
     
     await Comments().insert( comment )
     await persistResourceLinks( comment.id, input.resources )
+    
+    if ( commentResource ) {
+      await Comments().where( { id: commentResource.resourceId } ).update( { updatedAt: knex.fn.now( ) } )
+    }
     
     return comment.id
   },

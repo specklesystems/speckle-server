@@ -5,50 +5,71 @@
       $store.state.selectedComment || $store.state.addingComment ? '0.2' : '1'
     };`"
   >
-    <div
-      v-for="user in users"
-      :ref="`user-target-${user.uuid}`"
-      :key="user.uuid + 'target'"
-      :class="`absolute-pos rounded-pill primary`"
-      :style="` opacity: ${
-        user.hidden ? '0.2' : 1
-      }; transform-origin:center; width: 10px; height:10px; pointer-events:none`"
-    ></div>
-    <div
-      v-for="user in users"
-      :ref="`user-arrow-${user.uuid}`"
-      :key="user.uuid + 'arrow'"
-      :class="`absolute-pos d-flex align-center justify-center`"
-      :style="`opacity: ${
-        user.hidden ? '0.2' : 1
-      }; pointer-events:none; transform-origin:center; width: 32px; height:32px; transform: rotateY(0) rotate(90deg)`"
-    >
-      <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
-      <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
-      <v-icon class="primary--text" large style="position: relative; right: -60%; font-size: 4.2em">
-        mdi-menu-right
-      </v-icon>
-    </div>
-    <div
-      v-for="sessionUser in users"
-      :ref="`user-bubble-${sessionUser.uuid}`"
-      :key="sessionUser.uuid"
-      class="absolute-pos rounded-pill user-bubble elevation-5"
-      :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 4px solid ${
-        $vuetify.theme.dark ? '#047EFB' : '#047EFB'
-      }`"
-    >
-      <div @click="setUserPow(sessionUser)">
-        <user-avatar
-          :id="sessionUser.id"
-          v-tooltip="sessionUser.name"
-          :show-hover="false"
-          :size="30"
-          :margin="false"
-        ></user-avatar>
-        <text-dots-typing v-if="sessionUser.status === 'writing'" />
+    <div v-show="showBubbles">
+      <div
+        v-for="user in users"
+        :ref="`user-target-${user.uuid}`"
+        :key="user.uuid + 'target'"
+        :class="`absolute-pos rounded-pill primary`"
+        :style="` opacity: ${
+          user.hidden ? '0.2' : 1
+        }; transform-origin:center; width: 10px; height:10px; pointer-events:none`"
+      ></div>
+      <div
+        v-for="user in users"
+        :ref="`user-arrow-${user.uuid}`"
+        :key="user.uuid + 'arrow'"
+        :class="`absolute-pos d-flex align-center justify-center`"
+        :style="`opacity: ${
+          user.hidden ? '0.2' : 1
+        }; pointer-events:none; transform-origin:center; width: 32px; height:32px; transform: rotateY(0) rotate(90deg)`"
+      >
+        <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-arrow-right</v-icon> -->
+        <!-- <v-icon class="primary--text" style="position: relative; right: -90%">mdi-pan-right</v-icon> -->
+        <v-icon
+          class="primary--text"
+          large
+          style="position: relative; right: -60%; font-size: 4.2em"
+        >
+          mdi-menu-right
+        </v-icon>
+      </div>
+      <div
+        v-for="sessionUser in users"
+        :ref="`user-bubble-${sessionUser.uuid}`"
+        :key="sessionUser.uuid"
+        class="absolute-pos rounded-pill user-bubble elevation-5"
+        :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 4px solid ${
+          $vuetify.theme.dark ? '#047EFB' : '#047EFB'
+        }`"
+      >
+        <div @click="setUserPow(sessionUser)">
+          <user-avatar
+            :id="sessionUser.id"
+            v-tooltip="sessionUser.name"
+            :show-hover="false"
+            :size="30"
+            :margin="false"
+          ></user-avatar>
+          <text-dots-typing v-if="sessionUser.status === 'writing'" />
+        </div>
       </div>
     </div>
+    <portal to="viewercontrols" :order="4">
+      <v-btn
+        key="bubbles-toggle-button"
+        v-show="users.length !== 0"
+        v-tooltip="`Toggle real time user bubbles`"
+        small
+        rounded
+        icon
+        class="mr-2"
+        @click="showBubbles = !showBubbles"
+      >
+        <v-icon v-if="showBubbles" small>mdi-account</v-icon>
+        <v-icon v-else small>mdi-account-off</v-icon>
+      </v-btn>
+    </portal>
   </div>
 </template>
 <script>
@@ -137,7 +158,8 @@ export default {
       selectedIds: [],
       selectionLocation: null,
       selectionCenter: null,
-      users: []
+      users: [],
+      showBubbles: true
     }
   },
   mounted() {

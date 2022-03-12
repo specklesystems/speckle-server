@@ -23,7 +23,7 @@
       >
         <div
           class="d-flex align-center"
-          :style="`height: 48px; width: ${$vuetify.breakpoint.xs ? '100vw' : '320px'}`"
+          :style="`height: 48px; width: ${$vuetify.breakpoint.xs ? '90vw' : '320px'}`"
         >
           <v-btn
             v-tooltip="!expand ? 'Add a comment (ctrl + shift + c)' : 'Cancel'"
@@ -37,7 +37,7 @@
             <v-icon v-else dark x-small>mdi-close</v-icon>
           </v-btn>
           <v-slide-x-transition>
-            <div v-if="expand" style="width: 100%" class="d-flex">
+            <div v-if="expand && !$vuetify.breakpoint.xs" style="width: 100%" class="d-flex">
               <v-textarea
                 v-model="commentText"
                 solo
@@ -64,6 +64,38 @@
             </div>
           </v-slide-x-transition>
         </div>
+        <v-dialog
+          v-if="$vuetify.breakpoint.xs"
+          v-model="expand"
+          class="elevation-0 flat"
+          @input="toggleExpand()"
+        >
+          <div class="d-flex justify-center" style="position: relative; left: 24px">
+            <v-textarea
+              v-model="commentText"
+              solo
+              hide-details
+              autofocus
+              auto-grow
+              rows="1"
+              placeholder="Your comment..."
+              class="mouse rounded-xl caption elevation-15"
+              append-icon="mdi-send"
+              @keydown.enter.shift.exact.prevent="addComment()"
+            ></v-textarea>
+            <v-btn
+              v-tooltip="'Send comment (shift + enter)'"
+              icon
+              dark
+              large
+              class="mouse elevation-0 primary pa-0 ma-o"
+              style="left: -47px; top: 1px; height: 48px; width: 48px"
+              @click="addComment()"
+            >
+              <v-icon dark small>mdi-send</v-icon>
+            </v-btn>
+          </div>
+        </v-dialog>
       </div>
     </v-slide-x-transition>
     <portal to="viewercontrols" :order="100">
@@ -238,6 +270,11 @@ export default {
 }
 </script>
 <style scoped>
+::v-deep .v-dialog {
+  box-shadow: none;
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
 .no-mouse {
   pointer-events: none;
 }
