@@ -196,10 +196,13 @@ export default {
       'select',
       debounce(
         function (args) {
+          if (this.$store.state.preventCommentCollapse) {
+            this.$store.commit('setPreventCommentCollapse', { value: false })
+            return
+          }
           for (let c of this.localComments) {
             this.collapseComment(c)
           }
-          // this.$store.commit('setCommentSelection', { comment: null })
         }.bind(this),
         10
       )

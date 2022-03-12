@@ -76,10 +76,10 @@ export default {
       }
     },
     $subscribe: {
-      userCommentActivity: {
+      userViewerActivity: {
         query: gql`
           subscription($streamId: String!, $resourceId: String!) {
-            userCommentActivity(streamId: $streamId, resourceId: $resourceId)
+            userViewerActivity(streamId: $streamId, resourceId: $resourceId)
           }
         `,
         variables() {
@@ -94,25 +94,25 @@ export default {
         result({ data }) {
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
           // it's easier to test like this though :)
-          if (data.userCommentActivity.status && data.userCommentActivity.status === 'disconnect') {
-            this.users = this.users.filter((u) => u.uuid !== data.userCommentActivity.uuid)
+          if (data.userViewerActivity.status && data.userViewerActivity.status === 'disconnect') {
+            this.users = this.users.filter((u) => u.uuid !== data.userViewerActivity.uuid)
             this.updateBubbles(true)
             return
           }
-          if (data.userCommentActivity.uuid === this.uuid) return
-          let indx = this.users.findIndex((u) => u.uuid === data.userCommentActivity.uuid)
+          if (data.userViewerActivity.uuid === this.uuid) return
+          let indx = this.users.findIndex((u) => u.uuid === data.userViewerActivity.uuid)
           if (indx !== -1) {
             let user = this.users[indx]
             user.hidden = false
             user.status = 'viewing'
-            user.camera = data.userCommentActivity.camera
-            user.status = data.userCommentActivity.status
-            user.filter = data.userCommentActivity.filter
-            user.selectionLocation = data.userCommentActivity.selectionLocation
-            user.selection = data.userCommentActivity.selection
-            user.selectionCenter = data.userCommentActivity.selectionCenter
-            user.sectionBox = data.userCommentActivity.sectionBox
-            user.name = data.userCommentActivity.name
+            user.camera = data.userViewerActivity.camera
+            user.status = data.userViewerActivity.status
+            user.filter = data.userViewerActivity.filter
+            user.selectionLocation = data.userViewerActivity.selectionLocation
+            user.selection = data.userViewerActivity.selection
+            user.selectionCenter = data.userViewerActivity.selectionCenter
+            user.sectionBox = data.userViewerActivity.sectionBox
+            user.name = data.userViewerActivity.name
             user.lastUpdate = Date.now()
             // if (Math.random() < 0.5) user.status = 'writing'
             // else user.status = 'viewing'
@@ -120,10 +120,10 @@ export default {
             this.users.push({
               projectedPos: [0, 0],
               hidden: false,
-              id: data.userCommentActivity.userId,
+              id: data.userViewerActivity.userId,
               lastUpdate: Date.now(),
               clipped: false,
-              ...data.userCommentActivity
+              ...data.userViewerActivity
             })
           }
           this.updateBubbles(true)
@@ -250,12 +250,12 @@ export default {
 
       await this.$apollo.mutate({
         mutation: gql`
-          mutation userCommentActivityBroadcast(
+          mutation userViewerActivityBroadcast(
             $streamId: String!
             $resourceId: String!
             $data: JSONObject
           ) {
-            userCommentActivityBroadcast(streamId: $streamId, resourceId: $resourceId, data: $data)
+            userViewerActivityBroadcast(streamId: $streamId, resourceId: $resourceId, data: $data)
           }
         `,
         variables: {
@@ -268,12 +268,12 @@ export default {
     async sendDisconnect() {
       await this.$apollo.mutate({
         mutation: gql`
-          mutation userCommentActivityBroadcast(
+          mutation userViewerActivityBroadcast(
             $streamId: String!
             $resourceId: String!
             $data: JSONObject
           ) {
-            userCommentActivityBroadcast(streamId: $streamId, resourceId: $resourceId, data: $data)
+            userViewerActivityBroadcast(streamId: $streamId, resourceId: $resourceId, data: $data)
           }
         `,
         variables: {

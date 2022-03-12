@@ -105,7 +105,7 @@ input ReplyEditInput {
 
 extend type Mutation {
   # Used for broadcasting real time chat head bubbles and status.
-  userCommentActivityBroadcast(
+  userViewerActivityBroadcast(
     streamId: String!
     resourceId: String!
     data: JSONObject
@@ -137,7 +137,7 @@ extend type Mutation {
 }
 
 extend type Subscription {
-  userCommentActivity(streamId: String!, resourceId: String!): JSONObject
+  userViewerActivity(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

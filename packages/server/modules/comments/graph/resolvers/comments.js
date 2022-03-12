@@ -39,11 +39,11 @@ module.exports = {
   },
   Mutation: {
     // Used for broadcasting real time chat head bubbles and status. Does not persist anything!
-    async userCommentActivityBroadcast( parent, args, context, info ) {
+    async userViewerActivityBroadcast( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
 
-      await pubsub.publish( 'COMMENT_ACTIVITY', {
-        userCommentActivity: args.data, 
+      await pubsub.publish( 'VIEWER_ACTIVITY', {
+        userViewerActivity: args.data, 
         streamId: args.streamId,
         resourceId: args.resourceId
       } )
@@ -91,8 +91,8 @@ module.exports = {
     // },
   },
   Subscription:{
-    userCommentActivity: {
-      subscribe: withFilter( () => pubsub.asyncIterator( [ 'COMMENT_ACTIVITY' ] ), async( payload, variables, context ) => {
+    userViewerActivity: {
+      subscribe: withFilter( () => pubsub.asyncIterator( [ 'VIEWER_ACTIVITY' ] ), async( payload, variables, context ) => {
         await authorizeResolver( context.userId, payload.streamId, 'stream:reviewer' )
         return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
       } )

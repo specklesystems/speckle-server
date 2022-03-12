@@ -3,7 +3,7 @@
     class="mt-2 px-2 py-4"
     :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'}`"
   >
-    <div class="text-right mb-5">
+    <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5">
       <!-- <v-btn
         v-if="$vuetify.breakpoint.xs"
         icon
@@ -12,12 +12,7 @@
       >
         <v-icon>mdi-minus</v-icon>
       </v-btn> -->
-      <v-btn
-        v-if="$vuetify.breakpoint.xs"
-        icon
-        class="primary dark ml-2 elevation-10"
-        @click="$emit('close', comment)"
-      >
+      <v-btn icon class="primary dark ml-2 elevation-10" @click="$emit('close', comment)">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </div>
@@ -155,6 +150,11 @@ export default {
         // },
         result({ data }) {
           if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
+          else {
+            setTimeout(() => {
+              this.$emit('refresh-layout') // needed for layout reshuffle in parent
+            }, 100)
+          }
           this.localReplies.push({ ...data.commentReplyCreated })
         }
       }
@@ -203,7 +203,6 @@ export default {
       let replyInput = {
         streamId: this.$route.params.streamId,
         parentComment: this.comment.id,
-        // resources: [{ resourceId: this.$route.params.streamId, resourceType: 'stream' }],
         text: this.replyText
       }
 

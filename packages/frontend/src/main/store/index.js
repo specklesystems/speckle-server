@@ -19,7 +19,8 @@ const store = new Vuex.Store({
     hideCategoryKey: null,
     hideCategoryValues: [],
     selectedComment: null,
-    addingComment: false
+    addingComment: false,
+    preventCommentCollapse: false
   },
   mutations: {
     setAddingCommentState(state, { addingCommentState }) {
@@ -249,7 +250,11 @@ const store = new Vuex.Store({
       this.commit('resetInternalHideIsolateObjectState')
       this.commit('resetInternalCategoryObjectState')
       state.appliedFilter = null
+      state.preventCommentCollapse = true
       window.__viewer.applyFilter(state.appliedFilter)
+    },
+    setPreventCommentCollapse(state, { value }) {
+      state.preventCommentCollapse = value
     }
   }
 })
