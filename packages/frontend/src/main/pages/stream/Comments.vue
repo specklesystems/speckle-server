@@ -15,19 +15,31 @@
         </div>
         <div class="text-truncate flex-shrink-0 mx-2">
           <v-icon small class="mr-1" style="font-size: 13px">mdi-comment-outline</v-icon>
-          Comments {{ localComments.totalCount }}
+          Comments
+          <span class="caption">{{ localComments.length }}</span>
         </div>
 
-        <div class="d-md-inline-block">
+        <!-- <div class="d-md-inline-block">
           <v-btn-toggle tile color="primary" group mandatory>
             <v-btn small icon disabled><v-icon small>mdi-filter</v-icon></v-btn>
             <v-btn small text @click="showArchivedComments = false">Active</v-btn>
             <v-btn small text @click="showArchivedComments = true">Archived</v-btn>
           </v-btn-toggle>
-        </div>
+        </div> -->
       </div>
     </portal>
-    <comment-list-item v-for="c in localComments" :key="c.id" :comment="c" />
+    <v-row dense>
+      <v-col cols="12">
+        <p class="caption">
+          Webhooks allow you to subscribe to a stream's events and get notified of them in real
+          time. You can then use this to trigger ci apps, automation workflows, and more.
+        </p>
+      </v-col>
+      <v-col v-for="c in localComments" :key="c.id" cols="12" sm="6">
+        <comment-list-item :comment="c" />
+      </v-col>
+    </v-row>
+    <!-- TODO: infinite loading -->
   </div>
 </template>
 <script>

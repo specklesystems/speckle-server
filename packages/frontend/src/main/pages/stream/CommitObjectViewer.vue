@@ -146,7 +146,7 @@
         class=""
       >
         <bubbles key="a" />
-        <comments-overlay key="c" />
+        <comments-overlay key="c" @add-resources="addResources" />
         <comment-add-overlay key="b" />
       </div>
       <!-- Progress bar -->
@@ -352,6 +352,7 @@ export default {
         )
       }
       window.__viewer.on('busy', (val) => {
+        this.$store.commit('setViewerBusy', { viewerBusyState: val })
         this.viewerBusy = val
         if (!val && this.camToSet) {
           setTimeout(() => {
@@ -451,6 +452,11 @@ export default {
       this.loadedModel = true
       this.setFilters()
       this.setViews()
+    },
+    async addResources(ids) {
+      for (let id of ids) {
+        await this.addResource(id)
+      }
     },
     async addResource(resId) {
       this.showAddOverlay = false

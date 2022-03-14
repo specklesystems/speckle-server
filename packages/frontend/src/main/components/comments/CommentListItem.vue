@@ -1,5 +1,5 @@
 <template>
-  <v-card class="my-4 rounded-lg overflow-hidden">
+  <v-card class="rounded-lg overflow-hidden">
     <div v-if="commentDetails" class="">
       <!-- <v-img :src="commentDetails.screenshot" max-width="150" max-height="150" /> -->
       <div class="d-flex align-center flex-grow-1 justify-space-between">
@@ -7,10 +7,21 @@
           <user-avatar :id="commentDetails.authorId" :size="40" />
         </div>
         <div class="text-truncate body-1 mr-auto">
-          <div class="text-truncate">{{ commentDetails.text }}</div>
+          <div class="text-truncate">
+            <router-link class="text-decoration-none" :to="link">
+              {{ commentDetails.text }}
+            </router-link>
+          </div>
           <div class="text-truncate caption">
-            <timeago :datetime="commentDetails.createdAt" />
-            , on {{ new Date(commentDetails.createdAt).toLocaleString() }}
+            <!-- <br /> -->
+            <span v-if="commentDetails.replies.totalCount > 0">
+              <!-- eslint-disable-next-line prettier/prettier -->
+              Last updated <timeago :datetime="commentDetails.updatedAt" /> <!--, on {{ new Date(commentDetails.updatedAt).toLocaleString() }} -->
+              <br />
+            </span>
+            <span class="grey--text">
+              Created on {{ new Date(commentDetails.createdAt).toLocaleString() }}
+            </span>
           </div>
         </div>
         <div class="body-2 px-4 flex-shrink-0">
@@ -21,30 +32,37 @@
           >
             <v-icon small>mdi-filter-variant</v-icon>
           </span>
-          <span v-if="commentDetails.data.sectionBox" v-tooltip="`This comment has a section box.`">
+          <span
+            v-if="commentDetails.data.sectionBox"
+            v-tooltip="`This comment has a section box.`"
+            class="mr-1"
+          >
             <v-icon small>mdi-cube-outline</v-icon>
           </span>
-        </div>
-        <div class="body-2 px-4 flex-shrink-0">
           <v-icon small>mdi-comment-outline</v-icon>
           {{ commentDetails.replies.totalCount }}
-          {{
-            commentDetails.replies.totalCount > 1 || commentDetails.replies.totalCount === 0
-              ? 'replies'
-              : 'reply'
-          }}
+          <span v-show="!$vuetify.breakpoint.xs && false" class="">
+            {{
+              commentDetails.replies.totalCount > 1 || commentDetails.replies.totalCount === 0
+                ? 'replies'
+                : 'reply'
+            }}
+          </span>
+          <v-btn small class="ml-1 primary dark rounded-xl" :to="link">reply</v-btn>
         </div>
         <div class="flex-shrink-0">
-          <v-img
-            :src="commentDetails.screenshot"
-            max-width="200"
-            max-height="140"
-            :gradient="`to top right, ${
-              $vuetify.theme.dark
-                ? 'rgba(100,115,201,.33), rgba(25,32,72,.7)'
-                : 'rgba(100,115,231,.1), rgba(25,32,72,.05)'
-            }`"
-          />
+          <router-link class="text-decoration-none" :to="link">
+            <v-img
+              :src="commentDetails.screenshot"
+              :width="`${$vuetify.breakpoint.xs ? '100' : '200'}`"
+              height="140"
+              :gradient="`to top right, ${
+                $vuetify.theme.dark
+                  ? 'rgba(100,115,201,.33), rgba(25,32,72,.7)'
+                  : 'rgba(100,115,231,.1), rgba(25,32,72,.05)'
+              }`"
+            />
+          </router-link>
         </div>
       </div>
     </div>
@@ -91,6 +109,18 @@ export default {
       update(data) {
         return data.comment
       }
+    }
+  },
+  computed: {
+    link() {
+      if (!this.commentDetails) return
+      let res = this.commentDetails.resources.filter((r) => r.resourceType !== 'stream')
+      let first = res.shift()
+      let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
+      if (res.length !== 0) {
+        route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
+      }
+      return route
     }
   }
 }

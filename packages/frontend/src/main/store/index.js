@@ -8,6 +8,7 @@ Vue.use(Vuex)
 // necessary (ie, component local state + events is not enough).
 const store = new Vuex.Store({
   state: {
+    viewerBusy: false,
     appliedFilter: null,
     isolateKey: null,
     isolateValues: [],
@@ -23,6 +24,9 @@ const store = new Vuex.Store({
     preventCommentCollapse: false
   },
   mutations: {
+    setViewerBusy(state, { viewerBusyState }) {
+      state.viewerBusy = viewerBusyState
+    },
     setAddingCommentState(state, { addingCommentState }) {
       state.addingComment = addingCommentState
     },

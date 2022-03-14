@@ -18,6 +18,11 @@
       </v-btn>
     </div>
     <div v-show="!minimise" style="width: 100%">
+      <div v-if="!isComplete" class="warning rounded-xl py-2 caption mb-2 text-center" dense>
+        <v-icon x-small>mdi-alert-circle-outline</v-icon>
+        This comment is targeting other resources.
+        <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
+      </div>
       <template v-for="(reply, index) in thread">
         <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
@@ -34,7 +39,10 @@
           <div :class="`${$userId() === reply.authorId ? 'order-last' : ''}`">
             <user-avatar :id="reply.authorId" :size="30" />
           </div>
-          <div :class="`mx-2 px-4 py-2 flex-grow-1 float-left caption`">
+          <div
+            :class="`mx-2 px-4 py-2 flex-grow-1 float-left caption`"
+            style="overflow-wrap: break-word"
+          >
             {{ reply.text }}
           </div>
         </div>
@@ -63,6 +71,17 @@
             @click="showArchiveDialog = true"
           >
             <v-icon small>mdi-delete-outline</v-icon>
+          </v-btn>
+          <v-btn
+            v-tooltip="'Share this comment as a link!'"
+            class="white--text mt-2 mr-2 rounded-xl elevation-4"
+            small
+            depressed
+            color="primary"
+            @click="copyCommentLinkToClip()"
+          >
+            <v-icon small class="mr-2">mdi-share-variant</v-icon>
+            share
           </v-btn>
         </div>
         <v-dialog v-model="showArchiveDialog" max-width="500">
@@ -185,8 +204,32 @@ export default {
   },
   computed: {
     thread() {
-      // TODO: add the replies in here too
-      return [this.comment, ...this.localReplies]
+      let sorted = [...this.localReplies].sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      )
+      return [this.comment, ...sorted]
+    },
+    isComplete() {
+      let res = [this.$route.params.resourceId]
+      if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
+      let commRes = this.comment.resources
+        .filter((r) => r.resourceType !== 'stream')
+        .map((r) => r.resourceId)
+
+      for (let r of commRes) {
+        if (res.indexOf(r) === -1) return false
+      }
+      return true
+    },
+    link() {
+      if (!this.comment) return
+      let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
+      let first = res.shift()
+      let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
+      if (res.length !== 0) {
+        route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
+      }
+      return route
     }
   },
   watch: {
@@ -201,6 +244,25 @@ export default {
     }
   },
   methods: {
+    copyCommentLinkToClip() {
+      // TODO
+      this.$eventHub.$emit('notification', {
+        text: 'Comment link copied to clipboard - paste away!'
+      })
+    },
+    addMissingResources() {
+      let res = [this.$route.params.resourceId]
+      if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
+      let commRes = this.comment.resources
+        .filter((r) => r.resourceType !== 'stream')
+        .map((r) => r.resourceId)
+
+      let missing = []
+      for (let r of commRes) {
+        if (res.indexOf(r) === -1) missing.push(r)
+      }
+      this.$emit('add-resources', missing)
+    },
     showTime(index) {
       if (index === 0) return true
       let curr = new Date(this.thread[index].createdAt)

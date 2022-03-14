@@ -82,6 +82,7 @@
               @refresh-layout="updateCommentBubbles()"
               @close="collapseComment"
               @deleted="handleDeletion"
+              @add-resources="(e) => $emit('add-resources', e)"
             />
           </div>
         </v-fade-transition>
@@ -125,6 +126,10 @@ export default {
               createdAt
               updatedAt
               data
+              resources {
+                resourceId
+                resourceType
+              }
               replies {
                 totalCount
               }
@@ -199,7 +204,8 @@ export default {
   data() {
     return {
       localComments: [],
-      showComments: true
+      showComments: true,
+      openCommentOnInit: null
     }
   },
   computed: {
@@ -210,7 +216,25 @@ export default {
       return this.comments ? this.localComments : []
     }
   },
+  watch: {
+    '$apollo.loading'(newVal) {
+      // if (newVal) return
+      // if (this.openCommentOnInit) {
+      //   this.expandComment({ id: this.openCommentOnInit })
+      //   this.openCommentOnInit = null
+      // }
+    }
+  },
   mounted() {
+    if (this.$route.query.cId) {
+      this.openCommentOnInit = this.$route.query.cId
+      this.commentIntervalChecker = window.setInterval(() => {
+        if (this.$store.state.viewerBusy || this.$apollo.loading) return
+        this.expandComment({ id: this.openCommentOnInit })
+        this.openCommentOnInit = null
+        window.clearInterval(this.commentIntervalChecker)
+      }, 2000)
+    }
     window.__viewer.on(
       'select',
       debounce(
