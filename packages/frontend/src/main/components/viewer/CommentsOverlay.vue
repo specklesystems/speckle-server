@@ -232,6 +232,12 @@ export default {
         if (this.$store.state.viewerBusy || this.$apollo.loading) return
         this.expandComment({ id: this.openCommentOnInit })
         this.openCommentOnInit = null
+        let q = { ...this.$route.query }
+        delete q.cId
+        this.$router.replace({
+          path: this.$route.path,
+          query: q
+        })
         window.clearInterval(this.commentIntervalChecker)
       }, 2000)
     }

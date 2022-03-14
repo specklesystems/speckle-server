@@ -246,6 +246,13 @@ export default {
   methods: {
     copyCommentLinkToClip() {
       // TODO
+      let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
+      let first = res.shift()
+      let route = `${window.origin}/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
+      if (res.length !== 0) {
+        route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
+      }
+      navigator.clipboard.writeText(route)
       this.$eventHub.$emit('notification', {
         text: 'Comment link copied to clipboard - paste away!'
       })
@@ -271,9 +278,9 @@ export default {
       return delta > 450000
     },
     async addReply() {
-      if (!this.replyText || this.replyText.length < 3) {
+      if (!this.replyText || this.replyText.length < 1) {
         this.$eventHub.$emit('notification', {
-          text: `Reply must be at least 3 characters.`
+          text: `Cannot post an empty reply.`
         })
         return
       }
