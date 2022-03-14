@@ -1,6 +1,32 @@
 <template>
   <div class="">
-    <!-- <div class="">{{ localComments }}</div> -->
+    <portal to="toolbar">
+      <div v-if="!$apollo.loading" class="d-flex align-center">
+        <div class="text-truncate flex-shrink-1">
+          <router-link
+            v-tooltip="stream.name"
+            class="text-decoration-none space-grotesk mx-1"
+            :to="`/streams/${stream.id}`"
+          >
+            <v-icon small class="primary--text mb-1 mr-1">mdi-folder</v-icon>
+            <b class="d-none d-sm-inline">{{ stream.name }}</b>
+          </router-link>
+          /
+        </div>
+        <div class="text-truncate flex-shrink-0 mx-2">
+          <v-icon small class="mr-1" style="font-size: 13px">mdi-comment-outline</v-icon>
+          Comments {{ localComments.totalCount }}
+        </div>
+
+        <div class="d-md-inline-block">
+          <v-btn-toggle tile color="primary" group mandatory>
+            <v-btn small icon disabled><v-icon small>mdi-filter</v-icon></v-btn>
+            <v-btn small text @click="showArchivedComments = false">Active</v-btn>
+            <v-btn small text @click="showArchivedComments = true">Archived</v-btn>
+          </v-btn-toggle>
+        </div>
+      </div>
+    </portal>
     <comment-list-item v-for="c in localComments" :key="c.id" :comment="c" />
   </div>
 </template>
@@ -14,14 +40,29 @@ export default {
   },
   data() {
     return {
-      localComments: []
+      localComments: [],
+      showArchivedComments: false,
+      commentFilter: 1
     }
   },
   apollo: {
+    stream: {
+      query: gql`
+        query Stream($id: String!) {
+          stream(id: $id) {
+            id
+            name
+          }
+        }
+      `,
+      variables() {
+        return { id: this.$route.params.streamId }
+      }
+    },
     comments: {
       query: gql`
-        query($streamId: String!, $resources: [ResourceIdentifierInput]!) {
-          comments(streamId: $streamId, resources: $resources, limit: 10) {
+        query($streamId: String!, $resources: [ResourceIdentifierInput]!, $archived: Boolean!) {
+          comments(streamId: $streamId, resources: $resources, limit: 10, archived: $archived) {
             totalCount
             cursor
             items {
@@ -33,6 +74,7 @@ export default {
       variables() {
         return {
           streamId: this.$route.params.streamId,
+          archived: this.showArchivedComments,
           resources: [
             {
               resourceType: 'stream',

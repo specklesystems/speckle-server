@@ -3,7 +3,7 @@ const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const {  getStream } = require( `${appRoot}/modules/core/services/streams` )
 
-const { getComment, getComments, createComment, archiveComment } = require( `${appRoot}/modules/comments/services` )
+const { getComment, getComments, getComments2, createComment, createCommentReply, archiveComment } = require( `${appRoot}/modules/comments/services` )
 
 const authorizeStreamAccess = async ( { streamId, userId, auth } ) => {
   const stream = await getStream( { streamId, userId } )
@@ -22,19 +22,18 @@ module.exports = {
   Query: {
     async comment( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return await getComment( args.id )
+      return await getComment( { id: args.id } )
     },
 
     async comments( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return await getComments( args ) 
+      return { ...await getComments2( args ) }
     }
   },
   Comment: {
     async replies( parent, args, context, info ) {
-      const streamId = parent.resources.filter( r => r.resourceType === 'stream' )[0].resourceId
       const resources = [ { resourceId: parent.id, resourceType: 'comment' } ]
-      return await getComments( { streamId, resources, limit: args.limit, cursor: args.cursor } )
+      return await getComments2( { resources, limit: args.limit, cursor: args.cursor } )
     }
   },
   Mutation: {
@@ -69,7 +68,7 @@ module.exports = {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
       await archiveComment( { ...args } )
       await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
-        commentThreadActivity: { eventType: 'comment-archived' }, 
+        commentThreadActivity: { eventType: args.archived ? 'comment-archived' : 'comment-added' }, 
         streamId: args.streamId,
         commentId: args.commentId
       } )
@@ -78,13 +77,9 @@ module.exports = {
     async commentReply( parent, args, context, info ) {
       // TODO
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
-      // the reply also has to be linked to the stream, for the recursive reply lookup to work
-      let input = { ...args.input, resources: [ 
-        { resourceId: args.input.parentComment, resourceType: 'comment' },
-        { resourceId: args.input.streamId, resourceType: 'stream' }
-      ] }
-      // console.log(input.resources)
-      let id = await createComment( { userId: context.userId, input } )
+      
+      let id = await createCommentReply( { authorId: context.userId, parentCommentId: args.input.parentComment, text: args.input.text, data: args.input.data } )
+      
       await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-added', ...args.input, id, authorId: context.userId, updatedAt: Date.now(), createdAt: Date.now() }, 
         streamId: args.input.streamId,

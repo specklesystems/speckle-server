@@ -10,7 +10,7 @@ type Comment {
   archived: Boolean!
   screenshot: String
   text: String!
-  data: JSONObject!
+  data: JSONObject
   resources: [ResourceIdentifier]!
   createdAt: DateTime
   updatedAt: DateTime

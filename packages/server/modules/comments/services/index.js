@@ -69,7 +69,7 @@ const getCommentLinksForResources = async ( streamId, resources ) => {
 
 module.exports = { 
   async createComment( { userId, input } ) {
-    if ( input.resources.length < 1 ) throw Error( 'Must specify atleast one resource as the comment target' )
+    if ( input.resources.length < 1 ) throw Error( 'Must specify at least one resource as the comment target' )
 
     const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
     if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
@@ -97,6 +97,15 @@ module.exports = {
     return comment.id
   },
 
+  async createCommentReply( { authorId, parentCommentId, text, data } ) {
+    let comment = { id: crs( { length: 10 } ), authorId, text, data }
+    await Comments().insert( comment )
+    await persistResourceLink( comment.id, { resourceId: parentCommentId, resourceType: 'comment' } )
+    await Comments().where( { id: parentCommentId } ).update( { updatedAt: knex.fn.now( ) } )
+
+    return comment.id
+  },
+
   async editComment( {} ) {
     // TODO
   },
@@ -105,8 +114,17 @@ module.exports = {
     return await Comments().where( { id: commentId } ).update( { archived } )
   },
 
-  async getComment( id ) {
-    let [ comment ] = await Comments().where( { id } )
+  async getComment( { id } ) {
+    // select * from "comments"
+    // join(
+    //   select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
+    //   from comment_links cl
+    //   join comments on comments.id = cl."commentId"
+    //   group by cl."commentId"
+    // ) res using(id)
+    // where id = 'ac500351ee'
+
+    let comment = await Comments().where( { id } ).first()
     return { ...comment, resources: await getResourcesForComment( comment ) }
   },
 
@@ -127,5 +145,74 @@ module.exports = {
     }
     items = await Promise.all( items.map( async comment => ( { ...comment, resources: await getResourcesForComment( comment ) } ) ) )
     return { items, cursor, totalCount: relevantComments.length }
+  },
+
+  async getComments2( { resources, limit, cursor, replies = false, archived = false } ) {
+    // TODO: check object validity
+    
+    let query = knex.with( 'comms', cte => {
+      cte.select( '*' ).from( 'comments' )
+      cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
+      cte.where( q => {
+        // link res
+        for ( let res of resources ) {
+          q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
+        }
+      } )
+      if ( !replies ) {
+        cte.whereNull( 'parentComment' )
+      }
+      cte.where( 'archived', '=', false )
+    } )
+
+    query.select( '*' ).from( 'comms' )
+    
+    // total count coming from our cte
+    query.joinRaw( 'right join (select count(*) from comms) c(total_count) on true' )
+    
+    // get comment's all linked resources
+    query.joinRaw( `
+      join(
+        select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
+        from comment_links cl
+        join comms on comms.id = cl."commentId"
+        group by cl."commentId"
+      ) res using(id)`
+    )
+
+    if ( cursor ) {
+      query.where( 'createdAt', '<', cursor )
+    }
+
+    query.orderBy( 'createdAt', 'desc' )
+    query.limit( limit ?? 10 )
+    
+    let rows = await query
+    let totalCount = rows && rows.length > 0 ? parseInt( rows[0].total_count ) : 0
+    let nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
+
+    return {
+      items: rows,
+      cursor: nextCursor,
+      totalCount
+    }
+
+    // let query = knex.from( 'comments' )
+    //   .select()
+    //   .join( 'comment_links', 'comments.id', '=', 'comment_links.commentId' )
+    //   .where( q => {
+    //     for ( let res of resources ) {
+    //       q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
+    //     }
+    //   } )
+      
+    // if ( topLevelOnly )
+    //   query.whereNull( 'comments.parentComment' )
+
+    // query.orderBy( 'comments.createdAt' )
+    // query.limit( limit ?? 100 )
+
+    // console.log( query.toString() )
   }
+
 }
