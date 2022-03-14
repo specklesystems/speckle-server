@@ -11,12 +11,18 @@
     "directory": "packages/objectloader"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .js,.ts"
   },
-  "keywords": ["speckle", "aec", "speckle api"],
+  "keywords": [
+    "speckle",
+    "aec",
+    "speckle api"
+  ],
   "author": "AEC Systems",
   "license": "Apache-2.0",
   "devDependencies": {
-    "undici": "^4.14.1"
+    "undici": "^4.14.1",
+    "eslint": "^8.11.0"
   }
 }

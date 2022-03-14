@@ -5,8 +5,11 @@
 
 /** @type {import("eslint").Linter.Config} */
 const config = {
-  rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }]
+  env: {
+    browser: true
+  },
+  parserOptions: {
+    sourceType: 'module'
   }
 }
 

@@ -5,9 +5,17 @@
 
 /** @type {import("eslint").Linter.Config} */
 const config = {
-  rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }]
-  }
+  env: {
+    browser: true
+  },
+  overrides: [
+    {
+      files: '*.spec.{js,ts}',
+      env: {
+        mocha: true
+      }
+    }
+  ]
 }
 
 module.exports = config

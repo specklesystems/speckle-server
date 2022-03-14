@@ -1,0 +1,4 @@
+{
+  "extends": "../../jsconfig.base.json",
+  "include": ["bin/www", "db", "logging", "scripts", "modules", "test"]
+}

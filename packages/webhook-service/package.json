@@ -13,7 +13,8 @@
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cross-env ALLOW_LOCAL_NETWORK=true node src/main.js"
+    "dev": "cross-env ALLOW_LOCAL_NETWORK=true node src/main.js",
+    "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
     "knex": "^1.0.3",
@@ -22,6 +23,7 @@
     "private-ip": "^2.3.3"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "eslint": "^8.11.0"
   }
 }

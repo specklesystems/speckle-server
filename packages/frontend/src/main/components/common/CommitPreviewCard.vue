@@ -5,11 +5,11 @@
       :elevation="hover ? 10 : 1"
       style="transition: all 0.2s ease-in-out"
     >
-    <router-link :to="`/streams/${commit.streamId}/commits/${commit.id}`">
-      <preview-image
-        :url="`/preview/${commit.streamId}/commits/${commit.id}`"
-        :height="previewHeight"
-      ></preview-image>
+      <router-link :to="`/streams/${commit.streamId}/commits/${commit.id}`">
+        <preview-image
+          :url="`/preview/${commit.streamId}/commits/${commit.id}`"
+          :height="previewHeight"
+        ></preview-image>
       </router-link>
       <v-toolbar class="transparent elevation-0" dense>
         <v-toolbar-title>
@@ -33,7 +33,7 @@
           </div>
         </v-card-text>
       </div>
-      <v-divider/>
+      <v-divider />
       <div class="d-flex align-center caption px-5 py-2">
         <div class="text-truncate mr-2">
           <router-link
