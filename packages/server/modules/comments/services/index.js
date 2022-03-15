@@ -94,8 +94,7 @@ module.exports = {
       await Comments().where( { id: commentResource.resourceId } ).update( { updatedAt: knex.fn.now( ) } )
     }
     
-    // await CommentViews().insert( { commentId: comment.id, userId: userId, viewedAt: knex.fn.now() } )
-    await module.exports.viewComment( { userId, commentId: comment.id } )
+    await module.exports.viewComment( { userId, commentId: comment.id } ) // so we don't self mark a comment as unread the moment it's created
     return comment.id
   },
 
@@ -113,10 +112,10 @@ module.exports = {
   },
 
   async viewComment( { userId, commentId } ) {
-    let q = CommentViews().insert( { commentId: commentId, userId: userId, viewedAt: knex.fn.now() } )
+    let query = CommentViews().insert( { commentId: commentId, userId: userId, viewedAt: knex.fn.now() } )
       .onConflict( knex.raw( '("commentId","userId")' ) )
       .merge()
-    await q
+    await query
   },
 
   async archiveComment( { commentId, archived = true } ) {
@@ -164,8 +163,6 @@ module.exports = {
   },
 
   async getComments2( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
-    // TODO: check object validity?
-    
     let query = knex.with( 'comms', cte => {
       cte.select( '*' ).from( 'comments' )
       cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
@@ -180,6 +177,7 @@ module.exports = {
 
       cte.where( q => {
         // link resources
+        // TODO: check object validity?
         for ( let res of resources ) {
           q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
         }
