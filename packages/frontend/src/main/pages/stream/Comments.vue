@@ -28,15 +28,22 @@
         </div> -->
       </div>
     </portal>
-    <v-row dense>
-      <v-col cols="12">
-        <p class="caption">
-          Webhooks allow you to subscribe to a stream's events and get notified of them in real
-          time. You can then use this to trigger ci apps, automation workflows, and more.
-        </p>
+    <v-row>
+      <v-col cols="12" class="mb-0">
+        <p class="mb-0 mt-2">All this stream's comments are listed below.</p>
       </v-col>
       <v-col v-for="c in localComments" :key="c.id" cols="12" sm="6">
         <comment-list-item :comment="c" />
+      </v-col>
+      <v-col cols="12" sm="6" class="align-center">
+        <infinite-loading spinner="waveDots" @infinite="infiniteHandler">
+          <div slot="no-more" class="caption py-10 mt-5">
+            You've reached the end - no more comments.
+          </div>
+          <div slot="no-results" class="caption py-10 mt-5">
+            You've reached the end - no more comments.
+          </div>
+        </infinite-loading>
       </v-col>
     </v-row>
     <!-- TODO: infinite loading -->
@@ -46,15 +53,17 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Branch',
+  name: 'Comments',
   components: {
-    CommentListItem: () => import('@/main/components/comments/CommentListItem.vue')
+    CommentListItem: () => import('@/main/components/comments/CommentListItem.vue'),
+    InfiniteLoading: () => import('vue-infinite-loading')
   },
   data() {
     return {
       localComments: [],
       showArchivedComments: false,
-      commentFilter: 1
+      commentFilter: 1,
+      cursor: null
     }
   },
   apollo: {
@@ -73,8 +82,19 @@ export default {
     },
     comments: {
       query: gql`
-        query($streamId: String!, $resources: [ResourceIdentifierInput]!, $archived: Boolean!) {
-          comments(streamId: $streamId, resources: $resources, limit: 10, archived: $archived) {
+        query(
+          $streamId: String!
+          $resources: [ResourceIdentifierInput]!
+          $archived: Boolean!
+          $cursor: String
+        ) {
+          comments(
+            streamId: $streamId
+            resources: $resources
+            limit: 2
+            archived: $archived
+            cursor: $cursor
+          ) {
             totalCount
             cursor
             items {
@@ -96,46 +116,34 @@ export default {
         }
       },
       result({ data }) {
+        this.cursor = data.comments.cursor
         for (let c of data.comments.items) {
           if (this.localComments.findIndex((lc) => c.id === lc.id) === -1)
             this.localComments.push({ ...c })
         }
       }
     }
-    // $subscribe: {
-    //   commentActivity: {
-    //     query: gql`
-    //       subscription($streamId: String!, $resourceId: String!) {
-    //         commentActivity(streamId: $streamId, resourceId: $resourceId)
-    //       }
-    //     `,
-    //     variables() {
-    //       return {
-    //         streamId: this.$route.params.streamId,
-    //         resourceId: this.$route.params.resourceId
-    //       }
-    //     },
-    //     skip() {
-    //       return !this.$loggedIn() || !this.$route.params.resourceId
-    //     },
-    //     result({ data }) {
-    //       if (!data.commentActivity) return
-    //       // Creation
-    //       if (data.commentActivity.eventType === 'comment-added') {
-    //         data.commentActivity.expanded = false
-    //         data.commentActivity.hovered = false
-    //         data.commentActivity.bouncing = false
-    //         this.localComments.push(data.commentActivity)
-    //         setTimeout(() => {
-    //           this.updateCommentBubbles()
-    //           this.bounceComment(data.commentActivity.id)
-    //         }, 10)
-    //       }
-    //     }
-    //   }
-    // }
   },
-  methods: {}
+  methods: {
+    async infiniteHandler($state) {
+      let res = await this.$apollo.queries.comments.refetch({
+        cursor: this.cursor ? this.cursor : null,
+        streamId: this.$route.params.streamId,
+        archived: this.showArchivedComments,
+        resources: [
+          {
+            resourceType: 'stream',
+            resourceId: this.$route.params.streamId
+          }
+        ]
+      })
+      this.cursor = res.data.comments.cursor
+      if (res.data.comments.items.length === 0) $state.complete()
+      else $state.loaded()
+
+      return
+    }
+  }
 }
 </script>
 <style scoped></style>

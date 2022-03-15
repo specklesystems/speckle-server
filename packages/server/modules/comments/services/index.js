@@ -196,23 +196,6 @@ module.exports = {
       cursor: nextCursor,
       totalCount
     }
-
-    // let query = knex.from( 'comments' )
-    //   .select()
-    //   .join( 'comment_links', 'comments.id', '=', 'comment_links.commentId' )
-    //   .where( q => {
-    //     for ( let res of resources ) {
-    //       q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
-    //     }
-    //   } )
-      
-    // if ( topLevelOnly )
-    //   query.whereNull( 'comments.parentComment' )
-
-    // query.orderBy( 'comments.createdAt' )
-    // query.limit( limit ?? 100 )
-
-    // console.log( query.toString() )
   }
 
 }

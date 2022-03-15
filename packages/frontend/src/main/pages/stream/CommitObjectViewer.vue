@@ -59,7 +59,7 @@
         />
 
         <!-- <v-divider v-if="isMultiple" class="my-4" /> -->
-
+        <portal-target name="comments"></portal-target>
         <!-- Views display -->
         <views-display v-if="views.length !== 0" :views="views" class="mt-4" />
 

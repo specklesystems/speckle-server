@@ -1,5 +1,10 @@
 <template>
-  <v-card class="rounded-lg overflow-hidden">
+  <v-card
+    :class="`rounded-lg overflow-hidden ${hovered ? 'elevation-10' : ''}`"
+    style="transition: box-shadow 0.3s ease"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
+  >
     <div v-if="commentDetails" class="">
       <!-- <v-img :src="commentDetails.screenshot" max-width="150" max-height="150" /> -->
       <div class="d-flex align-center flex-grow-1 justify-space-between">
@@ -16,7 +21,7 @@
             <!-- <br /> -->
             <span v-if="commentDetails.replies.totalCount > 0">
               <!-- eslint-disable-next-line prettier/prettier -->
-              Last updated <timeago :datetime="commentDetails.updatedAt" /> <!--, on {{ new Date(commentDetails.updatedAt).toLocaleString() }} -->
+              Last reply <timeago :datetime="commentDetails.updatedAt" /> <!--, on {{ new Date(commentDetails.updatedAt).toLocaleString() }} -->
               <br />
             </span>
             <span class="grey--text">
@@ -109,6 +114,11 @@ export default {
       update(data) {
         return data.comment
       }
+    }
+  },
+  data() {
+    return {
+      hovered: false
     }
   },
   computed: {

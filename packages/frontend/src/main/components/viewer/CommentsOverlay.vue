@@ -89,6 +89,17 @@
         <!-- </v-card> -->
       </div>
     </div>
+    <portal v-if="localComments.length !== 0" to="comments">
+      <comments-viewer-navbar
+        :comments="localComments"
+        @select-comment="
+          (e) => {
+            if (!e.expanded && !showComments) showComments = true
+            e.expanded ? collapseComment(e) : expandComment(e)
+          }
+        "
+      />
+    </portal>
     <portal to="viewercontrols" :order="5">
       <v-btn
         key="comment-toggle-button"
@@ -110,7 +121,8 @@ import gql from 'graphql-tag'
 
 export default {
   components: {
-    CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer')
+    CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer'),
+    CommentsViewerNavbar: () => import('@/main/components/comments/CommentsViewerNavbar')
   },
   apollo: {
     comments: {

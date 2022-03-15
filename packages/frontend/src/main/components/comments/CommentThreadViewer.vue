@@ -54,11 +54,11 @@
           hide-details
           auto-grow
           rows="1"
-          placeholder="Reply (shift + enter to send)"
+          placeholder="Reply (press enter to send)"
           class="rounded-xl mb-2 caption"
           append-icon="mdi-send"
           @click:append="addReply"
-          @keydown.enter.shift.exact.prevent="addReply()"
+          @keydown.enter.exact.prevent="addReply()"
         ></v-textarea>
         <div class="text-right">
           <v-btn

@@ -11,7 +11,7 @@
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon large>mdi-cube-outline</v-icon>
         </v-app-bar-nav-icon>
-        <v-chip small class="ma-1 caption white--text no-hover">Object</v-chip>
+        <v-chip small class="ma-1 caption grey white--text no-hover">Object</v-chip>
         <v-spacer />
         <v-btn
           v-if="$route.params.resourceId !== resource.id"
