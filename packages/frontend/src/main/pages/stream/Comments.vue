@@ -28,15 +28,22 @@
         </div> -->
       </div>
     </portal>
-    <v-row>
+    <v-row v-if="localComments.length === 0">
+      <v-col cols="12">
+        <no-data-placeholder>
+          <h2 class="space-grotesk">No comments here just yet!</h2>
+        </no-data-placeholder>
+      </v-col>
+    </v-row>
+    <v-row v-else>
       <v-col cols="12" class="mb-0">
         <p class="mb-0 mt-2">All this stream's comments are listed below.</p>
       </v-col>
       <v-col v-for="c in localComments" :key="c.id" cols="12" sm="6">
         <comment-list-item :comment="c" />
       </v-col>
-      <v-col cols="12" sm="6" class="align-center">
-        <infinite-loading spinner="waveDots" @infinite="infiniteHandler">
+      <v-col cols="12" class="align-center">
+        <infinite-loading :key="localComments[0].id" spinner="waveDots" @infinite="infiniteHandler">
           <div slot="no-more" class="caption py-10 mt-5">
             You've reached the end - no more comments.
           </div>
@@ -56,6 +63,7 @@ export default {
   name: 'Comments',
   components: {
     CommentListItem: () => import('@/main/components/comments/CommentListItem.vue'),
+    NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
     InfiniteLoading: () => import('vue-infinite-loading')
   },
   data() {
@@ -65,6 +73,9 @@ export default {
       commentFilter: 1,
       cursor: null
     }
+  },
+  mounted() {
+    this.$apollo.queries.comments.refetch()
   },
   apollo: {
     stream: {
@@ -91,7 +102,7 @@ export default {
           comments(
             streamId: $streamId
             resources: $resources
-            limit: 2
+            limit: 10
             archived: $archived
             cursor: $cursor
           ) {

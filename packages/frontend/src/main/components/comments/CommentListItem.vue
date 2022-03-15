@@ -1,6 +1,8 @@
 <template>
   <v-card
-    :class="`rounded-lg overflow-hidden ${hovered ? 'elevation-10' : ''}`"
+    :class="`rounded-lg overflow-hidden ${hovered ? 'elevation-10' : ''} ${
+      isUnread ? 'border' : ''
+    } `"
     style="transition: box-shadow 0.3s ease"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
@@ -94,6 +96,7 @@ export default {
             screenshot
             createdAt
             updatedAt
+            viewedAt
             resources {
               resourceType
               resourceId
@@ -131,7 +134,16 @@ export default {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
       return route
+    },
+    isUnread() {
+      if (!this.commentDetails) return
+      return new Date(this.commentDetails.updatedAt) - new Date(this.commentDetails.viewedAt) > 0
     }
   }
 }
 </script>
+<style scoped>
+.border {
+  outline: 2px solid #047efb;
+}
+</style>

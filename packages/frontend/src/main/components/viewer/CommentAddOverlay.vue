@@ -49,11 +49,11 @@
                 placeholder="Your comment..."
                 class="mouse rounded-xl caption elevation-15"
                 append-icon="mdi-send"
-                @keydown.enter.shift.exact.prevent="addComment()"
+                @keydown.enter.exact.prevent="addComment()"
               ></v-textarea>
               <v-btn
                 v-if="$loggedIn()"
-                v-tooltip="'Send comment (shift + enter)'"
+                v-tooltip="'Send comment (press enter)'"
                 icon
                 dark
                 large
@@ -98,10 +98,10 @@
               placeholder="Your comment..."
               class="mouse rounded-xl caption elevation-15"
               append-icon="mdi-send"
-              @keydown.enter.shift.exact.prevent="addComment()"
+              @keydown.enter.exact.prevent="addComment()"
             ></v-textarea>
             <v-btn
-              v-tooltip="'Send comment (shift + enter)'"
+              v-tooltip="'Send comment (press enter)'"
               icon
               dark
               large

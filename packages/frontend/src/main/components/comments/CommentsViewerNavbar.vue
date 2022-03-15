@@ -31,7 +31,7 @@
           v-for="comment in comments"
           :key="comment.id + '-card-sidebar'"
           no-gutters
-          :class="`my-2 property-row rounded-lg ${
+          :class="`${isUnread(comment) ? 'border' : ''} my-2 property-row rounded-lg ${
             $store.state.selectedComment && $store.state.selectedComment.id === comment.id
               ? 'elevation-5 selected'
               : ''
@@ -92,10 +92,18 @@ export default {
     return {
       expand: true
     }
+  },
+  methods: {
+    isUnread(comment) {
+      return new Date(comment.updatedAt) - new Date(comment.viewedAt) > 0
+    }
   }
 }
 </script>
 <style scoped>
+.border {
+  outline: 2px solid #047efb;
+}
 .property-row {
   transition: all 0.3s ease;
   background: rgba(120, 120, 120, 0.05);

@@ -22,7 +22,7 @@ module.exports = {
   Query: {
     async comment( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return await getComment( { id: args.id } )
+      return await getComment( { id: args.id, userId: context.userId } )
     },
 
     async comments( parent, args, context, info ) {
