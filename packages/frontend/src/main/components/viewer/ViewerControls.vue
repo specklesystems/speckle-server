@@ -3,7 +3,7 @@
     <v-card
       class="elevation-5 rounded-xl pl-3 py-0 d-flex align-center"
       height="44"
-      style="max-width: 90vw; overflow-x: scroll;"
+      style="max-width: 90vw; overflow-x: auto; overflow-y: hidden"
     >
       <v-btn
         v-show="showVisReset"

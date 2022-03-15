@@ -59,7 +59,7 @@ export default {
   },
   methods: {
     signOut() {
-      this.$mixpanel.track('Log Out', { type: 'action'  })
+      this.$mixpanel.track('Log Out', { type: 'action' })
       signOut()
     },
     switchTheme() {

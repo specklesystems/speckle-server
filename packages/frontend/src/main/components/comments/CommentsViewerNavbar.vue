@@ -10,7 +10,10 @@
           <v-icon small>mdi-comment-outline</v-icon>
         </v-list-item-action>
         <v-list-item-content>
-          <v-list-item-title>Comments</v-list-item-title>
+          <v-list-item-title>
+            Comments
+            <span class="grey--text">({{ comments.length }})</span>
+          </v-list-item-title>
         </v-list-item-content>
         <v-list-item-action class="pa-0 ma-0">
           <v-btn small icon @click.stop="expand = !expand">

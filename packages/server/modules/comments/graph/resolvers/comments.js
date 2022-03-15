@@ -3,7 +3,7 @@ const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const {  getStream } = require( `${appRoot}/modules/core/services/streams` )
 
-const { getComment, getComments, getComments2, createComment, createCommentReply, archiveComment } = require( `${appRoot}/modules/comments/services` )
+const { getComment, getComments, getComments2, createComment, createCommentReply, viewComment, archiveComment } = require( `${appRoot}/modules/comments/services` )
 
 const authorizeStreamAccess = async ( { streamId, userId, auth } ) => {
   const stream = await getStream( { streamId, userId } )
@@ -27,7 +27,7 @@ module.exports = {
 
     async comments( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return { ...await getComments2( args ) }
+      return { ...await getComments2( { ...args, userId: context.userId } ) }
     }
   },
   Comment: {
@@ -61,9 +61,18 @@ module.exports = {
       } )
       return id
     },
+
     async commentEdit( parent, args, context, info ) {
       // TODO
     },
+
+    // used for flagging a comment as viewed
+    async commentView( parent, args, context, info ) {
+      await authorizeResolver( context.userId, args.streamId, 'stream:reviewer' )
+      await viewComment( { userId: context.userId, commentId: args.commentId } )
+      return true
+    },
+
     async commentArchive( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
       await archiveComment( { ...args } )
@@ -74,11 +83,12 @@ module.exports = {
       } )
       return true 
     },
+
     async commentReply( parent, args, context, info ) {
-      // TODO
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       
       let id = await createCommentReply( { authorId: context.userId, parentCommentId: args.input.parentComment, text: args.input.text, data: args.input.data } )
+      // TODO: update last viewed of parent comment for our user
       
       await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-added', ...args.input, id, authorId: context.userId, updatedAt: Date.now(), createdAt: Date.now() }, 

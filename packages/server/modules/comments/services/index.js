@@ -9,6 +9,7 @@ const Branches = ( ) => knex( 'branches' )
 const Commits = () => knex( 'commits' )
 const Comments = () => knex( 'comments' )
 const CommentLinks = () => knex( 'comment_links' )
+const CommentViews = () => knex( 'comment_views' )
 
 const persistResourceLinks = async ( commentId, resources ) => 
   await Promise.all( resources.map( res => persistResourceLink( commentId, res ) ) )
@@ -37,8 +38,7 @@ const persistResourceLink = async ( commentId, { resourceId, resourceType } ) =>
   await CommentLinks().insert( { commentId, resourceId, resourceType } )
 }
 
-const getResourcesForComment = async ( { id } ) =>
-  await CommentLinks().where( { commentId: id } )
+const getResourcesForComment = async ( { id } ) => await CommentLinks().where( { commentId: id } )
 
 const getCommentLinksForResources = async ( streamId, resources ) => {
   const resourceIds = resources.map( r => r.resourceId )
@@ -94,6 +94,8 @@ module.exports = {
       await Comments().where( { id: commentResource.resourceId } ).update( { updatedAt: knex.fn.now( ) } )
     }
     
+    // await CommentViews().insert( { commentId: comment.id, userId: userId, viewedAt: knex.fn.now() } )
+    await module.exports.viewComment( { userId, commentId: comment.id } )
     return comment.id
   },
 
@@ -110,11 +112,19 @@ module.exports = {
     // TODO
   },
 
+  async viewComment( { userId, commentId } ) {
+    let q = CommentViews().insert( { commentId: commentId, userId: userId, viewedAt: knex.fn.now() } )
+      .onConflict( knex.raw( '("commentId","userId")' ) )
+      .merge()
+    await q
+  },
+
   async archiveComment( { commentId, archived = true } ) {
     return await Comments().where( { id: commentId } ).update( { archived } )
   },
 
   async getComment( { id } ) {
+    // TODO: implement
     // select * from "comments"
     // join(
     //   select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
@@ -147,14 +157,23 @@ module.exports = {
     return { items, cursor, totalCount: relevantComments.length }
   },
 
-  async getComments2( { resources, limit, cursor, replies = false, archived = false } ) {
-    // TODO: check object validity
+  async getComments2( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
+    // TODO: check object validity?
     
     let query = knex.with( 'comms', cte => {
       cte.select( '*' ).from( 'comments' )
       cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
+      
+      if ( userId ){
+        // link viewed At
+        cte.leftOuterJoin( 'comment_views', b => {
+          b.on( 'comment_views.commentId', '=', 'comments.id' )
+          b.andOn( 'comment_views.userId', '=', knex.raw( '?', userId ) )
+        } )
+      }
+
       cte.where( q => {
-        // link res
+        // link resources
         for ( let res of resources ) {
           q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
         }

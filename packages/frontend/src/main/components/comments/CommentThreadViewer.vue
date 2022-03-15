@@ -129,6 +129,7 @@ export default {
         query($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
             id
+            viewedAt
             replies(limit: 1000) {
               totalCount
               cursor
@@ -235,7 +236,18 @@ export default {
   watch: {
     'comment.expanded': {
       deep: true,
-      handler(newVal) {
+      async handler(newVal) {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation commentView($streamId: String!, $commentId: String!) {
+              commentView(streamId: $streamId, commentId: $commentId)
+            }
+          `,
+          variables: { streamId: this.$route.params.streamId, commentId: this.comment.id }
+        })
+
+        // eslint-disable-next-line vue/no-mutating-props
+        this.comment.viewedAt = Date.now()
         if (!newVal) return
         this.localReplies = []
         this.$apollo.queries.replyQuery.refetch()
@@ -245,7 +257,6 @@ export default {
   },
   methods: {
     copyCommentLinkToClip() {
-      // TODO
       let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
       let first = res.shift()
       let route = `${window.origin}/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`

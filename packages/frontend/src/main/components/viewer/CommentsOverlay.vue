@@ -34,7 +34,9 @@
               small
               icon
               :class="`elevation-5 pa-0 ma-0 mouse ${
-                comment.expanded || comment.bouncing ? 'dark white--text primary' : 'background'
+                comment.expanded || comment.bouncing || isUnread(comment)
+                  ? 'dark white--text primary'
+                  : 'background'
               }`"
               @click="comment.expanded ? collapseComment(comment) : expandComment(comment)"
             >
@@ -137,6 +139,7 @@ export default {
               text
               createdAt
               updatedAt
+              viewedAt
               data
               resources {
                 resourceId
@@ -274,6 +277,9 @@ export default {
     )
   },
   methods: {
+    isUnread(comment) {
+      return new Date(comment.updatedAt) - new Date(comment.viewedAt) > 0
+    },
     toggleComments() {
       this.showComments = !this.showComments
     },
@@ -437,6 +443,7 @@ export default {
       commentEl.classList.add('tada-once')
       let comment = this.localComments.find((c) => c.id === id)
       comment.bouncing = true
+      comment.updatedAt = Date.now()
       setTimeout(() => {
         commentEl.classList.remove('tada-once')
         comment.bouncing = false
