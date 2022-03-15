@@ -38,7 +38,7 @@ const persistResourceLink = async ( commentId, { resourceId, resourceType } ) =>
 }
 
 const getResourcesForComment = async ( { id } ) =>
-  await CommentLinks().where( { commentId: id } )
+  await CommentLinks().select( 'resourceId', 'resourceType' ).where( { commentId: id } )
 
 const getCommentLinksForResources = async ( streamId, resources ) => {
   const resourceIds = resources.map( r => r.resourceId )
@@ -75,7 +75,7 @@ module.exports = {
     if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
 
     const [ stream ] = streamResources
-    if ( stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
+    if ( stream && stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
 
     let comment = { ...input }
 

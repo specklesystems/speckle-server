@@ -32,7 +32,6 @@ describe( 'Comments @comments', () => {
     baz: 123
   }
   let commitId1, commitId2
-
   before( async () => {
     await beforeEachContext() 
     
@@ -162,7 +161,6 @@ describe( 'Comments @comments', () => {
   } )
 
   it( 'Should be able to comment on valid resources in any permutation', async () => {
-    //comment on branches too!!!
     const resourceCombinations = [
       [
         { resourceId: stream.id, resourceType: 'stream' } 
@@ -177,19 +175,19 @@ describe( 'Comments @comments', () => {
         { resourceId: testObject1.id, resourceType: 'object' } 
       ],
       [
-        // object overlay on object
+      // object overlay on object
         { resourceId: stream.id, resourceType: 'stream' },
         { resourceId: testObject1.id, resourceType: 'object' },
         { resourceId: testObject2.id, resourceType: 'object' } 
       ],
       [
-        // an object overlayed on a commit
+      // an object overlayed on a commit
         { resourceId: stream.id, resourceType: 'stream' },
         { resourceId: commitId1, resourceType: 'commit' },
         { resourceId: testObject2.id, resourceType: 'object' } 
       ],
       [
-        // an object overlayed on a commit
+      // an object overlayed on a commit
         { resourceId: stream.id, resourceType: 'stream' },
         { resourceId: commitId1, resourceType: 'commit' },
         { resourceId: testObject1.id, resourceType: 'object' },
@@ -202,6 +200,7 @@ describe( 'Comments @comments', () => {
         { resourceId: testObject1.id, resourceType: 'object' }        
       ]
     ]
+
 
     // yeah i know, Promise.all, but this is easier to debug...
     for ( const resources of resourceCombinations ) {
@@ -262,7 +261,7 @@ describe( 'Comments @comments', () => {
           data: { justSome: crs( { length: 10 } ) }
         }
       } ) )
-      await new Promise( resolve => setTimeout( resolve, 500 ) )
+      await new Promise( resolve => setTimeout( resolve, 50 ) )
     } 
 
     let comments = await getComments( { 
@@ -289,9 +288,92 @@ describe( 'Comments @comments', () => {
     expect( comments.items ).to.have.lengthOf( 2 )
     expect( createdComments.slice( 2, 4 ) ).deep.to.equal( comments.items.map( c => c.id ) )
   } )
-  it( 'Should handle very  and limit for queries' )
-  it( 'Should properly return replies for a comment' )
-  it( 'Should return all the referenced resources for a comment' )
+  it( 'Should properly return replies for a comment', async ( ) => {
+    const streamCommentId1 = await createComment( { 
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: [
+          { resourceId: stream.id, resourceType: 'stream' }
+        ],
+        text: crs( { length: 10 } ),
+        data: { justSome: crs( { length: 10 } ) }
+      }
+    } )
+
+    const commentId1 = await createComment( { 
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: [
+          { resourceId: streamCommentId1, resourceType: 'comment' }
+        ],
+        text: crs( { length: 10 } ),
+        data: { justSome: crs( { length: 10 } ) }
+      }
+    } )
+    const commentId2 = await createComment( { 
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: [
+          { resourceId: streamCommentId1, resourceType: 'comment' }
+        ],
+        text: crs( { length: 10 } ),
+        data: { justSome: crs( { length: 10 } ) }
+      }
+    } )
+    const replies = await getComments( { 
+      streamId: stream.id,
+      resources: [
+        { resourceId: streamCommentId1, resourceType: 'comment' },
+      ],
+    } )
+    expect( replies.items ).to.have.lengthOf( 2 )
+    expect( replies.items.map( i => i.id ) ).deep.to.equal( [ commentId1, commentId2 ] )
+  } )
+  it( 'Should return all the referenced resources for a comment', async () => {
+    const localObjectId = await createObject( stream.id, { anotherTestObject: 1 } )
+    const inputResources = [
+      { resourceId: stream.id, resourceType: 'stream' },
+      { resourceId: commitId1, resourceType: 'commit' },
+      { resourceId: localObjectId, resourceType: 'object' },
+      { resourceId: testObject2.id, resourceType: 'object' } 
+    ]
+    const queryResources = [
+      { resourceId: stream.id, resourceType: 'stream' },
+      { resourceId: localObjectId, resourceType: 'object' },
+    ]
+    await createComment( { 
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: inputResources,
+        text: crs( { length: 10 } ),
+        data: { justSome: crs( { length: 10 } ) }
+      }
+    } )
+    const comments = await getComments( {
+      streamId: stream.id,
+      resources: queryResources
+    } )
+    expect( comments.items ).to.have.lengthOf( 1 )
+    expect( comments.items[0].resources ).to.have.deep.members( inputResources )
+  } )
+  it( 'Should return the same data when querying a single comment vs a list of comments', async ( ) => {
+    const comments = await getComments( {
+      streamId: stream.id,
+      resources: [
+        { resourceId: stream.id, resourceType: 'stream' },
+        { resourceId: localObjectId, resourceType: 'object' },
+      ]
+    } )
+    expect( comments.items ).to.have.lengthOf( 1 )
+    const [ firstComment ] = comments.items
+    const comment = await getComment( firstComment.id )
+
+    expect( comment ).deep.to.equal( firstComment )
+  } )
   it( 'Should be able to edit a comment text and its context???' )
   it( 'Should not be allowed to edit a not existing comment' )
   it( 'Should be able to archive a comment' )
