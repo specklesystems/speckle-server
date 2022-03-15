@@ -1,0 +1,45 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "packages/server"
+    },
+    {
+      "path": "packages/preview-service"
+    },
+    {
+      "path": "packages/frontend"
+    },
+    {
+      "path": "packages/viewer"
+    },
+    {
+      "path": "packages/fileimport-service"
+    },
+    {
+      "path": "packages/webhook-service"
+    },
+    {
+      "path": "packages/objectloader"
+    }
+  ],
+  "settings": {
+    "explorer.confirmDelete": false,
+    "files.associations": {
+      "*.vue": "vue"
+    },
+    "vetur.format.defaultFormatterOptions": {
+      "js-beautify-html": {
+        "wrap_attributes": "force-expand-multiline"
+      },
+      "prettyhtml": {
+        "printWidth": 100,
+        "singleQuote": false,
+        "wrapAttributes": false,
+        "sortAttributes": false
+      }
+    }
+  }
+}
