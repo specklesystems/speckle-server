@@ -137,6 +137,12 @@ module.exports = ( app ) => {
       res.status( 201 ).end( )
     } )
 
+    busboy.on( 'error', async ( err ) => {
+      debug( 'speckle:upload-endpoint' )( `[User ${req.context.userId || '-'}] Upload error: ${err}` )
+      if ( !requestDropped ) res.status( 400 ).end( 'Upload request error. The server logs have more details' )
+      requestDropped = true
+    } )
+
     req.pipe( busboy )
   } )
 }

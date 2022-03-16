@@ -127,6 +127,12 @@ exports.init = async ( app, options ) => {
       }
       res.send( fileIds )
     } )
+
+    busboy.on( 'error', async ( err ) => {
+      console.log( `FileUpload error: ${err}` )
+      res.status( 400 ).end( 'Upload request error. The server logs have more details' )
+    } )
+
     req.pipe( busboy )
   } )
 }
