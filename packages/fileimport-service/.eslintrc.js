@@ -1,29 +1,13 @@
-module.exports = {
-  env: {
-    node: true,
-    commonjs: true,
-    es2021: true
-  },
-  parserOptions: {
-    ecmaVersion: 12
-  },
-  ignorePatterns: [ 'node_modules/*' ],
-  extends: 'eslint:recommended',
+/**
+ * Extends repo root config, only put changes here that are scoped to this specific package
+ * (if you already are - evaluate whether you really need package scoped linting rules)
+ */
+
+/** @type {import("eslint").Linter.Config} */
+const config = {
   rules: {
-    'object-curly-spacing': [ 'error', 'always' ],
-    'array-bracket-spacing': [ 'error', 'always' ],
-    'semi-spacing': [ 'error', { 'before': false, 'after': true } ],
-    'space-in-parens': [ 'error', 'always' ],
-    'space-before-blocks': 'error',
-    'space-infix-ops': 'error',
-    'comma-dangle': [ 'error', 'never' ],
-    'no-console': [ 'warn', { allow: [ 'warn', 'error' ] } ],
-    'space-unary-ops': 'error',
-    'no-var': 'error',
-    'no-alert': 'error',
-    'no-param-reassign': 'warn',
-    semi: [ 'error', 'never' ],
-    quotes: [ 'error', 'single' ],
-    eqeqeq: 'warn'
+    'no-console': ['warn', { allow: ['warn', 'error'] }]
   }
 }
+
+module.exports = config

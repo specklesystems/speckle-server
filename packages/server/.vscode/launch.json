@@ -1,0 +1,72 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch via NPM",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "runtimeArgs": ["run-script", "dev"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "name": "run script",
+      // "program": "${workspaceFolder}/scripts/duplicateUserMigration.js",
+      "program": "${file}",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node",
+      "console": "integratedTerminal"
+    },
+    {
+      "args": ["-g='Email verifications @emails'", "--timeout=10000", "--exit"],
+      // "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PORT": "0",
+        "POSTGRES_URL": "localhost",
+        "POSTGRES_USER": "speckle",
+        "POSTGRES_PASSWORD": "speckle",
+        "POSTGRES_DB": "speckle2_test",
+        "NODE_ENV": "test"
+      },
+      "internalConsoleOptions": "openOnSessionStart",
+      "name": "Mocha Tests",
+      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node"
+    },
+    {
+      "name": "NPM test",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "test",
+        "--",
+        "-g='Objects @core-objects'",
+        "--exit"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        // "POSTGRES_URL": "postgres://speckle:speckle@localhost/speckle2_test",
+        "DEBUG": "server:*"
+      },
+      // "envFile": "${workspaceFolder}/.env",
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "pwa-node"
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Launch Program",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/bin/www"
+    }
+  ]
+}

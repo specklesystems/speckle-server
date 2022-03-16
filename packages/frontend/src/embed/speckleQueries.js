@@ -1,4 +1,4 @@
-import gql from "graphql-tag";
+import gql from 'graphql-tag'
 
 export const serverInfoQuery = `
   query ServerInfo {
@@ -40,5 +40,3 @@ export const branchLastCommitQuery = `
     }
   }
 `
-
-

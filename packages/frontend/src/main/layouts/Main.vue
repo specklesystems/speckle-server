@@ -138,6 +138,7 @@ export default {
     if (mixpanelId !== null) {
       this.$mixpanel.identify(mixpanelId)
       this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
+      this.$mixpanel.people.set('Identified', true)
     }
     this.$mixpanel.track('Visit Web App')
   },

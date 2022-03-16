@@ -6,7 +6,6 @@ packages/viewer/dist
 *.crt
 .nyc_output
 coverage/
-.vscode
 .idea
 test-queries
 
@@ -21,3 +20,4 @@ packages/frontend/schema.graphql
 packages/server/reports*
 
 **/venv/**
+**/start/

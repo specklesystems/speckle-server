@@ -1,5 +1,10 @@
 {
-  "include": [
-    "./src/**/*"
-  ]
+  "extends": "../../jsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "module": "es2020"
+  },
+  "include": ["src"]
 }

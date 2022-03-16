@@ -1,81 +1,88 @@
 'use strict'
-const crs = require( 'crypto-random-string' )
-const appRoot = require( 'app-root-path' )
-const knex = require( `${appRoot}/db/knex` )
+const crs = require('crypto-random-string')
+const appRoot = require('app-root-path')
+const knex = require(`${appRoot}/db/knex`)
 
 const Streams = () => knex( 'streams' )
 const Objects = () => knex( 'objects' )
-const Branches = ( ) => knex( 'branches' )
 const Commits = () => knex( 'commits' )
 const Comments = () => knex( 'comments' )
 const CommentLinks = () => knex( 'comment_links' )
 const CommentViews = () => knex( 'comment_views' )
 
-const persistResourceLinks = async ( commentId, resources ) => 
-  await Promise.all( resources.map( res => persistResourceLink( commentId, res ) ) )
+const persistResourceLinks = async (commentId, resources) =>
+  await Promise.all(resources.map(res => persistResourceLink(commentId, res)))
 
-const persistResourceLink = async ( commentId, { resourceId, resourceType } ) => {
+const persistResourceLink = async (commentId, { resourceId, resourceType }) => {
   //should the resource belonging to the stream stuff be validated here?
   let query
-  switch ( resourceType ) {
-  case 'stream':
-    query = Streams()
-    break
-  case 'commit':
-    query = Commits()
-    break
-  case 'object':
-    query = Objects()
-    break
-  case 'comment':
-    query = Comments()
-    break
-  default:
-    throw Error( `resource type ${resourceType} is not supported as a comment target` )
+  switch (resourceType) {
+    case 'stream':
+      query = Streams()
+      break
+    case 'commit':
+      query = Commits()
+      break
+    case 'object':
+      query = Objects()
+      break
+    case 'comment':
+      query = Comments()
+      break
+    default:
+      throw Error(`resource type ${resourceType} is not supported as a comment target`)
   }
   //make sure, that the referenced resource exists
-  if ( !( await query.where( { id: resourceId } ) ).length ) throw Error ( `${resourceType}: ${resourceId} doesn't exist, you cannot comment on it` )
-  await CommentLinks().insert( { commentId, resourceId, resourceType } )
+  if (!(await query.where({ id: resourceId })).length) throw Error(`${resourceType}: ${resourceId} doesn't exist, you cannot comment on it`)
+  await CommentLinks().insert({ commentId, resourceId, resourceType })
 }
 
-const getResourcesForComment = async ( { id } ) => await CommentLinks().where( { commentId: id } )
+const getResourcesForComment = async ({ id }) => 
+  await CommentLinks().select('resourceId', 'resourceType').where({ commentId: id })
 
-const getCommentLinksForResources = async ( streamId, resources ) => {
-  const resourceIds = resources.map( r => r.resourceId )
-  let commentLinks = await CommentLinks().whereIn( 'resourceId', resourceIds )
-  const objectIds = resources.filter( res => res.resourceType === 'object' ).map( r => r.resourceId )
-  if ( objectIds.length ) {
-    const streamObjectIds = ( await Objects().where( { streamId } ).whereIn( 'id', objectIds ) ).map( o => o.id )
+const getCommentLinksForResources = async (streamId, resources, archived) => {
+  const resourceIds = resources.map(r => r.resourceId)
+  let query = CommentLinks()
+    .join('comments', 'comment_links.commentId', '=', 'comments.id')
+    .whereIn('resourceId', resourceIds)
+    .select('commentId', 'resourceId', 'resourceType', 'archived')
+  
+  if (!archived) query = query.where({ archived })
+  let commentLinks = await query
+
+  const objectIds = resources.filter(res => res.resourceType === 'object').map(r => r.resourceId)
+  if (objectIds.length) {
+    const streamObjectIds = (await Objects().where({ streamId }).whereIn('id', objectIds)).map(o => o.id)
     // if a comment link is of type object, check if the object belongs to the stream, other types do not need filtering
     // since all other types are directly linked to a stream
-    commentLinks = commentLinks.filter( link => link.resourceType === 'object' ? streamObjectIds.includes( link.resourceId ) : true ) 
+    commentLinks = commentLinks.filter(link => link.resourceType === 'object' ? streamObjectIds.includes(link.resourceId) : true)
   }
 
   // group comment links by comment ids, so that the resources can be filtered below
   let commentGroups = {}
-  for ( const link of commentLinks ) {
-    if ( !( link.commentId in commentGroups ) ) commentGroups[link.commentId] = []
-    commentGroups[link.commentId].push( link.resourceId )
+  for (const link of commentLinks) {
+    if (!(link.commentId in commentGroups)) commentGroups[link.commentId] = []
+    commentGroups[link.commentId].push(link.resourceId)
   }
 
   const relevantCommentIds = Object
-    .keys( commentGroups )
-    .filter( 
+    .keys(commentGroups)
+    .filter(
       // make sure, that the given comment targets exactly the same set of resources, as the input requested 
-      commentId => commentGroups[commentId].length === resourceIds.length && resourceIds.every( resId => commentGroups[commentId].includes( resId ) )
+      commentId => commentGroups[commentId].length === resourceIds.length && resourceIds.every(resId => commentGroups[commentId].includes(resId))
     )
-  return commentLinks.filter( l => relevantCommentIds.includes( l.commentId ) )
-} 
+  return commentLinks.filter(l => relevantCommentIds.includes(l.commentId))
+}
 
-module.exports = { 
-  async createComment( { userId, input } ) {
-    if ( input.resources.length < 1 ) throw Error( 'Must specify at least one resource as the comment target' )
+module.exports = {
+  async createComment({ userId, input }) {
+    if (input.resources.length < 1) throw Error('Must specify at least one resource as the comment target')
 
-    const streamResources = input.resources.filter( r => r.resourceType === 'stream' )
-    if ( streamResources.length > 1 ) throw Error( 'Commenting on multiple streams is not supported' )
-    
-    const [ stream ] = streamResources
-    if ( stream.resourceId !== input.streamId ) throw Error( 'Input streamId doesn\'t match the stream resource.resourceId' )
+    const streamResources = input.resources.filter(r => r.resourceType === 'stream')
+    if (streamResources.length > 1) throw Error('Commenting on multiple streams is not supported')
+
+    const [stream] = streamResources
+    if (stream && stream.resourceId !== input.streamId) throw Error('Input streamId doesn\'t match the stream resource.resourceId')
 
     const commentResource = input.resources.find( r => r.resourceType === 'comment' )
 
@@ -84,7 +91,7 @@ module.exports = {
     delete comment.resources
     delete comment.streamId
 
-    comment.id = crs( { length: 10 } )
+    comment.id = crs({ length: 10 })
     comment.authorId = userId
     
     await Comments().insert( comment )
@@ -107,7 +114,7 @@ module.exports = {
     return comment.id
   },
 
-  async editComment( {} ) {
+  async editComment({ }) {
     // TODO
   },
 
@@ -116,10 +123,6 @@ module.exports = {
       .onConflict( knex.raw( '("commentId","userId")' ) )
       .merge()
     await query
-  },
-
-  async archiveComment( { commentId, archived = true } ) {
-    return await Comments().where( { id: commentId } ).update( { archived } )
   },
 
   async getComment( { id, userId = null } ) {
@@ -143,26 +146,32 @@ module.exports = {
     return res
   },
 
-  async getComments2( { streamId, resources, limit, cursor, archived = false } ) {
-    // maybe since we are so streamId limited, asking for a streamId here would make sense
-    const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
-    const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
-    let query = Comments().whereIn( 'id', relevantComments ).orderBy( 'createdAt' )
-    if ( cursor ) query = query.where( 'createdAt', '>', cursor.toISOString() )
+  async archiveComment({ commentId, archived = true }) {
+    let [comments] = await Comments().where({ id: commentId }).count()
+    if (parseInt(comments.count) < 1) throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+    return await Comments().where({ id: commentId }).update({ archived })
+  },
 
-    if ( !archived ) query = query.andWhere( { archived } )
+  async getComments({ streamId, resources, limit, cursor, archived = false }) {
+    // maybe since we are so streamId limited, asking for a streamId here would make sense
+    const commentLinks = await getCommentLinksForResources(streamId, resources, archived)
+    const relevantComments = [...new Set(commentLinks.map(l => l.commentId))]
+    let query = Comments().whereIn('id', relevantComments).orderBy('createdAt')
+    if (cursor) query = query.where('createdAt', '>', cursor.toISOString())
+
+    if (!archived) query = query.andWhere({ archived })
     const defaultLimit = 100
-    let items = await query.limit( limit ?? defaultLimit )
-    if ( items.length ) {
+    let items = await query.limit(limit ?? defaultLimit)
+    if (items.length) {
       cursor = items[items.length - 1].createdAt
     } else {
       cursor = null
     }
-    items = await Promise.all( items.map( async comment => ( { ...comment, resources: await getResourcesForComment( comment ) } ) ) )
+    items = await Promise.all(items.map(async comment => ({ ...comment, resources: await getResourcesForComment(comment) })))
     return { items, cursor, totalCount: relevantComments.length }
   },
 
-  async getComments( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
+  async getComments2( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
     let query = knex.with( 'comms', cte => {
       cte.select( '*' ).from( 'comments' )
       cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
@@ -184,7 +193,7 @@ module.exports = {
       if ( !replies ) {
         cte.whereNull( 'parentComment' )
       }
-      cte.where( 'archived', '=', false )
+      cte.where( 'archived', '=', archived )
     } )
 
     query.select( '*' ).from( 'comms' )

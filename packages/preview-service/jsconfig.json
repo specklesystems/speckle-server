@@ -1,0 +1,7 @@
+{
+  "extends": "../../jsconfig.base.json",
+  "compilerOptions": {
+    "module": "es2020"
+  },
+  "include": ["*.js", "bg_service", "bin/www", "render_page", "routes"]
+}

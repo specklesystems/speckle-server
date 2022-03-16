@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "index.js",
   "homepage": "https://speckle.systems",
@@ -11,9 +11,18 @@
     "directory": "packages/objectloader"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .js,.ts"
   },
-  "keywords": ["speckle", "aec", "speckle api"],
+  "keywords": [
+    "speckle",
+    "aec",
+    "speckle api"
+  ],
   "author": "AEC Systems",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "undici": "^4.14.1",
+    "eslint": "^8.11.0"
+  }
 }
