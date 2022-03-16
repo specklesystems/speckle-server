@@ -6,7 +6,7 @@ exports.up = async ( knex ) => {
     // table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.specificType( 'createdAt', 'TIMESTAMPTZ(3)' ).defaultTo( knex.fn.now( ) )
     table.specificType( 'updatedAt', 'TIMESTAMPTZ(3)' ).defaultTo( knex.fn.now( ) )
-    table.string( 'text' )
+    table.text( 'text' )
     table.text( 'screenshot' )
     table.jsonb( 'data' )
     table.boolean( 'archived' ).defaultTo( false ).notNullable()
