@@ -13,6 +13,7 @@
     "source.fixAll.eslint": true
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "search.useParentIgnoreFiles": true,
   "cSpell.enableFiletypes": ["vue-html", "vue-postcss"],
   "cSpell.userWords": ["Matomo", "SUPPRESSMSGBOXES", "matomo"],
   "cSpell.words": ["mixpanel"]
