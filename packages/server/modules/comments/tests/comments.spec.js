@@ -45,7 +45,7 @@ describe( 'Comments @comments', () => {
     commitId2 = await createCommitByBranchName( { streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject2.id, authorId: user.id } )
   } )
 
-  it( 'Should not be allowed to comment without specifying atleast one target resource', async () => {
+  it( 'Should not be allowed to comment without specifying at least one target resource', async () => {
     return await createComment( {
       userId: user.id,
       input: {
@@ -56,7 +56,7 @@ describe( 'Comments @comments', () => {
       }
     } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.be.equal( 'Must specify atleast one resource as the comment target' ) )
+      .catch( error => expect( error.message ).to.be.equal( 'Must specify at least one resource as the comment target' ) )
   } )
   it( 'Should not be able to comment resources that do not belong to the input streamId', async () => {
     // need to check streamId - commit link
@@ -144,6 +144,7 @@ describe( 'Comments @comments', () => {
         .catch( error => expect( error.message ).to.contain( ': this doesnt exist dummy doesn\'t exist, you cannot comment on it' ) )
     }
   } )
+
   it( 'Should not be allowed to comment on an non supported resource type', async () => {
     await createComment( {
       userId: user.id,
@@ -217,6 +218,7 @@ describe( 'Comments @comments', () => {
       expect( commentId ).to.exist
     }
   } )
+
   it( 'Should not return the same comment multiple times for multi resource comments', async () => {
     const localObjectId = await createObject( stream.id, { testObject: 1 } )
 
@@ -232,7 +234,7 @@ describe( 'Comments @comments', () => {
             { resourceId: localObjectId, resourceType: 'object' }
           ],
           text: crs( { length: 10 } ),
-          data: { justSome: crs( { length: 10 } ) }
+          data: { justSome: 'distinct test' + crs( { length: 10 } ) }
         }
       } )
     }
@@ -243,8 +245,15 @@ describe( 'Comments @comments', () => {
         { resourceId: localObjectId, resourceType: 'object' }
       ]
     } )
-    expect( comments.items ).to.have.lengthOf( commentCount )
+
+    let ids = comments.items.map( c => c.id)
+    let set = new Set( ids )
+    expect(set.size).to.equal(ids.length)
+    
+    // Note: since we switched to an "or" clause, this does not apply anymore. 
+    // expect( comments.items ).to.have.lengthOf( commentCount )
   } )
+
   it( 'Should handle cursor and limit for queries', async () => {
     const localObjectId = await createObject( stream.id, { testObject: 'something completely different' } )
 
@@ -276,7 +285,7 @@ describe( 'Comments @comments', () => {
       limit: 2
     } )
     expect( comments.items ).to.have.lengthOf( 2 )
-    expect( createdComments.slice( 0, 2 ) ).deep.to.equal( comments.items.map( c => c.id ) )
+    expect( createdComments.reverse().slice( 0, 2 ) ).deep.to.equal( comments.items.map( c => c.id ) ) // note: reversing as default order is newest first now 
 
     const cursor = comments.items[1].createdAt
     comments = await getComments( {
@@ -291,6 +300,7 @@ describe( 'Comments @comments', () => {
     expect( comments.items ).to.have.lengthOf( 2 )
     expect( createdComments.slice( 2, 4 ) ).deep.to.equal( comments.items.map( c => c.id ) )
   } )
+
   it( 'Should properly return replies for a comment', async () => {
     const streamCommentId1 = await createComment( {
       userId: user.id,
@@ -315,6 +325,7 @@ describe( 'Comments @comments', () => {
         data: { justSome: crs( { length: 10 } ) }
       }
     } )
+
     const commentId2 = await createComment( {
       userId: user.id,
       input: {
@@ -333,8 +344,9 @@ describe( 'Comments @comments', () => {
       ],
     } )
     expect( replies.items ).to.have.lengthOf( 2 )
-    expect( replies.items.map( i => i.id ) ).deep.to.equal( [ commentId1, commentId2 ] )
+    expect( replies.items.reverse().map( i => i.id ) ).deep.to.equal( [ commentId1, commentId2 ] )
   } )
+
   it( 'Should return all the referenced resources for a comment', async () => {
     const localObjectId = await createObject( stream.id, { anotherTestObject: 1 } )
     const inputResources = [
@@ -356,13 +368,17 @@ describe( 'Comments @comments', () => {
         data: { justSome: crs( { length: 10 } ) }
       }
     } )
+
     const comments = await getComments( {
       streamId: stream.id,
       resources: queryResources
     } )
-    expect( comments.items ).to.have.lengthOf( 1 )
+    // expect( comments.items ).to.have.lengthOf( 1 ) // not applicable anymore, as we're "OR"-ing 
+    let resIds = comments.items[0].resources.map(r => r.resourceId ).sort()
+    inputResources.sort() // order is not ensured
     expect( comments.items[0].resources ).to.have.deep.members( inputResources )
   } )
+
   it( 'Should return the same data when querying a single comment vs a list of comments', async () => {
     const localObjectId = await createObject( stream.id, { anotherTestObject: 42 } )
     await createComment( {
@@ -380,16 +396,22 @@ describe( 'Comments @comments', () => {
     const comments = await getComments( {
       streamId: stream.id,
       resources: [
-        { resourceId: stream.id, resourceType: 'stream' },
         { resourceId: localObjectId, resourceType: 'object' },
       ]
     } )
     expect( comments.items ).to.have.lengthOf( 1 )
     const [ firstComment ] = comments.items
-    const comment = await getComment( firstComment.id )
+    const comment = await getComment( { id: firstComment.id } )
+    
+    // the getComments query brings along some extra garbage i'm lazy to 
+    delete firstComment.total_count
+    delete firstComment.resourceType
+    delete firstComment.resourceId
+    delete firstComment.commentId 
 
     expect( comment ).deep.to.equal( firstComment )
   } )
+  
   it( 'Should be able to edit a comment text and its context???' )
   it( 'Should not be allowed to edit a not existing comment' )
   it( 'Should be able to archive a comment', async () => {
@@ -405,17 +427,17 @@ describe( 'Comments @comments', () => {
       }
     } )
 
-    let comment = await getComment( commentId )
+    let comment = await getComment( {id: commentId} )
     expect( comment.archived ).to.equal( false )
 
     await archiveComment( { commentId } )
 
-    comment = await getComment( commentId )
+    comment = await getComment( { id: commentId } )
     expect( comment.archived ).to.equal( true )
 
     await archiveComment( { commentId, archived: false } )
 
-    comment = await getComment( commentId )
+    comment = await getComment( {id: commentId} )
     expect( comment.archived ).to.equal( false )
   } )
   it( 'Should not be allowed to archive a not existing comment', async () => {
@@ -471,8 +493,8 @@ describe( 'Comments @comments', () => {
       limit: 100,
       archived: true
     } )
-    expect( comments.totalCount ).to.be.equal( commentCount )
-    expect( comments.items.length ).to.be.equal( commentCount )
+    expect( comments.totalCount ).to.be.equal( archiveCount )
+    expect( comments.items.length ).to.be.equal( archiveCount )
   } )
   it( 'Should publish events to pubsub, test it by registering a subscriber' )
   it( 'Should be able to write a short novel as comment text', async () => {
@@ -488,7 +510,7 @@ describe( 'Comments @comments', () => {
       }
     } )
 
-    const comment = await getComment( commentId )
+    const comment = await getComment( { id: commentId } )
     expect( comment.text ).to.equal( aShortNovel )
   } )
 } )

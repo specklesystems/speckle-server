@@ -152,7 +152,7 @@ module.exports = {
     return await Comments().where({ id: commentId }).update({ archived })
   },
 
-  async getComments({ streamId, resources, limit, cursor, archived = false }) {
+  async getCommentsOld({ streamId, resources, limit, cursor, archived = false }) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
     const commentLinks = await getCommentLinksForResources(streamId, resources, archived)
     const relevantComments = [...new Set(commentLinks.map(l => l.commentId))]
@@ -171,9 +171,9 @@ module.exports = {
     return { items, cursor, totalCount: relevantComments.length }
   },
 
-  async getComments2( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
+  async getComments( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
     let query = knex.with( 'comms', cte => {
-      cte.select( '*' ).from( 'comments' )
+      cte.select( ).distinctOn('id').from( 'comments' )
       cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
       
       if ( userId ){
@@ -196,7 +196,7 @@ module.exports = {
       cte.where( 'archived', '=', archived )
     } )
 
-    query.select( '*' ).from( 'comms' )
+    query.select( ).from( 'comms' )
     
     // total count coming from our cte
     query.joinRaw( 'right join (select count(*) from comms) c(total_count) on true' )
