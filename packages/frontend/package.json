@@ -7,7 +7,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "build:setup": "vue-cli-service build",
-    "serve:setup": "vue-cli-service serve"
+    "serve:setup": "vue-cli-service serve",
+    "lint": "eslint . --ext .js,.ts,.vue"
   },
   "dependencies": {
     "@speckle/viewer": "^2.2.6",
@@ -46,13 +47,12 @@
     "@vue/cli-plugin-vuex": "~4.3.0",
     "@vue/cli-service": "~4.3.0",
     "babel-eslint": "^10.1.0",
-    "eslint": "^7.15.0",
-    "eslint-config-prettier": "^6.15.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
     "eslint-loader": "^4.0.2",
-    "eslint-plugin-prettier": "^3.2.0",
-    "eslint-plugin-vue": "^7.2.0",
+    "eslint-plugin-vue": "^8.5.0",
     "graphql-tag": "^2.11.0",
-    "prettier": "^2.2.1",
+    "prettier": "^2.5.1",
     "sass": "~1.32.6",
     "sass-loader": "^8.0.0",
     "vue-cli-plugin-apollo": "~0.21.3",

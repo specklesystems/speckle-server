@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     trackSignIn(strategyName) {
-      this.$mixpanel.track('Sign In', {
+      this.$mixpanel.track('Log In', {
         isInvite: this.inviteId !== null,
         type: 'action',
         provider: strategyName

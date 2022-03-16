@@ -12,14 +12,14 @@ workflows:
       - test_server
   deploy-latest:
     jobs:
-      - docker_build_and_deploy:
+      - build:
           context: main-builds
           filters:
             branches:
               only: main
   deploy-prod:
     jobs:
-      - docker_build_and_deploy:
+      - build:
           context: main-builds
           filters:
             tags:
@@ -28,11 +28,11 @@ workflows:
               ignore: /.*/
   ci-test:
     jobs:
-      - docker_build_and_deploy:
+      - build:
           context: main-builds
           filters:
             branches:
-              only: gergo/helmChartTest
+              only: gergo/noCD
 
 jobs:
   test_server:
@@ -72,18 +72,13 @@ jobs:
       - store_artifacts:
           path: packages/server/reports/test-results.xml
 
-  docker_build_and_deploy:
+  build:
     docker:
-      - image: circleci/python:3.6-buster
+      - image: circleci/python:3.7
     steps:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - run:
-          name: Install kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod u+x ./kubectl
       - run:
           name: Build Frontend
           command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
@@ -109,29 +104,3 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
-
-      - run:
-          name: Deploy
-          command: |
-            RELEASE_VERSION=$(./.circleci/get_version.sh)
-            if [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              ./.circleci/deploy.sh
-              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_1_RELEASE} ./.circleci/deploy_in_new_setup.sh
-              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_RELEASE} ./.circleci/deploy_in_new_setup.sh
-            else
-              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_2_LATEST} ./.circleci/deploy_in_new_setup.sh
-              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_3_LATEST} ./.circleci/deploy_in_new_setup.sh
-              env K8S_CLUSTER=LON1 K8S_NAMESPACE=${K8S_NAMESPACE_LON1_4_LATEST} ./.circleci/deploy_in_new_setup.sh
-            fi
-      - run:
-          name: Test deployment
-          command: |
-            ./utils/test-deployment/install_prerequisites.sh
-            RELEASE_VERSION=$(./.circleci/get_version.sh)
-            if [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              ./utils/test-deployment/run_tests.py https://speckle.xyz
-              ./utils/test-deployment/run_tests.py ${SPECKLE_URL_TOR1_1_RELEASE}
-            else
-              ./utils/test-deployment/run_tests.py https://latest.speckle.dev
-              ./utils/test-deployment/run_tests.py ${SPECKLE_URL_TOR1_1_LATEST}
-            fi

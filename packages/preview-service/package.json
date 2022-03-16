@@ -11,7 +11,8 @@
   },
   "scripts": {
     "dev": "DEBUG='preview-service:*' nodemon --trace-deprecation ./bin/www",
-    "build-fe": "webpack --env dev --config webpack.config.render_page.js && webpack --env build --config webpack.config.render_page.js"
+    "build-fe": "webpack --env dev --config webpack.config.render_page.js && webpack --env build --config webpack.config.render_page.js",
+    "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
     "@speckle/objectloader": "file:../objectloader",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",
+    "eslint": "^8.11.0",
     "babel-loader": "^8.2.2",
     "clean-webpack-plugin": "^4.0.0-alpha.0",
     "html-webpack-plugin": "^5.3.1",

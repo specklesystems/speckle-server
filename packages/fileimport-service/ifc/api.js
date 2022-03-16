@@ -6,14 +6,10 @@ const bcrypt = require( 'bcrypt' )
 const knex = require( '../knex' )
 const Streams = ( ) => knex( 'streams' )
 const Branches = ( ) => knex( 'branches' )
-const Commits = ( ) => knex( 'commits' )
 const Objects = ( ) => knex( 'objects' )
 const Closures = ( ) => knex( 'object_children_closure' )
 const ApiTokens = ( ) => knex( 'api_tokens' )
 const TokenScopes = ( ) => knex( 'token_scopes' )
-
-const StreamCommits = ( ) => knex( 'stream_commits' )
-const BranchCommits = ( ) => knex( 'branch_commits' )
 
 module.exports = class ServerAPI {
 

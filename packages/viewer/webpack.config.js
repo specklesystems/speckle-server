@@ -1,14 +1,13 @@
-/* global __dirname */
-const { CleanWebpackPlugin } = require( 'clean-webpack-plugin' )
-const path = require( 'path' )
-const yargs = require( 'yargs' )
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const path = require('path')
+const yargs = require('yargs')
 const env = yargs.argv.env
 
 let libraryName = 'Speckle'
 
 let outputFile, mode
 
-if ( env === 'build' ) {
+if (env === 'build') {
   mode = 'production'
   outputFile = libraryName + '.js'
 } else {
@@ -18,33 +17,31 @@ if ( env === 'build' ) {
 
 const config = {
   mode: mode,
-  entry: path.resolve( __dirname + '/src/index.js' ),
+  entry: path.resolve(__dirname + '/src/index.js'),
   target: 'web',
   devtool: 'source-map',
   output: {
-    path: path.resolve( __dirname + '/dist' ) ,
+    path: path.resolve(__dirname + '/dist'),
     filename: outputFile,
     library: libraryName,
     libraryTarget: 'umd',
-    globalObject: 'this',
+    globalObject: 'this'
   },
   module: {
     rules: [
       {
         test: /(\.jsx|\.js|\.ts|\.tsx)$/,
         use: {
-          loader: 'babel-loader',
+          loader: 'babel-loader'
         },
-        exclude: /(node_modules|bower_components)/,
-      },
-    ],
+        exclude: /(node_modules|bower_components)/
+      }
+    ]
   },
-  plugins: [
-    new CleanWebpackPlugin( { cleanStaleWebpackAssets: false } ),
-  ],
+  plugins: [new CleanWebpackPlugin({ cleanStaleWebpackAssets: false })],
   resolve: {
-    modules: [ path.resolve( './node_modules' ), path.resolve( './src' ) ],
-    extensions: [ '.json', '.js' ],
+    modules: [path.resolve('./node_modules'), path.resolve('./src')],
+    extensions: ['.json', '.js']
   }
 }
 

@@ -1,8 +1,16 @@
 {
   "name": "root",
   "private": true,
+  "scripts": {
+    "lint": "eslint . --ext .js,.ts,.vue"
+  },
   "devDependencies": {
+    "@types/eslint": "^8.4.1",
     "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.5.1",
+    "graphql-tag": "^2.11.0",
     "lerna": "^3.22.1"
   },
   "config": {

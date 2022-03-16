@@ -1,6 +1,5 @@
 'use strict'
 
-const crypto = require( 'crypto' )
 const knex = require( '../knex' )
 
 const { getFileStream } = require( './filesApi' )

@@ -1,0 +1,62 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "🏡 root"
+    },
+    {
+      "path": "packages/server",
+      "name": "🖥️ server"
+    },
+    {
+      "path": "packages/frontend",
+      "name": "🪟 frontend"
+    },
+    {
+      "path": "packages/preview-service",
+      "name": "🖼️ preview-service"
+    },
+    {
+      "path": "packages/viewer",
+      "name": "🔎 viewer"
+    },
+    {
+      "path": "packages/fileimport-service",
+      "name": "💾 fileimport-service"
+    },
+    {
+      "path": "packages/webhook-service",
+      "name": "✉️ webhook-service"
+    },
+    {
+      "path": "packages/objectloader",
+      "name": "🌐 objectloader"
+    }
+  ],
+  "settings": {
+    // Some settings below are duplicated in root/.vscode, incase the repo is opened without targetting the workspace file
+    // I don't think there's a way to force users to open the project as a workspace always
+    "explorer.confirmDelete": false,
+    "files.associations": {
+      "*.vue": "vue"
+    },
+    "editor.formatOnPaste": true,
+    "editor.multiCursorModifier": "ctrlCmd",
+    "editor.snippetSuggestions": "top",
+    "eslint.format.enable": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "extensions": {
+    // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
+    // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
+
+    // List of extensions which should be recommended for users of this workspace.
+    "recommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "octref.vetur"],
+    // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
+    "unwantedRecommendations": []
+  }
+}
