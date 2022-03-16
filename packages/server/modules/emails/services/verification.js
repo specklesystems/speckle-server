@@ -1,5 +1,3 @@
-require('../../../bootstrap')
-
 const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
 
