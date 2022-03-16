@@ -206,6 +206,9 @@ export default {
             data.commentActivity.expanded = false
             data.commentActivity.hovered = false
             data.commentActivity.bouncing = false
+            if (data.commentActivity.authorId === this.$userId()) {
+              data.commentActivity.viewedAt = Date.now()
+            }
             this.localComments.push(data.commentActivity)
             setTimeout(() => {
               this.updateCommentBubbles()
@@ -229,15 +232,6 @@ export default {
     },
     flatComments() {
       return this.comments ? this.localComments : []
-    }
-  },
-  watch: {
-    '$apollo.loading'(newVal) {
-      // if (newVal) return
-      // if (this.openCommentOnInit) {
-      //   this.expandComment({ id: this.openCommentOnInit })
-      //   this.openCommentOnInit = null
-      // }
     }
   },
   mounted() {

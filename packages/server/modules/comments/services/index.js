@@ -177,7 +177,6 @@ module.exports = {
 
       cte.where( q => {
         // link resources
-        // TODO: check object validity?
         for ( let res of resources ) {
           q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
         }
