@@ -6,7 +6,6 @@ packages/viewer/dist
 *.crt
 .nyc_output
 coverage/
-.vscode
 .idea
 test-queries
 
