@@ -24,15 +24,15 @@
       "console": "integratedTerminal"
     },
     {
-      "args": ["-g='Email verifications @emails'", "--timeout=10000", "--exit"],
+      "args": ["-g='@comments'", "--timeout=10000", "--exit"],
       // "envFile": "${workspaceFolder}/.env",
       "env": {
         "PORT": "0",
-        "POSTGRES_URL": "localhost",
-        "POSTGRES_USER": "speckle",
-        "POSTGRES_PASSWORD": "speckle",
-        "POSTGRES_DB": "speckle2_test",
-        "NODE_ENV": "test"
+        "POSTGRES_URL": "postgresql://localhost:5432/speckle2_test",
+        // "POSTGRES_USER": "speckle",
+        // "POSTGRES_PASSWORD": "speckle",
+        // "POSTGRES_DB": "speckle2_test",
+        // "NODE_ENV": "test"
       },
       "internalConsoleOptions": "openOnSessionStart",
       "name": "Mocha Tests",
@@ -48,7 +48,7 @@
         "run-script",
         "test",
         "--",
-        "-g='Objects @core-objects'",
+        "-g='Comments @comments'",
         "--exit"
       ],
       "console": "integratedTerminal",

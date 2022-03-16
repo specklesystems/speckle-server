@@ -9,13 +9,19 @@ const { createStream } = require( `${appRoot}/modules/core/services/streams` )
 const { createCommitByBranchName } = require( `${appRoot}/modules/core/services/commits` )
 
 const { createObject } = require( `${appRoot}/modules/core/services/objects` )
-const { createComment, getComments, getComment, archiveComment } = require( '../services' )
+const { createComment, getComments, getComment, viewComment, archiveComment } = require( '../services' )
 
 describe( 'Comments @comments', () => {
   let user = {
     name: 'The comment wizard',
     email: 'comment@wizard.ry',
     password: 'i did not like Rivendel wine :('
+  }
+
+  let otherUser = {
+    name: 'Fondalf The Brey',
+    email: 'totalnotfakegandalf87@mordor.com',
+    password: 'what gandalf puts in his pipe stays in his pipe'
   }
 
   let stream = {
@@ -32,10 +38,13 @@ describe( 'Comments @comments', () => {
     baz: 123
   }
   let commitId1, commitId2
+
   before( async () => {
     await beforeEachContext()
 
     user.id = await createUser( user )
+    otherUser.id = await createUser( otherUser )
+
     stream.id = await createStream( { ...stream, ownerId: user.id } )
 
     testObject1.id = await createObject( stream.id, testObject1 )
@@ -82,6 +91,34 @@ describe( 'Comments @comments', () => {
     //add the checks from above
     expect( 1 ).to.equal( 2 )
   } )
+
+  it('Should create viewedAt entries for comments', async () => {
+    const id = await createComment({
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: [{ resourceId: commitId1, resourceType: 'commit' }],
+        text: 'https://tenor.com/view/gandalf-smoking-gif-21189890', // possibly NSFW
+        data: { someMore: 'https://tenor.com/view/gandalf-old-man-naked-take-robe-off-funny-gif-17224126' } // possibly NSFW
+      }
+    })
+
+    // ppl creating comments get to view them too
+    const comment = await getComment({id, userId: user.id})
+    expect(comment).to.haveOwnProperty('viewedAt')
+
+    const commentNoUser = await getComment({id})
+    expect(commentNoUser).to.not.haveOwnProperty('viewedAt')
+
+    const commentOtherUser = await getComment({id, userId: otherUser.id})
+    expect(commentOtherUser.viewedAt).to.be.null
+    
+    await viewComment({userId: user.id, commentId: id })
+
+    const viewedCommentOtherUser = await getComment({id, userId: otherUser.id})
+    expect(viewedCommentOtherUser).to.haveOwnProperty('viewedAt')
+  })
+
   it( 'Should not be allowed to comment targeting multiple streams as a resource', async () => {
     return await createComment( {
       userId: user.id,
@@ -100,6 +137,7 @@ describe( 'Comments @comments', () => {
       .then( () => { throw new Error( 'This should have been rejected' ) } )
       .catch( error => expect( error.message ).to.be.equal( 'Commenting on multiple streams is not supported' ) )
   } )
+
   it( 'Should not be allowed to comment on non existing resources', async () => {
     const nonExistentResources = [
       {
@@ -403,7 +441,7 @@ describe( 'Comments @comments', () => {
     const [ firstComment ] = comments.items
     const comment = await getComment( { id: firstComment.id } )
     
-    // the getComments query brings along some extra garbage i'm lazy to 
+    // the getComments query brings along some extra garbage i'm lazy to clean up
     delete firstComment.total_count
     delete firstComment.resourceType
     delete firstComment.resourceId
@@ -413,7 +451,9 @@ describe( 'Comments @comments', () => {
   } )
   
   it( 'Should be able to edit a comment text and its context???' )
+  
   it( 'Should not be allowed to edit a not existing comment' )
+  
   it( 'Should be able to archive a comment', async () => {
     const commentId = await createComment( {
       userId: user.id,
@@ -440,11 +480,13 @@ describe( 'Comments @comments', () => {
     comment = await getComment( {id: commentId} )
     expect( comment.archived ).to.equal( false )
   } )
+
   it( 'Should not be allowed to archive a not existing comment', async () => {
     archiveComment( { commentId: 'badabumm' } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
       .catch( error => expect( error.message ).to.be.equal( 'No comment badabumm exists, cannot change its archival status' ) )
   } )
+
   it( 'Should not query archived comments unless asked', async () => {
     const localObjectId = await createObject( stream.id, { testObject: crs( { length: 10 } ) } )
 
@@ -497,6 +539,7 @@ describe( 'Comments @comments', () => {
     expect( comments.items.length ).to.be.equal( archiveCount )
   } )
   it( 'Should publish events to pubsub, test it by registering a subscriber' )
+
   it( 'Should be able to write a short novel as comment text', async () => {
     const commentId = await createComment( {
       userId: user.id,
