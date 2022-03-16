@@ -174,9 +174,9 @@ export default {
             commentId: this.comment.id
           }
         },
-        // skip() {
-        //   return !this.comment.expanded
-        // },
+        skip() {
+          return !this.$loggedIn()
+        },
         result({ data }) {
           if (data.commentThreadActivity.eventType === 'reply-added') {
             if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)

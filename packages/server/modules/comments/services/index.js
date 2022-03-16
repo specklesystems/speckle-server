@@ -143,7 +143,7 @@ module.exports = {
     return res
   },
 
-  async getComments( { streamId, resources, limit, cursor, archived = false } ) {
+  async getComments2( { streamId, resources, limit, cursor, archived = false } ) {
     // maybe since we are so streamId limited, asking for a streamId here would make sense
     const commentLinks =  await getCommentLinksForResources( streamId, resources ) 
     const relevantComments = [ ...new Set( commentLinks.map( l => l.commentId ) ) ]
@@ -162,7 +162,7 @@ module.exports = {
     return { items, cursor, totalCount: relevantComments.length }
   },
 
-  async getComments2( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
+  async getComments( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
     let query = knex.with( 'comms', cte => {
       cte.select( '*' ).from( 'comments' )
       cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
