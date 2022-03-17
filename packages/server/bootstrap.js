@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 /**
  * Bootstrap module that should be imported at the very top of each entry point module
  */
