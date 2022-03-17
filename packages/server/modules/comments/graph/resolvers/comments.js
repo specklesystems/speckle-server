@@ -78,7 +78,7 @@ module.exports = {
 
     async commentArchive(parent, args, context) {
       await authorizeStreamAccess({ streamId: args.streamId, userId: context.userId, auth: context.auth })
-      await archiveComment({ ...args })
+      await archiveComment({ ...args, userId: context.userId })
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: args.archived ? 'comment-archived' : 'comment-added' },
         streamId: args.streamId,
