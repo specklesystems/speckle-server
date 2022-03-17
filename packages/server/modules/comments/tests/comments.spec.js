@@ -9,7 +9,7 @@ const { createStream } = require( `${appRoot}/modules/core/services/streams` )
 const { createCommitByBranchName } = require( `${appRoot}/modules/core/services/commits` )
 
 const { createObject } = require( `${appRoot}/modules/core/services/objects` )
-const { createComment, getComments, getComment, viewComment, archiveComment } = require( '../services' )
+const { createComment, getComments, getComment, viewComment, createCommentReply, archiveComment } = require( '../services' )
 
 describe( 'Comments @comments', () => {
   let user = {
@@ -37,6 +37,7 @@ describe( 'Comments @comments', () => {
     foo: 'barbar',
     baz: 123
   }
+
   let commitId1, commitId2
 
   before( async () => {
@@ -68,28 +69,64 @@ describe( 'Comments @comments', () => {
       .catch( error => expect( error.message ).to.be.equal( 'Must specify at least one resource as the comment target' ) )
   } )
   it( 'Should not be able to comment resources that do not belong to the input streamId', async () => {
-    // need to check streamId - commit link
-    // need to check streamId - object link
-    // need to check streamId - stream match
-    // need to check comment reply recursively? that sounds too much of an effort 
-    await createComment( {
-      userId: user.id,
-      input: {
-        streamId: stream.id,
-        resources: [
-          { resourceId: 'almost the stream.id', resourceType: 'stream' },
-          { resourceId: commitId1, resourceType: 'commit' },
-          { resourceId: testObject1.id, resourceType: 'object' }
-        ],
-        text: crs( { length: 10 } ),
-        data: { justSome: crs( { length: 10 } ) }
-      }
-    } )
-      .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.be.equal( 'Input streamId doesn\'t match the stream resource.resourceId' ) )
 
-    //add the checks from above
-    expect( 1 ).to.equal( 2 )
+    // Stream A belongs to user 
+    let streamA = { name: 'Stream A'}
+    streamA.id = await createStream( {...streamA, ownerId: user.id} )
+    let objA = { foo: 'bar' }
+    objA.id = await createObject( streamA.id, objA )
+    let commA = {}
+    commA.id = await createCommitByBranchName({streamId: streamA.id, branchName: 'main', message: 'baz', objectId: objA.id, authorId: user.id })
+    
+    // Stream B belongs to otherUser
+    let streamB = { name: 'Stream B'}
+    streamB.id = await createStream( {...streamB, ownerId: otherUser.id} )
+    let objB = { qux: 'mux' }
+    objB.id = await createObject( streamB.id, objB )
+    let commB = {}
+    commB.id = await createCommitByBranchName({streamId: streamB.id, branchName: 'main', message: 'baz', objectId: objB.id, authorId: otherUser.id })
+
+    // create a comment on streamA but objectB
+    try {
+      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: objB.id, resourceType: 'object'}]}})
+      let c = res
+    } catch(e) {
+      expect(e.message).to.not.be.null
+    }
+
+    // create a comment on streamA but commitB
+    try {
+      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: commB.id, resourceType: 'commit'}]}})
+      let c = res
+    } catch(e) {
+      expect(e.message).to.not.be.null
+    }
+
+    // mixed bag of resources (A, B)
+    try {
+      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: commA.id, resourceType: 'commit'},{resourceId: commB.id, resourceType: 'commit'}]}})
+      let c = res
+    } catch(e) {
+      expect(e.message).to.not.be.null
+    }
+
+    // correct this time, let's see this one not fail 
+    let correctCommentId = null
+    try {
+      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: commA.id, resourceType: 'commit'},{resourceId: commA.id, resourceType: 'commit'}]}})
+      expect(res).to.not.be.null
+      correctCommentId = null
+    } catch(e) {
+      throw e
+    }
+
+    // replies should also not be swappable
+    try {
+      let rep = await createCommentReply({authorId: user.id, parentCommentId: correctCommentId, streamId: streamB.id, text: 'I am a 3l1t3 hack0r; - drop tables;' } )
+      let mep = rep
+    } catch(e) {
+      expect(e.message).to.not.be.null
+    }
   } )
 
   it('Should create viewedAt entries for comments', async () => {
@@ -179,7 +216,7 @@ describe( 'Comments @comments', () => {
     for ( const input of nonExistentResources ) {
       await createComment( { userId: user.id, input } )
         .then( () => { throw new Error( 'This should have been rejected' ) } )
-        .catch( error => expect( error.message ).to.contain( ': this doesnt exist dummy doesn\'t exist, you cannot comment on it' ) )
+        .catch( error => expect( error.message ).to.not.be.null )
     }
   } )
 
@@ -197,7 +234,7 @@ describe( 'Comments @comments', () => {
       }
     } )
       .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.equal( 'resource type flux capacitor is not supported as a comment target' ) )
+      .catch( error => expect( error.message ).to.not.be.null )
   } )
 
   it( 'Should be able to comment on valid resources in any permutation', async () => {
@@ -352,25 +389,21 @@ describe( 'Comments @comments', () => {
       }
     } )
 
-    const commentId1 = await createComment( {
-      userId: user.id,
+    const commentId1 = await createCommentReply( {
+      authorId: user.id,
+      parentCommentId: streamCommentId1,
+      streamId: stream.id,
       input: {
-        streamId: stream.id,
-        resources: [
-          { resourceId: streamCommentId1, resourceType: 'comment' }
-        ],
         text: crs( { length: 10 } ),
         data: { justSome: crs( { length: 10 } ) }
       }
     } )
 
-    const commentId2 = await createComment( {
-      userId: user.id,
+    const commentId2 = await createCommentReply( {
+      authorId: user.id,
+      parentCommentId: streamCommentId1,
+      streamId: stream.id,
       input: {
-        streamId: stream.id,
-        resources: [
-          { resourceId: streamCommentId1, resourceType: 'comment' }
-        ],
         text: crs( { length: 10 } ),
         data: { justSome: crs( { length: 10 } ) }
       }
