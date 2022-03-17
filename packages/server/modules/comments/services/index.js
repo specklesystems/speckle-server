@@ -11,14 +11,15 @@ const CommentLinks = () => knex( 'comment_links' )
 const CommentViews = () => knex( 'comment_views' )
 
 const persistResourceLinks = async ({ streamId, commentId, resources}) => {
+  // this itches - a for loop with queries... but okay let's hit the road now
   for(let res of resources) {
     // The switch of doom: if something throws, we're out
-    switch (resourceType) {
+    switch (res.resourceType) {
       case 'stream':
         // Stream validity is already checked, so we can just go ahead.
         break
       case 'commit': 
-        let linkage = await knex('stream_commits').select().where({commitId: streamId}).first()
+        let linkage = await knex('stream_commits').select().where({commitId:res.resourceId, streamId: streamId}).first()
         if(!linkage) throw new Error('Commit not found')
         if(linkage.streamId !== streamId) throw new Error('Stop hacking - that commit id is not part of the specified stream.')
         break
@@ -72,10 +73,10 @@ module.exports = {
   },
 
   async createCommentReply( { authorId, parentCommentId, streamId, text, data } ) {
-    let comment = { id: crs( { length: 10 } ), authorId, text, data }
+    let comment = { id: crs( { length: 10 } ), authorId, text, data, streamId }
     await Comments().insert( comment )
     try{
-      await persistResourceLink( comment.id, { resourceId: parentCommentId, resourceType: 'comment' } )
+      await persistResourceLinks( {commentId: comment.id, streamId: streamId, resources: [{ resourceId: parentCommentId, resourceType: 'comment' }]} )
     } catch(e) {
       await Comments().where({id: comment.id}).delete() // roll back
       throw e // pass on to resolver
