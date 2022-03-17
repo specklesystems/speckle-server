@@ -2,6 +2,7 @@
 exports.up = async ( knex ) => {
   await knex.schema.createTable( 'comments', table => {
     table.string( 'id', 10 ).primary( )
+    table.string('streamId', 10).references('id').inTable('streams').notNullable().index( ).onDelete( 'cascade' )
     table.string( 'authorId', 10 ).references( 'id' ).inTable( 'users' ).notNullable().index( )
     // table.timestamp( 'createdAt' ).defaultTo( knex.fn.now( ) )
     table.specificType( 'createdAt', 'TIMESTAMPTZ(3)' ).defaultTo( knex.fn.now( ) )

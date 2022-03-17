@@ -21,8 +21,11 @@ const authorizeStreamAccess = async ( { streamId, userId, auth } ) => {
 module.exports = {  
   Query: {
     async comment( parent, args, context, info ) {
-      await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return await getComment( { id: args.id, userId: context.userId } )
+      await authorizeStreamAccess( { streamId: args.streamId, userId: context.userId, auth: context.auth } )
+      let comment = await getComment( { id: args.id, userId: context.userId } )
+      if(comment.streamId !== args.streamId)
+        throw new ForbiddenError('You do not have access to this comment.')
+      return comment
     },
 
     async comments( parent, args, context, info ) {
@@ -50,10 +53,10 @@ module.exports = {
     },
 
     async commentCreate( parent, args, context, info ) {
-      // TODO: check perms, persist comment
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
+      
       let id = await createComment( { userId: context.userId, input: args.input } )
-      // console.log( args.input )
+      
       await pubsub.publish( 'COMMENT_ACTIVITY', {
         commentActivity: { ...args.input, authorId: context.userId, id, replies: { totalCount: 0 }, updatedAt: Date.now(), createdAt: Date.now(), eventType: 'comment-added' },
         streamId: args.input.streamId,
@@ -87,7 +90,7 @@ module.exports = {
     async commentReply( parent, args, context, info ) {
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
       
-      let id = await createCommentReply( { authorId: context.userId, parentCommentId: args.input.parentComment, text: args.input.text, data: args.input.data } )
+      let id = await createCommentReply( { authorId: context.userId, parentCommentId: args.input.parentComment, streamId: args.input.streamId, text: args.input.text, data: args.input.data } )
       // TODO: update last viewed of parent comment for our user
       
       await pubsub.publish( 'COMMENT_THREAD_ACTIVITY', {
