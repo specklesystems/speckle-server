@@ -110,7 +110,7 @@ extend type Subscription {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentActivity(streamId: String!, resourceId: [String!]): JSONObject
+  commentActivity(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

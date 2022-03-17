@@ -3,7 +3,7 @@ const { authorizeResolver, pubsub } = require( `${appRoot}/modules/shared` )
 const { ForbiddenError, UserInputError, ApolloError, withFilter } = require( 'apollo-server-express' )
 const {  getStream } = require( `${appRoot}/modules/core/services/streams` )
 
-const { getComment, getComments, getComments2, createComment, createCommentReply, viewComment, archiveComment } = require( `${appRoot}/modules/comments/services` )
+const { getComment, getComments, createComment, createCommentReply, viewComment, archiveComment } = require( `${appRoot}/modules/comments/services` )
 
 const authorizeStreamAccess = async ( { streamId, userId, auth } ) => {
   const stream = await getStream( { streamId, userId } )
@@ -27,13 +27,13 @@ module.exports = {
 
     async comments( parent, args, context, info ) {
       await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return { ...await getComments2( { ...args, userId: context.userId } ) }
+      return { ...await getComments( { ...args, userId: context.userId } ) }
     }
   },
   Comment: {
     async replies( parent, args, context, info ) {
       const resources = [ { resourceId: parent.id, resourceType: 'comment' } ]
-      return await getComments2( { resources, limit: args.limit, cursor: args.cursor } )
+      return await getComments( { resources, limit: args.limit, cursor: args.cursor } )
     }
   },
   Mutation: {
