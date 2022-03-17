@@ -29,7 +29,7 @@
         <v-icon
           class="primary--text"
           large
-          style="position: relative; right: -60%; font-size: 4.2em"
+          :style="`opacity: ${user.hidden ? '0.2' : 1}; position: relative; right: -60%; font-size: 4.2em`"
         >
           mdi-menu-right
         </v-icon>
@@ -38,19 +38,21 @@
         v-for="sessionUser in users"
         :ref="`user-bubble-${sessionUser.uuid}`"
         :key="sessionUser.uuid"
-        class="absolute-pos rounded-pill user-bubble elevation-5"
-        :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 4px solid ${
-          $vuetify.theme.dark ? '#047EFB' : '#047EFB'
-        }`"
+        :class="`${sessionUser.name === 'Anonymous Viewer' ? 'background' : '' } absolute-pos rounded-pill user-bubble elevation-5`"
+        :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 4px solid #047EFB;`"
       >
-        <div @click="setUserPow(sessionUser)">
+        <div @click="setUserPow(sessionUser)" >
           <user-avatar
+            v-if="sessionUser.name !== 'Anonymous Viewer'"
             :id="sessionUser.id"
             v-tooltip="sessionUser.name"
             :show-hover="false"
             :size="30"
             :margin="false"
           ></user-avatar>
+          <v-avatar color="background" :size="30" v-else v-tooltip="sessionUser.name" style="cursor: pointer;">
+            👀
+          </v-avatar>
           <text-dots-typing v-if="sessionUser.status === 'writing'" />
         </div>
       </div>
@@ -110,11 +112,13 @@ export default {
           }
         },
         skip() {
-          return !this.$route.params.resourceId || !this.$loggedIn()
+          return !this.$route.params.resourceId //|| !this.$loggedIn()
         },
-        result({ data }) {
+        result( res ) {
+          let data = res.data
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
           // it's easier to test like this though :)
+          if(!data.userViewerActivity) return
           if (data.userViewerActivity.status && data.userViewerActivity.status === 'disconnect') {
             this.users = this.users.filter((u) => u.uuid !== data.userViewerActivity.uuid)
             this.updateBubbles(true)
@@ -239,7 +243,7 @@ export default {
       }
       this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
 
-      if (!this.$loggedIn()) return
+      // if (!this.$loggedIn()) return
 
       let controls = window.__viewer.cameraHandler.activeCam.controls
       let pos = controls.getPosition()
@@ -268,7 +272,7 @@ export default {
         selectionCenter: this.selectionCenter,
         camera: c,
         userId: this.$userId(),
-        name: this.user.name,
+        name: this.user ? this.user.name : 'Anonymous Viewer',
         uuid: this.uuid,
         status: 'viewing'
       }

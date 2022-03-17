@@ -283,6 +283,7 @@ export default {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
       navigator.clipboard.writeText(route)
+      this.$mixpanel.track('Comment Action', { type: 'action', name: 'share' })
       this.$eventHub.$emit('notification', {
         text: 'Comment link copied to clipboard - paste away!'
       })
@@ -348,7 +349,6 @@ export default {
       }, 100)
     },
     async archiveComment() {
-      // TODO
       try {
         await this.$apollo.mutate({
           mutation: gql`

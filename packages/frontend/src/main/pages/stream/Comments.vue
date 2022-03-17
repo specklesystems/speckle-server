@@ -39,7 +39,7 @@
       <v-col cols="12" class="mb-0">
         <p class="mb-0 mt-2">All this stream's comments are listed below.</p>
       </v-col>
-      <v-col v-for="c in localComments" :key="c.id" cols="12" sm="6">
+      <v-col v-for="c in localComments" :key="c.id" cols="12" md="6">
         <comment-list-item :comment="c" :stream="stream" @deleted="handleDeletion"/>
       </v-col>
       <v-col cols="12" class="align-center">

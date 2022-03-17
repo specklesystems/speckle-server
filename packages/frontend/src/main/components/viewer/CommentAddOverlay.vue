@@ -68,7 +68,7 @@
                 block
                 depressed
                 color="primary"
-                class="rounded-xl"
+                class="rounded-xl mouse"
                 to="/authn/login"
               >
                 <v-icon small class="mr-1">mdi-account</v-icon>
