@@ -1,7 +1,13 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
 
-  comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
+  comments(
+    streamId: String!
+    resources: [ResourceIdentifierInput]!
+    limit: Int = 25
+    cursor: String
+    archived: Boolean! = false
+  ): CommentCollection
 }
 
 type Comment {
@@ -67,37 +73,34 @@ input CommentEditInput {
 
 extend type Mutation {
   # Used for broadcasting real time chat head bubbles and status.
-  userViewerActivityBroadcast(
-    streamId: String!
-    resourceId: String!
-    data: JSONObject
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  userViewerActivityBroadcast(streamId: String!, resourceId: String!, data: JSONObject): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
 
-  commentCreate(input: CommentCreateInput! ): String!
+  commentCreate(input: CommentCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   # Mark a given comment as viewed
-  commentView(streamId: String!, commentId: String!): Boolean! 
+  commentView(streamId: String!, commentId: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentArchive( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
+  commentArchive(streamId: String!, commentId: String!, archived: Boolean! = true): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentEdit( input: CommentEditInput! ): Boolean!
+  commentEdit(input: CommentEditInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentReply( input: ReplyCreateInput! ): String!
+  commentReply(input: ReplyCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   commentReactionToggle(streamId: String!, commentId: String!, reaction: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
-
 }
 
 extend type Subscription {

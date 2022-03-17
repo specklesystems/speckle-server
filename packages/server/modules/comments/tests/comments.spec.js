@@ -8,8 +8,8 @@ const { createUser } = require(`${appRoot}/modules/core/services/users`)
 const { createStream } = require(`${appRoot}/modules/core/services/streams`)
 const { createCommitByBranchName } = require(`${appRoot}/modules/core/services/commits`)
 
-const { createObject } = require( `${appRoot}/modules/core/services/objects` )
-const { createComment, getComments, getComment, editComment, viewComment, createCommentReply, archiveComment } = require( '../services' )
+const { createObject } = require(`${appRoot}/modules/core/services/objects`)
+const { createComment, getComments, getComment, editComment, viewComment, createCommentReply, archiveComment } = require('../services')
 
 describe('Comments @comments', () => {
   let user = {
@@ -64,70 +64,51 @@ describe('Comments @comments', () => {
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
-    } )
-      .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.be.equal( 'Must specify at least one resource as the comment target' ) )
-  } )
-  it( 'Should not be able to comment resources that do not belong to the input streamId', async () => {
+    })
+      .then(() => { throw new Error('This should have been rejected') })
+      .catch(error => expect(error.message).to.be.equal('Must specify at least one resource as the comment target'))
+  })
+  it('Should not be able to comment resources that do not belong to the input streamId', async () => {
 
     // Stream A belongs to user 
-    let streamA = { name: 'Stream A'}
-    streamA.id = await createStream( {...streamA, ownerId: user.id} )
+    let streamA = { name: 'Stream A' }
+    streamA.id = await createStream({ ...streamA, ownerId: user.id })
     let objA = { foo: 'bar' }
-    objA.id = await createObject( streamA.id, objA )
+    objA.id = await createObject(streamA.id, objA)
     let commA = {}
-    commA.id = await createCommitByBranchName({streamId: streamA.id, branchName: 'main', message: 'baz', objectId: objA.id, authorId: user.id })
-    
+    commA.id = await createCommitByBranchName({ streamId: streamA.id, branchName: 'main', message: 'baz', objectId: objA.id, authorId: user.id })
+
     // Stream B belongs to otherUser
-    let streamB = { name: 'Stream B'}
-    streamB.id = await createStream( {...streamB, ownerId: otherUser.id} )
+    let streamB = { name: 'Stream B' }
+    streamB.id = await createStream({ ...streamB, ownerId: otherUser.id })
     let objB = { qux: 'mux' }
-    objB.id = await createObject( streamB.id, objB )
+    objB.id = await createObject(streamB.id, objB)
     let commB = {}
-    commB.id = await createCommitByBranchName({streamId: streamB.id, branchName: 'main', message: 'baz', objectId: objB.id, authorId: otherUser.id })
+    commB.id = await createCommitByBranchName({ streamId: streamB.id, branchName: 'main', message: 'baz', objectId: objB.id, authorId: otherUser.id })
 
     // create a comment on streamA but objectB
-    try {
-      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: objB.id, resourceType: 'object'}]}})
-      let c = res
-    } catch(e) {
-      expect(e.message).to.not.be.null
-    }
+    createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: objB.id, resourceType: 'object' }] } })
+      .then(() => { throw new Error('This should have been rejected') })
+      .catch(error => expect(error.message).to.be.equal('Object not found'))
 
     // create a comment on streamA but commitB
-    try {
-      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: commB.id, resourceType: 'commit'}]}})
-      let c = res
-    } catch(e) {
-      expect(e.message).to.not.be.null
-    }
+    createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: commB.id, resourceType: 'commit' }] } })
+      .then(() => { throw new Error('This should have been rejected') })
+      .catch(error => expect(error.message).to.be.equal('Commit not found'))
 
     // mixed bag of resources (A, B)
-    try {
-      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: commA.id, resourceType: 'commit'},{resourceId: commB.id, resourceType: 'commit'}]}})
-      let c = res
-    } catch(e) {
-      expect(e.message).to.not.be.null
-    }
+    createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: commA.id, resourceType: 'commit' }, { resourceId: commB.id, resourceType: 'commit' }] } })
+      .then(() => { throw new Error('This should have been rejected') })
+      .catch(error => expect(error.message).to.be.equal('Commit not found'))
 
     // correct this time, let's see this one not fail 
-    let correctCommentId = null
-    try {
-      let res = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{resourceId: commA.id, resourceType: 'commit'},{resourceId: commA.id, resourceType: 'commit'}]}})
-      expect(res).to.not.be.null
-      correctCommentId = null
-    } catch(e) {
-      throw e
-    }
+    const correctCommentId = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: commA.id, resourceType: 'commit' }, { resourceId: commA.id, resourceType: 'commit' }] } })
 
     // replies should also not be swappable
-    try {
-      let rep = await createCommentReply({authorId: user.id, parentCommentId: correctCommentId, streamId: streamB.id, text: 'I am a 3l1t3 hack0r; - drop tables;' } )
-      let mep = rep
-    } catch(e) {
-      expect(e.message).to.not.be.null
-    }
-  } )
+    createCommentReply({ authorId: user.id, parentCommentId: correctCommentId, streamId: streamB.id, text: 'I am a 3l1t3 hack0r; - drop tables;' })
+      .then(() => { throw new Error('This should have been rejected') })
+      .catch(error => expect(error.message).to.be.equal('Stop hacking - that comment is not part of the specified stream.'))
+  })
 
   it('Should create viewedAt entries for comments', async () => {
     const id = await createComment({
@@ -213,10 +194,10 @@ describe('Comments @comments', () => {
         data: null
       },
     ]
-    for ( const input of nonExistentResources ) {
-      await createComment( { userId: user.id, input } )
-        .then( () => { throw new Error( 'This should have been rejected' ) } )
-        .catch( error => expect( error.message ).to.not.be.null )
+    for (const input of nonExistentResources) {
+      await createComment({ userId: user.id, input })
+        .then(() => { throw new Error('This should have been rejected') })
+        .catch(error => expect(error.message).to.not.be.null)
     }
   })
 
@@ -232,10 +213,10 @@ describe('Comments @comments', () => {
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
-    } )
-      .then( () => { throw new Error( 'This should have been rejected' ) } )
-      .catch( error => expect( error.message ).to.not.be.null )
-  } )
+    })
+      .then(() => { throw new Error('This should have been rejected') })
+      .catch(error => expect(error.message).to.not.be.null)
+  })
 
   it('Should be able to comment on valid resources in any permutation', async () => {
     const resourceCombinations = [
@@ -391,23 +372,23 @@ describe('Comments @comments', () => {
       }
     })
 
-    const commentId1 = await createCommentReply( {
+    const commentId1 = await createCommentReply({
       authorId: user.id,
       parentCommentId: streamCommentId1,
       streamId: stream.id,
       input: {
-        text: crs( { length: 10 } ),
-        data: { justSome: crs( { length: 10 } ) }
+        text: crs({ length: 10 }),
+        data: { justSome: crs({ length: 10 }) }
       }
     })
 
-    const commentId2 = await createCommentReply( {
+    const commentId2 = await createCommentReply({
       authorId: user.id,
       parentCommentId: streamCommentId1,
       streamId: stream.id,
       input: {
-        text: crs( { length: 10 } ),
-        data: { justSome: crs( { length: 10 } ) }
+        text: crs({ length: 10 }),
+        data: { justSome: crs({ length: 10 }) }
       }
     })
     const replies = await getComments({
@@ -447,7 +428,6 @@ describe('Comments @comments', () => {
       resources: queryResources
     })
     // expect( comments.items ).to.have.lengthOf( 1 ) // not applicable anymore, as we're "OR"-ing 
-    let resIds = comments.items[0].resources.map(r => r.resourceId).sort()
     inputResources.sort() // order is not ensured
     expect(comments.items[0].resources).to.have.deep.members(inputResources)
   })
@@ -550,7 +530,7 @@ describe('Comments @comments', () => {
     comment = await getComment({ id: commentId })
     expect(comment.archived).to.equal(true)
 
-    await archiveComment({ streamId: stream.id, commentId,  userId: user.id, archived: false })
+    await archiveComment({ streamId: stream.id, commentId, userId: user.id, archived: false })
 
     comment = await getComment({ id: commentId })
     expect(comment.archived).to.equal(false)
@@ -577,7 +557,7 @@ describe('Comments @comments', () => {
     archiveComment({ commentId, streamId: stream.id, userId: otherUser.id })
       .then(() => { throw new Error('This should have been rejected') })
       .catch(error => expect(error.message).to.be.equal('You don\'t have permission to archive the comment'))
-    
+
     const otherUsersCommentId = await createComment({
       userId: otherUser.id,
       input: {
