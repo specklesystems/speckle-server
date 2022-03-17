@@ -61,13 +61,8 @@ input CommentEditInput {
   streamId: String!
   id: String!
   text: String!
-  data: JSONObject!
-}
-
-input ReplyEditInput {
-  id: String!
-  text: String!
-  archived: Boolean
+  # data: JSONObject!
+  # screenshot: String
 }
 
 extend type Mutation {
@@ -91,7 +86,7 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentEdit(streamId: String!, comment: JSONObject!): Boolean!
+  commentEdit( input: CommentEditInput! ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
