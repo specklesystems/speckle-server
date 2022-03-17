@@ -84,7 +84,7 @@ module.exports = {
   },
 
   async editComment({ userId, input }) {
-    const [editedComment] = await Comments().where({ id: input.id })
+    const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error('The comment doesn\'t exist')
     if (editedComment.authorId !== userId) throw new Error('You cannot edit someone else\'s comments')
 

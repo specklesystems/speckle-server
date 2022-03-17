@@ -3,7 +3,7 @@ const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
 const { getStream } = require(`${appRoot}/modules/core/services/streams`)
 
-const { getComment, getComments, createComment, createCommentReply, viewComment, archiveComment } = require(`${appRoot}/modules/comments/services`)
+const { getComment, getComments, createComment, createCommentReply, viewComment, editComment, archiveComment } = require(`${appRoot}/modules/comments/services`)
 
 const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
   const stream = await getStream({ streamId, userId })
@@ -66,7 +66,9 @@ module.exports = {
     },
 
     async commentEdit(parent, args, context, info) {
-      // TODO
+      await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
+      await editComment({userId: context.userId, ...input})
+      return true
     },
 
     // used for flagging a comment as viewed

@@ -4,6 +4,7 @@ extend type Query {
   comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
 }
 
+
 type Comment {
   id: String!
   authorId: String!
@@ -11,10 +12,22 @@ type Comment {
   screenshot: String
   text: String!
   data: JSONObject
+  """
+  Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
+  """
   resources: [ResourceIdentifier]!
   createdAt: DateTime
+  """
+  The time this comment was last updated. Correspons also to the latest reply to this comment, if any.
+  """
   updatedAt: DateTime
+  """
+  The last time you viewed this comment. Present only if an auth'ed request.
+  """
   viewedAt: DateTime # relevant only if a top level commit.
+  """
+  Gets the replies to this comment.
+  """
   replies(limit: Int = 25, cursor: String): CommentCollection
   reactions: [String]
 }
@@ -61,35 +74,49 @@ input CommentEditInput {
   streamId: String!
   id: String!
   text: String!
-  # data: JSONObject!
-  # screenshot: String
 }
 
 extend type Mutation {
-  # Used for broadcasting real time chat head bubbles and status.
+  """
+  Used for broadcasting real time chat head bubbles and status. Does not persist any info.
+  """
   userViewerActivityBroadcast(
     streamId: String!
     resourceId: String!
     data: JSONObject
   ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 
+  """
+  Creates a comment
+  """
   commentCreate(input: CommentCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  # Mark a given comment as viewed
+  """
+  Flags a comment as viewed by you (the logged in user)
+  """
   commentView(streamId: String!, commentId: String!): Boolean! 
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
+  """
+  Archives a comment.
+  """
   commentArchive( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
+  """
+  Edits a comment.
+  """
   commentEdit( input: CommentEditInput! ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
+  """
+  Adds a reply to a comment.
+  """
   commentReply( input: ReplyCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
