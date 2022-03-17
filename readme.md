@@ -31,8 +31,8 @@ What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtub
 
 Give Speckle a try in no time by:
 
-- [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz) ⇒ creating an account at 
-- [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1) ⇒ deploying an instance in 1 click 
+- [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz) ⇒ creating an account at
+- [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1) ⇒ deploying an instance in 1 click
 
 ### Resources
 
@@ -40,12 +40,11 @@ Give Speckle a try in no time by:
 - [![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems) our tutorials portal is full of resources to get you started using Speckle
 - [![docs](https://img.shields.io/badge/docs-speckle.guide-orange?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://speckle.guide/dev/) reference on almost any end-user and developer functionality
 
-
 # Repo structure
 
 This monorepo is the home of the Speckle v2 web packages:
 
--  [`packages/server`](https://github.com/specklesystems/speckle-server/blob/main/packages/server): the Server, a nodejs app. Core external dependencies are a Redis and Postgresql db.
+- [`packages/server`](https://github.com/specklesystems/speckle-server/blob/main/packages/server): the Server, a nodejs app. Core external dependencies are a Redis and Postgresql db.
 - [`packages/frontend`](https://github.com/specklesystems/speckle-server/blob/main/packages/frontend): the Frontend, a static Vue app.
 - [`packages/viewer`](https://github.com/specklesystems/speckle-server/blob/main/packages/viewer): a threejs extension that allows you to display 3D data [![npm version](https://camo.githubusercontent.com/dc69232cc57b77de6554e752dd6dfc60ca0ecdfbe91bdfcbf7c7531a511ec200/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532467669657765722e737667)](https://www.npmjs.com/package/@speckle/viewer)
 - [`packages/objectloader`](https://github.com/specklesystems/speckle-server/blob/main/packages/objectloader): a small js utility class that helps you stream an object and all its sub-components from the Speckle Server API. [![npm version](https://camo.githubusercontent.com/4d4f1e38ce50aaf11b4a3ad8e01ce3eaaa561dc5fd08febbae556f52f1d41097/68747470733a2f2f62616467652e667572792e696f2f6a732f253430737065636b6c652532466f626a6563746c6f616465722e737667)](https://www.npmjs.com/package/@speckle/objectloader)
@@ -67,13 +66,17 @@ Make sure to also check and ⭐️ these other Speckle repositories:
 - [`speckle-powerbi`](https://github.com/specklesystems/speckle-powerbi): PowerBi connector
 - and more [connectors & tooling](https://github.com/specklesystems/)!
 
-
-
 ## Developing and Debugging
 
 Have you checked our [dev docs](https://speckle.guide/dev/)?
 
 We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [Local development environment](https://speckle.guide/dev/server-local-dev.html) page.
+
+### IDE
+
+The suggested IDE for working in this repo is VSCode, because the repo has special configs to improve the DX there (auto-format & auto-lint, recommended extensions etc.).
+
+This repository relies on [VSCode multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces), so for the best DX and proper formatting/linting make sure you open the project using the `workspace.code-workspace` file instead of just opening the folder in VSCode.
 
 ### Contributing
 
