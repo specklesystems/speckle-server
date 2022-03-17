@@ -3,12 +3,12 @@ const crs = require('crypto-random-string')
 const appRoot = require('app-root-path')
 const knex = require(`${appRoot}/db/knex`)
 
-const Streams = () => knex( 'streams' )
-const Objects = () => knex( 'objects' )
-const Commits = () => knex( 'commits' )
-const Comments = () => knex( 'comments' )
-const CommentLinks = () => knex( 'comment_links' )
-const CommentViews = () => knex( 'comment_views' )
+const Streams = () => knex('streams')
+const Objects = () => knex('objects')
+const Commits = () => knex('commits')
+const Comments = () => knex('comments')
+const CommentLinks = () => knex('comment_links')
+const CommentViews = () => knex('comment_views')
 
 const persistResourceLinks = async ({ streamId, commentId, resources}) => {
   // this itches - a for loop with queries... but okay let's hit the road now
@@ -86,42 +86,57 @@ module.exports = {
     return comment.id
   },
 
-  async editComment({ }) {
-    // TODO
+  async editComment({ userId, input }) {
+    const [editedComment] = await Comments().where({ id: input.id })
+    if (!editedComment) throw new Error('The comment doesn\'t exist')
+    if (editedComment.authorId !== userId) throw new Error('You cannot edit someone else\'s comments')
+
+    await Comments().where({ id: input.id }).update({ text: input.text })
   },
 
-  async viewComment( { userId, commentId } ) {
-    let query = CommentViews().insert( { commentId: commentId, userId: userId, viewedAt: knex.fn.now() } )
-      .onConflict( knex.raw( '("commentId","userId")' ) )
+  async viewComment({ userId, commentId }) {
+    let query = CommentViews().insert({ commentId: commentId, userId: userId, viewedAt: knex.fn.now() })
+      .onConflict(knex.raw('("commentId","userId")'))
       .merge()
     await query
   },
 
-  async getComment( { id, userId = null } ) {
-    let query = Comments().select( '*' )
-      .joinRaw( `
+  async getComment({ id, userId = null }) {
+    let query = Comments().select('*')
+      .joinRaw(`
         join(
           select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
           from comment_links cl
           join comments on comments.id = cl."commentId"
           group by cl."commentId"
-        ) res using(id)` 
+        ) res using(id)`
       )
-    if ( userId ) {
-      query.leftOuterJoin( 'comment_views', b => {
-        b.on( 'comment_views.commentId', '=', 'comments.id' )
-        b.andOn( 'comment_views.userId', '=', knex.raw( '?', userId ) )
-      } )
+    if (userId) {
+      query.leftOuterJoin('comment_views', b => {
+        b.on('comment_views.commentId', '=', 'comments.id')
+        b.andOn('comment_views.userId', '=', knex.raw('?', userId))
+      })
     }
-    query.where( { id } ).first()
+    query.where({ id }).first()
     let res = await query
     return res
   },
 
-  async archiveComment({ commentId, archived = true }) {
-    let [comments] = await Comments().where({ id: commentId }).count()
-    if (parseInt(comments.count) < 1) throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
-    return await Comments().where({ id: commentId }).update({ archived })
+  async archiveComment({ commentId, userId, streamId, archived = true }) {
+    let comment = await Comments().where({ id: commentId }).first()
+    if (!comment) throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+    
+  
+    let aclEntry = await knex('stream_acl').select().where({resourceId: streamId}).andWhere({userId: userId}).first()
+    
+    if (comment.authorId !== userId) {
+
+      if(!aclEntry || aclEntry.role !== 'stream:owner')
+        throw new Error('You don\'t have permission to archive the comment')
+    }
+    
+    await Comments().where({ id: commentId }).update({ archived })
+    return true
   },
 
   async getComments( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
@@ -131,31 +146,31 @@ module.exports = {
       
       if ( userId ){
         // link viewed At
-        cte.leftOuterJoin( 'comment_views', b => {
-          b.on( 'comment_views.commentId', '=', 'comments.id' )
-          b.andOn( 'comment_views.userId', '=', knex.raw( '?', userId ) )
-        } )
+        cte.leftOuterJoin('comment_views', b => {
+          b.on('comment_views.commentId', '=', 'comments.id')
+          b.andOn('comment_views.userId', '=', knex.raw('?', userId))
+        })
       }
 
-      cte.where( q => {
+      cte.where(q => {
         // link resources
-        for ( let res of resources ) {
-          q.orWhere( 'comment_links.resourceId', '=', res.resourceId )
+        for (let res of resources) {
+          q.orWhere('comment_links.resourceId', '=', res.resourceId)
         }
-      } )
-      if ( !replies ) {
-        cte.whereNull( 'parentComment' )
+      })
+      if (!replies) {
+        cte.whereNull('parentComment')
       }
-      cte.where( 'archived', '=', archived )
-    } )
+      cte.where('archived', '=', archived)
+    })
 
-    query.select( ).from( 'comms' )
-    
+    query.select().from('comms')
+
     // total count coming from our cte
-    query.joinRaw( 'right join (select count(*) from comms) c(total_count) on true' )
-    
+    query.joinRaw('right join (select count(*) from comms) c(total_count) on true')
+
     // get comment's all linked resources
-    query.joinRaw( `
+    query.joinRaw(`
       join(
         select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
         from comment_links cl
@@ -164,15 +179,15 @@ module.exports = {
       ) res using(id)`
     )
 
-    if ( cursor ) {
-      query.where( 'createdAt', '<', cursor )
+    if (cursor) {
+      query.where('createdAt', '<', cursor)
     }
 
-    query.orderBy( 'createdAt', 'desc' )
-    query.limit( limit ?? 10 )
-    
+    query.orderBy('createdAt', 'desc')
+    query.limit(limit ?? 10)
+
     let rows = await query
-    let totalCount = rows && rows.length > 0 ? parseInt( rows[0].total_count ) : 0
+    let totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
     let nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 
     return {
