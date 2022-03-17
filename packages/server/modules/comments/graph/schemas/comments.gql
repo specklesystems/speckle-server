@@ -57,6 +57,12 @@ enum ResourceType {
 
 input CommentCreateInput {
   streamId: String!
+  """
+  Specfies the resources this comment is linked to. There are several usecases:
+  - a comment targets only one resource (commit or object)
+  - a comment targets one or more resources (commits or objects)
+  - a comment targets
+  """
   resources: [ResourceIdentifierInput]!
   text: String!
   data: JSONObject!
@@ -84,7 +90,7 @@ extend type Mutation {
     streamId: String!
     resourceId: String!
     data: JSONObject
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  ): Boolean!
 
   """
   Creates a comment
@@ -128,9 +134,10 @@ extend type Mutation {
 }
 
 extend type Subscription {
+  """
+  Broadcasts "real-time" location data for viewer users.
+  """
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
 
   commentActivity(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")
