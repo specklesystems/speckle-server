@@ -29,6 +29,28 @@
             <span class="grey--text">
               Created on {{ new Date(commentDetails.createdAt).toLocaleString() }}
             </span>
+            <br>
+            <v-btn v-if="canArchiveThread" @click="showArchiveDialog=true" class="ml-n2 red--text rounded-lg elevation-0" x-small plain>Archive</v-btn>
+             <v-dialog v-model="showArchiveDialog" max-width="500">
+              <v-card>
+                <v-toolbar color="error" dark flat>
+                  <v-app-bar-nav-icon style="pointer-events: none">
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-app-bar-nav-icon>
+                  <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
+                  <v-spacer></v-spacer>
+                  <v-btn icon @click="showArchiveDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+                </v-toolbar>
+                <v-card-text class="mt-4">
+                  This comment thread will be archived. Are you sure?
+                </v-card-text>
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn text @click="showArchiveDialog = false">Cancel</v-btn>
+                  <v-btn color="error" text @click="archiveComment()">Archive</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </div>
         <div class="body-2 px-4 flex-shrink-0">
@@ -46,16 +68,12 @@
           >
             <v-icon small>mdi-cube-outline</v-icon>
           </span>
-          <v-icon small>mdi-comment-outline</v-icon>
-          {{ commentDetails.replies.totalCount }}
-          <span v-show="!$vuetify.breakpoint.xs && false" class="">
-            {{
-              commentDetails.replies.totalCount > 1 || commentDetails.replies.totalCount === 0
-                ? 'replies'
-                : 'reply'
-            }}
-          </span>
-          <v-btn small class="ml-1 primary dark rounded-xl" :to="link">reply</v-btn>
+         
+          <v-btn small class="ml-1 primary dark rounded-xl" :to="link">
+            <v-icon small>mdi-comment-outline</v-icon>
+            {{ commentDetails.replies.totalCount }}
+            reply
+          </v-btn>
         </div>
         <div class="flex-shrink-0">
           <router-link class="text-decoration-none" :to="link">
@@ -83,7 +101,8 @@ export default {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
   },
   props: {
-    comment: { type: Object, default: () => null }
+    comment: { type: Object, default: () => null },
+    stream: { type: Object, default: () => { return { role: null } } }
   },
   apollo: {
     commentDetails: {
@@ -121,10 +140,16 @@ export default {
   },
   data() {
     return {
-      hovered: false
+      hovered: false,
+      showArchiveDialog: false
     }
   },
   computed: {
+    canArchiveThread() {
+      if(!this.comment || !this.stream ) return false
+      if(!this.stream.role) return false
+      if(this.comment.authorId === this.$userId() || this.stream.role ==='stream:owner') return true
+    },
     link() {
       if (!this.commentDetails) return
       let res = this.commentDetails.resources.filter((r) => r.resourceType !== 'stream')
@@ -138,6 +163,33 @@ export default {
     isUnread() {
       if (!this.commentDetails) return
       return new Date(this.commentDetails.updatedAt) - new Date(this.commentDetails.viewedAt) > 0
+    }
+  },
+  methods:{
+    async archiveComment() {
+      try {
+        await this.$apollo.mutate({
+          mutation: gql`
+            mutation commentArchive($streamId: String!, $commentId: String!) {
+              commentArchive(streamId: $streamId, commentId: $commentId)
+            }
+          `,
+          variables: {
+            streamId: this.$route.params.streamId,
+            commentId: this.comment.id
+          }
+        })
+        this.showArchiveDialog = false
+        this.$emit('deleted', this.comment)
+        this.$mixpanel.track('Comment Action', { type: 'action', name: 'archive' })
+        this.$eventHub.$emit('notification', {
+          text: 'Thread archived.'
+        })
+      } catch (e) {
+        this.$eventHub.$emit('notification', {
+          text: e.message
+        })
+      }
     }
   }
 }
