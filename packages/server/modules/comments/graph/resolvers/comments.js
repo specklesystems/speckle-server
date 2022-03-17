@@ -68,6 +68,7 @@ module.exports = {
     async commentEdit(parent, args, context) {
       // TODO
       await editComment({ userId: context.userId, input: args.input })
+      return true
     },
 
     // used for flagging a comment as viewed
