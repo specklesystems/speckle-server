@@ -1,9 +1,9 @@
 <template>
   <div
-    class="mt-2 px-2 py-4"
-    :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'}`"
+    class="no-mouse pa-2"
+    :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'} xxx-background: rgba(0.5, 0.5, 0.5, 0.5)`"
   >
-    <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5">
+    <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5 mouse">
       <v-btn icon small class="background ml-2 elevation-10" @click="minimise = !minimise">
         <v-icon v-if="!minimise" small>mdi-minus</v-icon>
         <v-icon v-else small>mdi-plus</v-icon>
@@ -17,7 +17,7 @@
         <v-icon small>mdi-close</v-icon>
       </v-btn>
     </div>
-    <div v-show="!minimise" style="width: 100%">
+    <div v-show="!minimise" style="width: 100%" class="mouse">
       <div v-if="!isComplete" class="warning rounded-xl py-2 caption mb-2 text-center" dense>
         <v-icon x-small>mdi-alert-circle-outline</v-icon>
         This comment is targeting other resources.
@@ -62,6 +62,7 @@
         ></v-textarea>
         <div class="text-right">
           <v-btn
+            v-show="canArchiveThread"
             v-tooltip="'Marks this thread as archived.'"
             class="white--text mt-2 mr-2"
             small
@@ -124,6 +125,19 @@ export default {
     comment: { type: Object, default: () => null }
   },
   apollo: {
+    stream: {
+      query: gql`
+        query($streamId: String!) {
+          stream(id: $streamId){
+            id
+            role
+          }
+        }
+      `,
+      variables() {
+        return { streamId: this.$route.params.streamId }
+      }
+    },
     replyQuery: {
       query: gql`
         query($streamId: String!, $id: String!) {
@@ -204,6 +218,11 @@ export default {
     }
   },
   computed: {
+    canArchiveThread() {
+      if(!this.comment || !this.stream ) return false
+      if(!this.stream.role) return false
+      if(this.comment.authorId === this.$userId() || this.stream.role ==='stream:owner') return true
+    },
     thread() {
       let sorted = [...this.localReplies].sort(
         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
@@ -264,6 +283,7 @@ export default {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
       navigator.clipboard.writeText(route)
+      this.$mixpanel.track('Comment Action', { type: 'action', name: 'share' })
       this.$eventHub.$emit('notification', {
         text: 'Comment link copied to clipboard - paste away!'
       })
@@ -329,7 +349,6 @@ export default {
       }, 100)
     },
     async archiveComment() {
-      // TODO
       try {
         await this.$apollo.mutate({
           mutation: gql`

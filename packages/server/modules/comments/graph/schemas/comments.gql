@@ -10,6 +10,7 @@ extend type Query {
   ): CommentCollection
 }
 
+
 type Comment {
   id: String!
   authorId: String!
@@ -17,10 +18,22 @@ type Comment {
   screenshot: String
   text: String!
   data: JSONObject
+  """
+  Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
+  """
   resources: [ResourceIdentifier]!
   createdAt: DateTime
+  """
+  The time this comment was last updated. Corresponds also to the latest reply to this comment, if any.
+  """
   updatedAt: DateTime
+  """
+  The last time you viewed this comment. Present only if an auth'ed request.
+  """
   viewedAt: DateTime # relevant only if a top level commit.
+  """
+  Gets the replies to this comment.
+  """
   replies(limit: Int = 25, cursor: String): CommentCollection
   reactions: [String]
 }
@@ -50,6 +63,12 @@ enum ResourceType {
 
 input CommentCreateInput {
   streamId: String!
+  """
+  Specifies the resources this comment is linked to. There are several use cases:
+  - a comment targets only one resource (commit or object)
+  - a comment targets one or more resources (commits or objects)
+  - a comment targets
+  """
   resources: [ResourceIdentifierInput]!
   text: String!
   data: JSONObject!
@@ -67,34 +86,50 @@ input CommentEditInput {
   streamId: String!
   id: String!
   text: String!
-  # data: JSONObject!
-  # screenshot: String
 }
 
 extend type Mutation {
-  # Used for broadcasting real time chat head bubbles and status.
-  userViewerActivityBroadcast(streamId: String!, resourceId: String!, data: JSONObject): Boolean!
+  """
+  Used for broadcasting real time chat head bubbles and status. Does not persist any info.
+  """
+  userViewerActivityBroadcast(
+    streamId: String!
+    resourceId: String!
+    data: JSONObject
+  ): Boolean!
+
+  """
+  Creates a comment
+  """
+  commentCreate(input: CommentCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentCreate(input: CommentCreateInput!): String!
+  """
+  Flags a comment as viewed by you (the logged in user)
+  """
+  commentView(streamId: String!, commentId: String!): Boolean! 
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  # Mark a given comment as viewed
-  commentView(streamId: String!, commentId: String!): Boolean!
+  """
+  Archives a comment.
+  """
+  commentArchive( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentArchive(streamId: String!, commentId: String!, archived: Boolean! = true): Boolean!
+  """
+  Edits a comment.
+  """
+  commentEdit( input: CommentEditInput! ): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentEdit(input: CommentEditInput!): Boolean!
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
-
-  commentReply(input: ReplyCreateInput!): String!
+  """
+  Adds a reply to a comment.
+  """
+  commentReply( input: ReplyCreateInput! ): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -104,9 +139,10 @@ extend type Mutation {
 }
 
 extend type Subscription {
+  """
+  Broadcasts "real-time" location data for viewer users.
+  """
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
 
   commentActivity(streamId: String!, resourceId: String!): JSONObject
     @hasRole(role: "server:user")

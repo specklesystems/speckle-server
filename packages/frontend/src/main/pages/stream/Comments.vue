@@ -39,8 +39,8 @@
       <v-col cols="12" class="mb-0">
         <p class="mb-0 mt-2">All this stream's comments are listed below.</p>
       </v-col>
-      <v-col v-for="c in localComments" :key="c.id" cols="12" sm="6">
-        <comment-list-item :comment="c" />
+      <v-col v-for="c in localComments" :key="c.id" cols="12" md="6">
+        <comment-list-item :comment="c" :stream="stream" @deleted="handleDeletion"/>
       </v-col>
       <v-col cols="12" class="align-center">
         <infinite-loading :key="localComments[0].id" spinner="waveDots" @infinite="infiniteHandler">
@@ -84,6 +84,7 @@ export default {
           stream(id: $id) {
             id
             name
+            role
           }
         }
       `,
@@ -136,6 +137,11 @@ export default {
     }
   },
   methods: {
+    handleDeletion( comment ){
+      let indx = this.localComments.findIndex(lc => lc.id === comment.id)
+      this.localComments.splice(indx, 1)
+
+    },
     async infiniteHandler($state) {
       let res = await this.$apollo.queries.comments.refetch({
         cursor: this.cursor ? this.cursor : null,

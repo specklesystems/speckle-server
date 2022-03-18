@@ -42,7 +42,14 @@ module.exports = {
   Mutation: {
     // Used for broadcasting real time chat head bubbles and status. Does not persist anything!
     async userViewerActivityBroadcast(parent, args, context) {
-      await authorizeStreamAccess({ streamId: args.streamId, userId: context.userId, auth: context.auth })
+      const stream = await getStream({ streamId: args.streamId, userId: context.userId })
+      if (!stream) {
+        throw new ApolloError('Stream not found')
+      }
+      
+      if( !stream.isPublic && !context.auth){
+        return false
+      }
 
       await pubsub.publish('VIEWER_ACTIVITY', {
         userViewerActivity: args.data,
@@ -66,8 +73,8 @@ module.exports = {
     },
 
     async commentEdit(parent, args, context) {
-      // TODO
-      await editComment({ userId: context.userId, input: args.input })
+      await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
+      await editComment({userId: context.userId, input: args.input})
       return true
     },
 
@@ -80,7 +87,7 @@ module.exports = {
 
     async commentArchive(parent, args, context) {
       await authorizeStreamAccess({ streamId: args.streamId, userId: context.userId, auth: context.auth })
-      await archiveComment({ ...args })
+      await archiveComment({ ...args, userId: context.userId })
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: args.archived ? 'comment-archived' : 'comment-added' },
         streamId: args.streamId,

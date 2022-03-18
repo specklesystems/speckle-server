@@ -206,8 +206,8 @@ export default {
             data.commentActivity.expanded = false
             data.commentActivity.hovered = false
             data.commentActivity.bouncing = false
-            if (data.commentActivity.authorId === this.$userId()) {
-              data.commentActivity.viewedAt = Date.now()
+            if (data.commentActivity.authorId !== this.$userId()) {
+              data.commentActivity.viewedAt = new Date('1987')
             }
             this.localComments.push(data.commentActivity)
             setTimeout(() => {
