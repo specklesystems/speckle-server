@@ -19,7 +19,7 @@ function walk(dir) {
   return results
 }
 
-let migrationDirs = walk('./modules')
+let migrationDirs = walk(path.resolve(__dirname, './modules'))
 
 // this is for readability, many users struggle to set the postgres connection uri
 // in the env variables. This way its a bit easier to understand, also backward compatible.
