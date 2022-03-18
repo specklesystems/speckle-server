@@ -16,7 +16,7 @@ const {
   archiveUser
 } = require('../../services/users')
 const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
-const { validateServerRole, validateScopes } = require(`${appRoot}/modules/shared`)
+const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 
 module.exports = {
@@ -26,6 +26,9 @@ module.exports = {
     },
 
     async user(parent, args, context) {
+      // User wants info about himself and he's not authenticated - just return null
+      if (!context.auth && !args.id) return null
+
       await validateServerRole(context, 'server:user')
 
       if (!args.id) await validateScopes(context.scopes, 'profile:read')

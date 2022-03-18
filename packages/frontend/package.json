@@ -18,8 +18,7 @@
     "apexcharts": "^3.33.1",
     "crypto-random-string": "^3.3.0",
     "dompurify": "^2.3.6",
-    "lodash.debounce": "^4.0.8",
-    "lodash.throttle": "^4.1.1",
+    "lodash": "^4.17.21",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
     "tween": "^0.9.0",
@@ -58,6 +57,7 @@
     "vuetify-loader": "^1.6.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.5.1"
+    "prettier": "^2.5.1",
+    "@types/lodash": "^4.14.180"
   }
 }

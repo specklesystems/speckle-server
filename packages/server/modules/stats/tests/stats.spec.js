@@ -1,16 +1,14 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const appRoot = require('app-root-path')
+const { createUser } = require(`@/modules/core/services/users`)
+const { createPersonalAccessToken } = require(`@/modules/core/services/tokens`)
+const { createStream } = require(`@/modules/core/services/streams`)
+const { createObjects } = require(`@/modules/core/services/objects`)
+const { createCommitByBranchName } = require(`@/modules/core/services/commits`)
 
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
-const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
-const { createStream } = require(`${appRoot}/modules/core/services/streams`)
-const { createObjects } = require(`${appRoot}/modules/core/services/objects`)
-const { createCommitByBranchName } = require(`${appRoot}/modules/core/services/commits`)
-
-const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
-const { createManyObjects } = require(`${appRoot}/test/helpers`)
+const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
+const { createManyObjects } = require(`@/test/helpers`)
 
 const {
   getStreamHistory,
@@ -27,8 +25,7 @@ const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 
 
 describe('Server stats services @stats-services', function () {
   before(async function () {
-    this.timeout(10000)
-
+    this.timeout(15000)
     await beforeEachContext()
     await seedDb(params)
   })
@@ -121,7 +118,7 @@ describe('Server stats api @stats-api', function () {
     `
 
   before(async function () {
-    this.timeout(10000)
+    this.timeout(15000)
 
     let { app } = await beforeEachContext()
     ;({ server, sendRequest } = await initializeTestServer(app))
@@ -202,41 +199,45 @@ describe('Server stats api @stats-api', function () {
 })
 
 async function seedDb({ numUsers = 10, numStreams = 10, numObjects = 10, numCommits = 10 } = {}) {
-  let users = []
-  let streams = []
-
   // create users
+  const userPromises = []
   for (let i = 0; i < numUsers; i++) {
-    let id = await createUser({
+    const promise = createUser({
       name: `User ${i}`,
       password: `SuperSecure${i}${i * 3.14}`,
       email: `user${i}@speckle.systems`
     })
-    users.push(id)
+    userPromises.push(promise)
   }
+
+  const userIds = await Promise.all(userPromises)
 
   // create streams
+  const streamPromises = []
   for (let i = 0; i < numStreams; i++) {
-    let id = await createStream({
+    const promise = createStream({
       name: `Stream ${i}`,
-      ownerId: users[i >= users.length ? users.length - 1 : i]
+      ownerId: userIds[i >= userIds.length ? userIds.length - 1 : i]
     })
-    streams.push(id)
+    streamPromises.push(promise)
   }
 
+  const streamIds = await Promise.all(streamPromises)
+
   // create a objects
-  let mockObjects = createManyObjects(numObjects - 1)
-  let objs = await createObjects(streams[0], mockObjects)
-  let commits = []
+  const objs = await createObjects(streamIds[0], createManyObjects(numObjects - 1))
 
   // create commits referencing those objects
+  const commitPromises = []
   for (let i = 0; i < numCommits; i++) {
-    let id = await createCommitByBranchName({
-      streamId: streams[0],
+    const promise = createCommitByBranchName({
+      streamId: streamIds[0],
       branchName: 'main',
       sourceApplication: 'tests',
       objectId: objs[i >= objs.length ? objs.length - 1 : i]
     })
-    commits.push(id)
+    commitPromises.push(promise)
   }
+
+  await Promise.all(commitPromises)
 }

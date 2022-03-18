@@ -107,7 +107,7 @@
 
 <script>
 import gql from 'graphql-tag'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 
 export default {
   name: 'AdminStreams',
@@ -199,7 +199,7 @@ export default {
       let ids = [this.manipulatedStream.id]
       await this.$apollo.mutate({
         mutation: gql`
-          mutation($ids: [String!]) {
+          mutation ($ids: [String!]) {
             streamsDelete(ids: $ids)
           }
         `,

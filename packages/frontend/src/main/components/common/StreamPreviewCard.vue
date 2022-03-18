@@ -7,6 +7,7 @@
           :color="hover"
           :height="previewHeight"
         ></preview-image>
+        <stream-favorite-btn :user="user" :stream="stream" class="favorite-button" />
       </router-link>
       <v-toolbar class="transparent elevation-0" dense>
         <v-toolbar-title>
@@ -28,6 +29,8 @@
             {{ stream.branches.totalCount }}
             <v-icon x-small class="">mdi-source-commit</v-icon>
             {{ stream.commits.totalCount }}
+            <v-icon x-small class="">mdi-heart-multiple</v-icon>
+            {{ stream.favoritesCount }}
           </div>
         </div>
       </v-card-text>
@@ -44,6 +47,7 @@
           :link-to-collabs="false"
         />
         <div
+          v-if="stream.role"
           :class="`caption text-right flex-grow-1 ${
             stream.role.split(':')[1] === 'owner' ? 'primary--text' : ''
           }`"
@@ -63,14 +67,25 @@
 <script>
 export default {
   components: {
-    PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay')
+    PreviewImage: () => import('@/main/components/common/PreviewImage.vue'),
+    CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
+    StreamFavoriteBtn: () => import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
   },
   props: {
     stream: { type: Object, default: () => null },
     previewHeight: { type: Number, default: () => 180 },
     showCollabs: { type: Boolean, default: true },
-    showDescription: { type: Boolean, default: true }
+    showDescription: { type: Boolean, default: true },
+    user: { type: Object, default: () => null }
   }
 }
 </script>
+<style lang="scss" scoped>
+.favorite-button {
+  $margin: 10px;
+
+  position: absolute;
+  top: $margin;
+  right: $margin;
+}
+</style>

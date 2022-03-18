@@ -6,7 +6,11 @@
 /** @type {import("eslint").Linter.Config} */
 const config = {
   env: {
-    browser: true
+    browser: true,
+    es2022: true
+  },
+  parserOptions: {
+    ecmaVersion: 13
   },
   overrides: [
     {

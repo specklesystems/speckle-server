@@ -213,9 +213,9 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import serverQuery from '@/graphql/server.gql'
 import streamCollaboratorsQuery from '@/graphql/streamCollaborators.gql'
 import userSearchQuery from '@/graphql/userSearch.gql'
+import { FullServerInfoQuery } from '@/graphql/server'
 
 export default {
   components: {
@@ -262,7 +262,7 @@ export default {
     },
     serverInfo: {
       prefetch: true,
-      query: serverQuery
+      query: FullServerInfoQuery
     }
   },
   computed: {
@@ -308,7 +308,7 @@ export default {
     async removeUser(user) {
       this.loading = true
       this.$matomo && this.$matomo.trackPageView('stream/remove-collaborator')
-      this.$mixpanel.track('Permission Action', { type: 'action', name: 'remove'  })
+      this.$mixpanel.track('Permission Action', { type: 'action', name: 'remove' })
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -358,7 +358,7 @@ export default {
       this.$apollo.queries.stream.refetch()
     },
     async grantPermissionUser(user) {
-      this.$mixpanel.track('Permission Action', { type: 'action', name: 'add'  })
+      this.$mixpanel.track('Permission Action', { type: 'action', name: 'add' })
       this.$matomo && this.$matomo.trackPageView('stream/add-collaborator')
       try {
         await this.$apollo.mutate({
