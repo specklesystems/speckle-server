@@ -33,7 +33,8 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
   connectionUri = env.POSTGRES_URL
 }
 
-module.exports = {
+/** @type {Object<string, import('knex').Knex.Config>} */
+const config = {
   test: {
     client: 'pg',
     connection: connectionUri || 'postgres://localhost/speckle2_test',
@@ -57,3 +58,5 @@ module.exports = {
     pool: { min: 2, max: 4 }
   }
 }
+
+module.exports = config

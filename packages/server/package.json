@@ -51,6 +51,7 @@
     "lodash.set": "^4.3.2",
     "lodash.values": "^4.3.0",
     "matomo-tracker": "^2.2.4",
+    "module-alias": "^2.2.2",
     "morgan": "^1.10.0",
     "morgan-debug": "^2.0.0",
     "node-machine-id": "^1.1.12",
@@ -72,6 +73,8 @@
   },
   "devDependencies": {
     "@apollo/client": "^3.5.9",
+    "@types/mocha": "^7.0.2",
+    "@types/module-alias": "^2.0.1",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
     "apollo-link": "^1.2.14",
@@ -82,21 +85,23 @@
     "chai-http": "^4.3.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.3",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
     "http-proxy-middleware": "^1.0.6",
     "lerna": "^3.22.1",
     "mocha": "^7.2.0",
-    "@types/mocha": "^7.0.2",
     "nodemon": "^2.0.6",
     "nyc": "^15.0.1",
+    "prettier": "^2.5.1",
     "supertest": "^4.0.2",
-    "ws": "^7.5.7",
-    "eslint": "^8.11.0",
-    "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.5.1"
+    "ws": "^7.5.7"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "_moduleAliases": {
+    "@": "."
   }
 }
