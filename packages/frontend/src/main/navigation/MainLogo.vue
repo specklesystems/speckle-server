@@ -33,21 +33,13 @@
   </v-card>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { MainServerInfoQuery } from '@/graphql/server'
+
 export default {
   props: { shadow: { type: Boolean, default: false } },
   apollo: {
     serverInfo: {
-      query: gql`
-        query {
-          serverInfo {
-            version
-            company
-            description
-            adminContact
-          }
-        }
-      `
+      query: MainServerInfoQuery
     }
   }
 }

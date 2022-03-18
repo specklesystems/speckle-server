@@ -1,13 +1,85 @@
 'use strict'
+const _ = require('lodash')
 const crs = require('crypto-random-string')
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
-
-const Streams = () => knex('streams')
-const Acl = () => knex('stream_acl')
-
 const debug = require('debug')
-const { createBranch } = require('./branches')
+
+const { createBranch } = require('@/modules/core/services/branches')
+const { Streams, StreamAcl, knex, StreamFavorites } = require('@/modules/core/dbSchema')
+
+/**
+ * List of columns to select when querying for user streams
+ * (expects joins to StreamAcl)
+ */
+const userStreamColumns = [
+  Streams.col.id,
+  Streams.col.name,
+  Streams.col.description,
+  Streams.col.isPublic,
+  Streams.col.createdAt,
+  Streams.col.updatedAt,
+  StreamAcl.col.role
+]
+
+/**
+ * Get base query for finding or counting user streams
+ * @param {object} p
+ * @param {string} [p.searchQuery] Filter by name/description/id
+ * @param {boolean} [p.publicOnly] Whether to only look for public streams
+ * @param {string} p.userId The user's ID
+ */
+function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
+  const query = StreamAcl.knex()
+    .where(StreamAcl.col.userId, userId)
+    .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
+
+  if (publicOnly) query.andWhere(Streams.col.isPublic, true)
+
+  if (searchQuery)
+    query.andWhere(function () {
+      this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
+        .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
+        .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
+    })
+
+  return query
+}
+
+/**
+ * Get base query for finding or counting user favorited streams
+ * @param {string} userId The user's ID
+ */
+function getFavoritedStreamsQueryBase(userId) {
+  const query = StreamFavorites.knex()
+    .where(StreamFavorites.col.userId, userId)
+    .innerJoin(Streams.name, Streams.col.id, StreamFavorites.col.streamId)
+    .leftJoin(StreamAcl.name, (q) =>
+      q
+        .on(StreamAcl.col.resourceId, '=', StreamFavorites.col.streamId)
+        .andOnVal(StreamAcl.col.userId, userId)
+    )
+    .andWhere((q) => q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId))
+
+  return query
+}
+
+/**
+ * Get a single stream
+ * @param {Object} p
+ * @param {string} p.streamId
+ * @param {string} [p.userId] Optionally resolve role for user
+ * @returns {Object}
+ */
+async function getStream({ streamId, userId }) {
+  let stream = await Streams.knex().where({ id: streamId }).select('*').first()
+  if (!userId) return stream
+
+  let acl = await StreamAcl.knex()
+    .where({ resourceId: streamId, userId: userId })
+    .select('role')
+    .first()
+  if (acl) stream.role = acl.role
+  return stream
+}
 
 module.exports = {
   async createStream({ name, description, isPublic, ownerId }) {
@@ -20,8 +92,8 @@ module.exports = {
     }
 
     // Create the stream & set up permissions
-    let [{ id: streamId }] = await Streams().returning('id').insert(stream)
-    await Acl().insert({ userId: ownerId, resourceId: streamId, role: 'stream:owner' })
+    let [{ id: streamId }] = await Streams.knex().returning('id').insert(stream)
+    await StreamAcl.knex().insert({ userId: ownerId, resourceId: streamId, role: 'stream:owner' })
 
     // Create a default main branch
     await createBranch({
@@ -33,39 +105,73 @@ module.exports = {
     return streamId
   },
 
-  async getStream({ streamId, userId }) {
-    let stream = await Streams().where({ id: streamId }).select('*').first()
-    if (!userId) return stream
-
-    let acl = await Acl().where({ resourceId: streamId, userId: userId }).select('role').first()
-    if (acl) stream.role = acl.role
-    return stream
-  },
+  getStream,
 
   async updateStream({ streamId, name, description, isPublic }) {
-    let [{ id }] = await Streams()
+    let [{ id }] = await Streams.knex()
       .returning('id')
       .where({ id: streamId })
       .update({ name, description, isPublic, updatedAt: knex.fn.now() })
     return id
   },
 
+  /**
+   * Set stream as favorited/unfavorited for a specific user
+   * @param {Object} param
+   * @param {string} streamId
+   * @param {string} userId
+   * @param {boolean} [favorited] By default favorites the stream, but you can set this
+   * to false to unfavorite it
+   */
+  async setStreamFavorited({ streamId, userId, favorited = true }) {
+    const favoriteQuery = StreamFavorites.knex().where({
+      streamId,
+      userId
+    })
+
+    if (!favorited) {
+      await favoriteQuery.del()
+      return
+    }
+
+    // Does user have access to this stream?
+    const stream = await getStream({ streamId, userId })
+    const hasAccess = stream && (stream.isPublic || stream.role)
+
+    // No access, clean up favorite metadata in case it exists and return
+    if (!hasAccess) {
+      await favoriteQuery.del()
+      return
+    }
+
+    // Access is OK, lets actually upsert the favorite
+    await StreamFavorites.knex()
+      .insert({
+        userId,
+        streamId
+      })
+      .onConflict(['streamId', 'userId'])
+      .ignore()
+
+    return
+  },
+
   async grantPermissionsStream({ streamId, userId, role }) {
     // upserts the existing role (sets a new one!)
     // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
     let query =
-      Acl().insert({ userId: userId, resourceId: streamId, role: role }).toString() +
+      StreamAcl.knex().insert({ userId: userId, resourceId: streamId, role: role }).toString() +
       ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
     await knex.raw(query)
 
     // update stream updated at
-    await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
+    await Streams.knex().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
     return true
   },
 
   async revokePermissionsStream({ streamId, userId }) {
-    let streamAclEntriesCount = Acl().count({ resourceId: streamId })
+    let streamAclEntriesCount = StreamAcl.knex().count({ resourceId: streamId })
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
 
     if (streamAclEntriesCount === 1)
@@ -75,23 +181,26 @@ module.exports = {
     // Count owners
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
 
-    let aclEntry = await Acl().where({ resourceId: streamId, userId: userId }).select('*').first()
+    let aclEntry = await StreamAcl.knex()
+      .where({ resourceId: streamId, userId: userId })
+      .select('*')
+      .first()
 
     if (aclEntry.role === 'stream:owner') {
-      let ownersCount = Acl().count({ resourceId: streamId, role: 'stream:owner' })
+      let ownersCount = StreamAcl.knex().count({ resourceId: streamId, role: 'stream:owner' })
       if (ownersCount === 1) throw new Error('Could not revoke permissions for user')
       else {
-        await Acl().where({ resourceId: streamId, userId: userId }).del()
+        await StreamAcl.knex().where({ resourceId: streamId, userId: userId }).del()
         return true
       }
     }
 
-    let delCount = await Acl().where({ resourceId: streamId, userId: userId }).del()
+    let delCount = await StreamAcl.knex().where({ resourceId: streamId, userId: userId }).del()
 
     if (delCount === 0) throw new Error('Could not revoke permissions for user')
 
     // update stream updated at
-    await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
+    await Streams.knex().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
 
     return true
   },
@@ -110,39 +219,29 @@ module.exports = {
       `,
       [streamId]
     )
-    return await Streams().where({ id: streamId }).del()
+    return await Streams.knex().where({ id: streamId }).del()
   },
 
+  /**
+   * Get the streams the user has access to
+   * @param {object} p
+   * @param {string} p.searchQuery Filter by name/description/id
+   * @param {boolean} p.publicOnly Whether to only look for public streams
+   * @param {string} p.userId The user's ID
+   * @param {number} p.limit Max amount of items to return
+   * @param {string} p.cursor Timestamp after which to look for items
+   * @returns {{streams: Array, cursor: string|null}}
+   */
   async getUserStreams({ userId, limit, cursor, publicOnly, searchQuery }) {
-    limit = limit || 25
-    publicOnly = publicOnly !== false //defaults to true if not provided
+    const finalLimit = limit || 25
+    const isPublicOnly = publicOnly !== false //defaults to true if not provided
 
-    let query = Acl()
-      .columns([
-        { id: 'streams.id' },
-        'name',
-        'description',
-        'isPublic',
-        'createdAt',
-        'updatedAt',
-        'role'
-      ])
-      .select()
-      .join('streams', 'stream_acl.resourceId', 'streams.id')
-      .where('stream_acl.userId', userId)
+    const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
+    query.columns(userStreamColumns).select()
 
-    if (cursor) query.andWhere('streams.updatedAt', '<', cursor)
+    if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
 
-    if (publicOnly) query.andWhere('streams.isPublic', true)
-
-    if (searchQuery)
-      query.andWhere(function () {
-        this.where('name', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('description', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('id', 'ILIKE', `%${searchQuery}%`) //potentially useless?
-      })
-
-    query.orderBy('streams.updatedAt', 'desc').limit(limit)
+    query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
 
     let rows = await query
     return {
@@ -159,7 +258,7 @@ module.exports = {
       .leftJoin('objects', 'streams.id', 'objects.streamId')
       .groupBy('streams.id')
 
-    let countQuery = Streams()
+    let countQuery = Streams.knex()
 
     if (searchQuery) {
       const whereFunc = function () {
@@ -196,29 +295,25 @@ module.exports = {
     return { streams: rows, totalCount: count }
   },
 
+  /**
+   * Get the total amount of streams the user has access to
+   * @param {object} p
+   * @param {string} p.searchQuery Filter by name/description/id
+   * @param {boolean} p.publicOnly Whether to only look for public streams
+   * @param {string} p.userId The user's ID
+   */
   async getUserStreamsCount({ userId, publicOnly, searchQuery }) {
-    publicOnly = publicOnly !== false //defaults to true if not provided
+    const isPublicOnly = publicOnly !== false //defaults to true if not provided
 
-    let query = Acl()
-      .count()
-      .join('streams', 'stream_acl.resourceId', 'streams.id')
-      .where({ userId: userId })
-
-    if (publicOnly) query.andWhere('streams.isPublic', true)
-
-    if (searchQuery)
-      query.andWhere(function () {
-        this.where('name', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('description', 'ILIKE', `%${searchQuery}%`)
-          .orWhere('id', 'ILIKE', `%${searchQuery}%`) //potentially useless?
-      })
+    const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
+    query.count()
 
     let [res] = await query
     return parseInt(res.count)
   },
 
   async getStreamUsers({ streamId }) {
-    let query = Acl()
+    let query = StreamAcl.knex()
       .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
       .select()
       .where({ resourceId: streamId })
@@ -227,6 +322,32 @@ module.exports = {
       .orderBy('stream_acl.role')
 
     return await query
+  },
+
+  async getFavoritedStreams({ userId, cursor, limit }) {
+    const finalLimit = _.clamp(limit || 25, 1, 25)
+    const query = getFavoritedStreamsQueryBase(userId)
+    query
+      .select()
+      .columns([...userStreamColumns, { favoritedDate: StreamFavorites.col.createdAt }])
+      .limit(finalLimit)
+      .orderBy(StreamFavorites.col.createdAt, 'desc')
+
+    if (cursor) query.andWhere(StreamFavorites.col.createdAt, '<', cursor)
+
+    let rows = await query
+    return {
+      streams: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].favoritedDate.toISOString() : null
+    }
+  },
+
+  async getFavoritedStreamsCount(userId) {
+    const query = getFavoritedStreamsQueryBase(userId)
+    query.count()
+
+    let [res] = await query
+    return parseInt(res.count)
   }
 }
 

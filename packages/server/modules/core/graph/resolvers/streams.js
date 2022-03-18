@@ -1,6 +1,5 @@
 'use strict'
 const { ApolloError, ForbiddenError, UserInputError, withFilter } = require('apollo-server-express')
-const appRoot = require('app-root-path')
 
 const {
   createStream,
@@ -12,17 +11,20 @@ const {
   getUserStreamsCount,
   getStreamUsers,
   grantPermissionsStream,
-  revokePermissionsStream
-} = require('../../services/streams')
+  revokePermissionsStream,
+  getFavoritedStreamsCount,
+  getFavoritedStreams,
+  setStreamFavorited
+} = require('@/modules/core/services/streams')
 
 const {
   authorizeResolver,
   validateScopes,
   validateServerRole,
   pubsub
-} = require(`${appRoot}/modules/shared`)
-const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
-const { respectsLimits } = require('../../services/ratelimits')
+} = require(`@/modules/shared`)
+const { saveActivity } = require(`@/modules/activitystream/services`)
+const { respectsLimits } = require('@/modules/core/services/ratelimits')
 
 // subscription events
 const USER_STREAM_ADDED = 'USER_STREAM_ADDED'
@@ -36,7 +38,7 @@ function sleep(ms) {
   })
 }
 
-const _deleteStream = async (parent, args, context, info) => {
+const _deleteStream = async (parent, args, context) => {
   await saveActivity({
     streamId: args.id,
     resourceType: 'stream',
@@ -70,7 +72,7 @@ const _deleteStream = async (parent, args, context, info) => {
 
 module.exports = {
   Query: {
-    async stream(parent, args, context, info) {
+    async stream(parent, args, context) {
       let stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) throw new ApolloError('Stream not found')
 
@@ -86,7 +88,7 @@ module.exports = {
       return stream
     },
 
-    async streams(parent, args, context, info) {
+    async streams(parent, args, context) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
 
@@ -106,7 +108,7 @@ module.exports = {
       return { totalCount, cursor: cursor, items: streams }
     },
 
-    async adminStreams(parent, args, context, info) {
+    async adminStreams(parent, args) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
 
@@ -123,19 +125,36 @@ module.exports = {
   },
 
   Stream: {
-    async collaborators(parent, args, context, info) {
+    async collaborators(parent) {
       let users = await getStreamUsers({ streamId: parent.id })
       return users
-    }
+    },
 
-    // async size ( parent, args, context, info ) {
-    //   let size = await streamSize( { streamId: parent.id } )
-    //   return size
-    // }
+    async favoritedDate(parent, _args, context) {
+      const streamId = parent.id
+      const userId = context.userId
+
+      if (!userId) return null
+
+      /** @type {import('@/modules/core/loaders').RequestDataLoaders} */
+      const dataLoaders = context.loaders
+      const data = await dataLoaders.streams.getUserFavoriteData.load(streamId)
+      return data?.createdAt
+    },
+
+    async favoritesCount(parent, _args, context) {
+      const streamId = parent.id
+
+      /** @type {import('@/modules/core/loaders').RequestDataLoaders} */
+      const dataLoaders = context.loaders
+      const data = await dataLoaders.streams.getFavoritesCount.load(streamId)
+
+      return data || 0
+    }
   },
 
   User: {
-    async streams(parent, args, context, info) {
+    async streams(parent, args, context) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items.')
       // Return only the user's public streams if parent.id !== context.userId
@@ -148,6 +167,24 @@ module.exports = {
         cursor: args.cursor,
         publicOnly: publicOnly
       })
+
+      return { totalCount, cursor: cursor, items: streams }
+    },
+
+    async favoriteStreams(parent, args, context) {
+      if (args.limit && args.limit > 50)
+        throw new UserInputError('Cannot return more than 50 items.')
+
+      if (parent.id !== context.userId)
+        throw new UserInputError("Cannot view another user's favorite streams")
+
+      const totalCount = await getFavoritedStreamsCount(parent.id)
+      const { cursor, streams } = await getFavoritedStreams({
+        userId: parent.id,
+        cursor: args.cursor,
+        limit: args.limit
+      })
+
       return { totalCount, cursor: cursor, items: streams }
     }
   },
@@ -176,7 +213,7 @@ module.exports = {
       return id
     },
 
-    async streamUpdate(parent, args, context, info) {
+    async streamUpdate(parent, args, context) {
       await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
 
       let oldValue = await getStream({ streamId: args.stream.id })
@@ -226,7 +263,7 @@ module.exports = {
       return results.every((res) => res === true)
     },
 
-    async streamGrantPermission(parent, args, context, info) {
+    async streamGrantPermission(parent, args, context) {
       await authorizeResolver(context.userId, args.permissionParams.streamId, 'stream:owner')
 
       if (context.userId === args.permissionParams.userId)
@@ -258,7 +295,7 @@ module.exports = {
       return granted
     },
 
-    async streamRevokePermission(parent, args, context, info) {
+    async streamRevokePermission(parent, args, context) {
       await authorizeResolver(context.userId, args.permissionParams.streamId, 'stream:owner')
 
       if (context.userId === args.permissionParams.userId)
@@ -283,6 +320,22 @@ module.exports = {
       }
 
       return revoked
+    },
+
+    async streamFavorite(_parent, args, ctx) {
+      const { streamId, favorited } = args
+      const userId = ctx.userId
+
+      // Toggle favorited status
+      await setStreamFavorited({ streamId, userId, favorited })
+
+      // Return up to date stream info
+      const stream = await getStream({ streamId, userId })
+
+      // User can't access this stream, returning nothing
+      if (!stream || (!stream.role && !stream.isPublic)) return null
+
+      return stream
     }
   },
 

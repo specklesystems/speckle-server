@@ -53,6 +53,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import { FullServerInfoQuery } from '@/graphql/server'
 
 export default {
   props: {
@@ -63,16 +64,7 @@ export default {
   },
   apollo: {
     scopes: {
-      query: gql`
-        query {
-          serverInfo {
-            scopes {
-              name
-              description
-            }
-          }
-        }
-      `,
+      query: FullServerInfoQuery,
       update: (data) => data.serverInfo.scopes
     }
   },
@@ -115,11 +107,11 @@ export default {
       if (!this.$refs.form.validate()) return
 
       this.$matomo && this.$matomo.trackPageView('user/token/create')
-      this.$mixpanel.track('Token Action', { type: 'action', name: 'create'  })
+      this.$mixpanel.track('Token Action', { type: 'action', name: 'create' })
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`
-            mutation($token: ApiTokenCreateInput!) {
+            mutation ($token: ApiTokenCreateInput!) {
               apiTokenCreate(token: $token)
             }
           `,
