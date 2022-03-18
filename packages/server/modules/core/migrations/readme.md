@@ -1,6 +1,6 @@
 ## Migrations, and how to create them
 
-First, make a new migration file in the appropriate migrations folder. Currently the knex CLI doesn't work for this purpose, so you should just duplicate an existing migration, rename it (make sure to update the timestamp prefix) and update the contents.
+First, make a new migration file in the appropriate migrations folder. To do this use `./bin/cli`.
 
 Next, write your migration! Here's an example below that adds a new column to a table.
 
