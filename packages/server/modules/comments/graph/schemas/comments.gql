@@ -1,7 +1,11 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
-
-  comments(streamId: String!, resources: [ResourceIdentifierInput]!, limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
+  """
+  This query can be used in the follwing ways: 
+  - get all the comments for a stream: do not pass in any resource identifiers.
+  - get the comments targeting any of a set of provided resources (comments/objects): pass in an array of resources.
+  """
+  comments(streamId: String!, resources: [ResourceIdentifierInput], limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
 }
 
 
@@ -61,7 +65,7 @@ input CommentCreateInput {
   Specfies the resources this comment is linked to. There are several usecases:
   - a comment targets only one resource (commit or object)
   - a comment targets one or more resources (commits or objects)
-  - a comment targets
+  - a comment targets only a stream
   """
   resources: [ResourceIdentifierInput]!
   text: String!
@@ -139,7 +143,7 @@ extend type Subscription {
   """
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
 
-  commentActivity(streamId: String!, resourceId: String!): JSONObject
+  commentActivity(streamId: String!, resourceIds: [String]): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 

@@ -186,20 +186,29 @@ export default {
     $subscribe: {
       commentActivity: {
         query: gql`
-          subscription($streamId: String!, $resourceId: String!) {
-            commentActivity(streamId: $streamId, resourceId: $resourceId)
+          subscription($streamId: String!, $resourceIds: [String]) {
+            commentActivity(streamId: $streamId, resourceIds: $resourceIds)
           }
         `,
         variables() {
+          let resIds = [this.$route.params.resourceId]
+          if(this.$route.query.overlay) resIds = [...resIds, ...this.$route.query.overlay.split(',')]
           return {
             streamId: this.$route.params.streamId,
-            resourceId: this.$route.params.resourceId
+            resourceIds: resIds
           }
         },
         skip() {
           return !this.$loggedIn() || !this.$route.params.resourceId
         },
+        error(e) {
+          console.log(e)
+          this.$eventHub.$emit('notification', {
+            text: 'Failed to subscribe to live events: ' + e.message
+          })
+        },
         result({ data }) {
+          console.log(data)
           if (!data.commentActivity) return
           // Creation
           if (data.commentActivity.eventType === 'comment-added') {
@@ -229,9 +238,6 @@ export default {
   computed: {
     hasExpandedComment() {
       return this.localComments.filter((c) => c.expanded).length !== 0
-    },
-    flatComments() {
-      return this.comments ? this.localComments : []
     }
   },
   mounted() {
@@ -332,9 +338,15 @@ export default {
         window.__viewer.sectionBox.off()
       }
     },
-    handleDeletion(comment) {
+    async handleDeletion(comment) {
       this.collapseComment(comment)
-      this.localComments = this.localComments.filter((c) => c.id !== comment.id)
+      // this.localComments = []
+      // await this.$apollo.queries.comments.refetch()
+      // this.updateCommentBubbles()
+      this.$store.commit('setCommentSelection', { comment: null })
+      let indx = this.localComments.findIndex(c => c.id === comment.id)
+      this.localComments.splice(indx, 1)
+      this.updateCommentBubbles()
     },
     updateCommentBubbles() {
       if (!this.comments) return

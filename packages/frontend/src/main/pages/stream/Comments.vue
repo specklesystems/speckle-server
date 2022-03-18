@@ -96,13 +96,11 @@ export default {
       query: gql`
         query(
           $streamId: String!
-          $resources: [ResourceIdentifierInput]!
           $archived: Boolean!
           $cursor: String
         ) {
           comments(
             streamId: $streamId
-            resources: $resources
             limit: 10
             archived: $archived
             cursor: $cursor
@@ -119,15 +117,10 @@ export default {
         return {
           streamId: this.$route.params.streamId,
           archived: this.showArchivedComments,
-          resources: [
-            {
-              resourceType: 'stream',
-              resourceId: this.$route.params.streamId
-            }
-          ]
         }
       },
       result({ data }) {
+        if(!data) return
         this.cursor = data.comments.cursor
         for (let c of data.comments.items) {
           if (this.localComments.findIndex((lc) => c.id === lc.id) === -1)

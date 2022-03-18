@@ -67,8 +67,9 @@ module.exports = {
       await pubsub.publish( 'COMMENT_ACTIVITY', {
         commentActivity: { ...args.input, authorId: context.userId, id, replies: { totalCount: 0 }, updatedAt: Date.now(), createdAt: Date.now(), eventType: 'comment-added' },
         streamId: args.input.streamId,
-        resourceId: args.input.resources[1].resourceId // TODO: hack for now
+        resourceIds: args.input.resources.map( res => res.resourceId ).join(',') // TODO: hack for now
       })
+
       return id
     },
 
@@ -119,7 +120,13 @@ module.exports = {
     commentActivity: {
       subscribe: withFilter(() => pubsub.asyncIterator(['COMMENT_ACTIVITY']), async (payload, variables, context) => {
         await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
-        return payload.streamId === variables.streamId && payload.resourceId === variables.resourceId
+
+        if(!payload.resourceIds)
+          return payload.streamId === variables.streamId
+        
+        for(let res of variables.resourceIds)
+          if(payload.resourceIds.includes( res ) && payload.streamId === variables.streamId) return true
+        return false
       })
     },
     commentThreadActivity: {

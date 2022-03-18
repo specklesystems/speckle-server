@@ -136,7 +136,7 @@ module.exports = {
     return true
   },
 
-  async getComments( { resources, limit, cursor, userId = null, replies = false, archived = false } ) {
+  async getComments( { resources, limit, cursor, userId = null, replies = false, streamId, archived = false } ) {
     let query = knex.with( 'comms', cte => {
       cte.select( ).distinctOn('id').from( 'comments' )
       cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
@@ -149,12 +149,16 @@ module.exports = {
         })
       }
 
-      cte.where(q => {
-        // link resources
-        for (let res of resources) {
-          q.orWhere('comment_links.resourceId', '=', res.resourceId)
-        }
-      })
+      if(resources && resources.length !== 0 ) {
+        cte.where(q => {
+          // link resources
+          for (let res of resources) {
+            q.orWhere('comment_links.resourceId', '=', res.resourceId)
+          }
+        })
+      } else {
+        cte.where({streamId: streamId })
+      }
       if (!replies) {
         cte.whereNull('parentComment')
       }
