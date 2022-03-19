@@ -2,8 +2,8 @@ extend type Query {
   comment(id: String!, streamId: String!): Comment
   """
   This query can be used in the follwing ways: 
-  - get all the comments for a stream: do not pass in any resource identifiers.
-  - get the comments targeting any of a set of provided resources (comments/objects): pass in an array of resources.
+  - get all the comments for a stream: **do not pass in any resource identifiers**.
+  - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
   """
   comments(streamId: String!, resources: [ResourceIdentifierInput], limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
 }
@@ -26,9 +26,9 @@ type Comment {
   """
   updatedAt: DateTime
   """
-  The last time you viewed this comment. Present only if an auth'ed request.
+  The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit.
   """
-  viewedAt: DateTime # relevant only if a top level commit.
+  viewedAt: DateTime
   """
   Gets the replies to this comment.
   """
@@ -104,7 +104,7 @@ extend type Mutation {
     @hasScope(scope: "streams:read")
 
   """
-  Flags a comment as viewed by you (the logged in user)
+  Flags a comment as viewed by you (the logged in user).
   """
   commentView(streamId: String!, commentId: String!): Boolean! 
     @hasRole(role: "server:user")
@@ -143,10 +143,20 @@ extend type Subscription {
   """
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
 
+  """
+  Subscribe to comment events. There's two ways to use this subscription: 
+  - for a whole stream: do not pass in any resourceIds; this sub will get called whenever a comment (not reply) is added to any of the stream's resources.
+  - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
+  """
   commentActivity(streamId: String!, resourceIds: [String]): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
+  """
+  Subscribes to events on a specific comment. Use to find out when:
+  - a top level comment is deleted (trigger a deletion event outside)
+  - a top level comment receives a reply. 
+  """
   commentThreadActivity(streamId: String!, commentId: String!): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
