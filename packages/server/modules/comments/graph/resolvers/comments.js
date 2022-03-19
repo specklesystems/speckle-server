@@ -3,7 +3,7 @@ const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
 const { getStream } = require(`${appRoot}/modules/core/services/streams`)
 
-const { getComment, getComments, createComment, createCommentReply, viewComment, editComment, archiveComment } = require(`${appRoot}/modules/comments/services`)
+const { getComment, getComments, createComment, createCommentReply, viewComment, archiveComment, editComment } = require(`${appRoot}/modules/comments/services`)
 
 const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
   const stream = await getStream({ streamId, userId })
@@ -20,23 +20,23 @@ const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
 
 module.exports = {
   Query: {
-    async comment( parent, args, context, info ) {
-      await authorizeStreamAccess( { streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      let comment = await getComment( { id: args.id, userId: context.userId } )
-      if(comment.streamId !== args.streamId)
+    async comment(parent, args, context) {
+      await authorizeStreamAccess({ streamId: args.streamId, userId: context.userId, auth: context.auth })
+      let comment = await getComment({ id: args.id, userId: context.userId })
+      if (comment.streamId !== args.streamId)
         throw new ForbiddenError('You do not have access to this comment.')
       return comment
     },
 
-    async comments( parent, args, context, info ) {
-      await authorizeStreamAccess( {  streamId: args.streamId, userId: context.userId, auth: context.auth } )
-      return { ...await getComments( { ...args, userId: context.userId } ) }
+    async comments(parent, args, context) {
+      await authorizeStreamAccess({ streamId: args.streamId, userId: context.userId, auth: context.auth })
+      return { ...await getComments({ ...args, userId: context.userId }) }
     }
   },
   Comment: {
-    async replies( parent, args, context, info ) {
-      const resources = [ { resourceId: parent.id, resourceType: 'comment' } ]
-      return await getComments( { resources, limit: args.limit, cursor: args.cursor } )
+    async replies(parent, args) {
+      const resources = [{ resourceId: parent.id, resourceType: 'comment' }]
+      return await getComments({ resources, replies: true, limit: args.limit, cursor: args.cursor })
     }
   },
   Mutation: {
@@ -73,9 +73,9 @@ module.exports = {
       return id
     },
 
-    async commentEdit(parent, args, context, info) {
+    async commentEdit(parent, args, context) {
       await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
-      await editComment({userId: context.userId, ...input})
+      await editComment({userId: context.userId, input: args.input})
       return true
     },
 
@@ -97,10 +97,10 @@ module.exports = {
       return true
     },
 
-    async commentReply( parent, args, context, info ) {
-      await authorizeResolver( context.userId, args.input.streamId, 'stream:reviewer' )
-      
-      let id = await createCommentReply( { authorId: context.userId, parentCommentId: args.input.parentComment, streamId: args.input.streamId, text: args.input.text, data: args.input.data } )
+    async commentReply(parent, args, context) {
+      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+
+      let id = await createCommentReply({ authorId: context.userId, parentCommentId: args.input.parentComment, streamId: args.input.streamId, text: args.input.text, data: args.input.data })
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-added', ...args.input, id, authorId: context.userId, updatedAt: Date.now(), createdAt: Date.now() },

@@ -393,6 +393,7 @@ describe('Comments @comments', () => {
     })
     const replies = await getComments({
       streamId: stream.id,
+      replies: true,
       resources: [
         { resourceId: streamCommentId1, resourceType: 'comment' },
       ],
