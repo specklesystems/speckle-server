@@ -55,14 +55,14 @@
         </div>
         <div class="body-2 px-4 flex-shrink-0">
           <span
-            v-if="commentDetails.data.filters"
+            v-if="commentDetails.data && commentDetails.data.filters"
             v-tooltip="`This comment has a filter.`"
             class="mr-1"
           >
             <v-icon small>mdi-filter-variant</v-icon>
           </span>
           <span
-            v-if="commentDetails.data.sectionBox"
+            v-if="commentDetails.data && commentDetails.data.sectionBox"
             v-tooltip="`This comment has a section box.`"
             class="mr-1"
           >
@@ -116,6 +116,7 @@ export default {
             createdAt
             updatedAt
             viewedAt
+            archived
             resources {
               resourceType
               resourceId
@@ -135,6 +136,34 @@ export default {
       },
       update(data) {
         return data.comment
+      }
+    },
+    $subscribe: {
+      commentThreadActivity: {
+        query: gql`
+          subscription($streamId: String!, $commentId: String!) {
+            commentThreadActivity(streamId: $streamId, commentId: $commentId)
+          }
+        `,
+        variables() {
+          return {
+            streamId: this.$route.params.streamId,
+            commentId: this.comment.id
+          }
+        },
+        skip() {
+          return !this.$loggedIn()
+        },
+        result({ data }) {
+          if (data.commentThreadActivity.eventType === 'reply-added') {
+            this.commentDetails.replies.totalCount++
+            this.commentDetails.updatedAt = Date.now()
+            return
+          }
+          if (data.commentThreadActivity.eventType === 'comment-archived') {
+            this.$emit('deleted', this.comment)
+          }
+        }
       }
     }
   },
@@ -180,6 +209,7 @@ export default {
           }
         })
         this.showArchiveDialog = false
+        this.commentDetails.archived = true
         this.$emit('deleted', this.comment)
         this.$mixpanel.track('Comment Action', { type: 'action', name: 'archive' })
         this.$eventHub.$emit('notification', {

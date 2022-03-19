@@ -24,9 +24,6 @@
     </v-list>
     <v-scroll-y-transition>
       <div v-show="expand" class="px-2">
-        <!-- <v-card v-for="comment in comments" :key="comment.id + '-card-sidebar'">
-          <v-card-title>{{ comment.text }}</v-card-title>
-        </v-card> -->
         <v-row
           v-for="comment in comments"
           :key="comment.id + '-card-sidebar'"
@@ -73,6 +70,7 @@
             <timeago :datetime="comment.updatedAt" />
           </v-col>
         </v-row>
+        <v-btn small block class="rounded-xl" :to="`/streams/${$route.params.streamId}/comments`">all stream comments</v-btn>
       </div>
     </v-scroll-y-transition>
   </div>

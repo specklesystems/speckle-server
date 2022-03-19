@@ -107,7 +107,7 @@
         </v-dialog>
       </div>
       <div v-else>
-        <v-btn block depressed color="primary" class="rounded-xl" to="/authn/login">
+        <v-btn block depressed color="primary" class="rounded-xl" @click="$loginAndSetRedirect()">
           <v-icon small class="mr-1">mdi-account</v-icon>
           Sign in to reply
         </v-btn>
@@ -144,6 +144,7 @@ export default {
           comment(streamId: $streamId, id: $id) {
             id
             viewedAt
+            archived
             replies(limit: 1000) {
               totalCount
               cursor

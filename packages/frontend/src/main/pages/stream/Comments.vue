@@ -18,7 +18,6 @@
           Comments
           <span class="caption">{{ localComments.length }}</span>
         </div>
-
         <!-- <div class="d-md-inline-block">
           <v-btn-toggle tile color="primary" group mandatory>
             <v-btn small icon disabled><v-icon small>mdi-filter</v-icon></v-btn>
@@ -40,7 +39,7 @@
         <p class="mb-0 mt-2">All this stream's comments are listed below.</p>
       </v-col>
       <v-col v-for="c in localComments" :key="c.id" cols="12" md="6">
-        <comment-list-item :comment="c" :stream="stream" @deleted="handleDeletion"/>
+        <comment-list-item v-if="c" :comment="c" :stream="stream" @deleted="handleDeletion"/>
       </v-col>
       <v-col cols="12" class="align-center">
         <infinite-loading :key="localComments[0].id" spinner="waveDots" @infinite="infiniteHandler">
@@ -109,14 +108,31 @@ export default {
             cursor
             items {
               id
+              archived
             }
           }
         }
       `,
+      fetchPolicy: 'no-cache',
       variables() {
         return {
           streamId: this.$route.params.streamId,
           archived: this.showArchivedComments,
+        }
+      },
+      subscribeToMore: {
+        document: gql`
+          subscription($streamId: String!) {
+            commentActivity(streamId: $streamId)
+          }
+        `,
+        variables() {
+          return { streamId: this.$route.params.streamId }
+        },
+        updateQuery(prevResult, {subscriptionData}) {
+          if (this.localComments.findIndex((lc) => subscriptionData.id === lc.id) === -1) {
+            this.localComments.push({ ...subscriptionData.data.commentActivity })
+          }
         }
       },
       result({ data }) {
@@ -131,6 +147,7 @@ export default {
   },
   methods: {
     handleDeletion( comment ){
+      this.$store.commit('setCommentSelection', { comment: null })
       let indx = this.localComments.findIndex(lc => lc.id === comment.id)
       this.localComments.splice(indx, 1)
 

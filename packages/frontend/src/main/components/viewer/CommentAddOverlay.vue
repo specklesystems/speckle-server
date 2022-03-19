@@ -185,7 +185,6 @@ export default {
       let commentInput = {
         streamId: this.$route.params.streamId,
         resources: [
-          // { resourceType: 'stream', resourceId: this.$route.params.streamId }, // TODO: remove
           {
             resourceType: this.$route.path.includes('object') ? 'object' : 'commit',
             resourceId: this.$route.params.resourceId

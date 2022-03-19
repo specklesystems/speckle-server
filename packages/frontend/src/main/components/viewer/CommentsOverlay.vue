@@ -14,7 +14,7 @@
     >
       <!-- Comment bubbles -->
       <div
-        v-for="comment in localComments"
+        v-for="comment in activeComments"
         :key="comment.id"
         :ref="`comment-${comment.id}`"
         :class="`absolute-pos rounded-xl no-mouse`"
@@ -65,7 +65,7 @@
       </div>
       <!-- Comment Threads -->
       <div
-        v-for="comment in localComments"
+        v-for="comment in activeComments"
         :key="comment.id + '-card'"
         :ref="`commentcard-${comment.id}`"
         :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
@@ -91,9 +91,9 @@
         <!-- </v-card> -->
       </div>
     </div>
-    <portal v-if="localComments.length !== 0" to="comments">
+    <portal v-if="activeComments.length !== 0" to="comments">
       <comments-viewer-navbar
-        :comments="localComments"
+        :comments="activeComments"
         @select-comment="
           (e) => {
             if (!e.expanded && !showComments) showComments = true
@@ -105,7 +105,7 @@
     <portal to="viewercontrols" :order="5">
       <v-btn
         key="comment-toggle-button"
-        v-tooltip="`Toggle comments (${localComments.length})`"
+        v-tooltip="`Toggle comments (${activeComments.length})`"
         rounded
         icon
         class="mr-2"
@@ -140,8 +140,9 @@ export default {
               createdAt
               updatedAt
               viewedAt
+              archived
               data
-              resources {
+              resources{
                 resourceId
                 resourceType
               }
@@ -152,6 +153,7 @@ export default {
           }
         }
       `,
+      fetchPolicy: 'no-cache',
       variables() {
         let resourceArr = [
           {
@@ -178,14 +180,14 @@ export default {
           c.expanded = false
           c.hovered = false
           c.bouncing = false
-          if (this.localComments.findIndex((lc) => c.id === lc.id) === -1)
-            this.localComments.push({ ...c })
+          if (this.localComments.findIndex((lc) => c.id === lc.id) === -1 && !c.archived) {
+              this.localComments.push({ ...c })
+          }
         }
-      }
-    },
-    $subscribe: {
-      commentActivity: {
-        query: gql`
+        return data
+      },
+      subscribeToMore:{
+        document:  gql`
           subscription($streamId: String!, $resourceIds: [String]) {
             commentActivity(streamId: $streamId, resourceIds: $resourceIds)
           }
@@ -198,30 +200,28 @@ export default {
             resourceIds: resIds
           }
         },
-        skip() {
-          return !this.$loggedIn() || !this.$route.params.resourceId
-        },
-        error(e) {
-          console.log(e)
-          this.$eventHub.$emit('notification', {
-            text: 'Failed to subscribe to live events: ' + e.message
-          })
-        },
-        result({ data }) {
-          console.log(data)
-          if (!data.commentActivity) return
-          // Creation
-          if (data.commentActivity.eventType === 'comment-added') {
-            data.commentActivity.expanded = false
-            data.commentActivity.hovered = false
-            data.commentActivity.bouncing = false
-            if (data.commentActivity.authorId !== this.$userId()) {
-              data.commentActivity.viewedAt = new Date('1987')
+        updateQuery(prevResult, {subscriptionData}) {
+          let newComment = subscriptionData.data.commentActivity
+          
+          newComment.expanded = false
+          newComment.hovered = false
+          newComment.bouncing = false
+          
+          if (newComment.authorId !== this.$userId()) 
+            newComment.viewedAt = new Date('1987')
+          
+          newComment.archived = false
+          
+          if(subscriptionData.data.commentActivity.eventType === 'comment-added') {
+            if(prevResult.comments.items.find( c => c.id === newComment.id)) {
+              return
             }
-            this.localComments.push(data.commentActivity)
-            setTimeout(() => {
+            if(!newComment.archived)
+              this.localComments.push(newComment)
+           
+           setTimeout(() => {
               this.updateCommentBubbles()
-              this.bounceComment(data.commentActivity.id)
+              this.bounceComment(newComment.id)
             }, 10)
           }
         }
@@ -236,11 +236,16 @@ export default {
     }
   },
   computed: {
+    activeComments() {
+      return this.localComments.filter(c => !c.archived)
+    },
     hasExpandedComment() {
       return this.localComments.filter((c) => c.expanded).length !== 0
     }
   },
   mounted() {
+    this.localComments = []
+    this.$apollo.queries.comments.refetch()
     if (this.$route.query.cId) {
       this.openCommentOnInit = this.$route.query.cId
       this.commentIntervalChecker = window.setInterval(() => {
@@ -275,6 +280,9 @@ export default {
     window.__viewer.cameraHandler.controls.addEventListener('update', () =>
       this.updateCommentBubbles()
     )
+    setTimeout(()=>{
+      this.updateCommentBubbles()
+    }, 1000)
   },
   methods: {
     isUnread(comment) {
@@ -340,12 +348,8 @@ export default {
     },
     async handleDeletion(comment) {
       this.collapseComment(comment)
-      // this.localComments = []
-      // await this.$apollo.queries.comments.refetch()
-      // this.updateCommentBubbles()
-      this.$store.commit('setCommentSelection', { comment: null })
-      let indx = this.localComments.findIndex(c => c.id === comment.id)
-      this.localComments.splice(indx, 1)
+      let comm = this.localComments.find(c => c.id === comment.id)
+      comm.archived = true
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {

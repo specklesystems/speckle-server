@@ -70,7 +70,7 @@ module.exports = {
   },
 
   async createCommentReply( { authorId, parentCommentId, streamId, text, data } ) {
-    let comment = { id: crs( { length: 10 } ), authorId, text, data, streamId }
+    let comment = { id: crs( { length: 10 } ), authorId, text, data, streamId, parentComment: parentCommentId }
     await Comments().insert( comment )
     try{
       await persistResourceLinks( {commentId: comment.id, streamId: streamId, resources: [{ resourceId: parentCommentId, resourceType: 'comment' }]} )

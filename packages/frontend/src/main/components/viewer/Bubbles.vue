@@ -112,7 +112,7 @@ export default {
           }
         },
         skip() {
-          return !this.$route.params.resourceId //|| !this.$loggedIn()
+          return !this.$route.params.resourceId || !this.$loggedIn()
         },
         result( res ) {
           let data = res.data
@@ -243,7 +243,7 @@ export default {
       }
       this.users = this.users.filter((u) => Date.now() - u.lastUpdate < 40000)
 
-      // if (!this.$loggedIn()) return
+      if (!this.$loggedIn()) return
 
       let controls = window.__viewer.cameraHandler.activeCam.controls
       let pos = controls.getPosition()
