@@ -3,7 +3,7 @@ const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
 const { getStream } = require(`${appRoot}/modules/core/services/streams`)
 
-const { getComment, getComments, createComment, createCommentReply, viewComment, archiveComment, editComment } = require(`${appRoot}/modules/comments/services`)
+const { getComment, getComments, createComment, createCommentReply, viewComment, archiveComment, editComment, streamResourceCheck } = require(`${appRoot}/modules/comments/services`)
 
 const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
   const stream = await getStream({ streamId, userId })
@@ -121,12 +121,21 @@ module.exports = {
       subscribe: withFilter(() => pubsub.asyncIterator(['COMMENT_ACTIVITY']), async (payload, variables, context) => {
         await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
 
-        if(!variables.resourceIds)
+        if(!variables.resourceIds) {
           return payload.streamId === variables.streamId
-        
-        for(let res of variables.resourceIds)
-          if(payload.resourceIds.includes( res ) && payload.streamId === variables.streamId) return true
-        return false
+        }
+
+        try {
+          // prevents comment exfiltration by listening in to a auth'ed stream, but different commit ("stream hopping" for subscriptions)
+          await streamResourceCheck( { streamId: variables.streamId, resources: variables.resourceIds.map( resId => { return { resourceId: resId, resourceType: resId.length === 10 ? 'commit' : 'object' } } ) })
+          for(let res of variables.resourceIds) {
+            if(payload.resourceIds.includes( res ) && payload.streamId === variables.streamId) {
+              return true
+            }
+          }
+        } catch( e ) {
+          return false
+        }
       })
     },
     commentThreadActivity: {

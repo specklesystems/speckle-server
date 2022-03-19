@@ -7,39 +7,38 @@ const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
 const CommentViews = () => knex('comment_views')
 
-const persistResourceLinks = async ({ streamId, commentId, resources }) => {
-  // this itches - a for loop with queries... but okay let's hit the road now
-  for (let res of resources) {
-    // The switch of doom: if something throws, we're out
-    switch (res.resourceType) {
-      case 'stream':
-        // Stream validity is already checked, so we can just go ahead.
-        break
-      case 'commit': {
-        let linkage = await knex('stream_commits').select().where({ commitId: res.resourceId, streamId: streamId }).first()
-        if (!linkage) throw new Error('Commit not found')
-        if (linkage.streamId !== streamId) throw new Error('Stop hacking - that commit id is not part of the specified stream.')
-        break
-      }
-      case 'object': {
-        let obj = await knex('objects').select().where({ id: res.resourceId, streamId: streamId }).first()
-        if (!obj) throw new Error('Object not found')
-        break
-      }
-      case 'comment': {
-        let comment = await Comments().where({ id: res.resourceId }).first()
-        if (!comment) throw new Error('Comment not found')
-        if (comment.streamId !== streamId) throw new Error('Stop hacking - that comment is not part of the specified stream.')
-        break
-      }
-      default:
-        throw Error(`resource type ${res.resourceType} is not supported as a comment target`)
-    }
-    await CommentLinks().insert({ commentId, resourceId: res.resourceId, resourceType: res.resourceType })
-  }
-}
-
 module.exports = {
+  async streamResourceCheck({ streamId, resources }) {
+    // this itches - a for loop with queries... but okay let's hit the road now
+    for (let res of resources) {
+      // The switch of doom: if something throws, we're out
+      switch (res.resourceType) {
+        case 'stream':
+          // Stream validity is already checked, so we can just go ahead.
+          break
+        case 'commit': {
+          let linkage = await knex('stream_commits').select().where({ commitId: res.resourceId, streamId: streamId }).first()
+          if (!linkage) throw new Error('Commit not found')
+          if (linkage.streamId !== streamId) throw new Error('Stop hacking - that commit id is not part of the specified stream.')
+          break
+        }
+        case 'object': {
+          let obj = await knex('objects').select().where({ id: res.resourceId, streamId: streamId }).first()
+          if (!obj) throw new Error('Object not found')
+          break
+        }
+        case 'comment': {
+          let comment = await Comments().where({ id: res.resourceId }).first()
+          if (!comment) throw new Error('Comment not found')
+          if (comment.streamId !== streamId) throw new Error('Stop hacking - that comment is not part of the specified stream.')
+          break
+        }
+        default:
+          throw Error(`resource type ${res.resourceType} is not supported as a comment target`)
+      }
+    }
+  },
+
   async createComment({ userId, input }) {
     if (input.resources.length < 1) throw Error('Must specify at least one resource as the comment target')
 
@@ -63,7 +62,10 @@ module.exports = {
 
     await Comments().insert(comment)
     try {
-      await persistResourceLinks({ streamId: input.streamId, commentId: comment.id, resources: input.resources })
+      await module.exports.streamResourceCheck({streamId: input.streamId, resources: input.resources})
+      for(let res of input.resources){
+        await CommentLinks().insert({ commentId: comment.id, resourceId: res.resourceId, resourceType: res.resourceType })
+      }
     } catch (e) {
       await Comments().where({ id: comment.id }).delete() // roll back
       throw e // pass on to resolver
@@ -76,7 +78,9 @@ module.exports = {
     let comment = { id: crs( { length: 10 } ), authorId, text, data, streamId, parentComment: parentCommentId }
     await Comments().insert( comment )
     try{
-      await persistResourceLinks( {commentId: comment.id, streamId: streamId, resources: [{ resourceId: parentCommentId, resourceType: 'comment' }]} )
+      let commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
+      await module.exports.streamResourceCheck({streamId: streamId, resources: [ commentLink ] })
+      await CommentLinks().insert({ commentId: comment.id, ...commentLink })
     } catch(e) {
       await Comments().where({id: comment.id}).delete() // roll back
       throw e // pass on to resolver
