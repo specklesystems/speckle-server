@@ -8,6 +8,47 @@ extend type Query {
   comments(streamId: String!, resources: [ResourceIdentifierInput], limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
 }
 
+extend type Stream{
+  """
+  The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:
+
+  ```
+  query{
+    comments(streamId:"streamId"){
+      ...
+    }
+  ```
+  """
+  commentCount: Int!
+}
+
+extend type Commit{
+  """
+  The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
+  E.g., 
+  ```
+  query{
+    comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
+      ...
+    }
+  ```
+  """
+  commentCount: Int!
+}
+
+extend type Object{
+  """
+  The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this object's id.
+  E.g., 
+  ```
+  query{
+    comments(streamId:"streamId" resources:[{resourceType: object, resourceId:"objectId"}] ){
+      ...
+    }
+  ```
+  """
+  commentCount: Int!
+}
 
 type Comment {
   id: String!

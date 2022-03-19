@@ -203,5 +203,21 @@ module.exports = {
       cursor: nextCursor,
       totalCount
     }
+  },
+
+  async getResourceCommentCount({resourceId}) {
+    let [res] = await CommentLinks().count('commentId').where({resourceId})
+    if( res && res.count) {
+      return parseInt(res.count)
+    }
+    return 0
+  },
+
+  async getStreamCommentCount({streamId}) {
+    let [res] = await Comments().count('id').where({streamId})
+    if( res && res.count) {
+      return parseInt(res.count)
+    }
+    return 0
   }
 }

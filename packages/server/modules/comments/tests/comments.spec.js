@@ -9,7 +9,7 @@ const { createStream } = require(`${appRoot}/modules/core/services/streams`)
 const { createCommitByBranchName } = require(`${appRoot}/modules/core/services/commits`)
 
 const { createObject } = require(`${appRoot}/modules/core/services/objects`)
-const { createComment, getComments, getComment, editComment, viewComment, createCommentReply, archiveComment } = require('../services')
+const { createComment, getComments, getComment, editComment, viewComment, createCommentReply, archiveComment, getResourceCommentCount, getStreamCommentCount } = require('../services')
 
 describe('Comments @comments', () => {
   let user = {
@@ -68,6 +68,7 @@ describe('Comments @comments', () => {
       .then(() => { throw new Error('This should have been rejected') })
       .catch(error => expect(error.message).to.be.equal('Must specify at least one resource as the comment target'))
   })
+
   it('Should not be able to comment resources that do not belong to the input streamId', async () => {
 
     // Stream A belongs to user 
@@ -108,6 +109,51 @@ describe('Comments @comments', () => {
     createCommentReply({ authorId: user.id, parentCommentId: correctCommentId, streamId: streamB.id, text: 'I am a 3l1t3 hack0r; - drop tables;' })
       .then(() => { throw new Error('This should have been rejected') })
       .catch(error => expect(error.message).to.be.equal('Stop hacking - that comment is not part of the specified stream.'))
+  })
+
+  it('Should return comment counts for streams, commits and objects', async() =>{
+    let stream = { name: 'Bean Counter' }
+    stream.id = await createStream({ ...stream, ownerId: user.id })
+    let obj = { foo: 'bar' }
+    obj.id = await createObject(stream.id, obj)
+    let commit = {}
+    commit.id = await createCommitByBranchName({ streamId: stream.id, branchName: 'main', message: 'baz', objectId: obj.id, authorId: user.id })
+
+    let commCount = 10
+
+    for(let i = 0; i < commCount; i++) {
+      // creates 1 * commCount comments linked to commit and object
+      await createComment({ userId: user.id, input: { text: 'bar', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' }, { resourceId: obj.id, resourceType: 'object' }] } })
+      // creates 1 * commCount comments linked to commit only
+      await createComment({ userId: user.id, input: { text: 'baz', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' } ] } })
+      // creates 1 * commCount comments linked to object only
+      await createComment({ userId: user.id, input: { text: 'qux', streamId: stream.id, resources: [{ resourceId: obj.id, resourceType: 'object' } ] } })
+    }
+
+    const count = await getStreamCommentCount({streamId: stream.id}) // should be 30
+    expect(count).to.equal(commCount * 3)
+
+    const objCount = await getResourceCommentCount({resourceId: obj.id})
+    expect(objCount).to.equal(commCount * 2)
+    
+    const commitCount = await getResourceCommentCount({resourceId: commit.id})
+    expect(commitCount).to.equal(commCount * 2)
+
+    let streamOther = { name: 'Bean Counter' }
+    streamOther.id = await createStream({ ...streamOther, ownerId: user.id })
+    let objOther = { 'are you bored': 'yes' }
+    objOther.id = await createObject(streamOther.id, objOther)
+    let commitOther = {}
+    commitOther.id = await createCommitByBranchName({ streamId: streamOther.id, branchName: 'main', message: 'baz', objectId: objOther.id, authorId: user.id })
+
+    const countOther = await getStreamCommentCount({streamId: streamOther.id})
+    expect(countOther).to.equal(0)
+
+    const objCountOther = await getResourceCommentCount({streamId: streamOther.id, resourceId: objOther.id})
+    expect(objCountOther).to.equal(0)
+    
+    const commitCountOther = await getResourceCommentCount({streamId: streamOther.id, resourceId: commitOther.id})
+    expect(commitCountOther).to.equal(0)
   })
 
   it('Should create viewedAt entries for comments', async () => {
@@ -309,9 +355,11 @@ describe('Comments @comments', () => {
     // Note: since we switched to an "or" clause, this does not apply anymore. 
     // expect( comments.items ).to.have.lengthOf( commentCount )
   })
+  
   it("should not be allowed to hop streams with a comment id", () => {
-
+    // Note: fixed in resolver
   })
+
   it('Should handle cursor and limit for queries', async () => {
     const localObjectId = await createObject(stream.id, { testObject: 'something completely different' })
 
@@ -465,6 +513,7 @@ describe('Comments @comments', () => {
 
     expect(comment).deep.to.equal(firstComment)
   })
+
   it('Should be able to edit a comment text', async () => {
     const localObjectId = await createObject(stream.id, { anotherTestObject: crs({ length: 10 }) })
     const commentId = await createComment({
@@ -485,11 +534,13 @@ describe('Comments @comments', () => {
     const comment = await getComment({ id: commentId })
     expect(comment.text).to.be.equal(properText)
   })
+
   it('Should not be allowed to edit a not existing comment', async () => {
     editComment({ userId: user.id, input: { id: 'this is not going to be found' } })
       .then(() => { throw new Error('This should have been rejected') })
       .catch(error => expect(error.message).to.be.equal('The comment doesn\'t exist'))
   })
+
   it('Should not be allowed to edit a comment of another user', async () => {
     const localObjectId = await createObject(stream.id, { anotherTestObject: crs({ length: 10 }) })
     const commentId = await createComment({
@@ -509,7 +560,9 @@ describe('Comments @comments', () => {
       .then(() => { throw new Error('This should have been rejected') })
       .catch(error => expect(error.message).to.be.equal('You cannot edit someone else\'s comments'))
   })
+
   it('Should be able to toggle reactions for a comment')
+
   it('Should be able to archive a comment', async () => {
     const commentId = await createComment({
       userId: user.id,
@@ -542,6 +595,7 @@ describe('Comments @comments', () => {
       .then(() => { throw new Error('This should have been rejected') })
       .catch(error => expect(error.message).to.be.equal('No comment badabumm exists, cannot change its archival status'))
   })
+
   it('Should be forbidden to archive someone else\'s comment, unless the person is a stream admin', async () => {
     const commentId = await createComment({
       userId: user.id,
@@ -574,6 +628,7 @@ describe('Comments @comments', () => {
     expect(archiveResult).to.be.true
 
   })
+
   it('Should not query archived comments unless asked', async () => {
     const localObjectId = await createObject(stream.id, { testObject: crs({ length: 10 }) })
 
@@ -625,6 +680,7 @@ describe('Comments @comments', () => {
     expect(comments.totalCount).to.be.equal(archiveCount)
     expect(comments.items.length).to.be.equal(archiveCount)
   })
+
   it('Should be able to write a short novel as comment text', async () => {
     const commentId = await createComment({
       userId: user.id,
