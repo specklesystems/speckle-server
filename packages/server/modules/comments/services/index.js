@@ -7,41 +7,44 @@ const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
 const CommentViews = () => knex('comment_views')
 
-const persistResourceLinks = async ({ streamId, commentId, resources}) => {
+const persistResourceLinks = async ({ streamId, commentId, resources }) => {
   // this itches - a for loop with queries... but okay let's hit the road now
-  for(let res of resources) {
+  for (let res of resources) {
     // The switch of doom: if something throws, we're out
     switch (res.resourceType) {
       case 'stream':
         // Stream validity is already checked, so we can just go ahead.
         break
-      case 'commit': 
-        let linkage = await knex('stream_commits').select().where({commitId:res.resourceId, streamId: streamId}).first()
-        if(!linkage) throw new Error('Commit not found')
-        if(linkage.streamId !== streamId) throw new Error('Stop hacking - that commit id is not part of the specified stream.')
+      case 'commit': {
+        let linkage = await knex('stream_commits').select().where({ commitId: res.resourceId, streamId: streamId }).first()
+        if (!linkage) throw new Error('Commit not found')
+        if (linkage.streamId !== streamId) throw new Error('Stop hacking - that commit id is not part of the specified stream.')
         break
-      case 'object':
-        let obj = await knex('objects').select().where({id: res.resourceId, streamId: streamId }).first()
-        if(!obj) throw new Error('Object not found')
+      }
+      case 'object': {
+        let obj = await knex('objects').select().where({ id: res.resourceId, streamId: streamId }).first()
+        if (!obj) throw new Error('Object not found')
         break
-      case 'comment':
-        let comment = await Comments().where({id: res.resourceId}).first()
-        if(!comment) throw new Error('Comment not found')
-        if(comment.streamId !== streamId ) throw new Error('Stop hacking - that comment is not part of the specified stream.')
+      }
+      case 'comment': {
+        let comment = await Comments().where({ id: res.resourceId }).first()
+        if (!comment) throw new Error('Comment not found')
+        if (comment.streamId !== streamId) throw new Error('Stop hacking - that comment is not part of the specified stream.')
         break
-      default: 
-        throw Error(`resource type ${resourceType} is not supported as a comment target`)
+      }
+      default:
+        throw Error(`resource type ${res.resourceType} is not supported as a comment target`)
     }
     await CommentLinks().insert({ commentId, resourceId: res.resourceId, resourceType: res.resourceType })
   }
 }
 
 module.exports = {
-  async createComment({ userId, input }) {    
+  async createComment({ userId, input }) {
     if (input.resources.length < 1) throw Error('Must specify at least one resource as the comment target')
-    
-    const commentResource = input.resources.find( r => r.resourceType === 'comment' )
-    if(commentResource)
+
+    const commentResource = input.resources.find(r => r.resourceType === 'comment')
+    if (commentResource)
       throw new Error('Please use the comment reply mutation.')
 
     // Stream checks
@@ -50,22 +53,22 @@ module.exports = {
 
     const [stream] = streamResources
     if (stream && stream.resourceId !== input.streamId) throw Error('Input streamId doesn\'t match the stream resource.resourceId')
-    
+
     let comment = { ...input }
 
     delete comment.resources
 
     comment.id = crs({ length: 10 })
     comment.authorId = userId
-    
-    await Comments().insert( comment )
-    try{
-      await persistResourceLinks( { streamId: input.streamId, commentId: comment.id, resources: input.resources } )
-    } catch(e) {
-      await Comments().where({id: comment.id}).delete() // roll back
+
+    await Comments().insert(comment)
+    try {
+      await persistResourceLinks({ streamId: input.streamId, commentId: comment.id, resources: input.resources })
+    } catch (e) {
+      await Comments().where({ id: comment.id }).delete() // roll back
       throw e // pass on to resolver
     }
-    await module.exports.viewComment( { userId, commentId: comment.id } ) // so we don't self mark a comment as unread the moment it's created
+    await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
     return comment.id
   },
 
@@ -78,7 +81,7 @@ module.exports = {
       await Comments().where({id: comment.id}).delete() // roll back
       throw e // pass on to resolver
     }
-    await Comments().where( { id: parentCommentId } ).update( { updatedAt: knex.fn.now( ) } )
+    await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
 
     return comment.id
   },
@@ -122,16 +125,16 @@ module.exports = {
   async archiveComment({ commentId, userId, streamId, archived = true }) {
     let comment = await Comments().where({ id: commentId }).first()
     if (!comment) throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
-    
-  
-    let aclEntry = await knex('stream_acl').select().where({resourceId: streamId}).andWhere({userId: userId}).first()
-    
+
+
+    let aclEntry = await knex('stream_acl').select().where({ resourceId: streamId, userId: userId }).first()
+
     if (comment.authorId !== userId) {
 
-      if(!aclEntry || aclEntry.role !== 'stream:owner')
+      if (!aclEntry || aclEntry.role !== 'stream:owner')
         throw new Error('You don\'t have permission to archive the comment')
     }
-    
+
     await Comments().where({ id: commentId }).update({ archived })
     return true
   },
@@ -197,5 +200,4 @@ module.exports = {
       totalCount
     }
   }
-
 }

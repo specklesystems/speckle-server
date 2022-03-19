@@ -22,7 +22,7 @@ type Comment {
   resources: [ResourceIdentifier]!
   createdAt: DateTime
   """
-  The time this comment was last updated. Correspons also to the latest reply to this comment, if any.
+  The time this comment was last updated. Corresponds also to the latest reply to this comment, if any.
   """
   updatedAt: DateTime
   """
@@ -62,7 +62,7 @@ enum ResourceType {
 input CommentCreateInput {
   streamId: String!
   """
-  Specfies the resources this comment is linked to. There are several usecases:
+  Specifies the resources this comment is linked to. There are several use cases:
   - a comment targets only one resource (commit or object)
   - a comment targets one or more resources (commits or objects)
   - a comment targets only a stream
@@ -134,7 +134,6 @@ extend type Mutation {
   commentReactionToggle(streamId: String!, commentId: String!, reaction: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
-
 }
 
 extend type Subscription {
