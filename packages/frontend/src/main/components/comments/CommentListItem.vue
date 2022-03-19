@@ -128,6 +128,7 @@ export default {
           }
         }
       `,
+      fetchPolicy: 'no-cache',
       variables() {
         return {
           streamId: this.$route.params.streamId,
