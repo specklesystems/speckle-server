@@ -120,21 +120,29 @@ describe('Comments @comments', () => {
     commit.id = await createCommitByBranchName({ streamId: stream.id, branchName: 'main', message: 'baz', objectId: obj.id, authorId: user.id })
 
     let commCount = 10
-
+    let commentIds = []
     for(let i = 0; i < commCount; i++) {
       // creates 1 * commCount comments linked to commit and object
-      await createComment({ userId: user.id, input: { text: 'bar', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' }, { resourceId: obj.id, resourceType: 'object' }] } })
+      commentIds.push( await createComment({ userId: user.id, input: { text: 'bar', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' }, { resourceId: obj.id, resourceType: 'object' }] } }) )
       // creates 1 * commCount comments linked to commit only
-      await createComment({ userId: user.id, input: { text: 'baz', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' } ] } })
+      commentIds.push( await createComment({ userId: user.id, input: { text: 'baz', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' } ] } }) )
       // creates 1 * commCount comments linked to object only
-      await createComment({ userId: user.id, input: { text: 'qux', streamId: stream.id, resources: [{ resourceId: obj.id, resourceType: 'object' } ] } })
+      commentIds.push( await createComment({ userId: user.id, input: { text: 'qux', streamId: stream.id, resources: [{ resourceId: obj.id, resourceType: 'object' } ] } }) )
     }
+    
+    // create some replies to foil the counts
+    await createCommentReply({ authorId: user.id, parentCommentId: commentIds[0], streamId: stream.id, input: { text: crs({ length: 10 }) } })
+    await createCommentReply({ authorId: user.id, parentCommentId: commentIds[1], streamId: stream.id, input: { text: crs({ length: 10 }) } })
+    await createCommentReply({ authorId: user.id, parentCommentId: commentIds[2], streamId: stream.id, input: { text: crs({ length: 10 }) } })
+
+    // we archive one of the object only comments for fun and profit
+    await archiveComment({commentId: commentIds[commentIds.length-1], userId: user.id, streamId: stream.id, archived: true })
 
     const count = await getStreamCommentCount({streamId: stream.id}) // should be 30
-    expect(count).to.equal(commCount * 3)
+    expect(count).to.equal(commCount * 3 - 1)
 
     const objCount = await getResourceCommentCount({resourceId: obj.id})
-    expect(objCount).to.equal(commCount * 2)
+    expect(objCount).to.equal(commCount * 2 - 1)
     
     const commitCount = await getResourceCommentCount({resourceId: commit.id})
     expect(commitCount).to.equal(commCount * 2)

@@ -206,7 +206,12 @@ module.exports = {
   },
 
   async getResourceCommentCount({resourceId}) {
-    let [res] = await CommentLinks().count('commentId').where({resourceId})
+    let [res] = await CommentLinks()
+      .count('commentId')
+      .where({resourceId})
+      .join('comments', 'comments.id', '=', 'commentId')
+      .where('comments.archived', '=', false )
+
     if( res && res.count) {
       return parseInt(res.count)
     }
@@ -214,7 +219,7 @@ module.exports = {
   },
 
   async getStreamCommentCount({streamId}) {
-    let [res] = await Comments().count('id').where({streamId})
+    let [res] = await Comments().count('id').where({streamId}).andWhere({ archived: false }).whereNull('parentComment')
     if( res && res.count) {
       return parseInt(res.count)
     }
