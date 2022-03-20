@@ -59,7 +59,9 @@
             md="4"
             xl="3"
           >
-            <v-card>
+          <commit-preview-card :commit="commit" :show-stream-and-branch="false"/>
+          <!-- CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'), -->
+            <!-- <v-card>
               <router-link :to="`/streams/${streamId}/commits/${commit.id}`">
                 <preview-image
                   :height="180"
@@ -78,7 +80,7 @@
                 :commit="commit"
                 :stream-id="streamId"
               ></list-item-commit>
-            </v-card>
+            </v-card> -->
           </v-col>
         </v-row>
         <v-row v-if="listMode">
@@ -147,7 +149,8 @@ export default {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
     CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
-    BranchToolbar: () => import('@/main/toolbars/BranchToolbar')
+    BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
+    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
   },
   data() {
     return {

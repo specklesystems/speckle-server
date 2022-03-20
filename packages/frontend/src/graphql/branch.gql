@@ -18,6 +18,7 @@ query Stream($streamId: String!, $branchName: String!, $cursor: String) {
           message
           referencedObject
           createdAt
+          commentCount
         }
       }
     }

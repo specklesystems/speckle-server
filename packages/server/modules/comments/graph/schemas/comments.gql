@@ -36,6 +36,20 @@ extend type Commit{
   commentCount: Int!
 }
 
+extend type CommitCollectionUserNode{
+  """
+  The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
+  E.g., 
+  ```
+  query{
+    comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
+      ...
+    }
+  ```
+  """
+  commentCount: Int!
+}
+
 extend type Object{
   """
   The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this object's id.

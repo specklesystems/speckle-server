@@ -85,6 +85,7 @@ export default {
                 createdAt
                 sourceApplication
                 branchName
+                commentCount
               }
             }
           }

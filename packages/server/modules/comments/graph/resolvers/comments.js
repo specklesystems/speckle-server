@@ -40,17 +40,22 @@ module.exports = {
     }
   },
   Stream: {
-    async commentCount(){
+    async commentCount(parent){
       return await getStreamCommentCount({streamId: parent.id})
     }
   },
   Commit: {
-    async commentCount(){
+    async commentCount(parent){
+      return await getResourceCommentCount({resourceId: parent.id})
+    }
+  },
+  CommitCollectionUserNode: {
+    async commentCount(parent){
       return await getResourceCommentCount({resourceId: parent.id})
     }
   },
   Object: {
-    async commentCount(){
+    async commentCount(parent){
       return await getResourceCommentCount({resourceId: parent.id})
     }
   },
