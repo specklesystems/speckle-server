@@ -7,7 +7,7 @@ import App from '@/main/App.vue'
 import { createProvider } from '@/vue-apollo'
 import { checkAccessCodeAndGetTokens, prefetchUserAndSetSuuid } from '@/plugins/authHelpers'
 
-import router from '@/main/router'
+import router from '@/main/router/index'
 import vuetify from '@/plugins/vuetify'
 
 Vue.config.productionTip = false
@@ -61,7 +61,7 @@ Vue.component(HistogramSlider.name, HistogramSlider)
 import VueApexCharts from 'vue-apexcharts'
 Vue.use(VueApexCharts)
 
-Vue.component('Apexchart', VueApexCharts)
+Vue.component('ApexChart', VueApexCharts)
 
 import { formatNumber } from '@/plugins/formatNumber'
 // Filter to turn any number into a nice string like '10k', '5.5m'

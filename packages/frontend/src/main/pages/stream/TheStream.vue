@@ -28,11 +28,11 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Stream',
+  name: 'TheStream',
   components: {
-    ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
-    StreamNav: () => import('@/main/navigation/StreamNav'),
-    StreamToolbar: () => import('@/main/toolbars/StreamToolbar')
+    ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder.vue'),
+    StreamNav: () => import('@/main/navigation/StreamNav.vue'),
+    StreamToolbar: () => import('@/main/toolbars/StreamToolbar.vue')
   },
   data() {
     return {
@@ -82,7 +82,7 @@ export default {
     $subscribe: {
       branchCreated: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             branchCreated(streamId: $streamId)
           }
         `,
@@ -107,7 +107,7 @@ export default {
       },
       commitCreated: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             commitCreated(streamId: $streamId)
           }
         `,

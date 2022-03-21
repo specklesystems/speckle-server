@@ -87,7 +87,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Details',
+  name: 'StreamHome',
   components: {
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),

@@ -84,11 +84,19 @@ const routes = [
         component: () => import('@/main/pages/Streams.vue')
       },
       {
+        path: 'streams/favorite',
+        name: 'favorite-streams',
+        meta: {
+          title: 'Favorite Streams | Speckle'
+        },
+        component: () => import('@/main/pages/TheFavoriteStreams.vue')
+      },
+      {
         path: 'streams/:streamId',
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/main/pages/stream/Stream.vue'),
+        component: () => import('@/main/pages/stream/TheStream.vue'),
         children: [
           {
             path: '',

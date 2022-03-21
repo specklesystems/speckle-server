@@ -36,15 +36,25 @@
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-feed" />
-        <v-list-item link to="/streams">
-          <v-list-item-icon>
-            <v-icon class="mt-2">mdi-folder-outline</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title>Streams</v-list-item-title>
-            <v-list-item-subtitle class="caption">All your streams</v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
+        <v-list-group prepend-icon="mdi-folder-outline mt-2" group="streams">
+          <template #activator>
+            <v-list-item-content>
+              <v-list-item-title>Streams</v-list-item-title>
+              <v-list-item-subtitle class="caption">All your streams</v-list-item-subtitle>
+            </v-list-item-content>
+          </template>
+
+          <v-list-item link to="/streams" exact-path>
+            <v-list-item-content>
+              <v-list-item-title>Your Streams</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item link to="/streams/favorite">
+            <v-list-item-content>
+              <v-list-item-title>Favorites</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list-group>
         <portal-target name="subnav-streams" />
         <v-list-item link to="/commits">
           <v-list-item-icon>
