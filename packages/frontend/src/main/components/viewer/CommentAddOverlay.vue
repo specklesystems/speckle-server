@@ -33,7 +33,7 @@
             :class="`mouse elevation-5 ${!expand ? 'primary' : 'background'} mr-2`"
             @click="toggleExpand()"
           >
-            <v-icon v-if="!expand" dark x-small>mdi-comment-plus</v-icon>
+            <v-icon v-if="!expand" dark >mdi-plus</v-icon>
             <v-icon v-else dark x-small>mdi-close</v-icon>
           </v-btn>
           <v-slide-x-transition>

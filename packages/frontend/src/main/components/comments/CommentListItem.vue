@@ -138,6 +138,9 @@ export default {
       },
       update(data) {
         return data.comment
+      },
+      skip() {
+        return !this.comment
       }
     },
     $subscribe: {
@@ -157,6 +160,7 @@ export default {
           return !this.$loggedIn()
         },
         result({ data }) {
+          if(!data || !data.commentThreadActivity) return
           if (data.commentThreadActivity.eventType === 'reply-added') {
             this.commentDetails.replies.totalCount++
             this.commentDetails.updatedAt = Date.now()
