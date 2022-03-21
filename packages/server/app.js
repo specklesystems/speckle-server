@@ -3,25 +3,22 @@
 
 require('./bootstrap')
 const http = require('http')
-const url = require('url')
 const express = require('express')
 const compression = require('compression')
 const appRoot = require('app-root-path')
 const logger = require('morgan-debug')
 const bodyParser = require('body-parser')
-const path = require('path')
 const debug = require('debug')
 const { createTerminus } = require('@godaddy/terminus')
 
 const Sentry = require('@sentry/node')
-const Tracing = require('@sentry/tracing')
 const Logging = require(`${appRoot}/logging`)
 const { startup: MatStartup } = require(`${appRoot}/logging/matomoHelper`)
 const prometheusClient = require('prom-client')
 
 const { ApolloServer, ForbiddenError } = require('apollo-server-express')
 
-const { contextApiTokenHelper } = require('./modules/shared')
+const { buildContext } = require('./modules/shared')
 const knex = require('./db/knex')
 
 let graphqlServer
@@ -71,7 +68,7 @@ exports.init = async () => {
   })
   graphqlServer = new ApolloServer({
     ...graph(),
-    context: contextApiTokenHelper,
+    context: buildContext,
     subscriptions: {
       onConnect: (connectionParams, webSocket, context) => {
         metricConnectCounter.inc()

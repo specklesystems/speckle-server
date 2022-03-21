@@ -10,7 +10,7 @@ exports.up = async function (knex) {
   await knex.schema.createTable(TABLE_NAME, (table) => {
     table.string('streamId', 10).references('id').inTable('streams').onDelete('cascade')
     table.string('userId', 10).references('id').inTable('users').onDelete('cascade')
-    table.timestamp('createdAt')
+    table.timestamp('createdAt').defaultTo(knex.fn.now())
 
     // userId first, since that's the main one we're going to be filtering by
     table.primary(['userId', 'streamId'])

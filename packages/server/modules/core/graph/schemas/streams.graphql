@@ -35,7 +35,7 @@ type Stream {
   """
   Date when you favorited this stream. `null` if stream isn't viewed from a specific user's perspective or if it isn't favorited.
   """
-  favoritedDate: Boolean
+  favoritedDate: DateTime
   # How many times this stream has been favorited
   favoritesCount: Int!
 }

@@ -7,7 +7,7 @@ const { Streams, StreamAcl, knex, StreamFavorites } = require('@/modules/core/db
 
 /**
  * List of columns to select when querying for user streams
- * (expects joins to StreamAcl & StreamFavorites)
+ * (expects joins to StreamAcl)
  */
 const userStreamColumns = [
   Streams.col.id,
@@ -16,8 +16,7 @@ const userStreamColumns = [
   Streams.col.isPublic,
   Streams.col.createdAt,
   Streams.col.updatedAt,
-  StreamAcl.col.role,
-  { favoritedDate: StreamFavorites.col.createdAt }
+  StreamAcl.col.role
 ]
 
 /**
@@ -188,15 +187,6 @@ module.exports = {
 
     const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
     query.columns(userStreamColumns).select()
-
-    // Get user-specific favorites info
-    query.leftJoin(StreamFavorites.name, function () {
-      this.on(StreamFavorites.col.streamId, '=', Streams.col.id).andOn(
-        StreamFavorites.col.userId,
-        '=',
-        StreamAcl.col.userId
-      )
-    })
 
     if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
 

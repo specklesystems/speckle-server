@@ -126,6 +126,28 @@ module.exports = {
     async collaborators(parent) {
       let users = await getStreamUsers({ streamId: parent.id })
       return users
+    },
+
+    async favoritedDate(parent, _args, context) {
+      const streamId = parent.id
+      const userId = context.userId
+
+      if (!userId) return null
+
+      /** @type {import('@/modules/core/loaders').RequestDataLoaders} */
+      const dataLoaders = context.loaders
+      const data = await dataLoaders.streams.getUserFavoriteData.load(streamId)
+      return data?.createdAt
+    },
+
+    async favoritesCount(parent, _args, context) {
+      const streamId = parent.id
+
+      /** @type {import('@/modules/core/loaders').RequestDataLoaders} */
+      const dataLoaders = context.loaders
+      const data = await dataLoaders.streams.getFavoritesCount.load(streamId)
+
+      return data || 0
     }
   },
 
