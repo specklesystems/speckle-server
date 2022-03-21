@@ -51,23 +51,31 @@
         </div>
       </template>
       <div v-if="$loggedIn()" class="px-0 mb-4">
-        <v-textarea
-          :disabled="loadingReply"
-          v-model="replyText"
-          solo
-          hide-details
-          auto-grow
-          rows="1"
-          placeholder="Reply (press enter to send)"
-          class="rounded-xl mb-2 caption"
-          append-icon="mdi-send"
-          @click:append="addReply"
-          @keydown.enter.exact.prevent="addReply()"
-        ></v-textarea>
+        <v-slide-y-transition>
+          <div class="px-4 py-2 caption mb-2 background rounded-xl" v-show="whoIsTyping.length > 0">
+            {{typingStatusText}}
+          </div>
+        </v-slide-y-transition>
+        <div >
+          <v-textarea
+            :disabled="loadingReply"
+            v-model="replyText"
+            solo
+            hide-details
+            auto-grow
+            rows="1"
+            placeholder="Reply (press enter to send)"
+            class="rounded-xl mb-2 caption"
+            append-icon="mdi-send"
+            @input="debTypingUpdate"
+            @click:append="addReply"
+            @keydown.enter.exact.prevent="addReply()"
+          ></v-textarea>
+        </div>
         <div class="px-2" v-show="loadingReply">
           <v-progress-linear indeterminate/>
         </div>
-        <div class="text-right">
+        <div class="text-right" ref="replyinput">
           <v-btn
             v-show="canArchiveThread"
             v-tooltip="'Marks this thread as archived.'"
@@ -124,6 +132,8 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import debounce from 'lodash.debounce'
+
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
@@ -132,6 +142,16 @@ export default {
     comment: { type: Object, default: () => null }
   },
   apollo: {
+    user: {
+      query: gql`
+        query{
+          user {
+            name
+            id
+          }
+        }
+      `
+    },
     stream: {
       query: gql`
         query($streamId: String!) {
@@ -172,9 +192,6 @@ export default {
           id: this.comment.id
         }
       },
-      // skip() {
-      //   return !this.comment.expanded
-      // },
       result({ data }) {
         if(!data) return
         data.comment.replies.items.forEach((item) => {
@@ -202,6 +219,7 @@ export default {
           return !this.$loggedIn()
         },
         result({ data }) {
+          if(!data || !data.commentThreadActivity) return
           if (data.commentThreadActivity.eventType === 'reply-added') {
             if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
             else {
@@ -210,10 +228,29 @@ export default {
               }, 100)
             }
             this.localReplies.push({ ...data.commentThreadActivity })
+            this.$refs.replyinput.scrollIntoView({behaviour: 'smooth', block: 'end' })
             return
           }
           if (data.commentThreadActivity.eventType === 'comment-archived') {
             this.$emit('deleted', this.comment)
+          }
+          if(data.commentThreadActivity.eventType === 'reply-typing-status') {
+            let state = data.commentThreadActivity.data
+            if(state.userId === this.$userId()) return
+            let existingUser = this.whoIsTyping.find( u => u.userId === state.userId)
+            if(state.isTyping && existingUser) {
+              existingUser.lastSeenAt = Date.now()
+              return
+            }
+            if(!state.isTyping) {
+              let indx = this.whoIsTyping.findIndex( u => u.userId === state.userId)
+              if(indx!==-1) this.whoIsTyping.splice(indx, 1)
+              return
+            }
+            if(state.isTyping && !existingUser) {
+              state.lastSeenAt = Date.now()
+              this.whoIsTyping.push(state)
+            }
           }
         }
       }
@@ -225,7 +262,9 @@ export default {
       localReplies: [],
       minimise: false,
       showArchiveDialog: false,
-      loadingReply: false
+      loadingReply: false,
+      whoIsTyping: [],
+      isTyping: true
     }
   },
   computed: {
@@ -261,7 +300,15 @@ export default {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
       }
       return route
-    }
+    },
+    typingStatusText() {
+      if(this.whoIsTyping.length === 0) return null
+      if(this.whoIsTyping.length > 1) {
+        return `${this.whoIsTyping.map(u=>u.userName).join(', ')} are typing...`
+      } else {
+        return `${this.whoIsTyping[0].userName} is typing...`
+      }
+    },
   },
   watch: {
     'comment.expanded': {
@@ -285,7 +332,43 @@ export default {
       }
     }
   },
+  mounted(){
+    window.addEventListener('beforeunload', async (e) => {
+      await this.sendTypingUpdate( false )
+    })
+    setInterval(()=>{
+      let now = Date.now()
+      for(let i = this.whoIsTyping.length-1; i >= 0; i--) {
+        if(Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000) this.whoIsTyping.splice(i, 1)
+      }
+    }, 5000)
+  },
   methods: {
+    debTypingUpdate: debounce( async function() { 
+      if(!this.$loggedIn()) return
+      await this.sendTypingUpdate(this.isTyping)
+      this.isTyping = !this.isTyping
+    }, 7000, { leading: true }),
+
+    async sendTypingUpdate( state = true) {
+      if(!this.$loggedIn()) return
+      await this.$apollo.mutate({
+        mutation: gql`
+          mutation typingUpdate($sId: String!, $cId: String!, $d: JSONObject ) {
+            userCommentThreadActivityBroadcast(streamId: $sId, commentId: $cId, data: $d)
+          }
+        `,
+        variables:{
+          sId: this.$route.params.streamId,
+          cId: this.comment.id,
+          d: {
+            userId: this.$userId(),
+            userName: this.user.name,
+            isTyping: state
+          }
+        }
+      })
+    },
     copyCommentLinkToClip() {
       let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
       let first = res.shift()
@@ -345,6 +428,7 @@ export default {
           `,
           variables: { input: replyInput }
         })
+        await this.sendTypingUpdate( false )
         this.$mixpanel.track('Comment Action', { type: 'action', name: 'reply' })
       } catch (e) {
         this.$eventHub.$emit('notification', {

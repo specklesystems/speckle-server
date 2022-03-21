@@ -202,7 +202,7 @@ export default {
           }
         },
         updateQuery(prevResult, {subscriptionData}) {
-          if(!subscriptionData) return
+          if(!subscriptionData || !subscriptionData.data || !subscriptionData.data.commentActivity) return
           let newComment = subscriptionData.data.commentActivity
           
           newComment.expanded = false
