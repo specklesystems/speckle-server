@@ -72,6 +72,9 @@ jobs:
       - store_artifacts:
           path: packages/server/coverage
 
+      - store_artifacts:
+          path: packages/server/reports/test-results.xml
+
   build:
     docker:
       - image: circleci/python:3.7
