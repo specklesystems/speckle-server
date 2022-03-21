@@ -381,7 +381,9 @@ export default {
       window.__viewer.cameraHandler.controls.addEventListener(
         'rest',
         debounce(() => {
-          if(this.$route.name !== 'commit' || this.$route.name !== 'object') return
+          if(!(this.$route.name === 'commit' || this.$route.name === 'object')) {
+            return
+          }
           if (this.firstCallToCam) {
             this.firstCallToCam = false
             return
