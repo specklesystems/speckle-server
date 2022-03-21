@@ -81,7 +81,6 @@ module.exports = {
 
     async userCommentThreadActivityBroadcast(parent, args, context, info) {
       await authorizeResolver( context.userId, args.streamId, 'stream:reviewer' )
-      console.log(args)
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-typing-status', data: args.data  },
         streamId: args.streamId,
