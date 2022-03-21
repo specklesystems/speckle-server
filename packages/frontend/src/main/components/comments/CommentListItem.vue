@@ -51,6 +51,7 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
+            <v-btn v-if="isUnread" @click="markAsRead" class="ml-n2 rounded-lg elevation-0" x-small plain>Mark as read</v-btn>
           </div>
         </div>
         <div class="body-2 px-4 flex-shrink-0">
@@ -196,6 +197,17 @@ export default {
     }
   },
   methods:{
+    async markAsRead() {
+      this.commentDetails.viewedAt = Date.now()
+      await this.$apollo.mutate({
+        mutation: gql`
+          mutation commentView($streamId: String!, $commentId: String!) {
+            commentView(streamId: $streamId, commentId: $commentId)
+          }
+        `,
+        variables: { streamId: this.$route.params.streamId, commentId: this.comment.id }
+      })
+    },
     async archiveComment() {
       try {
         await this.$apollo.mutate({
