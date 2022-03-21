@@ -67,10 +67,10 @@ jobs:
           working_directory: 'packages/server'
 
       - store_test_results:
-          path: packages/server/reports
+          path: packages/server/coverage
 
       - store_artifacts:
-          path: packages/server/reports/test-results.xml
+          path: packages/server/coverage
 
   build:
     docker:
