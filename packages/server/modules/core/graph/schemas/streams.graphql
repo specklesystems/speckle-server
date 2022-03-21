@@ -2,16 +2,21 @@ extend type Query {
   """
   Returns a specific stream.
   """
-  stream( id: String! ): Stream
+  stream(id: String!): Stream
 
   """
   All the streams of the current user, pass in the `query` parameter to search by name, description or ID.
   """
-  streams( query: String, limit: Int = 25, cursor: String ): StreamCollection
+  streams(query: String, limit: Int = 25, cursor: String): StreamCollection
     @hasScope(scope: "streams:read")
 
-  adminStreams( offset: Int = 0, query: String, orderBy: String, visibility: String, limit: Int = 25 ): StreamCollection
-    @hasRole(role: "server:admin")
+  adminStreams(
+    offset: Int = 0
+    query: String
+    orderBy: String
+    visibility: String
+    limit: Int = 25
+  ): StreamCollection @hasRole(role: "server:admin")
 }
 
 type Stream {
@@ -25,15 +30,24 @@ type Stream {
   role: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  collaborators: [ StreamCollaborator ]!
+  collaborators: [StreamCollaborator]!
   size: String
+  """
+  Date when you favorited this stream. `null` if stream isn't viewed from a specific user's perspective or if it isn't favorited.
+  """
+  favoritedDate: Boolean
 }
 
 extend type User {
   """
   All the streams that a user has access to.
   """
-  streams( limit: Int! = 25, cursor: String ): StreamCollection
+  streams(limit: Int! = 25, cursor: String): StreamCollection
+
+  """
+  All the streams that a user has favorited
+  """
+  favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection
 }
 
 type StreamCollaborator {
@@ -47,48 +61,45 @@ type StreamCollaborator {
 type StreamCollection {
   totalCount: Int!
   cursor: String
-  items: [ Stream ]
+  items: [Stream]
 }
-
 
 extend type Mutation {
   """
   Creates a new stream.
   """
-  streamCreate( stream: StreamCreateInput! ): String
+  streamCreate(stream: StreamCreateInput!): String
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   """
   Updates an existing stream.
   """
-  streamUpdate( stream: StreamUpdateInput! ): Boolean!
+  streamUpdate(stream: StreamUpdateInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   """
   Deletes an existing stream.
   """
-  streamDelete( id: String! ): Boolean!
+  streamDelete(id: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 
-  streamsDelete( ids: [String!] ): Boolean!
-    @hasRole(role: "server:admin")
+  streamsDelete(ids: [String!]): Boolean! @hasRole(role: "server:admin")
   """
   Grants permissions to a user on a given stream.
   """
-  streamGrantPermission( permissionParams: StreamGrantPermissionInput! ): Boolean
+  streamGrantPermission(permissionParams: StreamGrantPermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
   """
   Revokes the permissions of a user on a given stream.
   """
-  streamRevokePermission( permissionParams: StreamRevokePermissionInput! ): Boolean
+  streamRevokePermission(permissionParams: StreamRevokePermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
 }
 
 extend type Subscription {
-
   #
   # User bound subscriptions that operate on the stream collection of an user
   # Example relevant view/usecase: updating the list of streams for a user.
@@ -98,17 +109,13 @@ extend type Subscription {
   Subscribes to new stream added event for your profile. Use this to display an up-to-date list of streams.
   **NOTE**: If someone shares a stream with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
   """
-  userStreamAdded: JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "profile:read")
+  userStreamAdded: JSONObject @hasRole(role: "server:user") @hasScope(scope: "profile:read")
 
   """
   Subscribes to stream removed event for your profile. Use this to display an up-to-date list of streams for your profile.
   **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
   """
-  userStreamRemoved: JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "profile:read")
+  userStreamRemoved: JSONObject @hasRole(role: "server:user") @hasScope(scope: "profile:read")
 
   #
   # Stream bound subscriptions that operate on the stream itself.
@@ -118,17 +125,16 @@ extend type Subscription {
   """
   Subscribes to stream updated event. Use this in clients/components that pertain only to this stream.
   """
-  streamUpdated( streamId: String ): JSONObject
+  streamUpdated(streamId: String): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
   Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream.
   """
-  streamDeleted( streamId: String ): JSONObject
+  streamDeleted(streamId: String): JSONObject
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
-
 }
 
 input StreamCreateInput {
@@ -145,12 +151,12 @@ input StreamUpdateInput {
 }
 
 input StreamGrantPermissionInput {
-  streamId: String!,
-  userId: String!,
+  streamId: String!
+  userId: String!
   role: String!
 }
 
 input StreamRevokePermissionInput {
-  streamId: String!,
+  streamId: String!
   userId: String!
 }
