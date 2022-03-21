@@ -1,100 +1,108 @@
 'use strict'
-const crs = require( 'crypto-random-string' )
-const appRoot = require( 'app-root-path' )
-const knex = require( `${appRoot}/db/knex` )
+const crs = require('crypto-random-string')
+const appRoot = require('app-root-path')
+const knex = require(`${appRoot}/db/knex`)
 
-const Streams = ( ) => knex( 'streams' )
-const Acl = ( ) => knex( 'stream_acl' )
+const Streams = () => knex('streams')
+const Acl = () => knex('stream_acl')
 
-const debug = require( 'debug' )
-const { createBranch } = require( './branches' )
+const debug = require('debug')
+const { createBranch } = require('./branches')
+const { respectsLimits } = require('./ratelimits')
 
 module.exports = {
+  async createStream({ name, description, isPublic, ownerId }) {
+    if (!(await respectsLimits({ action: 'STREAM_CREATE', source: ownerId }))) {
+      throw new Error('Blocked due to rate-limiting. Try again later')
+    }
 
-  async createStream( { name, description, isPublic, ownerId } ) {
     let stream = {
-      id: crs( { length: 10 } ),
+      id: crs({ length: 10 }),
       name: name || generateStreamName(),
       description: description || '',
       isPublic: isPublic !== false,
-      updatedAt: knex.fn.now( )
+      updatedAt: knex.fn.now()
     }
 
     // Create the stream & set up permissions
-    let [ { id: streamId } ] = await Streams( ).returning( 'id' ).insert( stream )
-    await Acl( ).insert( { userId: ownerId, resourceId: streamId, role: 'stream:owner' } )
+    let [{ id: streamId }] = await Streams().returning('id').insert(stream)
+    await Acl().insert({ userId: ownerId, resourceId: streamId, role: 'stream:owner' })
 
     // Create a default main branch
-    await createBranch( { name: 'main', description: 'default branch', streamId: streamId, authorId: ownerId } )
+    await createBranch({
+      name: 'main',
+      description: 'default branch',
+      streamId: streamId,
+      authorId: ownerId
+    })
     return streamId
   },
 
-  async getStream( { streamId, userId } ) {
-    let stream = await Streams( ).where( { id: streamId } ).select( '*' ).first( )
-    if ( !userId )
-      return stream
+  async getStream({ streamId, userId }) {
+    let stream = await Streams().where({ id: streamId }).select('*').first()
+    if (!userId) return stream
 
-    let acl = await Acl().where( { resourceId: streamId, userId: userId } ).select( 'role' ).first()
-    if ( acl ) stream.role = acl.role
+    let acl = await Acl().where({ resourceId: streamId, userId: userId }).select('role').first()
+    if (acl) stream.role = acl.role
     return stream
   },
 
-  async updateStream( { streamId, name, description, isPublic } ) {
-    let [ { id } ] = await Streams( )
-      .returning( 'id' )
-      .where( { id: streamId } )
-      .update( { name, description, isPublic, updatedAt: knex.fn.now() } )
+  async updateStream({ streamId, name, description, isPublic }) {
+    let [{ id }] = await Streams()
+      .returning('id')
+      .where({ id: streamId })
+      .update({ name, description, isPublic, updatedAt: knex.fn.now() })
     return id
   },
 
-  async grantPermissionsStream( { streamId, userId, role } ) {
+  async grantPermissionsStream({ streamId, userId, role }) {
     // upserts the existing role (sets a new one!)
     // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
-    let query = Acl( ).insert( { userId: userId, resourceId: streamId, role: role } ).toString( ) + ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
+    let query =
+      Acl().insert({ userId: userId, resourceId: streamId, role: role }).toString() +
+      ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
-    await knex.raw( query )
+    await knex.raw(query)
 
     // update stream updated at
-    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
+    await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
     return true
   },
 
-  async revokePermissionsStream( { streamId, userId } ) {
-    let streamAclEntriesCount = Acl( ).count( { resourceId: streamId } )
+  async revokePermissionsStream({ streamId, userId }) {
+    let streamAclEntriesCount = Acl().count({ resourceId: streamId })
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
 
-    if ( streamAclEntriesCount === 1 )
-      throw new Error( 'Stream has only one ownership link left - cannot revoke permissions.' )
+    if (streamAclEntriesCount === 1)
+      throw new Error('Stream has only one ownership link left - cannot revoke permissions.')
 
     // TODO: below behaviour not correct. Flow:
     // Count owners
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
 
-    let aclEntry = await Acl( ).where( { resourceId: streamId, userId: userId } ).select( '*' ).first( )
+    let aclEntry = await Acl().where({ resourceId: streamId, userId: userId }).select('*').first()
 
-    if ( aclEntry.role === 'stream:owner' ) {
-      let ownersCount = Acl( ).count( { resourceId: streamId, role: 'stream:owner' } )
-      if ( ownersCount === 1 )
-        throw new Error( 'Could not revoke permissions for user' )
+    if (aclEntry.role === 'stream:owner') {
+      let ownersCount = Acl().count({ resourceId: streamId, role: 'stream:owner' })
+      if (ownersCount === 1) throw new Error('Could not revoke permissions for user')
       else {
-        await Acl( ).where( { resourceId: streamId, userId: userId } ).del( )
+        await Acl().where({ resourceId: streamId, userId: userId }).del()
         return true
       }
     }
 
-    let delCount = await Acl( ).where( { resourceId: streamId, userId: userId } ).del( )
+    let delCount = await Acl().where({ resourceId: streamId, userId: userId }).del()
 
-    if ( delCount === 0 )
-      throw new Error( 'Could not revoke permissions for user' )
+    if (delCount === 0) throw new Error('Could not revoke permissions for user')
 
     // update stream updated at
-    await Streams().where( { id: streamId } ).update( { updatedAt: knex.fn.now() } )
+    await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
 
     return true
   },
 
-  async deleteStream( { streamId } ) {
-    debug( 'speckle:db' )( 'Deleting stream ' + streamId )
+  async deleteStream({ streamId }) {
+    debug('speckle:db')('Deleting stream ' + streamId)
 
     // Delete stream commits (not automatically cascaded)
     await knex.raw(
@@ -105,121 +113,164 @@ module.exports = {
         WHERE s.id = ?
       )
       `,
-      [ streamId ]
+      [streamId]
     )
-    return await Streams( ).where( { id: streamId } ).del( )
+    return await Streams().where({ id: streamId }).del()
   },
 
-  async getUserStreams( { userId, limit, cursor, publicOnly, searchQuery } ) {
+  async getUserStreams({ userId, limit, cursor, publicOnly, searchQuery }) {
     limit = limit || 25
     publicOnly = publicOnly !== false //defaults to true if not provided
 
-    let query = Acl( )
-      .columns( [ { id: 'streams.id' }, 'name', 'description', 'isPublic', 'createdAt', 'updatedAt', 'role' ] ).select( )
-      .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
-      .where( 'stream_acl.userId', userId )
+    let query = Acl()
+      .columns([
+        { id: 'streams.id' },
+        'name',
+        'description',
+        'isPublic',
+        'createdAt',
+        'updatedAt',
+        'role'
+      ])
+      .select()
+      .join('streams', 'stream_acl.resourceId', 'streams.id')
+      .where('stream_acl.userId', userId)
 
-    if ( cursor )
-      query.andWhere( 'streams.updatedAt', '<', cursor )
+    if (cursor) query.andWhere('streams.updatedAt', '<', cursor)
 
-    if ( publicOnly )
-      query.andWhere( 'streams.isPublic', true )
+    if (publicOnly) query.andWhere('streams.isPublic', true)
 
-    if ( searchQuery )
-      query.andWhere( function () {
-        this.where( 'name', 'ILIKE', `%${ searchQuery }%` )
-          .orWhere( 'description', 'ILIKE', `%${searchQuery}%` )
-          .orWhere( 'id', 'ILIKE', `%${searchQuery}%` ) //potentially useless?
-      } )
+    if (searchQuery)
+      query.andWhere(function () {
+        this.where('name', 'ILIKE', `%${searchQuery}%`)
+          .orWhere('description', 'ILIKE', `%${searchQuery}%`)
+          .orWhere('id', 'ILIKE', `%${searchQuery}%`) //potentially useless?
+      })
 
-    query.orderBy( 'streams.updatedAt', 'desc' ).limit( limit )
+    query.orderBy('streams.updatedAt', 'desc').limit(limit)
 
     let rows = await query
-    return { streams: rows, cursor: rows.length > 0 ? rows[ rows.length - 1 ].updatedAt.toISOString( ) : null }
+    return {
+      streams: rows,
+      cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+    }
   },
 
-  async getStreams( { offset, limit, orderBy, visibility, searchQuery } ) {
+  async getStreams({ offset, limit, orderBy, visibility, searchQuery }) {
     let query = knex
-      .column( 'streams.*', knex.raw( 'coalesce(sum(pg_column_size(objects.data)),0) as size' ) )
+      .column('streams.*', knex.raw('coalesce(sum(pg_column_size(objects.data)),0) as size'))
       .select()
-      .from( 'streams' )
-      .leftJoin( 'objects', 'streams.id', 'objects.streamId' )
-      .groupBy( 'streams.id' )
+      .from('streams')
+      .leftJoin('objects', 'streams.id', 'objects.streamId')
+      .groupBy('streams.id')
 
-    let countQuery = Streams( )
-    
-    if ( searchQuery ) {
+    let countQuery = Streams()
+
+    if (searchQuery) {
       const whereFunc = function () {
-        this.where( 'streams.name', 'ILIKE', `%${ searchQuery }%` )
-          .orWhere( 'streams.description', 'ILIKE', `%${searchQuery}%` )
-      } 
-      query.where( whereFunc )
-      countQuery.where( whereFunc )
-    }
-    if ( visibility && visibility !== 'all' ) {
-      if ( ![ 'private', 'public' ].includes( visibility ) ) throw new Error( 'Stream visibility should be either private, public or all' )
-      let isPublic = visibility === 'public'
-      const publicFunc = function() {
-        this.where( { isPublic } )
+        this.where('streams.name', 'ILIKE', `%${searchQuery}%`).orWhere(
+          'streams.description',
+          'ILIKE',
+          `%${searchQuery}%`
+        )
       }
-      query.andWhere( publicFunc )
-      countQuery.andWhere( publicFunc )
+      query.where(whereFunc)
+      countQuery.where(whereFunc)
     }
-    let [ res ] = await countQuery.count( )
-    let count = parseInt( res.count )
+    if (visibility && visibility !== 'all') {
+      if (!['private', 'public'].includes(visibility))
+        throw new Error('Stream visibility should be either private, public or all')
+      let isPublic = visibility === 'public'
+      const publicFunc = function () {
+        this.where({ isPublic })
+      }
+      query.andWhere(publicFunc)
+      countQuery.andWhere(publicFunc)
+    }
+    let [res] = await countQuery.count()
+    let count = parseInt(res.count)
 
-    if ( !count ) return { streams: [], totalCount: 0 }
+    if (!count) return { streams: [], totalCount: 0 }
 
     orderBy = orderBy || 'updatedAt,desc'
-    
-    let [ columnName, order ] = orderBy.split( ',' )
 
-    let rows = await query.orderBy( `${columnName}`, order ).offset( offset ).limit( limit )
+    let [columnName, order] = orderBy.split(',')
+
+    let rows = await query.orderBy(`${columnName}`, order).offset(offset).limit(limit)
 
     return { streams: rows, totalCount: count }
   },
 
-  async getUserStreamsCount( { userId, publicOnly, searchQuery } ) {
+  async getUserStreamsCount({ userId, publicOnly, searchQuery }) {
     publicOnly = publicOnly !== false //defaults to true if not provided
 
-    let query = Acl( ).count( )
-      .join( 'streams', 'stream_acl.resourceId', 'streams.id' )
-      .where( { userId: userId } )
+    let query = Acl()
+      .count()
+      .join('streams', 'stream_acl.resourceId', 'streams.id')
+      .where({ userId: userId })
 
-    if ( publicOnly )
-      query.andWhere( 'streams.isPublic', true )
+    if (publicOnly) query.andWhere('streams.isPublic', true)
 
-    if ( searchQuery )
-      query.andWhere( function () {
-        this.where( 'name', 'ILIKE', `%${searchQuery}%` )
-          .orWhere( 'description', 'ILIKE', `%${searchQuery}%` )
-          .orWhere( 'id', 'ILIKE', `%${searchQuery}%` ) //potentially useless?
-      } )
+    if (searchQuery)
+      query.andWhere(function () {
+        this.where('name', 'ILIKE', `%${searchQuery}%`)
+          .orWhere('description', 'ILIKE', `%${searchQuery}%`)
+          .orWhere('id', 'ILIKE', `%${searchQuery}%`) //potentially useless?
+      })
 
-    let [ res ] = await query
-    return parseInt( res.count )
+    let [res] = await query
+    return parseInt(res.count)
   },
 
-  async getStreamUsers( { streamId } ) {
-    let query =
-      Acl( ).columns( { role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar' ).select( )
-        .where( { resourceId: streamId } )
-        .rightJoin( 'users', { 'users.id': 'stream_acl.userId' } )
-        .select( 'stream_acl.role', 'name', 'id', 'company', 'avatar' )
-        .orderBy( 'stream_acl.role' )
+  async getStreamUsers({ streamId }) {
+    let query = Acl()
+      .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
+      .select()
+      .where({ resourceId: streamId })
+      .rightJoin('users', { 'users.id': 'stream_acl.userId' })
+      .select('stream_acl.role', 'name', 'id', 'company', 'avatar')
+      .orderBy('stream_acl.role')
 
     return await query
-  },
+  }
 }
 
 const adjectives = [
-  'Tall', 'Curved', 'Stacked', 'Purple', 'Pink', 'Rectangular', 'Circular', 'Oval', 'Shiny', 'Speckled', 'Blue', 'Stretched', 'Round', 'Spherical', 'Majestic', 'Symmetrical'
+  'Tall',
+  'Curved',
+  'Stacked',
+  'Purple',
+  'Pink',
+  'Rectangular',
+  'Circular',
+  'Oval',
+  'Shiny',
+  'Speckled',
+  'Blue',
+  'Stretched',
+  'Round',
+  'Spherical',
+  'Majestic',
+  'Symmetrical'
 ]
 
 const nouns = [
-  'Building', 'House', 'Treehouse', 'Tower', 'Tunnel', 'Bridge', 'Pyramid', 'Structure', 'Edifice', 'Palace', 'Castle', 'Villa'
+  'Building',
+  'House',
+  'Treehouse',
+  'Tower',
+  'Tunnel',
+  'Bridge',
+  'Pyramid',
+  'Structure',
+  'Edifice',
+  'Palace',
+  'Castle',
+  'Villa'
 ]
 
 const generateStreamName = () => {
-  return `${adjectives[Math.floor( Math.random()*adjectives.length )]} ${nouns[Math.floor( Math.random()*nouns.length )]}`
+  return `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${
+    nouns[Math.floor(Math.random() * nouns.length)]
+  }`
 }
