@@ -60,14 +60,14 @@ jobs:
           working_directory: 'packages/server'
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
       - run:
-          command: 'npm run test:report'
+          command: 'npm run test:coverage'
           working_directory: 'packages/server'
       - run:
           command: 'bash <(curl -s https://codecov.io/bash)'
           working_directory: 'packages/server'
 
       - store_test_results:
-          path: packages/server/coverage
+          path: packages/server/reports
 
       - store_artifacts:
           path: packages/server/coverage
