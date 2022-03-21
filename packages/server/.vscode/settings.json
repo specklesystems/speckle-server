@@ -1,0 +1,3 @@
+{
+  "mochaExplorer.env": { "NODE_ENV": "test" }
+}

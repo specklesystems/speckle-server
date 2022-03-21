@@ -16,6 +16,7 @@ module.exports = async () => {
   await registerOrUpdateApp( { ...SpeckleWebApp } )
   await registerOrUpdateApp( { ...SpeckleApiExplorer } )
   await registerOrUpdateApp( { ...SpeckleDesktopApp } )
+  await registerOrUpdateApp( { ...SpeckleConnectorApp } )
   await registerOrUpdateApp( { ...SpeckleExcel } )
 }
 
@@ -91,6 +92,17 @@ let SpeckleDesktopApp = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'speckle://account',
+  scopes: [ 'streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read' ]
+}
+
+let SpeckleConnectorApp = {
+  id: 'sca',
+  secret: 'sca',
+  name: 'Speckle Connector',
+  description: 'A Speckle Desktop Connectors.',
+  trustByDefault: true,
+  public: true,
+  redirectUrl: 'http://localhost:29363',
   scopes: [ 'streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read' ]
 }
 

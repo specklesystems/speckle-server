@@ -106,7 +106,7 @@ describe( 'GraphQL @apps-api', ( ) => {
     expect( res ).to.be.json
     expect( res.body.errors ).to.not.exist
     expect( res.body.data.apps ).to.be.an( 'array' )
-    expect( res.body.data.apps.length ).to.equal( 5 )
+    expect( res.body.data.apps.length ).to.equal( 6 )
   } )
 
   it( 'Should get app info without secret if not authenticated and owner', async ( ) => {

@@ -1,6 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
+require('./bootstrap')
 const http = require('http')
 const url = require('url')
 const express = require('express')
@@ -19,8 +20,6 @@ const { startup: MatStartup } = require(`${appRoot}/logging/matomoHelper`)
 const prometheusClient = require('prom-client')
 
 const { ApolloServer, ForbiddenError } = require('apollo-server-express')
-
-require('dotenv').config({ path: `${appRoot}/.env` })
 
 const { contextApiTokenHelper } = require('./modules/shared')
 const knex = require('./db/knex')
