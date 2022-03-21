@@ -149,7 +149,18 @@ extend type Mutation {
     streamId: String!
     resourceId: String!
     data: JSONObject
+  ): Boolean!  
+  @hasRole(role: "server:user")
+  
+  """
+  Used for broadcasting real time typing status in comment threads. Does not persist any info.
+  """
+  userCommentThreadActivityBroadcast(
+    streamId: String!
+    commentId: String!
+    data: JSONObject
   ): Boolean!
+  @hasRole(role: "server:user")
 
   """
   Creates a comment

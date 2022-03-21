@@ -49,7 +49,7 @@ module.exports = {
       return await getResourceCommentCount({resourceId: parent.id})
     }
   },
-  CommitCollectionUserNode: {
+  CommitCollectionUserNode: { // urgh, i think we tripped our gql schemas in there a bit
     async commentCount(parent){
       return await getResourceCommentCount({resourceId: parent.id})
     }
@@ -75,6 +75,17 @@ module.exports = {
         userViewerActivity: args.data,
         streamId: args.streamId,
         resourceId: args.resourceId
+      })
+      return true
+    },
+
+    async userCommentThreadActivityBroadcast(parent, args, context, info) {
+      await authorizeResolver( context.userId, args.streamId, 'stream:reviewer' )
+      console.log(args)
+      await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
+        commentThreadActivity: { eventType: 'reply-typing-status', data: args.data  },
+        streamId: args.streamId,
+        commentId: args.commentId
       })
       return true
     },
