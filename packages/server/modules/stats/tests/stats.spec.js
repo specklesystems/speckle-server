@@ -27,22 +27,14 @@ const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 
 
 describe('Server stats services @stats-services', function () {
   before(async function () {
-    console.log(new Date().toISOString(), 'BEFORE() 1')
     this.timeout(20000)
 
     await beforeEachContext()
-    console.log(new Date().toISOString(), 'BEFORE()2')
-
     await seedDb(params)
-    console.log(new Date().toISOString(), 'BEFORE() 3')
   })
 
   it('should return the total number of users on this server', async () => {
-    console.log(new Date().toISOString(), 'T 1')
-
     let res = await getTotalUserCount()
-    console.log(new Date().toISOString(), 'T2')
-
     expect(res).to.equal(params.numUsers)
   })
 
@@ -212,8 +204,6 @@ describe('Server stats api @stats-api', function () {
 async function seedDb({ numUsers = 10, numStreams = 10, numObjects = 10, numCommits = 10 } = {}) {
   let users = []
   let streams = []
-
-  console.log(new Date().toISOString(), '')
 
   // create users
   for (let i = 0; i < numUsers; i++) {

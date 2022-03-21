@@ -53,34 +53,21 @@ const initializeTestServer = async (app) => {
 
 exports.mochaHooks = {
   beforeAll: async () => {
-    console.log(new Date().toISOString(), 'MAIN BEFORE ALL')
-
     await unlock()
     await knex.migrate.rollback()
     await knex.migrate.latest()
     console.log('running before all')
-
-    console.log(new Date().toISOString(), 'AFTER MAIN BEFORE ALL')
   },
   afterAll: async () => {
-    console.log(new Date().toISOString(), 'MAIN AFTER ALL')
-
     await unlock()
     await knex.migrate.rollback()
     console.log('running after all')
-
-    console.log(new Date().toISOString(), 'AFTER MAIN AFTER ALL')
   }
 }
 
 exports.beforeEachContext = async () => {
-  console.log(new Date().toISOString(), 'BEFORECONTEXT')
-
   await truncateTables()
   const { app } = await init()
-
-  console.log(new Date().toISOString(), 'AFTER BEFORECONTEXT')
-
   return { app }
 }
 
