@@ -176,6 +176,7 @@ export default {
         }
       },
       result({ data }) {
+        if(!data) return
         for (let c of data.comments.items) {
           c.expanded = false
           c.hovered = false
@@ -201,6 +202,7 @@ export default {
           }
         },
         updateQuery(prevResult, {subscriptionData}) {
+          if(!subscriptionData) return
           let newComment = subscriptionData.data.commentActivity
           
           newComment.expanded = false

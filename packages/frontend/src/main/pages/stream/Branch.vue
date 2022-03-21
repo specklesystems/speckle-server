@@ -9,31 +9,7 @@
       <v-col v-if="stream && stream.branch" cols="12">
         <v-row v-if="stream.branch.commits.items.length > 0">
           <v-col cols="12">
-            <v-card>
-              <router-link :to="`/streams/${streamId}/commits/${latestCommit.id}`">
-                <preview-image
-                  :height="320"
-                  :url="`/preview/${$route.params.streamId}/commits/${latestCommit.id}`"
-                ></preview-image>
-              </router-link>
-              <div style="position: absolute; top: 10px; right: 20px">
-                <commit-received-receipts
-                  :stream-id="streamId"
-                  :commit-id="latestCommit.id"
-                  shadow
-                />
-              </div>
-              <div style="position: absolute; top: 10px; left: 12px">
-                <source-app-avatar :application-name="latestCommit.sourceApplication" />
-              </div>
-
-              <list-item-commit
-                transparent
-                :show-source-app="false"
-                :commit="latestCommit"
-                :stream-id="streamId"
-              ></list-item-commit>
-            </v-card>
+            <commit-preview-card :commit="latestCommit" :preview-height="320" :show-stream-and-branch="false"/>
           </v-col>
           <v-col cols="12">
             <v-toolbar flat class="transparent">
@@ -60,27 +36,6 @@
             xl="3"
           >
           <commit-preview-card :commit="commit" :show-stream-and-branch="false"/>
-          <!-- CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'), -->
-            <!-- <v-card>
-              <router-link :to="`/streams/${streamId}/commits/${commit.id}`">
-                <preview-image
-                  :height="180"
-                  :url="`/preview/${streamId}/commits/${commit.id}`"
-                ></preview-image>
-              </router-link>
-              <div style="position: absolute; top: 10px; right: 20px">
-                <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
-              </div>
-              <div style="position: absolute; top: 10px; left: 12px">
-                <source-app-avatar :application-name="commit.sourceApplication" />
-              </div>
-              <list-item-commit
-                transparent
-                :show-source-app="false"
-                :commit="commit"
-                :stream-id="streamId"
-              ></list-item-commit>
-            </v-card> -->
           </v-col>
         </v-row>
         <v-row v-if="listMode">
@@ -104,10 +59,10 @@
         @infinite="infiniteHandler"
       >
         <div slot="no-more">
-          <v-col>You've reached the end - this branch has no more commits.</v-col>
+          <v-col class="caption py-3 text-center">You've reached the end - this branch has no more commits.</v-col>
         </div>
         <div slot="no-results">
-          <v-col>You've reached the end - this branch has no more commits.</v-col>
+          <v-col class="caption py-3 text-center">You've reached the end - this branch has no more commits.</v-col>
         </div>
       </infinite-loading>
 

@@ -23,6 +23,9 @@
         This comment is targeting other resources.
         <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
       </div>
+      <div class="px-2" v-show="$apollo.loading">
+          <v-progress-linear indeterminate/>
+        </div>
       <template v-for="(reply, index) in thread">
         <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
@@ -49,6 +52,7 @@
       </template>
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-textarea
+          :disabled="loadingReply"
           v-model="replyText"
           solo
           hide-details
@@ -60,6 +64,9 @@
           @click:append="addReply"
           @keydown.enter.exact.prevent="addReply()"
         ></v-textarea>
+        <div class="px-2" v-show="loadingReply">
+          <v-progress-linear indeterminate/>
+        </div>
         <div class="text-right">
           <v-btn
             v-show="canArchiveThread"
@@ -158,6 +165,7 @@ export default {
           }
         }
       `,
+      fetchPolicy: 'cache-and-network',
       variables() {
         return {
           streamId: this.$route.params.streamId,
@@ -168,6 +176,7 @@ export default {
       //   return !this.comment.expanded
       // },
       result({ data }) {
+        if(!data) return
         data.comment.replies.items.forEach((item) => {
           if (this.localReplies.findIndex((c) => c.id === item.id) === -1)
             this.localReplies.push(item)
@@ -215,7 +224,8 @@ export default {
       replyText: null,
       localReplies: [],
       minimise: false,
-      showArchiveDialog: false
+      showArchiveDialog: false,
+      loadingReply: false
     }
   },
   computed: {
@@ -322,8 +332,11 @@ export default {
         parentComment: this.comment.id,
         text: this.replyText
       }
-
+      
+      this.loadingReply = true
+      
       try {
+        this.replyText = null
         await this.$apollo.mutate({
           mutation: gql`
             mutation commentReply($input: ReplyCreateInput!) {
@@ -332,13 +345,14 @@ export default {
           `,
           variables: { input: replyInput }
         })
-        this.replyText = null
         this.$mixpanel.track('Comment Action', { type: 'action', name: 'reply' })
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: e.message
         })
       }
+
+      this.loadingReply = false
 
       setTimeout(() => {
         // Shhh.
