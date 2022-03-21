@@ -72,7 +72,7 @@ import userQuery from '@/graphql/user.gql'
 export default {
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
-    StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard'),
+    StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
   apollo: {

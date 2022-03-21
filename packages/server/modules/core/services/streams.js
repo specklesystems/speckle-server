@@ -189,7 +189,7 @@ module.exports = {
     const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
     query.columns(userStreamColumns).select()
 
-    // Get favorites info
+    // Get user-specific favorites info
     query.leftJoin(StreamFavorites.name, function () {
       this.on(StreamFavorites.col.streamId, '=', Streams.col.id).andOn(
         StreamFavorites.col.userId,
