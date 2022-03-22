@@ -6,7 +6,7 @@ const appRoot = require('app-root-path')
 const dotenv = require('dotenv')
 const { isTestEnv } = require('./modules/core/helpers/envHelper')
 
-// If running in test env, load .env.test first
+// If running in test env, load .env.test first (if it even exists)
 if (isTestEnv()) {
   dotenv.config({ path: `${appRoot}/.env.test` })
 }
