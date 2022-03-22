@@ -11,7 +11,7 @@
           <v-list-item-content>
             <v-list-item-title>Go to your streams</v-list-item-title>
             <v-list-item-subtitle class="caption">
-              Favorite any of your streams to make them appear here
+              Favorite streams to make them appear here
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -21,7 +21,7 @@
 </template>
 
 <script>
-import NoDataPlaceholder from '../../common/NoDataPlaceholder.vue'
+import NoDataPlaceholder from '@/main/components/common/NoDataPlaceholder.vue'
 
 export default {
   name: 'FavoriteStreamsPlaceholder',

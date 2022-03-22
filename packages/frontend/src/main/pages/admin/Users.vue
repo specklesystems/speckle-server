@@ -99,7 +99,7 @@
 
 <script>
 import gql from 'graphql-tag'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 
 export default {
   name: 'UserAdmin',
@@ -173,7 +173,7 @@ export default {
     async deleteUser(user) {
       await this.$apollo.mutate({
         mutation: gql`
-          mutation($userEmail: String!) {
+          mutation ($userEmail: String!) {
             adminDeleteUser(userConfirmation: { email: $userEmail })
           }
         `,
@@ -215,7 +215,7 @@ export default {
     async updateUserRole(userId, newRole) {
       await this.$apollo.mutate({
         mutation: gql`
-          mutation($userId: String!, $newRole: String!) {
+          mutation ($userId: String!, $newRole: String!) {
             userRoleChange(userRoleInput: { id: $userId, role: $newRole })
           }
         `,

@@ -61,6 +61,25 @@ function getFavoritedStreamsQueryBase(userId) {
   return query
 }
 
+/**
+ * Get a single stream
+ * @param {Object} p
+ * @param {string} p.streamId
+ * @param {string} [p.userId] Optionally resolve role for user
+ * @returns {Object}
+ */
+async function getStream({ streamId, userId }) {
+  let stream = await Streams.knex().where({ id: streamId }).select('*').first()
+  if (!userId) return stream
+
+  let acl = await StreamAcl.knex()
+    .where({ resourceId: streamId, userId: userId })
+    .select('role')
+    .first()
+  if (acl) stream.role = acl.role
+  return stream
+}
+
 module.exports = {
   async createStream({ name, description, isPublic, ownerId }) {
     let stream = {
@@ -85,17 +104,7 @@ module.exports = {
     return streamId
   },
 
-  async getStream({ streamId, userId }) {
-    let stream = await Streams.knex().where({ id: streamId }).select('*').first()
-    if (!userId) return stream
-
-    let acl = await StreamAcl.knex()
-      .where({ resourceId: streamId, userId: userId })
-      .select('role')
-      .first()
-    if (acl) stream.role = acl.role
-    return stream
-  },
+  getStream,
 
   async updateStream({ streamId, name, description, isPublic }) {
     let [{ id }] = await Streams.knex()
@@ -103,6 +112,47 @@ module.exports = {
       .where({ id: streamId })
       .update({ name, description, isPublic, updatedAt: knex.fn.now() })
     return id
+  },
+
+  /**
+   * Set stream as favorited/unfavorited for a specific user
+   * @param {Object} param
+   * @param {string} streamId
+   * @param {string} userId
+   * @param {boolean} [favorited] By default favorites the stream, but you can set this
+   * to false to unfavorite it
+   */
+  async setStreamFavorited({ streamId, userId, favorited = true }) {
+    const favoriteQuery = StreamFavorites.knex().where({
+      streamId,
+      userId
+    })
+
+    if (!favorited) {
+      await favoriteQuery.del()
+      return
+    }
+
+    // Does user have access to this stream?
+    const stream = await getStream({ streamId, userId })
+    const hasAccess = stream && (stream.isPublic || stream.role)
+
+    // No access, clean up favorite metadata in case it exists and return
+    if (!hasAccess) {
+      await favoriteQuery.del()
+      return
+    }
+
+    // Access is OK, lets actually upsert the favorite
+    await StreamFavorites.knex()
+      .insert({
+        userId,
+        streamId
+      })
+      .onConflict(['streamId', 'userId'])
+      .ignore()
+
+    return
   },
 
   async grantPermissionsStream({ streamId, userId, role }) {
@@ -278,7 +328,7 @@ module.exports = {
     const query = getFavoritedStreamsQueryBase(userId)
     query
       .select()
-      .columns(userStreamColumns)
+      .columns([...userStreamColumns, { favoritedDate: StreamFavorites.col.createdAt }])
       .limit(finalLimit)
       .orderBy(StreamFavorites.col.createdAt, 'desc')
 
@@ -287,7 +337,7 @@ module.exports = {
     let rows = await query
     return {
       streams: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
+      cursor: rows.length > 0 ? rows[rows.length - 1].favoritedDate.toISOString() : null
     }
   },
 

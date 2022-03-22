@@ -3,16 +3,12 @@ extend type Query {
   Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
   """
   user(id: String): User
-  
+
   """
   Get users from the server in a paginated view. The query search for matches in name, company and email.
   """
-  users(limit: Int! = 25, offset: Int! = 0, query: String=null) : UserCollection
-  userSearch(
-    query: String!
-    limit: Int! = 25
-    cursor: String
-  ): UserSearchResultCollection
+  users(limit: Int! = 25, offset: Int! = 0, query: String = null): UserCollection
+  userSearch(query: String!, limit: Int! = 25, cursor: String): UserSearchResultCollection
   userPwdStrength(pwd: String!): JSONObject
 }
 
@@ -32,10 +28,9 @@ type User {
   role: String
 }
 
-
 type UserCollection {
   totalCount: Int!
-  items: [ User ]
+  items: [User]
 }
 
 type UserSearchResultCollection {
@@ -57,7 +52,7 @@ extend type Mutation {
   Edits a user's profile.
   """
   userUpdate(user: UserUpdateInput!): Boolean!
-  
+
   """
   Delete a user's account.
   """
@@ -65,11 +60,9 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "profile:delete")
 
-  adminDeleteUser(userConfirmation: UserDeleteInput!): Boolean!
-    @hasRole(role: "server:admin")
+  adminDeleteUser(userConfirmation: UserDeleteInput!): Boolean! @hasRole(role: "server:admin")
 
-  userRoleChange(userRoleInput: UserRoleInput!): Boolean!
-    @hasRole(role: "server:admin")
+  userRoleChange(userRoleInput: UserRoleInput!): Boolean! @hasRole(role: "server:admin")
 }
 
 input UserRoleInput {

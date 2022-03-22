@@ -46,7 +46,7 @@
     <!-- Streams display -->
     <v-row v-if="streams && streams.items.length > 0">
       <v-col v-for="(stream, i) in filteredStreams" :key="i" cols="12" sm="6" md="6" lg="4" xl="3">
-        <stream-preview-card :key="i + 'card'" :stream="stream"></stream-preview-card>
+        <stream-preview-card :key="i + 'card'" :stream="stream" :user="user"></stream-preview-card>
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading :identifier="infiniteId" class="" @infinite="infiniteHandler">
@@ -70,6 +70,7 @@ import streamsQuery from '@/graphql/streams.gql'
 import userQuery from '@/graphql/user.gql'
 
 export default {
+  name: 'TheStreams',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue'),

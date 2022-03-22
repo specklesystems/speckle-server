@@ -99,6 +99,9 @@ extend type Mutation {
   streamRevokePermission(permissionParams: StreamRevokePermissionInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:write")
+
+  # Favorite/unfavorite the given stream
+  streamFavorite(streamId: String!, favorited: Boolean!): Stream @hasRole(role: "server:user")
 }
 
 extend type Subscription {

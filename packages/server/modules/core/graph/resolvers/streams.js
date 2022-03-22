@@ -13,15 +13,16 @@ const {
   grantPermissionsStream,
   revokePermissionsStream,
   getFavoritedStreamsCount,
-  getFavoritedStreams
-} = require('../../services/streams')
+  getFavoritedStreams,
+  setStreamFavorited
+} = require('@/modules/core/services/streams')
 
 const {
   authorizeResolver,
   validateScopes,
   validateServerRole,
   pubsub
-} = require(`@//modules/shared`)
+} = require(`@/modules/shared`)
 const { saveActivity } = require(`@/modules/activitystream/services`)
 
 // subscription events
@@ -313,6 +314,22 @@ module.exports = {
       }
 
       return revoked
+    },
+
+    async streamFavorite(_parent, args, ctx) {
+      const { streamId, favorited } = args
+      const userId = ctx.userId
+
+      // Toggle favorited status
+      await setStreamFavorited({ streamId, userId, favorited })
+
+      // Return up to date stream info
+      const stream = await getStream({ streamId, userId })
+
+      // User can't access this stream, returning nothing
+      if (!stream || (!stream.role && !stream.isPublic)) return null
+
+      return stream
     }
   },
 

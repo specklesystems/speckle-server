@@ -183,7 +183,7 @@
   </div>
 </template>
 <script>
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/main/components/common/Viewer' // do not import async
