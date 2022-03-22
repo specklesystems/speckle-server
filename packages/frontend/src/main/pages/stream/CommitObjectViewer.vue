@@ -59,7 +59,7 @@
         />
 
         <!-- <v-divider v-if="isMultiple" class="my-4" /> -->
-
+        <portal-target name="comments"></portal-target>
         <!-- Views display -->
         <views-display v-if="views.length !== 0" :views="views" class="mt-4" />
 
@@ -80,15 +80,15 @@
       <v-fade-transition>
         <preview-image
           v-if="!loadedModel && (isCommit || isObject)"
-          style="
+          :style="`
             height: 100vh;
             width: 100%;
-            top: -64px;
+            ${!$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'}
             left: 0px;
             position: absolute;
             opacity: 0.7;
             filter: blur(4px);
-          "
+          `"
           :height="420"
           :url="`/preview/${$route.params.streamId}/objects/${
             isCommit ? resources[0].data.commit.referencedObject : resources[0].data.object.id
@@ -96,20 +96,23 @@
         ></preview-image>
       </v-fade-transition>
 
-      <div style="height: 100vh; width: 100%; top: -64px; left: 0px; position: absolute">
+      <div
+        :style="`height: 100vh; width: 100%; ${
+          !$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'
+        } left: 0px; position: absolute`"
+      >
         <viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
 
       <div
-        style="
+        :style="`
           height: 100vh;
           width: 100%;
-          top: -64px;
+          ${!$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'}
           left: 22px;
           position: absolute;
           z-index: 10;
-          pointer-events: none;
-        "
+          pointer-events: none;`"
       >
         <object-selection
           v-show="selectionData.length !== 0"
@@ -124,12 +127,28 @@
       <div
         :style="`width: 100%; bottom: 12px; left: 0px; position: ${
           $isMobile() ? 'fixed' : 'absolute'
-        }; z-index: 100`"
+        }; z-index: 20`"
         :class="`d-flex justify-center`"
       >
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
-
+      <div
+        style="
+          height: 100vh;
+          width: 100%;
+          top: -64px;
+          left: 0;
+          position: absolute;
+          z-index: 4;
+          pointer-events: none;
+          overflow: none;
+        "
+        class=""
+      >
+        <bubbles key="a" />
+        <comments-overlay key="c" @add-resources="addResources" />
+        <comment-add-overlay key="b" />
+      </div>
       <!-- Progress bar -->
       <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
         <v-progress-linear
@@ -187,6 +206,7 @@ import debounce from 'lodash.debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import Viewer from '@/main/components/common/Viewer' // do not import async
+import { resourceType } from '@/plugins/resourceIdentifier'
 
 export default {
   components: {
@@ -202,7 +222,10 @@ export default {
     ObjectSelection: () => import('@/main/components/viewer/ObjectSelection'),
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
-    Filters: () => import('@/main/components/viewer/Filters')
+    Filters: () => import('@/main/components/viewer/Filters'),
+    Bubbles: () => import('@/main/components/viewer/Bubbles'),
+    CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay'),
+    CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay')
   },
   data: () => ({
     loadedModel: false,
@@ -270,10 +293,10 @@ export default {
   async mounted() {
     this.$eventHub.$emit('page-load', true)
     this.resources.push({
-      type: this.$route.params.resourceId.length === 10 ? 'commit' : 'object',
+      type: resourceType(this.$route.params.resourceId),
       id: this.$route.params.resourceId,
       data:
-        this.$route.params.resourceId.length === 10
+        resourceType(this.$route.params.resourceId) === 'commit'
           ? await this.loadCommit(this.$route.params.resourceId)
           : await this.loadObject(this.$route.params.resourceId)
     })
@@ -281,13 +304,14 @@ export default {
     if (this.$route.query.overlay) {
       let ids = this.$route.query.overlay.split(',')
       for (const id of ids) {
-        let cleanedId = id.replace(/\s+/g, '')
+        const cleanedId = id.replace(/\s+/g, '')
         if (!cleanedId || cleanedId === '') continue
+        const resType = resourceType(cleanedId)
         this.resources.push({
-          type: id.length === 10 ? 'commit' : 'object',
+          type: resType,
           id: cleanedId,
           data:
-            cleanedId.length === 10
+            resType === 'commit'
               ? await this.loadCommit(cleanedId)
               : await this.loadObject(cleanedId)
         })
@@ -328,6 +352,7 @@ export default {
         )
       }
       window.__viewer.on('busy', (val) => {
+        this.$store.commit('setViewerBusy', { viewerBusyState: val })
         this.viewerBusy = val
         if (!val && this.camToSet) {
           setTimeout(() => {
@@ -356,11 +381,15 @@ export default {
       window.__viewer.cameraHandler.controls.addEventListener(
         'rest',
         debounce(() => {
+          if(!(this.$route.name === 'commit' || this.$route.name === 'object')) {
+            return
+          }
           if (this.firstCallToCam) {
             this.firstCallToCam = false
             return
           }
           if (this.camToSet) return
+
           let controls = window.__viewer.cameraHandler.activeCam.controls
           let pos = controls.getPosition()
           let target = controls.getTarget()
@@ -427,19 +456,26 @@ export default {
       this.setFilters()
       this.setViews()
     },
+    async addResources(ids) {
+      for (let id of ids) {
+        await this.addResource(id)
+      }
+    },
     async addResource(resId) {
       this.showAddOverlay = false
+      const resType = resourceType(resId)
       let existing = this.resources.findIndex((res) => res.id === resId)
+
       if (existing !== -1) {
         this.$eventHub.$emit('notification', {
-          text: `${resId.length === 10 ? 'Commit' : 'Object'} is already loaded.`
+          text: `${resType.charAt(0).toUpperCase() + resType.slice(1)} is already loaded.`
         })
         return
       }
       let resource = {
-        type: resId.length === 10 ? 'commit' : 'object',
+        type: resType,
         id: resId,
-        data: resId.length === 10 ? await this.loadCommit(resId) : await this.loadObject(resId)
+        data: resType === 'commit' ? await this.loadCommit(resId) : await this.loadObject(resId)
       }
       this.resources.push(resource)
       this.$mixpanel.track('Viewer Action', {
@@ -534,7 +570,7 @@ export default {
     },
     captureSelect(selectionData) {
       this.selectionData.splice(0, this.selectionData.length)
-      this.selectionData.push(...selectionData)
+      this.selectionData.push(...selectionData.userData)
     }
   }
 }

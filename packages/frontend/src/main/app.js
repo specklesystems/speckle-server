@@ -30,7 +30,7 @@ import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 Vue.use(PerfectScrollbar)
 
 import VTooltip from 'v-tooltip'
-Vue.use(VTooltip, { defaultDelay: 300 })
+Vue.use(VTooltip, { defaultDelay: 300, defaultBoundariesElement: document.body })
 
 import VueMatomo from 'vue-matomo'
 

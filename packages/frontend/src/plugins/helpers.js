@@ -24,3 +24,14 @@ Vue.prototype.$loggedIn = function () {
 Vue.prototype.$isMobile = function () {
   return window.matchMedia('(any-hover: none)').matches
 }
+
+Vue.prototype.$resourceType = function (resourceId) {
+  return resourceId.length === 10 ? 'commit' : 'object'
+}
+
+Vue.prototype.$loginAndSetRedirect = function () {
+  let currUrl = window.location.href
+  localStorage.setItem('shouldRedirectTo', currUrl.replace(window.location.origin, ''))
+  this.$router.push('/authn/login')
+}
+

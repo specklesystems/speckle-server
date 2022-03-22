@@ -5,9 +5,9 @@
       :elevation="hover ? 10 : 1"
       style="transition: all 0.2s ease-in-out"
     >
-      <router-link :to="`/streams/${commit.streamId}/commits/${commit.id}`">
+      <router-link :to="`/streams/${streamId}/commits/${commit.id}`">
         <preview-image
-          :url="`/preview/${commit.streamId}/commits/${commit.id}`"
+          :url="`/preview/${streamId}/commits/${commit.id}`"
           :height="previewHeight"
         ></preview-image>
       </router-link>
@@ -15,7 +15,7 @@
         <v-toolbar-title>
           <router-link
             class="text-decoration-none"
-            :to="`/streams/${commit.streamId}/commits/${commit.id}`"
+            :to="`/streams/${streamId}/commits/${commit.id}`"
           >
             <v-icon small>mdi-source-commit</v-icon>
             {{ commit.message }}
@@ -33,12 +33,12 @@
           </div>
         </v-card-text>
       </div>
-      <v-divider />
-      <div class="d-flex align-center caption px-5 py-2">
+      <v-divider v-if="showStreamAndBranch"/>
+      <div v-if="showStreamAndBranch" class="d-flex align-center caption px-5 py-2">
         <div class="text-truncate mr-2">
           <router-link
             class="text-decoration-none d-inline-flex align-center"
-            :to="`/streams/${commit.streamId}`"
+            :to="`/streams/${streamId}`"
           >
             <v-icon x-small class="primary--text mr-2">mdi-folder-outline</v-icon>
             {{ commit.streamName }}
@@ -47,7 +47,7 @@
         <div class="text-right flex-grow-1 text-truncate">
           <router-link
             class="text-decoration-none d-inline-flex align-center"
-            :to="`/streams/${commit.streamId}/branches/${commit.branchName}`"
+            :to="`/streams/${streamId}/branches/${commit.branchName}`"
           >
             <v-icon x-small class="primary--text mr-2">mdi-source-branch</v-icon>
             {{ commit.branchName }}
@@ -55,10 +55,13 @@
         </div>
       </div>
       <div style="position: absolute; top: 10px; right: 20px">
-        <commit-received-receipts :stream-id="commit.streamId" :commit-id="commit.id" shadow />
+        <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
       </div>
       <div style="position: absolute; top: 10px; left: 12px">
-        <source-app-avatar :application-name="commit.sourceApplication" />
+        <v-chip v-if="commit.commentCount !== 0" small class="caption primary" dark v-tooltip="`${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`">
+          <v-icon x-small class="mr-1">mdi-comment-outline</v-icon> {{ commit.commentCount }}
+        </v-chip>
+        <source-app-avatar :application-name="commit.sourceApplication" /> 
       </div>
     </v-card>
   </v-hover>
@@ -73,8 +76,12 @@ export default {
   props: {
     commit: { type: Object, default: () => null },
     previewHeight: { type: Number, default: () => 180 },
-    showCollabs: { type: Boolean, default: true },
-    showDescription: { type: Boolean, default: true }
+    showStreamAndBranch: { type: Boolean, default: true }
+  },
+  computed:{
+    streamId() {
+      return this.commit.streamId ?? this.$route.params.streamId
+    }
   }
 }
 </script>

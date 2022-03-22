@@ -20,7 +20,7 @@
   </style>
 <script defer src="demo.js"></script></head>
 
-<body>
+<body style="background: #e4e4e4">
   <div class="container">
     <div class="row" style="padding-top: 20px">
       <div class="twelve columns">
@@ -33,7 +33,7 @@
       <div class="twelve columns">
         <button onclick="v.postprocessing = !v.postprocessing">Postprocessing Toggle</button>
         <button onclick="v.interactions.zoomExtents()">Zoom Extents</button>
-        <button onclick="v.interactions.toggleSectionBox()">Toggle Section Box</button>
+        <button onclick="v.toggleSectionBox()">Toggle Section Box</button>
         <button onclick="v.interactions.rotateCamera(undefined, undefined, false)">Rotate</button>
         <button onclick="viewerScreenshot()">Screenshot</button>
       </div>
@@ -43,8 +43,10 @@
         <button class="" onclick="loadData()" style="width:49%">Load Object URL</button>
       </div>
       <div class="twelve columns">
-        <button onclick="v.sceneManager.removeAllObjects()">Dispose Everything</button>
+        <button onclick="v.unloadAll()">Dispose Everything</button>
         View:
+        <button onclick="v.toggleCameraProjection()">Ortho/Perspective</button>
+        <button onclick="v.interactions.rotateTo()">3D</button>
         <button onclick="v.interactions.rotateTo('top')">Top</button>
         <button onclick="v.interactions.rotateTo('front')">Front</button>
         <button onclick="v.interactions.rotateTo('back')">Back</button>
@@ -55,17 +57,17 @@
       <div class="twelve columns">
         Used Memory (MB): <span id="info-mem">-</span> /
         LoadProgress: <span id="info-progress">-</span> /
-        ViewerBusy: <span id="info-busy">-</span> /
+        ViewerBusy: <span id="info-busy">idle</span> /
         Draw Calls: <span id="info-draws">-</span>
       </div>
-  
-      </div>
+
     </div>
-    <div class="row">
-      <div class="twelve columns">
-        <div id="renderer"></div>
-      </div>
+  </div>
+  <div class="row">
+    <div class="twelve columns">
+      <div id="renderer"></div>
     </div>
+  </div>
 
 </body>
 

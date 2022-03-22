@@ -1,5 +1,5 @@
 <template>
-  <v-row no-gutters class="my-1 property-row rounded-lg">
+  <v-row no-gutters class="my-1 property-row rounded-lg" @click="$emit('active-toggle', filter)">
     <v-col cols="1" class="text-center" style="line-height: 30px">
       <v-icon small style="font-size: 12px" :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`">
         {{ filter.data.type === 'number' ? 'mdi-numeric' : 'mdi-format-text' }}
@@ -14,9 +14,6 @@
       <span v-tooltip="'Matching objects'" style="font-size: 10px">
         ({{ filter.data.objectCount }})
       </span>
-    </v-col>
-    <v-col class="text-right" style="line-height: 30px">
-      <v-btn x-small @click="$emit('active-toggle', filter)">Set</v-btn>
     </v-col>
   </v-row>
 </template>
@@ -37,6 +34,7 @@ export default {
   background: rgba(120, 120, 120, 0.05);
 }
 .property-row:hover {
-  background: rgba(120, 120, 120, 0.09);
+  background: rgba(120, 120, 120, 0.2);
+  cursor: pointer;
 }
 </style>
