@@ -11,7 +11,6 @@
             <v-icon small class="primary--text mb-1 mr-1">mdi-folder</v-icon>
             <b>{{ stream.name }}</b>
           </router-link>
-          <stream-favorite-btn :stream="stream" :user="user" />
         </div>
         <div class="d-none d-sm-inline-block text-truncate">
           <v-chip v-if="stream.role" v-tooltip="'Your role'" small class="ml-1">
@@ -42,6 +41,7 @@
       </div>
     </portal>
     <portal to="actions">
+      <stream-favorite-btn :stream="stream" :user="user" />
       <v-btn
         v-if="stream"
         v-tooltip="'Share this stream'"
