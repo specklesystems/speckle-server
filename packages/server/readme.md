@@ -22,13 +22,13 @@ The Speckle Server is a node application tested against v12.
 
 The external dependencies are **PostgreSQL** and **Redis**. To get the dependencies running without any hassle, you can run them in docker containers as described in our [Server deployment instructions](https://speckle.guide/dev/server-setup.html#step-1-set-up-dependencies) (chapter `Run your speckle-server fork`, step 1)
 
-
 > **_NOTE:_** If you install PostgreSQL yourself or use an existing PostgreSQL instance, make sure to create a database and a user that can access it
 
 After you have PostgreSQL and Redis running, in the `packages/server` folder:
 
 - copy the `.env-example` file to `.env`,
-- If you have a custom setup, open and edit the `.env` file, filling in the required variables,
+- (if you plan to run tests) copy the `.env.test-example` file to `.env.test`
+- If you have a custom setup, open and edit the `.env` & `.env.test` files, filling in the required variables,
 - run `npm install`,
 - finally `npm run dev`,
 - check `localhost:3000/graphql` out!

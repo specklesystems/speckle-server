@@ -136,7 +136,7 @@ export default {
         this.parseAndSetFilters()
       }
     },
-    '$store.state.appliedFilter'(val) {
+    '$store.state.appliedFilter'() {
       if (this.trySetPresetFilter) return
       if (this.$store.state.appliedFilter && this.$store.state.appliedFilter.filterBy) {
         let key = Object.keys(this.$store.state.appliedFilter.filterBy)[0]

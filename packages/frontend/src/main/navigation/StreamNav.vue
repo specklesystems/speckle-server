@@ -144,6 +144,16 @@
         <v-divider class="mb-2"></v-divider>
       </v-list-group>
 
+      <!-- Comments  -->
+      <v-list-item link exact :to="`/streams/${stream.id}/comments`">
+        <v-list-item-icon>
+          <v-icon small>mdi-comment-outline</v-icon>
+        </v-list-item-icon>
+        <v-list-item-content>
+          <v-list-item-title>Comments</v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
+
       <!-- Other menu items go here -->
 
       <v-list-item link :to="`/streams/${stream.id}/globals`">

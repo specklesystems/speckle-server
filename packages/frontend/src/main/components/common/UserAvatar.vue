@@ -9,9 +9,13 @@
             :avatar="userById.avatar"
             :seed="id"
             v-bind="attrs"
-            class="ma-1"
+            :class="`${margin ? 'ma-1' : ''} ${shadow ? 'elevation-5' : ''}`"
           ></user-avatar-icon>
-          <v-avatar v-else class="ma-1" :size="size">
+          <v-avatar
+            v-else
+            :class="`${margin ? 'ma-1' : ''} ${shadow ? 'elevation-5' : ''}`"
+            :size="size"
+          >
             <v-img contain src="/logo.svg"></v-img>
           </v-avatar>
         </div>
@@ -56,7 +60,7 @@
     </v-menu>
     <user-avatar-icon
       v-else
-      class="ma-1"
+      :class="`${margin ? 'ma-1' : ''} ${shadow ? 'elevation-5' : ''}`"
       :size="size"
       :avatar="avatar"
       :seed="id"
@@ -73,6 +77,14 @@ export default {
     avatar: { type: String, default: null },
     name: { type: String, default: null },
     showHover: {
+      type: Boolean,
+      default: true
+    },
+    shadow: {
+      type: Boolean,
+      default: false
+    },
+    margin: {
       type: Boolean,
       default: true
     },

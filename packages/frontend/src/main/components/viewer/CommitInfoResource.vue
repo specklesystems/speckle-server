@@ -38,15 +38,15 @@
           <v-icon x-small>{{ expanded ? 'mdi-minus' : 'mdi-plus' }}</v-icon>
         </v-btn>
       </v-toolbar>
+      <div class="caption my-2 px-2 pb-2">
+        {{ commit.message }}
+        <v-divider class="my-2" />
+        <timeago :datetime="commit.createdAt"></timeago>
+        ,
+        {{ new Date(commit.createdAt).toLocaleString() }}
+      </div>
       <v-expand-transition>
         <div v-show="expanded" class="px-1 pb-2">
-          <div class="caption my-2 px-2">
-            {{ commit.message }}
-            <v-divider class="my-2" />
-            <timeago :datetime="commit.createdAt"></timeago>
-            ,
-            {{ new Date(commit.createdAt).toLocaleString() }}
-          </div>
           <v-divider class="mx-2 my-2" />
           <object-properties
             :obj="{
@@ -72,7 +72,7 @@ export default {
   props: ['resource'],
   data() {
     return {
-      expanded: true
+      expanded: false
     }
   },
   computed: {

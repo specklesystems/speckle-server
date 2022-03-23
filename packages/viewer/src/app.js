@@ -32,14 +32,12 @@ window.loadData = async function LoadData( url ) {
   console.log(`Finished loading in: ${(Date.now() - t0) / 1000}`)
 } 
 
-v.on( 'select', objects => {
-  console.info( `Selection event. Current selection count: ${objects.length}.` )
-  console.log( objects )
+v.on( 'select', (info) => {
+  console.info( `Selection event.` )
 } )
 
-v.on( 'object-doubleclicked', obj => {
-  console.info( 'Object double click event.' )
-  console.log( obj ? obj : 'nothing was doubleckicked.' )
+v.on( 'object-doubleclicked', (info) => {
+  console.info( `Object double click event.` )
 } )
 
 v.on( 'section-box', status => {

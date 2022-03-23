@@ -25,7 +25,7 @@ What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtub
 - **GraphQL API:** get what you need anywhere you want it
 - **Webhooks:** the base for a automation and next-gen pipelines
 - **Built for developers:** we are building Speckle with developers in mind and got tools for every stack
-- **Built for the AEC industry:** Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender and more!
+- **Built for the AEC industry:** Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender, ArchiCAD and more!
 
 ### Try Speckle now!
 

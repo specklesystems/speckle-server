@@ -25,33 +25,6 @@ export default class SelectionHelper extends EventEmitter {
     this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null
 
     this.pointerDown = false
-    // this.hoverObj = null
-
-    // optional param allows for hover
-    if ( typeof _options !== 'undefined' && _options.hover ) {
-      // doesn't feel good when debounced, might be necessary tho
-      this.viewer.renderer.domElement.addEventListener( 'pointermove', debounce( ( e ) => {
-        let hovered = this.getClickedObjects( e )
-        // dragging event, this shouldn't be under the "hover option"
-        if ( this.pointerDown ) {
-          this.emit( 'object-drag', hovered, this._getNormalisedClickPosition( e ) )
-          return
-        }
-
-        this.emit( 'hovered', hovered, e )
-      },0 ) )
-    }
-
-    // dragging event, this shouldn't be under the "hover option"
-    if ( typeof _options !== 'undefined' && _options.hover ) {
-      this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce( ( e ) => {
-        this.pointerDown = true
-
-        if ( this.viewer.cameraHandler.orbiting ) return
-
-        this.emit( 'mouse-down', this.getClickedObjects( e ) )
-      }, 100 ) )
-    }
 
     this.checkForSectionBoxInclusion = true
     if ( typeof _options !== 'undefined' && _options.checkForSectionBoxInclusion ) {
@@ -75,7 +48,6 @@ export default class SelectionHelper extends EventEmitter {
       if ( delta > 250 ) return
 
       let selectionObjects = this.getClickedObjects( e )
-
       this.emit( 'object-clicked', selectionObjects )
     } )
 
@@ -138,7 +110,6 @@ export default class SelectionHelper extends EventEmitter {
     let targetObjects = this.subset ? this.subset : this.viewer.sceneManager.filteredObjects
     
     let intersectedObjects = this.raycaster.intersectObjects( targetObjects )
-    
     // filters objects in section box mode
     if ( this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion ) {
       let box = new THREE.Box3().setFromObject( this.viewer.sectionBox.cube )

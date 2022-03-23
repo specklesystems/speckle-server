@@ -10,7 +10,7 @@
     nudge-left="10"
   >
     <template #activator="{ on, attrs }">
-      <v-btn :small="small" rounded class="mr-2" v-bind="attrs" v-on="on">
+      <v-btn :small="small" rounded icon class="mr-2" v-bind="attrs" v-on="on">
         <v-icon small>mdi-camera-outline</v-icon>
       </v-btn>
     </template>

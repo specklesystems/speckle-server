@@ -119,6 +119,15 @@ const routes = [
             }
           },
           {
+            path: 'comments/',
+            name: 'comments',
+            meta: {
+              title: 'Stream Comments | Speckle',
+              resizableNavbar: false
+            },
+            component: () => import('@/main/pages/stream/Comments.vue')
+          },
+          {
             path: 'commits/:resourceId*',
             name: 'commit',
             meta: {
