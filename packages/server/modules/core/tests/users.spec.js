@@ -305,43 +305,6 @@ describe('Actors & Tokens @user-services', () => {
       })
       expect(match).to.equal(true)
     })
-
-    it('Should rate-limit user creation', async () => {
-      let userTemplate = {
-        name: 'John',
-        password: 'mypassword',
-        ip: '1.2.3.4'
-      }
-      let oldLimit = LIMITS.USER_CREATE
-      LIMITS.USER_CREATE = 5
-      // 5 users should be fine
-      for (let i = 0; i < 5; i++) {
-        let user = { email: `test${i}@example.com`, ...userTemplate }
-        await createUser(user)
-      }
-      // should fail the 6th user
-      let failed = false
-      try {
-        let user = { email: `test7@example.com`, ...userTemplate }
-        await createUser(user)
-      } catch (err) {
-        if (!err.message.includes('rate-limit')) throw err
-        else failed = true
-      }
-      // should be able to create from different ip
-      for (let i = 0; i < 5; i++) {
-        let user = { ...userTemplate, email: `othertest${i}@example.com`, ip: '1.2.3.5' }
-        await createUser(user)
-      }
-      // should not be limited from unknown ip addresses
-      for (let i = 0; i < 10; i++) {
-        let user = { ...userTemplate, email: `generictest${i}@example.com`, ip: '' }
-        await createUser(user)
-      }
-
-      LIMITS.USER_CREATE = oldLimit
-      expect(failed).to.equal(true)
-    })
   })
 
   describe('API Tokens @core-apitokens', () => {
