@@ -26,6 +26,7 @@
 
 <script>
 import gql from 'graphql-tag'
+import { StreamQuery } from '@/graphql/streams'
 
 export default {
   name: 'TheStream',
@@ -43,32 +44,7 @@ export default {
   },
   apollo: {
     stream: {
-      query: gql`
-        query Stream($id: String!) {
-          stream(id: $id) {
-            id
-            name
-            role
-            createdAt
-            updatedAt
-            description
-            isPublic
-            commits {
-              totalCount
-            }
-            collaborators {
-              id
-              name
-              role
-              company
-              avatar
-            }
-            branches {
-              totalCount
-            }
-          }
-        }
-      `,
+      query: StreamQuery,
       variables() {
         return {
           id: this.$route.params.streamId

@@ -108,7 +108,8 @@
   </div>
 </template>
 <script>
-import userQuery from '@/graphql/user.gql'
+import { MainUserDataQuery } from '@/graphql/user'
+
 export default {
   components: {
     MainLogo: () => import('@/main/navigation/MainLogo'),
@@ -119,7 +120,7 @@ export default {
   props: { expanded: { type: Boolean, default: false }, drawer: { type: Boolean, default: true } },
   apollo: {
     user: {
-      query: userQuery
+      query: MainUserDataQuery
     }
   },
   data() {

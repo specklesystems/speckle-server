@@ -29,3 +29,16 @@ export const COMMON_STREAM_FIELDS = gql`
     favoritesCount
   }
 `
+
+/**
+ * Retrieve a single stream
+ */
+export const StreamQuery = gql`
+  query Stream($id: String!) {
+    stream(id: $id) {
+      ...CommonStreamFields
+    }
+  }
+
+  ${COMMON_STREAM_FIELDS}
+`

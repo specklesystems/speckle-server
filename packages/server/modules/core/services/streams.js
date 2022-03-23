@@ -1,4 +1,5 @@
 'use strict'
+const _ = require('lodash')
 const crs = require('crypto-random-string')
 const debug = require('debug')
 
@@ -324,7 +325,7 @@ module.exports = {
   },
 
   async getFavoritedStreams({ userId, cursor, limit }) {
-    const finalLimit = limit || 25
+    const finalLimit = _.clamp(limit || 25, 1, 25)
     const query = getFavoritedStreamsQueryBase(userId)
     query
       .select()

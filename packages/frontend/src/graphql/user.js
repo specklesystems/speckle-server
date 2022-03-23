@@ -31,13 +31,10 @@ export const COMMON_USER_FIELDS = gql`
  * User data with favorite streams
  */
 export const UserFavoriteStreamsQuery = gql`
-  ${COMMON_USER_FIELDS}
-  ${COMMON_STREAM_FIELDS}
-
   query UserFavoriteStreams($cursor: String) {
     user {
       ...CommonUserFields
-      favoriteStreams(cursor: $cursor, limit: 3) {
+      favoriteStreams(cursor: $cursor, limit: 10) {
         totalCount
         cursor
         items {
@@ -46,4 +43,20 @@ export const UserFavoriteStreamsQuery = gql`
       }
     }
   }
+
+  ${COMMON_USER_FIELDS}
+  ${COMMON_STREAM_FIELDS}
+`
+
+/**
+ * Get main user metadata
+ */
+export const MainUserDataQuery = gql`
+  query MainUserData {
+    user {
+      ...CommonUserFields
+    }
+  }
+
+  ${COMMON_USER_FIELDS}
 `

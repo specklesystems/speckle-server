@@ -20,7 +20,7 @@
         <span class="caption">+{{ collaborators.length - 4 }}</span>
       </v-btn>
       <v-btn
-        v-if="collaborators.length <= 5"
+        v-if="stream.role === Roles.Stream.Owner && collaborators.length <= 5"
         v-tooltip="'Manage collaborators'"
         icon
         x-small
@@ -40,15 +40,19 @@
   </div>
 </template>
 <script>
+import { Roles } from '@/helpers/mainConstants'
+
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
   },
-  // props: ['stream'],
   props: {
     stream: { type: Object, default: () => null },
     size: { type: Number, default: 20 },
     linkToCollabs: { type: Boolean, default: true }
+  },
+  data() {
+    return { Roles }
   },
   computed: {
     collaborators() {

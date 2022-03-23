@@ -58,10 +58,12 @@
   </v-app>
 </template>
 <script>
-import userQuery from '@/graphql/user.gql'
 import gql from 'graphql-tag'
+import { MainUserDataQuery } from '@/graphql/user'
+import { MainServerInfoQuery } from '@/graphql/server'
 
 export default {
+  name: 'TheMain',
   components: {
     MainNav: () => import('@/main/navigation/MainNav'),
     MainNavBottom: () => import('@/main/navigation/MainNavBottom'),
@@ -72,20 +74,10 @@ export default {
   },
   apollo: {
     serverInfo: {
-      query: gql`
-        query {
-          serverInfo {
-            name
-            company
-            description
-            adminContact
-            version
-          }
-        }
-      `
+      query: MainServerInfoQuery
     },
     user: {
-      query: userQuery
+      query: MainUserDataQuery
     },
     $subscribe: {
       userStreamAdded: {

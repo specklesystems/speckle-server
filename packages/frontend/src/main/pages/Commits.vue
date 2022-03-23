@@ -69,11 +69,11 @@ export default {
   apollo: {
     user: {
       query: gql`
-        query($cursor: String) {
+        query ($cursor: String) {
           user {
             id
             name
-            commits(limit: 3, cursor: $cursor) {
+            commits(limit: 10, cursor: $cursor) {
               totalCount
               cursor
               items {

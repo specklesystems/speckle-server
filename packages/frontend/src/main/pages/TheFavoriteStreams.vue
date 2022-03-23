@@ -10,7 +10,9 @@
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading class="" @infinite="infiniteHandler">
-          <div slot="no-more">The end - no more streams to display.</div>
+          <div slot="no-more">
+            <v-card class="pa-4">The end - no more streams to display.</v-card>
+          </div>
           <div slot="no-results">
             <v-card class="pa-4">The end - no more streams to display.</v-card>
           </div>
@@ -38,10 +40,22 @@ export default {
   computed: {
     streams() {
       return this.user?.favoriteStreams?.items || []
+    },
+    /**
+     * Whether or not there are more streams to load
+     */
+    allStreamsLoaded() {
+      return this.streams.length && this.streams.length >= this.user.favoriteStreams.totalCount
     }
   },
   methods: {
     infiniteHandler($state) {
+      if (this.allStreamsLoaded) {
+        $state.loaded()
+        $state.complete()
+        return
+      }
+
       // Fetch more favorites
       this.$apollo.queries.user.fetchMore({
         variables: {
@@ -61,8 +75,15 @@ export default {
           // set vue-infinite state
           newItems.length === 0 ? $state.complete() : $state.loaded()
 
-          fetchMoreResult.user.favoriteStreams.items = allItems
-          return fetchMoreResult
+          return {
+            user: {
+              ...previousResult.user,
+              favoriteStreams: {
+                ...fetchMoreResult.user.favoriteStreams,
+                items: allItems
+              }
+            }
+          }
         }
       })
     }

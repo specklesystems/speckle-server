@@ -46,12 +46,12 @@
 </template>
 <script>
 import { signOut } from '@/plugins/authHelpers'
-import userQuery from '@/graphql/user.gql'
+import { MainUserDataQuery } from '@/graphql/user'
 
 export default {
   apollo: {
     user: {
-      query: userQuery,
+      query: MainUserDataQuery,
       skip() {
         return !this.loggedIn
       }
@@ -59,7 +59,7 @@ export default {
   },
   methods: {
     signOut() {
-      this.$mixpanel.track('Log Out', { type: 'action'  })
+      this.$mixpanel.track('Log Out', { type: 'action' })
       signOut()
     },
     switchTheme() {

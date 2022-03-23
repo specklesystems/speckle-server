@@ -57,7 +57,7 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/main/layouts/Main.vue'),
+    component: () => import('@/main/layouts/TheMain.vue'),
     children: [
       {
         path: '',

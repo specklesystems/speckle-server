@@ -31,6 +31,8 @@
             {{ stream.commits.totalCount }}
             <v-icon style="font-size: 11px" class="ml-1">mdi-source-branch</v-icon>
             {{ stream.branches.totalCount }}
+            <v-icon x-small class="">mdi-heart-multiple</v-icon>
+            {{ stream.favoritesCount }}
           </span>
         </div>
         <div class="d-none d-sm-inline-block">
@@ -45,8 +47,8 @@
         elevation="0"
         text
         rounded
-        @click="shareStream = true"
         class="mr-1"
+        @click="shareStream = true"
       >
         <v-icon v-if="!stream.isPublic" x-small class="mr-1 grey--text">mdi-lock</v-icon>
         <v-icon v-else x-small class="mr-1 grey--text">mdi-lock-open</v-icon>
@@ -68,7 +70,9 @@ export default {
     CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
     ShareStreamDialog: () => import('@/main/dialogs/ShareStream')
   },
-  props: ['stream'],
+  props: {
+    stream: { type: Object, required: true }
+  },
   data() {
     return { shareStream: false }
   }

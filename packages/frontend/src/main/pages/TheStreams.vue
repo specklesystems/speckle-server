@@ -51,8 +51,10 @@
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading :identifier="infiniteId" class="" @infinite="infiniteHandler">
           <div slot="no-more">
-            The end - no more streams to display.
-            {{ streamFilter !== 1 ? 'Remove filters to see more.' : '' }}
+            <v-card class="pa-4">
+              The end - no more streams to display.
+              {{ streamFilter !== 1 ? 'Remove filters to see more.' : '' }}
+            </v-card>
           </div>
           <div slot="no-results">
             <v-card class="pa-4">
@@ -67,7 +69,7 @@
 </template>
 <script>
 import streamsQuery from '@/graphql/streams.gql'
-import userQuery from '@/graphql/user.gql'
+import { MainUserDataQuery } from '@/graphql/user'
 
 export default {
   name: 'TheStreams',
@@ -81,7 +83,7 @@ export default {
       query: streamsQuery
     },
     user: {
-      query: userQuery
+      query: MainUserDataQuery
     }
   },
   data() {
@@ -101,6 +103,12 @@ export default {
       if (this.streamFilter === 4)
         return this.streams.items.filter((s) => s.role === 'stream:reviewer')
       return this.streams.items
+    },
+    /**
+     * Whether or not there are more streams to load
+     */
+    allStreamsLoaded() {
+      return this.streams && this.streams.items.length >= this.streams.totalCount
     }
   },
   watch: {
@@ -122,26 +130,39 @@ export default {
       if (this.streamFilter === 4 && role === 'stream:reviewer') return true
       return false
     },
+    // TODO: Prevent extra load if we've hit all items
     infiniteHandler($state) {
+      if (this.allStreamsLoaded) {
+        $state.loaded()
+        $state.complete()
+        return
+      }
+
       this.$apollo.queries.streams.fetchMore({
         variables: {
-          cursor: this.streams.cursor
+          cursor: this.streams?.cursor
         },
         // Transform the previous result with new data
         updateQuery: (previousResult, { fetchMoreResult }) => {
           const newItems = fetchMoreResult.streams.items
-          let allItems = [...previousResult.streams.items]
+          const allItems = [...previousResult.streams.items]
+          const newTotalCount = fetchMoreResult.streams.totalCount
+
           for (const stream of newItems) {
             if (allItems.findIndex((s) => s.id === stream.id) === -1) allItems.push(stream)
           }
-          //set vue-infinite state
-          if (newItems.length === 0) $state.complete()
-          else $state.loaded()
+
+          // Update infinite loader state
+          if (newItems.length === 0) {
+            $state.complete()
+          } else {
+            $state.loaded()
+          }
 
           return {
             streams: {
               __typename: previousResult.streams.__typename,
-              totalCount: fetchMoreResult.streams.totalCount,
+              totalCount: newTotalCount,
               cursor: fetchMoreResult.streams.cursor,
               // Merging the new streams
               items: allItems
