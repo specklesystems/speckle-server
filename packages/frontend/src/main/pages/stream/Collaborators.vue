@@ -253,7 +253,9 @@ export default {
       skip() {
         return !this.search || this.search.length < 3
       },
-      debounce: 300
+      debounce: 300,
+      // if the same query is input after adding a contributor, it doesn't show the proper results with caching
+      fetchPolicy: 'no-cache'
     },
     serverInfo: {
       prefetch: true,
