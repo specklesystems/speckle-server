@@ -8,6 +8,7 @@ const appRoot = require('app-root-path')
 const knex = require(`${appRoot}/db/knex`)
 
 const {
+  archiveUser,
   createUser,
   findOrCreateUser,
   getUser,
@@ -38,16 +39,12 @@ const {
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require(`${appRoot}/test/hooks`)
 
-const { LIMITS } = require('../services/ratelimits')
-
 describe('Actors & Tokens @user-services', () => {
   let myTestActor = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
     password: 'sn3aky-1337-b1m'
   }
-
-  let otherUser = {}
 
   before(async () => {
     await beforeEachContext()
@@ -65,7 +62,6 @@ describe('Actors & Tokens @user-services', () => {
 
       let actorId = await createUser(newUser)
       newUser.id = actorId
-      otherUser = { ...newUser }
 
       expect(actorId).to.be.a('string')
     })
@@ -132,7 +128,7 @@ describe('Actors & Tokens @user-services', () => {
           throw new Error('This should have failed with duplicate email error')
         })
         .catch((err) => {
-          expect(err.message).to.equal('asdf')
+          expect(err.message).to.equal('Email taken. Try logging in?')
         })
     })
 
@@ -258,6 +254,28 @@ describe('Actors & Tokens @user-services', () => {
       expect(users[0].name).to.equal('Bill Gates')
     })
 
+    it('Should not search for archived users unless explicitly asked', async () => {
+      const toBeArchivedId = await createUser({
+        name: 'Miss Library Lady',
+        email: 'will@be.archived',
+        password: 'ilikebooks'
+      })
+
+      await createUser({
+        name: 'Not in the Library',
+        email: 'i@will.survive',
+        password: 'nanananananaaaa'
+      })
+
+      await archiveUser({ userId: toBeArchivedId })
+
+      let { users } = await searchUsers('Library', 20, null)
+      expect(users).to.have.lengthOf(1)
+
+      users = (await searchUsers('Library', 20, null, true)).users
+      expect(users).to.have.lengthOf(2)
+    })
+
     it('Should update a user', async () => {
       let updatedActor = { ...myTestActor }
       updatedActor.name = 'didimitrie'
@@ -284,7 +302,7 @@ describe('Actors & Tokens @user-services', () => {
       actor.email = 'e@ma.il'
       actor.name = 'Bob Gates'
 
-      let id = await createUser(actor)
+      await createUser(actor)
 
       let match = await validatePasssword({ email: actor.email, password: 'super-test-200' })
       expect(match).to.equal(true)
