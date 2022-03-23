@@ -127,12 +127,13 @@ describe('Actors & Tokens @user-services', () => {
       newUser.email = 'bill@gates.com'
       newUser.password = 'testthebest'
 
-      try {
-        let actorId = await createUser(newUser)
-      } catch (e) {
-        return
-      }
-      assert.fail('dupe email')
+      createUser(newUser)
+        .then(() => {
+          throw new Error('This should have failed with duplicate email error')
+        })
+        .catch((err) => {
+          expect(err.message).to.equal('asdf')
+        })
     })
 
     let ballmerUserId = null

@@ -12,6 +12,7 @@ extend type Query {
     query: String!
     limit: Int! = 25
     cursor: String
+    archived: Boolean = false
   ): UserSearchResultCollection
   userPwdStrength(pwd: String!): JSONObject
 }
