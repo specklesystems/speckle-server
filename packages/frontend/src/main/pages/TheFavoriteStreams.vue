@@ -33,6 +33,7 @@ export default {
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue')
   },
   apollo: {
+    // TODO: Re-fetch on page open
     user: {
       query: UserFavoriteStreamsQuery
     }

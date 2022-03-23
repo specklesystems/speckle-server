@@ -10,6 +10,7 @@
 import gql from 'graphql-tag'
 import { canBeFavorited } from '@/helpers/streamHelpers'
 import { UserFavoriteStreamsQuery } from '@/graphql/user'
+import { COMMON_STREAM_FIELDS } from '@/graphql/streams'
 
 export default {
   name: 'StreamFavoriteBtn',
@@ -62,16 +63,42 @@ export default {
         },
         update: (cache, { data: { streamFavorite } }) => {
           const { id, favoritedDate } = streamFavorite || {}
+          const isNowFavorited = !!favoritedDate
 
-          // Need to adjust cache only if unfavorited
-          if (favoritedDate) return
+          // Check favoriteStreams cache
+          let data
+          try {
+            data = cache.readQuery({ query: UserFavoriteStreamsQuery })
+          } catch (e) {
+            // Cache isn't filled probably (sucks that this throws)
+            return
+          }
 
-          // Remove from user.favoritedStreams, if cached
-          const data = cache.readQuery({ query: UserFavoriteStreamsQuery })
-          if ((data?.user?.favoriteStreams?.items || []).length < 1) return
+          // Doesn't exist, no need to update anything
+          if (!data) return
 
-          const streams = data.user.favoriteStreams.items
-          const newStreams = streams.filter((s) => s.id !== id)
+          const streams = data?.user?.favoriteStreams?.items || []
+          let newStreams, newTotalCount
+
+          if (isNowFavorited) {
+            // Add to favorite streams query
+            const normalizedId = `Stream:${id}`
+            const stream = cache.readFragment({
+              id: normalizedId,
+              fragment: COMMON_STREAM_FIELDS
+            })
+
+            // Stream should usually be cached (how else are you favoriting it?)
+            newStreams = streams.slice()
+            newStreams.unshift(stream)
+            newTotalCount = data.user.favoriteStreams.totalCount + 1
+          } else {
+            // Drop from favorite streams query
+            if (streams.length < 1) return
+
+            newStreams = streams.filter((s) => s.id !== id)
+            newTotalCount = data.user.favoriteStreams.totalCount - 1
+          }
 
           cache.writeQuery({
             query: UserFavoriteStreamsQuery,
@@ -81,7 +108,7 @@ export default {
                 favoriteStreams: {
                   ...data.user.favoriteStreams,
                   items: newStreams,
-                  totalCount: Math.min(data.user.favoriteStreams.totalCount - 1, 0)
+                  totalCount: Math.min(newTotalCount - 1, 0)
                 }
               }
             }
