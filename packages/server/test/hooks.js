@@ -60,7 +60,6 @@ exports.mochaHooks = {
   },
   afterAll: async () => {
     await unlock()
-    await knex.migrate.rollback()
     console.log('running after all')
   }
 }
