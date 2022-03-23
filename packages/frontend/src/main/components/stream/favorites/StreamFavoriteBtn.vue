@@ -82,13 +82,12 @@ export default {
 
           if (isNowFavorited) {
             // Add to favorite streams query
-            const normalizedId = `Stream:${id}`
+            // Stream should be in the cache (how else are you favoriting it?)
             const stream = cache.readFragment({
-              id: normalizedId,
+              id: `Stream:${id}`,
               fragment: COMMON_STREAM_FIELDS
             })
 
-            // Stream should usually be cached (how else are you favoriting it?)
             newStreams = streams.slice()
             newStreams.unshift(stream)
             newTotalCount = data.user.favoriteStreams.totalCount + 1

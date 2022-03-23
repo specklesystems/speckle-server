@@ -119,7 +119,6 @@ describe('Server stats api @stats-api', function () {
 
   before(async function () {
     this.timeout(15000)
-    console.log(new Date().toISOString())
 
     let { app } = await beforeEachContext()
     ;({ server, sendRequest } = await initializeTestServer(app))
