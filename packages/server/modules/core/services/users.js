@@ -10,7 +10,6 @@ const Acl = () => knex('server_acl')
 
 const debug = require('debug')
 const { deleteStream } = require('./streams')
-const { respectsLimits } = require('./ratelimits')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId: userId }).update({ role: role })
@@ -38,10 +37,6 @@ module.exports = {
   */
 
   async createUser(user) {
-    if (user.ip && !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))) {
-      throw new Error('Blocked due to rate-limiting. Try again later')
-    }
-
     user.id = crs({ length: 10 })
     user.email = user.email.toLowerCase()
 

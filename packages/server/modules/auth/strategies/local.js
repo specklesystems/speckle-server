@@ -10,6 +10,7 @@ const {
 } = require(`${appRoot}/modules/core/services/users`)
 const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
 const { validateInvite, useInvite } = require(`${appRoot}/modules/serverinvites/services`)
+const { respectsLimits } = require(`${appRoot}/modules/core/services/ratelimits`)
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -58,12 +59,15 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         let user = req.body
         user.ip = req.headers['cf-connecting-ip'] || req.connection.remoteAddress || ''
-        let ignorePrefixes = ['192.168.', '10.', '127.', '172.1', '172.2', '172.3']
+        let ignorePrefixes = ['192.168.', '10.', '127.', '172.1', '172.2', '172.3', '::']
         for (let ipPrefix of ignorePrefixes)
           if (user.ip.startsWith(ipPrefix)) {
             delete user.ip
             break
           }
+        if (user.ip && !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))) {
+          throw new Error('Blocked due to rate-limiting. Try again later')
+        }
 
         // 1. if the server is invite only you must have an invite
         if (serverInfo.inviteOnly && !req.session.inviteId)

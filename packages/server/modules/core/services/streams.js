@@ -8,14 +8,9 @@ const Acl = () => knex('stream_acl')
 
 const debug = require('debug')
 const { createBranch } = require('./branches')
-const { respectsLimits } = require('./ratelimits')
 
 module.exports = {
   async createStream({ name, description, isPublic, ownerId }) {
-    if (!(await respectsLimits({ action: 'STREAM_CREATE', source: ownerId }))) {
-      throw new Error('Blocked due to rate-limiting. Try again later')
-    }
-
     let stream = {
       id: crs({ length: 10 }),
       name: name || generateStreamName(),

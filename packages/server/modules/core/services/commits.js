@@ -13,7 +13,6 @@ const ParentCommits = () => knex('parent_commits')
 
 const { getBranchesByStreamId, getBranchByNameAndStreamId } = require('./branches')
 const { getObject } = require('./objects')
-const { respectsLimits } = require('./ratelimits')
 
 module.exports = {
   async createCommitByBranchId({
@@ -26,10 +25,6 @@ module.exports = {
     totalChildrenCount,
     parents
   }) {
-    if (!(await respectsLimits({ action: 'COMMIT_CREATE', source: authorId }))) {
-      throw new Error('Blocked due to rate-limiting. Try again later')
-    }
-
     // If no total children count is passed in, get it from the original object
     // that this commit references.
     if (!totalChildrenCount) {

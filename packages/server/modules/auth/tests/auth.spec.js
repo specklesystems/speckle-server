@@ -7,6 +7,7 @@ const { createStream, getStream } = require(`${appRoot}/modules/core/services/st
 
 const { updateServerInfo } = require(`${appRoot}/modules/core/services/generic`)
 const { getUserByEmail } = require(`${appRoot}/modules/core/services/users`)
+const { LIMITS } = require(`${appRoot}/modules/core/services/ratelimits`)
 const { createAndSendInvite } = require(`${appRoot}/modules/serverinvites/services`)
 const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
 const expect = chai.expect
@@ -392,6 +393,43 @@ describe('Auth @auth', () => {
       const res = await sendRequest(null, { query })
       expect(res.body.errors).to.not.exist
       expect(res.body.data.serverInfo.authStrategies).to.be.an('array')
+    })
+
+    it('Should rate-limit user creation', async () => {
+      let newUser = async (id, ip, expectCode) => {
+        console.log(id, ip, expectCode)
+        await request(app)
+          .post(`/auth/local/register?challenge=test&suuid=test`)
+          .set('CF-Connecting-IP', ip)
+          .send({
+            email: `rltest_${id}@speckle.systems`,
+            name: 'ratelimit test',
+            company: 'test',
+            password: 'roll saving throws'
+          })
+          .expect(expectCode)
+      }
+
+      let oldLimit = LIMITS.USER_CREATE
+      LIMITS.USER_CREATE = 5
+      // 5 users should be fine
+      for (let i = 0; i < 5; i++) {
+        await newUser(`test${i}`, '1.2.3.4', 302)
+      }
+      // should fail the 6th user
+      await newUser(`test${5}`, '1.2.3.4', 400)
+
+      // should be able to create from different ip
+      for (let i = 0; i < 5; i++) {
+        await newUser(`othertest${i}`, '1.2.3.5', 302)
+      }
+
+      // should not be limited from unknown ip addresses
+      for (let i = 0; i < 10; i++) {
+        await newUser(`generic${i}`, '', 302)
+      }
+
+      LIMITS.USER_CREATE = oldLimit
     })
   })
 })

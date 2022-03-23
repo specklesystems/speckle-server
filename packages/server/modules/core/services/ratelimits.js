@@ -50,6 +50,8 @@ const LIMIT_INTERVAL = {
 let rateLimitedCache = {}
 
 async function shouldRateLimitNext({ action, source }) {
+  if (!source) return false
+
   let limit = LIMITS[action]
   let checkInterval = LIMIT_INTERVAL[action]
   if (limit === undefined || checkInterval === undefined) {
@@ -65,8 +67,6 @@ async function shouldRateLimitNext({ action, source }) {
     .where({ action, source })
     .andWhere('timestamp', '>', new Date(startTimeMs))
   let count = parseInt(res.count) + 1 // plus this request
-
-  // console.log(`Count for ${action} (source=${source}): ${count}`)
 
   let shouldRateLimit = count >= limit
 
