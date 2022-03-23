@@ -11,6 +11,7 @@
             <v-icon small class="primary--text mb-1 mr-1">mdi-folder</v-icon>
             <b>{{ stream.name }}</b>
           </router-link>
+          <stream-favorite-btn :stream="stream" :user="user" />
         </div>
         <div class="d-none d-sm-inline-block text-truncate">
           <v-chip v-if="stream.role" v-tooltip="'Your role'" small class="ml-1">
@@ -68,10 +69,12 @@
 export default {
   components: {
     CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
-    ShareStreamDialog: () => import('@/main/dialogs/ShareStream')
+    ShareStreamDialog: () => import('@/main/dialogs/ShareStream'),
+    StreamFavoriteBtn: () => import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
   },
   props: {
-    stream: { type: Object, required: true }
+    stream: { type: Object, required: true },
+    user: { type: Object, required: true }
   },
   data() {
     return { shareStream: false }

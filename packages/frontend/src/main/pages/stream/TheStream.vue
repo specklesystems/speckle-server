@@ -5,7 +5,7 @@
       <stream-nav :stream="stream" />
 
       <!-- Stream Page App Bar (Toolbar) -->
-      <stream-toolbar :stream="stream" />
+      <stream-toolbar :stream="stream" :user="user" />
 
       <!-- Stream Child Routes -->
       <div v-if="!error">
@@ -27,6 +27,7 @@
 <script>
 import gql from 'graphql-tag'
 import { StreamQuery } from '@/graphql/streams'
+import { MainUserDataQuery } from '@/graphql/user'
 
 export default {
   name: 'TheStream',
@@ -54,6 +55,9 @@ export default {
         if (err.message) this.error = err.message.replace('GraphQL error: ', '')
         else this.error = err
       }
+    },
+    user: {
+      query: MainUserDataQuery
     },
     $subscribe: {
       branchCreated: {
