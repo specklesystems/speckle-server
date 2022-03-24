@@ -255,6 +255,9 @@ export default {
       },
       debounce: 300,
       // if the same query is input after adding a contributor, it doesn't show the proper results with caching
+      // the cause was the error on the filtered search results prop breaking
+      // but it still can be reasonable to disable this query caching for any user permission changes
+      // happening while the cache is still active
       fetchPolicy: 'no-cache'
     },
     serverInfo: {
@@ -343,7 +346,11 @@ export default {
     async addCollab(user) {
       this.loading = true
       this.search = null
-      this.userSearch.items = null
+      // the line below is meant to disable the apollo cache? if so, its not doing that
+      // rather it breaks the filteredSearchResults computed property
+      // which in turn fails silently, without any errors, just not having values
+      // TODO: check with Dim
+      // this.userSearch.items = null
       user.role = 'stream:contributor'
       await this.grantPermissionUser(user)
       this.stream.collaborators.unshift(user)
