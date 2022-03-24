@@ -20,6 +20,8 @@ const { ApolloServer, ForbiddenError } = require('apollo-server-express')
 
 const { buildContext } = require('./modules/shared')
 const knex = require('./db/knex')
+const { formatGraphQLError } = require('@/modules/core/graph/setup')
+const { isDevEnv } = require('@/modules/core/helpers/envHelper')
 
 let graphqlServer
 
@@ -66,6 +68,7 @@ exports.init = async () => {
     name: 'speckle_server_apollo_clients',
     help: 'Number of currently connected clients'
   })
+  const debug = isDevEnv()
   graphqlServer = new ApolloServer({
     ...graph(),
     context: buildContext,
@@ -96,9 +99,11 @@ exports.init = async () => {
       }
     },
     plugins: [require(`${appRoot}/logging/apolloPlugin`)],
-    tracing: process.env.NODE_ENV === 'development',
+    tracing: debug,
     introspection: true,
-    playground: true
+    playground: true,
+    formatError: formatGraphQLError,
+    debug
   })
 
   graphqlServer.applyMiddleware({ app: app })

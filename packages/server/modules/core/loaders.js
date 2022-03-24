@@ -16,7 +16,7 @@ const {
 module.exports = {
   /**
    * Build request-scoped dataloaders
-   * @param {Object} ctx GraphQL context
+   * @param {import('@/modules/shared/index').AuthContextPart} ctx GraphQL context w/o loaders
    * @returns {RequestDataLoaders}
    */
   buildRequestLoaders(ctx) {
