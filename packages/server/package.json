@@ -65,6 +65,7 @@
     "sanitize-html": "^2.4.0",
     "sharp": "^0.29.3",
     "string-pixel-width": "^1.10.0",
+    "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
     "zxcvbn": "^4.4.2"
   },
@@ -89,9 +90,9 @@
     "http-proxy-middleware": "^1.0.6",
     "lerna": "^3.22.1",
     "mocha": "^7.2.0",
+    "mocha-junit-reporter": "^2.0.2",
     "nodemon": "^2.0.6",
     "nyc": "^15.0.1",
-    "mocha-junit-reporter": "^2.0.2",
     "prettier": "^2.5.1",
     "supertest": "^4.0.2",
     "ws": "^7.5.7",

@@ -4,21 +4,16 @@ const crs = require('crypto-random-string')
 const debug = require('debug')
 
 const { createBranch } = require('@/modules/core/services/branches')
-const { Streams, StreamAcl, knex, StreamFavorites } = require('@/modules/core/dbSchema')
-
-/**
- * List of columns to select when querying for user streams
- * (expects joins to StreamAcl)
- */
-const userStreamColumns = [
-  Streams.col.id,
-  Streams.col.name,
-  Streams.col.description,
-  Streams.col.isPublic,
-  Streams.col.createdAt,
-  Streams.col.updatedAt,
-  StreamAcl.col.role
-]
+const { Streams, StreamAcl, knex } = require('@/modules/core/dbSchema')
+const {
+  BASE_STREAM_COLUMNS,
+  getStream,
+  getFavoritedStreams,
+  getFavoritedStreamsCount,
+  setStreamFavorited,
+  canUserFavoriteStream
+} = require('@/modules/core/repositories/streams')
+const { UnauthorizedAccessError, InvalidArgumentError } = require('@/modules/core/errors/base')
 
 /**
  * Get base query for finding or counting user streams
@@ -42,43 +37,6 @@ function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
     })
 
   return query
-}
-
-/**
- * Get base query for finding or counting user favorited streams
- * @param {string} userId The user's ID
- */
-function getFavoritedStreamsQueryBase(userId) {
-  const query = StreamFavorites.knex()
-    .where(StreamFavorites.col.userId, userId)
-    .innerJoin(Streams.name, Streams.col.id, StreamFavorites.col.streamId)
-    .leftJoin(StreamAcl.name, (q) =>
-      q
-        .on(StreamAcl.col.resourceId, '=', StreamFavorites.col.streamId)
-        .andOnVal(StreamAcl.col.userId, userId)
-    )
-    .andWhere((q) => q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId))
-
-  return query
-}
-
-/**
- * Get a single stream
- * @param {Object} p
- * @param {string} p.streamId
- * @param {string} [p.userId] Optionally resolve role for user
- * @returns {Object}
- */
-async function getStream({ streamId, userId }) {
-  let stream = await Streams.knex().where({ id: streamId }).select('*').first()
-  if (!userId) return stream
-
-  let acl = await StreamAcl.knex()
-    .where({ resourceId: streamId, userId: userId })
-    .select('role')
-    .first()
-  if (acl) stream.role = acl.role
-  return stream
 }
 
 module.exports = {
@@ -115,46 +73,7 @@ module.exports = {
     return id
   },
 
-  /**
-   * Set stream as favorited/unfavorited for a specific user
-   * @param {Object} param
-   * @param {string} streamId
-   * @param {string} userId
-   * @param {boolean} [favorited] By default favorites the stream, but you can set this
-   * to false to unfavorite it
-   */
-  async setStreamFavorited({ streamId, userId, favorited = true }) {
-    const favoriteQuery = StreamFavorites.knex().where({
-      streamId,
-      userId
-    })
-
-    if (!favorited) {
-      await favoriteQuery.del()
-      return
-    }
-
-    // Does user have access to this stream?
-    const stream = await getStream({ streamId, userId })
-    const hasAccess = stream && (stream.isPublic || stream.role)
-
-    // No access, clean up favorite metadata in case it exists and return
-    if (!hasAccess) {
-      await favoriteQuery.del()
-      return
-    }
-
-    // Access is OK, lets actually upsert the favorite
-    await StreamFavorites.knex()
-      .insert({
-        userId,
-        streamId
-      })
-      .onConflict(['streamId', 'userId'])
-      .ignore()
-
-    return
-  },
+  setStreamFavorited,
 
   async grantPermissionsStream({ streamId, userId, role }) {
     // upserts the existing role (sets a new one!)
@@ -237,7 +156,7 @@ module.exports = {
     const isPublicOnly = publicOnly !== false //defaults to true if not provided
 
     const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
-    query.columns(userStreamColumns).select()
+    query.columns(BASE_STREAM_COLUMNS).select()
 
     if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
 
@@ -324,30 +243,85 @@ module.exports = {
     return await query
   },
 
-  async getFavoritedStreams({ userId, cursor, limit }) {
-    const finalLimit = _.clamp(limit || 25, 1, 25)
-    const query = getFavoritedStreamsQueryBase(userId)
-    query
-      .select()
-      .columns([...userStreamColumns, { favoritedDate: StreamFavorites.col.createdAt }])
-      .limit(finalLimit)
-      .orderBy(StreamFavorites.col.createdAt, 'desc')
-
-    if (cursor) query.andWhere(StreamFavorites.col.createdAt, '<', cursor)
-
-    let rows = await query
-    return {
-      streams: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].favoritedDate.toISOString() : null
+  /**
+   * Favorite or unfavorite a stream
+   * @param {Object} p
+   * @param {string} p.userId
+   * @param {string} p.streamId
+   * @param {boolean} [p.favorited] Whether to favorite or unfavorite (true by default)
+   * @returns {Promise<Object>} Updated stream
+   */
+  async favoriteStream({ userId, streamId, favorited }) {
+    // Check if user has access to stream
+    if (!(await canUserFavoriteStream({ userId, streamId }))) {
+      throw new UnauthorizedAccessError("User doesn't have access to the specified stream", {
+        info: { userId, streamId }
+      })
     }
+
+    // Favorite/unfavorite the stream
+    await setStreamFavorited({ streamId, userId, favorited })
+
+    // Get updated stream info
+    return await getStream({ streamId, userId })
   },
 
-  async getFavoritedStreamsCount(userId) {
-    const query = getFavoritedStreamsQueryBase(userId)
-    query.count()
+  /**
+   * Get user favorited streams & metadata
+   * @param {Object} p
+   * @param {string} p.userId
+   * @param {number} [p.limit] Defaults to 25
+   * @param {string} [p.cursor] Optionally specify date after which to look for favorites
+   * @returns
+   */
+  async getFavoriteStreamsCollection({ userId, limit, cursor }) {
+    limit = _.clamp(limit || 25, 1, 25)
 
-    let [res] = await query
-    return parseInt(res.count)
+    // Get total count of favorited streams
+    const totalCount = await getFavoritedStreamsCount(userId)
+
+    // Get paginated streams
+    const { cursor: finalCursor, streams } = await getFavoritedStreams({
+      userId,
+      cursor,
+      limit
+    })
+
+    return { totalCount, cursor: finalCursor, items: streams }
+  },
+
+  /**
+   * Get active user stream favorite date (using dataloader)
+   * @param {Object} p
+   * @param {import('@/modules/shared/index').GraphQLContext} p.ctx
+   * @param {string} p.streamId
+   * @param {Promise<string| null>}
+   */
+  async getActiveUserStreamFavoriteDate({ ctx, streamId }) {
+    if (!ctx.userId) {
+      return null
+    }
+
+    if (!streamId) {
+      throw new InvalidArgumentError('Invalid stream ID')
+    }
+
+    return (await ctx.loaders.streams.getUserFavoriteData.load(streamId))?.createdAt || null
+  },
+
+  /**
+   * Get stream favorites count (using dataloader)
+   * @param {Object} p
+   * @param {import('@/modules/shared/index').GraphQLContext} p.ctx
+   * @param {string} p.streamId
+   * @returns {Promise<number>}
+   */
+  async getStreamFavoritesCount({ ctx, streamId }) {
+    if (!streamId) {
+      throw new InvalidArgumentError('Invalid stream ID')
+    }
+
+    return (await ctx.loaders.streams.getFavoritesCount.load(streamId)) || 0
   }
 }
 

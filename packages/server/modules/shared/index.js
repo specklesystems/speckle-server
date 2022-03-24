@@ -1,18 +1,33 @@
 'use strict'
 const Redis = require('ioredis')
-const debug = require('debug')('speckle:middleware')
-const appRoot = require('app-root-path')
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { buildRequestLoaders } = require('@/modules/core/loaders')
-const { validateToken } = require(`${appRoot}/modules/core/services/tokens`)
+const { validateToken } = require(`@/modules/core/services/tokens`)
 
 let pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
 })
 
+/**
+ * @typedef {Object} AuthContextPart
+ * @property {boolean} auth Whether or not user is logged in
+ * @property {string | undefined} userId User ID, if user is logged in
+ * @property {string | undefined} role User role, if logged in
+ * @property {string | undefined} token User token, if logged in
+ * @property {string[] | undefined} scopes Token scopes, if logged in
+ */
+
+/**
+ * @typedef {AuthContextPart & {loaders: import('@/modules/core/loaders').RequestDataLoaders}} GraphQLContext
+ */
+
+/**
+ * Build context for GQL operations
+ * @returns
+ */
 async function buildContext({ req, connection }) {
   // Parsing auth info
   const authCtx = await contextApiTokenHelper({ req, connection })
@@ -27,6 +42,7 @@ async function buildContext({ req, connection }) {
 
 /**
  * Graphql server context helper: sets req.context to have an auth prop (true/false), userId and server role.
+ * @returns {AuthContextPart}
  */
 async function contextApiTokenHelper({ req, connection }) {
   let token = null

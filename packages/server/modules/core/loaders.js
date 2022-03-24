@@ -1,12 +1,14 @@
-const _ = require('lodash')
-const { StreamFavorites, knex } = require('@/modules/core/dbSchema')
 const DataLoader = require('dataloader')
+const {
+  getBatchUserFavoriteData,
+  getBatchStreamFavoritesCounts
+} = require('@/modules/core/repositories/streams')
 
 /**
  * All DataLoaders available on the GQL ctx object
  * @typedef {Object} RequestDataLoaders
  * @property {{
- *  getUserFavoriteData: DataLoader<string, Object>,
+ *  getUserFavoriteData: DataLoader<string, {}>,
  *  getFavoritesCount: DataLoader<string, number>
  * }} streams
  */
@@ -25,32 +27,21 @@ module.exports = {
         /**
          * Get favorite metadata for a specific stream and user
          */
-        getUserFavoriteData: new DataLoader(async (keys) => {
-          const query = StreamFavorites.knex()
-            .select()
-            .where(StreamFavorites.col.userId, userId)
-            .whereIn(StreamFavorites.col.streamId, keys)
+        getUserFavoriteData: new DataLoader(async (streamIds) => {
+          if (!userId) {
+            return streamIds.map(() => null)
+          }
 
-          const rows = await query
-          const keyedRows = _.keyBy(rows, 'streamId')
-
-          return keys.map((k) => keyedRows[k])
+          const results = await getBatchUserFavoriteData({ userId, streamIds })
+          return streamIds.map((k) => results[k])
         }),
 
         /**
          * Get amount of favorites for a specific stream
          */
-        getFavoritesCount: new DataLoader(async (keys) => {
-          const query = StreamFavorites.knex()
-            .select()
-            .columns([StreamFavorites.col.streamId, knex.raw('COUNT(*) as count')])
-            .whereIn(StreamFavorites.col.streamId, keys)
-            .groupBy(StreamFavorites.col.streamId)
-
-          const rows = await query
-          const keyedRows = _.keyBy(rows, 'streamId')
-
-          return keys.map((k) => keyedRows[k]?.count || 0)
+        getFavoritesCount: new DataLoader(async (streamIds) => {
+          const results = await getBatchStreamFavoritesCounts(streamIds)
+          return streamIds.map((k) => results[k] || 0)
         })
       }
     }

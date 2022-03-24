@@ -12,9 +12,10 @@ const {
   getStreamUsers,
   grantPermissionsStream,
   revokePermissionsStream,
-  getFavoritedStreamsCount,
-  getFavoritedStreams,
-  setStreamFavorited
+  favoriteStream,
+  getFavoriteStreamsCollection,
+  getActiveUserStreamFavoriteDate,
+  getStreamFavoritesCount
 } = require('@/modules/core/services/streams')
 
 const {
@@ -130,26 +131,15 @@ module.exports = {
       return users
     },
 
-    async favoritedDate(parent, _args, context) {
-      const streamId = parent.id
-      const userId = context.userId
-
-      if (!userId) return null
-
-      /** @type {import('@/modules/core/loaders').RequestDataLoaders} */
-      const dataLoaders = context.loaders
-      const data = await dataLoaders.streams.getUserFavoriteData.load(streamId)
-      return data?.createdAt
+    async favoritedDate(parent, _args, ctx) {
+      const { id: streamId } = parent
+      return await getActiveUserStreamFavoriteDate({ ctx, streamId })
     },
 
-    async favoritesCount(parent, _args, context) {
-      const streamId = parent.id
+    async favoritesCount(parent, _args, ctx) {
+      const { id: streamId } = parent
 
-      /** @type {import('@/modules/core/loaders').RequestDataLoaders} */
-      const dataLoaders = context.loaders
-      const data = await dataLoaders.streams.getFavoritesCount.load(streamId)
-
-      return data || 0
+      return await getStreamFavoritesCount({ ctx, streamId })
     }
   },
 
@@ -172,25 +162,19 @@ module.exports = {
     },
 
     async favoriteStreams(parent, args, context) {
-      if (args.limit && args.limit > 50)
-        throw new UserInputError('Cannot return more than 50 items.')
+      const { userId } = context
+      const { id: requestedUserId } = parent || {}
+      const { limit, cursor } = args
 
-      if (parent.id !== context.userId)
+      if (userId !== requestedUserId)
         throw new UserInputError("Cannot view another user's favorite streams")
 
-      const totalCount = await getFavoritedStreamsCount(parent.id)
-      const { cursor, streams } = await getFavoritedStreams({
-        userId: parent.id,
-        cursor: args.cursor,
-        limit: args.limit
-      })
-
-      return { totalCount, cursor: cursor, items: streams }
+      return await getFavoriteStreamsCollection({ userId, limit, cursor })
     }
   },
 
   Mutation: {
-    async streamCreate(parent, args, context, info) {
+    async streamCreate(parent, args, context) {
       if (!(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))) {
         throw new Error('Blocked due to rate-limiting. Try again later')
       }
@@ -324,18 +308,9 @@ module.exports = {
 
     async streamFavorite(_parent, args, ctx) {
       const { streamId, favorited } = args
-      const userId = ctx.userId
+      const { userId } = ctx
 
-      // Toggle favorited status
-      await setStreamFavorited({ streamId, userId, favorited })
-
-      // Return up to date stream info
-      const stream = await getStream({ streamId, userId })
-
-      // User can't access this stream, returning nothing
-      if (!stream || (!stream.role && !stream.isPublic)) return null
-
-      return stream
+      return await favoriteStream({ userId, streamId, favorited })
     }
   },
 
