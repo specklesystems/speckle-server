@@ -25,19 +25,26 @@ let pubsub = new RedisPubSub({
  */
 
 /**
+ * Add data loaders to auth ctx
+ * @param {AuthContextPart} ctx
+ * @returns {GraphQLContext}
+ */
+async function addLoadersToCtx(ctx) {
+  const loaders = buildRequestLoaders(ctx)
+  ctx.loaders = loaders
+  return ctx
+}
+
+/**
  * Build context for GQL operations
- * @returns
+ * @returns {GraphQLContext}
  */
 async function buildContext({ req, connection }) {
   // Parsing auth info
-  const authCtx = await contextApiTokenHelper({ req, connection })
+  const ctx = await contextApiTokenHelper({ req, connection })
 
-  // Initializing request data loaders
-  const loaders = buildRequestLoaders(authCtx)
-  return {
-    ...authCtx,
-    loaders
-  }
+  // Adding request data loaders
+  return addLoadersToCtx(ctx)
 }
 
 /**
@@ -187,6 +194,7 @@ module.exports = {
   registerOrUpdateScope,
   registerOrUpdateRole,
   buildContext,
+  addLoadersToCtx,
   contextMiddleware,
   validateServerRole,
   validateScopes,

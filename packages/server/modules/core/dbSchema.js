@@ -33,7 +33,8 @@ module.exports = {
     col: {
       streamId: 'stream_favorites.streamId',
       userId: 'stream_favorites.userId',
-      createdAt: 'stream_favorites.createdAt'
+      createdAt: 'stream_favorites.createdAt',
+      cursor: 'stream_favorites.cursor'
     }
   },
   knex

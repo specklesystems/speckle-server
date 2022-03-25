@@ -20,46 +20,25 @@ const { ApolloServer, ForbiddenError } = require('apollo-server-express')
 
 const { buildContext } = require('./modules/shared')
 const knex = require('./db/knex')
-const { formatGraphQLError } = require('@/modules/core/graph/setup')
-const { isDevEnv } = require('@/modules/core/helpers/envHelper')
+const { buildErrorFormatter } = require('@/modules/core/graph/setup')
+const { isDevEnv, isTestEnv } = require('@/modules/core/helpers/envHelper')
 
 let graphqlServer
 
 /**
- * Initialises the express application together with the graphql server middleware.
- * @return {[type]} an express application and the graphql server
+ * Create Apollo Server instance
+ * @param {Partial<import('apollo-server-express').ApolloServerExpressConfig>} optionOverrides Optionally override ctor options
+ * @returns {import('apollo-server-express').ApolloServer}
  */
-exports.init = async () => {
-  const app = express()
+exports.buildApolloServer = (optionOverrides) => {
+  const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
+  const { graph } = require('./modules')
 
-  Logging(app)
-  MatStartup()
-
-  // Initialise prometheus metrics
+  // (Re-)Initialise prometheus metrics
   prometheusClient.register.clear()
   prometheusClient.collectDefaultMetrics()
 
-  // Moves things along automatically on restart.
-  // Should perhaps be done manually?
-  await knex.migrate.latest()
-
-  if (process.env.NODE_ENV !== 'test') {
-    app.use(logger('speckle', 'dev', {}))
-  }
-
-  if (process.env.COMPRESSION) {
-    app.use(compression())
-  }
-
-  app.use(bodyParser.json({ limit: '100mb' }))
-  app.use(bodyParser.urlencoded({ limit: '100mb', extended: false }))
-
-  const { init, graph } = require('./modules')
-
-  // Initialise default modules, including rest api handlers
-  await init(app)
-
-  // Initialise graphql server
+  // Init metrics
   const metricConnectCounter = new prometheusClient.Counter({
     name: 'speckle_server_apollo_connect',
     help: 'Number of connects'
@@ -68,12 +47,12 @@ exports.init = async () => {
     name: 'speckle_server_apollo_clients',
     help: 'Number of currently connected clients'
   })
-  const debug = isDevEnv()
-  graphqlServer = new ApolloServer({
+
+  return new ApolloServer({
     ...graph(),
     context: buildContext,
     subscriptions: {
-      onConnect: (connectionParams, webSocket, context) => {
+      onConnect: (connectionParams) => {
         metricConnectCounter.inc()
         metricConnectedClients.inc()
         try {
@@ -93,19 +72,51 @@ exports.init = async () => {
           throw new ForbiddenError('You need a token to subscribe')
         }
       },
-      onDisconnect: (webSocket, context) => {
+      onDisconnect: () => {
         metricConnectedClients.dec()
-        // debug( `speckle:debug` )( 'ws on disconnect connect event' )
       }
     },
     plugins: [require(`${appRoot}/logging/apolloPlugin`)],
     tracing: debug,
     introspection: true,
     playground: true,
-    formatError: formatGraphQLError,
-    debug
+    formatError: buildErrorFormatter(debug),
+    debug,
+    ...optionOverrides
   })
+}
 
+/**
+ * Initialises the express application together with the graphql server middleware.
+ */
+exports.init = async () => {
+  const app = express()
+
+  Logging(app)
+  MatStartup()
+
+  // Moves things along automatically on restart.
+  // Should perhaps be done manually?
+  await knex.migrate.latest()
+
+  if (process.env.NODE_ENV !== 'test') {
+    app.use(logger('speckle', 'dev', {}))
+  }
+
+  if (process.env.COMPRESSION) {
+    app.use(compression())
+  }
+
+  app.use(bodyParser.json({ limit: '100mb' }))
+  app.use(bodyParser.urlencoded({ limit: '100mb', extended: false }))
+
+  const { init } = require('./modules')
+
+  // Initialise default modules, including rest api handlers
+  await init(app)
+
+  // Initialise graphql server
+  graphqlServer = module.exports.buildApolloServer()
   graphqlServer.applyMiddleware({ app: app })
 
   // Expose prometheus metrics

@@ -71,16 +71,20 @@ async function getFavoritedStreams({ userId, cursor, limit }) {
   const query = getFavoritedStreamsQueryBase(userId)
   query
     .select()
-    .columns([...BASE_STREAM_COLUMNS, { favoritedDate: StreamFavorites.col.createdAt }])
+    .columns([
+      ...BASE_STREAM_COLUMNS,
+      { favoritedDate: StreamFavorites.col.createdAt },
+      { favCursor: StreamFavorites.col.cursor }
+    ])
     .limit(finalLimit)
-    .orderBy(StreamFavorites.col.createdAt, 'desc')
+    .orderBy(StreamFavorites.col.cursor, 'desc')
 
-  if (cursor) query.andWhere(StreamFavorites.col.createdAt, '<', cursor)
+  if (cursor) query.andWhere(StreamFavorites.col.cursor, '<', cursor)
 
   let rows = await query
   return {
     streams: rows,
-    cursor: rows.length > 0 ? rows[rows.length - 1].favoritedDate.toISOString() : null
+    cursor: rows.length > 0 ? rows[rows.length - 1].favCursor : null
   }
 }
 

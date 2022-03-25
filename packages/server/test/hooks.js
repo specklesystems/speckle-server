@@ -2,10 +2,12 @@
 require('../bootstrap')
 const chai = require('chai')
 const chaiHttp = require('chai-http')
+const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
 const { init, startHttp } = require(`@/app`)
 
 chai.use(chaiHttp)
+chai.use(deepEqualInAnyOrder)
 
 const unlock = async () => {
   const exists = await knex.schema.hasTable('knex_migrations_lock')
@@ -53,21 +55,22 @@ const initializeTestServer = async (app) => {
 
 exports.mochaHooks = {
   beforeAll: async () => {
+    console.log('running before all')
     await unlock()
     await knex.migrate.rollback()
     await knex.migrate.latest()
-    console.log('running before all')
+    await init()
   },
   afterAll: async () => {
-    await unlock()
     console.log('running after all')
+    await unlock()
   }
 }
 
 exports.beforeEachContext = async () => {
   await truncateTables()
-  const { app } = await init()
-  return { app }
+  const { app, graphqlServer } = await init()
+  return { app, graphqlServer }
 }
 
 exports.initializeTestServer = initializeTestServer
