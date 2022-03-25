@@ -16,7 +16,7 @@ workflows:
       - lint:
           filters: *filters-every-push
 
-      - npm_build_object_loader:
+      - build_viewer:
           # built the npm package
           requires:
             - lint
@@ -28,7 +28,6 @@ workflows:
                 # - main
                 - gergo/CIRewrite
 
-  #     - npm_build_viewer:
   #         requires:
   #           # the result of objectloader build can be mounted here from workspace
   #           - npm_build_object_loader
@@ -124,11 +123,15 @@ jobs:
       - checkout
       - run: node --version
 
-  npm_build_object_loader:
+  build-viewer:
     docker: *docker-image
     steps:
       - checkout
-      - run: node --version
+      - node/install-packages:
+          app-dir: ~/project/packages/viewer
+      - run: 
+          command: npm build
+          working_directory: 'packages/viewer'
   # publish_npm:
   #   context:
   #     - npm_registry
