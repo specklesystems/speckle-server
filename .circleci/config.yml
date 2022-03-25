@@ -133,7 +133,7 @@ jobs:
 
   get-version:
     docker:
-      - image: cimg:python
+      - image: cimg/python:3.9
     steps:
       - checkout
       - run: ./.circleci/get_version.sh
