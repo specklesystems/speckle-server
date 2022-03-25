@@ -133,7 +133,7 @@ jobs:
       - node/install-packages:
           app-dir: ~/project/packages/viewer
       - run: 
-          command: npm build
+          command: npm run build
           working_directory: 'packages/viewer'
   # publish_npm:
   #   context:
