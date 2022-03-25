@@ -80,7 +80,6 @@ workflows:
 
 jobs:
   test:
-    parallelism: 4
     docker:
       - image: cimg/node:lts
       - image: cimg/redis:6.2.6
