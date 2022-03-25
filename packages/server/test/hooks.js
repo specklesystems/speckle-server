@@ -16,18 +16,21 @@ const unlock = async () => {
   }
 }
 
-const truncateTables = async () => {
-  //why is server config only created once!????
-  const protectedTables = ['server_config']
-  // const protectedTables = [ 'server_config', 'user_roles', 'scopes', 'server_acl' ]
-  const tables = (
-    await knex('pg_tables')
-      .select('tablename')
-      .where({ schemaname: 'public' })
-      .whereRaw("tablename not like '%knex%'")
-      .whereNotIn('tablename', protectedTables)
-  ).map((table) => table.tablename)
-  await knex.raw(`truncate table ${tables.join(',')} cascade`)
+exports.truncateTables = async (tableNames) => {
+  if (!tableNames?.length) {
+    //why is server config only created once!????
+    const protectedTables = ['server_config']
+    // const protectedTables = [ 'server_config', 'user_roles', 'scopes', 'server_acl' ]
+    tableNames = (
+      await knex('pg_tables')
+        .select('tablename')
+        .where({ schemaname: 'public' })
+        .whereRaw("tablename not like '%knex%'")
+        .whereNotIn('tablename', protectedTables)
+    ).map((table) => table.tablename)
+  }
+
+  await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
 const initializeTestServer = async (app) => {
@@ -68,7 +71,7 @@ exports.mochaHooks = {
 }
 
 exports.beforeEachContext = async () => {
-  await truncateTables()
+  await exports.truncateTables()
   const { app, graphqlServer } = await init()
   return { app, graphqlServer }
 }

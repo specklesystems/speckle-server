@@ -37,5 +37,23 @@ module.exports = {
       cursor: 'stream_favorites.cursor'
     }
   },
+  Users: {
+    name: 'users',
+    knex: () => knex('users'),
+    col: {
+      id: 'users.id',
+      suuid: 'users.suuid',
+      createdAt: 'users.createdAt',
+      name: 'users.name',
+      bio: 'users.bio',
+      company: 'users.company',
+      email: 'users.email',
+      verified: 'users.verified',
+      avatar: 'users.avatar',
+      profiles: 'users.profiles',
+      passwordDigest: 'users.passwordDigest',
+      ip: 'users.ip'
+    }
+  },
   knex
 }

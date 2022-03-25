@@ -2,20 +2,25 @@
 const expect = require('chai').expect
 
 const { buildApolloServer } = require('@/app')
-const { StreamFavorites } = require('@/modules/core/dbSchema')
+const { StreamFavorites, Streams, Users, knex } = require('@/modules/core/dbSchema')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 const { addLoadersToCtx } = require('@/modules/shared')
-const { beforeEachContext } = require('@/test/hooks')
+const { truncateTables } = require('@/test/hooks')
 const { gql } = require('apollo-server-express')
 
-// TODO: Try out transaction
-/**
- * FAVORITES:
- * ETC:
- * - New type error handling, error results
+/*
+ * TODO: Extra tests
+ * - Test for new error handler, checking if exceptions are reported correctly in responses
  */
+
+/**
+ * Cleaning up relevant tables
+ */
+async function cleanup() {
+  await truncateTables([StreamFavorites.name, Streams.name, Users.name])
+}
 
 const favoriteMutationGql = gql`
   mutation ($sid: String!, $favorited: Boolean!) {
@@ -71,7 +76,7 @@ describe('Favorite streams', () => {
   }
 
   before(async function () {
-    await beforeEachContext()
+    await cleanup()
 
     // Seeding
     await Promise.all([
@@ -90,8 +95,7 @@ describe('Favorite streams', () => {
   })
 
   after(async () => {
-    // // Truncate everything
-    // await beforeEachContext()
+    await cleanup()
   })
 
   describe('when authenticated', () => {
