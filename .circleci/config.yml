@@ -24,11 +24,6 @@ workflows:
               only:
                 # - main
                 - gergo/CIRewrite
-          docker:
-            - image: cimg:python
-          steps:
-            - checkout
-            - run: ./.circleci/get_version.sh
             
 
       # - build-viewer:
@@ -135,6 +130,13 @@ jobs:
       - store_artifacts:
           path: packages/server/coverage/lcov-report
           destination: package/server/coverage
+
+  get-version:
+    docker:
+      - image: cimg:python
+    steps:
+      - checkout
+      - run: ./.circleci/get_version.sh
 
 
   lint:
