@@ -11,95 +11,100 @@ workflows:
       - test
       - lint
 
-  build_publish:
-    filters:
-      tags:
-        only: /^[0-9]+\.[0-9]+\.[0-9]+$/
-      branches:
-        only:
-          # - main
-          - gergo/CIRewrute
+  build:
     jobs:
-      - test
-      - lint
       - npm_build_object_loader:
           # built the npm package
           requires:
             - test
             - lint
 
-      - npm_build_viewer:
-          requires:
-            # the result of objectloader build can be mounted here from workspace
-            - npm_build_object_loader
+  #     - npm_build_viewer:
+  #         requires:
+  #           # the result of objectloader build can be mounted here from workspace
+  #           - npm_build_object_loader
 
-      - docker_build_server:
-          requires:
-            - test
-            - lint
+  #     - docker_build_server:
+  #         requires:
+  #           - test
+  #           - lint
 
-      - docker_build_webhook_service:
-          requires:
-            - test
-            - lint
+  #     - docker_build_webhook_service:
+  #         requires:
+  #           - test
+  #           - lint
 
-      - docker_build_file_import_service:
-          requires:
-            - test
-            - lint
+  #     - docker_build_file_import_service:
+  #         requires:
+  #           - test
+  #           - lint
 
-      - docker_build_preview_service:
-          requires:
-            # viewer and obj_loader package mounted here from workspace
-            - npm_build_viewer
+  #     - docker_build_preview_service:
+  #         requires:
+  #           # viewer and obj_loader package mounted here from workspace
+  #           - npm_build_viewer
 
-      - docker_build_frontend:
-          requires:
-            # viewer and obj_loader package mounted here from workspace
-            - npm_build_viewer
+  #     - docker_build_frontend:
+  #         requires:
+  #           # viewer and obj_loader package mounted here from workspace
+  #           - npm_build_viewer
 
-      - publish_npm:
-          requires:
-            - npm_build_object_loader
-            - npm_build_viewer
+  # publish:
+  #   jobs:
+  #     - publish_npm:
+  #         requires:
+  #           - npm_build_object_loader
+  #           - npm_build_viewer
 
-      - publish_docker_hub:
-          requires:
-            - docker_build_server
-            - docker_build_webhook_service
-            - docker_build_file_import_service
-            - docker_build_preview_service
-            - docker_build_frontend
+  #     - publish_docker_hub:
+  #         requires:
+  #           - docker_build_server
+  #           - docker_build_webhook_service
+  #           - docker_build_file_import_service
+  #           - docker_build_preview_service
+  #           - docker_build_frontend
 
-      - publish_helm_chart:
-          requires:
-            - publish_docker_hub
+  #     - publish_helm_chart:
+  #         requires:
+  #           - publish_docker_hub
 
 jobs:
   test:
-    executor: node-executor
+    filters: &filters-every-push
+      branches:
+        only:
+          - gergo/CIRewrite
+    docker: &docker-image
+      - image: cimg/node:lts
     steps:
       - checkout
       - run: node --version
   lint:
-    executor: node-executor
+    docker: *docker-image
     steps:
       - checkout
       - run: node --version
 
-  publish_npm:
-    context:
-      - npm_registry
+  npm_build_object_loader:
+    docker: *docker-image
+    filters: &filters-build
+      tags:
+        only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+      branches:
+        only:
+          # - main
+          - gergo/CIRewrite
+    steps:
+      - checkout
+      - run: node --version
+  # publish_npm:
+  #   context:
+  #     - npm_registry
 
-  publish_docker_hub:
-    context:
-      - docker_hub
+  # publish_docker_hub:
+  #   context:
+  #     - docker_hub
 
-  publish_helm_chart:
-    context:
-      - helm_repo
-
-executors:
-  node-executor:
-    name: node/default
-    tag: '16'
+  # publish_helm_chart:
+  #   context:
+  #     - helm_repo
