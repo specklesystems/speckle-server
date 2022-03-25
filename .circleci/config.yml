@@ -106,6 +106,22 @@ jobs:
       - node/test:
           app-dir: ~/project/packages/server
           test-results-for: mocha
+      - run:
+          command: npm run test:report
+          working_directory: 'packages/server'
+      # - run:
+      #     command: 'bash <(curl -s https://codecov.io/bash)'
+      #     working_directory: 'packages/server'
+
+      - store_test_results:
+          path: packages/server/reports
+
+      - store_artifacts:
+          path: packages/server/coverage
+
+      - store_artifacts:
+          path: packages/server/reports/test-results.xml
+
       # - node/test:
       #     app-dir: *server-dir
       #     test-results-for: mocha
