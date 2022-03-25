@@ -16,7 +16,7 @@ workflows:
       - lint:
           filters: *filters-every-push
 
-      - build_viewer:
+      - build-viewer:
           # built the npm package
           requires:
             - lint
