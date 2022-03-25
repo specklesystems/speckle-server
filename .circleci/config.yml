@@ -103,9 +103,6 @@ jobs:
           app-dir: ~/project/packages/server
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
-      - node/test:
-          app-dir: ~/project/packages/server
-          test-results-for: mocha
       - run:
           command: npm run test:report
           working_directory: 'packages/server'
