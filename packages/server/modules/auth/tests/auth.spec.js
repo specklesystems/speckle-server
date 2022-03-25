@@ -113,7 +113,7 @@ describe('Auth @auth', () => {
         role: 'stream:reviewer'
       })
 
-      const res = await request(app)
+      await request(app)
         .post('/auth/local/register?challenge=test&suuid=test&inviteId=' + inviteId)
         .send({
           email: 'new@stream.collaborator',
@@ -129,21 +129,20 @@ describe('Auth @auth', () => {
     })
 
     it('Should log in (speckle frontend)', async () => {
-      let res = await request(app)
+      await request(app)
         .post('/auth/local/login?challenge=test')
         .send({ email: 'spam@speckle.systems', password: 'roll saving throws' })
         .expect(302)
     })
 
     it('Should fail nicely to log in (speckle frontend)', async () => {
-      let res = await request(app)
+      await request(app)
         .post('/auth/local/login?challenge=test')
         .send({ email: 'spam@speckle.systems', password: 'roll saving throw' })
         .expect(401)
     })
 
     it('Should redirect login with access code (speckle frontend)', async () => {
-      let appId = 'sdm'
       let challenge = 'random'
 
       let res = await request(app)
@@ -156,7 +155,6 @@ describe('Auth @auth', () => {
     })
 
     it('Should redirect registration with access code (speckle frontend)', async () => {
-      let appId = 'sdm'
       let challenge = 'random'
 
       let res = await request(app)
@@ -205,7 +203,7 @@ describe('Auth @auth', () => {
       let accessCode = res.headers.location.split('access_code=')[1]
 
       // Swap the app
-      tokenResponse = await request(app)
+      await request(app)
         .post('/auth/token')
         .send({ appId, appSecret: appId, accessCode, challenge })
         .expect(401)
@@ -221,7 +219,7 @@ describe('Auth @auth', () => {
       let accessCode = res.headers.location.split('access_code=')[1]
 
       // Spoof the challenge
-      let tokenResponse = await request(app)
+      await request(app)
         .post('/auth/token')
         .send({ appId, appSecret: 'sdm', accessCode, challenge: 'WRONG' })
         .expect(401)
@@ -237,14 +235,13 @@ describe('Auth @auth', () => {
       let accessCode = res.headers.location.split('access_code=')[1]
 
       // Spoof the secret
-      tokenResponse = await request(app)
+      await request(app)
         .post('/auth/token')
         .send({ appId, appSecret: 'spoof', accessCode, challenge })
         .expect(401)
     })
 
     it('Should not exchange a token for an access code with a garbage input', async () => {
-      let appId = 'sdm'
       let challenge = 'random'
       let res = await request(app)
         .post(`/auth/local/login?challenge=${challenge}`)
@@ -253,10 +250,7 @@ describe('Auth @auth', () => {
       let accessCode = res.headers.location.split('access_code=')[1]
 
       // Send pure garbage
-      tokenResponse = await request(app)
-        .post('/auth/token')
-        .send({ accessCode, challenge })
-        .expect(401)
+      await request(app).post('/auth/token').send({ accessCode, challenge }).expect(401)
     })
 
     it('Should refresh a token (speckle frontend)', async () => {
@@ -307,13 +301,13 @@ describe('Auth @auth', () => {
       expect(tokenResponse.body.refreshToken).to.exist
 
       // spoof secret
-      let refreshTokenResponse = await request(app)
+      await request(app)
         .post('/auth/token')
         .send({ refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'WRONG' })
         .expect(401)
 
       // swap app (use on rt for another app)
-      refreshTokenResponse = await request(app)
+      await request(app)
         .post('/auth/token')
         .send({ refreshToken: tokenResponse.body.refreshToken, appId: 'sdm', appSecret: 'sdm' })
         .expect(401)
@@ -355,7 +349,7 @@ describe('Auth @auth', () => {
 
     it('Should not get an access code on bad requests', async () => {
       // Spoofed app
-      let response = await request(app)
+      await request(app)
         .get(
           `/auth/accesscode?appId=lol&challenge=${crs({ length: 20 })}&token=${
             frontendCredentials.token
@@ -364,25 +358,25 @@ describe('Auth @auth', () => {
         .expect(400)
 
       // Spoofed token
-      response = await request(app)
+      await request(app)
         .get(`/auth/accesscode?appId=sdm&challenge=${crs({ length: 20 })}&token=I_AM_HACZ0R`)
         .expect(400)
 
       // No challenge
-      response = await request(app)
+      await request(app)
         .get(`/auth/accesscode?appId=explorer&token=${frontendCredentials.token}`)
         .expect(400)
     })
 
     it('Should not freak out on malformed logout request', async () => {
-      let response = await request(app)
+      await request(app)
         .post('/auth/logout')
         .send({ adsfadsf: frontendCredentials.token })
         .expect(400)
     })
 
     it('Should invalidate tokens on logout', async () => {
-      let response = await request(app)
+      await request(app)
         .post('/auth/logout')
         .send({ ...frontendCredentials })
         .expect(200)
@@ -397,7 +391,6 @@ describe('Auth @auth', () => {
 
     it('Should rate-limit user creation', async () => {
       let newUser = async (id, ip, expectCode) => {
-        console.log(id, ip, expectCode)
         await request(app)
           .post(`/auth/local/register?challenge=test&suuid=test`)
           .set('CF-Connecting-IP', ip)

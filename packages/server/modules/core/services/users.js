@@ -71,7 +71,7 @@ module.exports = {
     return res[0].id
   },
 
-  async findOrCreateUser({ user, rawProfile }) {
+  async findOrCreateUser({ user }) {
     let existingUser = await userByEmailQuery(user.email).select('id').first()
 
     if (existingUser) {
@@ -128,19 +128,21 @@ module.exports = {
     await Users().where({ id: id }).update({ passwordDigest })
   },
 
-  async searchUsers(searchQuery, limit, cursor) {
-    limit = limit || 25
+  async searchUsers(searchQuery, limit, cursor, archived = false) {
 
     let query = Users()
+      .join('server_acl', 'users.id', 'server_acl.userId') 
       .select('id', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt')
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
         queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        if (!archived) queryBuilder.andWhere('role', '!=', 'server:archived-user')
       })
 
     if (cursor) query.andWhere('users.createdAt', '<', cursor)
 
-    query.orderBy('users.createdAt', 'desc').limit(limit)
+    const defaultLimit = 25
+    query.orderBy('users.createdAt', 'desc').limit(limit || defaultLimit)
 
     let rows = await query
     return {
