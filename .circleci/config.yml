@@ -102,9 +102,13 @@ jobs:
       - node/install-packages: &server-dir
           app-dir: ~/project/packages/server
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
+
       - node/test:
           app-dir: ~/project/packages/server
           test-results-for: mocha
+      # - node/test:
+      #     app-dir: *server-dir
+      #     test-results-for: mocha
 
   lint:
     docker: &docker-image
