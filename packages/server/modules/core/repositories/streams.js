@@ -176,6 +176,9 @@ async function getBatchStreamFavoritesCounts(streamIds) {
   return _.mapValues(_.keyBy(rows, 'streamId'), (r) => r?.count || 0)
 }
 
+function StreamsAclTest() {}
+StreamsAclTest.toString = () => 'stream_acl'
+
 /**
  * Check if user can favorite a stream
  * @param {Object} p

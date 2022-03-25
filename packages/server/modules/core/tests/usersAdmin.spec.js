@@ -12,6 +12,8 @@ const {
   unmakeUserAdmin,
   makeUserAdmin
 } = require('../services/users')
+const { truncateTables } = require('@/test/hooks')
+const { Users } = require('@/modules/core/dbSchema')
 const { beforeEachContext } = require(`${appRoot}/test/hooks`)
 
 describe('User admin @user-services', () => {
@@ -23,6 +25,9 @@ describe('User admin @user-services', () => {
 
   before(async () => {
     await beforeEachContext()
+
+    // TODO: Users leak fix
+    await truncateTables([Users.name])
 
     let actorId = await createUser(myTestActor)
     myTestActor.id = actorId

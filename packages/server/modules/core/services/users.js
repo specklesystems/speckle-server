@@ -36,7 +36,7 @@ module.exports = {
 
   */
 
-  async createUser(user) {
+  async createUser(user, role) {
     user.id = crs({ length: 10 })
     user.email = user.email.toLowerCase()
 
@@ -52,7 +52,7 @@ module.exports = {
 
     let res = await Users().returning('id').insert(user)
 
-    let userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
+    let userRole = role || (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
 
     await Acl().insert({ userId: res[0].id, role: userRole })
 

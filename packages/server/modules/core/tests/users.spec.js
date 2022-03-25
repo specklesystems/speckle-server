@@ -39,6 +39,8 @@ const { createObject } = require('../services/objects')
 const { beforeEachContext } = require(`${appRoot}/test/hooks`)
 
 const { LIMITS } = require('../services/ratelimits')
+const { truncateTables } = require('@/test/hooks')
+const { Users } = require('@/modules/core/dbSchema')
 
 describe('Actors & Tokens @user-services', () => {
   let myTestActor = {
@@ -51,6 +53,9 @@ describe('Actors & Tokens @user-services', () => {
 
   before(async () => {
     await beforeEachContext()
+
+    // TODO: "last admin role" fix
+    await truncateTables([Users.name])
 
     let actorId = await createUser(myTestActor)
     myTestActor.id = actorId

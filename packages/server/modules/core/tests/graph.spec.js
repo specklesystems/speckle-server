@@ -19,7 +19,8 @@ describe('GraphQL API Core @core-api', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {
-    ;({ app } = await beforeEachContext())
+    // TODO: Convert to new style
+    ;({ app } = await beforeEachContext(true))
     ;({ server, sendRequest, serverAddress } = await initializeTestServer(app))
 
     userA.id = await createUser(userA)

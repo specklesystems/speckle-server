@@ -19,7 +19,7 @@ let server
 describe('Auth @auth', () => {
   describe('Local authN & authZ (token endpoints)', () => {
     before(async () => {
-      ;({ app } = await beforeEachContext())
+      ;({ app } = await beforeEachContext(true)) // TODO: Convert to new style
       ;({ server, sendRequest } = await initializeTestServer(app))
     })
 

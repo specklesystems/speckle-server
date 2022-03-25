@@ -66,12 +66,20 @@ exports.mochaHooks = {
   },
   afterAll: async () => {
     console.log('running after all')
+    await knex.connectionTransaction(false)
     await unlock()
   }
 }
 
-exports.beforeEachContext = async () => {
-  await exports.truncateTables()
+exports.beforeEachContext = async (old) => {
+  if (old) {
+    await knex.connectionTransaction(false)
+    await exports.truncateTables()
+  } else {
+    await knex.connectionTransaction(false)
+    await knex.connectionTransaction(true)
+  }
+
   const { app, graphqlServer } = await init()
   return { app, graphqlServer }
 }

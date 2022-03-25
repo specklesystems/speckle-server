@@ -49,7 +49,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
   before(async function () {
     this.timeout(10000) // we need to wait for the server to start in the child process!
 
-    await beforeEachContext()
+    await beforeEachContext(true)
 
     const childProcess = require('child_process')
     console.log('  Starting server... this might take a bit.')

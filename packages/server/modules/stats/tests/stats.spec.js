@@ -26,7 +26,7 @@ const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 
 describe('Server stats services @stats-services', function () {
   before(async function () {
     this.timeout(15000)
-    await beforeEachContext()
+    await beforeEachContext(true)
     await seedDb(params)
   })
 
@@ -120,7 +120,8 @@ describe('Server stats api @stats-api', function () {
   before(async function () {
     this.timeout(15000)
 
-    let { app } = await beforeEachContext()
+    // TODO: Convert to new style
+    let { app } = await beforeEachContext(true)
     ;({ server, sendRequest } = await initializeTestServer(app))
 
     adminUser.id = await createUser(adminUser)
