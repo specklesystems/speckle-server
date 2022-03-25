@@ -127,6 +127,9 @@ jobs:
     docker: *docker-image
     steps:
       - checkout
+      - run: 
+          command: npm install ../objectloader
+          working_directory: 'packages/viewer'
       - node/install-packages:
           app-dir: ~/project/packages/viewer
       - run: 
