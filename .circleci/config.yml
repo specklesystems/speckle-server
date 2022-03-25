@@ -100,7 +100,7 @@ jobs:
       - checkout
       - run: pwd
       - node/install-packages:
-         app-dir: ~/project/package/server
+         app-dir: ~/project/packages/server
 
   lint:
     docker: &docker-image
