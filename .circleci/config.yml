@@ -99,7 +99,8 @@ jobs:
     steps:
       - checkout
       - run: pwd
-      - node/install-packages
+      - node/install-packages:
+         app-dir: ~/project/package/server
 
   lint:
     docker: &docker-image
