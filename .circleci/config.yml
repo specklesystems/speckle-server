@@ -8,8 +8,13 @@ workflows:
 
   test_and_lint:
     jobs:
-      - test
-      - lint
+      - test:
+          filters: &filters-every-push
+            branches:
+              only:
+                - gergo/CIRewrite
+      - lint:
+          filters: *filters-every-push
 
   build:
     jobs:
@@ -18,6 +23,13 @@ workflows:
           requires:
             - test
             - lint
+          filters: &filters-build
+            tags:
+              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+            branches:
+              only:
+                # - main
+                - gergo/CIRewrite
 
   #     - npm_build_viewer:
   #         requires:
@@ -70,10 +82,6 @@ workflows:
 
 jobs:
   test:
-    filters: &filters-every-push
-      branches:
-        only:
-          - gergo/CIRewrite
     docker: &docker-image
       - image: cimg/node:lts
     steps:
@@ -87,13 +95,6 @@ jobs:
 
   npm_build_object_loader:
     docker: *docker-image
-    filters: &filters-build
-      tags:
-        only: /^[0-9]+\.[0-9]+\.[0-9]+$/
-      branches:
-        only:
-          # - main
-          - gergo/CIRewrite
     steps:
       - checkout
       - run: node --version
