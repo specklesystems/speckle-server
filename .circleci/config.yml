@@ -6,7 +6,7 @@ orbs:
 workflows:
   version: 2
 
-  test_and_lint:
+  test-build:
     jobs:
       - test:
           filters: &filters-every-push
@@ -16,8 +16,6 @@ workflows:
       - lint:
           filters: *filters-every-push
 
-  build:
-    jobs:
       - npm_build_object_loader:
           # built the npm package
           requires:
