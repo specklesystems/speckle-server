@@ -19,7 +19,6 @@ workflows:
       - npm_build_object_loader:
           # built the npm package
           requires:
-            - test
             - lint
           filters: &filters-build
             tags:
@@ -114,14 +113,9 @@ jobs:
           path: packages/server/reports
 
       - store_artifacts:
-          path: packages/server/coverage
+          path: packages/server/coverage/lcov-report
+          destination: package/server/coverage
 
-      - store_artifacts:
-          path: packages/server/reports/test-results.xml
-
-      # - node/test:
-      #     app-dir: *server-dir
-      #     test-results-for: mocha
 
   lint:
     docker: &docker-image
