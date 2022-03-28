@@ -78,7 +78,7 @@ workflows:
             - test-server
             # - npm_build_viewer
 
-      - docker-build-test-deployment:
+      - docker-build-test-containers:
           filters: *filters-build
 
 
