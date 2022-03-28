@@ -91,12 +91,12 @@ workflows:
             - docker-build-previews
             - docker-build-test-container
 
+      - publish-npm:
+          requires:
+            - lint
+
   # publish:
   #   jobs:
-  #     - publish_npm:
-  #         requires:
-  #           - npm_build_object_loader
-  #           - npm_build_viewer
 
   #     - publish_docker_hub:
   #         requires:
@@ -229,9 +229,13 @@ jobs:
           name: Build and Publish
           command: env FOLDER=utils SPECKLE_SERVER_PACKAGE=test-deployment ./.circleci/build.sh
 
-  # publish_npm:
-  #   context:
-  #     - npm_registry
+  publish-npm:
+    docker: *docker-image
+    # context:
+    #   - npm_registry
+    steps:
+      - checkout
+      - run: node --version
 
   # publish_docker_hub:
   #   context:
