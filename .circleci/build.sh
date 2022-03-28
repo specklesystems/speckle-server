@@ -6,7 +6,7 @@ set -e
 # defaults to packages for minimal intervention in the ci config
 FOLDER="${FOLDER:-packages}"
 
-DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG-$SPECKLE_SERVER_PACKAGE
+DOCKER_IMAGE_TAG=speckle/speckle-$SPECKLE_SERVER_PACKAGE
 
 IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
 
@@ -21,5 +21,3 @@ fi
 
 echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $DOCKER_REG_URL
 # docker push -a
-
-# docker save -o <file path for generated tar file> <image name>
