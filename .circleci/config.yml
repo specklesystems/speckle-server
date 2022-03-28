@@ -145,9 +145,10 @@ jobs:
           command: node --version
           # command: npm run test:report
           working_directory: 'packages/server'
-      # - run:
-      #     command: 'bash <(curl -s https://codecov.io/bash)'
-      #     working_directory: 'packages/server'
+
+      - run:
+          command: 'bash <(curl -s https://codecov.io/bash)'
+          working_directory: 'packages/server'
 
       - store_test_results:
           path: packages/server/reports
@@ -170,6 +171,8 @@ jobs:
           working_directory: 'packages/viewer'
   
   docker-build-and-publish-server:
+    context: &docker-hub-context
+      - docker-hub
     docker: *docker-image
     steps:
       - checkout
