@@ -65,13 +65,13 @@ workflows:
             - lint
             - test-server
 
-      - docker_build_file_import_service:
+      - docker-build-file-imports:
           filters: *filters-build
           requires:
             - lint
             - test-server
 
-      - docker_build_preview_service:
+      - docker-build-previews:
           filters: *filters-build
           requires:
             - lint
