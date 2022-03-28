@@ -45,7 +45,9 @@ async function connectionTransaction(enable = true) {
   if (enable) {
     // console.log('ON ')
     if (connectionLevelTransaction) return
-    connectionLevelTransaction = await knexInstance.transaction()
+    connectionLevelTransaction = await knexInstance.transaction(null, {
+      doNotRejectOnRollback: true
+    })
   } else {
     // console.log('OFF ')
 
