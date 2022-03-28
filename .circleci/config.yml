@@ -16,14 +16,14 @@ workflows:
       - lint:
           filters: *filters-every-push
       
-      - get-version:
-          filters: &filters-build
-            tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
-            branches:
-              only:
-                # - main
-                - gergo/CIRewrite
+      # - get-version:
+      #     filters: &filters-build
+      #       tags:
+      #         only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+      #       branches:
+      #         only:
+      #           # - main
+      #           - gergo/CIRewrite
             
 
       # - build-viewer:
@@ -46,7 +46,6 @@ workflows:
           filters: *filters-build
           requires:
             - lint
-            - get-version
             - test-server
               
 
