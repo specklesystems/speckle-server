@@ -42,7 +42,7 @@ workflows:
   #           # the result of objectloader build can be mounted here from workspace
   #           - npm_build_object_loader
 
-      - docker-build-server:
+      - docker-build-and-publish-server:
           filters: &filters-build
             tags:
               only: /^[0-9]+\.[0-9]+\.[0-9]+$/
@@ -54,42 +54,42 @@ workflows:
             - lint
             - test-server
               
-      - docker-build-frontend:
+      - docker-build-and-publish-frontend:
           filters: *filters-build
           requires:
             - lint
 
-      - docker-build-webhooks:
-          filters: *filters-build
-          requires:
-            - lint
-            - test-server
-
-      - docker-build-file-imports:
+      - docker-build-and-publish-webhooks:
           filters: *filters-build
           requires:
             - lint
             - test-server
 
-      - docker-build-previews:
+      - docker-build-and-publish-file-imports:
+          filters: *filters-build
+          requires:
+            - lint
+            - test-server
+
+      - docker-build-and-publish-previews:
           filters: *filters-build
           requires:
             - lint
             - test-server
             # - npm_build_viewer
 
-      - docker-build-test-container:
+      - docker-build-and-publish-test-container:
           filters: *filters-build
 
       - publish_helm_chart:
           filters: *filters-build
           requires:
-            - docker-build-server
-            - docker-build-frontend
-            - docker-build-webhooks
-            - docker-build-file-imports
-            - docker-build-previews
-            - docker-build-test-container
+            - docker-build-and-publish-server
+            - docker-build-and-publish-frontend
+            - docker-build-and-publish-webhooks
+            - docker-build-and-publish-file-imports
+            - docker-build-and-publish-previews
+            - docker-build-and-publish-test-container
 
       - publish-npm:
           requires:
@@ -169,7 +169,7 @@ jobs:
           command: npm run build
           working_directory: 'packages/viewer'
   
-  docker-build-server:
+  docker-build-and-publish-server:
     docker: *docker-image
     steps:
       - checkout
@@ -179,7 +179,7 @@ jobs:
           name: Build and Publish
           command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
 
-  docker-build-frontend:
+  docker-build-and-publish-frontend:
     docker: *docker-image
     steps:
       - checkout
@@ -189,7 +189,7 @@ jobs:
           name: Build and Publish
           command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
 
-  docker-build-previews:
+  docker-build-and-publish-previews:
     docker: *docker-image
     steps:
       - checkout
@@ -199,7 +199,7 @@ jobs:
           name: Build and Publish
           command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
           
-  docker-build-webhooks:
+  docker-build-and-publish-webhooks:
     docker: *docker-image
     steps:
       - checkout
@@ -209,7 +209,7 @@ jobs:
           name: Build and Publish
           command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
 
-  docker-build-file-imports:
+  docker-build-and-publish-file-imports:
     docker: *docker-image
     steps:
       - checkout
@@ -219,7 +219,7 @@ jobs:
           name: Build and Publish
           command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
 
-  docker-build-test-container:
+  docker-build-and-publish-test-container:
     docker: *docker-image
     steps:
       - checkout
