@@ -73,11 +73,17 @@ exports.mochaHooks = {
 
 exports.beforeEachContext = async (old) => {
   if (old) {
+    console.log(new Date().toISOString(), 'OLD - STARt')
     await knex.connectionTransaction(false)
     await exports.truncateTables()
+    console.log(new Date().toISOString(), 'OLD - END')
   } else {
+    console.log(new Date().toISOString(), 'NEW - STARt')
+
     await knex.connectionTransaction(false)
     await knex.connectionTransaction(true)
+
+    console.log(new Date().toISOString(), 'NEW - END')
   }
 
   const { app, graphqlServer } = await init()

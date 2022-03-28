@@ -43,6 +43,7 @@ module.exports = (app) => {
       // 1. Validate token
       let { valid, scopes, userId, role } = await validateToken(userToken)
       if (!valid) throw new Error('Invalid token')
+      if (!challenge) throw new Error('Invalid challenge')
 
       // 2. Validate token scopes
       await validateScopes(scopes, 'tokens:write')
