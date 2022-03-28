@@ -43,7 +43,13 @@ workflows:
   #           - npm_build_object_loader
 
       - docker-build-server:
-          filters: *filters-build
+          filters: &filters-build
+            tags:
+              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+            branches:
+              only:
+                # - main
+                - gergo/CIRewrite
           requires:
             - lint
             - test-server
