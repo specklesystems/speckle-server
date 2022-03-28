@@ -185,7 +185,6 @@ jobs:
           command: ./.circleci/build.sh
 
   docker-build-and-publish-server:
-    context: *docker-hub-context
     docker: *docker-image
     steps:
       - checkout
