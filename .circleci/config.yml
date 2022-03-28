@@ -54,28 +54,33 @@ workflows:
             - lint
             - test-server
               
+      - docker-build-frontend:
+          filters: *filters-build
+          requires:
+            - lint
 
-  #     - docker_build_webhook_service:
-  #         requires:
-  #           - test
-  #           - lint
-  #     - docker-build-test-deployment:
+      - docker-build-webhooks:
+          filters: *filters-build
+          requires:
+            - lint
+            - test-server
 
+      - docker_build_file_import_service:
+          filters: *filters-build
+          requires:
+            - lint
+            - test-server
 
-  #     - docker_build_file_import_service:
-  #         requires:
-  #           - test
-  #           - lint
+      - docker_build_preview_service:
+          filters: *filters-build
+          requires:
+            - lint
+            - test-server
+            # - npm_build_viewer
 
-  #     - docker_build_preview_service:
-  #         requires:
-  #           # viewer and obj_loader package mounted here from workspace
-  #           - npm_build_viewer
+      - docker-build-test-deployment:
+          filters: *filters-build
 
-  #     - docker_build_frontend:
-  #         requires:
-  #           # viewer and obj_loader package mounted here from workspace
-  #           - npm_build_viewer
 
   # publish:
   #   jobs:
@@ -162,9 +167,58 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-          name: Build Server
+          name: Build and Publish
           command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
 
+  docker-build-frontend:
+    docker: *docker-image
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish
+          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
+
+  docker-build-previews:
+    docker: *docker-image
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish
+          command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
+          
+  docker-build-webhooks:
+    docker: *docker-image
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish
+          command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
+
+  docker-build-file-imports:
+    docker: *docker-image
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish
+          command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
+
+  docker-build-test-container:
+    docker: *docker-image
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and Publish
+          command: env FOLDER=utils SPECKLE_SERVER_PACKAGE=test-deployment ./.circleci/build.sh
 
   # publish_npm:
   #   context:
