@@ -92,6 +92,13 @@ workflows:
   #           - publish_docker_hub
 
 jobs:
+  lint:
+    docker: &docker-image
+      - image: cimg/python:3.9-node
+    steps:
+      - checkout
+      - run: node --version
+
   test-server:
     docker:
       - image: cimg/node:lts
@@ -111,8 +118,7 @@ jobs:
       CANONICAL_URL: 'http://localhost:3000'
     steps:
       - checkout
-      - run: pwd
-      - node/install-packages: &server-dir
+      - node/install-packages:
           app-dir: ~/project/packages/server
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
@@ -130,21 +136,6 @@ jobs:
       - store_artifacts:
           path: packages/server/coverage/lcov-report
           destination: package/server/coverage
-
-  get-version:
-    docker:
-      - image: cimg/python:3.9
-    steps:
-      - checkout
-      - run: ./.circleci/get_version.sh
-
-
-  lint:
-    docker: &docker-image
-      - image: cimg/node:lts
-    steps:
-      - checkout
-      - run: node --version
 
   build-viewer:
     docker: *docker-image
