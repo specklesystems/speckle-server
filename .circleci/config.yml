@@ -55,8 +55,6 @@ workflows:
           requires:
             - lint
             - test-server
-          environment:
-           SPECKLE_SERVER_PACKAGE: server 
               
       - docker-build-and-publish-frontend:
           filters: *filters-build
@@ -174,7 +172,7 @@ jobs:
           command: npm run build
           working_directory: 'packages/viewer'
   
-  docker-build-and-publish:
+  docker-build-and-publish: &docker-job
     docker: *docker-image
     steps:
       - checkout
@@ -184,15 +182,11 @@ jobs:
           name: Build and Publish
           command: ./.circleci/build.sh
 
-  docker-build-and-publish-server:
-    docker: *docker-image
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: env SPECKLE_SERVER_PACKAGE=server ./.circleci/build.sh
+  docker-build-and-publish-server: 
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: server
+
 
   docker-build-and-publish-frontend:
     docker: *docker-image
