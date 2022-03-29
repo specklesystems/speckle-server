@@ -19,4 +19,5 @@ if [[ "$IMAGE_VERSION_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $DOCKER_REG_URL
+docker image ls
 docker push -a
