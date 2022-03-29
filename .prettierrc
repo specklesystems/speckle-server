@@ -4,7 +4,6 @@
   "semi": false,
   "endOfLine": "auto",
   "bracketSpacing": true,
-  "bracketSameLine": true,
   "vueIndentScriptAndStyle": false,
   "htmlWhitespaceSensitivity": "ignore",
   "printWidth": 100,
