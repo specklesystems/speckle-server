@@ -253,12 +253,11 @@ export default class ObjectLoader {
   }
 
   processLine(chunk) {
-    var pieces = chunk.split('\t')
+    let pieces = chunk.split('\t')
     return { id: pieces[0], obj: JSON.parse(pieces[1]) }
   }
 
   async *getRawObjectIterator() {
-    let tSTART = Date.now()
 
     if (this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
       await safariFix()
@@ -365,7 +364,7 @@ export default class ObjectLoader {
 
     const decoders = []
     const readers = []
-    const readPromisses = []
+    const readPromises = []
     const startIndexes = []
     const readBuffers = []
     const finishedRequests = []
@@ -373,7 +372,7 @@ export default class ObjectLoader {
     for (let i = 0; i < splitHttpRequests.length; i++) {
       decoders.push(new TextDecoder())
       readers.push(null)
-      readPromisses.push(null)
+      readPromises.push(null)
       startIndexes.push(0)
       readBuffers.push('')
       finishedRequests.push(false)
@@ -389,12 +388,12 @@ export default class ObjectLoader {
           x.reqId = i
           return x
         })
-        readPromisses[i] = crtReadPromise
+        readPromises[i] = crtReadPromise
       })
     }
 
     while (true) {
-      let validReadPromises = readPromisses.filter((x) => x != null)
+      let validReadPromises = readPromises.filter((x) => !!x)
       if (validReadPromises.length === 0) {
         // Check if all requests finished
         if (finishedRequests.every((x) => x)) {
@@ -418,7 +417,7 @@ export default class ObjectLoader {
           x.reqId = reqId
           return x
         })
-        readPromisses[reqId] = crtReadPromise
+        readPromises[reqId] = crtReadPromise
       } else {
         // This request finished. "Flush any non-newline-terminated text"
         if (readBuffers[reqId].length > 0) {
@@ -426,7 +425,7 @@ export default class ObjectLoader {
           readBuffers[reqId] = ''
         }
         // no other read calls for this request
-        readPromisses[reqId] = null
+        readPromises[reqId] = null
       }
 
       if (!crtDataChunk) continue
@@ -469,7 +468,6 @@ export default class ObjectLoader {
 
     for (let i = 0; i < ids.length; i += 500) {
       let idsChunk = ids.slice(i, i + 500)
-      let t0 = Date.now()
 
       let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
       let idbChildrenPromises = idsChunk.map((id) =>
