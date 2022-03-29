@@ -5,6 +5,8 @@ require('./bootstrap')
 const http = require('http')
 const url = require('url')
 const express = require('express')
+// `express-async-errors` patches express to catch errors in async handlers. no variable needed
+require('express-async-errors')
 const compression = require('compression')
 const appRoot = require('app-root-path')
 const logger = require('morgan-debug')
@@ -17,6 +19,7 @@ const Sentry = require('@sentry/node')
 const Tracing = require('@sentry/tracing')
 const Logging = require(`${appRoot}/logging`)
 const { startup: MatStartup } = require(`${appRoot}/logging/matomoHelper`)
+const { errorLoggingMiddleware } = require(`${appRoot}/logging/errorLogging`)
 const prometheusClient = require('prom-client')
 
 const { ApolloServer, ForbiddenError } = require('apollo-server-express')
@@ -118,6 +121,9 @@ exports.init = async () => {
 
   // Trust X-Forwarded-* headers (for https protocol detection)
   app.enable('trust proxy')
+
+  // Log errors
+  app.use(errorLoggingMiddleware)
 
   return { app, graphqlServer }
 }
