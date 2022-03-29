@@ -5,7 +5,7 @@
   >
     <v-container fill-height fluid>
       <v-row align="center" justify="center">
-        <v-col cols="12" md="8" lg="6" xl="4">
+        <v-col cols="12" md="10" lg="8" xl="6">
           <getting-started-steps />
         </v-col>
       </v-row>
