@@ -22,4 +22,4 @@ cd ~/helm
 
 git add .
 git commit -m "CircleCI commit"
-git push
+# git push
