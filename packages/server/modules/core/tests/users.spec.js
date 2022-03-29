@@ -25,7 +25,11 @@ const {
   validateToken,
   getUserTokens
 } = require('../services/tokens')
-const { grantPermissionsStream, createStream, getStream } = require('../services/streams')
+const {
+  grantPermissionsStream,
+  createStream,
+  getStream
+} = require('../services/streams')
 
 const { createBranch, getBranchesByStreamId } = require('../services/branches')
 
@@ -67,7 +71,11 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should store user email lowercase', async () => {
-      let user = { name: 'Marty McFly', email: 'Marty@Mc.Fly', password: 'something_future_proof' }
+      let user = {
+        name: 'Marty McFly',
+        email: 'Marty@Mc.Fly',
+        password: 'something_future_proof'
+      }
 
       let userId = await createUser(user)
 
@@ -81,12 +89,18 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Validate password should ignore email casing', async () => {
-      expect(await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' }))
+      expect(
+        await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
+      )
     })
 
     it('Should not create a user with a too small password', async () => {
       try {
-        await createUser({ name: 'Dim Sum', email: 'dim@gmail.com', password: '1234567' })
+        await createUser({
+          name: 'Dim Sum',
+          email: 'dim@gmail.com',
+          password: '1234567'
+        })
       } catch (e) {
         return
       }
@@ -169,8 +183,14 @@ describe('Actors & Tokens @user-services', () => {
         isPublic: true
       }
 
-      soloOwnerStream.id = await createStream({ ...soloOwnerStream, ownerId: ballmerUserId })
-      multiOwnerStream.id = await createStream({ ...multiOwnerStream, ownerId: ballmerUserId })
+      soloOwnerStream.id = await createStream({
+        ...soloOwnerStream,
+        ownerId: ballmerUserId
+      })
+      multiOwnerStream.id = await createStream({
+        ...multiOwnerStream,
+        ownerId: ballmerUserId
+      })
 
       await grantPermissionsStream({
         streamId: multiOwnerStream.id,
@@ -227,7 +247,9 @@ describe('Actors & Tokens @user-services', () => {
       let commit = await getCommitById({ streamId: multiOwnerStream.id, id: commitId })
       expect(commit).to.be.not.null
 
-      let commitsByStreamId = await getCommitsByStreamId({ streamId: multiOwnerStream.id })
+      let commitsByStreamId = await getCommitsByStreamId({
+        streamId: multiOwnerStream.id
+      })
       expect(commitsByStreamId.commits.length).to.equal(1)
 
       let user = await getUser(ballmerUserId)
@@ -239,7 +261,9 @@ describe('Actors & Tokens @user-services', () => {
         await deleteUser(myTestActor.id)
         assert.fail('boom')
       } catch (err) {
-        expect(err.message).to.equal('Cannot remove the last admin role from the server')
+        expect(err.message).to.equal(
+          'Cannot remove the last admin role from the server'
+        )
       }
     })
 
@@ -292,7 +316,10 @@ describe('Actors & Tokens @user-services', () => {
 
       await updateUser(myTestActor.id, updatedActor)
 
-      let match = await validatePasssword({ email: myTestActor.email, password: 'failwhale' })
+      let match = await validatePasssword({
+        email: myTestActor.email,
+        password: 'failwhale'
+      })
       expect(match).to.equal(false)
     })
 
@@ -304,9 +331,15 @@ describe('Actors & Tokens @user-services', () => {
 
       await createUser(actor)
 
-      let match = await validatePasssword({ email: actor.email, password: 'super-test-200' })
+      let match = await validatePasssword({
+        email: actor.email,
+        password: 'super-test-200'
+      })
       expect(match).to.equal(true)
-      let matchWrong = await validatePasssword({ email: actor.email, password: 'super-test-2000' })
+      let matchWrong = await validatePasssword({
+        email: actor.email,
+        password: 'super-test-2000'
+      })
       expect(matchWrong).to.equal(false)
     })
 

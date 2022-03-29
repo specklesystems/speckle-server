@@ -81,7 +81,7 @@ export default {
   apollo: {
     appScopes: {
       query: gql`
-        query($id: String!) {
+        query ($id: String!) {
           app(id: $id) {
             id
             name
@@ -120,7 +120,7 @@ export default {
   },
   methods: {
     async deleteApp() {
-      this.$mixpanel.track('App Action', { type: 'action', name: 'delete'  })
+      this.$mixpanel.track('App Action', { type: 'action', name: 'delete' })
       this.$matomo && this.$matomo.trackPageView('user/app/revoke')
       try {
         await this.$apollo.mutate({

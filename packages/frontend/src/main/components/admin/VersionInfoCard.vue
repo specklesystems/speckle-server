@@ -75,7 +75,9 @@ export default {
   },
   methods: {
     getLatestVersion() {
-      return fetch('https://api.github.com/repos/specklesystems/speckle-server/releases/latest')
+      return fetch(
+        'https://api.github.com/repos/specklesystems/speckle-server/releases/latest'
+      )
         .then(async (res) => {
           let x = await res.json()
           return x.tag_name

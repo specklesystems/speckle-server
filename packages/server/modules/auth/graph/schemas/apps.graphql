@@ -2,7 +2,7 @@ extend type Query {
   """
   Gets a specific app from the server.
   """
-  app( id: String! ): ServerApp
+  app(id: String!): ServerApp
 
   """
   Returns all the publicly available apps on this server.
@@ -53,9 +53,7 @@ extend type User {
   """
   Returns the apps you have created.
   """
-  createdApps: [ServerApp]
-    @hasRole(role: "server:user")
-    @hasScope(scope: "apps:read")
+  createdApps: [ServerApp] @hasRole(role: "server:user") @hasScope(scope: "apps:read")
 }
 
 extend type Mutation {
@@ -86,7 +84,6 @@ extend type Mutation {
   appRevokeAccess(appId: String!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "apps:write")
-
 }
 
 input AppCreateInput {

@@ -198,7 +198,12 @@ describe('Server stats api @stats-api', function () {
   })
 })
 
-async function seedDb({ numUsers = 10, numStreams = 10, numObjects = 10, numCommits = 10 } = {}) {
+async function seedDb({
+  numUsers = 10,
+  numStreams = 10,
+  numObjects = 10,
+  numCommits = 10
+} = {}) {
   // create users
   const userPromises = []
   for (let i = 0; i < numUsers; i++) {

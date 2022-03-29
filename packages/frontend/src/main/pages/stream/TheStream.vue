@@ -5,7 +5,7 @@
       <stream-nav :stream="stream" />
 
       <!-- Stream Page App Bar (Toolbar) -->
-      <stream-toolbar :stream="stream" :user="user" />
+      <stream-toolbar v-if="stream" :stream="stream" :user="user" />
 
       <!-- Stream Child Routes -->
       <div v-if="!error">

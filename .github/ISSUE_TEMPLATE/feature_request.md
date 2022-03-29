@@ -4,7 +4,6 @@ about: Suggest an idea for Speckle!
 title: ''
 labels: enhancement, question
 assignees: ''
-
 ---
 
 **What package are you referring to?**

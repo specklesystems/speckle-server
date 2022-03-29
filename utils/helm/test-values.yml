@@ -2,15 +2,15 @@ namespace: speckle-test
 
 domain: myspeckleserver
 
-docker_image_tag: "local"
+docker_image_tag: 'local'
 
 db:
   PGSSLMODE: allow3
 
 s3:
-  endpoint: "http://minio:9000/"
-  bucket: "speckle"
-  access_key: "minioadmin"
-  create_bucket: "true"
+  endpoint: 'http://minio:9000/'
+  bucket: 'speckle'
+  access_key: 'minioadmin'
+  create_bucket: 'true'
 
 cert_manager_issuer: letsencrypt-staging

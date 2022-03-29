@@ -2,7 +2,9 @@
   <div>
     <v-list dense nav class="mt-4 py-0 mb-3">
       <v-list-item
-        :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
+        :class="`px-2 list-overlay-${
+          $vuetify.theme.dark ? 'dark' : 'light'
+        } elevation-2`"
         style="position: sticky; top: 82px"
         @click="expand = !expand"
       >
@@ -29,7 +31,8 @@
           :key="comment.id + '-card-sidebar'"
           no-gutters
           :class="`${isUnread(comment) ? 'border' : ''} my-2 property-row rounded-lg ${
-            $store.state.selectedComment && $store.state.selectedComment.id === comment.id
+            $store.state.selectedComment &&
+            $store.state.selectedComment.id === comment.id
               ? 'elevation-5 selected'
               : ''
           }`"
@@ -40,7 +43,9 @@
           </v-col>
           <v-col
             cols="8"
-            :class="`pl-2 body-2 text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+            :class="`pl-2 body-2 text-truncate px-1 ${
+              $vuetify.theme.dark ? 'grey--text' : ''
+            }`"
             style="line-height: 30px"
           >
             {{ comment.text }}
@@ -70,7 +75,14 @@
             <timeago :datetime="comment.updatedAt" />
           </v-col>
         </v-row>
-        <v-btn small block class="rounded-xl" :to="`/streams/${$route.params.streamId}/comments`">all stream comments</v-btn>
+        <v-btn
+          small
+          block
+          class="rounded-xl"
+          :to="`/streams/${$route.params.streamId}/comments`"
+        >
+          all stream comments
+        </v-btn>
       </div>
     </v-scroll-y-transition>
   </div>

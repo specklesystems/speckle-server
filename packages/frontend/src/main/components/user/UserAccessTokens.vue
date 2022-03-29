@@ -7,11 +7,12 @@
     </template>
     <v-card rounded="lg">
       <v-card-text>
-        Personal Access Tokens can be used to access the Speckle API on this server; they function
-        like ordinary OAuth access tokens. Use them in your scripts or apps!
+        Personal Access Tokens can be used to access the Speckle API on this server;
+        they function like ordinary OAuth access tokens. Use them in your scripts or
+        apps!
         <b>
-          Treat them like a password: do not post them anywhere where they could be accessed by
-          others (e.g., public repos).
+          Treat them like a password: do not post them anywhere where they could be
+          accessed by others (e.g., public repos).
         </b>
       </v-card-text>
       <v-card-text v-if="$apollo.loading">Loading...</v-card-text>

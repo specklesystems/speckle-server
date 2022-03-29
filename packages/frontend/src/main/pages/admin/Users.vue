@@ -84,7 +84,8 @@
             <b>{{ manipulatedUser.name }}</b>
             's account from the server.
             <br />
-            Streams, where {{ manipulatedUser.name }} is the only owner, will also be deleted.
+            Streams, where {{ manipulatedUser.name }} is the only owner, will also be
+            deleted.
           </v-alert>
         </v-card-text>
         <v-card-actions>

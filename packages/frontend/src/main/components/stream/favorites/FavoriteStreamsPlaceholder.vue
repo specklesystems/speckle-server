@@ -1,7 +1,9 @@
 <template>
   <no-data-placeholder>
     <h2>Nothing favorited yet!</h2>
-    <p class="caption">Once you mark any streams as favorite, they're going to appear here.</p>
+    <p class="caption">
+      Once you mark any streams as favorite, they're going to appear here.
+    </p>
     <template #actions>
       <v-list rounded class="transparent">
         <v-list-item link class="primary mb-4" to="/streams">

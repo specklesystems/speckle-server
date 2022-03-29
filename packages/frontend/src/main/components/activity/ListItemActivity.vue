@@ -36,11 +36,16 @@
                     class="mr-3"
                     :user-id="activityItem.info.targetUser"
                     :color="
-                      lastActivity.actionType === 'stream_permissions_add' ? 'success' : 'error'
+                      lastActivity.actionType === 'stream_permissions_add'
+                        ? 'success'
+                        : 'error'
                     "
                   ></user-pill>
 
-                  <span v-if="$vuetify.breakpoint.smAndUp" class="mr-3 body-2 font-italic">
+                  <span
+                    v-if="$vuetify.breakpoint.smAndUp"
+                    class="mr-3 body-2 font-italic"
+                  >
                     {{
                       lastActivity.actionType === 'stream_permissions_add'
                         ? 'user added as'
@@ -85,7 +90,9 @@
                   <v-icon color="primary" small>mdi-folder</v-icon>
                   {{ stream.name }}
                 </router-link>
-                <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span>
+                <span class="ml-3 body-2 font-italic">
+                  {{ lastActivityBrief.actionText }}
+                </span>
 
                 <v-spacer />
 
@@ -168,10 +175,14 @@
         >
           <v-card-text class="pa-5 body-1">
             <v-chip :to="url" :color="lastActivityBrief.color">
-              <v-icon small class="mr-2 float-left" light>{{ lastActivityBrief.icon }}</v-icon>
+              <v-icon small class="mr-2 float-left" light>
+                {{ lastActivityBrief.icon }}
+              </v-icon>
               {{ branchName }}
             </v-chip>
-            <span class="ml-3 body-2 font-italic">{{ lastActivityBrief.actionText }}</span>
+            <span class="ml-3 body-2 font-italic">
+              {{ lastActivityBrief.actionText }}
+            </span>
             <div class="mt-3">
               <div
                 v-for="activityItem in activityGroup"
@@ -215,7 +226,9 @@
                       </v-chip>
                       <span v-if="lastActivity.actionType === 'commit_create'">
                         <span class="mx-3 body-2 font-italic">from</span>
-                        <source-app-avatar :application-name="commit.sourceApplication" />
+                        <source-app-avatar
+                          :application-name="commit.sourceApplication"
+                        />
                       </span>
                       <span v-if="lastActivity.actionType === 'commit_receive'">
                         <span class="mx-3 body-2 font-italic">in</span>
@@ -438,13 +451,17 @@ export default {
         case 'stream_permissions_add':
           return {
             captionText: `added ${
-              this.activityGroup.length === 1 ? 'a user' : this.activityGroup.length + ' users'
+              this.activityGroup.length === 1
+                ? 'a user'
+                : this.activityGroup.length + ' users'
             } to`
           }
         case 'stream_permissions_remove':
           return {
             captionText: `removed ${
-              this.activityGroup.length === 1 ? 'a user' : this.activityGroup.length + ' users'
+              this.activityGroup.length === 1
+                ? 'a user'
+                : this.activityGroup.length + ' users'
             } from`
           }
         case 'branch_create':

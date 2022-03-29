@@ -37,6 +37,7 @@ npm run serve
 ```
 
 ### Packaging for production
+
 If you plan to package the frontend to use in a production setting, see our [Server deployment instructions](https://speckle.guide/dev/server-setup.html) (chapter `Run your speckle-server fork`)
 
 ## Community

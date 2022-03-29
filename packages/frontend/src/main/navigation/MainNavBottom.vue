@@ -19,7 +19,11 @@
             <v-col>
               <v-btn x-small block depressed @click="switchTheme()">
                 <v-icon x-small class="mr-1">
-                  {{ $vuetify.theme.dark ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }}
+                  {{
+                    $vuetify.theme.dark
+                      ? 'mdi-white-balance-sunny'
+                      : 'mdi-weather-night'
+                  }}
                 </v-icon>
                 <!-- {{ $vuetify.theme.dark ? 'mdi-white-balance-sunny' : 'mdi-weather-night' }} -->
               </v-btn>
@@ -64,8 +68,14 @@ export default {
     },
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
-      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
+      localStorage.setItem(
+        'darkModeEnabled',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
+      this.$mixpanel.people.set(
+        'Theme Web',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
     }
   }
 }

@@ -2,7 +2,14 @@
   <v-app :class="`${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`">
     <v-container fill-height fluid>
       <v-row align="center" justify="center">
-        <v-col v-if="showBlurb" cols="12" md="6" lg="6" xl="4" class="hidden-sm-and-down">
+        <v-col
+          v-if="showBlurb"
+          cols="12"
+          md="6"
+          lg="6"
+          xl="4"
+          class="hidden-sm-and-down"
+        >
           <blurb :server-info="serverInfo" />
         </v-col>
         <v-col cols="11" sm="8" md="6" lg="4" xl="3">

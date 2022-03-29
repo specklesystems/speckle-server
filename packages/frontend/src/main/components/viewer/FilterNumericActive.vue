@@ -8,23 +8,33 @@
           icon
           @click.stop="colorBy = !colorBy"
         >
-          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">mdi-palette</v-icon>
+          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">
+            mdi-palette
+          </v-icon>
         </v-btn>
       </v-list-item-action>
     </portal>
     <v-row no-gutters class="my-1 property-row rounded-lg">
       <v-col
         cols="1"
-        :class="`text-center text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+        :class="`text-center text-truncate px-1 ${
+          $vuetify.theme.dark ? 'grey--text' : ''
+        }`"
         style="line-height: 24px; font-size: 9px"
       >
-        <v-icon small style="font-size: 12px" :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`">
+        <v-icon
+          small
+          style="font-size: 12px"
+          :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`"
+        >
           mdi-information-outline
         </v-icon>
       </v-col>
       <v-col
         cols="11"
-        :class="`caption text-truncatexxx px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+        :class="`caption text-truncatexxx px-1 ${
+          $vuetify.theme.dark ? 'grey--text' : ''
+        }`"
         style="line-height: 24px"
       >
         {{ filter.data.objectCount }} elements; min:
@@ -34,7 +44,9 @@
       <v-col
         v-if="filter.data.maxValue === filter.data.minValue"
         cols="12"
-        :class="`caption text-truncatexxx px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+        :class="`caption text-truncatexxx px-1 ${
+          $vuetify.theme.dark ? 'grey--text' : ''
+        }`"
         style="line-height: 24px"
       >
         Invalid values (min value equals to max value).
@@ -144,6 +156,10 @@ export default {
 }
 .super-slider .v-slider__track-fill {
   background: linear-gradient(to left, #fc466b, #3f5efb) !important;
-  background: -webkit-linear-gradient(to left, #fc466b, #3f5efb); /* Chrome 10-25, Safari 5.1-6 */
+  background: -webkit-linear-gradient(
+    to left,
+    #fc466b,
+    #3f5efb
+  ); /* Chrome 10-25, Safari 5.1-6 */
 }
 </style>

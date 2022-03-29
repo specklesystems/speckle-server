@@ -32,9 +32,10 @@
               1)
               <b>Open the console of your browser.</b>
               <span class="caption">
-                On Chrome, you can do so via these shortcuts: Option + ⌘ + J (on macOS), or Shift +
-                CTRL + J (on Win). For Firefox, Ctrl + Shift + K ( Command + Option + K on OS X).
-                For MS Edge, Shift + ⌘ + J (on macOS) or Shift + CTRL + J.
+                On Chrome, you can do so via these shortcuts: Option + ⌘ + J (on macOS),
+                or Shift + CTRL + J (on Win). For Firefox, Ctrl + Shift + K ( Command +
+                Option + K on OS X). For MS Edge, Shift + ⌘ + J (on macOS) or Shift +
+                CTRL + J.
               </span>
             </p>
             <p class="body-2">

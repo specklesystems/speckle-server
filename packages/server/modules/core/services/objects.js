@@ -35,7 +35,9 @@ module.exports = {
     delete insertionObject.__closure
 
     insertionObject.totalChildrenCount = closures.length
-    insertionObject.totalChildrenCountByDepth = JSON.stringify(totalChildrenCountByDepth)
+    insertionObject.totalChildrenCountByDepth = JSON.stringify(
+      totalChildrenCountByDepth
+    )
 
     let q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
     await knex.raw(q1)
@@ -75,7 +77,9 @@ module.exports = {
       }
 
       insertionObject.totalChildrenCount = totalChildrenCountGlobal
-      insertionObject.totalChildrenCountByDepth = JSON.stringify(totalChildrenCountByDepth)
+      insertionObject.totalChildrenCountByDepth = JSON.stringify(
+        totalChildrenCountByDepth
+      )
 
       delete insertionObject.__tree
       delete insertionObject.__closure
@@ -162,7 +166,9 @@ module.exports = {
             }
 
             insertionObject.totalChildrenCount = totalChildrenCountGlobal
-            insertionObject.totalChildrenCountByDepth = JSON.stringify(totalChildrenCountByDepth)
+            insertionObject.totalChildrenCountByDepth = JSON.stringify(
+              totalChildrenCountByDepth
+            )
 
             delete insertionObject.__tree
             delete insertionObject.__closure
@@ -172,7 +178,8 @@ module.exports = {
           })
 
           if (objsToInsert.length > 0) {
-            let queryObjs = Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
+            let queryObjs =
+              Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
             await knex.raw(queryObjs)
           }
 
@@ -198,7 +205,10 @@ module.exports = {
   },
 
   async getObject({ streamId, objectId }) {
-    let res = await Objects().where({ streamId: streamId, id: objectId }).select('*').first()
+    let res = await Objects()
+      .where({ streamId: streamId, id: objectId })
+      .select('*')
+      .first()
     if (!res) return null
     res.data.totalChildrenCount = res.totalChildrenCount // move this back
     delete res.streamId // backwards compatibility
@@ -217,7 +227,10 @@ module.exports = {
       )
     })
       .where(
-        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [streamId, objectId])
+        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [
+          streamId,
+          objectId
+        ])
       )
       .orderBy('objects.id')
     return q.stream({ highWaterMark: 500 })
@@ -258,7 +271,10 @@ module.exports = {
       )
     })
       .where(
-        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [streamId, objectId])
+        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [
+          streamId,
+          objectId
+        ])
       )
       .andWhere(knex.raw('"minDepth" < ?', [depth]))
       .andWhere(knex.raw('id > ?', [cursor ? cursor : '0']))
@@ -401,7 +417,9 @@ module.exports = {
 
         // Order by clause; validate direction!
         let direction =
-          orderBy.direction && orderBy.direction.toLowerCase() === 'desc' ? 'desc' : 'asc'
+          orderBy.direction && orderBy.direction.toLowerCase() === 'desc'
+            ? 'desc'
+            : 'asc'
         if (orderBy.field === 'id') {
           cteInnerQuery.orderBy('id', direction)
         } else {
@@ -437,10 +455,10 @@ module.exports = {
           mainQuery.where(knex.raw(`id ${cursor.operator} ? `, [cursor.value]))
         } else {
           mainQuery.where(
-            knex.raw(`jsonb_path_query_first( data, ? )::${castType} ${cursor.operator}= ? `, [
-              '$.' + cursor.field,
-              cursor.value
-            ])
+            knex.raw(
+              `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator}= ? `,
+              ['$.' + cursor.field, cursor.value]
+            )
           )
         }
       } else {
@@ -457,10 +475,10 @@ module.exports = {
           qb.where('id', '>', cursor.lastSeenId)
           if (fullObjectSelect)
             qb.orWhere(
-              knex.raw(`jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `, [
-                '$.' + cursor.field,
-                cursor.value
-              ])
+              knex.raw(
+                `jsonb_path_query_first( data, ? )::${castType} ${cursor.operator} ? `,
+                ['$.' + cursor.field, cursor.value]
+              )
             )
           else
             qb.orWhere(
@@ -516,8 +534,14 @@ module.exports = {
     }
 
     // Cursor objects should be client-side opaque, hence we encode them to base64.
-    let cursorEncoded = Buffer.from(JSON.stringify(cursorObj), 'binary').toString('base64')
-    return { totalCount, objects: rows, cursor: rows.length === limit ? cursorEncoded : null }
+    let cursorEncoded = Buffer.from(JSON.stringify(cursorObj), 'binary').toString(
+      'base64'
+    )
+    return {
+      totalCount,
+      objects: rows,
+      cursor: rows.length === limit ? cursorEncoded : null
+    }
   },
 
   async getObjects(streamId, objectIds) {
@@ -549,7 +573,10 @@ module.exports = {
   },
 
   async hasObjects({ streamId, objectIds }) {
-    let dbRes = await Objects().whereIn('id', objectIds).andWhere('streamId', streamId).select('id')
+    let dbRes = await Objects()
+      .whereIn('id', objectIds)
+      .andWhere('streamId', streamId)
+      .select('id')
 
     let res = {}
     for (let i in objectIds) {
@@ -575,7 +602,9 @@ function prepInsertionObject(streamId, obj) {
   const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
   if (obj.hash) obj.id = obj.hash
-  else obj.id = obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
+  else
+    obj.id =
+      obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
   let stringifiedObj = JSON.stringify(obj)
   if (stringifiedObj.length > MAX_OBJECT_SIZE) {

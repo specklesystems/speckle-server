@@ -1,15 +1,21 @@
 /* istanbul ignore file */
 'use strict'
-const passport = require( 'passport' )
-const GoogleStrategy = require( 'passport-google-oauth20' ).Strategy
-const URL = require( 'url' ).URL
-const debug = require( 'debug' )
-const appRoot = require( 'app-root-path' )
-const { findOrCreateUser, getUserByEmail } = require( `${appRoot}/modules/core/services/users` )
-const { getServerInfo } = require( `${appRoot}/modules/core/services/generic` )
-const { validateInvite, useInvite } = require( `${appRoot}/modules/serverinvites/services` )
+const passport = require('passport')
+const GoogleStrategy = require('passport-google-oauth20').Strategy
+const URL = require('url').URL
+const debug = require('debug')
+const appRoot = require('app-root-path')
+const {
+  findOrCreateUser,
+  getUserByEmail
+} = require(`${appRoot}/modules/core/services/users`)
+const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
+const {
+  validateInvite,
+  useInvite
+} = require(`${appRoot}/modules/serverinvites/services`)
 
-module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
+module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
     id: 'google',
     name: 'Google',
@@ -19,72 +25,79 @@ module.exports = async ( app, session, sessionStorage, finalizeAuth ) => {
     callbackUrl: '/auth/goog/callback'
   }
 
-  let myStrategy = new GoogleStrategy( {
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: strategy.callbackUrl,
-    scope: [ 'profile', 'email' ],
-    passReqToCallback: true
-  }, async ( req, accessToken, refreshToken, profile, done ) => {
+  let myStrategy = new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: strategy.callbackUrl,
+      scope: ['profile', 'email'],
+      passReqToCallback: true
+    },
+    async (req, accessToken, refreshToken, profile, done) => {
+      const serverInfo = await getServerInfo()
 
-    const serverInfo = await getServerInfo()
+      try {
+        let email = profile.emails[0].value
+        let name = profile.displayName
 
-    try {
-      let email = profile.emails[ 0 ].value
-      let name = profile.displayName
+        let user = { email, name, avatar: profile._json.picture }
 
-      let user = { email, name, avatar: profile._json.picture }
+        if (req.session.suuid) user.suuid = req.session.suuid
 
-      if ( req.session.suuid )
-        user.suuid = req.session.suuid
+        let existingUser
+        existingUser = await getUserByEmail({ email: user.email })
 
-      let existingUser
-      existingUser = await getUserByEmail( { email: user.email } )
+        // if there is an existing user, go ahead and log them in (regardless of
+        // whether the server is invite only or not).
+        if (existingUser) {
+          let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+          return done(null, myUser)
+        }
 
-      // if there is an existing user, go ahead and log them in (regardless of
-      // whether the server is invite only or not).
-      if ( existingUser ) {
-        let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
-        return done( null, myUser )
+        // if the server is not invite only, go ahead and log the user in.
+        if (!serverInfo.inviteOnly) {
+          let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+          return done(null, myUser)
+        }
+
+        // if the server is invite only and we have no invite id, throw.
+        if (serverInfo.inviteOnly && !req.session.inviteId) {
+          throw new Error('This server is invite only. Please provide an invite id.')
+        }
+
+        // validate the invite
+        const validInvite = await validateInvite({
+          id: req.session.inviteId,
+          email: user.email
+        })
+        if (!validInvite) throw new Error('Invalid invite.')
+
+        // create the user
+        let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+
+        // use the invite
+        await useInvite({ id: req.session.inviteId, email: user.email })
+
+        // return to the auth flow
+        return done(null, myUser)
+      } catch (err) {
+        debug('speckle:errors')(err)
+        return done(null, false, { message: err.message })
       }
-
-      // if the server is not invite only, go ahead and log the user in.
-      if ( !serverInfo.inviteOnly ) {
-        let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
-        return done( null, myUser )
-      }
-
-      // if the server is invite only and we have no invite id, throw.
-      if ( serverInfo.inviteOnly && !req.session.inviteId ) {
-        throw new Error( 'This server is invite only. Please provide an invite id.' )
-      }
-
-      // validate the invite
-      const validInvite = await validateInvite( { id:req.session.inviteId, email: user.email } )
-      if ( !validInvite )
-        throw new Error( 'Invalid invite.' )
-
-      // create the user
-      let myUser = await findOrCreateUser( { user: user, rawProfile: profile._raw } )
-
-      // use the invite
-      await useInvite( { id: req.session.inviteId, email: user.email } )
-
-      // return to the auth flow
-      return done( null, myUser )
-
-    } catch ( err ) {
-
-      debug( 'speckle:errors' )( err )
-      return done( null, false, { message: err.message } )
-
     }
-  } )
+  )
 
-  passport.use( myStrategy )
+  passport.use(myStrategy)
 
-  app.get( strategy.url, session, sessionStorage, passport.authenticate( 'google' ) )
-  app.get( '/auth/goog/callback', session, passport.authenticate( 'google', { failureRedirect: '/error?message=Failed to authenticate.' } ), finalizeAuth )
+  app.get(strategy.url, session, sessionStorage, passport.authenticate('google'))
+  app.get(
+    '/auth/goog/callback',
+    session,
+    passport.authenticate('google', {
+      failureRedirect: '/error?message=Failed to authenticate.'
+    }),
+    finalizeAuth
+  )
 
   return strategy
 }

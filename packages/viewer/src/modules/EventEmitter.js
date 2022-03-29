@@ -6,31 +6,31 @@ export default class EventEmitter {
     this._events = {}
   }
 
-  on( name, listener ) {
-    if ( !this._events[name] ) {
+  on(name, listener) {
+    if (!this._events[name]) {
       this._events[name] = []
     }
 
-    this._events[name].push( listener )
+    this._events[name].push(listener)
   }
 
-  removeListener( name, listenerToRemove ) {
-    if ( !this._events[name] ) return
+  removeListener(name, listenerToRemove) {
+    if (!this._events[name]) return
 
-    const filterListeners = ( listener ) => listener !== listenerToRemove
+    const filterListeners = (listener) => listener !== listenerToRemove
 
-    this._events[name] = this._events[name].filter( filterListeners )
+    this._events[name] = this._events[name].filter(filterListeners)
   }
 
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/rest_parameters
-  emit( name, ...args ) {
-    if ( !this._events[name] ) return
+  emit(name, ...args) {
+    if (!this._events[name]) return
 
-    const fireCallbacks = ( callback ) => {
-      callback( ...args )
+    const fireCallbacks = (callback) => {
+      callback(...args)
     }
 
-    this._events[name].forEach( fireCallbacks )
+    this._events[name].forEach(fireCallbacks)
   }
 
   dispose() {

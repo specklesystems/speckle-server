@@ -7,7 +7,12 @@
     </v-card-title>
     <v-card-text class="pb-5">
       <template v-for="s in strategies">
-        <v-col :key="s.name" cols="12" class="text-center py-1 my-0" @click="trackSignIn(s.name)">
+        <v-col
+          :key="s.name"
+          cols="12"
+          class="text-center py-1 my-0"
+          @click="trackSignIn(s.name)"
+        >
           <v-btn
             dark
             block

@@ -28,7 +28,14 @@
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn> -->
       <canonical-views :small="small" />
-      <v-btn v-tooltip="'Zoom extents'" :small="small" rounded icon class="mr-2" @click="zoomEx()">
+      <v-btn
+        v-tooltip="'Zoom extents'"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        @click="zoomEx()"
+      >
         <v-icon small>mdi-arrow-expand</v-icon>
       </v-btn>
       <v-btn
@@ -42,7 +49,11 @@
         <v-icon small>mdi-scissors-cutting</v-icon>
       </v-btn>
       <!-- Other components teleport extra controls in here -->
-      <portal-target name="viewercontrols" class="d-flex align-center" multiple></portal-target>
+      <portal-target
+        name="viewercontrols"
+        class="d-flex align-center"
+        multiple
+      ></portal-target>
     </v-card>
   </div>
 </template>

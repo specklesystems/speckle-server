@@ -1,12 +1,12 @@
 'use strict'
-const appRoot = require( 'app-root-path' )
+const appRoot = require('app-root-path')
 
 module.exports = {
-  async createResetToken( { email } ){
+  async createResetToken({ email }) {
     // TODO
   },
 
-  async resetPasswordFromToken( { tokenId, newPassword } ) {
+  async resetPasswordFromToken({ tokenId, newPassword }) {
     // TODO
   }
 }

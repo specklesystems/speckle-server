@@ -13,7 +13,12 @@ export default class ObjectLoader {
     streamId,
     token,
     objectId,
-    options = { enableCaching: true, fullyTraverseArrays: false, excludeProps: [], fetch: null }
+    options = {
+      enableCaching: true,
+      fullyTraverseArrays: false,
+      excludeProps: [],
+      fetch: null
+    }
   }) {
     this.INTERVAL_MS = 20
     this.TIMEOUT_MS = 180000 // three mins
@@ -52,7 +57,8 @@ export default class ObjectLoader {
     this.lastAsyncPause = Date.now()
     this.existingAsyncPause = null
 
-    // we can't simply bind fetch to this.fetch, so instead we have to do some acrobatics: https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
+    // we can't simply bind fetch to this.fetch, so instead we have to do some acrobatics:
+    // https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
     this.preferredFetch = options.fetch
     this.fetch = function (...args) {
       let currentFetch = this.preferredFetch || fetch
@@ -108,7 +114,11 @@ export default class ObjectLoader {
       }
       downloadNum++
       if (onProgress)
-        onProgress({ stage: 'download', current: downloadNum, total: this.totalChildrenCount })
+        onProgress({
+          stage: 'download',
+          current: downloadNum,
+          total: this.totalChildrenCount
+        })
     }
     this.isLoading = false
   }
@@ -130,7 +140,9 @@ export default class ObjectLoader {
         if (typeof element !== 'object' && !this.options.fullyTraverseArrays) return obj
 
         // Dereference element if needed
-        let deRef = element.referencedId ? await this.getObject(element.referencedId) : element
+        let deRef = element.referencedId
+          ? await this.getObject(element.referencedId)
+          : element
         if (element.referencedId && onProgress)
           onProgress({
             stage: 'construction',
@@ -196,7 +208,11 @@ export default class ObjectLoader {
       if (this.intervals[id]) {
         this.intervals[id].elapsed = 0 // reset elapsed
       } else {
-        let intervalId = setInterval(this.tryResolvePromise.bind(this), this.INTERVAL_MS, id)
+        let intervalId = setInterval(
+          this.tryResolvePromise.bind(this),
+          this.INTERVAL_MS,
+          id
+        )
         this.intervals[id] = { interval: intervalId, elapsed: 0 }
       }
     })
@@ -247,7 +263,8 @@ export default class ObjectLoader {
     if (this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
       await safariFix()
       let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
-      idbOpenRequest.onupgradeneeded = () => idbOpenRequest.result.createObjectStore('objects')
+      idbOpenRequest.onupgradeneeded = () =>
+        idbOpenRequest.result.createObjectStore('objects')
       this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
     }
 
@@ -299,7 +316,9 @@ export default class ObjectLoader {
         for (let id of sortedCachedKeys) {
           yield `${id}\t${cachedObjects[id]}`
         }
-        let newChildrenForBatch = splitBeforeCacheCheck[i].filter((id) => !(id in cachedObjects))
+        let newChildrenForBatch = splitBeforeCacheCheck[i].filter(
+          (id) => !(id in cachedObjects)
+        )
         newChildren.push(...newChildrenForBatch)
       }
 

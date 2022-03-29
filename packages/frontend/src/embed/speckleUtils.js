@@ -1,4 +1,8 @@
-import { branchLastCommitQuery, serverInfoQuery, streamCommitQuery } from './speckleQueries.js'
+import {
+  branchLastCommitQuery,
+  serverInfoQuery,
+  streamCommitQuery
+} from './speckleQueries.js'
 
 export let SERVER_URL = window.location.origin
 

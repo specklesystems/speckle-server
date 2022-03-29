@@ -1,7 +1,11 @@
 <template>
   <v-row>
     <v-col cols="12">
-      <v-timeline v-if="stream && groupedActivity && groupedActivity.length !== 0" align-top dense>
+      <v-timeline
+        v-if="stream && groupedActivity && groupedActivity.length !== 0"
+        align-top
+        dense
+      >
         <list-item-activity
           v-for="activity in groupedActivity"
           :key="activity.time"
@@ -10,7 +14,9 @@
           class="my-1"
         ></list-item-activity>
         <infinite-loading
-          v-if="stream.activity && stream.activity.items.length < stream.activity.totalCount"
+          v-if="
+            stream.activity && stream.activity.items.length < stream.activity.totalCount
+          "
           @infinite="infiniteHandler"
         >
           <div slot="no-more">This is all your activity!</div>
@@ -96,11 +102,18 @@ export default {
         if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
           if (curr.actionType.includes('stream_permissions')) {
             //skip multiple stream_permission actions on the same user, just pick the last!
-            if (prev[prev.length - 1].some((x) => x.info.targetUser === curr.info.targetUser))
+            if (
+              prev[prev.length - 1].some(
+                (x) => x.info.targetUser === curr.info.targetUser
+              )
+            )
               action = 'skip'
             else action = 'combine'
           } //stream, branch, commit
-          else if (curr.actionType.includes('_update') || curr.actionType === 'commit_create')
+          else if (
+            curr.actionType.includes('_update') ||
+            curr.actionType === 'commit_create'
+          )
             action = 'combine'
         }
         if (action === 'combine') {

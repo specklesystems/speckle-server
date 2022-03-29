@@ -66,7 +66,10 @@ module.exports = {
     parents
   }) {
     branchName = branchName.toLowerCase()
-    let myBranch = await getBranchByNameAndStreamId({ streamId: streamId, name: branchName })
+    let myBranch = await getBranchByNameAndStreamId({
+      streamId: streamId,
+      name: branchName
+    })
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
@@ -123,7 +126,10 @@ module.exports = {
 
   async getCommitsTotalCountByBranchName({ streamId, branchName }) {
     branchName = branchName.toLowerCase()
-    let myBranch = await getBranchByNameAndStreamId({ streamId: streamId, name: branchName })
+    let myBranch = await getBranchByNameAndStreamId({
+      streamId: streamId,
+      name: branchName
+    })
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
@@ -166,7 +172,10 @@ module.exports = {
 
   async getCommitsByBranchName({ streamId, branchName, limit, cursor }) {
     branchName = branchName.toLowerCase()
-    let myBranch = await getBranchByNameAndStreamId({ streamId: streamId, name: branchName })
+    let myBranch = await getBranchByNameAndStreamId({
+      streamId: streamId,
+      name: branchName
+    })
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 

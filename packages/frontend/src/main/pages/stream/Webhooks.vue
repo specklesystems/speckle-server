@@ -1,13 +1,19 @@
 <template>
   <div>
     <no-data-placeholder
-      v-if="!$apollo.loading && webhooks.length === 0 && stream && stream.role === 'stream:owner'"
+      v-if="
+        !$apollo.loading &&
+        webhooks.length === 0 &&
+        stream &&
+        stream.role === 'stream:owner'
+      "
       :show-message="false"
     >
       <h2>This stream has no webhooks.</h2>
       <p class="caption">
-        Webhooks allow you to subscribe to a stream's events and get notified of them in real time.
-        You can then use this to trigger ci apps, automation workflows, and more.
+        Webhooks allow you to subscribe to a stream's events and get notified of them in
+        real time. You can then use this to trigger ci apps, automation workflows, and
+        more.
       </p>
       <template #actions>
         <v-list rounded class="transparent">
@@ -75,10 +81,12 @@
           <span class="d-inline-block">What are Webhooks?</span>
         </template> -->
             <v-card-text>
-              Webhooks allow you to subscribe to a stream's events and get notified of them in real
-              time. You can then use this to trigger ci apps, automation workflows, and more. Read
-              more on webhooks
-              <a href="https://speckle.guide/dev/server-webhooks.html" target="_blank">here</a>
+              Webhooks allow you to subscribe to a stream's events and get notified of
+              them in real time. You can then use this to trigger ci apps, automation
+              workflows, and more. Read more on webhooks
+              <a href="https://speckle.guide/dev/server-webhooks.html" target="_blank">
+                here
+              </a>
               .
             </v-card-text>
           </section-card>
@@ -88,10 +96,17 @@
             <template slot="header">Existing Webhooks</template>
             <template slot="actions">
               <v-spacer></v-spacer>
-              <v-btn small class="primary" dark @click="newWebhookDialog = true">New Webhook</v-btn>
+              <v-btn small class="primary" dark @click="newWebhookDialog = true">
+                New Webhook
+              </v-btn>
             </template>
             <v-list subheader class="transparent pa-0 ma-0">
-              <v-list-item v-for="wh in webhooks" :key="wh.id" link style="cursor: default">
+              <v-list-item
+                v-for="wh in webhooks"
+                :key="wh.id"
+                link
+                style="cursor: default"
+              >
                 <v-list-item-icon>
                   <v-icon :color="wh.statusIcon.color" class="pt-2">
                     {{ wh.statusIcon.icon }}
@@ -150,7 +165,11 @@
       </v-row>
     </v-container>
 
-    <v-dialog v-model="newWebhookDialog" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+    <v-dialog
+      v-model="newWebhookDialog"
+      width="500"
+      :fullscreen="$vuetify.breakpoint.smAndDown"
+    >
       <v-card>
         <v-toolbar>
           <v-app-bar-nav-icon style="pointer-events: none">
@@ -173,7 +192,11 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="editWebhookDialog" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+    <v-dialog
+      v-model="editWebhookDialog"
+      width="500"
+      :fullscreen="$vuetify.breakpoint.smAndDown"
+    >
       <v-card>
         <v-toolbar>
           <v-app-bar-nav-icon style="pointer-events: none">
@@ -198,7 +221,11 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="statusReportsDialog" width="500" :fullscreen="$vuetify.breakpoint.smAndDown">
+    <v-dialog
+      v-model="statusReportsDialog"
+      width="500"
+      :fullscreen="$vuetify.breakpoint.smAndDown"
+    >
       <v-card>
         <v-toolbar>
           <v-app-bar-nav-icon style="pointer-events: none">
@@ -215,7 +242,10 @@
 
         <v-list v-if="selectedWebhook">
           <v-subheader>Latest delivery reports:</v-subheader>
-          <v-list-item v-for="(sr, index) in selectedWebhook.history.items" :key="index">
+          <v-list-item
+            v-for="(sr, index) in selectedWebhook.history.items"
+            :key="index"
+          >
             <v-list-item-icon>
               <v-icon :class="`${sr.status === 2 ? 'green--text' : 'red--text'}`">
                 {{ sr.status === 2 ? 'mdi-check' : 'mdi-close' }}

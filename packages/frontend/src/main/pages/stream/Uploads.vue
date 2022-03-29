@@ -23,10 +23,13 @@
       <v-col cols="12">
         <section-card>
           <v-card-text>
-            Speckle can now process IFC files and store them as a commit (snapshot). You can then
-            access it from the Speckle API, and receive it in other applications. Thanks to the Open
-            Source
-            <a href="https://ifcjs.github.io/info/docs/Guide/web-ifc/Introduction" target="_blank">
+            Speckle can now process IFC files and store them as a commit (snapshot). You
+            can then access it from the Speckle API, and receive it in other
+            applications. Thanks to the Open Source
+            <a
+              href="https://ifcjs.github.io/info/docs/Guide/web-ifc/Introduction"
+              target="_blank"
+            >
               IFC.js Project
             </a>
             for making this possible.
@@ -36,16 +39,17 @@
           v-if="stream && (stream.role === 'stream:reviewer' || !stream.role)"
           type="warning"
         >
-          Your permission level ({{ stream.role ? stream.role : 'none' }}) is not high enough to
-          access this feature.
+          Your permission level ({{ stream.role ? stream.role : 'none' }}) is not high
+          enough to access this feature.
         </v-alert>
       </v-col>
       <v-col cols="12" md="4">
         <section-card>
           <template slot="header">Previous Uploads</template>
           <v-card-text>
-            Here are the previously uploaded files in this stream. Please note, currently processing
-            time is restricted to 5 minutes - if a file takes longer to process, it will be ignored.
+            Here are the previously uploaded files in this stream. Please note,
+            currently processing time is restricted to 5 minutes - if a file takes
+            longer to process, it will be ignored.
           </v-card-text>
           <div v-if="!$apollo.loading && streamUploads.length !== 0">
             <template v-for="file in streamUploads">
@@ -129,7 +133,8 @@ export default {
   name: 'Webhooks',
   components: {
     FileUploadItem: () => import('@/main/components/stream/uploads/FileUploadItem'),
-    FileProcessingItem: () => import('@/main/components/stream/uploads/FileProcessingItem'),
+    FileProcessingItem: () =>
+      import('@/main/components/stream/uploads/FileProcessingItem'),
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
   apollo: {
@@ -203,7 +208,8 @@ export default {
         }
 
         if (file.size > 50626997) {
-          this.dragError = 'Your files are too powerful (for now). Maximum upload size is 50mb!'
+          this.dragError =
+            'Your files are too powerful (for now). Maximum upload size is 50mb!'
           return
         }
 

@@ -1,6 +1,10 @@
 <template>
   <v-navigation-drawer app right fixed class="transparent overflow-auto" floating>
-    <v-card rounded="lg" style="overflow: hidden" class="transparent elevation-0 pl-1 pr-3 pb-4">
+    <v-card
+      rounded="lg"
+      style="overflow: hidden"
+      class="transparent elevation-0 pl-1 pr-3 pb-4"
+    >
       <v-toolbar class="mt-3" rounded="lg" dense>
         <v-toolbar-title class="body-2 font-weight-bold">
           <a
@@ -12,7 +16,10 @@
           </a>
         </v-toolbar-title>
         <v-spacer />
-        <v-app-bar-nav-icon href="https://github.com/specklesystems/speckle-server" target="_blank">
+        <v-app-bar-nav-icon
+          href="https://github.com/specklesystems/speckle-server"
+          target="_blank"
+        >
           <v-icon small class="yellow--text">mdi-star</v-icon>
         </v-app-bar-nav-icon>
       </v-toolbar>
@@ -56,7 +63,11 @@
       </div>
       <v-toolbar class="my-4" rounded="lg" dense flat>
         <v-toolbar-title class="body-2">
-          <a href="https://speckle.systems/tutorials" target="_blank" class="text-decoration-none">
+          <a
+            href="https://speckle.systems/tutorials"
+            target="_blank"
+            class="text-decoration-none"
+          >
             More Tutorials
           </a>
         </v-toolbar-title>
@@ -68,12 +79,20 @@
         <v-card-text class="caption">
           <p class="mb-0">
             At
-            <a href="https://speckle.systems" target="_blank" class="text-decoration-none">
+            <a
+              href="https://speckle.systems"
+              target="_blank"
+              class="text-decoration-none"
+            >
               Speckle
             </a>
-            we're working tirelessly to bring you the best open source data platform for AEC. Tell
-            us what you think on our
-            <a href="https://speckle.community" target="_blank" class="text-decoration-none">
+            we're working tirelessly to bring you the best open source data platform for
+            AEC. Tell us what you think on our
+            <a
+              href="https://speckle.community"
+              target="_blank"
+              class="text-decoration-none"
+            >
               forum
             </a>
             , and don't forget to give us a ⭐️ on

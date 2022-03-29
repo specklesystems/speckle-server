@@ -4,10 +4,8 @@
   "semi": false,
   "endOfLine": "auto",
   "bracketSpacing": true,
-  "eslintIntegration": true,
-  "jsxBracketSameLine": true,
   "vueIndentScriptAndStyle": false,
   "htmlWhitespaceSensitivity": "ignore",
-  "printWidth": 100,
+  "printWidth": 88,
   "singleQuote": true
 }

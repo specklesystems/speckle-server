@@ -4,7 +4,11 @@
     :style="`${serverInfo.inviteOnly ? 'border: 2px solid #047EFB' : ''}`"
     rounded="lg"
   >
-    <div v-show="serverInfo.inviteOnly" class="caption text-center" style="background: #047efb">
+    <div
+      v-show="serverInfo.inviteOnly"
+      class="caption text-center"
+      style="background: #047efb"
+    >
       <v-icon small>mdi-shield-alert-outline</v-icon>
       This Speckle server is invite only.
     </div>
@@ -15,19 +19,34 @@
       <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
       Interoperability in seconds
     </v-card-title>
-    <strategies :strategies="strategies" :app-id="appId" :challenge="challenge" :suuid="suuid" />
+    <strategies
+      :strategies="strategies"
+      :app-id="appId"
+      :challenge="challenge"
+      :suuid="suuid"
+    />
     <div v-if="hasLocalStrategy">
       <v-card-title class="justify-center pb-5 pt-0 body-1 text--secondary">
         <v-divider class="mx-4"></v-divider>
         Login with email & password
         <v-divider class="mx-4"></v-divider>
       </v-card-title>
-      <v-alert v-model="registrationError" type="error" :icon="null" text multi-line dismissible>
+      <v-alert
+        v-model="registrationError"
+        type="error"
+        :icon="null"
+        text
+        multi-line
+        dismissible
+      >
         <v-row align="center">
           <v-col class="grow">
             {{ errorMessage }}
           </v-col>
-          <v-col v-if="errorMessage.toLowerCase().includes('email taken')" class="shrink">
+          <v-col
+            v-if="errorMessage.toLowerCase().includes('email taken')"
+            class="shrink"
+          >
             <v-btn color="primary" plain :to="loginRoute">Login</v-btn>
           </v-col>
         </v-row>
@@ -58,7 +77,9 @@
               />
             </v-col>
             <v-col cols="12">
-              <v-btn block large color="primary" type="submit" @click="loginUser()">Log in</v-btn>
+              <v-btn block large color="primary" type="submit" @click="loginUser()">
+                Log in
+              </v-btn>
             </v-col>
           </v-row>
         </v-form>
@@ -71,7 +92,9 @@
       </v-card-title>
       <div class="justify-center caption text-center pb-5">
         <div class="mx-4 align-self-center">
-          <a href="/authn/resetpassword" class="text-decoration-none">Forgot your password?</a>
+          <a href="/authn/resetpassword" class="text-decoration-none">
+            Forgot your password?
+          </a>
         </div>
       </div>
     </div>
@@ -193,7 +216,7 @@ export default {
         })
 
         if (res.redirected) {
-          this.$mixpanel.track('Log In', { type: 'action'  })
+          this.$mixpanel.track('Log In', { type: 'action' })
           window.location = res.url
           return
         }

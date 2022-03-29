@@ -23,7 +23,10 @@
       <!-- <v-divider></v-divider> -->
       <!-- <v-subheader>DESC</v-subheader> -->
       <div class="caption px-3 my-4">
-        <perfect-scrollbar style="max-height: 100px" :options="{ suppressScrollX: true }">
+        <perfect-scrollbar
+          style="max-height: 100px"
+          :options="{ suppressScrollX: true }"
+        >
           <span v-html="parsedDescription"></span>
         </perfect-scrollbar>
         <router-link
@@ -60,7 +63,9 @@
           @click="newBranchDialog = true"
         >
           <v-list-item-icon>
-            <v-icon small style="padding-top: 10px" class="primary--text">mdi-plus-box</v-icon>
+            <v-icon small style="padding-top: 10px" class="primary--text">
+              mdi-plus-box
+            </v-icon>
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>New Branch</v-list-item-title>
@@ -202,7 +207,11 @@
         </v-list-item-content>
       </v-list-item>
     </v-list>
-    <v-dialog v-model="newBranchDialog" max-width="500" :fullscreen="$vuetify.breakpoint.xsOnly">
+    <v-dialog
+      v-model="newBranchDialog"
+      max-width="500"
+      :fullscreen="$vuetify.breakpoint.xsOnly"
+    >
       <new-branch
         @close="newBranchDialog = false"
         @refetch-branches="$apollo.queries.branchQuery.refetch()"
@@ -300,7 +309,9 @@ export default {
       if (!this.branchQuery) return
       return [
         this.branchQuery.branches.items.find((b) => b.name === 'main'),
-        ...this.branchQuery.branches.items.filter((b) => b.name !== 'main' && b.name !== 'globals')
+        ...this.branchQuery.branches.items.filter(
+          (b) => b.name !== 'main' && b.name !== 'globals'
+        )
       ]
     },
     branchesTotalCount() {

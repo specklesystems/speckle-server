@@ -12,7 +12,10 @@
       <div v-show="$route.meta.resizableNavbar" class="nav-resizer"></div>
       <main-nav :expanded="drawer" @hide-drawer="drawer = false" />
       <template #append>
-        <div :xxxstyle="`${$isMobile() ? 'padding-bottom: 58px' : ''}`" class="elevation-10">
+        <div
+          :xxxstyle="`${$isMobile() ? 'padding-bottom: 58px' : ''}`"
+          class="elevation-10"
+        >
           <main-nav-bottom />
         </div>
       </template>
@@ -70,7 +73,8 @@ export default {
     SearchBar: () => import('@/main/components/common/SearchBar'),
     GlobalToast: () => import('@/main/components/common/GlobalToast'),
     GlobalLoading: () => import('@/main/components/common/GlobalLoading'),
-    EmailVerificationBanner: () => import('@/main/components/user/EmailVerificationBanner')
+    EmailVerificationBanner: () =>
+      import('@/main/components/user/EmailVerificationBanner')
   },
   apollo: {
     serverInfo: {
@@ -129,7 +133,10 @@ export default {
     let mixpanelId = this.$mixpanelId()
     if (mixpanelId !== null) {
       this.$mixpanel.identify(mixpanelId)
-      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
+      this.$mixpanel.people.set(
+        'Theme Web',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
       this.$mixpanel.people.set('Identified', true)
     }
     this.$mixpanel.track('Visit Web App')
@@ -137,8 +144,14 @@ export default {
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
-      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
+      localStorage.setItem(
+        'darkModeEnabled',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
+      this.$mixpanel.people.set(
+        'Theme Web',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
     },
     setNavResizeEvents() {
       const minSize = this.borderSize

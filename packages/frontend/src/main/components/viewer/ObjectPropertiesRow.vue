@@ -1,17 +1,29 @@
 <template>
   <v-row
     no-gutters
-    :class="`my-1 py-1 property-row rounded-lg ${$vuetify.theme.dark ? 'black-bg' : 'white-bg'} ${
-      prop.type === 'object' || prop.type === 'array' ? (expanded ? 'border-blue' : 'border') : ''
+    :class="`my-1 py-1 property-row rounded-lg ${
+      $vuetify.theme.dark ? 'black-bg' : 'white-bg'
+    } ${
+      prop.type === 'object' || prop.type === 'array'
+        ? expanded
+          ? 'border-blue'
+          : 'border'
+        : ''
     } ${
       prop.type === 'object' || prop.type === 'array'
         ? 'hover-cursor property-row-hover'
         : 'normal-cursor'
     }`"
-    @click.stop="prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null"
+    @click.stop="
+      prop.type === 'object' || prop.type === 'array' ? (expanded = !expanded) : null
+    "
   >
     <v-col cols="1" class="text-center">
-      <v-icon small style="font-size: 12px" :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`">
+      <v-icon
+        small
+        style="font-size: 12px"
+        :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`"
+      >
         {{ icon }}
       </v-icon>
     </v-col>
@@ -79,18 +91,32 @@
         class="mr-1"
         @click.stop="toggleFilter()"
       >
-        <v-icon :class="`${isolated ? 'primary--text' : 'grey--text'}`" style="font-size: 12px">
+        <v-icon
+          :class="`${isolated ? 'primary--text' : 'grey--text'}`"
+          style="font-size: 12px"
+        >
           {{ !isolated ? 'mdi-filter' : 'mdi-filter' }}
         </v-icon>
       </v-btn>
-      <v-btn v-tooltip="'Expand/collapse property'" x-small icon @click.stop="expanded = !expanded">
-        <v-icon :class="`${expanded ? 'grey--text' : 'primary--text'}`" style="font-size: 12px">
+      <v-btn
+        v-tooltip="'Expand/collapse property'"
+        x-small
+        icon
+        @click.stop="expanded = !expanded"
+      >
+        <v-icon
+          :class="`${expanded ? 'grey--text' : 'primary--text'}`"
+          style="font-size: 12px"
+        >
           {{ expanded ? 'mdi-minus' : 'mdi-plus' }}
         </v-icon>
       </v-btn>
     </v-col>
     <v-scroll-y-transition>
-      <v-col v-if="expanded && (prop.type === 'object' || prop.type === 'array')" cols="12">
+      <v-col
+        v-if="expanded && (prop.type === 'object' || prop.type === 'array')"
+        cols="12"
+      >
         <object-properties :obj="prop.value" :stream-id="streamId" />
       </v-col>
     </v-scroll-y-transition>
@@ -129,7 +155,9 @@ export default {
       }
       if (this.prop.type === 'array') {
         let ids = this.prop.value.map((o) => o.referencedId)
-        let targetIds = this.$store.state.hideValues.filter((val) => ids.indexOf(val) !== -1)
+        let targetIds = this.$store.state.hideValues.filter(
+          (val) => ids.indexOf(val) !== -1
+        )
         if (targetIds.length === 0) return true
         else return false // return "partial" or "full", depending on state
       }
@@ -137,11 +165,15 @@ export default {
     },
     isolated() {
       if (this.prop.type === 'object') {
-        return this.$store.state.isolateValues.indexOf(this.prop.value.referencedId) !== -1
+        return (
+          this.$store.state.isolateValues.indexOf(this.prop.value.referencedId) !== -1
+        )
       }
       if (this.prop.type === 'array') {
         let ids = this.prop.value.map((o) => o.referencedId)
-        let targetIds = this.$store.state.isolateValues.filter((val) => ids.indexOf(val) !== -1)
+        let targetIds = this.$store.state.isolateValues.filter(
+          (val) => ids.indexOf(val) !== -1
+        )
         if (targetIds.length === 0) return false
         else return true // return "partial" or "full", depending on state
       }
@@ -158,8 +190,15 @@ export default {
       }
 
       if (this.visible)
-        this.$store.commit('hideObjects', { filterKey: '__parents', filterValues: targetIds })
-      else this.$store.commit('showObjects', { filterKey: '__parents', filterValues: targetIds })
+        this.$store.commit('hideObjects', {
+          filterKey: '__parents',
+          filterValues: targetIds
+        })
+      else
+        this.$store.commit('showObjects', {
+          filterKey: '__parents',
+          filterValues: targetIds
+        })
     },
     toggleFilter() {
       let targetIds
@@ -169,8 +208,15 @@ export default {
       }
 
       if (this.isolated)
-        this.$store.commit('unisolateObjects', { filterKey: '__parents', filterValues: targetIds })
-      else this.$store.commit('isolateObjects', { filterKey: '__parents', filterValues: targetIds })
+        this.$store.commit('unisolateObjects', {
+          filterKey: '__parents',
+          filterValues: targetIds
+        })
+      else
+        this.$store.commit('isolateObjects', {
+          filterKey: '__parents',
+          filterValues: targetIds
+        })
     }
   }
 }

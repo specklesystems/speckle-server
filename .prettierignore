@@ -1,0 +1,11 @@
+node_modules
+build
+dist
+coverage
+.nyc_output
+packages/server/reports*
+package-lock.json
+yarn.lock
+
+# Prettier doesn't understand the syntax inside the Yaml files, because of the brackets
+utils/helm/speckle-server/templates

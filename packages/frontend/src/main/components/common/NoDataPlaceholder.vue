@@ -1,9 +1,18 @@
 <template>
   <v-container>
     <v-row justify="center" style="margin-top: 50px" dense>
-      <v-col cols="12" lg="6" md="6" xl="6" class="d-flex flex-column justify-center align-center">
+      <v-col
+        cols="12"
+        lg="6"
+        md="6"
+        xl="6"
+        class="d-flex flex-column justify-center align-center"
+      >
         <v-card flat tile color="transparent" class="pa-0">
-          <div v-if="showImage" class="d-flex flex-column justify-space-between align-center mb-10">
+          <div
+            v-if="showImage"
+            class="d-flex flex-column justify-space-between align-center mb-10"
+          >
             <v-img contain max-height="200" src="@/assets/emptybox.png"></v-img>
           </div>
           <div class="text-center mb-2 space-grotesk">
@@ -25,8 +34,8 @@
                   <v-list-item-content>
                     <v-list-item-title>Install Connectors</v-list-item-title>
                     <p class="caption pb-0 mb-0">
-                      Download Speckle Manager to install connectors for your design applications
-                      and start sending data in no time!
+                      Download Speckle Manager to install connectors for your design
+                      applications and start sending data in no time!
                     </p>
                   </v-list-item-content>
                 </v-list-item>
@@ -42,7 +51,8 @@
                   <v-list-item-content>
                     <v-list-item-title>Authenticate</v-list-item-title>
                     <p class="caption pb-0 mb-0">
-                      Link up your Speckle account with the desktop connectors you have installed.
+                      Link up your Speckle account with the desktop connectors you have
+                      installed.
                     </p>
                   </v-list-item-content>
                 </v-list-item>

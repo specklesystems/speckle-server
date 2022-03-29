@@ -6,7 +6,10 @@ export default {
   components: {},
   mounted() {
     let mixpanelId = this.$mixpanelId()
-    this.$mixpanel.register({ server_id: this.$mixpanelServerId(), hostApp: 'web-embed' })
+    this.$mixpanel.register({
+      server_id: this.$mixpanelServerId(),
+      hostApp: 'web-embed'
+    })
     if (mixpanelId !== null) {
       this.$mixpanel.identify(mixpanelId)
     }

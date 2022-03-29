@@ -58,9 +58,16 @@ module.exports = {
         throw new UserInputError('Search query must be at least 3 carachters.')
 
       if (args.limit && args.limit > 100)
-        throw new UserInputError('Cannot return more than 100 items, please use pagination.')
+        throw new UserInputError(
+          'Cannot return more than 100 items, please use pagination.'
+        )
 
-      let { cursor, users } = await searchUsers(args.query, args.limit, args.cursor, args.archived)
+      let { cursor, users } = await searchUsers(
+        args.query,
+        args.limit,
+        args.cursor,
+        args.archived
+      )
       return { cursor: cursor, items: users }
     },
 

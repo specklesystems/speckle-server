@@ -98,7 +98,7 @@ spec:
       containers:
         - name: main
           image: minio/minio
-          args: ["server", "/data", "--console-address", ":9001"]
+          args: ['server', '/data', '--console-address', ':9001']
           resources:
             limits:
               cpu: 1000m
@@ -172,6 +172,6 @@ stringData:
   postgres_url: postgresql://speckle:speckle@pg/speckle
   redis_url: redis://redis
   session_secret: hello
-  email_password: ""
+  email_password: ''
   s3_secret_key: minioadmin
-  google_client_secret: ""
+  google_client_secret: ''

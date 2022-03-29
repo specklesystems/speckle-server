@@ -22,8 +22,8 @@
     <v-row justify="center">
       <v-col v-if="stream.role !== 'stream:owner'" cols="12">
         <v-alert type="warning">
-          Your permission level ({{ stream.role }}) is not high enough to edit this stream's
-          collaborators.
+          Your permission level ({{ stream.role }}) is not high enough to edit this
+          stream's collaborators.
         </v-alert>
       </v-col>
 
@@ -53,12 +53,18 @@
                   one-line
                   class="px-0 mx-0 transparent"
                 >
-                  <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
+                  <v-list-item
+                    v-if="filteredSearchResults.length === 0"
+                    class="px-0 mx-0"
+                  >
                     <v-list-item-content>
                       <v-list-item-title>No users found.</v-list-item-title>
                     </v-list-item-content>
                   </v-list-item>
-                  <v-list-item v-if="filteredSearchResults.length === 0" class="px-0 mx-0">
+                  <v-list-item
+                    v-if="filteredSearchResults.length === 0"
+                    class="px-0 mx-0"
+                  >
                     <v-list-item-action>
                       <v-btn color="primary" @click="showStreamInviteDialog">
                         Invite {{ search }}
@@ -116,7 +122,11 @@
                 {{ role.description }}
               </v-card-text>
               <v-card-text v-if="role.name === 'stream:reviewer'">
-                <div v-for="user in reviewers" :key="user.id" class="d-flex align-center mb-2">
+                <div
+                  v-for="user in reviewers"
+                  :key="user.id"
+                  class="d-flex align-center mb-2"
+                >
                   <user-role
                     :user="user"
                     :roles="roles"
@@ -127,7 +137,11 @@
                 </div>
               </v-card-text>
               <v-card-text v-if="role.name === 'stream:contributor'">
-                <div v-for="user in contributors" :key="user.id" class="d-flex align-center mb-2">
+                <div
+                  v-for="user in contributors"
+                  :key="user.id"
+                  class="d-flex align-center mb-2"
+                >
                   <user-role
                     :user="user"
                     :roles="roles"
@@ -138,7 +152,11 @@
                 </div>
               </v-card-text>
               <v-card-text v-if="role.name === 'stream:owner'">
-                <div v-for="user in owners" :key="user.id" class="d-flex align-center mb-2">
+                <div
+                  v-for="user in owners"
+                  :key="user.id"
+                  class="d-flex align-center mb-2"
+                >
                   <user-role
                     :user="user"
                     :roles="roles"
@@ -156,7 +174,9 @@
             <v-card
               rounded="lg"
               style="height: 100%"
-              :class="`${!$vuetify.theme.dark ? 'grey lighten-5' : ''} d-flex flex-column`"
+              :class="`${
+                !$vuetify.theme.dark ? 'grey lighten-5' : ''
+              } d-flex flex-column`"
             >
               <v-toolbar style="flex: none" flat>
                 <v-toolbar-title class="text-capitalize">

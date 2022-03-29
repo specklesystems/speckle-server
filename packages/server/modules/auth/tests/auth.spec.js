@@ -274,7 +274,11 @@ describe('Auth @auth', () => {
 
       let refreshTokenResponse = await request(app)
         .post('/auth/token')
-        .send({ refreshToken: tokenResponse.body.refreshToken, appId, appSecret: appId })
+        .send({
+          refreshToken: tokenResponse.body.refreshToken,
+          appId,
+          appSecret: appId
+        })
         .expect(200)
 
       expect(refreshTokenResponse.body.token).to.exist
@@ -303,13 +307,21 @@ describe('Auth @auth', () => {
       // spoof secret
       await request(app)
         .post('/auth/token')
-        .send({ refreshToken: tokenResponse.body.refreshToken, appId, appSecret: 'WRONG' })
+        .send({
+          refreshToken: tokenResponse.body.refreshToken,
+          appId,
+          appSecret: 'WRONG'
+        })
         .expect(401)
 
       // swap app (use on rt for another app)
       await request(app)
         .post('/auth/token')
-        .send({ refreshToken: tokenResponse.body.refreshToken, appId: 'sdm', appSecret: 'sdm' })
+        .send({
+          refreshToken: tokenResponse.body.refreshToken,
+          appId: 'sdm',
+          appSecret: 'sdm'
+        })
         .expect(401)
     })
 
@@ -359,7 +371,11 @@ describe('Auth @auth', () => {
 
       // Spoofed token
       await request(app)
-        .get(`/auth/accesscode?appId=sdm&challenge=${crs({ length: 20 })}&token=I_AM_HACZ0R`)
+        .get(
+          `/auth/accesscode?appId=sdm&challenge=${crs({
+            length: 20
+          })}&token=I_AM_HACZ0R`
+        )
         .expect(400)
 
       // No challenge
@@ -383,7 +399,8 @@ describe('Auth @auth', () => {
     })
 
     it('ServerInfo Query should return the auth strategies available', async () => {
-      const query = 'query sinfo { serverInfo { authStrategies { id name icon url color } } }'
+      const query =
+        'query sinfo { serverInfo { authStrategies { id name icon url color } } }'
       const res = await sendRequest(null, { query })
       expect(res.body.errors).to.not.exist
       expect(res.body.data.serverInfo.authStrategies).to.be.an('array')

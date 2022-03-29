@@ -27,7 +27,9 @@
           icon
           @click.stop="isolateSelection()"
         >
-          <v-icon x-small :class="`${!isolated ? 'primary--text' : ''}`">mdi-filter</v-icon>
+          <v-icon x-small :class="`${!isolated ? 'primary--text' : ''}`">
+            mdi-filter
+          </v-icon>
         </v-btn>
         <v-btn
           v-show="$vuetify.breakpoint.xs"
@@ -40,11 +42,21 @@
         </v-btn>
       </div>
       <div v-for="prop in props" :key="prop.value.id" style="width: 99%">
-        <v-card class="transparent elevation-3 rounded-lg mb-3" style="pointer-events: auto">
-          <object-properties-row :prop="prop" :stream-id="streamId" :ref-id="prop.refId" />
+        <v-card
+          class="transparent elevation-3 rounded-lg mb-3"
+          style="pointer-events: auto"
+        >
+          <object-properties-row
+            :prop="prop"
+            :stream-id="streamId"
+            :ref-id="prop.refId"
+          />
         </v-card>
       </div>
-      <div v-show="props.length === 1 && !$vuetify.breakpoint.xs" class="caption grey--text">
+      <div
+        v-show="props.length === 1 && !$vuetify.breakpoint.xs"
+        class="caption grey--text"
+      >
         Hint: hold shift to select multiple objects.
       </div>
     </perfect-scrollbar>
@@ -98,12 +110,21 @@ export default {
     isolateSelection() {
       let ids = this.objects.map((o) => o.id)
       if (!this.isolated)
-        this.$store.commit('unisolateObjects', { filterKey: '__parents', filterValues: ids })
-      else this.$store.commit('isolateObjects', { filterKey: '__parents', filterValues: ids })
+        this.$store.commit('unisolateObjects', {
+          filterKey: '__parents',
+          filterValues: ids
+        })
+      else
+        this.$store.commit('isolateObjects', {
+          filterKey: '__parents',
+          filterValues: ids
+        })
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''
-      let url = `/streams/${this.streamId}/objects/${this.objects[0].id}?overlay=${this.objects
+      let url = `/streams/${this.streamId}/objects/${
+        this.objects[0].id
+      }?overlay=${this.objects
         .slice(1)
         .map((o) => o.id)
         .join(',')}`

@@ -14,8 +14,16 @@
 
       <v-window v-model="onboarding" class="pb-3">
         <v-window-item>
-          <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-1.png" :aspect-ratio="16 / 9">
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
+            <v-img
+              class="align-start mb-3"
+              src="@/assets/onboarding-1.png"
+              :aspect-ratio="16 / 9"
+            >
               <template #sources>
                 <source srcset="@/assets/onboarding-1.webp" />
               </template>
@@ -32,8 +40,8 @@
                       <b>plugins</b>
                       - our speckle
                       <b>connectors</b>
-                      - to help you extract your 3D objects and all their properties from your
-                      desktop application.
+                      - to help you extract your 3D objects and all their properties
+                      from your desktop application.
                     </p>
                   </v-col>
                 </v-row>
@@ -43,8 +51,16 @@
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-2.png" :aspect-ratio="16 / 9">
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
+            <v-img
+              class="align-start mb-3"
+              src="@/assets/onboarding-2.png"
+              :aspect-ratio="16 / 9"
+            >
               <template #sources>
                 <source srcset="@/assets/onboarding-2.webp" />
               </template>
@@ -57,10 +73,11 @@
                 <v-row>
                   <v-col cols="6" class="mt-5 mb-12">
                     <p>
-                      Every time you send your 3D objects out of your application, they are captured
-                      as a
+                      Every time you send your 3D objects out of your application, they
+                      are captured as a
                       <b>"commit"</b>
-                      that includes a description, the sender, timestamp, and source application.
+                      that includes a description, the sender, timestamp, and source
+                      application.
                     </p>
                   </v-col>
                 </v-row>
@@ -80,8 +97,16 @@
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-3.png" :aspect-ratio="16 / 9">
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
+            <v-img
+              class="align-start mb-3"
+              src="@/assets/onboarding-3.png"
+              :aspect-ratio="16 / 9"
+            >
               <template #sources>
                 <source srcset="@/assets/onboarding-3.webp" />
               </template>
@@ -111,7 +136,8 @@
                     <p>
                       Create
                       <b>additional</b>
-                      branches in your stream if you want to store parallel collections of data.
+                      branches in your stream if you want to store parallel collections
+                      of data.
                     </p>
                     <p>Use branches to keep your stream organization tidy!</p>
                   </v-col>
@@ -122,8 +148,16 @@
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-4.png" :aspect-ratio="16 / 9">
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
+            <v-img
+              class="align-start mb-3"
+              src="@/assets/onboarding-4.png"
+              :aspect-ratio="16 / 9"
+            >
               <template #sources>
                 <source srcset="@/assets/onboarding-4.webp" />
               </template>
@@ -143,8 +177,8 @@
                     <p>
                       Speckle Web gives you access to all your information and
                       <b>activity,</b>
-                      with a data viewer that lets you filter and customize your objects by their
-                      properties.
+                      with a data viewer that lets you filter and customize your objects
+                      by their properties.
                     </p>
                   </v-col>
                 </v-row>
@@ -154,8 +188,16 @@
         </v-window-item>
 
         <v-window-item>
-          <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-5.png" :aspect-ratio="16 / 9">
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
+            <v-img
+              class="align-start mb-3"
+              src="@/assets/onboarding-5.png"
+              :aspect-ratio="16 / 9"
+            >
               <template #sources>
                 <source srcset="@/assets/onboarding-5.webp" />
               </template>
@@ -168,8 +210,8 @@
                 <v-row>
                   <v-col cols="5" class="mt-5 mb-12">
                     <p>
-                      Get your original 3D data back into your application with our connectors -
-                      just select the commits you want to receive!
+                      Get your original 3D data back into your application with our
+                      connectors - just select the commits you want to receive!
                     </p>
                   </v-col>
                 </v-row>
@@ -186,7 +228,9 @@
 
         <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent">
-            <v-card-title class="display-1 justify-center my-5">🏃‍♀️ Get Started!</v-card-title>
+            <v-card-title class="display-1 justify-center my-5">
+              🏃‍♀️ Get Started!
+            </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               Time to make the most of
               <b>your</b>
@@ -194,10 +238,12 @@
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
-                You can now start creating your own workflows for automation, interoperaility or
-                collaboration using Speckle!
+                You can now start creating your own workflows for automation,
+                interoperaility or collaboration using Speckle!
               </p>
-              <p>We have put together a series of tutorials that you might find useful:</p>
+              <p>
+                We have put together a series of tutorials that you might find useful:
+              </p>
             </v-card-text>
             <v-container fluid>
               <v-row dense>
@@ -228,7 +274,7 @@
         </v-window-item>
       </v-window>
       <v-card-actions class="justify-space-between pb-7">
-        <v-btn text @click="prev" :disabled="onboarding == 0" rounded class="pr-4">
+        <v-btn text :disabled="onboarding == 0" rounded class="pr-4" @click="prev">
           <v-icon>mdi-chevron-left</v-icon>
           BACK
         </v-btn>
@@ -239,7 +285,7 @@
             </v-btn>
           </v-item>
         </v-item-group>
-        <v-btn color="primary" @click="next" rounded elevation="10" class="pl-4">
+        <v-btn color="primary" rounded elevation="10" class="pl-4" @click="next">
           {{ onboarding == length - 1 ? 'FINISH' : 'NEXT' }}
           <v-icon>mdi-chevron-right</v-icon>
         </v-btn>

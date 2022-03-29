@@ -4,7 +4,7 @@ query StreamCommits($id: String!) {
     role
     commits {
       totalCount
-      items{
+      items {
         id
         authorId
         authorName

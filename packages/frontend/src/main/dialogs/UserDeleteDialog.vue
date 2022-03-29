@@ -15,8 +15,8 @@
             <v-row>
               <v-col cols="12" class="pb-0">
                 <p>
-                  To protect against accidental deletion, please enter the email address associated
-                  with this account:
+                  To protect against accidental deletion, please enter the email address
+                  associated with this account:
                 </p>
               </v-col>
             </v-row>
@@ -38,7 +38,9 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn text @click="cancel">Cancel</v-btn>
-          <v-btn color="error" :disabled="!valid" type="submit">Delete my account</v-btn>
+          <v-btn color="error" :disabled="!valid" type="submit">
+            Delete my account
+          </v-btn>
         </v-card-actions>
       </v-form>
     </v-card>

@@ -34,7 +34,10 @@
           @focus="copyToClipboard"
         ></v-text-field>
         <v-text-field
-          v-if="$route.params.resourceId && $resourceType($route.params.resourceId) === 'commit'"
+          v-if="
+            $route.params.resourceId &&
+            $resourceType($route.params.resourceId) === 'commit'
+          "
           ref="commitUrl"
           dark
           filled
@@ -73,7 +76,8 @@
       <div v-if="stream.isPublic">
         <v-card-text>
           <div class="caption mx-1 pb-2">
-            Copy the code below to embed an iframe of this model in your webpage or document.
+            Copy the code below to embed an iframe of this model in your webpage or
+            document.
           </div>
           <v-text-field
             dense
@@ -86,7 +90,10 @@
         </v-card-text>
       </div>
     </v-sheet>
-    <v-sheet v-if="stream" :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`">
+    <v-sheet
+      v-if="stream"
+      :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
+    >
       <v-toolbar v-if="stream.role === 'stream:owner'" class="transparent" rounded flat>
         <v-app-bar-nav-icon style="pointer-events: none">
           <v-icon>{{ stream.isPublic ? 'mdi-lock-open' : 'mdi-lock' }}</v-icon>
@@ -104,7 +111,8 @@
         ></v-switch>
       </v-toolbar>
       <v-card-text v-if="stream.isPublic" class="pt-2">
-        This stream is public. This means that anyone with the link can view and read data from it.
+        This stream is public. This means that anyone with the link can view and read
+        data from it.
       </v-card-text>
       <v-card-text v-if="!stream.isPublic" class="pt-2 pb-2">
         This stream is private. This means that only collaborators can access it.
@@ -115,7 +123,9 @@
         v-tooltip="
           `${
             stream.role !== 'stream:owner'
-              ? 'You do not have the right access level (' + stream.role + ') to add collaborators.'
+              ? 'You do not have the right access level (' +
+                stream.role +
+                ') to add collaborators.'
               : ''
           }`
         "
@@ -127,7 +137,10 @@
         <v-toolbar-title>
           Collaborators
           <user-avatar
-            v-for="collab in stream.collaborators.slice(0, stream.collaborators.length > 5 ? 4 : 5)"
+            v-for="collab in stream.collaborators.slice(
+              0,
+              stream.collaborators.length > 5 ? 4 : 5
+            )"
             :id="collab.id"
             :key="collab.id"
             :size="20"

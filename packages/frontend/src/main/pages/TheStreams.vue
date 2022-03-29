@@ -18,7 +18,8 @@
       <no-data-placeholder v-if="user">
         <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
         <p class="caption">
-          Once you create a stream and start sending some data, your activity will show up here.
+          Once you create a stream and start sending some data, your activity will show
+          up here.
         </p>
         <template #actions>
           <v-list rounded class="transparent">
@@ -44,8 +45,20 @@
     </v-row>
     <!-- Streams display -->
     <v-row v-if="streams && streams.items.length > 0">
-      <v-col v-for="(stream, i) in filteredStreams" :key="i" cols="12" sm="6" md="6" lg="4" xl="3">
-        <stream-preview-card :key="i + 'card'" :stream="stream" :user="user"></stream-preview-card>
+      <v-col
+        v-for="(stream, i) in filteredStreams"
+        :key="i"
+        cols="12"
+        sm="6"
+        md="6"
+        lg="4"
+        xl="3"
+      >
+        <stream-preview-card
+          :key="i + 'card'"
+          :stream="stream"
+          :user="user"
+        ></stream-preview-card>
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
         <infinite-loading :identifier="infiniteId" class="" @infinite="infiniteHandler">
@@ -148,7 +161,8 @@ export default {
           const newTotalCount = fetchMoreResult.streams.totalCount
 
           for (const stream of newItems) {
-            if (allItems.findIndex((s) => s.id === stream.id) === -1) allItems.push(stream)
+            if (allItems.findIndex((s) => s.id === stream.id) === -1)
+              allItems.push(stream)
           }
 
           // Update infinite loader state

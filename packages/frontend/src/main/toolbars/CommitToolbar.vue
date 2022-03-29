@@ -51,9 +51,16 @@
           <timeago :datetime="stream.commit.createdAt"></timeago>
         </span> -->
         <!-- <source-app-avatar :application-name="stream.commit.sourceApplication" /> -->
-        <commit-received-receipts :commit-id="stream.commit.id" :stream-id="stream.id" />
+        <commit-received-receipts
+          :commit-id="stream.commit.id"
+          :stream-id="stream.id"
+        />
         <v-btn
-          v-if="stream && stream.role !== 'stream:reviewer' && stream.commit.authorId === $userId()"
+          v-if="
+            stream &&
+            stream.role !== 'stream:reviewer' &&
+            stream.commit.authorId === $userId()
+          "
           v-tooltip="'Edit commit'"
           text
           elevation="0"
@@ -82,7 +89,9 @@
               </v-app-bar-nav-icon>
               <v-toolbar-title>Commit Info</v-toolbar-title>
               <v-spacer></v-spacer>
-              <v-btn icon @click="showCommitInfo = false"><v-icon>mdi-close</v-icon></v-btn>
+              <v-btn icon @click="showCommitInfo = false">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
             </v-toolbar>
             <v-card-text class="mt-2">
               <div class="pa-2">Commit message: {{ stream.commit.message }}</div>
@@ -105,11 +114,16 @@
               <v-divider />
               <div class="pa-2">
                 Source app:
-                <source-app-avatar :application-name="stream.commit.sourceApplication" />
+                <source-app-avatar
+                  :application-name="stream.commit.sourceApplication"
+                />
               </div>
               <v-divider />
               <div class="pa-2">
-                <commit-received-receipts :commit-id="stream.commit.id" :stream-id="stream.id" />
+                <commit-received-receipts
+                  :commit-id="stream.commit.id"
+                  :stream-id="stream.id"
+                />
               </div>
               <div class="pa-2">
                 <v-btn
@@ -128,7 +142,10 @@
                   dark
                   @click="$emit('edit-commit')"
                 >
-                  <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+                  <v-icon
+                    small
+                    :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`"
+                  >
                     mdi-pencil
                   </v-icon>
                   <span>Edit Message/Delete</span>
@@ -146,7 +163,8 @@ export default {
   components: {
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
-    CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts')
+    CommitReceivedReceipts: () =>
+      import('@/main/components/common/CommitReceivedReceipts')
   },
   props: ['stream'],
   data() {

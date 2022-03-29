@@ -7,7 +7,12 @@
           <v-icon x-small color="primary" class="mr-1">{{ icons[value.name] }}</v-icon>
           {{ capitalize(value.name.split('History')[0]) }} history
         </p>
-        <apex-chart class="primary--text" type="bar" :options="options" :series="[value]" />
+        <apex-chart
+          class="primary--text"
+          type="bar"
+          :options="options"
+          :series="[value]"
+        />
       </v-col>
     </v-row>
   </section-card>

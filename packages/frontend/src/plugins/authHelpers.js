@@ -44,7 +44,11 @@ export async function prefetchUserAndSetSuuid(apolloClient) {
     // eslint-disable-next-line camelcase
     let distinct_id =
       '@' +
-      crypto.createHash('md5').update(data.user.email.toLowerCase()).digest('hex').toUpperCase()
+      crypto
+        .createHash('md5')
+        .update(data.user.email.toLowerCase())
+        .digest('hex')
+        .toUpperCase()
 
     localStorage.setItem('suuid', data.user.suuid)
     localStorage.setItem('distinct_id', distinct_id)

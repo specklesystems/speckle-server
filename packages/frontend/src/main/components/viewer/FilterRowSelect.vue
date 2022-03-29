@@ -1,7 +1,15 @@
 <template>
-  <v-row no-gutters class="my-1 property-row rounded-lg" @click="$emit('active-toggle', filter)">
+  <v-row
+    no-gutters
+    class="my-1 property-row rounded-lg"
+    @click="$emit('active-toggle', filter)"
+  >
     <v-col cols="1" class="text-center" style="line-height: 30px">
-      <v-icon small style="font-size: 12px" :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`">
+      <v-icon
+        small
+        style="font-size: 12px"
+        :class="`${$vuetify.theme.dark ? 'grey--text' : ''}`"
+      >
         {{ filter.data.type === 'number' ? 'mdi-numeric' : 'mdi-format-text' }}
       </v-icon>
     </v-col>

@@ -13,7 +13,9 @@ const sendEmailVerification = async ({ recipient }) => {
   const serverInfo = await getServerInfo()
   const existingVerifications = await Verifications().where({ email: recipient })
   if (existingVerifications.some((ver) => isVerificationValid(ver)))
-    throw new Error('You already have a valid verification message, please check your inbox')
+    throw new Error(
+      'You already have a valid verification message, please check your inbox'
+    )
   const verificationId = await createEmailVerification({ email: recipient })
   const verificationLink = new URL(
     `auth/verifyemail?t=${verificationId}`,

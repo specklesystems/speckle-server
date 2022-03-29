@@ -55,7 +55,9 @@ const store = new Vuex.Store({
       if (state.isolateKey !== filterKey) state.isolateValues = []
 
       state.isolateKey = filterKey
-      state.isolateValues = state.isolateValues.filter((val) => filterValues.indexOf(val) === -1)
+      state.isolateValues = state.isolateValues.filter(
+        (val) => filterValues.indexOf(val) === -1
+      )
       if (state.isolateValues.length === 0) state.appliedFilter = null
       else
         state.appliedFilter = {
@@ -85,7 +87,9 @@ const store = new Vuex.Store({
       if (state.hideKey !== filterKey) state.hideValues = []
 
       state.hideKey = filterKey
-      state.hideValues = state.hideValues.filter((val) => filterValues.indexOf(val) === -1)
+      state.hideValues = state.hideValues.filter(
+        (val) => filterValues.indexOf(val) === -1
+      )
 
       if (state.hideValues.length === 0) state.appliedFilter = null
       else
@@ -94,7 +98,10 @@ const store = new Vuex.Store({
         }
       window.__viewer.applyFilter(state.appliedFilter)
     },
-    async isolateCategoryToggle(state, { filterKey, filterValue, allValues, colorBy = false }) {
+    async isolateCategoryToggle(
+      state,
+      { filterKey, filterValue, allValues, colorBy = false }
+    ) {
       this.commit('resetInternalHideIsolateObjectState')
       state.hideCategoryKey = null
       state.hideCategoryValues = []
@@ -183,7 +190,13 @@ const store = new Vuex.Store({
       this.commit('resetInternalCategoryObjectState')
       state.appliedFilter = {
         ghostOthers: true,
-        colorBy: { type: 'gradient', property: filterKey, minValue, maxValue, gradientColors },
+        colorBy: {
+          type: 'gradient',
+          property: filterKey,
+          minValue,
+          maxValue,
+          gradientColors
+        },
         filterBy: { [filterKey]: { gte: minValue, lte: maxValue } }
       }
       window.__viewer.applyFilter(state.appliedFilter)

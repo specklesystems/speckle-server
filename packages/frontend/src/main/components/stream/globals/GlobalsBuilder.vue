@@ -8,10 +8,22 @@
     </template>
     <template slot="actions">
       <v-spacer />
-      <v-btn v-tooltip="'Clear all globals'" color="error" icon class="mr-2" @click="clearGlobals">
+      <v-btn
+        v-tooltip="'Clear all globals'"
+        color="error"
+        icon
+        class="mr-2"
+        @click="clearGlobals"
+      >
         <v-icon>mdi-close</v-icon>
       </v-btn>
-      <v-btn v-tooltip="'Undo any changes'" color="primary" icon class="mr-2" @click="resetGlobals">
+      <v-btn
+        v-tooltip="'Undo any changes'"
+        color="primary"
+        icon
+        class="mr-2"
+        @click="resetGlobals"
+      >
         <v-icon>mdi-undo</v-icon>
       </v-btn>
       <v-btn
@@ -49,7 +61,12 @@
           <v-progress-linear indeterminate></v-progress-linear>
         </template>
         <v-card-title>Save Globals</v-card-title>
-        <v-form ref="form" v-model="saveValid" lazy-validation @submit.prevent="saveGlobals">
+        <v-form
+          ref="form"
+          v-model="saveValid"
+          lazy-validation
+          @submit.prevent="saveGlobals"
+        >
           <v-card-text>
             <v-text-field
               v-model="saveMessage"
@@ -66,7 +83,9 @@
           </v-alert>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="primary" text :disabled="!saveValid" type="submit">Save</v-btn>
+            <v-btn color="primary" text :disabled="!saveValid" type="submit">
+              Save
+            </v-btn>
           </v-card-actions>
         </v-form>
       </v-card>
@@ -146,7 +165,9 @@ export default {
       },
       saveValid: false,
       saveLoading: false,
-      nameRules: [(v) => (v && v.length >= 3) || 'Message must be at least 3 characters'],
+      nameRules: [
+        (v) => (v && v.length >= 3) || 'Message must be at least 3 characters'
+      ],
       saveMessage: null,
       saveError: null
     }
@@ -179,7 +200,7 @@ export default {
       try {
         this.loading = true
         this.$matomo && this.$matomo.trackPageView('globals/save')
-        this.$mixpanel.track('Globals Action', { type: 'action', name: 'update'  })
+        this.$mixpanel.track('Globals Action', { type: 'action', name: 'update' })
         let res = await this.$apollo.mutate({
           mutation: gql`
             mutation ObjectCreate($params: ObjectCreateInput!) {
@@ -298,7 +319,9 @@ export default {
         : this.nestedGlobals(this.sample)
     },
     clearGlobals() {
-      this.globalsArray = this.nestedGlobals({ placeholder: 'something cool goes here...' })
+      this.globalsArray = this.nestedGlobals({
+        placeholder: 'something cool goes here...'
+      })
     },
     addProp(kwargs) {
       let globals = this.getNestedGlobals(kwargs.path)

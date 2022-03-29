@@ -7,7 +7,11 @@
     <div class="my-5"></div>
     <section-card>
       <v-card-text>
-        <div v-for="(value, name) in serverDetails" :key="name" class="d-flex align-center mb-2">
+        <div
+          v-for="(value, name) in serverDetails"
+          :key="name"
+          class="d-flex align-center mb-2"
+        >
           <div class="flex-grow-1">
             <div v-if="value.type == 'boolean'">
               <p class="mt-2">{{ value.label }}</p>

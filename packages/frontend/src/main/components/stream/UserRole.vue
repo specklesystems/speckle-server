@@ -14,7 +14,9 @@
       <!-- <v-btn x-small color="primary">change</v-btn> -->
       <v-menu offset-y>
         <template #activator="{ on, attrs }">
-          <v-btn x-small color="" dark v-bind="attrs" :disabled="disabled" v-on="on">Change</v-btn>
+          <v-btn x-small color="" dark v-bind="attrs" :disabled="disabled" v-on="on">
+            Change
+          </v-btn>
         </template>
         <v-list dense>
           <v-list-item
@@ -25,7 +27,9 @@
               $emit('update-user-role', userSelf)
             "
           >
-            <v-list-item-action><v-icon small>mdi-chevron-right</v-icon></v-list-item-action>
+            <v-list-item-action>
+              <v-icon small>mdi-chevron-right</v-icon>
+            </v-list-item-action>
             <v-list-item-title>{{ item.name }}</v-list-item-title>
           </v-list-item>
           <v-list-item @click="$emit('remove-user', userSelf)">
