@@ -217,6 +217,7 @@ jobs:
     # context:
       # - helm_repo
     steps:
+      - checkout
       - add_ssh_keys:
           fingerprints:
             - '18:74:c4:b9:dc:66:b2:66:1d:81:56:0d:0a:87:9b:b1'
