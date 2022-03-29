@@ -16,6 +16,9 @@
         <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
             <v-img class="align-start mb-3" src="@/assets/onboarding-1.png" :aspect-ratio="16 / 9">
+              <template #sources>
+                <source srcset="@/assets/onboarding-1.webp" />
+              </template>
               <v-card-text class="body-1 text--primary text-left pa-10">
                 <v-row>
                   <v-col cols="6">
@@ -41,7 +44,10 @@
 
         <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-2.png">
+            <v-img class="align-start mb-3" src="@/assets/onboarding-2.png" :aspect-ratio="16 / 9">
+              <template #sources>
+                <source srcset="@/assets/onboarding-2.webp" />
+              </template>
               <v-card-text class="body-1 text--primary text-left pa-10">
                 <v-row>
                   <v-col cols="10">
@@ -75,7 +81,10 @@
 
         <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-3.png">
+            <v-img class="align-start mb-3" src="@/assets/onboarding-3.png" :aspect-ratio="16 / 9">
+              <template #sources>
+                <source srcset="@/assets/onboarding-3.webp" />
+              </template>
               <v-card-text class="body-1 text--primary text-left pa-10">
                 <v-row>
                   <v-col cols="8">
@@ -114,7 +123,10 @@
 
         <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-4.png">
+            <v-img class="align-start mb-3" src="@/assets/onboarding-4.png" :aspect-ratio="16 / 9">
+              <template #sources>
+                <source srcset="@/assets/onboarding-4.webp" />
+              </template>
               <v-card-text class="body-1 text--primary text-left pa-10">
                 <v-row>
                   <v-col cols="8">
@@ -143,7 +155,10 @@
 
         <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent" align="start">
-            <v-img class="align-start mb-3" src="@/assets/onboarding-5.png">
+            <v-img class="align-start mb-3" src="@/assets/onboarding-5.png" :aspect-ratio="16 / 9">
+              <template #sources>
+                <source srcset="@/assets/onboarding-5.webp" />
+              </template>
               <v-card-text class="body-1 text--primary text-left pa-10">
                 <v-row>
                   <v-col cols="8">
