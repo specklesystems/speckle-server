@@ -89,6 +89,7 @@
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
 import { isEmailValid } from '@/plugins/authHelpers'
+import { MainServerInfoQuery } from '@/graphql/server'
 
 export default {
   name: 'AdminInvites',
@@ -142,14 +143,7 @@ export default {
       prefetch: true
     },
     serverInfo: {
-      query: gql`
-        query {
-          serverInfo {
-            name
-            canonicalUrl
-          }
-        }
-      `
+      query: MainServerInfoQuery
     }
   },
   methods: {

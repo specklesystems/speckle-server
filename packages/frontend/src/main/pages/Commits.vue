@@ -33,7 +33,7 @@
     <no-data-placeholder v-if="user && user.commits.totalCount === 0">
       <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
       <p class="caption">
-        Once you will create a stream and start sending some data, your activity will show up here.
+        Once you create a stream and start sending some data, your activity will show up here.
       </p>
       <template #actions>
         <v-list rounded class="transparent">
@@ -69,11 +69,11 @@ export default {
   apollo: {
     user: {
       query: gql`
-        query($cursor: String) {
+        query ($cursor: String) {
           user {
             id
             name
-            commits(limit: 3, cursor: $cursor) {
+            commits(limit: 10, cursor: $cursor) {
               totalCount
               cursor
               items {

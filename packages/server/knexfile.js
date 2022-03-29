@@ -19,7 +19,7 @@ function walk(dir) {
   return results
 }
 
-let migrationDirs = walk('./modules')
+let migrationDirs = walk(path.resolve(__dirname, './modules'))
 
 // this is for readability, many users struggle to set the postgres connection uri
 // in the env variables. This way its a bit easier to understand, also backward compatible.
@@ -33,7 +33,8 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
   connectionUri = env.POSTGRES_URL
 }
 
-module.exports = {
+/** @type {Object<string, import('knex').Knex.Config>} */
+const config = {
   test: {
     client: 'pg',
     connection: connectionUri || 'postgres://localhost/speckle2_test',
@@ -57,3 +58,5 @@ module.exports = {
     pool: { min: 2, max: 4 }
   }
 }
+
+module.exports = config

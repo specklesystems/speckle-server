@@ -57,7 +57,7 @@ const routes = [
     meta: {
       title: 'Home | Speckle'
     },
-    component: () => import('@/main/layouts/Main.vue'),
+    component: () => import('@/main/layouts/TheMain.vue'),
     children: [
       {
         path: '',
@@ -81,14 +81,22 @@ const routes = [
         meta: {
           title: 'Streams | Speckle'
         },
-        component: () => import('@/main/pages/Streams.vue')
+        component: () => import('@/main/pages/TheStreams.vue')
+      },
+      {
+        path: 'streams/favorite',
+        name: 'favorite-streams',
+        meta: {
+          title: 'Favorite Streams | Speckle'
+        },
+        component: () => import('@/main/pages/TheFavoriteStreams.vue')
       },
       {
         path: 'streams/:streamId',
         meta: {
           title: 'Stream | Speckle'
         },
-        component: () => import('@/main/pages/stream/Stream.vue'),
+        component: () => import('@/main/pages/stream/TheStream.vue'),
         children: [
           {
             path: '',

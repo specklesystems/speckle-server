@@ -32,6 +32,12 @@ type Stream {
   updatedAt: DateTime!
   collaborators: [StreamCollaborator]!
   size: String
+  """
+  Date when you favorited this stream. `null` if stream isn't viewed from a specific user's perspective or if it isn't favorited.
+  """
+  favoritedDate: DateTime
+  # How many times this stream has been favorited
+  favoritesCount: Int!
 }
 
 extend type User {
@@ -39,6 +45,16 @@ extend type User {
   All the streams that a user has access to.
   """
   streams(limit: Int! = 25, cursor: String): StreamCollection
+
+  """
+  All the streams that a user has favorited
+  """
+  favoriteStreams(limit: Int! = 25, cursor: String): StreamCollection @hasRole(role: "server:user")
+
+  """
+  Total amount of favorites attached to streams owned by the user
+  """
+  totalOwnedStreamsFavorites: Int!
 }
 
 type StreamCollaborator {
@@ -85,9 +101,12 @@ extend type Mutation {
   """
   Revokes the permissions of a user on a given stream.
   """
-  streamRevokePermission(
-    permissionParams: StreamRevokePermissionInput!
-  ): Boolean @hasRole(role: "server:user") @hasScope(scope: "streams:write")
+  streamRevokePermission(permissionParams: StreamRevokePermissionInput!): Boolean
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:write")
+
+  # Favorite/unfavorite the given stream
+  streamFavorite(streamId: String!, favorited: Boolean!): Stream @hasRole(role: "server:user")
 }
 
 extend type Subscription {
@@ -100,17 +119,13 @@ extend type Subscription {
   Subscribes to new stream added event for your profile. Use this to display an up-to-date list of streams.
   **NOTE**: If someone shares a stream with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
   """
-  userStreamAdded: JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "profile:read")
+  userStreamAdded: JSONObject @hasRole(role: "server:user") @hasScope(scope: "profile:read")
 
   """
   Subscribes to stream removed event for your profile. Use this to display an up-to-date list of streams for your profile.
   **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
   """
-  userStreamRemoved: JSONObject
-    @hasRole(role: "server:user")
-    @hasScope(scope: "profile:read")
+  userStreamRemoved: JSONObject @hasRole(role: "server:user") @hasScope(scope: "profile:read")
 
   #
   # Stream bound subscriptions that operate on the stream itself.

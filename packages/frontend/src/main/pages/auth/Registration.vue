@@ -104,11 +104,7 @@
               />
             </v-col>
             <v-col cols="12" class="py-2 pl-9" style="margin-top: -18px">
-              <v-row
-                v-show="passwordStrength !== 1 && this.form.password"
-                no-gutters
-                align="center"
-              >
+              <v-row v-show="passwordStrength !== 1 && form.password" no-gutters align="center">
                 <v-col
                   cols="12"
                   class="flex-grow-1 flex-shrink-0"
@@ -119,9 +115,9 @@
                     height="5"
                     class="mt-1 mb-0"
                     :color="`${
-                      passwordStrength >= 75 && this.form.password === this.form.passwordConf
+                      passwordStrength >= 75 && form.password === form.passwordConf
                         ? 'green'
-                        : passwordStrength >= 50 && this.form.password === this.form.passwordConf
+                        : passwordStrength >= 50 && form.password === form.passwordConf
                         ? 'orange'
                         : 'red'
                     }`"
@@ -129,13 +125,13 @@
                 </v-col>
                 <v-col cols="12" class="caption text-center mt-3">
                   {{
-                    this.pwdSuggestions
-                      ? this.pwdSuggestions
-                      : this.form.password && this.form.password === this.form.passwordConf
+                    pwdSuggestions
+                      ? pwdSuggestions
+                      : form.password && form.password === form.passwordConf
                       ? 'Looks good.'
                       : null
                   }}
-                  <span v-if="this.form.password !== this.form.passwordConf">
+                  <span v-if="form.password !== form.passwordConf">
                     <b>Passwords do not match.</b>
                   </span>
                 </v-col>
@@ -161,7 +157,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 import crs from 'crypto-random-string'
 
 import Strategies from '@/main/components/auth/Strategies'

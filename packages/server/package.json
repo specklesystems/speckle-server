@@ -34,9 +34,11 @@
     "compression": "^1.7.4",
     "connect-redis": "^6.1.1",
     "crypto-random-string": "^3.2.0",
+    "dataloader": "^2.0.0",
     "debug": "^4.3.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.3",
+    "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",
     "graphql": "^15.8.0",
     "graphql-redis-subscriptions": "^2.2.2",
@@ -45,13 +47,9 @@
     "graphql-tools": "^4.0.7",
     "ioredis": "^4.19.4",
     "knex": "^1.0.3",
-    "lodash.chunk": "^4.2.0",
-    "lodash.debounce": "^4.0.8",
-    "lodash.get": "^4.4.2",
-    "lodash.merge": "^4.6.2",
-    "lodash.set": "^4.3.2",
-    "lodash.values": "^4.3.0",
+    "lodash": "^4.17.21",
     "matomo-tracker": "^2.2.4",
+    "module-alias": "^2.2.2",
     "morgan": "^1.10.0",
     "morgan-debug": "^2.0.0",
     "node-machine-id": "^1.1.12",
@@ -68,11 +66,16 @@
     "sanitize-html": "^2.4.0",
     "sharp": "^0.29.3",
     "string-pixel-width": "^1.10.0",
+    "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@apollo/client": "^3.5.9",
+    "@types/lodash": "^4.14.180",
+    "@types/mocha": "^7.0.2",
+    "@types/module-alias": "^2.0.1",
+    "@types/yargs": "^17.0.10",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
     "apollo-link": "^1.2.14",
@@ -83,22 +86,26 @@
     "chai-http": "^4.3.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.3",
+    "deep-equal-in-any-order": "^1.1.15",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
     "http-proxy-middleware": "^1.0.6",
     "lerna": "^3.22.1",
     "mocha": "^7.2.0",
-    "@types/mocha": "^7.0.2",
+    "mocha-junit-reporter": "^2.0.2",
     "nodemon": "^2.0.6",
     "nyc": "^15.0.1",
-    "mocha-junit-reporter": "^2.0.2",
+    "prettier": "^2.5.1",
     "supertest": "^4.0.2",
     "ws": "^7.5.7",
-    "eslint": "^8.11.0",
-    "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.5.1"
+    "yargs": "^17.3.1"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "_moduleAliases": {
+    "@": "."
   }
 }

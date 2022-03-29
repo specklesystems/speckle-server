@@ -81,6 +81,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import { FullServerInfoQuery } from '@/graphql/server'
 
 export default {
   props: {
@@ -120,21 +121,12 @@ export default {
   apollo: {
     scopes: {
       prefetch: true,
-      query: gql`
-        query {
-          serverInfo {
-            scopes {
-              name
-              description
-            }
-          }
-        }
-      `,
+      query: FullServerInfoQuery,
       update: (data) => data.serverInfo.scopes
     },
     app: {
       query: gql`
-        query($id: String!) {
+        query ($id: String!) {
           app(id: $id) {
             id
             name
@@ -226,7 +218,7 @@ export default {
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`
-            mutation($app: AppUpdateInput!) {
+            mutation ($app: AppUpdateInput!) {
               appUpdate(app: $app)
             }
           `,
