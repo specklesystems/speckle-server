@@ -58,23 +58,26 @@ workflows:
               
       - docker-build-and-publish-frontend:
           context: *docker-hub-context
-          <<: *filters-build
+          filters: *filters-build
           requires:
             - lint
 
       - docker-build-and-publish-webhooks:
+          context: *docker-hub-context
           filters: *filters-build
           requires:
             - lint
             - test-server
 
       - docker-build-and-publish-file-imports:
+          context: *docker-hub-context
           filters: *filters-build
           requires:
             - lint
             - test-server
 
       - docker-build-and-publish-previews:
+          context: *docker-hub-context
           filters: *filters-build
           requires:
             - lint
@@ -82,6 +85,7 @@ workflows:
             # - npm_build_viewer
 
       - docker-build-and-publish-test-container:
+          context: *docker-hub-context
           filters: *filters-build
 
       - publish_helm_chart:
