@@ -15,7 +15,7 @@ workflows:
                 - gergo/CIRewrite
       - lint:
           filters: *filters-every-push
-      
+
       # - build-viewer:
       #     # built the npm package
       #     requires:
@@ -28,9 +28,9 @@ workflows:
       #           # - main
       #           - gergo/CIRewrite
 
-  #         requires:
-  #           # the result of objectloader build can be mounted here from workspace
-  #           - npm_build_object_loader
+      #         requires:
+      #           # the result of objectloader build can be mounted here from workspace
+      #           - npm_build_object_loader
 
       - docker-build-and-publish-server:
           context: &docker-hub-context
@@ -40,12 +40,12 @@ workflows:
               only: /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
               only:
-                # - main
-                - gergo/CIRewrite
+                - main
+                # - gergo/CIRewrite
           requires:
             - lint
             - test-server
-              
+
       - docker-build-and-publish-frontend:
           context: *docker-hub-context
           filters: *filters-build
@@ -72,13 +72,12 @@ workflows:
           requires:
             - lint
             - test-server
-            # - npm_build_viewer
 
       - docker-build-and-publish-test-container:
           context: *docker-hub-context
           filters: *filters-build
 
-      - publish_helm_chart:
+      - publish-helm-chart:
           filters: *filters-build
           requires:
             - docker-build-and-publish-server
@@ -142,15 +141,15 @@ jobs:
     docker: *docker-image
     steps:
       - checkout
-      - run: 
+      - run:
           command: npm install ../objectloader
           working_directory: 'packages/viewer'
       - node/install-packages:
           app-dir: ~/project/packages/viewer
-      - run: 
+      - run:
           command: npm run build
           working_directory: 'packages/viewer'
-  
+
   docker-build-and-publish: &docker-job
     docker: *docker-image
     steps:
@@ -161,11 +160,10 @@ jobs:
           name: Build and Publish
           command: ./.circleci/build.sh
 
-  docker-build-and-publish-server: 
+  docker-build-and-publish-server:
     <<: *docker-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
-
 
   docker-build-and-publish-frontend:
     <<: *docker-job
@@ -201,10 +199,8 @@ jobs:
       - checkout
       - run: node --version
 
-  publish_helm_chart:
+  publish-helm-chart:
     docker: *docker-image
-    # context:
-      # - helm_repo
     steps:
       - checkout
       - add_ssh_keys:
