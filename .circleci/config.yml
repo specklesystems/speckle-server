@@ -57,7 +57,8 @@ workflows:
             - test-server
               
       - docker-build-and-publish-frontend:
-          filters: *filters-build
+          <<: *docker-hub-context
+          <<: *filters-build
           requires:
             - lint
 
