@@ -10,7 +10,7 @@ async function isLocalNetworkUrl(url) {
   let parsedUrl = new URL(url)
   let hostname = parsedUrl.hostname
   let ip = await new Promise((resolve, reject) => {
-    dns.lookup(hostname, (err, addr, fam) => {
+    dns.lookup(hostname, (err, addr) => {
       if (err) {
         reject(err)
       } else {
