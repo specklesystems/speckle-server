@@ -3,12 +3,20 @@
     <v-col class="text-truncate">
       <user-avatar :id="selfUser.id" :size="30" class="mr-2"></user-avatar>
 
-      <router-link class="text-decoration-none space-grotesk mx-1" :to="`/profile/${selfUser.id}`">
+      <router-link
+        class="text-decoration-none space-grotesk mx-1"
+        :to="`/profile/${selfUser.id}`"
+      >
         {{ selfUser.name }}
       </router-link>
     </v-col>
     <v-col cols="3" class="caption text-truncate">
-      <v-icon v-if="selfUser.verified" v-tooltip="'Verfied email'" small class="mr-2 primary--text">
+      <v-icon
+        v-if="selfUser.verified"
+        v-tooltip="'Verfied email'"
+        small
+        class="mr-2 primary--text"
+      >
         mdi-shield-check
       </v-icon>
       <v-icon v-else v-tooltip="'Email not verified'" small class="mr-2 warning--text">
@@ -45,7 +53,13 @@
       ></v-select>
       <!-- </v-col>
     <v-col cols="1" class="text-right"> -->
-      <v-btn v-tooltip="'Delete user'" small icon color="error" @click="$emit('delete', selfUser)">
+      <v-btn
+        v-tooltip="'Delete user'"
+        small
+        icon
+        color="error"
+        @click="$emit('delete', selfUser)"
+      >
         <v-icon small>mdi-delete-outline</v-icon>
       </v-btn>
     </v-col>

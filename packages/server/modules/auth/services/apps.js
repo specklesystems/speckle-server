@@ -26,12 +26,15 @@ module.exports = {
     let app = await ServerApps().select('*').where({ id: id }).first()
     if (!app) return null
 
-    let appScopeNames = (await ServerAppsScopes().select('scopeName').where({ appId: id })).map(
-      (s) => s.scopeName
-    )
+    let appScopeNames = (
+      await ServerAppsScopes().select('scopeName').where({ appId: id })
+    ).map((s) => s.scopeName)
 
     app.scopes = allScopes.filter((scope) => appScopeNames.indexOf(scope.name) !== -1)
-    app.author = await Users().select('id', 'name', 'avatar').where({ id: app.authorId }).first()
+    app.author = await Users()
+      .select('id', 'name', 'avatar')
+      .where({ id: app.authorId })
+      .first()
     return app
   },
 
@@ -119,7 +122,9 @@ module.exports = {
     delete app.trustByDefault
 
     await ServerApps().insert(app)
-    await ServerAppsScopes().insert(scopes.map((s) => ({ appId: app.id, scopeName: s })))
+    await ServerAppsScopes().insert(
+      scopes.map((s) => ({ appId: app.id, scopeName: s }))
+    )
     return { id: app.id, secret: app.secret }
   },
 
@@ -132,7 +137,9 @@ module.exports = {
       // Flush existing app scopes
       await ServerAppsScopes().where({ appId: app.id }).del()
       // Update new scopes
-      await ServerAppsScopes().insert(app.scopes.map((s) => ({ appId: app.id, scopeName: s })))
+      await ServerAppsScopes().insert(
+        app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
+      )
     }
 
     delete app.secret
@@ -174,10 +181,14 @@ module.exports = {
     let resAccessCodeDelete = await AuthorizationCodes()
       .where({ appId: appId, userId: userId })
       .del()
-    let resRefreshTokenDelete = await RefreshTokens().where({ appId: appId, userId: userId }).del()
+    let resRefreshTokenDelete = await RefreshTokens()
+      .where({ appId: appId, userId: userId })
+      .del()
     let resApiTokenDelete = await ApiTokens()
       .whereIn('id', (qb) => {
-        qb.select('tokenId').from('user_server_app_tokens').where({ appId: appId, userId: userId })
+        qb.select('tokenId')
+          .from('user_server_app_tokens')
+          .where({ appId: appId, userId: userId })
       })
       .del()
 
@@ -200,7 +211,8 @@ module.exports = {
     let code = await AuthorizationCodes().select().where({ id: accessCode }).first()
 
     if (!code) throw new Error('Access code not found.')
-    if (code.appId !== appId) throw new Error('Invalid request: application id does not match.')
+    if (code.appId !== appId)
+      throw new Error('Invalid request: application id does not match.')
 
     await AuthorizationCodes().where({ id: accessCode }).del()
 
@@ -253,7 +265,10 @@ module.exports = {
     let refreshTokenId = refreshToken.slice(0, 10)
     let refreshTokenContent = refreshToken.slice(10, 42)
 
-    let refreshTokenDb = await RefreshTokens().select('*').where({ id: refreshTokenId }).first()
+    let refreshTokenDb = await RefreshTokens()
+      .select('*')
+      .where({ id: refreshTokenId })
+      .first()
 
     if (!refreshTokenDb) throw new Error('Invalid request')
 

@@ -1,15 +1,27 @@
 <template>
-  <v-card v-if="!$apollo.loading && action === 0" rounded="lg" class="py-4 elevation-10">
+  <v-card
+    v-if="!$apollo.loading && action === 0"
+    rounded="lg"
+    class="py-4 elevation-10"
+  >
     <v-card-text class="text-center">
       <user-avatar></user-avatar>
     </v-card-text>
     <v-card-text class="text-h5 font-weight-regular text-center pt-4">
-      <v-icon v-if="app.trustByDefault" class="mr-2 primary--text">mdi-shield-check</v-icon>
+      <v-icon v-if="app.trustByDefault" class="mr-2 primary--text">
+        mdi-shield-check
+      </v-icon>
       <b class="primary--text">{{ app.name }}</b>
       is requesting access to your Speckle account.
     </v-card-text>
     <v-card-text>
-      <v-expansion-panels v-if="!app.trustByDefault" v-model="panel" flat hover class="py-3">
+      <v-expansion-panels
+        v-if="!app.trustByDefault"
+        v-model="panel"
+        flat
+        hover
+        class="py-3"
+      >
         <v-expansion-panel>
           <v-expansion-panel-header class="">
             <b>App Info & Requested permissions ({{ app.scopes.length }})</b>

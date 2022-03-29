@@ -23,7 +23,9 @@ module.exports = {
             .first()
           if (!linkage) throw new Error('Commit not found')
           if (linkage.streamId !== streamId)
-            throw new Error('Stop hacking - that commit id is not part of the specified stream.')
+            throw new Error(
+              'Stop hacking - that commit id is not part of the specified stream.'
+            )
           break
         }
         case 'object': {
@@ -38,11 +40,15 @@ module.exports = {
           let comment = await Comments().where({ id: res.resourceId }).first()
           if (!comment) throw new Error('Comment not found')
           if (comment.streamId !== streamId)
-            throw new Error('Stop hacking - that comment is not part of the specified stream.')
+            throw new Error(
+              'Stop hacking - that comment is not part of the specified stream.'
+            )
           break
         }
         default:
-          throw Error(`resource type ${res.resourceType} is not supported as a comment target`)
+          throw Error(
+            `resource type ${res.resourceType} is not supported as a comment target`
+          )
       }
     }
   },
@@ -56,7 +62,8 @@ module.exports = {
 
     // Stream checks
     const streamResources = input.resources.filter((r) => r.resourceType === 'stream')
-    if (streamResources.length > 1) throw Error('Commenting on multiple streams is not supported')
+    if (streamResources.length > 1)
+      throw Error('Commenting on multiple streams is not supported')
 
     const [stream] = streamResources
     if (stream && stream.resourceId !== input.streamId)
@@ -102,7 +109,10 @@ module.exports = {
     await Comments().insert(comment)
     try {
       let commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
-      await module.exports.streamResourceCheck({ streamId: streamId, resources: [commentLink] })
+      await module.exports.streamResourceCheck({
+        streamId: streamId,
+        resources: [commentLink]
+      })
       await CommentLinks().insert({ commentId: comment.id, ...commentLink })
     } catch (e) {
       await Comments().where({ id: comment.id }).delete() // roll back
@@ -152,7 +162,9 @@ module.exports = {
   async archiveComment({ commentId, userId, streamId, archived = true }) {
     let comment = await Comments().where({ id: commentId }).first()
     if (!comment)
-      throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+      throw new Error(
+        `No comment ${commentId} exists, cannot change its archival status`
+      )
 
     let aclEntry = await knex('stream_acl')
       .select()

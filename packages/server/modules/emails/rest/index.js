@@ -3,7 +3,10 @@ const knex = require(`${appRoot}/db/knex`)
 
 const { getUserByEmail } = require(`${appRoot}/modules/core/services/users`)
 const { contextMiddleware } = require(`${appRoot}/modules/shared`)
-const { sendEmailVerification, isVerificationValid } = require('../services/verification')
+const {
+  sendEmailVerification,
+  isVerificationValid
+} = require('../services/verification')
 
 const Verifications = () => knex('email_verifications')
 const Users = () => knex('users')
@@ -15,7 +18,9 @@ module.exports = (app) => {
       if (!req.body.email) return res.status(400).send('Invalid request')
       const user = await getUserByEmail({ email: req.body.email })
       if (user.id !== req.context.userId) {
-        return res.status(403).send("Authenticated user email doesn't match the requested email")
+        return res
+          .status(403)
+          .send("Authenticated user email doesn't match the requested email")
       }
       const emailResult = await sendEmailVerification({ recipient: user.email })
 

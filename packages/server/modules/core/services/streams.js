@@ -13,7 +13,10 @@ const {
   setStreamFavorited,
   canUserFavoriteStream
 } = require('@/modules/core/repositories/streams')
-const { UnauthorizedAccessError, InvalidArgumentError } = require('@/modules/core/errors/base')
+const {
+  UnauthorizedAccessError,
+  InvalidArgumentError
+} = require('@/modules/core/errors/base')
 
 /**
  * Get base query for finding or counting user streams
@@ -51,7 +54,11 @@ module.exports = {
 
     // Create the stream & set up permissions
     let [{ id: streamId }] = await Streams.knex().returning('id').insert(stream)
-    await StreamAcl.knex().insert({ userId: ownerId, resourceId: streamId, role: 'stream:owner' })
+    await StreamAcl.knex().insert({
+      userId: ownerId,
+      resourceId: streamId,
+      role: 'stream:owner'
+    })
 
     // Create a default main branch
     await createBranch({
@@ -79,7 +86,9 @@ module.exports = {
     // upserts the existing role (sets a new one!)
     // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
     let query =
-      StreamAcl.knex().insert({ userId: userId, resourceId: streamId, role: role }).toString() +
+      StreamAcl.knex()
+        .insert({ userId: userId, resourceId: streamId, role: role })
+        .toString() +
       ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
     await knex.raw(query)
@@ -94,7 +103,9 @@ module.exports = {
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
 
     if (streamAclEntriesCount === 1)
-      throw new Error('Stream has only one ownership link left - cannot revoke permissions.')
+      throw new Error(
+        'Stream has only one ownership link left - cannot revoke permissions.'
+      )
 
     // TODO: below behaviour not correct. Flow:
     // Count owners
@@ -106,7 +117,10 @@ module.exports = {
       .first()
 
     if (aclEntry.role === 'stream:owner') {
-      let ownersCount = StreamAcl.knex().count({ resourceId: streamId, role: 'stream:owner' })
+      let ownersCount = StreamAcl.knex().count({
+        resourceId: streamId,
+        role: 'stream:owner'
+      })
       if (ownersCount === 1) throw new Error('Could not revoke permissions for user')
       else {
         await StreamAcl.knex().where({ resourceId: streamId, userId: userId }).del()
@@ -114,7 +128,9 @@ module.exports = {
       }
     }
 
-    let delCount = await StreamAcl.knex().where({ resourceId: streamId, userId: userId }).del()
+    let delCount = await StreamAcl.knex()
+      .where({ resourceId: streamId, userId: userId })
+      .del()
 
     if (delCount === 0) throw new Error('Could not revoke permissions for user')
 
@@ -155,7 +171,11 @@ module.exports = {
     const finalLimit = limit || 25
     const isPublicOnly = publicOnly !== false //defaults to true if not provided
 
-    const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
+    const query = getUserStreamsQueryBase({
+      userId,
+      publicOnly: isPublicOnly,
+      searchQuery
+    })
     query.columns(BASE_STREAM_COLUMNS).select()
 
     if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
@@ -171,7 +191,10 @@ module.exports = {
 
   async getStreams({ offset, limit, orderBy, visibility, searchQuery }) {
     let query = knex
-      .column('streams.*', knex.raw('coalesce(sum(pg_column_size(objects.data)),0) as size'))
+      .column(
+        'streams.*',
+        knex.raw('coalesce(sum(pg_column_size(objects.data)),0) as size')
+      )
       .select()
       .from('streams')
       .leftJoin('objects', 'streams.id', 'objects.streamId')
@@ -224,7 +247,11 @@ module.exports = {
   async getUserStreamsCount({ userId, publicOnly, searchQuery }) {
     const isPublicOnly = publicOnly !== false //defaults to true if not provided
 
-    const query = getUserStreamsQueryBase({ userId, publicOnly: isPublicOnly, searchQuery })
+    const query = getUserStreamsQueryBase({
+      userId,
+      publicOnly: isPublicOnly,
+      searchQuery
+    })
     query.count()
 
     let [res] = await query
@@ -254,9 +281,12 @@ module.exports = {
   async favoriteStream({ userId, streamId, favorited }) {
     // Check if user has access to stream
     if (!(await canUserFavoriteStream({ userId, streamId }))) {
-      throw new UnauthorizedAccessError("User doesn't have access to the specified stream", {
-        info: { userId, streamId }
-      })
+      throw new UnauthorizedAccessError(
+        "User doesn't have access to the specified stream",
+        {
+          info: { userId, streamId }
+        }
+      )
     }
 
     // Favorite/unfavorite the stream
@@ -306,7 +336,9 @@ module.exports = {
       throw new InvalidArgumentError('Invalid stream ID')
     }
 
-    return (await ctx.loaders.streams.getUserFavoriteData.load(streamId))?.createdAt || null
+    return (
+      (await ctx.loaders.streams.getUserFavoriteData.load(streamId))?.createdAt || null
+    )
   },
 
   /**

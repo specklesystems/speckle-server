@@ -79,7 +79,10 @@ export default class Coverter {
         await callback(await this[`${type}ToBufferGeometry`](obj.data || obj, scale))
         return
       } catch (e) {
-        console.warn(`(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`, e)
+        console.warn(
+          `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`,
+          e
+        )
       }
     }
 
@@ -98,10 +101,16 @@ export default class Coverter {
         try {
           let convertedElement = await this.convert(displayValue, scale)
           await callback(
-            new ObjectWrapper(convertedElement.bufferGeometry, obj, convertedElement.geometryType)
+            new ObjectWrapper(
+              convertedElement.bufferGeometry,
+              obj,
+              convertedElement.geometryType
+            )
           ) // use the parent's metadata!
         } catch (e) {
-          console.warn(`(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`)
+          console.warn(
+            `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
+          )
         }
       } else {
         for (let element of displayValue) {
@@ -137,13 +146,21 @@ export default class Coverter {
     // traverses the object in case there's any sub-objects we can convert.
     for (let prop in target) {
       if (prop === '__parents' || prop === 'bbox') continue
-      if (['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)) continue
+      if (
+        ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)
+      )
+        continue
       if (typeof target[prop] !== 'object' || target[prop] === null) continue
 
       if (this.activePromises >= this.maxChildrenPromises) {
         await this.traverseAndConvert(target[prop], callback, scale, obj.__parents)
       } else {
-        let childPromise = this.traverseAndConvert(target[prop], callback, scale, obj.__parents)
+        let childPromise = this.traverseAndConvert(
+          target[prop],
+          callback,
+          scale,
+          obj.__parents
+        )
         childrenConversionPromisses.push(childPromise)
       }
     }
@@ -215,7 +232,9 @@ export default class Coverter {
   getSpeckleType(obj) {
     let type = 'Base'
     if (obj.data)
-      type = obj.data.speckle_type ? obj.data.speckle_type.split('.').reverse()[0] : type
+      type = obj.data.speckle_type
+        ? obj.data.speckle_type.split('.').reverse()[0]
+        : type
     else type = obj.speckle_type ? obj.speckle_type.split('.').reverse()[0] : type
     return type
   }
@@ -263,7 +282,9 @@ export default class Coverter {
     buffer.setAttribute(
       'position',
       new THREE.Float32BufferAttribute(
-        !scale || conversionFactor === 1 ? vertices : vertices.map((v) => v * conversionFactor),
+        !scale || conversionFactor === 1
+          ? vertices
+          : vertices.map((v) => v * conversionFactor),
         3
       )
     )
@@ -279,7 +300,10 @@ export default class Coverter {
 
       buffer.setAttribute(
         'color',
-        new THREE.BufferAttribute(new Float32Array(buffer.attributes.position.count * 3), 3)
+        new THREE.BufferAttribute(
+          new Float32Array(buffer.attributes.position.count * 3),
+          3
+        )
       )
 
       for (let i = 0; i < buffer.attributes.position.count; i++) {
@@ -353,7 +377,11 @@ export default class Coverter {
           indices.push(faces[k + 1], faces[k + 2], faces[k + 3])
         } else {
           // Quad or N-gon face
-          const triangulation = MeshTriangulationHelper.triangulateFace(k, faces, vertices)
+          const triangulation = MeshTriangulationHelper.triangulateFace(
+            k,
+            faces,
+            vertices
+          )
           indices.push(...triangulation)
         }
 
@@ -369,7 +397,9 @@ export default class Coverter {
       buffer.setAttribute(
         'position',
         new THREE.Float32BufferAttribute(
-          !scale || conversionFactor === 1 ? vertices : vertices.map((v) => v * conversionFactor),
+          !scale || conversionFactor === 1
+            ? vertices
+            : vertices.map((v) => v * conversionFactor),
           3
         )
       )
@@ -385,7 +415,10 @@ export default class Coverter {
 
         buffer.setAttribute(
           'color',
-          new THREE.BufferAttribute(new Float32Array(buffer.attributes.position.count * 3), 3)
+          new THREE.BufferAttribute(
+            new Float32Array(buffer.attributes.position.count * 3),
+            3
+          )
         )
 
         for (let i = 0; i < buffer.attributes.position.count; i++) {

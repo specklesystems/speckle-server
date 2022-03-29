@@ -59,7 +59,10 @@ describe('Streams @core-streams', () => {
       expect(testStream).to.have.property('id')
       expect(testStream.id).to.not.be.null
 
-      secondTestStream.id = await createStream({ ...secondTestStream, ownerId: userOne.id })
+      secondTestStream.id = await createStream({
+        ...secondTestStream,
+        ownerId: userOne.id
+      })
       expect(secondTestStream.id).to.not.be.null
     })
 
@@ -87,7 +90,10 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should search all streams of a user', async () => {
-      let { streams, cursor } = await getUserStreams({ userId: userOne.id, searchQuery: 'woo' })
+      let { streams, cursor } = await getUserStreams({
+        userId: userOne.id,
+        searchQuery: 'woo'
+      })
       // console.log( res )
       expect(streams).to.have.lengthOf(1)
       expect(cursor).to.exist

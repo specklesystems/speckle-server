@@ -6,7 +6,12 @@
     } xxx-background: rgba(0.5, 0.5, 0.5, 0.5)`"
   >
     <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5 mouse">
-      <v-btn icon small class="background ml-2 elevation-10" @click="minimise = !minimise">
+      <v-btn
+        icon
+        small
+        class="background ml-2 elevation-10"
+        @click="minimise = !minimise"
+      >
         <v-icon v-if="!minimise" small>mdi-minus</v-icon>
         <v-icon v-else small>mdi-plus</v-icon>
       </v-btn>
@@ -20,7 +25,11 @@
       </v-btn>
     </div>
     <div v-show="!minimise" style="width: 100%" class="mouse">
-      <div v-if="!isComplete" class="warning rounded-xl py-2 caption mb-2 text-center" dense>
+      <div
+        v-if="!isComplete"
+        class="warning rounded-xl py-2 caption mb-2 text-center"
+        dense
+      >
         <v-icon x-small>mdi-alert-circle-outline</v-icon>
         This comment is targeting other resources.
         <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
@@ -29,8 +38,14 @@
         <v-progress-linear indeterminate />
       </div>
       <template v-for="(reply, index) in thread">
-        <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
-          <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
+        <div
+          v-if="showTime(index)"
+          :key="index + 'date'"
+          class="d-flex justify-center mouse"
+        >
+          <div
+            class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text"
+          >
             {{ new Date(reply.createdAt).toLocaleString() }}
             <timeago :datetime="reply.createdAt" class="font-italic ma-1"></timeago>
           </div>
@@ -54,7 +69,10 @@
       </template>
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
-          <div class="px-4 py-2 caption mb-2 background rounded-xl" v-show="whoIsTyping.length > 0">
+          <div
+            class="px-4 py-2 caption mb-2 background rounded-xl"
+            v-show="whoIsTyping.length > 0"
+          >
             {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
@@ -110,7 +128,9 @@
               </v-app-bar-nav-icon>
               <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
               <v-spacer></v-spacer>
-              <v-btn icon @click="showArchiveDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+              <v-btn icon @click="showArchiveDialog = false">
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
             </v-toolbar>
             <v-card-text class="mt-4">
               This comment thread will be archived. Are you sure?
@@ -124,7 +144,13 @@
         </v-dialog>
       </div>
       <div v-else>
-        <v-btn block depressed color="primary" class="rounded-xl" @click="$loginAndSetRedirect()">
+        <v-btn
+          block
+          depressed
+          color="primary"
+          class="rounded-xl"
+          @click="$loginAndSetRedirect()"
+        >
           <v-icon small class="mr-1">mdi-account</v-icon>
           Sign in to reply
         </v-btn>
@@ -273,7 +299,10 @@ export default {
     canArchiveThread() {
       if (!this.comment || !this.stream) return false
       if (!this.stream.role) return false
-      if (this.comment.authorId === this.$userId() || this.stream.role === 'stream:owner')
+      if (
+        this.comment.authorId === this.$userId() ||
+        this.stream.role === 'stream:owner'
+      )
         return true
     },
     thread() {
@@ -323,7 +352,10 @@ export default {
               commentView(streamId: $streamId, commentId: $commentId)
             }
           `,
-          variables: { streamId: this.$route.params.streamId, commentId: this.comment.id }
+          variables: {
+            streamId: this.$route.params.streamId,
+            commentId: this.comment.id
+          }
         })
 
         // eslint-disable-next-line vue/no-mutating-props
@@ -342,7 +374,8 @@ export default {
     setInterval(() => {
       let now = Date.now()
       for (let i = this.whoIsTyping.length - 1; i >= 0; i--) {
-        if (Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000) this.whoIsTyping.splice(i, 1)
+        if (Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000)
+          this.whoIsTyping.splice(i, 1)
       }
     }, 5000)
   },
@@ -362,7 +395,11 @@ export default {
       await this.$apollo.mutate({
         mutation: gql`
           mutation typingUpdate($sId: String!, $cId: String!, $d: JSONObject) {
-            userCommentThreadActivityBroadcast(streamId: $sId, commentId: $cId, data: $d)
+            userCommentThreadActivityBroadcast(
+              streamId: $sId
+              commentId: $cId
+              data: $d
+            )
           }
         `,
         variables: {

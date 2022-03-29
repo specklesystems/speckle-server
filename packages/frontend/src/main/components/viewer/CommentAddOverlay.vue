@@ -37,7 +37,11 @@
             <v-icon v-else dark x-small>mdi-close</v-icon>
           </v-btn>
           <v-slide-x-transition>
-            <div v-if="expand && !$vuetify.breakpoint.xs" style="width: 100%" class="d-flex">
+            <div
+              v-if="expand && !$vuetify.breakpoint.xs"
+              style="width: 100%"
+              class="d-flex"
+            >
               <v-textarea
                 v-if="$loggedIn()"
                 v-model="commentText"
@@ -160,7 +164,10 @@ export default {
   },
   mounted() {
     window.__viewer.on('select', debounce(this.handleSelect, 10))
-    window.__viewer.cameraHandler.controls.addEventListener('update', this.updateCommentBubble)
+    window.__viewer.cameraHandler.controls.addEventListener(
+      'update',
+      this.updateCommentBubble
+    )
     // this.$refs.commentTextArea.calculateInputHeight()
     document.addEventListener(
       'keyup',
@@ -258,8 +265,16 @@ export default {
       if (!this.$refs.commentButton) return
       this.visible = true
 
-      let projectedLocation = new THREE.Vector3(info.location.x, info.location.y, info.location.z)
-      this.location = new THREE.Vector3(info.location.x, info.location.y, info.location.z)
+      let projectedLocation = new THREE.Vector3(
+        info.location.x,
+        info.location.y,
+        info.location.z
+      )
+      this.location = new THREE.Vector3(
+        info.location.x,
+        info.location.y,
+        info.location.z
+      )
 
       let cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
@@ -267,8 +282,10 @@ export default {
       let collapsedSize = this.$refs.commentButton.clientWidth
       collapsedSize = 36
       const mappedLocation = new THREE.Vector3(
-        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth - collapsedSize / 2,
-        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight - collapsedSize / 1,
+        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
+          collapsedSize / 2,
+        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
+          collapsedSize / 1,
         0
       )
       this.$refs.commentButton.style.transform = ''
@@ -287,8 +304,10 @@ export default {
       let collapsedSize = this.$refs.commentButton.clientWidth
       collapsedSize = 36
       const mappedLocation = new THREE.Vector3(
-        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth - collapsedSize / 2,
-        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight - collapsedSize / 1,
+        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
+          collapsedSize / 2,
+        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
+          collapsedSize / 1,
         0
       )
       this.$refs.commentButton.style.transform = ''

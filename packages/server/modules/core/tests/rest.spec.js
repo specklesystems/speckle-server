@@ -14,8 +14,16 @@ const { createPersonalAccessToken } = require('../services/tokens')
 const { createStream } = require('../services/streams')
 
 describe('Upload/Download Routes @api-rest', () => {
-  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wowwow8charsplease' }
-  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wowwow8charsplease' }
+  let userA = {
+    name: 'd1',
+    email: 'd.1@speckle.systems',
+    password: 'wowwow8charsplease'
+  }
+  let userB = {
+    name: 'd2',
+    email: 'd.2@speckle.systems',
+    password: 'wowwow8charsplease'
+  }
 
   let testStream = {
     name: 'Test Stream 01',
@@ -29,31 +37,42 @@ describe('Upload/Download Routes @api-rest', () => {
     ;({ app } = await beforeEachContext())
 
     userA.id = await createUser(userA)
-    userA.token = `Bearer ${await createPersonalAccessToken(userA.id, 'test token user A', [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
-    ])}`
+    userA.token = `Bearer ${await createPersonalAccessToken(
+      userA.id,
+      'test token user A',
+      [
+        'streams:read',
+        'streams:write',
+        'users:read',
+        'users:email',
+        'tokens:write',
+        'tokens:read',
+        'profile:read',
+        'profile:email'
+      ]
+    )}`
 
     userB.id = await createUser(userB)
-    userB.token = `Bearer ${await createPersonalAccessToken(userB.id, 'test token user B', [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
-    ])}`
+    userB.token = `Bearer ${await createPersonalAccessToken(
+      userB.id,
+      'test token user B',
+      [
+        'streams:read',
+        'streams:write',
+        'users:read',
+        'users:email',
+        'tokens:write',
+        'tokens:read',
+        'profile:read',
+        'profile:email'
+      ]
+    )}`
 
     testStream.id = await createStream({ ...testStream, ownerId: userA.id })
-    privateTestStream.id = await createStream({ ...privateTestStream, ownerId: userA.id })
+    privateTestStream.id = await createStream({
+      ...privateTestStream,
+      ownerId: userA.id
+    })
   })
 
   it('Should not allow download requests without an authorization token or valid streamId', async () => {
@@ -134,7 +153,9 @@ describe('Upload/Download Routes @api-rest', () => {
 
   it('Should not allow upload requests without an authorization token or valid streamId', async () => {
     // invalid token and streamId
-    let res = await request(app).post('/objects/wow_hack').set('Authorization', 'this is a hoax')
+    let res = await request(app)
+      .post('/objects/wow_hack')
+      .set('Authorization', 'this is a hoax')
     expect(res).to.have.status(401)
 
     // invalid token
@@ -306,7 +327,10 @@ describe('Upload/Download Routes @api-rest', () => {
             assert(o[objBatches[0][i].id] === true, 'Server is missing an object')
           }
           for (let i = 0; i < fakeIds.length; i++) {
-            assert(o[fakeIds[i]] === false, 'Server wrongly reports it has an extra object')
+            assert(
+              o[fakeIds[i]] === false,
+              'Server wrongly reports it has an extra object'
+            )
           }
           done()
         } catch (err) {

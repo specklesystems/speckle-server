@@ -10,7 +10,10 @@ module.exports = class IFCParser {
   async parse(data) {
     if (this.api.wasmModule === undefined) await this.api.Init()
 
-    this.modelId = this.api.OpenModel(data, { COORDINATE_TO_ORIGIN: true, USE_FAST_BOOLS: true })
+    this.modelId = this.api.OpenModel(data, {
+      COORDINATE_TO_ORIGIN: true,
+      USE_FAST_BOOLS: true
+    })
 
     this.projectId = this.api.GetLineIDsWithType(this.modelId, WebIFC.IFCPROJECT).get(0)
 
@@ -50,7 +53,10 @@ module.exports = class IFCParser {
         let matrix = placedGeom.flatTransformation
         let raw = {
           color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
-          vertices: this.api.GetVertexArray(geom.GetVertexData(), geom.GetVertexDataSize()),
+          vertices: this.api.GetVertexArray(
+            geom.GetVertexData(),
+            geom.GetVertexDataSize()
+          ),
           indices: this.api.GetIndexArray(geom.GetIndexData(), geom.GetIndexDataSize())
         }
 
@@ -61,7 +67,8 @@ module.exports = class IFCParser {
             y = vertices[k + 1],
             z = vertices[k + 2]
           vertices[k] = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]
-          vertices[k + 1] = (matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14]) * -1
+          vertices[k + 1] =
+            (matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14]) * -1
           vertices[k + 2] = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13]
         }
 
@@ -80,7 +87,9 @@ module.exports = class IFCParser {
           area: 0,
           faces: spcklFaces,
           vertices: Array.from(vertices),
-          renderMaterial: placedGeom.color ? this.colorToMaterial(placedGeom.color) : null
+          renderMaterial: placedGeom.color
+            ? this.colorToMaterial(placedGeom.color)
+            : null
         }
 
         let id = await this.serverApi.saveObject(spcklMesh)
@@ -106,7 +115,9 @@ module.exports = class IFCParser {
     // If array, traverse all items in it.
     if (Array.isArray(element)) {
       return await Promise.all(
-        element.map(async (el) => await this.traverse(el, recursive, depth + 1, specialTypes))
+        element.map(
+          async (el) => await this.traverse(el, recursive, depth + 1, specialTypes)
+        )
       )
     }
 
@@ -117,13 +128,19 @@ module.exports = class IFCParser {
       )
     }
 
-    if (this.cache[element.expressID.toString()]) return this.cache[element.expressID.toString()]
+    if (this.cache[element.expressID.toString()])
+      return this.cache[element.expressID.toString()]
     // If you got here -> It's an IFC Element: create base object, upload and return ref.
     // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
     // Traverse all key/value pairs first.
     for (let key of Object.keys(element)) {
-      element[key] = await this.traverse(element[key], recursive, depth + 1, specialTypes)
+      element[key] = await this.traverse(
+        element[key],
+        recursive,
+        depth + 1,
+        specialTypes
+      )
     }
 
     // Assign speckle_type and empty closure table.
@@ -162,7 +179,9 @@ module.exports = class IFCParser {
       'RelatedObjects'
     )
     if (psetsIds.length > 0)
-      element.rawPsets = psetsIds.map((childId) => this.api.GetLine(this.modelId, childId, true))
+      element.rawPsets = psetsIds.map((childId) =>
+        this.api.GetLine(this.modelId, childId, true)
+      )
 
     // Find related type properties
     const typePropsId = this.getAllRelatedItemsOfType(
@@ -243,7 +262,11 @@ module.exports = class IFCParser {
       }
     }
 
-    if (this.productGeo[element.expressID] || element.spatialChildren || element.children) {
+    if (
+      this.productGeo[element.expressID] ||
+      element.spatialChildren ||
+      element.children
+    ) {
       let id = await this.serverApi.saveObject(element)
       let ref = { speckle_type: 'reference', referencedId: id }
       this.cache[element.expressID.toString()] = ref
@@ -256,7 +279,15 @@ module.exports = class IFCParser {
     }
   }
 
-  async processSubElements(element, key, newKey, isSpecial, recursive, depth, specialTypes) {
+  async processSubElements(
+    element,
+    key,
+    newKey,
+    isSpecial,
+    recursive,
+    depth,
+    specialTypes
+  ) {
     if (element[key]) {
       if (!isSpecial) element[newKey] = []
       let childCount = {}
@@ -275,8 +306,11 @@ module.exports = class IFCParser {
 
           // adds to parent (this element) the child's closure tree.
           if (this.closureCache[child.expressID.toString()]) {
-            for (let key of Object.keys(this.closureCache[child.expressID.toString()])) {
-              element.__closure[key] = this.closureCache[child.expressID.toString()][key] + 1
+            for (let key of Object.keys(
+              this.closureCache[child.expressID.toString()]
+            )) {
+              element.__closure[key] =
+                this.closureCache[child.expressID.toString()][key] + 1
             }
           }
         }

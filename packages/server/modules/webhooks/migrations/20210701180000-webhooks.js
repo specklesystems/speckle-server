@@ -16,7 +16,11 @@ exports.up = async (knex) => {
 
   await knex.schema.createTable('webhooks_events', (table) => {
     table.string('id').primary()
-    table.string('webhookId').references('id').inTable('webhooks_config').onDelete('cascade')
+    table
+      .string('webhookId')
+      .references('id')
+      .inTable('webhooks_config')
+      .onDelete('cascade')
 
     table.integer('status').notNullable().defaultTo(0)
     table.text('statusInfo').notNullable().defaultTo('Pending')

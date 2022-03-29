@@ -49,8 +49,12 @@ async function registerDefaultApp(app) {
 async function updateDefaultApp(app, existingApp) {
   existingApp.scopes = existingApp.scopes.map((s) => s.name)
 
-  let scopeDiffA = app.scopes.filter((scope) => existingApp.scopes.indexOf(scope) === -1)
-  let scopeDiffB = existingApp.scopes.filter((scope) => app.scopes.indexOf(scope) === -1)
+  let scopeDiffA = app.scopes.filter(
+    (scope) => existingApp.scopes.indexOf(scope) === -1
+  )
+  let scopeDiffB = existingApp.scopes.filter(
+    (scope) => app.scopes.indexOf(scope) === -1
+  )
 
   if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
     await revokeExistingAppCredentials({ appId: app.id })
@@ -66,7 +70,8 @@ let SpeckleWebApp = {
   id: 'spklwebapp',
   secret: 'spklwebapp',
   name: 'Speckle Web Manager',
-  description: 'The Speckle Web Manager is your one-stop place to manage and coordinate your data.',
+  description:
+    'The Speckle Web Manager is your one-stop place to manage and coordinate your data.',
   trustByDefault: true,
   public: true,
   redirectUrl: process.env.CANONICAL_URL,
@@ -88,11 +93,18 @@ let SpeckleDesktopApp = {
   id: 'sdm',
   secret: 'sdm',
   name: 'Speckle Desktop Manager',
-  description: 'Manages local installations of Speckle connectors, kits and everything else.',
+  description:
+    'Manages local installations of Speckle connectors, kits and everything else.',
   trustByDefault: true,
   public: true,
   redirectUrl: 'speckle://account',
-  scopes: ['streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read']
+  scopes: [
+    'streams:read',
+    'streams:write',
+    'profile:read',
+    'profile:email',
+    'users:read'
+  ]
 }
 
 let SpeckleConnectorApp = {
@@ -103,7 +115,13 @@ let SpeckleConnectorApp = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'http://localhost:29363',
-  scopes: ['streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read']
+  scopes: [
+    'streams:read',
+    'streams:write',
+    'profile:read',
+    'profile:email',
+    'users:read'
+  ]
 }
 
 let SpeckleExcel = {
@@ -115,5 +133,11 @@ let SpeckleExcel = {
   trustByDefault: true,
   public: true,
   redirectUrl: 'https://speckle-excel.netlify.app',
-  scopes: ['streams:read', 'streams:write', 'profile:read', 'profile:email', 'users:read']
+  scopes: [
+    'streams:read',
+    'streams:write',
+    'profile:read',
+    'profile:email',
+    'users:read'
+  ]
 }

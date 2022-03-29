@@ -4,7 +4,10 @@ const crs = require('crypto-random-string')
 const knex = require(`${appRoot}/db/knex`)
 const sanitizeHtml = require('sanitize-html')
 
-const { getUserByEmail, getUserById } = require(`${appRoot}/modules/core/services/users`)
+const {
+  getUserByEmail,
+  getUserById
+} = require(`${appRoot}/modules/core/services/users`)
 
 const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
 const { sendEmail } = require(`${appRoot}/modules/emails`)
@@ -14,13 +17,22 @@ const { grantPermissionsStream } = require(`${appRoot}/modules/core/services/str
 const Invites = () => knex('server_invites')
 
 module.exports = {
-  async createAndSendInvite({ email, inviterId, message, resourceTarget, resourceId, role }) {
+  async createAndSendInvite({
+    email,
+    inviterId,
+    message,
+    resourceTarget,
+    resourceId,
+    role
+  }) {
     // check if email is already registered as a user
     email = email.toLowerCase()
     let existingUser = await getUserByEmail({ email })
 
     if (existingUser)
-      throw new Error('This email is already associated with an account on this server!')
+      throw new Error(
+        'This email is already associated with an account on this server!'
+      )
 
     if (message) {
       if (message.length >= 1024) {
@@ -48,14 +60,19 @@ module.exports = {
     await Invites().insert(invite)
 
     let serverInfo = await getServerInfo()
-    let inviteLink = new URL(`/authn/register?inviteId=${invite.id}`, process.env.CANONICAL_URL)
+    let inviteLink = new URL(
+      `/authn/register?inviteId=${invite.id}`,
+      process.env.CANONICAL_URL
+    )
 
     let emailText, emailHtml, subject
 
     emailText = `
 Hello!
 
-${inviter.name} has just sent you this invitation to join the ${serverInfo.name} Speckle Server (${
+${inviter.name} has just sent you this invitation to join the ${
+      serverInfo.name
+    } Speckle Server (${
       process.env.CANONICAL_URL
     })! To accept their invitation, just click on the following link:
 
@@ -76,7 +93,9 @@ This email was sent from ${serverInfo.name} at ${
 Hello!
 <br>
 <br>
-${inviter.name} has just sent you this invitation to join the ${serverInfo.name} Speckle Server!
+${inviter.name} has just sent you this invitation to join the ${
+      serverInfo.name
+    } Speckle Server!
 To accept the invitation, <a href="${inviteLink}" rel="notrack">click here</a>!
 
 <br>

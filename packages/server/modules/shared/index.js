@@ -110,7 +110,8 @@ async function validateServerRole(context, requiredRole) {
   let myRole = roles.find((r) => r.name === context.role)
 
   if (role === null) new ApolloError('Invalid server role specified')
-  if (myRole === null) new ForbiddenError('You do not have the required server role (null)')
+  if (myRole === null)
+    new ForbiddenError('You do not have the required server role (null)')
   if (myRole.weight >= role.weight) return true
 
   throw new ForbiddenError('You do not have the required server role')
@@ -142,7 +143,8 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
 
   let role = roles.find((r) => r.name === requiredRole)
 
-  if (role === undefined || role === null) throw new ApolloError('Unknown role: ' + requiredRole)
+  if (role === undefined || role === null)
+    throw new ApolloError('Unknown role: ' + requiredRole)
 
   try {
     let { isPublic } = await knex(role.resourceTarget)
@@ -151,7 +153,9 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
       .first()
     if (isPublic && roles[requiredRole] < 200) return true
   } catch (e) {
-    throw new ApolloError(`Resource of type ${role.resourceTarget} with ${resourceId} not found`)
+    throw new ApolloError(
+      `Resource of type ${role.resourceTarget} with ${resourceId} not found`
+    )
   }
 
   let userAclEntry = await knex(role.aclTableName)
@@ -159,7 +163,8 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     .where({ resourceId: resourceId, userId: userId })
     .first()
 
-  if (!userAclEntry) throw new ForbiddenError('You do not have access to this resource.')
+  if (!userAclEntry)
+    throw new ForbiddenError('You do not have access to this resource.')
 
   userAclEntry.role = roles.find((r) => r.name === userAclEntry.role)
 

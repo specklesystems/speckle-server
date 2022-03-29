@@ -50,10 +50,10 @@ async function doTask(task) {
       let insertionObject = { id: previewId, data: imgBuffer }
       //await Previews().insert( insertionObject )
       //let dbQuery = Previews().insert( insertionObject ).toString( ) + ' on conflict do nothing'
-      await knex.raw('INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING', [
-        previewId,
-        imgBuffer
-      ])
+      await knex.raw(
+        'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
+        [previewId, imgBuffer]
+      )
 
       metadata[angle] = previewId
     }

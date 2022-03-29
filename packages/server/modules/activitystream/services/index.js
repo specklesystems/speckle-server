@@ -8,7 +8,15 @@ const StreamActivity = () => knex('stream_activity')
 const StreamAcl = () => knex('stream_acl')
 
 module.exports = {
-  async saveActivity({ streamId, resourceType, resourceId, actionType, userId, info, message }) {
+  async saveActivity({
+    streamId,
+    resourceType,
+    resourceId,
+    actionType,
+    userId,
+    info,
+    message
+  }) {
     let dbObject = {
       streamId, // abc
       resourceType, // "commit"
@@ -29,7 +37,11 @@ module.exports = {
           data: info
         }
       }
-      dispatchStreamEvent({ streamId, event: actionType, eventPayload: webhooksPayload })
+      dispatchStreamEvent({
+        streamId,
+        event: actionType,
+        eventPayload: webhooksPayload
+      })
     }
   },
 
@@ -167,7 +179,9 @@ module.exports = {
   async getTimelineCount({ userId, after, before }) {
     let query = StreamAcl()
       .count()
-      .innerJoin('stream_activity', { 'stream_acl.resourceId': 'stream_activity.streamId' })
+      .innerJoin('stream_activity', {
+        'stream_acl.resourceId': 'stream_activity.streamId'
+      })
       .where({ 'stream_acl.userId': userId })
     if (after) query.andWhere('stream_activity.time', '>', after)
     if (before) query.andWhere('stream_activity.time', '<', before)

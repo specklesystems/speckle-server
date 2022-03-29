@@ -17,7 +17,9 @@ module.exports = {
   async createWebhook({ streamId, url, description, secret, enabled, triggers }) {
     let streamWebhookCount = await module.exports.getStreamWebhooksCount({ streamId })
     if (streamWebhookCount >= MAX_STREAM_WEBHOOKS) {
-      throw new Error(`Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})`)
+      throw new Error(
+        `Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})`
+      )
     }
 
     let triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
@@ -56,7 +58,10 @@ module.exports = {
       fieldsToUpdate.triggers = triggersObj
     }
 
-    let [{ id: res }] = await WebhooksConfig().returning('id').where({ id }).update(fieldsToUpdate)
+    let [{ id: res }] = await WebhooksConfig()
+      .returning('id')
+      .where({ id })
+      .update(fieldsToUpdate)
     return res
   },
 
@@ -94,7 +99,10 @@ module.exports = {
 
     // Add user info (except email and pwd)
     if (eventPayload.userId) {
-      eventPayload.user = await Users().where({ id: eventPayload.userId }).select('*').first()
+      eventPayload.user = await Users()
+        .where({ id: eventPayload.userId })
+        .select('*')
+        .first()
       if (eventPayload.user) {
         delete eventPayload.user.passwordDigest
         delete eventPayload.user.email

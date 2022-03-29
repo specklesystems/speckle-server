@@ -1,14 +1,24 @@
 <template>
   <div>
     <v-row v-if="commits.length != 0" dense>
-      <v-col v-for="commit in commits" :key="commit.id + 'card'" cols="12" sm="6" md="4">
+      <v-col
+        v-for="commit in commits"
+        :key="commit.id + 'card'"
+        cols="12"
+        sm="6"
+        md="4"
+      >
         <v-card @click.stop="$emit('add-resource', commit.id)">
           <preview-image
             :height="180"
             :url="`/preview/${streamId}/commits/${commit.id}`"
           ></preview-image>
           <div style="position: absolute; top: 10px; right: 20px">
-            <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
+            <commit-received-receipts
+              :stream-id="streamId"
+              :commit-id="commit.id"
+              shadow
+            />
           </div>
           <div style="position: absolute; top: 10px; left: 12px">
             <source-app-avatar :application-name="commit.sourceApplication" />
@@ -43,7 +53,8 @@ export default {
     InfiniteLoading: () => import('vue-infinite-loading'),
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
+    CommitReceivedReceipts: () =>
+      import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
   props: ['streamId', 'branchName'],

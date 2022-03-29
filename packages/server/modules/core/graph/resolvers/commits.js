@@ -1,7 +1,12 @@
 'use strict'
 
 const appRoot = require('app-root-path')
-const { ForbiddenError, UserInputError, ApolloError, withFilter } = require('apollo-server-express')
+const {
+  ForbiddenError,
+  UserInputError,
+  ApolloError,
+  withFilter
+} = require('apollo-server-express')
 const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
 const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
 
@@ -35,7 +40,9 @@ module.exports = {
   Stream: {
     async commits(parent, args, context, info) {
       if (args.limit && args.limit > 100)
-        throw new UserInputError('Cannot return more than 100 items, please use pagination.')
+        throw new UserInputError(
+          'Cannot return more than 100 items, please use pagination.'
+        )
       let { commits: items, cursor } = await getCommitsByStreamId({
         streamId: parent.id,
         limit: args.limit,
@@ -54,7 +61,9 @@ module.exports = {
       if (!args.id) {
         let { commits } = await getCommitsByStreamId({ streamId: parent.id, limit: 1 })
         if (commits.length !== 0) return commits[0]
-        throw new ApolloError('Cannot retrieve commit (there are no commits in this stream).')
+        throw new ApolloError(
+          'Cannot retrieve commit (there are no commits in this stream).'
+        )
       }
       let c = await getCommitById({ streamId: parent.id, id: args.id })
       return c
@@ -65,7 +74,9 @@ module.exports = {
       let publicOnly = context.userId !== parent.id
       let totalCount = await getCommitsTotalCountByUserId({ userId: parent.id })
       if (args.limit && args.limit > 100)
-        throw new UserInputError('Cannot return more than 100 items, please use pagination.')
+        throw new UserInputError(
+          'Cannot return more than 100 items, please use pagination.'
+        )
       let { commits: items, cursor } = await getCommitsByUserId({
         userId: parent.id,
         limit: args.limit,
@@ -79,7 +90,9 @@ module.exports = {
   Branch: {
     async commits(parent, args, context, info) {
       if (args.limit && args.limit > 100)
-        throw new UserInputError('Cannot return more than 100 items, please use pagination.')
+        throw new UserInputError(
+          'Cannot return more than 100 items, please use pagination.'
+        )
       let { commits, cursor } = await getCommitsByBranchId({
         branchId: parent.id,
         limit: args.limit,
@@ -92,13 +105,22 @@ module.exports = {
   },
   Mutation: {
     async commitCreate(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.commit.streamId, 'stream:contributor')
+      await authorizeResolver(
+        context.userId,
+        args.commit.streamId,
+        'stream:contributor'
+      )
 
-      if (!(await respectsLimits({ action: 'COMMIT_CREATE', source: context.userId }))) {
+      if (
+        !(await respectsLimits({ action: 'COMMIT_CREATE', source: context.userId }))
+      ) {
         throw new Error('Blocked due to rate-limiting. Try again later')
       }
 
-      let id = await createCommitByBranchName({ ...args.commit, authorId: context.userId })
+      let id = await createCommitByBranchName({
+        ...args.commit,
+        authorId: context.userId
+      })
       if (id) {
         await saveActivity({
           streamId: args.commit.streamId,
@@ -119,9 +141,16 @@ module.exports = {
     },
 
     async commitUpdate(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.commit.streamId, 'stream:contributor')
+      await authorizeResolver(
+        context.userId,
+        args.commit.streamId,
+        'stream:contributor'
+      )
 
-      let commit = await getCommitById({ streamId: args.commit.streamId, id: args.commit.id })
+      let commit = await getCommitById({
+        streamId: args.commit.streamId,
+        id: args.commit.id
+      })
       if (commit.authorId !== context.userId)
         throw new ForbiddenError('Only the author of a commit may update it.')
 
@@ -154,7 +183,10 @@ module.exports = {
         await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
       }
 
-      let commit = await getCommitById({ streamId: args.input.streamId, id: args.input.commitId })
+      let commit = await getCommitById({
+        streamId: args.input.streamId,
+        id: args.input.commitId
+      })
       let user = await getUser(context.userId)
 
       await saveActivity({
@@ -163,7 +195,10 @@ module.exports = {
         resourceId: args.input.commitId,
         actionType: 'commit_receive',
         userId: context.userId,
-        info: { sourceApplication: args.input.sourceApplication, message: args.input.message },
+        info: {
+          sourceApplication: args.input.sourceApplication,
+          message: args.input.message
+        },
         message: `Commit ${args.input.commitId} was received by ${user.name}`
       })
 
@@ -171,9 +206,16 @@ module.exports = {
     },
 
     async commitDelete(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.commit.streamId, 'stream:contributor')
+      await authorizeResolver(
+        context.userId,
+        args.commit.streamId,
+        'stream:contributor'
+      )
 
-      let commit = await getCommitById({ streamId: args.commit.streamId, id: args.commit.id })
+      let commit = await getCommitById({
+        streamId: args.commit.streamId,
+        id: args.commit.id
+      })
       if (commit.authorId !== context.userId)
         throw new ForbiddenError('Only the author of a commit may delete it.')
 

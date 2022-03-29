@@ -1,4 +1,8 @@
-const { DateTimeResolver, BigIntResolver, JSONObjectResolver } = require('graphql-scalars')
+const {
+  DateTimeResolver,
+  BigIntResolver,
+  JSONObjectResolver
+} = require('graphql-scalars')
 
 exports.scalarResolvers = {
   DateTime: DateTimeResolver,

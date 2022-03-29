@@ -7,7 +7,10 @@ const expect = chai.expect
 const { createUser } = require(`${appRoot}/modules/core/services/users`)
 const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
 const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
-const { createAuthorizationCode, createAppTokenFromAccessCode } = require('../services/apps')
+const {
+  createAuthorizationCode,
+  createAppTokenFromAccessCode
+} = require('../services/apps')
 
 let sendRequest
 let server
@@ -56,7 +59,8 @@ describe('GraphQL @apps-api', () => {
   let testApp
 
   it('Should create an app', async () => {
-    const query = 'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
+    const query =
+      'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
     const variables = {
       myApp: {
         name: 'Test App',
@@ -134,10 +138,14 @@ describe('GraphQL @apps-api', () => {
     const query = `query getApp { app( id: "${testAppId}") { name secret } }`
 
     const res = await sendRequest(null, { query })
-    expect(res.body.data.app.secret).to.equal('App secrets are only revealed to their author 😉')
+    expect(res.body.data.app.secret).to.equal(
+      'App secrets are only revealed to their author 😉'
+    )
 
     const res2 = await sendRequest(testToken2, { query })
-    expect(res2.body.data.app.secret).to.equal('App secrets are only revealed to their author 😉')
+    expect(res2.body.data.app.secret).to.equal(
+      'App secrets are only revealed to their author 😉'
+    )
   })
 
   it('Should update app info', async () => {
@@ -176,7 +184,8 @@ describe('GraphQL @apps-api', () => {
   })
 
   it('Should get the apps that i have created', async () => {
-    const query = 'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
+    const query =
+      'mutation createApp($myApp:AppCreateInput!) { appCreate( app: $myApp ) } '
     let variables = {
       myApp: {
         name: 'Another Test App',
@@ -199,7 +208,8 @@ describe('GraphQL @apps-api', () => {
     }
     await sendRequest(testToken, { query, variables })
 
-    const getMyAppsQuery = 'query usersApps{ user { createdApps { id name description } } }'
+    const getMyAppsQuery =
+      'query usersApps{ user { createdApps { id name description } } }'
 
     let res = await sendRequest(testToken, { query: getMyAppsQuery })
     expect(res.body.errors).to.not.exist

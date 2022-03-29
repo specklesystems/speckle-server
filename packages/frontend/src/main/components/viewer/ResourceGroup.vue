@@ -50,7 +50,11 @@
         /> -->
         <div v-show="removedResources.length !== 0" class="px-3 caption pb-5">
           Removed resources:
-          <span v-for="(res, index) in removedResources" :key="index" v-tooltip="'Click to re-add'">
+          <span
+            v-for="(res, index) in removedResources"
+            :key="index"
+            v-tooltip="'Click to re-add'"
+          >
             <a
               @click="
                 $emit('add-resource', res.id)
@@ -68,7 +72,9 @@
               </span>
             </a>
             <!-- eslint-disable-next-line prettier/prettier -->
-            <span v-if="removedResources.length > 1 && index < removedResources.length - 1">
+            <span
+              v-if="removedResources.length > 1 && index < removedResources.length - 1"
+            >
               ,&nbsp;
             </span>
           </span>

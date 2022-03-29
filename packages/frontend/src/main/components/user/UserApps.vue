@@ -6,8 +6,8 @@
       <v-btn small color="primary" @click="appDialog = true">new app</v-btn>
     </template>
     <v-card-text>
-      Register and manage third-party Speckle Apps that, once authorised by a user on this server,
-      can act on their behalf.
+      Register and manage third-party Speckle Apps that, once authorised by a user on
+      this server, can act on their behalf.
     </v-card-text>
     <v-card-text v-if="$apollo.loading">Loading...</v-card-text>
     <v-card-text v-if="apps && apps.length !== 0">

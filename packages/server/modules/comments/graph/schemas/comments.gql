@@ -151,8 +151,11 @@ extend type Mutation {
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
   """
-  userViewerActivityBroadcast(streamId: String!, resourceId: String!, data: JSONObject): Boolean!
-    @hasRole(role: "server:user")
+  userViewerActivityBroadcast(
+    streamId: String!
+    resourceId: String!
+    data: JSONObject
+  ): Boolean! @hasRole(role: "server:user")
 
   """
   Used for broadcasting real time typing status in comment threads. Does not persist any info.
@@ -180,9 +183,11 @@ extend type Mutation {
   """
   Archives a comment.
   """
-  commentArchive(streamId: String!, commentId: String!, archived: Boolean! = true): Boolean!
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
+  commentArchive(
+    streamId: String!
+    commentId: String!
+    archived: Boolean! = true
+  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 
   """
   Edits a comment.
@@ -198,9 +203,11 @@ extend type Mutation {
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
-  commentReactionToggle(streamId: String!, commentId: String!, reaction: String!): Boolean!
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
+  commentReactionToggle(
+    streamId: String!
+    commentId: String!
+    reaction: String!
+  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 extend type Subscription {

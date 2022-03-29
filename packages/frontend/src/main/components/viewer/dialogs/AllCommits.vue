@@ -14,7 +14,11 @@
             :url="`/preview/${streamId}/commits/${commit.id}`"
           ></preview-image>
           <div style="position: absolute; top: 10px; right: 20px">
-            <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
+            <commit-received-receipts
+              :stream-id="streamId"
+              :commit-id="commit.id"
+              shadow
+            />
           </div>
           <div style="position: absolute; top: 10px; left: 12px">
             <source-app-avatar :application-name="commit.sourceApplication" />
@@ -48,7 +52,8 @@ export default {
     InfiniteLoading: () => import('vue-infinite-loading'),
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
+    CommitReceivedReceipts: () =>
+      import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
   props: ['streamId'],
@@ -101,7 +106,8 @@ export default {
 
           let allItems = [...previousResult.stream.commits.items]
           for (const commit of newItems) {
-            if (allItems.findIndex((c) => c.id === commit.id) === -1) allItems.push(commit)
+            if (allItems.findIndex((c) => c.id === commit.id) === -1)
+              allItems.push(commit)
           }
 
           return {

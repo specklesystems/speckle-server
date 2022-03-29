@@ -37,10 +37,15 @@
         style="height: 20vh; line-height: 20vh; text-align: center"
       >
         👋 &nbsp; You need to log in to use the explorer.
-        <span><button class="login-button" onclick="redirectToAuth()">Log in</button></span>
+        <span>
+          <button class="login-button" onclick="redirectToAuth()">Log in</button>
+        </span>
       </div>
       <div id="graphiql" style="height: 88vh"></div>
-      <script crossorigin src="https://unpkg.com/react/umd/react.production.min.js"></script>
+      <script
+        crossorigin
+        src="https://unpkg.com/react/umd/react.production.min.js"
+      ></script>
       <script
         crossorigin
         src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"
@@ -68,7 +73,9 @@
             Math.random().toString(36).substring(2, 15) +
               Math.random().toString(36).substring(2, 15)
           )
-          window.location = `/authn/verify/explorer/${localStorage.getItem('challenge')}`
+          window.location = `/authn/verify/explorer/${localStorage.getItem(
+            'challenge'
+          )}`
         }
 
         async function accessCodeExchange(accessCode) {

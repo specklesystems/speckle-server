@@ -10,7 +10,9 @@ exports.up = async (knex) => {
     table.integer('id').notNullable().defaultTo(0).index()
     table.string('name').defaultTo('Community Server')
     table.string('company').defaultTo('Unknown Company')
-    table.string('description').defaultTo('This a community deployment of a Speckle Server.')
+    table
+      .string('description')
+      .defaultTo('This a community deployment of a Speckle Server.')
     table.string('adminContact').defaultTo('n/a')
     table.string('termsOfService').defaultTo('n/a')
     table.string('canonicalUrl') // TODO: to be removed, it's not used anymore
@@ -48,15 +50,30 @@ exports.up = async (knex) => {
 
   // Server-wide access control list.
   await knex.schema.createTable('server_acl', (table) => {
-    table.string('userId', 10).references('id').inTable('users').primary().onDelete('cascade')
-    table.string('role').references('name').inTable('user_roles').notNullable().onDelete('cascade')
+    table
+      .string('userId', 10)
+      .references('id')
+      .inTable('users')
+      .primary()
+      .onDelete('cascade')
+    table
+      .string('role')
+      .references('name')
+      .inTable('user_roles')
+      .notNullable()
+      .onDelete('cascade')
   })
 
   // Tokens.
   await knex.schema.createTable('api_tokens', (table) => {
     table.string('id', 10).primary()
     table.string('tokenDigest').unique()
-    table.string('owner', 10).references('id').inTable('users').notNullable().onDelete('cascade')
+    table
+      .string('owner', 10)
+      .references('id')
+      .inTable('users')
+      .notNullable()
+      .onDelete('cascade')
     table.string('name', 512)
     table.string('lastChars', 6)
     table.boolean('revoked').defaultTo(false)
@@ -111,14 +128,24 @@ exports.up = async (knex) => {
   // Stream-users access control list.
   // Controls ownership and permissions.
   await knex.schema.createTable('stream_acl', (table) => {
-    table.string('userId', 10).references('id').inTable('users').notNullable().onDelete('cascade')
+    table
+      .string('userId', 10)
+      .references('id')
+      .inTable('users')
+      .notNullable()
+      .onDelete('cascade')
     table
       .string('resourceId', 10)
       .references('id')
       .inTable('streams')
       .notNullable()
       .onDelete('cascade')
-    table.string('role').references('name').inTable('user_roles').notNullable().onDelete('cascade')
+    table
+      .string('role')
+      .references('name')
+      .inTable('user_roles')
+      .notNullable()
+      .onDelete('cascade')
     table.primary(['userId', 'resourceId'])
     table.unique(['userId', 'resourceId'])
   })
@@ -164,8 +191,18 @@ exports.up = async (knex) => {
   // NOTE: DEPRECATED
   // Table is dropped in later migration.
   await knex.schema.createTable('parent_commits', (table) => {
-    table.string('parent', 10).references('id').inTable('commits').notNullable().onDelete('cascade')
-    table.string('child', 10).references('id').inTable('commits').notNullable().onDelete('cascade')
+    table
+      .string('parent', 10)
+      .references('id')
+      .inTable('commits')
+      .notNullable()
+      .onDelete('cascade')
+    table
+      .string('child', 10)
+      .references('id')
+      .inTable('commits')
+      .notNullable()
+      .onDelete('cascade')
     table.unique(['parent', 'child'], 'commit_parent_child_index')
   })
 
@@ -195,7 +232,12 @@ exports.up = async (knex) => {
       .inTable('branches')
       .notNullable()
       .onDelete('cascade')
-    table.string('commitId').references('id').inTable('commits').notNullable().onDelete('cascade')
+    table
+      .string('commitId')
+      .references('id')
+      .inTable('commits')
+      .notNullable()
+      .onDelete('cascade')
     table.primary(['branchId', 'commitId'])
   })
 
@@ -208,7 +250,12 @@ exports.up = async (knex) => {
       .inTable('streams')
       .notNullable()
       .onDelete('cascade')
-    table.string('commitId').references('id').inTable('commits').notNullable().onDelete('cascade')
+    table
+      .string('commitId')
+      .references('id')
+      .inTable('commits')
+      .notNullable()
+      .onDelete('cascade')
     table.primary(['streamId', 'commitId'])
   })
 }

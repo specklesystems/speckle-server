@@ -3,7 +3,10 @@ const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
 const knex = require(`${appRoot}/db/knex`)
 
-const { getUserByEmail, updateUserPassword } = require(`${appRoot}/modules/core/services/users`)
+const {
+  getUserByEmail,
+  updateUserPassword
+} = require(`${appRoot}/modules/core/services/users`)
 const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
 const { sendEmail } = require(`${appRoot}/modules/emails`)
 
@@ -19,7 +22,10 @@ module.exports = (app) => {
       if (!user) throw new Error('No user with that email found.')
 
       // check if pwd request has been already sent
-      let existingToken = await ResetTokens().select('*').where({ email: req.body.email }).first()
+      let existingToken = await ResetTokens()
+        .select('*')
+        .where({ email: req.body.email })
+        .first()
       if (existingToken) {
         const timeDiff = Math.abs(Date.now() - new Date(existingToken.createdAt))
         if (timeDiff / 36e5 < 1)
@@ -105,7 +111,10 @@ This email was sent from ${serverInfo.name} at ${
     try {
       if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')
 
-      let token = await ResetTokens().where({ id: req.body.tokenId }).select('*').first()
+      let token = await ResetTokens()
+        .where({ id: req.body.tokenId })
+        .select('*')
+        .first()
       if (!token) throw new Error('Invalid request.')
 
       const timeDiff = Math.abs(Date.now() - new Date(token.createdAt))

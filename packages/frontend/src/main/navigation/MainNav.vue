@@ -1,6 +1,10 @@
 <template>
   <div>
-    <main-logo :shadow="shadowSpeckle" :expanded="expanded" @hide-drawer="$emit('hide-drawer')" />
+    <main-logo
+      :shadow="shadowSpeckle"
+      :expanded="expanded"
+      @hide-drawer="$emit('hide-drawer')"
+    />
 
     <portal-target name="nav">
       <!-- Main Actions -->
@@ -40,7 +44,9 @@
           <template #activator>
             <v-list-item-content>
               <v-list-item-title>Streams</v-list-item-title>
-              <v-list-item-subtitle class="caption">All your streams</v-list-item-subtitle>
+              <v-list-item-subtitle class="caption">
+                All your streams
+              </v-list-item-subtitle>
             </v-list-item-content>
           </template>
 
@@ -62,7 +68,9 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>Commits</v-list-item-title>
-            <v-list-item-subtitle class="caption">Your latest commits</v-list-item-subtitle>
+            <v-list-item-subtitle class="caption">
+              Your latest commits
+            </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-commits" />
@@ -72,7 +80,9 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>Admin</v-list-item-title>
-            <v-list-item-subtitle class="caption">Server Management</v-list-item-subtitle>
+            <v-list-item-subtitle class="caption">
+              Server Management
+            </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-admin" />
@@ -89,7 +99,9 @@
 
           <v-list-item-content>
             <v-list-item-title>Profile</v-list-item-title>
-            <v-list-item-subtitle class="caption">Settings & Security</v-list-item-subtitle>
+            <v-list-item-subtitle class="caption">
+              Settings & Security
+            </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-profile" />
@@ -98,11 +110,19 @@
 
     <!-- Dialogs  -->
 
-    <v-dialog v-model="newStreamDialog" max-width="500" :fullscreen="$vuetify.breakpoint.xsOnly">
+    <v-dialog
+      v-model="newStreamDialog"
+      max-width="500"
+      :fullscreen="$vuetify.breakpoint.xsOnly"
+    >
       <new-stream @created="newStreamDialog = false" @close="newStreamDialog = false" />
     </v-dialog>
 
-    <v-dialog v-model="inviteUsersDialog" max-width="500" :fullscreen="$vuetify.breakpoint.xsOnly">
+    <v-dialog
+      v-model="inviteUsersDialog"
+      max-width="500"
+      :fullscreen="$vuetify.breakpoint.xsOnly"
+    >
       <server-invites @close="inviteUsersDialog = false" />
     </v-dialog>
   </div>
@@ -117,7 +137,10 @@ export default {
     ServerInvites: () => import('@/main/dialogs/ServerInvites'),
     UserAvatarIcon: () => import('@/main/components/common/UserAvatarIcon')
   },
-  props: { expanded: { type: Boolean, default: false }, drawer: { type: Boolean, default: true } },
+  props: {
+    expanded: { type: Boolean, default: false },
+    drawer: { type: Boolean, default: true }
+  },
   apollo: {
     user: {
       query: MainUserDataQuery
@@ -131,7 +154,9 @@ export default {
     }
   },
   mounted() {
-    let navContent = [...document.getElementsByClassName('v-navigation-drawer__content')][0]
+    let navContent = [
+      ...document.getElementsByClassName('v-navigation-drawer__content')
+    ][0]
     navContent.addEventListener('scroll', () => {
       if (navContent.scrollTop > 50) this.shadowSpeckle = true
       else this.shadowSpeckle = false
@@ -141,8 +166,14 @@ export default {
   methods: {
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem('darkModeEnabled', this.$vuetify.theme.dark ? 'dark' : 'light')
-      this.$mixpanel.people.set('Theme Web', this.$vuetify.theme.dark ? 'dark' : 'light')
+      localStorage.setItem(
+        'darkModeEnabled',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
+      this.$mixpanel.people.set(
+        'Theme Web',
+        this.$vuetify.theme.dark ? 'dark' : 'light'
+      )
     }
   }
 }

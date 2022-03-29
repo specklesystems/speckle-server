@@ -35,10 +35,16 @@ exports.up = async (knex) => {
     const oldAcl = await knex('server_acl').where({ userId: upperUser.id }).first()
     // if the old user was admin, make the target admin too
     if (oldAcl.role === 'server:admin')
-      await knex('server_acl').where({ userId: lowerUser.id }).update({ role: 'server:admin' })
+      await knex('server_acl')
+        .where({ userId: lowerUser.id })
+        .update({ role: 'server:admin' })
   }
 
-  const _migrateSingleStreamAccess = async ({ lowerUser, upperUser, upperStreamAcl }) => {
+  const _migrateSingleStreamAccess = async ({
+    lowerUser,
+    upperUser,
+    upperStreamAcl
+  }) => {
     const upperRole = roles.filter((r) => r.name === upperStreamAcl.role)[0]
     const lowerAcl = await knex('stream_acl')
       .where({ userId: lowerUser.id, resourceId: upperStreamAcl.resourceId })
@@ -90,7 +96,9 @@ exports.up = async (knex) => {
         // TODO: decide 👆
         // my idea, take the first one and run with it
         if (!lowerUser)
-          lowerUser = await Users().whereRaw('lower(email) = lower(?)', [lowerEmail]).first()
+          lowerUser = await Users()
+            .whereRaw('lower(email) = lower(?)', [lowerEmail])
+            .first()
         let upperUser = await Users()
           .whereRaw('lower(email) = lower(?)', [lowerEmail])
           .whereNot({ id: lowerUser.id })

@@ -40,8 +40,8 @@
       <no-data-placeholder v-if="quickUser">
         <h2>Welcome {{ quickUser.name.split(' ')[0] }}!</h2>
         <p class="caption">
-          Once you will create a stream and start sending some data, your activity will show up
-          here.
+          Once you will create a stream and start sending some data, your activity will
+          show up here.
         </p>
 
         <template #actions>
@@ -174,7 +174,11 @@ export default {
         if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
           if (curr.actionType.includes('stream_permissions')) {
             //skip multiple stream_permission actions on the same user, just pick the last!
-            if (prev[prev.length - 1].some((x) => x.info.targetUser === curr.info.targetUser))
+            if (
+              prev[prev.length - 1].some(
+                (x) => x.info.targetUser === curr.info.targetUser
+              )
+            )
               action = 'skip'
             else action = 'combine'
           } //stream, branch, commit
@@ -209,7 +213,10 @@ export default {
           if (newItems.length === 0) $state.complete()
           else $state.loaded()
 
-          fetchMoreResult.user.timeline.items = [...previousResult.user.timeline.items, ...newItems]
+          fetchMoreResult.user.timeline.items = [
+            ...previousResult.user.timeline.items,
+            ...newItems
+          ]
 
           return fetchMoreResult
         }

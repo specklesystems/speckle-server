@@ -51,7 +51,11 @@ const initializeTestServer = async (app) => {
     serverAddress,
     wsAddress,
     sendRequest(auth, obj) {
-      return chai.request(serverAddress).post('/graphql').set('Authorization', auth).send(obj)
+      return chai
+        .request(serverAddress)
+        .post('/graphql')
+        .set('Authorization', auth)
+        .send(obj)
     }
   }
 }

@@ -62,7 +62,10 @@ async function pageFunction(objectUrl) {
   */
 
   ret.duration = (Date.now() - t0) / 1000
-  ret.mem = { total: performance.memory.totalJSHeapSize, used: performance.memory.usedJSHeapSize }
+  ret.mem = {
+    total: performance.memory.totalJSHeapSize,
+    used: performance.memory.usedJSHeapSize
+  }
   ret.userAgent = navigator.userAgent
   return ret
 }
@@ -140,7 +143,10 @@ async function getScreenshot(objectUrl) {
   </body></html>
   `
 
-  const imageBuffer = new Buffer.from(b64Image.replace(/^data:image\/\w+;base64,/, ''), 'base64')
+  const imageBuffer = new Buffer.from(
+    b64Image.replace(/^data:image\/\w+;base64,/, ''),
+    'base64'
+  )
 
   // await page.waitForTimeout(500);
   //var response = await page.screenshot({

@@ -11,7 +11,12 @@
           <v-btn icon @click="showDialog = false"><v-icon>mdi-close</v-icon></v-btn>
         </v-toolbar>
 
-        <v-alert v-model="showError" dismissible type="error" :class="`${success ? 'mb-0' : ''}`">
+        <v-alert
+          v-model="showError"
+          dismissible
+          type="error"
+          :class="`${success ? 'mb-0' : ''}`"
+        >
           {{ error }}
         </v-alert>
         <v-alert v-model="success" dismissible type="success">
@@ -19,8 +24,8 @@
         </v-alert>
         <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="sendInvite">
           <v-card-text class="pb-0 mb-0">
-            We will send an invite to the email below - once they accept, they will also gain access
-            to this stream!
+            We will send an invite to the email below - once they accept, they will also
+            gain access to this stream!
           </v-card-text>
           <v-card-text class="pt-0 mt-0">
             <v-text-field

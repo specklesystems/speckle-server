@@ -62,7 +62,8 @@ export default class SceneObjects {
     let flattenObject = function (obj) {
       let flatten = {}
       for (let k in obj) {
-        if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k)) continue
+        if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k))
+          continue
         let v = obj[k]
         if (v === null || v === undefined || Array.isArray(v)) continue
         if (v.constructor === Object) {
@@ -213,7 +214,9 @@ export default class SceneObjects {
       newFilteredObjects.add(filteredPointObjects)
 
       // group solid objects
-      let groupedFilteredSolidObjects = await this.groupSolidObjects(filteredSolidObjects)
+      let groupedFilteredSolidObjects = await this.groupSolidObjects(
+        filteredSolidObjects
+      )
       newFilteredObjects.add(groupedFilteredSolidObjects)
 
       let groupedGhostedObjects = await this.groupSolidObjects(newGhostedObjects)
@@ -278,7 +281,12 @@ export default class SceneObjects {
         let m = mesh.material
 
         // Pass-through non mesh materials (blocks can contain lines, that end up here)
-        if (!(m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshBasicMaterial)) {
+        if (
+          !(
+            m instanceof THREE.MeshStandardMaterial ||
+            m instanceof THREE.MeshBasicMaterial
+          )
+        ) {
           // if ( mesh.type === 'Line' ) continue
           // if ( groupedObjects.children.length >= 2 ) continue
           groupedObjects.add(mesh.clone())
@@ -289,8 +297,8 @@ export default class SceneObjects {
           m.transparent
         }/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}/${m.wireframe}`
 
-        materialId += `--${Object.keys(mesh.geometry.attributes).toString()}--${!!mesh.geometry
-          .index}`
+        materialId += `--${Object.keys(mesh.geometry.attributes).toString()}--${!!mesh
+          .geometry.index}`
 
         if (!(materialId in materialIdToBufferGeometry)) {
           materialIdToBufferGeometry[materialId] = []
@@ -304,7 +312,8 @@ export default class SceneObjects {
         // Max 1024 objects per group (mergeBufferGeometries is sync and can freeze for large data)
         if (materialIdToBufferGeometry[materialId].length >= 1024) {
           let archivedMaterialId = `arch//${materialId}//${mesh.id}`
-          materialIdToBufferGeometry[archivedMaterialId] = materialIdToBufferGeometry[materialId]
+          materialIdToBufferGeometry[archivedMaterialId] =
+            materialIdToBufferGeometry[materialId]
           materialIdToMaterial[archivedMaterialId] = materialIdToMaterial[materialId]
           materialIdToMeshes[archivedMaterialId] = materialIdToMeshes[materialId]
           delete materialIdToBufferGeometry[materialId]

@@ -16,13 +16,17 @@
       Updated
       <b><timeago :datetime="stream.updatedAt"></timeago></b>
       <br />
-      <span class="grey--text">({{ new Date(stream.updatedAt).toLocaleString() }})</span>
+      <span class="grey--text">
+        ({{ new Date(stream.updatedAt).toLocaleString() }})
+      </span>
     </v-col>
     <v-col cols="2" class="caption text-truncate">
       Created
       <b><timeago :datetime="stream.createdAt"></timeago></b>
       <br />
-      <span class="grey--text">({{ new Date(stream.createdAt).toLocaleString() }})</span>
+      <span class="grey--text">
+        ({{ new Date(stream.createdAt).toLocaleString() }})
+      </span>
     </v-col>
     <v-col v-tooltip="'Stream total size'" class="caption font-weight-bold">
       {{ `${(stream.size ? stream.size / 1048576 : 0.0).toFixed(2)} MB` }}
@@ -37,7 +41,13 @@
       <collaborators-display :stream="stream" :link-to-collabs="false" />
     </v-col>
     <v-col cols="1" class="text-right">
-      <v-btn v-tooltip="'Delete stream'" small icon color="error" @click="$emit('delete', stream)">
+      <v-btn
+        v-tooltip="'Delete stream'"
+        small
+        icon
+        color="error"
+        @click="$emit('delete', stream)"
+      >
         <v-icon small>mdi-delete-outline</v-icon>
       </v-btn>
     </v-col>

@@ -25,9 +25,9 @@
     >
       <h2>There are no global variables in this stream.</h2>
       <p class="caption">
-        Global variables can hold various information that's useful across the project: location
-        (city, adress, lat & long coordinates), custom project names or tags, or any other numbers
-        or text that you want to keep track of.
+        Global variables can hold various information that's useful across the project:
+        location (city, adress, lat & long coordinates), custom project names or tags,
+        or any other numbers or text that you want to keep track of.
       </p>
       <template #actions>
         <v-list rounded class="transparent">
@@ -81,32 +81,43 @@
         <v-col cols="12">
           <section-card>
             <v-card-text>
-              Globals are useful for storing design values, project requirements, notes, or any info
-              you want to keep track of alongside your geometry. Read more on stream global
-              variables
-              <a href="https://speckle.guide/user/web.html#globals" target="_blank">here</a>
+              Globals are useful for storing design values, project requirements, notes,
+              or any info you want to keep track of alongside your geometry. Read more
+              on stream global variables
+              <a href="https://speckle.guide/user/web.html#globals" target="_blank">
+                here
+              </a>
               .
               <v-divider class="my-2"></v-divider>
               <b>Global editor help:</b>
-              Drag and drop fields in and out of groups as you please. Click the box icon next to
-              any field to turn it into a nested group of fields.
+              Drag and drop fields in and out of groups as you please. Click the box
+              icon next to any field to turn it into a nested group of fields.
             </v-card-text>
             <v-alert
-              v-if="!(stream.role === 'stream:contributor') && !(stream.role === 'stream:owner')"
+              v-if="
+                !(stream.role === 'stream:contributor') &&
+                !(stream.role === 'stream:owner')
+              "
               class="my-3"
               dense
               type="warning"
             >
-              You are free to play around with the globals here, but you do not have the required
-              stream permission to save your changes.
+              You are free to play around with the globals here, but you do not have the
+              required stream permission to save your changes.
             </v-alert>
           </section-card>
         </v-col>
         <!-- History -->
         <v-col cols="12" md="4">
           <section-card expandable>
-            <template slot="header">Globals History ({{ branch.commits.totalCount }})</template>
-            <v-list v-if="branch.commits.totalCount !== 0" class="pa-0 transparent" dense>
+            <template slot="header">
+              Globals History ({{ branch.commits.totalCount }})
+            </template>
+            <v-list
+              v-if="branch.commits.totalCount !== 0"
+              class="pa-0 transparent"
+              dense
+            >
               <list-item-commit
                 v-for="item in branch.commits.items"
                 :key="item.id"
@@ -191,7 +202,9 @@ export default {
     },
     commit() {
       return this.$route.params.commitId
-        ? this.branch?.commits?.items?.filter((c) => c.id == this.$route.params.commitId)[0]
+        ? this.branch?.commits?.items?.filter(
+            (c) => c.id == this.$route.params.commitId
+          )[0]
         : this.branch?.commits?.items[0]
     },
     objectId() {
@@ -226,7 +239,8 @@ export default {
     },
     newCommit() {
       this.$apollo.queries.branch.refetch()
-      if (this.$route.params.commitId) this.$router.push(`/streams/${this.streamId}/globals`)
+      if (this.$route.params.commitId)
+        this.$router.push(`/streams/${this.streamId}/globals`)
     }
   }
 }

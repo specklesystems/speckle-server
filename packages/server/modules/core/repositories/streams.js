@@ -44,7 +44,9 @@ async function getStream({ streamId, userId }) {
  */
 function getFavoritedStreamsQueryBase(userId) {
   if (!userId)
-    throw new InvalidArgumentError('User ID must be specified to retrieve favorited streams')
+    throw new InvalidArgumentError(
+      'User ID must be specified to retrieve favorited streams'
+    )
 
   const query = StreamFavorites.knex()
     .where(StreamFavorites.col.userId, userId)
@@ -54,7 +56,9 @@ function getFavoritedStreamsQueryBase(userId) {
         .on(StreamAcl.col.resourceId, '=', StreamFavorites.col.streamId)
         .andOnVal(StreamAcl.col.userId, userId)
     )
-    .andWhere((q) => q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId))
+    .andWhere((q) =>
+      q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
+    )
 
   return query
 }
@@ -193,7 +197,10 @@ async function canUserFavoriteStream({ userId, streamId }) {
   const query = Streams.knex()
     .select([Streams.col.id])
     .leftJoin(StreamAcl.name, function () {
-      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(StreamAcl.col.userId, userId)
+      this.on(StreamAcl.col.resourceId, Streams.col.id).andOnVal(
+        StreamAcl.col.userId,
+        userId
+      )
     })
     .where(Streams.col.id, streamId)
     .andWhere(function () {

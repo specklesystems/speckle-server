@@ -1,6 +1,11 @@
 'use strict'
 const appRoot = require('app-root-path')
-const { ApolloError, ForbiddenError, UserInputError, withFilter } = require('apollo-server-express')
+const {
+  ApolloError,
+  ForbiddenError,
+  UserInputError,
+  withFilter
+} = require('apollo-server-express')
 
 const {
   getUserActivity,

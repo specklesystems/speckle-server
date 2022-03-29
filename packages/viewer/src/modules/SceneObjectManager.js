@@ -175,7 +175,10 @@ export default class SceneObjectManager {
   }
 
   addSingleSolid(wrapper, material, addToScene = true) {
-    const mesh = new THREE.Mesh(wrapper.bufferGeometry, material ? material : this.solidMaterial)
+    const mesh = new THREE.Mesh(
+      wrapper.bufferGeometry,
+      material ? material : this.solidMaterial
+    )
     // mesh.matrixAutoUpdate = false
     mesh.userData = wrapper.meta
     mesh.uuid = wrapper.meta.id
@@ -280,7 +283,9 @@ export default class SceneObjectManager {
     this.viewer.interactions.deselectObjects()
 
     for (let objGroup of this.sceneObjects.allObjects.children) {
-      let toRemove = objGroup.children.filter((obj) => obj.userData?.__importedUrl === importedUrl)
+      let toRemove = objGroup.children.filter(
+        (obj) => obj.userData?.__importedUrl === importedUrl
+      )
       toRemove.forEach((obj) => {
         if (obj.material) obj.material.dispose()
         if (obj.geometry) obj.geometry.dispose()
@@ -302,7 +307,10 @@ export default class SceneObjectManager {
 
   getSceneBoundingBox() {
     if (this.objects.length === 0) {
-      let box = new THREE.Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+      let box = new THREE.Box3(
+        new THREE.Vector3(-1, -1, -1),
+        new THREE.Vector3(1, 1, 1)
+      )
       return box
     }
     let box = new THREE.Box3().setFromObject(this.userObjects)

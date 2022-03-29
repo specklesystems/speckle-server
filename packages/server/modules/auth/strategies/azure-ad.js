@@ -6,9 +6,15 @@ const OIDCStrategy = require('passport-azure-ad').OIDCStrategy
 const URL = require('url').URL
 const debug = require('debug')
 const appRoot = require('app-root-path')
-const { findOrCreateUser, getUserByEmail } = require(`${appRoot}/modules/core/services/users`)
+const {
+  findOrCreateUser,
+  getUserByEmail
+} = require(`${appRoot}/modules/core/services/users`)
 const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { validateInvite, useInvite } = require(`${appRoot}/modules/serverinvites/services`)
+const {
+  validateInvite,
+  useInvite
+} = require(`${appRoot}/modules/serverinvites/services`)
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   let strategy = new OIDCStrategy(
@@ -18,7 +24,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       responseType: 'code id_token',
       responseMode: 'form_post',
       issuer: process.env.AZURE_AD_ISSUER,
-      redirectUrl: new URL('/auth/azure/callback', process.env.CANONICAL_URL).toString(),
+      redirectUrl: new URL(
+        '/auth/azure/callback',
+        process.env.CANONICAL_URL
+      ).toString(),
       allowHttpForRedirectUrl: true,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
       scope: ['profile', 'email', 'openid'],
@@ -63,7 +72,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {
-          let myUser = await findOrCreateUser({ user: user, rawProfile: req.user._json })
+          let myUser = await findOrCreateUser({
+            user: user,
+            rawProfile: req.user._json
+          })
           // ID is used later for verifying access token
           req.user.id = myUser.id
           return next()
@@ -71,7 +83,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
-          let myUser = await findOrCreateUser({ user: user, rawProfile: req.user._json })
+          let myUser = await findOrCreateUser({
+            user: user,
+            rawProfile: req.user._json
+          })
           // ID is used later for verifying access token
           req.user.id = myUser.id
           return next()
@@ -83,7 +98,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         }
 
         // validate the invite
-        const validInvite = await validateInvite({ id: req.session.inviteId, email: user.email })
+        const validInvite = await validateInvite({
+          id: req.session.inviteId,
+          email: user.email
+        })
         if (!validInvite) throw new Error('Invalid invite.')
 
         // create the user

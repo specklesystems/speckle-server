@@ -29,7 +29,8 @@
             <v-card-text class="body-1 text--primary">
               <p>
                 Engineers, designers, hackers and entire organizations rely on us for
-                interoperability, automation and collaboration to deliver better buildings, faster.
+                interoperability, automation and collaboration to deliver better
+                buildings, faster.
                 <br />
                 Please select your role:
               </p>
@@ -45,7 +46,9 @@
                       @click="nextUser"
                     >
                       <h1>👷‍♀️</h1>
-                      <v-card-title class="justify-center">Designer or Manager</v-card-title>
+                      <v-card-title class="justify-center">
+                        Designer or Manager
+                      </v-card-title>
                       <v-card-subtitle class="justify-center">
                         Architect, engineer, BIM Manager, etc.
                       </v-card-subtitle>
@@ -81,7 +84,9 @@
               height="200px"
               src="@/assets/onboarding_connectors_dev.png"
             ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">🧰 Our toolkit</v-card-title>
+            <v-card-title class="display-1 justify-center mb-5">
+              🧰 Our toolkit
+            </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               From AEC developers, for AEC developers
             </v-card-subtitle>
@@ -94,13 +99,15 @@
               </p>
               <p>
                 Whether you are
-                <b>writing new integrations, custom workflows or creating brand new apps</b>
-                on top of Speckle, our toolkit is here to take care of the low level stuff, so that
-                you can focus on the fun bits.
+                <b>
+                  writing new integrations, custom workflows or creating brand new apps
+                </b>
+                on top of Speckle, our toolkit is here to take care of the low level
+                stuff, so that you can focus on the fun bits.
               </p>
               <p>
-                From user permission management, data extraction or 3d model online visualization,
-                we've got you covered!
+                From user permission management, data extraction or 3d model online
+                visualization, we've got you covered!
               </p>
             </v-card-text>
           </v-card>
@@ -113,7 +120,9 @@
               height="200px"
               src="@/assets/onboarding_connectors.png"
             ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">🔌 Connectors</v-card-title>
+            <v-card-title class="display-1 justify-center mb-5">
+              🔌 Connectors
+            </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               Say goodbye to files!
             </v-card-subtitle>
@@ -155,7 +164,8 @@
               <p>
                 Speckle ships with a
                 <b>version control system,</b>
-                we're bringing the tech industry best practices to AEC. You'll soon also be able to
+                we're bringing the tech industry best practices to AEC. You'll soon also
+                be able to
                 <b>trigger custom workflows and pipelines</b>
                 directly from Speckle!
               </p>
@@ -175,27 +185,29 @@
               height="200px"
               src="@/assets/onboarding_streams.png"
             ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">🌊 Streams</v-card-title>
+            <v-card-title class="display-1 justify-center mb-5">
+              🌊 Streams
+            </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               A new way of working together
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
                 <b>Streams</b>
-                are collections of data inside Speckle. You can see a stream as a folder, a project
-                or a repository.
+                are collections of data inside Speckle. You can see a stream as a
+                folder, a project or a repository.
               </p>
               <p>
                 Data in a stream is stored in
                 <b>commits,</b>
-                which are snapshots of data in time. Every time you send to Speckle from a
-                connector, a commit is created.
+                which are snapshots of data in time. Every time you send to Speckle from
+                a connector, a commit is created.
               </p>
               <p>
                 Commits can also be organized in
                 <b>branches,</b>
-                for instance, to have multiple design options or to store data by discipline. The
-                default branch is called
+                for instance, to have multiple design options or to store data by
+                discipline. The default branch is called
                 <i>main</i>
                 .
               </p>
@@ -204,7 +216,9 @@
         </v-window-item>
         <v-window-item v-if="isDev">
           <v-card class="transparent elevation-0 text-center" color="transparent">
-            <v-card-title class="display-1 justify-center my-5">🏃‍♀️ Start Hacking!</v-card-title>
+            <v-card-title class="display-1 justify-center my-5">
+              🏃‍♀️ Start Hacking!
+            </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               Time to make the most of
               <b>your</b>
@@ -212,10 +226,12 @@
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
-                You can now start developing with Speckle and create your connectors, apps or custom
-                workflows.
+                You can now start developing with Speckle and create your connectors,
+                apps or custom workflows.
               </p>
-              <p>We have put together a series of resources that you might find useful:</p>
+              <p>
+                We have put together a series of resources that you might find useful:
+              </p>
             </v-card-text>
             <v-container fluid>
               <v-row dense>
@@ -251,7 +267,9 @@
         </v-window-item>
         <v-window-item v-else>
           <v-card class="transparent elevation-0 text-center" color="transparent">
-            <v-card-title class="display-1 justify-center my-5">🏃‍♀️ Get Started!</v-card-title>
+            <v-card-title class="display-1 justify-center my-5">
+              🏃‍♀️ Get Started!
+            </v-card-title>
             <v-card-subtitle class="subtitle-1 justify-center mb-5">
               Time to make the most of
               <b>your</b>
@@ -259,10 +277,12 @@
             </v-card-subtitle>
             <v-card-text class="body-1 text--primary">
               <p>
-                You can now start creating your own workflows for automation, interoperaility or
-                collaboration using Speckle!
+                You can now start creating your own workflows for automation,
+                interoperaility or collaboration using Speckle!
               </p>
-              <p>We have put together a series of tutorials that you might find useful:</p>
+              <p>
+                We have put together a series of tutorials that you might find useful:
+              </p>
             </v-card-text>
             <v-container fluid>
               <v-row dense>

@@ -54,7 +54,9 @@ module.exports = class ServerAPI {
     delete insertionObject.__closure
 
     insertionObject.totalChildrenCount = closures.length
-    insertionObject.totalChildrenCountByDepth = JSON.stringify(totalChildrenCountByDepth)
+    insertionObject.totalChildrenCountByDepth = JSON.stringify(
+      totalChildrenCountByDepth
+    )
 
     let q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
     await knex.raw(q1)
@@ -71,11 +73,15 @@ module.exports = class ServerAPI {
     const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
     if (obj.hash) obj.id = obj.hash
-    else obj.id = obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
+    else
+      obj.id =
+        obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
     let stringifiedObj = JSON.stringify(obj)
     if (stringifiedObj.length > MAX_OBJECT_SIZE) {
-      throw new Error(`Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`)
+      throw new Error(
+        `Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`
+      )
     }
 
     return {

@@ -63,7 +63,9 @@
             <v-toolbar-title>Stream Feed</v-toolbar-title>
             <v-spacer />
           </v-toolbar>
-          <v-card-title class="caption" style="margin-top: -30px">Recent activity log</v-card-title>
+          <v-card-title class="caption" style="margin-top: -30px">
+            Recent activity log
+          </v-card-title>
         </v-card>
         <div class="mr-0">
           <stream-activity></stream-activity>
@@ -74,7 +76,8 @@
     <no-data-placeholder v-if="stream && stream.commits.totalCount === 0">
       <h2>This stream has not received any data.</h2>
       <p class="caption">
-        Streams are repositories where you can store, version and retrieve various design data.
+        Streams are repositories where you can store, version and retrieve various
+        design data.
       </p>
     </no-data-placeholder>
   </div>
@@ -162,7 +165,9 @@ export default {
         .filter((br) => br.name !== 'globals' && br.commits.totalCount !== 0)
         .slice()
         .sort(
-          (a, b) => new Date(b.commits.items[0].createdAt) - new Date(a.commits.items[0].createdAt)
+          (a, b) =>
+            new Date(b.commits.items[0].createdAt) -
+            new Date(a.commits.items[0].createdAt)
         )
       return branches.slice(0, 3)
     },

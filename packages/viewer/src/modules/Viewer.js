@@ -11,7 +11,12 @@ import CameraHandler from './context/CameraHanlder'
 import SectionBox from './SectionBox'
 
 export default class Viewer extends EventEmitter {
-  constructor({ container, postprocessing = false, reflections = true, showStats = false }) {
+  constructor({
+    container,
+    postprocessing = false,
+    reflections = true,
+    showStats = false
+  }) {
     super()
 
     window.THREE = THREE
@@ -156,7 +161,8 @@ export default class Viewer extends EventEmitter {
       if (this.stats) this.stats.begin()
       this.render()
       if (this.stats && document.getElementById('info-draws'))
-        document.getElementById('info-draws').textContent = '' + this.renderer.info.render.calls
+        document.getElementById('info-draws').textContent =
+          '' + this.renderer.info.render.calls
       if (this.stats) this.stats.end()
     }
   }

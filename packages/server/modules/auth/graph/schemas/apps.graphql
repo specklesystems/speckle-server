@@ -46,7 +46,9 @@ extend type User {
   """
   Returns the apps you have authorized.
   """
-  authorizedApps: [ServerAppListItem] @hasRole(role: "server:user") @hasScope(scope: "apps:read")
+  authorizedApps: [ServerAppListItem]
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:read")
 
   """
   Returns the apps you have created.
@@ -72,7 +74,9 @@ extend type Mutation {
   """
   Deletes a thirty party application.
   """
-  appDelete(appId: String!): Boolean! @hasRole(role: "server:user") @hasScope(scope: "apps:write")
+  appDelete(appId: String!): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "apps:write")
 
   """
   Revokes (de-authorizes) an application that you have previously authorized.

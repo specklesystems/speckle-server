@@ -64,7 +64,11 @@ module.exports = {
     async objectCreate(parent, args, context, info) {
       await validateServerRole(context, 'server:user')
       await validateScopes(context.scopes, 'streams:write')
-      await authorizeResolver(context.userId, args.objectInput.streamId, 'stream:contributor')
+      await authorizeResolver(
+        context.userId,
+        args.objectInput.streamId,
+        'stream:contributor'
+      )
 
       let ids = await createObjects(args.objectInput.streamId, args.objectInput.objects)
       return ids

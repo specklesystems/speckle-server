@@ -1,7 +1,12 @@
 'use strict'
 
 const appRoot = require('app-root-path')
-const { ForbiddenError, UserInputError, ApolloError, withFilter } = require('apollo-server-express')
+const {
+  ForbiddenError,
+  UserInputError,
+  ApolloError,
+  withFilter
+} = require('apollo-server-express')
 const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
 
 const {
@@ -26,7 +31,9 @@ module.exports = {
   Stream: {
     async branches(parent, args, context, info) {
       if (args.limit && args.limit > 100)
-        throw new UserInputError('Cannot return more than 100 items, please use pagination.')
+        throw new UserInputError(
+          'Cannot return more than 100 items, please use pagination.'
+        )
       let { items, cursor, totalCount } = await getBranchesByStreamId({
         streamId: parent.id,
         limit: args.limit,
@@ -42,13 +49,18 @@ module.exports = {
   },
   Branch: {
     async author(parent, args, context, info) {
-      if (parent.authorId && context.auth) return await getUserById({ userId: parent.authorId })
+      if (parent.authorId && context.auth)
+        return await getUserById({ userId: parent.authorId })
       else return null
     }
   },
   Mutation: {
     async branchCreate(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.branch.streamId, 'stream:contributor')
+      await authorizeResolver(
+        context.userId,
+        args.branch.streamId,
+        'stream:contributor'
+      )
 
       let id = await createBranch({ ...args.branch, authorId: context.userId })
 
@@ -72,7 +84,11 @@ module.exports = {
     },
 
     async branchUpdate(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.branch.streamId, 'stream:contributor')
+      await authorizeResolver(
+        context.userId,
+        args.branch.streamId,
+        'stream:contributor'
+      )
 
       let oldValue = await getBranchById({ id: args.branch.id })
       if (!oldValue) {
@@ -107,7 +123,11 @@ module.exports = {
     },
 
     async branchDelete(parent, args, context, info) {
-      let role = await authorizeResolver(context.userId, args.branch.streamId, 'stream:contributor')
+      let role = await authorizeResolver(
+        context.userId,
+        args.branch.streamId,
+        'stream:contributor'
+      )
 
       let branch = await getBranchById({ id: args.branch.id })
       if (!branch) {
@@ -124,7 +144,10 @@ module.exports = {
           'Only the branch creator or stream owners are allowed to delete branches.'
         )
 
-      let deleted = await deleteBranchById({ id: args.branch.id, streamId: args.branch.streamId })
+      let deleted = await deleteBranchById({
+        id: args.branch.id,
+        streamId: args.branch.streamId
+      })
       if (deleted) {
         await saveActivity({
           streamId: args.branch.streamId,

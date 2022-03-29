@@ -96,24 +96,27 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     userA.token = `Bearer ${token}`
 
     userB.id = await createUser(userB)
-    userB.token = `Bearer ${await createPersonalAccessToken(userB.id, 'test token user B', [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
-    ])}`
+    userB.token = `Bearer ${await createPersonalAccessToken(
+      userB.id,
+      'test token user B',
+      [
+        'streams:read',
+        'streams:write',
+        'users:read',
+        'users:email',
+        'tokens:write',
+        'tokens:read',
+        'profile:read',
+        'profile:email'
+      ]
+    )}`
 
     userC.id = await createUser(userC)
-    userC.token = `Bearer ${await createPersonalAccessToken(userC.id, 'test token user B', [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email'
-    ])}`
+    userC.token = `Bearer ${await createPersonalAccessToken(
+      userC.id,
+      'test token user B',
+      ['streams:read', 'streams:write', 'users:read', 'users:email']
+    )}`
   })
 
   after(async () => {

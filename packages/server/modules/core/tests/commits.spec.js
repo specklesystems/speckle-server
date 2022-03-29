@@ -156,7 +156,10 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should get the commit count from a branch', async () => {
-    let c = await getCommitsTotalCountByBranchName({ streamId: stream.id, branchName: 'main' })
+    let c = await getCommitsTotalCountByBranchName({
+      streamId: stream.id,
+      branchName: 'main'
+    })
     expect(c).to.equal(13)
   })
 
@@ -177,7 +180,10 @@ describe('Commits @core-commits', () => {
       })
     }
 
-    let { commits, cursor } = await getCommitsByStreamId({ streamId: stream.id, limit: 10 })
+    let { commits, cursor } = await getCommitsByStreamId({
+      streamId: stream.id,
+      limit: 10
+    })
     let { commits: commits2, cursor: cursor2 } = await getCommitsByStreamId({
       streamId: stream.id,
       limit: 20,
@@ -207,7 +213,11 @@ describe('Commits @core-commits', () => {
   })
 
   it('Should get the public commits of an user only', async () => {
-    let privateStreamId = await createStream({ name: 'private', isPublic: false, ownerId: user.id })
+    let privateStreamId = await createStream({
+      name: 'private',
+      isPublic: false,
+      ownerId: user.id
+    })
     let objectId = await createObject(privateStreamId, testObject)
     let commitId = await createCommitByBranchName({
       streamId: privateStreamId,
@@ -228,10 +238,16 @@ describe('Commits @core-commits', () => {
   })
 
   it('Commits should have source, total count, branch name and parents fields', async () => {
-    let { commits: userCommits } = await getCommitsByUserId({ userId: user.id, limit: 1000 })
+    let { commits: userCommits } = await getCommitsByUserId({
+      userId: user.id,
+      limit: 1000
+    })
     let userCommit = userCommits[0]
 
-    let { commits: streamCommits } = await getCommitsByStreamId({ streamId: stream.id, limit: 10 })
+    let { commits: streamCommits } = await getCommitsByStreamId({
+      streamId: stream.id,
+      limit: 10
+    })
     let serverCommit = streamCommits[0]
 
     let { commits: branchCommits } = await getCommitsByBranchName({

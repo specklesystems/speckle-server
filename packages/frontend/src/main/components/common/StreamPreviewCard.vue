@@ -1,6 +1,10 @@
 <template>
   <v-hover v-slot="{ hover }">
-    <v-card class="rounded-lg" :elevation="hover ? 10 : 1" style="transition: all 0.2s ease-in-out">
+    <v-card
+      class="rounded-lg"
+      :elevation="hover ? 10 : 1"
+      style="transition: all 0.2s ease-in-out"
+    >
       <router-link :to="`/streams/${stream.id}`">
         <preview-image
           :url="`/preview/${stream.id}`"
@@ -41,7 +45,9 @@
           small
           class="caption primary"
           dark
-          v-tooltip="`${stream.commentCount} comment${stream.commentCount === 1 ? '' : 's'}`"
+          v-tooltip="
+            `${stream.commentCount} comment${stream.commentCount === 1 ? '' : 's'}`
+          "
         >
           <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
           {{ stream.commentCount }}
@@ -62,7 +68,9 @@
         >
           <v-icon
             small
-            :class="`mr-1 ${stream.role.split(':')[1] === 'owner' ? 'primary--text' : ''}`"
+            :class="`mr-1 ${
+              stream.role.split(':')[1] === 'owner' ? 'primary--text' : ''
+            }`"
           >
             mdi-account-key-outline
           </v-icon>
@@ -77,7 +85,8 @@ export default {
   components: {
     PreviewImage: () => import('@/main/components/common/PreviewImage.vue'),
     CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
-    StreamFavoriteBtn: () => import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
+    StreamFavoriteBtn: () =>
+      import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
   },
   props: {
     stream: { type: Object, default: () => null },

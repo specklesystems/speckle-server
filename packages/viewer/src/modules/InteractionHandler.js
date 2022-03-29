@@ -78,10 +78,14 @@ export default class InteractionHandler {
           break
         }
         case 'Mesh':
-          this.overlaidObjects.add(new THREE.Mesh(obj.geometry, this.overlayMeshMaterial))
+          this.overlaidObjects.add(
+            new THREE.Mesh(obj.geometry, this.overlayMeshMaterial)
+          )
           break
         case 'Line':
-          this.overlaidObjects.add(new THREE.Line(obj.geometry, this.overlayMeshMaterial))
+          this.overlaidObjects.add(
+            new THREE.Line(obj.geometry, this.overlayMeshMaterial)
+          )
           break
       }
     }
@@ -117,7 +121,11 @@ export default class InteractionHandler {
 
     let selType = objs[0].object.type
     let rootBlock = null
-    if (objs[0].object.parent?.userData?.speckle_type?.toLowerCase().includes('blockinstance')) {
+    if (
+      objs[0].object.parent?.userData?.speckle_type
+        ?.toLowerCase()
+        .includes('blockinstance')
+    ) {
       selType = 'Block'
       rootBlock = this.getParentBlock(objs[0].object.parent)
     }
@@ -246,12 +254,17 @@ export default class InteractionHandler {
       return
     }
     if (this.viewer.sceneManager.sceneObjects.objectsInScene.length === 0) {
-      let box = new THREE.Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+      let box = new THREE.Box3(
+        new THREE.Vector3(-1, -1, -1),
+        new THREE.Vector3(1, 1, 1)
+      )
       this.zoomToBox(box, fit, transition)
       return
     }
 
-    let box = new THREE.Box3().setFromObject(this.viewer.sceneManager.sceneObjects.objectsInScene)
+    let box = new THREE.Box3().setFromObject(
+      this.viewer.sceneManager.sceneObjects.objectsInScene
+    )
     this.zoomToBox(box, fit, transition)
     // this.viewer.controls.setBoundary( box )
   }
@@ -268,7 +281,9 @@ export default class InteractionHandler {
     target.radius = target.radius * fitOffset
 
     const maxSize = Math.max(size.x, size.y, size.z)
-    const camFov = this.viewer.cameraHandler.camera.fov ? this.viewer.cameraHandler.camera.fov : 55
+    const camFov = this.viewer.cameraHandler.camera.fov
+      ? this.viewer.cameraHandler.camera.fov
+      : 55
     const camAspect = this.viewer.cameraHandler.camera.aspect
       ? this.viewer.cameraHandler.camera.aspect
       : 1.2
@@ -376,12 +391,26 @@ export default class InteractionHandler {
       default: {
         let box
         if (this.viewer.sceneManager.sceneObjects.allObjects.children.length === 0)
-          box = new THREE.Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
-        else box = new THREE.Box3().setFromObject(this.viewer.sceneManager.sceneObjects.allObjects)
+          box = new THREE.Box3(
+            new THREE.Vector3(-1, -1, -1),
+            new THREE.Vector3(1, 1, 1)
+          )
+        else
+          box = new THREE.Box3().setFromObject(
+            this.viewer.sceneManager.sceneObjects.allObjects
+          )
         if (box.max.x === Infinity || box.max.x === -Infinity) {
-          box = new THREE.Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+          box = new THREE.Box3(
+            new THREE.Vector3(-1, -1, -1),
+            new THREE.Vector3(1, 1, 1)
+          )
         }
-        this.viewer.cameraHandler.controls.setPosition(box.max.x, box.max.y, box.max.z, transition)
+        this.viewer.cameraHandler.controls.setPosition(
+          box.max.x,
+          box.max.y,
+          box.max.z,
+          transition
+        )
         this.zoomExtents()
         this.viewer.cameraHandler.enableRotations()
         break

@@ -4,7 +4,8 @@ const { Scopes } = require('@/modules/core/helpers/mainConstants')
 module.exports = [
   {
     name: Scopes.Streams.Read,
-    description: 'Read your streams, and any associated information (branches, commits, objects).',
+    description:
+      'Read your streams, and any associated information (branches, commits, objects).',
     public: true
   },
   {

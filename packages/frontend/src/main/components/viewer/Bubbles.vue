@@ -43,7 +43,9 @@
         :class="`${
           sessionUser.name === 'Anonymous Viewer' ? 'background' : ''
         } absolute-pos rounded-pill user-bubble elevation-5`"
-        :style="`opacity: ${sessionUser.hidden ? '0.2' : 1}; border: 4px solid #047EFB;`"
+        :style="`opacity: ${
+          sessionUser.hidden ? '0.2' : 1
+        }; border: 4px solid #047EFB;`"
       >
         <div @click="setUserPow(sessionUser)">
           <user-avatar
@@ -129,13 +131,20 @@ export default {
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
           // it's easier to test like this though :)
           if (!data.userViewerActivity) return
-          if (data.userViewerActivity.status && data.userViewerActivity.status === 'disconnect') {
-            this.users = this.users.filter((u) => u.uuid !== data.userViewerActivity.uuid)
+          if (
+            data.userViewerActivity.status &&
+            data.userViewerActivity.status === 'disconnect'
+          ) {
+            this.users = this.users.filter(
+              (u) => u.uuid !== data.userViewerActivity.uuid
+            )
             this.updateBubbles(true)
             return
           }
           if (data.userViewerActivity.uuid === this.uuid) return
-          let indx = this.users.findIndex((u) => u.uuid === data.userViewerActivity.uuid)
+          let indx = this.users.findIndex(
+            (u) => u.uuid === data.userViewerActivity.uuid
+          )
           if (indx !== -1) {
             let user = this.users[indx]
             user.hidden = false
@@ -294,7 +303,11 @@ export default {
             $resourceId: String!
             $data: JSONObject
           ) {
-            userViewerActivityBroadcast(streamId: $streamId, resourceId: $resourceId, data: $data)
+            userViewerActivityBroadcast(
+              streamId: $streamId
+              resourceId: $resourceId
+              data: $data
+            )
           }
         `,
         variables: {
@@ -313,7 +326,11 @@ export default {
             $resourceId: String!
             $data: JSONObject
           ) {
-            userViewerActivityBroadcast(streamId: $streamId, resourceId: $resourceId, data: $data)
+            userViewerActivityBroadcast(
+              streamId: $streamId
+              resourceId: $resourceId
+              data: $data
+            )
           }
         `,
         variables: {
@@ -412,7 +429,10 @@ export default {
         uTargetEl.style.transform = `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`
         uTargetEl.style.opacity = user.clipped ? '0' : '1'
 
-        const angle = Math.atan2(targetLoc.y - 16 - newTarget.y, targetLoc.x - 16 - newTarget.x)
+        const angle = Math.atan2(
+          targetLoc.y - 16 - newTarget.y,
+          targetLoc.x - 16 - newTarget.x
+        )
         uArrowEl.style.transform = `translate(${newTarget.x}px,${newTarget.y}px) rotate(${angle}rad)`
         uArrowEl.style.opacity = user.clipped ? '0' : '1'
       }

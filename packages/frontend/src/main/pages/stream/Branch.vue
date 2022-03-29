@@ -84,7 +84,9 @@
       </v-dialog>
 
       <no-data-placeholder
-        v-if="!$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0"
+        v-if="
+          !$apollo.loading && stream.branch && stream.branch.commits.totalCount === 0
+        "
       >
         <h2 class="space-grotesk">Branch "{{ stream.branch.name }}" has no commits.</h2>
       </no-data-placeholder>
@@ -110,7 +112,8 @@ export default {
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     BranchEditDialog: () => import('@/main/dialogs/BranchEditDialog'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
+    CommitReceivedReceipts: () =>
+      import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
@@ -193,12 +196,18 @@ export default {
       else return null
     },
     latestCommit() {
-      if (this.stream.branch.commits.items && this.stream.branch.commits.items.length > 0)
+      if (
+        this.stream.branch.commits.items &&
+        this.stream.branch.commits.items.length > 0
+      )
         return this.stream.branch.commits.items[0]
       else return null
     },
     allPreviousCommits() {
-      if (this.stream.branch.commits.items && this.stream.branch.commits.items.length > 0)
+      if (
+        this.stream.branch.commits.items &&
+        this.stream.branch.commits.items.length > 0
+      )
         return this.stream.branch.commits.items.slice(1)
       else return null
     }
@@ -221,7 +230,8 @@ export default {
 
           let allItems = [...previousResult.stream.branch.commits.items]
           for (const commit of newItems) {
-            if (allItems.findIndex((c) => c.id === commit.id) === -1) allItems.push(commit)
+            if (allItems.findIndex((c) => c.id === commit.id) === -1)
+              allItems.push(commit)
           }
 
           return {

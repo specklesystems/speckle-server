@@ -89,7 +89,9 @@ describe('Objects @core-objects', () => {
     for (let i = 0; i < objCount_2; i++) {
       objs2.push({
         amazingness: i * i,
-        somethingness: `Sample HASH ${i % 2 === 0 ? 'SUPER MEGA HASH CHANGE' : '100101'} ERRR`,
+        somethingness: `Sample HASH ${
+          i % 2 === 0 ? 'SUPER MEGA HASH CHANGE' : '100101'
+        } ERRR`,
         x: 10,
         y: i * 2,
         z: i * 0.23432,
@@ -99,7 +101,8 @@ describe('Objects @core-objects', () => {
         },
         __tree: [
           '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e67f6723',
-          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67' + i / 2.0,
+          '79eb41764cc2c065de752bd704bfc4aa.8a9b0676b7fe3e5e487bb34549e623237f67' +
+            i / 2.0,
           '79eb41764cc2c065de752bd704asdf4aa.' + i + '.' + i * i,
           '79eb41764cc2c065de752bd704bfc4aa.' + i + '.' + i * i + 3
         ]
@@ -157,7 +160,13 @@ describe('Objects @core-objects', () => {
       streamId: stream.id,
       limit,
       objectId: ids[0],
-      select: ['nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]']
+      select: [
+        'nest.mallard',
+        'test.value',
+        'test.secondValue',
+        'nest.arr[0]',
+        'nest.arr[1]'
+      ]
     })
 
     expect(rows_1.length).to.equal(limit)
@@ -172,7 +181,13 @@ describe('Objects @core-objects', () => {
       streamId: stream.id,
       limit,
       objectId: ids[0],
-      select: ['nest.mallard', 'test.value', 'test.secondValue', 'nest.arr[0]', 'nest.arr[1]'],
+      select: [
+        'nest.mallard',
+        'test.value',
+        'test.secondValue',
+        'nest.arr[0]',
+        'nest.arr[1]'
+      ],
       cursor: cursor_1
     })
 
@@ -241,7 +256,9 @@ describe('Objects @core-objects', () => {
     expect(test2.totalCount).to.equal(23)
 
     expect(test.objects[0].data.test.value).to.be.below(test.objects[1].data.test.value)
-    expect(test2.objects[0].data.test.value).to.be.below(test2.objects[1].data.test.value)
+    expect(test2.objects[0].data.test.value).to.be.below(
+      test2.objects[1].data.test.value
+    )
 
     // continuity
     expect(test.objects[test.objects.length - 1].data.test.value + 1).to.equal(
@@ -434,7 +451,9 @@ describe('Objects @core-objects', () => {
       cursor: test.cursor
     })
 
-    expect(test.objects[1].data.test.value).to.equal(test2.objects[0].data.test.value + 1) // continuity check
+    expect(test.objects[1].data.test.value).to.equal(
+      test2.objects[0].data.test.value + 1
+    ) // continuity check
 
     let test3 = await getObjectChildrenQuery({
       streamId: stream.id,
@@ -474,13 +493,15 @@ describe('Objects @core-objects', () => {
 
   it('should stream objects back', (done) => {
     let tcount = 0
-    getObjectChildrenStream({ streamId: stream.id, objectId: commitId }).then((stream) => {
-      stream.on('data', (row) => tcount++)
-      stream.on('end', () => {
-        expect(tcount).to.equal(3333)
-        done()
-      })
-    })
+    getObjectChildrenStream({ streamId: stream.id, objectId: commitId }).then(
+      (stream) => {
+        stream.on('data', (row) => tcount++)
+        stream.on('end', () => {
+          expect(tcount).to.equal(3333)
+          done()
+        })
+      }
+    )
   })
 
   it('should not deadlock when batch inserting in random order', async function () {

@@ -22,8 +22,8 @@
           autofocus
         ></v-text-field>
         <p class="caption">
-          Tip: you can create nested branches by using "/" as a separator in their names. E.g.,
-          "mep/stage-1" or "arch/sketch-design".
+          Tip: you can create nested branches by using "/" as a separator in their
+          names. E.g., "mep/stage-1" or "arch/sketch-design".
         </p>
         <v-textarea v-model="description" rows="2" label="Description"></v-textarea>
       </v-card-text>
@@ -50,7 +50,8 @@ export default {
       nameRules: [
         (v) => !!v || 'Branches need a name too!',
         (v) =>
-          !(v.startsWith('#') || v.startsWith('/')) || 'Branch names cannot start with "#" or "/"',
+          !(v.startsWith('#') || v.startsWith('/')) ||
+          'Branch names cannot start with "#" or "/"',
         (v) =>
           (v && this.reservedBranchNames.findIndex((e) => e === v) === -1) ||
           'This is a reserved branch name',

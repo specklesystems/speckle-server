@@ -19,7 +19,10 @@ router.post('/getobjects/:streamId', async (req, res) => {
     'Content-Type': simpleText ? 'text/plain' : 'application/json'
   })
 
-  let dbStream = await getObjectsStream({ streamId: req.params.streamId, objectIds: childrenList })
+  let dbStream = await getObjectsStream({
+    streamId: req.params.streamId,
+    objectIds: childrenList
+  })
   let speckleObjStream = new SpeckleObjectsStream(simpleText)
   let gzipStream = zlib.createGzip()
 
@@ -31,12 +34,14 @@ router.post('/getobjects/:streamId', async (req, res) => {
     res,
     (err) => {
       if (err) {
-        console.log(`Error streaming objects from stream ${req.params.streamId}: ${err}`)
+        console.log(
+          `Error streaming objects from stream ${req.params.streamId}: ${err}`
+        )
       } else {
         console.log(
-          `Streamed ${childrenList.length} objects from stream ${req.params.streamId} (size: ${
-            gzipStream.bytesWritten / 1000000
-          } MB)`
+          `Streamed ${childrenList.length} objects from stream ${
+            req.params.streamId
+          } (size: ${gzipStream.bytesWritten / 1000000} MB)`
         )
       }
     }

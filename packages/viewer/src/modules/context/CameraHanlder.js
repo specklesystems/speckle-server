@@ -6,7 +6,10 @@ export default class CameraHandler {
   constructor(viewer) {
     this.viewer = viewer
 
-    this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight)
+    this.camera = new THREE.PerspectiveCamera(
+      55,
+      window.innerWidth / window.innerHeight
+    )
     this.camera.up.set(0, 0, 1)
     this.camera.position.set(1, 1, 1)
     this.camera.updateProjectionMatrix()
@@ -73,7 +76,10 @@ export default class CameraHandler {
   set activeCam(val) {
     if (val === 'perspective') this.setPerspectiveCameraOn()
     else if (val === 'ortho') this.setOrthoCameraOn()
-    else throw new Error(`'${val}' projection mode is invalid. Try with 'perspective' or 'ortho'.`)
+    else
+      throw new Error(
+        `'${val}' projection mode is invalid. Try with 'perspective' or 'ortho'.`
+      )
   }
 
   set enabled(val) {
@@ -113,7 +119,10 @@ export default class CameraHandler {
     this.controls.getTarget(target)
     const distance = target.clone().sub(this.camera.position)
     const depth = distance.dot(lineOfSight)
-    const dims = { x: this.viewer.container.offsetWidth, y: this.viewer.container.offsetHeight }
+    const dims = {
+      x: this.viewer.container.offsetWidth,
+      y: this.viewer.container.offsetHeight
+    }
     const aspect = dims.x / dims.y
     const fov = this.camera.fov
     const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
@@ -135,7 +144,9 @@ export default class CameraHandler {
     // fit the camera inside, so we don't have clipping plane issues.
     // WIP implementation
     let camPos = this.orthoCamera.position
-    let box = new THREE.Box3().setFromObject(this.viewer.sceneManager.sceneObjects.allObjects)
+    let box = new THREE.Box3().setFromObject(
+      this.viewer.sceneManager.sceneObjects.allObjects
+    )
     let sphere = new THREE.Sphere()
     box.getBoundingSphere(sphere)
 
@@ -210,7 +221,8 @@ export default class CameraHandler {
   }
 
   onWindowResize() {
-    this.camera.aspect = this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
+    this.camera.aspect =
+      this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
     this.camera.updateProjectionMatrix()
 
     let aspect = this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
@@ -234,7 +246,9 @@ export default class CameraHandler {
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(normalizedMouse, this.camera)
 
-    const intersections = raycaster.intersectObjects(this.viewer.sceneManager.allObjects)
+    const intersections = raycaster.intersectObjects(
+      this.viewer.sceneManager.allObjects
+    )
     if (intersections.length !== 0) {
       this.controls.setOrbitPoint(
         intersections[0].point.x,

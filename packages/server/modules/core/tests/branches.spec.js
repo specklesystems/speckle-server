@@ -47,7 +47,11 @@ describe('Branches @core-branches', () => {
   let branch = { name: 'dim/dev' }
 
   it('Should create a branch', async () => {
-    branch.id = await createBranch({ ...branch, streamId: stream.id, authorId: user.id })
+    branch.id = await createBranch({
+      ...branch,
+      streamId: stream.id,
+      authorId: user.id
+    })
     expect(branch.id).to.be.not.null
     expect(branch.id).to.be.a.string
   })
@@ -92,15 +96,28 @@ describe('Branches @core-branches', () => {
   })
 
   it('Branch names should be case insensitive (always lowercase)', async () => {
-    let id = await createBranch({ name: 'CaseSensitive', streamId: stream.id, authorId: user.id })
+    let id = await createBranch({
+      name: 'CaseSensitive',
+      streamId: stream.id,
+      authorId: user.id
+    })
 
-    let b = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'casesensitive' })
+    let b = await getBranchByNameAndStreamId({
+      streamId: stream.id,
+      name: 'casesensitive'
+    })
     expect(b.name).to.equal('casesensitive')
 
-    let bb = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'CaseSensitive' })
+    let bb = await getBranchByNameAndStreamId({
+      streamId: stream.id,
+      name: 'CaseSensitive'
+    })
     expect(bb.name).to.equal('casesensitive')
 
-    let bbb = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'CASESENSITIVE' })
+    let bbb = await getBranchByNameAndStreamId({
+      streamId: stream.id,
+      name: 'CASESENSITIVE'
+    })
     expect(bbb.name).to.equal('casesensitive')
 
     // cleanup
@@ -123,9 +140,15 @@ describe('Branches @core-branches', () => {
   it('Should get all stream branches', async () => {
     await createBranch({ name: 'main-faster', streamId: stream.id, authorId: user.id })
     await createBranch({ name: 'main-blaster', streamId: stream.id, authorId: user.id })
-    await createBranch({ name: 'blaster-farter', streamId: stream.id, authorId: user.id })
+    await createBranch({
+      name: 'blaster-farter',
+      streamId: stream.id,
+      authorId: user.id
+    })
 
-    let { items, cursor, totalCount } = await getBranchesByStreamId({ streamId: stream.id })
+    let { items, cursor, totalCount } = await getBranchesByStreamId({
+      streamId: stream.id
+    })
     expect(items).to.have.lengthOf(5)
     expect(cursor).to.exist
     expect(totalCount).to.exist

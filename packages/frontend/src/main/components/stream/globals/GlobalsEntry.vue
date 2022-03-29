@@ -24,7 +24,11 @@
                 dense
                 rounded
               />
-              <v-text-field v-model="entry.value" class="entry-value mr-5" hint="property value" />
+              <v-text-field
+                v-model="entry.value"
+                class="entry-value mr-5"
+                hint="property value"
+              />
               <v-btn
                 v-if="true"
                 v-tooltip="'Transform this field into a nested object'"
@@ -57,7 +61,13 @@
                 @click="editTitle = true"
               >
                 {{ entry.key }}
-                <v-btn v-show="mouseOver" icon small color="primary" @click="editTitle = true">
+                <v-btn
+                  v-show="mouseOver"
+                  icon
+                  small
+                  color="primary"
+                  @click="editTitle = true"
+                >
                   <v-icon small>mdi-pencil</v-icon>
                 </v-btn>
               </v-toolbar-title>
@@ -175,13 +185,15 @@ export default {
             (v) => {
               let filtered = entries.filter((_, i) => i != index)
               let result =
-                filtered.findIndex((e) => e.key === v) === -1 || 'Each property name must be unique'
+                filtered.findIndex((e) => e.key === v) === -1 ||
+                'Each property name must be unique'
               if (entries[index].valid === true) entries[index].valid = result
               return result
             },
             (v) => {
               const re = /[./]/
-              let result = !re.test(v) || 'The name cannot contain invalid characters: "." or "/"'
+              let result =
+                !re.test(v) || 'The name cannot contain invalid characters: "." or "/"'
               if (entries[index].valid === true) entries[index].valid = result
               return result
             }

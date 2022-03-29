@@ -21,13 +21,19 @@ module.exports = (app) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let hasStreamAccess = await validatePermissionsReadStream(req.params.streamId, req)
+      let hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
       if (!hasStreamAccess.result) {
         return res.status(hasStreamAccess.status).end()
       }
 
       // Populate first object (the "commit")
-      let obj = await getObject({ streamId: req.params.streamId, objectId: req.params.objectId })
+      let obj = await getObject({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
 
       if (!obj) {
         return res.status(404).send('Failed to find object.')
@@ -66,7 +72,9 @@ module.exports = (app) => {
             debug('speckle:info')(
               `[User ${req.context.userId || '-'}] Downloaded object ${
                 req.params.objectId
-              } from stream ${req.params.streamId} (size: ${gzipStream.bytesWritten / 1000000} MB)`
+              } from stream ${req.params.streamId} (size: ${
+                gzipStream.bytesWritten / 1000000
+              } MB)`
             )
           }
         }
@@ -81,12 +89,18 @@ module.exports = (app) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let hasStreamAccess = await validatePermissionsReadStream(req.params.streamId, req)
+      let hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
       if (!hasStreamAccess.result) {
         return res.status(hasStreamAccess.status).end()
       }
 
-      let obj = await getObject({ streamId: req.params.streamId, objectId: req.params.objectId })
+      let obj = await getObject({
+        streamId: req.params.streamId,
+        objectId: req.params.objectId
+      })
 
       if (!obj) {
         return res.status(404).send('Failed to find object.')

@@ -6,9 +6,15 @@ const GithubStrategy = require('passport-github2')
 const URL = require('url').URL
 const debug = require('debug')
 const appRoot = require('app-root-path')
-const { findOrCreateUser, getUserByEmail } = require(`${appRoot}/modules/core/services/users`)
+const {
+  findOrCreateUser,
+  getUserByEmail
+} = require(`${appRoot}/modules/core/services/users`)
 const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { validateInvite, useInvite } = require(`${appRoot}/modules/serverinvites/services`)
+const {
+  validateInvite,
+  useInvite
+} = require(`${appRoot}/modules/serverinvites/services`)
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -62,7 +68,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         }
 
         // validate the invite
-        const validInvite = await validateInvite({ id: req.session.inviteId, email: user.email })
+        const validInvite = await validateInvite({
+          id: req.session.inviteId,
+          email: user.email
+        })
         if (!validInvite) throw new Error('Invalid invite.')
 
         // create the user
@@ -86,7 +95,9 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   app.get(
     '/auth/gh/callback',
     session,
-    passport.authenticate('github', { failureRedirect: '/error?message=Failed to authenticate.' }),
+    passport.authenticate('github', {
+      failureRedirect: '/error?message=Failed to authenticate.'
+    }),
     finalizeAuth
   )
 

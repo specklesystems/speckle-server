@@ -115,7 +115,8 @@ export default class FilteringManager {
       color = `hsl(${colorHue}, 50%, 30%)`
     }
 
-    if (objValue !== undefined && objValue !== null) this.colorLegend[objValue.toString()] = color
+    if (objValue !== undefined && objValue !== null)
+      this.colorLegend[objValue.toString()] = color
 
     let material = this.ColoredMaterial.clone()
     material.color = new THREE.Color(color)
@@ -169,13 +170,15 @@ export default class FilteringManager {
 
       if ('includes' in valueFilter && Array.isArray(valueFilter.includes)) {
         if (!objValue || !Array.isArray(objValue)) return false
-        for (let testValue of valueFilter.includes) if (objValue.includes(testValue)) return true
+        for (let testValue of valueFilter.includes)
+          if (objValue.includes(testValue)) return true
         return false
       }
 
       if ('excludes' in valueFilter && Array.isArray(valueFilter.excludes)) {
         if (!objValue || !Array.isArray(objValue)) return true
-        for (let testValue of valueFilter.excludes) if (objValue.includes(testValue)) return false
+        for (let testValue of valueFilter.excludes)
+          if (objValue.includes(testValue)) return false
         return true
       }
 

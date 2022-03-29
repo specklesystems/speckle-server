@@ -1,6 +1,12 @@
 <template>
-  <v-card :class="`elevation-${elevation} rounded-lg overflow-hidden ${funky ? 'funky' : ''}`">
-    <v-toolbar v-show="hasHeaderSlot || hasActionsSlot || expandable" flat :dense="dense">
+  <v-card
+    :class="`elevation-${elevation} rounded-lg overflow-hidden ${funky ? 'funky' : ''}`"
+  >
+    <v-toolbar
+      v-show="hasHeaderSlot || hasActionsSlot || expandable"
+      flat
+      :dense="dense"
+    >
       <v-toolbar-title class="text-subtitle-1">
         <slot name="header"></slot>
       </v-toolbar-title>

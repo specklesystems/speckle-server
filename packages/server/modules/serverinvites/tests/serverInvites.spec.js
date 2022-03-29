@@ -13,7 +13,10 @@ const {
   useInvite,
   sanitizeMessage
 } = require(`${appRoot}/modules/serverinvites/services`)
-const { createStream, getUserStreams } = require(`${appRoot}/modules/core/services/streams`)
+const {
+  createStream,
+  getUserStreams
+} = require(`${appRoot}/modules/core/services/streams`)
 const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
 
 const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
@@ -81,7 +84,10 @@ describe('Server Invites @server-invites', () => {
 
     it('should not allow self invites', async () => {
       try {
-        await createAndSendInvite({ email: 'didimitrie-100@gmail.com', inviterId: actor.id })
+        await createAndSendInvite({
+          email: 'didimitrie-100@gmail.com',
+          inviterId: actor.id
+        })
       } catch (e) {
         return
       }
@@ -90,7 +96,10 @@ describe('Server Invites @server-invites', () => {
 
     it('should not allow invites from no user', async () => {
       try {
-        await createAndSendInvite({ email: 'didimitrie233-100@gmail.com', inviterId: 'fake' })
+        await createAndSendInvite({
+          email: 'didimitrie233-100@gmail.com',
+          inviterId: 'fake'
+        })
       } catch (e) {
         return
       }
@@ -154,8 +163,14 @@ describe('Server Invites @server-invites', () => {
         message: 'Hey, join!'
       })
 
-      const valid = await validateInvite({ email: 'rAvEn@specklE.sYstems', id: inviteId })
-      const invalid = await validateInvite({ email: 'bunny@speckle.systems', id: inviteId })
+      const valid = await validateInvite({
+        email: 'rAvEn@specklE.sYstems',
+        id: inviteId
+      })
+      const invalid = await validateInvite({
+        email: 'bunny@speckle.systems',
+        id: inviteId
+      })
 
       expect(valid).to.equal(true)
       expect(invalid).to.equal(false)
@@ -170,7 +185,9 @@ describe('Server Invites @server-invites', () => {
 
       try {
         await useInvite({ id: inviteId, email: 'parrot@speckle.systems' })
-        assert.fail('Should not allow a different email to be used than the one in the invite')
+        assert.fail(
+          'Should not allow a different email to be used than the one in the invite'
+        )
       } catch (e) {
         // pass
       }
@@ -203,7 +220,11 @@ describe('Server Invites @server-invites', () => {
       invite.id = await createAndSendInvite(invite)
 
       // fake registration
-      let guest = { email: 'bunny@speckle.systems', name: 'bunny', password: 'ten toes or more' }
+      let guest = {
+        email: 'bunny@speckle.systems',
+        name: 'bunny',
+        password: 'ten toes or more'
+      }
       guest.id = await createUser(guest)
 
       await useInvite({ id: invite.id, email: guest.email })
@@ -260,7 +281,11 @@ describe('Server Invites @server-invites', () => {
         query:
           'mutation inviteToStream($input: StreamInviteCreateInput!) { streamInviteCreate( input: $input ) }',
         variables: {
-          input: { email: 'peppers@speckle.systems', message: 'wow!', streamId: stream.id }
+          input: {
+            email: 'peppers@speckle.systems',
+            message: 'wow!',
+            streamId: stream.id
+          }
         }
       })
 

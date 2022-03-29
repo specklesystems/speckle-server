@@ -1,7 +1,12 @@
 <template>
   <v-card class="pa-4">
     <v-card-title>Create a New Personal Access Token</v-card-title>
-    <v-form v-show="!fullTokenResult" ref="form" v-model="valid" @submit.prevent="createToken">
+    <v-form
+      v-show="!fullTokenResult"
+      ref="form"
+      v-model="valid"
+      @submit.prevent="createToken"
+    >
       <v-card-text>
         <v-text-field
           v-model="name"
@@ -44,8 +49,8 @@
       </div>
       <v-alert type="info">
         <b>Note:</b>
-        This is the first and last time you will be able to see the full token. Please copy paste it
-        somewhere safe now.
+        This is the first and last time you will be able to see the full token. Please
+        copy paste it somewhere safe now.
       </v-alert>
       <v-btn block color="primary" @click="clearAndClose">Close</v-btn>
     </v-card-text>

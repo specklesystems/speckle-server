@@ -35,7 +35,12 @@ module.exports = {
 
   ServerApp: {
     secret(parent, args, context, info) {
-      if (context.auth && parent.author && parent.author.id && parent.author.id === context.userId)
+      if (
+        context.auth &&
+        parent.author &&
+        parent.author.id &&
+        parent.author.id === context.userId
+      )
         return parent.secret
 
       return 'App secrets are only revealed to their author 😉'

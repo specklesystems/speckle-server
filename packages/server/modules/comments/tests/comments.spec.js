@@ -131,7 +131,10 @@ describe('Comments @comments', () => {
     // create a comment on streamA but objectB
     createComment({
       userId: user.id,
-      input: { streamId: streamA.id, resources: [{ resourceId: objB.id, resourceType: 'object' }] }
+      input: {
+        streamId: streamA.id,
+        resources: [{ resourceId: objB.id, resourceType: 'object' }]
+      }
     })
       .then(() => {
         throw new Error('This should have been rejected')
@@ -141,7 +144,10 @@ describe('Comments @comments', () => {
     // create a comment on streamA but commitB
     createComment({
       userId: user.id,
-      input: { streamId: streamA.id, resources: [{ resourceId: commB.id, resourceType: 'commit' }] }
+      input: {
+        streamId: streamA.id,
+        resources: [{ resourceId: commB.id, resourceType: 'commit' }]
+      }
     })
       .then(() => {
         throw new Error('This should have been rejected')
@@ -322,7 +328,8 @@ describe('Comments @comments', () => {
         resources: [{ resourceId: commitId1, resourceType: 'commit' }],
         text: 'https://tenor.com/view/gandalf-smoking-gif-21189890', // possibly NSFW
         data: {
-          someMore: 'https://tenor.com/view/gandalf-old-man-naked-take-robe-off-funny-gif-17224126'
+          someMore:
+            'https://tenor.com/view/gandalf-old-man-naked-take-robe-off-funny-gif-17224126'
         } // possibly NSFW
       }
     })
@@ -362,7 +369,9 @@ describe('Comments @comments', () => {
         throw new Error('This should have been rejected')
       })
       .catch((error) =>
-        expect(error.message).to.be.equal('Commenting on multiple streams is not supported')
+        expect(error.message).to.be.equal(
+          'Commenting on multiple streams is not supported'
+        )
       )
   })
 
@@ -559,7 +568,9 @@ describe('Comments @comments', () => {
       limit: 2
     })
     expect(comments.items).to.have.lengthOf(2)
-    expect(createdComments.reverse().slice(0, 2)).deep.to.equal(comments.items.map((c) => c.id)) // note: reversing as default order is newest first now
+    expect(createdComments.reverse().slice(0, 2)).deep.to.equal(
+      comments.items.map((c) => c.id)
+    ) // note: reversing as default order is newest first now
 
     const cursor = comments.items[1].createdAt
     comments = await getComments({
@@ -611,7 +622,10 @@ describe('Comments @comments', () => {
       resources: [{ resourceId: streamCommentId1, resourceType: 'comment' }]
     })
     expect(replies.items).to.have.lengthOf(2)
-    expect(replies.items.reverse().map((i) => i.id)).deep.to.equal([commentId1, commentId2])
+    expect(replies.items.reverse().map((i) => i.id)).deep.to.equal([
+      commentId1,
+      commentId2
+    ])
   })
 
   it('Should return all the referenced resources for a comment', async () => {
@@ -677,7 +691,9 @@ describe('Comments @comments', () => {
   })
 
   it('Should be able to edit a comment text', async () => {
-    const localObjectId = await createObject(stream.id, { anotherTestObject: crs({ length: 10 }) })
+    const localObjectId = await createObject(stream.id, {
+      anotherTestObject: crs({ length: 10 })
+    })
     const commentId = await createComment({
       userId: user.id,
       input: {
@@ -706,7 +722,9 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to edit a comment of another user', async () => {
-    const localObjectId = await createObject(stream.id, { anotherTestObject: crs({ length: 10 }) })
+    const localObjectId = await createObject(stream.id, {
+      anotherTestObject: crs({ length: 10 })
+    })
     const commentId = await createComment({
       userId: user.id,
       input: {
@@ -750,7 +768,12 @@ describe('Comments @comments', () => {
     comment = await getComment({ id: commentId })
     expect(comment.archived).to.equal(true)
 
-    await archiveComment({ streamId: stream.id, commentId, userId: user.id, archived: false })
+    await archiveComment({
+      streamId: stream.id,
+      commentId,
+      userId: user.id,
+      archived: false
+    })
 
     comment = await getComment({ id: commentId })
     expect(comment.archived).to.equal(false)
@@ -784,7 +807,9 @@ describe('Comments @comments', () => {
         throw new Error('This should have been rejected')
       })
       .catch((error) =>
-        expect(error.message).to.be.equal("You don't have permission to archive the comment")
+        expect(error.message).to.be.equal(
+          "You don't have permission to archive the comment"
+        )
       )
 
     const otherUsersCommentId = await createComment({
@@ -805,7 +830,9 @@ describe('Comments @comments', () => {
   })
 
   it('Should not query archived comments unless asked', async () => {
-    const localObjectId = await createObject(stream.id, { testObject: crs({ length: 10 }) })
+    const localObjectId = await createObject(stream.id, {
+      testObject: crs({ length: 10 })
+    })
 
     const commentCount = 15
     for (let i = 0; i < commentCount; i++) {

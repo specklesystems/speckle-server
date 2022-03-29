@@ -77,22 +77,27 @@ describe('Activity @activity', () => {
     userIz.token = `Bearer ${token}`
 
     userCr.id = await createUser(userCr)
-    userCr.token = `Bearer ${await createPersonalAccessToken(userCr.id, 'cristi test token', [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
-    ])}`
+    userCr.token = `Bearer ${await createPersonalAccessToken(
+      userCr.id,
+      'cristi test token',
+      [
+        'streams:read',
+        'streams:write',
+        'users:read',
+        'users:email',
+        'tokens:write',
+        'tokens:read',
+        'profile:read',
+        'profile:email'
+      ]
+    )}`
 
     userX.id = await createUser(userX)
-    userX.token = `Bearer ${await createPersonalAccessToken(userX.id, 'no users:read test token', [
-      'streams:read',
-      'streams:write'
-    ])}`
+    userX.token = `Bearer ${await createPersonalAccessToken(
+      userX.id,
+      'no users:read test token',
+      ['streams:read', 'streams:write']
+    )}`
   })
 
   after(async () => {

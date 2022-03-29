@@ -8,7 +8,12 @@
       <v-spacer></v-spacer>
       <v-btn icon @click="$emit('close')"><v-icon>mdi-close</v-icon></v-btn>
     </v-toolbar>
-    <v-alert v-model="showError" dismissible type="error" :class="`${success ? 'mb-0' : ''}`">
+    <v-alert
+      v-model="showError"
+      dismissible
+      type="error"
+      :class="`${success ? 'mb-0' : ''}`"
+    >
       {{ error }}
     </v-alert>
     <v-alert v-model="success" timeout="3000" dismissible type="success">
@@ -16,11 +21,15 @@
     </v-alert>
     <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="sendInvite">
       <v-card-text class="pb-0 mb-0">
-        Speckle will send a server invite link to the email below. You can also add a personal
-        message if you want to.
+        Speckle will send a server invite link to the email below. You can also add a
+        personal message if you want to.
       </v-card-text>
       <v-card-text class="pt-0 mt-0">
-        <v-text-field v-model="email" :rules="validation.emailRules" label="email"></v-text-field>
+        <v-text-field
+          v-model="email"
+          :rules="validation.emailRules"
+          label="email"
+        ></v-text-field>
         <v-text-field
           v-model="message"
           :rules="validation.messageRules"

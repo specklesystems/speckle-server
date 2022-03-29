@@ -137,14 +137,16 @@ describe('Webhooks @webhooks', () => {
       streamTwo.id = await createStream(streamTwo)
       webhookTwo.streamId = streamTwo.id
 
-      userOne.token = `Bearer ${await createPersonalAccessToken(userOne.id, 'userOne test token', [
-        'streams:read',
-        'streams:write'
-      ])}`
-      userTwo.token = `Bearer ${await createPersonalAccessToken(userTwo.id, 'userTwo test token', [
-        'streams:read',
-        'streams:write'
-      ])}`
+      userOne.token = `Bearer ${await createPersonalAccessToken(
+        userOne.id,
+        'userOne test token',
+        ['streams:read', 'streams:write']
+      )}`
+      userTwo.token = `Bearer ${await createPersonalAccessToken(
+        userTwo.id,
+        'userTwo test token',
+        ['streams:read', 'streams:write']
+      )}`
       await grantPermissionsStream({
         streamId: streamTwo.id,
         userId: userOne.id,
@@ -184,7 +186,9 @@ describe('Webhooks @webhooks', () => {
       expect(webhooks.totalCount).to.equal(1)
       expect(webhooks.items[0].url).to.equal(webhookTwo.url)
       expect(webhooks.items[0].history.totalCount).to.equal(1)
-      expect(JSON.parse(webhooks.items[0].history.items[0].payload).test).to.equal('payload321')
+      expect(JSON.parse(webhooks.items[0].history.items[0].payload).test).to.equal(
+        'payload321'
+      )
     })
 
     it('Should update a webhook', async () => {

@@ -8,7 +8,10 @@ const Closures = () => knex('object_children_closure')
 
 module.exports = {
   async getObject({ streamId, objectId }) {
-    let res = await Objects().where({ streamId: streamId, id: objectId }).select('*').first()
+    let res = await Objects()
+      .where({ streamId: streamId, id: objectId })
+      .select('*')
+      .first()
     if (!res) return null
     res.data.totalChildrenCount = res.totalChildrenCount
     delete res.streamId
@@ -27,7 +30,10 @@ module.exports = {
       )
     })
       .where(
-        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [streamId, objectId])
+        knex.raw('object_children_closure."streamId" = ? AND parent = ?', [
+          streamId,
+          objectId
+        ])
       )
       .orderBy('objects.id')
     return q.stream({ highWaterMark: 500 })

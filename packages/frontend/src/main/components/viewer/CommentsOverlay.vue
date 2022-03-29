@@ -4,12 +4,24 @@
   -->
   <div
     ref="parent"
-    style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
+    style="
+      width: 100%;
+      height: 100vh;
+      position: absolute;
+      pointer-events: none;
+      overflow: hidden;
+    "
     class="d-flex align-center justify-center no-mouse"
   >
     <div
       v-show="showComments && !$store.state.addingComment"
-      style="width: 100%; height: 100vh; position: absolute; pointer-events: none; overflow: hidden"
+      style="
+        width: 100%;
+        height: 100vh;
+        position: absolute;
+        pointer-events: none;
+        overflow: hidden;
+      "
       class="no-mouse"
     >
       <!-- Comment bubbles -->
@@ -18,8 +30,13 @@
         :key="comment.id"
         :ref="`comment-${comment.id}`"
         :class="`absolute-pos rounded-xl no-mouse`"
-        :style="`transition: opacity 0.2s ease; z-index:${comment.expanded ? '20' : '10'}; ${
-          hasExpandedComment && !comment.expanded && !comment.hovered && !comment.bouncing
+        :style="`transition: opacity 0.2s ease; z-index:${
+          comment.expanded ? '20' : '10'
+        }; ${
+          hasExpandedComment &&
+          !comment.expanded &&
+          !comment.hovered &&
+          !comment.bouncing
             ? 'opacity: 0.1;'
             : 'opacity: 1;'
         }`"
@@ -38,7 +55,9 @@
                   ? 'dark white--text primary'
                   : 'background'
               }`"
-              @click="comment.expanded ? collapseComment(comment) : expandComment(comment)"
+              @click="
+                comment.expanded ? collapseComment(comment) : expandComment(comment)
+              "
             >
               <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
               <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
@@ -49,7 +68,10 @@
                 style="position: absolute; left: 30px; width: max-content"
                 class="rounded-xl primary white--text px-2 ml-1 caption"
               >
-                <timeago :datetime="comment.updatedAt" class="font-italic mr-2"></timeago>
+                <timeago
+                  :datetime="comment.updatedAt"
+                  class="font-italic mr-2"
+                ></timeago>
                 <v-icon x-small class="white--text">mdi-comment-outline</v-icon>
                 {{ comment.replies.totalCount + 1 }}
                 <v-icon v-if="comment.data.filters" x-small class="white--text">
@@ -124,7 +146,8 @@ import gql from 'graphql-tag'
 export default {
   components: {
     CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer'),
-    CommentsViewerNavbar: () => import('@/main/components/comments/CommentsViewerNavbar')
+    CommentsViewerNavbar: () =>
+      import('@/main/components/comments/CommentsViewerNavbar')
   },
   apollo: {
     comments: {
@@ -181,7 +204,10 @@ export default {
           c.expanded = false
           c.hovered = false
           c.bouncing = false
-          if (this.localComments.findIndex((lc) => c.id === lc.id) === -1 && !c.archived) {
+          if (
+            this.localComments.findIndex((lc) => c.id === lc.id) === -1 &&
+            !c.archived
+          ) {
             this.localComments.push({ ...c })
           }
         }
@@ -203,7 +229,11 @@ export default {
           }
         },
         updateQuery(prevResult, { subscriptionData }) {
-          if (!subscriptionData || !subscriptionData.data || !subscriptionData.data.commentActivity)
+          if (
+            !subscriptionData ||
+            !subscriptionData.data ||
+            !subscriptionData.data.commentActivity
+          )
             return
           let newComment = subscriptionData.data.commentActivity
 
@@ -211,7 +241,8 @@ export default {
           newComment.hovered = false
           newComment.bouncing = false
 
-          if (newComment.authorId !== this.$userId()) newComment.viewedAt = new Date('1987')
+          if (newComment.authorId !== this.$userId())
+            newComment.viewedAt = new Date('1987')
 
           newComment.archived = false
 
@@ -387,14 +418,16 @@ export default {
         const paddingYBottom = 90
 
         if (tX < -300)
-          if (!comment.preventAutoClose && !this.$vuetify.breakpoint.xs) comment.expanded = false // collapse if too far out leftwise
+          if (!comment.preventAutoClose && !this.$vuetify.breakpoint.xs)
+            comment.expanded = false // collapse if too far out leftwise
         if (tX < paddingX) {
           tX = paddingX
         }
 
         if (tX > this.$refs.parent.clientWidth - (paddingX + 50)) {
           tX = this.$refs.parent.clientWidth - (paddingX + 50)
-          if (!comment.preventAutoClose && !this.$vuetify.breakpoint.xs) comment.expanded = false // collapse if too far down right
+          if (!comment.preventAutoClose && !this.$vuetify.breakpoint.xs)
+            comment.expanded = false // collapse if too far down right
         }
         if (tY < 0 && !comment.preventAutoClose && !this.$vuetify.breakpoint.xs)
           comment.expanded = false // collapse if too far out topwise

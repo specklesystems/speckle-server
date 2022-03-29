@@ -8,7 +8,9 @@ setInterval(() => {
 
 let v = new Viewer({ container: document.getElementById('renderer'), showStats: true })
 v.on('load-progress', (args) => {
-  document.getElementById('info-progress').innerText = `${Math.round(1000 * args.progress) / 1000}`
+  document.getElementById('info-progress').innerText = `${
+    Math.round(1000 * args.progress) / 1000
+  }`
 })
 
 v.on('busy', (isBusy) => {

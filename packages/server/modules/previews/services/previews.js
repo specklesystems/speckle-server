@@ -19,7 +19,8 @@ module.exports = {
       priority,
       previewStatus: 0
     }
-    let sqlQuery = ObjectPreview().insert(insertionObject).toString() + ' on conflict do nothing'
+    let sqlQuery =
+      ObjectPreview().insert(insertionObject).toString() + ' on conflict do nothing'
     await knex.raw(sqlQuery)
   },
 

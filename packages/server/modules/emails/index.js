@@ -49,7 +49,9 @@ const initTransporter = async () => {
   // if (process.env.NODE_ENV === 'test') return await initTestSmtpTransporter()
   if (process.env.EMAIL === 'true') return await initSmtpTransporter()
 
-  modulesDebug('📧 Email provider is not configured. Server functionality will be limited.')
+  modulesDebug(
+    '📧 Email provider is not configured. Server functionality will be limited.'
+  )
 }
 
 exports.init = async (app, __) => {

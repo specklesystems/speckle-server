@@ -91,7 +91,9 @@
           `"
           :height="420"
           :url="`/preview/${$route.params.streamId}/objects/${
-            isCommit ? resources[0].data.commit.referencedObject : resources[0].data.object.id
+            isCommit
+              ? resources[0].data.commit.referencedObject
+              : resources[0].data.object.id
           }`"
         ></preview-image>
       </v-fade-transition>
@@ -150,7 +152,10 @@
         <comment-add-overlay key="b" />
       </div>
       <!-- Progress bar -->
-      <div v-if="!loadedModel" style="width: 20%; top: 45%; left: 40%; position: absolute">
+      <div
+        v-if="!loadedModel"
+        style="width: 20%; top: 45%; left: 40%; position: absolute"
+      >
         <v-progress-linear
           v-model="loadProgress"
           :indeterminate="loadProgress >= 99 && !loadedModel"
@@ -160,7 +165,13 @@
       <div
         v-show="viewerBusy && loadedModel"
         class="pl-2 pb-2"
-        style="width: 100%; bottom: 12px; left: 0; position: absolute; z-index: 10000000"
+        style="
+          width: 100%;
+          bottom: 12px;
+          left: 0;
+          position: absolute;
+          z-index: 10000000;
+        "
       >
         <v-progress-circular
           :size="20"
@@ -245,12 +256,14 @@ export default {
   computed: {
     isCommit() {
       if (this.resources.length === 0) return false
-      if (this.resources.length === 1 && this.resources[0].type === 'commit') return true
+      if (this.resources.length === 1 && this.resources[0].type === 'commit')
+        return true
       return false
     },
     isObject() {
       if (this.resources.length === 0) return false
-      if (this.resources.length === 1 && this.resources[0].type === 'object') return true
+      if (this.resources.length === 1 && this.resources[0].type === 'object')
+        return true
       return false
     },
     isMultiple() {
@@ -265,8 +278,15 @@ export default {
   watch: {
     stream(val) {
       if (!val) return
-      if (val && val.commit && val.commit.branchName && val.commit.branchName === 'globals') {
-        this.$router.push(`/streams/${this.$route.params.streamId}/globals/${val.commit.id}`)
+      if (
+        val &&
+        val.commit &&
+        val.commit.branchName &&
+        val.commit.branchName === 'globals'
+      ) {
+        this.$router.push(
+          `/streams/${this.$route.params.streamId}/globals/${val.commit.id}`
+        )
         return
       }
     },
@@ -364,7 +384,10 @@ export default {
               { x: this.camToSet[3], y: this.camToSet[4], z: this.camToSet[5] } // target
             )
             if (this.camToSet[6] === 1) {
-              window.__viewer.cameraHandler.activeCam.controls.zoom(this.camToSet[7], true)
+              window.__viewer.cameraHandler.activeCam.controls.zoom(
+                this.camToSet[7],
+                true
+              )
             }
             this.camToSet = null
           }, 200)
@@ -468,14 +491,19 @@ export default {
 
       if (existing !== -1) {
         this.$eventHub.$emit('notification', {
-          text: `${resType.charAt(0).toUpperCase() + resType.slice(1)} is already loaded.`
+          text: `${
+            resType.charAt(0).toUpperCase() + resType.slice(1)
+          } is already loaded.`
         })
         return
       }
       let resource = {
         type: resType,
         id: resId,
-        data: resType === 'commit' ? await this.loadCommit(resId) : await this.loadObject(resId)
+        data:
+          resType === 'commit'
+            ? await this.loadCommit(resId)
+            : await this.loadObject(resId)
       }
       this.resources.push(resource)
       this.$mixpanel.track('Viewer Action', {
@@ -504,7 +532,9 @@ export default {
       }
 
       this.loadModel(
-        resource.type === 'commit' ? resource.data.commit.referencedObject : resource.data.object.id
+        resource.type === 'commit'
+          ? resource.data.commit.referencedObject
+          : resource.data.object.id
       )
     },
     async removeResource(resource) {

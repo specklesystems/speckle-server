@@ -26,7 +26,8 @@ module.exports = async (app) => {
   })
 
   let sessionStorage = (req, res, next) => {
-    if (!req.query.challenge) return res.status(400).send('Invalid request: no challenge detected.')
+    if (!req.query.challenge)
+      return res.status(400).send('Invalid request: no challenge detected.')
 
     req.session.challenge = req.query.challenge
 

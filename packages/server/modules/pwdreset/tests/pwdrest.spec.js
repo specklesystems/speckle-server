@@ -47,10 +47,16 @@ describe('Password reset requests @passwordresets', () => {
     await request(app).post('/auth/pwdreset/finalize').expect(400)
 
     // invalid request
-    await request(app).post('/auth/pwdreset/finalize').send({ tokenId: 'fake' }).expect(400)
+    await request(app)
+      .post('/auth/pwdreset/finalize')
+      .send({ tokenId: 'fake' })
+      .expect(400)
 
     // should be not ok, missing pwd
-    await request(app).post('/auth/pwdreset/finalize').send({ tokenId: token.id }).expect(400)
+    await request(app)
+      .post('/auth/pwdreset/finalize')
+      .send({ tokenId: token.id })
+      .expect(400)
 
     await request(app)
       .post('/auth/pwdreset/finalize')

@@ -8,12 +8,14 @@
         <v-toolbar flat class="error--text" dense>
           <v-toolbar-title>Delete Account</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon @click="showDelete = !showDelete"><v-icon>mdi-chevron-down</v-icon></v-btn>
+          <v-btn icon @click="showDelete = !showDelete">
+            <v-icon>mdi-chevron-down</v-icon>
+          </v-btn>
         </v-toolbar>
         <div v-show="showDelete">
           <v-card-text>
-            This action cannot be undone. We will delete all streams where you are the sole owner,
-            and any associated data.
+            This action cannot be undone. We will delete all streams where you are the
+            sole owner, and any associated data.
           </v-card-text>
           <v-card-actions>
             <v-btn block @click="deleteUser">Delete account</v-btn>

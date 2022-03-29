@@ -10,7 +10,9 @@ const knex = require(`${appRoot}/db/knex`)
 const { createUser } = require(`${appRoot}/modules/core/services/users`)
 const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
 
-const { sendEmailVerification } = require(`${appRoot}/modules/emails/services/verification`)
+const {
+  sendEmailVerification
+} = require(`${appRoot}/modules/emails/services/verification`)
 
 const Verifications = () => knex('email_verifications')
 
@@ -32,28 +34,36 @@ describe('Email verifications @emails', () => {
     ;({ app } = await beforeEachContext())
 
     userA.id = await createUser(userA)
-    userA.token = `Bearer ${await createPersonalAccessToken(userA.id, 'test token user A', [
-      'server:setup',
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
-    ])}`
+    userA.token = `Bearer ${await createPersonalAccessToken(
+      userA.id,
+      'test token user A',
+      [
+        'server:setup',
+        'streams:read',
+        'streams:write',
+        'users:read',
+        'users:email',
+        'tokens:write',
+        'tokens:read',
+        'profile:read',
+        'profile:email'
+      ]
+    )}`
     userB.id = await createUser(userB)
-    userB.token = `Bearer ${await createPersonalAccessToken(userB.id, 'test token user B', [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
-    ])}`
+    userB.token = `Bearer ${await createPersonalAccessToken(
+      userB.id,
+      'test token user B',
+      [
+        'streams:read',
+        'streams:write',
+        'users:read',
+        'users:email',
+        'tokens:write',
+        'tokens:read',
+        'profile:read',
+        'profile:email'
+      ]
+    )}`
   })
 
   describe('Create email verification', () => {
@@ -125,7 +135,9 @@ describe('Email verifications @emails', () => {
       }
       await Verifications().insert(expiredVerification)
 
-      await request(app).get(`/auth/verifyemail?t=${expiredVerification.id}`).expect(400)
+      await request(app)
+        .get(`/auth/verifyemail?t=${expiredVerification.id}`)
+        .expect(400)
 
       await Verifications().where({ id: expiredVerification.id }).del()
     })

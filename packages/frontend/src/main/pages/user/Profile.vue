@@ -21,7 +21,13 @@
           </template>
           <v-card-text>
             <v-row class="mt-2">
-              <v-col v-for="(stream, i) in user.streams.items" :key="i" cols="12" sm="6" lg="4">
+              <v-col
+                v-for="(stream, i) in user.streams.items"
+                :key="i"
+                cols="12"
+                sm="6"
+                lg="4"
+              >
                 <list-item-stream :stream="stream"></list-item-stream>
               </v-col>
             </v-row>

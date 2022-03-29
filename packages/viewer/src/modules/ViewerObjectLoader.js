@@ -69,23 +69,33 @@ export default class ViewerObjectLoader {
     let firstObjectPromise = null
     for await (let obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
-        this.viewer.emit('load-progress', { progress: 1, id: this.objectId, url: this.objectUrl }) // to hide progress bar, easier on the frontend
+        this.viewer.emit('load-progress', {
+          progress: 1,
+          id: this.objectId,
+          url: this.objectUrl
+        }) // to hide progress bar, easier on the frontend
         this.viewer.emit('load-cancelled', { id: this.objectId, url: this.objectUrl })
         return
       }
       await this.converter.asyncPause()
       if (first) {
-        firstObjectPromise = this.converter.traverseAndConvert(obj, async (objectWrapper) => {
-          await this.converter.asyncPause()
-          objectWrapper.meta.__importedUrl = this.objectUrl
-          this.viewer.sceneManager.addObject(objectWrapper)
-          viewerLoads++
-        })
+        firstObjectPromise = this.converter.traverseAndConvert(
+          obj,
+          async (objectWrapper) => {
+            await this.converter.asyncPause()
+            objectWrapper.meta.__importedUrl = this.objectUrl
+            this.viewer.sceneManager.addObject(objectWrapper)
+            viewerLoads++
+          }
+        )
         first = false
         total = obj.totalChildrenCount
       }
       current++
-      this.viewer.emit('load-progress', { progress: current / (total + 1), id: this.objectId })
+      this.viewer.emit('load-progress', {
+        progress: current / (total + 1),
+        id: this.objectId
+      })
     }
 
     if (firstObjectPromise) {

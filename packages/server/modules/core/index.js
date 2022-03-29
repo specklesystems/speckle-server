@@ -1,7 +1,10 @@
 'use strict'
 let debug = require('debug')
 const appRoot = require('app-root-path')
-const { registerOrUpdateScope, registerOrUpdateRole } = require(`${appRoot}/modules/shared`)
+const {
+  registerOrUpdateScope,
+  registerOrUpdateRole
+} = require(`${appRoot}/modules/shared`)
 
 exports.init = async (app, options) => {
   debug('speckle:modules')('💥 Init core module')

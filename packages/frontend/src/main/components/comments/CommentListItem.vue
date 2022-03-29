@@ -49,7 +49,9 @@
                   </v-app-bar-nav-icon>
                   <v-toolbar-title>Archive Comment Thread</v-toolbar-title>
                   <v-spacer></v-spacer>
-                  <v-btn icon @click="showArchiveDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+                  <v-btn icon @click="showArchiveDialog = false">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
                 </v-toolbar>
                 <v-card-text class="mt-4">
                   This comment thread will be archived. Are you sure?
@@ -206,7 +208,10 @@ export default {
     canArchiveThread() {
       if (!this.comment || !this.stream) return false
       if (!this.stream.role) return false
-      if (this.comment.authorId === this.$userId() || this.stream.role === 'stream:owner')
+      if (
+        this.comment.authorId === this.$userId() ||
+        this.stream.role === 'stream:owner'
+      )
         return true
     },
     link() {
@@ -221,7 +226,11 @@ export default {
     },
     isUnread() {
       if (!this.commentDetails) return
-      return new Date(this.commentDetails.updatedAt) - new Date(this.commentDetails.viewedAt) > 0
+      return (
+        new Date(this.commentDetails.updatedAt) -
+          new Date(this.commentDetails.viewedAt) >
+        0
+      )
     }
   },
   methods: {
@@ -233,7 +242,10 @@ export default {
             commentView(streamId: $streamId, commentId: $commentId)
           }
         `,
-        variables: { streamId: this.$route.params.streamId, commentId: this.comment.id }
+        variables: {
+          streamId: this.$route.params.streamId,
+          commentId: this.comment.id
+        }
       })
     },
     async archiveComment() {

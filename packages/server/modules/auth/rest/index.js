@@ -76,7 +76,12 @@ module.exports = (app) => {
       }
 
       // Access-code - token exchange
-      if (!req.body.appId || !req.body.appSecret || !req.body.accessCode || !req.body.challenge)
+      if (
+        !req.body.appId ||
+        !req.body.appSecret ||
+        !req.body.accessCode ||
+        !req.body.challenge
+      )
         throw new Error('Invalid request' + JSON.stringify(req.body))
 
       let authResponse = await createAppTokenFromAccessCode({

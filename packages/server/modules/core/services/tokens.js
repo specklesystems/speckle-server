@@ -32,7 +32,8 @@ module.exports = {
   },
 
   async createToken({ userId, name, scopes, lifespan }) {
-    let { tokenId, tokenString, tokenHash, lastChars } = await module.exports.createBareToken()
+    let { tokenId, tokenString, tokenHash, lastChars } =
+      await module.exports.createBareToken()
 
     if (scopes.length === 0) throw new Error('No scopes provided')
 
@@ -54,7 +55,12 @@ module.exports = {
 
   // Creates a personal access token for a user with a set of given scopes.
   async createPersonalAccessToken(userId, name, scopes, lifespan) {
-    let { id, token } = await module.exports.createToken({ userId, name, scopes, lifespan })
+    let { id, token } = await module.exports.createToken({
+      userId,
+      name,
+      scopes,
+      lifespan
+    })
 
     // Store the relationship
     await PersonalApiTokens().insert({ userId: userId, tokenId: id })
@@ -83,7 +89,10 @@ module.exports = {
     if (valid) {
       await ApiTokens().where({ id: tokenId }).update({ lastUsed: knex.fn.now() })
       let scopes = await TokenScopes().select('scopeName').where({ tokenId: tokenId })
-      let { role } = await ServerRoles().select('role').where({ userId: token.owner }).first()
+      let { role } = await ServerRoles()
+        .select('role')
+        .where({ userId: token.owner })
+        .first()
       return {
         valid: true,
         userId: token.owner,

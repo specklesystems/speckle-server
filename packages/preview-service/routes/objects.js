@@ -11,7 +11,10 @@ var router = express.Router()
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
 router.get('/:streamId/:objectId', async function (req, res, next) {
   // Populate first object (the "commit")
-  let obj = await getObject({ streamId: req.params.streamId, objectId: req.params.objectId })
+  let obj = await getObject({
+    streamId: req.params.streamId,
+    objectId: req.params.objectId
+  })
 
   if (!obj) {
     return res.status(404).send('Failed to find object.')
@@ -46,9 +49,9 @@ router.get('/:streamId/:objectId', async function (req, res, next) {
         )
       } else {
         console.log(
-          `Downloaded object ${req.params.objectId} from stream ${req.params.streamId} (size: ${
-            gzipStream.bytesWritten / 1000000
-          } MB)`
+          `Downloaded object ${req.params.objectId} from stream ${
+            req.params.streamId
+          } (size: ${gzipStream.bytesWritten / 1000000} MB)`
         )
       }
     }
@@ -56,13 +59,18 @@ router.get('/:streamId/:objectId', async function (req, res, next) {
 })
 
 router.get('/:streamId/:objectId/single', async (req, res) => {
-  let obj = await getObject({ streamId: req.params.streamId, objectId: req.params.objectId })
+  let obj = await getObject({
+    streamId: req.params.streamId,
+    objectId: req.params.objectId
+  })
 
   if (!obj) {
     return res.status(404).send('Failed to find object.')
   }
 
-  console.log(`Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}`)
+  console.log(
+    `Downloaded single object ${req.params.objectId} from stream ${req.params.streamId}`
+  )
 
   res.send(obj.data)
 })

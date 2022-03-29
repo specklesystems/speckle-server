@@ -151,7 +151,9 @@ module.exports = {
   },
 
   async validatePasssword({ email, password }) {
-    let { passwordDigest } = await userByEmailQuery(email).select('passwordDigest').first()
+    let { passwordDigest } = await userByEmailQuery(email)
+      .select('passwordDigest')
+      .first()
     return bcrypt.compare(password, passwordDigest)
   },
 

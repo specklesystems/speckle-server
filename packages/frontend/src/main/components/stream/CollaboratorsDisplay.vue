@@ -33,7 +33,10 @@
       </v-btn>
     </span>
     <span v-else-if="!linkToCollabs && collaborators.length > 5">
-      <span v-tooltip="`${collaborators.length - 4} more collaborators`" class="caption">
+      <span
+        v-tooltip="`${collaborators.length - 4} more collaborators`"
+        class="caption"
+      >
         +{{ collaborators.length - 4 }}
       </span>
     </span>

@@ -33,7 +33,10 @@ export default class SectionBox {
 
     // we're attaching the gizmo mover to this sphere in the box centre
     let sphere = new THREE.SphereGeometry(0.01, 10, 10)
-    this.sphere = new THREE.Mesh(sphere, new THREE.MeshStandardMaterial({ color: 0x00ffff }))
+    this.sphere = new THREE.Mesh(
+      sphere,
+      new THREE.MeshStandardMaterial({ color: 0x00ffff })
+    )
     this.sphere.visible = false
     this.display.add(this.sphere)
 
@@ -149,7 +152,8 @@ export default class SectionBox {
 
     // Dragging a side / plane
     if (this.dragging && this.currentRange) {
-      if (this.prevPosition === null) this.prevPosition = this.hoverPlane.position.clone()
+      if (this.prevPosition === null)
+        this.prevPosition = this.hoverPlane.position.clone()
       this.prevPosition.sub(this.hoverPlane.position)
       this.prevPosition.negate()
       let boxArr = this.boxGeometry.attributes.position.array
@@ -261,8 +265,8 @@ export default class SectionBox {
     ]
 
     const indexes = [
-      0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7, 7, 2, 6, 4,
-      5, 0, 0, 5, 1
+      0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7,
+      7, 2, 6, 4, 5, 0, 0, 5, 1
     ]
 
     let positions = []
@@ -271,7 +275,10 @@ export default class SectionBox {
     }
 
     let g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3))
+    g.setAttribute(
+      'position',
+      new THREE.BufferAttribute(new Float32Array(positions), 3)
+    )
     g.setIndex(indexes)
     g.computeVertexNormals()
     return g
@@ -290,8 +297,8 @@ export default class SectionBox {
     let index = 0
     let boxArr = this.boxGeometry.attributes.position
     const indexes = [
-      0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7, 7, 2, 6, 4,
-      5, 0, 0, 5, 1
+      0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7,
+      7, 2, 6, 4, 5, 0, 0, 5, 1
     ]
 
     for (let i = 0; i < indexes.length; i += 6) {
@@ -345,8 +352,12 @@ export default class SectionBox {
     else {
       if (this.viewer.interactions.selectedObjects.children.length !== 0) {
         box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
-      } else if (this.viewer.sceneManager.sceneObjects.allObjects.children.length !== 0) {
-        box = new THREE.Box3().setFromObject(this.viewer.sceneManager.sceneObjects.allObjects)
+      } else if (
+        this.viewer.sceneManager.sceneObjects.allObjects.children.length !== 0
+      ) {
+        box = new THREE.Box3().setFromObject(
+          this.viewer.sceneManager.sceneObjects.allObjects
+        )
       } else {
         box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
       }
@@ -434,7 +445,9 @@ export default class SectionBox {
 
   getCurrentBox() {
     if (!this.display.visible) return null
-    let box = new THREE.Box3().setFromBufferAttribute(this.boxGeometry.attributes.position)
+    let box = new THREE.Box3().setFromBufferAttribute(
+      this.boxGeometry.attributes.position
+    )
     return box
   }
 }

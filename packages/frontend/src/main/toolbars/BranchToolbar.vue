@@ -67,7 +67,9 @@
       <span class="space-grotesk" style="max-width: 80%">{{ stream.branch.name }}</span>
       <span class="caption ml-2 mb-2 pb-2">{{ stream.branch.description }}</span>
       <v-chip
-        v-tooltip="`Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`"
+        v-tooltip="
+          `Branch ${stream.branch.name} has ${stream.branch.commits.totalCount} commits`
+        "
         class="ml-2 pl-2"
         small
       >
@@ -92,7 +94,9 @@
         class="ml-2"
         @click="$emit('edit-branch')"
       >
-        <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">mdi-pencil</v-icon>
+        <v-icon small :class="`${$vuetify.breakpoint.mdAndDown ? '' : 'mr-2'}`">
+          mdi-pencil
+        </v-icon>
         <span class="hidden-md-and-down">Edit</span>
       </v-btn>
     </div>

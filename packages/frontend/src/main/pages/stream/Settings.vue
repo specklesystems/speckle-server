@@ -22,8 +22,8 @@
     <v-row>
       <v-col v-if="stream.role !== 'stream:owner'" cols="12">
         <v-alert type="warning">
-          Your permission level ({{ stream.role }}) is not high enough to edit this stream's
-          details.
+          Your permission level ({{ stream.role }}) is not high enough to edit this
+          stream's details.
         </v-alert>
       </v-col>
       <v-col cols="12">
@@ -66,7 +66,13 @@
             </v-form>
           </v-card-text>
           <v-card-actions>
-            <v-btn class="ml-3" color="primary" type="submit" :disabled="!canSave" @click="save">
+            <v-btn
+              class="ml-3"
+              color="primary"
+              type="submit"
+              :disabled="!canSave"
+              @click="save"
+            >
               Save Changes
             </v-btn>
           </v-card-actions>
@@ -92,13 +98,17 @@
             <div class="ml-4">
               <div class="text-subtitle-1">Permanently Delete Stream</div>
               <div class="caption">
-                Once you delete a stream, there is no going back! All data will be removed, and
-                existing collaborators will not be able to access it.
+                Once you delete a stream, there is no going back! All data will be
+                removed, and existing collaborators will not be able to access it.
               </div>
             </div>
           </v-card-text>
         </section-card>
-        <v-dialog v-model="deleteDialog" width="500" @keydown.esc="deleteDialog = false">
+        <v-dialog
+          v-model="deleteDialog"
+          width="500"
+          @keydown.esc="deleteDialog = false"
+        >
           <v-card>
             <v-toolbar class="error mb-4">
               <v-toolbar-title>Deleting Stream '{{ stream.name }}'</v-toolbar-title>
@@ -111,8 +121,9 @@
             </v-toolbar>
 
             <v-card-text>
-              Type the name of the stream below to confirm you really want to delete it. All data
-              will be removed, and existing collaborators will not be able to access it.
+              Type the name of the stream below to confirm you really want to delete it.
+              All data will be removed, and existing collaborators will not be able to
+              access it.
               <v-divider class="my-2"></v-divider>
               <b>You cannot undo this action.</b>
 
@@ -171,7 +182,11 @@ export default {
       update(data) {
         let stream = data.stream
         if (stream)
-          ({ name: this.name, description: this.description, isPublic: this.isPublic } = stream)
+          ({
+            name: this.name,
+            description: this.description,
+            isPublic: this.isPublic
+          } = stream)
 
         return stream
       }

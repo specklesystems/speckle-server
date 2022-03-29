@@ -48,7 +48,10 @@ describe('Generic AuthN & AuthZ controller tests', () => {
 
   it('Should validate server role', async () => {
     try {
-      let test = await validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
+      let test = await validateServerRole(
+        { auth: true, role: 'server:user' },
+        'server:admin'
+      )
       assert.fail()
     } catch (e) {
       assert.equal('the void', 'the void')
@@ -62,13 +65,19 @@ describe('Generic AuthN & AuthZ controller tests', () => {
     }
 
     try {
-      let test = await validateServerRole({ auth: true, role: 'server:admin' }, '133TCR3w')
+      let test = await validateServerRole(
+        { auth: true, role: 'server:admin' },
+        '133TCR3w'
+      )
       assert.fail('Invalid roles should be refused')
     } catch (e) {
       assert.equal('and waits dreaming', 'and waits dreaming')
     }
 
-    let test = await validateServerRole({ auth: true, role: 'server:admin' }, 'server:user')
+    let test = await validateServerRole(
+      { auth: true, role: 'server:admin' },
+      'server:user'
+    )
     expect(test).to.equal(true)
   })
 

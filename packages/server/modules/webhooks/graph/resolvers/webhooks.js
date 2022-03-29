@@ -30,7 +30,10 @@ module.exports = {
 
   Webhook: {
     async history(parent, args, context, info) {
-      let items = await getLastWebhookEvents({ webhookId: parent.id, limit: args.limit })
+      let items = await getLastWebhookEvents({
+        webhookId: parent.id,
+        limit: args.limit
+      })
       let totalCount = await getWebhookEventsCount({ webhookId: parent.id })
 
       return { items, totalCount }

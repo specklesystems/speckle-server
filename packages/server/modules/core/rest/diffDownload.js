@@ -25,7 +25,10 @@ module.exports = (app) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let hasStreamAccess = await validatePermissionsReadStream(req.params.streamId, req)
+      let hasStreamAccess = await validatePermissionsReadStream(
+        req.params.streamId,
+        req
+      )
       if (!hasStreamAccess.result) {
         return res.status(hasStreamAccess.status).end()
       }
@@ -55,9 +58,9 @@ module.exports = (app) => {
         (err) => {
           if (err) {
             debug('speckle:error')(
-              `[User ${req.context.userId || '-'}] Error streaming objects from stream ${
-                req.params.streamId
-              }: ${err}`
+              `[User ${
+                req.context.userId || '-'
+              }] Error streaming objects from stream ${req.params.streamId}: ${err}`
             )
           } else {
             debug('speckle:info')(

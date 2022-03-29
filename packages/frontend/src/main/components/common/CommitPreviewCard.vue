@@ -63,7 +63,9 @@
           small
           class="caption primary"
           dark
-          v-tooltip="`${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`"
+          v-tooltip="
+            `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
+          "
         >
           <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
           {{ commit.commentCount }}
@@ -77,7 +79,8 @@
 export default {
   components: {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
+    CommitReceivedReceipts: () =>
+      import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
   props: {

@@ -109,8 +109,13 @@ export default class SelectionHelper extends EventEmitter {
 
   getClickedObjects(e) {
     const normalizedPosition = this._getNormalisedClickPosition(e)
-    this.raycaster.setFromCamera(normalizedPosition, this.viewer.cameraHandler.activeCam.camera)
-    let targetObjects = this.subset ? this.subset : this.viewer.sceneManager.filteredObjects
+    this.raycaster.setFromCamera(
+      normalizedPosition,
+      this.viewer.cameraHandler.activeCam.camera
+    )
+    let targetObjects = this.subset
+      ? this.subset
+      : this.viewer.sceneManager.filteredObjects
 
     let intersectedObjects = this.raycaster.intersectObjects(targetObjects)
     // filters objects in section box mode
@@ -127,7 +132,9 @@ export default class SelectionHelper extends EventEmitter {
   _getGroupChildren(group) {
     let children = []
     if (group.children.length === 0) return [group]
-    group.children.forEach((c) => (children = [...children, ...this._getGroupChildren(c)]))
+    group.children.forEach(
+      (c) => (children = [...children, ...this._getGroupChildren(c)])
+    )
     return children
   }
 

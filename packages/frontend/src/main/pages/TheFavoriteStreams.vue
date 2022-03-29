@@ -5,7 +5,15 @@
     <favorite-streams-placeholder v-if="!streams.length" />
     <!-- Streams found -->
     <v-row v-else>
-      <v-col v-for="stream in streams" :key="stream.id" cols="12" sm="6" md="6" lg="4" xl="3">
+      <v-col
+        v-for="stream in streams"
+        :key="stream.id"
+        cols="12"
+        sm="6"
+        md="6"
+        lg="4"
+        xl="3"
+      >
         <stream-preview-card :stream="stream" :user="user" />
       </v-col>
       <v-col cols="12" sm="6" md="6" lg="4" xl="3">
@@ -45,7 +53,10 @@ export default {
      * Whether or not there are more streams to load
      */
     allStreamsLoaded() {
-      return this.streams.length && this.streams.length >= this.user.favoriteStreams.totalCount
+      return (
+        this.streams.length &&
+        this.streams.length >= this.user.favoriteStreams.totalCount
+      )
     }
   },
   methods: {
@@ -69,7 +80,8 @@ export default {
           const { items: allItems } = oldFavorites
 
           for (const stream of newItems) {
-            if (allItems.findIndex((s) => s.id === stream.id) === -1) allItems.push(stream)
+            if (allItems.findIndex((s) => s.id === stream.id) === -1)
+              allItems.push(stream)
           }
 
           // set vue-infinite state
