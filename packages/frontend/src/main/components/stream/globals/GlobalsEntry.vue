@@ -54,7 +54,7 @@
                 v-if="!editTitle"
                 @mouseenter="mouseOver = true"
                 @mouseleave="mouseOver = false"
-                @click="editTitle=true"
+                @click="editTitle = true"
               >
                 {{ entry.key }}
                 <v-btn v-show="mouseOver" icon small color="primary" @click="editTitle = true">
@@ -68,9 +68,9 @@
                   :rules="rules.keys(index, entries)"
                   :error-messages="entry.valid === true ? null : entry.valid"
                   append-icon="mdi-check"
-                  @click:append="editTitle=false"
-                  @keyup.enter="editTitle=false"
-                  style="width: 300px; margin-top:14px;"
+                  @click:append="editTitle = false"
+                  @keyup.enter="editTitle = false"
+                  style="width: 300px; margin-top: 14px"
                 ></v-text-field>
               </v-toolbar-title>
               <v-spacer></v-spacer>

@@ -4,10 +4,19 @@ extend type User {
   """
   All the recent activity from this user in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: DateTime, limit: Int! = 25): ActivityCollection
-    @hasRole(role: "server:user")
-    @hasScope(scope: "users:read")
-  timeline(after: DateTime, before: DateTime, cursor: DateTime, limit: Int! = 25): ActivityCollection
+  activity(
+    actionType: String
+    after: DateTime
+    before: DateTime
+    cursor: DateTime
+    limit: Int! = 25
+  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "users:read")
+  timeline(
+    after: DateTime
+    before: DateTime
+    cursor: DateTime
+    limit: Int! = 25
+  ): ActivityCollection
     @hasRole(role: "server:user")
     @hasScopes(scopes: ["users:read", "streams:read"])
 }
@@ -16,27 +25,39 @@ extend type Stream {
   """
   All the recent activity on this stream in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: DateTime, limit: Int! = 25): ActivityCollection
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
+  activity(
+    actionType: String
+    after: DateTime
+    before: DateTime
+    cursor: DateTime
+    limit: Int! = 25
+  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 extend type Branch {
   """
   All the recent activity on this branch in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: DateTime, limit: Int! = 25): ActivityCollection
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
+  activity(
+    actionType: String
+    after: DateTime
+    before: DateTime
+    cursor: DateTime
+    limit: Int! = 25
+  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 extend type Commit {
   """
   All the recent activity on this commit in chronological order
   """
-  activity(actionType: String, after: DateTime, before: DateTime, cursor: DateTime, limit: Int! = 25): ActivityCollection
-    @hasRole(role: "server:user")
-    @hasScope(scope: "streams:read")
+  activity(
+    actionType: String
+    after: DateTime
+    before: DateTime
+    cursor: DateTime
+    limit: Int! = 25
+  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 type ActivityCollection {

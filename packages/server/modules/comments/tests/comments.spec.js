@@ -9,7 +9,17 @@ const { createStream } = require(`${appRoot}/modules/core/services/streams`)
 const { createCommitByBranchName } = require(`${appRoot}/modules/core/services/commits`)
 
 const { createObject } = require(`${appRoot}/modules/core/services/objects`)
-const { createComment, getComments, getComment, editComment, viewComment, createCommentReply, archiveComment, getResourceCommentCount, getStreamCommentCount } = require('../services')
+const {
+  createComment,
+  getComments,
+  getComment,
+  editComment,
+  viewComment,
+  createCommentReply,
+  archiveComment,
+  getResourceCommentCount,
+  getStreamCommentCount
+} = require('../services')
 
 describe('Comments @comments', () => {
   let user = {
@@ -51,8 +61,22 @@ describe('Comments @comments', () => {
     testObject1.id = await createObject(stream.id, testObject1)
     testObject2.id = await createObject(stream.id, testObject2)
 
-    commitId1 = await createCommitByBranchName({ streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject1.id, authorId: user.id })
-    commitId2 = await createCommitByBranchName({ streamId: stream.id, branchName: 'main', message: 'first commit', sourceApplication: 'tests', objectId: testObject2.id, authorId: user.id })
+    commitId1 = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: 'main',
+      message: 'first commit',
+      sourceApplication: 'tests',
+      objectId: testObject1.id,
+      authorId: user.id
+    })
+    commitId2 = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: 'main',
+      message: 'first commit',
+      sourceApplication: 'tests',
+      objectId: testObject2.id,
+      authorId: user.id
+    })
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
@@ -65,19 +89,30 @@ describe('Comments @comments', () => {
         data: { justSome: crs({ length: 10 }) }
       }
     })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('Must specify at least one resource as the comment target'))
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) =>
+        expect(error.message).to.be.equal(
+          'Must specify at least one resource as the comment target'
+        )
+      )
   })
 
   it('Should not be able to comment resources that do not belong to the input streamId', async () => {
-
-    // Stream A belongs to user 
+    // Stream A belongs to user
     let streamA = { name: 'Stream A' }
     streamA.id = await createStream({ ...streamA, ownerId: user.id })
     let objA = { foo: 'bar' }
     objA.id = await createObject(streamA.id, objA)
     let commA = {}
-    commA.id = await createCommitByBranchName({ streamId: streamA.id, branchName: 'main', message: 'baz', objectId: objA.id, authorId: user.id })
+    commA.id = await createCommitByBranchName({
+      streamId: streamA.id,
+      branchName: 'main',
+      message: 'baz',
+      objectId: objA.id,
+      authorId: user.id
+    })
 
     // Stream B belongs to otherUser
     let streamB = { name: 'Stream B' }
@@ -85,66 +120,169 @@ describe('Comments @comments', () => {
     let objB = { qux: 'mux' }
     objB.id = await createObject(streamB.id, objB)
     let commB = {}
-    commB.id = await createCommitByBranchName({ streamId: streamB.id, branchName: 'main', message: 'baz', objectId: objB.id, authorId: otherUser.id })
+    commB.id = await createCommitByBranchName({
+      streamId: streamB.id,
+      branchName: 'main',
+      message: 'baz',
+      objectId: objB.id,
+      authorId: otherUser.id
+    })
 
     // create a comment on streamA but objectB
-    createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: objB.id, resourceType: 'object' }] } })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('Object not found'))
+    createComment({
+      userId: user.id,
+      input: { streamId: streamA.id, resources: [{ resourceId: objB.id, resourceType: 'object' }] }
+    })
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) => expect(error.message).to.be.equal('Object not found'))
 
     // create a comment on streamA but commitB
-    createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: commB.id, resourceType: 'commit' }] } })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('Commit not found'))
+    createComment({
+      userId: user.id,
+      input: { streamId: streamA.id, resources: [{ resourceId: commB.id, resourceType: 'commit' }] }
+    })
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) => expect(error.message).to.be.equal('Commit not found'))
 
     // mixed bag of resources (A, B)
-    createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: commA.id, resourceType: 'commit' }, { resourceId: commB.id, resourceType: 'commit' }] } })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('Commit not found'))
+    createComment({
+      userId: user.id,
+      input: {
+        streamId: streamA.id,
+        resources: [
+          { resourceId: commA.id, resourceType: 'commit' },
+          { resourceId: commB.id, resourceType: 'commit' }
+        ]
+      }
+    })
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) => expect(error.message).to.be.equal('Commit not found'))
 
-    // correct this time, let's see this one not fail 
-    const correctCommentId = await createComment({ userId: user.id, input: { streamId: streamA.id, resources: [{ resourceId: commA.id, resourceType: 'commit' }, { resourceId: commA.id, resourceType: 'commit' }] } })
+    // correct this time, let's see this one not fail
+    const correctCommentId = await createComment({
+      userId: user.id,
+      input: {
+        streamId: streamA.id,
+        resources: [
+          { resourceId: commA.id, resourceType: 'commit' },
+          { resourceId: commA.id, resourceType: 'commit' }
+        ]
+      }
+    })
 
     // replies should also not be swappable
-    createCommentReply({ authorId: user.id, parentCommentId: correctCommentId, streamId: streamB.id, text: 'I am a 3l1t3 hack0r; - drop tables;' })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('Stop hacking - that comment is not part of the specified stream.'))
+    createCommentReply({
+      authorId: user.id,
+      parentCommentId: correctCommentId,
+      streamId: streamB.id,
+      text: 'I am a 3l1t3 hack0r; - drop tables;'
+    })
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) =>
+        expect(error.message).to.be.equal(
+          'Stop hacking - that comment is not part of the specified stream.'
+        )
+      )
   })
 
-  it('Should return comment counts for streams, commits and objects', async() =>{
+  it('Should return comment counts for streams, commits and objects', async () => {
     let stream = { name: 'Bean Counter' }
     stream.id = await createStream({ ...stream, ownerId: user.id })
     let obj = { foo: 'bar' }
     obj.id = await createObject(stream.id, obj)
     let commit = {}
-    commit.id = await createCommitByBranchName({ streamId: stream.id, branchName: 'main', message: 'baz', objectId: obj.id, authorId: user.id })
+    commit.id = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: 'main',
+      message: 'baz',
+      objectId: obj.id,
+      authorId: user.id
+    })
 
     let commCount = 10
     let commentIds = []
-    for(let i = 0; i < commCount; i++) {
+    for (let i = 0; i < commCount; i++) {
       // creates 1 * commCount comments linked to commit and object
-      commentIds.push( await createComment({ userId: user.id, input: { text: 'bar', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' }, { resourceId: obj.id, resourceType: 'object' }] } }) )
+      commentIds.push(
+        await createComment({
+          userId: user.id,
+          input: {
+            text: 'bar',
+            streamId: stream.id,
+            resources: [
+              { resourceId: commit.id, resourceType: 'commit' },
+              { resourceId: obj.id, resourceType: 'object' }
+            ]
+          }
+        })
+      )
       // creates 1 * commCount comments linked to commit only
-      commentIds.push( await createComment({ userId: user.id, input: { text: 'baz', streamId: stream.id, resources: [{ resourceId: commit.id, resourceType: 'commit' } ] } }) )
+      commentIds.push(
+        await createComment({
+          userId: user.id,
+          input: {
+            text: 'baz',
+            streamId: stream.id,
+            resources: [{ resourceId: commit.id, resourceType: 'commit' }]
+          }
+        })
+      )
       // creates 1 * commCount comments linked to object only
-      commentIds.push( await createComment({ userId: user.id, input: { text: 'qux', streamId: stream.id, resources: [{ resourceId: obj.id, resourceType: 'object' } ] } }) )
+      commentIds.push(
+        await createComment({
+          userId: user.id,
+          input: {
+            text: 'qux',
+            streamId: stream.id,
+            resources: [{ resourceId: obj.id, resourceType: 'object' }]
+          }
+        })
+      )
     }
-    
+
     // create some replies to foil the counts
-    await createCommentReply({ authorId: user.id, parentCommentId: commentIds[0], streamId: stream.id, input: { text: crs({ length: 10 }) } })
-    await createCommentReply({ authorId: user.id, parentCommentId: commentIds[1], streamId: stream.id, input: { text: crs({ length: 10 }) } })
-    await createCommentReply({ authorId: user.id, parentCommentId: commentIds[2], streamId: stream.id, input: { text: crs({ length: 10 }) } })
+    await createCommentReply({
+      authorId: user.id,
+      parentCommentId: commentIds[0],
+      streamId: stream.id,
+      input: { text: crs({ length: 10 }) }
+    })
+    await createCommentReply({
+      authorId: user.id,
+      parentCommentId: commentIds[1],
+      streamId: stream.id,
+      input: { text: crs({ length: 10 }) }
+    })
+    await createCommentReply({
+      authorId: user.id,
+      parentCommentId: commentIds[2],
+      streamId: stream.id,
+      input: { text: crs({ length: 10 }) }
+    })
 
     // we archive one of the object only comments for fun and profit
-    await archiveComment({commentId: commentIds[commentIds.length-1], userId: user.id, streamId: stream.id, archived: true })
+    await archiveComment({
+      commentId: commentIds[commentIds.length - 1],
+      userId: user.id,
+      streamId: stream.id,
+      archived: true
+    })
 
-    const count = await getStreamCommentCount({streamId: stream.id}) // should be 30
+    const count = await getStreamCommentCount({ streamId: stream.id }) // should be 30
     expect(count).to.equal(commCount * 3 - 1)
 
-    const objCount = await getResourceCommentCount({resourceId: obj.id})
+    const objCount = await getResourceCommentCount({ resourceId: obj.id })
     expect(objCount).to.equal(commCount * 2 - 1)
-    
-    const commitCount = await getResourceCommentCount({resourceId: commit.id})
+
+    const commitCount = await getResourceCommentCount({ resourceId: commit.id })
     expect(commitCount).to.equal(commCount * 2)
 
     let streamOther = { name: 'Bean Counter' }
@@ -152,15 +290,27 @@ describe('Comments @comments', () => {
     let objOther = { 'are you bored': 'yes' }
     objOther.id = await createObject(streamOther.id, objOther)
     let commitOther = {}
-    commitOther.id = await createCommitByBranchName({ streamId: streamOther.id, branchName: 'main', message: 'baz', objectId: objOther.id, authorId: user.id })
+    commitOther.id = await createCommitByBranchName({
+      streamId: streamOther.id,
+      branchName: 'main',
+      message: 'baz',
+      objectId: objOther.id,
+      authorId: user.id
+    })
 
-    const countOther = await getStreamCommentCount({streamId: streamOther.id})
+    const countOther = await getStreamCommentCount({ streamId: streamOther.id })
     expect(countOther).to.equal(0)
 
-    const objCountOther = await getResourceCommentCount({streamId: streamOther.id, resourceId: objOther.id})
+    const objCountOther = await getResourceCommentCount({
+      streamId: streamOther.id,
+      resourceId: objOther.id
+    })
     expect(objCountOther).to.equal(0)
-    
-    const commitCountOther = await getResourceCommentCount({streamId: streamOther.id, resourceId: commitOther.id})
+
+    const commitCountOther = await getResourceCommentCount({
+      streamId: streamOther.id,
+      resourceId: commitOther.id
+    })
     expect(commitCountOther).to.equal(0)
   })
 
@@ -171,7 +321,9 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [{ resourceId: commitId1, resourceType: 'commit' }],
         text: 'https://tenor.com/view/gandalf-smoking-gif-21189890', // possibly NSFW
-        data: { someMore: 'https://tenor.com/view/gandalf-old-man-naked-take-robe-off-funny-gif-17224126' } // possibly NSFW
+        data: {
+          someMore: 'https://tenor.com/view/gandalf-old-man-naked-take-robe-off-funny-gif-17224126'
+        } // possibly NSFW
       }
     })
 
@@ -206,16 +358,27 @@ describe('Comments @comments', () => {
         data: { justSome: crs({ length: 10 }) }
       }
     })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('Commenting on multiple streams is not supported'))
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) =>
+        expect(error.message).to.be.equal('Commenting on multiple streams is not supported')
+      )
   })
 
   it('Should not be allowed to comment on non existing resources', async () => {
     const nonExistentResources = [
       {
         streamId: 'this doesnt exist dummy',
+        resources: [{ resourceId: 'this doesnt exist dummy', resourceType: 'stream' }],
+        text: null,
+        data: null
+      },
+      {
+        streamId: stream.id,
         resources: [
-          { resourceId: 'this doesnt exist dummy', resourceType: 'stream' },
+          { resourceId: stream.id, resourceType: 'stream' },
+          { resourceId: 'this doesnt exist dummy', resourceType: 'commit' }
         ],
         text: null,
         data: null
@@ -224,7 +387,7 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [
           { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: 'this doesnt exist dummy', resourceType: 'commit' },
+          { resourceId: 'this doesnt exist dummy', resourceType: 'object' }
         ],
         text: null,
         data: null
@@ -233,25 +396,18 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [
           { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: 'this doesnt exist dummy', resourceType: 'object' },
+          { resourceId: 'this doesnt exist dummy', resourceType: 'comment' }
         ],
         text: null,
         data: null
-      },
-      {
-        streamId: stream.id,
-        resources: [
-          { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: 'this doesnt exist dummy', resourceType: 'comment' },
-        ],
-        text: null,
-        data: null
-      },
+      }
     ]
     for (const input of nonExistentResources) {
       await createComment({ userId: user.id, input })
-        .then(() => { throw new Error('This should have been rejected') })
-        .catch(error => expect(error.message).to.not.be.null)
+        .then(() => {
+          throw new Error('This should have been rejected')
+        })
+        .catch((error) => expect(error.message).to.not.be.null)
     }
   })
 
@@ -262,21 +418,21 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [
           { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: 'jubbjabb', resourceType: 'flux capacitor' },
+          { resourceId: 'jubbjabb', resourceType: 'flux capacitor' }
         ],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
     })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.not.be.null)
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) => expect(error.message).to.not.be.null)
   })
 
   it('Should be able to comment on valid resources in any permutation', async () => {
     const resourceCombinations = [
-      [
-        { resourceId: stream.id, resourceType: 'stream' }
-      ],
+      [{ resourceId: stream.id, resourceType: 'stream' }],
       [
         { resourceId: stream.id, resourceType: 'stream' },
         { resourceId: commitId1, resourceType: 'commit' }
@@ -312,7 +468,6 @@ describe('Comments @comments', () => {
         { resourceId: testObject1.id, resourceType: 'object' }
       ]
     ]
-
 
     // yeah i know, Promise.all, but this is easier to debug...
     for (const resources of resourceCombinations) {
@@ -350,44 +505,49 @@ describe('Comments @comments', () => {
     }
 
     const comments = await getComments({
-      streamId: stream.id, resources: [
+      streamId: stream.id,
+      resources: [
         { resourceId: commitId1, resourceType: 'commit' },
         { resourceId: localObjectId, resourceType: 'object' }
       ]
     })
 
-    let ids = comments.items.map(c => c.id)
+    let ids = comments.items.map((c) => c.id)
     let set = new Set(ids)
     expect(set.size).to.equal(ids.length)
 
-    // Note: since we switched to an "or" clause, this does not apply anymore. 
+    // Note: since we switched to an "or" clause, this does not apply anymore.
     // expect( comments.items ).to.have.lengthOf( commentCount )
   })
-  
-  it("should not be allowed to hop streams with a comment id", () => {
+
+  it('should not be allowed to hop streams with a comment id', () => {
     // Note: fixed in resolver
   })
 
   it('Should handle cursor and limit for queries', async () => {
-    const localObjectId = await createObject(stream.id, { testObject: 'something completely different' })
+    const localObjectId = await createObject(stream.id, {
+      testObject: 'something completely different'
+    })
 
     let createdComments = []
     const commentCount = 10
     for (let i = 0; i < commentCount; i++) {
-      createdComments.push(await createComment({
-        userId: user.id,
-        input: {
-          streamId: stream.id,
-          resources: [
-            { resourceId: stream.id, resourceType: 'stream' },
-            { resourceId: commitId1, resourceType: 'commit' },
-            { resourceId: localObjectId, resourceType: 'object' }
-          ],
-          text: crs({ length: 10 }),
-          data: { justSome: crs({ length: 10 }) }
-        }
-      }))
-      await new Promise(resolve => setTimeout(resolve, 50))
+      createdComments.push(
+        await createComment({
+          userId: user.id,
+          input: {
+            streamId: stream.id,
+            resources: [
+              { resourceId: stream.id, resourceType: 'stream' },
+              { resourceId: commitId1, resourceType: 'commit' },
+              { resourceId: localObjectId, resourceType: 'object' }
+            ],
+            text: crs({ length: 10 }),
+            data: { justSome: crs({ length: 10 }) }
+          }
+        })
+      )
+      await new Promise((resolve) => setTimeout(resolve, 50))
     }
 
     let comments = await getComments({
@@ -399,7 +559,7 @@ describe('Comments @comments', () => {
       limit: 2
     })
     expect(comments.items).to.have.lengthOf(2)
-    expect(createdComments.reverse().slice(0, 2)).deep.to.equal(comments.items.map(c => c.id)) // note: reversing as default order is newest first now 
+    expect(createdComments.reverse().slice(0, 2)).deep.to.equal(comments.items.map((c) => c.id)) // note: reversing as default order is newest first now
 
     const cursor = comments.items[1].createdAt
     comments = await getComments({
@@ -412,7 +572,7 @@ describe('Comments @comments', () => {
       cursor
     })
     expect(comments.items).to.have.lengthOf(2)
-    expect(createdComments.slice(2, 4)).deep.to.equal(comments.items.map(c => c.id))
+    expect(createdComments.slice(2, 4)).deep.to.equal(comments.items.map((c) => c.id))
   })
 
   it('Should properly return replies for a comment', async () => {
@@ -420,9 +580,7 @@ describe('Comments @comments', () => {
       userId: user.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: stream.id, resourceType: 'stream' }
-        ],
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
@@ -450,12 +608,10 @@ describe('Comments @comments', () => {
     const replies = await getComments({
       streamId: stream.id,
       replies: true,
-      resources: [
-        { resourceId: streamCommentId1, resourceType: 'comment' },
-      ],
+      resources: [{ resourceId: streamCommentId1, resourceType: 'comment' }]
     })
     expect(replies.items).to.have.lengthOf(2)
-    expect(replies.items.reverse().map(i => i.id)).deep.to.equal([commentId1, commentId2])
+    expect(replies.items.reverse().map((i) => i.id)).deep.to.equal([commentId1, commentId2])
   })
 
   it('Should return all the referenced resources for a comment', async () => {
@@ -468,7 +624,7 @@ describe('Comments @comments', () => {
     ]
     const queryResources = [
       { resourceId: stream.id, resourceType: 'stream' },
-      { resourceId: localObjectId, resourceType: 'object' },
+      { resourceId: localObjectId, resourceType: 'object' }
     ]
     await createComment({
       userId: user.id,
@@ -484,7 +640,7 @@ describe('Comments @comments', () => {
       streamId: stream.id,
       resources: queryResources
     })
-    // expect( comments.items ).to.have.lengthOf( 1 ) // not applicable anymore, as we're "OR"-ing 
+    // expect( comments.items ).to.have.lengthOf( 1 ) // not applicable anymore, as we're "OR"-ing
     inputResources.sort() // order is not ensured
     expect(comments.items[0].resources).to.have.deep.members(inputResources)
   })
@@ -497,7 +653,7 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [
           { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: localObjectId, resourceType: 'object' },
+          { resourceId: localObjectId, resourceType: 'object' }
         ],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
@@ -505,9 +661,7 @@ describe('Comments @comments', () => {
     })
     const comments = await getComments({
       streamId: stream.id,
-      resources: [
-        { resourceId: localObjectId, resourceType: 'object' },
-      ]
+      resources: [{ resourceId: localObjectId, resourceType: 'object' }]
     })
     expect(comments.items).to.have.lengthOf(1)
     const [firstComment] = comments.items
@@ -530,7 +684,7 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [
           { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: localObjectId, resourceType: 'object' },
+          { resourceId: localObjectId, resourceType: 'object' }
         ],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
@@ -545,8 +699,10 @@ describe('Comments @comments', () => {
 
   it('Should not be allowed to edit a not existing comment', async () => {
     editComment({ userId: user.id, input: { id: 'this is not going to be found' } })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('The comment doesn\'t exist'))
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) => expect(error.message).to.be.equal("The comment doesn't exist"))
   })
 
   it('Should not be allowed to edit a comment of another user', async () => {
@@ -557,16 +713,20 @@ describe('Comments @comments', () => {
         streamId: stream.id,
         resources: [
           { resourceId: stream.id, resourceType: 'stream' },
-          { resourceId: localObjectId, resourceType: 'object' },
+          { resourceId: localObjectId, resourceType: 'object' }
         ],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
     })
 
-    editComment({ userId: otherUser.id, input: { id: commentId, text: "properText" } })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('You cannot edit someone else\'s comments'))
+    editComment({ userId: otherUser.id, input: { id: commentId, text: 'properText' } })
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) =>
+        expect(error.message).to.be.equal("You cannot edit someone else's comments")
+      )
   })
 
   it('Should be able to toggle reactions for a comment')
@@ -576,9 +736,7 @@ describe('Comments @comments', () => {
       userId: user.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: stream.id, resourceType: 'stream' },
-        ],
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
@@ -600,41 +758,50 @@ describe('Comments @comments', () => {
 
   it('Should not be allowed to archive a not existing comment', async () => {
     archiveComment({ commentId: 'badabumm', streamId: stream.id, userId: user.id })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('No comment badabumm exists, cannot change its archival status'))
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) =>
+        expect(error.message).to.be.equal(
+          'No comment badabumm exists, cannot change its archival status'
+        )
+      )
   })
 
-  it('Should be forbidden to archive someone else\'s comment, unless the person is a stream admin', async () => {
+  it("Should be forbidden to archive someone else's comment, unless the person is a stream admin", async () => {
     const commentId = await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: stream.id, resourceType: 'stream' },
-        ],
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
     })
 
     archiveComment({ commentId, streamId: stream.id, userId: otherUser.id })
-      .then(() => { throw new Error('This should have been rejected') })
-      .catch(error => expect(error.message).to.be.equal('You don\'t have permission to archive the comment'))
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((error) =>
+        expect(error.message).to.be.equal("You don't have permission to archive the comment")
+      )
 
     const otherUsersCommentId = await createComment({
       userId: otherUser.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: stream.id, resourceType: 'stream' },
-        ],
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
         text: crs({ length: 10 }),
         data: { justSome: crs({ length: 10 }) }
       }
     })
-    let archiveResult = await archiveComment({ commentId: otherUsersCommentId, userId: user.id, streamId: stream.id })
+    let archiveResult = await archiveComment({
+      commentId: otherUsersCommentId,
+      userId: user.id,
+      streamId: stream.id
+    })
     expect(archiveResult).to.be.true
-
   })
 
   it('Should not query archived comments unless asked', async () => {
@@ -646,9 +813,7 @@ describe('Comments @comments', () => {
         userId: user.id,
         input: {
           streamId: stream.id,
-          resources: [
-            { resourceId: localObjectId, resourceType: 'object' }
-          ],
+          resources: [{ resourceId: localObjectId, resourceType: 'object' }],
           text: crs({ length: 10 }),
           data: { justSome: crs({ length: 10 }) }
         }
@@ -658,20 +823,20 @@ describe('Comments @comments', () => {
     const archiveCount = 3
     let comments = await getComments({
       streamId: stream.id,
-      resources: [
-        { resourceId: localObjectId, resourceType: 'object' }
-      ],
+      resources: [{ resourceId: localObjectId, resourceType: 'object' }],
       limit: archiveCount
     })
     expect(comments.totalCount).to.be.equal(commentCount)
 
-    await Promise.all(comments.items.map(comment => archiveComment({ commentId: comment.id, streamId: stream.id, userId: user.id })))
+    await Promise.all(
+      comments.items.map((comment) =>
+        archiveComment({ commentId: comment.id, streamId: stream.id, userId: user.id })
+      )
+    )
 
     comments = await getComments({
       streamId: stream.id,
-      resources: [
-        { resourceId: localObjectId, resourceType: 'object' }
-      ],
+      resources: [{ resourceId: localObjectId, resourceType: 'object' }],
       limit: 100
     })
     expect(comments.totalCount).to.be.equal(commentCount - archiveCount)
@@ -679,9 +844,7 @@ describe('Comments @comments', () => {
 
     comments = await getComments({
       streamId: stream.id,
-      resources: [
-        { resourceId: localObjectId, resourceType: 'object' }
-      ],
+      resources: [{ resourceId: localObjectId, resourceType: 'object' }],
       limit: 100,
       archived: true
     })
@@ -694,9 +857,7 @@ describe('Comments @comments', () => {
       userId: user.id,
       input: {
         streamId: stream.id,
-        resources: [
-          { resourceId: stream.id, resourceType: 'stream' }
-        ],
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
         text: aShortNovel,
         data: { justSome: crs({ length: 10 }) }
       }
@@ -706,7 +867,6 @@ describe('Comments @comments', () => {
     expect(comment.text).to.equal(aShortNovel)
   })
 })
-
 
 const aShortNovel = `
 In the works of Gaiman, a predominant concept is the concept of

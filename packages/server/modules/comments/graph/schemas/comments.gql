@@ -1,14 +1,20 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
   """
-  This query can be used in the follwing ways: 
+  This query can be used in the follwing ways:
   - get all the comments for a stream: **do not pass in any resource identifiers**.
   - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
   """
-  comments(streamId: String!, resources: [ResourceIdentifierInput], limit: Int = 25, cursor: String, archived: Boolean! = false): CommentCollection
+  comments(
+    streamId: String!
+    resources: [ResourceIdentifierInput]
+    limit: Int = 25
+    cursor: String
+    archived: Boolean! = false
+  ): CommentCollection
 }
 
-extend type Stream{
+extend type Stream {
   """
   The total number of comments for this stream. To actually get the comments, use the comments query without passing in a resource array. E.g.:
 
@@ -22,10 +28,10 @@ extend type Stream{
   commentCount: Int!
 }
 
-extend type Commit{
+extend type Commit {
   """
   The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
-  E.g., 
+  E.g.,
   ```
   query{
     comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
@@ -36,10 +42,10 @@ extend type Commit{
   commentCount: Int!
 }
 
-extend type CommitCollectionUserNode{
+extend type CommitCollectionUserNode {
   """
   The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
-  E.g., 
+  E.g.,
   ```
   query{
     comments(streamId:"streamId" resources:[{resourceType: commit, resourceId:"commitId"}] ){
@@ -50,10 +56,10 @@ extend type CommitCollectionUserNode{
   commentCount: Int!
 }
 
-extend type Object{
+extend type Object {
   """
   The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this object's id.
-  E.g., 
+  E.g.,
   ```
   query{
     comments(streamId:"streamId" resources:[{resourceType: object, resourceId:"objectId"}] ){
@@ -145,13 +151,9 @@ extend type Mutation {
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
   """
-  userViewerActivityBroadcast(
-    streamId: String!
-    resourceId: String!
-    data: JSONObject
-  ): Boolean!  
-  @hasRole(role: "server:user")
-  
+  userViewerActivityBroadcast(streamId: String!, resourceId: String!, data: JSONObject): Boolean!
+    @hasRole(role: "server:user")
+
   """
   Used for broadcasting real time typing status in comment threads. Does not persist any info.
   """
@@ -159,41 +161,40 @@ extend type Mutation {
     streamId: String!
     commentId: String!
     data: JSONObject
-  ): Boolean!
-  @hasRole(role: "server:user")
+  ): Boolean! @hasRole(role: "server:user")
 
   """
   Creates a comment
   """
-  commentCreate(input: CommentCreateInput! ): String!
+  commentCreate(input: CommentCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
   Flags a comment as viewed by you (the logged in user).
   """
-  commentView(streamId: String!, commentId: String!): Boolean! 
+  commentView(streamId: String!, commentId: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
   Archives a comment.
   """
-  commentArchive( streamId: String!, commentId: String!, archived: Boolean! = true ): Boolean!
+  commentArchive(streamId: String!, commentId: String!, archived: Boolean! = true): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
   Edits a comment.
   """
-  commentEdit( input: CommentEditInput! ): Boolean!
+  commentEdit(input: CommentEditInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
   """
   Adds a reply to a comment.
   """
-  commentReply( input: ReplyCreateInput! ): String!
+  commentReply(input: ReplyCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
 
@@ -209,7 +210,7 @@ extend type Subscription {
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
 
   """
-  Subscribe to comment events. There's two ways to use this subscription: 
+  Subscribe to comment events. There's two ways to use this subscription:
   - for a whole stream: do not pass in any resourceIds; this sub will get called whenever a comment (not reply) is added to any of the stream's resources.
   - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
   """
@@ -220,7 +221,7 @@ extend type Subscription {
   """
   Subscribes to events on a specific comment. Use to find out when:
   - a top level comment is deleted (trigger a deletion event outside)
-  - a top level comment receives a reply. 
+  - a top level comment receives a reply.
   """
   commentThreadActivity(streamId: String!, commentId: String!): JSONObject
     @hasRole(role: "server:user")

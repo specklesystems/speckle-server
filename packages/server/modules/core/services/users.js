@@ -129,9 +129,8 @@ module.exports = {
   },
 
   async searchUsers(searchQuery, limit, cursor, archived = false) {
-
     let query = Users()
-      .join('server_acl', 'users.id', 'server_acl.userId') 
+      .join('server_acl', 'users.id', 'server_acl.userId')
       .select('id', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt')
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name

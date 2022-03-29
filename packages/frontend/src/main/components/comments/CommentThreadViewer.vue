@@ -1,7 +1,9 @@
 <template>
   <div
     class="no-mouse pa-2"
-    :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'} xxx-background: rgba(0.5, 0.5, 0.5, 0.5)`"
+    :style="`${
+      $vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'
+    } xxx-background: rgba(0.5, 0.5, 0.5, 0.5)`"
   >
     <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5 mouse">
       <v-btn icon small class="background ml-2 elevation-10" @click="minimise = !minimise">
@@ -24,8 +26,8 @@
         <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
       </div>
       <div class="px-2" v-show="$apollo.loading">
-          <v-progress-linear indeterminate/>
-        </div>
+        <v-progress-linear indeterminate />
+      </div>
       <template v-for="(reply, index) in thread">
         <div v-if="showTime(index)" :key="index + 'date'" class="d-flex justify-center mouse">
           <div class="d-inline px-2 py-0 caption text-center mb-2 rounded-lg background grey--text">
@@ -53,10 +55,10 @@
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
           <div class="px-4 py-2 caption mb-2 background rounded-xl" v-show="whoIsTyping.length > 0">
-            {{typingStatusText}}
+            {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
-        <div >
+        <div>
           <v-textarea
             :disabled="loadingReply"
             v-model="replyText"
@@ -73,7 +75,7 @@
           ></v-textarea>
         </div>
         <div class="px-2" v-show="loadingReply">
-          <v-progress-linear indeterminate/>
+          <v-progress-linear indeterminate />
         </div>
         <div class="text-right" ref="replyinput">
           <v-btn
@@ -144,7 +146,7 @@ export default {
   apollo: {
     user: {
       query: gql`
-        query{
+        query {
           user {
             name
             id
@@ -154,8 +156,8 @@ export default {
     },
     stream: {
       query: gql`
-        query($streamId: String!) {
-          stream(id: $streamId){
+        query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             role
           }
@@ -167,7 +169,7 @@ export default {
     },
     replyQuery: {
       query: gql`
-        query($streamId: String!, $id: String!) {
+        query ($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
             id
             viewedAt
@@ -193,7 +195,7 @@ export default {
         }
       },
       result({ data }) {
-        if(!data) return
+        if (!data) return
         data.comment.replies.items.forEach((item) => {
           if (this.localReplies.findIndex((c) => c.id === item.id) === -1)
             this.localReplies.push(item)
@@ -205,7 +207,7 @@ export default {
     $subscribe: {
       commentThreadActivity: {
         query: gql`
-          subscription($streamId: String!, $commentId: String!) {
+          subscription ($streamId: String!, $commentId: String!) {
             commentThreadActivity(streamId: $streamId, commentId: $commentId)
           }
         `,
@@ -219,7 +221,7 @@ export default {
           return !this.$loggedIn()
         },
         result({ data }) {
-          if(!data || !data.commentThreadActivity) return
+          if (!data || !data.commentThreadActivity) return
           if (data.commentThreadActivity.eventType === 'reply-added') {
             if (!this.comment.expanded) return this.$emit('bounce', this.comment.id)
             else {
@@ -228,26 +230,26 @@ export default {
               }, 100)
             }
             this.localReplies.push({ ...data.commentThreadActivity })
-            this.$refs.replyinput.scrollIntoView({behaviour: 'smooth', block: 'end' })
+            this.$refs.replyinput.scrollIntoView({ behaviour: 'smooth', block: 'end' })
             return
           }
           if (data.commentThreadActivity.eventType === 'comment-archived') {
             this.$emit('deleted', this.comment)
           }
-          if(data.commentThreadActivity.eventType === 'reply-typing-status') {
+          if (data.commentThreadActivity.eventType === 'reply-typing-status') {
             let state = data.commentThreadActivity.data
-            if(state.userId === this.$userId()) return
-            let existingUser = this.whoIsTyping.find( u => u.userId === state.userId)
-            if(state.isTyping && existingUser) {
+            if (state.userId === this.$userId()) return
+            let existingUser = this.whoIsTyping.find((u) => u.userId === state.userId)
+            if (state.isTyping && existingUser) {
               existingUser.lastSeenAt = Date.now()
               return
             }
-            if(!state.isTyping) {
-              let indx = this.whoIsTyping.findIndex( u => u.userId === state.userId)
-              if(indx!==-1) this.whoIsTyping.splice(indx, 1)
+            if (!state.isTyping) {
+              let indx = this.whoIsTyping.findIndex((u) => u.userId === state.userId)
+              if (indx !== -1) this.whoIsTyping.splice(indx, 1)
               return
             }
-            if(state.isTyping && !existingUser) {
+            if (state.isTyping && !existingUser) {
               state.lastSeenAt = Date.now()
               this.whoIsTyping.push(state)
             }
@@ -269,9 +271,10 @@ export default {
   },
   computed: {
     canArchiveThread() {
-      if(!this.comment || !this.stream ) return false
-      if(!this.stream.role) return false
-      if(this.comment.authorId === this.$userId() || this.stream.role ==='stream:owner') return true
+      if (!this.comment || !this.stream) return false
+      if (!this.stream.role) return false
+      if (this.comment.authorId === this.$userId() || this.stream.role === 'stream:owner')
+        return true
     },
     thread() {
       let sorted = [...this.localReplies].sort(
@@ -302,13 +305,13 @@ export default {
       return route
     },
     typingStatusText() {
-      if(this.whoIsTyping.length === 0) return null
-      if(this.whoIsTyping.length > 1) {
-        return `${this.whoIsTyping.map(u=>u.userName).join(', ')} are typing...`
+      if (this.whoIsTyping.length === 0) return null
+      if (this.whoIsTyping.length > 1) {
+        return `${this.whoIsTyping.map((u) => u.userName).join(', ')} are typing...`
       } else {
         return `${this.whoIsTyping[0].userName} is typing...`
       }
-    },
+    }
   },
   watch: {
     'comment.expanded': {
@@ -332,33 +335,37 @@ export default {
       }
     }
   },
-  mounted(){
+  mounted() {
     window.addEventListener('beforeunload', async (e) => {
-      await this.sendTypingUpdate( false )
+      await this.sendTypingUpdate(false)
     })
-    setInterval(()=>{
+    setInterval(() => {
       let now = Date.now()
-      for(let i = this.whoIsTyping.length-1; i >= 0; i--) {
-        if(Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000) this.whoIsTyping.splice(i, 1)
+      for (let i = this.whoIsTyping.length - 1; i >= 0; i--) {
+        if (Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000) this.whoIsTyping.splice(i, 1)
       }
     }, 5000)
   },
   methods: {
-    debTypingUpdate: debounce( async function() { 
-      if(!this.$loggedIn()) return
-      await this.sendTypingUpdate(this.isTyping)
-      this.isTyping = !this.isTyping
-    }, 7000, { leading: true }),
+    debTypingUpdate: debounce(
+      async function () {
+        if (!this.$loggedIn()) return
+        await this.sendTypingUpdate(this.isTyping)
+        this.isTyping = !this.isTyping
+      },
+      7000,
+      { leading: true }
+    ),
 
-    async sendTypingUpdate( state = true) {
-      if(!this.$loggedIn()) return
+    async sendTypingUpdate(state = true) {
+      if (!this.$loggedIn()) return
       await this.$apollo.mutate({
         mutation: gql`
-          mutation typingUpdate($sId: String!, $cId: String!, $d: JSONObject ) {
+          mutation typingUpdate($sId: String!, $cId: String!, $d: JSONObject) {
             userCommentThreadActivityBroadcast(streamId: $sId, commentId: $cId, data: $d)
           }
         `,
-        variables:{
+        variables: {
           sId: this.$route.params.streamId,
           cId: this.comment.id,
           d: {
@@ -415,9 +422,9 @@ export default {
         parentComment: this.comment.id,
         text: this.replyText
       }
-      
+
       this.loadingReply = true
-      
+
       try {
         this.replyText = null
         await this.$apollo.mutate({
@@ -428,7 +435,7 @@ export default {
           `,
           variables: { input: replyInput }
         })
-        await this.sendTypingUpdate( false )
+        await this.sendTypingUpdate(false)
         this.$mixpanel.track('Comment Action', { type: 'action', name: 'reply' })
       } catch (e) {
         this.$eventHub.$emit('notification', {

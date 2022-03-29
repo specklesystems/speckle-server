@@ -1,16 +1,16 @@
 'use strict'
 
-const crypto = require( 'crypto' )
-const knex = require( './knex' )
-const fs = require( 'fs' )
+const crypto = require('crypto')
+const knex = require('./knex')
+const fs = require('fs')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
-const { makeNetworkRequest } = require( './webhookCaller' )
+const { makeNetworkRequest } = require('./webhookCaller')
 
 async function startTask() {
-  let { rows } = await knex.raw( `
+  let { rows } = await knex.raw(`
     UPDATE webhooks_events
     SET 
       "status" = 1,
@@ -23,13 +23,14 @@ async function startTask() {
     ) as task
     WHERE webhooks_events."id" = task."id"
     RETURNING webhooks_events."id"
-  ` )
+  `)
   return rows[0]
 }
 
-async function doTask( task ) {
+async function doTask(task) {
   try {
-    let { rows } = await knex.raw( `
+    let { rows } = await knex.raw(
+      `
       SELECT 
         ev.payload as evt,
         cnf.id as wh_id, cnf.url as wh_url, cnf.secret as wh_secret, cnf.enabled as wh_enabled
@@ -37,82 +38,97 @@ async function doTask( task ) {
       INNER JOIN webhooks_config cnf ON ev."webhookId" = cnf.id
       WHERE ev.id = ?
       LIMIT 1
-    `, [ task.id ] )
+    `,
+      [task.id]
+    )
     let info = rows[0]
-    if ( !info ) {
-      throw new Error( 'Internal error: DB inconsistent' )
+    if (!info) {
+      throw new Error('Internal error: DB inconsistent')
     }
 
-    let fullPayload = JSON.parse( info.evt )
+    let fullPayload = JSON.parse(info.evt)
 
     let postData = { payload: info.evt }
 
-    let signature = crypto.createHmac( 'sha256', info.wh_secret || '' ).update( postData.payload ).digest( 'hex' )
+    let signature = crypto
+      .createHmac('sha256', info.wh_secret || '')
+      .update(postData.payload)
+      .digest('hex')
     let postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 
-    console.log( `Callin webhook ${fullPayload.streamId} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...` )
-    let result = await makeNetworkRequest( { url: info.wh_url, data: postData, headersData: postHeaders } )
+    console.log(
+      `Callin webhook ${fullPayload.streamId} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...`
+    )
+    let result = await makeNetworkRequest({
+      url: info.wh_url,
+      data: postData,
+      headersData: postHeaders
+    })
 
-    console.log( `  Result: ${JSON.stringify( result )}` )
+    console.log(`  Result: ${JSON.stringify(result)}`)
 
-    if ( !result.success ) {
-      throw new Error( result.error )
+    if (!result.success) {
+      throw new Error(result.error)
     }
 
-    await knex.raw( `
+    await knex.raw(
+      `
       UPDATE webhooks_events
       SET
         "status" = 2,
         "lastUpdate" = NOW(),
         "statusInfo" = 'Webhook called'
       WHERE "id" = ?
-    `, [ task.id ] )
-  } catch ( err ) {
-    await knex.raw( `
+    `,
+      [task.id]
+    )
+  } catch (err) {
+    await knex.raw(
+      `
       UPDATE webhooks_events
       SET
         "status" = 3,
         "lastUpdate" = NOW(),
         "statusInfo" = ?
       WHERE "id" = ?
-    `, [ err.toString(), task.id ] )
+    `,
+      [err.toString(), task.id]
+    )
   }
-
 }
 
 async function tick() {
-  if ( shouldExit ) {
-    process.exit( 0 )
+  if (shouldExit) {
+    process.exit(0)
   }
 
   try {
     let task = await startTask()
 
-    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {} )
+    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 
-    if ( !task ) {
-      setTimeout( tick, 1000 )
+    if (!task) {
+      setTimeout(tick, 1000)
       return
     }
 
-    await doTask( task )
+    await doTask(task)
 
     // Check for another task very soon
-    setTimeout( tick, 10 )
-  } catch ( err ) {
-    console.log( 'Error executing task: ', err )
-    setTimeout( tick, 5000 )
+    setTimeout(tick, 10)
+  } catch (err) {
+    console.log('Error executing task: ', err)
+    setTimeout(tick, 5000)
   }
 }
 
-
 async function main() {
-  console.log( 'Starting Webhook Service...' )
+  console.log('Starting Webhook Service...')
 
-  process.on( 'SIGTERM', () => {
+  process.on('SIGTERM', () => {
     shouldExit = true
-    console.log( 'Shutting down...' )
-  } )
+    console.log('Shutting down...')
+  })
 
   tick()
 }

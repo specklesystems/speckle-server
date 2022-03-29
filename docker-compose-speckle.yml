@@ -1,6 +1,5 @@
-version: "2"
+version: '2'
 services:
-
   speckle-frontend:
     build:
       context: .
@@ -8,7 +7,7 @@ services:
     image: speckle/speckle-frontend:local
     restart: always
     ports:
-      - "0.0.0.0:80:80"
+      - '0.0.0.0:80:80'
 
   speckle-server:
     build:
@@ -18,26 +17,26 @@ services:
     restart: always
     environment:
       # TODO: Change this to the URL of the speckle server, as accessed from the network
-      CANONICAL_URL: "http://localhost"
+      CANONICAL_URL: 'http://localhost'
 
       # TODO: Change this to a unique secret for this server
-      SESSION_SECRET: "TODO:Replace"
+      SESSION_SECRET: 'TODO:Replace'
 
-      STRATEGY_LOCAL: "true"
-      DEBUG: "speckle:*"
+      STRATEGY_LOCAL: 'true'
+      DEBUG: 'speckle:*'
 
-      POSTGRES_URL: "postgres"
-      POSTGRES_USER: "speckle"
-      POSTGRES_PASSWORD: "speckle"
-      POSTGRES_DB: "speckle"
+      POSTGRES_URL: 'postgres'
+      POSTGRES_USER: 'speckle'
+      POSTGRES_PASSWORD: 'speckle'
+      POSTGRES_DB: 'speckle'
 
-      REDIS_URL: "redis://redis"
+      REDIS_URL: 'redis://redis'
 
-      S3_ENDPOINT: "http://minio:9000"
-      S3_ACCESS_KEY: "minioadmin"
-      S3_SECRET_KEY: "minioadmin"
-      S3_BUCKET: "speckle-server"
-      S3_CREATE_BUCKET: "true"
+      S3_ENDPOINT: 'http://minio:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
 
   preview-service:
     build:
@@ -45,11 +44,11 @@ services:
       dockerfile: packages/preview-service/Dockerfile
     image: speckle/speckle-preview-service:local
     restart: always
-    mem_limit: "3000m"
-    memswap_limit: "3000m"
+    mem_limit: '3000m'
+    memswap_limit: '3000m'
     environment:
-      DEBUG: "preview-service:*"
-      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+      DEBUG: 'preview-service:*'
+      PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 
   webhook-service:
     build:
@@ -58,8 +57,8 @@ services:
     image: speckle/speckle-webhook-service:local
     restart: always
     environment:
-      DEBUG: "webhook-service:*"
-      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+      DEBUG: 'webhook-service:*'
+      PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 
   fileimport-service:
     build:
@@ -68,12 +67,12 @@ services:
     image: speckle/speckle-fileimport-service:local
     restart: always
     environment:
-      DEBUG: "fileimport-service:*"
-      PG_CONNECTION_STRING: "postgres://speckle:speckle@postgres/speckle"
+      DEBUG: 'fileimport-service:*'
+      PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 
-      S3_ENDPOINT: "http://minio:9000"
-      S3_ACCESS_KEY: "minioadmin"
-      S3_SECRET_KEY: "minioadmin"
-      S3_BUCKET: "speckle-server"
+      S3_ENDPOINT: 'http://minio:9000'
+      S3_ACCESS_KEY: 'minioadmin'
+      S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
 
-      SPECKLE_SERVER_URL: "http://speckle-server:3000"
+      SPECKLE_SERVER_URL: 'http://speckle-server:3000'

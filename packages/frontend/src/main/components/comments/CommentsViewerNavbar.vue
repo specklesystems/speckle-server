@@ -70,7 +70,9 @@
             <timeago :datetime="comment.updatedAt" />
           </v-col>
         </v-row>
-        <v-btn small block class="rounded-xl" :to="`/streams/${$route.params.streamId}/comments`">all stream comments</v-btn>
+        <v-btn small block class="rounded-xl" :to="`/streams/${$route.params.streamId}/comments`">
+          all stream comments
+        </v-btn>
       </div>
     </v-scroll-y-transition>
   </div>

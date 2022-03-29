@@ -193,7 +193,7 @@ export default {
         })
 
         if (res.redirected) {
-          this.$mixpanel.track('Log In', { type: 'action'  })
+          this.$mixpanel.track('Log In', { type: 'action' })
           window.location = res.url
           return
         }

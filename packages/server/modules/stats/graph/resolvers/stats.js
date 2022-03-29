@@ -1,15 +1,22 @@
 'use strict'
-const appRoot = require( 'app-root-path' )
-const { validateServerRole, validateScopes } = require( `${appRoot}/modules/shared` )
-const { getStreamHistory, getCommitHistory, getObjectHistory, getUserHistory, getTotalStreamCount, getTotalCommitCount, getTotalObjectCount, getTotalUserCount } = require( '../../services' )
-
+const appRoot = require('app-root-path')
+const { validateServerRole, validateScopes } = require(`${appRoot}/modules/shared`)
+const {
+  getStreamHistory,
+  getCommitHistory,
+  getObjectHistory,
+  getUserHistory,
+  getTotalStreamCount,
+  getTotalCommitCount,
+  getTotalObjectCount,
+  getTotalUserCount
+} = require('../../services')
 
 module.exports = {
   Query: {
-    async serverStats( parent, args, context, info ) {
-
-      await validateServerRole( context, 'server:admin' )
-      await validateScopes( context.scopes, 'server:stats' )
+    async serverStats(parent, args, context, info) {
+      await validateServerRole(context, 'server:admin')
+      await validateScopes(context.scopes, 'server:stats')
       return {}
     }
   },

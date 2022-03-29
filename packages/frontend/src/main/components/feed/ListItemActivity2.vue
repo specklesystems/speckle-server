@@ -299,7 +299,7 @@ export default {
     },
     user: {
       query: gql`
-        query($id: String) {
+        query ($id: String) {
           user(id: $id) {
             name
             avatar
@@ -316,7 +316,7 @@ export default {
 
     stream: {
       query: gql`
-        query($id: String!) {
+        query ($id: String!) {
           stream(id: $id) {
             id
             name
@@ -339,7 +339,7 @@ export default {
     },
     branch: {
       query: gql`
-        query($id: String!, $branchName: String!) {
+        query ($id: String!, $branchName: String!) {
           stream(id: $id) {
             id
             branch(name: $branchName) {
@@ -361,7 +361,7 @@ export default {
     },
     commit: {
       query: gql`
-        query($id: String!, $commitId: String!) {
+        query ($id: String!, $commitId: String!) {
           stream(id: $id) {
             id
             commit(id: $commitId) {

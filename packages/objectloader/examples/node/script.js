@@ -4,21 +4,19 @@ import { fetch } from 'undici'
 import ObjectLoader from '../../index.js'
 
 let loader = new ObjectLoader({
-  serverUrl:"https://latest.speckle.dev",
-  streamId:"3ed8357f29",
-  objectId:"0408ab9caaa2ebefb2dd7f1f671e7555",
-  options:{ enableCaching: false, excludeProps:[], fetch }
+  serverUrl: 'https://latest.speckle.dev',
+  streamId: '3ed8357f29',
+  objectId: '0408ab9caaa2ebefb2dd7f1f671e7555',
+  options: { enableCaching: false, excludeProps: [], fetch }
 })
 
-
 let loadData = async function loadData() {
-
-  let obj = await loader.getAndConstructObject((e) =>{
+  let obj = await loader.getAndConstructObject((e) => {
     console.log(e) // log progress!
   })
 
   console.log('Done!')
-  console.log( obj )
+  console.log(obj)
 }
 
 loadData()

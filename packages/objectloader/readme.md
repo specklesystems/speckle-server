@@ -38,17 +38,17 @@ async load( { serverUrl, token, streamId, objectId } ) {
 
 ```
 
-If you do not want to process the objects one by one as they are streamed to you, you can use the `getAndConstructObject()` method. Here's an example: 
+If you do not want to process the objects one by one as they are streamed to you, you can use the `getAndConstructObject()` method. Here's an example:
 
-```js
+````js
 
 let loader = new ObjectLoader( {
-  serverUrl: "https://latest.speckle.dev", 
-  streamId: "3ed8357f29", 
+  serverUrl: "https://latest.speckle.dev",
+  streamId: "3ed8357f29",
   objectId: "0408ab9caaa2ebefb2dd7f1f671e7555",
   options: {
     fullyTraverseArrays: false, // Default: false. By default, if an array starts with a primitive type, it will not be traversed. Set it to true if you want to capture scenarios in which lists can have intersped objects and primitives, e.g. [ 1, 2, "a", { important object } ]
-    excludeProps: [ 'displayValue', 'displayMesh', '__closure' ] // Default: []. Any prop names that you pass in here will be ignored from object construction traversal. 
+    excludeProps: [ 'displayValue', 'displayMesh', '__closure' ] // Default: []. Any prop names that you pass in here will be ignored from object construction traversal.
   }
 } )
 
@@ -67,7 +67,7 @@ let loader = new ObjectLoader({
   objectId: '0408ab9caaa2ebefb2dd7f1f671e7555',
   options: { enableCaching: false, excludeProps: [], fetch },
 })
-```
+````
 
 ## Community
 

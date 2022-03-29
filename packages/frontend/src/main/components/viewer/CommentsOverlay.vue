@@ -129,7 +129,7 @@ export default {
   apollo: {
     comments: {
       query: gql`
-        query($streamId: String!, $resources: [ResourceIdentifierInput]!) {
+        query ($streamId: String!, $resources: [ResourceIdentifierInput]!) {
           comments(streamId: $streamId, resources: $resources, limit: 1000) {
             totalCount
             cursor
@@ -142,7 +142,7 @@ export default {
               viewedAt
               archived
               data
-              resources{
+              resources {
                 resourceId
                 resourceType
               }
@@ -176,52 +176,52 @@ export default {
         }
       },
       result({ data }) {
-        if(!data) return
+        if (!data) return
         for (let c of data.comments.items) {
           c.expanded = false
           c.hovered = false
           c.bouncing = false
           if (this.localComments.findIndex((lc) => c.id === lc.id) === -1 && !c.archived) {
-              this.localComments.push({ ...c })
+            this.localComments.push({ ...c })
           }
         }
         return data
       },
-      subscribeToMore:{
-        document:  gql`
-          subscription($streamId: String!, $resourceIds: [String]) {
+      subscribeToMore: {
+        document: gql`
+          subscription ($streamId: String!, $resourceIds: [String]) {
             commentActivity(streamId: $streamId, resourceIds: $resourceIds)
           }
         `,
         variables() {
           let resIds = [this.$route.params.resourceId]
-          if(this.$route.query.overlay) resIds = [...resIds, ...this.$route.query.overlay.split(',')]
+          if (this.$route.query.overlay)
+            resIds = [...resIds, ...this.$route.query.overlay.split(',')]
           return {
             streamId: this.$route.params.streamId,
             resourceIds: resIds
           }
         },
-        updateQuery(prevResult, {subscriptionData}) {
-          if(!subscriptionData || !subscriptionData.data || !subscriptionData.data.commentActivity) return
+        updateQuery(prevResult, { subscriptionData }) {
+          if (!subscriptionData || !subscriptionData.data || !subscriptionData.data.commentActivity)
+            return
           let newComment = subscriptionData.data.commentActivity
-          
+
           newComment.expanded = false
           newComment.hovered = false
           newComment.bouncing = false
-          
-          if (newComment.authorId !== this.$userId()) 
-            newComment.viewedAt = new Date('1987')
-          
+
+          if (newComment.authorId !== this.$userId()) newComment.viewedAt = new Date('1987')
+
           newComment.archived = false
-          
-          if(subscriptionData.data.commentActivity.eventType === 'comment-added') {
-            if(prevResult.comments.items.find( c => c.id === newComment.id)) {
+
+          if (subscriptionData.data.commentActivity.eventType === 'comment-added') {
+            if (prevResult.comments.items.find((c) => c.id === newComment.id)) {
               return
             }
-            if(!newComment.archived)
-              this.localComments.push(newComment)
-           
-           setTimeout(() => {
+            if (!newComment.archived) this.localComments.push(newComment)
+
+            setTimeout(() => {
               this.updateCommentBubbles()
               this.bounceComment(newComment.id)
             }, 10)
@@ -239,7 +239,7 @@ export default {
   },
   computed: {
     activeComments() {
-      return this.localComments.filter(c => !c.archived)
+      return this.localComments.filter((c) => !c.archived)
     },
     hasExpandedComment() {
       return this.localComments.filter((c) => c.expanded).length !== 0
@@ -282,7 +282,7 @@ export default {
     window.__viewer.cameraHandler.controls.addEventListener('update', () =>
       this.updateCommentBubbles()
     )
-    setTimeout(()=>{
+    setTimeout(() => {
       this.updateCommentBubbles()
     }, 1000)
   },
@@ -350,7 +350,7 @@ export default {
     },
     async handleDeletion(comment) {
       this.collapseComment(comment)
-      let comm = this.localComments.find(c => c.id === comment.id)
+      let comm = this.localComments.find((c) => c.id === comment.id)
       comm.archived = true
       this.updateCommentBubbles()
     },

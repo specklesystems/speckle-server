@@ -138,7 +138,7 @@ export default {
       this.loading = true
       this.error = null
       this.$matomo && this.$matomo.trackPageView('branch/delete')
-      this.$mixpanel.track('Branch Action', { type: 'action', name: 'delete'  })
+      this.$mixpanel.track('Branch Action', { type: 'action', name: 'delete' })
       try {
         let res = await this.$apollo.mutate({
           mutation: gql`
@@ -173,7 +173,7 @@ export default {
 
         this.loading = true
         this.$matomo && this.$matomo.trackPageView('branch/update')
-        this.$mixpanel.track('Branch Action', { type: 'action', name: 'update'  })
+        this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
         let res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {

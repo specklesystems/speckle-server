@@ -55,7 +55,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query($streamId: String!, $cursor: String) {
+        query ($streamId: String!, $cursor: String) {
           stream(id: $streamId) {
             id
             commits(cursor: $cursor, limit: 2) {

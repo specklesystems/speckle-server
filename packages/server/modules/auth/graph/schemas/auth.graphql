@@ -6,9 +6,9 @@ extend type ServerInfo {
 }
 
 type AuthStrategy {
-  id: String!,
-  name: String!,
-  icon: String!,
-  url: String!,
+  id: String!
+  name: String!
+  icon: String!
+  url: String!
   color: String
 }

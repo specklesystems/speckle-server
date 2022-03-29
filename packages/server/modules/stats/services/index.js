@@ -1,31 +1,30 @@
 'use strict'
-const appRoot = require( 'app-root-path' )
-const knex = require( `${appRoot}/db/knex` )
+const appRoot = require('app-root-path')
+const knex = require(`${appRoot}/db/knex`)
 
 module.exports = {
-
   async getTotalStreamCount() {
     const query = 'SELECT COUNT(*) FROM streams'
-    const result = await knex.raw( query )
-    return parseInt( result.rows[0].count )
+    const result = await knex.raw(query)
+    return parseInt(result.rows[0].count)
   },
 
   async getTotalCommitCount() {
     const query = 'SELECT COUNT(*) FROM commits'
-    const result = await knex.raw( query )
-    return parseInt( result.rows[0].count )
+    const result = await knex.raw(query)
+    return parseInt(result.rows[0].count)
   },
 
   async getTotalObjectCount() {
     const query = 'SELECT COUNT(*) FROM objects'
-    const result = await knex.raw( query )
-    return parseInt( result.rows[0].count )
+    const result = await knex.raw(query)
+    return parseInt(result.rows[0].count)
   },
 
   async getTotalUserCount() {
     const query = 'SELECT COUNT(*) FROM users'
-    const result = await knex.raw( query )
-    return parseInt( result.rows[0].count )
+    const result = await knex.raw(query)
+    return parseInt(result.rows[0].count)
   },
 
   async getStreamHistory() {
@@ -39,8 +38,8 @@ module.exports = {
       DATE_TRUNC('month', streams. "createdAt")
     `
 
-    const result = await knex.raw( query )
-    result.rows.forEach( row => row.count = parseInt( row.count ) )
+    const result = await knex.raw(query)
+    result.rows.forEach((row) => (row.count = parseInt(row.count)))
     return result.rows
   },
 
@@ -54,8 +53,8 @@ module.exports = {
     GROUP BY
       DATE_TRUNC('month', commits. "createdAt")
     `
-    const result = await knex.raw( query )
-    result.rows.forEach( row => row.count = parseInt( row.count ) )
+    const result = await knex.raw(query)
+    result.rows.forEach((row) => (row.count = parseInt(row.count)))
     return result.rows
   },
 
@@ -69,10 +68,9 @@ module.exports = {
     GROUP BY
       DATE_TRUNC('month', objects. "createdAt")
     `
-    const result = await knex.raw( query )
-    result.rows.forEach( row => row.count = parseInt( row.count ) )
+    const result = await knex.raw(query)
+    result.rows.forEach((row) => (row.count = parseInt(row.count)))
     return result.rows
-
   },
 
   async getUserHistory() {
@@ -85,9 +83,8 @@ module.exports = {
     GROUP BY
       DATE_TRUNC('month', users. "createdAt")
     `
-    const result = await knex.raw( query )
-    result.rows.forEach( row => row.count = parseInt( row.count ) )
+    const result = await knex.raw(query)
+    result.rows.forEach((row) => (row.count = parseInt(row.count)))
     return result.rows
-  },
-
+  }
 }

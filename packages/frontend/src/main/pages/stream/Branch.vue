@@ -9,7 +9,11 @@
       <v-col v-if="stream && stream.branch" cols="12">
         <v-row v-if="stream.branch.commits.items.length > 0">
           <v-col cols="12">
-            <commit-preview-card :commit="latestCommit" :preview-height="320" :show-stream-and-branch="false"/>
+            <commit-preview-card
+              :commit="latestCommit"
+              :preview-height="320"
+              :show-stream-and-branch="false"
+            />
           </v-col>
           <v-col cols="12">
             <v-toolbar flat class="transparent">
@@ -35,7 +39,7 @@
             md="4"
             xl="3"
           >
-          <commit-preview-card :commit="commit" :show-stream-and-branch="false"/>
+            <commit-preview-card :commit="commit" :show-stream-and-branch="false" />
           </v-col>
         </v-row>
         <v-row v-if="listMode">
@@ -59,10 +63,14 @@
         @infinite="infiniteHandler"
       >
         <div slot="no-more">
-          <v-col class="caption py-3 text-center">You've reached the end - this branch has no more commits.</v-col>
+          <v-col class="caption py-3 text-center">
+            You've reached the end - this branch has no more commits.
+          </v-col>
         </div>
         <div slot="no-results">
-          <v-col class="caption py-3 text-center">You've reached the end - this branch has no more commits.</v-col>
+          <v-col class="caption py-3 text-center">
+            You've reached the end - this branch has no more commits.
+          </v-col>
         </div>
       </infinite-loading>
 
@@ -105,7 +113,7 @@ export default {
     CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
-    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
+    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
   },
   data() {
     return {
@@ -127,7 +135,7 @@ export default {
     $subscribe: {
       commitCreated: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             commitCreated(streamId: $streamId)
           }
         `,
@@ -147,7 +155,7 @@ export default {
       },
       commitDeleted: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             commitDeleted(streamId: $streamId)
           }
         `,

@@ -101,7 +101,7 @@ export default {
     },
     timeline: {
       query: gql`
-        query($cursor: DateTime) {
+        query ($cursor: DateTime) {
           user {
             id
             timeline(cursor: $cursor) {

@@ -118,12 +118,12 @@ export default {
   methods: {
     async deny() {
       this.action = -1
-      this.$mixpanel.track('App Authorization', { allow: false, type: 'action'  })
+      this.$mixpanel.track('App Authorization', { allow: false, type: 'action' })
       window.location.replace(this.denyUrl)
     },
     async allow() {
       this.action = 1
-      this.$mixpanel.track('App Authorization', { allow: true, type: 'action'  })
+      this.$mixpanel.track('App Authorization', { allow: true, type: 'action' })
       window.location.replace(
         `${window.location.origin}/auth/accesscode?appId=${this.app.id}&challenge=${
           this.$route.params.challenge

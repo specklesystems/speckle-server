@@ -333,8 +333,7 @@ export default {
       {
         title: 'Map AutoCAD Blocks to Revit families with Dynamo',
         image: 'viewer-tutorial.png',
-        link:
-          'https://speckle.systems/tutorials/mapping-autocad-blocks-to-revit-families-via-dynamo/'
+        link: 'https://speckle.systems/tutorials/mapping-autocad-blocks-to-revit-families-via-dynamo/'
       },
       {
         title: 'Analyse Revit models in Grasshopper',

@@ -23,15 +23,25 @@
             <!-- <br /> -->
             <span v-if="commentDetails.replies.totalCount > 0">
               <!-- eslint-disable-next-line prettier/prettier -->
-              Last reply <timeago :datetime="commentDetails.updatedAt" /> <!--, on {{ new Date(commentDetails.updatedAt).toLocaleString() }} -->
+              Last reply
+              <timeago :datetime="commentDetails.updatedAt" />
+              <!--, on {{ new Date(commentDetails.updatedAt).toLocaleString() }} -->
               <br />
             </span>
             <span class="grey--text">
               Created on {{ new Date(commentDetails.createdAt).toLocaleString() }}
             </span>
-            <br>
-            <v-btn v-if="canArchiveThread" @click="showArchiveDialog=true" class="ml-n2 red--text rounded-lg elevation-0" x-small plain>Archive</v-btn>
-             <v-dialog v-model="showArchiveDialog" max-width="500">
+            <br />
+            <v-btn
+              v-if="canArchiveThread"
+              @click="showArchiveDialog = true"
+              class="ml-n2 red--text rounded-lg elevation-0"
+              x-small
+              plain
+            >
+              Archive
+            </v-btn>
+            <v-dialog v-model="showArchiveDialog" max-width="500">
               <v-card>
                 <v-toolbar color="error" dark flat>
                   <v-app-bar-nav-icon style="pointer-events: none">
@@ -51,7 +61,15 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
-            <v-btn v-if="isUnread" @click="markAsRead" class="ml-n2 rounded-lg elevation-0" x-small plain>Mark as read</v-btn>
+            <v-btn
+              v-if="isUnread"
+              @click="markAsRead"
+              class="ml-n2 rounded-lg elevation-0"
+              x-small
+              plain
+            >
+              Mark as read
+            </v-btn>
           </div>
         </div>
         <div class="body-2 px-4 flex-shrink-0">
@@ -69,7 +87,7 @@
           >
             <v-icon small>mdi-cube-outline</v-icon>
           </span>
-         
+
           <v-btn small class="ml-1 primary dark rounded-xl" :to="link">
             <v-icon small>mdi-comment-outline</v-icon>
             {{ commentDetails.replies.totalCount }}
@@ -103,12 +121,17 @@ export default {
   },
   props: {
     comment: { type: Object, default: () => null },
-    stream: { type: Object, default: () => { return { role: null } } }
+    stream: {
+      type: Object,
+      default: () => {
+        return { role: null }
+      }
+    }
   },
   apollo: {
     commentDetails: {
       query: gql`
-        query($streamId: String!, $id: String!) {
+        query ($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
             id
             text
@@ -146,7 +169,7 @@ export default {
     $subscribe: {
       commentThreadActivity: {
         query: gql`
-          subscription($streamId: String!, $commentId: String!) {
+          subscription ($streamId: String!, $commentId: String!) {
             commentThreadActivity(streamId: $streamId, commentId: $commentId)
           }
         `,
@@ -160,7 +183,7 @@ export default {
           return !this.$loggedIn()
         },
         result({ data }) {
-          if(!data || !data.commentThreadActivity) return
+          if (!data || !data.commentThreadActivity) return
           if (data.commentThreadActivity.eventType === 'reply-added') {
             this.commentDetails.replies.totalCount++
             this.commentDetails.updatedAt = Date.now()
@@ -181,9 +204,10 @@ export default {
   },
   computed: {
     canArchiveThread() {
-      if(!this.comment || !this.stream ) return false
-      if(!this.stream.role) return false
-      if(this.comment.authorId === this.$userId() || this.stream.role ==='stream:owner') return true
+      if (!this.comment || !this.stream) return false
+      if (!this.stream.role) return false
+      if (this.comment.authorId === this.$userId() || this.stream.role === 'stream:owner')
+        return true
     },
     link() {
       if (!this.commentDetails) return
@@ -200,7 +224,7 @@ export default {
       return new Date(this.commentDetails.updatedAt) - new Date(this.commentDetails.viewedAt) > 0
     }
   },
-  methods:{
+  methods: {
     async markAsRead() {
       this.commentDetails.viewedAt = Date.now()
       await this.$apollo.mutate({

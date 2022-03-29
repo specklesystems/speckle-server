@@ -113,11 +113,11 @@ export default {
 
       this.$matomo && this.$matomo.trackPageView('invite/stream/create')
       this.$matomo && this.$matomo.trackEvent('invite', 'stream')
-      this.$mixpanel.track('Invite Send', { type: 'action', source: 'stream'  })
+      this.$mixpanel.track('Invite Send', { type: 'action', source: 'stream' })
       try {
         await this.$apollo.mutate({
           mutation: gql`
-            mutation($input: StreamInviteCreateInput!) {
+            mutation ($input: StreamInviteCreateInput!) {
               streamInviteCreate(input: $input)
             }
           `,

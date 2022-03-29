@@ -1,19 +1,20 @@
 'use strict'
 
-var express = require( 'express' )
+var express = require('express')
 var router = express.Router()
-const puppeteer = require( 'puppeteer' )
+const puppeteer = require('puppeteer')
 
-function sleep( ms ) {
-  return new Promise( ( resolve ) => {
-    setTimeout( resolve, ms )
-  } )
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 }
 
-async function pageFunction( objectUrl ) {
-  waitForAnimation = async ( ms=70 ) => await new Promise( ( resolve ) => {
-    setTimeout( resolve, ms )
-  } )
+async function pageFunction(objectUrl) {
+  waitForAnimation = async (ms = 70) =>
+    await new Promise((resolve) => {
+      setTimeout(resolve, ms)
+    })
   let ret = {
     duration: 0,
     mem: 0,
@@ -24,25 +25,25 @@ async function pageFunction( objectUrl ) {
   let stepAngle = 0.261799
 
   try {
-    await v.loadObject( objectUrl, '' )
-  } catch ( error ) {
+    await v.loadObject(objectUrl, '')
+  } catch (error) {
     // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
-    await waitForAnimation( 1000 )
+    await waitForAnimation(1000)
   }
-  
-  v.interactions.zoomExtents( 0.95, false )
-  await waitForAnimation( 100 )
+
+  v.interactions.zoomExtents(0.95, false)
+  await waitForAnimation(100)
   ret.scr['0'] = v.interactions.screenshot()
 
-  for ( let i = 1; i < 3; i++ ) {
-    v.interactions.rotateCamera( stepAngle, undefined, false )
+  for (let i = 1; i < 3; i++) {
+    v.interactions.rotateCamera(stepAngle, undefined, false)
     await waitForAnimation()
-    ret.scr[( -1 * i ) + ''] = v.interactions.screenshot()
+    ret.scr[-1 * i + ''] = v.interactions.screenshot()
   }
-  v.interactions.rotateCamera( -2 * stepAngle, undefined, false )
+  v.interactions.rotateCamera(-2 * stepAngle, undefined, false)
   await waitForAnimation()
-  for ( let i = 1; i < 3; i++ ) {
-    v.interactions.rotateCamera( -1 * stepAngle, undefined, false )
+  for (let i = 1; i < 3; i++) {
+    v.interactions.rotateCamera(-1 * stepAngle, undefined, false)
     await waitForAnimation()
     ret.scr[i + ''] = v.interactions.screenshot()
   }
@@ -60,59 +61,69 @@ async function pageFunction( objectUrl ) {
   }
   */
 
-  ret.duration = ( Date.now() - t0 ) / 1000
+  ret.duration = (Date.now() - t0) / 1000
   ret.mem = { total: performance.memory.totalJSHeapSize, used: performance.memory.usedJSHeapSize }
   ret.userAgent = navigator.userAgent
   return ret
 }
 
-async function getScreenshot( objectUrl ) {
-  let launchParams = { headless: true, args: [ '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage' ] }
+async function getScreenshot(objectUrl) {
+  let launchParams = {
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+  }
   // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
   //   launchParams.executablePath = 'chromium'
   // }
-  const browser = await puppeteer.launch( launchParams )
+  const browser = await puppeteer.launch(launchParams)
   const page = await browser.newPage()
 
-  const wrapperPromise = new Promise( async ( resolve, reject ) => {
+  const wrapperPromise = new Promise(async (resolve, reject) => {
     try {
-      await page.goto( 'http://127.0.0.1:3001/render/' )
+      await page.goto('http://127.0.0.1:3001/render/')
 
-      console.log( 'Page loaded' )
+      console.log('Page loaded')
 
       // Handle page crash (oom?)
-      page.on( 'error', ( err ) => {
-        reject ( err )
-      } )
-    
-      page.evaluate( pageFunction, objectUrl )
-        .then( ret => { resolve( ret ) } )
-        .catch( err => { reject( err ) } )
+      page.on('error', (err) => {
+        reject(err)
+      })
 
-    } catch ( err ) {
-      return reject( err )
+      page
+        .evaluate(pageFunction, objectUrl)
+        .then((ret) => {
+          resolve(ret)
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    } catch (err) {
+      return reject(err)
     }
-
-  } )
+  })
 
   let ret = null
   try {
     ret = await wrapperPromise
-  } catch ( err ) {
-    console.log( `Error generating preview for ${objectUrl}: ${err}` )
+  } catch (err) {
+    console.log(`Error generating preview for ${objectUrl}: ${err}`)
     ret = {
-      error: err,
+      error: err
     }
   }
-  
+
   // Don't await for cleanup
   browser.close()
 
-  if ( ret.error ) {
+  if (ret.error) {
     return null
   }
 
-  console.log( `Generated preview for ${objectUrl} in ${ret.duration} sec with ${ret.mem.total / 1000000} MB of memory` )
+  console.log(
+    `Generated preview for ${objectUrl} in ${ret.duration} sec with ${
+      ret.mem.total / 1000000
+    } MB of memory`
+  )
   return ret.scr
 
   return `
@@ -129,7 +140,7 @@ async function getScreenshot( objectUrl ) {
   </body></html>
   `
 
-  const imageBuffer = new Buffer.from( b64Image.replace( /^data:image\/\w+;base64,/, '' ), 'base64' )
+  const imageBuffer = new Buffer.from(b64Image.replace(/^data:image\/\w+;base64,/, ''), 'base64')
 
   // await page.waitForTimeout(500);
   //var response = await page.screenshot({
@@ -138,10 +149,9 @@ async function getScreenshot( objectUrl ) {
   //});
 
   return imageBuffer
-};
+}
 
-
-router.get( '/:streamId/:objectId', async function( req, res, next ) {
+router.get('/:streamId/:objectId', async function (req, res, next) {
   let objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
   /*
   let authToken = ''
@@ -155,16 +165,16 @@ router.get( '/:streamId/:objectId', async function( req, res, next ) {
   }
   */
 
-  console.log( objectUrl )
+  console.log(objectUrl)
 
-  let scr = await getScreenshot( objectUrl )
+  let scr = await getScreenshot(objectUrl)
 
-  if ( !scr ) {
-    return res.status( 500 ).end()
+  if (!scr) {
+    return res.status(500).end()
   }
 
   // res.setHeader( 'content-type', 'image/png' )
-  res.send( scr )
-} )
+  res.send(scr)
+})
 
 module.exports = router

@@ -17,20 +17,28 @@ module.exports = {
           // Stream validity is already checked, so we can just go ahead.
           break
         case 'commit': {
-          let linkage = await knex('stream_commits').select().where({ commitId: res.resourceId, streamId: streamId }).first()
+          let linkage = await knex('stream_commits')
+            .select()
+            .where({ commitId: res.resourceId, streamId: streamId })
+            .first()
           if (!linkage) throw new Error('Commit not found')
-          if (linkage.streamId !== streamId) throw new Error('Stop hacking - that commit id is not part of the specified stream.')
+          if (linkage.streamId !== streamId)
+            throw new Error('Stop hacking - that commit id is not part of the specified stream.')
           break
         }
         case 'object': {
-          let obj = await knex('objects').select().where({ id: res.resourceId, streamId: streamId }).first()
+          let obj = await knex('objects')
+            .select()
+            .where({ id: res.resourceId, streamId: streamId })
+            .first()
           if (!obj) throw new Error('Object not found')
           break
         }
         case 'comment': {
           let comment = await Comments().where({ id: res.resourceId }).first()
           if (!comment) throw new Error('Comment not found')
-          if (comment.streamId !== streamId) throw new Error('Stop hacking - that comment is not part of the specified stream.')
+          if (comment.streamId !== streamId)
+            throw new Error('Stop hacking - that comment is not part of the specified stream.')
           break
         }
         default:
@@ -40,18 +48,19 @@ module.exports = {
   },
 
   async createComment({ userId, input }) {
-    if (input.resources.length < 1) throw Error('Must specify at least one resource as the comment target')
+    if (input.resources.length < 1)
+      throw Error('Must specify at least one resource as the comment target')
 
-    const commentResource = input.resources.find(r => r.resourceType === 'comment')
-    if (commentResource)
-      throw new Error('Please use the comment reply mutation.')
+    const commentResource = input.resources.find((r) => r.resourceType === 'comment')
+    if (commentResource) throw new Error('Please use the comment reply mutation.')
 
     // Stream checks
-    const streamResources = input.resources.filter(r => r.resourceType === 'stream')
+    const streamResources = input.resources.filter((r) => r.resourceType === 'stream')
     if (streamResources.length > 1) throw Error('Commenting on multiple streams is not supported')
 
     const [stream] = streamResources
-    if (stream && stream.resourceId !== input.streamId) throw Error('Input streamId doesn\'t match the stream resource.resourceId')
+    if (stream && stream.resourceId !== input.streamId)
+      throw Error("Input streamId doesn't match the stream resource.resourceId")
 
     let comment = { ...input }
 
@@ -62,9 +71,16 @@ module.exports = {
 
     await Comments().insert(comment)
     try {
-      await module.exports.streamResourceCheck({streamId: input.streamId, resources: input.resources})
-      for(let res of input.resources){
-        await CommentLinks().insert({ commentId: comment.id, resourceId: res.resourceId, resourceType: res.resourceType })
+      await module.exports.streamResourceCheck({
+        streamId: input.streamId,
+        resources: input.resources
+      })
+      for (let res of input.resources) {
+        await CommentLinks().insert({
+          commentId: comment.id,
+          resourceId: res.resourceId,
+          resourceType: res.resourceType
+        })
       }
     } catch (e) {
       await Comments().where({ id: comment.id }).delete() // roll back
@@ -74,15 +90,22 @@ module.exports = {
     return comment.id
   },
 
-  async createCommentReply( { authorId, parentCommentId, streamId, text, data } ) {
-    let comment = { id: crs( { length: 10 } ), authorId, text, data, streamId, parentComment: parentCommentId }
-    await Comments().insert( comment )
-    try{
+  async createCommentReply({ authorId, parentCommentId, streamId, text, data }) {
+    let comment = {
+      id: crs({ length: 10 }),
+      authorId,
+      text,
+      data,
+      streamId,
+      parentComment: parentCommentId
+    }
+    await Comments().insert(comment)
+    try {
       let commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
-      await module.exports.streamResourceCheck({streamId: streamId, resources: [ commentLink ] })
+      await module.exports.streamResourceCheck({ streamId: streamId, resources: [commentLink] })
       await CommentLinks().insert({ commentId: comment.id, ...commentLink })
-    } catch(e) {
-      await Comments().where({id: comment.id}).delete() // roll back
+    } catch (e) {
+      await Comments().where({ id: comment.id }).delete() // roll back
       throw e // pass on to resolver
     }
     await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
@@ -92,31 +115,31 @@ module.exports = {
 
   async editComment({ userId, input }) {
     const editedComment = await Comments().where({ id: input.id }).first()
-    if (!editedComment) throw new Error('The comment doesn\'t exist')
-    if (editedComment.authorId !== userId) throw new Error('You cannot edit someone else\'s comments')
+    if (!editedComment) throw new Error("The comment doesn't exist")
+    if (editedComment.authorId !== userId)
+      throw new Error("You cannot edit someone else's comments")
 
     await Comments().where({ id: input.id }).update({ text: input.text })
   },
 
   async viewComment({ userId, commentId }) {
-    let query = CommentViews().insert({ commentId: commentId, userId: userId, viewedAt: knex.fn.now() })
+    let query = CommentViews()
+      .insert({ commentId: commentId, userId: userId, viewedAt: knex.fn.now() })
       .onConflict(knex.raw('("commentId","userId")'))
       .merge()
     await query
   },
 
   async getComment({ id, userId = null }) {
-    let query = Comments().select('*')
-      .joinRaw(`
+    let query = Comments().select('*').joinRaw(`
         join(
           select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
           from comment_links cl
           join comments on comments.id = cl."commentId"
           group by cl."commentId"
-        ) res using(id)`
-      )
+        ) res using(id)`)
     if (userId) {
-      query.leftOuterJoin('comment_views', b => {
+      query.leftOuterJoin('comment_views', (b) => {
         b.on('comment_views.commentId', '=', 'comments.id')
         b.andOn('comment_views.userId', '=', knex.raw('?', userId))
       })
@@ -128,43 +151,53 @@ module.exports = {
 
   async archiveComment({ commentId, userId, streamId, archived = true }) {
     let comment = await Comments().where({ id: commentId }).first()
-    if (!comment) throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
+    if (!comment)
+      throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
 
-
-    let aclEntry = await knex('stream_acl').select().where({ resourceId: streamId, userId: userId }).first()
+    let aclEntry = await knex('stream_acl')
+      .select()
+      .where({ resourceId: streamId, userId: userId })
+      .first()
 
     if (comment.authorId !== userId) {
-
       if (!aclEntry || aclEntry.role !== 'stream:owner')
-        throw new Error('You don\'t have permission to archive the comment')
+        throw new Error("You don't have permission to archive the comment")
     }
 
     await Comments().where({ id: commentId }).update({ archived })
     return true
   },
 
-  async getComments( { resources, limit, cursor, userId = null, replies = false, streamId, archived = false } ) {
-    let query = knex.with( 'comms', cte => {
-      cte.select( ).distinctOn('id').from( 'comments' )
-      cte.join( 'comment_links', 'comments.id', '=', 'commentId' )
-      
-      if ( userId ){
+  async getComments({
+    resources,
+    limit,
+    cursor,
+    userId = null,
+    replies = false,
+    streamId,
+    archived = false
+  }) {
+    let query = knex.with('comms', (cte) => {
+      cte.select().distinctOn('id').from('comments')
+      cte.join('comment_links', 'comments.id', '=', 'commentId')
+
+      if (userId) {
         // link viewed At
-        cte.leftOuterJoin('comment_views', b => {
+        cte.leftOuterJoin('comment_views', (b) => {
           b.on('comment_views.commentId', '=', 'comments.id')
           b.andOn('comment_views.userId', '=', knex.raw('?', userId))
         })
       }
 
-      if(resources && resources.length !== 0 ) {
-        cte.where(q => {
+      if (resources && resources.length !== 0) {
+        cte.where((q) => {
           // link resources
           for (let res of resources) {
             q.orWhere('comment_links.resourceId', '=', res.resourceId)
           }
         })
       } else {
-        cte.where({streamId: streamId })
+        cte.where({ streamId: streamId })
       }
       if (!replies) {
         cte.whereNull('parentComment')
@@ -184,8 +217,7 @@ module.exports = {
         from comment_links cl
         join comms on comms.id = cl."commentId"
         group by cl."commentId"
-      ) res using(id)`
-    )
+      ) res using(id)`)
 
     if (cursor) {
       query.where('createdAt', '<', cursor)
@@ -205,22 +237,26 @@ module.exports = {
     }
   },
 
-  async getResourceCommentCount({resourceId}) {
+  async getResourceCommentCount({ resourceId }) {
     let [res] = await CommentLinks()
       .count('commentId')
-      .where({resourceId})
+      .where({ resourceId })
       .join('comments', 'comments.id', '=', 'commentId')
-      .where('comments.archived', '=', false )
+      .where('comments.archived', '=', false)
 
-    if( res && res.count) {
+    if (res && res.count) {
       return parseInt(res.count)
     }
     return 0
   },
 
-  async getStreamCommentCount({streamId}) {
-    let [res] = await Comments().count('id').where({streamId}).andWhere({ archived: false }).whereNull('parentComment')
-    if( res && res.count) {
+  async getStreamCommentCount({ streamId }) {
+    let [res] = await Comments()
+      .count('id')
+      .where({ streamId })
+      .andWhere({ archived: false })
+      .whereNull('parentComment')
+    if (res && res.count) {
       return parseInt(res.count)
     }
     return 0

@@ -203,7 +203,7 @@ export default {
       if (!this.branch) {
         this.loading = true
         this.$matomo && this.$matomo.trackPageView('globals/branch/create')
-        this.$mixpanel.track('Globals Action', { type: 'action', name: 'create'  })
+        this.$mixpanel.track('Globals Action', { type: 'action', name: 'create' })
         await this.$apollo.mutate({
           mutation: gql`
             mutation branchCreate($params: BranchCreateInput!) {

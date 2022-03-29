@@ -2,7 +2,11 @@
   <div>
     <v-row v-if="stream && stream.commits.totalCount !== 0" no-gutters>
       <v-col cols="12">
-        <commit-preview-card :commit="stream.commits.items[0]" :preview-height="320" :show-stream-and-branch="true"/>
+        <commit-preview-card
+          :commit="stream.commits.items[0]"
+          :preview-height="320"
+          :show-stream-and-branch="true"
+        />
         <v-list class="pa-0 ma-0"></v-list>
       </v-col>
       <v-col cols="12" style="height: 20px"></v-col>
@@ -28,7 +32,10 @@
               md="4"
               xl="12"
             >
-              <v-card class="rounded-lg" :to="`/streams/${$route.params.streamId}/branches/${branch.name}`">
+              <v-card
+                class="rounded-lg"
+                :to="`/streams/${$route.params.streamId}/branches/${branch.name}`"
+              >
                 <preview-image
                   :height="120"
                   :url="`/preview/${$route.params.streamId}/commits/${branch.commits.items[0].id}`"
@@ -82,7 +89,7 @@ export default {
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
     StreamActivity: () => import('@/main/components/stream/Activity'),
-    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
+    CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
   },
   data() {
     return {

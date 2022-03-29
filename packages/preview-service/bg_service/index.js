@@ -1,19 +1,18 @@
 'use strict'
 
-const crypto = require( 'crypto' )
-const knex = require( '../knex' )
-const fetch = require( 'node-fetch' )
-const ObjectPreview = ( ) => knex( 'object_preview' )
-const Previews = ( ) => knex( 'previews' )
-const fs = require( 'fs' )
+const crypto = require('crypto')
+const knex = require('../knex')
+const fetch = require('node-fetch')
+const ObjectPreview = () => knex('object_preview')
+const Previews = () => knex('previews')
+const fs = require('fs')
 
 let shouldExit = false
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
-
 async function startTask() {
-  let { rows } = await knex.raw( `
+  let { rows } = await knex.raw(`
     UPDATE object_preview
     SET 
       "previewStatus" = 1,
@@ -26,94 +25,104 @@ async function startTask() {
     ) as task
     WHERE object_preview."streamId" = task."streamId" AND object_preview."objectId" = task."objectId"
     RETURNING object_preview."streamId", object_preview."objectId"
-  ` )
+  `)
   return rows[0]
 }
 
-async function doTask( task ) {
-  
+async function doTask(task) {
   let previewUrl = `http://127.0.0.1:3001/preview/${task.streamId}/${task.objectId}`
 
   try {
-    let res = await fetch( previewUrl )
+    let res = await fetch(previewUrl)
     res = await res.json()
     // let imgBuffer = await res.buffer()  // this gets the binary response body
 
     let metadata = {}
 
-    for ( let angle in res ) {
-      const imgBuffer = new Buffer.from( res[angle].replace( /^data:image\/\w+;base64,/, '' ), 'base64' )
-      let previewId = crypto.createHash( 'md5' ).update( imgBuffer ).digest( 'hex' )
+    for (let angle in res) {
+      const imgBuffer = new Buffer.from(
+        res[angle].replace(/^data:image\/\w+;base64,/, ''),
+        'base64'
+      )
+      let previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
 
       // Save preview image
       let insertionObject = { id: previewId, data: imgBuffer }
       //await Previews().insert( insertionObject )
       //let dbQuery = Previews().insert( insertionObject ).toString( ) + ' on conflict do nothing'
-      await knex.raw( 'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING', [ previewId, imgBuffer ] )
+      await knex.raw('INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING', [
+        previewId,
+        imgBuffer
+      ])
 
       metadata[angle] = previewId
     }
 
     // Update preview metadata
-    await knex.raw( `
+    await knex.raw(
+      `
       UPDATE object_preview
       SET
         "previewStatus" = 2,
         "lastUpdate" = NOW(),
         "preview" = ?
       WHERE "streamId" = ? AND "objectId" = ?
-    `, [ metadata, task.streamId, task.objectId ] )
-
-  } catch ( err ) {
+    `,
+      [metadata, task.streamId, task.objectId]
+    )
+  } catch (err) {
     // Update preview metadata
-    await knex.raw( `
+    await knex.raw(
+      `
       UPDATE object_preview
       SET
         "previewStatus" = 3,
         "lastUpdate" = NOW(),
         "preview" = ?
       WHERE "streamId" = ? AND "objectId" = ?
-    `, [ {}, task.streamId, task.objectId ] )
+    `,
+      [{}, task.streamId, task.objectId]
+    )
   }
 }
 
 async function tick() {
-  if ( shouldExit ) {
-    process.exit( 0 )
+  if (shouldExit) {
+    process.exit(0)
   }
 
   try {
     let task = await startTask()
 
-    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {} )
+    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 
-    if ( !task ) {
-      setTimeout( tick, 1000 )
+    if (!task) {
+      setTimeout(tick, 1000)
       return
     }
 
-    await doTask( task )
+    await doTask(task)
 
     // Check for another task very soon
-    setTimeout( tick, 10 )
-  } catch ( err ) {
-    console.log( 'Error executing task: ', err )
-    setTimeout( tick, 5000 )
+    setTimeout(tick, 10)
+  } catch (err) {
+    console.log('Error executing task: ', err)
+    setTimeout(tick, 5000)
   }
 }
 
 async function startPreviewService() {
-  console.log( '📸 Started Preview Service' )
+  console.log('📸 Started Preview Service')
 
-  process.on( 'SIGTERM', () => {
+  process.on('SIGTERM', () => {
     shouldExit = true
-    console.log( 'Shutting down...' )
-  } )
+    console.log('Shutting down...')
+  })
 
-  process.on( 'SIGINT', () => {
+  process.on('SIGINT', () => {
     shouldExit = true
-    console.log( 'Shutting down...' )
-  } )
+    console.log('Shutting down...')
+  })
 
   tick()
 }
