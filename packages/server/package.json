@@ -37,6 +37,7 @@
     "debug": "^4.3.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.3",
+    "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",
     "graphql": "^15.8.0",
     "graphql-redis-subscriptions": "^2.2.2",
@@ -73,6 +74,7 @@
   },
   "devDependencies": {
     "@apollo/client": "^3.5.9",
+    "@types/mocha": "^7.0.2",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
     "apollo-link": "^1.2.14",
@@ -83,18 +85,17 @@
     "chai-http": "^4.3.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.3",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
     "http-proxy-middleware": "^1.0.6",
     "lerna": "^3.22.1",
     "mocha": "^7.2.0",
-    "@types/mocha": "^7.0.2",
+    "mocha-junit-reporter": "^2.0.2",
     "nodemon": "^2.0.6",
     "nyc": "^15.0.1",
-    "mocha-junit-reporter": "^2.0.2",
+    "prettier": "^2.5.1",
     "supertest": "^4.0.2",
-    "ws": "^7.5.7",
-    "eslint": "^8.11.0",
-    "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.5.1"
+    "ws": "^7.5.7"
   },
   "config": {
     "commitizen": {
