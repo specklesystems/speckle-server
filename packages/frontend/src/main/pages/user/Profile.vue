@@ -58,6 +58,7 @@ export default {
             profiles
             role
             suuid
+            totalOwnedStreamsFavorites
             streams {
               totalCount
               items {

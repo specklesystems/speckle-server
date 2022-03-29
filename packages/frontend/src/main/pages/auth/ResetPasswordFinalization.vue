@@ -19,11 +19,11 @@
         <v-row dense>
           <v-col cols="12">
             <v-text-field
+              id="new-password"
               v-model="form.password"
               label="new password"
               type="password"
               autocomplete="new-password"
-              id="new-password"
               :rules="validation.passwordRules"
               filled
               single-line
@@ -43,7 +43,7 @@
             />
           </v-col>
           <v-col cols="12" class="py-2" style="margin-top: -18px">
-            <v-row v-show="passwordStrength !== 1 && this.form.password" no-gutters align="center">
+            <v-row v-show="passwordStrength !== 1 && form.password" no-gutters align="center">
               <v-col
                 cols="12"
                 class="flex-grow-1 flex-shrink-0"
@@ -59,14 +59,8 @@
                 ></v-progress-linear>
               </v-col>
               <v-col cols="12" class="caption text-center mt-3">
-                {{
-                  this.pwdSuggestions
-                    ? this.pwdSuggestions
-                    : this.form.password
-                    ? 'Looks good.'
-                    : null
-                }}
-                <span v-if="this.form.password !== this.form.passwordConf">
+                {{ pwdSuggestions ? pwdSuggestions : form.password ? 'Looks good.' : null }}
+                <span v-if="form.password !== form.passwordConf">
                   <b>Passwords do not match.</b>
                 </span>
               </v-col>
@@ -84,7 +78,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 
 export default {
   name: 'ResetPasswordRequest',

@@ -1,4 +1,10 @@
 {
   "extends": "../../jsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
   "include": ["bin/www", "db", "logging", "scripts", "modules", "test"]
 }

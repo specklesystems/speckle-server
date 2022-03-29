@@ -9,7 +9,7 @@
 </template>
 <script>
 import { Viewer } from '@speckle/viewer'
-import throttle from 'lodash.throttle'
+import throttle from 'lodash/throttle'
 
 export default {
   data() {
@@ -33,7 +33,7 @@ export default {
     // - juggle the container div out of this component's dom when the component is managed out by vue
     // - juggle the container div back in of this component's dom when it's back.
 
-    this.$mixpanel.track('Viewer Action', { type: 'action', name: 'load'  })
+    this.$mixpanel.track('Viewer Action', { type: 'action', name: 'load' })
     let renderDomElement = document.getElementById('renderer')
     if (!renderDomElement) {
       renderDomElement = document.createElement('div')

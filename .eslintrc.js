@@ -16,7 +16,6 @@ const config = {
     ],
     'no-var': 'error',
     'no-alert': 'error',
-    'no-param-reassign': 'warn',
     eqeqeq: 'warn'
   },
   ignorePatterns: ['node_modules', 'dist', 'public']

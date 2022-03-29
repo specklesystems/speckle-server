@@ -7,7 +7,7 @@ import App from '@/main/App.vue'
 import { createProvider } from '@/vue-apollo'
 import { checkAccessCodeAndGetTokens, prefetchUserAndSetSuuid } from '@/plugins/authHelpers'
 
-import router from '@/main/router'
+import router from '@/main/router/index'
 import vuetify from '@/plugins/vuetify'
 
 Vue.config.productionTip = false
@@ -61,7 +61,7 @@ Vue.component(HistogramSlider.name, HistogramSlider)
 import VueApexCharts from 'vue-apexcharts'
 Vue.use(VueApexCharts)
 
-Vue.component('Apexchart', VueApexCharts)
+Vue.component('ApexChart', VueApexCharts)
 
 import { formatNumber } from '@/plugins/formatNumber'
 // Filter to turn any number into a nice string like '10k', '5.5m'
@@ -78,11 +78,12 @@ Vue.filter('capitalize', (value) => {
 // adds various helper methods
 import '@/plugins/helpers'
 
-let AuthToken = localStorage.getItem('AuthToken')
-let RefreshToken = localStorage.getItem('RefreshToken')
+const AuthToken = localStorage.getItem(LocalStorageKeys.AuthToken)
+const RefreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
+const apolloProvider = createProvider()
 
 if (AuthToken) {
-  prefetchUserAndSetSuuid()
+  prefetchUserAndSetSuuid(apolloProvider.defaultClient)
     .then(() => {
       initVue()
     })
@@ -95,7 +96,7 @@ if (AuthToken) {
 } else {
   checkAccessCodeAndGetTokens()
     .then(() => {
-      return prefetchUserAndSetSuuid()
+      return prefetchUserAndSetSuuid(apolloProvider.defaultClient)
     })
     .then(() => {
       initVue()
@@ -106,13 +107,14 @@ if (AuthToken) {
 }
 
 import store from '@/main/store'
+import { LocalStorageKeys } from '@/helpers/mainConstants'
 
 function initVue() {
   new Vue({
     router,
     vuetify,
     store,
-    apolloProvider: createProvider(),
+    apolloProvider,
     render: (h) => h(App)
   }).$mount('#app')
 }
