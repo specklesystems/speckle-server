@@ -48,8 +48,9 @@
   </v-container>
 </template>
 <script>
-import userQuery from '@/graphql/user.gql'
+import { ProfileSelfQuery } from '@/graphql/user'
 import { signOut } from '@/plugins/authHelpers'
+
 export default {
   name: 'Profile',
   components: {
@@ -63,7 +64,7 @@ export default {
   data: () => ({}),
   apollo: {
     user: {
-      query: userQuery
+      query: ProfileSelfQuery
     }
   },
   computed: {},

@@ -1,3 +1,6 @@
+import { MainUserDataQuery } from '@/graphql/user'
+import { LocalStorageKeys } from '@/helpers/mainConstants'
+import { createProvider } from '@/vue-apollo'
 import crypto from 'crypto'
 
 const appId = 'spklwebapp'
@@ -13,8 +16,8 @@ export async function checkAccessCodeAndGetTokens() {
     let response = await getTokenFromAccessCode(accessCode)
     // eslint-disable-next-line no-prototype-builtins
     if (response.hasOwnProperty('token')) {
-      localStorage.setItem('AuthToken', response.token)
-      localStorage.setItem('RefreshToken', response.refreshToken)
+      localStorage.setItem(LocalStorageKeys.AuthToken, response.token)
+      localStorage.setItem(LocalStorageKeys.RefreshToken, response.refreshToken)
       window.history.replaceState({}, document.title, '/')
       return true
     }
@@ -24,37 +27,33 @@ export async function checkAccessCodeAndGetTokens() {
 }
 
 /**
- * Gets the user id and suuid and sets them in local storage.
+ * Gets the user id and suuid, sets them in local storage
+ * @param {import('apollo-client').ApolloClient} apolloClient
  * @return {Object} The full graphql response.
  */
-export async function prefetchUserAndSetSuuid() {
-  let token = localStorage.getItem('AuthToken')
-  if (token) {
-    let testResponse = await fetch('/graphql', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ query: `{ user { id email suuid streams { totalCount } } }` })
-    })
+export async function prefetchUserAndSetSuuid(apolloClient) {
+  let token = localStorage.getItem(LocalStorageKeys.AuthToken)
+  if (!token) return
 
-    let data = (await testResponse.json()).data
-    if (data.user) {
-      // eslint-disable-next-line camelcase
-      let distinct_id =
-        '@' +
-        crypto.createHash('md5').update(data.user.email.toLowerCase()).digest('hex').toUpperCase()
+  // Pull user info (& remember it in the Apollo cache)
+  const { data } = await apolloClient.query({
+    query: MainUserDataQuery
+  })
 
-      localStorage.setItem('suuid', data.user.suuid)
-      localStorage.setItem('distinct_id', distinct_id)
-      localStorage.setItem('uuid', data.user.id)
-      localStorage.setItem('stcount', data.user.streams.totalCount)
-      return data
-    } else {
-      await signOut()
-      throw new Error('Failed to set user')
-    }
+  if (data.user) {
+    // eslint-disable-next-line camelcase
+    let distinct_id =
+      '@' +
+      crypto.createHash('md5').update(data.user.email.toLowerCase()).digest('hex').toUpperCase()
+
+    localStorage.setItem('suuid', data.user.suuid)
+    localStorage.setItem('distinct_id', distinct_id)
+    localStorage.setItem('uuid', data.user.id)
+    localStorage.setItem('stcount', data.user.streams.totalCount)
+    return data
+  } else {
+    await signOut()
+    throw new Error('Failed to set user')
   }
 }
 
@@ -87,13 +86,13 @@ export async function signOut(mixpanelInstance) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      token: localStorage.getItem('AuthToken'),
-      refreshToken: localStorage.getItem('RefreshToken')
+      token: localStorage.getItem(LocalStorageKeys.AuthToken),
+      refreshToken: localStorage.getItem(LocalStorageKeys.RefreshToken)
     })
   })
 
-  localStorage.removeItem('AuthToken')
-  localStorage.removeItem('RefreshToken')
+  localStorage.removeItem(LocalStorageKeys.AuthToken)
+  localStorage.removeItem(LocalStorageKeys.RefreshToken)
   localStorage.removeItem('suuid')
   localStorage.removeItem('uuid')
   localStorage.removeItem('distinct_id')
@@ -103,13 +102,13 @@ export async function signOut(mixpanelInstance) {
   window.location = '/'
 
   if (mixpanelInstance) {
-    mixpanelInstance.track('Log Out', { type: 'action'  })
+    mixpanelInstance.track('Log Out', { type: 'action' })
     mixpanelInstance.reset()
   }
 }
 
 export async function refreshToken() {
-  let refreshToken = localStorage.getItem('RefreshToken')
+  let refreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
   if (!refreshToken) throw new Error('No refresh token found')
 
   let refreshResponse = await fetch('/auth/token', {
@@ -128,14 +127,15 @@ export async function refreshToken() {
 
   // eslint-disable-next-line no-prototype-builtins
   if (data.hasOwnProperty('token')) {
-    localStorage.setItem('AuthToken', data.token)
-    localStorage.setItem('RefreshToken', data.refreshToken)
+    localStorage.setItem(LocalStorageKeys.AuthToken, data.token)
+    localStorage.setItem(LocalStorageKeys.RefreshToken, data.refreshToken)
     await prefetchUserAndSetSuuid()
     return true
   }
 }
 
 export function isEmailValid(email) {
-  const emailValidator = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  const emailValidator =
+    /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
   return emailValidator.test(email)
 }

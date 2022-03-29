@@ -1,14 +1,14 @@
 <template>
   <v-card v-if="file" class="my-4 elevation-1" :loading="percentCompleted != -1">
     <template slot="progress">
-      <v-progress-linear color="primary" height="4" :value="percentCompleted"></v-progress-linear>
+      <v-progress-linear color="primary" height="4" :value="percentCompleted" />
     </template>
     <v-toolbar flat color="transparent">
       <v-toolbar-title>
         {{ file.name }}
-        <span class="caption">{{ file.size }}kb</span>
+        <span class="caption">{{ Math.round(file.size / 1024) }}kb</span>
       </v-toolbar-title>
-      <v-spacer></v-spacer>
+      <v-spacer />
       <v-menu offset-y>
         <template #activator="{ attrs, on }">
           <v-btn v-tooltip="`Change the branch to upload to`" text v-bind="attrs" v-on="on">
@@ -23,7 +23,9 @@
             link
             @click="selectedBranch = item.name"
           >
-            <v-list-item-title class="caption">{{ item.name }}</v-list-item-title>
+            <v-list-item-title class="caption">
+              {{ item.name }}
+            </v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>

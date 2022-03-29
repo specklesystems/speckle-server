@@ -5,7 +5,7 @@
       <stream-nav :stream="stream" />
 
       <!-- Stream Page App Bar (Toolbar) -->
-      <stream-toolbar :stream="stream" />
+      <stream-toolbar :stream="stream" :user="user" />
 
       <!-- Stream Child Routes -->
       <div v-if="!error">
@@ -26,13 +26,15 @@
 
 <script>
 import gql from 'graphql-tag'
+import { StreamQuery } from '@/graphql/streams'
+import { MainUserDataQuery } from '@/graphql/user'
 
 export default {
-  name: 'Stream',
+  name: 'TheStream',
   components: {
-    ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
-    StreamNav: () => import('@/main/navigation/StreamNav'),
-    StreamToolbar: () => import('@/main/toolbars/StreamToolbar')
+    ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder.vue'),
+    StreamNav: () => import('@/main/navigation/StreamNav.vue'),
+    StreamToolbar: () => import('@/main/toolbars/StreamToolbar.vue')
   },
   data() {
     return {
@@ -43,32 +45,7 @@ export default {
   },
   apollo: {
     stream: {
-      query: gql`
-        query Stream($id: String!) {
-          stream(id: $id) {
-            id
-            name
-            role
-            createdAt
-            updatedAt
-            description
-            isPublic
-            commits {
-              totalCount
-            }
-            collaborators {
-              id
-              name
-              role
-              company
-              avatar
-            }
-            branches {
-              totalCount
-            }
-          }
-        }
-      `,
+      query: StreamQuery,
       variables() {
         return {
           id: this.$route.params.streamId
@@ -79,10 +56,13 @@ export default {
         else this.error = err
       }
     },
+    user: {
+      query: MainUserDataQuery
+    },
     $subscribe: {
       branchCreated: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             branchCreated(streamId: $streamId)
           }
         `,
@@ -107,7 +87,7 @@ export default {
       },
       commitCreated: {
         query: gql`
-          subscription($streamId: String!) {
+          subscription ($streamId: String!) {
             commitCreated(streamId: $streamId)
           }
         `,

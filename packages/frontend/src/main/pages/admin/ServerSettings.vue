@@ -41,6 +41,7 @@
 
 <script>
 import gql from 'graphql-tag'
+import { MainServerInfoQuery } from '@/graphql/server'
 
 export default {
   name: 'ServerInfoAdminCard',
@@ -83,18 +84,7 @@ export default {
   },
   apollo: {
     serverInfo: {
-      query: gql`
-        query {
-          serverInfo {
-            name
-            company
-            description
-            adminContact
-            termsOfService
-            inviteOnly
-          }
-        }
-      `,
+      query: MainServerInfoQuery,
       update(data) {
         delete data.serverInfo.__typename
         this.serverModifications = Object.assign({}, data.serverInfo)
@@ -107,7 +97,7 @@ export default {
       this.loading = true
       await this.$apollo.mutate({
         mutation: gql`
-          mutation($info: ServerInfoUpdateInput!) {
+          mutation ($info: ServerInfoUpdateInput!) {
             serverInfoUpdate(info: $info)
           }
         `,

@@ -2,22 +2,13 @@
   <router-view></router-view>
 </template>
 <script>
-import gql from 'graphql-tag'
+import { MainServerInfoQuery } from '@/graphql/server'
 
 export default {
   components: {},
   apollo: {
     serverInfo: {
-      query: gql`
-        query {
-          serverInfo {
-            name
-            company
-            description
-            adminContact
-          }
-        }
-      `
+      query: MainServerInfoQuery
     }
   }
 }

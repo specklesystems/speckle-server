@@ -1,5 +1,5 @@
 query Streams($cursor: String) {
-  streams(cursor: $cursor, limit:3 ) {
+  streams(cursor: $cursor, limit: 10) {
     totalCount
     cursor
     items {
@@ -34,6 +34,8 @@ query Streams($cursor: String) {
       branches {
         totalCount
       }
+      favoritedDate
+      favoritesCount
     }
   }
 }

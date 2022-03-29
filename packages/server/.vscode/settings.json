@@ -1,3 +1,8 @@
 {
-  "mochaExplorer.env": { "NODE_ENV": "test" }
+  "mochaExplorer.env": { "NODE_ENV": "test" },
+  "mochaExplorer.files": "src/**/*.spec.js",
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative"
 }
