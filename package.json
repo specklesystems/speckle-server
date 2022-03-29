@@ -4,6 +4,7 @@
   "scripts": {
     "lint": "eslint . --ext .js,.ts,.vue",
     "prettier:check": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "docker:deps:up": "docker-compose -f ./docker-compose-deps.yml up -d",
     "docker:deps:down": "docker-compose -f ./docker-compose-deps.yml down",
     "dev": "lerna run dev --parallel",
