@@ -189,54 +189,30 @@ jobs:
 
 
   docker-build-and-publish-frontend:
-    docker: *docker-image
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: env SPECKLE_SERVER_PACKAGE=frontend ./.circleci/build.sh
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: frontend
 
   docker-build-and-publish-previews:
-    docker: *docker-image
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: env SPECKLE_SERVER_PACKAGE=preview-service ./.circleci/build.sh
-          
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: preview-service
+
   docker-build-and-publish-webhooks:
-    docker: *docker-image
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: env SPECKLE_SERVER_PACKAGE=webhook-service ./.circleci/build.sh
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: webhook-service
 
   docker-build-and-publish-file-imports:
-    docker: *docker-image
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: env SPECKLE_SERVER_PACKAGE=fileimport-service ./.circleci/build.sh
+    <<: *docker-job
+    environment:
+      SPECKLE_SERVER_PACKAGE: fileimport-service
 
   docker-build-and-publish-test-container:
-    docker: *docker-image
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and Publish
-          command: env FOLDER=utils SPECKLE_SERVER_PACKAGE=test-deployment ./.circleci/build.sh
+    <<: *docker-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: test-deployment
 
   publish-npm:
     docker: *docker-image
