@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import debounce from 'lodash.debounce'
 import EventEmitter from './EventEmitter'
 
 /**

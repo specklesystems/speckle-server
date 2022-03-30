@@ -137,7 +137,7 @@ export default class SceneObjectManager {
     }
   }
 
-  addSolid(wrapper, _addToScene = true) {
+  addSolid(wrapper, addToScene = true) {
     // Do we have a defined material?
     if (wrapper.meta.renderMaterial) {
       let renderMat = wrapper.meta.renderMaterial
@@ -150,7 +150,7 @@ export default class SceneObjectManager {
 
         material.color = color
         material.opacity = renderMat.opacity !== 0 ? renderMat.opacity : 0.2
-        return this.addSingleTransparentSolid(wrapper, material)
+        return this.addSingleTransparentSolid(wrapper, material, addToScene)
 
         // It's not a transparent material!
       } else {
@@ -161,16 +161,16 @@ export default class SceneObjectManager {
         material.metalness = renderMat.metalness
         if (material.metalness !== 0) material.roughness = 0.1
         if (material.metalness > 0.8) material.color = new THREE.Color('#CDCDCD') // hack for rhino metal materials being black FFS
-        return this.addSingleSolid(wrapper, material)
+        return this.addSingleSolid(wrapper, material, addToScene)
       }
     } else if (wrapper.bufferGeometry.attributes.color) {
-      return this.addSingleSolid(wrapper, this.solidVertexMaterial)
+      return this.addSingleSolid(wrapper, this.solidVertexMaterial, addToScene)
     } else {
       // If we don't have defined material, just use the default
       let material = this.solidMaterial.clone()
       material.clippingPlanes = this.viewer.sectionBox.planes
 
-      return this.addSingleSolid(wrapper, material)
+      return this.addSingleSolid(wrapper, material, addToScene)
     }
   }
 

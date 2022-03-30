@@ -1,4 +1,3 @@
-import { chunk } from 'lodash'
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 // import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils'

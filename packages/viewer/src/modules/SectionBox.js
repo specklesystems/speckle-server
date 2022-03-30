@@ -87,7 +87,7 @@ export default class SectionBox {
       checkForSectionBoxInclusion: false
     })
     this.selectionHelper.on('object-clicked', this._clickHandler.bind(this))
-    this.selectionHelper.on('hovered', (objs) => {
+    this.selectionHelper.on('hovered', () => {
       // TODO: cannot get this to work reliably
       // if( !this.attachedToBox ) return
       // if( objs.length === 0 ) {
