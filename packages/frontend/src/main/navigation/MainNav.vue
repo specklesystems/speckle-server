@@ -37,7 +37,7 @@
         </v-list-item>
         <portal-target name="subnav-feed" />
         <v-list-group prepend-icon="mdi-folder-outline mt-2" group="streams">
-          <template #activator>
+          <template slot="activator">
             <v-list-item-content>
               <v-list-item-title>Streams</v-list-item-title>
               <v-list-item-subtitle class="caption">All your streams</v-list-item-subtitle>
