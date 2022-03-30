@@ -30,7 +30,15 @@
     >
       Verification email sent, please check you inbox.
     </v-alert>
-    <v-alert v-if="errors" type="error" height="44" dismissible rounded="lg" elevation="8" dense>
+    <v-alert
+      v-if="errors"
+      type="error"
+      height="44"
+      dismissible
+      rounded="lg"
+      elevation="8"
+      dense
+    >
       Email verification failed.{{ errorMessage ? ` Reason: ${errorMessage}` : '' }}
     </v-alert>
   </transition>

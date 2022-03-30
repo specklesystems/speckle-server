@@ -1,6 +1,10 @@
 <template>
   <div v-if="user" style="display: inline-block" class="text-center">
-    <user-avatar-icon :size="size" :avatar="user.avatar" :seed="user.id"></user-avatar-icon>
+    <user-avatar-icon
+      :size="size"
+      :avatar="user.avatar"
+      :seed="user.id"
+    ></user-avatar-icon>
     <p class="text-h6 mt-4">
       {{ user.name }}
       <br />

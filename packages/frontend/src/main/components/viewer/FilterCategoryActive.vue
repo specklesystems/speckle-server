@@ -8,7 +8,9 @@
           icon
           @click.stop="toggleColors()"
         >
-          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">mdi-palette</v-icon>
+          <v-icon small :class="`${colorBy ? 'primary--text' : ''}`">
+            mdi-palette
+          </v-icon>
         </v-btn>
       </v-list-item-action>
     </portal>
@@ -20,7 +22,9 @@
     >
       <v-col
         cols="1"
-        :class="`text-center text-truncate px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+        :class="`text-center text-truncate px-1 ${
+          $vuetify.theme.dark ? 'grey--text' : ''
+        }`"
         style="line-height: 24px; font-size: 9px"
       >
         {{ type.count }}
@@ -35,13 +39,17 @@
       </v-col>
       <v-col
         cols="4"
-        :class="`caption text-truncate text-right px-1 ${$vuetify.theme.dark ? 'grey--text' : ''}`"
+        :class="`caption text-truncate text-right px-1 ${
+          $vuetify.theme.dark ? 'grey--text' : ''
+        }`"
         style="line-height: 24px"
       >
         <div
           v-if="colorBy"
           class="d-inline-block rounded mr-3 mt-1 elevation-3"
-          :style="`width: 8px; height: 8px; background:${$store.state.colorLegend[type.fullName]};`"
+          :style="`width: 8px; height: 8px; background:${
+            $store.state.colorLegend[type.fullName]
+          };`"
         ></div>
         <v-btn
           v-tooltip="'Toggle visibility'"

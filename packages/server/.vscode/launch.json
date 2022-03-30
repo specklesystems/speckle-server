@@ -28,7 +28,7 @@
       // "envFile": "${workspaceFolder}/.env",
       "env": {
         "PORT": "0",
-        "POSTGRES_URL": "postgresql://localhost:5432/speckle2_test",
+        "POSTGRES_URL": "postgresql://localhost:5432/speckle2_test"
         // "POSTGRES_USER": "speckle",
         // "POSTGRES_PASSWORD": "speckle",
         // "POSTGRES_DB": "speckle2_test",
@@ -44,13 +44,7 @@
     {
       "name": "NPM test",
       "request": "launch",
-      "runtimeArgs": [
-        "run-script",
-        "test",
-        "--",
-        "-g='Comments @comments'",
-        "--exit"
-      ],
+      "runtimeArgs": ["run-script", "test", "--", "-g='Comments @comments'", "--exit"],
       "console": "integratedTerminal",
       "env": {
         // "POSTGRES_URL": "postgres://speckle:speckle@localhost/speckle2_test",

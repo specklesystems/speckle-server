@@ -18,6 +18,15 @@ const config = {
   parserOptions: {
     sourceType: 'module'
   },
+  overrides: [
+    {
+      files: './*.{js, ts}',
+      env: {
+        node: true,
+        commonjs: true
+      }
+    }
+  ],
   plugins: ['vue'],
   rules: {
     'no-console': 1

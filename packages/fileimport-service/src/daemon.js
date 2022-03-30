@@ -1,12 +1,12 @@
 'use strict'
 
-const knex = require( '../knex' )
+const knex = require('../knex')
 
-const { getFileStream } = require( './filesApi' )
-const fs = require( 'fs' )
-const { spawn } = require( 'child_process' )
+const { getFileStream } = require('./filesApi')
+const fs = require('fs')
+const { spawn } = require('child_process')
 
-const ServerAPI = require( '../ifc/api' )
+const ServerAPI = require('../ifc/api')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -16,7 +16,7 @@ const TMP_RESULTS_PATH = '/tmp/import_result.json'
 let shouldExit = false
 
 async function startTask() {
-  let { rows } = await knex.raw( `
+  let { rows } = await knex.raw(`
     UPDATE file_uploads
     SET 
       "convertedStatus" = 1,
@@ -29,37 +29,45 @@ async function startTask() {
     ) as task
     WHERE file_uploads."id" = task."id"
     RETURNING file_uploads."id"
-  ` )
+  `)
   return rows[0]
 }
 
-async function doTask( task ) {
+async function doTask(task) {
   let tempUserToken = null
   let serverApi = null
 
   try {
-    console.log( 'Doing task ', task )
-    let { rows } = await knex.raw( `
+    console.log('Doing task ', task)
+    let { rows } = await knex.raw(
+      `
       SELECT 
         id as "fileId", "streamId", "branchName", "userId", "fileName", "fileType"
       FROM file_uploads
       WHERE id = ?
       LIMIT 1
-    `, [ task.id ] )
+    `,
+      [task.id]
+    )
     let info = rows[0]
-    if ( !info ) {
-      throw new Error( 'Internal error: DB inconsistent' )
+    if (!info) {
+      throw new Error('Internal error: DB inconsistent')
     }
 
-    let upstreamFileStream = await getFileStream( { fileId: info.fileId } )
-    let diskFileStream = fs.createWriteStream( TMP_FILE_PATH )
-    
-    upstreamFileStream.pipe( diskFileStream )
+    let upstreamFileStream = await getFileStream({ fileId: info.fileId })
+    let diskFileStream = fs.createWriteStream(TMP_FILE_PATH)
 
-    await new Promise( fulfill => diskFileStream.on( 'finish' , fulfill ) )
-    
-    serverApi = new ServerAPI( { streamId: info.streamId } )
-    let { token } = await serverApi.createToken( { userId: info.userId, name: 'temp upload token', scopes: [ 'streams:write', 'streams:read' ], lifespan: 1000000 } )
+    upstreamFileStream.pipe(diskFileStream)
+
+    await new Promise((fulfill) => diskFileStream.on('finish', fulfill))
+
+    serverApi = new ServerAPI({ streamId: info.streamId })
+    let { token } = await serverApi.createToken({
+      userId: info.userId,
+      name: 'temp upload token',
+      scopes: ['streams:write', 'streams:read'],
+      lifespan: 1000000
+    })
     tempUserToken = token
 
     await runProcessWithTimeout(
@@ -78,14 +86,14 @@ async function doTask( task ) {
       10 * 60 * 1000
     )
 
-    let output = JSON.parse( fs.readFileSync( TMP_RESULTS_PATH ) )
+    let output = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH))
 
-    if ( !output.success )
-      throw new Error( output.error )
+    if (!output.success) throw new Error(output.error)
 
     let commitId = output.commitId
 
-    await knex.raw( `
+    await knex.raw(
+      `
       UPDATE file_uploads
       SET
         "convertedStatus" = 2,
@@ -93,103 +101,103 @@ async function doTask( task ) {
         "convertedMessage" = 'File converted successfully',
         "convertedCommitId" = ?
       WHERE "id" = ?
-    `, [ commitId, task.id ] )
-  } catch ( err ) {
-    console.log( 'Error: ', err )
-    await knex.raw( `
+    `,
+      [commitId, task.id]
+    )
+  } catch (err) {
+    console.log('Error: ', err)
+    await knex.raw(
+      `
       UPDATE file_uploads
       SET
         "convertedStatus" = 3,
         "convertedLastUpdate" = NOW(),
         "convertedMessage" = ?
       WHERE "id" = ?
-    `, [ err.toString(), task.id ] )
+    `,
+      [err.toString(), task.id]
+    )
   }
 
-  if ( fs.existsSync( TMP_FILE_PATH ) ) fs.unlinkSync( TMP_FILE_PATH )
-  if ( fs.existsSync( TMP_RESULTS_PATH ) ) fs.unlinkSync( TMP_RESULTS_PATH )
+  if (fs.existsSync(TMP_FILE_PATH)) fs.unlinkSync(TMP_FILE_PATH)
+  if (fs.existsSync(TMP_RESULTS_PATH)) fs.unlinkSync(TMP_RESULTS_PATH)
 
-  if ( tempUserToken ) {
-    await serverApi.revokeTokenById( tempUserToken )
+  if (tempUserToken) {
+    await serverApi.revokeTokenById(tempUserToken)
   }
-
 }
 
-function runProcessWithTimeout( cmd, cmdArgs, extraEnv, timeoutMs ) {
-  
-  return new Promise( ( resolve, reject ) => {
-    console.log( `Starting process: ${cmd} ${cmdArgs}` )
-    const childProc = spawn( cmd, cmdArgs, { env: { ...process.env, ...extraEnv } } )
+function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    console.log(`Starting process: ${cmd} ${cmdArgs}`)
+    const childProc = spawn(cmd, cmdArgs, { env: { ...process.env, ...extraEnv } })
 
-    childProc.stdout.on( 'data', ( data ) => {
-      console.log( 'Parser: ', data.toString() )
-    } )
+    childProc.stdout.on('data', (data) => {
+      console.log('Parser: ', data.toString())
+    })
 
-    childProc.stderr.on( 'data', ( data ) => {
-      console.error( 'Parser: ', data.toString() )
-    } )
+    childProc.stderr.on('data', (data) => {
+      console.error('Parser: ', data.toString())
+    })
 
     let timedOut = false
 
-    let timeout = setTimeout( () => {
-      console.log( 'Process timeout. Killing process...' )
+    let timeout = setTimeout(() => {
+      console.log('Process timeout. Killing process...')
 
       timedOut = true
-      childProc.kill( 9 )
-      reject( `Timeout: Process took longer than ${timeoutMs} ms to execute` )
-    }, timeoutMs )
+      childProc.kill(9)
+      reject(`Timeout: Process took longer than ${timeoutMs} ms to execute`)
+    }, timeoutMs)
 
-    childProc.on( 'close', ( code ) => {
-      console.log( `Process exited with code ${code}` )
+    childProc.on('close', (code) => {
+      console.log(`Process exited with code ${code}`)
 
-      if ( timedOut ) return // ignore `close` calls after killing (the promise was already rejected)
+      if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
 
-      clearTimeout( timeout )
+      clearTimeout(timeout)
 
-      if ( code === 0 ) {
+      if (code === 0) {
         resolve()
       } else {
-        reject( `Parser exited with code ${code}` )
+        reject(`Parser exited with code ${code}`)
       }
-    } )
-
-  } )
-
+    })
+  })
 }
 
 async function tick() {
-  if ( shouldExit ) {
-    process.exit( 0 )
+  if (shouldExit) {
+    process.exit(0)
   }
 
   try {
     let task = await startTask()
 
-    fs.writeFile( HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {} )
+    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 
-    if ( !task ) {
-      setTimeout( tick, 1000 )
+    if (!task) {
+      setTimeout(tick, 1000)
       return
     }
 
-    await doTask( task )
+    await doTask(task)
 
     // Check for another task very soon
-    setTimeout( tick, 10 )
-  } catch ( err ) {
-    console.log( 'Error executing task: ', err )
-    setTimeout( tick, 5000 )
+    setTimeout(tick, 10)
+  } catch (err) {
+    console.log('Error executing task: ', err)
+    setTimeout(tick, 5000)
   }
 }
 
-
 async function main() {
-  console.log( 'Starting FileUploads Service...' )
-  
-  process.on( 'SIGTERM', () => {
+  console.log('Starting FileUploads Service...')
+
+  process.on('SIGTERM', () => {
     shouldExit = true
-    console.log( 'Shutting down...' )
-  } )
+    console.log('Shutting down...')
+  })
 
   tick()
 }

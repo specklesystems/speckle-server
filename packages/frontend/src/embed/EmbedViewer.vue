@@ -1,12 +1,18 @@
 <template>
-  <v-app :class="`no-scrollbar ${$vuetify.theme.dark ? 'background-dark' : 'background-light'}`">
+  <v-app
+    :class="`no-scrollbar ${
+      $vuetify.theme.dark ? 'background-dark' : 'background-light'
+    }`"
+  >
     <!-- <speckle-loading v-if="!stream || error" :error="error" style="z-index: 101000" /> -->
     <div v-if="!error" style="z-index: 1000">
       <div class="top-left bottom-left ma-2 d-flex">
         <span class="caption d-inline-flex align-center">
           <img src="@/assets/logo.svg" height="20" />
           <span style="margin-top: 2px" class="primary--text">
-            <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">Speckle</a>
+            <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
+              Speckle
+            </a>
           </span>
         </span>
       </div>
@@ -90,7 +96,9 @@ export default {
   },
   computed: {
     isSmall() {
-      return this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
+      return (
+        this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
+      )
     },
     displayType() {
       if (!this.input.stream) {
@@ -147,7 +155,8 @@ export default {
         let res = await getCommit(this.input.stream, this.input.commit)
         let data = res.data
         let latestCommit = data.stream.commit
-        if (this.input.object === undefined) this.objectId = latestCommit.referencedObject
+        if (this.input.object === undefined)
+          this.objectId = latestCommit.referencedObject
         this.specificCommit = data.stream
       } catch (e) {
         this.error = e.message
@@ -157,13 +166,15 @@ export default {
       try {
         let res = await getLatestBranchCommit(this.input.stream, this.input.branch)
         let data = res.data
-        let latestCommit = data.stream.branch.commits.items[0] || data.stream.branch.commit
+        let latestCommit =
+          data.stream.branch.commits.items[0] || data.stream.branch.commit
         if (!latestCommit) {
           this.error = 'No commit for this branch'
           this.lastCommit = data.stream
           return
         }
-        if (this.input.object == undefined) this.objectId = latestCommit.referencedObject
+        if (this.input.object == undefined)
+          this.objectId = latestCommit.referencedObject
         else this.objectId = this.input.object
         this.lastCommit = data.stream
       } catch (e) {

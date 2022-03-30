@@ -15,7 +15,7 @@
     "@babel/preset-react"
   ],
   "plugins": [
-    ["@babel/plugin-proposal-class-properties", { "loose": true}],
+    ["@babel/plugin-proposal-class-properties", { "loose": true }],
     "babel-plugin-add-module-exports",
     "@babel/plugin-transform-classes",
     ["@babel/plugin-proposal-private-methods", { "loose": true }]

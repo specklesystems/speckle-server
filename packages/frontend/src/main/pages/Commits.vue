@@ -33,7 +33,8 @@
     <no-data-placeholder v-if="user && user.commits.totalCount === 0">
       <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
       <p class="caption">
-        Once you create a stream and start sending some data, your activity will show up here.
+        Once you create a stream and start sending some data, your activity will show up
+        here.
       </p>
       <template #actions>
         <v-list rounded class="transparent">
@@ -107,7 +108,8 @@ export default {
 
           let allItems = [...previousResult.user.commits.items]
           for (const commit of newItems) {
-            if (allItems.findIndex((c) => c.id === commit.id) === -1) allItems.push(commit)
+            if (allItems.findIndex((c) => c.id === commit.id) === -1)
+              allItems.push(commit)
           }
 
           return {

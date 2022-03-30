@@ -23,7 +23,10 @@ async function parseAndCreateCommit({
     totalChildrenCount: tCount
   }
 
-  let branch = await serverApi.getBranchByNameAndStreamId({ streamId: streamId, name: branchName })
+  let branch = await serverApi.getBranchByNameAndStreamId({
+    streamId: streamId,
+    name: branchName
+  })
 
   if (!branch) {
     await serverApi.createBranch({

@@ -14,7 +14,9 @@
       <div class="text-truncate flex-shrink-0 mx-1 d-inline-flex">
         /
         <div class="text-decoration-none space-grotesk">
-          <v-icon small class="mx-1 primary--text" style="font-size: 13px">mdi-cube-outline</v-icon>
+          <v-icon small class="mx-1 primary--text" style="font-size: 13px">
+            mdi-cube-outline
+          </v-icon>
           <b class="d-none d-sm-inline">Object</b>
           <code class="ml-2">{{ stream.object.id }}</code>
         </div>

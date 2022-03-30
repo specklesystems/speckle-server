@@ -33,7 +33,7 @@
           </div>
         </v-card-text>
       </div>
-      <v-divider v-if="showStreamAndBranch"/>
+      <v-divider v-if="showStreamAndBranch" />
       <div v-if="showStreamAndBranch" class="d-flex align-center caption px-5 py-2">
         <div class="text-truncate mr-2">
           <router-link
@@ -58,10 +58,19 @@
         <commit-received-receipts :stream-id="streamId" :commit-id="commit.id" shadow />
       </div>
       <div style="position: absolute; top: 10px; left: 12px">
-        <v-chip v-if="commit.commentCount !== 0" small class="caption primary" dark v-tooltip="`${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`">
-          <v-icon x-small class="mr-1">mdi-comment-outline</v-icon> {{ commit.commentCount }}
+        <v-chip
+          v-if="commit.commentCount !== 0"
+          small
+          class="caption primary"
+          dark
+          v-tooltip="
+            `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
+          "
+        >
+          <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
+          {{ commit.commentCount }}
         </v-chip>
-        <source-app-avatar :application-name="commit.sourceApplication" /> 
+        <source-app-avatar :application-name="commit.sourceApplication" />
       </div>
     </v-card>
   </v-hover>
@@ -70,7 +79,8 @@
 export default {
   components: {
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () => import('@/main/components/common/CommitReceivedReceipts'),
+    CommitReceivedReceipts: () =>
+      import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
   props: {
@@ -78,7 +88,7 @@ export default {
     previewHeight: { type: Number, default: () => 180 },
     showStreamAndBranch: { type: Boolean, default: true }
   },
-  computed:{
+  computed: {
     streamId() {
       return this.commit.streamId ?? this.$route.params.streamId
     }

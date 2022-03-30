@@ -48,11 +48,13 @@
           </v-app-bar-nav-icon>
           <v-toolbar-title>Delete Commit</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon @click="showDeleteDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+          <v-btn icon @click="showDeleteDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-toolbar>
         <v-card-text class="mt-4">
-          You cannot undo this action. This will permanently delete this commit. To confirm, type in
-          its its id (
+          You cannot undo this action. This will permanently delete this commit. To
+          confirm, type in its its id (
           <code>{{ commit.id }}</code>
           ) below:
           <v-text-field
@@ -109,7 +111,11 @@ export default {
             }
           `,
           variables: {
-            myCommit: { streamId: this.stream.id, id: this.commit.id, message: this.commit.message }
+            myCommit: {
+              streamId: this.stream.id,
+              id: this.commit.id,
+              message: this.commit.message
+            }
           }
         })
       } catch (err) {
@@ -143,7 +149,9 @@ export default {
           text: err.message
         })
       }
-      this.$router.push(`/streams/` + this.$route.params.streamId + `/branches/` + commitBranch)
+      this.$router.push(
+        `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch
+      )
       this.loading = false
       this.showDeleteDialog = false
     }

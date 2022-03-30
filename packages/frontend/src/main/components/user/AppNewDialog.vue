@@ -2,7 +2,12 @@
   <v-card>
     <v-card-title class="primary white--text">Create a New App</v-card-title>
 
-    <v-form v-show="!appCreateResult" ref="form" v-model="valid" @submit.prevent="createApp">
+    <v-form
+      v-show="!appCreateResult"
+      ref="form"
+      v-model="valid"
+      @submit.prevent="createApp"
+    >
       <v-card-text>
         <v-text-field
           v-model="name"
@@ -65,7 +70,9 @@
         <p>
           <b>Note:</b>
           To authenticate users inside your app, direct them to
-          <code style="word-break: break-all">{{ rootUrl }}/authn/verify/{appId}/{challenge}</code>
+          <code style="word-break: break-all">
+            {{ rootUrl }}/authn/verify/{appId}/{challenge}
+          </code>
           , where
           <code>challenge</code>
           is an OAuth2 plain code challenge.

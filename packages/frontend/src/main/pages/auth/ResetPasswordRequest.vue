@@ -9,14 +9,15 @@
     <v-alert v-model="success" :icon="null" text>
       <v-row align="center">
         <v-col class="grow">
-          Done! We've sent you instructions on how to reset your password at {{ form.email }}.
+          Done! We've sent you instructions on how to reset your password at
+          {{ form.email }}.
         </v-col>
       </v-row>
     </v-alert>
     <v-card-text v-if="!success" class="pb-7">
       <p class="body-1">
-        Type in the email address you used, so we can verify your account. We will send you
-        instructions on how to reset your password.
+        Type in the email address you used, so we can verify your account. We will send
+        you instructions on how to reset your password.
       </p>
       <v-form ref="form" class="" @submit.prevent="sendResetEmail()">
         <v-row dense>
@@ -30,7 +31,9 @@
             />
           </v-col>
           <v-col cols="12">
-            <v-btn block large color="primary" @click="sendResetEmail()">Send Reset Email</v-btn>
+            <v-btn block large color="primary" @click="sendResetEmail()">
+              Send Reset Email
+            </v-btn>
           </v-col>
         </v-row>
       </v-form>

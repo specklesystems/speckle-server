@@ -1,7 +1,10 @@
 /* eslint-disable */
 import Vue from 'vue'
 import VueApollo from 'vue-apollo'
-import { createApolloClient, restartWebsockets } from 'vue-cli-plugin-apollo/graphql-client'
+import {
+  createApolloClient,
+  restartWebsockets
+} from 'vue-cli-plugin-apollo/graphql-client'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 
@@ -11,10 +14,12 @@ Vue.use(VueApollo)
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
 // Http endpoint
-const httpEndpoint = process.env.VUE_APP_GRAPHQL_HTTP || `${window.location.origin}/graphql`
+const httpEndpoint =
+  process.env.VUE_APP_GRAPHQL_HTTP || `${window.location.origin}/graphql`
 // WS endpoint
 const wsEndpoint =
-  process.env.VUE_APP_GRAPHQL_WS || `${window.location.origin.replace('http', 'ws')}/graphql`
+  process.env.VUE_APP_GRAPHQL_WS ||
+  `${window.location.origin.replace('http', 'ws')}/graphql`
 
 function hasAuthToken() {
   return !!localStorage.getItem(AUTH_TOKEN)
@@ -53,8 +58,10 @@ function getDefaultOptions() {
     inMemoryCacheOptions: {
       cacheRedirects: {
         Query: {
-          user: (_, args, { getCacheKey }) => getCacheKey({ __typename: 'User', id: args.id }),
-          stream: (_, args, { getCacheKey }) => getCacheKey({ __typename: 'Stream', id: args.id })
+          user: (_, args, { getCacheKey }) =>
+            getCacheKey({ __typename: 'User', id: args.id }),
+          stream: (_, args, { getCacheKey }) =>
+            getCacheKey({ __typename: 'Stream', id: args.id })
         }
       }
     }

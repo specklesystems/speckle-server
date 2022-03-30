@@ -1,6 +1,4 @@
 module.exports = {
   presets: ['@vue/cli-plugin-babel/preset'],
-  exclude: [
-    /(Speckle.js\.). /
-  ]
+  exclude: [/(Speckle.js\.). /]
 }

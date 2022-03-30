@@ -1,5 +1,10 @@
 'use strict'
-const { ApolloError, ForbiddenError, UserInputError, withFilter } = require('apollo-server-express')
+const {
+  ApolloError,
+  ForbiddenError,
+  UserInputError,
+  withFilter
+} = require('apollo-server-express')
 
 const {
   createStream,
@@ -52,7 +57,10 @@ const _deleteStream = async (parent, args, context) => {
   })
 
   // Notify any listeners on the streamId
-  await pubsub.publish(STREAM_DELETED, { streamDeleted: { streamId: args.id }, streamId: args.id })
+  await pubsub.publish(STREAM_DELETED, {
+    streamDeleted: { streamId: args.id },
+    streamId: args.id
+  })
 
   // Notify all stream users
   let users = await getStreamUsers({ streamId: args.id })
@@ -182,7 +190,9 @@ module.exports = {
 
   Mutation: {
     async streamCreate(parent, args, context) {
-      if (!(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))) {
+      if (
+        !(await respectsLimits({ action: 'STREAM_CREATE', source: context.userId }))
+      ) {
         throw new Error('Blocked due to rate-limiting. Try again later')
       }
 
@@ -255,7 +265,11 @@ module.exports = {
     },
 
     async streamGrantPermission(parent, args, context) {
-      await authorizeResolver(context.userId, args.permissionParams.streamId, 'stream:owner')
+      await authorizeResolver(
+        context.userId,
+        args.permissionParams.streamId,
+        'stream:owner'
+      )
 
       if (context.userId === args.permissionParams.userId)
         throw new Error('You cannot set roles for yourself.')
@@ -278,7 +292,10 @@ module.exports = {
           message: `Permission granted to user ${params.userId} (${params.role})`
         })
         await pubsub.publish(USER_STREAM_ADDED, {
-          userStreamAdded: { id: args.permissionParams.streamId, sharedBy: context.userId },
+          userStreamAdded: {
+            id: args.permissionParams.streamId,
+            sharedBy: context.userId
+          },
           ownerId: args.permissionParams.userId
         })
       }
@@ -287,7 +304,11 @@ module.exports = {
     },
 
     async streamRevokePermission(parent, args, context) {
-      await authorizeResolver(context.userId, args.permissionParams.streamId, 'stream:owner')
+      await authorizeResolver(
+        context.userId,
+        args.permissionParams.streamId,
+        'stream:owner'
+      )
 
       if (context.userId === args.permissionParams.userId)
         throw new ApolloError('You cannot revoke your own access rights to a stream.')
@@ -305,7 +326,10 @@ module.exports = {
           message: `Permission revoked for user ${args.permissionParams.userId}`
         })
         await pubsub.publish(USER_STREAM_REMOVED, {
-          userStreamRemoved: { id: args.permissionParams.streamId, revokedBy: context.userId },
+          userStreamRemoved: {
+            id: args.permissionParams.streamId,
+            revokedBy: context.userId
+          },
           ownerId: args.permissionParams.userId
         })
       }

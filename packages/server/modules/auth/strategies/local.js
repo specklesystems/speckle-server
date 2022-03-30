@@ -9,7 +9,10 @@ const {
   getUserByEmail
 } = require(`${appRoot}/modules/core/services/users`)
 const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { validateInvite, useInvite } = require(`${appRoot}/modules/serverinvites/services`)
+const {
+  validateInvite,
+  useInvite
+} = require(`${appRoot}/modules/serverinvites/services`)
 const { respectsLimits } = require(`${appRoot}/modules/core/services/ratelimits`)
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
@@ -27,7 +30,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     sessionAppId,
     async (req, res, next) => {
       try {
-        let valid = await validatePasssword({ email: req.body.email, password: req.body.password })
+        let valid = await validatePasssword({
+          email: req.body.email,
+          password: req.body.password
+        })
 
         if (!valid) throw new Error('Invalid credentials')
 
@@ -59,13 +65,24 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         let user = req.body
         user.ip = req.headers['cf-connecting-ip'] || req.connection.remoteAddress || ''
-        let ignorePrefixes = ['192.168.', '10.', '127.', '172.1', '172.2', '172.3', '::']
+        let ignorePrefixes = [
+          '192.168.',
+          '10.',
+          '127.',
+          '172.1',
+          '172.2',
+          '172.3',
+          '::'
+        ]
         for (let ipPrefix of ignorePrefixes)
           if (user.ip.startsWith(ipPrefix)) {
             delete user.ip
             break
           }
-        if (user.ip && !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))) {
+        if (
+          user.ip &&
+          !(await respectsLimits({ action: 'USER_CREATE', source: user.ip }))
+        ) {
           throw new Error('Blocked due to rate-limiting. Try again later')
         }
 
@@ -94,7 +111,8 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         req.user = { id: userId, email: user.email }
 
         // 4. if the user had an invite, its used up
-        if (req.session.inviteId) await useInvite({ id: req.session.inviteId, email: user.email })
+        if (req.session.inviteId)
+          await useInvite({ id: req.session.inviteId, email: user.email })
 
         return next()
       } catch (err) {

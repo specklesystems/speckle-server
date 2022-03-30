@@ -19,6 +19,7 @@ npm run build-fe
 This should be rerun whenever you make changes to the viewer (if you make local viewer changes, don't forget to build the viewer module before running this)
 
 After the viewer web page is up to date, run the preview service with:
+
 ```
 npm run dev
 ```

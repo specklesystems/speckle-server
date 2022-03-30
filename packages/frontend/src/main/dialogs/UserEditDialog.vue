@@ -28,7 +28,11 @@
             </v-row>
             <v-row>
               <v-col cols="12" class="pt-0 pb-0">
-                <v-text-field v-model="user.company" filled label="Company"></v-text-field>
+                <v-text-field
+                  v-model="user.company"
+                  filled
+                  label="Company"
+                ></v-text-field>
               </v-col>
             </v-row>
             <v-row>
@@ -64,7 +68,9 @@ export default {
         (v) => !!v || 'Name is required',
         (v) => (v && v.length <= 60) || 'Name must be less than 60 characters.'
       ],
-      bioRules: [(v) => !v || (v && v.length <= 500) || 'Bio must be less than 500 characters.'],
+      bioRules: [
+        (v) => !v || (v && v.length <= 500) || 'Bio must be less than 500 characters.'
+      ],
       valid: true
     }
   },

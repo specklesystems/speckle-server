@@ -104,9 +104,13 @@ describe('Favorite streams', () => {
     ])
 
     await Promise.all([
-      createStream({ ...myPubStream, ownerId: me.id }).then((id) => (myPubStream.id = id)),
+      createStream({ ...myPubStream, ownerId: me.id }).then(
+        (id) => (myPubStream.id = id)
+      ),
       createStream({ ...myStream, ownerId: me.id }).then((id) => (myStream.id = id)),
-      createStream({ ...notMyStream, ownerId: otherGuy.id }).then((id) => (notMyStream.id = id)),
+      createStream({ ...notMyStream, ownerId: otherGuy.id }).then(
+        (id) => (notMyStream.id = id)
+      ),
       createStream({ ...notMyPubStream, ownerId: otherGuy.id }).then(
         (id) => (notMyPubStream.id = id)
       )
@@ -237,7 +241,9 @@ describe('Favorite streams', () => {
         )
 
         // Pre-favorite all streams
-        await Promise.all(favoritedStreamIds().map(async (id) => favoriteStream(id, true)))
+        await Promise.all(
+          favoritedStreamIds().map(async (id) => favoriteStream(id, true))
+        )
       })
 
       it("throw error if trying to get another user's favorite stream collection", async () => {

@@ -98,7 +98,9 @@ export default {
       for (let key of Object.keys(this.realObject)) {
         if (this.ignoredProps.indexOf(key) !== -1) continue
         let value = this.realObject[key]
-        let type = Array.isArray(this.realObject[key]) ? 'array' : typeof this.realObject[key]
+        let type = Array.isArray(this.realObject[key])
+          ? 'array'
+          : typeof this.realObject[key]
         let extras = []
         if (value?.referencedId) extras.push('open', 'visibility')
         if (

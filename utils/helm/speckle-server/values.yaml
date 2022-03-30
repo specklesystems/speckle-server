@@ -7,14 +7,14 @@ docker_image_tag: v2.3.3
 db:
   # postgres_url: secret -> postgres_url
   useCertificate: false
-  certificate: "" # Multi-line string with the contents of `ca-certificate.crt`
+  certificate: '' # Multi-line string with the contents of `ca-certificate.crt`
   PGSSLMODE: require
 
 s3:
-  endpoint: ""
-  bucket: ""
-  access_key: ""
-  create_bucket: "false"
+  endpoint: ''
+  bucket: ''
+  access_key: ''
+  create_bucket: 'false'
   # secret_key: secret -> s3_secret_key
 
 #redis:
@@ -28,24 +28,24 @@ server:
       enabled: true
     google:
       enabled: false
-      client_id: ""
+      client_id: ''
       # client_secret: secret -> `google_client_secret`
     github:
       enabled: false
-      client_id: ""
+      client_id: ''
       # client_secret: secret -> `github_client_secret`
     azure_ad:
       enabled: false
-      org_name: ""
-      identity_metadata: ""
-      issuer: ""
-      client_id: ""
+      org_name: ''
+      identity_metadata: ''
+      issuer: ''
+      client_id: ''
       # client_secret: secret -> `azure_ad_client_secret`
   email:
     enabled: false
-    host: ""
-    port: ""
-    username: ""
+    host: ''
+    port: ''
+    username: ''
     # password: secret -> `email_password`
   requests:
     cpu: 500m
@@ -54,7 +54,7 @@ server:
     cpu: 1000m
     memory: 3Gi
 
-  sentry_dns: ""
+  sentry_dns: ''
   disable_tracking: false
   disable_tracing: false
 

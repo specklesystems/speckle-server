@@ -70,11 +70,14 @@
             @select="setStream"
           />
           <v-alert v-else text dense type="info" dismissible @input="dismiss">
-            They will be invited to be collaborators on the "{{ selectedStream.name }}" stream.
+            They will be invited to be collaborators on the "{{ selectedStream.name }}"
+            stream.
           </v-alert>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn block :disabled="!submitable" color="primary" type="submit">Invite</v-btn>
+            <v-btn block :disabled="!submitable" color="primary" type="submit">
+              Invite
+            </v-btn>
           </v-card-actions>
         </v-form>
       </v-card-text>
@@ -187,7 +190,11 @@ export default {
       for (let chip of this.chips) {
         if (!chip || chip.length === 0) continue
         try {
-          await this.sendInvite(chip, this.createInviteMessage(), this.selectedStream?.id)
+          await this.sendInvite(
+            chip,
+            this.createInviteMessage(),
+            this.selectedStream?.id
+          )
           this.sentToEmails.push(chip)
         } catch (err) {
           this.errors.push({ email: chip, reason: err.graphQLErrors[0].message })
@@ -208,7 +215,9 @@ export default {
       }
 
       let query = gql`
-        mutation($input: ${streamId ? 'StreamInviteCreateInput!' : 'ServerInviteCreateInput!'}) {
+        mutation($input: ${
+          streamId ? 'StreamInviteCreateInput!' : 'ServerInviteCreateInput!'
+        }) {
           ${streamId ? 'streamInviteCreate' : 'serverInviteCreate'}(input: $input)
         }
       `

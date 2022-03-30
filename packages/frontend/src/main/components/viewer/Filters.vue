@@ -43,7 +43,10 @@
           <filter-category-active :filter="activeFilter" />
         </div>
         <div v-if="activeFilter && activeFilter.data.type === 'number'">
-          <filter-numeric-active :filter="activeFilter" :prevent-first-set="preventFirstSet" />
+          <filter-numeric-active
+            :filter="activeFilter"
+            :prevent-first-set="preventFirstSet"
+          />
         </div>
         <div v-show="activeFilter === null">
           <div class="">
@@ -67,9 +70,14 @@
                 />
               </div>
             </div>
-            <v-subheader>{{ filterSearch ? 'Matching' : 'Other' }} filters:</v-subheader>
+            <v-subheader>
+              {{ filterSearch ? 'Matching' : 'Other' }} filters:
+            </v-subheader>
             <div v-for="filter in matchingFilters" :key="filter.targetKey">
-              <filter-row-select :filter="filter" @active-toggle="(e) => (activeFilter = e)" />
+              <filter-row-select
+                :filter="filter"
+                @active-toggle="(e) => (activeFilter = e)"
+              />
             </div>
           </div>
         </div>

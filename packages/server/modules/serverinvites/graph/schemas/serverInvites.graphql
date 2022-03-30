@@ -1,16 +1,15 @@
-
 type ServerInvite {
   id: String!
   createdAt: DateTime!
 }
 
 extend type Mutation {
-  serverInviteCreate( input: ServerInviteCreateInput! ): Boolean
+  serverInviteCreate(input: ServerInviteCreateInput!): Boolean
     @hasRole(role: "server:user")
     @hasScope(scope: "users:invite")
 
-  streamInviteCreate( input: StreamInviteCreateInput! ): Boolean
-    @hasRole(role: "server:user" )
+  streamInviteCreate(input: StreamInviteCreateInput!): Boolean
+    @hasRole(role: "server:user")
     @hasScope(scope: "users:invite")
 }
 

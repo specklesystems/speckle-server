@@ -1,77 +1,72 @@
 /* istanbul ignore file */
-const request = require( 'supertest' )
-const appRoot = require( 'app-root-path' )
+const request = require('supertest')
+const appRoot = require('app-root-path')
 
-const knex = require( `${appRoot}/db/knex` )
-const ResetTokens = ( ) => knex( 'pwdreset_tokens' )
+const knex = require(`${appRoot}/db/knex`)
+const ResetTokens = () => knex('pwdreset_tokens')
 
-const { beforeEachContext } = require( `${appRoot}/test/hooks` )
-const { createUser } = require( `${appRoot}/modules/core/services/users` )
+const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { createUser } = require(`${appRoot}/modules/core/services/users`)
 
-describe( 'Password reset requests @passwordresets', ( ) => {
+describe('Password reset requests @passwordresets', () => {
   let app
   let userA = { name: 'd1', email: 'd@speckle.systems', password: 'wowwow8charsplease' }
 
-  before( async ( ) => {
-    ( { app } = await beforeEachContext( ) )
-    userA.id = await createUser( userA )
-  } )
+  before(async () => {
+    ;({ app } = await beforeEachContext())
+    userA.id = await createUser(userA)
+  })
 
-  it( 'Should carefully send a password request email', async ( ) => {
+  it('Should carefully send a password request email', async () => {
     // invalid request
-    await request( app )
-      .post( '/auth/pwdreset/request' )
-      .expect( 400 )
+    await request(app).post('/auth/pwdreset/request').expect(400)
 
     // non-existent user
-    await request( app )
-      .post( '/auth/pwdreset/request' )
-      .send( { email: 'doesnot@exist.here' } )
-      .expect( 400 )
+    await request(app)
+      .post('/auth/pwdreset/request')
+      .send({ email: 'doesnot@exist.here' })
+      .expect(400)
 
     // good request
-    await request( app )
-      .post( '/auth/pwdreset/request' )
-      .send( { email: 'd@speckle.systems' } )
-      .expect( 200 )
+    await request(app)
+      .post('/auth/pwdreset/request')
+      .send({ email: 'd@speckle.systems' })
+      .expect(200)
 
     // already has expiration token, fall back
-    await request( app )
-      .post( '/auth/pwdreset/request' )
-      .send( { email: 'd@speckle.systems' } )
-      .expect( 400 )
-  } )
+    await request(app)
+      .post('/auth/pwdreset/request')
+      .send({ email: 'd@speckle.systems' })
+      .expect(400)
+  })
 
-  it( 'Should reset passwords', async () => {
+  it('Should reset passwords', async () => {
     let token = await ResetTokens().select().first()
 
     // invalid request
-    await request( app )
-      .post( '/auth/pwdreset/finalize' )
-      .expect( 400 )
+    await request(app).post('/auth/pwdreset/finalize').expect(400)
 
     // invalid request
-    await request( app )
-      .post( '/auth/pwdreset/finalize' )
-      .send( { tokenId: 'fake' } )
-      .expect( 400 )
+    await request(app)
+      .post('/auth/pwdreset/finalize')
+      .send({ tokenId: 'fake' })
+      .expect(400)
 
     // should be not ok, missing pwd
-    await request( app )
-      .post( '/auth/pwdreset/finalize' )
-      .send( { tokenId: token.id } )
-      .expect( 400 )
+    await request(app)
+      .post('/auth/pwdreset/finalize')
+      .send({ tokenId: token.id })
+      .expect(400)
 
-    await request( app )
-      .post( '/auth/pwdreset/finalize' )
-      .send( { tokenId: token.id, password: '12345678' } )
-      .expect( 200 )
+    await request(app)
+      .post('/auth/pwdreset/finalize')
+      .send({ tokenId: token.id, password: '12345678' })
+      .expect(200)
 
     // token used up, should fail
-    await request( app )
-      .post( '/auth/pwdreset/finalize' )
-      .send( { tokenId: token.id, password: 'abc12345678' } )
-      .expect( 400 )
-  } )
-} )
-
+    await request(app)
+      .post('/auth/pwdreset/finalize')
+      .send({ tokenId: token.id, password: 'abc12345678' })
+      .expect(400)
+  })
+})

@@ -46,7 +46,9 @@
             </div>
           </div>
           <div class="mt-2">
-            <v-btn x-small block :to="isSelf ? '/profile' : '/profile/' + id">View profile</v-btn>
+            <v-btn x-small block :to="isSelf ? '/profile' : '/profile/' + id">
+              View profile
+            </v-btn>
           </div>
         </v-card-text>
       </v-card>

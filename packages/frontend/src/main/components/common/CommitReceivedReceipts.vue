@@ -47,7 +47,9 @@
           <v-app-bar-nav-icon><v-icon>mdi-download</v-icon></v-app-bar-nav-icon>
           <v-toolbar-title>All Received Receipts</v-toolbar-title>
           <v-spacer />
-          <v-btn icon @click="showAllActivityDialog = false"><v-icon>mdi-close</v-icon></v-btn>
+          <v-btn icon @click="showAllActivityDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
         </v-toolbar>
         <v-list>
           <v-list-item v-for="(act, i) in activity.items" :key="i">
@@ -63,7 +65,10 @@
               </v-list-item-subtitle>
             </v-list-item-content>
             <v-list-item-action>
-              <source-app-avatar class="mt-3 mb-3" :application-name="act.info.sourceApplication" />
+              <source-app-avatar
+                class="mt-3 mb-3"
+                :application-name="act.info.sourceApplication"
+              />
             </v-list-item-action>
           </v-list-item>
         </v-list>
@@ -131,7 +136,8 @@ export default {
   },
   computed: {
     receivedUsersUnique() {
-      if (!(this.activity && this.activity.items && this.activity.items.length > 0)) return []
+      if (!(this.activity && this.activity.items && this.activity.items.length > 0))
+        return []
       let set = new Set()
       this.activity.items.forEach((item) => set.add(item.userId))
       return Array.from(set)

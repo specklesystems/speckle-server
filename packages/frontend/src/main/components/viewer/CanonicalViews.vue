@@ -15,7 +15,11 @@
       </v-btn>
     </template>
     <v-list dense nav>
-      <v-list-item v-for="(item, index) in items" :key="index" @click="setView(item.title)">
+      <v-list-item
+        v-for="(item, index) in items"
+        :key="index"
+        @click="setView(item.title)"
+      >
         <v-list-item-title>
           <v-icon small>mdi-camera-control</v-icon>
           {{ item.title }}

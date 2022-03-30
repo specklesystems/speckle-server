@@ -121,7 +121,9 @@ const routes = [
             beforeEnter: (to, from, next) => {
               if (to.params.branchName.toLowerCase() !== to.params.branchName)
                 return next(
-                  `/streams/${to.params.streamId}/branches/${to.params.branchName.toLowerCase()}`
+                  `/streams/${
+                    to.params.streamId
+                  }/branches/${to.params.branchName.toLowerCase()}`
                 )
               else next()
             }
@@ -318,7 +320,9 @@ router.beforeEach((to, from, next) => {
 
   if (
     !uuid &&
-    !to.matched.some(({ name }) => name === 'stream' || name === 'commit' || name === 'branch') && //allow public streams to be viewed
+    !to.matched.some(
+      ({ name }) => name === 'stream' || name === 'commit' || name === 'branch'
+    ) && //allow public streams to be viewed
     to.name !== 'Embeded Viewer' &&
     to.name !== 'Login' &&
     to.name !== 'Register' &&

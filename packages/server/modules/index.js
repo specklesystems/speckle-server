@@ -70,7 +70,9 @@ exports.graph = () => {
     if (fs.existsSync(path.join(fullPath, 'graph', 'schemas'))) {
       let moduleSchemas = fs.readdirSync(path.join(fullPath, 'graph', 'schemas'))
       moduleSchemas.forEach((schema) => {
-        typeDefs.push(fs.readFileSync(path.join(fullPath, 'graph', 'schemas', schema), 'utf8'))
+        typeDefs.push(
+          fs.readFileSync(path.join(fullPath, 'graph', 'schemas', schema), 'utf8')
+        )
       })
     }
 

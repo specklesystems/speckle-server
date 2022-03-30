@@ -43,7 +43,11 @@
             />
           </v-col>
           <v-col cols="12" class="py-2" style="margin-top: -18px">
-            <v-row v-show="passwordStrength !== 1 && form.password" no-gutters align="center">
+            <v-row
+              v-show="passwordStrength !== 1 && form.password"
+              no-gutters
+              align="center"
+            >
               <v-col
                 cols="12"
                 class="flex-grow-1 flex-shrink-0"
@@ -54,12 +58,18 @@
                   height="5"
                   class="mt-1 mb-0"
                   :color="`${
-                    passwordStrength >= 75 ? 'green' : passwordStrength >= 50 ? 'orange' : 'red'
+                    passwordStrength >= 75
+                      ? 'green'
+                      : passwordStrength >= 50
+                      ? 'orange'
+                      : 'red'
                   }`"
                 ></v-progress-linear>
               </v-col>
               <v-col cols="12" class="caption text-center mt-3">
-                {{ pwdSuggestions ? pwdSuggestions : form.password ? 'Looks good.' : null }}
+                {{
+                  pwdSuggestions ? pwdSuggestions : form.password ? 'Looks good.' : null
+                }}
                 <span v-if="form.password !== form.passwordConf">
                   <b>Passwords do not match.</b>
                 </span>
@@ -151,7 +161,8 @@ export default {
         this.errorMessage = null
         let valid = this.$refs.form.validate()
         if (!valid) return
-        if (this.form.password !== this.form.passwordConf) throw new Error('Passwords do not match')
+        if (this.form.password !== this.form.passwordConf)
+          throw new Error('Passwords do not match')
         if (this.passwordStrength < 3) throw new Error('Password too weak.')
 
         let res = await fetch(`/auth/pwdreset/finalize`, {

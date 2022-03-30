@@ -11,7 +11,12 @@
       <v-spacer />
       <v-menu offset-y>
         <template #activator="{ attrs, on }">
-          <v-btn v-tooltip="`Change the branch to upload to`" text v-bind="attrs" v-on="on">
+          <v-btn
+            v-tooltip="`Change the branch to upload to`"
+            text
+            v-bind="attrs"
+            v-on="on"
+          >
             <v-icon small>mdi-source-branch</v-icon>
             <span class="caption">{{ selectedBranch }}</span>
           </v-btn>
@@ -55,7 +60,10 @@ export default {
           this.selectedBranch ? this.selectedBranch : 'main'
         }`
       )
-      request.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('AuthToken')}`)
+      request.setRequestHeader(
+        'Authorization',
+        `Bearer ${localStorage.getItem('AuthToken')}`
+      )
 
       request.upload.addEventListener(
         'progress',

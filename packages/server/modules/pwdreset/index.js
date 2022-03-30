@@ -1,13 +1,11 @@
 'use strict'
-let debug = require( 'debug' )
-const appRoot = require( 'app-root-path' )
+let debug = require('debug')
+const appRoot = require('app-root-path')
 
-exports.init = async ( app, options ) => {
-  debug( 'speckle:modules' )( '♻️  Init pwd reset module' )
+exports.init = async (app, options) => {
+  debug('speckle:modules')('♻️  Init pwd reset module')
 
-  require( './rest' )( app )
+  require('./rest')(app)
 }
 
-exports.finalize = async () => {
-
-}
+exports.finalize = async () => {}

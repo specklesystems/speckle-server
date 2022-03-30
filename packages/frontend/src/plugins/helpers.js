@@ -34,4 +34,3 @@ Vue.prototype.$loginAndSetRedirect = function () {
   localStorage.setItem('shouldRedirectTo', currUrl.replace(window.location.origin, ''))
   this.$router.push('/authn/login')
 }
-
