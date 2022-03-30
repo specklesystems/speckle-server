@@ -1,29 +1,18 @@
 'use strict'
-const appRoot = require('app-root-path')
-
-const redis = require('redis')
-const ExpressSession = require('express-session')
-const RedisStore = require('connect-redis')(ExpressSession)
-const passport = require('passport')
 const debug = require('debug')
 const cors = require('cors')
 
-const sentry = require(`${appRoot}/logging/sentryHelper`)
-const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
+const sentry = require(`@/logging/sentryHelper`)
+const { matomoMiddleware } = require(`@/logging/matomoHelper`)
 const {
   getApp,
-  getAllAppsAuthorizedByUser,
   createAuthorizationCode,
   createAppTokenFromAccessCode,
   refreshAppToken
 } = require('../services/apps')
-const {
-  createPersonalAccessToken,
-  validateToken,
-  revokeTokenById
-} = require(`${appRoot}/modules/core/services/tokens`)
-const { revokeRefreshToken } = require(`${appRoot}/modules/auth/services/apps`)
-const { validateScopes, contextMiddleware } = require(`${appRoot}/modules/shared`)
+const { validateToken, revokeTokenById } = require(`@/modules/core/services/tokens`)
+const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
+const { validateScopes } = require(`@/modules/shared`)
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -108,7 +97,7 @@ module.exports = (app) => {
       if (!token) throw new Error('Invalid request')
       await revokeTokenById(token)
 
-      if (refreshToken) revokeRefreshToken({ tokenId: refreshToken })
+      if (refreshToken) await revokeRefreshToken({ tokenId: refreshToken })
 
       return res.status(200).send({ message: 'You have logged out.' })
     } catch (err) {
