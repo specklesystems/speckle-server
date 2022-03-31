@@ -40,8 +40,8 @@
       <no-data-placeholder v-if="quickUser">
         <h2>Welcome {{ quickUser.name.split(' ')[0] }}!</h2>
         <p class="caption">
-          Once you will create a stream and start sending some data, your activity will
-          show up here.
+          Once you create a stream and start sending some data, your activity will show
+          up here.
         </p>
 
         <template #actions>

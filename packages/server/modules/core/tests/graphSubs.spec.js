@@ -45,7 +45,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
   // set up app & two basic users to ping pong permissions around
   before(async function () {
-    this.timeout(10000) // we need to wait for the server to start in the child process!
+    this.timeout(15000) // we need to wait for the server to start in the child process!
 
     await beforeEachContext()
 

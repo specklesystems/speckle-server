@@ -14,258 +14,219 @@
 
       <v-window v-model="onboarding" class="pb-3">
         <v-window-item>
-          <v-card class="transparent elevation-0 text-center" color="transparent">
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
             <v-img
-              class="white--text align-end mb-3"
-              height="200px"
-              src="@/assets/onboardingsplash.png"
-            ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">
-              👋 Welcome to Speckle!
-            </v-card-title>
-            <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              The Open Data Infrastructure for the Built Environment.
-            </v-card-subtitle>
-            <v-card-text class="body-1 text--primary">
-              <p>
-                Engineers, designers, hackers and entire organizations rely on us for
-                interoperability, automation and collaboration to deliver better
-                buildings, faster.
-                <br />
-                Please select your role:
-              </p>
-            </v-card-text>
-            <v-container fluid>
-              <v-row dense>
-                <v-col cols="5" offset="1">
-                  <v-hover>
-                    <v-card
-                      slot-scope="{ hover }"
-                      height="100%"
-                      :class="`pa-5 elevation-${hover ? 10 : 10}`"
-                      @click="nextUser"
-                    >
-                      <h1>👷‍♀️</h1>
-                      <v-card-title class="justify-center">
-                        Designer or Manager
-                      </v-card-title>
-                      <v-card-subtitle class="justify-center">
-                        Architect, engineer, BIM Manager, etc.
-                      </v-card-subtitle>
-                    </v-card>
-                  </v-hover>
-                </v-col>
-                <v-col cols="5" offset="0">
-                  <v-hover>
-                    <v-card
-                      slot-scope="{ hover }"
-                      height="100%"
-                      :class="`pa-5 elevation-${hover ? 10 : 10}`"
-                      @click="nextDev"
-                    >
-                      <h1>👩‍💻</h1>
-                      <v-card-title class="justify-center">Developer</v-card-title>
-                      <v-card-subtitle class="justify-center">
-                        Software engineer, computational designer, hacker
-                      </v-card-subtitle>
-                    </v-card>
-                  </v-hover>
-                </v-col>
-              </v-row>
-            </v-container>
-            <p class="my-7"><strong>Let us give you a quick tour! 🙋‍♂️</strong></p>
+              class="align-start mb-3"
+              src="@/assets/onboarding-1.png"
+              :aspect-ratio="16 / 9"
+            >
+              <template #sources>
+                <source srcset="@/assets/onboarding-1.webp" />
+              </template>
+              <v-card-text class="body-1 text--primary text-left pa-10">
+                <v-row>
+                  <v-col cols="6">
+                    <h1>Connecting your data</h1>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="6" class="mt-5 mb-12">
+                    <p>
+                      We've developed a collection of
+                      <b>plugins</b>
+                      - our speckle
+                      <b>connectors</b>
+                      - to help you extract your 3D objects and all their properties
+                      from your desktop application.
+                    </p>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-img>
           </v-card>
         </v-window-item>
 
-        <v-window-item v-if="isDev">
-          <v-card class="transparent elevation-0 text-center" color="transparent">
+        <v-window-item>
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
             <v-img
-              class="white--text align-end mb-3"
-              height="200px"
-              src="@/assets/onboarding_connectors_dev.png"
-            ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">
-              🧰 Our toolkit
-            </v-card-title>
-            <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              From AEC developers, for AEC developers
-            </v-card-subtitle>
-            <v-card-text class="body-1 text--primary">
-              <p>
-                Use our
-                <b>connectors, SDKs, APIs and tools</b>
-                to get in control of
-                <i>your data.</i>
-              </p>
-              <p>
-                Whether you are
-                <b>
-                  writing new integrations, custom workflows or creating brand new apps
-                </b>
-                on top of Speckle, our toolkit is here to take care of the low level
-                stuff, so that you can focus on the fun bits.
-              </p>
-              <p>
-                From user permission management, data extraction or 3d model online
-                visualization, we've got you covered!
-              </p>
-            </v-card-text>
+              class="align-start mb-3"
+              src="@/assets/onboarding-2.png"
+              :aspect-ratio="16 / 9"
+            >
+              <template #sources>
+                <source srcset="@/assets/onboarding-2.webp" />
+              </template>
+              <v-card-text class="body-1 text--primary text-left pa-10">
+                <v-row>
+                  <v-col cols="10">
+                    <h1>Sending data to Speckle</h1>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="6" class="mt-5 mb-12">
+                    <p>
+                      Every time you send your 3D objects out of your application, they
+                      are captured as a
+                      <b>"commit"</b>
+                      that includes a description, the sender, timestamp, and source
+                      application.
+                    </p>
+                  </v-col>
+                </v-row>
+                <v-row justify="end" class="mt-12 text-right">
+                  <spacer />
+                  <v-col cols="5">
+                    <p>
+                      Think of it like a
+                      <b>snapshot</b>
+                      of your current model state!
+                    </p>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-img>
           </v-card>
         </v-window-item>
 
-        <v-window-item v-else>
-          <v-card class="transparent elevation-0 text-center" color="transparent">
+        <v-window-item>
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
             <v-img
-              class="white--text align-end mb-3"
-              height="200px"
-              src="@/assets/onboarding_connectors.png"
-            ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">
-              🔌 Connectors
-            </v-card-title>
-            <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              Say goodbye to files!
-            </v-card-subtitle>
-            <v-card-text class="body-1 text--primary">
-              <p></p>
-              <p>
-                <b>Connectors</b>
-                are plugins for design and analysis software, they let you
-                <b>exchange</b>
-                geometry and BIM data directly from the tools you use.
-              </p>
-              <p>
-                Install our connectors and you'll instantly be able to
-                <b>share your models and data</b>
-                with others or
-                <b>access it from the web,</b>
-                or
-                <b>load it into other supported software</b>
-                .
-              </p>
-            </v-card-text>
+              class="align-start mb-3"
+              src="@/assets/onboarding-3.png"
+              :aspect-ratio="16 / 9"
+            >
+              <template #sources>
+                <source srcset="@/assets/onboarding-3.webp" />
+              </template>
+              <v-card-text class="body-1 text--primary text-left pa-10">
+                <v-row>
+                  <v-col cols="8">
+                    <h1>Organizing your data</h1>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="6" class="mt-5 mb-12">
+                    <p>
+                      All data objects sent to Speckle are stored in
+                      <b>streams</b>
+                      that you can create and customize!
+                    </p>
+                    <p>
+                      By default, every stream has a
+                      <b>main branch</b>
+                      where every commit is stored.
+                    </p>
+                  </v-col>
+                </v-row>
+                <v-row justify="end" class="mt-12 text-right">
+                  <spacer />
+                  <v-col cols="5">
+                    <p>
+                      Create
+                      <b>additional</b>
+                      branches in your stream if you want to store parallel collections
+                      of data.
+                    </p>
+                    <p>Use branches to keep your stream organization tidy!</p>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-img>
           </v-card>
         </v-window-item>
 
-        <v-window-item v-if="isDev">
-          <v-card class="transparent elevation-0 text-center" color="transparent">
+        <v-window-item>
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
             <v-img
-              class="white--text align-end mb-3"
-              height="200px"
-              src="@/assets/onboarding_streams.png"
-            ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">
-              🐙 Git & DevOps for AEC
-            </v-card-title>
-            <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              Welcome to the future of the AEC industry!
-            </v-card-subtitle>
-            <v-card-text class="body-1 text--primary">
-              <p>
-                Speckle ships with a
-                <b>version control system,</b>
-                we're bringing the tech industry best practices to AEC. You'll soon also
-                be able to
-                <b>trigger custom workflows and pipelines</b>
-                directly from Speckle!
-              </p>
-              <p>
-                Also, Speckle talks
-                <i>data, not files!</i>
-                <br />
-                Store it where you want, and access it when you need 🔓
-              </p>
-            </v-card-text>
+              class="align-start mb-3"
+              src="@/assets/onboarding-4.png"
+              :aspect-ratio="16 / 9"
+            >
+              <template #sources>
+                <source srcset="@/assets/onboarding-4.webp" />
+              </template>
+              <v-card-text class="body-1 text--primary text-left pa-10">
+                <v-row>
+                  <v-col cols="8">
+                    <h1>Viewing your data</h1>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="8" class="mt-5">
+                    <p>
+                      Want to explore all of your 3D data in your
+                      <b>web browser,</b>
+                      or see who's collaborating with you on your streams?
+                    </p>
+                    <p>
+                      Speckle Web gives you access to all your information and
+                      <b>activity,</b>
+                      with a data viewer that lets you filter and customize your objects
+                      by their properties.
+                    </p>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-img>
           </v-card>
         </v-window-item>
-        <v-window-item v-else>
-          <v-card class="transparent elevation-0 text-center" color="transparent">
-            <v-img
-              class="white--text align-end mb-3"
-              height="200px"
-              src="@/assets/onboarding_streams.png"
-            ></v-img>
-            <v-card-title class="display-1 justify-center mb-5">
-              🌊 Streams
-            </v-card-title>
-            <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              A new way of working together
-            </v-card-subtitle>
-            <v-card-text class="body-1 text--primary">
-              <p>
-                <b>Streams</b>
-                are collections of data inside Speckle. You can see a stream as a
-                folder, a project or a repository.
-              </p>
-              <p>
-                Data in a stream is stored in
-                <b>commits,</b>
-                which are snapshots of data in time. Every time you send to Speckle from
-                a connector, a commit is created.
-              </p>
-              <p>
-                Commits can also be organized in
-                <b>branches,</b>
-                for instance, to have multiple design options or to store data by
-                discipline. The default branch is called
-                <i>main</i>
-                .
-              </p>
-            </v-card-text>
-          </v-card>
-        </v-window-item>
-        <v-window-item v-if="isDev">
-          <v-card class="transparent elevation-0 text-center" color="transparent">
-            <v-card-title class="display-1 justify-center my-5">
-              🏃‍♀️ Start Hacking!
-            </v-card-title>
-            <v-card-subtitle class="subtitle-1 justify-center mb-5">
-              Time to make the most of
-              <b>your</b>
-              data!
-            </v-card-subtitle>
-            <v-card-text class="body-1 text--primary">
-              <p>
-                You can now start developing with Speckle and create your connectors,
-                apps or custom workflows.
-              </p>
-              <p>
-                We have put together a series of resources that you might find useful:
-              </p>
-            </v-card-text>
-            <v-container fluid>
-              <v-row dense>
-                <v-col v-for="(tutorial, i) in tutorialsDev" :key="i" cols="6">
-                  <v-hover>
-                    <v-card
-                      slot-scope="{ hover }"
-                      :class="`elevation-${hover ? 10 : 0}`"
-                      :href="tutorial.link"
-                      target="_blank"
-                    >
-                      <v-img
-                        class="white--text align-end"
-                        height="150"
-                        gradient="to bottom, rgba(36,100,235,.2), rgba(36,100,235,.7)"
-                        :src="require('@/assets/' + tutorial.image)"
-                      >
-                        <v-card-title class="justify-center">
-                          {{ tutorial.title }}
-                        </v-card-title>
-                      </v-img>
-                    </v-card>
-                  </v-hover>
-                </v-col>
-              </v-row>
-            </v-container>
 
-            <v-btn elevation="10" class="my-4" rounded color="primary" @click="finish">
-              <!-- <v-icon small class="mr-4">mdi-download</v-icon> -->
-              Finish & go to the web app
-            </v-btn>
+        <v-window-item>
+          <v-card
+            class="transparent elevation-0 text-center"
+            color="transparent"
+            align="start"
+          >
+            <v-img
+              class="align-start mb-3"
+              src="@/assets/onboarding-5.png"
+              :aspect-ratio="16 / 9"
+            >
+              <template #sources>
+                <source srcset="@/assets/onboarding-5.webp" />
+              </template>
+              <v-card-text class="body-1 text--primary text-left pa-10">
+                <v-row>
+                  <v-col cols="8">
+                    <h1>Retrieving data from Speckle</h1>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="5" class="mt-5 mb-12">
+                    <p>
+                      Get your original 3D data back into your application with our
+                      connectors - just select the commits you want to receive!
+                    </p>
+                  </v-col>
+                </v-row>
+                <v-row justify="end" class="mt-12 text-right">
+                  <spacer />
+                  <v-col cols="4">
+                    <p>Or consume it programmatically with our APIs and SDKs!</p>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-img>
           </v-card>
         </v-window-item>
-        <v-window-item v-else>
+
+        <v-window-item>
           <v-card class="transparent elevation-0 text-center" color="transparent">
             <v-card-title class="display-1 justify-center my-5">
               🏃‍♀️ Get Started!
@@ -309,17 +270,13 @@
                 </v-col>
               </v-row>
             </v-container>
-
-            <v-btn elevation="10" class="my-4" rounded color="primary" @click="finish">
-              <!-- <v-icon small class="mr-4">mdi-download</v-icon> -->
-              Finish & go to the web app
-            </v-btn>
           </v-card>
         </v-window-item>
       </v-window>
-      <v-card-actions v-if="onboarding > 0" class="justify-space-between pb-7">
-        <v-btn text @click="prev">
+      <v-card-actions class="justify-space-between pb-7">
+        <v-btn text :disabled="onboarding == 0" rounded class="pr-4" @click="prev">
           <v-icon>mdi-chevron-left</v-icon>
+          BACK
         </v-btn>
         <v-item-group v-model="onboarding" class="text-center" mandatory>
           <v-item v-for="n in length" :key="`btn-${n}`" v-slot="{ active, toggle }">
@@ -328,7 +285,8 @@
             </v-btn>
           </v-item>
         </v-item-group>
-        <v-btn :disabled="onboarding == 3" text @click="next">
+        <v-btn color="primary" rounded elevation="10" class="pl-4" @click="next">
+          {{ onboarding == length - 1 ? 'FINISH' : 'NEXT' }}
           <v-icon>mdi-chevron-right</v-icon>
         </v-btn>
       </v-card-actions>
@@ -338,7 +296,7 @@
 <script>
 export default {
   data: () => ({
-    length: 4,
+    length: 5,
     onboarding: 0,
     newStreamDialog: false,
     hasClickedDownload: false,
@@ -417,6 +375,9 @@ export default {
       })
     },
     next() {
+      if (this.onboarding === this.length - 1) {
+        this.finish()
+      }
       this.onboarding++
       this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
       this.$mixpanel.track('Web Onboarding', {

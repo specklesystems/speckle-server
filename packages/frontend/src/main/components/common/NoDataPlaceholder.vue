@@ -186,6 +186,10 @@ export default {
   },
   methods: {
     async downloadManager() {
+      this.$mixpanel.track('Manager Download', {
+        type: 'action'
+      })
+
       let url = `https://releases.speckle.dev/manager/SpeckleManager Setup.exe`
 
       let a = document.createElement('a')
@@ -195,10 +199,6 @@ export default {
       a.download = 'SpeckleManager Setup.exe'
       a.click()
       document.body.removeChild(a)
-
-      this.$mixpanel.track('Manager Download', {
-        os: 'win'
-      })
     }
   }
 }

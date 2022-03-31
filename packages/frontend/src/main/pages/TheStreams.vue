@@ -18,8 +18,8 @@
       <no-data-placeholder v-if="user">
         <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
         <p class="caption">
-          Once you will create a stream and start sending some data, your activity will
-          show up here.
+          Once you create a stream and start sending some data, your activity will show
+          up here.
         </p>
         <template #actions>
           <v-list rounded class="transparent">

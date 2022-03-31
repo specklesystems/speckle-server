@@ -1,15 +1,15 @@
 'use strict'
 
-let createError = require('http-errors')
-let express = require('express')
-let path = require('path')
-let cookieParser = require('cookie-parser')
-let logger = require('morgan')
+const createError = require('http-errors')
+const express = require('express')
+const path = require('path')
+const cookieParser = require('cookie-parser')
+const logger = require('morgan')
 
-let indexRouter = require('./routes/index')
-let previewRouter = require('./routes/preview')
-let objectsRouter = require('./routes/objects')
-let apiRouter = require('./routes/api')
+const indexRouter = require('./routes/index')
+const previewRouter = require('./routes/preview')
+const objectsRouter = require('./routes/objects')
+const apiRouter = require('./routes/api')
 const prometheusClient = require('prom-client')
 
 prometheusClient.register.clear()
