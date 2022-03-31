@@ -4,7 +4,7 @@
 const appRoot = require('app-root-path')
 const sharp = require('sharp')
 const xmlescape = require('xml-escape')
-var pixelWidth = require('string-pixel-width')
+const pixelWidth = require('string-pixel-width')
 
 module.exports = {
   async makeOgImage(previewBufferOrFilename, streamName) {

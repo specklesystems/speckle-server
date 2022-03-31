@@ -106,7 +106,7 @@ module.exports = {
       return true
     },
 
-    async userCommentThreadActivityBroadcast(parent, args, context, info) {
+    async userCommentThreadActivityBroadcast(parent, args, context) {
       await authorizeResolver(context.userId, args.streamId, 'stream:reviewer')
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-typing-status', data: args.data },
@@ -116,7 +116,7 @@ module.exports = {
       return true
     },
 
-    async commentCreate(parent, args, context, info) {
+    async commentCreate(parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
       let id = await createComment({ userId: context.userId, input: args.input })

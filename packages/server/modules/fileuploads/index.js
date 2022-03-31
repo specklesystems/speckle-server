@@ -2,11 +2,9 @@
 'use strict'
 
 const debug = require('debug')
-const express = require('express')
 const appRoot = require('app-root-path')
 const Busboy = require('busboy')
 
-const cors = require('cors')
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
@@ -22,7 +20,7 @@ const {
 } = require('./services/fileuploads')
 const { getStream } = require('../core/services/streams')
 
-exports.init = async (app, options) => {
+exports.init = async (app) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     debug('speckle:modules')('📄 FileUploads module is DISABLED')
     return
@@ -129,7 +127,7 @@ exports.init = async (app, options) => {
         let busboy = Busboy({ headers: req.headers })
 
         busboy.on('file', (name, file, info) => {
-          const { filename, encoding, mimeType } = info
+          const { filename } = info
           let promise = uploadFile({
             streamId: req.params.streamId,
             branchName: req.params.branchName || '',

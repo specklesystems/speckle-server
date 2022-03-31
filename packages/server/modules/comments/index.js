@@ -1,6 +1,6 @@
 let debug = require('debug')
 
-exports.init = async (app, options) => {
+exports.init = async () => {
   debug('speckle:modules')('🗣  Init comments module (barebones)')
 }
-exports.finalize = async (app, options) => {}
+exports.finalize = async () => {}

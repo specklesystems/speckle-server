@@ -3,7 +3,6 @@ const appRoot = require('app-root-path')
 const {
   validateServerRole,
   validateScopes,
-  authorizeResolver
 } = require(`${appRoot}/modules/shared`)
 const {
   updateServerInfo,
@@ -14,23 +13,23 @@ const {
 
 module.exports = {
   Query: {
-    async serverInfo(parent, args, context, info) {
+    async serverInfo() {
       return await getServerInfo()
     }
   },
 
   ServerInfo: {
-    async roles(parent, args, context, info) {
+    async roles() {
       return await getPublicRoles()
     },
 
-    async scopes(parent, args, context, info) {
+    async scopes() {
       return await getPublicScopes()
     }
   },
 
   Mutation: {
-    async serverInfoUpdate(parent, args, context, info) {
+    async serverInfoUpdate(parent, args, context) {
       await validateServerRole(context, 'server:admin')
       await validateScopes(context.scopes, 'server:setup')
 

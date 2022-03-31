@@ -4,14 +4,11 @@ const crs = require('crypto-random-string')
 const appRoot = require('app-root-path')
 const knex = require(`${appRoot}/db/knex`)
 
-const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
 const PersonalApiTokens = () => knex('personal_api_tokens')
 
 const TokenScopes = () => knex('token_scopes')
 const ServerRoles = () => knex('server_acl')
-const ServerApps = () => knex('server_apps')
-const ServerAppsScopes = () => knex('server_apps_scopes')
 
 module.exports = {
   /*

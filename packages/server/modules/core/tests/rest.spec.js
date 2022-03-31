@@ -139,7 +139,7 @@ describe('Upload/Download Routes @api-rest', () => {
       .attach('batch1', Buffer.from(JSON.stringify(objBatch), 'utf8'))
 
     // should allow userA to access privateTestStream object
-    res = await request(app)
+    let res = await request(app)
       .get(`/objects/${privateTestStream.id}/${objBatch[0].id}`)
       .set('Authorization', userA.token)
     expect(res).to.have.status(200)
@@ -201,7 +201,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should properly download an object, with all its children, into a application/json response', (done) => {
     new Promise((resolve) => setTimeout(resolve, 1500)) // avoids race condition
       .then(() => {
-        let res = request(app)
+        request(app)
           .get(`/objects/${testStream.id}/${parentId}`)
           .set('Authorization', userA.token)
           .buffer()
@@ -229,7 +229,7 @@ describe('Upload/Download Routes @api-rest', () => {
   }).timeout(5000)
 
   it('Should properly download an object, with all its children, into a text/plain response', (done) => {
-    let res = request(app)
+    request(app)
       .get(`/objects/${testStream.id}/${parentId}`)
       .set('Authorization', userA.token)
       .set('Accept', 'text/plain')
@@ -261,7 +261,7 @@ describe('Upload/Download Routes @api-rest', () => {
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
-    let res = request(app)
+    request(app)
       .post(`/api/getobjects/${testStream.id}`)
       .set('Authorization', userA.token)
       .set('Accept', 'text/plain')
@@ -304,7 +304,7 @@ describe('Upload/Download Routes @api-rest', () => {
       objectIds.push(fakeId)
     }
 
-    let res = request(app)
+    request(app)
       .post(`/api/diff/${testStream.id}`)
       .set('Authorization', userA.token)
       .send({ objects: JSON.stringify(objectIds) })

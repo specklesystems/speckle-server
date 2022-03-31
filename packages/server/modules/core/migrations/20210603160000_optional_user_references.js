@@ -20,7 +20,7 @@ exports.up = async (knex) => {
   `)
 }
 
-exports.down = async (knex) => {
+exports.down = async () => {
   // NOTE:
   // This migration cannot run backwards: if a user deletes their account, the previous not null
   // constraint cannot be satisfied. Therefore, there's no going back (and there isn't really a need either).

@@ -271,7 +271,7 @@ describe('Webhooks @webhooks', () => {
       // just cleanup the 99 extra webhooks added before (not a real test)
       let streamWebhooks = await getStreamWebhooks({ streamId: streamOne.id })
       for (let webhook of streamWebhooks) {
-        if (webhook.id != webhookOne.id) {
+        if (webhook.id !== webhookOne.id) {
           await deleteWebhook({ id: webhook.id })
         }
       }

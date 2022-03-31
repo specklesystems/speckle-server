@@ -14,7 +14,7 @@ const {
 
 module.exports = {
   Query: {
-    async serverStats(parent, args, context, info) {
+    async serverStats(parent, args, context) {
       await validateServerRole(context, 'server:admin')
       await validateScopes(context.scopes, 'server:stats')
       return {}

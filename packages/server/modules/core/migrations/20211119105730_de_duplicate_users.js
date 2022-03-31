@@ -40,11 +40,7 @@ exports.up = async (knex) => {
         .update({ role: 'server:admin' })
   }
 
-  const _migrateSingleStreamAccess = async ({
-    lowerUser,
-    upperUser,
-    upperStreamAcl
-  }) => {
+  const _migrateSingleStreamAccess = async ({ lowerUser, upperStreamAcl }) => {
     const upperRole = roles.filter((r) => r.name === upperStreamAcl.role)[0]
     const lowerAcl = await knex('stream_acl')
       .where({ userId: lowerUser.id, resourceId: upperStreamAcl.resourceId })
@@ -125,4 +121,4 @@ exports.up = async (knex) => {
   await runMigrations()
 }
 
-exports.down = async (knex) => {}
+exports.down = async () => {}

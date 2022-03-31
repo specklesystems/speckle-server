@@ -1,10 +1,6 @@
 'use strict'
 const appRoot = require('app-root-path')
 
-const redis = require('redis')
-const ExpressSession = require('express-session')
-const RedisStore = require('connect-redis')(ExpressSession)
-const passport = require('passport')
 const debug = require('debug')
 const cors = require('cors')
 
@@ -12,18 +8,16 @@ const sentry = require(`${appRoot}/logging/sentryHelper`)
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   getApp,
-  getAllAppsAuthorizedByUser,
   createAuthorizationCode,
   createAppTokenFromAccessCode,
   refreshAppToken
 } = require('../services/apps')
 const {
-  createPersonalAccessToken,
   validateToken,
   revokeTokenById
 } = require(`${appRoot}/modules/core/services/tokens`)
 const { revokeRefreshToken } = require(`${appRoot}/modules/auth/services/apps`)
-const { validateScopes, contextMiddleware } = require(`${appRoot}/modules/shared`)
+const { validateScopes } = require(`${appRoot}/modules/shared`)
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -31,7 +25,7 @@ module.exports = (app) => {
   Generates an access code for an app.
   TODO: ensure same origin.
    */
-  app.get('/auth/accesscode', async (req, res, next) => {
+  app.get('/auth/accesscode', async (req, res) => {
     try {
       let appId = req.query.appId
       let app = await getApp({ id: appId })
@@ -41,7 +35,7 @@ module.exports = (app) => {
       let userToken = req.query.token
 
       // 1. Validate token
-      let { valid, scopes, userId, role } = await validateToken(userToken)
+      let { valid, scopes, userId } = await validateToken(userToken)
       if (!valid) throw new Error('Invalid token')
 
       // 2. Validate token scopes
@@ -60,7 +54,7 @@ module.exports = (app) => {
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
   app.options('/auth/token', cors())
-  app.post('/auth/token', cors(), matomoMiddleware, async (req, res, next) => {
+  app.post('/auth/token', cors(), matomoMiddleware, async (req, res) => {
     try {
       // Token refresh
       if (req.body.refreshToken) {
@@ -100,7 +94,7 @@ module.exports = (app) => {
   /*
   Ensures a user is logged out by invalidating their token and refresh token.
    */
-  app.post('/auth/logout', matomoMiddleware, async (req, res, next) => {
+  app.post('/auth/logout', matomoMiddleware, async (req, res) => {
     try {
       let token = req.body.token
       let refreshToken = req.body.refreshToken

@@ -41,7 +41,7 @@ const serverAclMigration = async ({ lowerUser, upperUser }) => {
       .update({ role: 'server:admin' })
 }
 
-const _migrateSingleStreamAccess = async ({ lowerUser, upperUser, upperStreamAcl }) => {
+const _migrateSingleStreamAccess = async ({ lowerUser, upperStreamAcl }) => {
   const upperRole = roles.filter((r) => r.name === upperStreamAcl.role)[0]
   const lowerAcl = await knex('stream_acl')
     .where({ userId: lowerUser.id, resourceId: upperStreamAcl.resourceId })
@@ -68,7 +68,7 @@ const streamAclMigration = async ({ lowerUser, upperUser }) => {
   await Promise.all(
     upperAcl.map(
       async (upperStreamAcl) =>
-        await _migrateSingleStreamAccess({ lowerUser, upperUser, upperStreamAcl })
+        await _migrateSingleStreamAccess({ lowerUser, upperStreamAcl })
     )
   )
 }

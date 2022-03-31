@@ -6,8 +6,7 @@ const knex = require(`${appRoot}/db/knex`)
 
 const {
   createToken,
-  createBareToken,
-  revokeTokenById
+  createBareToken
 } = require(`${appRoot}/modules/core/services/tokens`)
 const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
@@ -165,8 +164,8 @@ module.exports = {
   },
 
   async revokeExistingAppCredentials({ appId }) {
-    let resAccessCodeDelete = await AuthorizationCodes().where({ appId: appId }).del()
-    let resRefreshTokenDelete = await RefreshTokens().where({ appId: appId }).del()
+    await AuthorizationCodes().where({ appId: appId }).del()
+    await RefreshTokens().where({ appId: appId }).del()
 
     let resApiTokenDelete = await ApiTokens()
       .whereIn('id', (qb) => {
@@ -178,12 +177,8 @@ module.exports = {
   },
 
   async revokeExistingAppCredentialsForUser({ appId, userId }) {
-    let resAccessCodeDelete = await AuthorizationCodes()
-      .where({ appId: appId, userId: userId })
-      .del()
-    let resRefreshTokenDelete = await RefreshTokens()
-      .where({ appId: appId, userId: userId })
-      .del()
+    await AuthorizationCodes().where({ appId: appId, userId: userId }).del()
+    await RefreshTokens().where({ appId: appId, userId: userId }).del()
     let resApiTokenDelete = await ApiTokens()
       .whereIn('id', (qb) => {
         qb.select('tokenId')
@@ -253,7 +248,7 @@ module.exports = {
       userId: code.userId
     }
 
-    const rtk = await RefreshTokens().insert(refreshToken)
+    await RefreshTokens().insert(refreshToken)
 
     return {
       token: appToken,
@@ -309,7 +304,7 @@ module.exports = {
       userId: refreshTokenDb.userId
     }
 
-    const rtk = await RefreshTokens().insert(freshRefreshToken)
+    await RefreshTokens().insert(freshRefreshToken)
 
     // Finally return
     return {

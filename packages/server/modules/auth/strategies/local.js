@@ -1,5 +1,4 @@
 'use strict'
-const URL = require('url').URL
 const appRoot = require('app-root-path')
 const debug = require('debug')
 const {

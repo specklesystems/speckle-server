@@ -12,12 +12,10 @@ const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
 
 const {
   createCommitByBranchName,
-  createCommitByBranchId,
   updateCommit,
   deleteCommit,
   getCommitById,
   getCommitsByBranchId,
-  getCommitsByBranchName,
   getCommitsByUserId,
   getCommitsByStreamId,
   getCommitsTotalCountByStreamId,
@@ -38,7 +36,7 @@ const COMMIT_DELETED = 'COMMIT_DELETED'
 module.exports = {
   Query: {},
   Stream: {
-    async commits(parent, args, context, info) {
+    async commits(parent, args) {
       if (args.limit && args.limit > 100)
         throw new UserInputError(
           'Cannot return more than 100 items, please use pagination.'
@@ -57,7 +55,7 @@ module.exports = {
       return { items, cursor, totalCount }
     },
 
-    async commit(parent, args, context, info) {
+    async commit(parent, args) {
       if (!args.id) {
         let { commits } = await getCommitsByStreamId({ streamId: parent.id, limit: 1 })
         if (commits.length !== 0) return commits[0]
@@ -70,7 +68,7 @@ module.exports = {
     }
   },
   User: {
-    async commits(parent, args, context, info) {
+    async commits(parent, args, context) {
       let publicOnly = context.userId !== parent.id
       let totalCount = await getCommitsTotalCountByUserId({ userId: parent.id })
       if (args.limit && args.limit > 100)
@@ -88,7 +86,7 @@ module.exports = {
     }
   },
   Branch: {
-    async commits(parent, args, context, info) {
+    async commits(parent, args) {
       if (args.limit && args.limit > 100)
         throw new UserInputError(
           'Cannot return more than 100 items, please use pagination.'
@@ -104,7 +102,7 @@ module.exports = {
     }
   },
   Mutation: {
-    async commitCreate(parent, args, context, info) {
+    async commitCreate(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -140,7 +138,7 @@ module.exports = {
       return id
     },
 
-    async commitUpdate(parent, args, context, info) {
+    async commitUpdate(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -175,7 +173,7 @@ module.exports = {
       return updated
     },
 
-    async commitReceive(parent, args, context, info) {
+    async commitReceive(parent, args, context) {
       // if stream is private, check if the user has access to it
       let stream = await getStream({ streamId: args.input.streamId })
 
@@ -183,7 +181,7 @@ module.exports = {
         await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
       }
 
-      let commit = await getCommitById({
+      await getCommitById({
         streamId: args.input.streamId,
         id: args.input.commitId
       })
@@ -205,7 +203,7 @@ module.exports = {
       return true
     },
 
-    async commitDelete(parent, args, context, info) {
+    async commitDelete(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,

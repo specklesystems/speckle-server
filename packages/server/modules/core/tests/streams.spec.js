@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const assert = require('assert')
 
 const appRoot = require('app-root-path')
 
@@ -72,7 +71,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should update a stream', async () => {
-      let sid = await updateStream({
+      await updateStream({
         streamId: testStream.id,
         name: 'Modified Name',
         description: 'Wooot'
@@ -155,12 +154,13 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should not revoke owner permissions', async () => {
-      try {
-        await revokePermissionsStream({ streamId: testStream.id, userId: userOne.id })
-        assert.fail()
-      } catch {
-        // pass
-      }
+      revokePermissionsStream({ streamId: testStream.id, userId: userOne.id })
+        .then(() => {
+          throw new Error('This should have thrown')
+        })
+        .catch((err) => {
+          expect(err.message).to.include('cannot revoke permissions.')
+        })
     })
   })
 
@@ -222,7 +222,7 @@ describe('Streams @core-streams', () => {
       await sleep(100)
       let testObject = { foo: 'bar', baz: 'qux' }
       testObject.id = await createObject(s.id, testObject)
-      commitId1 = await createCommitByBranchName({
+      await createCommitByBranchName({
         streamId: s.id,
         branchName: 'main',
         message: 'first commit',
@@ -231,7 +231,7 @@ describe('Streams @core-streams', () => {
         sourceApplication: 'tests'
       })
 
-      su = await getStream({ streamId: s.id })
+      let su = await getStream({ streamId: s.id })
       expect(su.updatedAt).to.not.equal(s.updatedAt)
     })
   })

@@ -79,8 +79,6 @@ async function contextApiTokenHelper({ req, connection }) {
     // TODO: Think whether perhaps it's better to throw the error
     return { auth: false, err: e }
   }
-
-  return { auth: false }
 }
 
 /**
@@ -104,14 +102,15 @@ async function validateServerRole(context, requiredRole) {
   if (!roles) roles = await knex('user_roles').select('*')
 
   if (!context.auth) throw new ForbiddenError('You must provide an auth token.')
-  if (context.role === 'server:admin') return true
 
   let role = roles.find((r) => r.name === requiredRole)
   let myRole = roles.find((r) => r.name === context.role)
 
-  if (role === null) new ApolloError('Invalid server role specified')
-  if (myRole === null)
-    new ForbiddenError('You do not have the required server role (null)')
+  if (!role) throw new ApolloError('Invalid server role specified')
+  if (!myRole)
+    throw new ForbiddenError('You do not have the required server role (null)')
+
+  if (context.role === 'server:admin') return true
   if (myRole.weight >= role.weight) return true
 
   throw new ForbiddenError('You do not have the required server role')
@@ -143,8 +142,7 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
 
   let role = roles.find((r) => r.name === requiredRole)
 
-  if (role === undefined || role === null)
-    throw new ApolloError('Unknown role: ' + requiredRole)
+  if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
 
   try {
     let { isPublic } = await knex(role.resourceTarget)

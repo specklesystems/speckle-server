@@ -7,8 +7,6 @@ const cors = require('cors')
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
-  validateScopes,
-  authorizeResolver
 } = require(`${appRoot}/modules/shared`)
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')

@@ -6,7 +6,7 @@ const {
   registerOrUpdateRole
 } = require(`${appRoot}/modules/shared`)
 
-exports.init = async (app, options) => {
+exports.init = async (app) => {
   debug('speckle:modules')('💥 Init core module')
 
   // Initialises the two main bulk upload/download endpoints

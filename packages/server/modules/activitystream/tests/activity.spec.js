@@ -60,7 +60,7 @@ describe('Activity @activity', () => {
 
   before(async () => {
     const { app } = await beforeEachContext()
-    ;({ server, serverAddress, sendRequest } = await initializeTestServer(app))
+    ;({ server, sendRequest } = await initializeTestServer(app))
 
     // create users and tokens
     userIz.id = await createUser(userIz)

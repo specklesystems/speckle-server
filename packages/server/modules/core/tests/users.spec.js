@@ -231,7 +231,7 @@ describe('Actors & Tokens @user-services', () => {
       }
 
       let multiOwnerStreamCopy = await getStream({ streamId: multiOwnerStream.id })
-      if (!multiOwnerStreamCopy || multiOwnerStreamCopy.id != multiOwnerStream.id) {
+      if (!multiOwnerStreamCopy || multiOwnerStreamCopy.id !== multiOwnerStream.id) {
         assert.fail('shared stream deleted')
       }
 

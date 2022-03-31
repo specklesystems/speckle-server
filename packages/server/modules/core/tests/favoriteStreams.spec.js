@@ -2,7 +2,7 @@
 const expect = require('chai').expect
 
 const { buildApolloServer } = require('@/app')
-const { StreamFavorites, Streams, Users, knex } = require('@/modules/core/dbSchema')
+const { StreamFavorites, Streams, Users } = require('@/modules/core/dbSchema')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
 const { createStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')

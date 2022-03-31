@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const assert = require('assert')
 const appRoot = require('app-root-path')
 
 const { createUser } = require(`${appRoot}/modules/core/services/users`)
@@ -53,71 +52,78 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should not allow multiple invites for the same email', async () => {
-      let inviteId = await createAndSendInvite({
+      await createAndSendInvite({
         email: 'cat@speckle.systems',
         inviterId: actor.id,
         message: 'Hey, join!'
       })
 
-      try {
-        await createAndSendInvite({
-          email: 'cat@speckle.systems',
-          inviterId: actor.id,
-          message: 'Hey, join!'
+      createAndSendInvite({
+        email: 'cat@speckle.systems',
+        inviterId: actor.id,
+        message: 'Hey, join!'
+      })
+        .then(() => {
+          throw new Error('This should have thrown')
         })
-      } catch (e) {
-        return
-      }
-      assert.fail('should not allow multiple invites for the same email')
+        .catch((err) => {
+          expect(err.message).to.equal('Already invited!')
+        })
     })
     it('low multiple invites for the same email regardles of casing', () => {
-      return createAndSendInvite({
+      createAndSendInvite({
         email: 'dIdImItrIe@gmaIl.com',
         inviterId: actor.id,
         message: 'Hey, join!'
       })
-        .then((result) => {})
-        .catch((result) => {
-          expect(result.message).to.equal('Already invited!')
+        .then(() => {
+          throw new Error('This should have thrown')
+        })
+        .catch((err) => {
+          expect(err.message).to.equal('Already invited!')
         })
     })
 
     it('should not allow self invites', async () => {
-      try {
-        await createAndSendInvite({
-          email: 'didimitrie-100@gmail.com',
-          inviterId: actor.id
+      createAndSendInvite({
+        email: 'didimitrie-100@gmail.com',
+        inviterId: actor.id
+      })
+        .then(() => {
+          throw new Error('This should have thrown')
         })
-      } catch (e) {
-        return
-      }
-      assert.fail('should not allow self invites')
+        .catch((err) => {
+          expect(err.message).to.equal(
+            'This email is already associated with an account on this server!'
+          )
+        })
     })
 
     it('should not allow invites from no user', async () => {
-      try {
-        await createAndSendInvite({
-          email: 'didimitrie233-100@gmail.com',
-          inviterId: 'fake'
+      createAndSendInvite({
+        email: 'didimitrie233-100@gmail.com',
+        inviterId: 'fake'
+      })
+        .then(() => {
+          throw new Error('This should have thrown')
         })
-      } catch (e) {
-        return
-      }
-      assert.fail('should not allow invites from no user')
+        .catch((err) => {
+          expect(err.message).to.equal('We dont know this inviter guy')
+        })
     })
 
     it('should not allow invites with a too long message', async () => {
-      try {
-        let inviteId = await createAndSendInvite({
-          email: '123456@gmail.com',
-          inviterId: actor.id,
-          message: longInviteMessage
+      createAndSendInvite({
+        email: '123456@gmail.com',
+        inviterId: actor.id,
+        message: longInviteMessage
+      })
+        .then(() => {
+          throw new Error('This should have thrown')
         })
-      } catch (e) {
-        return
-      }
-
-      assert.fail('created invite with too long message')
+        .catch((err) => {
+          expect(err.message).to.equal('Personal message too long.')
+        })
     })
 
     it('should sanitize invite messages', async () => {
@@ -143,7 +149,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should get an invite by email', async () => {
-      let inviteId = await createAndSendInvite({
+      await createAndSendInvite({
         email: 'weasel@speckle.systems',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -183,14 +189,15 @@ describe('Server Invites @server-invites', () => {
         message: 'Hey, join!'
       })
 
-      try {
-        await useInvite({ id: inviteId, email: 'parrot@speckle.systems' })
-        assert.fail(
-          'Should not allow a different email to be used than the one in the invite'
-        )
-      } catch (e) {
-        // pass
-      }
+      useInvite({ id: inviteId, email: 'parrot@speckle.systems' })
+        .then(() => {
+          throw new Error('This should have thrown')
+        })
+        .catch((err) => {
+          expect(err.message).to.equal(
+            'Invite email mismatch. Please use the original email the invite was sent to register.'
+          )
+        })
 
       let result = await useInvite({ id: inviteId, email: 'crOw@specKle.systeMs' })
 
@@ -198,12 +205,13 @@ describe('Server Invites @server-invites', () => {
       expect(result).equals(true)
       expect(invite.used).equals(true)
 
-      try {
-        await useInvite({ id: inviteId, email: 'CrOw@speckle.systems' })
-        assert.fail('Should not be able to use an already used invite.')
-      } catch (e) {
-        //pass
-      }
+      useInvite({ id: inviteId, email: 'CrOw@speckle.systems' })
+        .then(() => {
+          throw new Error('This should have thrown')
+        })
+        .catch((err) => {
+          expect(err.message).to.equal('Invite has been used')
+        })
     })
 
     it('should create a stream invite and use it', async () => {
@@ -229,7 +237,7 @@ describe('Server Invites @server-invites', () => {
 
       await useInvite({ id: invite.id, email: guest.email })
 
-      let { streams, cursor } = await getUserStreams({ userId: guest.id })
+      let { streams } = await getUserStreams({ userId: guest.id })
       expect(streams).to.be.an('array')
       expect(streams).to.be.not.null
       expect(streams.length).to.equal(1)

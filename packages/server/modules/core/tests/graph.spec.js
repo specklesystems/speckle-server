@@ -20,7 +20,7 @@ describe('GraphQL API Core @core-api', () => {
   // set up app & two basic users to ping pong permissions around
   before(async () => {
     ;({ app } = await beforeEachContext())
-    ;({ server, sendRequest, serverAddress } = await initializeTestServer(app))
+    ;({ server, sendRequest } = await initializeTestServer(app))
 
     userA.id = await createUser(userA)
     userA.token = `Bearer ${await createPersonalAccessToken(
@@ -580,7 +580,7 @@ describe('GraphQL API Core @core-api', () => {
       })
 
       it('Should delete streams', async () => {
-        streamResults = await sendRequest(userA.token, {
+        const streamResults = await sendRequest(userA.token, {
           query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
         })
         expect(streamResults.body.data.adminStreams.totalCount).to.equal(5)
@@ -826,7 +826,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should delete a branch', async () => {
         // give C some access permissions
-        const perms = await sendRequest(userA.token, {
+        await sendRequest(userA.token, {
           query: `mutation{ streamGrantPermission( permissionParams: {streamId: "${ts1}", userId: "${userC.id}" role: "stream:contributor"}) }`
         })
 
@@ -1017,7 +1017,7 @@ describe('GraphQL API Core @core-api', () => {
             objectId: objIds[i],
             branchName: 'main'
           }
-          let res = await sendRequest(userA.token, {
+          await sendRequest(userA.token, {
             query:
               'mutation( $myCommit: CommitCreateInput! ) { commitCreate( commit: $myCommit ) }',
             variables: { myCommit: c1 }
@@ -1173,7 +1173,6 @@ describe('GraphQL API Core @core-api', () => {
     })
 
     describe('Streams', () => {
-      let retrievedStream
 
       it('Should retrieve a stream', async () => {
         const res = await sendRequest(userA.token, {
@@ -1197,7 +1196,6 @@ describe('GraphQL API Core @core-api', () => {
         expect(res.body.errors).to.not.exist
 
         let stream = res.body.data.stream
-        retrievedStream = stream
 
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)

@@ -1,7 +1,6 @@
 'use strict'
 const appRoot = require('app-root-path')
 const {
-  contextMiddleware,
   validateScopes,
   validateServerRole,
   authorizeResolver

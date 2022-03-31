@@ -14,7 +14,7 @@ const {
 
 module.exports = {
   Stream: {
-    async webhooks(parent, args, context, info) {
+    async webhooks(parent, args, context) {
       await authorizeResolver(context.userId, parent.id, 'stream:owner')
 
       if (args.id) {
@@ -29,7 +29,7 @@ module.exports = {
   },
 
   Webhook: {
-    async history(parent, args, context, info) {
+    async history(parent, args) {
       let items = await getLastWebhookEvents({
         webhookId: parent.id,
         limit: args.limit
@@ -41,7 +41,7 @@ module.exports = {
   },
 
   Mutation: {
-    async webhookCreate(parent, args, context, info) {
+    async webhookCreate(parent, args, context) {
       await authorizeResolver(context.userId, args.webhook.streamId, 'stream:owner')
 
       let id = await createWebhook({
@@ -55,7 +55,7 @@ module.exports = {
 
       return id
     },
-    async webhookUpdate(parent, args, context, info) {
+    async webhookUpdate(parent, args, context) {
       await authorizeResolver(context.userId, args.webhook.streamId, 'stream:owner')
 
       let wh = await getWebhook({ id: args.webhook.id })
@@ -75,7 +75,7 @@ module.exports = {
 
       return !!updated
     },
-    async webhookDelete(parent, args, context, info) {
+    async webhookDelete(parent, args, context) {
       await authorizeResolver(context.userId, args.webhook.streamId, 'stream:owner')
 
       let wh = await getWebhook({ id: args.webhook.id })

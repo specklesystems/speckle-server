@@ -224,7 +224,7 @@ describe('GraphQL @apps-api', () => {
       userId: testUser.id,
       challenge: 'floating points'
     })
-    const response_1 = await createAppTokenFromAccessCode({
+    await createAppTokenFromAccessCode({
       appId: testAppId,
       appSecret: testApp.secret,
       accessCode: authorizationCode_1,
@@ -236,7 +236,7 @@ describe('GraphQL @apps-api', () => {
       userId: testUser.id,
       challenge: 'floating points'
     })
-    const response_2 = await createAppTokenFromAccessCode({
+    await createAppTokenFromAccessCode({
       appId: 'sdm',
       appSecret: 'sdm',
       accessCode: authorizationCode_2,

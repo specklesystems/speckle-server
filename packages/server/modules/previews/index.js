@@ -2,10 +2,8 @@
 'use strict'
 
 const debug = require('debug')
-const express = require('express')
 const appRoot = require('app-root-path')
 
-const cors = require('cors')
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
@@ -28,7 +26,7 @@ const {
 
 const { makeOgImage } = require('./ogImage')
 
-exports.init = (app, options) => {
+exports.init = (app) => {
   if (process.env.DISABLE_PREVIEWS) {
     debug('speckle:modules')('📸 Object preview module is DISABLED')
   } else {
@@ -57,7 +55,7 @@ exports.init = (app, options) => {
       await createObjectPreview({ streamId, objectId, priority: 0 })
     }
 
-    if (!previewInfo || previewInfo.previewStatus != 2 || !previewInfo.preview) {
+    if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {
       return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 
@@ -191,7 +189,7 @@ exports.init = (app, options) => {
         limit: 1,
         ignoreGlobalsBranch: true
       })
-      if (!commits || commits.length == 0) {
+      if (!commits || commits.length === 0) {
         return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
       }
       let lastCommit = commits[0]
@@ -230,7 +228,7 @@ exports.init = (app, options) => {
         commitsObj = {}
       }
       let { commits } = commitsObj
-      if (!commits || commits.length == 0) {
+      if (!commits || commits.length === 0) {
         return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
       }
       let lastCommit = commits[0]

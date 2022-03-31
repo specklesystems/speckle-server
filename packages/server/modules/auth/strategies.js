@@ -5,10 +5,9 @@ const redis = require('redis')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
-const debug = require('debug')
 
 const sentry = require(`${appRoot}/logging/sentryHelper`)
-const { getApp, createAuthorizationCode } = require('./services/apps')
+const { createAuthorizationCode } = require('./services/apps')
 
 module.exports = async (app) => {
   let authStrategies = []
@@ -45,7 +44,7 @@ module.exports = async (app) => {
   /*
   Finalizes authentication for the main frontend application.
    */
-  let finalizeAuth = async (req, res, next) => {
+  let finalizeAuth = async (req, res) => {
     try {
       let ac = await createAuthorizationCode({
         appId: 'spklwebapp',

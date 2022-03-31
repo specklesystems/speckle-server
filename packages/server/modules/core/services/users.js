@@ -21,7 +21,7 @@ const countAdminUsers = async () => {
 const _ensureAtleastOneAdminRemains = async (userId) => {
   if ((await countAdminUsers()) === 1) {
     let currentAdmin = await Acl().where({ role: 'server:admin' }).first()
-    if (currentAdmin.userId == userId) {
+    if (currentAdmin.userId === userId) {
       throw new Error('Cannot remove the last admin role from the server')
     }
   }

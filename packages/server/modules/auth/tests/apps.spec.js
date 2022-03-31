@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const assert = require('assert')
 const appRoot = require('app-root-path')
 
 const { createUser } = require(`${appRoot}/modules/core/services/users`)
@@ -86,15 +85,13 @@ describe('Services @apps-services', () => {
   })
 
   it('Should fail to register an app with no scopes', async () => {
-    try {
-      const res = await createApp({
-        name: 'test application2',
-        redirectUrl: 'http://localhost:1335'
+    createApp({ name: 'test application2', redirectUrl: 'http://localhost:1335' })
+      .then(() => {
+        throw new Error('this should have been rejected')
       })
-      assert.fail()
-    } catch (e) {
-      // pass
-    }
+      .catch((err) =>
+        expect(err.message).to.equal('Cannot create an app with no scopes.')
+      )
   })
 
   it('Should update an app', async () => {
@@ -184,7 +181,7 @@ describe('Services @apps-services', () => {
 
     // We now have one unused access code, an api token and a refresh token.
     // Proceed to update the app:
-    const res = await updateApp({
+    await updateApp({
       app: {
         name: 'updated test application',
         id: myTestApp.id,
@@ -195,28 +192,26 @@ describe('Services @apps-services', () => {
     let validationResponse = await validateToken(apiTokenResponse.token)
     expect(validationResponse.valid).to.equal(false)
 
-    try {
-      let refresh = await refreshAppToken({
-        refreshToken: apiTokenResponse.refreshToken,
-        appId: myTestApp.id,
-        appSecret: myTestApp.secret
+    refreshAppToken({
+      refreshToken: apiTokenResponse.refreshToken,
+      appId: myTestApp.id,
+      appSecret: myTestApp.secret
+    })
+      .then(() => {
+        throw new Error('this should have been rejected')
       })
-      assert.fail('Should not be able to refresh token')
-    } catch (e) {
-      // Pass
-    }
+      .catch((err) => expect(err.message).to.equal('Invalid request'))
 
-    try {
-      let token = await createAppTokenFromAccessCode({
-        appId: myTestApp.id,
-        appSecret: myTestApp.secret,
-        accessCode: unusedAccessCode,
-        challenge: 'random'
+    createAppTokenFromAccessCode({
+      appId: myTestApp.id,
+      appSecret: myTestApp.secret,
+      accessCode: unusedAccessCode,
+      challenge: 'random'
+    })
+      .then(() => {
+        throw new Error('this should have been rejected')
       })
-      assert.fail('Should not be able to generate new token using old access code')
-    } catch (e) {
-      // Pass
-    }
+      .catch((err) => expect(err.message).to.equal('Access code not found.'))
   })
 
   it('Should revoke access for a given user', async () => {
@@ -227,7 +222,7 @@ describe('Services @apps-services', () => {
     }
 
     secondUser.id = await createUser(secondUser)
-    let accesCode = await createAuthorizationCode({
+    let accessCode = await createAuthorizationCode({
       appId: myTestApp.id,
       userId: secondUser.id,
       challenge
@@ -235,37 +230,41 @@ describe('Services @apps-services', () => {
     let apiTokenResponse = await createAppTokenFromAccessCode({
       appId: myTestApp.id,
       appSecret: myTestApp.secret,
-      accessCode: accesCode,
+      accessCode: accessCode,
       challenge: challenge
     })
 
-    const res = await revokeExistingAppCredentialsForUser({
+    await revokeExistingAppCredentialsForUser({
       appId: myTestApp.id,
       userId: secondUser.id
     })
 
-    try {
-      let refresh = await refreshAppToken({
-        refreshToken: apiTokenResponse.refreshToken,
-        appId: myTestApp.id,
-        appSecret: myTestApp.secret
+    refreshAppToken({
+      refreshToken: apiTokenResponse.refreshToken,
+      appId: myTestApp.id,
+      appSecret: myTestApp.secret
+    })
+      .then(() => {
+        throw new Error('this should have been rejected')
       })
-      assert.fail('Should not be able to refresh token')
-    } catch (e) {
-      // Pass
-    }
+      .catch((err) => expect(err.message).to.equal('Invalid request'))
 
-    try {
-      let token = await createAppTokenFromAccessCode({
-        appId: myTestApp.id,
-        appSecret: myTestApp.secret,
-        accessCode: unusedAccessCode,
-        challenge: 'random'
+    let unusedAccessCode = await createAuthorizationCode({
+      appId: myTestApp.id,
+      userId: actor.id,
+      challenge
+    })
+
+    createAppTokenFromAccessCode({
+      appId: myTestApp.id,
+      appSecret: myTestApp.secret,
+      accessCode: unusedAccessCode,
+      challenge: 'random'
+    })
+      .then(() => {
+        throw new Error('this should have been rejected')
       })
-      assert.fail('Should not be able to generate new token using old access code')
-    } catch (e) {
-      // Pass
-    }
+      .catch((err) => expect(err.message).to.equal('Access code not found.'))
   })
 
   it('Should delete an app', async () => {

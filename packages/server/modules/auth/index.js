@@ -3,16 +3,16 @@ let debug = require('debug')
 const appRoot = require('app-root-path')
 const { registerOrUpdateScope } = require(`${appRoot}/modules/shared`)
 
-exports.init = async (app, options) => {
+exports.init = async (app) => {
   debug('speckle:modules')('🔑 Init auth module')
 
-  // Initialise authn strategies
+  // Initialize authn strategies
   exports.authStrategies = await require('./strategies')(app)
 
   // Hoist auth routes
   require('./rest')(app)
 
-  // Register core-based scoeps
+  // Register core-based scopes
   const scopes = require('./scopes.js')
   for (let scope of scopes) {
     await registerOrUpdateScope(scope)

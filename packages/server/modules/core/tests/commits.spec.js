@@ -146,7 +146,7 @@ describe('Commits @core-commits', () => {
     expect(commits).to.be.an('array')
     expect(commits.length).to.equal(2)
 
-    let { commits: commits2, cursor: cursor2 } = await getCommitsByBranchName({
+    let { commits: commits2 } = await getCommitsByBranchName({
       streamId: stream.id,
       branchName: 'main',
       limit: 5,
@@ -166,7 +166,6 @@ describe('Commits @core-commits', () => {
   it('Should get the commits from a stream', async () => {
     await createBranch({ name: 'dim/dev', streamId: stream.id, authorId: user.id })
 
-    let prevId
     for (let i = 0; i < 10; i++) {
       let t = { thud: i }
       t.id = await createObject(stream.id, t)
@@ -184,7 +183,7 @@ describe('Commits @core-commits', () => {
       streamId: stream.id,
       limit: 10
     })
-    let { commits: commits2, cursor: cursor2 } = await getCommitsByStreamId({
+    let { commits: commits2 } = await getCommitsByStreamId({
       streamId: stream.id,
       limit: 20,
       cursor: cursor
@@ -202,7 +201,7 @@ describe('Commits @core-commits', () => {
   it('Should get the commits of a user', async () => {
     let { commits, cursor } = await getCommitsByUserId({ userId: user.id, limit: 3 })
 
-    let { commits: commits2, cursor: cursor2 } = await getCommitsByUserId({
+    let { commits: commits2 } = await getCommitsByUserId({
       userId: user.id,
       limit: 100,
       cursor: cursor
@@ -219,7 +218,7 @@ describe('Commits @core-commits', () => {
       ownerId: user.id
     })
     let objectId = await createObject(privateStreamId, testObject)
-    let commitId = await createCommitByBranchName({
+    await createCommitByBranchName({
       streamId: privateStreamId,
       branchName: 'main',
       message: 'first commit',
@@ -228,7 +227,7 @@ describe('Commits @core-commits', () => {
       authorId: user.id
     })
 
-    let { commits, cursor } = await getCommitsByUserId({ userId: user.id, limit: 1000 })
+    let { commits } = await getCommitsByUserId({ userId: user.id, limit: 1000 })
     expect(commits.length).to.equal(23)
   })
 

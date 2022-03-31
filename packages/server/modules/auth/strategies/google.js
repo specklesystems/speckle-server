@@ -2,7 +2,6 @@
 'use strict'
 const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
-const URL = require('url').URL
 const debug = require('debug')
 const appRoot = require('app-root-path')
 const {

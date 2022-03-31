@@ -1,12 +1,4 @@
 'use strict'
-const appRoot = require('app-root-path')
-const {
-  ApolloError,
-  ForbiddenError,
-  UserInputError,
-  withFilter
-} = require('apollo-server-express')
-
 const {
   getUserActivity,
   getStreamActivity,
@@ -18,15 +10,11 @@ const {
   getTimelineCount
 } = require('../../services/index')
 
-const { authorizeResolver, validateScopes } = require(`${appRoot}/modules/shared`)
-const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
-
-const { getStream } = require(`${appRoot}/modules/core/services/streams`)
 
 module.exports = {
   Query: {},
   User: {
-    async activity(parent, args, context, info) {
+    async activity(parent, args) {
       let { items, cursor } = await getUserActivity({
         userId: parent.id,
         actionType: args.actionType,
@@ -45,7 +33,7 @@ module.exports = {
       return { items, cursor, totalCount }
     },
 
-    async timeline(parent, args, context, info) {
+    async timeline(parent, args) {
       let { items, cursor } = await getUserTimeline({
         userId: parent.id,
         after: args.after,
@@ -64,7 +52,7 @@ module.exports = {
   },
 
   Stream: {
-    async activity(parent, args, context, info) {
+    async activity(parent, args) {
       let { items, cursor } = await getStreamActivity({
         streamId: parent.id,
         actionType: args.actionType,
@@ -85,7 +73,7 @@ module.exports = {
   },
 
   Branch: {
-    async activity(parent, args, context, info) {
+    async activity(parent, args) {
       let { items, cursor } = await getResourceActivity({
         resourceType: 'branch',
         resourceId: parent.id,
@@ -107,7 +95,7 @@ module.exports = {
   },
 
   Commit: {
-    async activity(parent, args, context, info) {
+    async activity(parent, args) {
       let { items, cursor } = await getResourceActivity({
         resourceType: 'commit',
         resourceId: parent.id,

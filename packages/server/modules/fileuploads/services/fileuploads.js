@@ -5,7 +5,6 @@ const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
 const knex = require(`${appRoot}/db/knex`)
 const S3 = require('aws-sdk/clients/s3')
-const stream = require('stream')
 
 const FileUploads = () => knex('file_uploads')
 
@@ -25,7 +24,7 @@ module.exports = {
     let Bucket = process.env.S3_BUCKET
 
     try {
-      let data = await s3.headBucket({ Bucket }).promise()
+      await s3.headBucket({ Bucket }).promise()
       return
     } catch (err) {
       if (err.statusCode === 403) {
@@ -80,7 +79,7 @@ module.exports = {
     // TODO: error if missing
     let Key = `files/${fileId}`
 
-    let uploadResponse = await s3.upload({ Bucket, Key, Body: fileStream }).promise()
+    await s3.upload({ Bucket, Key, Body: fileStream }).promise()
 
     // Get file size and update db entry
     let headResponse = await s3.headObject({ Key, Bucket }).promise()

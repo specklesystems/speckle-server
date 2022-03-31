@@ -1,6 +1,5 @@
 'use strict'
-const appRoot = require('app-root-path')
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError } = require('apollo-server-express')
 
 const {
   getApp,
@@ -11,30 +10,22 @@ const {
   updateApp,
   deleteApp,
   revokeExistingAppCredentialsForUser,
-  createAuthorizationCode,
-  exchangeAuthorizationCodeForToken
 } = require('../../services/apps')
-const { createAppToken } = require(`${appRoot}/modules/core/services/tokens`)
-const {
-  validateServerRole,
-  validateScopes,
-  authorizeResolver
-} = require(`${appRoot}/modules/shared`)
 
 module.exports = {
   Query: {
-    async app(parent, args, context, info) {
+    async app(parent, args) {
       let app = await getApp({ id: args.id })
       return app
     },
 
-    async apps(parent, args, context, info) {
+    async apps() {
       return await getAllPublicApps()
     }
   },
 
   ServerApp: {
-    secret(parent, args, context, info) {
+    secret(parent, args, context) {
       if (
         context.auth &&
         parent.author &&
@@ -48,21 +39,21 @@ module.exports = {
   },
 
   User: {
-    async authorizedApps(parent, args, context, info) {
+    async authorizedApps(parent, args, context) {
       let res = await getAllAppsAuthorizedByUser({ userId: context.userId })
       return res
     },
-    async createdApps(parent, args, context, info) {
+    async createdApps(parent, args, context) {
       return await getAllAppsCreatedByUser({ userId: context.userId })
     }
   },
   Mutation: {
-    async appCreate(parent, args, context, info) {
+    async appCreate(parent, args, context) {
       let { id } = await createApp({ ...args.app, authorId: context.userId })
       return id
     },
 
-    async appUpdate(parent, args, context, info) {
+    async appUpdate(parent, args, context) {
       let app = await getApp({ id: args.app.id })
       if (!app.author && context.role !== 'server:admin')
         throw new ForbiddenError('You are not authorized to edit this app.')
@@ -73,7 +64,7 @@ module.exports = {
       return true
     },
 
-    async appDelete(parent, args, context, info) {
+    async appDelete(parent, args, context) {
       let app = await getApp({ id: args.appId })
 
       if (!app.author && context.role !== 'server:admin')
@@ -84,7 +75,7 @@ module.exports = {
       return (await deleteApp({ id: args.appId })) === 1
     },
 
-    async appRevokeAccess(parent, args, context, info) {
+    async appRevokeAccess(parent, args, context) {
       return await revokeExistingAppCredentialsForUser({
         appId: args.appId,
         userId: context.userId

@@ -1,19 +1,16 @@
 'use strict'
 
-const appRoot = require('app-root-path')
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError } = require('apollo-server-express')
 const {
   createPersonalAccessToken,
   revokeToken,
-  revokeTokenById,
-  validateToken,
   getUserTokens
 } = require('../../services/tokens')
 
 module.exports = {
   Query: {},
   User: {
-    async apiTokens(parent, args, context, info) {
+    async apiTokens(parent, args, context) {
       // TODO!
       if (parent.id !== context.userId)
         throw new ForbiddenError('You can only view your own tokens')
@@ -23,7 +20,7 @@ module.exports = {
     }
   },
   Mutation: {
-    async apiTokenCreate(parent, args, context, info) {
+    async apiTokenCreate(parent, args, context) {
       return await createPersonalAccessToken(
         context.userId,
         args.token.name,
@@ -31,7 +28,7 @@ module.exports = {
         args.token.lifespan
       )
     },
-    async apiTokenRevoke(parent, args, context, info) {
+    async apiTokenRevoke(parent, args, context) {
       let id = null
       if (args.token.toLowerCase().includes('bearer')) id = args.token.split(' ')[1]
       else id = args.token

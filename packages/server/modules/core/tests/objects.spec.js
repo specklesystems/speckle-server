@@ -177,7 +177,7 @@ describe('Objects @core-objects', () => {
 
     expect(cursor_1).to.be.a('string')
 
-    let { objects: rows_2, cursor: cursor_2 } = await getObjectChildren({
+    let { objects: rows_2 } = await getObjectChildren({
       streamId: stream.id,
       limit,
       objectId: ids[0],
@@ -197,7 +197,7 @@ describe('Objects @core-objects', () => {
     expect(rows_2[0]).to.have.nested.property('data.test.secondValue')
     expect(rows_2[0]).to.have.nested.property('data.nest.mallard')
 
-    let { objects, cursor } = await getObjectChildren({
+    let { objects } = await getObjectChildren({
       streamId: stream.id,
       objectId: ids[0],
       limit: 1000
@@ -335,7 +335,7 @@ describe('Objects @core-objects', () => {
 
   it('should not allow invalid query operators ', async () => {
     try {
-      let test = await getObjectChildrenQuery({
+      await getObjectChildrenQuery({
         streamId: stream.id,
         objectId: parentObjectId,
         query: [
@@ -495,7 +495,7 @@ describe('Objects @core-objects', () => {
     let tcount = 0
     getObjectChildrenStream({ streamId: stream.id, objectId: commitId }).then(
       (stream) => {
-        stream.on('data', (row) => tcount++)
+        stream.on('data', () => tcount++)
         stream.on('end', () => {
           expect(tcount).to.equal(3333)
           done()
@@ -525,7 +525,7 @@ describe('Objects @core-objects', () => {
     let promisses = []
     for (let i = 0; i < shuffledVersions.length; i++) {
       let promise = createObjectsBatched(stream.id, shuffledVersions[i])
-      promise.catch((e) => {})
+      promise.catch(() => {})
       promisses.push(promise)
     }
 

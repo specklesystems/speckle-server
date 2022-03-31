@@ -1,17 +1,14 @@
 'use strict'
-const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const appRoot = require('app-root-path')
 const knex = require(`${appRoot}/db/knex`)
 
 const Streams = () => knex('streams')
-const Branches = () => knex('branches')
 const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
 const BranchCommits = () => knex('branch_commits')
-const ParentCommits = () => knex('parent_commits')
 
-const { getBranchesByStreamId, getBranchByNameAndStreamId } = require('./branches')
+const { getBranchByNameAndStreamId } = require('./branches')
 const { getObject } = require('./objects')
 
 module.exports = {

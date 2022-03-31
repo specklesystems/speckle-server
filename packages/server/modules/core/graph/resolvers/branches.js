@@ -29,7 +29,7 @@ const BRANCH_DELETED = 'BRANCH_DELETED'
 module.exports = {
   Query: {},
   Stream: {
-    async branches(parent, args, context, info) {
+    async branches(parent, args) {
       if (args.limit && args.limit > 100)
         throw new UserInputError(
           'Cannot return more than 100 items, please use pagination.'
@@ -43,19 +43,19 @@ module.exports = {
       return { totalCount, cursor, items }
     },
 
-    async branch(parent, args, context, info) {
+    async branch(parent, args) {
       return await getBranchByNameAndStreamId({ streamId: parent.id, name: args.name })
     }
   },
   Branch: {
-    async author(parent, args, context, info) {
+    async author(parent, args, context) {
       if (parent.authorId && context.auth)
         return await getUserById({ userId: parent.authorId })
       else return null
     }
   },
   Mutation: {
-    async branchCreate(parent, args, context, info) {
+    async branchCreate(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -83,7 +83,7 @@ module.exports = {
       return id
     },
 
-    async branchUpdate(parent, args, context, info) {
+    async branchUpdate(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -122,7 +122,7 @@ module.exports = {
       return updated
     },
 
-    async branchDelete(parent, args, context, info) {
+    async branchDelete(parent, args, context) {
       let role = await authorizeResolver(
         context.userId,
         args.branch.streamId,

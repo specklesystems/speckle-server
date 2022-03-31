@@ -9,8 +9,6 @@ const { WebSocketLink } = require('apollo-link-ws')
 const { SubscriptionClient } = require('subscriptions-transport-ws')
 const ws = require('ws')
 
-const knex = require(`${appRoot}/db/knex`)
-
 const { createUser } = require('../services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const { beforeEachContext } = require(`@/test/hooks`)
@@ -72,6 +70,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     })
 
     // lets wait for the server is starting up
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (childPort) {
         console.log(`Child server started at PORT ${childPort} `)
@@ -139,14 +138,14 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sc1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
         .expect(200)
         .expect(noErrors)
 
-      let sc2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
@@ -186,13 +185,13 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sd1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamDelete(id: "${sid1}" ) }`
       })
         .expect(200)
         .expect(noErrors)
 
-      let sd2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamDelete(id: "${sid2}" ) }`
       })
         .expect(200)
@@ -225,7 +224,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sg = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
       })
         .expect(200)
@@ -258,12 +257,12 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sg = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamGrantPermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}", role: "stream:contributor"} ) }`
       })
         .expect(200)
         .expect(noErrors)
-      let sr = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamRevokePermission( permissionParams: {streamId: "${streamId}", userId: "${userB.id}"} ) }`
       })
         .expect(200)
@@ -291,18 +290,18 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      const resSU = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream" } ) }`
       })
         .expect(200)
         .expect(noErrors)
-      const resSU_2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }`
       })
         .expect(200)
         .expect(noErrors)
 
-      const resSU_3 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamUpdate(stream: { id: "${streamId}", description: "updated this stream... again!" } ) }`
       })
         .expect(200)
@@ -330,7 +329,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      const resSU = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { streamDelete( id: "${streamId}" ) }`
       })
         .expect(200)
@@ -356,7 +355,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sc1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
@@ -381,14 +380,14 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sc1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
         .expect(200)
         .expect(noErrors)
 
-      let sc2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
@@ -414,14 +413,14 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let sc1 = await sendRequest(userC.token, {
+      await sendRequest(userC.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
         .expect(200)
         .expect(noErrors)
 
-      let sc2 = await sendRequest(userC.token, {
+      await sendRequest(userC.token, {
         query:
           'mutation { streamCreate(stream: { name: "Subs Test (u A) Private", description: "Hello World", isPublic:false } ) }'
       })
@@ -455,12 +454,12 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let bc1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }`
       })
         .expect(200)
         .expect(noErrors)
-      let bc2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "another branch 🥬", description: "this is a test branch 🌳" } ) }`
       })
         .expect(200)
@@ -492,12 +491,12 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let bu1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchUpdate ( branch: { streamId: "${streamId}", id: "${branchId}", description: "updating this branch" } ) }`
       })
         .expect(200)
         .expect(noErrors)
-      let bu2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchUpdate ( branch: { streamId: "${streamId}", id: "${branchId}", description: "updating this branch v2" } ) }`
       })
         .expect(200)
@@ -533,12 +532,12 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let bd1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchDelete ( branch: { streamId: "${streamId}", id: "${bid1}" } ) }`
       })
         .expect(200)
         .expect(noErrors)
-      let bd2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchDelete ( branch: { streamId: "${streamId}", id: "${bid2}" } ) }`
       })
         .expect(200)
@@ -566,7 +565,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let bc = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { branchCreate ( branch: { streamId: "${streamId}", name: "new branch 🌿", description: "this is a test branch 🌳" } ) }`
       })
         .expect(200)
@@ -604,12 +603,12 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let cc1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId1}" } ) }`
       })
         .expect(200)
         .expect(noErrors)
-      let cc2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId2}" } ) }`
       })
         .expect(200)
@@ -645,12 +644,12 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let cu1 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { commitUpdate ( commit: { streamId: "${streamId}", id: "${commitId}", message: "updating this commit" } ) }`
       })
         .expect(200)
         .expect(noErrors)
-      let cu2 = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { commitUpdate ( commit: { streamId: "${streamId}", id: "${commitId}", message: "updating this commit v2" } ) }`
       })
         .expect(200)
@@ -686,7 +685,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let cd = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { commitDelete ( commit: { streamId: "${streamId}", id: "${commitId}" } ) }`
       })
         .expect(200)
@@ -718,7 +717,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
       await sleep(500)
 
-      let cc = await sendRequest(userA.token, {
+      await sendRequest(userA.token, {
         query: `mutation { commitCreate ( commit: { streamId: "${streamId}", branchName: "main", objectId: "${objId}" } ) }`
       })
         .expect(200)

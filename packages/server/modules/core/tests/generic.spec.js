@@ -1,6 +1,5 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const assert = require('assert')
 
 const appRoot = require('app-root-path')
 const { beforeEachContext } = require(`${appRoot}/test/hooks`)
@@ -18,19 +17,21 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Validate scopes', async () => {
-    try {
-      await validateScopes()
-      assert.fail('Should have thrown an error with invalid input')
-    } catch (e) {
-      //
-    }
+    validateScopes()
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) =>
+        expect('You do not have the required privileges.').to.equal(err.message)
+      )
 
-    try {
-      await validateScopes(['a'], 'b')
-      assert.fail('Should have thrown an error')
-    } catch (e) {
-      //
-    }
+    validateScopes(['a'], 'b')
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) =>
+        expect('You do not have the required privileges.').to.equal(err.message)
+      )
 
     await validateScopes(['a', 'b'], 'b') // should pass
   })
@@ -47,32 +48,25 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Should validate server role', async () => {
-    try {
-      let test = await validateServerRole(
-        { auth: true, role: 'server:user' },
-        'server:admin'
+    validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) =>
+        expect('You do not have the required server role').to.equal(err.message)
       )
-      assert.fail()
-    } catch (e) {
-      assert.equal('the void', 'the void')
-    }
 
-    try {
-      let test = await validateServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
-      assert.fail('Invalid roles should be refused')
-    } catch (e) {
-      assert.equal('stares', 'stares')
-    }
+    validateServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) => expect('Invalid server role specified').to.equal(err.message))
 
-    try {
-      let test = await validateServerRole(
-        { auth: true, role: 'server:admin' },
-        '133TCR3w'
-      )
-      assert.fail('Invalid roles should be refused')
-    } catch (e) {
-      assert.equal('and waits dreaming', 'and waits dreaming')
-    }
+    validateServerRole({ auth: true, role: 'server:admin' }, '133TCR3w')
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) => expect('Invalid server role specified').to.equal(err.message))
 
     let test = await validateServerRole(
       { auth: true, role: 'server:admin' },
@@ -82,14 +76,17 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Resolver Authorization Should fail nicely when roles & resources are wanky', async () => {
-    try {
-      let res = await authorizeResolver(null, 'foo', 'bar')
-      assert.fail('resolver authorization should have thrown')
-    } catch (e) {}
+    authorizeResolver(null, 'foo', 'bar')
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) => expect('Unknown role: bar').to.equal(err.message))
 
-    try {
-      let res = await authorizeResolver('foo', 'bar', 'streams:read')
-      assert.fail('resolver authorization should have thrown')
-    } catch (e) {}
+    // this caught me out, but streams:read is not a valid role for now
+    authorizeResolver('foo', 'bar', 'streams:read')
+      .then(() => {
+        throw new Error('This should have been rejected')
+      })
+      .catch((err) => expect('Unknown role: streams:read').to.equal(err.message))
   })
 })

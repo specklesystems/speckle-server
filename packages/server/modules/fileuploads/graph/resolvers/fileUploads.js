@@ -2,10 +2,10 @@ const { getStreamFileUploads, getFileInfo } = require('../../services/fileupload
 
 module.exports = {
   Stream: {
-    async fileUploads(parent, args, context, info) {
+    async fileUploads(parent) {
       return await getStreamFileUploads({ streamId: parent.id })
     },
-    async fileUpload(parent, args, context, info) {
+    async fileUpload(parent, args) {
       return await getFileInfo({ fileId: args.id })
     }
   }

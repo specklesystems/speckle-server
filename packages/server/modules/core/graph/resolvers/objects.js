@@ -1,32 +1,28 @@
 'use strict'
 const appRoot = require('app-root-path')
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
 const {
   validateServerRole,
   validateScopes,
   authorizeResolver
 } = require(`${appRoot}/modules/shared`)
 
-const { getUser } = require('../../services/users')
 const {
-  createObject,
   createObjects,
   getObject,
-  getObjects,
   getObjectChildren,
   getObjectChildrenQuery
 } = require('../../services/objects')
 
 module.exports = {
   Stream: {
-    async object(parent, args, context, info) {
+    async object(parent, args) {
       let obj = await getObject({ streamId: parent.id, objectId: args.id })
       obj.streamId = parent.id
       return obj
     }
   },
   Object: {
-    async children(parent, args, context, info) {
+    async children(parent, args) {
       // The simple query branch
       if (!args.query && !args.orderBy) {
         let result = await getObjectChildren({
@@ -61,7 +57,7 @@ module.exports = {
     }
   },
   Mutation: {
-    async objectCreate(parent, args, context, info) {
+    async objectCreate(parent, args, context) {
       await validateServerRole(context, 'server:user')
       await validateScopes(context.scopes, 'streams:write')
       await authorizeResolver(

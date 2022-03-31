@@ -9,7 +9,7 @@ const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const { contextMiddleware } = require(`${appRoot}/modules/shared`)
 const { validatePermissionsWriteStream } = require('./authUtils')
 
-const { createObjects, createObjectsBatched } = require('../services/objects')
+const { createObjectsBatched } = require('../services/objects')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -32,13 +32,13 @@ module.exports = (app) => {
 
       let busboy = Busboy({ headers: req.headers })
       let totalProcessed = 0
-      let last = {}
+      // let last = {}
 
       let promises = []
       let requestDropped = false
 
       busboy.on('file', (name, file, info) => {
-        const { filename, encoding, mimeType } = info
+        const { mimeType } = info
 
         if (requestDropped) return
 
@@ -102,7 +102,7 @@ module.exports = (app) => {
               requestDropped = true
             }
 
-            last = objs[objs.length - 1]
+            // last = objs[objs.length - 1]
             totalProcessed += objs.length
 
             let promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
@@ -173,7 +173,7 @@ module.exports = (app) => {
               if (!requestDropped) res.status(400).send('Failed to parse data.')
               requestDropped = true
             }
-            last = objs[objs.length - 1]
+            // last = objs[objs.length - 1]
             totalProcessed += objs.length
 
             let promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {

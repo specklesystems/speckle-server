@@ -98,7 +98,7 @@ module.exports = {
         prepInsertionObjectBatch(batch)
         await knex.transaction(async (trx) => {
           let q = Objects().insert(batch).toString() + ' on conflict do nothing'
-          const inserts = await trx.raw(q)
+          await trx.raw(q)
         })
         debug(`Inserted ${batch.length} objects`)
       }
@@ -112,7 +112,7 @@ module.exports = {
         prepInsertionClosureBatch(batch)
         await knex.transaction(async (trx) => {
           let q = Closures().insert(batch).toString() + ' on conflict do nothing'
-          const inserts = await trx.raw(q)
+          await trx.raw(q)
         })
         debug(`Inserted ${batch.length} closures`)
       }
@@ -241,7 +241,6 @@ module.exports = {
     depth = parseInt(depth) || 1000
 
     let fullObjectSelect = false
-    let selectStatements = []
 
     let q = Closures()
     q.select('id')
@@ -390,7 +389,7 @@ module.exports = {
               if (typeof statement.value === 'boolean') castType = 'boolean'
               if (typeof statement.value === 'number') castType = 'numeric'
 
-              if (operatorsWhitelist.indexOf(statement.operator) == -1)
+              if (operatorsWhitelist.indexOf(statement.operator) === -1)
                 throw new Error('Invalid operator for query')
 
               // Determine the correct where clause (where, and where, or where)
@@ -446,7 +445,7 @@ module.exports = {
       // When strings are used inside an order clause, as mentioned above, we need to add quotes around the comparison value, as the jsonb_path_query funcs return json encoded strings (`{"test":"foo"}` => test is returned as `"foo"`)
       if (castType === 'text') cursor.value = `"${cursor.value}"`
 
-      if (operatorsWhitelist.indexOf(cursor.operator) == -1)
+      if (operatorsWhitelist.indexOf(cursor.operator) === -1)
         throw new Error('Invalid operator for cursor')
 
       // Unwrapping the tuple comparison of ( userOrderByField, id ) > ( lastValueOfUserOrderBy, lastSeenId )
@@ -598,7 +597,7 @@ module.exports = {
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject(streamId, obj) {
-  let memNow = process.memoryUsage().heapUsed / 1024 / 1024
+  // let memNow = process.memoryUsage().heapUsed / 1024 / 1024
   const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
   if (obj.hash) obj.id = obj.hash
@@ -610,7 +609,7 @@ function prepInsertionObject(streamId, obj) {
   if (stringifiedObj.length > MAX_OBJECT_SIZE) {
     throw new Error(`Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`)
   }
-  let memAfter = process.memoryUsage().heapUsed / 1024 / 1024
+  // let memAfter = process.memoryUsage().heapUsed / 1024 / 1024
 
   return {
     data: stringifiedObj, // stored in jsonb column

@@ -5,7 +5,6 @@ const knex = require(`${appRoot}/db/knex`)
 
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
-const BranchCommits = () => knex('branch_commits')
 
 module.exports = {
   async createBranch({ name, description, streamId, authorId }) {
@@ -18,7 +17,7 @@ module.exports = {
 
     if (name) module.exports.validateBranchName({ name })
 
-    let [{ id }] = await Branches().returning('id').insert(branch)
+    await Branches().insert(branch)
 
     // update stream updated at
     await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })

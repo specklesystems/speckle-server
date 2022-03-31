@@ -14,7 +14,7 @@ const ResetTokens = () => knex('pwdreset_tokens')
 
 module.exports = (app) => {
   // sends a password recovery email.
-  app.post('/auth/pwdreset/request', async (req, res, next) => {
+  app.post('/auth/pwdreset/request', async (req, res) => {
     try {
       if (!req.body.email) throw new Error('Invalid request')
 
@@ -107,7 +107,7 @@ This email was sent from ${serverInfo.name} at ${
   })
 
   // Finalizes password recovery.
-  app.post('/auth/pwdreset/finalize', async (req, res, next) => {
+  app.post('/auth/pwdreset/finalize', async (req, res) => {
     try {
       if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')
 
