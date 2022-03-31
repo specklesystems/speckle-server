@@ -11,6 +11,7 @@ const metricCallCount = new prometheusClient.Counter({
 })
 
 module.exports = {
+  // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
     return {
       didResolveOperation(ctx) {

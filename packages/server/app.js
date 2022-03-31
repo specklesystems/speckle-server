@@ -79,7 +79,7 @@ exports.buildApolloServer = (optionOverrides) => {
         metricConnectedClients.dec()
       }
     },
-    plugins: [require(`${appRoot}/logging/apolloPlugin`)],
+    plugins: [require('@/logging/apolloPlugin')],
     tracing: debug,
     introspection: true,
     playground: true,

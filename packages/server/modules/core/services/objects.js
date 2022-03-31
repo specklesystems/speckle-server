@@ -134,70 +134,68 @@ module.exports = {
 
     let ids = []
 
-    let promises = batches.map(
-      async (batch, index) =>
-        new Promise(async (resolve, reject) => {
-          let closures = []
-          let objsToInsert = []
+    const insertBatch = async (batch, index) => {
+      let closures = []
+      let objsToInsert = []
 
-          let t0 = performance.now()
+      let t0 = performance.now()
 
-          batch.forEach((obj) => {
-            if (!obj) return
+      batch.forEach((obj) => {
+        if (!obj) return
 
-            let insertionObject = prepInsertionObject(streamId, obj)
-            let totalChildrenCountByDepth = {}
-            let totalChildrenCountGlobal = 0
-            if (obj.__closure !== null) {
-              for (const prop in obj.__closure) {
-                closures.push({
-                  streamId: streamId,
-                  parent: insertionObject.id,
-                  child: prop,
-                  minDepth: obj.__closure[prop]
-                })
+        let insertionObject = prepInsertionObject(streamId, obj)
+        let totalChildrenCountByDepth = {}
+        let totalChildrenCountGlobal = 0
+        if (obj.__closure !== null) {
+          for (const prop in obj.__closure) {
+            closures.push({
+              streamId: streamId,
+              parent: insertionObject.id,
+              child: prop,
+              minDepth: obj.__closure[prop]
+            })
 
-                totalChildrenCountGlobal++
+            totalChildrenCountGlobal++
 
-                if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
-                  totalChildrenCountByDepth[obj.__closure[prop].toString()]++
-                else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
-              }
-            }
-
-            insertionObject.totalChildrenCount = totalChildrenCountGlobal
-            insertionObject.totalChildrenCountByDepth = JSON.stringify(
-              totalChildrenCountByDepth
-            )
-
-            delete insertionObject.__tree
-            delete insertionObject.__closure
-
-            objsToInsert.push(insertionObject)
-            ids.push(insertionObject.id)
-          })
-
-          if (objsToInsert.length > 0) {
-            let queryObjs =
-              Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
-            await knex.raw(queryObjs)
+            if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
+              totalChildrenCountByDepth[obj.__closure[prop].toString()]++
+            else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
           }
+        }
 
-          if (closures.length > 0) {
-            let q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
-            await knex.raw(q2)
-          }
+        insertionObject.totalChildrenCount = totalChildrenCountGlobal
+        insertionObject.totalChildrenCountByDepth = JSON.stringify(
+          totalChildrenCountByDepth
+        )
 
-          let t1 = performance.now()
-          debug(
-            `Batch ${index + 1}/${batches.length}: Stored ${
-              closures.length + objsToInsert.length
-            } objects in ${t1 - t0}ms.`
-          )
-          // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
-          resolve()
-        })
-    )
+        delete insertionObject.__tree
+        delete insertionObject.__closure
+
+        objsToInsert.push(insertionObject)
+        ids.push(insertionObject.id)
+      })
+
+      if (objsToInsert.length > 0) {
+        let queryObjs =
+          Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
+        await knex.raw(queryObjs)
+      }
+
+      if (closures.length > 0) {
+        let q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
+        await knex.raw(q2)
+      }
+
+      let t1 = performance.now()
+      debug(
+        `Batch ${index + 1}/${batches.length}: Stored ${
+          closures.length + objsToInsert.length
+        } objects in ${t1 - t0}ms.`
+      )
+      // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+    }
+
+    let promises = batches.map((batch, index) => insertBatch(batch, index))
 
     await Promise.all(promises)
 

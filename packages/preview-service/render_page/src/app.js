@@ -1,4 +1,4 @@
-import { Viewer, Converter } from '@speckle/viewer'
+import { Viewer } from '@speckle/viewer'
 
 let v = new Viewer({ container: document.getElementById('renderer'), showStats: false })
 // v.on( 'load-progress', args => console.log( args ) )
@@ -6,7 +6,8 @@ let v = new Viewer({ container: document.getElementById('renderer'), showStats: 
 window.v = v
 
 window.LoadData = async function LoadData(url) {
-  await v.loadObject(url, token)
+  // token is not used in this context, since the preview service talks directly to the DB
+  await v.loadObject(url, undefined)
 }
 
 window.onload = () => {

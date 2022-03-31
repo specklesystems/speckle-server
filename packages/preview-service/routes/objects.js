@@ -9,7 +9,7 @@ const { pipeline, PassThrough } = require('stream')
 let router = express.Router()
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
-router.get('/:streamId/:objectId', async function (req, res, next) {
+router.get('/:streamId/:objectId', async function (req, res) {
   // Populate first object (the "commit")
   let obj = await getObject({
     streamId: req.params.streamId,

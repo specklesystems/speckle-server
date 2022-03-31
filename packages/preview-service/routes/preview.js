@@ -1,4 +1,5 @@
 'use strict'
+/* eslint-disable */
 
 let express = require('express')
 let router = express.Router()
@@ -151,7 +152,7 @@ async function getScreenshot(objectUrl) {
   // return imageBuffer
 }
 
-router.get('/:streamId/:objectId', async function (req, res, next) {
+router.get('/:streamId/:objectId', async function (req, res) {
   let objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
   /*
   let authToken = ''
