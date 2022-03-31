@@ -78,9 +78,9 @@
                   :rules="rules.keys(index, entries)"
                   :error-messages="entry.valid === true ? null : entry.valid"
                   append-icon="mdi-check"
+                  style="width: 300px; margin-top: 14px"
                   @click:append="editTitle = false"
                   @keyup.enter="editTitle = false"
-                  style="width: 300px; margin-top: 14px"
                 ></v-text-field>
               </v-toolbar-title>
               <v-spacer></v-spacer>
@@ -183,7 +183,7 @@ export default {
               return result
             },
             (v) => {
-              let filtered = entries.filter((_, i) => i != index)
+              let filtered = entries.filter((_, i) => i !== index)
               let result =
                 filtered.findIndex((e) => e.key === v) === -1 ||
                 'Each property name must be unique'
@@ -214,7 +214,7 @@ export default {
   },
   methods: {
     emitAddProp() {
-      var bimNouns = [
+      const bimNouns = [
         'parameter',
         'BIM',
         'triple O',
@@ -225,7 +225,7 @@ export default {
         'layer',
         'interop'
       ]
-      var bimAdjs = [
+      const bimAdjs = [
         'parametric',
         'chonky',
         '3D',
@@ -235,8 +235,8 @@ export default {
         'discrete',
         'dank'
       ]
-      var bimExclamations = ['wow', 'much', 'yes', 'towards a new']
-      var randomPhrase =
+      const bimExclamations = ['wow', 'much', 'yes', 'towards a new']
+      const randomPhrase =
         bimExclamations[Math.floor(Math.random() * bimExclamations.length)] +
         ' ' +
         bimAdjs[Math.floor(Math.random() * bimAdjs.length)] +

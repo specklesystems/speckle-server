@@ -97,7 +97,7 @@ export default {
   computed: {
     isSmall() {
       return (
-        this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
+        this.$vuetify.breakpoint.name === 'xs' || this.$vuetify.breakpoint.name === 'sm'
       )
     },
     displayType() {
@@ -135,7 +135,7 @@ export default {
   },
   watch: {
     displayType(oldVal, newVal) {
-      if (newVal == 'error') this.error = 'Provided details were invalid'
+      if (newVal === 'error') this.error = 'Provided details were invalid'
       else {
         this.error = null
       }
@@ -173,7 +173,7 @@ export default {
           this.lastCommit = data.stream
           return
         }
-        if (this.input.object == undefined)
+        if (this.input.object === undefined)
           this.objectId = latestCommit.referencedObject
         else this.objectId = this.input.object
         this.lastCommit = data.stream

@@ -1,6 +1,5 @@
 import { MainUserDataQuery } from '@/graphql/user'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
-import { createProvider } from '@/vue-apollo'
 import crypto from 'crypto'
 
 const appId = 'spklwebapp'

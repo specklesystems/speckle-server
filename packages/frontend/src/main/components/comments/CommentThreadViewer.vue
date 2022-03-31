@@ -10,9 +10,9 @@
         icon
         small
         class="background ml-2 elevation-10"
-        @click="minimise = !minimise"
+        @click="minimize = !minimize"
       >
-        <v-icon v-if="!minimise" small>mdi-minus</v-icon>
+        <v-icon v-if="!minimize" small>mdi-minus</v-icon>
         <v-icon v-else small>mdi-plus</v-icon>
       </v-btn>
       <v-btn
@@ -24,7 +24,7 @@
         <v-icon small>mdi-close</v-icon>
       </v-btn>
     </div>
-    <div v-show="!minimise" style="width: 100%" class="mouse">
+    <div v-show="!minimize" style="width: 100%" class="mouse">
       <div
         v-if="!isComplete"
         class="warning rounded-xl py-2 caption mb-2 text-center"
@@ -34,7 +34,7 @@
         This comment is targeting other resources.
         <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
       </div>
-      <div class="px-2" v-show="$apollo.loading">
+      <div v-show="$apollo.loading" class="px-2">
         <v-progress-linear indeterminate />
       </div>
       <template v-for="(reply, index) in thread">
@@ -70,16 +70,16 @@
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
           <div
-            class="px-4 py-2 caption mb-2 background rounded-xl"
             v-show="whoIsTyping.length > 0"
+            class="px-4 py-2 caption mb-2 background rounded-xl"
           >
             {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
         <div>
           <v-textarea
-            :disabled="loadingReply"
             v-model="replyText"
+            :disabled="loadingReply"
             solo
             hide-details
             auto-grow
@@ -92,10 +92,10 @@
             @keydown.enter.exact.prevent="addReply()"
           ></v-textarea>
         </div>
-        <div class="px-2" v-show="loadingReply">
+        <div v-show="loadingReply" class="px-2">
           <v-progress-linear indeterminate />
         </div>
-        <div class="text-right" ref="replyinput">
+        <div ref="replyinput" class="text-right">
           <v-btn
             v-show="canArchiveThread"
             v-tooltip="'Marks this thread as archived.'"
@@ -288,7 +288,7 @@ export default {
     return {
       replyText: null,
       localReplies: [],
-      minimise: false,
+      minimize: false,
       showArchiveDialog: false,
       loadingReply: false,
       whoIsTyping: [],
@@ -304,6 +304,7 @@ export default {
         this.stream.role === 'stream:owner'
       )
         return true
+      return false
     },
     thread() {
       let sorted = [...this.localReplies].sort(
@@ -368,7 +369,7 @@ export default {
     }
   },
   mounted() {
-    window.addEventListener('beforeunload', async (e) => {
+    window.addEventListener('beforeunload', async () => {
       await this.sendTypingUpdate(false)
     })
     setInterval(() => {

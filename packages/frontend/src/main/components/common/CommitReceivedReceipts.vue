@@ -17,9 +17,9 @@
 
       <user-avatar
         v-for="userId in receivedUsersUnique.slice(0, 2)"
-        xxxv-show="$vuetify.breakpoint.smAndUp"
         :id="userId"
         :key="userId"
+        xxxv-show="$vuetify.breakpoint.smAndUp"
         :show-hover="false"
         :size="20"
       ></user-avatar>

@@ -119,7 +119,7 @@ export default {
         return data.stream.object
       },
       skip() {
-        return this.objectId == null
+        return !!this.objectId
       }
     }
   },
@@ -296,7 +296,7 @@ export default {
         }
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
-        else if (entry.type == 'object') {
+        else if (entry.type === 'object') {
           base[entry.key] = this.globalsToBase(entry.globals)
         } else if (typeof entry.value === 'string' && entry.value.includes(',')) {
           base[entry.key] = entry.value
@@ -349,12 +349,12 @@ export default {
 
       if (depth > 0) {
         let id = path.shift()
-        entry = entry.find((e) => e.id == id)
+        entry = entry.find((e) => e.id === id)
       }
 
       if (depth > 1) {
         path.forEach((id) => {
-          entry = entry.globals.find((e) => e.id == id)
+          entry = entry.globals.find((e) => e.id === id)
         })
       }
 

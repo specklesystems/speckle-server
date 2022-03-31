@@ -198,7 +198,7 @@ export default {
   },
   watch: {
     appDialog(val) {
-      if (val == 0) this.clearAndClose() //if dialog was closed, on opening always show the initial editing form
+      if (val === 0) this.clearAndClose() //if dialog was closed, on opening always show the initial editing form
     }
   },
   methods: {
