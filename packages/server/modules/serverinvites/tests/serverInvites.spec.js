@@ -58,7 +58,7 @@ describe('Server Invites @server-invites', () => {
         message: 'Hey, join!'
       })
 
-      createAndSendInvite({
+      await createAndSendInvite({
         email: 'cat@speckle.systems',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -70,8 +70,8 @@ describe('Server Invites @server-invites', () => {
           expect(err.message).to.equal('Already invited!')
         })
     })
-    it('low multiple invites for the same email regardles of casing', () => {
-      createAndSendInvite({
+    it('low multiple invites for the same email regardles of casing', async () => {
+      await createAndSendInvite({
         email: 'dIdImItrIe@gmaIl.com',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -85,7 +85,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should not allow self invites', async () => {
-      createAndSendInvite({
+      await createAndSendInvite({
         email: 'didimitrie-100@gmail.com',
         inviterId: actor.id
       })
@@ -100,7 +100,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should not allow invites from no user', async () => {
-      createAndSendInvite({
+      await createAndSendInvite({
         email: 'didimitrie233-100@gmail.com',
         inviterId: 'fake'
       })
@@ -113,7 +113,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should not allow invites with a too long message', async () => {
-      createAndSendInvite({
+      await createAndSendInvite({
         email: '123456@gmail.com',
         inviterId: actor.id,
         message: longInviteMessage
@@ -189,7 +189,7 @@ describe('Server Invites @server-invites', () => {
         message: 'Hey, join!'
       })
 
-      useInvite({ id: inviteId, email: 'parrot@speckle.systems' })
+      await useInvite({ id: inviteId, email: 'parrot@speckle.systems' })
         .then(() => {
           throw new Error('This should have thrown')
         })
@@ -205,7 +205,7 @@ describe('Server Invites @server-invites', () => {
       expect(result).equals(true)
       expect(invite.used).equals(true)
 
-      useInvite({ id: inviteId, email: 'CrOw@speckle.systems' })
+      await useInvite({ id: inviteId, email: 'CrOw@speckle.systems' })
         .then(() => {
           throw new Error('This should have thrown')
         })

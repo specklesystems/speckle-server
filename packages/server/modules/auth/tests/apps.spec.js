@@ -85,7 +85,7 @@ describe('Services @apps-services', () => {
   })
 
   it('Should fail to register an app with no scopes', async () => {
-    createApp({ name: 'test application2', redirectUrl: 'http://localhost:1335' })
+    await createApp({ name: 'test application2', redirectUrl: 'http://localhost:1335' })
       .then(() => {
         throw new Error('this should have been rejected')
       })
@@ -192,7 +192,7 @@ describe('Services @apps-services', () => {
     let validationResponse = await validateToken(apiTokenResponse.token)
     expect(validationResponse.valid).to.equal(false)
 
-    refreshAppToken({
+    await refreshAppToken({
       refreshToken: apiTokenResponse.refreshToken,
       appId: myTestApp.id,
       appSecret: myTestApp.secret
@@ -202,7 +202,7 @@ describe('Services @apps-services', () => {
       })
       .catch((err) => expect(err.message).to.equal('Invalid request'))
 
-    createAppTokenFromAccessCode({
+    await createAppTokenFromAccessCode({
       appId: myTestApp.id,
       appSecret: myTestApp.secret,
       accessCode: unusedAccessCode,
@@ -239,7 +239,7 @@ describe('Services @apps-services', () => {
       userId: secondUser.id
     })
 
-    refreshAppToken({
+    await refreshAppToken({
       refreshToken: apiTokenResponse.refreshToken,
       appId: myTestApp.id,
       appSecret: myTestApp.secret
@@ -255,7 +255,7 @@ describe('Services @apps-services', () => {
       challenge
     })
 
-    createAppTokenFromAccessCode({
+    await createAppTokenFromAccessCode({
       appId: myTestApp.id,
       appSecret: myTestApp.secret,
       accessCode: unusedAccessCode,

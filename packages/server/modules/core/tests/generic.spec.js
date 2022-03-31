@@ -17,7 +17,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Validate scopes', async () => {
-    validateScopes()
+    await validateScopes()
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -25,7 +25,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         expect('You do not have the required privileges.').to.equal(err.message)
       )
 
-    validateScopes(['a'], 'b')
+    await validateScopes(['a'], 'b')
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -48,7 +48,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Should validate server role', async () => {
-    validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
+    await validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -56,13 +56,13 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         expect('You do not have the required server role').to.equal(err.message)
       )
 
-    validateServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
+    await validateServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
       .then(() => {
         throw new Error('This should have been rejected')
       })
       .catch((err) => expect('Invalid server role specified').to.equal(err.message))
 
-    validateServerRole({ auth: true, role: 'server:admin' }, '133TCR3w')
+    await validateServerRole({ auth: true, role: 'server:admin' }, '133TCR3w')
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -76,14 +76,14 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Resolver Authorization Should fail nicely when roles & resources are wanky', async () => {
-    authorizeResolver(null, 'foo', 'bar')
+    await authorizeResolver(null, 'foo', 'bar')
       .then(() => {
         throw new Error('This should have been rejected')
       })
       .catch((err) => expect('Unknown role: bar').to.equal(err.message))
 
     // this caught me out, but streams:read is not a valid role for now
-    authorizeResolver('foo', 'bar', 'streams:read')
+    await authorizeResolver('foo', 'bar', 'streams:read')
       .then(() => {
         throw new Error('This should have been rejected')
       })

@@ -44,7 +44,14 @@
     {
       "name": "NPM test",
       "request": "launch",
-      "runtimeArgs": ["run-script", "test", "--", "-g='Comments @comments'", "--exit"],
+      "runtimeArgs": [
+        "run-script",
+        "test",
+        "--",
+        // "-g='@apps-api'",
+        "--exit",
+        "--timeout=0"
+      ],
       "console": "integratedTerminal",
       "env": {
         // "POSTGRES_URL": "postgres://speckle:speckle@localhost/speckle2_test",

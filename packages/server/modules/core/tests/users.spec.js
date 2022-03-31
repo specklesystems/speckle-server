@@ -137,7 +137,7 @@ describe('Actors & Tokens @user-services', () => {
       newUser.email = 'bill@gates.com'
       newUser.password = 'testthebest'
 
-      createUser(newUser)
+      await createUser(newUser)
         .then(() => {
           throw new Error('This should have failed with duplicate email error')
         })

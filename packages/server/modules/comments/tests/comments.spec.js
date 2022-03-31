@@ -80,7 +80,7 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
-    return await createComment({
+    await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
@@ -129,7 +129,7 @@ describe('Comments @comments', () => {
     })
 
     // create a comment on streamA but objectB
-    createComment({
+    await createComment({
       userId: user.id,
       input: {
         streamId: streamA.id,
@@ -142,7 +142,7 @@ describe('Comments @comments', () => {
       .catch((error) => expect(error.message).to.be.equal('Object not found'))
 
     // create a comment on streamA but commitB
-    createComment({
+    await createComment({
       userId: user.id,
       input: {
         streamId: streamA.id,
@@ -155,7 +155,7 @@ describe('Comments @comments', () => {
       .catch((error) => expect(error.message).to.be.equal('Commit not found'))
 
     // mixed bag of resources (A, B)
-    createComment({
+    await createComment({
       userId: user.id,
       input: {
         streamId: streamA.id,
@@ -183,7 +183,7 @@ describe('Comments @comments', () => {
     })
 
     // replies should also not be swappable
-    createCommentReply({
+    await createCommentReply({
       authorId: user.id,
       parentCommentId: correctCommentId,
       streamId: streamB.id,
@@ -351,7 +351,7 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to comment targeting multiple streams as a resource', async () => {
-    return await createComment({
+    await createComment({
       userId: user.id,
       input: {
         streamId: stream.id,
@@ -714,7 +714,7 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to edit a not existing comment', async () => {
-    editComment({ userId: user.id, input: { id: 'this is not going to be found' } })
+    await editComment({ userId: user.id, input: { id: 'this is not going to be found' } })
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -738,7 +738,7 @@ describe('Comments @comments', () => {
       }
     })
 
-    editComment({ userId: otherUser.id, input: { id: commentId, text: 'properText' } })
+    await editComment({ userId: otherUser.id, input: { id: commentId, text: 'properText' } })
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -780,7 +780,7 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to archive a not existing comment', async () => {
-    archiveComment({ commentId: 'badabumm', streamId: stream.id, userId: user.id })
+    await archiveComment({ commentId: 'badabumm', streamId: stream.id, userId: user.id })
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -802,7 +802,7 @@ describe('Comments @comments', () => {
       }
     })
 
-    archiveComment({ commentId, streamId: stream.id, userId: otherUser.id })
+    await archiveComment({ commentId, streamId: stream.id, userId: otherUser.id })
       .then(() => {
         throw new Error('This should have been rejected')
       })

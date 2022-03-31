@@ -154,7 +154,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should not revoke owner permissions', async () => {
-      revokePermissionsStream({ streamId: testStream.id, userId: userOne.id })
+      await revokePermissionsStream({ streamId: testStream.id, userId: userOne.id })
         .then(() => {
           throw new Error('This should have thrown')
         })
