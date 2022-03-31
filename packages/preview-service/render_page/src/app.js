@@ -1,5 +1,4 @@
 import { Viewer, Converter } from '@speckle/viewer'
-import ObjectLoader from '@speckle/objectloader'
 
 let v = new Viewer({ container: document.getElementById('renderer'), showStats: false })
 // v.on( 'load-progress', args => console.log( args ) )
@@ -10,7 +9,7 @@ window.LoadData = async function LoadData(url) {
   await v.loadObject(url, token)
 }
 
-window.onload = (event) => {
+window.onload = () => {
   let testUrl = window.location.hash.substr(1)
   if (testUrl) {
     window.LoadData(testUrl)

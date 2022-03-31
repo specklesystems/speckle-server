@@ -1,21 +1,21 @@
 'use strict'
 
-var createError = require('http-errors')
-var express = require('express')
-var path = require('path')
-var cookieParser = require('cookie-parser')
-var logger = require('morgan')
+let createError = require('http-errors')
+let express = require('express')
+let path = require('path')
+let cookieParser = require('cookie-parser')
+let logger = require('morgan')
 
-var indexRouter = require('./routes/index')
-var previewRouter = require('./routes/preview')
-var objectsRouter = require('./routes/objects')
-var apiRouter = require('./routes/api')
+let indexRouter = require('./routes/index')
+let previewRouter = require('./routes/preview')
+let objectsRouter = require('./routes/objects')
+let apiRouter = require('./routes/api')
 const prometheusClient = require('prom-client')
 
 prometheusClient.register.clear()
 prometheusClient.collectDefaultMetrics()
 
-var app = express()
+let app = express()
 
 app.use(logger('dev'))
 
@@ -45,7 +45,7 @@ app.use(function (req, res, next) {
 })
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res) {
   let errorText = err.message
   if (req.app.get('env') === 'development') {
     errorText = `<html><body><pre>${err.message}: ${err.status}\n${err.stack}</pre></body></html>`

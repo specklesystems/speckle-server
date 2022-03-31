@@ -1,6 +1,5 @@
 'use strict'
 
-let debug = require('debug')('speckle:services')
 const knex = require('../../knex')
 
 const Objects = () => knex('objects')

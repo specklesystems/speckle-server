@@ -3,8 +3,6 @@
 const crypto = require('crypto')
 const knex = require('../knex')
 const fetch = require('node-fetch')
-const ObjectPreview = () => knex('object_preview')
-const Previews = () => knex('previews')
 const fs = require('fs')
 
 let shouldExit = false
@@ -47,9 +45,6 @@ async function doTask(task) {
       let previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
 
       // Save preview image
-      let insertionObject = { id: previewId, data: imgBuffer }
-      //await Previews().insert( insertionObject )
-      //let dbQuery = Previews().insert( insertionObject ).toString( ) + ' on conflict do nothing'
       await knex.raw(
         'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
         [previewId, imgBuffer]

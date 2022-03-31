@@ -1,12 +1,12 @@
 'use strict'
 
 const zlib = require('zlib')
-var express = require('express')
-var { getObject, getObjectChildrenStream } = require('./services/objects_utils')
+const express = require('express')
+const { getObject, getObjectChildrenStream } = require('./services/objects_utils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 
-var router = express.Router()
+let router = express.Router()
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
 router.get('/:streamId/:objectId', async function (req, res, next) {
