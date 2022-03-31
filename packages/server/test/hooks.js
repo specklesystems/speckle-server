@@ -75,9 +75,7 @@ exports.mochaHooks = {
 }
 
 exports.beforeEachContext = async () => {
-  console.log('running before each')
   await exports.truncateTables()
-  console.log('done truncating tables')
   const { app, graphqlServer } = await init()
   return { app, graphqlServer }
 }

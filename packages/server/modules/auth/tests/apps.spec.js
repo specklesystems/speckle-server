@@ -261,6 +261,13 @@ describe('Services @apps-services', () => {
       accessCode: unusedAccessCode,
       challenge: 'random'
     })
+
+    await createAppTokenFromAccessCode({
+      appId: myTestApp.id,
+      appSecret: myTestApp.secret,
+      accessCode: unusedAccessCode,
+      challenge: 'random'
+    })
       .then(() => {
         throw new Error('this should have been rejected')
       })
