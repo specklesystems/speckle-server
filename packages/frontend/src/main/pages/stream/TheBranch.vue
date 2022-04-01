@@ -104,17 +104,13 @@ import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
 
 export default {
-  name: 'Branch',
+  name: 'TheBranch',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     BranchEditDialog: () => import('@/main/dialogs/BranchEditDialog'),
-    PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () =>
-      import('@/main/components/common/CommitReceivedReceipts'),
-    SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
   },

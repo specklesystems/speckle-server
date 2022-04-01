@@ -87,6 +87,7 @@
 </template>
 <script>
 export default {
+  name: 'ViewerFilters',
   components: {
     FilterRowSelect: () => import('@/main/components/viewer/FilterRowSelect'),
     FilterCategoryActive: () => import('@/main/components/viewer/FilterCategoryActive'),

@@ -130,7 +130,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Webhooks',
+  name: 'TheUploads',
   components: {
     FileUploadItem: () => import('@/main/components/stream/uploads/FileUploadItem'),
     FileProcessingItem: () =>

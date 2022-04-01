@@ -156,7 +156,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'StreamSettings',
+  name: 'TheSettings',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },

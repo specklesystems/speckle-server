@@ -197,7 +197,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView('stream/webhook/create')
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create' })
 
-      let res = await this.$apollo.mutate({
+      await this.$apollo.mutate({
         mutation: gql`
           mutation webhookCreate($params: WebhookCreateInput!) {
             webhookCreate(webhook: $params)

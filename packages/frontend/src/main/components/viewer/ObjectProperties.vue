@@ -34,7 +34,16 @@ export default {
   components: {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
   },
-  props: ['obj', 'streamId'],
+  props: {
+    obj: {
+      type: Object,
+      default: () => null
+    },
+    streamId: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       realObject: this.obj,

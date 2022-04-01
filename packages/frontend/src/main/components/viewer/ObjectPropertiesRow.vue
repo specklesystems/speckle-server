@@ -129,7 +129,24 @@ export default {
   components: {
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
   },
-  props: ['prop', 'streamId', 'parent', 'refId'],
+  props: {
+    prop: {
+      type: Object,
+      default: () => null
+    },
+    parent: {
+      type: Object,
+      default: () => null
+    },
+    refId: {
+      type: String,
+      default: () => null
+    },
+    streamId: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       expanded: false,

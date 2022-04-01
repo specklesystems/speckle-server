@@ -41,7 +41,16 @@
 </template>
 <script>
 export default {
-  props: ['file', 'branches'],
+  props: {
+    file: {
+      type: File,
+      default: () => null
+    },
+    branches: {
+      type: Array,
+      default: () => []
+    }
+  },
   data: () => ({
     percentCompleted: -1,
     error: null,

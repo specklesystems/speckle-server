@@ -76,7 +76,12 @@ export default {
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
   },
-  props: ['resource'],
+  props: {
+    resource: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       expanded: false

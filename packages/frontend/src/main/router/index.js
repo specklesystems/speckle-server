@@ -8,7 +8,7 @@ const routes = [
     path: '/authn',
     name: 'Auth',
     redirect: '/authn/login',
-    component: () => import('@/main/layouts/Auth.vue'),
+    component: () => import('@/main/layouts/TheAuth.vue'),
     children: [
       {
         path: 'login',
@@ -16,7 +16,7 @@ const routes = [
         meta: {
           title: 'Login | Speckle'
         },
-        component: () => import('@/main/pages/auth/Login.vue')
+        component: () => import('@/main/pages/auth/TheLogin.vue')
       },
       {
         path: 'register',
@@ -24,7 +24,7 @@ const routes = [
         meta: {
           title: 'Register | Speckle'
         },
-        component: () => import('@/main/pages/auth/Registration.vue')
+        component: () => import('@/main/pages/auth/TheRegistration.vue')
       },
       {
         path: 'resetpassword',
@@ -65,7 +65,7 @@ const routes = [
         meta: {
           title: 'Home | Speckle'
         },
-        component: () => import('@/main/pages/Feed.vue')
+        component: () => import('@/main/pages/TheFeed.vue')
       },
       {
         path: '/commits',
@@ -73,7 +73,7 @@ const routes = [
         meta: {
           title: 'Commits | Speckle'
         },
-        component: () => import('@/main/pages/Commits.vue')
+        component: () => import('@/main/pages/TheCommits.vue')
       },
       {
         path: 'streams',
@@ -104,7 +104,7 @@ const routes = [
             meta: {
               title: 'Stream | Speckle'
             },
-            component: () => import('@/main/pages/stream/StreamHome.vue')
+            component: () => import('@/main/pages/stream/TheStreamHome.vue')
           },
           {
             path: 'branches/',
@@ -117,7 +117,7 @@ const routes = [
             meta: {
               title: 'Branch | Speckle'
             },
-            component: () => import('@/main/pages/stream/Branch.vue'),
+            component: () => import('@/main/pages/stream/TheBranch.vue'),
             beforeEnter: (to, from, next) => {
               if (to.params.branchName.toLowerCase() !== to.params.branchName)
                 return next(
@@ -135,7 +135,7 @@ const routes = [
               title: 'Stream Comments | Speckle',
               resizableNavbar: false
             },
-            component: () => import('@/main/pages/stream/Comments.vue')
+            component: () => import('@/main/pages/stream/TheComments.vue')
           },
           {
             path: 'commits/:resourceId*',
@@ -162,7 +162,7 @@ const routes = [
               title: 'Stream Collaborators | Speckle'
             },
             props: true,
-            component: () => import('@/main/pages/stream/Collaborators.vue')
+            component: () => import('@/main/pages/stream/TheCollaborators.vue')
           },
           {
             path: 'settings/',
@@ -171,7 +171,7 @@ const routes = [
               title: 'Stream Settings | Speckle'
             },
             props: true,
-            component: () => import('@/main/pages/stream/Settings.vue')
+            component: () => import('@/main/pages/stream/TheSettings.vue')
           },
           {
             path: 'webhooks/',
@@ -180,7 +180,7 @@ const routes = [
               title: 'Webhooks | Speckle'
             },
             props: true,
-            component: () => import('@/main/pages/stream/Webhooks.vue')
+            component: () => import('@/main/pages/stream/TheWebhooks.vue')
           },
           {
             path: 'uploads/',
@@ -189,7 +189,7 @@ const routes = [
               title: 'Stream Uploads | Speckle'
             },
             props: true,
-            component: () => import('@/main/pages/stream/Uploads.vue')
+            component: () => import('@/main/pages/stream/TheUploads.vue')
           },
           {
             path: 'globals/',
@@ -198,7 +198,7 @@ const routes = [
               title: 'Globals | Speckle'
             },
             props: true,
-            component: () => import('@/main/pages/stream/Globals.vue')
+            component: () => import('@/main/pages/stream/TheGlobals.vue')
           },
           {
             path: 'globals/:commitId',
@@ -206,7 +206,7 @@ const routes = [
             meta: {
               title: 'Globals | Speckle'
             },
-            component: () => import('@/main/pages/stream/Globals.vue')
+            component: () => import('@/main/pages/stream/TheGlobals.vue')
           }
         ]
       },
@@ -216,7 +216,7 @@ const routes = [
         meta: {
           title: 'Your Profile | Speckle'
         },
-        component: () => import('@/main/pages/user/ProfileSelf.vue')
+        component: () => import('@/main/pages/user/TheProfileSelf.vue')
       },
       {
         path: 'profile/:userId',
@@ -224,7 +224,7 @@ const routes = [
         meta: {
           title: 'User Profile | Speckle'
         },
-        component: () => import('@/main/pages/user/Profile.vue')
+        component: () => import('@/main/pages/user/TheProfileUser.vue')
       },
       {
         path: 'admin',
@@ -271,7 +271,7 @@ const routes = [
     meta: {
       title: 'Error | Speckle'
     },
-    component: () => import('@/main/pages/common/Error.vue')
+    component: () => import('@/main/pages/common/TheError.vue')
   },
   {
     path: '/onboarding',
@@ -279,7 +279,7 @@ const routes = [
     meta: {
       title: 'Getting Started | Speckle'
     },
-    component: () => import('@/main/pages/onboarding/Onboarding.vue')
+    component: () => import('@/main/pages/onboarding/TheOnboarding.vue')
   },
   {
     path: '*',

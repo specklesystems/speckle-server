@@ -57,10 +57,10 @@
             :margin="false"
           ></user-avatar>
           <v-avatar
-            color="background"
-            :size="30"
             v-else
             v-tooltip="sessionUser.name"
+            color="background"
+            :size="30"
             style="cursor: pointer"
           >
             👀
@@ -87,11 +87,14 @@
   </div>
 </template>
 <script>
+// TODO: Need to fix the viewer package build process to be able to properly reference THREE.js
+/* global THREE */
 import gql from 'graphql-tag'
 import { v4 as uuid } from 'uuid'
 import debounce from 'lodash.debounce'
 
 export default {
+  name: 'ViewerBubbles',
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     TextDotsTyping: () => import('@/main/components/common/TextDotsTyping')
@@ -196,16 +199,12 @@ export default {
     this.uuid = window.__bubblesId
 
     this.raycaster = new THREE.Raycaster()
-    // window.__viewer.cameraHandler.controls.addEventListener(
-    //   'update',
-    //   throttle(this.updateBubbles, 120)
-    // )
     window.__viewer.cameraHandler.controls.addEventListener('update', () =>
       this.updateBubbles(false)
     )
 
     this.updateInterval = window.setInterval(this.sendUpdateAndPrune, 2000)
-    window.addEventListener('beforeunload', async (e) => {
+    window.addEventListener('beforeunload', async () => {
       await this.sendDisconnect()
     })
     this.resourceId = this.$route.params.resourceId
@@ -219,7 +218,7 @@ export default {
         this.sendUpdateAndPrune()
       }, 50)
     )
-    window.__viewer.on('object-doubleclicked', (selectionInfo) => {})
+    window.__viewer.on('object-doubleclicked', () => {})
   },
   async beforeDestroy() {
     await this.sendDisconnect()
@@ -443,14 +442,11 @@ export default {
 }
 </script>
 <style scoped>
-.user-bubble {
-}
 .absolute-pos {
   pointer-events: auto;
   position: absolute;
   top: 0;
   left: 0;
-  /* transition: all 0.3s ease; */
   transform-origin: center;
 }
 </style>

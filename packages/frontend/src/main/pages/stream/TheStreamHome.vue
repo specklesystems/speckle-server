@@ -68,7 +68,7 @@
           </v-card-title>
         </v-card>
         <div class="mr-0">
-          <stream-activity></stream-activity>
+          <stream-activity />
         </div>
       </v-col>
     </v-row>
@@ -86,12 +86,11 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'StreamHome',
+  name: 'TheStreamHome',
   components: {
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
-    ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    StreamActivity: () => import('@/main/components/stream/Activity'),
+    StreamActivity: () => import('@/main/components/stream/StreamActivity.vue'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
   },
   data() {

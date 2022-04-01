@@ -44,7 +44,12 @@
 </template>
 <script>
 export default {
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return { showInfo: false }
   },

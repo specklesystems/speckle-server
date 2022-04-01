@@ -62,6 +62,7 @@
 <script>
 import gql from 'graphql-tag'
 export default {
+  name: 'TheCommits',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),

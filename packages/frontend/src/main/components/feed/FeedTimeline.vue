@@ -73,14 +73,11 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Timeline',
+  name: 'FeedTimeline',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     ListItemActivity: () => import('@/main/components/activity/ListItemActivity'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
-  },
-  props: {
-    type: String
   },
   data() {
     return {

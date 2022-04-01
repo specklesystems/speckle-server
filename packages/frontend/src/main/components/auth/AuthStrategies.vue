@@ -31,8 +31,25 @@
 </template>
 <script>
 export default {
-  name: 'Strategies',
-  props: ['strategies', 'appId', 'challenge', 'suuid'],
+  name: 'AuthStrategies',
+  props: {
+    strategies: {
+      type: Array,
+      default: () => []
+    },
+    appId: {
+      type: String,
+      default: () => null
+    },
+    challenge: {
+      type: String,
+      default: () => null
+    },
+    suuid: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       inviteId: null

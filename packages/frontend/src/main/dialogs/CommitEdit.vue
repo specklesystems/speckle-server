@@ -82,7 +82,12 @@
 <script>
 import gql from 'graphql-tag'
 export default {
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       showDeleteDialog: false,

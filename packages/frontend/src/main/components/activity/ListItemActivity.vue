@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/no-v-html -->
   <v-timeline-item medium>
     <template #icon>
       <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" />
@@ -256,13 +257,6 @@
                   >
                     SEE ALL {{ activityGroup.length }} COMMITS
                   </router-link>
-                  <!-- <div class="mt-3 body-1">
-                        <div
-                          v-for="activityItem in activityGroup"
-                          :key="activityItem.time"
-                          v-html="updatedDescription(activityItem)"
-                        ></div>
-                      </div> -->
                 </v-card-text>
               </v-col>
 
@@ -297,7 +291,12 @@ import gql from 'graphql-tag'
 
 export default {
   components: { UserAvatar, SourceAppAvatar, PreviewImage, UserPill },
-  props: ['activityGroup'],
+  props: {
+    activityGroup: {
+      type: Array,
+      default: () => []
+    }
+  },
   apollo: {
     you: {
       query: gql`
@@ -540,6 +539,10 @@ export default {
     }
   },
   methods: {
+    /**
+     * TODO: no bueno, needs refactoring. As eslint warns us - using v-html can lead to XSS attacks.
+     * Additionally I don't see why this can't be done with Vue templates
+     */
     updatedDescription(activity) {
       //CREATED
       if (activity.actionType === 'stream_create') {

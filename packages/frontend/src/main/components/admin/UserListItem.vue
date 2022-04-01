@@ -42,13 +42,13 @@
         }}
       </v-icon>
       <v-select
+        v-tooltip="'Change role'"
         :value="selfUser.role"
         :items="roles"
         dense
         filled
         rounded
         hide-details
-        v-tooltip="'Change role'"
         @change="(e) => $emit('change-role', { user, role: e })"
       ></v-select>
       <!-- </v-col>

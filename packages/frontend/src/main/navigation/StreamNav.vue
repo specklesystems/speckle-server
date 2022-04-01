@@ -20,13 +20,13 @@
           <v-list-item-title class="font-weight-bold">Streams</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <!-- <v-divider></v-divider> -->
-      <!-- <v-subheader>DESC</v-subheader> -->
       <div class="caption px-3 my-4">
         <perfect-scrollbar
           style="max-height: 100px"
           :options="{ suppressScrollX: true }"
         >
+          <!-- TODO: Need to get rid of this, as it opens us up for an XSS attack -->
+          <!-- eslint-disable-next-line vue/no-v-html -->
           <span v-html="parsedDescription"></span>
         </perfect-scrollbar>
         <router-link
@@ -225,7 +225,12 @@ export default {
   components: {
     NewBranch: () => import('@/main/dialogs/NewBranch')
   },
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   apollo: {
     branchQuery: {
       query: gql`
@@ -319,6 +324,7 @@ export default {
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
     },
     parsedDescription() {
+      // TODO: Pretty sketchy, isn't the descripton user editable? A user could inject XSS this way
       if (!this.stream || !this.stream.description) return 'No description provided.'
       return this.stream.description.replace(
         /\[(.+?)\]\((https?:\/\/[a-zA-Z0-9/.(]+?)\)/g,

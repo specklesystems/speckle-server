@@ -58,19 +58,19 @@
       </v-btn>
     </div>
     <div style="position: fixed" class="no-scrollbar">
-      <viewer @load-progress="captureProgress" />
+      <speckle-viewer @load-progress="captureProgress" />
     </div>
   </v-app>
 </template>
 
 <script>
-import Viewer from '@/main/components/common/Viewer.vue'
+import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue'
 import { getCommit, getLatestBranchCommit, getServerInfo } from '@/embed/speckleUtils'
 
 export default {
   name: 'EmbedViewer',
   components: {
-    Viewer
+    SpeckleViewer
   },
   filters: {
     truncate: function (str, n = 20) {

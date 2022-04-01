@@ -16,7 +16,7 @@
         , empowering your design and construction data.
       </span>
     </v-card-text>
-    <div class="">
+    <div>
       <v-card-text class="text-h6 font-weight-regular">
         Speckle helps leading AEC companies freely exchange data between software silos
         and automate design and delivery processes:
@@ -30,7 +30,6 @@
 </template>
 <script>
 export default {
-  name: 'Blurb',
-  props: ['serverInfo']
+  name: 'LoginBlurb'
 }
 </script>

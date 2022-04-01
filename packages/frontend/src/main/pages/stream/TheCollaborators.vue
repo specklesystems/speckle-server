@@ -238,6 +238,7 @@ import userSearchQuery from '@/graphql/userSearch.gql'
 import { FullServerInfoQuery } from '@/graphql/server'
 
 export default {
+  name: 'TheCollaborators',
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     UserRole: () => import('@/main/components/stream/UserRole'),

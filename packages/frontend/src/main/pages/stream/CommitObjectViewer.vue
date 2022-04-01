@@ -64,7 +64,7 @@
         <views-display v-if="views.length !== 0" :views="views" class="mt-4" />
 
         <!-- Filters display -->
-        <filters
+        <viewer-filters
           class="mt-4"
           :props="objectProperties"
           :source-application="
@@ -103,7 +103,7 @@
           !$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'
         } left: 0px; position: absolute`"
       >
-        <viewer @load-progress="captureProgress" @selection="captureSelect" />
+        <speckle-viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
 
       <div
@@ -147,7 +147,7 @@
         "
         class=""
       >
-        <bubbles key="a" />
+        <viewer-bubbles key="a" />
         <comments-overlay key="c" @add-resources="addResources" />
         <comment-add-overlay key="b" />
       </div>
@@ -216,25 +216,26 @@
 import debounce from 'lodash/debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
-import Viewer from '@/main/components/common/Viewer' // do not import async
+import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue' // do not import async
 import { resourceType } from '@/plugins/resourceIdentifier'
 
 export default {
   components: {
-    Viewer,
+    SpeckleViewer,
     CommitToolbar: () => import('@/main/toolbars/CommitToolbar'),
     ObjectToolbar: () => import('@/main/toolbars/ObjectToolbar'),
     MultipleResourcesToolbar: () => import('@/main/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/main/dialogs/CommitEdit'),
-    StreamOverlayViewer: () => import('@/main/components/viewer/dialogs/AddOverlay'),
+    StreamOverlayViewer: () =>
+      import('@/main/components/viewer/dialogs/StreamOverlayViewer.vue'),
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
     ViewerControls: () => import('@/main/components/viewer/ViewerControls'),
     ObjectSelection: () => import('@/main/components/viewer/ObjectSelection'),
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
-    Filters: () => import('@/main/components/viewer/Filters'),
-    Bubbles: () => import('@/main/components/viewer/Bubbles'),
+    ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue'),
+    ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay')
   },

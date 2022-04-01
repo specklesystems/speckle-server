@@ -19,7 +19,7 @@
       <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
       Interoperability in seconds
     </v-card-title>
-    <strategies
+    <auth-strategies
       :strategies="strategies"
       :app-id="appId"
       :challenge="challenge"
@@ -104,12 +104,12 @@
 <script>
 import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
-import Strategies from '@/main/components/auth/Strategies'
+import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
-  name: 'Login',
-  components: { Strategies },
+  name: 'TheLogin',
+  components: { AuthStrategies },
   apollo: {
     serverInfo: {
       query: gql`

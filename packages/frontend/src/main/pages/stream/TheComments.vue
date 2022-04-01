@@ -70,7 +70,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Comments',
+  name: 'TheComments',
   components: {
     CommentListItem: () => import('@/main/components/comments/CommentListItem.vue'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),

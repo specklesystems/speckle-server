@@ -53,7 +53,7 @@
       </p>
     </error-placeholder>
 
-    <v-container fluid v-if="!$apollo.loading && webhooks.length !== 0" class="pa-0">
+    <v-container v-if="!$apollo.loading && webhooks.length !== 0" fluid class="pa-0">
       <portal to="toolbar">
         <div class="d-flex align-center">
           <div class="text-truncate">
@@ -269,7 +269,7 @@
 <script>
 import webhooksQuery from '@/graphql/webhooks.gql'
 export default {
-  name: 'Webhooks',
+  name: 'TheWebhooks',
   components: {
     WebhookForm: () => import('@/main/components/stream/WebhookForm'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),

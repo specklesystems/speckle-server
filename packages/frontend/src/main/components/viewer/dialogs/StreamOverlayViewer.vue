@@ -95,13 +95,18 @@
 import gql from 'graphql-tag'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 export default {
+  name: 'StreamOverlayViewer',
   components: {
-    // SectionCard: () => import('@/main/components/common/SectionCard')
     AllCommits: () => import('@/main/components/viewer/dialogs/AllCommits'),
     AllCommitsBranch: () => import('@/main/components/viewer/dialogs/AllCommitsBranch'),
     PreviewImage: () => import('@/main/components/common/PreviewImage')
   },
-  props: ['streamId'],
+  props: {
+    streamId: {
+      type: String,
+      default: () => null
+    }
+  },
   apollo: {},
   data() {
     return {

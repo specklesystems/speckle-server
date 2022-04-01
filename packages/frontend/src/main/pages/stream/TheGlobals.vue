@@ -151,7 +151,7 @@ import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
 
 export default {
-  name: 'Globals',
+  name: 'TheGlobals',
   components: {
     GlobalsBuilder: () => import('@/main/components/stream/globals/GlobalsBuilder'),
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
@@ -203,7 +203,7 @@ export default {
     commit() {
       return this.$route.params.commitId
         ? this.branch?.commits?.items?.filter(
-            (c) => c.id == this.$route.params.commitId
+            (c) => c.id === this.$route.params.commitId
           )[0]
         : this.branch?.commits?.items[0]
     },

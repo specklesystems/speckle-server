@@ -128,7 +128,6 @@ export default {
         this.$refs.streamInviteDialog.show()
       }, 500)
     }
-  },
-  methods: {}
+  }
 }
 </script>

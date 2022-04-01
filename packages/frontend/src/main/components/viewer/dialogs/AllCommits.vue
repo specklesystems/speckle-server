@@ -56,7 +56,12 @@ export default {
       import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
-  props: ['streamId'],
+  props: {
+    streamId: {
+      type: String,
+      default: () => null
+    }
+  },
   apollo: {
     stream: {
       query: gql`

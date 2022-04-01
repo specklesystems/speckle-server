@@ -57,7 +57,16 @@ export default {
       import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
-  props: ['streamId', 'branchName'],
+  props: {
+    streamId: {
+      type: String,
+      default: () => null
+    },
+    branchName: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       skip: true,

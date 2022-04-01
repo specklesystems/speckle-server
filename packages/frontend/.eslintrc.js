@@ -27,10 +27,7 @@ const config = {
       }
     }
   ],
-  plugins: ['vue'],
-  rules: {
-    'no-console': 1
-  }
+  plugins: ['vue']
 }
 
 module.exports = config

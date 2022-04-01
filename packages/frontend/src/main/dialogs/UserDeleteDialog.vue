@@ -54,7 +54,7 @@ export default {
       email: null,
       dialog: false,
       isLoading: false,
-      emailRules: [(v) => v == this.correctEmail || 'Incorrect email'],
+      emailRules: [(v) => v === this.correctEmail || 'Incorrect email'],
       valid: true
     }
   },

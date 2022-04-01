@@ -20,7 +20,7 @@
           @infinite="infiniteHandler"
         >
           <div slot="no-more">This is all your activity!</div>
-          <div slot="no-results">There are no activities to load</div>
+          <div slot="no-results">There are no ctivities to load</div>
         </infinite-loading>
       </v-timeline>
       <v-timeline v-else-if="$apollo.loading" align-top dense>
@@ -39,8 +39,9 @@
 <script>
 import gql from 'graphql-tag'
 
+// TODO: Is this unused?
 export default {
-  name: 'Activity',
+  name: 'TheActivity',
   components: {
     ListItemActivity: () => import('@/main/components/activity/ListItemActivity'),
     InfiniteLoading: () => import('vue-infinite-loading')
@@ -123,7 +124,7 @@ export default {
         }
         return prev
       }, [])
-      // console.log(groupedTimeline)
+
       this.groupedActivity = groupedActivity
     },
     infiniteHandler($state) {

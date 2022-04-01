@@ -82,9 +82,16 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import isNull from 'lodash/isNull'
+import isUndefined from 'lodash/isUndefined'
 
 export default {
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       dialog: false,
@@ -139,7 +146,7 @@ export default {
           .map((b) => b.name)
       },
       skip() {
-        return this.stream.branch == null
+        return isNull(this.stream.branch) || isUndefined(this.stream.branch)
       }
     }
   },

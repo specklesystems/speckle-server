@@ -55,7 +55,9 @@
   </v-app>
 </template>
 <script>
-export default {}
+export default {
+  name: 'TheError'
+}
 </script>
 <style scoped>
 pre {

@@ -12,6 +12,7 @@ import { Viewer } from '@speckle/viewer'
 import throttle from 'lodash/throttle'
 
 export default {
+  name: 'SpeckleViewer',
   data() {
     return {}
   },
