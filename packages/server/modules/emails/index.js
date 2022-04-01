@@ -8,7 +8,6 @@ const errorDebug = debug.extend('errors')
 
 let transporter
 
-
 const createJsonEchoTransporter = () =>
   nodemailer.createTransport({
     jsonTransport: true

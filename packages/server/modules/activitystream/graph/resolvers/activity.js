@@ -10,7 +10,6 @@ const {
   getTimelineCount
 } = require('../../services/index')
 
-
 module.exports = {
   Query: {},
   User: {

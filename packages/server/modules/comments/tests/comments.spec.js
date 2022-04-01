@@ -714,7 +714,10 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to edit a not existing comment', async () => {
-    await editComment({ userId: user.id, input: { id: 'this is not going to be found' } })
+    await editComment({
+      userId: user.id,
+      input: { id: 'this is not going to be found' }
+    })
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -738,7 +741,10 @@ describe('Comments @comments', () => {
       }
     })
 
-    await editComment({ userId: otherUser.id, input: { id: commentId, text: 'properText' } })
+    await editComment({
+      userId: otherUser.id,
+      input: { id: commentId, text: 'properText' }
+    })
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -780,7 +786,11 @@ describe('Comments @comments', () => {
   })
 
   it('Should not be allowed to archive a not existing comment', async () => {
-    await archiveComment({ commentId: 'badabumm', streamId: stream.id, userId: user.id })
+    await archiveComment({
+      commentId: 'badabumm',
+      streamId: stream.id,
+      userId: user.id
+    })
       .then(() => {
         throw new Error('This should have been rejected')
       })

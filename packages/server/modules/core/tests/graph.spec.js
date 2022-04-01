@@ -1173,7 +1173,6 @@ describe('GraphQL API Core @core-api', () => {
     })
 
     describe('Streams', () => {
-
       it('Should retrieve a stream', async () => {
         const res = await sendRequest(userA.token, {
           query: `

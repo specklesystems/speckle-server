@@ -5,9 +5,7 @@ const appRoot = require('app-root-path')
 const cors = require('cors')
 
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
-const {
-  contextMiddleware,
-} = require(`${appRoot}/modules/shared`)
+const { contextMiddleware } = require(`${appRoot}/modules/shared`)
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')

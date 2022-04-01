@@ -9,7 +9,7 @@ const {
   createApp,
   updateApp,
   deleteApp,
-  revokeExistingAppCredentialsForUser,
+  revokeExistingAppCredentialsForUser
 } = require('../../services/apps')
 
 module.exports = {

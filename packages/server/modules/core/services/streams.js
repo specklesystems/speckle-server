@@ -100,7 +100,7 @@ module.exports = {
 
   async revokePermissionsStream({ streamId, userId }) {
     let [streamAclEntriesCount] = await StreamAcl.knex()
-    // let [streamAclEntriesCount] = await StreamAcl.knex()
+      // let [streamAclEntriesCount] = await StreamAcl.knex()
       .where({ resourceId: streamId })
       .count()
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)

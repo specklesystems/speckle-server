@@ -258,7 +258,6 @@ export default class ObjectLoader {
   }
 
   async *getRawObjectIterator() {
-
     if (this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
       await safariFix()
       let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)

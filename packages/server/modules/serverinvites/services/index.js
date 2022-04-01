@@ -47,7 +47,7 @@ module.exports = {
     if (existingInvite) throw new Error('Already invited!')
 
     let inviter = await getUserById({ userId: inviterId })
-    if(!inviter) throw new Error('We dont know this inviter guy')
+    if (!inviter) throw new Error('We dont know this inviter guy')
     let invite = {
       id: crs({ length: 20 }),
       email,
