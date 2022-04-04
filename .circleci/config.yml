@@ -6,9 +6,6 @@ orbs:
 workflows:
   version: 2
 
-defaults: &defaults
-  working_directory: /tmp/ci
-
   test-build:
     jobs:
       - test-server
@@ -105,7 +102,7 @@ jobs:
 
   get-version:
     docker: *docker-image
-    <<: *defaults
+    working_directory: /tmp/ci
     steps:
       - checkout
       - run: pwd
