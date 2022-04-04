@@ -6,10 +6,14 @@ orbs:
 workflows:
   version: 2
 
+defaults: &defaults
+  working_directory: /tmp/ci
+
   test-build:
     jobs:
       - test-server
       - lint
+      - get-version
 
       # - build-viewer:
       #     # built the npm package
@@ -35,6 +39,7 @@ workflows:
             branches:
               only:
                 - main
+                - gergo/CIRewrite
           requires:
             - lint
             - test-server
@@ -97,6 +102,33 @@ jobs:
     steps:
       - checkout
       - run: node --version
+
+  get-version:
+    docker: *docker-image
+    <<: *defaults
+    steps:
+      - checkout
+      - run: pwd
+      - run: mkdir -p workspace
+      - run:
+          name: set version
+          command: SPECKLE_VERSION = ./.circleci/get_version.sh
+      # - run:
+      #     name: set var
+      #     command: echo "export BAZ=baz.`date +%Y%m%d.%H%M`" >> $BASH_ENV
+      # - run: echo "$BAZ"
+      # - run: echo "export FOO=foo.`date +%Y%m%d.%H%M%S`" >>workspace/new-env-vars
+      # - run: echo "export BOB=$BAZ" >> workspace/new-env-vars
+      # - run: cat workspace/new-env-vars >> $BASH_ENV
+      # - run: echo ${FOO:-NULL}
+      # - run: echo ${BAZ:-NULL}
+      # - run: echo ${BOB:-NULL}
+      - run: echo $SPECKLE_VERSION
+      # - persist_to_workspace:
+      #     root: workspace
+      #     paths:
+      #         - new-env-vars
+
 
   test-server:
     docker:
