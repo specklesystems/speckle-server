@@ -8,13 +8,8 @@ workflows:
 
   test-build:
     jobs:
-      - test-server:
-          filters: &filters-every-push
-            branches:
-              only:
-                - gergo/CIRewrite
-      - lint:
-          filters: *filters-every-push
+      - test-server
+      - lint
 
       # - build-viewer:
       #     # built the npm package
@@ -26,7 +21,6 @@ workflows:
       #       branches:
       #         only:
       #           # - main
-      #           - gergo/CIRewrite
 
       #         requires:
       #           # the result of objectloader build can be mounted here from workspace
@@ -41,7 +35,6 @@ workflows:
             branches:
               only:
                 - main
-                # - gergo/CIRewrite
           requires:
             - lint
             - test-server
@@ -76,10 +69,15 @@ workflows:
       - docker-build-and-publish-test-container:
           context: *docker-hub-context
           filters: *filters-build
+          requires:
+            - lint
+            - test-server
 
       - publish-helm-chart:
           filters: *filters-build
           requires:
+            - lint
+            - test-server
             - docker-build-and-publish-server
             - docker-build-and-publish-frontend
             - docker-build-and-publish-webhooks
