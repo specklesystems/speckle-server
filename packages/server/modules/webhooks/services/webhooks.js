@@ -11,20 +11,20 @@ const Users = () => knex('users')
 const { getServerInfo } = require('../../core/services/generic')
 const { getStream } = require('../../core/services/streams')
 
-let MAX_STREAM_WEBHOOKS = 100
+const MAX_STREAM_WEBHOOKS = 100
 
 module.exports = {
   async createWebhook({ streamId, url, description, secret, enabled, triggers }) {
-    let streamWebhookCount = await module.exports.getStreamWebhooksCount({ streamId })
+    const streamWebhookCount = await module.exports.getStreamWebhooksCount({ streamId })
     if (streamWebhookCount >= MAX_STREAM_WEBHOOKS) {
       throw new Error(
         `Maximum number of webhooks for a stream reached (${MAX_STREAM_WEBHOOKS})`
       )
     }
 
-    let triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
+    const triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
 
-    let [{ id }] = await WebhooksConfig()
+    const [{ id }] = await WebhooksConfig()
       .returning('id')
       .insert({
         id: crs({ length: 10 }),
@@ -39,7 +39,7 @@ module.exports = {
   },
 
   async getWebhook({ id }) {
-    let webhook = await WebhooksConfig().select('*').where({ id }).first()
+    const webhook = await WebhooksConfig().select('*').where({ id }).first()
     if (webhook) {
       webhook.triggers = Object.keys(webhook.triggers)
     }
@@ -48,17 +48,17 @@ module.exports = {
   },
 
   async updateWebhook({ id, url, description, secret, enabled, triggers }) {
-    let fieldsToUpdate = {}
+    const fieldsToUpdate = {}
     if (url !== undefined) fieldsToUpdate.url = url
     if (description !== undefined) fieldsToUpdate.description = description
     if (secret !== undefined) fieldsToUpdate.secret = secret
     if (enabled !== undefined) fieldsToUpdate.enabled = enabled
     if (triggers !== undefined) {
-      let triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
+      const triggersObj = Object.assign({}, ...triggers.map((x) => ({ [x]: true })))
       fieldsToUpdate.triggers = triggersObj
     }
 
-    let [{ id: res }] = await WebhooksConfig()
+    const [{ id: res }] = await WebhooksConfig()
       .returning('id')
       .where({ id })
       .update(fieldsToUpdate)
@@ -70,8 +70,8 @@ module.exports = {
   },
 
   async getStreamWebhooks({ streamId }) {
-    let webhooks = await WebhooksConfig().select('*').where({ streamId })
-    for (let webhook of webhooks) {
+    const webhooks = await WebhooksConfig().select('*').where({ streamId })
+    for (const webhook of webhooks) {
       webhook.triggers = Object.keys(webhook.triggers)
     }
 
@@ -79,7 +79,7 @@ module.exports = {
   },
 
   async getStreamWebhooksCount({ streamId }) {
-    let [res] = await WebhooksConfig().count().where({ streamId })
+    const [res] = await WebhooksConfig().count().where({ streamId })
     return parseInt(res.count)
   },
 
@@ -109,13 +109,13 @@ module.exports = {
       }
     }
 
-    let { rows } = await knex.raw(
+    const { rows } = await knex.raw(
       `
       SELECT * FROM webhooks_config WHERE "streamId" = ?
     `,
       [streamId]
     )
-    for (let wh of rows) {
+    for (const wh of rows) {
       if (!wh.enabled) continue
       if (!(event in wh.triggers)) continue
 
@@ -145,7 +145,7 @@ module.exports = {
   },
 
   async getWebhookEventsCount({ webhookId }) {
-    let [res] = await WebhooksEvents().count().where({ webhookId })
+    const [res] = await WebhooksEvents().count().where({ webhookId })
 
     return parseInt(res.count)
   }

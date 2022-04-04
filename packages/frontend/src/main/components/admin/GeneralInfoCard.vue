@@ -50,7 +50,7 @@ export default {
         }
       `,
       update(data) {
-        let stats = data.serverStats
+        const stats = data.serverStats
         return {
           users: stats.totalUserCount,
           streams: stats.totalStreamCount,

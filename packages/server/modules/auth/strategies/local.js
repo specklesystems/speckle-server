@@ -29,14 +29,14 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
     sessionAppId,
     async (req, res, next) => {
       try {
-        let valid = await validatePasssword({
+        const valid = await validatePasssword({
           email: req.body.email,
           password: req.body.password
         })
 
         if (!valid) throw new Error('Invalid credentials')
 
-        let user = await getUserByEmail({ email: req.body.email })
+        const user = await getUserByEmail({ email: req.body.email })
         if (!user) throw new Error('Invalid credentials')
 
         if (req.body.suuid && user.suuid !== req.body.suuid) {
@@ -62,9 +62,9 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
       try {
         if (!req.body.password) throw new Error('Password missing')
 
-        let user = req.body
+        const user = req.body
         user.ip = req.headers['cf-connecting-ip'] || req.connection.remoteAddress || ''
-        let ignorePrefixes = [
+        const ignorePrefixes = [
           '192.168.',
           '10.',
           '127.',
@@ -73,7 +73,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           '172.3',
           '::'
         ]
-        for (let ipPrefix of ignorePrefixes)
+        for (const ipPrefix of ignorePrefixes)
           if (user.ip.startsWith(ipPrefix)) {
             delete user.ip
             break
@@ -106,7 +106,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         //    * the server public and the user has a valid invite
         //    * the server public and the user doesn't have an invite
         // so we go ahead and register the user
-        let userId = await createUser(user)
+        const userId = await createUser(user)
         req.user = { id: userId, email: user.email }
 
         // 4. if the user had an invite, its used up

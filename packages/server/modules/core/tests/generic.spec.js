@@ -37,13 +37,13 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   })
 
   it('Should create proper context', async () => {
-    let res = await buildContext({ req: { headers: { authorization: 'Bearer BS' } } })
+    const res = await buildContext({ req: { headers: { authorization: 'Bearer BS' } } })
     expect(res.auth).to.equal(false)
 
-    let res2 = await buildContext({ req: { headers: { authorization: null } } })
+    const res2 = await buildContext({ req: { headers: { authorization: null } } })
     expect(res2.auth).to.equal(false)
 
-    let res3 = await buildContext({ req: { headers: { authorization: undefined } } })
+    const res3 = await buildContext({ req: { headers: { authorization: undefined } } })
     expect(res3.auth).to.equal(false)
   })
 
@@ -68,7 +68,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       })
       .catch((err) => expect('Invalid server role specified').to.equal(err.message))
 
-    let test = await validateServerRole(
+    const test = await validateServerRole(
       { auth: true, role: 'server:admin' },
       'server:user'
     )

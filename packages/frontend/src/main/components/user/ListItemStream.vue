@@ -55,7 +55,7 @@ export default {
   props: {
     stream: {
       type: Object,
-      default: function () {
+      default () {
         return {}
       }
     }

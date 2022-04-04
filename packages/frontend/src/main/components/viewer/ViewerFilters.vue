@@ -117,7 +117,7 @@ export default {
   computed: {
     topFilters() {
       if (this.allFilters.length === 0) return []
-      let arr = []
+      const arr = []
       arr.push(this.allFilters.find((f) => f.name === 'Object Type'))
       if (this.sourceApplication.toLowerCase().includes('revit')) {
         arr.push(this.allFilters.find((f) => f.name === 'Level'))
@@ -148,8 +148,8 @@ export default {
     '$store.state.appliedFilter'() {
       if (this.trySetPresetFilter) return
       if (this.$store.state.appliedFilter && this.$store.state.appliedFilter.filterBy) {
-        let key = Object.keys(this.$store.state.appliedFilter.filterBy)[0]
-        let presetFilter = this.allFilters.find((f) => f.targetKey === key)
+        const key = Object.keys(this.$store.state.appliedFilter.filterBy)[0]
+        const presetFilter = this.allFilters.find((f) => f.targetKey === key)
         if (presetFilter) this.activeFilter = presetFilter
         this.trySetPresetFilter = true
         this.preventFirstSet = true
@@ -169,10 +169,10 @@ export default {
   },
   methods: {
     parseAndSetFilters() {
-      let keys = Object.keys(this.props)
-      let filters = []
-      for (let key of keys) {
-        let filter = {}
+      const keys = Object.keys(this.props)
+      const filters = []
+      for (const key of keys) {
+        const filter = {}
         // Handle revit params
         if (key.startsWith('parameters.')) {
           if (key.endsWith('.value')) {

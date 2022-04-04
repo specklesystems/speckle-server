@@ -30,7 +30,7 @@ Vue.prototype.$resourceType = function (resourceId) {
 }
 
 Vue.prototype.$loginAndSetRedirect = function () {
-  let currUrl = window.location.href
+  const currUrl = window.location.href
   localStorage.setItem('shouldRedirectTo', currUrl.replace(window.location.origin, ''))
   this.$router.push('/authn/login')
 }

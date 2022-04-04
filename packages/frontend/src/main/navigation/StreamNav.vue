@@ -274,11 +274,11 @@ export default {
   computed: {
     groupedBranches() {
       if (!this.branchQuery) return
-      let branches = this.branchQuery.branches.items
-      let items = []
-      for (let b of branches) {
+      const branches = this.branchQuery.branches.items
+      const items = []
+      for (const b of branches) {
         if (b.name === 'globals') continue
-        let parts = b.name.split('/')
+        const parts = b.name.split('/')
         if (parts.length === 1) {
           items.push({ ...b, displayName: b.name, type: 'item', children: [] })
         } else {
@@ -295,7 +295,7 @@ export default {
           if (this.$route.path.includes(b.name)) existing.expand = true
         }
       }
-      let sorted = items.sort((a, b) => {
+      const sorted = items.sort((a, b) => {
         const nameA = a.name.toLowerCase()
         const nameB = b.name.toLowerCase()
         if (nameA < nameB) return -1

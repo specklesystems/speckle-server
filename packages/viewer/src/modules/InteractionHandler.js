@@ -63,15 +63,15 @@ export default class InteractionHandler {
   overlayObjects(ids = []) {
     this.overlaidObjects.clear()
 
-    let all = this.viewer.sceneManager.allObjects
-    let subsetToAdd = all.filter((obj) => ids.indexOf(obj.uuid) !== -1)
+    const all = this.viewer.sceneManager.allObjects
+    const subsetToAdd = all.filter((obj) => ids.indexOf(obj.uuid) !== -1)
 
-    for (let obj of subsetToAdd) {
-      let selType = obj.type
+    for (const obj of subsetToAdd) {
+      const selType = obj.type
       switch (selType) {
         case 'Group': {
-          let blockObjs = this.getBlockObjectsCloned(obj)
-          for (let child of blockObjs) {
+          const blockObjs = this.getBlockObjectsCloned(obj)
+          for (const child of blockObjs) {
             child.material = this.overlayMeshMaterial
             this.overlaidObjects.add(child)
           }
@@ -130,8 +130,8 @@ export default class InteractionHandler {
       rootBlock = this.getParentBlock(objs[0].object.parent)
     }
 
-    let objId = selType === 'Block' ? rootBlock.userData.id : objs[0].object.userData.id
-    let objIdIndexCheck = this.selectedObjectsUserData.findIndex((o) => o.id === objId)
+    const objId = selType === 'Block' ? rootBlock.userData.id : objs[0].object.userData.id
+    const objIdIndexCheck = this.selectedObjectsUserData.findIndex((o) => o.id === objId)
     if (objIdIndexCheck !== -1) {
       if (this.selectionHelper.multiSelect) {
         // TODO: deselect if in multiple selection mode
@@ -143,8 +143,8 @@ export default class InteractionHandler {
 
     switch (selType) {
       case 'Block': {
-        let blockObjs = this.getBlockObjectsCloned(rootBlock)
-        for (let child of blockObjs) {
+        const blockObjs = this.getBlockObjectsCloned(rootBlock)
+        for (const child of blockObjs) {
           child.userData = { id: rootBlock.userData.id }
           child.material = this.selectionMeshMaterial
           this.selectedObjects.add(child)
@@ -153,14 +153,14 @@ export default class InteractionHandler {
         break
       }
       case 'Mesh': {
-        let m = new THREE.Mesh(objs[0].object.geometry, this.selectionMeshMaterial)
+        const m = new THREE.Mesh(objs[0].object.geometry, this.selectionMeshMaterial)
         m.userData = { id: objs[0].object.userData.id }
         this.selectedObjects.add(m)
         //this.viewer.outlinePass.selectedObjects.push( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
       }
       case 'Line': {
-        let l = new THREE.Line(objs[0].object.geometry, this.selectionMeshMaterial)
+        const l = new THREE.Line(objs[0].object.geometry, this.selectionMeshMaterial)
         l.userData = { id: objs[0].object.userData.id }
         this.selectedObjects.add(l)
         //this.viewer.outlinePass.selectedObjects.push( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
@@ -179,18 +179,18 @@ export default class InteractionHandler {
       this.selectedRawObjects.push(objs[0])
     }
 
-    let box = new THREE.Box3().setFromObject(this.selectedObjects)
-    let boxHelper = new THREE.Box3Helper(box, 0x047efb)
+    const box = new THREE.Box3().setFromObject(this.selectedObjects)
+    const boxHelper = new THREE.Box3Helper(box, 0x047efb)
     this.selectionBox.clear()
     this.selectionBox.add(boxHelper)
     this.viewer.needsRender = true
 
-    let selectionCenter = new THREE.Vector3()
+    const selectionCenter = new THREE.Vector3()
     box.getCenter(selectionCenter)
-    let selectionInfo = {
+    const selectionInfo = {
       userData: this.selectedObjectsUserData,
       location: objs[0].point,
-      selectionCenter: selectionCenter
+      selectionCenter
     }
     this.viewer.emit('select', selectionInfo)
   }
@@ -202,27 +202,27 @@ export default class InteractionHandler {
   }
 
   getBlockObjectsCloned(block, objects = []) {
-    for (let child of block.children) {
+    for (const child of block.children) {
       if (child instanceof THREE.Group) {
         objects.push(...this.getBlockObjectsCloned(child))
       } else {
         objects.push(child.clone())
       }
     }
-    for (let child of objects) {
+    for (const child of objects) {
       child.geometry = child.geometry.clone().applyMatrix4(block.matrix)
     }
     return objects
   }
 
   deselectObj(id) {
-    let objToRemove = this.selectedObjects.children.filter((o) => o.userData.id === id)
+    const objToRemove = this.selectedObjects.children.filter((o) => o.userData.id === id)
     for (const o of objToRemove) this.selectedObjects.remove(o)
 
     this.selectionBox.clear()
     if (this.selectedObjects.children.length !== 0) {
-      let box = new THREE.Box3().setFromObject(this.selectedObjects)
-      let boxHelper = new THREE.Box3Helper(box, 0x047efb)
+      const box = new THREE.Box3().setFromObject(this.selectedObjects)
+      const boxHelper = new THREE.Box3Helper(box, 0x047efb)
       this.selectionBox.add(boxHelper)
     }
     this.viewer.needsRender = true
@@ -238,7 +238,7 @@ export default class InteractionHandler {
   }
 
   zoomToObjectId(id) {
-    let obj = this.viewer.sceneManager.allObjects.find((o) => o.uuid === id)
+    const obj = this.viewer.sceneManager.allObjects.find((o) => o.uuid === id)
     if (obj) this.zoomToObject(obj)
     else console.warn(`No object with id of ${id} found.`)
   }
@@ -254,7 +254,7 @@ export default class InteractionHandler {
       return
     }
     if (this.viewer.sceneManager.sceneObjects.objectsInScene.length === 0) {
-      let box = new THREE.Box3(
+      const box = new THREE.Box3(
         new THREE.Vector3(-1, -1, -1),
         new THREE.Vector3(1, 1, 1)
       )
@@ -262,7 +262,7 @@ export default class InteractionHandler {
       return
     }
 
-    let box = new THREE.Box3().setFromObject(
+    const box = new THREE.Box3().setFromObject(
       this.viewer.sceneManager.sceneObjects.objectsInScene
     )
     this.zoomToBox(box, fit, transition)
@@ -276,7 +276,7 @@ export default class InteractionHandler {
     const fitOffset = fit
 
     const size = box.getSize(new THREE.Vector3())
-    let target = new THREE.Sphere()
+    const target = new THREE.Sphere()
     box.getBoundingSphere(target)
     target.radius = target.radius * fitOffset
 
@@ -305,7 +305,7 @@ export default class InteractionHandler {
 
       // fit the camera inside, so we don't have clipping plane issues.
       // WIP implementation
-      let camPos = this.viewer.cameraHandler.orthoCamera.position
+      const camPos = this.viewer.cameraHandler.orthoCamera.position
       let dist = target.distanceToPoint(camPos)
       if (dist < 0) {
         dist *= -1
@@ -323,7 +323,7 @@ export default class InteractionHandler {
   }
 
   screenshot() {
-    let sectionBoxVisible = this.viewer.sectionBox.display.visible
+    const sectionBoxVisible = this.viewer.sectionBox.display.visible
     if (sectionBoxVisible) {
       this.viewer.sectionBox.displayOff()
       this.viewer.needsRender = true
@@ -426,14 +426,14 @@ export default class InteractionHandler {
 
   setView(id, transition = true) {
     if (!id) return
-    let view = this.viewer.sceneManager.views.find((v) => v.id === id)
+    const view = this.viewer.sceneManager.views.find((v) => v.id === id)
     if (!view) {
       console.warn(`View id ${id} not found.`)
       return
     }
 
-    let target = view.target
-    let position = view.origin
+    const target = view.target
+    const position = view.origin
 
     this.viewer.cameraHandler.activeCam.controls.setLookAt(
       position.x,

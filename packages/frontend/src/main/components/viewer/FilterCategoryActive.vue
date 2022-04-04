@@ -130,7 +130,7 @@ export default {
     mashColorLegend(colorLegend) {
       // just adds to our colors
       if (!colorLegend) return
-      let keys = Object.keys(colorLegend)
+      const keys = Object.keys(colorLegend)
       for (const key of keys) {
         if (!this.legend[key]) this.$set(this.legend, key, colorLegend[key])
       }
@@ -155,9 +155,9 @@ export default {
     },
     generateTypeMap(filter) {
       if (filter.data.type !== 'string') return []
-      let typeMap = []
-      for (let key of Object.keys(filter.data.uniqueValues)) {
-        let shortName = key.split('.').reverse()[0]
+      const typeMap = []
+      for (const key of Object.keys(filter.data.uniqueValues)) {
+        const shortName = key.split('.').reverse()[0]
         typeMap.push({
           name: shortName,
           fullName: key,

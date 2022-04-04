@@ -101,9 +101,9 @@ export default {
       this.success = false
       this.errors = false
       this.errorMessage = null
-      let valid = this.$refs.form.validate()
+      const valid = this.$refs.form.validate()
       if (!valid) return
-      let res = await fetch(`/auth/pwdreset/request`, {
+      const res = await fetch(`/auth/pwdreset/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: this.form.email })

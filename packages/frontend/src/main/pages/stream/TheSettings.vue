@@ -180,7 +180,7 @@ export default {
       },
 
       update(data) {
-        let stream = data.stream
+        const stream = data.stream
         if (stream)
           ({
             name: this.name,

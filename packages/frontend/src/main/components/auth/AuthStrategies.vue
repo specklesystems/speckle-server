@@ -56,8 +56,8 @@ export default {
     }
   },
   mounted() {
-    let urlParams = new URLSearchParams(window.location.search)
-    let inviteId = urlParams.get('inviteId')
+    const urlParams = new URLSearchParams(window.location.search)
+    const inviteId = urlParams.get('inviteId')
     this.inviteId = inviteId
   },
   methods: {

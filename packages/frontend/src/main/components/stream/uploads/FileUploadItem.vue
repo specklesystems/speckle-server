@@ -58,11 +58,11 @@ export default {
   }),
   methods: {
     upload() {
-      let data = new FormData()
+      const data = new FormData()
       this.error = null
       data.append('file', this.file)
 
-      let request = new XMLHttpRequest()
+      const request = new XMLHttpRequest()
       request.open(
         'POST',
         `/api/file/ifc/${this.$route.params.streamId}/${

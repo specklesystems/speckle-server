@@ -160,13 +160,13 @@ export default {
   methods: {
     groupSimilarActivities(data) {
       if (!data) return
-      let groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
+      const groupedTimeline = data.user.timeline.items.reduce(function (prev, curr) {
         //first item
         if (!prev.length) {
           prev.push([curr])
           return prev
         }
-        let test = prev[prev.length - 1][0]
+        const test = prev[prev.length - 1][0]
         let action = 'split' // split | combine | skip
         if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
           if (curr.actionType.includes('stream_permissions')) {

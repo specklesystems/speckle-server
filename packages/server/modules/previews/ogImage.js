@@ -8,15 +8,15 @@ const pixelWidth = require('string-pixel-width')
 
 module.exports = {
   async makeOgImage(previewBufferOrFilename, streamName) {
-    let imgWidth = 1200
-    let imgHeight = 627
+    const imgWidth = 1200
+    const imgHeight = 627
 
-    let panelPadding = 20
-    let panelWidth = imgWidth - 2 * panelPadding
-    let panelHeight = 80
+    const panelPadding = 20
+    const panelWidth = imgWidth - 2 * panelPadding
+    const panelHeight = 80
 
     let title = '/ ' + streamName
-    let maxTitleSize = 750
+    const maxTitleSize = 750
     if (pixelWidth(title, { font: 'open sans', size: 48 }) > maxTitleSize) {
       while (pixelWidth(title, { font: 'open sans', size: 48 }) > maxTitleSize) {
         title = title.slice(0, -1)

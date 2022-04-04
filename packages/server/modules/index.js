@@ -7,7 +7,7 @@ const { values, merge } = require('lodash')
 const { scalarResolvers, scalarSchemas } = require('./core/graph/scalars')
 
 exports.init = async (app) => {
-  let moduleDirs = [
+  const moduleDirs = [
     './core',
     './auth',
     './apiexplorer',
@@ -20,20 +20,20 @@ exports.init = async (app) => {
   ]
 
   // Stage 1: initialise all modules
-  for (let dir of moduleDirs) {
+  for (const dir of moduleDirs) {
     await require(dir).init(app)
   }
 
   // Stage 2: finalize init all modules
-  for (let dir of moduleDirs) {
+  for (const dir of moduleDirs) {
     await require(dir).finalize(app)
   }
 }
 
 exports.graph = () => {
-  let dirs = fs.readdirSync(`${appRoot}/modules`)
+  const dirs = fs.readdirSync(`${appRoot}/modules`)
   // Base query and mutation to allow for type extension by modules.
-  let typeDefs = [
+  const typeDefs = [
     `
       ${scalarSchemas}
       directive @hasScope(scope: String!) on FIELD_DEFINITION
@@ -64,11 +64,11 @@ exports.graph = () => {
   let schemaDirectives = {}
 
   dirs.forEach((file) => {
-    let fullPath = path.join(`${appRoot}/modules`, file)
+    const fullPath = path.join(`${appRoot}/modules`, file)
 
     // load and merge the type definitions
     if (fs.existsSync(path.join(fullPath, 'graph', 'schemas'))) {
-      let moduleSchemas = fs.readdirSync(path.join(fullPath, 'graph', 'schemas'))
+      const moduleSchemas = fs.readdirSync(path.join(fullPath, 'graph', 'schemas'))
       moduleSchemas.forEach((schema) => {
         typeDefs.push(
           fs.readFileSync(path.join(fullPath, 'graph', 'schemas', schema), 'utf8')
@@ -92,7 +92,7 @@ exports.graph = () => {
     }
   })
 
-  let resolvers = { ...scalarResolvers }
+  const resolvers = { ...scalarResolvers }
   resolverObjs.forEach((o) => {
     merge(resolvers, o)
   })

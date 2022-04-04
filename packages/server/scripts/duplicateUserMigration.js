@@ -56,7 +56,7 @@ const _migrateSingleStreamAccess = async ({ lowerUser, upperStreamAcl }) => {
         .update({ role: upperRole.name })
   } else {
     // if it didn't have access, just add it
-    let lowerStreamAcl = { ...upperStreamAcl }
+    const lowerStreamAcl = { ...upperStreamAcl }
     lowerStreamAcl.userId = lowerUser.id
     await knex('stream_acl').insert(lowerStreamAcl)
   }
@@ -81,12 +81,12 @@ const createMigrations = ({ lowerUser, upperUser }) =>
 const userByEmailQuery = (email) => Users().where({ email })
 
 const getDuplicateUsers = async () => {
-  let duplicates = await knex.raw(
+  const duplicates = await knex.raw(
     'select lower(email) as lowered, count(id) as reg_count from users group by lowered having count(id) > 1'
   )
   return await Promise.all(
     duplicates.rows.map(async (dup) => {
-      let lowerEmail = dup.lowered
+      const lowerEmail = dup.lowered
 
       let lowerUser = await userByEmailQuery(lowerEmail).first()
       // if no user found migrate to a random one?
@@ -96,7 +96,7 @@ const getDuplicateUsers = async () => {
         lowerUser = await Users()
           .whereRaw('lower(email) = lower(?)', [lowerEmail])
           .first()
-      let upperUser = await Users()
+      const upperUser = await Users()
         .whereRaw('lower(email) = lower(?)', [lowerEmail])
         .whereNot({ id: lowerUser.id })
         .first()

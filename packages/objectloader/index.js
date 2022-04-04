@@ -61,7 +61,7 @@ export default class ObjectLoader {
     // https://stackoverflow.com/questions/69337187/uncaught-in-promise-typeerror-failed-to-execute-fetch-on-workerglobalscope#comment124731316_69337187
     this.preferredFetch = options.fetch
     this.fetch = function (...args) {
-      let currentFetch = this.preferredFetch || fetch
+      const currentFetch = this.preferredFetch || fetch
       return currentFetch(...args)
     }
   }
@@ -94,7 +94,7 @@ export default class ObjectLoader {
   async getAndConstructObject(onProgress) {
     await this.downloadObjectsInBuffer(onProgress) // Fire and forget; PS: semicolon of doom
 
-    let rootObject = await this.getObject(this.objectId)
+    const rootObject = await this.getObject(this.objectId)
     return this.traverseAndConstruct(rootObject, onProgress)
   }
 
@@ -106,7 +106,7 @@ export default class ObjectLoader {
     let first = true
     let downloadNum = 0
 
-    for await (let obj of this.getObjectIterator()) {
+    for await (const obj of this.getObjectIterator()) {
       if (first) {
         this.totalChildrenCount = obj.totalChildrenCount
         first = false
@@ -135,12 +135,12 @@ export default class ObjectLoader {
 
     // Handle arrays
     if (Array.isArray(obj) && obj.length !== 0) {
-      let arr = []
-      for (let element of obj) {
+      const arr = []
+      for (const element of obj) {
         if (typeof element !== 'object' && !this.options.fullyTraverseArrays) return obj
 
         // Dereference element if needed
-        let deRef = element.referencedId
+        const deRef = element.referencedId
           ? await this.getObject(element.referencedId)
           : element
         if (element.referencedId && onProgress)
@@ -167,12 +167,12 @@ export default class ObjectLoader {
 
     // Handle objects
     // 1) Purge ignored props
-    for (let ignoredProp of this.options.excludeProps) {
+    for (const ignoredProp of this.options.excludeProps) {
       delete obj[ignoredProp]
     }
 
     // 2) Iterate through obj
-    for (let prop in obj) {
+    for (const prop in obj) {
       if (typeof obj[prop] !== 'object' || obj[prop] === null) continue // leave alone primitive props
 
       if (obj[prop].referencedId) {
@@ -202,13 +202,13 @@ export default class ObjectLoader {
   async getObject(id) {
     if (this.buffer[id]) return this.buffer[id]
 
-    let promise = new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       this.promises.push({ id, resolve, reject })
       // Only create a new interval checker if none is already present!
       if (this.intervals[id]) {
         this.intervals[id].elapsed = 0 // reset elapsed
       } else {
-        let intervalId = setInterval(
+        const intervalId = setInterval(
           this.tryResolvePromise.bind(this),
           this.INTERVAL_MS,
           id
@@ -222,7 +222,7 @@ export default class ObjectLoader {
   tryResolvePromise(id) {
     this.intervals[id].elapsed += this.INTERVAL_MS
     if (this.buffer[id]) {
-      for (let p of this.promises.filter((p) => p.id === id)) {
+      for (const p of this.promises.filter((p) => p.id === id)) {
         p.resolve(this.buffer[id])
       }
 
@@ -241,10 +241,10 @@ export default class ObjectLoader {
   }
 
   async *getObjectIterator() {
-    let t0 = Date.now()
+    const t0 = Date.now()
     let count = 0
-    for await (let line of this.getRawObjectIterator()) {
-      let { id, obj } = this.processLine(line)
+    for await (const line of this.getRawObjectIterator()) {
+      const { id, obj } = this.processLine(line)
       this.buffer[id] = obj
       count += 1
       yield obj
@@ -253,14 +253,14 @@ export default class ObjectLoader {
   }
 
   processLine(chunk) {
-    let pieces = chunk.split('\t')
+    const pieces = chunk.split('\t')
     return { id: pieces[0], obj: JSON.parse(pieces[1]) }
   }
 
   async *getRawObjectIterator() {
     if (this.options.enableCaching && window.indexedDB && this.cacheDB === null) {
       await safariFix()
-      let idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
+      const idbOpenRequest = indexedDB.open('speckle-object-cache', 1)
       idbOpenRequest.onupgradeneeded = () =>
         idbOpenRequest.result.createObjectStore('objects')
       this.cacheDB = await this.promisifyIdbRequest(idbOpenRequest)
@@ -283,7 +283,7 @@ export default class ObjectLoader {
 
     if (childrenIds.length > 50) {
       // split into 5%, 15%, 40%, 40% (5% for the high priority children: the ones with lower minDepth)
-      let splitBeforeCacheCheck = [[], [], [], []]
+      const splitBeforeCacheCheck = [[], [], [], []]
       let crtChildIndex = 0
 
       for (; crtChildIndex < 0.05 * childrenIds.length; crtChildIndex++) {
@@ -301,20 +301,20 @@ export default class ObjectLoader {
 
       console.log('Cache check for: ', splitBeforeCacheCheck)
 
-      let newChildren = []
+      const newChildren = []
       let nextCachePromise = this.cacheGetObjects(splitBeforeCacheCheck[0])
 
       for (let i = 0; i < 4; i++) {
-        let cachedObjects = await nextCachePromise
+        const cachedObjects = await nextCachePromise
         if (i < 3) nextCachePromise = this.cacheGetObjects(splitBeforeCacheCheck[i + 1])
 
-        let sortedCachedKeys = Object.keys(cachedObjects).sort(
+        const sortedCachedKeys = Object.keys(cachedObjects).sort(
           (a, b) => rootObj.__closure[a] - rootObj.__closure[b]
         )
-        for (let id of sortedCachedKeys) {
+        for (const id of sortedCachedKeys) {
           yield `${id}\t${cachedObjects[id]}`
         }
-        let newChildrenForBatch = splitBeforeCacheCheck[i].filter(
+        const newChildrenForBatch = splitBeforeCacheCheck[i].filter(
           (id) => !(id in cachedObjects)
         )
         newChildren.push(...newChildrenForBatch)
@@ -346,10 +346,10 @@ export default class ObjectLoader {
     } else {
       // small object with <= 50 children. check cache and make only 1 request
       const cachedObjects = await this.cacheGetObjects(childrenIds)
-      let sortedCachedKeys = Object.keys(cachedObjects).sort(
+      const sortedCachedKeys = Object.keys(cachedObjects).sort(
         (a, b) => rootObj.__closure[a] - rootObj.__closure[b]
       )
-      for (let id of sortedCachedKeys) {
+      for (const id of sortedCachedKeys) {
         yield `${id}\t${cachedObjects[id]}`
       }
       childrenIds = childrenIds.filter((id) => !(id in cachedObjects))
@@ -381,9 +381,9 @@ export default class ObjectLoader {
         headers: { ...this.headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ objects: JSON.stringify(splitHttpRequests[i]) })
       }).then((crtResponse) => {
-        let crtReader = crtResponse.body.getReader()
+        const crtReader = crtResponse.body.getReader()
         readers[i] = crtReader
-        let crtReadPromise = crtReader.read().then((x) => {
+        const crtReadPromise = crtReader.read().then((x) => {
           x.reqId = i
           return x
         })
@@ -392,7 +392,7 @@ export default class ObjectLoader {
     }
 
     while (true) {
-      let validReadPromises = readPromises.filter((x) => !!x)
+      const validReadPromises = readPromises.filter((x) => !!x)
       if (validReadPromises.length === 0) {
         // Check if all requests finished
         if (finishedRequests.every((x) => x)) {
@@ -406,13 +406,13 @@ export default class ObjectLoader {
       }
 
       // Wait for data on any running request
-      let data = await Promise.any(validReadPromises)
+      const data = await Promise.any(validReadPromises)
       let { value: crtDataChunk, done: readerDone, reqId } = data
       finishedRequests[reqId] = readerDone
 
       // Replace read promise on this request with a new `read` call
       if (!readerDone) {
-        let crtReadPromise = readers[reqId].read().then((x) => {
+        const crtReadPromise = readers[reqId].read().then((x) => {
           x.reqId = reqId
           return x
         })
@@ -430,12 +430,12 @@ export default class ObjectLoader {
       if (!crtDataChunk) continue
 
       crtDataChunk = decoders[reqId].decode(crtDataChunk)
-      let unprocessedText = readBuffers[reqId] + crtDataChunk
-      let unprocessedLines = unprocessedText.split(/\r\n|\n|\r/)
-      let remainderText = unprocessedLines.pop()
+      const unprocessedText = readBuffers[reqId] + crtDataChunk
+      const unprocessedLines = unprocessedText.split(/\r\n|\n|\r/)
+      const remainderText = unprocessedLines.pop()
       readBuffers[reqId] = remainderText
 
-      for (let line of unprocessedLines) {
+      for (const line of unprocessedLines) {
         yield line
       }
       this.cacheStoreObjects(unprocessedLines)
@@ -463,20 +463,20 @@ export default class ObjectLoader {
       return {}
     }
 
-    let ret = {}
+    const ret = {}
 
     for (let i = 0; i < ids.length; i += 500) {
-      let idsChunk = ids.slice(i, i + 500)
+      const idsChunk = ids.slice(i, i + 500)
 
-      let store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
-      let idbChildrenPromises = idsChunk.map((id) =>
+      const store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
+      const idbChildrenPromises = idsChunk.map((id) =>
         this.promisifyIdbRequest(store.get(id)).then((data) => ({ id, data }))
       )
-      let cachedData = await Promise.all(idbChildrenPromises)
+      const cachedData = await Promise.all(idbChildrenPromises)
 
       // console.log("Cache check for : ", idsChunk.length, Date.now() - t0)
 
-      for (let cachedObj of cachedData) {
+      for (const cachedObj of cachedData) {
         if (!cachedObj.data)
           // non-existent objects are retrieved with `undefined` data
           continue
@@ -492,9 +492,9 @@ export default class ObjectLoader {
       return {}
     }
 
-    let store = this.cacheDB.transaction('objects', 'readwrite').objectStore('objects')
-    for (let obj of objects) {
-      let idAndData = obj.split('\t')
+    const store = this.cacheDB.transaction('objects', 'readwrite').objectStore('objects')
+    for (const obj of objects) {
+      const idAndData = obj.split('\t')
       store.put(idAndData[1], idAndData[0])
     }
 

@@ -12,7 +12,7 @@ const appSecret = 'spklwebapp'
 export async function checkAccessCodeAndGetTokens() {
   const accessCode = new URLSearchParams(window.location.search).get('access_code')
   if (accessCode) {
-    let response = await getTokenFromAccessCode(accessCode)
+    const response = await getTokenFromAccessCode(accessCode)
     // eslint-disable-next-line no-prototype-builtins
     if (response.hasOwnProperty('token')) {
       localStorage.setItem(LocalStorageKeys.AuthToken, response.token)
@@ -31,7 +31,7 @@ export async function checkAccessCodeAndGetTokens() {
  * @return {Object} The full graphql response.
  */
 export async function prefetchUserAndSetSuuid(apolloClient) {
-  let token = localStorage.getItem(LocalStorageKeys.AuthToken)
+  const token = localStorage.getItem(LocalStorageKeys.AuthToken)
   if (!token) return
 
   // Pull user info (& remember it in the Apollo cache)
@@ -41,7 +41,7 @@ export async function prefetchUserAndSetSuuid(apolloClient) {
 
   if (data.user) {
     // eslint-disable-next-line camelcase
-    let distinct_id =
+    const distinct_id =
       '@' +
       crypto
         .createHash('md5')
@@ -61,20 +61,20 @@ export async function prefetchUserAndSetSuuid(apolloClient) {
 }
 
 export async function getTokenFromAccessCode(accessCode) {
-  let response = await fetch('/auth/token', {
+  const response = await fetch('/auth/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      accessCode: accessCode,
-      appId: appId,
-      appSecret: appSecret,
+      accessCode,
+      appId,
+      appSecret,
       challenge: localStorage.getItem('appChallenge')
     })
   })
 
-  let data = await response.json()
+  const data = await response.json()
   return data
 }
 
@@ -111,22 +111,22 @@ export async function signOut(mixpanelInstance) {
 }
 
 export async function refreshToken() {
-  let refreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
+  const refreshToken = localStorage.getItem(LocalStorageKeys.RefreshToken)
   if (!refreshToken) throw new Error('No refresh token found')
 
-  let refreshResponse = await fetch('/auth/token', {
+  const refreshResponse = await fetch('/auth/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      refreshToken: refreshToken,
-      appId: appId,
-      appSecret: appSecret
+      refreshToken,
+      appId,
+      appSecret
     })
   })
 
-  let data = await refreshResponse.json()
+  const data = await refreshResponse.json()
 
   // eslint-disable-next-line no-prototype-builtins
   if (data.hasOwnProperty('token')) {

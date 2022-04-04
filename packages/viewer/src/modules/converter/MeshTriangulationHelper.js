@@ -22,17 +22,17 @@ export default class MeshTriangulationHelper {
 
     //Gets vertex from a relative vert index
     function V(v) {
-      let index = faces[asIndex(v)] * 3
+      const index = faces[asIndex(v)] * 3
       return new Vector3(vertices[index], vertices[index + 1], vertices[index + 2])
     }
 
-    let triangleFaces = Array((n - 2) * 3)
+    const triangleFaces = Array((n - 2) * 3)
 
     //Calculate face normal using the Newell Method
-    let faceNormal = new Vector3(0, 0, 0)
+    const faceNormal = new Vector3(0, 0, 0)
     for (let ii = n - 1, jj = 0; jj < n; ii = jj, jj++) {
-      let iPos = V(ii)
-      let jPos = V(jj)
+      const iPos = V(ii)
+      const jPos = V(jj)
       faceNormal.x += (jPos.y - iPos.y) * (iPos.z + jPos.z) // projection on yz
       faceNormal.y += (jPos.z - iPos.z) * (iPos.x + jPos.x) // projection on xz
       faceNormal.z += (jPos.x - iPos.x) * (iPos.y + jPos.y) // projection on xy
@@ -107,9 +107,9 @@ export default class MeshTriangulationHelper {
    */
   static testPointTriangle(v, a, b, c) {
     function Test(_v, _a, _b) {
-      let crossA = _v.cross(_a)
-      let crossB = _v.cross(_b)
-      let dotWithEpsilon = Number.EPSILON + crossA.dot(crossB)
+      const crossA = _v.cross(_a)
+      const crossB = _v.cross(_b)
+      const dotWithEpsilon = Number.EPSILON + crossA.dot(crossB)
       return Math.sign(dotWithEpsilon) !== -1
     }
 
@@ -129,7 +129,7 @@ export default class MeshTriangulationHelper {
    * @returns {boolean} true if triangle is ccw
    */
   static triangleIsCCW(referenceNormal, a, b, c) {
-    let triangleNormal = c.sub(a).cross(b.sub(a))
+    const triangleNormal = c.sub(a).cross(b.sub(a))
     triangleNormal.normalize()
     return referenceNormal.dot(triangleNormal) > 0.0
   }

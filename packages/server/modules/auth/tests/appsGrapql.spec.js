@@ -211,7 +211,7 @@ describe('GraphQL @apps-api', () => {
     const getMyAppsQuery =
       'query usersApps{ user { createdApps { id name description } } }'
 
-    let res = await sendRequest(testToken, { query: getMyAppsQuery })
+    const res = await sendRequest(testToken, { query: getMyAppsQuery })
     expect(res.body.errors).to.not.exist
     expect(res.body.data.user.createdApps).to.be.an('array')
     expect(res.body.data.user.createdApps.length).to.equal(3)
@@ -246,7 +246,7 @@ describe('GraphQL @apps-api', () => {
     const query =
       'query myAuthApps{ user { authorizedApps { id name description termsAndConditionsLink logo author { id name } } } }'
 
-    let res = await sendRequest(testToken, { query })
+    const res = await sendRequest(testToken, { query })
 
     expect(res.body.errors).to.not.exist
     expect(res.body.data.user.authorizedApps).to.be.an('array')

@@ -236,9 +236,9 @@ export default {
       document.execCommand('copy')
     },
     getIframeUrl() {
-      let resourceId = this.$route.params.resourceId
+      const resourceId = this.$route.params.resourceId
       if (!resourceId) return null
-      let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
+      const base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
       return `<iframe src="${base}&${this.$resourceType(resourceId)}=${
         this.$route.params.resourceId
       }" width=600 height=400 />"`
@@ -246,7 +246,7 @@ export default {
     async changeVisibility() {
       this.swapPermsLoading = true
 
-      let newIsPublic = !this.stream.isPublic
+      const newIsPublic = !this.stream.isPublic
       try {
         await this.$apollo.mutate({
           mutation: gql`

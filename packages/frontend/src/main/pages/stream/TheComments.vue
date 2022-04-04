@@ -147,7 +147,7 @@ export default {
       result({ data }) {
         if (!data) return
         this.cursor = data.comments.cursor
-        for (let c of data.comments.items) {
+        for (const c of data.comments.items) {
           if (this.localComments.findIndex((lc) => c.id === lc.id) === -1)
             this.localComments.push({ ...c })
         }
@@ -157,11 +157,11 @@ export default {
   methods: {
     handleDeletion(comment) {
       this.$store.commit('setCommentSelection', { comment: null })
-      let indx = this.localComments.findIndex((lc) => lc.id === comment.id)
+      const indx = this.localComments.findIndex((lc) => lc.id === comment.id)
       this.localComments.splice(indx, 1)
     },
     async infiniteHandler($state) {
-      let res = await this.$apollo.queries.comments.refetch({
+      const res = await this.$apollo.queries.comments.refetch({
         cursor: this.cursor ? this.cursor : null,
         streamId: this.$route.params.streamId,
         archived: this.showArchivedComments,

@@ -15,7 +15,7 @@ const prometheusClient = require('prom-client')
 prometheusClient.register.clear()
 prometheusClient.collectDefaultMetrics()
 
-let app = express()
+const app = express()
 
 app.use(logger('dev'))
 

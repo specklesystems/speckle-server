@@ -18,11 +18,11 @@ module.exports = (app) => {
     try {
       if (!req.body.email) throw new Error('Invalid request')
 
-      let user = await getUserByEmail({ email: req.body.email })
+      const user = await getUserByEmail({ email: req.body.email })
       if (!user) throw new Error('No user with that email found.')
 
       // check if pwd request has been already sent
-      let existingToken = await ResetTokens()
+      const existingToken = await ResetTokens()
         .select('*')
         .where({ email: req.body.email })
         .first()
@@ -38,22 +38,22 @@ module.exports = (app) => {
       await ResetTokens().where({ email: req.body.email }).del()
 
       // create a new token
-      let token = {
+      const token = {
         id: crs({ length: 10 }),
         email: req.body.email
       }
 
       await ResetTokens().insert(token)
 
-      let serverInfo = await getServerInfo()
+      const serverInfo = await getServerInfo()
 
       // send the reset link email
 
-      let resetLink = new URL(
+      const resetLink = new URL(
         `/authn/resetpassword/finalize?t=${token.id}`,
         process.env.CANONICAL_URL
       )
-      let emailText = `
+      const emailText = `
 Hi ${user.name},
 
 You've requested a password reset for your Speckle account at ${process.env.CANONICAL_URL}. If this wasn't you, ignore this email; otherwise, follow the link below to reset your password:
@@ -66,7 +66,7 @@ Warm regards,
 Speckle
       `
 
-      let emailHtml = `
+      const emailHtml = `
 Hi ${user.name},
 <br>
 <br>
@@ -111,7 +111,7 @@ This email was sent from ${serverInfo.name} at ${
     try {
       if (!req.body.tokenId || !req.body.password) throw new Error('Invalid request.')
 
-      let token = await ResetTokens()
+      const token = await ResetTokens()
         .where({ id: req.body.tokenId })
         .select('*')
         .first()
@@ -122,7 +122,7 @@ This email was sent from ${serverInfo.name} at ${
         throw new Error('Link expired.')
       }
 
-      let user = await getUserByEmail({ email: token.email })
+      const user = await getUserByEmail({ email: token.email })
 
       await updateUserPassword({ id: user.id, newPassword: req.body.password })
 

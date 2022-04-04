@@ -217,8 +217,8 @@ export default {
     },
     link() {
       if (!this.commentDetails) return
-      let res = this.commentDetails.resources.filter((r) => r.resourceType !== 'stream')
-      let first = res.shift()
+      const res = this.commentDetails.resources.filter((r) => r.resourceType !== 'stream')
+      const first = res.shift()
       let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`

@@ -107,7 +107,7 @@ export default {
           if (newItems.length === 0) $state.complete()
           else $state.loaded()
 
-          let allItems = [...previousResult.user.commits.items]
+          const allItems = [...previousResult.user.commits.items]
           for (const commit of newItems) {
             if (allItems.findIndex((c) => c.id === commit.id) === -1)
               allItems.push(commit)

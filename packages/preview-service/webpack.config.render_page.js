@@ -4,7 +4,7 @@ const path = require('path')
 const yargs = require('yargs')
 const env = yargs.argv.env
 
-let filename = 'viewer'
+const filename = 'viewer'
 
 let outputFile, mode
 
@@ -17,7 +17,7 @@ if (env === 'build') {
 }
 
 const config = {
-  mode: mode,
+  mode,
   entry: path.resolve(__dirname + '/render_page/src/app.js'),
   target: 'web',
   devtool: 'source-map',

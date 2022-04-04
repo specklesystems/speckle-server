@@ -20,18 +20,18 @@ const {
 } = require('../services/branches')
 
 describe('Branches @core-branches', () => {
-  let user = {
+  const user = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie4342@gmail.com',
     password: 'sn3aky-1337-b1m'
   }
 
-  let stream = {
+  const stream = {
     name: 'Test Stream References',
     description: 'Whatever goes in here usually...'
   }
 
-  let testObject = {
+  const testObject = {
     foo: 'bar',
     baz: 'qux'
   }
@@ -44,7 +44,7 @@ describe('Branches @core-branches', () => {
     testObject.id = await createObject(stream.id, testObject)
   })
 
-  let branch = { name: 'dim/dev' }
+  const branch = { name: 'dim/dev' }
 
   it('Should create a branch', async () => {
     branch.id = await createBranch({
@@ -96,25 +96,25 @@ describe('Branches @core-branches', () => {
   })
 
   it('Branch names should be case insensitive (always lowercase)', async () => {
-    let id = await createBranch({
+    const id = await createBranch({
       name: 'CaseSensitive',
       streamId: stream.id,
       authorId: user.id
     })
 
-    let b = await getBranchByNameAndStreamId({
+    const b = await getBranchByNameAndStreamId({
       streamId: stream.id,
       name: 'casesensitive'
     })
     expect(b.name).to.equal('casesensitive')
 
-    let bb = await getBranchByNameAndStreamId({
+    const bb = await getBranchByNameAndStreamId({
       streamId: stream.id,
       name: 'CaseSensitive'
     })
     expect(bb.name).to.equal('casesensitive')
 
-    let bbb = await getBranchByNameAndStreamId({
+    const bbb = await getBranchByNameAndStreamId({
       streamId: stream.id,
       name: 'CASESENSITIVE'
     })
@@ -125,7 +125,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should get a branch', async () => {
-    let myBranch = await getBranchById({ id: branch.id })
+    const myBranch = await getBranchById({ id: branch.id })
     expect(myBranch.authorId).to.equal(user.id)
     expect(myBranch.streamId).to.equal(stream.id)
   })
@@ -133,7 +133,7 @@ describe('Branches @core-branches', () => {
   it('Should update a branch', async () => {
     await updateBranch({ id: branch.id, description: 'lorem ipsum' })
 
-    let b1 = await getBranchById({ id: branch.id })
+    const b1 = await getBranchById({ id: branch.id })
     expect(b1.description).to.equal('lorem ipsum')
   })
 
@@ -146,7 +146,7 @@ describe('Branches @core-branches', () => {
       authorId: user.id
     })
 
-    let { items, cursor, totalCount } = await getBranchesByStreamId({
+    const { items, cursor, totalCount } = await getBranchesByStreamId({
       streamId: stream.id
     })
     expect(items).to.have.lengthOf(5)
@@ -156,12 +156,12 @@ describe('Branches @core-branches', () => {
 
   it('Should delete a branch', async () => {
     await deleteBranchById({ id: branch.id, streamId: stream.id })
-    let { items } = await getBranchesByStreamId({ streamId: stream.id })
+    const { items } = await getBranchesByStreamId({ streamId: stream.id })
     expect(items).to.have.lengthOf(4)
   })
 
   it('Should NOT delete the main branch', async () => {
-    let b = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'main' })
+    const b = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'main' })
     try {
       await deleteBranchById({ id: b.id, streamId: stream.id })
       assert.fail()
@@ -171,13 +171,13 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should return branches in time createdAt order, MAIN first', async () => {
-    let { items } = await getBranchesByStreamId({ streamId: stream.id })
+    const { items } = await getBranchesByStreamId({ streamId: stream.id })
     expect(items[0].name).to.equal('main')
 
-    let branch = items[3]
+    const branch = items[3]
     await updateBranch({ id: branch.id, description: 'lorem ipsum' })
-    let cursor = new Date().toISOString()
-    let got = await getBranchesByStreamId({ streamId: stream.id, cursor: cursor })
+    const cursor = new Date().toISOString()
+    const got = await getBranchesByStreamId({ streamId: stream.id, cursor })
 
     expect(got.items[3].name).to.equal(branch.name)
     expect(got.items[0].name).to.equal('main')

@@ -15,7 +15,7 @@ const {
 const { beforeEachContext } = require(`${appRoot}/test/hooks`)
 
 describe('User admin @user-services', () => {
-  let myTestActor = {
+  const myTestActor = {
     name: 'Gergo Jedlicska',
     email: 'gergo@jedlicska.com',
     password: 'sn3aky-1337-b1m'
@@ -24,28 +24,28 @@ describe('User admin @user-services', () => {
   before(async () => {
     await beforeEachContext()
 
-    let actorId = await createUser(myTestActor)
+    const actorId = await createUser(myTestActor)
     myTestActor.id = actorId
   })
 
   it('First created user should be admin', async () => {
-    let users = await getUsers(100, 0)
+    const users = await getUsers(100, 0)
     expect(users).to.be.an('array')
     expect(users).to.have.lengthOf(1)
-    let firstUser = users[0]
+    const firstUser = users[0]
 
-    let userRole = await getUserRole(firstUser.id)
+    const userRole = await getUserRole(firstUser.id)
     expect(userRole).to.equal('server:admin')
   })
 
   it('Count user knows how to count', async () => {
     expect(await countUsers()).to.equal(1)
-    let newUser = { ...myTestActor }
+    const newUser = { ...myTestActor }
     newUser.name = 'Bill Gates'
     newUser.email = 'bill@gates.com'
     newUser.password = 'testthebest'
 
-    let actorId = await createUser(newUser)
+    const actorId = await createUser(newUser)
 
     expect(await countUsers()).to.equal(2)
 
@@ -54,7 +54,7 @@ describe('User admin @user-services', () => {
   })
 
   it('Get users query limit is sanitized to upper limit', async () => {
-    let createNewDroid = (number) => {
+    const createNewDroid = (number) => {
       return {
         name: `${number}`,
         email: `${number}@droidarmy.com`,
@@ -62,7 +62,7 @@ describe('User admin @user-services', () => {
       }
     }
 
-    let userInputs = Array(250)
+    const userInputs = Array(250)
       .fill()
       .map((v, i) => createNewDroid(i))
 
@@ -71,19 +71,19 @@ describe('User admin @user-services', () => {
     await Promise.all(userInputs.map((userInput) => createUser(userInput)))
     expect(await countUsers()).to.equal(251)
 
-    let users = await getUsers(2000000)
+    const users = await getUsers(2000000)
     expect(users).to.have.lengthOf(200)
   }).timeout(10000)
 
   it('Get users offset is applied', async () => {
-    let users = await getUsers(200, 200)
+    const users = await getUsers(200, 200)
     expect(users).to.have.lengthOf(51)
   })
 
   it('User query filters', async () => {
-    let users = await getUsers(100, 0, 'gergo')
+    const users = await getUsers(100, 0, 'gergo')
     expect(users).to.have.lengthOf(1)
-    let [user] = users
+    const [user] = users
     expect(user.email).to.equal('gergo@jedlicska.com')
   })
 
@@ -92,9 +92,9 @@ describe('User admin @user-services', () => {
   })
 
   it('Change user role modifies role', async () => {
-    let [user] = await getUsers(1, 10)
+    const [user] = await getUsers(1, 10)
 
-    let oldRole = await getUserRole(user.id)
+    const oldRole = await getUserRole(user.id)
     expect(oldRole).to.equal('server:user')
 
     await makeUserAdmin({ userId: user.id })

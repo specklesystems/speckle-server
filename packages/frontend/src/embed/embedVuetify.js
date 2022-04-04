@@ -4,7 +4,7 @@ import Vuetify from 'vuetify/lib'
 
 Vue.use(Vuetify)
 
-let darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 export default new Vuetify({
   icons: {
     iconfont: 'mdi'

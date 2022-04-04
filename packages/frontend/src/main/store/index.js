@@ -109,7 +109,7 @@ const store = new Vuex.Store({
       if (filterKey !== state.isolateCategoryKey) state.isolateCategoryValues = []
       state.isolateCategoryKey = filterKey
 
-      let indx = state.isolateCategoryValues.indexOf(filterValue)
+      const indx = state.isolateCategoryValues.indexOf(filterValue)
       if (indx === -1) state.isolateCategoryValues.push(filterValue)
       else state.isolateCategoryValues.splice(indx, 1)
 
@@ -137,7 +137,7 @@ const store = new Vuex.Store({
       }
       if (state.isolateCategoryValues.length === allValues.length)
         delete state.appliedFilter.filterBy
-      let res = await window.__viewer.applyFilter(state.appliedFilter)
+      const res = await window.__viewer.applyFilter(state.appliedFilter)
       state.colorLegend = res.colorLegend
     },
     async hideCategoryToggle(state, { filterKey, filterValue, colorBy = false }) {
@@ -147,7 +147,7 @@ const store = new Vuex.Store({
       if (filterKey !== state.hideCategoryKey) state.hideCategoryValues = []
       state.hideCategoryKey = filterKey
 
-      let indx = state.hideCategoryValues.indexOf(filterValue)
+      const indx = state.hideCategoryValues.indexOf(filterValue)
       if (indx === -1) state.hideCategoryValues.push(filterValue)
       else state.hideCategoryValues.splice(indx, 1)
 
@@ -168,7 +168,7 @@ const store = new Vuex.Store({
           colorBy: colorBy ? { type: 'category', property: filterKey } : null
         }
       }
-      let res = await window.__viewer.applyFilter(state.appliedFilter)
+      const res = await window.__viewer.applyFilter(state.appliedFilter)
       state.colorLegend = res.colorLegend
     },
     async toggleColorByCategory(state, { filterKey }) {
@@ -179,7 +179,7 @@ const store = new Vuex.Store({
           ...state.appliedFilter,
           colorBy: { type: 'category', property: filterKey }
         }
-      let res = await window.__viewer.applyFilter(state.appliedFilter)
+      const res = await window.__viewer.applyFilter(state.appliedFilter)
       state.colorLegend = res.colorLegend
     },
     setNumericFilter(
@@ -202,7 +202,7 @@ const store = new Vuex.Store({
       window.__viewer.applyFilter(state.appliedFilter)
     },
     async setFilterDirect(state, { filter }) {
-      let filterBy = filter.filterBy
+      const filterBy = filter.filterBy
       if (filterBy && filterBy.__parents) {
         if (filterBy.__parents.includes) {
           this.commit('isolateObjects', {
@@ -227,9 +227,9 @@ const store = new Vuex.Store({
             maxValue: filter.filterBy[Object.keys(filter.filterBy)[0]].lte
           })
         } else {
-          let values = filterBy[Object.keys(filter.filterBy)[0]]
+          const values = filterBy[Object.keys(filter.filterBy)[0]]
           for (const val of values) {
-            let f = {
+            const f = {
               filterKey: Object.keys(filter.filterBy)[0],
               filterValue: val,
               allValues: [],
@@ -239,9 +239,9 @@ const store = new Vuex.Store({
           }
         }
       } else {
-        let values = filterBy[Object.keys(filter.filterBy)[0]].not
+        const values = filterBy[Object.keys(filter.filterBy)[0]].not
         for (const val of values) {
-          let f = {
+          const f = {
             filterKey: Object.keys(filter.filterBy)[0],
             filterValue: val,
             allValues: [],

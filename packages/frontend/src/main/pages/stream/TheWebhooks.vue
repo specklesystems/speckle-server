@@ -331,7 +331,7 @@ export default {
     },
     getStatusInfo(webhook) {
       if (!webhook.history.items.length) return 'No events yet'
-      let msg = webhook.history.items[0].statusInfo
+      const msg = webhook.history.items[0].statusInfo
 
       return msg
     },

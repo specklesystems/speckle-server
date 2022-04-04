@@ -10,7 +10,7 @@ const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 const { makeNetworkRequest } = require('./webhookCaller')
 
 async function startTask() {
-  let { rows } = await knex.raw(`
+  const { rows } = await knex.raw(`
     UPDATE webhooks_events
     SET 
       "status" = 1,
@@ -29,7 +29,7 @@ async function startTask() {
 
 async function doTask(task) {
   try {
-    let { rows } = await knex.raw(
+    const { rows } = await knex.raw(
       `
       SELECT 
         ev.payload as evt,
@@ -41,25 +41,25 @@ async function doTask(task) {
     `,
       [task.id]
     )
-    let info = rows[0]
+    const info = rows[0]
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
 
-    let fullPayload = JSON.parse(info.evt)
+    const fullPayload = JSON.parse(info.evt)
 
-    let postData = { payload: info.evt }
+    const postData = { payload: info.evt }
 
-    let signature = crypto
+    const signature = crypto
       .createHmac('sha256', info.wh_secret || '')
       .update(postData.payload)
       .digest('hex')
-    let postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
+    const postHeaders = { 'X-WEBHOOK-SIGNATURE': signature }
 
     console.log(
       `Callin webhook ${fullPayload.streamId} : ${fullPayload.event.event_name} at ${fullPayload.webhook.url}...`
     )
-    let result = await makeNetworkRequest({
+    const result = await makeNetworkRequest({
       url: info.wh_url,
       data: postData,
       headersData: postHeaders
@@ -103,7 +103,7 @@ async function tick() {
   }
 
   try {
-    let task = await startTask()
+    const task = await startTask()
 
     fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 

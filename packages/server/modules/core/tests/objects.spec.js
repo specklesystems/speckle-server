@@ -20,7 +20,7 @@ const {
   getObjectChildrenStream
 } = require('../services/objects')
 
-let sampleCommit = JSON.parse(`{
+const sampleCommit = JSON.parse(`{
   "Objects": [
     {
       "speckleType": "reference",
@@ -36,7 +36,7 @@ let sampleCommit = JSON.parse(`{
   "speckleType": "Speckle.Core.Commit"
 }`)
 
-let sampleObject = JSON.parse(`{
+const sampleObject = JSON.parse(`{
   "Vertices": [],
   "id": "8a9b0676b7fe3e5e487bb34549e67f67",
   "applicationId": "test",
@@ -44,13 +44,13 @@ let sampleObject = JSON.parse(`{
 }`)
 
 describe('Objects @core-objects', () => {
-  let userOne = {
+  const userOne = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie43@gmail.com',
     password: 'sn3aky-1337-b1m'
   }
 
-  let stream = {
+  const stream = {
     name: 'Test Streams',
     description: 'Whatever goes in here usually...'
   }
@@ -67,10 +67,10 @@ describe('Objects @core-objects', () => {
     sampleCommit.id = await createObject(stream.id, sampleCommit)
   })
 
-  let objCount_1 = 10
-  let objCount_2 = 1000
-  let objs = []
-  let objs2 = []
+  const objCount_1 = 10
+  const objCount_2 = 1000
+  const objs = []
+  const objs2 = []
 
   it(`Should create ${objCount_1} objects`, async () => {
     for (let i = 0; i < objCount_1; i++) {
@@ -80,7 +80,7 @@ describe('Objects @core-objects', () => {
       })
     }
 
-    let ids = await createObjects(stream.id, objs)
+    const ids = await createObjects(stream.id, objs)
 
     expect(ids).to.have.lengthOf(objCount_1)
   }).timeout(30000)
@@ -109,7 +109,7 @@ describe('Objects @core-objects', () => {
       })
     }
 
-    let myIds = await createObjects(stream.id, objs2)
+    const myIds = await createObjects(stream.id, objs2)
 
     myIds.forEach((h, i) => (objs2[i].id = h))
 
@@ -117,22 +117,22 @@ describe('Objects @core-objects', () => {
   }).timeout(30000)
 
   it('Should get a single object', async () => {
-    let obj = await getObject({ streamId: stream.id, objectId: sampleCommit.id })
+    const obj = await getObject({ streamId: stream.id, objectId: sampleCommit.id })
     expect(obj).to.not.be.null
   })
 
   it('Should get more objects', async () => {
-    let myObjs = await getObjects(
+    const myObjs = await getObjects(
       stream.id,
       objs.map((o) => o.id)
     )
     expect(myObjs).to.have.lengthOf(objs.length)
 
-    let match1 = myObjs.find((o) => o.id === objs[0].id)
+    const match1 = myObjs.find((o) => o.id === objs[0].id)
     expect(match1).to.not.be.null
     expect(match1.id).to.equal(objs[0].id)
 
-    let match2 = myObjs.find((o) => o.id === objs[2].id)
+    const match2 = myObjs.find((o) => o.id === objs[2].id)
     expect(match2).to.not.be.null
     expect(match2.id).to.equal(objs[2].id)
   })
@@ -140,8 +140,8 @@ describe('Objects @core-objects', () => {
   let parentObjectId
 
   it('Should get object children', async () => {
-    let objs_1 = createManyObjects(100, 'noise__')
-    let ids = await createObjects(stream.id, objs_1)
+    const objs_1 = createManyObjects(100, 'noise__')
+    const ids = await createObjects(stream.id, objs_1)
     // console.log( ids )
     // console.log(ids[ 0 ])
 
@@ -155,8 +155,8 @@ describe('Objects @core-objects', () => {
     // let { rows } = await getObjectChildren( { objectId: ids[0], select: ['id', 'name', 'sortValueB'] } )
     // let { rows } = await getObjectChildren( { objectId: ids[ 0 ] } )
 
-    let limit = 50
-    let { objects: rows_1, cursor: cursor_1 } = await getObjectChildren({
+    const limit = 50
+    const { objects: rows_1, cursor: cursor_1 } = await getObjectChildren({
       streamId: stream.id,
       limit,
       objectId: ids[0],
@@ -177,7 +177,7 @@ describe('Objects @core-objects', () => {
 
     expect(cursor_1).to.be.a('string')
 
-    let { objects: rows_2 } = await getObjectChildren({
+    const { objects: rows_2 } = await getObjectChildren({
       streamId: stream.id,
       limit,
       objectId: ids[0],
@@ -197,7 +197,7 @@ describe('Objects @core-objects', () => {
     expect(rows_2[0]).to.have.nested.property('data.test.secondValue')
     expect(rows_2[0]).to.have.nested.property('data.nest.mallard')
 
-    let { objects } = await getObjectChildren({
+    const { objects } = await getObjectChildren({
       streamId: stream.id,
       objectId: ids[0],
       limit: 1000
@@ -210,7 +210,7 @@ describe('Objects @core-objects', () => {
   it('should query object children, ascending order', async () => {
     // we're assuming the prev test objects exist
 
-    let test = await getObjectChildrenQuery({
+    const test = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       select: ['id', 'test.value'],
@@ -223,7 +223,7 @@ describe('Objects @core-objects', () => {
       orderBy: { field: 'test.value', direction: 'asc' }
     })
 
-    let test2 = await getObjectChildrenQuery({
+    const test2 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       select: ['id', 'test.value', 'nest.duck'],
@@ -268,7 +268,7 @@ describe('Objects @core-objects', () => {
 
   it('should query object children desc on a field with duplicate values, without selecting fields', async () => {
     // Note: the `similar` field is incremented on i%3===0, resulting in a pattern of 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, etc.
-    let test3 = await getObjectChildrenQuery({
+    const test3 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
@@ -280,7 +280,7 @@ describe('Objects @core-objects', () => {
       limit: 5
     })
 
-    let test4 = await getObjectChildrenQuery({
+    const test4 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       // select: [ 'similar', 'id' ],
@@ -319,7 +319,7 @@ describe('Objects @core-objects', () => {
   })
 
   it('should query object children with no results ', async () => {
-    let test = await getObjectChildrenQuery({
+    const test = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       query: [
@@ -355,7 +355,7 @@ describe('Objects @core-objects', () => {
   })
 
   it('should query children and sort them by a boolean value ', async () => {
-    let test = await getObjectChildrenQuery({
+    const test = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
@@ -364,7 +364,7 @@ describe('Objects @core-objects', () => {
       orderBy: { field: 'nest.duck', direction: 'desc' }
     })
 
-    let test2 = await getObjectChildrenQuery({
+    const test2 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
@@ -379,9 +379,9 @@ describe('Objects @core-objects', () => {
   })
 
   it('should query children and sort them by a string value ', async () => {
-    let limVal = 20
+    const limVal = 20
 
-    let test = await getObjectChildrenQuery({
+    const test = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
@@ -389,7 +389,7 @@ describe('Objects @core-objects', () => {
       orderBy: { field: 'name', direction: 'asc' }
     })
 
-    let test2 = await getObjectChildrenQuery({
+    const test2 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 5,
@@ -409,7 +409,7 @@ describe('Objects @core-objects', () => {
   })
 
   it('should query children and sort them by id by default ', async () => {
-    let test = await getObjectChildrenQuery({
+    const test = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 3,
@@ -421,7 +421,7 @@ describe('Objects @core-objects', () => {
 
     expect(test.totalCount).to.equal(90)
 
-    let test2 = await getObjectChildrenQuery({
+    const test2 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 3,
@@ -436,14 +436,14 @@ describe('Objects @core-objects', () => {
   })
 
   it('should just order results by something', async () => {
-    let test = await getObjectChildrenQuery({
+    const test = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 2,
       orderBy: { field: 'test.value', direction: 'desc' }
     })
 
-    let test2 = await getObjectChildrenQuery({
+    const test2 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 2,
@@ -455,14 +455,14 @@ describe('Objects @core-objects', () => {
       test2.objects[0].data.test.value + 1
     ) // continuity check
 
-    let test3 = await getObjectChildrenQuery({
+    const test3 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 50,
       orderBy: { field: 'nest.duck', direction: 'desc' }
     })
 
-    let test4 = await getObjectChildrenQuery({
+    const test4 = await getObjectChildrenQuery({
       streamId: stream.id,
       objectId: parentObjectId,
       limit: 50,
@@ -476,14 +476,14 @@ describe('Objects @core-objects', () => {
 
   let commitId
   it('should batch create objects', async () => {
-    let objs = createManyObjects(3333, 'perlin merlin magic')
+    const objs = createManyObjects(3333, 'perlin merlin magic')
     commitId = objs[0].id
 
     await createObjectsBatched(stream.id, objs)
 
-    let parent = await getObject({ streamId: stream.id, objectId: commitId })
+    const parent = await getObject({ streamId: stream.id, objectId: commitId })
     expect(parent.totalChildrenCount).to.equal(3333)
-    let commitChildren = await getObjectChildren({
+    const commitChildren = await getObjectChildren({
       streamId: stream.id,
       objectId: commitId,
       limit: 2
@@ -506,7 +506,7 @@ describe('Objects @core-objects', () => {
 
   it('should not deadlock when batch inserting in random order', async function () {
     this.timeout(5000)
-    let objs = createManyObjects(5000, 'perlin merlin magic')
+    const objs = createManyObjects(5000, 'perlin merlin magic')
 
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -515,16 +515,16 @@ describe('Objects @core-objects', () => {
       }
     }
 
-    let shuffledVersions = []
+    const shuffledVersions = []
     for (let i = 0; i < 3; i++) {
-      let shuffledVersion = objs.slice()
+      const shuffledVersion = objs.slice()
       shuffleArray(shuffledVersion)
       shuffledVersions.push(shuffledVersion)
     }
 
-    let promisses = []
+    const promisses = []
     for (let i = 0; i < shuffledVersions.length; i++) {
-      let promise = createObjectsBatched(stream.id, shuffledVersions[i])
+      const promise = createObjectsBatched(stream.id, shuffledVersions[i])
       promise.catch(() => {})
       promisses.push(promise)
     }
@@ -539,21 +539,21 @@ function createManyObjects(num, noise) {
   num = num || 10000
   noise = noise || Math.random() * 100
 
-  let objs = []
+  const objs = []
 
-  let base = { name: 'base bastard 2', noise: noise, __closure: {} }
+  const base = { name: 'base bastard 2', noise, __closure: {} }
   objs.push(base)
   let k = 0
 
   for (let i = 0; i < num; i++) {
-    let baby = {
+    const baby = {
       name: `mr. ${i}`,
       nest: { duck: i % 2 === 0, mallard: 'falsey', arr: [i + 42, i, i] },
       test: { value: i, secondValue: 'mallard ' + (i % 10) },
       similar: k,
       even: i % 2 === 0,
       objArr: [{ a: i }, { b: i * i }, { c: true }],
-      noise: noise,
+      noise,
       sortValueA: i,
       sortValueB: i * 0.42 * i
     }

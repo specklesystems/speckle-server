@@ -6,7 +6,7 @@ exports.up = async (knex) => {
 }
 
 exports.down = async (knex) => {
-  let hasColumn = await knex.schema.hasColumn('server_config', 'inviteOnly')
+  const hasColumn = await knex.schema.hasColumn('server_config', 'inviteOnly')
   if (hasColumn) {
     await knex.schema.alterTable('server_config', (table) => {
       table.dropColumn('inviteOnly')

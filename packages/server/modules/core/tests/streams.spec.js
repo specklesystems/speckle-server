@@ -26,13 +26,13 @@ const { beforeEachContext } = require(`${appRoot}/test/hooks`)
 const { sleep } = require(`${appRoot}/test/helpers`)
 
 describe('Streams @core-streams', () => {
-  let userOne = {
+  const userOne = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
     password: 'sn3aky-1337-b1m'
   }
 
-  let userTwo = {
+  const userTwo = {
     name: 'Dimitrie Stefanescu 2',
     email: 'didimitrie2@gmail.com',
     password: 'sn3aky-1337-b1m'
@@ -44,13 +44,13 @@ describe('Streams @core-streams', () => {
     userOne.id = await createUser(userOne)
   })
 
-  let testStream = {
+  const testStream = {
     name: 'Test Stream 01',
     description: 'wonderful test stream',
     isPublic: true
   }
 
-  let secondTestStream = { name: 'Test Stream 02', description: 'wot' }
+  const secondTestStream = { name: 'Test Stream 02', description: 'wot' }
 
   describe('Create, Read, Update, Delete Streams', () => {
     it('Should create a stream', async () => {
@@ -66,7 +66,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should get a stream', async () => {
-      let stream = await getStream({ streamId: testStream.id })
+      const stream = await getStream({ streamId: testStream.id })
       expect(stream).to.not.be.null
     })
 
@@ -76,20 +76,20 @@ describe('Streams @core-streams', () => {
         name: 'Modified Name',
         description: 'Wooot'
       })
-      let stream = await getStream({ streamId: testStream.id })
+      const stream = await getStream({ streamId: testStream.id })
       expect(stream.name).to.equal('Modified Name')
       expect(stream.description).to.equal('Wooot')
     })
 
     it('Should get all streams of a user', async () => {
-      let { streams, cursor } = await getUserStreams({ userId: userOne.id })
+      const { streams, cursor } = await getUserStreams({ userId: userOne.id })
       // console.log( res )
       expect(streams).to.have.lengthOf(2)
       expect(cursor).to.exist
     })
 
     it('Should search all streams of a user', async () => {
-      let { streams, cursor } = await getUserStreams({
+      const { streams, cursor } = await getUserStreams({
         userId: userOne.id,
         searchQuery: 'woo'
       })
@@ -133,7 +133,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Stream should show up in the other users` list', async () => {
-      let { streams: userTwoStreams } = await getUserStreams({ userId: userTwo.id })
+      const { streams: userTwoStreams } = await getUserStreams({ userId: userTwo.id })
 
       expect(userTwoStreams).to.have.lengthOf(1)
       expect(userTwoStreams[0]).to.have.property('role')
@@ -141,7 +141,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should get the users with access to a stream', async () => {
-      let users = await getStreamUsers({ streamId: testStream.id })
+      const users = await getStreamUsers({ streamId: testStream.id })
       expect(users).to.have.lengthOf(2)
       expect(users[0]).to.not.have.property('email')
       expect(users[0]).to.have.property('id')
@@ -149,7 +149,7 @@ describe('Streams @core-streams', () => {
 
     it('Should revoke permissions on stream', async () => {
       await revokePermissionsStream({ streamId: testStream.id, userId: userTwo.id })
-      let { streams: userTwoStreams } = await getUserStreams({ userId: userTwo.id })
+      const { streams: userTwoStreams } = await getUserStreams({ userId: userTwo.id })
       expect(userTwoStreams).to.have.lengthOf(0)
     })
 
@@ -176,7 +176,7 @@ describe('Streams @core-streams', () => {
       await sleep(100)
 
       await updateStream({ streamId: s.id, name: 'TU1' })
-      let su = await getStream({ streamId: s.id })
+      const su = await getStream({ streamId: s.id })
 
       expect(su.updatedAt).to.not.equal(s.updatedAt)
     })
@@ -206,13 +206,13 @@ describe('Streams @core-streams', () => {
 
       await sleep(100)
       await createBranch({ name: 'dim/lol', streamId: s.id, authorId: userOne.id })
-      let su = await getStream({ streamId: s.id })
+      const su = await getStream({ streamId: s.id })
       expect(su.updatedAt).to.not.equal(s.updatedAt)
 
       await sleep(100)
-      let b = await getBranchByNameAndStreamId({ streamId: s.id, name: 'dim/lol' })
+      const b = await getBranchByNameAndStreamId({ streamId: s.id, name: 'dim/lol' })
       await deleteBranchById({ id: b.id, streamId: s.id })
-      let su2 = await getStream({ streamId: s.id })
+      const su2 = await getStream({ streamId: s.id })
       expect(su2.updatedAt).to.not.equal(su.updatedAt)
     })
 
@@ -220,7 +220,7 @@ describe('Streams @core-streams', () => {
       s = await getStream({ streamId: s.id })
 
       await sleep(100)
-      let testObject = { foo: 'bar', baz: 'qux' }
+      const testObject = { foo: 'bar', baz: 'qux' }
       testObject.id = await createObject(s.id, testObject)
       await createCommitByBranchName({
         streamId: s.id,
@@ -231,7 +231,7 @@ describe('Streams @core-streams', () => {
         sourceApplication: 'tests'
       })
 
-      let su = await getStream({ streamId: s.id })
+      const su = await getStream({ streamId: s.id })
       expect(su.updatedAt).to.not.equal(s.updatedAt)
     })
   })

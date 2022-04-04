@@ -16,7 +16,7 @@ const {
 module.exports = {
   Stream: {
     async object(parent, args) {
-      let obj = await getObject({ streamId: parent.id, objectId: args.id })
+      const obj = await getObject({ streamId: parent.id, objectId: args.id })
       obj.streamId = parent.id
       return obj
     }
@@ -25,7 +25,7 @@ module.exports = {
     async children(parent, args) {
       // The simple query branch
       if (!args.query && !args.orderBy) {
-        let result = await getObjectChildren({
+        const result = await getObjectChildren({
           streamId: parent.streamId,
           objectId: parent.id,
           limit: args.limit,
@@ -42,7 +42,7 @@ module.exports = {
       }
 
       // The complex query branch
-      let result = await getObjectChildrenQuery({
+      const result = await getObjectChildrenQuery({
         streamId: parent.streamId,
         objectId: parent.id,
         limit: args.limit,
@@ -66,7 +66,7 @@ module.exports = {
         'stream:contributor'
       )
 
-      let ids = await createObjects(args.objectInput.streamId, args.objectInput.objects)
+      const ids = await createObjects(args.objectInput.streamId, args.objectInput.objects)
       return ids
     }
   }

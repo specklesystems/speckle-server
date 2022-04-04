@@ -22,7 +22,7 @@ const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hoo
 
 describe('Server Invites @server-invites', () => {
   describe('Services @server-invites-services', () => {
-    let actor = {
+    const actor = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie-100@gmail.com',
       password: 'wtfwtfwtf'
@@ -34,7 +34,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should create an invite', async () => {
-      let inviteId = await createAndSendInvite({
+      const inviteId = await createAndSendInvite({
         email: 'didimitrie@gmail.com',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -43,7 +43,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should store invited email as lowercase', async () => {
-      let inviteId = await createAndSendInvite({
+      const inviteId = await createAndSendInvite({
         email: 'GerGO@gmaIl.com',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -127,7 +127,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should sanitize invite messages', async () => {
-      let clean = sanitizeMessage(
+      const clean = sanitizeMessage(
         'Click on my <b><a href="https://spam.com">spam link please</a></b>!'
       )
       const includesLink = clean.includes('<a')
@@ -135,12 +135,12 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should get an invite by id', async () => {
-      let inviteId = await createAndSendInvite({
+      const inviteId = await createAndSendInvite({
         email: 'badger@speckle.systems',
         inviterId: actor.id,
         message: 'Hey, join!'
       })
-      let invite = await getInviteById({ id: inviteId })
+      const invite = await getInviteById({ id: inviteId })
 
       expect(invite).to.be.not.null
       expect(invite.email).to.equal('badger@speckle.systems')
@@ -154,7 +154,7 @@ describe('Server Invites @server-invites', () => {
         inviterId: actor.id,
         message: 'Hey, join!'
       })
-      let invite = await getInviteByEmail({ email: 'weasel@speckle.systems' })
+      const invite = await getInviteByEmail({ email: 'weasel@speckle.systems' })
 
       expect(invite).to.be.not.null
       expect(invite.email).to.equal('weasel@speckle.systems')
@@ -163,7 +163,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should validate an invite', async () => {
-      let inviteId = await createAndSendInvite({
+      const inviteId = await createAndSendInvite({
         email: 'raven@speckle.systems',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -183,7 +183,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should use an invite', async () => {
-      let inviteId = await createAndSendInvite({
+      const inviteId = await createAndSendInvite({
         email: 'crow@speckle.systems',
         inviterId: actor.id,
         message: 'Hey, join!'
@@ -199,9 +199,9 @@ describe('Server Invites @server-invites', () => {
           )
         })
 
-      let result = await useInvite({ id: inviteId, email: 'crOw@specKle.systeMs' })
+      const result = await useInvite({ id: inviteId, email: 'crOw@specKle.systeMs' })
 
-      let invite = await getInviteByEmail({ email: 'crow@speCkle.syStems' })
+      const invite = await getInviteByEmail({ email: 'crow@speCkle.syStems' })
       expect(result).equals(true)
       expect(invite.used).equals(true)
 
@@ -215,10 +215,10 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should create a stream invite and use it', async () => {
-      let stream = { name: 'test', description: 'wow' }
+      const stream = { name: 'test', description: 'wow' }
       stream.id = await createStream({ ...stream, ownerId: actor.id })
 
-      let invite = {
+      const invite = {
         email: 'bunny@speckle.systems',
         inviterId: actor.id,
         resourceTarget: 'streams',
@@ -228,7 +228,7 @@ describe('Server Invites @server-invites', () => {
       invite.id = await createAndSendInvite(invite)
 
       // fake registration
-      let guest = {
+      const guest = {
         email: 'bunny@speckle.systems',
         name: 'bunny',
         password: 'ten toes or more'
@@ -237,7 +237,7 @@ describe('Server Invites @server-invites', () => {
 
       await useInvite({ id: invite.id, email: guest.email })
 
-      let { streams } = await getUserStreams({ userId: guest.id })
+      const { streams } = await getUserStreams({ userId: guest.id })
       expect(streams).to.be.an('array')
       expect(streams).to.be.not.null
       expect(streams.length).to.equal(1)
@@ -247,7 +247,7 @@ describe('Server Invites @server-invites', () => {
   // TODO: reinstate these tests; not sure why they pass locally and fail on CI
   describe('API @server-invites-api', () => {
     let server, sendRequest
-    let actor = {
+    const actor = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie-10000@gmail.com',
       password: 'wtfwtfwtf'
@@ -256,7 +256,7 @@ describe('Server Invites @server-invites', () => {
     let testToken
 
     before(async () => {
-      let { app } = await beforeEachContext()
+      const { app } = await beforeEachContext()
       ;({ server, sendRequest } = await initializeTestServer(app))
 
       actor.id = await createUser(actor)
@@ -282,7 +282,7 @@ describe('Server Invites @server-invites', () => {
     })
 
     it('should create a stream invite', async () => {
-      let stream = { name: 'test', description: 'wow' }
+      const stream = { name: 'test', description: 'wow' }
       stream.id = await createStream({ ...stream, ownerId: actor.id })
 
       const res = await sendRequest(testToken, {

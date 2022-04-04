@@ -137,7 +137,7 @@ export default {
         (v) => {
           try {
             // eslint-disable-next-line no-unused-vars
-            let x = new URL(v)
+            const x = new URL(v)
             return true
           } catch {
             return 'Url must be valid'
@@ -155,8 +155,8 @@ export default {
     },
     parsedScopes() {
       if (!this.scopes) return []
-      let arr = []
-      for (let s of this.scopes) {
+      const arr = []
+      for (const s of this.scopes) {
         arr.push({ text: s.name, value: s.name })
         arr.push({ header: s.description })
         arr.push({ divider: true })
@@ -178,7 +178,7 @@ export default {
       this.$mixpanel.track('App Action', { type: 'action', name: 'create' })
 
       try {
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation ($app: AppCreateInput!) {
               appCreate(app: $app)

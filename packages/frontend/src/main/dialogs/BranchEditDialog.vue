@@ -157,7 +157,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView('branch/delete')
       this.$mixpanel.track('Branch Action', { type: 'action', name: 'delete' })
       try {
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchDelete($params: BranchDeleteInput!) {
               branchDelete(branch: $params)
@@ -191,7 +191,7 @@ export default {
         this.loading = true
         this.$matomo && this.$matomo.trackPageView('branch/update')
         this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
               branchUpdate(branch: $params)

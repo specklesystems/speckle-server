@@ -17,19 +17,19 @@ function getS3Config() {
 module.exports = {
   async getFileStream({ fileId }) {
     const s3 = new S3(getS3Config())
-    let Bucket = process.env.S3_BUCKET
-    let Key = `files/${fileId}`
+    const Bucket = process.env.S3_BUCKET
+    const Key = `files/${fileId}`
 
-    let fileStream = s3.getObject({ Key, Bucket }).createReadStream()
+    const fileStream = s3.getObject({ Key, Bucket }).createReadStream()
     return fileStream
   },
 
   async readFile({ fileId }) {
     const s3 = new S3(getS3Config())
-    let Bucket = process.env.S3_BUCKET
-    let Key = `files/${fileId}`
+    const Bucket = process.env.S3_BUCKET
+    const Key = `files/${fileId}`
 
-    let s3Data = await s3.getObject({ Key, Bucket }).promise()
+    const s3Data = await s3.getObject({ Key, Bucket }).promise()
 
     return s3Data.Body
   }

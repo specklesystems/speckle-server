@@ -15,7 +15,7 @@ const {
 module.exports = {
   Query: {
     async app(parent, args) {
-      let app = await getApp({ id: args.id })
+      const app = await getApp({ id: args.id })
       return app
     },
 
@@ -40,7 +40,7 @@ module.exports = {
 
   User: {
     async authorizedApps(parent, args, context) {
-      let res = await getAllAppsAuthorizedByUser({ userId: context.userId })
+      const res = await getAllAppsAuthorizedByUser({ userId: context.userId })
       return res
     },
     async createdApps(parent, args, context) {
@@ -49,12 +49,12 @@ module.exports = {
   },
   Mutation: {
     async appCreate(parent, args, context) {
-      let { id } = await createApp({ ...args.app, authorId: context.userId })
+      const { id } = await createApp({ ...args.app, authorId: context.userId })
       return id
     },
 
     async appUpdate(parent, args, context) {
-      let app = await getApp({ id: args.app.id })
+      const app = await getApp({ id: args.app.id })
       if (!app.author && context.role !== 'server:admin')
         throw new ForbiddenError('You are not authorized to edit this app.')
       if (app.author.id !== context.userId && context.role !== 'server:admin')
@@ -65,7 +65,7 @@ module.exports = {
     },
 
     async appDelete(parent, args, context) {
-      let app = await getApp({ id: args.appId })
+      const app = await getApp({ id: args.appId })
 
       if (!app.author && context.role !== 'server:admin')
         throw new ForbiddenError('You are not authorized to edit this app.')

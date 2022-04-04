@@ -162,12 +162,12 @@ export default {
     },
     orderColumn: {
       get() {
-        let [column] = this.orderBy.split(',')
+        const [column] = this.orderBy.split(',')
         return column
       },
       set(column) {
-        let direction = this.orderBy.split(',').pop()
-        let orderBy = `${column},${direction}`
+        const direction = this.orderBy.split(',').pop()
+        const orderBy = `${column},${direction}`
         this.navigateNext({ orderBy })
       }
     },
@@ -176,8 +176,8 @@ export default {
         return this.orderBy.split(',').pop()
       },
       set(direction) {
-        let [column] = this.orderBy.split(',')
-        let orderBy = `${column},${direction}`
+        const [column] = this.orderBy.split(',')
+        const orderBy = `${column},${direction}`
         this.navigateNext({ orderBy })
       }
     },
@@ -196,7 +196,7 @@ export default {
       this.manipulatedStream = stream
     },
     async deleteStreams() {
-      let ids = [this.manipulatedStream.id]
+      const ids = [this.manipulatedStream.id]
       await this.$apollo.mutate({
         mutation: gql`
           mutation ($ids: [String!]) {
@@ -204,7 +204,7 @@ export default {
           }
         `,
         variables: {
-          ids: ids
+          ids
         },
         update: () => {
           this.$apollo.queries.adminStreams.refetch()
@@ -223,9 +223,9 @@ export default {
     },
     _prepareRoute(routeParams) {
       let newRoute = 'streams'
-      let newParams = { ...this.$props }
+      const newParams = { ...this.$props }
 
-      for (let key in routeParams) {
+      for (const key in routeParams) {
         newParams[key] = routeParams[key]
       }
 

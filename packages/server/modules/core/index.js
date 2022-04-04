@@ -1,5 +1,5 @@
 'use strict'
-let debug = require('debug')
+const debug = require('debug')
 const appRoot = require('app-root-path')
 const {
   registerOrUpdateScope,
@@ -19,13 +19,13 @@ exports.init = async (app) => {
 
   // Register core-based scoeps
   const scopes = require('./scopes.js')
-  for (let scope of scopes) {
+  for (const scope of scopes) {
     await registerOrUpdateScope(scope)
   }
 
   // Register core-based roles
   const roles = require('./roles.js')
-  for (let role of roles) {
+  for (const role of roles) {
     await registerOrUpdateRole(role)
   }
 }

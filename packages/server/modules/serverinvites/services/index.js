@@ -27,7 +27,7 @@ module.exports = {
   }) {
     // check if email is already registered as a user
     email = email.toLowerCase()
-    let existingUser = await getUserByEmail({ email })
+    const existingUser = await getUserByEmail({ email })
 
     if (existingUser)
       throw new Error(
@@ -43,15 +43,15 @@ module.exports = {
     }
 
     // check if email is already invited
-    let existingInvite = await module.exports.getInviteByEmail({ email })
+    const existingInvite = await module.exports.getInviteByEmail({ email })
     if (existingInvite) throw new Error('Already invited!')
 
-    let inviter = await getUserById({ userId: inviterId })
+    const inviter = await getUserById({ userId: inviterId })
     if (!inviter) throw new Error('We dont know this inviter guy')
-    let invite = {
+    const invite = {
       id: crs({ length: 20 }),
       email,
-      inviterId: inviterId,
+      inviterId,
       message,
       resourceTarget,
       resourceId,
@@ -60,8 +60,8 @@ module.exports = {
 
     await Invites().insert(invite)
 
-    let serverInfo = await getServerInfo()
-    let inviteLink = new URL(
+    const serverInfo = await getServerInfo()
+    const inviteLink = new URL(
       `/authn/register?inviteId=${invite.id}`,
       process.env.CANONICAL_URL
     )
@@ -126,7 +126,7 @@ This email was sent from ${serverInfo.name} at ${
       subject = `${inviter.name} wants to share a stream on Speckle with you!`
     }
 
-    await sendEmail({ to: email, subject: subject, text: emailText, html: emailHtml })
+    await sendEmail({ to: email, subject, text: emailText, html: emailHtml })
 
     return invite.id
   },
@@ -148,7 +148,7 @@ This email was sent from ${serverInfo.name} at ${
     // TODO
     // send email to inviter that their invite was accepted?
 
-    let invite = await module.exports.getInviteById({ id })
+    const invite = await module.exports.getInviteById({ id })
     if (!invite) throw new Error('Invite not found')
     if (invite.used) throw new Error('Invite has been used')
     if (invite.email !== email.toLowerCase())
@@ -157,7 +157,7 @@ This email was sent from ${serverInfo.name} at ${
       )
 
     if (invite.resourceId && invite.resourceTarget && invite.role) {
-      let user = await getUserByEmail({ email: invite.email })
+      const user = await getUserByEmail({ email: invite.email })
       if (!user) throw new Error('Failed to find new user. Did they register already?')
       switch (invite.resourceTarget) {
         case 'streams':
@@ -172,7 +172,7 @@ This email was sent from ${serverInfo.name} at ${
       }
     }
 
-    await Invites().where({ id: id }).update({ used: true })
+    await Invites().where({ id }).update({ used: true })
     return true
   },
 

@@ -44,7 +44,7 @@ const { createObject } = require('../services/objects')
 const { beforeEachContext } = require(`${appRoot}/test/hooks`)
 
 describe('Actors & Tokens @user-services', () => {
-  let myTestActor = {
+  const myTestActor = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
     password: 'sn3aky-1337-b1m'
@@ -53,38 +53,38 @@ describe('Actors & Tokens @user-services', () => {
   before(async () => {
     await beforeEachContext()
 
-    let actorId = await createUser(myTestActor)
+    const actorId = await createUser(myTestActor)
     myTestActor.id = actorId
   })
 
   describe('Users @core-users', () => {
     it('Should create an user', async () => {
-      let newUser = { ...myTestActor }
+      const newUser = { ...myTestActor }
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
       newUser.password = 'testthebest'
 
-      let actorId = await createUser(newUser)
+      const actorId = await createUser(newUser)
       newUser.id = actorId
 
       expect(actorId).to.be.a('string')
     })
 
     it('Should store user email lowercase', async () => {
-      let user = {
+      const user = {
         name: 'Marty McFly',
         email: 'Marty@Mc.Fly',
         password: 'something_future_proof'
       }
 
-      let userId = await createUser(user)
+      const userId = await createUser(user)
 
-      let storedUser = await getUser(userId)
+      const storedUser = await getUser(userId)
       expect(storedUser.email).to.equal(user.email.toLowerCase())
     })
 
     it('Get user by should ignore email casing', async () => {
-      let user = await getUserByEmail({ email: 'BiLL@GaTES.cOm' })
+      const user = await getUserByEmail({ email: 'BiLL@GaTES.cOm' })
       expect(user.email).to.equal('bill@gates.com')
     })
 
@@ -132,7 +132,7 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should not create an user with the same email', async () => {
-      let newUser = {}
+      const newUser = {}
       newUser.name = 'Bill Gates'
       newUser.email = 'bill@gates.com'
       newUser.password = 'testthebest'
@@ -149,35 +149,35 @@ describe('Actors & Tokens @user-services', () => {
     let ballmerUserId = null
 
     it('Find or create should create a user', async () => {
-      let newUser = {}
+      const newUser = {}
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
 
-      let { id } = await findOrCreateUser({ user: newUser })
+      const { id } = await findOrCreateUser({ user: newUser })
       ballmerUserId = id
       expect(id).to.be.a('string')
     })
 
     it('Find or create should NOT create a user', async () => {
-      let newUser = {}
+      const newUser = {}
       newUser.name = 'Steve Ballmer Balls'
       newUser.email = 'ballmer@balls.com'
       newUser.password = 'testthebest'
       newUser.suuid = 'really it does not matter'
 
-      let { id } = await findOrCreateUser({ user: newUser })
+      const { id } = await findOrCreateUser({ user: newUser })
       expect(id).to.equal(ballmerUserId)
     })
 
     // Note: deletion is more complicated.
     it('Should delete a user', async () => {
-      let soloOwnerStream = {
+      const soloOwnerStream = {
         name: 'Test Stream 01',
         description: 'wonderful test stream',
         isPublic: true
       }
-      let multiOwnerStream = {
+      const multiOwnerStream = {
         name: 'Test Stream 02',
         description: 'another test stream',
         isPublic: true
@@ -199,14 +199,14 @@ describe('Actors & Tokens @user-services', () => {
       })
 
       // create a branch for ballmer on the multiowner stream
-      let branch = { name: 'ballmer/dev' }
+      const branch = { name: 'ballmer/dev' }
       branch.id = await createBranch({
         ...branch,
         streamId: multiOwnerStream.id,
         authorId: ballmerUserId
       })
 
-      let branchSecond = { name: 'steve/jobs' }
+      const branchSecond = { name: 'steve/jobs' }
       branchSecond.id = await createBranch({
         ...branchSecond,
         streamId: multiOwnerStream.id,
@@ -214,8 +214,8 @@ describe('Actors & Tokens @user-services', () => {
       })
 
       // create an object and a commit around it on the multiowner stream
-      let objId = await createObject(multiOwnerStream.id, { pie: 'in the sky' })
-      let commitId = await createCommitByBranchName({
+      const objId = await createObject(multiOwnerStream.id, { pie: 'in the sky' })
+      const commitId = await createCommitByBranchName({
         streamId: multiOwnerStream.id,
         branchName: 'ballmer/dev',
         message: 'breakfast commit',
@@ -230,29 +230,29 @@ describe('Actors & Tokens @user-services', () => {
         assert.fail('user stream not deleted')
       }
 
-      let multiOwnerStreamCopy = await getStream({ streamId: multiOwnerStream.id })
+      const multiOwnerStreamCopy = await getStream({ streamId: multiOwnerStream.id })
       if (!multiOwnerStreamCopy || multiOwnerStreamCopy.id !== multiOwnerStream.id) {
         assert.fail('shared stream deleted')
       }
 
-      let branches = await getBranchesByStreamId({ streamId: multiOwnerStream.id })
+      const branches = await getBranchesByStreamId({ streamId: multiOwnerStream.id })
       expect(branches.items.length).to.equal(3)
 
-      let branchCommits = await getCommitsByBranchName({
+      const branchCommits = await getCommitsByBranchName({
         streamId: multiOwnerStream.id,
         branchName: 'ballmer/dev'
       })
       expect(branchCommits.commits.length).to.equal(1)
 
-      let commit = await getCommitById({ streamId: multiOwnerStream.id, id: commitId })
+      const commit = await getCommitById({ streamId: multiOwnerStream.id, id: commitId })
       expect(commit).to.be.not.null
 
-      let commitsByStreamId = await getCommitsByStreamId({
+      const commitsByStreamId = await getCommitsByStreamId({
         streamId: multiOwnerStream.id
       })
       expect(commitsByStreamId.commits.length).to.equal(1)
 
-      let user = await getUser(ballmerUserId)
+      const user = await getUser(ballmerUserId)
       if (user) assert.fail('user not deleted')
     })
 
@@ -268,12 +268,12 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should get a user', async () => {
-      let actor = await getUser(myTestActor.id)
+      const actor = await getUser(myTestActor.id)
       expect(actor).to.not.have.property('passwordDigest')
     })
 
     it('Should search and get users', async () => {
-      let { users } = await searchUsers('gates', 20, null)
+      const { users } = await searchUsers('gates', 20, null)
       expect(users).to.have.lengthOf(1)
       expect(users[0].name).to.equal('Bill Gates')
     })
@@ -301,22 +301,22 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should update a user', async () => {
-      let updatedActor = { ...myTestActor }
+      const updatedActor = { ...myTestActor }
       updatedActor.name = 'didimitrie'
 
       await updateUser(myTestActor.id, updatedActor)
 
-      let actor = await getUser(myTestActor.id)
+      const actor = await getUser(myTestActor.id)
       expect(actor.name).to.equal(updatedActor.name)
     })
 
     it('Should not update password', async () => {
-      let updatedActor = { ...myTestActor }
+      const updatedActor = { ...myTestActor }
       updatedActor.password = 'failwhale'
 
       await updateUser(myTestActor.id, updatedActor)
 
-      let match = await validatePasssword({
+      const match = await validatePasssword({
         email: myTestActor.email,
         password: 'failwhale'
       })
@@ -324,19 +324,19 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should validate user password', async () => {
-      let actor = {}
+      const actor = {}
       actor.password = 'super-test-200'
       actor.email = 'e@ma.il'
       actor.name = 'Bob Gates'
 
       await createUser(actor)
 
-      let match = await validatePasssword({
+      const match = await validatePasssword({
         email: actor.email,
         password: 'super-test-200'
       })
       expect(match).to.equal(true)
-      let matchWrong = await validatePasssword({
+      const matchWrong = await validatePasssword({
         email: actor.email,
         password: 'super-test-2000'
       })
@@ -344,14 +344,14 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should update the password of a user', async () => {
-      let id = await createUser({
+      const id = await createUser({
         name: 'D',
         email: 'tester@mcbester.com',
         password: 'H4!b5at+kWls-8yh4Guq'
       }) // https://mostsecure.pw
       await updateUserPassword({ id, newPassword: 'Hello Dogs and Cats' })
 
-      let match = await validatePasssword({
+      const match = await validatePasssword({
         email: 'tester@mcbester.com',
         password: 'Hello Dogs and Cats'
       })
@@ -384,8 +384,8 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should create a personal api token', async () => {
-      let scopes = ['streams:write', 'profile:read']
-      let name = 'My Test Token'
+      const scopes = ['streams:write', 'profile:read']
+      const name = 'My Test Token'
 
       myFirstToken = await createPersonalAccessToken(myTestActor.id, name, scopes)
       expect(myFirstToken).to.have.lengthOf(42)
@@ -397,7 +397,7 @@ describe('Actors & Tokens @user-services', () => {
     // } )
 
     it('Should validate a token', async () => {
-      let res = await validateToken(pregeneratedToken)
+      const res = await validateToken(pregeneratedToken)
       expect(res).to.have.property('valid')
       expect(res.valid).to.equal(true)
       expect(res).to.have.property('scopes')
@@ -407,19 +407,19 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Should revoke an api token', async () => {
       await revokeToken(revokedToken, myTestActor.id)
-      let res = await validateToken(revokedToken)
+      const res = await validateToken(revokedToken)
       expect(res).to.have.property('valid')
       expect(res.valid).to.equal(false)
     })
 
     it('Should refuse an expired token', async () => {
-      let res = await validateToken(expireSoonToken)
+      const res = await validateToken(expireSoonToken)
       expect(res.valid).to.equal(false)
       // assert.fail( )
     })
 
     it('Should get the tokens of an user', async () => {
-      let userTokens = await getUserTokens(myTestActor.id)
+      const userTokens = await getUserTokens(myTestActor.id)
       expect(userTokens).to.be.an('array')
       expect(userTokens).to.have.lengthOf(2)
     })

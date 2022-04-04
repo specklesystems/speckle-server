@@ -17,7 +17,7 @@ module.exports = {
     info,
     message
   }) {
-    let dbObject = {
+    const dbObject = {
       streamId, // abc
       resourceType, // "commit"
       resourceId, // commit id
@@ -28,9 +28,9 @@ module.exports = {
     }
     await StreamActivity().insert(dbObject)
     if (streamId) {
-      let webhooksPayload = {
-        streamId: streamId,
-        userId: userId,
+      const webhooksPayload = {
+        streamId,
+        userId,
         activityMessage: message,
         event: {
           event_name: actionType,
@@ -50,14 +50,14 @@ module.exports = {
       limit = 200
     }
 
-    let dbQuery = StreamActivity().where({ streamId: streamId })
-    if (actionType) dbQuery.andWhere({ actionType: actionType })
+    const dbQuery = StreamActivity().where({ streamId })
+    if (actionType) dbQuery.andWhere({ actionType })
     if (after) dbQuery.andWhere('time', '>', after)
     if (before) dbQuery.andWhere('time', '<', before)
     if (cursor) dbQuery.andWhere('time', '<', cursor)
     dbQuery.orderBy('time', 'desc').limit(limit)
 
-    let results = await dbQuery.select('*')
+    const results = await dbQuery.select('*')
 
     return {
       items: results,
@@ -70,14 +70,14 @@ module.exports = {
       limit = 200
     }
 
-    let dbQuery = StreamActivity().where({ userId: userId })
-    if (actionType) dbQuery.andWhere({ actionType: actionType })
+    const dbQuery = StreamActivity().where({ userId })
+    if (actionType) dbQuery.andWhere({ actionType })
     if (after) dbQuery.andWhere('time', '>', after)
     if (before) dbQuery.andWhere('time', '<', before)
     if (cursor) dbQuery.andWhere('time', '<', cursor)
     dbQuery.orderBy('time', 'desc').limit(limit)
 
-    let results = await dbQuery.select('*')
+    const results = await dbQuery.select('*')
     return {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
@@ -97,14 +97,14 @@ module.exports = {
       limit = 200
     }
 
-    let dbQuery = StreamActivity().where({ resourceType, resourceId })
-    if (actionType) dbQuery.andWhere({ actionType: actionType })
+    const dbQuery = StreamActivity().where({ resourceType, resourceId })
+    if (actionType) dbQuery.andWhere({ actionType })
     if (after) dbQuery.andWhere('time', '>', after)
     if (before) dbQuery.andWhere('time', '<', before)
     if (cursor) dbQuery.andWhere('time', '<', cursor)
     dbQuery.orderBy('time', 'desc').limit(limit)
 
-    let results = await dbQuery.select('*')
+    const results = await dbQuery.select('*')
     return {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
@@ -117,7 +117,7 @@ module.exports = {
     }
 
     let sqlFilters = ''
-    let sqlVariables = []
+    const sqlVariables = []
     if (after) {
       sqlFilters += ' AND time > ?'
       sqlVariables.push(after)
@@ -131,7 +131,7 @@ module.exports = {
       sqlVariables.push(cursor)
     }
 
-    let dbRawQuery = `
+    const dbRawQuery = `
       SELECT act.*
       FROM stream_acl acl
       INNER JOIN stream_activity act ON acl."resourceId" = act."streamId"
@@ -142,7 +142,7 @@ module.exports = {
 
     sqlVariables.unshift(userId)
     sqlVariables.push(limit)
-    let results = (await knex.raw(dbRawQuery, sqlVariables)).rows
+    const results = (await knex.raw(dbRawQuery, sqlVariables)).rows
     return {
       items: results,
       cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
@@ -150,34 +150,34 @@ module.exports = {
   },
 
   async getActivityCountByResourceId({ resourceId, actionType, after, before }) {
-    let query = StreamActivity().count().where({ resourceId })
+    const query = StreamActivity().count().where({ resourceId })
     if (actionType) query.andWhere({ actionType })
     if (after) query.andWhere('time', '>', after)
     if (before) query.andWhere('time', '<', before)
-    let [res] = await query
+    const [res] = await query
     return parseInt(res.count)
   },
 
   async getActivityCountByStreamId({ streamId, actionType, after, before }) {
-    let query = StreamActivity().count().where({ streamId })
+    const query = StreamActivity().count().where({ streamId })
     if (actionType) query.andWhere({ actionType })
     if (after) query.andWhere('time', '>', after)
     if (before) query.andWhere('time', '<', before)
-    let [res] = await query
+    const [res] = await query
     return parseInt(res.count)
   },
 
   async getActivityCountByUserId({ userId, actionType, after, before }) {
-    let query = StreamActivity().count().where({ userId })
+    const query = StreamActivity().count().where({ userId })
     if (actionType) query.andWhere({ actionType })
     if (after) query.andWhere('time', '>', after)
     if (before) query.andWhere('time', '<', before)
-    let [res] = await query
+    const [res] = await query
     return parseInt(res.count)
   },
 
   async getTimelineCount({ userId, after, before }) {
-    let query = StreamAcl()
+    const query = StreamAcl()
       .count()
       .innerJoin('stream_activity', {
         'stream_acl.resourceId': 'stream_activity.streamId'
@@ -185,7 +185,7 @@ module.exports = {
       .where({ 'stream_acl.userId': userId })
     if (after) query.andWhere('stream_activity.time', '>', after)
     if (before) query.andWhere('stream_activity.time', '<', before)
-    let [res] = await query
+    const [res] = await query
     return parseInt(res.count)
   }
 }

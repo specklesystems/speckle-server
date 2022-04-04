@@ -83,12 +83,12 @@ describe('Favorite streams', () => {
     name: 'Not My Stream 2',
     isPublic: true
   }
-  let me = {
+  const me = {
     name: 'Itsa Me',
     email: 'me@gmail.com',
     password: 'sn3aky-1337-b1m'
   }
-  let otherGuy = {
+  const otherGuy = {
     name: 'Some Other DUde',
     email: 'otherguy@gmail.com',
     password: 'sn3aky-1337-b1m'
@@ -179,7 +179,7 @@ describe('Favorite streams', () => {
     })
 
     describe('and favorited', () => {
-      let favoritedStream = {
+      const favoritedStream = {
         name: 'Favorited Stream',
         isPublic: true
       }
@@ -286,7 +286,7 @@ describe('Favorite streams', () => {
 
         let failsafe = 3
         while (failsafe > 0) {
-          let res = await getPaginatedAndAssert(nextCursor)
+          const res = await getPaginatedAndAssert(nextCursor)
           returnedStreamIds = returnedStreamIds.concat(res.sids)
           nextCursor = res.cursor
 

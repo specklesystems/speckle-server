@@ -120,7 +120,7 @@ export default {
     }
   },
   async mounted() {
-    let res = await this.$apollo.query({
+    const res = await this.$apollo.query({
       query: gql`
         query {
           stream(id: "${this.streamId}") {
@@ -156,15 +156,15 @@ export default {
         this.objectId = null
         return
       }
-      let pcs = this.objectIdInput.split('/')
-      let objectId = pcs.reverse()[0]
+      const pcs = this.objectIdInput.split('/')
+      const objectId = pcs.reverse()[0]
       if (objectId.length !== 32) {
         this.objectIdError = 'Invalid id length.'
         this.objectId = null
         return
       }
       if (pcs.length !== 1) {
-        let streamId = pcs[2]
+        const streamId = pcs[2]
         if (streamId !== this.$route.params.streamId) {
           this.objectIdError = 'Objects do not belong to the same stream.'
           this.objectId = null

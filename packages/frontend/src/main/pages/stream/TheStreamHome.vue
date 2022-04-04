@@ -160,7 +160,7 @@ export default {
   computed: {
     latestBranches() {
       if (!this.stream) return []
-      let branches = this.stream.branches.items
+      const branches = this.stream.branches.items
         .filter((br) => br.name !== 'globals' && br.commits.totalCount !== 0)
         .slice()
         .sort(

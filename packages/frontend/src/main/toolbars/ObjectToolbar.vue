@@ -56,8 +56,8 @@ export default {
   computed: {
     commitDate() {
       if (!this.stream.commit) return null
-      let date = new Date(this.stream.commit.createdAt)
-      let options = { year: 'numeric', month: 'long', day: 'numeric' }
+      const date = new Date(this.stream.commit.createdAt)
+      const options = { year: 'numeric', month: 'long', day: 'numeric' }
 
       return date.toLocaleString(undefined, options)
     }

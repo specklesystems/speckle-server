@@ -20,12 +20,12 @@ const RefreshTokens = () => knex('refresh_tokens')
 
 module.exports = {
   async getApp({ id }) {
-    let allScopes = await Scopes().select('*')
+    const allScopes = await Scopes().select('*')
 
-    let app = await ServerApps().select('*').where({ id: id }).first()
+    const app = await ServerApps().select('*').where({ id }).first()
     if (!app) return null
 
-    let appScopeNames = (
+    const appScopeNames = (
       await ServerAppsScopes().select('scopeName').where({ appId: id })
     ).map((s) => s.scopeName)
 
@@ -38,7 +38,7 @@ module.exports = {
   },
 
   async getAllPublicApps() {
-    let apps = await ServerApps()
+    const apps = await ServerApps()
       .select(
         'server_apps.id',
         'server_apps.name',
@@ -64,7 +64,7 @@ module.exports = {
   },
 
   async getAllAppsCreatedByUser({ userId }) {
-    let apps = await ServerApps()
+    const apps = await ServerApps()
       .select(
         'server_apps.id',
         'server_apps.secret',
@@ -91,7 +91,7 @@ module.exports = {
   },
 
   async getAllAppsAuthorizedByUser({ userId }) {
-    let query = knex.raw(
+    const query = knex.raw(
       `
       SELECT DISTINCT ON (a."appId") a."appId" as id, sa."name", sa."description",  sa."trustByDefault", sa."redirectUrl" as "redirectUrl", sa.logo, sa."termsAndConditionsLink", json_build_object('name', u.name, 'id', sa."authorId") as author
       FROM user_server_app_tokens a
@@ -102,7 +102,7 @@ module.exports = {
       [userId]
     )
 
-    let { rows } = await query
+    const { rows } = await query
     return rows
   },
 
@@ -114,7 +114,7 @@ module.exports = {
       throw new Error('Cannot create an app with no scopes.')
     }
 
-    let scopes = [...app.scopes]
+    const scopes = [...app.scopes]
 
     delete app.scopes
     delete app.firstparty
@@ -144,7 +144,7 @@ module.exports = {
     delete app.secret
     delete app.scopes
 
-    let [{ id }] = await ServerApps().returning('id').where({ id: app.id }).update(app)
+    const [{ id }] = await ServerApps().returning('id').where({ id: app.id }).update(app)
 
     return id
   },
@@ -152,24 +152,24 @@ module.exports = {
   async deleteApp({ id }) {
     await module.exports.revokeExistingAppCredentials({ appId: id })
 
-    return await ServerApps().where({ id: id }).del()
+    return await ServerApps().where({ id }).del()
   },
 
   async revokeRefreshToken({ tokenId }) {
     tokenId = tokenId.slice(0, 10)
-    let delCount = await RefreshTokens().where({ id: tokenId }).del()
+    const delCount = await RefreshTokens().where({ id: tokenId }).del()
 
     if (delCount === 0) throw new Error('Did not revoke token')
     return true
   },
 
   async revokeExistingAppCredentials({ appId }) {
-    await AuthorizationCodes().where({ appId: appId }).del()
-    await RefreshTokens().where({ appId: appId }).del()
+    await AuthorizationCodes().where({ appId }).del()
+    await RefreshTokens().where({ appId }).del()
 
-    let resApiTokenDelete = await ApiTokens()
+    const resApiTokenDelete = await ApiTokens()
       .whereIn('id', (qb) => {
-        qb.select('tokenId').from('user_server_app_tokens').where({ appId: appId })
+        qb.select('tokenId').from('user_server_app_tokens').where({ appId })
       })
       .del()
 
@@ -177,13 +177,13 @@ module.exports = {
   },
 
   async revokeExistingAppCredentialsForUser({ appId, userId }) {
-    await AuthorizationCodes().where({ appId: appId, userId: userId }).del()
-    await RefreshTokens().where({ appId: appId, userId: userId }).del()
-    let resApiTokenDelete = await ApiTokens()
+    await AuthorizationCodes().where({ appId, userId }).del()
+    await RefreshTokens().where({ appId, userId }).del()
+    const resApiTokenDelete = await ApiTokens()
       .whereIn('id', (qb) => {
         qb.select('tokenId')
           .from('user_server_app_tokens')
-          .where({ appId: appId, userId: userId })
+          .where({ appId, userId })
       })
       .del()
 
@@ -191,11 +191,11 @@ module.exports = {
   },
 
   async createAuthorizationCode({ appId, userId, challenge }) {
-    let ac = {
+    const ac = {
       id: crs({ length: 42 }),
-      appId: appId,
-      userId: userId,
-      challenge: challenge
+      appId,
+      userId,
+      challenge
     }
 
     await AuthorizationCodes().insert(ac)
@@ -203,7 +203,7 @@ module.exports = {
   },
 
   async createAppTokenFromAccessCode({ appId, appSecret, accessCode, challenge }) {
-    let code = await AuthorizationCodes().select().where({ id: accessCode }).first()
+    const code = await AuthorizationCodes().select().where({ id: accessCode }).first()
 
     if (!code) throw new Error('Access code not found.')
     if (code.appId !== appId)
@@ -218,12 +218,12 @@ module.exports = {
 
     if (code.challenge !== challenge) throw new Error('Invalid request')
 
-    let app = await ServerApps().select('*').where({ id: appId }).first()
+    const app = await ServerApps().select('*').where({ id: appId }).first()
 
     if (!app) throw new Error('Invalid app')
     if (app.secret !== appSecret) throw new Error('Invalid app credentials')
 
-    const scopes = await ServerAppsScopes().select('scopeName').where({ appId: appId })
+    const scopes = await ServerAppsScopes().select('scopeName').where({ appId })
 
     const appScopes = scopes.map((s) => s.scopeName)
 
@@ -236,12 +236,12 @@ module.exports = {
     await ServerAppsTokens().insert({
       userId: code.userId,
       tokenId: appToken.slice(0, 10),
-      appId: appId
+      appId
     })
 
-    let bareToken = await createBareToken()
+    const bareToken = await createBareToken()
 
-    let refreshToken = {
+    const refreshToken = {
       id: bareToken.tokenId,
       tokenDigest: bareToken.tokenHash,
       appId: app.id,
@@ -257,10 +257,10 @@ module.exports = {
   },
 
   async refreshAppToken({ refreshToken, appId, appSecret }) {
-    let refreshTokenId = refreshToken.slice(0, 10)
-    let refreshTokenContent = refreshToken.slice(10, 42)
+    const refreshTokenId = refreshToken.slice(0, 10)
+    const refreshTokenContent = refreshToken.slice(10, 42)
 
-    let refreshTokenDb = await RefreshTokens()
+    const refreshTokenDb = await RefreshTokens()
       .select('*')
       .where({ id: refreshTokenId })
       .first()
@@ -275,10 +275,10 @@ module.exports = {
       throw new Error('Refresh token expired')
     }
 
-    let valid = await bcrypt.compare(refreshTokenContent, refreshTokenDb.tokenDigest)
+    const valid = await bcrypt.compare(refreshTokenContent, refreshTokenDb.tokenDigest)
     if (!valid) throw new Error('Invalid token') // sneky hackstors
 
-    let app = await module.exports.getApp({ id: appId })
+    const app = await module.exports.getApp({ id: appId })
     if (app.secret !== appSecret) throw new Error('Invalid request')
 
     // Create the new token
@@ -291,16 +291,16 @@ module.exports = {
     await ServerAppsTokens().insert({
       userId: refreshTokenDb.userId,
       tokenId: appToken.slice(0, 10),
-      appId: appId
+      appId
     })
 
     // Create a new refresh token
-    let bareToken = await createBareToken()
+    const bareToken = await createBareToken()
 
-    let freshRefreshToken = {
+    const freshRefreshToken = {
       id: bareToken.tokenId,
       tokenDigest: bareToken.tokenHash,
-      appId: appId,
+      appId,
       userId: refreshTokenDb.userId
     }
 

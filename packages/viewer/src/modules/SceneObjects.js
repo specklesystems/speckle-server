@@ -59,16 +59,16 @@ export default class SceneObjects {
   }
 
   getObjectsProperties(includeAll = true) {
-    let flattenObject = function (obj) {
-      let flatten = {}
-      for (let k in obj) {
+    const flattenObject = function (obj) {
+      const flatten = {}
+      for (const k in obj) {
         if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k))
           continue
-        let v = obj[k]
+        const v = obj[k]
         if (v === null || v === undefined || Array.isArray(v)) continue
         if (v.constructor === Object) {
-          let flattenProp = flattenObject(v)
-          for (let pk in flattenProp) {
+          const flattenProp = flattenObject(v)
+          for (const pk in flattenProp) {
             flatten[`${k}.${pk}`] = flattenProp[pk]
           }
           continue
@@ -78,13 +78,13 @@ export default class SceneObjects {
       return flatten
     }
 
-    let targetObjects = includeAll ? this.allObjects : this.objectsInScene
+    const targetObjects = includeAll ? this.allObjects : this.objectsInScene
 
-    let propValues = {}
-    for (let objGroup of targetObjects.children) {
-      for (let threeObj of objGroup.children) {
-        let obj = flattenObject(threeObj.userData)
-        for (let prop of Object.keys(obj)) {
+    const propValues = {}
+    for (const objGroup of targetObjects.children) {
+      for (const threeObj of objGroup.children) {
+        const obj = flattenObject(threeObj.userData)
+        for (const prop of Object.keys(obj)) {
           if (!(prop in propValues)) {
             propValues[prop] = []
           }
@@ -93,9 +93,9 @@ export default class SceneObjects {
       }
     }
 
-    let propInfo = {}
-    for (let prop in propValues) {
-      let pinfo = {
+    const propInfo = {}
+    for (const prop in propValues) {
+      const pinfo = {
         type: typeof propValues[prop][0],
         objectCount: propValues[prop].length,
         allValues: propValues[prop],
@@ -103,7 +103,7 @@ export default class SceneObjects {
         minValue: propValues[prop][0],
         maxValue: propValues[prop][0]
       }
-      for (let v of propValues[prop]) {
+      for (const v of propValues[prop]) {
         if (v < pinfo.minValue) pinfo.minValue = v
         if (v > pinfo.maxValue) pinfo.maxValue = v
         if (!(v in pinfo.uniqueValues)) {
@@ -118,12 +118,12 @@ export default class SceneObjects {
   }
 
   async applyFilterToGroup(threejsGroup, filter, ghostedObjectsOutput) {
-    let ret = new THREE.Group()
+    const ret = new THREE.Group()
     ret.name = 'filtered_' + threejsGroup.name
 
-    for (let obj of threejsGroup.children) {
+    for (const obj of threejsGroup.children) {
       await this.asyncPause()
-      let filteredObj = this.filteringManager.filterAndColorObject(obj, filter)
+      const filteredObj = this.filteringManager.filterAndColorObject(obj, filter)
       if (filteredObj) {
         if (ghostedObjectsOutput && filteredObj.userData.hidden) {
           ghostedObjectsOutput.add(filteredObj)
@@ -136,7 +136,7 @@ export default class SceneObjects {
   }
 
   disposeAndClearGroup(threejsGroup, disposeGeometry = true) {
-    for (let child of threejsGroup.children) {
+    for (const child of threejsGroup.children) {
       if (child.type === 'Group') {
         this.disposeAndClearGroup(child, disposeGeometry)
       }
@@ -152,7 +152,7 @@ export default class SceneObjects {
 
     if (filter === null) {
       // Remove filters, use allObjects
-      let newGoupedSolidObjects = await this.groupSolidObjects(this.allSolidObjects)
+      const newGoupedSolidObjects = await this.groupSolidObjects(this.allSolidObjects)
 
       if (this.groupedSolidObjects !== null) {
         this.disposeAndClearGroup(this.groupedSolidObjects)
@@ -178,13 +178,13 @@ export default class SceneObjects {
       // A filter is to be applied
       this.filteringManager.initFilterOperation()
 
-      let newFilteredObjects = new THREE.Group()
+      const newFilteredObjects = new THREE.Group()
       newFilteredObjects.name = 'FilteredObjects'
 
-      let newGhostedObjects = new THREE.Group()
+      const newGhostedObjects = new THREE.Group()
       newGhostedObjects.name = 'GhostedObjects'
 
-      let filteredSolidObjects = await this.applyFilterToGroup(
+      const filteredSolidObjects = await this.applyFilterToGroup(
         this.allSolidObjects,
         filter,
         newGhostedObjects
@@ -192,21 +192,21 @@ export default class SceneObjects {
       filteredSolidObjects.visible = false
       newFilteredObjects.add(filteredSolidObjects)
 
-      let filteredLineObjects = await this.applyFilterToGroup(
+      const filteredLineObjects = await this.applyFilterToGroup(
         this.allLineObjects,
         filter,
         newGhostedObjects
       )
       newFilteredObjects.add(filteredLineObjects)
 
-      let filteredTransparentObjects = await this.applyFilterToGroup(
+      const filteredTransparentObjects = await this.applyFilterToGroup(
         this.allTransparentObjects,
         filter,
         newGhostedObjects
       )
       newFilteredObjects.add(filteredTransparentObjects)
 
-      let filteredPointObjects = await this.applyFilterToGroup(
+      const filteredPointObjects = await this.applyFilterToGroup(
         this.allPointObjects,
         filter,
         newGhostedObjects
@@ -214,12 +214,12 @@ export default class SceneObjects {
       newFilteredObjects.add(filteredPointObjects)
 
       // group solid objects
-      let groupedFilteredSolidObjects = await this.groupSolidObjects(
+      const groupedFilteredSolidObjects = await this.groupSolidObjects(
         filteredSolidObjects
       )
       newFilteredObjects.add(groupedFilteredSolidObjects)
 
-      let groupedGhostedObjects = await this.groupSolidObjects(newGhostedObjects)
+      const groupedGhostedObjects = await this.groupSolidObjects(newGhostedObjects)
 
       // Sync update scene
       if (this.filteredObjects !== null) {
@@ -246,15 +246,15 @@ export default class SceneObjects {
   }
 
   flattenGroup(group) {
-    let acc = []
-    for (let child of group.children) {
+    const acc = []
+    for (const child of group.children) {
       if (child instanceof THREE.Group) {
         acc.push(...this.flattenGroup(child))
       } else {
         acc.push(child.clone())
       }
     }
-    for (let element of acc) {
+    for (const element of acc) {
       element.geometry = element.geometry.clone()
       element.geometry.applyMatrix4(group.matrix)
     }
@@ -262,14 +262,14 @@ export default class SceneObjects {
   }
 
   async groupSolidObjects(threejsGroup) {
-    let materialIdToBufferGeometry = {}
-    let materialIdToMaterial = {}
-    let materialIdToMeshes = {}
+    const materialIdToBufferGeometry = {}
+    const materialIdToMaterial = {}
+    const materialIdToMeshes = {}
 
-    let groupedObjects = new THREE.Group()
+    const groupedObjects = new THREE.Group()
     groupedObjects.name = 'GroupedSolidObjects'
 
-    for (let obj of threejsGroup.children) {
+    for (const obj of threejsGroup.children) {
       let meshes = []
       if (obj instanceof THREE.Group) {
         meshes = this.flattenGroup(obj)
@@ -277,8 +277,8 @@ export default class SceneObjects {
         meshes = [obj]
       }
 
-      for (let mesh of meshes) {
-        let m = mesh.material
+      for (const mesh of meshes) {
+        const m = mesh.material
 
         // Pass-through non mesh materials (blocks can contain lines, that end up here)
         if (
@@ -311,7 +311,7 @@ export default class SceneObjects {
 
         // Max 1024 objects per group (mergeBufferGeometries is sync and can freeze for large data)
         if (materialIdToBufferGeometry[materialId].length >= 1024) {
-          let archivedMaterialId = `arch//${materialId}//${mesh.id}`
+          const archivedMaterialId = `arch//${materialId}//${mesh.id}`
           materialIdToBufferGeometry[archivedMaterialId] =
             materialIdToBufferGeometry[materialId]
           materialIdToMaterial[archivedMaterialId] = materialIdToMaterial[materialId]
@@ -325,15 +325,15 @@ export default class SceneObjects {
 
     await this.asyncPause()
 
-    for (let materialId in materialIdToBufferGeometry) {
+    for (const materialId in materialIdToBufferGeometry) {
       await this.asyncPause()
-      let groupGeometry = BufferGeometryUtils.mergeBufferGeometries(
+      const groupGeometry = BufferGeometryUtils.mergeBufferGeometries(
         materialIdToBufferGeometry[materialId]
       )
       await this.asyncPause()
 
-      let groupMaterial = materialIdToMaterial[materialId]
-      let groupMesh = new THREE.Mesh(groupGeometry, groupMaterial)
+      const groupMaterial = materialIdToMaterial[materialId]
+      const groupMesh = new THREE.Mesh(groupGeometry, groupMaterial)
       groupMesh.userData = null
       groupedObjects.add(groupMesh)
     }

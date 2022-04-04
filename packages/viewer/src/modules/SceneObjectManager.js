@@ -83,8 +83,8 @@ export default class SceneObjectManager {
   }
 
   get filteredObjects() {
-    let ret = []
-    for (let objectGroup of this.sceneObjects.objectsInScene.children) {
+    const ret = []
+    for (const objectGroup of this.sceneObjects.objectsInScene.children) {
       if (objectGroup.name === 'GroupedSolidObjects') continue
       ret.push(...objectGroup.children)
     }
@@ -140,12 +140,12 @@ export default class SceneObjectManager {
   addSolid(wrapper, addToScene = true) {
     // Do we have a defined material?
     if (wrapper.meta.renderMaterial) {
-      let renderMat = wrapper.meta.renderMaterial
-      let color = new THREE.Color(this._argbToRGB(renderMat.diffuse))
+      const renderMat = wrapper.meta.renderMaterial
+      const color = new THREE.Color(this._argbToRGB(renderMat.diffuse))
       this._normaliseColor(color)
       // Is it a transparent material?
       if (renderMat.opacity !== 1) {
-        let material = this.transparentMaterial.clone()
+        const material = this.transparentMaterial.clone()
         material.clippingPlanes = this.viewer.sectionBox.planes
 
         material.color = color
@@ -154,7 +154,7 @@ export default class SceneObjectManager {
 
         // It's not a transparent material!
       } else {
-        let material = this.solidMaterial.clone()
+        const material = this.solidMaterial.clone()
         material.clippingPlanes = this.viewer.sectionBox.planes
 
         material.color = color
@@ -167,7 +167,7 @@ export default class SceneObjectManager {
       return this.addSingleSolid(wrapper, this.solidVertexMaterial, addToScene)
     } else {
       // If we don't have defined material, just use the default
-      let material = this.solidMaterial.clone()
+      const material = this.solidMaterial.clone()
       material.clippingPlanes = this.viewer.sectionBox.planes
 
       return this.addSingleSolid(wrapper, material, addToScene)
@@ -215,7 +215,7 @@ export default class SceneObjectManager {
   }
 
   addPoint(wrapper, addToScene = true) {
-    let dot = new THREE.Points(wrapper.bufferGeometry, this.pointMaterial)
+    const dot = new THREE.Points(wrapper.bufferGeometry, this.pointMaterial)
     dot.userData = wrapper.meta
     dot.uuid = wrapper.meta.id
     if (addToScene) {
@@ -230,11 +230,11 @@ export default class SceneObjectManager {
     if (wrapper.bufferGeometry.attributes.color) {
       clouds = new THREE.Points(wrapper.bufferGeometry, this.pointVertexColorsMaterial)
     } else if (wrapper.meta.renderMaterial) {
-      let renderMat = wrapper.meta.renderMaterial
-      let color = new THREE.Color(this._argbToRGB(renderMat.diffuse))
+      const renderMat = wrapper.meta.renderMaterial
+      const color = new THREE.Color(this._argbToRGB(renderMat.diffuse))
 
       this._normaliseColor(color)
-      let material = this.pointMaterial.clone()
+      const material = this.pointMaterial.clone()
       material.clippingPlanes = this.viewer.sectionBox.planes
       // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
 
@@ -255,13 +255,13 @@ export default class SceneObjectManager {
   }
 
   addBlock(wrapper, addToScene = true) {
-    let group = new THREE.Group()
+    const group = new THREE.Group()
 
     wrapper.bufferGeometry.forEach((g) => {
       if (wrapper.meta.renderMaterial && !g.meta.renderMaterial) {
         g.meta.renderMaterial = wrapper.meta.renderMaterial
       }
-      let res = this.addObject(g, false)
+      const res = this.addObject(g, false)
       if (res) group.add(res)
     })
 
@@ -282,8 +282,8 @@ export default class SceneObjectManager {
   async removeImportedObject(importedUrl) {
     this.viewer.interactions.deselectObjects()
 
-    for (let objGroup of this.sceneObjects.allObjects.children) {
-      let toRemove = objGroup.children.filter(
+    for (const objGroup of this.sceneObjects.allObjects.children) {
+      const toRemove = objGroup.children.filter(
         (obj) => obj.userData?.__importedUrl === importedUrl
       )
       toRemove.forEach((obj) => {
@@ -307,13 +307,13 @@ export default class SceneObjectManager {
 
   getSceneBoundingBox() {
     if (this.objects.length === 0) {
-      let box = new THREE.Box3(
+      const box = new THREE.Box3(
         new THREE.Vector3(-1, -1, -1),
         new THREE.Vector3(1, 1, 1)
       )
       return box
     }
-    let box = new THREE.Box3().setFromObject(this.userObjects)
+    const box = new THREE.Box3().setFromObject(this.userObjects)
     return box
   }
 
@@ -324,7 +324,7 @@ export default class SceneObjectManager {
   _normaliseColor(color) {
     // Note: full of **magic numbers** that will need changing once global scene
     // is properly set up; also to test with materials coming from other software too...
-    let hsl = {}
+    const hsl = {}
     color.getHSL(hsl)
 
     if (hsl.s + hsl.l > 1) {

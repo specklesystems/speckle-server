@@ -571,7 +571,7 @@ export default {
                 activity.info.new[key] +
                 '</i></p>'
             if (key === 'description') {
-              let oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
+              const oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
               changes +=
                 '<p>📋 Description changed from <i><del>' +
                 this.truncate(oldDesc) +
@@ -580,7 +580,7 @@ export default {
                 '</ib></p>'
             }
             if (key === 'message') {
-              let oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
+              const oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
               changes +=
                 '<p>📋 Message changed from <i><del>' +
                 this.truncate(oldDesc) +

@@ -15,14 +15,14 @@ window.ObjectLoader = ObjectLoader
 // })
 
 // https://latest.speckle.dev/streams/3ed8357f29/objects/0408ab9caaa2ebefb2dd7f1f671e7555
-let loader = new ObjectLoader({
+const loader = new ObjectLoader({
   serverUrl: 'https://latest.speckle.dev',
   streamId: '3ed8357f29',
   objectId: '0408ab9caaa2ebefb2dd7f1f671e7555'
 })
 
 window.loadData = async function loadData() {
-  let obj = await loader.getAndConstructObject((e) => {
+  const obj = await loader.getAndConstructObject((e) => {
     console.log(e) // log progress!
   })
 

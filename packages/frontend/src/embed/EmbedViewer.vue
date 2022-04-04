@@ -73,7 +73,7 @@ export default {
     SpeckleViewer
   },
   filters: {
-    truncate: function (str, n = 20) {
+    truncate (str, n = 20) {
       return str.length > n ? str.substr(0, n - 3) + '...' : str
     }
   },
@@ -118,16 +118,16 @@ export default {
       return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.objectId}`
     },
     goToServerUrl() {
-      let stream = this.input.stream
-      let base = `${window.location.origin}/streams/${stream}/`
+      const stream = this.input.stream
+      const base = `${window.location.origin}/streams/${stream}/`
 
-      let commit = this.input.commit
+      const commit = this.input.commit
       if (commit) return base + `commits/${commit}`
 
-      let object = this.objectId
+      const object = this.objectId
       if (object) return base + `objects/${object}`
 
-      let branch = this.input.branch
+      const branch = this.input.branch
       if (branch) return base + `branches/${encodeURI(branch)}`
 
       return base
@@ -143,7 +143,7 @@ export default {
   },
   async beforeMount() {
     try {
-      let serverInfoResponse = await getServerInfo()
+      const serverInfoResponse = await getServerInfo()
       this.serverInfo = serverInfoResponse.data.serverInfo
     } catch (e) {
       this.error = e.message
@@ -152,9 +152,9 @@ export default {
 
     if (this.displayType === 'commit') {
       try {
-        let res = await getCommit(this.input.stream, this.input.commit)
-        let data = res.data
-        let latestCommit = data.stream.commit
+        const res = await getCommit(this.input.stream, this.input.commit)
+        const data = res.data
+        const latestCommit = data.stream.commit
         if (this.input.object === undefined)
           this.objectId = latestCommit.referencedObject
         this.specificCommit = data.stream
@@ -164,9 +164,9 @@ export default {
       }
     } else {
       try {
-        let res = await getLatestBranchCommit(this.input.stream, this.input.branch)
-        let data = res.data
-        let latestCommit =
+        const res = await getLatestBranchCommit(this.input.stream, this.input.branch)
+        const data = res.data
+        const latestCommit =
           data.stream.branch.commits.items[0] || data.stream.branch.commit
         if (!latestCommit) {
           this.error = 'No commit for this branch'
@@ -200,7 +200,7 @@ export default {
     },
     async getPreviewImage(angle) {
       angle = angle || 0
-      let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      const previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')

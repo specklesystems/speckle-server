@@ -34,7 +34,7 @@ module.exports = class IFCParser {
 
     await this.traverse(this.project, true, 0)
 
-    let id = await this.serverApi.saveObject(this.project)
+    const id = await this.serverApi.saveObject(this.project)
     return { id, tCount: Object.keys(this.project.__closure).length }
   }
 
@@ -47,11 +47,11 @@ module.exports = class IFCParser {
       this.productGeo[prodId] = []
 
       for (let j = 0; j < mesh.geometries.size(); j++) {
-        let placedGeom = mesh.geometries.get(j)
-        let geom = this.api.GetGeometry(this.modelId, placedGeom.geometryExpressID)
+        const placedGeom = mesh.geometries.get(j)
+        const geom = this.api.GetGeometry(this.modelId, placedGeom.geometryExpressID)
 
-        let matrix = placedGeom.flatTransformation
-        let raw = {
+        const matrix = placedGeom.flatTransformation
+        const raw = {
           color: geom.color, // NOTE: material: x, y, z = rgb, w = opacity
           vertices: this.api.GetVertexArray(
             geom.GetVertexData(),
@@ -63,7 +63,7 @@ module.exports = class IFCParser {
         const { vertices } = this.extractVertexData(raw.vertices)
 
         for (let k = 0; k < vertices.length; k += 3) {
-          let x = vertices[k],
+          const x = vertices[k],
             y = vertices[k + 1],
             z = vertices[k + 2]
           vertices[k] = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12]
@@ -73,14 +73,14 @@ module.exports = class IFCParser {
         }
 
         // Since all faces are triangles, we must add a `0` before each group of 3.
-        let spcklFaces = []
+        const spcklFaces = []
         for (let i = 0; i < raw.indices.length; i++) {
           if (i % 3 === 0) spcklFaces.push(0)
           spcklFaces.push(raw.indices[i])
         }
 
         // Create a propper Speckle Mesh
-        let spcklMesh = {
+        const spcklMesh = {
           speckle_type: 'Objects.Geometry.Mesh',
           units: 'm',
           volume: 0,
@@ -92,8 +92,8 @@ module.exports = class IFCParser {
             : null
         }
 
-        let id = await this.serverApi.saveObject(spcklMesh)
-        let ref = { speckle_type: 'reference', referencedId: id }
+        const id = await this.serverApi.saveObject(spcklMesh)
+        const ref = { speckle_type: 'reference', referencedId: id }
         this.productGeo[prodId].push(ref)
       }
     }
@@ -134,7 +134,7 @@ module.exports = class IFCParser {
     // console.log( `Traversing element ${element.expressID}; Recurse: ${recursive}; Stack ${depth}` )
 
     // Traverse all key/value pairs first.
-    for (let key of Object.keys(element)) {
+    for (const key of Object.keys(element)) {
       element[key] = await this.traverse(
         element[key],
         recursive,
@@ -267,8 +267,8 @@ module.exports = class IFCParser {
       element.spatialChildren ||
       element.children
     ) {
-      let id = await this.serverApi.saveObject(element)
-      let ref = { speckle_type: 'reference', referencedId: id }
+      const id = await this.serverApi.saveObject(element)
+      const ref = { speckle_type: 'reference', referencedId: id }
       this.cache[element.expressID.toString()] = ref
       this.closureCache[element.expressID.toString()] = element.__closure
       return ref
@@ -290,9 +290,9 @@ module.exports = class IFCParser {
   ) {
     if (element[key]) {
       if (!isSpecial) element[newKey] = []
-      let childCount = {}
-      for (let child of element[key]) {
-        let res = await this.traverse(child, recursive, depth + 1, specialTypes)
+      const childCount = {}
+      for (const child of element[key]) {
+        const res = await this.traverse(child, recursive, depth + 1, specialTypes)
         if (res.referencedId) {
           if (isSpecial) {
             let name = child[isSpecial.key]
@@ -306,7 +306,7 @@ module.exports = class IFCParser {
 
           // adds to parent (this element) the child's closure tree.
           if (this.closureCache[child.expressID.toString()]) {
-            for (let key of Object.keys(
+            for (const key of Object.keys(
               this.closureCache[child.expressID.toString()]
             )) {
               element.__closure[key] =
@@ -358,7 +358,7 @@ module.exports = class IFCParser {
   }
 
   colorToMaterial(color) {
-    let intColor =
+    const intColor =
       (color.w << 24) + ((color.x * 255) << 16) + ((color.y * 255) << 8) + color.z * 255
 
     return {

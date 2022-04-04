@@ -14,23 +14,23 @@ const { createPersonalAccessToken } = require('../services/tokens')
 const { createStream } = require('../services/streams')
 
 describe('Upload/Download Routes @api-rest', () => {
-  let userA = {
+  const userA = {
     name: 'd1',
     email: 'd.1@speckle.systems',
     password: 'wowwow8charsplease'
   }
-  let userB = {
+  const userB = {
     name: 'd2',
     email: 'd.2@speckle.systems',
     password: 'wowwow8charsplease'
   }
 
-  let testStream = {
+  const testStream = {
     name: 'Test Stream 01',
     description: 'wonderful test stream'
   }
 
-  let privateTestStream = { name: 'Private Test Stream', isPublic: false }
+  const privateTestStream = { name: 'Private Test Stream', isPublic: false }
 
   let app
   before(async () => {
@@ -101,7 +101,7 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(404)
 
     // create some objects
-    let objBatches = [createManyObjects(20), createManyObjects(20)]
+    const objBatches = [createManyObjects(20), createManyObjects(20)]
 
     await request(app)
       .post(`/objects/${testStream.id}`)
@@ -130,7 +130,7 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   it('Should not allow getting an object that is not part of the stream', async () => {
-    let objBatch = createManyObjects(20)
+    const objBatch = createManyObjects(20)
 
     await request(app)
       .post(`/objects/${privateTestStream.id}`)
@@ -172,8 +172,8 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   let parentId
-  let numObjs = 5000
-  let objBatches = [
+  const numObjs = 5000
+  const objBatches = [
     createManyObjects(numObjs),
     createManyObjects(numObjs),
     createManyObjects(numObjs)
@@ -182,7 +182,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should properly upload a bunch of objects', async () => {
     parentId = objBatches[0][0].id
 
-    let res = await request(app)
+    const res = await request(app)
       .post(`/objects/${testStream.id}`)
       .set('Authorization', userA.token)
       .set('Content-type', 'multipart/form-data')
@@ -217,7 +217,7 @@ describe('Upload/Download Routes @api-rest', () => {
           .end((err, res) => {
             if (err) done(err)
             try {
-              let o = JSON.parse(res.body)
+              const o = JSON.parse(res.body)
               expect(o.length).to.equal(numObjs + 1)
               expect(res).to.be.json
               done()
@@ -246,7 +246,7 @@ describe('Upload/Download Routes @api-rest', () => {
       .end((err, res) => {
         if (err) done(err)
         try {
-          let o = res.body.split('\n').filter((l) => l !== '')
+          const o = res.body.split('\n').filter((l) => l !== '')
           expect(o.length).to.equal(numObjs + 1)
           expect(res).to.be.text
           done()
@@ -257,7 +257,7 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   it('Should properly download a list of objects', (done) => {
-    let objectIds = []
+    const objectIds = []
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
@@ -279,7 +279,7 @@ describe('Upload/Download Routes @api-rest', () => {
       .end((err, res) => {
         if (err) done(err)
         try {
-          let o = res.body.split('\n').filter((l) => l !== '')
+          const o = res.body.split('\n').filter((l) => l !== '')
           expect(o.length).to.equal(objectIds.length)
           expect(res).to.be.text
           done()
@@ -290,13 +290,13 @@ describe('Upload/Download Routes @api-rest', () => {
   })
 
   it('Should properly check if the server has a list of objects', (done) => {
-    let objectIds = []
+    const objectIds = []
     for (let i = 0; i < objBatches[0].length; i++) {
       objectIds.push(objBatches[0][i].id)
     }
-    let fakeIds = []
+    const fakeIds = []
     for (let i = 0; i < 100; i++) {
-      let fakeId = crypto
+      const fakeId = crypto
         .createHash('md5')
         .update('fakefake' + i)
         .digest('hex')
@@ -321,7 +321,7 @@ describe('Upload/Download Routes @api-rest', () => {
       .end((err, res) => {
         if (err) done(err)
         try {
-          let o = JSON.parse(res.body)
+          const o = JSON.parse(res.body)
           expect(Object.keys(o).length).to.equal(objectIds.length)
           for (let i = 0; i < objBatches[0].length; i++) {
             assert(o[objBatches[0][i].id] === true, 'Server is missing an object')

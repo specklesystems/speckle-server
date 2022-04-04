@@ -10,7 +10,7 @@ const { getStream } = require('../services/streams')
 
 module.exports = {
   async validatePermissionsReadStream(streamId, req) {
-    const stream = await getStream({ streamId: streamId, userId: req.context.userId })
+    const stream = await getStream({ streamId, userId: req.context.userId })
     if (stream?.isPublic) return { result: true, status: 200 }
 
     try {

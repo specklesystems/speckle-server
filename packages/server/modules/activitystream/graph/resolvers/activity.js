@@ -14,7 +14,7 @@ module.exports = {
   Query: {},
   User: {
     async activity(parent, args) {
-      let { items, cursor } = await getUserActivity({
+      const { items, cursor } = await getUserActivity({
         userId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -22,7 +22,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      let totalCount = await getActivityCountByUserId({
+      const totalCount = await getActivityCountByUserId({
         userId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -33,14 +33,14 @@ module.exports = {
     },
 
     async timeline(parent, args) {
-      let { items, cursor } = await getUserTimeline({
+      const { items, cursor } = await getUserTimeline({
         userId: parent.id,
         after: args.after,
         before: args.before,
         cursor: args.cursor,
         limit: args.limit
       })
-      let totalCount = await getTimelineCount({
+      const totalCount = await getTimelineCount({
         userId: parent.id,
         after: args.after,
         before: args.before
@@ -52,7 +52,7 @@ module.exports = {
 
   Stream: {
     async activity(parent, args) {
-      let { items, cursor } = await getStreamActivity({
+      const { items, cursor } = await getStreamActivity({
         streamId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -60,7 +60,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      let totalCount = await getActivityCountByStreamId({
+      const totalCount = await getActivityCountByStreamId({
         streamId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -73,7 +73,7 @@ module.exports = {
 
   Branch: {
     async activity(parent, args) {
-      let { items, cursor } = await getResourceActivity({
+      const { items, cursor } = await getResourceActivity({
         resourceType: 'branch',
         resourceId: parent.id,
         actionType: args.actionType,
@@ -82,7 +82,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      let totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceId({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,
@@ -95,7 +95,7 @@ module.exports = {
 
   Commit: {
     async activity(parent, args) {
-      let { items, cursor } = await getResourceActivity({
+      const { items, cursor } = await getResourceActivity({
         resourceType: 'commit',
         resourceId: parent.id,
         actionType: args.actionType,
@@ -104,7 +104,7 @@ module.exports = {
         cursor: args.cursor,
         limit: args.limit
       })
-      let totalCount = await getActivityCountByResourceId({
+      const totalCount = await getActivityCountByResourceId({
         resourceId: parent.id,
         actionType: args.actionType,
         after: args.after,

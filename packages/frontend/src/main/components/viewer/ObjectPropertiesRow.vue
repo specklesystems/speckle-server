@@ -171,8 +171,8 @@ export default {
         return this.$store.state.hideValues.indexOf(this.prop.value.referencedId) === -1
       }
       if (this.prop.type === 'array') {
-        let ids = this.prop.value.map((o) => o.referencedId)
-        let targetIds = this.$store.state.hideValues.filter(
+        const ids = this.prop.value.map((o) => o.referencedId)
+        const targetIds = this.$store.state.hideValues.filter(
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return true
@@ -187,8 +187,8 @@ export default {
         )
       }
       if (this.prop.type === 'array') {
-        let ids = this.prop.value.map((o) => o.referencedId)
-        let targetIds = this.$store.state.isolateValues.filter(
+        const ids = this.prop.value.map((o) => o.referencedId)
+        const targetIds = this.$store.state.isolateValues.filter(
           (val) => ids.indexOf(val) !== -1
         )
         if (targetIds.length === 0) return false

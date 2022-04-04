@@ -34,7 +34,7 @@ module.exports = {
         throw new UserInputError(
           'Cannot return more than 100 items, please use pagination.'
         )
-      let { items, cursor, totalCount } = await getBranchesByStreamId({
+      const { items, cursor, totalCount } = await getBranchesByStreamId({
         streamId: parent.id,
         limit: args.limit,
         cursor: args.cursor
@@ -62,7 +62,7 @@ module.exports = {
         'stream:contributor'
       )
 
-      let id = await createBranch({ ...args.branch, authorId: context.userId })
+      const id = await createBranch({ ...args.branch, authorId: context.userId })
 
       if (id) {
         await saveActivity({
@@ -71,11 +71,11 @@ module.exports = {
           resourceId: id,
           actionType: 'branch_create',
           userId: context.userId,
-          info: { branch: { ...args.branch, id: id } },
+          info: { branch: { ...args.branch, id } },
           message: `Branch created: '${args.branch.name}' (${id})`
         })
         await pubsub.publish(BRANCH_CREATED, {
-          branchCreated: { ...args.branch, id: id, authorId: context.userId },
+          branchCreated: { ...args.branch, id, authorId: context.userId },
           streamId: args.branch.streamId
         })
       }
@@ -90,7 +90,7 @@ module.exports = {
         'stream:contributor'
       )
 
-      let oldValue = await getBranchById({ id: args.branch.id })
+      const oldValue = await getBranchById({ id: args.branch.id })
       if (!oldValue) {
         throw new ApolloError('Branch not found.')
       }
@@ -100,7 +100,7 @@ module.exports = {
           'The branch id and stream id do not match. Please check your inputs.'
         )
 
-      let updated = await updateBranch({ ...args.branch })
+      const updated = await updateBranch({ ...args.branch })
 
       if (updated) {
         await saveActivity({
@@ -123,13 +123,13 @@ module.exports = {
     },
 
     async branchDelete(parent, args, context) {
-      let role = await authorizeResolver(
+      const role = await authorizeResolver(
         context.userId,
         args.branch.streamId,
         'stream:contributor'
       )
 
-      let branch = await getBranchById({ id: args.branch.id })
+      const branch = await getBranchById({ id: args.branch.id })
       if (!branch) {
         throw new ApolloError('Branch not found.')
       }
@@ -144,7 +144,7 @@ module.exports = {
           'Only the branch creator or stream owners are allowed to delete branches.'
         )
 
-      let deleted = await deleteBranchById({
+      const deleted = await deleteBranchById({
         id: args.branch.id,
         streamId: args.branch.streamId
       })
@@ -185,7 +185,7 @@ module.exports = {
         async (payload, variables, context) => {
           await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
 
-          let streamMatch = payload.streamId === variables.streamId
+          const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.branchId) {
             return payload.branchId === variables.branchId
           }

@@ -22,28 +22,28 @@ const {
 } = require('../services')
 
 describe('Comments @comments', () => {
-  let user = {
+  const user = {
     name: 'The comment wizard',
     email: 'comment@wizard.ry',
     password: 'i did not like Rivendel wine :('
   }
 
-  let otherUser = {
+  const otherUser = {
     name: 'Fondalf The Brey',
     email: 'totalnotfakegandalf87@mordor.com',
     password: 'what gandalf puts in his pipe stays in his pipe'
   }
 
-  let stream = {
+  const stream = {
     name: 'Commented stream',
     description: 'Chit chats over here'
   }
 
-  let testObject1 = {
+  const testObject1 = {
     foo: 'bar'
   }
 
-  let testObject2 = {
+  const testObject2 = {
     foo: 'barbar',
     baz: 123
   }
@@ -101,11 +101,11 @@ describe('Comments @comments', () => {
 
   it('Should not be able to comment resources that do not belong to the input streamId', async () => {
     // Stream A belongs to user
-    let streamA = { name: 'Stream A' }
+    const streamA = { name: 'Stream A' }
     streamA.id = await createStream({ ...streamA, ownerId: user.id })
-    let objA = { foo: 'bar' }
+    const objA = { foo: 'bar' }
     objA.id = await createObject(streamA.id, objA)
-    let commA = {}
+    const commA = {}
     commA.id = await createCommitByBranchName({
       streamId: streamA.id,
       branchName: 'main',
@@ -115,11 +115,11 @@ describe('Comments @comments', () => {
     })
 
     // Stream B belongs to otherUser
-    let streamB = { name: 'Stream B' }
+    const streamB = { name: 'Stream B' }
     streamB.id = await createStream({ ...streamB, ownerId: otherUser.id })
-    let objB = { qux: 'mux' }
+    const objB = { qux: 'mux' }
     objB.id = await createObject(streamB.id, objB)
-    let commB = {}
+    const commB = {}
     commB.id = await createCommitByBranchName({
       streamId: streamB.id,
       branchName: 'main',
@@ -200,11 +200,11 @@ describe('Comments @comments', () => {
   })
 
   it('Should return comment counts for streams, commits and objects', async () => {
-    let stream = { name: 'Bean Counter' }
+    const stream = { name: 'Bean Counter' }
     stream.id = await createStream({ ...stream, ownerId: user.id })
-    let obj = { foo: 'bar' }
+    const obj = { foo: 'bar' }
     obj.id = await createObject(stream.id, obj)
-    let commit = {}
+    const commit = {}
     commit.id = await createCommitByBranchName({
       streamId: stream.id,
       branchName: 'main',
@@ -213,8 +213,8 @@ describe('Comments @comments', () => {
       authorId: user.id
     })
 
-    let commCount = 10
-    let commentIds = []
+    const commCount = 10
+    const commentIds = []
     for (let i = 0; i < commCount; i++) {
       // creates 1 * commCount comments linked to commit and object
       commentIds.push(
@@ -291,11 +291,11 @@ describe('Comments @comments', () => {
     const commitCount = await getResourceCommentCount({ resourceId: commit.id })
     expect(commitCount).to.equal(commCount * 2)
 
-    let streamOther = { name: 'Bean Counter' }
+    const streamOther = { name: 'Bean Counter' }
     streamOther.id = await createStream({ ...streamOther, ownerId: user.id })
-    let objOther = { 'are you bored': 'yes' }
+    const objOther = { 'are you bored': 'yes' }
     objOther.id = await createObject(streamOther.id, objOther)
-    let commitOther = {}
+    const commitOther = {}
     commitOther.id = await createCommitByBranchName({
       streamId: streamOther.id,
       branchName: 'main',
@@ -521,8 +521,8 @@ describe('Comments @comments', () => {
       ]
     })
 
-    let ids = comments.items.map((c) => c.id)
-    let set = new Set(ids)
+    const ids = comments.items.map((c) => c.id)
+    const set = new Set(ids)
     expect(set.size).to.equal(ids.length)
 
     // Note: since we switched to an "or" clause, this does not apply anymore.
@@ -538,7 +538,7 @@ describe('Comments @comments', () => {
       testObject: 'something completely different'
     })
 
-    let createdComments = []
+    const createdComments = []
     const commentCount = 10
     for (let i = 0; i < commentCount; i++) {
       createdComments.push(
@@ -831,7 +831,7 @@ describe('Comments @comments', () => {
         data: { justSome: crs({ length: 10 }) }
       }
     })
-    let archiveResult = await archiveComment({
+    const archiveResult = await archiveComment({
       commentId: otherUsersCommentId,
       userId: user.id,
       streamId: stream.id

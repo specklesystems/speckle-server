@@ -24,7 +24,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     callbackUrl: '/auth/goog/callback'
   }
 
-  let myStrategy = new GoogleStrategy(
+  const myStrategy = new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -36,10 +36,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       const serverInfo = await getServerInfo()
 
       try {
-        let email = profile.emails[0].value
-        let name = profile.displayName
+        const email = profile.emails[0].value
+        const name = profile.displayName
 
-        let user = { email, name, avatar: profile._json.picture }
+        const user = { email, name, avatar: profile._json.picture }
 
         if (req.session.suuid) user.suuid = req.session.suuid
 
@@ -49,13 +49,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {
-          let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
           return done(null, myUser)
         }
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
-          let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
           return done(null, myUser)
         }
 
@@ -72,7 +72,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         if (!validInvite) throw new Error('Invalid invite.')
 
         // create the user
-        let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+        const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
 
         // use the invite
         await useInvite({ id: req.session.inviteId, email: user.email })

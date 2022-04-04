@@ -10,7 +10,7 @@ let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
 async function startTask() {
-  let { rows } = await knex.raw(`
+  const { rows } = await knex.raw(`
     UPDATE object_preview
     SET 
       "previewStatus" = 1,
@@ -28,21 +28,21 @@ async function startTask() {
 }
 
 async function doTask(task) {
-  let previewUrl = `http://127.0.0.1:3001/preview/${task.streamId}/${task.objectId}`
+  const previewUrl = `http://127.0.0.1:3001/preview/${task.streamId}/${task.objectId}`
 
   try {
     let res = await fetch(previewUrl)
     res = await res.json()
     // let imgBuffer = await res.buffer()  // this gets the binary response body
 
-    let metadata = {}
+    const metadata = {}
 
-    for (let angle in res) {
+    for (const angle in res) {
       const imgBuffer = new Buffer.from(
         res[angle].replace(/^data:image\/\w+;base64,/, ''),
         'base64'
       )
-      let previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
+      const previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
 
       // Save preview image
       await knex.raw(
@@ -87,7 +87,7 @@ async function tick() {
   }
 
   try {
-    let task = await startTask()
+    const task = await startTask()
 
     fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 

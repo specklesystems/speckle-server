@@ -130,7 +130,7 @@ export default {
           return !this.$route.params.resourceId || !this.$loggedIn()
         },
         result(res) {
-          let data = res.data
+          const data = res.data
           // Note: swap user id checks for .userId (vs. uuid) if wanting to not allow same user two diff browsers
           // it's easier to test like this though :)
           if (!data.userViewerActivity) return
@@ -145,11 +145,11 @@ export default {
             return
           }
           if (data.userViewerActivity.uuid === this.uuid) return
-          let indx = this.users.findIndex(
+          const indx = this.users.findIndex(
             (u) => u.uuid === data.userViewerActivity.uuid
           )
           if (indx !== -1) {
-            let user = this.users[indx]
+            const user = this.users[indx]
             user.hidden = false
             user.status = 'viewing'
             user.camera = data.userViewerActivity.camera
@@ -226,7 +226,7 @@ export default {
   },
   methods: {
     setUserPow(user) {
-      let camToSet = user.camera
+      const camToSet = user.camera
       if (camToSet[6] === 1) {
         window.__viewer.toggleCameraProjection()
       }
@@ -248,8 +248,8 @@ export default {
     },
     async sendUpdateAndPrune() {
       if (!this.$route.params.resourceId) return
-      for (let user of this.users) {
-        let delta = Date.now() - user.lastUpdate
+      for (const user of this.users) {
+        const delta = Date.now() - user.lastUpdate
         if (delta > 20000) {
           user.hidden = true
           user.status = 'stale'
@@ -263,10 +263,10 @@ export default {
 
       if (!this.$loggedIn()) return
 
-      let controls = window.__viewer.cameraHandler.activeCam.controls
-      let pos = controls.getPosition()
-      let target = controls.getTarget()
-      let c = [
+      const controls = window.__viewer.cameraHandler.activeCam.controls
+      const pos = controls.getPosition()
+      const target = controls.getTarget()
+      const c = [
         parseFloat(pos.x.toFixed(5)),
         parseFloat(pos.y.toFixed(5)),
         parseFloat(pos.z.toFixed(5)),
@@ -282,7 +282,7 @@ export default {
         selectionLocation = this.$store.state.selectedComment.data.location
       }
 
-      let data = {
+      const data = {
         filter: this.$store.state.appliedFilter,
         selection: this.selectedIds,
         selectionLocation,
@@ -343,17 +343,17 @@ export default {
     updateBubbles(transition = true) {
       if (!this.$refs.parent) return
 
-      let cam = window.__viewer.cameraHandler.camera
+      const cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
-      let selectedObjects = []
-      for (let user of this.users) {
+      const selectedObjects = []
+      for (const user of this.users) {
         if (!this.$refs[`user-bubble-${user.uuid}`]) continue
 
         if (user.selection) selectedObjects.push(...user.selection)
 
-        let location = new THREE.Vector3(user.camera[0], user.camera[1], user.camera[2])
+        const location = new THREE.Vector3(user.camera[0], user.camera[1], user.camera[2])
         let target = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5])
-        let camDir = new THREE.Vector3().subVectors(target, location)
+        const camDir = new THREE.Vector3().subVectors(target, location)
 
         if (user.selectionLocation)
           target = new THREE.Vector3(
@@ -366,21 +366,21 @@ export default {
         target.project(cam)
         // target.normalize()
 
-        let bubbleLoc = new THREE.Vector3(
+        const bubbleLoc = new THREE.Vector3(
           (camDir.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
           (camDir.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
           0
         )
-        let targetLoc = new THREE.Vector3(
+        const targetLoc = new THREE.Vector3(
           (target.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
           (target.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
           0
         )
-        let dir2D = new THREE.Vector3()
+        const dir2D = new THREE.Vector3()
           .subVectors(targetLoc, bubbleLoc)
           .normalize()
           .multiplyScalar(70)
-        let newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
+        const newTarget = new THREE.Vector3().addVectors(targetLoc, dir2D)
 
         // TODO: clamp sides
         const paddingX = 42
@@ -407,9 +407,9 @@ export default {
           user.clipped = true
         }
 
-        let bubbleEl = this.$refs[`user-bubble-${user.uuid}`][0]
-        let uTargetEl = this.$refs[`user-target-${user.uuid}`][0]
-        let uArrowEl = this.$refs[`user-arrow-${user.uuid}`][0]
+        const bubbleEl = this.$refs[`user-bubble-${user.uuid}`][0]
+        const uTargetEl = this.$refs[`user-target-${user.uuid}`][0]
+        const uArrowEl = this.$refs[`user-arrow-${user.uuid}`][0]
 
         if (!bubbleEl || !uTargetEl || !uArrowEl) return // collection can get modified during update
 

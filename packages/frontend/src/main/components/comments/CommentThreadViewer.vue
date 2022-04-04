@@ -263,15 +263,15 @@ export default {
             this.$emit('deleted', this.comment)
           }
           if (data.commentThreadActivity.eventType === 'reply-typing-status') {
-            let state = data.commentThreadActivity.data
+            const state = data.commentThreadActivity.data
             if (state.userId === this.$userId()) return
-            let existingUser = this.whoIsTyping.find((u) => u.userId === state.userId)
+            const existingUser = this.whoIsTyping.find((u) => u.userId === state.userId)
             if (state.isTyping && existingUser) {
               existingUser.lastSeenAt = Date.now()
               return
             }
             if (!state.isTyping) {
-              let indx = this.whoIsTyping.findIndex((u) => u.userId === state.userId)
+              const indx = this.whoIsTyping.findIndex((u) => u.userId === state.userId)
               if (indx !== -1) this.whoIsTyping.splice(indx, 1)
               return
             }
@@ -284,7 +284,7 @@ export default {
       }
     }
   },
-  data: function () {
+  data () {
     return {
       replyText: null,
       localReplies: [],
@@ -307,27 +307,27 @@ export default {
       return false
     },
     thread() {
-      let sorted = [...this.localReplies].sort(
+      const sorted = [...this.localReplies].sort(
         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
       )
       return [this.comment, ...sorted]
     },
     isComplete() {
-      let res = [this.$route.params.resourceId]
+      const res = [this.$route.params.resourceId]
       if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
-      let commRes = this.comment.resources
+      const commRes = this.comment.resources
         .filter((r) => r.resourceType !== 'stream')
         .map((r) => r.resourceId)
 
-      for (let r of commRes) {
+      for (const r of commRes) {
         if (res.indexOf(r) === -1) return false
       }
       return true
     },
     link() {
       if (!this.comment) return
-      let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
-      let first = res.shift()
+      const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
+      const first = res.shift()
       let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
@@ -373,7 +373,7 @@ export default {
       await this.sendTypingUpdate(false)
     })
     setInterval(() => {
-      let now = Date.now()
+      const now = Date.now()
       for (let i = this.whoIsTyping.length - 1; i >= 0; i--) {
         if (Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000)
           this.whoIsTyping.splice(i, 1)
@@ -415,8 +415,8 @@ export default {
       })
     },
     copyCommentLinkToClip() {
-      let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
-      let first = res.shift()
+      const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
+      const first = res.shift()
       let route = `${window.origin}/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
@@ -428,23 +428,23 @@ export default {
       })
     },
     addMissingResources() {
-      let res = [this.$route.params.resourceId]
+      const res = [this.$route.params.resourceId]
       if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
-      let commRes = this.comment.resources
+      const commRes = this.comment.resources
         .filter((r) => r.resourceType !== 'stream')
         .map((r) => r.resourceId)
 
-      let missing = []
-      for (let r of commRes) {
+      const missing = []
+      for (const r of commRes) {
         if (res.indexOf(r) === -1) missing.push(r)
       }
       this.$emit('add-resources', missing)
     },
     showTime(index) {
       if (index === 0) return true
-      let curr = new Date(this.thread[index].createdAt)
-      let prev = new Date(this.thread[index - 1].createdAt)
-      let delta = Math.abs(prev - curr)
+      const curr = new Date(this.thread[index].createdAt)
+      const prev = new Date(this.thread[index - 1].createdAt)
+      const delta = Math.abs(prev - curr)
       return delta > 450000
     },
     async addReply() {
@@ -455,7 +455,7 @@ export default {
         return
       }
 
-      let replyInput = {
+      const replyInput = {
         streamId: this.$route.params.streamId,
         parentComment: this.comment.id,
         text: this.replyText

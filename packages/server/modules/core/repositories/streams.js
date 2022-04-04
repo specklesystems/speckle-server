@@ -27,11 +27,11 @@ const BASE_STREAM_COLUMNS = [
 async function getStream({ streamId, userId }) {
   if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
 
-  let stream = await Streams.knex().where({ id: streamId }).select('*').first()
+  const stream = await Streams.knex().where({ id: streamId }).select('*').first()
   if (!userId) return stream
 
-  let acl = await StreamAcl.knex()
-    .where({ resourceId: streamId, userId: userId })
+  const acl = await StreamAcl.knex()
+    .where({ resourceId: streamId, userId })
     .select('role')
     .first()
   if (acl) stream.role = acl.role
@@ -86,7 +86,7 @@ async function getFavoritedStreams({ userId, cursor, limit }) {
 
   if (cursor) query.andWhere(StreamFavorites.col.cursor, '<', cursor)
 
-  let rows = await query
+  const rows = await query
   return {
     streams: rows,
     cursor: rows.length > 0 ? rows[rows.length - 1].favCursor : null
@@ -102,7 +102,7 @@ async function getFavoritedStreamsCount(userId) {
   const query = getFavoritedStreamsQueryBase(userId)
   query.count()
 
-  let [res] = await query
+  const [res] = await query
   return parseInt(res.count)
 }
 

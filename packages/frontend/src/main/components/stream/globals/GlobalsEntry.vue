@@ -178,13 +178,13 @@ export default {
         keys(index, entries) {
           return [
             (v) => {
-              let result = !!v || 'Properties need to have a name!'
+              const result = !!v || 'Properties need to have a name!'
               entries[index].valid = result
               return result
             },
             (v) => {
-              let filtered = entries.filter((_, i) => i !== index)
-              let result =
+              const filtered = entries.filter((_, i) => i !== index)
+              const result =
                 filtered.findIndex((e) => e.key === v) === -1 ||
                 'Each property name must be unique'
               if (entries[index].valid === true) entries[index].valid = result
@@ -192,7 +192,7 @@ export default {
             },
             (v) => {
               const re = /[./]/
-              let result =
+              const result =
                 !re.test(v) || 'The name cannot contain invalid characters: "." or "/"'
               if (entries[index].valid === true) entries[index].valid = result
               return result
@@ -242,20 +242,20 @@ export default {
         bimAdjs[Math.floor(Math.random() * bimAdjs.length)] +
         ' ' +
         bimNouns[Math.floor(Math.random() * bimNouns.length)]
-      let field = {
+      const field = {
         key: `placeholder ${crs({ length: 6 })}`,
         type: 'field',
         value: randomPhrase,
         valid: true,
         id: crs({ length: 10 })
       }
-      this.$emit('add-prop', { field: field, path: this.path })
+      this.$emit('add-prop', { field, path: this.path })
     },
     emitRemoveAt(index) {
-      this.$emit('remove-prop', { path: this.path, index: index })
+      this.$emit('remove-prop', { path: this.path, index })
     },
     emitFieldToObject(entry, index) {
-      let obj = {
+      const obj = {
         key: entry.key,
         type: 'object',
         id: entry.id,
@@ -270,11 +270,11 @@ export default {
           }
         ]
       }
-      this.$emit('field-to-object', { obj: obj, path: this.path, index: index })
+      this.$emit('field-to-object', { obj, path: this.path, index })
     },
     emitObjectToField(entry, index) {
-      let fields = entry.globals
-      this.$emit('object-to-field', { fields: fields, path: this.path, index: index })
+      const fields = entry.globals
+      this.$emit('object-to-field', { fields, path: this.path, index })
     }
   }
 }

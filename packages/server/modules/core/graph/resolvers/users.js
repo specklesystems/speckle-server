@@ -44,8 +44,8 @@ module.exports = {
     async users(parent, args, context) {
       await validateServerRole(context, 'server:admin')
       await validateScopes(context.scopes, 'users:read')
-      let users = await getUsers(args.limit, args.offset, args.query)
-      let totalCount = await countUsers(args.query)
+      const users = await getUsers(args.limit, args.offset, args.query)
+      const totalCount = await countUsers(args.query)
       return { totalCount, items: users }
     },
 
@@ -62,17 +62,17 @@ module.exports = {
           'Cannot return more than 100 items, please use pagination.'
         )
 
-      let { cursor, users } = await searchUsers(
+      const { cursor, users } = await searchUsers(
         args.query,
         args.limit,
         args.cursor,
         args.archived
       )
-      return { cursor: cursor, items: users }
+      return { cursor, items: users }
     },
 
     async userPwdStrength(parent, args) {
-      let res = zxcvbn(args.pwd)
+      const res = zxcvbn(args.pwd)
       return { score: res.score, feedback: res.feedback }
     }
   },
@@ -106,7 +106,7 @@ module.exports = {
     async userUpdate(parent, args, context) {
       await validateServerRole(context, 'server:user')
 
-      let oldValue = await getUserById({ userId: context.userId })
+      const oldValue = await getUserById({ userId: context.userId })
 
       await updateUser(context.userId, args.user)
 
@@ -124,25 +124,25 @@ module.exports = {
     },
 
     async userRoleChange(parent, args) {
-      let roleChangers = {
+      const roleChangers = {
         'server:admin': makeUserAdmin,
         'server:user': unmakeUserAdmin,
         'server:archived-user': archiveUser
       }
-      let roleChanger = roleChangers[args.userRoleInput.role]
+      const roleChanger = roleChangers[args.userRoleInput.role]
       await roleChanger({ userId: args.userRoleInput.id })
       return true
     },
 
     async adminDeleteUser(parent, args, context) {
       await validateServerRole(context, 'server:admin')
-      let user = await getUserByEmail({ email: args.userConfirmation.email })
+      const user = await getUserByEmail({ email: args.userConfirmation.email })
       await deleteUser(user.id)
       return true
     },
 
     async userDelete(parent, args, context) {
-      let user = await getUser(context.userId)
+      const user = await getUser(context.userId)
 
       if (args.userConfirmation.email !== user.email) {
         throw new UserInputError('Malformed input: emails do not match.')

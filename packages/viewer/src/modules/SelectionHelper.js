@@ -43,12 +43,12 @@ export default class SelectionHelper extends EventEmitter {
       e.preventDefault()
       if (this.viewer.cameraHandler.orbiting) return
 
-      let delta = new Date().getTime() - mdTime
+      const delta = new Date().getTime() - mdTime
       this.pointerDown = false
 
       if (delta > 250) return
 
-      let selectionObjects = this.getClickedObjects(e)
+      const selectionObjects = this.getClickedObjects(e)
       this.emit('object-clicked', selectionObjects)
     })
 
@@ -66,11 +66,11 @@ export default class SelectionHelper extends EventEmitter {
       if (e.targetTouches.length > 0) {
         return
       }
-      let currentTime = new Date().getTime()
-      let tapLength = currentTime - this.lastTap
+      const currentTime = new Date().getTime()
+      const tapLength = currentTime - this.lastTap
       clearTimeout(this.tapTimeout)
       if (tapLength < 500 && tapLength > 0) {
-        let selectionObjects = this.getClickedObjects(this.touchLocation)
+        const selectionObjects = this.getClickedObjects(this.touchLocation)
         this.emit('object-doubleclicked', selectionObjects)
       } else {
         this.tapTimeout = setTimeout(function () {
@@ -81,7 +81,7 @@ export default class SelectionHelper extends EventEmitter {
     })
 
     this.viewer.renderer.domElement.addEventListener('dblclick', (e) => {
-      let selectionObjects = this.getClickedObjects(e)
+      const selectionObjects = this.getClickedObjects(e)
       this.emit('object-doubleclicked', selectionObjects)
     })
 
@@ -112,14 +112,14 @@ export default class SelectionHelper extends EventEmitter {
       normalizedPosition,
       this.viewer.cameraHandler.activeCam.camera
     )
-    let targetObjects = this.subset
+    const targetObjects = this.subset
       ? this.subset
       : this.viewer.sceneManager.filteredObjects
 
     let intersectedObjects = this.raycaster.intersectObjects(targetObjects)
     // filters objects in section box mode
     if (this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion) {
-      let box = new THREE.Box3().setFromObject(this.viewer.sectionBox.cube)
+      const box = new THREE.Box3().setFromObject(this.viewer.sectionBox.cube)
       intersectedObjects = intersectedObjects.filter((obj) => {
         return box.containsPoint(obj.point)
       })

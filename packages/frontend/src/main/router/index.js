@@ -314,8 +314,8 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  let uuid = localStorage.getItem('uuid')
-  let redirect = localStorage.getItem('shouldRedirectTo')
+  const uuid = localStorage.getItem('uuid')
+  const redirect = localStorage.getItem('shouldRedirectTo')
   router.app.$eventHub.$emit('page-load', true)
 
   if (

@@ -20,9 +20,9 @@ let wsAddr
 let childPort = null
 
 describe('GraphQL API Subscriptions @gql-subscriptions', () => {
-  let userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow8charsplease' }
-  let userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow8charsplease' }
-  let userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow8charsplease' }
+  const userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow8charsplease' }
+  const userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow8charsplease' }
+  const userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow8charsplease' }
   let serverProcess
 
   const getWsClient = (wsurl, authToken) => {
@@ -40,7 +40,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
   const createSubscriptionObservable = (wsurl, authToken, query, variables) => {
     authToken = authToken || userA.token
     const link = new WebSocketLink(getWsClient(wsurl, authToken))
-    return execute(link, { query: query, variables: variables })
+    return execute(link, { query, variables })
   }
 
   // set up app & two basic users to ping pong permissions around
@@ -62,7 +62,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       // uncomment this line to understand a bit more what's happening...
       // console.error( `stderr: ${data}` )
       // ok this is going to be a dirt hack, but I have no better idea ATM
-      let match = `${data}`.match(reg)
+      const match = `${data}`.match(reg)
 
       if (!childPort && match) {
         childPort = parseInt(match[1])
@@ -82,7 +82,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     }
 
     userA.id = await createUser(userA)
-    let token = await createPersonalAccessToken(userA.id, 'test token user A', [
+    const token = await createPersonalAccessToken(userA.id, 'test token user A', [
       'streams:read',
       'streams:write',
       'users:read',
