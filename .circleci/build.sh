@@ -6,18 +6,19 @@ set -e
 # defaults to packages for minimal intervention in the ci config
 FOLDER="${FOLDER:-packages}"
 
-DOCKER_IMAGE_TAG=$DOCKER_IMAGE_TAG-$SPECKLE_SERVER_PACKAGE
+DOCKER_IMAGE_TAG=speckle/speckle-$SPECKLE_SERVER_PACKAGE
 
-IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
+# IMAGE_VERSION_TAG=$(./.circleci/get_version.sh)
+IMAGE_VERSION_TAG="${IMAGE_VERSION_TAG:-0}"
+echo $IMAGE_VERSION_TAG
 
 docker build --build-arg SPECKLE_SERVER_VERSION=$IMAGE_VERSION_TAG -t $DOCKER_IMAGE_TAG:latest . -f $FOLDER/$SPECKLE_SERVER_PACKAGE/Dockerfile
-docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
 
-echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $DOCKER_REG_URL
-docker push $DOCKER_IMAGE_TAG:latest
-docker push $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
+docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:$IMAGE_VERSION_TAG
 
 if [[ "$IMAGE_VERSION_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   docker tag $DOCKER_IMAGE_TAG:latest $DOCKER_IMAGE_TAG:2
-  docker push $DOCKER_IMAGE_TAG:2
 fi
+
+echo "$DOCKER_REG_PASS" | docker login -u "$DOCKER_REG_USER" --password-stdin $DOCKER_REG_URL
+docker push -a $DOCKER_IMAGE_TAG
