@@ -104,7 +104,8 @@ jobs:
       - image: cimg/python:3.9-node
     steps:
       - checkout
-      - run: node --version
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files
 
   get-version:
     docker: *docker-image
