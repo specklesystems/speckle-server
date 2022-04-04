@@ -123,7 +123,7 @@ jobs:
       # - run: echo "$BAZ"
       # - run: echo "export FOO=foo.`date +%Y%m%d.%H%M%S`" >>workspace/new-env-vars
       # - run: echo "export BOB=$BAZ" >> workspace/new-env-vars
-      - run: cat workspace/env-vars >> $BASH_ENV
+      # - run: cat workspace/env-vars >> $BASH_ENV
       # - run: echo ${FOO:-NULL}
       # - run: echo ${BAZ:-NULL}
       # - run: echo ${BOB:-NULL}
