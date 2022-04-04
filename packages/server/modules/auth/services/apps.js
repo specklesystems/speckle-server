@@ -154,8 +154,6 @@ module.exports = {
   async revokeRefreshToken({ tokenId }) {
     tokenId = tokenId.slice(0, 10)
     let delCount = await RefreshTokens().where({ id: tokenId }).del()
-
-    if (delCount === 0) throw new Error('Did not revoke token')
     return true
   },
 
