@@ -24,7 +24,10 @@
       <!-- <v-subheader>DESC</v-subheader> -->
       <div class="caption px-3 my-4">
         <perfect-scrollbar style="max-height: 100px" :options="{ suppressScrollX: true }">
-          <span v-html="parsedDescription"></span>
+          <span v-if="stream && stream.description">
+            {{ stream.description }}
+          </span>
+          <span v-else class="font-italic">No description provided</span>
         </perfect-scrollbar>
         <router-link
           v-if="stream.role === 'stream:owner'"
@@ -296,13 +299,6 @@ export default {
     branchesTotalCount() {
       if (!this.branchQuery) return 0
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
-    },
-    parsedDescription() {
-      if (!this.stream || !this.stream.description) return 'No description provided.'
-      return this.stream.description.replace(
-        /\[(.+?)\]\((https?:\/\/[a-zA-Z0-9/.(]+?)\)/g,
-        '<a href="$2" class="text-decoration-none" target="_blank">$1</a>'
-      )
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null

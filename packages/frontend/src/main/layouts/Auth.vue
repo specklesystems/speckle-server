@@ -7,11 +7,19 @@
         </v-col>
         <v-col cols="11" sm="8" md="6" lg="4" xl="3">
           <router-view></router-view>
-          <p
-            v-if="serverInfo"
-            class="caption text-center mt-2"
-            v-html="serverInfo.termsOfService"
-          ></p>
+          <p v-if="serverInfo" class="caption text-center mt-2">
+            <a
+              v-if="termsOfServiceUrl"
+              :href="termsOfServiceUrl"
+              target="_blank"
+              class="text-decoration-none"
+            >
+              Terms of Service
+            </a>
+            <template v-else>
+              {{ serverInfo.termsOfService }}
+            </template>
+          </p>
         </v-col>
       </v-row>
     </v-container>
@@ -29,6 +37,18 @@ export default {
   computed: {
     showBlurb() {
       return this.$route.name === 'Login' || this.$route.name === 'Register'
+    },
+    termsOfServiceUrl() {
+      if (!this.serverInfo?.termsOfService) return null
+
+      let url
+      try {
+        url = new URL(this.serverInfo.termsOfService)
+      } catch (e) {
+        return null // Invalid URL
+      }
+
+      return url.toString()
     }
   },
   apollo: {

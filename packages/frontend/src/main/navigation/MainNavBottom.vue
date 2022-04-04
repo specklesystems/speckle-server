@@ -5,7 +5,7 @@
         <v-list-item class="d-flex flex-grow-1 justify-center">
           <v-row dense style="max-width: 350px">
             <v-col v-if="$loggedIn()">
-              <v-btn x-small block depressed @click="signOut()">
+              <v-btn x-small block depressed color="error" @click="signOut()">
                 <v-icon x-small class="mr-1">mdi-account-off</v-icon>
                 Sign out
               </v-btn>

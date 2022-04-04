@@ -1,15 +1,6 @@
 <template>
   <v-container class="pa-0" fluid>
     <portal to="toolbar"><b>Your Profile</b></portal>
-    <portal to="subnav-profile">
-      <v-list class="ml-12 pr-0" dense nav subheader>
-        <v-list-item @click="signOut()">
-          <v-list-item-content>
-            <v-list-item-title>Sign out</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </portal>
     <v-row>
       <v-col cols="12" lg="4">
         <user-info-card :user="user" @update="update"></user-info-card>

@@ -41,6 +41,7 @@
 
 <script>
 import gql from 'graphql-tag'
+import pick from 'lodash/pick'
 
 export default {
   name: 'ServerInfoAdminCard',
@@ -107,12 +108,12 @@ export default {
       this.loading = true
       await this.$apollo.mutate({
         mutation: gql`
-          mutation($info: ServerInfoUpdateInput!) {
+          mutation ($info: ServerInfoUpdateInput!) {
             serverInfoUpdate(info: $info)
           }
         `,
         variables: {
-          info: this.serverModifications
+          info: pick(this.serverModifications, Object.keys(this.serverDetails))
         }
       })
       await this.$apollo.queries['serverInfo'].refetch()
