@@ -56,6 +56,7 @@ async function parseAndCreateCommit({
   })
 
   const json = await response.json()
+  // eslint-disable-next-line no-console
   console.log(json)
 
   return json.data.commitCreate

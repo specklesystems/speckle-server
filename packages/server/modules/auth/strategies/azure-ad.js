@@ -66,8 +66,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         if (req.session.suuid) user.suuid = req.session.suuid
 
-        let existingUser
-        existingUser = await getUserByEmail({ email: user.email })
+        const existingUser = await getUserByEmail({ email: user.email })
 
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).

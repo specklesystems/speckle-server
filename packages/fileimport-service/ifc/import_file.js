@@ -9,6 +9,7 @@ async function main() {
 
   const [filePath, userId, streamId, branchName, commitMessage] = cmdArgs
 
+  // eslint-disable-next-line no-console
   console.log('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
 
   const data = fs.readFileSync(filePath)

@@ -33,6 +33,7 @@ module.exports = {
         userId,
         activityMessage: message,
         event: {
+          // eslint-disable-next-line camelcase
           event_name: actionType,
           data: info
         }

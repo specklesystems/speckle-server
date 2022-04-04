@@ -1,4 +1,5 @@
 /* istanbul ignore file */
+/* eslint-disable camelcase */
 const expect = require('chai').expect
 const assert = require('assert')
 

@@ -407,6 +407,7 @@ export default class ObjectLoader {
 
       // Wait for data on any running request
       const data = await Promise.any(validReadPromises)
+      // eslint-disable-next-line prefer-const
       let { value: crtDataChunk, done: readerDone, reqId } = data
       finishedRequests[reqId] = readerDone
 

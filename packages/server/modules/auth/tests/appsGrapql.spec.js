@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 const chai = require('chai')
 const appRoot = require('app-root-path')

@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable camelcase */
 const WebIFC = require('web-ifc/web-ifc-api-node')
 const ServerAPI = require('./api.js')
 

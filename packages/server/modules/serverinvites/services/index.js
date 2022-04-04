@@ -66,9 +66,9 @@ module.exports = {
       process.env.CANONICAL_URL
     )
 
-    let emailText, emailHtml, subject
+    let subject
 
-    emailText = `
+    const emailText = `
 Hello!
 
 ${inviter.name} has just sent you this invitation to join the ${
@@ -90,7 +90,7 @@ This email was sent from ${serverInfo.name} at ${
     }.
       `
 
-    emailHtml = `
+    const emailHtml = `
 Hello!
 <br>
 <br>
