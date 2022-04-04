@@ -10,7 +10,13 @@ workflows:
     jobs:
       - test-server
       - lint
-      - get-version
+      - get-version:
+          filters: &filters-build
+            tags:
+              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+            branches:
+              only:
+                - main
 
       # - build-viewer:
       #     # built the npm package
@@ -28,14 +34,9 @@ workflows:
       #           - npm_build_object_loader
 
       - docker-build-and-publish-server:
+          filters: *filters-build
           context: &docker-hub-context
             - docker-hub
-          filters: &filters-build
-            tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
-            branches:
-              only:
-                - main
           requires:
             - lint
             - test-server
