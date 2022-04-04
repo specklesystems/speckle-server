@@ -117,9 +117,8 @@ jobs:
       - run:
           name: set version
           command: |
-            echo $(./.circleci/get_version.sh)
             SPECKLE_VERSION=$(./.circleci/get_version.sh)
-            echo $SPECKLE_VERSION
+            echo "export SPECKLE_VERSION=$SPECKLE_VERSION" >> workspace/env-vars
       # - run:
       #     name: set var
       #     command: echo "export BAZ=baz.`date +%Y%m%d.%H%M`" >> $BASH_ENV
