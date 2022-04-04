@@ -116,22 +116,22 @@ jobs:
       - run: mkdir -p workspace
       - run:
           name: set version
-          command: SPECKLE_VERSION=./.circleci/get_version.sh
+          command: echo "export SPECKLE_VERSION=./.circleci/get_version.sh" >> workspace/env-vars
       # - run:
       #     name: set var
       #     command: echo "export BAZ=baz.`date +%Y%m%d.%H%M`" >> $BASH_ENV
       # - run: echo "$BAZ"
       # - run: echo "export FOO=foo.`date +%Y%m%d.%H%M%S`" >>workspace/new-env-vars
       # - run: echo "export BOB=$BAZ" >> workspace/new-env-vars
-      # - run: cat workspace/new-env-vars >> $BASH_ENV
+      - run: cat workspace/env-vars >> $BASH_ENV
       # - run: echo ${FOO:-NULL}
       # - run: echo ${BAZ:-NULL}
       # - run: echo ${BOB:-NULL}
       - run: echo $SPECKLE_VERSION
-      # - persist_to_workspace:
-      #     root: workspace
-      #     paths:
-      #         - new-env-vars
+      - persist_to_workspace:
+          root: workspace
+          paths:
+              - env-vars
 
 
   test-server:
