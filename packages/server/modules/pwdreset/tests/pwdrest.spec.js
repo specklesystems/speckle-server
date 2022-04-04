@@ -10,7 +10,11 @@ const { createUser } = require(`${appRoot}/modules/core/services/users`)
 
 describe('Password reset requests @passwordresets', () => {
   let app
-  const userA = { name: 'd1', email: 'd@speckle.systems', password: 'wowwow8charsplease' }
+  const userA = {
+    name: 'd1',
+    email: 'd@speckle.systems',
+    password: 'wowwow8charsplease'
+  }
 
   before(async () => {
     ;({ app } = await beforeEachContext())

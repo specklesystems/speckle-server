@@ -105,18 +105,20 @@ module.exports = (app) => {
             // last = objs[objs.length - 1]
             totalProcessed += objs.length
 
-            const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-              debug('speckle:error')(
-                `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
-              )
-              if (!requestDropped)
-                res
-                  .status(400)
-                  .send(
-                    'Error inserting object in the database. Check server logs for details'
-                  )
-              requestDropped = true
-            })
+            const promise = createObjectsBatched(req.params.streamId, objs).catch(
+              (e) => {
+                debug('speckle:error')(
+                  `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
+                )
+                if (!requestDropped)
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+                requestDropped = true
+              }
+            )
             promises.push(promise)
 
             await promise
@@ -176,18 +178,20 @@ module.exports = (app) => {
             // last = objs[objs.length - 1]
             totalProcessed += objs.length
 
-            const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-              debug('speckle:error')(
-                `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
-              )
-              if (!requestDropped)
-                res
-                  .status(400)
-                  .send(
-                    'Error inserting object in the database. Check server logs for details'
-                  )
-              requestDropped = true
-            })
+            const promise = createObjectsBatched(req.params.streamId, objs).catch(
+              (e) => {
+                debug('speckle:error')(
+                  `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
+                )
+                if (!requestDropped)
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+                requestDropped = true
+              }
+            )
             promises.push(promise)
 
             await promise

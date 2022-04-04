@@ -57,7 +57,10 @@ module.exports = {
 
     async commit(parent, args) {
       if (!args.id) {
-        const { commits } = await getCommitsByStreamId({ streamId: parent.id, limit: 1 })
+        const { commits } = await getCommitsByStreamId({
+          streamId: parent.id,
+          limit: 1
+        })
         if (commits.length !== 0) return commits[0]
         throw new ApolloError(
           'Cannot retrieve commit (there are no commits in this stream).'

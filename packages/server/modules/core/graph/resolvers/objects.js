@@ -66,7 +66,10 @@ module.exports = {
         'stream:contributor'
       )
 
-      const ids = await createObjects(args.objectInput.streamId, args.objectInput.objects)
+      const ids = await createObjects(
+        args.objectInput.streamId,
+        args.objectInput.objects
+      )
       return ids
     }
   }

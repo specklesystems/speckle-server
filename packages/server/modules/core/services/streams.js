@@ -86,9 +86,7 @@ module.exports = {
     // upserts the existing role (sets a new one!)
     // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
     const query =
-      StreamAcl.knex()
-        .insert({ userId, resourceId: streamId, role })
-        .toString() +
+      StreamAcl.knex().insert({ userId, resourceId: streamId, role }).toString() +
       ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
     await knex.raw(query)

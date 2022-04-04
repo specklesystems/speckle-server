@@ -20,9 +20,21 @@ let wsAddr
 let childPort = null
 
 describe('GraphQL API Subscriptions @gql-subscriptions', () => {
-  const userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wow8charsplease' }
-  const userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wow8charsplease' }
-  const userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wow8charsplease' }
+  const userA = {
+    name: 'd1',
+    email: 'd.1@speckle.systems',
+    password: 'wow8charsplease'
+  }
+  const userB = {
+    name: 'd2',
+    email: 'd.2@speckle.systems',
+    password: 'wow8charsplease'
+  }
+  const userC = {
+    name: 'd3',
+    email: 'd.3@speckle.systems',
+    password: 'wow8charsplease'
+  }
   let serverProcess
 
   const getWsClient = (wsurl, authToken) => {

@@ -468,7 +468,9 @@ export default class ObjectLoader {
     for (let i = 0; i < ids.length; i += 500) {
       const idsChunk = ids.slice(i, i + 500)
 
-      const store = this.cacheDB.transaction('objects', 'readonly').objectStore('objects')
+      const store = this.cacheDB
+        .transaction('objects', 'readonly')
+        .objectStore('objects')
       const idbChildrenPromises = idsChunk.map((id) =>
         this.promisifyIdbRequest(store.get(id)).then((data) => ({ id, data }))
       )
@@ -492,7 +494,9 @@ export default class ObjectLoader {
       return {}
     }
 
-    const store = this.cacheDB.transaction('objects', 'readwrite').objectStore('objects')
+    const store = this.cacheDB
+      .transaction('objects', 'readwrite')
+      .objectStore('objects')
     for (const obj of objects) {
       const idAndData = obj.split('\t')
       store.put(idAndData[1], idAndData[0])

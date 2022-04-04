@@ -244,7 +244,10 @@ describe('Actors & Tokens @user-services', () => {
       })
       expect(branchCommits.commits.length).to.equal(1)
 
-      const commit = await getCommitById({ streamId: multiOwnerStream.id, id: commitId })
+      const commit = await getCommitById({
+        streamId: multiOwnerStream.id,
+        id: commitId
+      })
       expect(commit).to.be.not.null
 
       const commitsByStreamId = await getCommitsByStreamId({

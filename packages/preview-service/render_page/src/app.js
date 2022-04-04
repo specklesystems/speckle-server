@@ -1,6 +1,9 @@
 import { Viewer } from '@speckle/viewer'
 
-const v = new Viewer({ container: document.getElementById('renderer'), showStats: false })
+const v = new Viewer({
+  container: document.getElementById('renderer'),
+  showStats: false
+})
 // v.on( 'load-progress', args => console.log( args ) )
 
 window.v = v

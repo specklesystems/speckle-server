@@ -55,7 +55,7 @@ export default {
         dataLabels: {
           enabled: true,
           position: 'bottom',
-          formatter (val) {
+          formatter(val) {
             return formatNumber(val)
           },
           offsetY: -25,

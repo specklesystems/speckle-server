@@ -48,7 +48,9 @@ module.exports = {
     if (cursor) query.andWhere('createdAt', '<', cursor)
     query.orderBy('createdAt').limit(limit)
 
-    const totalCount = await module.exports.getBranchesByStreamIdTotalCount({ streamId })
+    const totalCount = await module.exports.getBranchesByStreamIdTotalCount({
+      streamId
+    })
     const rows = await query
     return {
       items: rows,

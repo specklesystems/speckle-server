@@ -57,7 +57,12 @@ export default class Coverter {
         if (this.activePromises >= this.maxChildrenPromises) {
           await this.traverseAndConvert(element, callback, scale, parents)
         } else {
-          const childPromise = this.traverseAndConvert(element, callback, scale, parents)
+          const childPromise = this.traverseAndConvert(
+            element,
+            callback,
+            scale,
+            parents
+          )
           childrenConversionPromisses.push(childPromise)
         }
       }

@@ -73,7 +73,7 @@ export default {
     SpeckleViewer
   },
   filters: {
-    truncate (str, n = 20) {
+    truncate(str, n = 20) {
       return str.length > n ? str.substr(0, n - 3) + '...' : str
     }
   },

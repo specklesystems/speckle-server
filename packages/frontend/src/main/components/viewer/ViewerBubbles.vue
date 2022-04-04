@@ -351,7 +351,11 @@ export default {
 
         if (user.selection) selectedObjects.push(...user.selection)
 
-        const location = new THREE.Vector3(user.camera[0], user.camera[1], user.camera[2])
+        const location = new THREE.Vector3(
+          user.camera[0],
+          user.camera[1],
+          user.camera[2]
+        )
         let target = new THREE.Vector3(user.camera[3], user.camera[4], user.camera[5])
         const camDir = new THREE.Vector3().subVectors(target, location)
 

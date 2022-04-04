@@ -144,7 +144,10 @@ module.exports = {
     delete app.secret
     delete app.scopes
 
-    const [{ id }] = await ServerApps().returning('id').where({ id: app.id }).update(app)
+    const [{ id }] = await ServerApps()
+      .returning('id')
+      .where({ id: app.id })
+      .update(app)
 
     return id
   },
@@ -181,9 +184,7 @@ module.exports = {
     await RefreshTokens().where({ appId, userId }).del()
     const resApiTokenDelete = await ApiTokens()
       .whereIn('id', (qb) => {
-        qb.select('tokenId')
-          .from('user_server_app_tokens')
-          .where({ appId, userId })
+        qb.select('tokenId').from('user_server_app_tokens').where({ appId, userId })
       })
       .del()
 

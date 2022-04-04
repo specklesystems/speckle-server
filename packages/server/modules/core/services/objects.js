@@ -203,10 +203,7 @@ module.exports = {
   },
 
   async getObject({ streamId, objectId }) {
-    const res = await Objects()
-      .where({ streamId, id: objectId })
-      .select('*')
-      .first()
+    const res = await Objects().where({ streamId, id: objectId }).select('*').first()
     if (!res) return null
     res.data.totalChildrenCount = res.totalChildrenCount // move this back
     delete res.streamId // backwards compatibility

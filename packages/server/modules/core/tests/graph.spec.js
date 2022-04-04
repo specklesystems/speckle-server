@@ -13,9 +13,21 @@ let server
 let sendRequest
 
 describe('GraphQL API Core @core-api', () => {
-  const userA = { name: 'd1', email: 'd.1@speckle.systems', password: 'wowwowwowwowwow' }
-  const userB = { name: 'd2', email: 'd.2@speckle.systems', password: 'wowwowwowwowwow' }
-  const userC = { name: 'd3', email: 'd.3@speckle.systems', password: 'wowwowwowwowwow' }
+  const userA = {
+    name: 'd1',
+    email: 'd.1@speckle.systems',
+    password: 'wowwowwowwowwow'
+  }
+  const userB = {
+    name: 'd2',
+    email: 'd.2@speckle.systems',
+    password: 'wowwowwowwowwow'
+  }
+  const userC = {
+    name: 'd3',
+    email: 'd.3@speckle.systems',
+    password: 'wowwowwowwowwow'
+  }
 
   // set up app & two basic users to ping pong permissions around
   before(async () => {

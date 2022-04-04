@@ -284,7 +284,7 @@ export default {
       }
     }
   },
-  data () {
+  data() {
     return {
       replyText: null,
       localReplies: [],

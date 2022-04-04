@@ -130,8 +130,11 @@ export default class InteractionHandler {
       rootBlock = this.getParentBlock(objs[0].object.parent)
     }
 
-    const objId = selType === 'Block' ? rootBlock.userData.id : objs[0].object.userData.id
-    const objIdIndexCheck = this.selectedObjectsUserData.findIndex((o) => o.id === objId)
+    const objId =
+      selType === 'Block' ? rootBlock.userData.id : objs[0].object.userData.id
+    const objIdIndexCheck = this.selectedObjectsUserData.findIndex(
+      (o) => o.id === objId
+    )
     if (objIdIndexCheck !== -1) {
       if (this.selectionHelper.multiSelect) {
         // TODO: deselect if in multiple selection mode
@@ -216,7 +219,9 @@ export default class InteractionHandler {
   }
 
   deselectObj(id) {
-    const objToRemove = this.selectedObjects.children.filter((o) => o.userData.id === id)
+    const objToRemove = this.selectedObjects.children.filter(
+      (o) => o.userData.id === id
+    )
     for (const o of objToRemove) this.selectedObjects.remove(o)
 
     this.selectionBox.clear()

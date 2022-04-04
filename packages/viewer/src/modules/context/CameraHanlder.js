@@ -14,7 +14,8 @@ export default class CameraHandler {
     this.camera.position.set(1, 1, 1)
     this.camera.updateProjectionMatrix()
 
-    const aspect = this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
+    const aspect =
+      this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
     const fustrumSize = 50
     this.orthoCamera = new THREE.OrthographicCamera(
       (-fustrumSize * aspect) / 2,
@@ -225,7 +226,8 @@ export default class CameraHandler {
       this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
     this.camera.updateProjectionMatrix()
 
-    const aspect = this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
+    const aspect =
+      this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
     const fustrumSize = 50
     this.orthoCamera.left = (-fustrumSize * aspect) / 2
     this.orthoCamera.right = (fustrumSize * aspect) / 2
