@@ -1,14 +1,9 @@
 'use strict'
 const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require(`@/db/knex`)
 
-const {
-  createToken,
-  createBareToken,
-  revokeTokenById
-} = require(`${appRoot}/modules/core/services/tokens`)
+const { createToken, createBareToken } = require(`@/modules/core/services/tokens`)
 const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
@@ -159,8 +154,6 @@ module.exports = {
   async revokeRefreshToken({ tokenId }) {
     tokenId = tokenId.slice(0, 10)
     let delCount = await RefreshTokens().where({ id: tokenId }).del()
-
-    if (delCount === 0) throw new Error('Did not revoke token')
     return true
   },
 
