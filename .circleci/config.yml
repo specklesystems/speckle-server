@@ -122,7 +122,7 @@ jobs:
       - persist_to_workspace:
           root: workspace
           paths:
-              - env-vars
+            - env-vars
 
   test-server:
     docker:
