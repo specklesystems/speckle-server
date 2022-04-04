@@ -104,6 +104,7 @@ jobs:
       - image: cimg/python:3.9-node
     steps:
       - checkout
+      - run: npm ci
       - run: pip install pre-commit
       - run: pre-commit run --all-files
 
