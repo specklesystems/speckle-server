@@ -40,18 +40,21 @@ workflows:
           requires:
             - lint
             - test-server
+            - get-version
 
       - docker-build-and-publish-frontend:
           context: *docker-hub-context
           filters: *filters-build
           requires:
             - lint
+            - get-version
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
           filters: *filters-build
           requires:
             - lint
+            - get-version
             - test-server
 
       - docker-build-and-publish-file-imports:
@@ -59,6 +62,7 @@ workflows:
           filters: *filters-build
           requires:
             - lint
+            - get-version
             - test-server
 
       - docker-build-and-publish-previews:
@@ -66,6 +70,7 @@ workflows:
           filters: *filters-build
           requires:
             - lint
+            - get-version
             - test-server
 
       - docker-build-and-publish-test-container:
@@ -73,6 +78,7 @@ workflows:
           filters: *filters-build
           requires:
             - lint
+            - get-version
             - test-server
 
       - publish-helm-chart:
@@ -80,6 +86,7 @@ workflows:
           requires:
             - lint
             - test-server
+            - get-version
             - docker-build-and-publish-server
             - docker-build-and-publish-frontend
             - docker-build-and-publish-webhooks
@@ -109,7 +116,7 @@ jobs:
       - run: mkdir -p workspace
       - run:
           name: set version
-          command: SPECKLE_VERSION = ./.circleci/get_version.sh
+          command: SPECKLE_VERSION=./.circleci/get_version.sh
       # - run:
       #     name: set var
       #     command: echo "export BAZ=baz.`date +%Y%m%d.%H%M`" >> $BASH_ENV
