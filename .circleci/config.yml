@@ -36,7 +36,6 @@ workflows:
             branches:
               only:
                 - main
-                - gergo/CIRewrite
           requires:
             - lint
             - test-server
