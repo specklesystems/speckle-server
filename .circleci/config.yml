@@ -231,8 +231,12 @@ jobs:
 
   publish-helm-chart:
     docker: *docker-image
+    working_directory: *work-dir
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
             - '18:74:c4:b9:dc:66:b2:66:1d:81:56:0d:0a:87:9b:b1'

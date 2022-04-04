@@ -2,7 +2,7 @@
 
 set -e
 
-RELEASE_VERSION=$(./.circleci/get_version.sh)
+RELEASE_VERSION=${IMAGE_VERSION_TAG}
 
 echo "Releasing Helm Chart version $RELEASE_VERSION"
 
