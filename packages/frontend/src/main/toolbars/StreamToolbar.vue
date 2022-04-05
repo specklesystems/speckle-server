@@ -63,11 +63,7 @@
       max-width="600"
       :fullscreen="$vuetify.breakpoint.xsOnly"
     >
-      <share-stream-dialog
-        :stream="stream"
-        @close="shareStream = false"
-        @visibility-changexxxx="$apollo.queries.stream.refetch()"
-      />
+      <share-stream-dialog :stream="stream" @close="shareStream = false" />
     </v-dialog>
   </div>
 </template>
@@ -75,7 +71,7 @@
 export default {
   components: {
     CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
-    ShareStreamDialog: () => import('@/main/dialogs/ShareStream'),
+    ShareStreamDialog: () => import('@/main/dialogs/ShareStreamDialog.vue'),
     StreamFavoriteBtn: () =>
       import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
   },

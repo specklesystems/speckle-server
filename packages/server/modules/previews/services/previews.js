@@ -13,19 +13,19 @@ module.exports = {
   },
 
   async createObjectPreview({ streamId, objectId, priority }) {
-    let insertionObject = {
+    const insertionObject = {
       streamId,
       objectId,
       priority,
       previewStatus: 0
     }
-    let sqlQuery =
+    const sqlQuery =
       ObjectPreview().insert(insertionObject).toString() + ' on conflict do nothing'
     await knex.raw(sqlQuery)
   },
 
   async getPreviewImage({ previewId }) {
-    let previewRow = await Previews().where({ id: previewId }).first().select('*')
+    const previewRow = await Previews().where({ id: previewId }).first().select('*')
     if (!previewRow) {
       return null
     }

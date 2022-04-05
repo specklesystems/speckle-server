@@ -10,16 +10,16 @@ const CommentViews = () => knex('comment_views')
 module.exports = {
   async streamResourceCheck({ streamId, resources }) {
     // this itches - a for loop with queries... but okay let's hit the road now
-    for (let res of resources) {
+    for (const res of resources) {
       // The switch of doom: if something throws, we're out
       switch (res.resourceType) {
         case 'stream':
           // Stream validity is already checked, so we can just go ahead.
           break
         case 'commit': {
-          let linkage = await knex('stream_commits')
+          const linkage = await knex('stream_commits')
             .select()
-            .where({ commitId: res.resourceId, streamId: streamId })
+            .where({ commitId: res.resourceId, streamId })
             .first()
           if (!linkage) throw new Error('Commit not found')
           if (linkage.streamId !== streamId)
@@ -29,15 +29,15 @@ module.exports = {
           break
         }
         case 'object': {
-          let obj = await knex('objects')
+          const obj = await knex('objects')
             .select()
-            .where({ id: res.resourceId, streamId: streamId })
+            .where({ id: res.resourceId, streamId })
             .first()
           if (!obj) throw new Error('Object not found')
           break
         }
         case 'comment': {
-          let comment = await Comments().where({ id: res.resourceId }).first()
+          const comment = await Comments().where({ id: res.resourceId }).first()
           if (!comment) throw new Error('Comment not found')
           if (comment.streamId !== streamId)
             throw new Error(
@@ -69,7 +69,7 @@ module.exports = {
     if (stream && stream.resourceId !== input.streamId)
       throw Error("Input streamId doesn't match the stream resource.resourceId")
 
-    let comment = { ...input }
+    const comment = { ...input }
 
     delete comment.resources
 
@@ -82,7 +82,7 @@ module.exports = {
         streamId: input.streamId,
         resources: input.resources
       })
-      for (let res of input.resources) {
+      for (const res of input.resources) {
         await CommentLinks().insert({
           commentId: comment.id,
           resourceId: res.resourceId,
@@ -98,7 +98,7 @@ module.exports = {
   },
 
   async createCommentReply({ authorId, parentCommentId, streamId, text, data }) {
-    let comment = {
+    const comment = {
       id: crs({ length: 10 }),
       authorId,
       text,
@@ -108,9 +108,9 @@ module.exports = {
     }
     await Comments().insert(comment)
     try {
-      let commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
+      const commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
       await module.exports.streamResourceCheck({
-        streamId: streamId,
+        streamId,
         resources: [commentLink]
       })
       await CommentLinks().insert({ commentId: comment.id, ...commentLink })
@@ -133,15 +133,15 @@ module.exports = {
   },
 
   async viewComment({ userId, commentId }) {
-    let query = CommentViews()
-      .insert({ commentId: commentId, userId: userId, viewedAt: knex.fn.now() })
+    const query = CommentViews()
+      .insert({ commentId, userId, viewedAt: knex.fn.now() })
       .onConflict(knex.raw('("commentId","userId")'))
       .merge()
     await query
   },
 
   async getComment({ id, userId = null }) {
-    let query = Comments().select('*').joinRaw(`
+    const query = Comments().select('*').joinRaw(`
         join(
           select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
           from comment_links cl
@@ -155,20 +155,20 @@ module.exports = {
       })
     }
     query.where({ id }).first()
-    let res = await query
+    const res = await query
     return res
   },
 
   async archiveComment({ commentId, userId, streamId, archived = true }) {
-    let comment = await Comments().where({ id: commentId }).first()
+    const comment = await Comments().where({ id: commentId }).first()
     if (!comment)
       throw new Error(
         `No comment ${commentId} exists, cannot change its archival status`
       )
 
-    let aclEntry = await knex('stream_acl')
+    const aclEntry = await knex('stream_acl')
       .select()
-      .where({ resourceId: streamId, userId: userId })
+      .where({ resourceId: streamId, userId })
       .first()
 
     if (comment.authorId !== userId) {
@@ -189,7 +189,7 @@ module.exports = {
     streamId,
     archived = false
   }) {
-    let query = knex.with('comms', (cte) => {
+    const query = knex.with('comms', (cte) => {
       cte.select().distinctOn('id').from('comments')
       cte.join('comment_links', 'comments.id', '=', 'commentId')
 
@@ -204,12 +204,12 @@ module.exports = {
       if (resources && resources.length !== 0) {
         cte.where((q) => {
           // link resources
-          for (let res of resources) {
+          for (const res of resources) {
             q.orWhere('comment_links.resourceId', '=', res.resourceId)
           }
         })
       } else {
-        cte.where({ streamId: streamId })
+        cte.where({ streamId })
       }
       if (!replies) {
         cte.whereNull('parentComment')
@@ -238,9 +238,9 @@ module.exports = {
     query.orderBy('createdAt', 'desc')
     query.limit(limit ?? 10)
 
-    let rows = await query
-    let totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
-    let nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
+    const rows = await query
+    const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
+    const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 
     return {
       items: rows,
@@ -250,7 +250,7 @@ module.exports = {
   },
 
   async getResourceCommentCount({ resourceId }) {
-    let [res] = await CommentLinks()
+    const [res] = await CommentLinks()
       .count('commentId')
       .where({ resourceId })
       .join('comments', 'comments.id', '=', 'commentId')
@@ -263,7 +263,7 @@ module.exports = {
   },
 
   async getStreamCommentCount({ streamId }) {
-    let [res] = await Comments()
+    const [res] = await Comments()
       .count('id')
       .where({ streamId })
       .andWhere({ archived: false })

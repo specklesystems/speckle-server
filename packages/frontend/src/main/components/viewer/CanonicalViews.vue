@@ -30,7 +30,9 @@
 </template>
 <script>
 export default {
-  props: ['small'],
+  props: {
+    small: { type: Boolean, default: false }
+  },
   data() {
     return {
       items: [

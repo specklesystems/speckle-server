@@ -238,6 +238,7 @@ import userSearchQuery from '@/graphql/userSearch.gql'
 import { FullServerInfoQuery } from '@/graphql/server'
 
 export default {
+  name: 'TheCollaborators',
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     UserRole: () => import('@/main/components/stream/UserRole'),
@@ -307,10 +308,10 @@ export default {
     },
     filteredSearchResults() {
       if (!this.userSearch) return null
-      let users = []
-      for (let u of this.userSearch.items) {
+      const users = []
+      for (const u of this.userSearch.items) {
         if (u.id === this.myId) continue
-        let indx = this.collaborators.findIndex((eu) => eu.id === u.id)
+        const indx = this.collaborators.findIndex((eu) => eu.id === u.id)
         if (indx === -1) users.push(u)
       }
       return users
@@ -343,7 +344,7 @@ export default {
             }
           }
         })
-        let index = this.stream.collaborators.findIndex((u) => u.id === user.id)
+        const index = this.stream.collaborators.findIndex((u) => u.id === user.id)
         if (index !== -1) {
           this.stream.collaborators.splice(index, 1)
         }

@@ -10,9 +10,9 @@
         icon
         small
         class="background ml-2 elevation-10"
-        @click="minimise = !minimise"
+        @click="minimize = !minimize"
       >
-        <v-icon v-if="!minimise" small>mdi-minus</v-icon>
+        <v-icon v-if="!minimize" small>mdi-minus</v-icon>
         <v-icon v-else small>mdi-plus</v-icon>
       </v-btn>
       <v-btn
@@ -24,7 +24,7 @@
         <v-icon small>mdi-close</v-icon>
       </v-btn>
     </div>
-    <div v-show="!minimise" style="width: 100%" class="mouse">
+    <div v-show="!minimize" style="width: 100%" class="mouse">
       <div
         v-if="!isComplete"
         class="warning rounded-xl py-2 caption mb-2 text-center"
@@ -34,7 +34,7 @@
         This comment is targeting other resources.
         <v-btn x-small @click="addMissingResources()">View in full context</v-btn>
       </div>
-      <div class="px-2" v-show="$apollo.loading">
+      <div v-show="$apollo.loading" class="px-2">
         <v-progress-linear indeterminate />
       </div>
       <template v-for="(reply, index) in thread">
@@ -70,16 +70,16 @@
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
           <div
-            class="px-4 py-2 caption mb-2 background rounded-xl"
             v-show="whoIsTyping.length > 0"
+            class="px-4 py-2 caption mb-2 background rounded-xl"
           >
             {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
         <div>
           <v-textarea
-            :disabled="loadingReply"
             v-model="replyText"
+            :disabled="loadingReply"
             solo
             hide-details
             auto-grow
@@ -92,10 +92,10 @@
             @keydown.enter.exact.prevent="addReply()"
           ></v-textarea>
         </div>
-        <div class="px-2" v-show="loadingReply">
+        <div v-show="loadingReply" class="px-2">
           <v-progress-linear indeterminate />
         </div>
-        <div class="text-right" ref="replyinput">
+        <div ref="replyinput" class="text-right">
           <v-btn
             v-show="canArchiveThread"
             v-tooltip="'Marks this thread as archived.'"
@@ -263,15 +263,15 @@ export default {
             this.$emit('deleted', this.comment)
           }
           if (data.commentThreadActivity.eventType === 'reply-typing-status') {
-            let state = data.commentThreadActivity.data
+            const state = data.commentThreadActivity.data
             if (state.userId === this.$userId()) return
-            let existingUser = this.whoIsTyping.find((u) => u.userId === state.userId)
+            const existingUser = this.whoIsTyping.find((u) => u.userId === state.userId)
             if (state.isTyping && existingUser) {
               existingUser.lastSeenAt = Date.now()
               return
             }
             if (!state.isTyping) {
-              let indx = this.whoIsTyping.findIndex((u) => u.userId === state.userId)
+              const indx = this.whoIsTyping.findIndex((u) => u.userId === state.userId)
               if (indx !== -1) this.whoIsTyping.splice(indx, 1)
               return
             }
@@ -284,11 +284,11 @@ export default {
       }
     }
   },
-  data: function () {
+  data() {
     return {
       replyText: null,
       localReplies: [],
-      minimise: false,
+      minimize: false,
       showArchiveDialog: false,
       loadingReply: false,
       whoIsTyping: [],
@@ -304,29 +304,30 @@ export default {
         this.stream.role === 'stream:owner'
       )
         return true
+      return false
     },
     thread() {
-      let sorted = [...this.localReplies].sort(
+      const sorted = [...this.localReplies].sort(
         (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
       )
       return [this.comment, ...sorted]
     },
     isComplete() {
-      let res = [this.$route.params.resourceId]
+      const res = [this.$route.params.resourceId]
       if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
-      let commRes = this.comment.resources
+      const commRes = this.comment.resources
         .filter((r) => r.resourceType !== 'stream')
         .map((r) => r.resourceId)
 
-      for (let r of commRes) {
+      for (const r of commRes) {
         if (res.indexOf(r) === -1) return false
       }
       return true
     },
     link() {
       if (!this.comment) return
-      let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
-      let first = res.shift()
+      const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
+      const first = res.shift()
       let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
@@ -368,11 +369,11 @@ export default {
     }
   },
   mounted() {
-    window.addEventListener('beforeunload', async (e) => {
+    window.addEventListener('beforeunload', async () => {
       await this.sendTypingUpdate(false)
     })
     setInterval(() => {
-      let now = Date.now()
+      const now = Date.now()
       for (let i = this.whoIsTyping.length - 1; i >= 0; i--) {
         if (Math.abs(now - this.whoIsTyping[i].lastSeenAt) > 10000)
           this.whoIsTyping.splice(i, 1)
@@ -414,8 +415,8 @@ export default {
       })
     },
     copyCommentLinkToClip() {
-      let res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
-      let first = res.shift()
+      const res = this.comment.resources.filter((r) => r.resourceType !== 'stream')
+      const first = res.shift()
       let route = `${window.origin}/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.comment.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`
@@ -427,23 +428,23 @@ export default {
       })
     },
     addMissingResources() {
-      let res = [this.$route.params.resourceId]
+      const res = [this.$route.params.resourceId]
       if (this.$route.query.overlay) res.push(...this.$route.query.overlay.split(','))
-      let commRes = this.comment.resources
+      const commRes = this.comment.resources
         .filter((r) => r.resourceType !== 'stream')
         .map((r) => r.resourceId)
 
-      let missing = []
-      for (let r of commRes) {
+      const missing = []
+      for (const r of commRes) {
         if (res.indexOf(r) === -1) missing.push(r)
       }
       this.$emit('add-resources', missing)
     },
     showTime(index) {
       if (index === 0) return true
-      let curr = new Date(this.thread[index].createdAt)
-      let prev = new Date(this.thread[index - 1].createdAt)
-      let delta = Math.abs(prev - curr)
+      const curr = new Date(this.thread[index].createdAt)
+      const prev = new Date(this.thread[index - 1].createdAt)
+      const delta = Math.abs(prev - curr)
       return delta > 450000
     },
     async addReply() {
@@ -454,7 +455,7 @@ export default {
         return
       }
 
-      let replyInput = {
+      const replyInput = {
         streamId: this.$route.params.streamId,
         parentComment: this.comment.id,
         text: this.replyText

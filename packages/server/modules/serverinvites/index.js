@@ -1,13 +1,13 @@
 'use strict'
-let debug = require('debug')
+const debug = require('debug')
 const appRoot = require('app-root-path')
 const { registerOrUpdateScope } = require(`${appRoot}/modules/shared`)
 
-exports.init = async (app, options) => {
+exports.init = async () => {
   debug('speckle:modules')('💌 Init invites module')
 
   const scopes = require('./scopes.js')
-  for (let scope of scopes) {
+  for (const scope of scopes) {
     await registerOrUpdateScope(scope)
   }
 }

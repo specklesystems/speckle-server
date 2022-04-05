@@ -22,7 +22,7 @@ export default {
     color() {
       if (!this.applicationName) return 'grey'
 
-      let appname = this.applicationName.toLowerCase()
+      const appname = this.applicationName.toLowerCase()
 
       if (appname.includes('dynamo')) return 'purple'
       if (appname.includes('revit')) return 'blue darken-3'
@@ -42,7 +42,7 @@ export default {
     shortName() {
       if (!this.applicationName) return '?'
 
-      let appname = this.applicationName.toLowerCase()
+      const appname = this.applicationName.toLowerCase()
 
       if (appname.includes('dynamo')) return 'DYN'
       if (appname.includes('revit')) return 'RVT'

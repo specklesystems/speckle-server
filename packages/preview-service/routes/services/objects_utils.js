@@ -1,6 +1,5 @@
 'use strict'
 
-let debug = require('debug')('speckle:services')
 const knex = require('../../knex')
 
 const Objects = () => knex('objects')
@@ -8,10 +7,7 @@ const Closures = () => knex('object_children_closure')
 
 module.exports = {
   async getObject({ streamId, objectId }) {
-    let res = await Objects()
-      .where({ streamId: streamId, id: objectId })
-      .select('*')
-      .first()
+    const res = await Objects().where({ streamId, id: objectId }).select('*').first()
     if (!res) return null
     res.data.totalChildrenCount = res.totalChildrenCount
     delete res.streamId
@@ -19,7 +15,7 @@ module.exports = {
   },
 
   async getObjectChildrenStream({ streamId, objectId }) {
-    let q = Closures()
+    const q = Closures()
     q.select('id')
     q.select(knex.raw('data::text as "dataText"'))
     q.rightJoin('objects', function () {
@@ -40,7 +36,7 @@ module.exports = {
   },
 
   async getObjectsStream({ streamId, objectIds }) {
-    let res = Objects()
+    const res = Objects()
       .whereIn('id', objectIds)
       .andWhere('streamId', streamId)
       .orderBy('id')

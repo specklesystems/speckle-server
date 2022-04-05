@@ -5,16 +5,17 @@
     </portal>
     <v-row>
       <v-col cols="12" lg="12">
-        <timeline />
+        <feed-timeline />
       </v-col>
     </v-row>
-    <latest-blogposts></latest-blogposts>
+    <latest-blogposts />
   </div>
 </template>
 <script>
 export default {
+  name: 'TheFeed',
   components: {
-    Timeline: () => import('@/main/components/feed/Timeline'),
+    FeedTimeline: () => import('@/main/components/feed/FeedTimeline.vue'),
     LatestBlogposts: () => import('@/main/components/feed/LatestBlogposts')
   }
 }

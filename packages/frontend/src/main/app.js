@@ -40,7 +40,7 @@ import VueMatomo from 'vue-matomo'
 Vue.use(VueMatomo, {
   host: 'https://speckle.matomo.cloud',
   siteId: 4,
-  router: router,
+  router,
   userId: localStorage.getItem('suuid')
 })
 

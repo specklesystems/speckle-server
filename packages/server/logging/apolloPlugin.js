@@ -11,6 +11,7 @@ const metricCallCount = new prometheusClient.Counter({
 })
 
 module.exports = {
+  // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
     return {
       didResolveOperation(ctx) {
@@ -18,13 +19,13 @@ module.exports = {
           return
         }
 
-        let transaction = Sentry.startTransaction({
+        const transaction = Sentry.startTransaction({
           op: `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`,
           name: `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
         })
 
         try {
-          let actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
+          const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
           metricCallCount.labels(actionName).inc()
 
           // console.log( actionName )

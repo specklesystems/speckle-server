@@ -31,16 +31,33 @@
 </template>
 <script>
 export default {
-  name: 'Strategies',
-  props: ['strategies', 'appId', 'challenge', 'suuid'],
+  name: 'AuthStrategies',
+  props: {
+    strategies: {
+      type: Array,
+      default: () => []
+    },
+    appId: {
+      type: String,
+      default: () => null
+    },
+    challenge: {
+      type: String,
+      default: () => null
+    },
+    suuid: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       inviteId: null
     }
   },
   mounted() {
-    let urlParams = new URLSearchParams(window.location.search)
-    let inviteId = urlParams.get('inviteId')
+    const urlParams = new URLSearchParams(window.location.search)
+    const inviteId = urlParams.get('inviteId')
     this.inviteId = inviteId
   },
   methods: {

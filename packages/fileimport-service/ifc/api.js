@@ -31,14 +31,14 @@ module.exports = class ServerAPI {
   }
 
   async createObject(streamId, object) {
-    let insertionObject = this.prepInsertionObject(streamId, object)
+    const insertionObject = this.prepInsertionObject(streamId, object)
 
-    let closures = []
-    let totalChildrenCountByDepth = {}
+    const closures = []
+    const totalChildrenCountByDepth = {}
     if (object.__closure !== null) {
       for (const prop in object.__closure) {
         closures.push({
-          streamId: streamId,
+          streamId,
           parent: insertionObject.id,
           child: prop,
           minDepth: object.__closure[prop]
@@ -58,11 +58,11 @@ module.exports = class ServerAPI {
       totalChildrenCountByDepth
     )
 
-    let q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
+    const q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
     await knex.raw(q1)
 
     if (closures.length > 0) {
-      let q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
+      const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
       await knex.raw(q2)
     }
 
@@ -77,7 +77,7 @@ module.exports = class ServerAPI {
       obj.id =
         obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
-    let stringifiedObj = JSON.stringify(obj)
+    const stringifiedObj = JSON.stringify(obj)
     if (stringifiedObj.length > MAX_OBJECT_SIZE) {
       throw new Error(
         `Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`
@@ -86,23 +86,23 @@ module.exports = class ServerAPI {
 
     return {
       data: stringifiedObj, // stored in jsonb column
-      streamId: streamId,
+      streamId,
       id: obj.id,
       speckleType: obj.speckleType
     }
   }
 
   async getBranchByNameAndStreamId({ streamId, name }) {
-    let query = Branches()
+    const query = Branches()
       .select('*')
-      .where({ streamId: streamId })
+      .where({ streamId })
       .andWhere(knex.raw('LOWER(name) = ?', [name]))
       .first()
     return await query
   }
 
   async createBranch({ name, description, streamId, authorId }) {
-    let branch = {}
+    const branch = {}
     branch.id = crs({ length: 10 })
     branch.streamId = streamId
     branch.authorId = authorId
@@ -118,28 +118,28 @@ module.exports = class ServerAPI {
   }
 
   async createBareToken() {
-    let tokenId = crs({ length: 10 })
-    let tokenString = crs({ length: 32 })
-    let tokenHash = await bcrypt.hash(tokenString, 10)
-    let lastChars = tokenString.slice(tokenString.length - 6, tokenString.length)
+    const tokenId = crs({ length: 10 })
+    const tokenString = crs({ length: 32 })
+    const tokenHash = await bcrypt.hash(tokenString, 10)
+    const lastChars = tokenString.slice(tokenString.length - 6, tokenString.length)
 
     return { tokenId, tokenString, tokenHash, lastChars }
   }
 
   async createToken({ userId, name, scopes, lifespan }) {
-    let { tokenId, tokenString, tokenHash, lastChars } = await this.createBareToken()
+    const { tokenId, tokenString, tokenHash, lastChars } = await this.createBareToken()
 
     if (scopes.length === 0) throw new Error('No scopes provided')
 
-    let token = {
+    const token = {
       id: tokenId,
       tokenDigest: tokenHash,
-      lastChars: lastChars,
+      lastChars,
       owner: userId,
-      name: name,
-      lifespan: lifespan
+      name,
+      lifespan
     }
-    let tokenScopes = scopes.map((scope) => ({ tokenId: tokenId, scopeName: scope }))
+    const tokenScopes = scopes.map((scope) => ({ tokenId, scopeName: scope }))
 
     await ApiTokens().insert(token)
     await TokenScopes().insert(tokenScopes)
@@ -148,7 +148,7 @@ module.exports = class ServerAPI {
   }
 
   async revokeTokenById(tokenId) {
-    let delCount = await ApiTokens()
+    const delCount = await ApiTokens()
       .where({ id: tokenId.slice(0, 10) })
       .del()
 

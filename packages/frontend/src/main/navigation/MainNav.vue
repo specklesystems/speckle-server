@@ -154,7 +154,7 @@ export default {
     }
   },
   mounted() {
-    let navContent = [
+    const navContent = [
       ...document.getElementsByClassName('v-navigation-drawer__content')
     ][0]
     navContent.addEventListener('scroll', () => {

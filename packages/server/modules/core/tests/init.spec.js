@@ -18,17 +18,17 @@ describe('Initialization Logic @init-logic', () => {
     })
 
     it('should have a lotta scopes', async () => {
-      let res = await knex('scopes').select()
+      const res = await knex('scopes').select()
       expect(res.length).to.be.greaterThan(10)
     })
 
     it('should have some roles', async () => {
-      let res = await knex('user_roles').select()
+      const res = await knex('user_roles').select()
       expect(res.length).to.be.greaterThan(4)
     })
 
     it('should have some apps', async () => {
-      let res = await knex('server_apps').select()
+      const res = await knex('server_apps').select()
       expect(res.length).to.be.greaterThan(2)
     })
   })
@@ -39,17 +39,17 @@ describe('Initialization Logic @init-logic', () => {
     })
 
     it('should have a lotta scopes second time round too!', async () => {
-      let res = await knex('scopes').select()
+      const res = await knex('scopes').select()
       expect(res.length).to.be.greaterThan(10)
     })
 
     it('should have some roles second time round!', async () => {
-      let res = await knex('user_roles').select()
+      const res = await knex('user_roles').select()
       expect(res.length).to.be.greaterThan(4)
     })
 
     it('should have some apps second time round', async () => {
-      let res = await knex('server_apps').select()
+      const res = await knex('server_apps').select()
       expect(res.length).to.be.greaterThan(2)
     })
   })

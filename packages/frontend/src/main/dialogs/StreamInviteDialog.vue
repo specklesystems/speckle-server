@@ -88,7 +88,7 @@ export default {
             return true
           },
           (v) => {
-            let pure = DOMPurify.sanitize(v)
+            const pure = DOMPurify.sanitize(v)
             if (pure !== v) return 'No crazy hacks please.'
             else return true
           }

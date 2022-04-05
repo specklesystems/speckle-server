@@ -17,9 +17,9 @@
 
       <user-avatar
         v-for="userId in receivedUsersUnique.slice(0, 2)"
-        xxxv-show="$vuetify.breakpoint.smAndUp"
         :id="userId"
         :key="userId"
+        xxxv-show="$vuetify.breakpoint.smAndUp"
         :show-hover="false"
         :size="20"
       ></user-avatar>
@@ -138,7 +138,7 @@ export default {
     receivedUsersUnique() {
       if (!(this.activity && this.activity.items && this.activity.items.length > 0))
         return []
-      let set = new Set()
+      const set = new Set()
       this.activity.items.forEach((item) => set.add(item.userId))
       return Array.from(set)
     }

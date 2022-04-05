@@ -156,7 +156,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'StreamSettings',
+  name: 'TheSettings',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
@@ -180,7 +180,7 @@ export default {
       },
 
       update(data) {
-        let stream = data.stream
+        const stream = data.stream
         if (stream)
           ({
             name: this.name,

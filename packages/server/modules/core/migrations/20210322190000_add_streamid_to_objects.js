@@ -111,7 +111,7 @@ exports.up = async (knex) => {
   Revert data and schema
 */
 exports.down = async (knex) => {
-  let hasColumn = await knex.schema.hasColumn('objects', 'streamId')
+  const hasColumn = await knex.schema.hasColumn('objects', 'streamId')
   if (hasColumn) {
     await knex.schema.alterTable('objects', (table) => {
       table.dropPrimary()

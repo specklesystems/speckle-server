@@ -105,7 +105,7 @@ export default class Viewer extends EventEmitter {
 
     // return
 
-    let ambientLight = new THREE.AmbientLight(0xffffff)
+    const ambientLight = new THREE.AmbientLight(0xffffff)
     this.scene.add(ambientLight)
 
     const lights = []
@@ -114,7 +114,7 @@ export default class Viewer extends EventEmitter {
     lights[2] = new THREE.PointLight(0xffffff, 0.21, 0)
     lights[3] = new THREE.PointLight(0xffffff, 0.21, 0)
 
-    let factor = 1000
+    const factor = 1000
     lights[0].position.set(1 * factor, 1 * factor, 1 * factor)
     lights[1].position.set(1 * factor, -1 * factor, 1 * factor)
     lights[2].position.set(-1 * factor, -1 * factor, 1 * factor)
@@ -137,7 +137,7 @@ export default class Viewer extends EventEmitter {
     hemiLight.up.set(0, 0, 1)
     this.scene.add(hemiLight)
 
-    let group = new THREE.Group()
+    const group = new THREE.Group()
     this.scene.add(group)
   }
 
@@ -172,7 +172,7 @@ export default class Viewer extends EventEmitter {
       // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
       // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
       // First remove the env map from all materials
-      for (let obj of this.sceneManager.filteredObjects) {
+      for (const obj of this.sceneManager.filteredObjects) {
         obj.material.envMap = null
       }
 
@@ -183,7 +183,7 @@ export default class Viewer extends EventEmitter {
       this.scene.background = null
 
       // Finally, re-set the env maps of all materials
-      for (let obj of this.sceneManager.filteredObjects) {
+      for (const obj of this.sceneManager.filteredObjects) {
         obj.material.envMap = this.cubeCamera.renderTarget.texture
       }
       this.reflectionsNeedUpdate = false
@@ -220,7 +220,7 @@ export default class Viewer extends EventEmitter {
     try {
       if (++this.inProgressOperations === 1) this.emit('busy', true)
 
-      let loader = new ViewerObjectLoader(this, url, token, enableCaching)
+      const loader = new ViewerObjectLoader(this, url, token, enableCaching)
       this.loaders[url] = loader
       await loader.load()
     } finally {
@@ -248,7 +248,7 @@ export default class Viewer extends EventEmitter {
   }
 
   async unloadAll() {
-    for (let key of Object.keys(this.loaders)) {
+    for (const key of Object.keys(this.loaders)) {
       await this.loaders[key].unload()
       delete this.loaders[key]
     }

@@ -9,7 +9,7 @@ const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const { contextMiddleware } = require(`${appRoot}/modules/shared`)
 const { validatePermissionsWriteStream } = require('./authUtils')
 
-const { createObjects, createObjectsBatched } = require('../services/objects')
+const { createObjectsBatched } = require('../services/objects')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -22,7 +22,7 @@ module.exports = (app) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let hasStreamAccess = await validatePermissionsWriteStream(
+      const hasStreamAccess = await validatePermissionsWriteStream(
         req.params.streamId,
         req
       )
@@ -30,20 +30,20 @@ module.exports = (app) => {
         return res.status(hasStreamAccess.status).end()
       }
 
-      let busboy = Busboy({ headers: req.headers })
+      const busboy = Busboy({ headers: req.headers })
       let totalProcessed = 0
-      let last = {}
+      // let last = {}
 
-      let promises = []
+      const promises = []
       let requestDropped = false
 
       busboy.on('file', (name, file, info) => {
-        const { filename, encoding, mimeType } = info
+        const { mimeType } = info
 
         if (requestDropped) return
 
         if (mimeType === 'application/gzip') {
-          let buffer = []
+          const buffer = []
 
           file.on('data', (data) => {
             if (data) buffer.push(data)
@@ -51,10 +51,10 @@ module.exports = (app) => {
 
           file.on('end', async () => {
             if (requestDropped) return
-            let t0 = Date.now()
+            const t0 = Date.now()
             let objs = []
 
-            let gzippedBuffer = Buffer.concat(buffer)
+            const gzippedBuffer = Buffer.concat(buffer)
             if (gzippedBuffer.length > MAX_FILE_SIZE) {
               debug('speckle:error')(
                 `[User ${
@@ -72,7 +72,7 @@ module.exports = (app) => {
               requestDropped = true
             }
 
-            let gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
+            const gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
             if (gunzippedBuffer.length > MAX_FILE_SIZE) {
               debug('speckle:error')(
                 `[User ${
@@ -102,21 +102,23 @@ module.exports = (app) => {
               requestDropped = true
             }
 
-            last = objs[objs.length - 1]
+            // last = objs[objs.length - 1]
             totalProcessed += objs.length
 
-            let promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-              debug('speckle:error')(
-                `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
-              )
-              if (!requestDropped)
-                res
-                  .status(400)
-                  .send(
-                    'Error inserting object in the database. Check server logs for details'
-                  )
-              requestDropped = true
-            })
+            const promise = createObjectsBatched(req.params.streamId, objs).catch(
+              (e) => {
+                debug('speckle:error')(
+                  `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
+                )
+                if (!requestDropped)
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+                requestDropped = true
+              }
+            )
             promises.push(promise)
 
             await promise
@@ -144,7 +146,7 @@ module.exports = (app) => {
 
           file.on('end', async () => {
             if (requestDropped) return
-            let t0 = Date.now()
+            const t0 = Date.now()
             let objs = []
 
             if (buffer.length > MAX_FILE_SIZE) {
@@ -173,21 +175,23 @@ module.exports = (app) => {
               if (!requestDropped) res.status(400).send('Failed to parse data.')
               requestDropped = true
             }
-            last = objs[objs.length - 1]
+            // last = objs[objs.length - 1]
             totalProcessed += objs.length
 
-            let promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-              debug('speckle:error')(
-                `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
-              )
-              if (!requestDropped)
-                res
-                  .status(400)
-                  .send(
-                    'Error inserting object in the database. Check server logs for details'
-                  )
-              requestDropped = true
-            })
+            const promise = createObjectsBatched(req.params.streamId, objs).catch(
+              (e) => {
+                debug('speckle:error')(
+                  `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
+                )
+                if (!requestDropped)
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+                requestDropped = true
+              }
+            )
             promises.push(promise)
 
             await promise

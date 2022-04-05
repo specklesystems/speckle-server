@@ -111,7 +111,7 @@ export default {
   },
   watch: {
     appScopes(val) {
-      let scopeList = []
+      const scopeList = []
       val.forEach((obj) => {
         scopeList.push(obj.name)
       })

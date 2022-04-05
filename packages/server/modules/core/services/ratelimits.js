@@ -1,5 +1,4 @@
 'use strict'
-const crs = require('crypto-random-string')
 const appRoot = require('app-root-path')
 const knex = require(`${appRoot}/db/knex`)
 
@@ -47,13 +46,13 @@ const LIMIT_INTERVAL = {
   ACTIVE_CONNECTIONS: 0
 }
 
-let rateLimitedCache = {}
+const rateLimitedCache = {}
 
 async function shouldRateLimitNext({ action, source }) {
   if (!source) return false
 
-  let limit = LIMITS[action]
-  let checkInterval = LIMIT_INTERVAL[action]
+  const limit = LIMITS[action]
+  const checkInterval = LIMIT_INTERVAL[action]
   if (limit === undefined || checkInterval === undefined) {
     return false
   }
@@ -62,13 +61,13 @@ async function shouldRateLimitNext({ action, source }) {
   if (checkInterval === 0) startTimeMs = 0
   else startTimeMs = Date.now() - checkInterval * 1000
 
-  let [res] = await RatelimitActions()
+  const [res] = await RatelimitActions()
     .count()
     .where({ action, source })
     .andWhere('timestamp', '>', new Date(startTimeMs))
-  let count = parseInt(res.count) + 1 // plus this request
+  const count = parseInt(res.count) + 1 // plus this request
 
-  let shouldRateLimit = count >= limit
+  const shouldRateLimit = count >= limit
 
   if (!shouldRateLimit) {
     await RatelimitActions().insert({ action, source })
@@ -82,8 +81,8 @@ module.exports = {
 
   // returns true if the action is fine, false if it should be blocked because of exceeding limit
   async respectsLimits({ action, source }) {
-    let rateLimitKey = `${action} ${source}`
-    let promise = shouldRateLimitNext({ action, source }).then((shouldRateLimit) => {
+    const rateLimitKey = `${action} ${source}`
+    const promise = shouldRateLimitNext({ action, source }).then((shouldRateLimit) => {
       if (shouldRateLimit) rateLimitedCache[rateLimitKey] = true
       else delete rateLimitedCache[rateLimitKey]
     })

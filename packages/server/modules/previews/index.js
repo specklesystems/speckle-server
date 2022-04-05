@@ -2,10 +2,8 @@
 'use strict'
 
 const debug = require('debug')
-const express = require('express')
 const appRoot = require('app-root-path')
 
-const cors = require('cors')
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
@@ -28,16 +26,16 @@ const {
 
 const { makeOgImage } = require('./ogImage')
 
-exports.init = (app, options) => {
+exports.init = (app) => {
   if (process.env.DISABLE_PREVIEWS) {
     debug('speckle:modules')('📸 Object preview module is DISABLED')
   } else {
     debug('speckle:modules')('📸 Init object preview module')
   }
 
-  let DEFAULT_ANGLE = '0'
+  const DEFAULT_ANGLE = '0'
 
-  let getObjectPreviewBufferOrFilepath = async ({ streamId, objectId, angle }) => {
+  const getObjectPreviewBufferOrFilepath = async ({ streamId, objectId, angle }) => {
     if (process.env.DISABLE_PREVIEWS) {
       return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
@@ -52,16 +50,16 @@ exports.init = (app, options) => {
     }
 
     // Get existing preview metadata
-    let previewInfo = await getObjectPreviewInfo({ streamId, objectId })
+    const previewInfo = await getObjectPreviewInfo({ streamId, objectId })
     if (!previewInfo) {
       await createObjectPreview({ streamId, objectId, priority: 0 })
     }
 
-    if (!previewInfo || previewInfo.previewStatus != 2 || !previewInfo.preview) {
+    if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {
       return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
     }
 
-    let previewImgId = previewInfo.preview[angle]
+    const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
       debug('speckle:errors')(
         `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
@@ -71,7 +69,7 @@ exports.init = (app, options) => {
         file: `${appRoot}/modules/previews/assets/preview_error.png`
       }
     }
-    let previewImg = await getPreviewImage({ previewId: previewImgId })
+    const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
       debug('speckle:errors')(`Error: Preview image not found: ${previewImgId}`)
       return {
@@ -82,7 +80,7 @@ exports.init = (app, options) => {
     return { type: 'buffer', buffer: previewImg }
   }
 
-  let sendObjectPreview = async (req, res, streamId, objectId, angle) => {
+  const sendObjectPreview = async (req, res, streamId, objectId, angle) => {
     let previewBufferOrFile = await getObjectPreviewBufferOrFilepath({
       streamId,
       objectId,
@@ -116,7 +114,7 @@ exports.init = (app, options) => {
     }
   }
 
-  let checkStreamPermissions = async (req) => {
+  const checkStreamPermissions = async (req) => {
     const stream = await getStream({
       streamId: req.params.streamId,
       userId: req.context.userId
@@ -155,7 +153,7 @@ exports.init = (app, options) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
         return res.sendFile(
@@ -178,7 +176,7 @@ exports.init = (app, options) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
         return res.sendFile(
@@ -186,15 +184,15 @@ exports.init = (app, options) => {
         )
       }
 
-      let { commits } = await getCommitsByStreamId({
+      const { commits } = await getCommitsByStreamId({
         streamId: req.params.streamId,
         limit: 1,
         ignoreGlobalsBranch: true
       })
-      if (!commits || commits.length == 0) {
+      if (!commits || commits.length === 0) {
         return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
       }
-      let lastCommit = commits[0]
+      const lastCommit = commits[0]
 
       return sendObjectPreview(
         req,
@@ -211,7 +209,7 @@ exports.init = (app, options) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
         return res.sendFile(
@@ -229,11 +227,11 @@ exports.init = (app, options) => {
       } catch {
         commitsObj = {}
       }
-      let { commits } = commitsObj
-      if (!commits || commits.length == 0) {
+      const { commits } = commitsObj
+      if (!commits || commits.length === 0) {
         return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
       }
-      let lastCommit = commits[0]
+      const lastCommit = commits[0]
 
       return sendObjectPreview(
         req,
@@ -250,7 +248,7 @@ exports.init = (app, options) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
         return res.sendFile(
@@ -258,7 +256,7 @@ exports.init = (app, options) => {
         )
       }
 
-      let commit = await getCommitById({
+      const commit = await getCommitById({
         streamId: req.params.streamId,
         id: req.params.commitId
       })
@@ -281,7 +279,7 @@ exports.init = (app, options) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
         return res.sendFile(

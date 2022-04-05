@@ -1,17 +1,14 @@
 'use strict'
-const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const appRoot = require('app-root-path')
 const knex = require(`${appRoot}/db/knex`)
 
 const Streams = () => knex('streams')
-const Branches = () => knex('branches')
 const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
 const BranchCommits = () => knex('branch_commits')
-const ParentCommits = () => knex('parent_commits')
 
-const { getBranchesByStreamId, getBranchByNameAndStreamId } = require('./branches')
+const { getBranchByNameAndStreamId } = require('./branches')
 const { getObject } = require('./objects')
 
 module.exports = {
@@ -28,12 +25,12 @@ module.exports = {
     // If no total children count is passed in, get it from the original object
     // that this commit references.
     if (!totalChildrenCount) {
-      let { totalChildrenCount: tc } = await getObject({ streamId, objectId })
+      const { totalChildrenCount: tc } = await getObject({ streamId, objectId })
       totalChildrenCount = tc || 1
     }
 
     // Create main table entry
-    let [{ id }] = await Commits()
+    const [{ id }] = await Commits()
       .returning('id')
       .insert({
         id: crs({ length: 10 }),
@@ -46,9 +43,9 @@ module.exports = {
       })
 
     // Link it to a branch
-    await BranchCommits().insert({ branchId: branchId, commitId: id })
+    await BranchCommits().insert({ branchId, commitId: id })
     // Link it to a stream
-    await StreamCommits().insert({ streamId: streamId, commitId: id })
+    await StreamCommits().insert({ streamId, commitId: id })
 
     // update stream updated at
     await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
@@ -66,8 +63,8 @@ module.exports = {
     parents
   }) {
     branchName = branchName.toLowerCase()
-    let myBranch = await getBranchByNameAndStreamId({
-      streamId: streamId,
+    const myBranch = await getBranchByNameAndStreamId({
+      streamId,
       name: branchName
     })
 
@@ -86,11 +83,11 @@ module.exports = {
   },
 
   async updateCommit({ id, message }) {
-    return await Commits().where({ id: id }).update({ message: message })
+    return await Commits().where({ id }).update({ message })
   },
 
   async getCommitById({ streamId, id }) {
-    let query = await Commits()
+    const query = await Commits()
       .columns([
         { id: 'commits.id' },
         'message',
@@ -115,19 +112,19 @@ module.exports = {
   },
 
   async deleteCommit({ id }) {
-    return await Commits().where({ id: id }).del()
+    return await Commits().where({ id }).del()
   },
 
   async getCommitsTotalCountByBranchId({ branchId }) {
-    let [res] = await BranchCommits().count().where('branchId', branchId)
+    const [res] = await BranchCommits().count().where('branchId', branchId)
 
     return parseInt(res.count)
   },
 
   async getCommitsTotalCountByBranchName({ streamId, branchName }) {
     branchName = branchName.toLowerCase()
-    let myBranch = await getBranchByNameAndStreamId({
-      streamId: streamId,
+    const myBranch = await getBranchByNameAndStreamId({
+      streamId,
       name: branchName
     })
 
@@ -138,7 +135,7 @@ module.exports = {
 
   async getCommitsByBranchId({ branchId, limit, cursor }) {
     limit = limit || 25
-    let query = BranchCommits()
+    const query = BranchCommits()
       .columns([
         { id: 'commitId' },
         'message',
@@ -162,7 +159,7 @@ module.exports = {
 
     query.orderBy('commits.createdAt', 'desc').limit(limit)
 
-    let rows = await query
+    const rows = await query
 
     return {
       commits: rows,
@@ -172,8 +169,8 @@ module.exports = {
 
   async getCommitsByBranchName({ streamId, branchName, limit, cursor }) {
     branchName = branchName.toLowerCase()
-    let myBranch = await getBranchByNameAndStreamId({
-      streamId: streamId,
+    const myBranch = await getBranchByNameAndStreamId({
+      streamId,
       name: branchName
     })
 
@@ -183,7 +180,7 @@ module.exports = {
   },
 
   async getCommitsTotalCountByStreamId({ streamId, ignoreGlobalsBranch }) {
-    let query = StreamCommits()
+    const query = StreamCommits()
       .count()
       .join('branch_commits', 'stream_commits.commitId', 'branch_commits.commitId')
       .join('branches', 'branches.id', 'branch_commits.branchId')
@@ -192,13 +189,13 @@ module.exports = {
     if (ignoreGlobalsBranch) query.andWhere('branches.name', '!=', 'globals')
 
     // let [ res ] = await StreamCommits( ).count( ).where( 'streamId', streamId )
-    let [res] = await query
+    const [res] = await query
     return parseInt(res.count)
   },
 
   async getCommitsByStreamId({ streamId, limit, cursor, ignoreGlobalsBranch }) {
     limit = limit || 25
-    let query = StreamCommits()
+    const query = StreamCommits()
       .columns([
         { id: 'commits.id' },
         'message',
@@ -225,7 +222,7 @@ module.exports = {
 
     query.orderBy('commits.createdAt', 'desc').limit(limit)
 
-    let rows = await query
+    const rows = await query
     return {
       commits: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
@@ -236,7 +233,7 @@ module.exports = {
     limit = limit || 25
     publicOnly = publicOnly !== false
 
-    let query = Commits()
+    const query = Commits()
       .columns([
         { id: 'commits.id' },
         'message',
@@ -262,7 +259,7 @@ module.exports = {
 
     query.orderBy('commits.createdAt', 'desc').limit(limit)
 
-    let rows = await query
+    const rows = await query
     return {
       commits: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
@@ -270,7 +267,7 @@ module.exports = {
   },
 
   async getCommitsTotalCountByUserId({ userId }) {
-    let [res] = await Commits().count().where('author', userId)
+    const [res] = await Commits().count().where('author', userId)
     return parseInt(res.count)
   }
 }

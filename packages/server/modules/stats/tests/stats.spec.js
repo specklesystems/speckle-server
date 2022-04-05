@@ -31,27 +31,27 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the total number of users on this server', async () => {
-    let res = await getTotalUserCount()
+    const res = await getTotalUserCount()
     expect(res).to.equal(params.numUsers)
   })
 
   it('should return the total number of streams on this server', async () => {
-    let res = await getTotalStreamCount()
+    const res = await getTotalStreamCount()
     expect(res).to.equal(params.numStreams)
   })
 
   it('should return the total number of commits on this server', async () => {
-    let res = await getTotalCommitCount()
+    const res = await getTotalCommitCount()
     expect(res).to.equal(params.numCommits)
   })
 
   it('should return the total number of objects on this server', async () => {
-    let res = await getTotalObjectCount()
+    const res = await getTotalObjectCount()
     expect(res).to.equal(params.numObjects)
   })
 
   it('should return the stream creation history by month', async () => {
-    let res = await getStreamHistory()
+    const res = await getStreamHistory()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')
@@ -60,7 +60,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the commit creation history by month', async () => {
-    let res = await getCommitHistory()
+    const res = await getCommitHistory()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')
@@ -69,7 +69,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the object creation history by month', async () => {
-    let res = await getObjectHistory()
+    const res = await getObjectHistory()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')
@@ -78,7 +78,7 @@ describe('Server stats services @stats-services', function () {
   })
 
   it('should return the user creation history by month', async () => {
-    let res = await getUserHistory()
+    const res = await getUserHistory()
     expect(res).to.be.an('array')
     expect(res[0]).to.have.property('count')
     expect(res[0]).to.have.property('created_month')
@@ -90,19 +90,19 @@ describe('Server stats services @stats-services', function () {
 describe('Server stats api @stats-api', function () {
   let server, sendRequest
 
-  let adminUser = {
+  const adminUser = {
     name: 'Dimitrie',
     password: 'TestPasswordSecure',
     email: 'spam@spam.spam'
   }
 
-  let notAdminUser = {
+  const notAdminUser = {
     name: 'Andrei',
     password: 'TestPasswordSecure',
     email: 'spasm@spam.spam'
   }
 
-  let fullQuery = `
+  const fullQuery = `
   query{
     serverStats{
       totalStreamCount
@@ -120,7 +120,7 @@ describe('Server stats api @stats-api', function () {
   before(async function () {
     this.timeout(15000)
 
-    let { app } = await beforeEachContext()
+    const { app } = await beforeEachContext()
     ;({ server, sendRequest } = await initializeTestServer(app))
 
     adminUser.id = await createUser(adminUser)
@@ -155,26 +155,26 @@ describe('Server stats api @stats-api', function () {
   })
 
   it('Should not get stats if user is not admin', async () => {
-    let res = await sendRequest(adminUser.badToken, { query: fullQuery })
+    const res = await sendRequest(adminUser.badToken, { query: fullQuery })
     expect(res.body.errors).to.exist
     expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
   })
 
   it('Should not get stats if user is not admin even if the token has the correct scopes', async () => {
-    let res = await sendRequest(notAdminUser.goodToken, { query: fullQuery })
+    const res = await sendRequest(notAdminUser.goodToken, { query: fullQuery })
     expect(res.body.errors).to.exist
     expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
   })
 
   it('Should not get stats if token does not have required scope', async () => {
-    let res = await sendRequest(adminUser.badToken, { query: fullQuery })
+    const res = await sendRequest(adminUser.badToken, { query: fullQuery })
     expect(res).to.be.json
     expect(res.body.errors).to.exist
     expect(res.body.errors[0].extensions.code).to.equal('FORBIDDEN')
   })
 
   it('Should get server stats', async () => {
-    let res = await sendRequest(adminUser.goodToken, { query: fullQuery })
+    const res = await sendRequest(adminUser.goodToken, { query: fullQuery })
     expect(res).to.be.json
     expect(res.body.errors).to.not.exist
 

@@ -181,7 +181,7 @@ export default {
   methods: {
     addCollab(user) {
       if (user.id === localStorage.getItem('uuid')) return
-      let indx = this.collabs.findIndex((u) => u.id === user.id)
+      const indx = this.collabs.findIndex((u) => u.id === user.id)
       if (indx !== -1) return
       user.role = 'stream:contributor'
       this.collabs.push(user)
@@ -189,7 +189,7 @@ export default {
       this.userSearch.items = null
     },
     removeCollab(user) {
-      let indx = this.collabs.findIndex((u) => u.id === user.id)
+      const indx = this.collabs.findIndex((u) => u.id === user.id)
       this.collabs.splice(indx, 1)
     },
     async createStream() {
@@ -199,7 +199,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView('stream/create')
       this.$mixpanel.track('Stream Action', { type: 'action', name: 'create' })
       try {
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation streamCreate($myStream: StreamCreateInput!) {
               streamCreate(stream: $myStream)
@@ -215,7 +215,7 @@ export default {
         })
 
         if (this.collabs.length !== 0) {
-          for (let user of this.collabs) {
+          for (const user of this.collabs) {
             await this.$apollo.mutate({
               mutation: gql`
                 mutation grantPermission($params: StreamGrantPermissionInput!) {

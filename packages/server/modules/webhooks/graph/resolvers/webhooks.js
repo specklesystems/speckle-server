@@ -14,37 +14,37 @@ const {
 
 module.exports = {
   Stream: {
-    async webhooks(parent, args, context, info) {
+    async webhooks(parent, args, context) {
       await authorizeResolver(context.userId, parent.id, 'stream:owner')
 
       if (args.id) {
-        let wh = await getWebhook({ id: args.id })
-        let items = wh ? [wh] : []
+        const wh = await getWebhook({ id: args.id })
+        const items = wh ? [wh] : []
         return { items, totalCount: items.length }
       }
 
-      let items = await getStreamWebhooks({ streamId: parent.id })
+      const items = await getStreamWebhooks({ streamId: parent.id })
       return { items, totalCount: items.length }
     }
   },
 
   Webhook: {
-    async history(parent, args, context, info) {
-      let items = await getLastWebhookEvents({
+    async history(parent, args) {
+      const items = await getLastWebhookEvents({
         webhookId: parent.id,
         limit: args.limit
       })
-      let totalCount = await getWebhookEventsCount({ webhookId: parent.id })
+      const totalCount = await getWebhookEventsCount({ webhookId: parent.id })
 
       return { items, totalCount }
     }
   },
 
   Mutation: {
-    async webhookCreate(parent, args, context, info) {
+    async webhookCreate(parent, args, context) {
       await authorizeResolver(context.userId, args.webhook.streamId, 'stream:owner')
 
-      let id = await createWebhook({
+      const id = await createWebhook({
         streamId: args.webhook.streamId,
         url: args.webhook.url,
         description: args.webhook.description,
@@ -55,16 +55,16 @@ module.exports = {
 
       return id
     },
-    async webhookUpdate(parent, args, context, info) {
+    async webhookUpdate(parent, args, context) {
       await authorizeResolver(context.userId, args.webhook.streamId, 'stream:owner')
 
-      let wh = await getWebhook({ id: args.webhook.id })
+      const wh = await getWebhook({ id: args.webhook.id })
       if (args.webhook.streamId !== wh.streamId)
         throw new ForbiddenError(
           'The webhook id and stream id do not match. Please check your inputs.'
         )
 
-      let updated = await updateWebhook({
+      const updated = await updateWebhook({
         id: args.webhook.id,
         url: args.webhook.url,
         description: args.webhook.description,
@@ -75,16 +75,16 @@ module.exports = {
 
       return !!updated
     },
-    async webhookDelete(parent, args, context, info) {
+    async webhookDelete(parent, args, context) {
       await authorizeResolver(context.userId, args.webhook.streamId, 'stream:owner')
 
-      let wh = await getWebhook({ id: args.webhook.id })
+      const wh = await getWebhook({ id: args.webhook.id })
       if (args.webhook.streamId !== wh.streamId)
         throw new ForbiddenError(
           'The webhook id and stream id do not match. Please check your inputs.'
         )
 
-      let deleted = await deleteWebhook({ id: args.webhook.id })
+      const deleted = await deleteWebhook({ id: args.webhook.id })
 
       return !!deleted
     }

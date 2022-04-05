@@ -32,7 +32,12 @@
       </v-toolbar>
       <div v-for="post in posts" :key="post.uuid">
         <v-hover v-slot="{ hover }">
-          <v-card class="my-4">
+          <v-card
+            class="my-4"
+            :elevation="hover ? 16 : 2"
+            :href="post.url"
+            :target="'_blank'"
+          >
             <v-img
               :src="post.feature_image"
               height="100"

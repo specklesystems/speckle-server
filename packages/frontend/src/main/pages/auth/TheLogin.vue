@@ -19,7 +19,7 @@
       <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
       Interoperability in seconds
     </v-card-title>
-    <strategies
+    <auth-strategies
       :strategies="strategies"
       :app-id="appId"
       :challenge="challenge"
@@ -104,12 +104,12 @@
 <script>
 import gql from 'graphql-tag'
 import crs from 'crypto-random-string'
-import Strategies from '@/main/components/auth/Strategies'
+import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
-  name: 'Login',
-  components: { Strategies },
+  name: 'TheLogin',
+  components: { AuthStrategies },
   apollo: {
     serverInfo: {
       query: gql`
@@ -173,12 +173,12 @@ export default {
     }
   },
   mounted() {
-    let urlParams = new URLSearchParams(window.location.search)
-    let appId = urlParams.get('appId')
-    let challenge = urlParams.get('challenge')
-    let suuid = urlParams.get('suuid')
+    const urlParams = new URLSearchParams(window.location.search)
+    const appId = urlParams.get('appId')
+    const challenge = urlParams.get('challenge')
+    const suuid = urlParams.get('suuid')
     this.suuid = suuid
-    let inviteId = urlParams.get('inviteId')
+    const inviteId = urlParams.get('inviteId')
     this.inviteId = inviteId
 
     this.$mixpanel.track('Visit Log In')
@@ -196,17 +196,17 @@ export default {
   methods: {
     async loginUser() {
       try {
-        let valid = this.$refs.form.validate()
+        const valid = this.$refs.form.validate()
         if (!valid) return
 
-        let user = {
+        const user = {
           email: this.form.email,
           password: this.form.password
         }
 
         if (this.suuid) user.suuid = this.suuid
 
-        let res = await fetch(`/auth/local/login?challenge=${this.challenge}`, {
+        const res = await fetch(`/auth/local/login?challenge=${this.challenge}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -221,7 +221,7 @@ export default {
           return
         }
 
-        let data = await res.json()
+        const data = await res.json()
         if (data.err) throw new Error(data.message)
       } catch (err) {
         this.errorMessage = err.message

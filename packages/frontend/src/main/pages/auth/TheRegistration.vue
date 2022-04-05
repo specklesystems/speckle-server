@@ -24,7 +24,7 @@
         <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
         Interoperability in seconds
       </v-card-title>
-      <strategies
+      <auth-strategies
         :strategies="strategies"
         :app-id="appId"
         :challenge="challenge"
@@ -187,12 +187,12 @@ import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
 import crs from 'crypto-random-string'
 
-import Strategies from '@/main/components/auth/Strategies'
+import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
 
 export default {
-  name: 'Registration',
-  components: { Strategies },
+  name: 'TheRegistration',
+  components: { AuthStrategies },
   apollo: {
     serverInfo: {
       query: gql`
@@ -270,12 +270,12 @@ export default {
     }
   },
   mounted() {
-    let urlParams = new URLSearchParams(window.location.search)
-    let appId = urlParams.get('appId')
-    let challenge = urlParams.get('challenge')
-    let suuid = urlParams.get('suuid')
+    const urlParams = new URLSearchParams(window.location.search)
+    const appId = urlParams.get('appId')
+    const challenge = urlParams.get('challenge')
+    const suuid = urlParams.get('suuid')
     this.suuid = suuid
-    let inviteId = urlParams.get('inviteId')
+    const inviteId = urlParams.get('inviteId')
     this.inviteId = inviteId
 
     this.$mixpanel.track('Visit Sign Up')
@@ -292,7 +292,7 @@ export default {
   },
   methods: {
     debouncedPwdTest: debounce(async function () {
-      let result = await this.$apollo.query({
+      const result = await this.$apollo.query({
         query: gql` query{ userPwdStrength(pwd:"${this.form.password}")}`
       })
       this.passwordStrength = result.data.userPwdStrength.score * 25
@@ -300,13 +300,13 @@ export default {
     }, 1000),
     async registerUser() {
       try {
-        let valid = this.$refs.form.validate()
+        const valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf)
           throw new Error('Passwords do not match')
         if (this.passwordStrength < 3) throw new Error('Password too weak')
 
-        let user = {
+        const user = {
           email: this.form.email,
           company: this.form.company,
           password: this.form.password,
@@ -315,7 +315,7 @@ export default {
 
         if (this.suuid) user.suuid = this.suuid
 
-        let res = await fetch(
+        const res = await fetch(
           `/auth/local/register?challenge=${this.challenge}${
             this.inviteId ? '&inviteId=' + this.inviteId : ''
           }`,
@@ -338,7 +338,7 @@ export default {
           return
         }
 
-        let data = await res.json()
+        const data = await res.json()
         if (data.err) throw new Error(data.err)
       } catch (err) {
         this.errorMessage = err.message

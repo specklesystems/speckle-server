@@ -63,9 +63,9 @@ const _deleteStream = async (parent, args, context) => {
   })
 
   // Notify all stream users
-  let users = await getStreamUsers({ streamId: args.id })
+  const users = await getStreamUsers({ streamId: args.id })
 
-  for (let user of users) {
+  for (const user of users) {
     await pubsub.publish(USER_STREAM_REMOVED, {
       userStreamRemoved: { id: args.id },
       ownerId: user.id
@@ -83,7 +83,7 @@ const _deleteStream = async (parent, args, context) => {
 module.exports = {
   Query: {
     async stream(parent, args, context) {
-      let stream = await getStream({ streamId: args.id, userId: context.userId })
+      const stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) throw new ApolloError('Stream not found')
 
       if (!stream.isPublic && context.auth === false)
@@ -102,27 +102,27 @@ module.exports = {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
 
-      let totalCount = await getUserStreamsCount({
+      const totalCount = await getUserStreamsCount({
         userId: context.userId,
         publicOnly: false,
         searchQuery: args.query
       })
 
-      let { cursor, streams } = await getUserStreams({
+      const { cursor, streams } = await getUserStreams({
         userId: context.userId,
         limit: args.limit,
         cursor: args.cursor,
         publicOnly: false,
         searchQuery: args.query
       })
-      return { totalCount, cursor: cursor, items: streams }
+      return { totalCount, cursor, items: streams }
     },
 
     async adminStreams(parent, args) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
 
-      let { streams, totalCount } = await getStreams({
+      const { streams, totalCount } = await getStreams({
         offset: args.offset,
         limit: args.limit,
         orderBy: args.orderBy,
@@ -136,7 +136,7 @@ module.exports = {
 
   Stream: {
     async collaborators(parent) {
-      let users = await getStreamUsers({ streamId: parent.id })
+      const users = await getStreamUsers({ streamId: parent.id })
       return users
     },
 
@@ -157,17 +157,17 @@ module.exports = {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items.')
       // Return only the user's public streams if parent.id !== context.userId
-      let publicOnly = parent.id !== context.userId
-      let totalCount = await getUserStreamsCount({ userId: parent.id, publicOnly })
+      const publicOnly = parent.id !== context.userId
+      const totalCount = await getUserStreamsCount({ userId: parent.id, publicOnly })
 
-      let { cursor, streams } = await getUserStreams({
+      const { cursor, streams } = await getUserStreams({
         userId: parent.id,
         limit: args.limit,
         cursor: args.cursor,
-        publicOnly: publicOnly
+        publicOnly
       })
 
-      return { totalCount, cursor: cursor, items: streams }
+      return { totalCount, cursor, items: streams }
     },
 
     async favoriteStreams(parent, args, context) {
@@ -196,7 +196,7 @@ module.exports = {
         throw new Error('Blocked due to rate-limiting. Try again later')
       }
 
-      let id = await createStream({ ...args.stream, ownerId: context.userId })
+      const id = await createStream({ ...args.stream, ownerId: context.userId })
 
       await saveActivity({
         streamId: id,
@@ -208,7 +208,7 @@ module.exports = {
         message: `Stream '${args.stream.name}' created`
       })
       await pubsub.publish(USER_STREAM_ADDED, {
-        userStreamAdded: { id: id, ...args.stream },
+        userStreamAdded: { id, ...args.stream },
         ownerId: context.userId
       })
       return id
@@ -217,8 +217,8 @@ module.exports = {
     async streamUpdate(parent, args, context) {
       await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
 
-      let oldValue = await getStream({ streamId: args.stream.id })
-      let update = {
+      const oldValue = await getStream({ streamId: args.stream.id })
+      const update = {
         streamId: args.stream.id,
         name: args.stream.name,
         description: args.stream.description,
@@ -256,7 +256,7 @@ module.exports = {
     async streamsDelete(parent, args, context, info) {
       const results = await Promise.all(
         args.ids.map(async (id) => {
-          let newArgs = { ...args }
+          const newArgs = { ...args }
           newArgs.id = id
           return await _deleteStream(parent, newArgs, context, info)
         })
@@ -274,12 +274,12 @@ module.exports = {
       if (context.userId === args.permissionParams.userId)
         throw new Error('You cannot set roles for yourself.')
 
-      let params = {
+      const params = {
         streamId: args.permissionParams.streamId,
         userId: args.permissionParams.userId,
         role: args.permissionParams.role.toLowerCase() || 'read'
       }
-      let granted = await grantPermissionsStream(params)
+      const granted = await grantPermissionsStream(params)
 
       if (granted) {
         await saveActivity({
@@ -313,7 +313,7 @@ module.exports = {
       if (context.userId === args.permissionParams.userId)
         throw new ApolloError('You cannot revoke your own access rights to a stream.')
 
-      let revoked = await revokePermissionsStream({ ...args.permissionParams })
+      const revoked = await revokePermissionsStream({ ...args.permissionParams })
 
       if (revoked) {
         await saveActivity({

@@ -140,6 +140,8 @@
   </div>
 </template>
 <script>
+// TODO: Need to fix the viewer package build process to be able to properly reference THREE.js
+/* global THREE */
 import debounce from 'lodash.debounce'
 import gql from 'graphql-tag'
 
@@ -178,15 +180,15 @@ export default {
       `,
       fetchPolicy: 'no-cache',
       variables() {
-        let resourceArr = [
+        const resourceArr = [
           {
             resourceType: this.$resourceType(this.$route.params.resourceId),
             resourceId: this.$route.params.resourceId
           }
         ]
         if (this.$route.query.overlay) {
-          let resIds = this.$route.query.overlay.split(',')
-          for (let resId of resIds)
+          const resIds = this.$route.query.overlay.split(',')
+          for (const resId of resIds)
             resourceArr.push({
               resourceType: this.$resourceType(resId),
               resourceId: resId
@@ -200,7 +202,7 @@ export default {
       },
       result({ data }) {
         if (!data) return
-        for (let c of data.comments.items) {
+        for (const c of data.comments.items) {
           c.expanded = false
           c.hovered = false
           c.bouncing = false
@@ -235,7 +237,7 @@ export default {
             !subscriptionData.data.commentActivity
           )
             return
-          let newComment = subscriptionData.data.commentActivity
+          const newComment = subscriptionData.data.commentActivity
 
           newComment.expanded = false
           newComment.hovered = false
@@ -285,7 +287,7 @@ export default {
         if (this.$store.state.viewerBusy || this.$apollo.loading) return
         this.expandComment({ id: this.openCommentOnInit })
         this.openCommentOnInit = null
-        let q = { ...this.$route.query }
+        const q = { ...this.$route.query }
         delete q.cId
         this.$router.replace({
           path: this.$route.path,
@@ -303,7 +305,7 @@ export default {
             this.$store.commit('setPreventCommentCollapse', { value: false })
             return
           }
-          for (let c of this.localComments) {
+          for (const c of this.localComments) {
             this.collapseComment(c)
           }
         }.bind(this),
@@ -325,7 +327,7 @@ export default {
       this.showComments = !this.showComments
     },
     expandComment(comment) {
-      for (let c of this.localComments) {
+      for (const c of this.localComments) {
         if (c.id === comment.id) {
           c.preventAutoClose = true
           this.$store.commit('setCommentSelection', { comment: c })
@@ -345,7 +347,7 @@ export default {
       }
     },
     collapseComment(comment) {
-      for (let c of this.localComments) {
+      for (const c of this.localComments) {
         if (c.id === comment.id && c.expanded) {
           c.expanded = false
           if (c.data.filters) this.$store.commit('resetFilter')
@@ -355,7 +357,7 @@ export default {
       }
     },
     setCommentPow(comment) {
-      let camToSet = comment.data.camPos
+      const camToSet = comment.data.camPos
       if (camToSet[6] === 1) {
         window.__viewer.toggleCameraProjection()
       }
@@ -381,22 +383,22 @@ export default {
     },
     async handleDeletion(comment) {
       this.collapseComment(comment)
-      let comm = this.localComments.find((c) => c.id === comment.id)
+      const comm = this.localComments.find((c) => c.id === comment.id)
       comm.archived = true
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
       if (!this.comments) return
-      let cam = window.__viewer.cameraHandler.camera
+      const cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
-      for (let comment of this.localComments) {
+      for (const comment of this.localComments) {
         // get html elements
-        let commentEl = this.$refs[`comment-${comment.id}`][0]
-        let card = this.$refs[`commentcard-${comment.id}`][0]
+        const commentEl = this.$refs[`comment-${comment.id}`][0]
+        const card = this.$refs[`commentcard-${comment.id}`][0]
 
         if (!commentEl) continue
 
-        let location = new THREE.Vector3(
+        const location = new THREE.Vector3(
           comment.data.location.x,
           comment.data.location.y,
           comment.data.location.z
@@ -404,7 +406,7 @@ export default {
 
         location.project(cam)
 
-        let commentLocation = new THREE.Vector3(
+        const commentLocation = new THREE.Vector3(
           (location.x * 0.5 + 0.5) * this.$refs.parent.clientWidth,
           (location.y * -0.5 + 0.5) * this.$refs.parent.clientHeight,
           0
@@ -449,7 +451,7 @@ export default {
         commentEl.style.top = `${tY}px`
         commentEl.style.left = `${tX}px`
 
-        let maxHeight = this.$refs.parent.clientHeight - paddingYTop - paddingYBottom
+        const maxHeight = this.$refs.parent.clientHeight - paddingYTop - paddingYBottom
 
         card.style.maxHeight = `${maxHeight}px`
 
@@ -469,8 +471,8 @@ export default {
           // top clip
           if (cardTop < paddingYTop) cardTop = paddingYTop
 
-          let cardBottom = cardTop + card.clientHeight
-          let maxBottom = this.$refs.parent.clientHeight - 45
+          const cardBottom = cardTop + card.clientHeight
+          const maxBottom = this.$refs.parent.clientHeight - 45
 
           // bottom clip
           if (cardBottom > maxBottom) {
@@ -484,9 +486,9 @@ export default {
       }
     },
     bounceComment(id) {
-      let commentEl = this.$refs[`comment-${id}`][0]
+      const commentEl = this.$refs[`comment-${id}`][0]
       commentEl.classList.add('tada-once')
-      let comment = this.localComments.find((c) => c.id === id)
+      const comment = this.localComments.find((c) => c.id === id)
       comment.bouncing = true
       comment.updatedAt = Date.now()
       setTimeout(() => {

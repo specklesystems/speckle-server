@@ -10,7 +10,11 @@ const { createUser } = require(`${appRoot}/modules/core/services/users`)
 
 describe('Password reset requests @passwordresets', () => {
   let app
-  let userA = { name: 'd1', email: 'd@speckle.systems', password: 'wowwow8charsplease' }
+  const userA = {
+    name: 'd1',
+    email: 'd@speckle.systems',
+    password: 'wowwow8charsplease'
+  }
 
   before(async () => {
     ;({ app } = await beforeEachContext())
@@ -41,7 +45,7 @@ describe('Password reset requests @passwordresets', () => {
   })
 
   it('Should reset passwords', async () => {
-    let token = await ResetTokens().select().first()
+    const token = await ResetTokens().select().first()
 
     // invalid request
     await request(app).post('/auth/pwdreset/finalize').expect(400)

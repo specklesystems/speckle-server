@@ -52,7 +52,7 @@ import { ProfileSelfQuery } from '@/graphql/user'
 import { signOut } from '@/plugins/authHelpers'
 
 export default {
-  name: 'Profile',
+  name: 'TheProfileSelf',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     UserInfoCard: () => import('@/main/components/user/UserInfoCard'),

@@ -36,7 +36,7 @@ module.exports = {
         userId: context.userId,
         auth: context.auth
       })
-      let comment = await getComment({ id: args.id, userId: context.userId })
+      const comment = await getComment({ id: args.id, userId: context.userId })
       if (comment.streamId !== args.streamId)
         throw new ForbiddenError('You do not have access to this comment.')
       return comment
@@ -106,7 +106,7 @@ module.exports = {
       return true
     },
 
-    async userCommentThreadActivityBroadcast(parent, args, context, info) {
+    async userCommentThreadActivityBroadcast(parent, args, context) {
       await authorizeResolver(context.userId, args.streamId, 'stream:reviewer')
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-typing-status', data: args.data },
@@ -116,10 +116,10 @@ module.exports = {
       return true
     },
 
-    async commentCreate(parent, args, context, info) {
+    async commentCreate(parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
-      let id = await createComment({ userId: context.userId, input: args.input })
+      const id = await createComment({ userId: context.userId, input: args.input })
 
       await pubsub.publish('COMMENT_ACTIVITY', {
         commentActivity: {
@@ -172,7 +172,7 @@ module.exports = {
     async commentReply(parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
-      let id = await createCommentReply({
+      const id = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
@@ -229,7 +229,7 @@ module.exports = {
                 }
               })
             })
-            for (let res of variables.resourceIds) {
+            for (const res of variables.resourceIds) {
               if (
                 payload.resourceIds.includes(res) &&
                 payload.streamId === variables.streamId

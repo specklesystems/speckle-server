@@ -34,10 +34,10 @@
             <br />
             <v-btn
               v-if="canArchiveThread"
-              @click="showArchiveDialog = true"
               class="ml-n2 red--text rounded-lg elevation-0"
               x-small
               plain
+              @click="showArchiveDialog = true"
             >
               Archive
             </v-btn>
@@ -65,10 +65,10 @@
             </v-dialog>
             <v-btn
               v-if="isUnread"
-              @click="markAsRead"
               class="ml-n2 rounded-lg elevation-0"
               x-small
               plain
+              @click="markAsRead"
             >
               Mark as read
             </v-btn>
@@ -213,11 +213,14 @@ export default {
         this.stream.role === 'stream:owner'
       )
         return true
+      return false
     },
     link() {
       if (!this.commentDetails) return
-      let res = this.commentDetails.resources.filter((r) => r.resourceType !== 'stream')
-      let first = res.shift()
+      const res = this.commentDetails.resources.filter(
+        (r) => r.resourceType !== 'stream'
+      )
+      const first = res.shift()
       let route = `/streams/${this.$route.params.streamId}/${first.resourceType}s/${first.resourceId}?cId=${this.commentDetails.id}`
       if (res.length !== 0) {
         route += `&overlay=${res.map((r) => r.resourceId).join(',')}`

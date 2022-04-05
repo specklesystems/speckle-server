@@ -14,8 +14,9 @@ export default class CameraHandler {
     this.camera.position.set(1, 1, 1)
     this.camera.updateProjectionMatrix()
 
-    let aspect = this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
-    let fustrumSize = 50
+    const aspect =
+      this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
+    const fustrumSize = 50
     this.orthoCamera = new THREE.OrthographicCamera(
       (-fustrumSize * aspect) / 2,
       (fustrumSize * aspect) / 2,
@@ -28,7 +29,7 @@ export default class CameraHandler {
     this.orthoCamera.position.set(100, 100, 100)
     this.orthoCamera.updateProjectionMatrix()
 
-    CameraControls.install({ THREE: THREE })
+    CameraControls.install({ THREE })
     this.controls = new CameraControls(this.camera, this.viewer.renderer.domElement)
     this.controls.maxPolarAngle = Math.PI / 2
     this.setupWASDControls()
@@ -143,11 +144,11 @@ export default class CameraHandler {
 
     // fit the camera inside, so we don't have clipping plane issues.
     // WIP implementation
-    let camPos = this.orthoCamera.position
-    let box = new THREE.Box3().setFromObject(
+    const camPos = this.orthoCamera.position
+    const box = new THREE.Box3().setFromObject(
       this.viewer.sceneManager.sceneObjects.allObjects
     )
-    let sphere = new THREE.Sphere()
+    const sphere = new THREE.Sphere()
     box.getBoundingSphere(sphere)
 
     let dist = sphere.distanceToPoint(camPos)
@@ -225,8 +226,9 @@ export default class CameraHandler {
       this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
     this.camera.updateProjectionMatrix()
 
-    let aspect = this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
-    let fustrumSize = 50
+    const aspect =
+      this.viewer.container.offsetWidth / this.viewer.container.offsetHeight
+    const fustrumSize = 50
     this.orthoCamera.left = (-fustrumSize * aspect) / 2
     this.orthoCamera.right = (fustrumSize * aspect) / 2
     this.orthoCamera.top = fustrumSize / 2

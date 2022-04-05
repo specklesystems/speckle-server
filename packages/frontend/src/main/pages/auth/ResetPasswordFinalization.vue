@@ -148,7 +148,7 @@ export default {
   },
   methods: {
     debouncedPwdTest: debounce(async function () {
-      let result = await this.$apollo.query({
+      const result = await this.$apollo.query({
         query: gql` query{ userPwdStrength(pwd:"${this.form.password}")}`
       })
       this.passwordStrength = result.data.userPwdStrength.score * 25
@@ -159,13 +159,13 @@ export default {
         this.success = false
         this.errors = false
         this.errorMessage = null
-        let valid = this.$refs.form.validate()
+        const valid = this.$refs.form.validate()
         if (!valid) return
         if (this.form.password !== this.form.passwordConf)
           throw new Error('Passwords do not match')
         if (this.passwordStrength < 3) throw new Error('Password too weak.')
 
-        let res = await fetch(`/auth/pwdreset/finalize`, {
+        const res = await fetch(`/auth/pwdreset/finalize`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tokenId: this.tokenId, password: this.form.password })

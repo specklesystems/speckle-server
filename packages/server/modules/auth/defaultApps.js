@@ -27,7 +27,7 @@ async function registerOrUpdateApp(app) {
     app.scopes = allScopes.map((s) => s.name)
   }
 
-  let existingApp = await getApp({ id: app.id })
+  const existingApp = await getApp({ id: app.id })
   if (existingApp) {
     updateDefaultApp(app, existingApp)
   } else {
@@ -37,7 +37,7 @@ async function registerOrUpdateApp(app) {
 
 async function registerDefaultApp(app) {
   try {
-    let scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
+    const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
     delete app.scopes
     await Apps().insert(app)
     await AppScopes().insert(scopes)
@@ -49,16 +49,16 @@ async function registerDefaultApp(app) {
 async function updateDefaultApp(app, existingApp) {
   existingApp.scopes = existingApp.scopes.map((s) => s.name)
 
-  let scopeDiffA = app.scopes.filter(
+  const scopeDiffA = app.scopes.filter(
     (scope) => existingApp.scopes.indexOf(scope) === -1
   )
-  let scopeDiffB = existingApp.scopes.filter(
+  const scopeDiffB = existingApp.scopes.filter(
     (scope) => app.scopes.indexOf(scope) === -1
   )
 
   if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
     await revokeExistingAppCredentials({ appId: app.id })
-    let scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
+    const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
     await AppScopes().insert(scopes)
   }
 
@@ -66,7 +66,7 @@ async function updateDefaultApp(app, existingApp) {
   await Apps().where({ id: app.id }).update(app)
 }
 
-let SpeckleWebApp = {
+const SpeckleWebApp = {
   id: 'spklwebapp',
   secret: 'spklwebapp',
   name: 'Speckle Web Manager',
@@ -78,7 +78,7 @@ let SpeckleWebApp = {
   scopes: 'all'
 }
 
-let SpeckleApiExplorer = {
+const SpeckleApiExplorer = {
   id: 'explorer',
   secret: 'explorer',
   name: 'Speckle Explorer',
@@ -89,7 +89,7 @@ let SpeckleApiExplorer = {
   scopes: 'all'
 }
 
-let SpeckleDesktopApp = {
+const SpeckleDesktopApp = {
   id: 'sdm',
   secret: 'sdm',
   name: 'Speckle Desktop Manager',
@@ -107,7 +107,7 @@ let SpeckleDesktopApp = {
   ]
 }
 
-let SpeckleConnectorApp = {
+const SpeckleConnectorApp = {
   id: 'sca',
   secret: 'sca',
   name: 'Speckle Connector',
@@ -124,7 +124,7 @@ let SpeckleConnectorApp = {
   ]
 }
 
-let SpeckleExcel = {
+const SpeckleExcel = {
   id: 'spklexcel',
   secret: 'spklexcel',
   name: 'Speckle Connector For Excel',

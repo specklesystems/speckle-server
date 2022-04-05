@@ -60,12 +60,12 @@
       <div style="position: absolute; top: 10px; left: 12px">
         <v-chip
           v-if="commit.commentCount !== 0"
-          small
-          class="caption primary"
-          dark
           v-tooltip="
             `${commit.commentCount} comment${commit.commentCount === 1 ? '' : 's'}`
           "
+          small
+          class="caption primary"
+          dark
         >
           <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
           {{ commit.commentCount }}

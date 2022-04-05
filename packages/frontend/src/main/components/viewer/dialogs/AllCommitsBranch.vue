@@ -57,7 +57,16 @@ export default {
       import('@/main/components/common/CommitReceivedReceipts'),
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar')
   },
-  props: ['streamId', 'branchName'],
+  props: {
+    streamId: {
+      type: String,
+      default: () => null
+    },
+    branchName: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       skip: true,
@@ -70,7 +79,7 @@ export default {
   },
   methods: {
     async fetchBranchCommits() {
-      let res = await this.$apollo.query({
+      const res = await this.$apollo.query({
         query: gql`
           query {
             stream(id: "${this.streamId}") {
@@ -95,13 +104,13 @@ export default {
           }
         `
       })
-      let items = res.data.stream.branch.commits.items
+      const items = res.data.stream.branch.commits.items
       this.cursor = res.data.stream.branch.commits.cursor
       items.forEach((item) => this.commits.push(item))
       return items
     },
     async infiniteHandler($state) {
-      let items = await this.fetchBranchCommits()
+      const items = await this.fetchBranchCommits()
       if (items.length === 0) $state.complete()
       else $state.loaded()
     }

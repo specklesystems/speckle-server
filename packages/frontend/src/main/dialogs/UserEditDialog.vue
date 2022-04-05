@@ -105,7 +105,7 @@ export default {
       })
     },
     agree() {
-      let self = this
+      const self = this
       setTimeout(function () {
         if (self.$refs.form.validate()) {
           self.resolve({

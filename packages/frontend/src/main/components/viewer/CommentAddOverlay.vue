@@ -149,6 +149,8 @@
   </div>
 </template>
 <script>
+// TODO: Need to fix the viewer package build process to be able to properly reference THREE.js
+/* global THREE */
 import gql from 'graphql-tag'
 import debounce from 'lodash.debounce'
 
@@ -188,8 +190,8 @@ export default {
 
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'create' })
 
-      let camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
-      let commentInput = {
+      const camTarget = window.__viewer.cameraHandler.activeCam.controls.getTarget()
+      const commentInput = {
         streamId: this.$route.params.streamId,
         resources: [
           {
@@ -265,7 +267,7 @@ export default {
       if (!this.$refs.commentButton) return
       this.visible = true
 
-      let projectedLocation = new THREE.Vector3(
+      const projectedLocation = new THREE.Vector3(
         info.location.x,
         info.location.y,
         info.location.z
@@ -276,7 +278,7 @@ export default {
         info.location.z
       )
 
-      let cam = window.__viewer.cameraHandler.camera
+      const cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
@@ -297,9 +299,9 @@ export default {
       // TODO: Clamping, etc.
       if (!this.location) return
       if (!this.$refs.commentButton) return
-      let cam = window.__viewer.cameraHandler.camera
+      const cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
-      let projectedLocation = this.location.clone()
+      const projectedLocation = this.location.clone()
       projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
       collapsedSize = 36

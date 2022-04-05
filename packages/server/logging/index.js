@@ -7,7 +7,7 @@ module.exports = function (app) {
   const id = machineIdSync()
 
   if (process.env.DISABLE_TRACING !== 'true' && process.env.SENTRY_DSN) {
-    Sentry.setUser({ id: id })
+    Sentry.setUser({ id })
 
     Sentry.init({
       dsn: process.env.SENTRY_DSN,

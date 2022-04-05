@@ -79,7 +79,7 @@ export default {
         'https://api.github.com/repos/specklesystems/speckle-server/releases/latest'
       )
         .then(async (res) => {
-          let x = await res.json()
+          const x = await res.json()
           return x.tag_name
         })
         .catch((err) => {

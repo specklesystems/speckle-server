@@ -4,19 +4,19 @@ import {
   streamCommitQuery
 } from './speckleQueries.js'
 
-export let SERVER_URL = window.location.origin
+export const SERVER_URL = window.location.origin
 
 // Unauthorised fetch, without token to prevent use of localStorage or exposing elsewhere.
 export async function speckleFetch(query, variables) {
   try {
-    let res = await fetch(`${SERVER_URL}/graphql`, {
+    const res = await fetch(`${SERVER_URL}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        query: query,
-        variables: variables
+        query,
+        variables
       })
     })
     return await res.json()

@@ -130,7 +130,7 @@
 import gql from 'graphql-tag'
 
 export default {
-  name: 'Webhooks',
+  name: 'TheUploads',
   components: {
     FileUploadItem: () => import('@/main/components/stream/uploads/FileUploadItem'),
     FileProcessingItem: () =>
@@ -201,7 +201,7 @@ export default {
       this.dragover = false
       this.dragError = null
       for (const file of files) {
-        let extension = file.name.split('.')[1]
+        const extension = file.name.split('.')[1]
         if (!extension || extension !== 'ifc') {
           this.dragError = 'Only IFC file extensions are supported.'
           return

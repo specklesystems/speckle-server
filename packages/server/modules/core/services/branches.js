@@ -5,11 +5,10 @@ const knex = require(`${appRoot}/db/knex`)
 
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
-const BranchCommits = () => knex('branch_commits')
 
 module.exports = {
   async createBranch({ name, description, streamId, authorId }) {
-    let branch = {}
+    const branch = {}
     branch.id = crs({ length: 10 })
     branch.streamId = streamId
     branch.authorId = authorId
@@ -18,7 +17,7 @@ module.exports = {
 
     if (name) module.exports.validateBranchName({ name })
 
-    let [{ id }] = await Branches().returning('id').insert(branch)
+    await Branches().insert(branch)
 
     // update stream updated at
     await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
@@ -29,8 +28,8 @@ module.exports = {
   async updateBranch({ id, name, description }) {
     if (name) module.exports.validateBranchName({ name })
     return await Branches()
-      .where({ id: id })
-      .update({ name: name ? name.toLowerCase() : name, description: description })
+      .where({ id })
+      .update({ name: name ? name.toLowerCase() : name, description })
   },
 
   validateBranchName({ name }) {
@@ -39,18 +38,20 @@ module.exports = {
   },
 
   async getBranchById({ id }) {
-    return await Branches().where({ id: id }).first().select('*')
+    return await Branches().where({ id }).first().select('*')
   },
 
   async getBranchesByStreamId({ streamId, limit, cursor }) {
     limit = limit || 25
-    let query = Branches().select('*').where({ streamId: streamId })
+    const query = Branches().select('*').where({ streamId })
 
     if (cursor) query.andWhere('createdAt', '<', cursor)
     query.orderBy('createdAt').limit(limit)
 
-    let totalCount = await module.exports.getBranchesByStreamIdTotalCount({ streamId })
-    let rows = await query
+    const totalCount = await module.exports.getBranchesByStreamIdTotalCount({
+      streamId
+    })
+    const rows = await query
     return {
       items: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null,
@@ -59,24 +60,24 @@ module.exports = {
   },
 
   async getBranchesByStreamIdTotalCount({ streamId }) {
-    let [res] = await Branches().count().where({ streamId: streamId })
+    const [res] = await Branches().count().where({ streamId })
     return parseInt(res.count)
   },
 
   async getBranchByNameAndStreamId({ streamId, name }) {
-    let query = Branches()
+    const query = Branches()
       .select('*')
-      .where({ streamId: streamId })
+      .where({ streamId })
       .andWhere(knex.raw('LOWER(name) = ?', [name.toLowerCase()]))
       .first()
     return await query
   },
 
   async deleteBranchById({ id, streamId }) {
-    let branch = await module.exports.getBranchById({ id: id })
+    const branch = await module.exports.getBranchById({ id })
     if (branch.name === 'main') throw new Error('Cannot delete the main branch.')
 
-    await Branches().where({ id: id }).del()
+    await Branches().where({ id }).del()
     await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
     return true
   }

@@ -103,12 +103,13 @@
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-switch
-          v-model="stream.isPublic"
+          :input-value="stream.isPublic"
           inset
           class="mt-4"
           :loading="swapPermsLoading"
+          :disabled="swapPermsLoading"
           @click="changeVisibility"
-        ></v-switch>
+        />
       </v-toolbar>
       <v-card-text v-if="stream.isPublic" class="pt-2">
         This stream is public. This means that anyone with the link can view and read
@@ -198,12 +199,19 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import { COMMON_STREAM_FIELDS } from '@/graphql/streams'
 // import { $resourceType } from '@/plugins/resourceIdentifier'
 export default {
+  name: 'ShareStreamDialog',
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
   },
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       swapPermsLoading: false
@@ -228,15 +236,17 @@ export default {
       document.execCommand('copy')
     },
     getIframeUrl() {
-      let resourceId = this.$route.params.resourceId
+      const resourceId = this.$route.params.resourceId
       if (!resourceId) return null
-      let base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
+      const base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
       return `<iframe src="${base}&${this.$resourceType(resourceId)}=${
         this.$route.params.resourceId
       }" width=600 height=400 />"`
     },
     async changeVisibility() {
       this.swapPermsLoading = true
+
+      const newIsPublic = !this.stream.isPublic
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -247,19 +257,37 @@ export default {
           variables: {
             input: {
               id: this.$route.params.streamId,
-              isPublic: this.stream.isPublic
+              isPublic: newIsPublic
             }
+          },
+          optimisticResponse: {
+            __typename: 'Mutation',
+            streamUpdate: newIsPublic
+          },
+          update: (cache, { data: { streamUpdate: isSuccessFul } }) => {
+            // Update stream public value in cache
+            const normalizedId = `Stream:${this.stream.id}`
+            const cachedStream = cache.readFragment({
+              id: normalizedId,
+              fragment: COMMON_STREAM_FIELDS
+            })
+
+            cache.writeFragment({
+              id: normalizedId,
+              fragment: COMMON_STREAM_FIELDS,
+              data: {
+                ...cachedStream,
+                isPublic: isSuccessFul ? newIsPublic : !newIsPublic
+              }
+            })
           }
         })
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: e.message ? e.message : 'Something went wrong.'
         })
-        this.stream.isPublic = !this.stream.isPublic
       }
       this.swapPermsLoading = false
-      this.$emit('visibility-change')
-      // this.$apollo.queries.stream.refetch()
     }
   }
 }

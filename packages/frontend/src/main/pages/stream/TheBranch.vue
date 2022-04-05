@@ -104,17 +104,13 @@ import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
 
 export default {
-  name: 'Branch',
+  name: 'TheBranch',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
     ListItemCommit: () => import('@/main/components/stream/ListItemCommit'),
     BranchEditDialog: () => import('@/main/dialogs/BranchEditDialog'),
-    PreviewImage: () => import('@/main/components/common/PreviewImage'),
-    CommitReceivedReceipts: () =>
-      import('@/main/components/common/CommitReceivedReceipts'),
-    SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
   },
@@ -228,7 +224,7 @@ export default {
           if (newItems.length === 0) $state.complete()
           else $state.loaded()
 
-          let allItems = [...previousResult.stream.branch.commits.items]
+          const allItems = [...previousResult.stream.branch.commits.items]
           for (const commit of newItems) {
             if (allItems.findIndex((c) => c.id === commit.id) === -1)
               allItems.push(commit)

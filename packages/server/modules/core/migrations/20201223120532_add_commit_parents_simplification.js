@@ -7,7 +7,7 @@ exports.up = async (knex) => {
 }
 
 exports.down = async (knex) => {
-  let hasColumn = await knex.schema.hasColumn('commits', 'parents')
+  const hasColumn = await knex.schema.hasColumn('commits', 'parents')
   if (hasColumn)
     await knex.schema.alterTable('commits', (table) => {
       table.dropColumn('parents')

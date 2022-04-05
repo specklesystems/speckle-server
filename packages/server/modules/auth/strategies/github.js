@@ -26,7 +26,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     callbackUrl: new URL('/auth/gh/callback', process.env.CANONICAL_URL).toString()
   }
 
-  let myStrategy = new GithubStrategy(
+  const myStrategy = new GithubStrategy(
     {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
@@ -38,27 +38,26 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       const serverInfo = await getServerInfo()
 
       try {
-        let email = profile.emails[0].value
-        let name = profile.displayName || profile.username
-        let bio = profile._json.bio
+        const email = profile.emails[0].value
+        const name = profile.displayName || profile.username
+        const bio = profile._json.bio
 
-        let user = { email, name, bio }
+        const user = { email, name, bio }
 
         if (req.session.suuid) user.suuid = req.session.suuid
 
-        let existingUser
-        existingUser = await getUserByEmail({ email: user.email })
+        const existingUser = await getUserByEmail({ email: user.email })
 
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {
-          let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
           return done(null, myUser)
         }
 
         // if the server is not invite only, go ahead and log the user in.
         if (!serverInfo.inviteOnly) {
-          let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+          const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
           return done(null, myUser)
         }
 
@@ -75,7 +74,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         if (!validInvite) throw new Error('Invalid invite.')
 
         // create the user
-        let myUser = await findOrCreateUser({ user: user, rawProfile: profile._raw })
+        const myUser = await findOrCreateUser({ user, rawProfile: profile._raw })
 
         // use the invite
         await useInvite({ id: req.session.inviteId, email: user.email })

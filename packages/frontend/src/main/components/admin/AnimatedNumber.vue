@@ -41,7 +41,7 @@ export default {
   },
   methods: {
     tween(startValue, endValue) {
-      let vm = this
+      const vm = this
       function animate() {
         if (TWEEN.update()) {
           requestAnimationFrame(animate)

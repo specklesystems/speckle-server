@@ -166,7 +166,12 @@ export default {
     CommitReceivedReceipts: () =>
       import('@/main/components/common/CommitReceivedReceipts')
   },
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return { showCommitInfo: false }
   },

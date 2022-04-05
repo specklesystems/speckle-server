@@ -3,7 +3,7 @@ const path = require('path')
 const yargs = require('yargs')
 const env = yargs.argv.env
 
-let libraryName = 'Speckle'
+const libraryName = 'Speckle'
 
 let outputFile, mode
 
@@ -16,7 +16,7 @@ if (env === 'build') {
 }
 
 const config = {
-  mode: mode,
+  mode,
   entry: path.resolve(__dirname + '/src/index.js'),
   target: 'web',
   devtool: 'source-map',

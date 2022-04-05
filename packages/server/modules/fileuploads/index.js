@@ -2,11 +2,9 @@
 'use strict'
 
 const debug = require('debug')
-const express = require('express')
 const appRoot = require('app-root-path')
 const Busboy = require('busboy')
 
-const cors = require('cors')
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
@@ -22,7 +20,7 @@ const {
 } = require('./services/fileuploads')
 const { getStream } = require('../core/services/streams')
 
-exports.init = async (app, options) => {
+exports.init = async (app) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     debug('speckle:modules')('📄 FileUploads module is DISABLED')
     return
@@ -39,7 +37,7 @@ exports.init = async (app, options) => {
 
   await checkBucket()
 
-  let checkStreamPermissions = async (req) => {
+  const checkStreamPermissions = async (req) => {
     if (!req.context || !req.context.auth) {
       return { hasPermissions: false, httpErrorCode: 401 }
     }
@@ -72,13 +70,13 @@ exports.init = async (app, options) => {
         return res.status(503).send('File uploads are disabled on this server')
       }
 
-      let fileInfo = await getFileInfo({ fileId: req.params.fileId })
+      const fileInfo = await getFileInfo({ fileId: req.params.fileId })
 
       if (!fileInfo) return res.status(404).send('File not found')
 
       // Check stream read access
-      let streamId = fileInfo.streamId
-      const stream = await getStream({ streamId: streamId, userId: req.context.userId })
+      const streamId = fileInfo.streamId
+      const stream = await getStream({ streamId, userId: req.context.userId })
 
       if (!stream) {
         return res.status(404).send('File stream not found')
@@ -102,7 +100,7 @@ exports.init = async (app, options) => {
         }
       }
 
-      let fileStream = await getFileStream({ fileId: req.params.fileId })
+      const fileStream = await getFileStream({ fileId: req.params.fileId })
 
       res.writeHead(200, {
         'Content-Type': 'application/octet-stream',
@@ -120,17 +118,17 @@ exports.init = async (app, options) => {
         if (process.env.DISABLE_FILE_UPLOADS) {
           return res.status(503).send('File uploads are disabled on this server')
         }
-        let { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+        const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
         if (!hasPermissions) {
           return res.status(httpErrorCode).end()
         }
 
-        let fileUploadPromises = []
-        let busboy = Busboy({ headers: req.headers })
+        const fileUploadPromises = []
+        const busboy = Busboy({ headers: req.headers })
 
         busboy.on('file', (name, file, info) => {
-          const { filename, encoding, mimeType } = info
-          let promise = uploadFile({
+          const { filename } = info
+          const promise = uploadFile({
             streamId: req.params.streamId,
             branchName: req.params.branchName || '',
             userId: req.context.userId,
@@ -142,10 +140,10 @@ exports.init = async (app, options) => {
         })
 
         busboy.on('finish', async function () {
-          let fileIds = []
+          const fileIds = []
 
-          for (let promise of fileUploadPromises) {
-            let fileId = await promise
+          for (const promise of fileUploadPromises) {
+            const fileId = await promise
             fileIds.push(fileId)
           }
           res.send(fileIds)

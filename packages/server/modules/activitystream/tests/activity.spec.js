@@ -15,44 +15,44 @@ let sendRequest
 describe('Activity @activity', () => {
   let server
 
-  let userIz = {
+  const userIz = {
     name: 'Izzy Lyseggen',
     email: 'izzybizzi@speckle.systems',
     password: 'sp0ckle sucks 9001'
   }
 
-  let userCr = {
+  const userCr = {
     name: 'Cristi Balas',
     email: 'cristib@speckle.systems',
     password: 'hack3r man 666'
   }
 
-  let userX = {
+  const userX = {
     name: 'Mystery User',
     email: 'mysteriousDude@speckle.systems',
     password: 'super $ecret pw0rd'
   }
 
-  let streamPublic = {
+  const streamPublic = {
     name: 'a fun stream for sharing',
     description: 'for all to see!',
     isPublic: true
   }
 
-  let branchPublic = { name: '🍁maple branch' }
+  const branchPublic = { name: '🍁maple branch' }
 
-  let streamSecret = {
+  const streamSecret = {
     name: 'a secret stream for me',
     description: 'for no one to see!',
     isPublic: false
   }
 
-  let testObj = {
+  const testObj = {
     hello: 'hallo',
     cool: 'kult',
     bunny: 'kanin'
   }
-  let testObj2 = {
+  const testObj2 = {
     goodbye: 'ha det bra',
     warm: 'varmt',
     bunny: 'kanin'
@@ -60,11 +60,11 @@ describe('Activity @activity', () => {
 
   before(async () => {
     const { app } = await beforeEachContext()
-    ;({ server, serverAddress, sendRequest } = await initializeTestServer(app))
+    ;({ server, sendRequest } = await initializeTestServer(app))
 
     // create users and tokens
     userIz.id = await createUser(userIz)
-    let token = await createPersonalAccessToken(userIz.id, 'izz test token', [
+    const token = await createPersonalAccessToken(userIz.id, 'izz test token', [
       'streams:read',
       'streams:write',
       'users:read',
@@ -150,11 +150,11 @@ describe('Activity @activity', () => {
     })
     expect(noErrors(resCollab))
 
-    let { items: activityC } = await getUserActivity({ userId: userCr.id })
+    const { items: activityC } = await getUserActivity({ userId: userCr.id })
     expect(activityC.length).to.equal(3)
     expect(activityC[0].actionType).to.equal('commit_create')
 
-    let { items: activityI } = await getUserActivity({ userId: userIz.id })
+    const { items: activityI } = await getUserActivity({ userId: userIz.id })
     expect(activityI.length).to.equal(5)
     expect(activityI[0].actionType).to.equal('stream_permissions_add')
   })
@@ -164,7 +164,7 @@ describe('Activity @activity', () => {
       query: `query {user(id:"${userIz.id}") { name activity { totalCount items {streamId resourceType resourceId actionType userId message time}}} }`
     })
     expect(noErrors(res))
-    let activity = res.body.data.user.activity
+    const activity = res.body.data.user.activity
 
     expect(activity.items.length).to.equal(5)
     expect(activity.totalCount).to.equal(5)
@@ -195,7 +195,7 @@ describe('Activity @activity', () => {
       query: `query { stream(id: "${streamPublic.id}") { activity { totalCount items {streamId resourceId actionType message} } } }`
     })
     expect(noErrors(res))
-    let activity = res.body.data.stream.activity
+    const activity = res.body.data.stream.activity
     expect(activity.items.length).to.equal(4)
     expect(activity.totalCount).to.equal(4)
     expect(activity.items[activity.totalCount - 1].actionType).to.equal('stream_create')
@@ -206,7 +206,7 @@ describe('Activity @activity', () => {
       query: `query { stream(id: "${streamPublic.id}") { branch(name: "${branchPublic.name}") { activity { totalCount items {streamId resourceId actionType message} } } } }`
     })
     expect(noErrors(res))
-    let activity = res.body.data.stream.branch.activity
+    const activity = res.body.data.stream.branch.activity
     expect(activity.items.length).to.equal(1)
     expect(activity.totalCount).to.equal(1)
     expect(activity.items[0].actionType).to.equal('branch_create')

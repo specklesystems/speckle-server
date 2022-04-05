@@ -120,7 +120,7 @@ export default {
             return true
           },
           (v) => {
-            let pure = DOMPurify.sanitize(v)
+            const pure = DOMPurify.sanitize(v)
             if (pure !== v) return 'No crazy hacks please.'
             else return true
           }
@@ -166,9 +166,9 @@ export default {
     validateAndCreateChips() {
       this.inputErrors = []
       if (!this.emails || this.emails === '') return
-      let splitEmails = this.emails.split(/[ ,]+/)
-      for (let email of splitEmails) {
-        let valid = isEmailValid(email) && this.chips.indexOf(email) === -1
+      const splitEmails = this.emails.split(/[ ,]+/)
+      for (const email of splitEmails) {
+        const valid = isEmailValid(email) && this.chips.indexOf(email) === -1
         if (valid) {
           this.chips.push(email)
         } else {
@@ -178,7 +178,7 @@ export default {
       this.emails = ''
     },
     createInviteMessage() {
-      let message =
+      const message =
         `You have been invited to a Speckle server: ${this.serverInfo.name} ` +
         `by ${this.user.name}. Visit ${this.serverInfo.canonicalUrl} to register.`
       return this.invitation || message
@@ -187,7 +187,7 @@ export default {
       this.submitting = true
       this.errors = []
       this.sentToEmails = []
-      for (let chip of this.chips) {
+      for (const chip of this.chips) {
         if (!chip || chip.length === 0) continue
         try {
           await this.sendInvite(
@@ -209,12 +209,12 @@ export default {
       }
     },
     async sendInvite(email, message, streamId) {
-      let input = {
-        email: email,
-        message: message
+      const input = {
+        email,
+        message
       }
 
-      let query = gql`
+      const query = gql`
         mutation($input: ${
           streamId ? 'StreamInviteCreateInput!' : 'ServerInviteCreateInput!'
         }) {
@@ -228,7 +228,7 @@ export default {
       await this.$apollo.mutate({
         mutation: query,
         variables: {
-          input: input
+          input
         }
       })
 

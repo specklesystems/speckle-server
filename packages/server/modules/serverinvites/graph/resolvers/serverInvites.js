@@ -6,7 +6,7 @@ const { authorizeResolver } = require(`${appRoot}/modules/shared`)
 
 module.exports = {
   Mutation: {
-    async serverInviteCreate(parent, args, context, info) {
+    async serverInviteCreate(parent, args, context) {
       await createAndSendInvite({
         email: args.input.email,
         inviterId: context.userId,
@@ -16,7 +16,7 @@ module.exports = {
       return true
     },
 
-    async streamInviteCreate(parent, args, context, info) {
+    async streamInviteCreate(parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, 'stream:owner')
 
       await createAndSendInvite({

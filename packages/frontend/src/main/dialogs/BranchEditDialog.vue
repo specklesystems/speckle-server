@@ -82,9 +82,16 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import isNull from 'lodash/isNull'
+import isUndefined from 'lodash/isUndefined'
 
 export default {
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       dialog: false,
@@ -139,7 +146,7 @@ export default {
           .map((b) => b.name)
       },
       skip() {
-        return this.stream.branch == null
+        return isNull(this.stream.branch) || isUndefined(this.stream.branch)
       }
     }
   },
@@ -150,7 +157,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView('branch/delete')
       this.$mixpanel.track('Branch Action', { type: 'action', name: 'delete' })
       try {
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchDelete($params: BranchDeleteInput!) {
               branchDelete(branch: $params)
@@ -184,7 +191,7 @@ export default {
         this.loading = true
         this.$matomo && this.$matomo.trackPageView('branch/update')
         this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
               branchUpdate(branch: $params)

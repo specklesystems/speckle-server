@@ -3,7 +3,7 @@ const { performance } = require('perf_hooks')
 const crypto = require('crypto')
 const { set, get, chunk } = require('lodash')
 
-let debug = require('debug')('speckle:services')
+const debug = require('debug')('speckle:services')
 
 const knex = require(`@/db/knex`)
 
@@ -12,14 +12,14 @@ const Closures = () => knex('object_children_closure')
 
 module.exports = {
   async createObject(streamId, object) {
-    let insertionObject = prepInsertionObject(streamId, object)
+    const insertionObject = prepInsertionObject(streamId, object)
 
-    let closures = []
-    let totalChildrenCountByDepth = {}
+    const closures = []
+    const totalChildrenCountByDepth = {}
     if (object.__closure !== null) {
       for (const prop in object.__closure) {
         closures.push({
-          streamId: streamId,
+          streamId,
           parent: insertionObject.id,
           child: prop,
           minDepth: object.__closure[prop]
@@ -39,11 +39,11 @@ module.exports = {
       totalChildrenCountByDepth
     )
 
-    let q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
+    const q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
     await knex.raw(q1)
 
     if (closures.length > 0) {
-      let q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
+      const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
       await knex.raw(q2)
     }
 
@@ -51,20 +51,20 @@ module.exports = {
   },
 
   async createObjectsBatched(streamId, objects) {
-    let closures = []
-    let objsToInsert = []
-    let ids = []
+    const closures = []
+    const objsToInsert = []
+    const ids = []
 
     // Prep objects up
     objects.forEach((obj) => {
-      let insertionObject = prepInsertionObject(streamId, obj)
+      const insertionObject = prepInsertionObject(streamId, obj)
       let totalChildrenCountGlobal = 0
-      let totalChildrenCountByDepth = {}
+      const totalChildrenCountByDepth = {}
 
       if (obj.__closure !== null) {
         for (const prop in obj.__closure) {
           closures.push({
-            streamId: streamId,
+            streamId,
             parent: insertionObject.id,
             child: prop,
             minDepth: obj.__closure[prop]
@@ -88,17 +88,17 @@ module.exports = {
       ids.push(insertionObject.id)
     })
 
-    let closureBatchSize = 1000
-    let objectsBatchSize = 500
+    const closureBatchSize = 1000
+    const objectsBatchSize = 500
 
     // step 1: insert objects
     if (objsToInsert.length > 0) {
-      let batches = chunk(objsToInsert, objectsBatchSize)
+      const batches = chunk(objsToInsert, objectsBatchSize)
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await knex.transaction(async (trx) => {
-          let q = Objects().insert(batch).toString() + ' on conflict do nothing'
-          const inserts = await trx.raw(q)
+          const q = Objects().insert(batch).toString() + ' on conflict do nothing'
+          await trx.raw(q)
         })
         debug(`Inserted ${batch.length} objects`)
       }
@@ -106,13 +106,13 @@ module.exports = {
 
     // step 2: insert closures
     if (closures.length > 0) {
-      let batches = chunk(closures, closureBatchSize)
+      const batches = chunk(closures, closureBatchSize)
 
       for (const batch of batches) {
         prepInsertionClosureBatch(batch)
         await knex.transaction(async (trx) => {
-          let q = Closures().insert(batch).toString() + ' on conflict do nothing'
-          const inserts = await trx.raw(q)
+          const q = Closures().insert(batch).toString() + ' on conflict do nothing'
+          await trx.raw(q)
         })
         debug(`Inserted ${batch.length} closures`)
       }
@@ -123,8 +123,8 @@ module.exports = {
   async createObjects(streamId, objects) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
-    let batches = []
-    let maxBatchSize = process.env.MAX_BATCH_SIZE || 250
+    const batches = []
+    const maxBatchSize = process.env.MAX_BATCH_SIZE || 250
     objects = [...objects]
     if (objects.length > maxBatchSize) {
       while (objects.length > 0) batches.push(objects.splice(0, maxBatchSize))
@@ -132,72 +132,70 @@ module.exports = {
       batches.push(objects)
     }
 
-    let ids = []
+    const ids = []
 
-    let promises = batches.map(
-      async (batch, index) =>
-        new Promise(async (resolve, reject) => {
-          let closures = []
-          let objsToInsert = []
+    const insertBatch = async (batch, index) => {
+      const closures = []
+      const objsToInsert = []
 
-          let t0 = performance.now()
+      const t0 = performance.now()
 
-          batch.forEach((obj) => {
-            if (!obj) return
+      batch.forEach((obj) => {
+        if (!obj) return
 
-            let insertionObject = prepInsertionObject(streamId, obj)
-            let totalChildrenCountByDepth = {}
-            let totalChildrenCountGlobal = 0
-            if (obj.__closure !== null) {
-              for (const prop in obj.__closure) {
-                closures.push({
-                  streamId: streamId,
-                  parent: insertionObject.id,
-                  child: prop,
-                  minDepth: obj.__closure[prop]
-                })
+        const insertionObject = prepInsertionObject(streamId, obj)
+        const totalChildrenCountByDepth = {}
+        let totalChildrenCountGlobal = 0
+        if (obj.__closure !== null) {
+          for (const prop in obj.__closure) {
+            closures.push({
+              streamId,
+              parent: insertionObject.id,
+              child: prop,
+              minDepth: obj.__closure[prop]
+            })
 
-                totalChildrenCountGlobal++
+            totalChildrenCountGlobal++
 
-                if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
-                  totalChildrenCountByDepth[obj.__closure[prop].toString()]++
-                else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
-              }
-            }
-
-            insertionObject.totalChildrenCount = totalChildrenCountGlobal
-            insertionObject.totalChildrenCountByDepth = JSON.stringify(
-              totalChildrenCountByDepth
-            )
-
-            delete insertionObject.__tree
-            delete insertionObject.__closure
-
-            objsToInsert.push(insertionObject)
-            ids.push(insertionObject.id)
-          })
-
-          if (objsToInsert.length > 0) {
-            let queryObjs =
-              Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
-            await knex.raw(queryObjs)
+            if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
+              totalChildrenCountByDepth[obj.__closure[prop].toString()]++
+            else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
           }
+        }
 
-          if (closures.length > 0) {
-            let q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
-            await knex.raw(q2)
-          }
+        insertionObject.totalChildrenCount = totalChildrenCountGlobal
+        insertionObject.totalChildrenCountByDepth = JSON.stringify(
+          totalChildrenCountByDepth
+        )
 
-          let t1 = performance.now()
-          debug(
-            `Batch ${index + 1}/${batches.length}: Stored ${
-              closures.length + objsToInsert.length
-            } objects in ${t1 - t0}ms.`
-          )
-          // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
-          resolve()
-        })
-    )
+        delete insertionObject.__tree
+        delete insertionObject.__closure
+
+        objsToInsert.push(insertionObject)
+        ids.push(insertionObject.id)
+      })
+
+      if (objsToInsert.length > 0) {
+        const queryObjs =
+          Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
+        await knex.raw(queryObjs)
+      }
+
+      if (closures.length > 0) {
+        const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
+        await knex.raw(q2)
+      }
+
+      const t1 = performance.now()
+      debug(
+        `Batch ${index + 1}/${batches.length}: Stored ${
+          closures.length + objsToInsert.length
+        } objects in ${t1 - t0}ms.`
+      )
+      // console.log( `Batch ${index + 1}/${batches.length}: Stored ${closures.length + objsToInsert.length} objects in ${t1-t0}ms.` )
+    }
+
+    const promises = batches.map((batch, index) => insertBatch(batch, index))
 
     await Promise.all(promises)
 
@@ -205,10 +203,7 @@ module.exports = {
   },
 
   async getObject({ streamId, objectId }) {
-    let res = await Objects()
-      .where({ streamId: streamId, id: objectId })
-      .select('*')
-      .first()
+    const res = await Objects().where({ streamId, id: objectId }).select('*').first()
     if (!res) return null
     res.data.totalChildrenCount = res.totalChildrenCount // move this back
     delete res.streamId // backwards compatibility
@@ -216,7 +211,7 @@ module.exports = {
   },
 
   async getObjectChildrenStream({ streamId, objectId }) {
-    let q = Closures()
+    const q = Closures()
     q.select('id')
     q.select(knex.raw('data::text as "dataText"'))
     q.rightJoin('objects', function () {
@@ -241,9 +236,8 @@ module.exports = {
     depth = parseInt(depth) || 1000
 
     let fullObjectSelect = false
-    let selectStatements = []
 
-    let q = Closures()
+    const q = Closures()
     q.select('id')
     q.select('createdAt')
     q.select('speckleType')
@@ -281,7 +275,7 @@ module.exports = {
       .orderBy('objects.id')
       .limit(limit)
 
-    let rows = await q
+    const rows = await q
 
     if (rows.length === 0) {
       return { objects: rows, cursor: null }
@@ -289,7 +283,7 @@ module.exports = {
 
     if (!fullObjectSelect)
       rows.forEach((o, i, arr) => {
-        let no = {
+        const no = {
           id: o.id,
           createdAt: o.createdAt,
           speckleType: o.speckleType,
@@ -297,13 +291,13 @@ module.exports = {
           data: {}
         }
         let k = 0
-        for (let field of select) {
+        for (const field of select) {
           set(no.data, field, o[k++])
         }
         arr[i] = no
       })
 
-    let lastId = rows[rows.length - 1].id
+    const lastId = rows[rows.length - 1].id
     return { objects: rows, cursor: lastId }
   },
 
@@ -341,11 +335,11 @@ module.exports = {
       fullObjectSelect = true
     }
 
-    let additionalIdOrderBy = orderBy.field !== 'id'
+    const additionalIdOrderBy = orderBy.field !== 'id'
 
-    let operatorsWhitelist = ['=', '>', '>=', '<', '<=', '!=']
+    const operatorsWhitelist = ['=', '>', '>=', '<', '<=', '!=']
 
-    let mainQuery = knex
+    const mainQuery = knex
       .with('objs', (cteInnerQuery) => {
         // always select the id
         cteInnerQuery.select('id').from('object_children_closure')
@@ -390,7 +384,7 @@ module.exports = {
               if (typeof statement.value === 'boolean') castType = 'boolean'
               if (typeof statement.value === 'number') castType = 'numeric'
 
-              if (operatorsWhitelist.indexOf(statement.operator) == -1)
+              if (operatorsWhitelist.indexOf(statement.operator) === -1)
                 throw new Error('Invalid operator for query')
 
               // Determine the correct where clause (where, and where, or where)
@@ -416,7 +410,7 @@ module.exports = {
         }
 
         // Order by clause; validate direction!
-        let direction =
+        const direction =
           orderBy.direction && orderBy.direction.toLowerCase() === 'desc'
             ? 'desc'
             : 'asc'
@@ -446,7 +440,7 @@ module.exports = {
       // When strings are used inside an order clause, as mentioned above, we need to add quotes around the comparison value, as the jsonb_path_query funcs return json encoded strings (`{"test":"foo"}` => test is returned as `"foo"`)
       if (castType === 'text') cursor.value = `"${cursor.value}"`
 
-      if (operatorsWhitelist.indexOf(cursor.operator) == -1)
+      if (operatorsWhitelist.indexOf(cursor.operator) === -1)
         throw new Error('Invalid operator for cursor')
 
       // Unwrapping the tuple comparison of ( userOrderByField, id ) > ( lastValueOfUserOrderBy, lastSeenId )
@@ -494,8 +488,8 @@ module.exports = {
     mainQuery.limit(limit)
     // console.log( mainQuery.toString() )
     // Finally, execute the query
-    let rows = await mainQuery
-    let totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
+    const rows = await mainQuery
+    const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
 
     // Return early
     if (totalCount === 0) return { totalCount, objects: [], cursor: null }
@@ -503,7 +497,7 @@ module.exports = {
     // Reconstruct the object based on the provided select paths.
     if (!fullObjectSelect) {
       rows.forEach((o, i, arr) => {
-        let no = {
+        const no = {
           id: o.id,
           createdAt: o.createdAt,
           speckleType: o.speckleType,
@@ -511,7 +505,7 @@ module.exports = {
           data: {}
         }
         let k = 0
-        for (let field of select) {
+        for (const field of select) {
           set(no.data, field, o[k++])
         }
         arr[i] = no
@@ -520,7 +514,7 @@ module.exports = {
 
     // Assemble the cursor for an eventual next call
     cursor = cursor || {}
-    let cursorObj = {
+    const cursorObj = {
       field: cursor.field || orderBy.field,
       operator:
         cursor.operator ||
@@ -534,7 +528,7 @@ module.exports = {
     }
 
     // Cursor objects should be client-side opaque, hence we encode them to base64.
-    let cursorEncoded = Buffer.from(JSON.stringify(cursorObj), 'binary').toString(
+    const cursorEncoded = Buffer.from(JSON.stringify(cursorObj), 'binary').toString(
       'base64'
     )
     return {
@@ -545,7 +539,7 @@ module.exports = {
   },
 
   async getObjects(streamId, objectIds) {
-    let res = await Objects()
+    const res = await Objects()
       .whereIn('id', objectIds)
       .andWhere('streamId', streamId)
       .select(
@@ -560,7 +554,7 @@ module.exports = {
   },
 
   async getObjectsStream({ streamId, objectIds }) {
-    let res = Objects()
+    const res = Objects()
       .whereIn('id', objectIds)
       .andWhere('streamId', streamId)
       .orderBy('id')
@@ -573,16 +567,16 @@ module.exports = {
   },
 
   async hasObjects({ streamId, objectIds }) {
-    let dbRes = await Objects()
+    const dbRes = await Objects()
       .whereIn('id', objectIds)
       .andWhere('streamId', streamId)
       .select('id')
 
-    let res = {}
-    for (let i in objectIds) {
+    const res = {}
+    for (const i in objectIds) {
       res[objectIds[i]] = false
     }
-    for (let i in dbRes) {
+    for (const i in dbRes) {
       res[dbRes[i].id] = true
     }
     return res
@@ -598,7 +592,7 @@ module.exports = {
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject(streamId, obj) {
-  let memNow = process.memoryUsage().heapUsed / 1024 / 1024
+  // let memNow = process.memoryUsage().heapUsed / 1024 / 1024
   const MAX_OBJECT_SIZE = 10 * 1024 * 1024
 
   if (obj.hash) obj.id = obj.hash
@@ -606,15 +600,15 @@ function prepInsertionObject(streamId, obj) {
     obj.id =
       obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
-  let stringifiedObj = JSON.stringify(obj)
+  const stringifiedObj = JSON.stringify(obj)
   if (stringifiedObj.length > MAX_OBJECT_SIZE) {
     throw new Error(`Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`)
   }
-  let memAfter = process.memoryUsage().heapUsed / 1024 / 1024
+  // let memAfter = process.memoryUsage().heapUsed / 1024 / 1024
 
   return {
     data: stringifiedObj, // stored in jsonb column
-    streamId: streamId,
+    streamId,
     id: obj.id,
     speckleType: obj.speckleType
   }

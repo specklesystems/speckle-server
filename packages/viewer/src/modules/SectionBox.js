@@ -32,7 +32,7 @@ export default class SectionBox {
     this.display.add(this.boxHelper)
 
     // we're attaching the gizmo mover to this sphere in the box centre
-    let sphere = new THREE.SphereGeometry(0.01, 10, 10)
+    const sphere = new THREE.SphereGeometry(0.01, 10, 10)
     this.sphere = new THREE.Mesh(
       sphere,
       new THREE.MeshStandardMaterial({ color: 0x00ffff })
@@ -87,7 +87,7 @@ export default class SectionBox {
       checkForSectionBoxInclusion: false
     })
     this.selectionHelper.on('object-clicked', this._clickHandler.bind(this))
-    this.selectionHelper.on('hovered', (objs) => {
+    this.selectionHelper.on('hovered', () => {
       // TODO: cannot get this to work reliably
       // if( !this.attachedToBox ) return
       // if( objs.length === 0 ) {
@@ -129,7 +129,7 @@ export default class SectionBox {
     this.controls.addEventListener('change', this._draggingChangeHandler.bind(this))
     this.controls.addEventListener('dragging-changed', (event) => {
       if (!this.display.visible) return
-      let val = !!event.value
+      const val = !!event.value
       if (val) {
         this.dragging = val
         this.viewer.interactions.preventSelection = val
@@ -156,9 +156,9 @@ export default class SectionBox {
         this.prevPosition = this.hoverPlane.position.clone()
       this.prevPosition.sub(this.hoverPlane.position)
       this.prevPosition.negate()
-      let boxArr = this.boxGeometry.attributes.position.array
+      const boxArr = this.boxGeometry.attributes.position.array
       for (let i = 0; i < this.currentRange.length; i++) {
-        let index = this.currentRange[i]
+        const index = this.currentRange[i]
         boxArr[3 * index] += this.prevPosition.x
         boxArr[3 * index + 1] += this.prevPosition.y
         boxArr[3 * index + 2] += this.prevPosition.z
@@ -203,19 +203,19 @@ export default class SectionBox {
     this.attachedToBox = false
     this.boxHelper.material.opacity = 0.3
     this.hoverPlane.visible = true
-    let side = this.sidesSimple[`${args[0].face.a}${args[0].face.b}${args[0].face.c}`]
+    const side = this.sidesSimple[`${args[0].face.a}${args[0].face.b}${args[0].face.c}`]
     this.controls.showX = side.axis === 'x'
     this.controls.showY = side.axis === 'y'
     this.controls.showZ = side.axis === 'z'
 
     this.currentRange = side.verts
 
-    let boxArr = this.boxGeometry.attributes.position
+    const boxArr = this.boxGeometry.attributes.position
     let index = 0
-    let planeArr = this.plane.attributes.position.array
-    let centre = new THREE.Vector3()
+    const planeArr = this.plane.attributes.position.array
+    const centre = new THREE.Vector3()
 
-    let tempArr = []
+    const tempArr = []
     for (let i = 0; i < planeArr.length; i++) {
       if (i % 3 === 0) {
         tempArr.push(boxArr.getX(this.currentRange[index]))
@@ -269,12 +269,12 @@ export default class SectionBox {
       7, 2, 6, 4, 5, 0, 0, 5, 1
     ]
 
-    let positions = []
-    for (let vert of vertices) {
+    const positions = []
+    for (const vert of vertices) {
       positions.push(...vert)
     }
 
-    let g = new THREE.BufferGeometry()
+    const g = new THREE.BufferGeometry()
     g.setAttribute(
       'position',
       new THREE.BufferAttribute(new Float32Array(positions), 3)
@@ -295,29 +295,29 @@ export default class SectionBox {
     ]
 
     let index = 0
-    let boxArr = this.boxGeometry.attributes.position
+    const boxArr = this.boxGeometry.attributes.position
     const indexes = [
       0, 1, 3, 3, 1, 2, 1, 5, 2, 2, 5, 6, 5, 4, 6, 6, 4, 7, 4, 0, 7, 7, 0, 3, 3, 2, 7,
       7, 2, 6, 4, 5, 0, 0, 5, 1
     ]
 
     for (let i = 0; i < indexes.length; i += 6) {
-      let a = new THREE.Vector3(
+      const a = new THREE.Vector3(
         boxArr.getX(indexes[i]),
         boxArr.getY(indexes[i]),
         boxArr.getZ(indexes[i])
       )
-      let b = new THREE.Vector3(
+      const b = new THREE.Vector3(
         boxArr.getX(indexes[i + 1]),
         boxArr.getY(indexes[i + 1]),
         boxArr.getZ(indexes[i + 1])
       )
-      let c = new THREE.Vector3(
+      const c = new THREE.Vector3(
         boxArr.getX(indexes[i + 2]),
         boxArr.getY(indexes[i + 2]),
         boxArr.getZ(indexes[i + 2])
       )
-      let plane = this.planes[index]
+      const plane = this.planes[index]
       plane.setFromCoplanarPoints(a, b, c)
       index++
     }
@@ -326,8 +326,8 @@ export default class SectionBox {
   _attachControlsToBox() {
     this.controls.detach()
 
-    let centre = new THREE.Vector3()
-    let boxArr = this.boxGeometry.attributes.position.array
+    const centre = new THREE.Vector3()
+    const boxArr = this.boxGeometry.attributes.position.array
     for (let i = 0; i < boxArr.length; i += 3) {
       centre.add(new THREE.Vector3(boxArr[i], boxArr[i + 1], boxArr[i + 2]))
     }
@@ -401,7 +401,7 @@ export default class SectionBox {
       z2
     ]
 
-    let boxVerts = this.boxGeometry.attributes.position.array
+    const boxVerts = this.boxGeometry.attributes.position.array
     for (let i = 0; i < newVertices.length; i++) {
       boxVerts[i] = newVertices[i]
     }
@@ -445,7 +445,7 @@ export default class SectionBox {
 
   getCurrentBox() {
     if (!this.display.visible) return null
-    let box = new THREE.Box3().setFromBufferAttribute(
+    const box = new THREE.Box3().setFromBufferAttribute(
       this.boxGeometry.attributes.position
     )
     return box

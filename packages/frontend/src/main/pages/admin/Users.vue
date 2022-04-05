@@ -159,8 +159,8 @@ export default {
       return Math.ceil(this.users.totalCount / this.limit)
     },
     availableRoles() {
-      let roleItems = []
-      for (let role in this.roleLookupTable) {
+      const roleItems = []
+      for (const role in this.roleLookupTable) {
         roleItems.push({ text: this.roleLookupTable[role], value: role })
       }
       return roleItems

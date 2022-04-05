@@ -99,7 +99,7 @@ export default {
         }
       },
       update(data) {
-        let webhook = data.stream.webhooks.items[0]
+        const webhook = data.stream.webhooks.items[0]
         this.secret = null
         if (webhook)
           ({
@@ -168,7 +168,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView('stream/webhook/update')
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update' })
 
-      let params = {
+      const params = {
         id: this.webhook.id,
         streamId: this.streamId,
         url: this.url,
@@ -185,7 +185,7 @@ export default {
           }
         `,
         variables: {
-          params: params
+          params
         }
       })
       this.$emit('refetch-webhooks')
@@ -197,7 +197,7 @@ export default {
       this.$matomo && this.$matomo.trackPageView('stream/webhook/create')
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create' })
 
-      let res = await this.$apollo.mutate({
+      await this.$apollo.mutate({
         mutation: gql`
           mutation webhookCreate($params: WebhookCreateInput!) {
             webhookCreate(webhook: $params)

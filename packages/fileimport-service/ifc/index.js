@@ -14,33 +14,33 @@ async function parseAndCreateCommit({
 
   const { id, tCount } = await myParser.parse(data)
 
-  let commit = {
-    streamId: streamId,
-    branchName: branchName,
+  const commit = {
+    streamId,
+    branchName,
     objectId: id,
-    message: message,
+    message,
     sourceApplication: 'IFC',
     totalChildrenCount: tCount
   }
 
-  let branch = await serverApi.getBranchByNameAndStreamId({
-    streamId: streamId,
+  const branch = await serverApi.getBranchByNameAndStreamId({
+    streamId,
     name: branchName
   })
 
   if (!branch) {
     await serverApi.createBranch({
       name: branchName,
-      streamId: streamId,
+      streamId,
       description: branchName === 'uploads' ? 'File upload branch' : null,
       authorId: userId
     })
   }
 
-  let userToken = process.env.USER_TOKEN
+  const userToken = process.env.USER_TOKEN
 
-  let server_base_url = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
-  const response = await fetch(server_base_url + '/graphql', {
+  const serverBaseUrl = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
+  const response = await fetch(serverBaseUrl + '/graphql', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -55,7 +55,8 @@ async function parseAndCreateCommit({
     })
   })
 
-  let json = await response.json()
+  const json = await response.json()
+  // eslint-disable-next-line no-console
   console.log(json)
 
   return json.data.commitCreate

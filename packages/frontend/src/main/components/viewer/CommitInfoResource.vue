@@ -76,7 +76,12 @@ export default {
     UserAvatar: () => import('@/main/components/common/UserAvatar'),
     ObjectProperties: () => import('@/main/components/viewer/ObjectProperties')
   },
-  props: ['resource'],
+  props: {
+    resource: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       expanded: false
@@ -103,7 +108,7 @@ export default {
   },
   methods: {
     isolate() {
-      let id = this.resource.data.commit.referencedObject
+      const id = this.resource.data.commit.referencedObject
       if (this.isolated)
         this.$store.commit('unisolateObjects', {
           filterKey: '__parents',
@@ -116,7 +121,7 @@ export default {
         })
     },
     toggleVisibility() {
-      let id = this.resource.data.commit.referencedObject
+      const id = this.resource.data.commit.referencedObject
       if (this.visible)
         this.$store.commit('hideObjects', {
           filterKey: '__parents',

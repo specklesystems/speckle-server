@@ -6,7 +6,7 @@ const { RedisPubSub } = require('graphql-redis-subscriptions')
 const { buildRequestLoaders } = require('@/modules/core/loaders')
 const { validateToken } = require(`@/modules/core/services/tokens`)
 
-let pubsub = new RedisPubSub({
+const pubsub = new RedisPubSub({
   publisher: new Redis(process.env.REDIS_URL),
   subscriber: new Redis(process.env.REDIS_URL)
 })
@@ -68,7 +68,7 @@ async function contextApiTokenHelper({ req, connection }) {
   if (token === null) return { auth: false }
 
   try {
-    let { valid, scopes, userId, role } = await validateToken(token)
+    const { valid, scopes, userId, role } = await validateToken(token)
 
     if (!valid) {
       return { auth: false }
@@ -79,15 +79,13 @@ async function contextApiTokenHelper({ req, connection }) {
     // TODO: Think whether perhaps it's better to throw the error
     return { auth: false, err: e }
   }
-
-  return { auth: false }
 }
 
 /**
  * Express middleware wrapper around the buildContext function. sets req.context to have an auth prop (true/false), userId and server role.
  */
 async function contextMiddleware(req, res, next) {
-  let result = await buildContext({ req, res })
+  const result = await buildContext({ req, res })
   req.context = result
   next()
 }
@@ -104,14 +102,15 @@ async function validateServerRole(context, requiredRole) {
   if (!roles) roles = await knex('user_roles').select('*')
 
   if (!context.auth) throw new ForbiddenError('You must provide an auth token.')
+
+  const role = roles.find((r) => r.name === requiredRole)
+  const myRole = roles.find((r) => r.name === context.role)
+
+  if (!role) throw new ApolloError('Invalid server role specified')
+  if (!myRole)
+    throw new ForbiddenError('You do not have the required server role (null)')
+
   if (context.role === 'server:admin') return true
-
-  let role = roles.find((r) => r.name === requiredRole)
-  let myRole = roles.find((r) => r.name === context.role)
-
-  if (role === null) new ApolloError('Invalid server role specified')
-  if (myRole === null)
-    new ForbiddenError('You do not have the required server role (null)')
   if (myRole.weight >= role.weight) return true
 
   throw new ForbiddenError('You do not have the required server role')
@@ -141,13 +140,12 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
-  let role = roles.find((r) => r.name === requiredRole)
+  const role = roles.find((r) => r.name === requiredRole)
 
-  if (role === undefined || role === null)
-    throw new ApolloError('Unknown role: ' + requiredRole)
+  if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
 
   try {
-    let { isPublic } = await knex(role.resourceTarget)
+    const { isPublic } = await knex(role.resourceTarget)
       .select('isPublic')
       .where({ id: resourceId })
       .first()
@@ -158,9 +156,9 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     )
   }
 
-  let userAclEntry = await knex(role.aclTableName)
+  const userAclEntry = await knex(role.aclTableName)
     .select('*')
-    .where({ resourceId: resourceId, userId: userId })
+    .where({ resourceId, userId })
     .first()
 
   if (!userAclEntry)

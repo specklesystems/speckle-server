@@ -1,12 +1,12 @@
 'use strict'
-let debug = require('debug')
+const debug = require('debug')
 const appRoot = require('app-root-path')
 const {
   registerOrUpdateScope,
   registerOrUpdateRole
 } = require(`${appRoot}/modules/shared`)
 
-exports.init = async (app, options) => {
+exports.init = async (app) => {
   debug('speckle:modules')('💥 Init core module')
 
   // Initialises the two main bulk upload/download endpoints
@@ -19,13 +19,13 @@ exports.init = async (app, options) => {
 
   // Register core-based scoeps
   const scopes = require('./scopes.js')
-  for (let scope of scopes) {
+  for (const scope of scopes) {
     await registerOrUpdateScope(scope)
   }
 
   // Register core-based roles
   const roles = require('./roles.js')
-  for (let role of roles) {
+  for (const role of roles) {
     await registerOrUpdateRole(role)
   }
 }

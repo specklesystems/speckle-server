@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 const chai = require('chai')
 const appRoot = require('app-root-path')
@@ -211,7 +212,7 @@ describe('GraphQL @apps-api', () => {
     const getMyAppsQuery =
       'query usersApps{ user { createdApps { id name description } } }'
 
-    let res = await sendRequest(testToken, { query: getMyAppsQuery })
+    const res = await sendRequest(testToken, { query: getMyAppsQuery })
     expect(res.body.errors).to.not.exist
     expect(res.body.data.user.createdApps).to.be.an('array')
     expect(res.body.data.user.createdApps.length).to.equal(3)
@@ -224,7 +225,7 @@ describe('GraphQL @apps-api', () => {
       userId: testUser.id,
       challenge: 'floating points'
     })
-    const response_1 = await createAppTokenFromAccessCode({
+    await createAppTokenFromAccessCode({
       appId: testAppId,
       appSecret: testApp.secret,
       accessCode: authorizationCode_1,
@@ -236,7 +237,7 @@ describe('GraphQL @apps-api', () => {
       userId: testUser.id,
       challenge: 'floating points'
     })
-    const response_2 = await createAppTokenFromAccessCode({
+    await createAppTokenFromAccessCode({
       appId: 'sdm',
       appSecret: 'sdm',
       accessCode: authorizationCode_2,
@@ -246,7 +247,7 @@ describe('GraphQL @apps-api', () => {
     const query =
       'query myAuthApps{ user { authorizedApps { id name description termsAndConditionsLink logo author { id name } } } }'
 
-    let res = await sendRequest(testToken, { query })
+    const res = await sendRequest(testToken, { query })
 
     expect(res.body.errors).to.not.exist
     expect(res.body.data.user.authorizedApps).to.be.an('array')

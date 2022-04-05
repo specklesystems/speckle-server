@@ -2,7 +2,7 @@
   <v-snackbar v-model="snack" app bottom color="primary">
     {{ text }}
     <template #action="{}">
-      <v-btn v-if="actionName" :to="to" @click.append="snack = false">
+      <v-btn v-if="actionName" :to="to" @click="snack = false">
         {{ actionName }}
       </v-btn>
       <v-btn small icon @click="snack = false">

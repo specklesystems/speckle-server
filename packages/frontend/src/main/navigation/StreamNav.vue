@@ -20,13 +20,13 @@
           <v-list-item-title class="font-weight-bold">Streams</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-      <!-- <v-divider></v-divider> -->
-      <!-- <v-subheader>DESC</v-subheader> -->
       <div class="caption px-3 my-4">
         <perfect-scrollbar
           style="max-height: 100px"
           :options="{ suppressScrollX: true }"
         >
+          <!-- TODO: Need to get rid of this, as it opens us up for an XSS attack -->
+          <!-- eslint-disable-next-line vue/no-v-html -->
           <span v-html="parsedDescription"></span>
         </perfect-scrollbar>
         <router-link
@@ -225,7 +225,12 @@ export default {
   components: {
     NewBranch: () => import('@/main/dialogs/NewBranch')
   },
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   apollo: {
     branchQuery: {
       query: gql`
@@ -269,11 +274,11 @@ export default {
   computed: {
     groupedBranches() {
       if (!this.branchQuery) return
-      let branches = this.branchQuery.branches.items
-      let items = []
-      for (let b of branches) {
+      const branches = this.branchQuery.branches.items
+      const items = []
+      for (const b of branches) {
         if (b.name === 'globals') continue
-        let parts = b.name.split('/')
+        const parts = b.name.split('/')
         if (parts.length === 1) {
           items.push({ ...b, displayName: b.name, type: 'item', children: [] })
         } else {
@@ -290,7 +295,7 @@ export default {
           if (this.$route.path.includes(b.name)) existing.expand = true
         }
       }
-      let sorted = items.sort((a, b) => {
+      const sorted = items.sort((a, b) => {
         const nameA = a.name.toLowerCase()
         const nameB = b.name.toLowerCase()
         if (nameA < nameB) return -1
@@ -319,6 +324,7 @@ export default {
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
     },
     parsedDescription() {
+      // TODO: Pretty sketchy, isn't the descripton user editable? A user could inject XSS this way
       if (!this.stream || !this.stream.description) return 'No description provided.'
       return this.stream.description.replace(
         /\[(.+?)\]\((https?:\/\/[a-zA-Z0-9/.(]+?)\)/g,

@@ -82,7 +82,12 @@
 <script>
 import gql from 'graphql-tag'
 export default {
-  props: ['stream'],
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    }
+  },
   data() {
     return {
       showDeleteDialog: false,
@@ -129,7 +134,7 @@ export default {
     async deleteCommit() {
       this.$matomo && this.$matomo.trackPageView('commit/delete')
       this.$mixpanel.track('Commit Action', { type: 'action', name: 'delete' })
-      let commitBranch = this.stream.commit.branchName
+      const commitBranch = this.stream.commit.branchName
       try {
         await this.$apollo.mutate({
           mutation: gql`

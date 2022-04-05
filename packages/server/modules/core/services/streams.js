@@ -44,7 +44,7 @@ function getUserStreamsQueryBase({ userId, publicOnly, searchQuery }) {
 
 module.exports = {
   async createStream({ name, description, isPublic, ownerId }) {
-    let stream = {
+    const stream = {
       id: crs({ length: 10 }),
       name: name || generateStreamName(),
       description: description || '',
@@ -53,7 +53,7 @@ module.exports = {
     }
 
     // Create the stream & set up permissions
-    let [{ id: streamId }] = await Streams.knex().returning('id').insert(stream)
+    const [{ id: streamId }] = await Streams.knex().returning('id').insert(stream)
     await StreamAcl.knex().insert({
       userId: ownerId,
       resourceId: streamId,
@@ -64,7 +64,7 @@ module.exports = {
     await createBranch({
       name: 'main',
       description: 'default branch',
-      streamId: streamId,
+      streamId,
       authorId: ownerId
     })
     return streamId
@@ -73,7 +73,7 @@ module.exports = {
   getStream,
 
   async updateStream({ streamId, name, description, isPublic }) {
-    let [{ id }] = await Streams.knex()
+    const [{ id }] = await Streams.knex()
       .returning('id')
       .where({ id: streamId })
       .update({ name, description, isPublic, updatedAt: knex.fn.now() })
@@ -85,10 +85,8 @@ module.exports = {
   async grantPermissionsStream({ streamId, userId, role }) {
     // upserts the existing role (sets a new one!)
     // TODO: check if we're removing the last owner (ie, does the stream still have an owner after this operation)?
-    let query =
-      StreamAcl.knex()
-        .insert({ userId: userId, resourceId: streamId, role: role })
-        .toString() +
+    const query =
+      StreamAcl.knex().insert({ userId, resourceId: streamId, role }).toString() +
       ' on conflict on constraint stream_acl_pkey do update set role=excluded.role'
 
     await knex.raw(query)
@@ -99,10 +97,13 @@ module.exports = {
   },
 
   async revokePermissionsStream({ streamId, userId }) {
-    let streamAclEntriesCount = StreamAcl.knex().count({ resourceId: streamId })
+    const [streamAclEntriesCount] = await StreamAcl.knex()
+      // let [streamAclEntriesCount] = await StreamAcl.knex()
+      .where({ resourceId: streamId })
+      .count()
     // TODO: check if streamAclEntriesCount === 1 then throw big boo-boo (can't delete last ownership link)
 
-    if (streamAclEntriesCount === 1)
+    if (parseInt(streamAclEntriesCount.count) === 1)
       throw new Error(
         'Stream has only one ownership link left - cannot revoke permissions.'
       )
@@ -111,25 +112,25 @@ module.exports = {
     // Count owners
     // If owner count > 1, then proceed to delete, otherwise throw an error (can't delete last owner - delete stream)
 
-    let aclEntry = await StreamAcl.knex()
-      .where({ resourceId: streamId, userId: userId })
+    const aclEntry = await StreamAcl.knex()
+      .where({ resourceId: streamId, userId })
       .select('*')
       .first()
 
     if (aclEntry.role === 'stream:owner') {
-      let ownersCount = StreamAcl.knex().count({
+      const ownersCount = StreamAcl.knex().count({
         resourceId: streamId,
         role: 'stream:owner'
       })
       if (ownersCount === 1) throw new Error('Could not revoke permissions for user')
       else {
-        await StreamAcl.knex().where({ resourceId: streamId, userId: userId }).del()
+        await StreamAcl.knex().where({ resourceId: streamId, userId }).del()
         return true
       }
     }
 
-    let delCount = await StreamAcl.knex()
-      .where({ resourceId: streamId, userId: userId })
+    const delCount = await StreamAcl.knex()
+      .where({ resourceId: streamId, userId })
       .del()
 
     if (delCount === 0) throw new Error('Could not revoke permissions for user')
@@ -182,7 +183,7 @@ module.exports = {
 
     query.orderBy(Streams.col.updatedAt, 'desc').limit(finalLimit)
 
-    let rows = await query
+    const rows = await query
     return {
       streams: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].updatedAt.toISOString() : null
@@ -190,7 +191,7 @@ module.exports = {
   },
 
   async getStreams({ offset, limit, orderBy, visibility, searchQuery }) {
-    let query = knex
+    const query = knex
       .column(
         'streams.*',
         knex.raw('coalesce(sum(pg_column_size(objects.data)),0) as size')
@@ -200,7 +201,7 @@ module.exports = {
       .leftJoin('objects', 'streams.id', 'objects.streamId')
       .groupBy('streams.id')
 
-    let countQuery = Streams.knex()
+    const countQuery = Streams.knex()
 
     if (searchQuery) {
       const whereFunc = function () {
@@ -216,23 +217,23 @@ module.exports = {
     if (visibility && visibility !== 'all') {
       if (!['private', 'public'].includes(visibility))
         throw new Error('Stream visibility should be either private, public or all')
-      let isPublic = visibility === 'public'
+      const isPublic = visibility === 'public'
       const publicFunc = function () {
         this.where({ isPublic })
       }
       query.andWhere(publicFunc)
       countQuery.andWhere(publicFunc)
     }
-    let [res] = await countQuery.count()
-    let count = parseInt(res.count)
+    const [res] = await countQuery.count()
+    const count = parseInt(res.count)
 
     if (!count) return { streams: [], totalCount: 0 }
 
     orderBy = orderBy || 'updatedAt,desc'
 
-    let [columnName, order] = orderBy.split(',')
+    const [columnName, order] = orderBy.split(',')
 
-    let rows = await query.orderBy(`${columnName}`, order).offset(offset).limit(limit)
+    const rows = await query.orderBy(`${columnName}`, order).offset(offset).limit(limit)
 
     return { streams: rows, totalCount: count }
   },
@@ -254,12 +255,12 @@ module.exports = {
     })
     query.count()
 
-    let [res] = await query
+    const [res] = await query
     return parseInt(res.count)
   },
 
   async getStreamUsers({ streamId }) {
-    let query = StreamAcl.knex()
+    const query = StreamAcl.knex()
       .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
       .select()
       .where({ resourceId: streamId })

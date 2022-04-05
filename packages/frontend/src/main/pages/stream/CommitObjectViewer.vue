@@ -64,7 +64,7 @@
         <views-display v-if="views.length !== 0" :views="views" class="mt-4" />
 
         <!-- Filters display -->
-        <filters
+        <viewer-filters
           class="mt-4"
           :props="objectProperties"
           :source-application="
@@ -103,7 +103,7 @@
           !$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'
         } left: 0px; position: absolute`"
       >
-        <viewer @load-progress="captureProgress" @selection="captureSelect" />
+        <speckle-viewer @load-progress="captureProgress" @selection="captureSelect" />
       </div>
 
       <div
@@ -147,7 +147,7 @@
         "
         class=""
       >
-        <bubbles key="a" />
+        <viewer-bubbles key="a" />
         <comments-overlay key="c" @add-resources="addResources" />
         <comment-add-overlay key="b" />
       </div>
@@ -216,25 +216,26 @@
 import debounce from 'lodash/debounce'
 import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
-import Viewer from '@/main/components/common/Viewer' // do not import async
+import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue' // do not import async
 import { resourceType } from '@/plugins/resourceIdentifier'
 
 export default {
   components: {
-    Viewer,
+    SpeckleViewer,
     CommitToolbar: () => import('@/main/toolbars/CommitToolbar'),
     ObjectToolbar: () => import('@/main/toolbars/ObjectToolbar'),
     MultipleResourcesToolbar: () => import('@/main/toolbars/MultipleResourcesToolbar'),
     CommitEdit: () => import('@/main/dialogs/CommitEdit'),
-    StreamOverlayViewer: () => import('@/main/components/viewer/dialogs/AddOverlay'),
+    StreamOverlayViewer: () =>
+      import('@/main/components/viewer/dialogs/StreamOverlayViewer.vue'),
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
     PreviewImage: () => import('@/main/components/common/PreviewImage'),
     ViewerControls: () => import('@/main/components/viewer/ViewerControls'),
     ObjectSelection: () => import('@/main/components/viewer/ObjectSelection'),
     ResourceGroup: () => import('@/main/components/viewer/ResourceGroup'),
     ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
-    Filters: () => import('@/main/components/viewer/Filters'),
-    Bubbles: () => import('@/main/components/viewer/Bubbles'),
+    ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue'),
+    ViewerBubbles: () => import('@/main/components/viewer/ViewerBubbles.vue'),
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay')
   },
@@ -292,7 +293,7 @@ export default {
     },
     '$store.state.appliedFilter'(val) {
       if (!val) {
-        let fullQuery = { ...this.$route.query }
+        const fullQuery = { ...this.$route.query }
         delete fullQuery.filter
         this.$router.replace({
           path: this.$route.path,
@@ -300,7 +301,7 @@ export default {
         })
         return
       }
-      let fullQuery = { ...this.$route.query }
+      const fullQuery = { ...this.$route.query }
       delete fullQuery.filter
       this.$router
         .replace({
@@ -322,7 +323,7 @@ export default {
     })
 
     if (this.$route.query.overlay) {
-      let ids = this.$route.query.overlay.split(',')
+      const ids = this.$route.query.overlay.split(',')
       for (const id of ids) {
         const cleanedId = id.replace(/\s+/g, '')
         if (!cleanedId || cleanedId === '') continue
@@ -413,10 +414,10 @@ export default {
           }
           if (this.camToSet) return
 
-          let controls = window.__viewer.cameraHandler.activeCam.controls
-          let pos = controls.getPosition()
-          let target = controls.getTarget()
-          let c = [
+          const controls = window.__viewer.cameraHandler.activeCam.controls
+          const pos = controls.getPosition()
+          const target = controls.getTarget()
+          const c = [
             parseFloat(pos.x.toFixed(5)),
             parseFloat(pos.y.toFixed(5)),
             parseFloat(pos.z.toFixed(5)),
@@ -426,7 +427,7 @@ export default {
             window.__viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
             controls._zoom
           ]
-          let fullQuery = { ...this.$route.query }
+          const fullQuery = { ...this.$route.query }
           delete fullQuery.c
           this.$router
             .replace({
@@ -441,9 +442,9 @@ export default {
   methods: {
     async loadCommit(id) {
       try {
-        let res = await this.$apollo.query({
+        const res = await this.$apollo.query({
           query: streamCommitQuery,
-          variables: { streamId: this.$route.params.streamId, id: id }
+          variables: { streamId: this.$route.params.streamId, id }
         })
         if (res.data.stream.commit === null) throw new Error()
         return res.data.stream
@@ -454,9 +455,9 @@ export default {
     },
     async loadObject(id) {
       try {
-        let res = await this.$apollo.query({
+        const res = await this.$apollo.query({
           query: streamObjectQuery,
-          variables: { streamId: this.$route.params.streamId, id: id }
+          variables: { streamId: this.$route.params.streamId, id }
         })
         if (res.data.stream.object === null) throw new Error()
         return res.data.stream
@@ -480,14 +481,14 @@ export default {
       this.setViews()
     },
     async addResources(ids) {
-      for (let id of ids) {
+      for (const id of ids) {
         await this.addResource(id)
       }
     },
     async addResource(resId) {
       this.showAddOverlay = false
       const resType = resourceType(resId)
-      let existing = this.resources.findIndex((res) => res.id === resId)
+      const existing = this.resources.findIndex((res) => res.id === resId)
 
       if (existing !== -1) {
         this.$eventHub.$emit('notification', {
@@ -497,7 +498,7 @@ export default {
         })
         return
       }
-      let resource = {
+      const resource = {
         type: resType,
         id: resId,
         data:
@@ -512,10 +513,10 @@ export default {
         resourceType: resource.type
       })
       // TODO add to url
-      let fullQuery = { ...this.$route.query }
+      const fullQuery = { ...this.$route.query }
       delete fullQuery.overlay
       if (this.$route.query.overlay) {
-        let arr = this.$route.query.overlay
+        const arr = this.$route.query.overlay
           .split(',')
           .map((id) => id.replace(/\s+/g, ''))
           .filter((id) => id && id !== '' && id !== resource.id)
@@ -538,12 +539,12 @@ export default {
       )
     },
     async removeResource(resource) {
-      let index = this.resources.findIndex((res) => resource.id === res.id)
+      const index = this.resources.findIndex((res) => resource.id === res.id)
 
       if (index === -1) return // err
 
       if (!resource.data.error) {
-        let url = `${window.location.origin}/streams/${resource.data.id}/objects/${
+        const url = `${window.location.origin}/streams/${resource.data.id}/objects/${
           resource.type === 'commit'
             ? resource.data.commit.referencedObject
             : resource.data.object.id
@@ -562,12 +563,12 @@ export default {
       this.setFilters()
       this.setViews()
       if (this.$route.query.overlay) {
-        let arr = this.$route.query.overlay
+        const arr = this.$route.query.overlay
           .split(',')
           .map((id) => id.replace(/\s+/g, ''))
           .filter((id) => id && id !== '' && id !== resource.id)
 
-        let fullQuery = { ...this.$route.query }
+        const fullQuery = { ...this.$route.query }
         delete fullQuery.overlay
         if (arr.length !== 0)
           this.$router.replace({

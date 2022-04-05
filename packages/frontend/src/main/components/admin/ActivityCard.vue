@@ -55,7 +55,7 @@ export default {
         dataLabels: {
           enabled: true,
           position: 'bottom',
-          formatter: function (val) {
+          formatter(val) {
             return formatNumber(val)
           },
           offsetY: -25,
@@ -136,7 +136,7 @@ export default {
         }
       `,
       update(data) {
-        let stats = data.serverStats
+        const stats = data.serverStats
         delete stats.__typename
         return stats
       }
@@ -145,15 +145,15 @@ export default {
   computed: {
     graphSeries() {
       let result = []
-      let months = this.past12Months()
+      const months = this.past12Months()
       if (this.serverStats) {
         result = Object.keys(this.serverStats).map((key) => {
-          let category = this.serverStats[key]
-          let processed = []
+          const category = this.serverStats[key]
+          const processed = []
           months?.forEach((month) => {
             let totalCount = 0
             category.forEach((value) => {
-              let date = new Date(value.created_month)
+              const date = new Date(value.created_month)
               if (this.isSameMonth(month, date)) {
                 totalCount = value.count
               }
@@ -171,10 +171,10 @@ export default {
       return word[0].toUpperCase() + word.slice(1).toLowerCase()
     },
     past12Months() {
-      let now = new Date(Date.now())
-      let dates = []
+      const now = new Date(Date.now())
+      const dates = []
       for (let i = 0; i < 12; i++) {
-        let d = new Date(now.getFullYear(), now.getMonth() - i, 2)
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 2)
         dates.push(d)
       }
       return dates

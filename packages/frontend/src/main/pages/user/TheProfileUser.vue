@@ -42,7 +42,7 @@ import ListItemStream from '@/main/components/user/ListItemStream'
 import gql from 'graphql-tag'
 
 export default {
-  name: 'ProfileUser',
+  name: 'TheProfileUser',
   components: {
     UserInfoCard: () => import('@/main/components/user/UserInfoCard'),
     SectionCard: () => import('@/main/components/common/SectionCard'),

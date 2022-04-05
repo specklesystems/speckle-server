@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const Matomo = require('matomo-tracker')
 const { machineIdSync } = require('node-machine-id')
 

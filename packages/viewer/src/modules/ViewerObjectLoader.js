@@ -23,9 +23,9 @@ export default class ViewerObjectLoader {
     }
 
     // example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
-    let url = new URL(objectUrl)
+    const url = new URL(objectUrl)
 
-    let segments = url.pathname.split('/')
+    const segments = url.pathname.split('/')
     if (
       segments.length < 5 ||
       url.pathname.indexOf('streams') === -1 ||
@@ -43,7 +43,7 @@ export default class ViewerObjectLoader {
       token: this.token,
       streamId: this.streamId,
       objectId: this.objectId,
-      options: { enableCaching: enableCaching }
+      options: { enableCaching }
     })
 
     this.converter = new Converter(this.loader)
@@ -67,7 +67,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
-    for await (let obj of this.loader.getObjectIterator()) {
+    for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.viewer.emit('load-progress', {
           progress: 1,

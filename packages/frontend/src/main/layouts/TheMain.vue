@@ -129,8 +129,9 @@ export default {
   mounted() {
     this.setNavResizeEvents()
 
+    // eslint-disable-next-line camelcase
     this.$mixpanel.register({ server_id: this.$mixpanelServerId(), hostApp: 'web' })
-    let mixpanelId = this.$mixpanelId()
+    const mixpanelId = this.$mixpanelId()
     if (mixpanelId !== null) {
       this.$mixpanel.identify(mixpanelId)
       this.$mixpanel.people.set(

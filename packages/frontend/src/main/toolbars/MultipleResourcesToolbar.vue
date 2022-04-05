@@ -28,6 +28,15 @@
 </template>
 <script>
 export default {
-  props: ['stream', 'resources']
+  props: {
+    stream: {
+      type: Object,
+      default: () => null
+    },
+    resources: {
+      type: Array,
+      default: () => []
+    }
+  }
 }
 </script>

@@ -5,11 +5,7 @@ const appRoot = require('app-root-path')
 const cors = require('cors')
 
 const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
-const {
-  contextMiddleware,
-  validateScopes,
-  authorizeResolver
-} = require(`${appRoot}/modules/shared`)
+const { contextMiddleware } = require(`${appRoot}/modules/shared`)
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
@@ -25,7 +21,7 @@ module.exports = (app) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let hasStreamAccess = await validatePermissionsReadStream(
+      const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,
         req
       )
@@ -33,21 +29,21 @@ module.exports = (app) => {
         return res.status(hasStreamAccess.status).end()
       }
 
-      let childrenList = JSON.parse(req.body.objects)
+      const childrenList = JSON.parse(req.body.objects)
 
-      let simpleText = req.headers.accept === 'text/plain'
+      const simpleText = req.headers.accept === 'text/plain'
 
       res.writeHead(200, {
         'Content-Encoding': 'gzip',
         'Content-Type': simpleText ? 'text/plain; charset=UTF-8' : 'application/json'
       })
 
-      let dbStream = await getObjectsStream({
+      const dbStream = await getObjectsStream({
         streamId: req.params.streamId,
         objectIds: childrenList
       })
-      let speckleObjStream = new SpeckleObjectsStream(simpleText)
-      let gzipStream = zlib.createGzip()
+      const speckleObjStream = new SpeckleObjectsStream(simpleText)
+      const gzipStream = zlib.createGzip()
 
       pipeline(
         dbStream,

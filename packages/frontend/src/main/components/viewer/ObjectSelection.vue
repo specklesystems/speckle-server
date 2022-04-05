@@ -99,7 +99,7 @@ export default {
       })
     },
     isolated() {
-      let ids = this.objects.map((o) => o.id)
+      const ids = this.objects.map((o) => o.id)
       ids.forEach((val) => {
         if (this.$store.state.isolateValues.indexOf(val) === -1) return false
       })
@@ -108,7 +108,7 @@ export default {
   },
   methods: {
     isolateSelection() {
-      let ids = this.objects.map((o) => o.id)
+      const ids = this.objects.map((o) => o.id)
       if (!this.isolated)
         this.$store.commit('unisolateObjects', {
           filterKey: '__parents',
@@ -122,7 +122,7 @@ export default {
     },
     getSelectionUrl() {
       if (this.objects.length < 2) return ''
-      let url = `/streams/${this.streamId}/objects/${
+      const url = `/streams/${this.streamId}/objects/${
         this.objects[0].id
       }?overlay=${this.objects
         .slice(1)

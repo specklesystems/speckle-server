@@ -119,7 +119,7 @@ export default {
         return data.stream.object
       },
       skip() {
-        return this.objectId == null
+        return !!this.objectId
       }
     }
   },
@@ -182,7 +182,7 @@ export default {
     globalsCommit() {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       this.globalsAreValid = true
-      let base = this.globalsToBase(this.globalsArray)
+      const base = this.globalsToBase(this.globalsArray)
       return base
     }
   },
@@ -195,13 +195,13 @@ export default {
     async saveGlobals() {
       if (!this.$refs.form.validate()) return
 
-      let commitObject = this.globalsToBase(this.globalsArray)
+      const commitObject = this.globalsToBase(this.globalsArray)
 
       try {
         this.loading = true
         this.$matomo && this.$matomo.trackPageView('globals/save')
         this.$mixpanel.track('Globals Action', { type: 'action', name: 'update' })
-        let res = await this.$apollo.mutate({
+        const res = await this.$apollo.mutate({
           mutation: gql`
             mutation ObjectCreate($params: ObjectCreateInput!) {
               objectCreate(objectInput: $params)
@@ -241,9 +241,9 @@ export default {
     },
     nestedGlobals(data) {
       if (!data) return []
-      let entries = Object.entries(data)
-      let arr = []
-      for (let [key, val] of entries) {
+      const entries = Object.entries(data)
+      const arr = []
+      for (const [key, val] of entries) {
         if (key.startsWith('__')) continue
         if (['totalChildrenCount', 'speckle_type', 'id'].includes(key)) continue
 
@@ -281,13 +281,13 @@ export default {
       return arr
     },
     globalsToBase(arr) {
-      let base = {
+      const base = {
         // eslint-disable-next-line camelcase
         speckle_type: 'Base',
         id: null
       }
 
-      for (let entry of arr) {
+      for (const entry of arr) {
         if (!entry.value && !entry.globals) continue
 
         if (entry.valid !== true) {
@@ -296,7 +296,7 @@ export default {
         }
 
         if (Array.isArray(entry.value)) base[entry.key] = entry.value
-        else if (entry.type == 'object') {
+        else if (entry.type === 'object') {
           base[entry.key] = this.globalsToBase(entry.globals)
         } else if (typeof entry.value === 'string' && entry.value.includes(',')) {
           base[entry.key] = entry.value
@@ -324,20 +324,20 @@ export default {
       })
     },
     addProp(kwargs) {
-      let globals = this.getNestedGlobals(kwargs.path)
+      const globals = this.getNestedGlobals(kwargs.path)
       globals.splice(globals.length, 0, kwargs.field)
     },
     removeProp(kwargs) {
-      let globals = this.getNestedGlobals(kwargs.path)
+      const globals = this.getNestedGlobals(kwargs.path)
       globals.splice(kwargs.index, 1)
     },
     fieldToObject(kwargs) {
-      let globals = this.getNestedGlobals(kwargs.path)
+      const globals = this.getNestedGlobals(kwargs.path)
 
       globals.splice(kwargs.index, 1, kwargs.obj)
     },
     objectToField(kwargs) {
-      let globals = this.getNestedGlobals(kwargs.path)
+      const globals = this.getNestedGlobals(kwargs.path)
 
       globals.splice(kwargs.index, 1, ...kwargs.fields)
     },
@@ -345,16 +345,16 @@ export default {
       let entry = this.globalsArray
       if (!path) return entry
 
-      let depth = path.length
+      const depth = path.length
 
       if (depth > 0) {
-        let id = path.shift()
-        entry = entry.find((e) => e.id == id)
+        const id = path.shift()
+        entry = entry.find((e) => e.id === id)
       }
 
       if (depth > 1) {
         path.forEach((id) => {
-          entry = entry.globals.find((e) => e.id == id)
+          entry = entry.globals.find((e) => e.id === id)
         })
       }
 

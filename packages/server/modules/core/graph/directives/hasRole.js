@@ -1,12 +1,12 @@
-const { SchemaDirectiveVisitor, ForbiddenError } = require('apollo-server-express')
+const { SchemaDirectiveVisitor } = require('apollo-server-express')
 const { defaultFieldResolver } = require('graphql')
 const appRoot = require('app-root-path')
 const { validateServerRole } = require(`${appRoot}/modules/shared`)
 
 module.exports = {
   hasRole: class HasRoleDirective extends SchemaDirectiveVisitor {
-    visitFieldDefinition(field, details) {
-      const { resolver = field.resolve || defaultFieldResolver, name } = field
+    visitFieldDefinition(field) {
+      const { resolver = field.resolve || defaultFieldResolver } = field
       const requiredRole = this.args.role
 
       field.resolve = async function (parent, args, context, info) {

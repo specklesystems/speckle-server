@@ -64,12 +64,12 @@ exports.buildApolloServer = (optionOverrides) => {
             connectionParams.authorization ||
             connectionParams.headers.Authorization
           ) {
-            let header =
+            const header =
               connectionParams.Authorization ||
               connectionParams.authorization ||
               connectionParams.headers.Authorization
-            let token = header.split(' ')[1]
-            return { token: token }
+            const token = header.split(' ')[1]
+            return { token }
           }
         } catch (e) {
           throw new ForbiddenError('You need a token to subscribe')
@@ -79,7 +79,7 @@ exports.buildApolloServer = (optionOverrides) => {
         metricConnectedClients.dec()
       }
     },
-    plugins: [require(`${appRoot}/logging/apolloPlugin`)],
+    plugins: [require('@/logging/apolloPlugin')],
     tracing: debug,
     introspection: true,
     playground: true,
@@ -120,7 +120,7 @@ exports.init = async () => {
 
   // Initialise graphql server
   graphqlServer = module.exports.buildApolloServer()
-  graphqlServer.applyMiddleware({ app: app })
+  graphqlServer.applyMiddleware({ app })
 
   // Expose prometheus metrics
   app.get('/metrics', async (req, res) => {
@@ -150,8 +150,8 @@ exports.startHttp = async (app, customPortOverride) => {
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT || 3000
 
-  let frontendHost = process.env.FRONTEND_HOST || 'localhost'
-  let frontendPort = process.env.FRONTEND_PORT || 8080
+  const frontendHost = process.env.FRONTEND_HOST || 'localhost'
+  const frontendPort = process.env.FRONTEND_PORT || 8080
 
   // Handles frontend proxying:
   // Dev mode -> proxy form the local webpack server
@@ -174,14 +174,14 @@ exports.startHttp = async (app, customPortOverride) => {
     bindAddress = process.env.BIND_ADDRESS || '0.0.0.0'
   }
 
-  let server = http.createServer(app)
+  const server = http.createServer(app)
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   app.set('port', port)
 
   // Final apollo server setup
   graphqlServer.installSubscriptionHandlers(server)
-  graphqlServer.applyMiddleware({ app: app })
+  graphqlServer.applyMiddleware({ app })
 
   app.use(Sentry.Handlers.errorHandler())
 

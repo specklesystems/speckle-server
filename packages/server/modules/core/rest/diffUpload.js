@@ -19,7 +19,7 @@ module.exports = (app) => {
     contextMiddleware,
     matomoMiddleware,
     async (req, res) => {
-      let hasStreamAccess = await validatePermissionsWriteStream(
+      const hasStreamAccess = await validatePermissionsWriteStream(
         req.params.streamId,
         req
       )
@@ -27,7 +27,7 @@ module.exports = (app) => {
         return res.status(hasStreamAccess.status).end()
       }
 
-      let objectList = JSON.parse(req.body.objects)
+      const objectList = JSON.parse(req.body.objects)
 
       debug('speckle:info')(
         `[User ${req.context.userId || '-'}] Diffing ${
@@ -35,7 +35,7 @@ module.exports = (app) => {
         } objects for stream ${req.params.streamId}`
       )
 
-      let response = await hasObjects({
+      const response = await hasObjects({
         streamId: req.params.streamId,
         objectIds: objectList
       })

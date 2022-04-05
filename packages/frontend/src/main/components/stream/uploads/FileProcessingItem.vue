@@ -119,15 +119,15 @@ export default {
   },
   methods: {
     async downloadOriginalFile() {
-      let res = await fetch(`/api/file/${this.fileId}`, {
+      const res = await fetch(`/api/file/${this.fileId}`, {
         headers: {
           Authorization: localStorage.getItem('AuthToken')
         }
       })
-      let blob = await res.blob()
-      let file = window.URL.createObjectURL(blob)
+      const blob = await res.blob()
+      const file = window.URL.createObjectURL(blob)
 
-      let a = document.createElement('a')
+      const a = document.createElement('a')
       document.body.appendChild(a)
       a.style = 'display: none'
       a.href = file

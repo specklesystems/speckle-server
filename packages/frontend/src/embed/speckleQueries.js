@@ -1,6 +1,6 @@
 import gql from 'graphql-tag'
 
-export const serverInfoQuery = `
+export const serverInfoQuery = gql`
   query ServerInfo {
     serverInfo {
       name
@@ -8,7 +8,7 @@ export const serverInfoQuery = `
   }
 `
 
-export const streamCommitQuery = `
+export const streamCommitQuery = gql`
   query Stream($id: String!, $commit: String!) {
     stream(id: $id) {
       id
@@ -22,7 +22,7 @@ export const streamCommitQuery = `
   }
 `
 
-export const branchLastCommitQuery = `
+export const branchLastCommitQuery = gql`
   query Stream($id: String!, $branch: String!) {
     stream(id: $id) {
       id

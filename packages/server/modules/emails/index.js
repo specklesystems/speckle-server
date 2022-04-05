@@ -8,19 +8,6 @@ const errorDebug = debug.extend('errors')
 
 let transporter
 
-const initTestSmtpTransporter = async () => {
-  const account = await nodemailer.createTestAccount()
-  return nodemailer.createTransport({
-    host: 'smtp.ethereal.email',
-    port: 587,
-    secure: false,
-    auth: {
-      user: account.user,
-      pass: account.pass
-    }
-  })
-}
-
 const createJsonEchoTransporter = () =>
   nodemailer.createTransport({
     jsonTransport: true
@@ -46,7 +33,6 @@ const initSmtpTransporter = async () => {
 
 const initTransporter = async () => {
   if (process.env.NODE_ENV === 'test') return createJsonEchoTransporter()
-  // if (process.env.NODE_ENV === 'test') return await initTestSmtpTransporter()
   if (process.env.EMAIL === 'true') return await initSmtpTransporter()
 
   modulesDebug(
@@ -54,7 +40,7 @@ const initTransporter = async () => {
   )
 }
 
-exports.init = async (app, __) => {
+exports.init = async (app) => {
   modulesDebug('📧 Init emails module')
   transporter = await initTransporter()
   require('./rest')(app)

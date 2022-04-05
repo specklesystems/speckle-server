@@ -40,14 +40,14 @@
       </v-card-text>
       <div style="position: absolute; top: 10px; left: 12px">
         <v-chip
-          :to="`/streams/${stream.id}/comments`"
           v-if="stream.commentCount !== 0"
-          small
-          class="caption primary"
-          dark
           v-tooltip="
             `${stream.commentCount} comment${stream.commentCount === 1 ? '' : 's'}`
           "
+          :to="`/streams/${stream.id}/comments`"
+          small
+          class="caption primary"
+          dark
         >
           <v-icon x-small class="mr-1">mdi-comment-outline</v-icon>
           {{ stream.commentCount }}

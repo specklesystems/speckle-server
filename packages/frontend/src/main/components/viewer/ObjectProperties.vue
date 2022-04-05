@@ -34,7 +34,16 @@ export default {
   components: {
     ObjectPropertiesRow: () => import('@/main/components/viewer/ObjectPropertiesRow')
   },
-  props: ['obj', 'streamId'],
+  props: {
+    obj: {
+      type: Object,
+      default: () => null
+    },
+    streamId: {
+      type: String,
+      default: () => null
+    }
+  },
   data() {
     return {
       realObject: this.obj,
@@ -71,7 +80,7 @@ export default {
   methods: {
     async getRealObject() {
       this.loading = true
-      let result = await this.$apollo.query({
+      const result = await this.$apollo.query({
         query: gql`
           query Object($streamId: String!, $id: String!) {
             stream(id: $streamId) {
@@ -95,13 +104,13 @@ export default {
       this.generateKVPs()
     },
     generateKVPs() {
-      for (let key of Object.keys(this.realObject)) {
+      for (const key of Object.keys(this.realObject)) {
         if (this.ignoredProps.indexOf(key) !== -1) continue
-        let value = this.realObject[key]
-        let type = Array.isArray(this.realObject[key])
+        const value = this.realObject[key]
+        const type = Array.isArray(this.realObject[key])
           ? 'array'
           : typeof this.realObject[key]
-        let extras = []
+        const extras = []
         if (value?.referencedId) extras.push('open', 'visibility')
         if (
           type === 'array' &&

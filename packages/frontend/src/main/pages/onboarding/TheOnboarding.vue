@@ -15,6 +15,7 @@
 <script>
 import GettingStartedSteps from '@/main/components/onboarding/GettingStartedSteps.vue'
 export default {
+  name: 'TheOnboarding',
   components: { GettingStartedSteps }
 }
 </script>

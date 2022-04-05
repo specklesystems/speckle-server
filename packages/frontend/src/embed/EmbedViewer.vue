@@ -58,22 +58,22 @@
       </v-btn>
     </div>
     <div style="position: fixed" class="no-scrollbar">
-      <viewer @load-progress="captureProgress" />
+      <speckle-viewer @load-progress="captureProgress" />
     </div>
   </v-app>
 </template>
 
 <script>
-import Viewer from '@/main/components/common/Viewer.vue'
+import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue'
 import { getCommit, getLatestBranchCommit, getServerInfo } from '@/embed/speckleUtils'
 
 export default {
   name: 'EmbedViewer',
   components: {
-    Viewer
+    SpeckleViewer
   },
   filters: {
-    truncate: function (str, n = 20) {
+    truncate(str, n = 20) {
       return str.length > n ? str.substr(0, n - 3) + '...' : str
     }
   },
@@ -97,7 +97,7 @@ export default {
   computed: {
     isSmall() {
       return (
-        this.$vuetify.breakpoint.name == 'xs' || this.$vuetify.breakpoint.name == 'sm'
+        this.$vuetify.breakpoint.name === 'xs' || this.$vuetify.breakpoint.name === 'sm'
       )
     },
     displayType() {
@@ -118,16 +118,16 @@ export default {
       return `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${this.objectId}`
     },
     goToServerUrl() {
-      let stream = this.input.stream
-      let base = `${window.location.origin}/streams/${stream}/`
+      const stream = this.input.stream
+      const base = `${window.location.origin}/streams/${stream}/`
 
-      let commit = this.input.commit
+      const commit = this.input.commit
       if (commit) return base + `commits/${commit}`
 
-      let object = this.objectId
+      const object = this.objectId
       if (object) return base + `objects/${object}`
 
-      let branch = this.input.branch
+      const branch = this.input.branch
       if (branch) return base + `branches/${encodeURI(branch)}`
 
       return base
@@ -135,7 +135,7 @@ export default {
   },
   watch: {
     displayType(oldVal, newVal) {
-      if (newVal == 'error') this.error = 'Provided details were invalid'
+      if (newVal === 'error') this.error = 'Provided details were invalid'
       else {
         this.error = null
       }
@@ -143,7 +143,7 @@ export default {
   },
   async beforeMount() {
     try {
-      let serverInfoResponse = await getServerInfo()
+      const serverInfoResponse = await getServerInfo()
       this.serverInfo = serverInfoResponse.data.serverInfo
     } catch (e) {
       this.error = e.message
@@ -152,9 +152,9 @@ export default {
 
     if (this.displayType === 'commit') {
       try {
-        let res = await getCommit(this.input.stream, this.input.commit)
-        let data = res.data
-        let latestCommit = data.stream.commit
+        const res = await getCommit(this.input.stream, this.input.commit)
+        const data = res.data
+        const latestCommit = data.stream.commit
         if (this.input.object === undefined)
           this.objectId = latestCommit.referencedObject
         this.specificCommit = data.stream
@@ -164,16 +164,16 @@ export default {
       }
     } else {
       try {
-        let res = await getLatestBranchCommit(this.input.stream, this.input.branch)
-        let data = res.data
-        let latestCommit =
+        const res = await getLatestBranchCommit(this.input.stream, this.input.branch)
+        const data = res.data
+        const latestCommit =
           data.stream.branch.commits.items[0] || data.stream.branch.commit
         if (!latestCommit) {
           this.error = 'No commit for this branch'
           this.lastCommit = data.stream
           return
         }
-        if (this.input.object == undefined)
+        if (this.input.object === undefined)
           this.objectId = latestCommit.referencedObject
         else this.objectId = this.input.object
         this.lastCommit = data.stream
@@ -200,7 +200,7 @@ export default {
     },
     async getPreviewImage(angle) {
       angle = angle || 0
-      let previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
+      const previewUrl = this.objectUrl.replace('streams', 'preview') + '/' + angle
       let token = undefined
       try {
         token = localStorage.getItem('AuthToken')

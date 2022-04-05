@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 'use strict'
 
 const knex = require('../knex')
@@ -16,7 +17,7 @@ const TMP_RESULTS_PATH = '/tmp/import_result.json'
 let shouldExit = false
 
 async function startTask() {
-  let { rows } = await knex.raw(`
+  const { rows } = await knex.raw(`
     UPDATE file_uploads
     SET 
       "convertedStatus" = 1,
@@ -39,7 +40,7 @@ async function doTask(task) {
 
   try {
     console.log('Doing task ', task)
-    let { rows } = await knex.raw(
+    const { rows } = await knex.raw(
       `
       SELECT 
         id as "fileId", "streamId", "branchName", "userId", "fileName", "fileType"
@@ -49,20 +50,20 @@ async function doTask(task) {
     `,
       [task.id]
     )
-    let info = rows[0]
+    const info = rows[0]
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
 
-    let upstreamFileStream = await getFileStream({ fileId: info.fileId })
-    let diskFileStream = fs.createWriteStream(TMP_FILE_PATH)
+    const upstreamFileStream = await getFileStream({ fileId: info.fileId })
+    const diskFileStream = fs.createWriteStream(TMP_FILE_PATH)
 
     upstreamFileStream.pipe(diskFileStream)
 
     await new Promise((fulfill) => diskFileStream.on('finish', fulfill))
 
     serverApi = new ServerAPI({ streamId: info.streamId })
-    let { token } = await serverApi.createToken({
+    const { token } = await serverApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
       scopes: ['streams:write', 'streams:read'],
@@ -86,11 +87,11 @@ async function doTask(task) {
       10 * 60 * 1000
     )
 
-    let output = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH))
+    const output = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH))
 
     if (!output.success) throw new Error(output.error)
 
-    let commitId = output.commitId
+    const commitId = output.commitId
 
     await knex.raw(
       `
@@ -142,7 +143,7 @@ function runProcessWithTimeout(cmd, cmdArgs, extraEnv, timeoutMs) {
 
     let timedOut = false
 
-    let timeout = setTimeout(() => {
+    const timeout = setTimeout(() => {
       console.log('Process timeout. Killing process...')
 
       timedOut = true
@@ -172,7 +173,7 @@ async function tick() {
   }
 
   try {
-    let task = await startTask()
+    const task = await startTask()
 
     fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 

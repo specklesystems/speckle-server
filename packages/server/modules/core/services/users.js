@@ -12,16 +12,16 @@ const debug = require('debug')
 const { deleteStream } = require('./streams')
 
 const changeUserRole = async ({ userId, role }) =>
-  await Acl().where({ userId: userId }).update({ role: role })
+  await Acl().where({ userId }).update({ role })
 
 const countAdminUsers = async () => {
-  let [{ count }] = await Acl().where({ role: 'server:admin' }).count()
+  const [{ count }] = await Acl().where({ role: 'server:admin' }).count()
   return parseInt(count)
 }
 const _ensureAtleastOneAdminRemains = async (userId) => {
   if ((await countAdminUsers()) === 1) {
-    let currentAdmin = await Acl().where({ role: 'server:admin' }).first()
-    if (currentAdmin.userId == userId) {
+    const currentAdmin = await Acl().where({ role: 'server:admin' }).first()
+    if (currentAdmin.userId === userId) {
       throw new Error('Cannot remove the last admin role from the server')
     }
   }
@@ -47,16 +47,16 @@ module.exports = {
     }
     delete user.password
 
-    let usr = await userByEmailQuery(user.email).select('id').first()
+    const usr = await userByEmailQuery(user.email).select('id').first()
     if (usr) throw new Error('Email taken. Try logging in?')
 
-    let res = await Users().returning('id').insert(user)
+    const res = await Users().returning('id').insert(user)
 
-    let userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
+    const userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
 
     await Acl().insert({ userId: res[0].id, role: userRole })
 
-    let loggedUser = { ...user }
+    const loggedUser = { ...user }
     delete loggedUser.passwordDigest
     await saveActivity({
       streamId: null,
@@ -72,7 +72,7 @@ module.exports = {
   },
 
   async findOrCreateUser({ user }) {
-    let existingUser = await userByEmailQuery(user.email).select('id').first()
+    const existingUser = await userByEmailQuery(user.email).select('id').first()
 
     if (existingUser) {
       if (user.suuid) {
@@ -89,27 +89,27 @@ module.exports = {
   },
 
   async getUserById({ userId }) {
-    let user = await Users().where({ id: userId }).select('*').first()
+    const user = await Users().where({ id: userId }).select('*').first()
     if (user) delete user.passwordDigest
     return user
   },
 
   // TODO: deprecate
   async getUser(id) {
-    let user = await Users().where({ id: id }).select('*').first()
+    const user = await Users().where({ id }).select('*').first()
     if (user) delete user.passwordDigest
     return user
   },
 
   async getUserByEmail({ email }) {
-    let user = await userByEmailQuery(email).select('*').first()
+    const user = await userByEmailQuery(email).select('*').first()
     if (!user) return null
     delete user.passwordDigest
     return user
   },
 
   async getUserRole(id) {
-    let { role } = await Acl().where({ userId: id }).select('role').first()
+    const { role } = await Acl().where({ userId: id }).select('role').first()
     return role
   },
 
@@ -118,18 +118,18 @@ module.exports = {
     delete user.passwordDigest
     delete user.password
     delete user.email
-    await Users().where({ id: id }).update(user)
+    await Users().where({ id }).update(user)
   },
 
   async updateUserPassword({ id, newPassword }) {
     if (newPassword.length < 8)
       throw new Error('Password to short; needs to be 8 characters or longer.')
-    let passwordDigest = await bcrypt.hash(newPassword, 10)
-    await Users().where({ id: id }).update({ passwordDigest })
+    const passwordDigest = await bcrypt.hash(newPassword, 10)
+    await Users().where({ id }).update({ passwordDigest })
   },
 
   async searchUsers(searchQuery, limit, cursor, archived = false) {
-    let query = Users()
+    const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
       .select('id', 'name', 'bio', 'company', 'verified', 'avatar', 'createdAt')
       .where((queryBuilder) => {
@@ -143,7 +143,7 @@ module.exports = {
     const defaultLimit = 25
     query.orderBy('users.createdAt', 'desc').limit(limit || defaultLimit)
 
-    let rows = await query
+    const rows = await query
     return {
       users: rows,
       cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
@@ -151,7 +151,7 @@ module.exports = {
   },
 
   async validatePasssword({ email, password }) {
-    let { passwordDigest } = await userByEmailQuery(email)
+    const { passwordDigest } = await userByEmailQuery(email)
       .select('passwordDigest')
       .first()
     return bcrypt.compare(password, passwordDigest)
@@ -161,7 +161,7 @@ module.exports = {
     //TODO: check for the last admin user to survive
     debug('speckle:db')('Deleting user ' + id)
     await _ensureAtleastOneAdminRemains(id)
-    let streams = await knex.raw(
+    const streams = await knex.raw(
       `
       -- Get the stream ids with only this user as owner
       SELECT "resourceId" as id
@@ -182,11 +182,11 @@ module.exports = {
       `,
       [id]
     )
-    for (let i in streams.rows) {
+    for (const i in streams.rows) {
       await deleteStream({ streamId: streams.rows[i].id })
     }
 
-    return await Users().where({ id: id }).del()
+    return await Users().where({ id }).del()
   },
 
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
@@ -194,7 +194,7 @@ module.exports = {
     const maxLimit = 200
     if (limit > maxLimit) limit = maxLimit
 
-    let query = Users()
+    const query = Users()
 
     if (searchQuery) {
       query.where((queryBuilder) => {
@@ -204,7 +204,7 @@ module.exports = {
           .orWhere('company', 'ILIKE', `%${searchQuery}%`)
       })
     }
-    let users = await query.limit(limit).offset(offset)
+    const users = await query.limit(limit).offset(offset)
     users.map((user) => delete user.passwordDigest)
     return users
   },
@@ -226,7 +226,7 @@ module.exports = {
   },
 
   async countUsers(searchQuery = null) {
-    let query = Users()
+    const query = Users()
     if (searchQuery) {
       query.where((queryBuilder) => {
         queryBuilder
@@ -236,7 +236,7 @@ module.exports = {
       })
     }
 
-    let [userCount] = await query.count()
+    const [userCount] = await query.count()
     return parseInt(userCount.count)
   }
 }

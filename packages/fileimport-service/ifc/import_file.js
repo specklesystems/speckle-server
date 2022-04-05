@@ -5,18 +5,19 @@ const TMP_RESULTS_PATH = '/tmp/import_result.json'
 const { parseAndCreateCommit } = require('./index')
 
 async function main() {
-  let cmdArgs = process.argv.slice(2)
+  const cmdArgs = process.argv.slice(2)
 
-  let [filePath, userId, streamId, branchName, commitMessage] = cmdArgs
+  const [filePath, userId, streamId, branchName, commitMessage] = cmdArgs
 
+  // eslint-disable-next-line no-console
   console.log('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
 
   const data = fs.readFileSync(filePath)
 
-  let ifcInput = {
+  const ifcInput = {
     data,
-    streamId: streamId,
-    userId: userId,
+    streamId,
+    userId,
     message: commitMessage || 'Imported file'
   }
   if (branchName) ifcInput.branchName = branchName
@@ -27,7 +28,7 @@ async function main() {
   }
 
   try {
-    let commitId = await parseAndCreateCommit(ifcInput)
+    const commitId = await parseAndCreateCommit(ifcInput)
     output = {
       success: true,
       commitId

@@ -28,20 +28,20 @@ export default class FilteringManager {
 
     if (!this.passesFilter(obj.userData, filter.filterBy)) {
       if (filter.ghostOthers) {
-        let clone = obj.clone()
+        const clone = obj.clone()
         this.ghostObject(clone)
         return clone
       }
       return null
     }
 
-    let clone = obj.clone()
+    const clone = obj.clone()
     if (filter.colorBy) {
       if (filter.colorBy.type === 'category') {
-        let newMaterial = this.colorWithCategory(obj, filter.colorBy)
+        const newMaterial = this.colorWithCategory(obj, filter.colorBy)
         this.setMaterial(clone, newMaterial)
       } else if (filter.colorBy.type === 'gradient') {
-        let newMaterial = this.colorWithGradient(obj, filter.colorBy)
+        const newMaterial = this.colorWithGradient(obj, filter.colorBy)
         this.setMaterial(clone, newMaterial)
       }
     }
@@ -52,7 +52,7 @@ export default class FilteringManager {
     clone.userData = { hidden: true }
 
     if (clone.type === 'Group') {
-      for (let child of clone.children) {
+      for (const child of clone.children) {
         this.ghostObject(child)
       }
     } else if (clone.type === 'Mesh') {
@@ -67,7 +67,7 @@ export default class FilteringManager {
 
   setMaterial(clone, material) {
     if (clone.type === 'Group') {
-      for (let child of clone.children) {
+      for (const child of clone.children) {
         this.setMaterial(child, material)
       }
     } else if (clone.material !== undefined && material !== undefined) {
@@ -78,23 +78,23 @@ export default class FilteringManager {
 
   getObjectProperty(obj, property) {
     if (!property) return
-    let keyParts = property.split('.')
+    const keyParts = property.split('.')
     let crtObj = obj
     for (let i = 0; i < keyParts.length - 1; i++) {
       if (!(keyParts[i] in crtObj)) return
       crtObj = crtObj[keyParts[i]]
       if (crtObj.constructor !== Object) return
     }
-    let attributeName = keyParts[keyParts.length - 1]
+    const attributeName = keyParts[keyParts.length - 1]
     return crtObj[attributeName]
   }
 
   colorWithCategory(threejsObj, colors) {
-    let obj = threejsObj.userData
-    let defaultValue = colors.default
+    const obj = threejsObj.userData
+    const defaultValue = colors.default
     let color = defaultValue
-    let objValue = this.getObjectProperty(obj, colors.property)
-    let customPallete = colors.values || {}
+    const objValue = this.getObjectProperty(obj, colors.property)
+    const customPallete = colors.values || {}
     if (objValue in customPallete) {
       color = customPallete[objValue]
     }
@@ -103,29 +103,29 @@ export default class FilteringManager {
       return threejsObj.material
     } else if (color === undefined) {
       // compute value hash
-      let objValueAsString = '' + objValue
+      const objValueAsString = '' + objValue
       let hash = 0
       for (let i = 0; i < objValueAsString.length; i++) {
-        let chr = objValueAsString.charCodeAt(i)
+        const chr = objValueAsString.charCodeAt(i)
         hash = (hash << 5) - hash + chr
         hash |= 0 // Convert to 32bit integer
       }
       hash = Math.abs(hash)
-      let colorHue = hash % 360
+      const colorHue = hash % 360
       color = `hsl(${colorHue}, 50%, 30%)`
     }
 
     if (objValue !== undefined && objValue !== null)
       this.colorLegend[objValue.toString()] = color
 
-    let material = this.ColoredMaterial.clone()
+    const material = this.ColoredMaterial.clone()
     material.color = new THREE.Color(color)
     return material
   }
 
   colorWithGradient(threejsObj, colors) {
-    let obj = threejsObj.userData
-    let rainbow = new Rainbow()
+    const obj = threejsObj.userData
+    const rainbow = new Rainbow()
     if ('minValue' in colors && 'maxValue' in colors)
       rainbow.setNumberRange(colors.minValue, colors.maxValue)
     if ('gradientColors' in colors) rainbow.setSpectrum(...colors.gradientColors)
@@ -133,26 +133,26 @@ export default class FilteringManager {
     let objValue = this.getObjectProperty(obj, colors.property)
     objValue = Number(objValue)
     if (Number.isNaN(objValue)) {
-      let defaultColor = colors.default
+      const defaultColor = colors.default
       if (defaultColor === null) return threejsObj.material
       if (defaultColor === undefined) return this.WireframeMaterial
 
-      let material = this.ColoredMaterial.clone()
+      const material = this.ColoredMaterial.clone()
       material.color = new THREE.Color(defaultColor)
       return material
     }
 
-    let material = this.ColoredMaterial.clone()
+    const material = this.ColoredMaterial.clone()
     material.color = new THREE.Color(`#${rainbow.colourAt(objValue)}`)
     return material
   }
 
   passesFilter(obj, filterBy) {
     if (!filterBy) return true
-    for (let filterKey in filterBy) {
-      let objValue = this.getObjectProperty(obj, filterKey)
+    for (const filterKey in filterBy) {
+      const objValue = this.getObjectProperty(obj, filterKey)
 
-      let passesFilter = this.filterValue(objValue, filterBy[filterKey])
+      const passesFilter = this.filterValue(objValue, filterBy[filterKey])
       if (!passesFilter) return false
     }
     return true
@@ -170,14 +170,14 @@ export default class FilteringManager {
 
       if ('includes' in valueFilter && Array.isArray(valueFilter.includes)) {
         if (!objValue || !Array.isArray(objValue)) return false
-        for (let testValue of valueFilter.includes)
+        for (const testValue of valueFilter.includes)
           if (objValue.includes(testValue)) return true
         return false
       }
 
       if ('excludes' in valueFilter && Array.isArray(valueFilter.excludes)) {
         if (!objValue || !Array.isArray(objValue)) return true
-        for (let testValue of valueFilter.excludes)
+        for (const testValue of valueFilter.excludes)
           if (objValue.includes(testValue)) return false
         return true
       }
