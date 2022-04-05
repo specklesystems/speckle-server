@@ -6,6 +6,7 @@ repos:
         # files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
         # types: [file]
         additional_dependencies:
+          - eslint@8.11.0
           - eslint-config-prettier@8.5.0
           - eslint-plugin-vue@8.5.0
 
