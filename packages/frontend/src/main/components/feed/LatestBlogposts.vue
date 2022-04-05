@@ -128,8 +128,8 @@ export default {
 
     this.api.posts
       .browse({
-        filter: 'tag:tutorials',
-        limit: 5
+        filter: 'tags:[tutorials,blog]',
+        limit: 7
       })
       .then((posts) => {
         this.posts = posts
