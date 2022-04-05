@@ -1,6 +1,11 @@
 <template>
   <div>
-    <portal to="toolbar">Favorite Streams</portal>
+    <portal to="toolbar">
+      Favorite Streams
+      <span v-if="streams.length" class="caption">
+        ({{ user.favoriteStreams.totalCount }})
+      </span>
+    </portal>
     <!-- No streams -->
     <favorite-streams-placeholder v-if="!streams.length" />
     <!-- Streams found -->

@@ -40,28 +40,36 @@
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-feed" />
-        <v-list-group prepend-icon="mdi-folder-outline mt-2" group="streams">
-          <template slot="activator">
-            <v-list-item-content>
-              <v-list-item-title>Streams</v-list-item-title>
-              <v-list-item-subtitle class="caption">
-                All your streams
-              </v-list-item-subtitle>
-            </v-list-item-content>
-          </template>
 
-          <v-list-item link to="/streams" exact-path>
+        <v-list-item link to="/streams" exact>
+          <v-list-item-icon>
+            <v-icon class="mt-2">mdi-folder-outline</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Streams</v-list-item-title>
+            <v-list-item-subtitle class="caption">
+              All your streams
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list
+          v-show="$route.name.includes('streams')"
+          class="ml-12 pr-0"
+          dense
+          nav
+          subheader
+        >
+          <v-list-item to="/streams/favorite" exact>
             <v-list-item-content>
-              <v-list-item-title>Your Streams</v-list-item-title>
+              <v-list-item-title>
+                <v-icon x-small color="red">mdi-heart</v-icon>
+                Favorites
+              </v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item link to="/streams/favorite">
-            <v-list-item-content>
-              <v-list-item-title>Favorites</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list-group>
+        </v-list>
         <portal-target name="subnav-streams" />
+
         <v-list-item link to="/commits">
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-source-commit</v-icon>
@@ -74,6 +82,7 @@
           </v-list-item-content>
         </v-list-item>
         <portal-target name="subnav-commits" />
+
         <v-list-item v-if="user && user.role === 'server:admin'" exact link to="/admin">
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-cog-outline</v-icon>
