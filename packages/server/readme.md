@@ -5,6 +5,7 @@
 #### Status
 
 [![Speckle-Next](https://circleci.com/gh/specklesystems/speckle-server.svg?style=svg&circle-token=76eabd350ea243575cbb258b746ed3f471f7ac29)](https://github.com/Speckle-Next/SpeckleServer/) [![codecov](https://codecov.io/gh/specklesystems/speckle-server/branch/master/graph/badge.svg)](https://codecov.io/gh/specklesystems/speckle-server)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/specklesystems/speckle-server/main.svg)](https://results.pre-commit.ci/latest/github/specklesystems/speckle-server/main)
 
 ## Disclaimer
 
