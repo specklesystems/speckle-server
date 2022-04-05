@@ -116,11 +116,12 @@
             </v-container>
 
             <div class="mt-3">
-              <div
-                v-for="activityItem in activityGroup"
-                :key="activityItem.time"
-                v-html="updatedDescription(activityItem)"
-              ></div>
+              <list-item-activity-description
+                v-for="(item, idx) in activityGroup"
+                :key="item.time"
+                :activity-group="activityGroup"
+                :activity-item-index="idx"
+              />
             </div>
           </v-card-text>
           <v-card-actions class="pt-0">
@@ -185,11 +186,12 @@
               {{ lastActivityBrief.actionText }}
             </span>
             <div class="mt-3">
-              <div
-                v-for="activityItem in activityGroup"
-                :key="activityItem.time"
-                v-html="updatedDescription(activityItem)"
-              ></div>
+              <list-item-activity-description
+                v-for="(item, idx) in activityGroup"
+                :key="item.time"
+                :activity-group="activityGroup"
+                :activity-item-index="idx"
+              />
             </div>
           </v-card-text>
         </v-card>
@@ -288,9 +290,16 @@ import UserPill from '@/main/components/activity/UserPill'
 import SourceAppAvatar from '@/main/components/common/SourceAppAvatar'
 import PreviewImage from '@/main/components/common/PreviewImage'
 import gql from 'graphql-tag'
+import ListItemActivityDescription from '@/main/components/activity/ListItemActivityDescription.vue'
 
 export default {
-  components: { UserAvatar, SourceAppAvatar, PreviewImage, UserPill },
+  components: {
+    UserAvatar,
+    SourceAppAvatar,
+    PreviewImage,
+    UserPill,
+    ListItemActivityDescription
+  },
   props: {
     activityGroup: {
       type: Array,
@@ -536,74 +545,6 @@ export default {
             name: this.lastActivity.actionType
           }
       }
-    }
-  },
-  methods: {
-    /**
-     * TODO: no bueno, needs refactoring. As eslint warns us - using v-html can lead to XSS attacks.
-     * Additionally I don't see why this can't be done with Vue templates
-     */
-    updatedDescription(activity) {
-      //CREATED
-      if (activity.actionType === 'stream_create') {
-        return activity.info?.stream?.description
-          ? this.truncate(this.lastActivity.info.stream.description, 50)
-          : ''
-      } else if (activity.actionType === 'branch_create') {
-        return this.activity?.info?.branch?.description
-          ? this.truncate(this.lastActivity.info.branch.description, 50)
-          : ''
-      }
-
-      //UPDATED
-      let changes = ''
-      if (activity.info.new) {
-        for (const [key] of Object.entries(activity.info.new)) {
-          if (
-            activity.info.old[key] !== undefined &&
-            activity.info.new[key] !== activity.info.old[key]
-          ) {
-            if (key === 'name')
-              changes +=
-                '<p>✏️ Renamed from <i><del>' +
-                activity.info.old[key] +
-                '</del></i> to <i>' +
-                activity.info.new[key] +
-                '</i></p>'
-            if (key === 'description') {
-              const oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
-              changes +=
-                '<p>📋 Description changed from <i><del>' +
-                this.truncate(oldDesc) +
-                '</del></i> to <i>' +
-                this.truncate(activity.info.new[key]) +
-                '</ib></p>'
-            }
-            if (key === 'message') {
-              const oldDesc = activity.info.old[key] ? activity.info.old[key] : 'empty'
-              changes +=
-                '<p>📋 Message changed from <i><del>' +
-                this.truncate(oldDesc) +
-                '</del></i> to <i>' +
-                this.truncate(activity.info.new[key]) +
-                '</ib></p>'
-            }
-            if (key === 'isPublic' && activity.info.new[key])
-              changes += '<p>👀 Stream is now <i>public</i></p>'
-            if (key === 'isPublic' && !activity.info.new[key])
-              changes += '<p>👀 Stream is now <i>private</i></p>'
-          }
-        }
-      }
-
-      return changes
-    },
-    truncate(input, length = 25) {
-      if (!input) return ''
-      if (input.length > length) {
-        return input.substring(0, length) + '...'
-      }
-      return input
     }
   }
 }

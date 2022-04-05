@@ -46,6 +46,7 @@
 <script>
 import gql from 'graphql-tag'
 import { MainServerInfoQuery } from '@/graphql/server'
+import pick from 'lodash/pick'
 
 export default {
   name: 'ServerInfoAdminCard',
@@ -106,7 +107,7 @@ export default {
           }
         `,
         variables: {
-          info: this.serverModifications
+          info: pick(this.serverModifications, Object.keys(this.serverDetails))
         }
       })
       await this.$apollo.queries['serverInfo'].refetch()

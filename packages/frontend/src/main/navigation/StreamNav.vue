@@ -25,9 +25,10 @@
           style="max-height: 100px"
           :options="{ suppressScrollX: true }"
         >
-          <!-- TODO: Need to get rid of this, as it opens us up for an XSS attack -->
-          <!-- eslint-disable-next-line vue/no-v-html -->
-          <span v-html="parsedDescription"></span>
+          <span v-if="stream && stream.description">
+            {{ stream.description }}
+          </span>
+          <span v-else class="font-italic">No description provided</span>
         </perfect-scrollbar>
         <router-link
           v-if="stream.role === 'stream:owner'"
@@ -322,14 +323,6 @@ export default {
     branchesTotalCount() {
       if (!this.branchQuery) return 0
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
-    },
-    parsedDescription() {
-      // TODO: Pretty sketchy, isn't the descripton user editable? A user could inject XSS this way
-      if (!this.stream || !this.stream.description) return 'No description provided.'
-      return this.stream.description.replace(
-        /\[(.+?)\]\((https?:\/\/[a-zA-Z0-9/.(]+?)\)/g,
-        '<a href="$2" class="text-decoration-none" target="_blank">$1</a>'
-      )
     },
     loggedIn() {
       return localStorage.getItem('uuid') !== null
