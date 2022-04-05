@@ -9,7 +9,6 @@ workflows:
   test-build:
     jobs:
       - test-server
-      - lint
       - get-version:
           filters: &filters-build
             tags:
@@ -20,8 +19,6 @@ workflows:
 
       # - build-viewer:
       #     # built the npm package
-      #     requires:
-      #       - lint
       #     filters: &filters-build
       #       tags:
       #         only: /^[0-9]+\.[0-9]+\.[0-9]+$/
@@ -38,7 +35,6 @@ workflows:
           context: &docker-hub-context
             - docker-hub
           requires:
-            - lint
             - test-server
             - get-version
 
@@ -46,14 +42,12 @@ workflows:
           context: *docker-hub-context
           filters: *filters-build
           requires:
-            - lint
             - get-version
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
           filters: *filters-build
           requires:
-            - lint
             - get-version
             - test-server
 
@@ -61,7 +55,6 @@ workflows:
           context: *docker-hub-context
           filters: *filters-build
           requires:
-            - lint
             - get-version
             - test-server
 
@@ -69,7 +62,6 @@ workflows:
           context: *docker-hub-context
           filters: *filters-build
           requires:
-            - lint
             - get-version
             - test-server
 
@@ -77,14 +69,12 @@ workflows:
           context: *docker-hub-context
           filters: *filters-build
           requires:
-            - lint
             - get-version
             - test-server
 
       - publish-helm-chart:
           filters: *filters-build
           requires:
-            - lint
             - test-server
             - get-version
             - docker-build-and-publish-server
@@ -96,8 +86,6 @@ workflows:
 
       - publish-npm:
           filters: *filters-build
-          requires:
-            - lint
 
 jobs:
   lint:

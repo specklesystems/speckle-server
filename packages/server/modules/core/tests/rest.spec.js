@@ -226,7 +226,7 @@ describe('Upload/Download Routes @api-rest', () => {
             }
           })
       })
-  }).timeout(5000)
+  })
 
   it('Should properly download an object, with all its children, into a text/plain response', (done) => {
     request(app)
