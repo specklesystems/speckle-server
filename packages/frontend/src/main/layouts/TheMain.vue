@@ -32,11 +32,11 @@
           </v-app-bar-nav-icon>
         </div>
         <div v-else class="ml-4"></div>
-        <div class="d-flex align-center overflow-hidden" style="flex-grow: 1">
+        <div class="d-flex align-center overflow-hidden flex-shrink-1">
           <portal-target name="toolbar" class="text-truncate" />
         </div>
-        <div class="text-right">
-          <portal-target name="actions">
+        <div class="d-flex text-right flex-grow-1 justify-end">
+          <portal-target name="actions" class="d-flex align-center">
             <div style="margin-right: -10px">
               <search-bar />
             </div>

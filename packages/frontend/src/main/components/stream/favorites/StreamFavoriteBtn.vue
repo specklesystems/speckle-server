@@ -1,5 +1,11 @@
 <template>
-  <v-btn v-if="user && canFavorite" icon color="red darken-3" @click="onFavoriteClick">
+  <v-btn
+    v-if="user && canFavorite"
+    icon
+    small
+    color="red darken-3"
+    @click="onFavoriteClick"
+  >
     <v-icon>
       {{ isFavorited ? 'mdi-heart' : 'mdi-heart-outline' }}
     </v-icon>

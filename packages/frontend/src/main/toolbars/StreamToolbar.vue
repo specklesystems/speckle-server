@@ -41,14 +41,16 @@
       </div>
     </portal>
     <portal to="actions">
-      <stream-favorite-btn :stream="stream" :user="user" />
+      <span style="position: relative; right: -5px">
+        <stream-favorite-btn :stream="stream" :user="user" />
+      </span>
       <v-btn
         v-if="stream"
         v-tooltip="'Share this stream'"
         elevation="0"
         text
         rounded
-        class="mr-1"
+        class="mr-1 px-0"
         @click="shareStream = true"
       >
         <v-icon v-if="!stream.isPublic" x-small class="mr-1 grey--text">
