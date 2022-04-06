@@ -15,7 +15,6 @@ const { createTerminus } = require('@godaddy/terminus')
 
 const Sentry = require('@sentry/node')
 const Logging = require(`${appRoot}/logging`)
-const { startup: MatStartup } = require(`${appRoot}/logging/matomoHelper`)
 const { errorLoggingMiddleware } = require(`${appRoot}/logging/errorLogging`)
 const prometheusClient = require('prom-client')
 
@@ -96,7 +95,6 @@ exports.init = async () => {
   const app = express()
 
   Logging(app)
-  MatStartup()
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?

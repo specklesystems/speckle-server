@@ -4,7 +4,6 @@
 const debug = require('debug')
 const appRoot = require('app-root-path')
 
-const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
   validateScopes,
@@ -151,7 +150,6 @@ exports.init = (app) => {
   app.get(
     '/preview/:streamId/objects/:objectId/:angle',
     contextMiddleware,
-    matomoMiddleware,
     async (req, res) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
@@ -171,43 +169,37 @@ exports.init = (app) => {
     }
   )
 
-  app.get(
-    '/preview/:streamId',
-    contextMiddleware,
-    matomoMiddleware,
-    async (req, res) => {
-      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-      if (!hasPermissions) {
-        // return res.status( httpErrorCode ).end()
-        return res.sendFile(
-          `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
-        )
-      }
-
-      const { commits } = await getCommitsByStreamId({
-        streamId: req.params.streamId,
-        limit: 1,
-        ignoreGlobalsBranch: true
-      })
-      if (!commits || commits.length === 0) {
-        return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
-      }
-      const lastCommit = commits[0]
-
-      return sendObjectPreview(
-        req,
-        res,
-        req.params.streamId,
-        lastCommit.referencedObject,
-        DEFAULT_ANGLE
+  app.get('/preview/:streamId', contextMiddleware, async (req, res) => {
+    const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+    if (!hasPermissions) {
+      // return res.status( httpErrorCode ).end()
+      return res.sendFile(
+        `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
       )
     }
-  )
+
+    const { commits } = await getCommitsByStreamId({
+      streamId: req.params.streamId,
+      limit: 1,
+      ignoreGlobalsBranch: true
+    })
+    if (!commits || commits.length === 0) {
+      return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
+    }
+    const lastCommit = commits[0]
+
+    return sendObjectPreview(
+      req,
+      res,
+      req.params.streamId,
+      lastCommit.referencedObject,
+      DEFAULT_ANGLE
+    )
+  })
 
   app.get(
     '/preview/:streamId/branches/:branchName',
     contextMiddleware,
-    matomoMiddleware,
     async (req, res) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
@@ -246,7 +238,6 @@ exports.init = (app) => {
   app.get(
     '/preview/:streamId/commits/:commitId',
     contextMiddleware,
-    matomoMiddleware,
     async (req, res) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
@@ -277,7 +268,6 @@ exports.init = (app) => {
   app.get(
     '/preview/:streamId/objects/:objectId',
     contextMiddleware,
-    matomoMiddleware,
     async (req, res) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {

@@ -5,7 +5,6 @@ const debug = require('debug')
 const appRoot = require('app-root-path')
 const Busboy = require('busboy')
 
-const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const {
   contextMiddleware,
   validateScopes,
@@ -61,59 +60,53 @@ exports.init = async (app) => {
     return { hasPermissions: true, httpErrorCode: 200 }
   }
 
-  app.get(
-    '/api/file/:fileId',
-    contextMiddleware,
-    matomoMiddleware,
-    async (req, res) => {
-      if (process.env.DISABLE_FILE_UPLOADS) {
-        return res.status(503).send('File uploads are disabled on this server')
-      }
-
-      const fileInfo = await getFileInfo({ fileId: req.params.fileId })
-
-      if (!fileInfo) return res.status(404).send('File not found')
-
-      // Check stream read access
-      const streamId = fileInfo.streamId
-      const stream = await getStream({ streamId, userId: req.context.userId })
-
-      if (!stream) {
-        return res.status(404).send('File stream not found')
-      }
-
-      if (!stream.isPublic && req.context.auth === false) {
-        return res.status(401).send('You must be logged in to access private streams')
-      }
-
-      if (!stream.isPublic) {
-        try {
-          await validateScopes(req.context.scopes, 'streams:read')
-        } catch (err) {
-          return res.status(401).send("The provided auth token can't read streams")
-        }
-
-        try {
-          await authorizeResolver(req.context.userId, streamId, 'stream:reviewer')
-        } catch (err) {
-          return res.status(401).send("You don't have access to this private stream")
-        }
-      }
-
-      const fileStream = await getFileStream({ fileId: req.params.fileId })
-
-      res.writeHead(200, {
-        'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${fileInfo.fileName}"`
-      })
-
-      fileStream.pipe(res)
+  app.get('/api/file/:fileId', contextMiddleware, async (req, res) => {
+    if (process.env.DISABLE_FILE_UPLOADS) {
+      return res.status(503).send('File uploads are disabled on this server')
     }
-  ),
+
+    const fileInfo = await getFileInfo({ fileId: req.params.fileId })
+
+    if (!fileInfo) return res.status(404).send('File not found')
+
+    // Check stream read access
+    const streamId = fileInfo.streamId
+    const stream = await getStream({ streamId, userId: req.context.userId })
+
+    if (!stream) {
+      return res.status(404).send('File stream not found')
+    }
+
+    if (!stream.isPublic && req.context.auth === false) {
+      return res.status(401).send('You must be logged in to access private streams')
+    }
+
+    if (!stream.isPublic) {
+      try {
+        await validateScopes(req.context.scopes, 'streams:read')
+      } catch (err) {
+        return res.status(401).send("The provided auth token can't read streams")
+      }
+
+      try {
+        await authorizeResolver(req.context.userId, streamId, 'stream:reviewer')
+      } catch (err) {
+        return res.status(401).send("You don't have access to this private stream")
+      }
+    }
+
+    const fileStream = await getFileStream({ fileId: req.params.fileId })
+
+    res.writeHead(200, {
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `attachment; filename="${fileInfo.fileName}"`
+    })
+
+    fileStream.pipe(res)
+  }),
     app.post(
       '/api/file/:fileType/:streamId/:branchName?',
       contextMiddleware,
-      matomoMiddleware,
       async (req, res) => {
         if (process.env.DISABLE_FILE_UPLOADS) {
           return res.status(503).send('File uploads are disabled on this server')

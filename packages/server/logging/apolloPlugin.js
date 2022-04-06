@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
-const { apolloHelper } = require('./matomoHelper')
 const prometheusClient = require('prom-client')
 
 const metricCallCount = new prometheusClient.Counter({
@@ -27,12 +26,7 @@ module.exports = {
         try {
           const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
           metricCallCount.labels(actionName).inc()
-
           // console.log( actionName )
-          // Filter out subscription ops
-          if (!ctx.operation.operation.toLowerCase().includes('subscription')) {
-            apolloHelper(actionName)
-          }
         } catch (e) {
           Sentry.captureException(e)
         }

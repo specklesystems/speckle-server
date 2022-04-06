@@ -1,10 +1,6 @@
 {
   "folders": [
     {
-      "path": ".",
-      "name": "🏡 root"
-    },
-    {
       "path": "packages/server",
       "name": "🖥️ server"
     },
@@ -31,7 +27,11 @@
     {
       "path": "packages/objectloader",
       "name": "🌐 objectloader"
-    }
+    },
+    {
+      "path": ".",
+      "name": "🏡 root"
+    },
   ],
   "settings": {
     // Some settings below are duplicated in root/.vscode, incase the repo is opened without targetting the workspace file

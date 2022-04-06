@@ -165,7 +165,6 @@ export default {
       this.$refs.userDialog.open(this.user).then((dialog) => {
         if (!dialog.result) return
 
-        this.$matomo && this.$matomo.trackPageView('user/update')
         this.$mixpanel.track('User Action', { type: 'action', name: 'update' })
 
         this.isLoading = true

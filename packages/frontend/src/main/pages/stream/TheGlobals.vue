@@ -215,7 +215,6 @@ export default {
     async createGlobals() {
       if (!this.branch) {
         this.loading = true
-        this.$matomo && this.$matomo.trackPageView('globals/branch/create')
         this.$mixpanel.track('Globals Action', { type: 'action', name: 'create' })
         await this.$apollo.mutate({
           mutation: gql`
