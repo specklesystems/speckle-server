@@ -1,6 +1,6 @@
 {
   "name": "@speckle/viewer",
-  "version": "2.4.2-alpha.7",
+  "version": "2.4.2-alpha.8",
   "description": "A 3d viewer for Speckle, based on threejs.",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -30,7 +30,7 @@
     "threejs"
   ],
   "dependencies": {
-    "@speckle/objectloader": "^2.4.2-alpha.7",
+    "@speckle/objectloader": "^2.4.2-alpha.8",
     "camera-controls": "^1.33.1",
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
@@ -64,5 +64,5 @@
     "webpack-dev-server": "^4.3.1",
     "yargs": "^17.2.1"
   },
-  "gitHead": "a3adcbe9afcbd6ee649375317260b610b680378a"
+  "gitHead": "92fc19356e5069d16a2a7f2bd8f8441ba6373c6a"
 }
