@@ -26,12 +26,7 @@ module.exports = {
         try {
           const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
           metricCallCount.labels(actionName).inc()
-
           // console.log( actionName )
-          // Filter out subscription ops
-          if (!ctx.operation.operation.toLowerCase().includes('subscription')) {
-            apolloHelper(actionName)
-          }
         } catch (e) {
           Sentry.captureException(e)
         }

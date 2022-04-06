@@ -3,8 +3,8 @@ repos:
     rev: 'v8.11.0' # Use the sha / tag you want to point at
     hooks:
       - id: eslint
-        # files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
-        # types: [file]
+        types: [file]
+        files: \.[jt]s$|vue$ # *.js, *.ts and vue
         additional_dependencies:
           - eslint@8.11.0
           - eslint-config-prettier@8.5.0
