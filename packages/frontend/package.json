@@ -1,6 +1,6 @@
 {
   "name": "@speckle/frontend",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve",
@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .js,.ts,.vue"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.2.6",
+    "@speckle/viewer": "^2.4.1",
     "@tryghost/content-api": "^1.5.12",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
@@ -41,23 +41,23 @@
   },
   "devDependencies": {
     "@mdi/font": "^5.8.55",
+    "@types/lodash": "^4.14.180",
     "@vue/cli-plugin-babel": "~4.3.0",
     "@vue/cli-plugin-router": "~4.3.0",
     "@vue/cli-plugin-vuex": "~4.3.0",
     "@vue/cli-service": "~4.3.0",
     "babel-eslint": "^10.1.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-vue": "^8.5.0",
     "graphql-tag": "^2.11.0",
+    "prettier": "^2.5.1",
     "sass": "~1.32.6",
     "sass-loader": "^8.0.0",
     "vue-cli-plugin-apollo": "~0.21.3",
     "vue-cli-plugin-vuetify": "^2.0.8",
     "vue-template-compiler": "^2.6.12",
-    "vuetify-loader": "^1.6.0",
-    "eslint": "^8.11.0",
-    "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.5.1",
-    "@types/lodash": "^4.14.180"
+    "vuetify-loader": "^1.6.0"
   }
 }
