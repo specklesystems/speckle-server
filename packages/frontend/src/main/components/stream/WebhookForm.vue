@@ -165,7 +165,6 @@ export default {
   methods: {
     async saveChanges() {
       this.$emit('update:loading', true)
-      this.$matomo && this.$matomo.trackPageView('stream/webhook/update')
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'update' })
 
       const params = {
@@ -194,7 +193,6 @@ export default {
     },
     async addWebhook() {
       this.$emit('update:loading', true)
-      this.$matomo && this.$matomo.trackPageView('stream/webhook/create')
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'create' })
 
       await this.$apollo.mutate({
@@ -221,7 +219,6 @@ export default {
     },
     async deleteWebhook() {
       this.$emit('update:loading', true)
-      this.$matomo && this.$matomo.trackPageView('stream/webhook/delete')
       this.$mixpanel.track('Webhook Action', { type: 'action', name: 'delete' })
 
       await this.$apollo.mutate({

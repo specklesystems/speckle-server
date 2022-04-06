@@ -196,7 +196,6 @@ export default {
       if (!this.$refs.form.validate()) return
 
       this.isLoading = true
-      this.$matomo && this.$matomo.trackPageView('stream/create')
       this.$mixpanel.track('Stream Action', { type: 'action', name: 'create' })
       try {
         const res = await this.$apollo.mutate({

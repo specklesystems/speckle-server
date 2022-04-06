@@ -3,7 +3,7 @@ const debug = require('debug')
 const cors = require('cors')
 
 const sentry = require(`@/logging/sentryHelper`)
-const { matomoMiddleware } = require(`@/logging/matomoHelper`)
+
 const {
   getApp,
   createAuthorizationCode,
@@ -49,7 +49,7 @@ module.exports = (app) => {
   Generates a new api token: (1) either via a valid refresh token or (2) via a valid access token
    */
   app.options('/auth/token', cors())
-  app.post('/auth/token', cors(), matomoMiddleware, async (req, res) => {
+  app.post('/auth/token', cors(), async (req, res) => {
     try {
       // Token refresh
       if (req.body.refreshToken) {
@@ -89,7 +89,7 @@ module.exports = (app) => {
   /*
   Ensures a user is logged out by invalidating their token and refresh token.
    */
-  app.post('/auth/logout', matomoMiddleware, async (req, res) => {
+  app.post('/auth/logout', async (req, res) => {
     try {
       const token = req.body.token
       const refreshToken = req.body.refreshToken

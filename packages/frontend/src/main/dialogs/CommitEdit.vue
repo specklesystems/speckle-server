@@ -105,7 +105,6 @@ export default {
   mounted() {},
   methods: {
     async editCommit() {
-      this.$matomo && this.$matomo.trackPageView('commit/update')
       this.$mixpanel.track('Commit Action', { type: 'action', name: 'update' })
       this.loading = true
       try {
@@ -132,7 +131,6 @@ export default {
       this.$emit('close')
     },
     async deleteCommit() {
-      this.$matomo && this.$matomo.trackPageView('commit/delete')
       this.$mixpanel.track('Commit Action', { type: 'action', name: 'delete' })
       const commitBranch = this.stream.commit.branchName
       try {

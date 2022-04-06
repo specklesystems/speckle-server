@@ -4,7 +4,6 @@ const debug = require('debug')
 const appRoot = require('app-root-path')
 const cors = require('cors')
 
-const { matomoMiddleware } = require(`${appRoot}/logging/matomoHelper`)
 const { contextMiddleware } = require(`${appRoot}/modules/shared`)
 const { validatePermissionsReadStream } = require('./authUtils')
 
@@ -19,7 +18,6 @@ module.exports = (app) => {
     '/objects/:streamId/:objectId',
     cors(),
     contextMiddleware,
-    matomoMiddleware,
     async (req, res) => {
       const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,
@@ -87,7 +85,6 @@ module.exports = (app) => {
     '/objects/:streamId/:objectId/single',
     cors(),
     contextMiddleware,
-    matomoMiddleware,
     async (req, res) => {
       const hasStreamAccess = await validatePermissionsReadStream(
         req.params.streamId,

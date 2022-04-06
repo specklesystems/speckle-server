@@ -221,7 +221,6 @@ export default {
     async editApp() {
       if (!this.$refs.form.validate()) return
       this.$mixpanel.track('App Action', { type: 'action', name: 'update' })
-      this.$matomo && this.$matomo.trackPageView('user/app/update')
       try {
         const res = await this.$apollo.mutate({
           mutation: gql`

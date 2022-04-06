@@ -111,7 +111,6 @@ export default {
     async createToken() {
       if (!this.$refs.form.validate()) return
 
-      this.$matomo && this.$matomo.trackPageView('user/token/create')
       this.$mixpanel.track('Token Action', { type: 'action', name: 'create' })
       try {
         const res = await this.$apollo.mutate({

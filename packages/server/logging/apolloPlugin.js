@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
-const { apolloHelper } = require('./matomoHelper')
 const prometheusClient = require('prom-client')
 
 const metricCallCount = new prometheusClient.Counter({

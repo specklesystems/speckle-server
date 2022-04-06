@@ -154,7 +154,6 @@ export default {
     async deleteBranch() {
       this.loading = true
       this.error = null
-      this.$matomo && this.$matomo.trackPageView('branch/delete')
       this.$mixpanel.track('Branch Action', { type: 'action', name: 'delete' })
       try {
         const res = await this.$apollo.mutate({
@@ -189,7 +188,6 @@ export default {
           throw new Error('Branch already exists. Please choose a different name.')
 
         this.loading = true
-        this.$matomo && this.$matomo.trackPageView('branch/update')
         this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
         const res = await this.$apollo.mutate({
           mutation: gql`
