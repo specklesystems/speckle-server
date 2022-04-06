@@ -1,6 +1,6 @@
 {
   "name": "@speckle/viewer",
-  "version": "2.4.2-alpha.6",
+  "version": "2.4.2-alpha.7",
   "description": "A 3d viewer for Speckle, based on threejs.",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -30,7 +30,7 @@
     "threejs"
   ],
   "dependencies": {
-    "@speckle/objectloader": "^2.4.2-alpha.6",
+    "@speckle/objectloader": "^2.4.2-alpha.7",
     "camera-controls": "^1.33.1",
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
