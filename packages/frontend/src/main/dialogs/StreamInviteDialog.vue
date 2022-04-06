@@ -116,8 +116,6 @@ export default {
     async sendInvite() {
       if (!this.$refs.form.validate()) return
 
-      this.$matomo && this.$matomo.trackPageView('invite/stream/create')
-      this.$matomo && this.$matomo.trackEvent('invite', 'stream')
       this.$mixpanel.track('Invite Send', { type: 'action', source: 'stream' })
       try {
         await this.$apollo.mutate({

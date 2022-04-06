@@ -72,7 +72,6 @@ export default {
       if (!this.$refs.form.validate()) return
 
       this.loading = true
-      this.$matomo && this.$matomo.trackPageView('branch/create')
       this.$mixpanel.track('Branch Action', { type: 'action', name: 'create' })
       try {
         await this.$apollo.mutate({

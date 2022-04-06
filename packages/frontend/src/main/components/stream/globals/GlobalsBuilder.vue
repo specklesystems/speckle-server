@@ -199,7 +199,6 @@ export default {
 
       try {
         this.loading = true
-        this.$matomo && this.$matomo.trackPageView('globals/save')
         this.$mixpanel.track('Globals Action', { type: 'action', name: 'update' })
         const res = await this.$apollo.mutate({
           mutation: gql`

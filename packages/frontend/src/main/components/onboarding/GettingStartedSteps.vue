@@ -349,7 +349,6 @@ export default {
   }),
   computed: {},
   mounted() {
-    this.$matomo && this.$matomo.trackEvent('onboarding', 'start')
     this.$mixpanel.track('Web Onboarding', {
       step: this.onboarding,
       type: 'action'
@@ -357,18 +356,15 @@ export default {
   },
   methods: {
     skip() {
-      this.$matomo && this.$matomo.trackPageView(`onboarding/skip`)
       localStorage.setItem('onboarding', 'skipped')
       this.$router.push('/')
     },
     finish() {
-      this.$matomo && this.$matomo.trackPageView(`onboarding/done`)
       localStorage.setItem('onboarding', 'complete')
       this.$router.push('/')
     },
     prev() {
       this.onboarding--
-      this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
       this.$mixpanel.track('Web Onboarding', {
         step: this.onboarding,
         type: 'action'
@@ -379,7 +375,6 @@ export default {
         this.finish()
       }
       this.onboarding++
-      this.$matomo && this.$matomo.trackPageView(`onboarding/step-${this.onboarding}`)
       this.$mixpanel.track('Web Onboarding', {
         step: this.onboarding,
         type: 'action'
