@@ -121,12 +121,16 @@ exports.init = async (app) => {
 
         busboy.on('file', (name, file, info) => {
           const { filename } = info
+          let fileType = req.params.fileType
+          if (fileType === 'autodetect')
+            fileType = filename.split('.').pop().toLowerCase()
+
           const promise = uploadFile({
             streamId: req.params.streamId,
             branchName: req.params.branchName || '',
             userId: req.context.userId,
             fileName: filename,
-            fileType: req.params.fileType,
+            fileType,
             fileStream: file
           })
           fileUploadPromises.push(promise)

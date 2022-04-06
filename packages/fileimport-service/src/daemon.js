@@ -71,21 +71,41 @@ async function doTask(task) {
     })
     tempUserToken = token
 
-    await runProcessWithTimeout(
-      'node',
-      [
-        './ifc/import_file.js',
-        TMP_FILE_PATH,
-        info.userId,
-        info.streamId,
-        info.branchName,
-        `File upload: ${info.fileName}`
-      ],
-      {
-        USER_TOKEN: tempUserToken
-      },
-      10 * 60 * 1000
-    )
+    if (info.fileType === 'ifc') {
+      await runProcessWithTimeout(
+        'node',
+        [
+          './ifc/import_file.js',
+          TMP_FILE_PATH,
+          info.userId,
+          info.streamId,
+          info.branchName,
+          `File upload: ${info.fileName}`
+        ],
+        {
+          USER_TOKEN: tempUserToken
+        },
+        10 * 60 * 1000
+      )
+    } else if (info.fileType === 'stl') {
+      await runProcessWithTimeout(
+        'python3',
+        [
+          './stl/import_file.py',
+          TMP_FILE_PATH,
+          info.userId,
+          info.streamId,
+          info.branchName,
+          `File upload: ${info.fileName}`
+        ],
+        {
+          USER_TOKEN: tempUserToken
+        },
+        10 * 60 * 1000
+      )
+    } else {
+      throw new Error(`File type ${info.fileType} is not supported`)
+    }
 
     const output = JSON.parse(fs.readFileSync(TMP_RESULTS_PATH))
 
