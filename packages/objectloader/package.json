@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.4.2-alpha.5",
+  "version": "2.4.2-alpha.6",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "index.js",
   "homepage": "https://speckle.systems",
@@ -26,5 +26,6 @@
     "eslint-config-prettier": "^8.5.0",
     "prettier": "^2.5.1",
     "undici": "^4.14.1"
-  }
+  },
+  "gitHead": "a3adcbe9afcbd6ee649375317260b610b680378a"
 }
