@@ -15,7 +15,7 @@
         <div class="text-truncate flex-shrink-0">
           /
           <v-icon small class="mr-1 mb-1 hidden-xs-only">mdi-arrow-up</v-icon>
-          <span class="space-grotesk">Import IFC - Alpha Feature</span>
+          <span class="space-grotesk">Import File - Alpha Feature</span>
         </div>
       </div>
     </portal>
@@ -23,9 +23,9 @@
       <v-col cols="12">
         <section-card>
           <v-card-text>
-            Speckle can now process IFC files and store them as a commit (snapshot). You
-            can then access it from the Speckle API, and receive it in other
-            applications. Thanks to the Open Source
+            Speckle can now process files and store them as a commit (snapshot). You can
+            then access it from the Speckle API, and receive it in other applications.
+            Current supported formats are: IFC and STL. Thanks to the Open Source
             <a
               href="https://ifcjs.github.io/info/docs/Guide/web-ifc/Introduction"
               target="_blank"
@@ -79,7 +79,7 @@
               <input
                 id="myid"
                 type="file"
-                accept=".ifc,.IFC"
+                accept=".ifc,.IFC,.stl,.STL"
                 style="display: none"
                 multiple
                 @change="onFileSelect($event)"
@@ -94,7 +94,7 @@
                 mdi-cloud-upload
               </v-icon>
               <br />
-              <span class="primary--text">Drag and drop your IFC file here!</span>
+              <span class="primary--text">Drag and drop your file here!</span>
               <br />
               <span class="caption">
                 Maximum 5 files at a time. Size is restricted to 50mb each.
@@ -118,7 +118,7 @@
               :file="file"
               :branches="stream.branches.items"
               @done="uploadCompleted"
-            ></file-upload-item>
+            />
           </template>
         </div>
       </v-col>
@@ -202,8 +202,8 @@ export default {
       this.dragError = null
       for (const file of files) {
         const extension = file.name.split('.')[1]
-        if (!extension || extension !== 'ifc') {
-          this.dragError = 'Only IFC file extensions are supported.'
+        if (!extension || !['ifc', 'stl'].includes(extension.toLowerCase())) {
+          this.dragError = `The ${extension.toLowerCase()} file extension is not yet supported`
           return
         }
 

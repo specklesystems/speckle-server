@@ -65,7 +65,7 @@ export default {
       const request = new XMLHttpRequest()
       request.open(
         'POST',
-        `/api/file/ifc/${this.$route.params.streamId}/${
+        `/api/file/autodetect/${this.$route.params.streamId}/${
           this.selectedBranch ? this.selectedBranch : 'main'
         }`
       )

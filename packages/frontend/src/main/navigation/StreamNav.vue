@@ -146,8 +146,8 @@
           </template>
         </div>
 
-        <v-skeleton-loader v-else type="list-item-two-line"></v-skeleton-loader>
-        <v-divider class="mb-2"></v-divider>
+        <v-skeleton-loader v-else type="list-item-two-line" />
+        <v-divider class="mb-2" />
       </v-list-group>
 
       <!-- Comments  -->
@@ -177,7 +177,7 @@
           <v-icon small>mdi-arrow-up</v-icon>
         </v-list-item-icon>
         <v-list-item-content>
-          <v-list-item-title>Import IFC</v-list-item-title>
+          <v-list-item-title>Import File</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
 
