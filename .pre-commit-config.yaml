@@ -5,6 +5,8 @@ repos:
       - id: eslint
         types: [file]
         files: \.[jt]s$|vue$ # *.js, *.ts and vue
+        args:
+          - '--max-warnings=0'
         additional_dependencies:
           - eslint@8.11.0
           - eslint-config-prettier@8.5.0
