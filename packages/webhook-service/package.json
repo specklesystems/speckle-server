@@ -1,5 +1,6 @@
 {
   "name": "@speckle/webhook-service",
+  "private": true,
   "version": "2.0.0",
   "description": "Component to handle calling external webhooks",
   "main": "index.js",

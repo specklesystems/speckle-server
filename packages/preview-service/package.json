@@ -1,5 +1,6 @@
 {
   "name": "@speckle/preview-service",
+  "private": true,
   "version": "2.0.0",
   "description": "Generate PNG previews of Speckle objects by using a headless viewer",
   "main": "index.js",

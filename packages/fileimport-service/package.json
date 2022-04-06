@@ -1,6 +1,7 @@
 {
   "name": "@speckle/fileimport-service",
   "version": "2.0.0",
+  "private": true,
   "description": "Parse and import files of various types into a stream",
   "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
