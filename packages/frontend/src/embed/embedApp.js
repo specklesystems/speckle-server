@@ -2,7 +2,10 @@ import Vue from 'vue'
 import App from './EmbedApp.vue'
 import vuetify from './embedVuetify'
 import router from './embedRouter'
-Vue.config.productionTip = false
+
+// process.env.NODE_ENV is injected by Webpack
+// eslint-disable-next-line no-undef
+Vue.config.productionTip = process.env.NODE_ENV === 'development'
 
 import VueMixpanel from 'vue-mixpanel'
 Vue.use(VueMixpanel, {

@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "engines": {
-    "node": "^14.0.0"
+    "node": ">=14.0.0 <17.0.0"
   },
   "scripts": {
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",

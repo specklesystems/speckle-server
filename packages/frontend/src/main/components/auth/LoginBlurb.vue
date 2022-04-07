@@ -3,18 +3,16 @@
     <v-card-text class="text-h3 text-sm-h4 text-md-h3 primary--text">
       <span class="primary--text">
         <b>
-          <a
-            class="text-decoration-none"
-            href="https://speckle.systems"
-            target="_blank"
+          <!-- display: inline -->
+          <a class="text-decoration-none" href="https://speckle.systems" target="_blank"
+            >Speckle</a
           >
-            Speckle
-          </a>
         </b>
       </span>
-      <span class="font-weight-light">
-        , empowering your design and construction data.
-      </span>
+      <!-- display: inline -->
+      <span class="font-weight-light"
+        >, empowering your design and construction data.</span
+      >
     </v-card-text>
     <div>
       <v-card-text class="text-h6 font-weight-regular">

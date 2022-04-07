@@ -160,7 +160,7 @@
 </template>
 <script>
 import gql from 'graphql-tag'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 
 export default {
   components: {

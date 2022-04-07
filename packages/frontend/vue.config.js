@@ -1,7 +1,28 @@
 /* eslint-env node */
-module.exports = {
-  configureWebpack: {
-    devtool: 'eval-source-map'
+const webpack = require('webpack')
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin')
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
+const LodashModuleReplacementPlugin = require('lodash-webpack-plugin')
+const { DuplicateReporterPlugin } = require('duplicate-dependencies-webpack-plugin')
+
+const isProdBuild = process.env.NODE_ENV === 'production'
+const shouldEnableProfiling = (process.argv || []).includes('--profile')
+
+/** @type {import('@vue/cli-service').ProjectOptions} */
+const config = {
+  chainWebpack: (config) => {
+    // Adding profiling plugins, if flag set
+    if (shouldEnableProfiling) {
+      config.plugin('webpack-profiling').use(webpack.debug.ProfilingPlugin)
+      config.plugin('speed-measure').use(SpeedMeasurePlugin)
+      config.plugin('bundle-analyzer').use(BundleAnalyzerPlugin)
+    }
+
+    config.plugin('duplicate-detection').use(DuplicateReporterPlugin)
+    config.plugin('lodash-optimization').use(LodashModuleReplacementPlugin)
+
+    // Setting source map according to build env
+    config.devtool(isProdBuild ? false : 'eval-source-map')
   },
   productionSourceMap: false,
   pages: {
@@ -27,6 +48,8 @@ module.exports = {
         { from: /./, to: '/app.html' }
       ]
     }
-  },
-  transpileDependencies: ['vuetify']
+    // progress: false // Disables progress bar in dev server build
+  }
 }
+
+module.exports = config

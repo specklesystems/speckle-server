@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import crypto from 'crypto'
+import md5 from '@/helpers/md5'
 
 Vue.prototype.$userId = function () {
   return localStorage.getItem('uuid')
@@ -10,11 +10,7 @@ Vue.prototype.$mixpanelId = function () {
 }
 
 Vue.prototype.$mixpanelServerId = function () {
-  return crypto
-    .createHash('md5')
-    .update(window.location.hostname.toLowerCase())
-    .digest('hex')
-    .toUpperCase()
+  return md5(window.location.hostname.toLowerCase()).toUpperCase()
 }
 
 Vue.prototype.$loggedIn = function () {

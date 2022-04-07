@@ -10,5 +10,8 @@ packages/viewer/example/speckleviewer.web.js
 package-lock.json
 yarn.lock
 
+# Profiler output
+events.json
+
 # Prettier doesn't understand the syntax inside the Yaml files, because of the brackets
 utils/helm/speckle-server/templates

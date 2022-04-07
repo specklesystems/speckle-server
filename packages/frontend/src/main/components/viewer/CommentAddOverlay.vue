@@ -152,7 +152,7 @@
 // TODO: Need to fix the viewer package build process to be able to properly reference THREE.js
 /* global THREE */
 import gql from 'graphql-tag'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 
 import { getCamArray } from './viewerFrontendHelpers'
 export default {
