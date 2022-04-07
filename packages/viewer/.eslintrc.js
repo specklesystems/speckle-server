@@ -13,7 +13,8 @@ const config = {
   },
   rules: {
     'no-console': ['warn', { allow: ['warn', 'error'] }]
-  }
+  },
+  ignorePatterns: ['dist2', 'example/speckleviewer.web.js']
 }
 
 module.exports = config

@@ -1,4 +1,9 @@
 /* eslint-disable */
+
+/**
+ * NOT PART OF THE ACTUAL LIBRARY, ONLY USED TO GENERATE THE EXAMPLE WEB BUILD
+ */
+
 import Viewer from './modules/Viewer'
 
 setInterval(() => {

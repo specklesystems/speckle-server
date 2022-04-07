@@ -2,9 +2,9 @@
   "name": "@speckle/objectloader",
   "version": "2.3.17-alpha.2889",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
-  "main": "index.js",
+  "main": "dist/objectloader.js",
+  "module": "dist/objectloader.esm.js",
   "homepage": "https://speckle.systems",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/specklesystems/speckle-server.git",
@@ -14,8 +14,11 @@
     "node": "^16.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint . --ext .js,.ts"
+    "lint": "eslint . --ext .js,.ts",
+    "build:dev": "rollup --config",
+    "build": "NODE_ENV=production rollup --config",
+    "dev": "rollup --config --watch",
+    "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./examples/browser -p 3031 -o"
   },
   "keywords": [
     "speckle",
@@ -24,10 +27,22 @@
   ],
   "author": "AEC Systems",
   "license": "Apache-2.0",
+  "dependencies": {
+    "core-js": "^3.21.1",
+    "regenerator-runtime": "^0.13.7"
+  },
   "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
+    "@rollup/plugin-babel": "^5.3.1",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "http-server": "^14.1.0",
     "prettier": "^2.5.1",
-    "undici": "^4.14.1"
+    "rollup": "^2.70.1",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "undici": "^4.14.1",
+    "@rollup/plugin-commonjs": "^21.0.3",
+    "@rollup/plugin-node-resolve": "^13.1.3"
   }
 }

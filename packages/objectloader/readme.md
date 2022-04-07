@@ -12,12 +12,18 @@ Comprehensive developer and user documentation can be found in our:
 
 This is a small utility class that helps you stream an object and all its sub-components from the Speckle Server API. It is intended to be used in contexts where you want to "download" the whole object, or iteratively traverse its whole tree.
 
+### Examples
+
+If you've got this repo checked out locally, you can run `npm run example` to run an example web page running ObjectLoader in the browser at 'http://127.0.0.1:3031/'. This will run the example HTML found under ./examples/browser/'.
+
+To test ObjectLoader in a node environment, just run `node ./examples/node/script.mjs`
+
 ### In the browser
 
 Here's a sample way on how to use it, pilfered from the [3d viewer package](../viewer):
 
 ```js
-
+import ObjectLoader from '@speckle/objectloader';
 
 async load( { serverUrl, token, streamId, objectId } ) {
 
@@ -40,34 +46,41 @@ async load( { serverUrl, token, streamId, objectId } ) {
 
 If you do not want to process the objects one by one as they are streamed to you, you can use the `getAndConstructObject()` method. Here's an example:
 
-````js
+```js
+import ObjectLoader from '@speckle/objectloader'
 
-let loader = new ObjectLoader( {
-  serverUrl: "https://latest.speckle.dev",
-  streamId: "3ed8357f29",
-  objectId: "0408ab9caaa2ebefb2dd7f1f671e7555",
+let loader = new ObjectLoader({
+  serverUrl: 'https://latest.speckle.dev',
+  streamId: '3ed8357f29',
+  objectId: '0408ab9caaa2ebefb2dd7f1f671e7555',
   options: {
     fullyTraverseArrays: false, // Default: false. By default, if an array starts with a primitive type, it will not be traversed. Set it to true if you want to capture scenarios in which lists can have intersped objects and primitives, e.g. [ 1, 2, "a", { important object } ]
-    excludeProps: [ 'displayValue', 'displayMesh', '__closure' ] // Default: []. Any prop names that you pass in here will be ignored from object construction traversal.
+    excludeProps: ['displayValue', 'displayMesh', '__closure'] // Default: []. Any prop names that you pass in here will be ignored from object construction traversal.
   }
-} )
+})
 
-let obj = await loader.getAndConstructObject( ( e ) => console.log( 'Progress', e ) )
+let obj = await loader.getAndConstructObject((e) => console.log('Progress', e))
+```
 
 ### On the server
 
 Since Node.js does not yet support the [`fetch API`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch), you'll need to provide your own `fetch` function in the options object. Note that `fetch` must return a [Web Stream](https://nodejs.org/api/webstreams.html), so [node-fetch](https://github.com/node-fetch/node-fetch) won't work, but [node/undici's](https://undici.nodejs.org/) implementation will.
 
 ```js
+import ObjectLoader from '@speckle/objectloader'
 import { fetch } from 'undici'
 
 let loader = new ObjectLoader({
   serverUrl: 'https://latest.speckle.dev',
   streamId: '3ed8357f29',
   objectId: '0408ab9caaa2ebefb2dd7f1f671e7555',
-  options: { enableCaching: false, excludeProps: [], fetch },
+  options: { enableCaching: false, excludeProps: [], fetch }
 })
-````
+```
+
+## Development
+
+Run `npm run build` to build prod release, run `npm run build:dev` to build dev release. Or run `npm run dev` to run the build in `watch` mode.
 
 ## Community
 

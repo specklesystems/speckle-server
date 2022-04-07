@@ -3,5 +3,5 @@
   "compilerOptions": {
     "module": "es2020"
   },
-  "include": ["index.js", "examples"]
+  "include": ["src/**", "examples"]
 }

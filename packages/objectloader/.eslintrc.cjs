@@ -10,7 +10,8 @@ const config = {
   },
   parserOptions: {
     sourceType: 'module'
-  }
+  },
+  ignorePatterns: ['examples/browser/objectloader.web.js']
 }
 
 module.exports = config
