@@ -12,7 +12,7 @@ workflows:
       - get-version:
           filters: &filters-build
             tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
               only:
                 - main
@@ -75,7 +75,9 @@ workflows:
             - docker-build-and-publish-test-container
 
       - publish-npm:
-          filters: *filters-build
+          filters:
+            tags:
+              only: *filters-tag
           context:
             - npm-registry
           requires:
@@ -222,7 +224,7 @@ jobs:
           command: |
             git config --global user.email "devops+circleci@speckle.systems"
             git config --global user.name "CI"
-      - run: npx lerna publish $IMAGE_VERSION_TAG --dist-tag next -y
+      - run: npx lerna publish $IMAGE_VERSION_TAG -y
 
   publish-helm-chart:
     docker: *docker-image
