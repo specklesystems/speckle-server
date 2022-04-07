@@ -65,6 +65,7 @@ workflows:
           requires:
             - test-server
             - get-version
+            - publish-npm
             - docker-build-and-publish-server
             - docker-build-and-publish-frontend
             - docker-build-and-publish-webhooks
@@ -206,7 +207,8 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
       - run: npm whoami
       - run: echo $IMAGE_VERSION_TAG
-      - run: npx lerna publish $IMAGE_VERSION_TAG --no-private --force-publish --dist-tag next --no-git-tag-version -y
+      - run: npx lerna bootstrap
+      - run: npx lerna publish $IMAGE_VERSION_TAG --force-publish --dist-tag next -y
 
   publish-helm-chart:
     docker: *docker-image
