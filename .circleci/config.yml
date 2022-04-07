@@ -74,6 +74,10 @@ workflows:
 
       - publish-npm:
           filters: *filters-build
+          context:
+            - npm-registry
+          requires:
+            - get-version
 
 jobs:
   lint:
@@ -191,8 +195,6 @@ jobs:
   publish-npm:
     docker: *docker-image
     working_directory: *work-dir
-    context:
-      - npm-registry
     steps:
       - checkout
       - attach_workspace:
