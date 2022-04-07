@@ -203,7 +203,7 @@ jobs:
       - run: |
           echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
           echo "registry=http://registry.npmjs.org/" >> .npmrc
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
       - run: npm whoami
       # - run: npx lerna publish prerelease --no-private --force-publish --dist-tag next --no-git-tag-version
 
