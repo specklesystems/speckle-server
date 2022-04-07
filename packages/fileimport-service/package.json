@@ -1,7 +1,7 @@
 {
   "name": "@speckle/fileimport-service",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.3.17-alpha.2830",
   "description": "Parse and import files of various types into a stream",
   "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
@@ -29,9 +29,9 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "nodemon": "^2.0.13",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "nodemon": "^2.0.13",
     "prettier": "^2.5.1"
   }
 }
