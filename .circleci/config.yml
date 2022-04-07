@@ -16,19 +16,7 @@ workflows:
             branches:
               only:
                 - main
-
-      # - build-viewer:
-      #     # built the npm package
-      #     filters: &filters-build
-      #       tags:
-      #         only: /^[0-9]+\.[0-9]+\.[0-9]+$/
-      #       branches:
-      #         only:
-      #           # - main
-
-      #         requires:
-      #           # the result of objectloader build can be mounted here from workspace
-      #           - npm_build_object_loader
+                - CI/lernaPublish
 
       - docker-build-and-publish-server:
           filters: *filters-build
@@ -99,7 +87,8 @@ jobs:
       - run: pre-commit run --all-files
 
   get-version:
-    docker: *docker-image
+    docker:
+      - image: cimg/python:3.9
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -154,19 +143,6 @@ jobs:
           path: packages/server/coverage/lcov-report
           destination: package/server/coverage
 
-  build-viewer:
-    docker: *docker-image
-    steps:
-      - checkout
-      - run:
-          command: npm install ../objectloader
-          working_directory: 'packages/viewer'
-      - node/install-packages:
-          app-dir: ~/project/packages/viewer
-      - run:
-          command: npm run build
-          working_directory: 'packages/viewer'
-
   docker-build-and-publish: &docker-job
     docker: *docker-image
     working_directory: *work-dir
@@ -214,11 +190,20 @@ jobs:
 
   publish-npm:
     docker: *docker-image
-    # context:
-    #   - npm_registry
+    working_directory: *work-dir
+    context:
+      - npm-registry
     steps:
       - checkout
-      - run: node --version
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: |
+          echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
+          echo "registry=http://registry.npmjs.org/" >> .npmrc
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+      - run: npm whoami
+      # - run: npx lerna publish prerelease --no-private --force-publish --dist-tag next --no-git-tag-version
 
   publish-helm-chart:
     docker: *docker-image
