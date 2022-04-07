@@ -221,7 +221,7 @@ jobs:
           command: |
             git config --global user.email "devops+circleci@speckle.systems"
             git config --global user.name "CI"
-      - run: npx lerna publish $IMAGE_VERSION_TAG --force-publish --dist-tag next -y
+      - run: npx lerna publish $IMAGE_VERSION_TAG --dist-tag next -y
 
   publish-helm-chart:
     docker: *docker-image
