@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.3.17-alpha.2867",
+  "version": "2.3.17-alpha.2878",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "index.js",
   "homepage": "https://speckle.systems",
