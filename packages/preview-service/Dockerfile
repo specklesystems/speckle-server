@@ -7,24 +7,24 @@ FROM node:14.16-buster-slim as build-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-WORKDIR /opt/objectloader
-COPY packages/objectloader/package*.json ./
-RUN npm install --production=false
-COPY packages/objectloader .
+# WORKDIR /opt/objectloader
+# COPY packages/objectloader/package*.json ./
+# RUN npm install --production=false
+# COPY packages/objectloader .
 # RUN npm run build
 
-WORKDIR /opt/viewer
-COPY packages/viewer/package*.json ./
-RUN npm install ../objectloader
+# WORKDIR /opt/viewer
+# COPY packages/viewer/package*.json ./
+# RUN npm install ../objectloader
 # Install dependencies and devDependencies
-RUN npm install --production=false
-COPY packages/viewer .
-RUN npm run build
+# RUN npm install --production=false
+# COPY packages/viewer .
+# RUN npm run build
 
 WORKDIR /opt/preview-service
 COPY packages/preview-service/package*.json ./
-RUN npm install ../objectloader && rm -rf ../objectloader/node_modules
-RUN npm install ../viewer && rm -rf ../viewer/node_modules
+# RUN npm install ../objectloader && rm -rf ../objectloader/node_modules
+# RUN npm install ../viewer && rm -rf ../viewer/node_modules
 RUN npm ci --production=false
 COPY packages/preview-service .
 RUN npm run build-fe

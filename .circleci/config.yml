@@ -31,6 +31,7 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
+            - publish-npm
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
@@ -51,6 +52,7 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
+            - publish-npm
             - test-server
 
       - docker-build-and-publish-test-container:
@@ -65,7 +67,6 @@ workflows:
           requires:
             - test-server
             - get-version
-            - publish-npm
             - docker-build-and-publish-server
             - docker-build-and-publish-frontend
             - docker-build-and-publish-webhooks
