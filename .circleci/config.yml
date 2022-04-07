@@ -215,8 +215,13 @@ jobs:
           command: npm whoami
       - add_ssh_keys:
           fingerprints:
-            - '9b:c3:1b:01:a0:42:24:72:c6:5c:3a:32:34:6b:f6:67'
-      - run: npx lerna publish $IMAGE_VERSION_TAG --force-publish --no-git-tag-version --dist-tag next -y
+            - 'e4:47:eb:29:a7:0b:56:a7:9b:d3:a9:e0:05:5c:13:e3'
+      - run:
+          name: setup git user
+          command: |
+            git config --global user.email "devops+circleci@speckle.systems"
+            git config --global user.name "CI"
+      - run: npx lerna publish $IMAGE_VERSION_TAG --force-publish --dist-tag next -y
 
   publish-helm-chart:
     docker: *docker-image
