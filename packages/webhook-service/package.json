@@ -11,6 +11,9 @@
     "url": "https://github.com/specklesystems/speckle-server/issues"
   },
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
+  "engines": {
+    "node": "^16.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "cross-env ALLOW_LOCAL_NETWORK=true node src/main.js",

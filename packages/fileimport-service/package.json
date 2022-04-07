@@ -10,6 +10,9 @@
     "type": "git",
     "url": "git+https://github.com/specklesystems/speckle-server.git"
   },
+  "engines": {
+    "node": "^16.0.0"
+  },
   "scripts": {
     "dev": "cross-env S3_BUCKET=speckle-server POSTGRES_URL=postgres://speckle:speckle@localhost/speckle NODE_ENV=development SPECKLE_SERVER_URL=localhost:3000 nodemon ./src/daemon.js",
     "lint": "eslint . --ext .js,.ts"

@@ -10,6 +10,9 @@
     "serve:setup": "vue-cli-service serve",
     "lint": "eslint . --ext .js,.ts,.vue"
   },
+  "engines": {
+    "node": "^16.0.0"
+  },
   "dependencies": {
     "@speckle/viewer": "^2.2.6",
     "@tryghost/content-api": "^1.5.12",
