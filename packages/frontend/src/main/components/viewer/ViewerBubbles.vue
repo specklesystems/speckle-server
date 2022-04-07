@@ -91,7 +91,7 @@
 /* global THREE */
 import gql from 'graphql-tag'
 import { v4 as uuid } from 'uuid'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 
 export default {
   name: 'ViewerBubbles',

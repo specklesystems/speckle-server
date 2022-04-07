@@ -141,7 +141,7 @@
 </template>
 <script>
 import draggable from 'vuedraggable'
-import crs from 'crypto-random-string'
+import { randomString } from '@/helpers/randomHelpers'
 
 export default {
   name: 'GlobalsEntry',
@@ -243,11 +243,11 @@ export default {
         ' ' +
         bimNouns[Math.floor(Math.random() * bimNouns.length)]
       const field = {
-        key: `placeholder ${crs({ length: 6 })}`,
+        key: `placeholder ${randomString(6)}`,
         type: 'field',
         value: randomPhrase,
         valid: true,
-        id: crs({ length: 10 })
+        id: randomString(10)
       }
       this.$emit('add-prop', { field, path: this.path })
     },
@@ -262,10 +262,10 @@ export default {
         valid: entry.valid,
         globals: [
           {
-            key: `placeholder ${crs({ length: 6 })}`,
+            key: `placeholder ${randomString(6)}`,
             type: 'field',
             value: entry.value,
-            id: crs({ length: 10 }),
+            id: randomString(10),
             valid: true
           }
         ]
