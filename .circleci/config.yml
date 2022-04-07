@@ -213,6 +213,9 @@ jobs:
       - run:
           name: try login to npm
           command: npm whoami
+      - add_ssh_keys:
+          fingerprints:
+            - '18:74:c4:b9:dc:66:b2:66:1d:81:56:0d:0a:87:9b:b1'
       - run: npx lerna publish $IMAGE_VERSION_TAG --force-publish --dist-tag next -y
 
   publish-helm-chart:
