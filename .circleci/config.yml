@@ -205,7 +205,7 @@ jobs:
           echo "registry=http://registry.npmjs.org/" >> .npmrc
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
       - run: npm whoami
-      - run: $IMAGE_VERSION_TAG
+      - run: echo $IMAGE_VERSION_TAG
       - run: npx lerna publish $IMAGE_VERSION_TAG --no-private --force-publish --dist-tag next --no-git-tag-version
 
   publish-helm-chart:
