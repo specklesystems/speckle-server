@@ -80,6 +80,8 @@ workflows:
             - npm-registry
           requires:
             - get-version
+          environment:
+            NPM_DIST_TAG: next
 
 jobs:
   lint:
@@ -222,7 +224,7 @@ jobs:
           command: |
             git config --global user.email "devops+circleci@speckle.systems"
             git config --global user.name "CI"
-      - run: npx lerna publish $IMAGE_VERSION_TAG --dist-tag next -y
+      - run: npx lerna publish $IMAGE_VERSION_TAG --dist-tag ${NPM_DIST_TAG} -y
 
   publish-helm-chart:
     docker: *docker-image
