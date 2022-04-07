@@ -1,7 +1,7 @@
 {
   "name": "@speckle/webhook-service",
   "private": true,
-  "version": "2.3.17-alpha.2830",
+  "version": "2.3.17-alpha.2844",
   "description": "Component to handle calling external webhooks",
   "main": "index.js",
   "repository": {
