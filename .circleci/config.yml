@@ -201,13 +201,18 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: |
-          echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
-          echo "registry=http://registry.npmjs.org/" >> .npmrc
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
-      - run: npm whoami
-      - run: echo $IMAGE_VERSION_TAG
       - run: npx lerna bootstrap
+      # this has to be after lerna bootstrap
+      # otherwise the auth workflow of lerna is borked...
+      - run:
+          name: auth to npm as Speckle
+          command: |
+            echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
+            echo "registry=http://registry.npmjs.org/" >> .npmrc
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+      - run:
+          name: try login to npm
+          command: npm whoami
       - run: npx lerna publish $IMAGE_VERSION_TAG --force-publish --dist-tag next -y
 
   publish-helm-chart:
