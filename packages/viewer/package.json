@@ -13,6 +13,9 @@
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": "^16.0.0"
+  },
   "scripts": {
     "serve": "webpack serve --env dev --config webpack.config.example.js --port 9002",
     "dev": "webpack --progress --watch --env dev",

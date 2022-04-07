@@ -10,6 +10,9 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/objectloader"
   },
+  "engines": {
+    "node": "^16.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .js,.ts"

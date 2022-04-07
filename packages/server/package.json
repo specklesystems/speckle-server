@@ -11,6 +11,9 @@
     "type": "git",
     "url": "https://github.com/specklesystems/Server.git"
   },
+  "engines": {
+    "node": "^16.0.0"
+  },
   "scripts": {
     "dev": "cross-env NODE_ENV=development DEBUG=speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
