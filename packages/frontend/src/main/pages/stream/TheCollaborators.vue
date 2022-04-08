@@ -106,7 +106,7 @@
             </section-card>
           </v-col>
           <v-col v-for="role in roles" :key="role.name" cols="12" md="4">
-            <section-card expandable>
+            <section-card v-if="role" expandable>
               <template slot="header">
                 <span class="text-capitalize">{{ role.name.split(':')[1] }}s</span>
               </template>
@@ -288,7 +288,22 @@ export default {
   },
   computed: {
     roles() {
-      return this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams')
+      if (this.serverInfo.roles.length === 0) return []
+      const temp = this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams')
+      const ret = [null, null, null]
+      // World's most idiotic way of enforcing order
+      for (const role of temp) {
+        if (role.name === 'stream:owner') {
+          ret[0] = role
+        } else if (role.name === 'stream:contributor') {
+          ret[1] = role
+        } else if (role.name === 'stream:reviewer') {
+          ret[2] = role
+        } else {
+          ret.push(role)
+        }
+      }
+      return ret
     },
     collaborators() {
       if (!this.stream) return []
