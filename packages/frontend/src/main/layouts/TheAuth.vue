@@ -15,18 +15,12 @@
         </v-col>
         <v-col cols="11" sm="8" md="6" lg="4" xl="3">
           <router-view></router-view>
-          <p v-if="serverInfo" class="caption text-center mt-2">
-            <a
-              v-if="termsOfServiceUrl"
-              :href="termsOfServiceUrl"
-              target="_blank"
-              class="text-decoration-none"
-            >
-              Terms of Service
-            </a>
-            <template v-else>
-              {{ serverInfo.termsOfService }}
-            </template>
+          <p
+            v-if="serverInfo"
+            class="caption text-center mt-2"
+            v-html="serverInfo.termsOfService"
+          >
+            <!-- Temporary revert of our no v-html policy -->
           </p>
         </v-col>
       </v-row>
