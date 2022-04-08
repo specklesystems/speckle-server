@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.4.0",
+  "version": "2.3.17-alpha.2889",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "index.js",
   "homepage": "https://speckle.systems",
@@ -25,9 +25,9 @@
   "author": "AEC Systems",
   "license": "Apache-2.0",
   "devDependencies": {
-    "undici": "^4.14.1",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
-    "prettier": "^2.5.1"
+    "prettier": "^2.5.1",
+    "undici": "^4.14.1"
   }
 }

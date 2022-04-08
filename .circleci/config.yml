@@ -12,23 +12,10 @@ workflows:
       - get-version:
           filters: &filters-build
             tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+$/
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
               only:
                 - main
-
-      # - build-viewer:
-      #     # built the npm package
-      #     filters: &filters-build
-      #       tags:
-      #         only: /^[0-9]+\.[0-9]+\.[0-9]+$/
-      #       branches:
-      #         only:
-      #           # - main
-
-      #         requires:
-      #           # the result of objectloader build can be mounted here from workspace
-      #           - npm_build_object_loader
 
       - docker-build-and-publish-server:
           filters: *filters-build
@@ -85,7 +72,15 @@ workflows:
             - docker-build-and-publish-test-container
 
       - publish-npm:
-          filters: *filters-build
+          filters:
+            tags:
+              only: *filters-tag
+            branches:
+              ignore: /.*/
+          context:
+            - npm-registry
+          requires:
+            - get-version
 
 jobs:
   lint:
@@ -99,7 +94,8 @@ jobs:
       - run: pre-commit run --all-files
 
   get-version:
-    docker: *docker-image
+    docker:
+      - image: cimg/python:3.9
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -154,19 +150,6 @@ jobs:
           path: packages/server/coverage/lcov-report
           destination: package/server/coverage
 
-  build-viewer:
-    docker: *docker-image
-    steps:
-      - checkout
-      - run:
-          command: npm install ../objectloader
-          working_directory: 'packages/viewer'
-      - node/install-packages:
-          app-dir: ~/project/packages/viewer
-      - run:
-          command: npm run build
-          working_directory: 'packages/viewer'
-
   docker-build-and-publish: &docker-job
     docker: *docker-image
     working_directory: *work-dir
@@ -214,11 +197,33 @@ jobs:
 
   publish-npm:
     docker: *docker-image
-    # context:
-    #   - npm_registry
+    working_directory: *work-dir
     steps:
       - checkout
-      - run: node --version
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: npx lerna bootstrap
+      # this has to be after lerna bootstrap
+      # otherwise the auth workflow of lerna is borked...
+      - run:
+          name: auth to npm as Speckle
+          command: |
+            echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
+            echo "registry=http://registry.npmjs.org/" >> .npmrc
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+      - run:
+          name: try login to npm
+          command: npm whoami
+      - add_ssh_keys:
+          fingerprints:
+            - 'e4:47:eb:29:a7:0b:56:a7:9b:d3:a9:e0:05:5c:13:e3'
+      - run:
+          name: setup git user
+          command: |
+            git config --global user.email "devops+circleci@speckle.systems"
+            git config --global user.name "CI"
+      - run: npx lerna publish $IMAGE_VERSION_TAG -y
 
   publish-helm-chart:
     docker: *docker-image

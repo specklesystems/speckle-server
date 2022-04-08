@@ -12,6 +12,7 @@ test-queries
 
 **/.DS_Store
 .nvmrc
+.npmrc
 
 packages/viewer/example/*.js
 packages/viewer/example/*.js.map
