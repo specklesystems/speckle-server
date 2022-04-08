@@ -16,7 +16,6 @@ workflows:
             branches:
               only:
                 - main
-                - CI/lernaPublish
 
       - docker-build-and-publish-server:
           filters: *filters-build
