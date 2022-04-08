@@ -103,7 +103,8 @@ const SpeckleDesktopApp = {
     'streams:write',
     'profile:read',
     'profile:email',
-    'users:read'
+    'users:read',
+    'users:invite'
   ]
 }
 
@@ -120,7 +121,8 @@ const SpeckleConnectorApp = {
     'streams:write',
     'profile:read',
     'profile:email',
-    'users:read'
+    'users:read',
+    'users:invite'
   ]
 }
 
