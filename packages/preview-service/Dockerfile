@@ -11,7 +11,7 @@ WORKDIR /opt/objectloader
 COPY packages/objectloader/package*.json ./
 RUN npm install --production=false
 COPY packages/objectloader .
-# RUN npm run build
+RUN npm run build
 
 WORKDIR /opt/viewer
 COPY packages/viewer/package*.json ./
