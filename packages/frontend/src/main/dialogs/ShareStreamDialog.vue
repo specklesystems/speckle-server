@@ -154,8 +154,8 @@
           color="primary"
           text
           rounded
-          :to="`/streams/${$route.params.streamId}/collaborators`"
           :disabled="stream.role !== 'stream:owner'"
+          @click="goToStreamCollabs()"
         >
           Manage
         </v-btn>
@@ -234,6 +234,10 @@ export default {
       // console.log(e.target.value)
       e.target.select()
       document.execCommand('copy')
+    },
+    goToStreamCollabs() {
+      this.$router.push(`/streams/${this.$route.params.streamId}/collaborators`)
+      this.$emit('close')
     },
     getIframeUrl() {
       const resourceId = this.$route.params.resourceId
