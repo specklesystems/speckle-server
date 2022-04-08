@@ -12,6 +12,7 @@ export const COMMON_STREAM_FIELDS = gql`
     isPublic
     createdAt
     updatedAt
+    commentCount
     collaborators {
       id
       name

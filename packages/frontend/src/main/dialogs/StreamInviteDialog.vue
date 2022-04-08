@@ -100,7 +100,7 @@ export default {
     showDialog() {
       this.clear()
       this.email = this.text
-      this.message = `Hey, I want to share a stream (${this.streamName}) with you!`
+      this.message = `Hey, I want to share a stream on Speckle with you!`
     }
   },
   methods: {
