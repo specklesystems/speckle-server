@@ -194,6 +194,10 @@
           Send Invite
         </v-btn>
       </v-toolbar>
+      <stream-invite-dialog
+        ref="streamInviteDialog"
+        :stream-id="$route.params.streamId"
+      />
     </v-sheet>
   </v-card>
 </template>
@@ -204,7 +208,8 @@ import { COMMON_STREAM_FIELDS } from '@/graphql/streams'
 export default {
   name: 'ShareStreamDialog',
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar'),
+    StreamInviteDialog: () => import('@/main/dialogs/StreamInviteDialog')
   },
   props: {
     stream: {
@@ -238,6 +243,9 @@ export default {
     goToStreamCollabs() {
       this.$router.push(`/streams/${this.$route.params.streamId}/collaborators`)
       this.$emit('close')
+    },
+    showStreamInviteDialog() {
+      this.$refs.streamInviteDialog.show()
     },
     getIframeUrl() {
       const resourceId = this.$route.params.resourceId
