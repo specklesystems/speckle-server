@@ -35,7 +35,7 @@
     "threejs"
   ],
   "dependencies": {
-    "@speckle/objectloader": "^2.4.0",
+    "@speckle/objectloader": "^2.3.18",
     "camera-controls": "^1.33.1",
     "core-js": "^3.21.1",
     "hold-event": "^0.1.0",
