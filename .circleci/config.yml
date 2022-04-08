@@ -31,7 +31,6 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
-            - publish-npm
 
       - docker-build-and-publish-webhooks:
           context: *docker-hub-context
@@ -52,7 +51,6 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
-            - publish-npm
             - test-server
 
       - docker-build-and-publish-test-container:
@@ -78,6 +76,8 @@ workflows:
           filters:
             tags:
               only: *filters-tag
+            branches:
+              ignore: /.*/
           context:
             - npm-registry
           requires:
