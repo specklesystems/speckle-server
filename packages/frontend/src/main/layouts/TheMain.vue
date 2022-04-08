@@ -141,6 +141,14 @@ export default {
       this.$mixpanel.people.set('Identified', true)
     }
     this.$mixpanel.track('Visit Web App')
+
+    if (this.$route.query.emailverfiedstatus) {
+      setTimeout(() => {
+        this.$eventHub.$emit('notification', {
+          text: '✉️ Email succesfully verfied!'
+        })
+      }, 1000) // todo: ask fabian if there's a better way, feels icky
+    }
   },
   methods: {
     switchTheme() {

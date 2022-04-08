@@ -55,6 +55,6 @@ module.exports = (app) => {
     await Users().where({ email: verification.email }).update({ verified: true })
     await Verifications().where({ id: req.query.t }).del()
 
-    return res.redirect('/')
+    return res.redirect('/?emailverfiedstatus=true')
   })
 }
