@@ -4,10 +4,12 @@
       $vuetify.theme.dark ? 'background-dark' : 'background-light'
     }`"
   >
-    <!-- <speckle-loading v-if="!stream || error" :error="error" style="z-index: 101000" /> -->
-    <div v-if="!error" style="z-index: 1000">
-      <div class="top-left bottom-left ma-2 d-flex">
-        <span class="caption d-inline-flex align-center">
+    <div v-if="!error" style="z-index: 10">
+      <div
+        class="top-left bottom-left pa-4"
+        style="right: 0px; position: fixed; z-index: 100000"
+      >
+        <span v-show="!drawer" class="caption d-inline-flex align-center">
           <img src="@/assets/logo.svg" height="18" />
           <span style="margin-top: 2px" class="primary--text">
             <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
@@ -15,6 +17,12 @@
             </a>
           </span>
         </span>
+        <br />
+      </div>
+      <div v-show="!drawer && loadedModel" class="caption grey--text pa-2">
+        <v-btn fab small @click="drawer = true">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
       </div>
       <div
         class="pa-2 d-flex align-center justify-space-between caption"
@@ -23,7 +31,7 @@
         <portal to="viewercontrols">
           <v-btn
             v-if="stream && serverInfo"
-            v-tooltip="'See in Speckle'"
+            v-tooltip="'View extra details in Speckle!'"
             icon
             dark
             large
@@ -44,6 +52,7 @@
         <viewer-controls v-show="loadedModel" />
       </div>
     </div>
+
     <div
       v-if="!loadedModel"
       ref="cover"
@@ -64,10 +73,29 @@
       v-if="!loadedModel && loadProgress === 0"
       class="d-flex fullscreen align-center justify-center"
     >
-      <v-btn fab color="primary" class="elevation-20" @click="load()">
+      <v-btn fab color="primary" class="elevation-20 hover-tada" @click="load()">
         <v-icon>mdi-play</v-icon>
       </v-btn>
     </div>
+    <v-navigation-drawer
+      ref="drawer"
+      v-model="drawer"
+      app
+      floating
+      style="z-index: 10000"
+    >
+      <div class="mx-1 mt-4 pr-2" style="height: 100%; width: 100%">
+        <!-- Views display -->
+        <views-display v-if="views.length !== 0" :views="views" :sticky-top="false" />
+
+        <!-- Filters display -->
+        <viewer-filters
+          :props="objectProperties"
+          style="width: 100%"
+          :sticky-top="false"
+        />
+      </div>
+    </v-navigation-drawer>
     <div style="position: fixed" class="no-scrollbar">
       <speckle-viewer @load-progress="captureProgress" />
     </div>
@@ -82,7 +110,9 @@ export default {
   name: 'EmbedViewer',
   components: {
     SpeckleViewer,
-    ViewerControls: () => import('@/main/components/viewer/ViewerControls')
+    ViewerControls: () => import('@/main/components/viewer/ViewerControls'),
+    ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
+    ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue')
   },
   filters: {
     truncate(str, n = 20) {
@@ -91,10 +121,13 @@ export default {
   },
   data() {
     return {
+      drawer: false,
       loadedModel: false,
       loadProgress: 0,
       error: null,
       objectId: this.$route.query.object,
+      views: [],
+      objectProperties: null,
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
@@ -200,12 +233,16 @@ export default {
   methods: {
     async load() {
       await window.__viewer.loadObject(this.objectUrl)
-      window.__viewer.zoomExtents(undefined, true)
-      this.loadedModel = true
       this.$mixpanel.track('Embedded Model Load', {
         step: this.onboarding,
         type: 'action'
       })
+
+      window.__viewer.zoomExtents(undefined, true)
+
+      this.loadedModel = true
+      this.views.push(...window.__viewer.sceneManager.views)
+      this.objectProperties = await window.__viewer.getObjectsProperties()
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100

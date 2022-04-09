@@ -14,9 +14,11 @@ Vue.use(VueMixpanel, {
 })
 
 import '@/plugins/helpers'
+import store from '@/main/store'
 
 new Vue({
   router,
   vuetify,
+  store,
   render: (h) => h(App)
 }).$mount('#app')
