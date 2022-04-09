@@ -8,10 +8,10 @@
     <div v-if="!error" style="z-index: 1000">
       <div class="top-left bottom-left ma-2 d-flex">
         <span class="caption d-inline-flex align-center">
-          <img src="@/assets/logo.svg" height="20" />
+          <img src="@/assets/logo.svg" height="18" />
           <span style="margin-top: 2px" class="primary--text">
             <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
-              Speckle
+              <b>Powered by Speckle</b>
             </a>
           </span>
         </span>
@@ -20,17 +20,28 @@
         class="pa-2 d-flex align-center justify-space-between caption"
         style="position: fixed; bottom: 0; width: 100%"
       >
-        <v-btn
-          v-if="stream && serverInfo"
-          v-tooltip="'See in Speckle'"
-          color="primary"
-          small
-          class="rounded-lg"
-          :href="goToServerUrl"
-          target="blank"
-        >
-          <v-icon small>mdi-open-in-new</v-icon>
-        </v-btn>
+        <portal to="viewercontrols">
+          <v-btn
+            v-if="stream && serverInfo"
+            v-tooltip="'See in Speckle'"
+            icon
+            dark
+            large
+            class="elevation-5 primary pa-0 ma-o"
+            :href="goToServerUrl"
+            target="blank"
+          >
+            <v-icon dark small>mdi-open-in-new</v-icon>
+          </v-btn>
+        </portal>
+      </div>
+      <div
+        :style="`width: 100%; bottom: 12px; left: 0px; position: ${
+          $isMobile() ? 'fixed' : 'absolute'
+        }; z-index: 20`"
+        :class="`d-flex justify-center`"
+      >
+        <viewer-controls v-show="loadedModel" />
       </div>
     </div>
     <div
@@ -53,7 +64,7 @@
       v-if="!loadedModel && loadProgress === 0"
       class="d-flex fullscreen align-center justify-center"
     >
-      <v-btn fab color="primary" class="elevation-10" @click="load()">
+      <v-btn fab color="primary" class="elevation-20" @click="load()">
         <v-icon>mdi-play</v-icon>
       </v-btn>
     </div>
@@ -70,7 +81,8 @@ import { getCommit, getLatestBranchCommit, getServerInfo } from '@/embed/speckle
 export default {
   name: 'EmbedViewer',
   components: {
-    SpeckleViewer
+    SpeckleViewer,
+    ViewerControls: () => import('@/main/components/viewer/ViewerControls')
   },
   filters: {
     truncate(str, n = 20) {
