@@ -253,7 +253,7 @@ export default {
       const base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
       return `<iframe src="${base}&${this.$resourceType(resourceId)}=${
         this.$route.params.resourceId
-      }" width=600 height=400 />`
+      }" width=600 height=400 ></iframe>`
     },
     async changeVisibility() {
       this.swapPermsLoading = true
