@@ -1,4 +1,9 @@
 <template>
+  <!--  
+    HIC SVNT DRACONES
+    this needs some cleanup, possibly even moving to the main app, 
+    and ensuring local storage absence handling is properly done 
+  -->
   <v-app
     :class="`no-scrollbar ${
       $vuetify.theme.dark ? 'background-dark' : 'background-light'
@@ -132,7 +137,10 @@ export default {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
         branch: this.$route.query.branch || 'main',
-        commit: this.$route.query.commit
+        commit: this.$route.query.commit,
+        overlay: this.$route.query.overlay,
+        camera: this.$route.query.c,
+        filter: this.$route.query.filter
       },
       lastCommit: null,
       specificCommit: null,
@@ -194,7 +202,8 @@ export default {
       this.error = e.message
       return
     }
-
+    console.log(this.displayType)
+    console.log(this.input)
     if (this.displayType === 'commit') {
       try {
         const res = await getCommit(this.input.stream, this.input.commit)
@@ -224,6 +233,7 @@ export default {
         this.lastCommit = data.stream
       } catch (e) {
         this.error = e.message
+        console.log(e)
         return
       }
     }
@@ -232,17 +242,43 @@ export default {
   mounted() {},
   methods: {
     async load() {
-      await window.__viewer.loadObject(this.objectUrl)
       this.$mixpanel.track('Embedded Model Load', {
         step: this.onboarding,
         type: 'action'
       })
 
+      await window.__viewer.loadObject(this.objectUrl)
+
+      if (this.input.overlay) {
+        const resIds = this.input.overlay.split(',')
+        for (const res of resIds) {
+          console.log(res)
+          if (res.length !== 10) {
+            await window.__viewer.loadObject(
+              `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${res}`
+            )
+          } else {
+            const { data } = await getCommit(this.input.stream, res)
+            await window.__viewer.loadObject(
+              `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${data.stream.commit.referencedObject}`
+            )
+          }
+        }
+      }
+
       window.__viewer.zoomExtents(undefined, true)
 
       this.loadedModel = true
+
       this.views.push(...window.__viewer.sceneManager.views)
       this.objectProperties = await window.__viewer.getObjectsProperties()
+
+      if (this.input.filter) {
+        const parsedFilter = JSON.parse(this.input.filter)
+        setTimeout(() => {
+          this.$store.commit('setFilterDirect', { filter: parsedFilter })
+        }, 1000)
+      }
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100
