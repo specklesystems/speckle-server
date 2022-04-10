@@ -250,10 +250,21 @@ export default {
     getIframeUrl() {
       const resourceId = this.$route.params.resourceId
       if (!resourceId) return null
-      const base = `${window.location.origin}/embed?stream=${this.$route.params.streamId}`
-      return `<iframe src="${base}&${this.$resourceType(resourceId)}=${
-        this.$route.params.resourceId
-      }" width=600 height=400 />"`
+      let base = `${window.location.origin}/embed?stream=${
+        this.$route.params.streamId
+      }&${this.$resourceType(resourceId)}=${this.$route.params.resourceId}`
+
+      if (this.$route.query.overlay) {
+        base += `&overlay=${this.$route.query.overlay}`
+      }
+      if (this.$route.query.c) {
+        base += `&c=${encodeURIComponent(this.$route.query.c)}`
+      }
+      if (this.$route.query.filter) {
+        base += `&filter=${encodeURIComponent(this.$route.query.filter)}`
+      }
+
+      return `<iframe src="${base}" width="600" height="400"></iframe>`
     },
     async changeVisibility() {
       this.swapPermsLoading = true

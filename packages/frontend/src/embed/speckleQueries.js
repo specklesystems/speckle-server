@@ -1,6 +1,6 @@
-import gql from 'graphql-tag'
-
-export const serverInfoQuery = gql`
+// NOTE: these are used in a simple fetch request, they do not need the gql literal!
+// The embed app does not use any apollo gql dependencies.
+export const serverInfoQuery = `
   query ServerInfo {
     serverInfo {
       name
@@ -8,7 +8,7 @@ export const serverInfoQuery = gql`
   }
 `
 
-export const streamCommitQuery = gql`
+export const streamCommitQuery = `
   query Stream($id: String!, $commit: String!) {
     stream(id: $id) {
       id
@@ -22,7 +22,7 @@ export const streamCommitQuery = gql`
   }
 `
 
-export const branchLastCommitQuery = gql`
+export const branchLastCommitQuery = `
   query Stream($id: String!, $branch: String!) {
     stream(id: $id) {
       id

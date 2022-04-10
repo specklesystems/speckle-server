@@ -4,10 +4,21 @@ import Vuetify from 'vuetify/lib'
 
 Vue.use(Vuetify)
 
+let hasLocalStorage = typeof Storage !== 'undefined'
+
+try {
+  localStorage.setItem('foo', 'bar')
+  localStorage.getItem('foo')
+  localStorage.removeItem('foo')
+} catch {
+  hasLocalStorage = false
+}
+
 const darkMediaQuery = window.matchMedia('(prefers-color-scheme: dark)').matches
-const hasDarkMode = localStorage.getItem('darkModeEnabled')
-if (!hasDarkMode && darkMediaQuery) {
-  // console.log('setting dark mode')
+const hasDarkMode = hasLocalStorage
+  ? localStorage.getItem('darkModeEnabled')
+  : darkMediaQuery
+if (!hasDarkMode && darkMediaQuery && hasLocalStorage) {
   localStorage.setItem('darkModeEnabled', 'dark')
 }
 
@@ -17,7 +28,7 @@ export default new Vuetify({
   },
   theme: {
     options: { customProperties: true },
-    dark: localStorage.getItem('darkModeEnabled') === 'dark',
+    dark: hasLocalStorage ? localStorage.getItem('darkModeEnabled') === 'dark' : false,
     themes: {
       light: {
         primary: '#047EFB', //blue

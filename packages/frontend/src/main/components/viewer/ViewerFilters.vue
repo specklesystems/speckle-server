@@ -2,7 +2,7 @@
   <v-list dense nav class="mt-0 py-0 mb-3">
     <v-list-item
       :class="`px-2 list-overlay-${$vuetify.theme.dark ? 'dark' : 'light'} elevation-2`"
-      style="position: sticky; top: 82px"
+      :style="`${stickyTop ? 'position: sticky; top: 82px;' : ''}`"
       @click="expand = !expand"
     >
       <v-list-item-action>
@@ -58,7 +58,7 @@
               append-icon="mdi-magnify"
               hide-details
               class="my-2"
-              style="position: sticky; top: 128px; z-index: 6"
+              :style="`${stickyTop ? 'position: sticky; top: 128px;' : ''} z-index: 6`"
             />
             <div v-if="topFilters.length !== 0 && !filterSearch">
               <v-subheader>Reccommended filters:</v-subheader>
@@ -100,7 +100,11 @@ export default {
     },
     sourceApplication: {
       type: String,
-      default: null
+      default: ''
+    },
+    stickyTop: {
+      type: Boolean,
+      default: true
     }
   },
   data() {

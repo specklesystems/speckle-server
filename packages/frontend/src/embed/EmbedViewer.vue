@@ -1,38 +1,63 @@
 <template>
+  <!--  
+    HIC SVNT DRACONES
+    this needs some cleanup, possibly even moving to the main app, 
+    and ensuring local storage absence handling is properly done 
+  -->
   <v-app
     :class="`no-scrollbar ${
       $vuetify.theme.dark ? 'background-dark' : 'background-light'
     }`"
   >
-    <!-- <speckle-loading v-if="!stream || error" :error="error" style="z-index: 101000" /> -->
-    <div v-if="!error" style="z-index: 1000">
-      <div class="top-left bottom-left ma-2 d-flex">
-        <span class="caption d-inline-flex align-center">
-          <img src="@/assets/logo.svg" height="20" />
+    <div v-if="!error" style="z-index: 10">
+      <div
+        class="top-left bottom-left pa-4"
+        style="right: 0px; position: fixed; z-index: 100000"
+      >
+        <span v-show="!drawer" class="caption d-inline-flex align-center">
+          <img src="@/assets/logo.svg" height="18" />
           <span style="margin-top: 2px" class="primary--text">
             <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
-              Speckle
+              <b>Powered by Speckle</b>
             </a>
           </span>
         </span>
+        <br />
+      </div>
+      <div v-show="!drawer && loadedModel" class="caption grey--text pa-2">
+        <v-btn fab small @click="drawer = true">
+          <v-icon>mdi-menu</v-icon>
+        </v-btn>
       </div>
       <div
         class="pa-2 d-flex align-center justify-space-between caption"
         style="position: fixed; bottom: 0; width: 100%"
       >
-        <v-btn
-          v-if="stream && serverInfo"
-          v-tooltip="'See in Speckle'"
-          color="primary"
-          small
-          class="rounded-lg"
-          :href="goToServerUrl"
-          target="blank"
-        >
-          <v-icon small>mdi-open-in-new</v-icon>
-        </v-btn>
+        <portal to="viewercontrols">
+          <v-btn
+            v-if="stream && serverInfo"
+            v-tooltip="'View extra details in Speckle!'"
+            icon
+            dark
+            large
+            class="elevation-5 primary pa-0 ma-o"
+            :href="goToServerUrl"
+            target="blank"
+          >
+            <v-icon dark small>mdi-open-in-new</v-icon>
+          </v-btn>
+        </portal>
+      </div>
+      <div
+        :style="`width: 100%; bottom: 12px; left: 0px; position: ${
+          $isMobile() ? 'fixed' : 'absolute'
+        }; z-index: 20`"
+        :class="`d-flex justify-center`"
+      >
+        <viewer-controls v-show="loadedModel" />
       </div>
     </div>
+
     <div
       v-if="!loadedModel"
       ref="cover"
@@ -53,10 +78,29 @@
       v-if="!loadedModel && loadProgress === 0"
       class="d-flex fullscreen align-center justify-center"
     >
-      <v-btn fab color="primary" class="elevation-10" @click="load()">
+      <v-btn fab color="primary" class="elevation-20 hover-tada" @click="load()">
         <v-icon>mdi-play</v-icon>
       </v-btn>
     </div>
+    <v-navigation-drawer
+      ref="drawer"
+      v-model="drawer"
+      app
+      floating
+      style="z-index: 10000"
+    >
+      <div class="mx-1 mt-4 pr-2" style="height: 100%; width: 100%">
+        <!-- Views display -->
+        <views-display v-if="views.length !== 0" :views="views" :sticky-top="false" />
+
+        <!-- Filters display -->
+        <viewer-filters
+          :props="objectProperties"
+          style="width: 100%"
+          :sticky-top="false"
+        />
+      </div>
+    </v-navigation-drawer>
     <div style="position: fixed" class="no-scrollbar">
       <speckle-viewer @load-progress="captureProgress" />
     </div>
@@ -70,7 +114,10 @@ import { getCommit, getLatestBranchCommit, getServerInfo } from '@/embed/speckle
 export default {
   name: 'EmbedViewer',
   components: {
-    SpeckleViewer
+    SpeckleViewer,
+    ViewerControls: () => import('@/main/components/viewer/ViewerControls'),
+    ViewsDisplay: () => import('@/main/components/viewer/ViewsDisplay'),
+    ViewerFilters: () => import('@/main/components/viewer/ViewerFilters.vue')
   },
   filters: {
     truncate(str, n = 20) {
@@ -79,15 +126,21 @@ export default {
   },
   data() {
     return {
+      drawer: false,
       loadedModel: false,
       loadProgress: 0,
       error: null,
       objectId: this.$route.query.object,
+      views: [],
+      objectProperties: null,
       input: {
         stream: this.$route.query.stream,
         object: this.$route.query.object,
         branch: this.$route.query.branch || 'main',
-        commit: this.$route.query.commit
+        commit: this.$route.query.commit,
+        overlay: this.$route.query.overlay,
+        camera: this.$route.query.c,
+        filter: this.$route.query.filter
       },
       lastCommit: null,
       specificCommit: null,
@@ -149,7 +202,6 @@ export default {
       this.error = e.message
       return
     }
-
     if (this.displayType === 'commit') {
       try {
         const res = await getCommit(this.input.stream, this.input.commit)
@@ -179,6 +231,7 @@ export default {
         this.lastCommit = data.stream
       } catch (e) {
         this.error = e.message
+        console.log(e)
         return
       }
     }
@@ -187,13 +240,51 @@ export default {
   mounted() {},
   methods: {
     async load() {
-      await window.__viewer.loadObject(this.objectUrl)
-      window.__viewer.zoomExtents(undefined, true)
-      this.loadedModel = true
       this.$mixpanel.track('Embedded Model Load', {
         step: this.onboarding,
         type: 'action'
       })
+
+      await window.__viewer.loadObject(this.objectUrl)
+
+      if (this.input.overlay) {
+        const resIds = this.input.overlay.split(',')
+        for (const res of resIds) {
+          console.log(res)
+          if (res.length !== 10) {
+            await window.__viewer.loadObject(
+              `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${res}`
+            )
+          } else {
+            const { data } = await getCommit(this.input.stream, res)
+            await window.__viewer.loadObject(
+              `${window.location.protocol}//${window.location.host}/streams/${this.input.stream}/objects/${data.stream.commit.referencedObject}`
+            )
+          }
+        }
+      }
+
+      window.__viewer.zoomExtents(undefined, true)
+
+      this.loadedModel = true
+
+      this.views.push(...window.__viewer.sceneManager.views)
+      this.objectProperties = await window.__viewer.getObjectsProperties()
+
+      if (this.input.filter) {
+        const parsedFilter = JSON.parse(this.input.filter)
+        setTimeout(() => {
+          this.$store.commit('setFilterDirect', { filter: parsedFilter })
+        }, 1000)
+      }
+
+      if (this.input.camera) {
+        const cam = JSON.parse(this.input.camera)
+        window.__viewer.interactions.setLookAt(
+          { x: cam[0], y: cam[1], z: cam[2] }, // position
+          { x: cam[3], y: cam[4], z: cam[5] } // target
+        )
+      }
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100
