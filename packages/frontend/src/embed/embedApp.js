@@ -16,6 +16,9 @@ Vue.use(VueMixpanel, {
 import '@/plugins/helpers'
 import store from '@/main/store'
 
+import PortalVue from 'portal-vue'
+Vue.use(PortalVue)
+
 new Vue({
   router,
   vuetify,
