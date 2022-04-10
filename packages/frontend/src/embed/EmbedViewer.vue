@@ -279,6 +279,14 @@ export default {
           this.$store.commit('setFilterDirect', { filter: parsedFilter })
         }, 1000)
       }
+
+      if (this.input.camera) {
+        const cam = JSON.parse(this.input.camera)
+        window.__viewer.interactions.setLookAt(
+          { x: cam[0], y: cam[1], z: cam[2] }, // position
+          { x: cam[3], y: cam[4], z: cam[5] } // target
+        )
+      }
     },
     captureProgress(args) {
       this.loadProgress = args.progress * 100
