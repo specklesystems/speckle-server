@@ -202,8 +202,6 @@ export default {
       this.error = e.message
       return
     }
-    console.log(this.displayType)
-    console.log(this.input)
     if (this.displayType === 'commit') {
       try {
         const res = await getCommit(this.input.stream, this.input.commit)
