@@ -20,7 +20,6 @@ RUN npm install
 COPY packages/viewer .
 RUN npm run build
 RUN npm pack --pack-destination=/packages/
-RUN ls /packages
 
 FROM node:16.13-bullseye-slim as build-stage
 
