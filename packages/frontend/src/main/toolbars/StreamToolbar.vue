@@ -41,7 +41,7 @@
       </div>
     </portal>
     <portal to="actions">
-      <span style="position: relative; right: -5px">
+      <span v-if="user" style="position: relative; right: -5px">
         <stream-favorite-btn :stream="stream" :user="user" />
       </span>
       <v-btn
@@ -79,7 +79,7 @@ export default {
   },
   props: {
     stream: { type: Object, required: true },
-    user: { type: Object, required: true }
+    user: { type: Object, default: () => null }
   },
   data() {
     return { shareStream: false }

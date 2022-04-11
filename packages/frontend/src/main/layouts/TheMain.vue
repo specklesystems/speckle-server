@@ -81,7 +81,10 @@ export default {
       query: MainServerInfoQuery
     },
     user: {
-      query: MainUserDataQuery
+      query: MainUserDataQuery,
+      skip() {
+        return !this.$loggedIn()
+      }
     },
     $subscribe: {
       userStreamAdded: {
