@@ -142,6 +142,9 @@ export default {
           ) {
             this.localComments.push({ ...subscriptionData.data.commentActivity })
           }
+        },
+        skip() {
+          return !this.$loggedIn()
         }
       },
       result({ data }) {

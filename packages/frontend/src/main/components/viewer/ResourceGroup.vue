@@ -24,7 +24,7 @@
             "
           ></object-info-resource>
         </div>
-        <div class="px-2 mb-2">
+        <div v-show="$loggedIn()" class="px-2 mb-2">
           <v-btn
             v-tooltip="'Overlay another commit or object'"
             block
@@ -35,19 +35,6 @@
             add
           </v-btn>
         </div>
-        <!-- <resource
-          v-for="(resource, index) in resources"
-          :key="index"
-          :resource="resource"
-          :is-multiple="resources.length > 1"
-          :expand-initial="resources.length === 1 || true"
-          @remove="
-            (e) => {
-              $emit('remove', e)
-              removedResources.push(e)
-            }
-          "
-        /> -->
         <div v-show="removedResources.length !== 0" class="px-3 caption pb-5">
           Removed resources:
           <span
