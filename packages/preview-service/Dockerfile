@@ -2,7 +2,7 @@
 
 
 # build stage
-FROM node:14.16-buster-slim as build-stage
+FROM node:14.16-buster-slim as deps-build 
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
@@ -11,25 +11,32 @@ WORKDIR /opt/objectloader
 COPY packages/objectloader/package*.json ./
 RUN npm install --production=false
 COPY packages/objectloader .
-# RUN npm run build
+RUN npm run build
+# this whole thing is required cause npm 6.* doesn't allow for pack output dir specification
+RUN mkdir /packages
+# invoke npm pack and move its result to the packages folder when done
+RUN mv $(npm pack) /packages/
 
 WORKDIR /opt/viewer
 COPY packages/viewer/package*.json ./
-RUN npm install ../objectloader
+# this installs objectloader from a tarball 
+RUN npm i $(find /packages -type f -name "speckle*.tgz")
 # Install dependencies and devDependencies
 RUN npm install --production=false
 COPY packages/viewer .
 RUN npm run build
+RUN mv $(npm pack) /packages/
+
+FROM node:14.16-buster-slim as build-stage
 
 WORKDIR /opt/preview-service
+COPY --from=deps-build /packages /packages
 COPY packages/preview-service/package*.json ./
-RUN npm install ../objectloader && rm -rf ../objectloader/node_modules
-RUN npm install ../viewer && rm -rf ../viewer/node_modules
+# this installs viewer and objectloader from a tarball
+RUN npm i $(find /packages -type f -name "speckle*.tgz")
 RUN npm ci --production=false
 COPY packages/preview-service .
 RUN npm run build-fe
-
-
 
 FROM node:14.16-buster-slim as node
 
@@ -48,8 +55,6 @@ RUN chmod +x /wait
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-COPY --from=build-stage /opt/objectloader /opt/objectloader
-COPY --from=build-stage /opt/viewer /opt/viewer
 COPY --from=build-stage /opt/preview-service /opt/preview-service
 
 WORKDIR /opt/preview-service

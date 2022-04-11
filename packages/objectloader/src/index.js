@@ -1,3 +1,7 @@
+// POLYFILLS
+import 'core-js'
+import 'regenerator-runtime/runtime'
+
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.

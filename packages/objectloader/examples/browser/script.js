@@ -1,4 +1,4 @@
-import ObjectLoader from '../../index.js'
+import ObjectLoader from './objectloader.web.js'
 window.ObjectLoader = ObjectLoader
 
 // let loader = new ObjectLoader({serverUrl:"https://latest.speckle.dev", streamId:"16d73b756a", objectId:"99b20746460c4369f25e08e92c988a9d"})

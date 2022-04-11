@@ -1,5 +1,4 @@
 /* eslint-env node */
-
 module.exports = {
   configureWebpack: {
     devtool: 'eval-source-map'

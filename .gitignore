@@ -2,6 +2,7 @@
 packages/server/.env
 packages/frontend/dist
 packages/viewer/dist
+packages/objectloader/dist
 *.env
 *.env.test
 *.crt
