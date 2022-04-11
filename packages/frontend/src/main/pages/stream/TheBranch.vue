@@ -150,6 +150,9 @@ export default {
           this.$eventHub.$emit('notification', {
             text: err.message
           })
+        },
+        skip() {
+          return !this.$loggedIn()
         }
       },
       commitDeleted: {
@@ -170,6 +173,9 @@ export default {
           this.$eventHub.$emit('notification', {
             text: err.message
           })
+        },
+        skip() {
+          return !this.$loggedIn()
         }
       }
     }
