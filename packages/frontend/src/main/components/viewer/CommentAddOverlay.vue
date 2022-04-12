@@ -42,33 +42,31 @@
               style="width: 100%"
               class="d-flex"
             >
-              <div v-if="canComment && $loggedIn()">
-                <v-textarea
-                  v-if="$loggedIn()"
-                  v-model="commentText"
-                  solo
-                  hide-details
-                  autofocus
-                  auto-grow
-                  rows="1"
-                  placeholder="Your comment..."
-                  class="mouse rounded-xl caption elevation-15"
-                  append-icon="mdi-send"
-                  @keydown.enter.exact.prevent="addComment()"
-                ></v-textarea>
-                <v-btn
-                  v-if="$loggedIn()"
-                  v-tooltip="'Send comment (press enter)'"
-                  icon
-                  dark
-                  large
-                  class="mouse elevation-0 primary pa-0 ma-o"
-                  style="left: -47px; top: 1px; height: 48px; width: 48px"
-                  @click="addComment()"
-                >
-                  <v-icon dark small>mdi-send</v-icon>
-                </v-btn>
-              </div>
+              <v-textarea
+                v-if="$loggedIn() && canComment"
+                v-model="commentText"
+                solo
+                hide-details
+                autofocus
+                auto-grow
+                rows="1"
+                placeholder="Your comment..."
+                class="mouse rounded-xl caption elevation-15"
+                append-icon="mdi-send"
+                @keydown.enter.exact.prevent="addComment()"
+              ></v-textarea>
+              <v-btn
+                v-if="$loggedIn() && canComment"
+                v-tooltip="'Send comment (press enter)'"
+                icon
+                dark
+                large
+                class="mouse elevation-0 primary pa-0 ma-o"
+                style="left: -47px; top: 1px; height: 48px; width: 48px"
+                @click="addComment()"
+              >
+                <v-icon dark small>mdi-send</v-icon>
+              </v-btn>
               <div
                 v-if="!canComment && $loggedIn()"
                 class="caption background px-4 py-2 rounded-xl elevation-2"
