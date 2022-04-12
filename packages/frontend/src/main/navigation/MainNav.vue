@@ -154,7 +154,7 @@ export default {
     user: {
       query: MainUserDataQuery,
       skip() {
-        !this.$loggedIn()
+        return !this.$loggedIn()
       }
     }
   },
