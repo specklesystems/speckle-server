@@ -152,7 +152,10 @@ export default {
   },
   apollo: {
     user: {
-      query: MainUserDataQuery
+      query: MainUserDataQuery,
+      skip() {
+        !this.$loggedIn()
+      }
     }
   },
   data() {

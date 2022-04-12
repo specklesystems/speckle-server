@@ -76,7 +76,7 @@
             {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
-        <div>
+        <div v-if="canReply">
           <v-textarea
             v-model="replyText"
             :disabled="loadingReply"
@@ -91,6 +91,9 @@
             @click:append="addReply"
             @keydown.enter.exact.prevent="addReply()"
           ></v-textarea>
+        </div>
+        <div v-else class="caption background rounded-xl py-2 px-4 elevation-2">
+          You do not have sufficient permissions to reply to comments in this stream.
         </div>
         <div v-show="loadingReply" class="px-2">
           <v-progress-linear indeterminate />
@@ -178,7 +181,10 @@ export default {
             id
           }
         }
-      `
+      `,
+      skip() {
+        return !this.$loggedIn()
+      }
     },
     stream: {
       query: gql`
@@ -296,6 +302,9 @@ export default {
     }
   },
   computed: {
+    canReply() {
+      return !!this.stream?.role
+    },
     canArchiveThread() {
       if (!this.comment || !this.stream) return false
       if (!this.stream.role) return false
@@ -347,6 +356,8 @@ export default {
     'comment.expanded': {
       deep: true,
       async handler(newVal) {
+        if (!this.$loggedIn() || !this.canReply) return
+
         await this.$apollo.mutate({
           mutation: gql`
             mutation commentView($streamId: String!, $commentId: String!) {

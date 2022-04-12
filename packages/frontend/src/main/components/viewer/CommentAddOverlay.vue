@@ -42,31 +42,39 @@
               style="width: 100%"
               class="d-flex"
             >
-              <v-textarea
-                v-if="$loggedIn()"
-                v-model="commentText"
-                solo
-                hide-details
-                autofocus
-                auto-grow
-                rows="1"
-                placeholder="Your comment..."
-                class="mouse rounded-xl caption elevation-15"
-                append-icon="mdi-send"
-                @keydown.enter.exact.prevent="addComment()"
-              ></v-textarea>
-              <v-btn
-                v-if="$loggedIn()"
-                v-tooltip="'Send comment (press enter)'"
-                icon
-                dark
-                large
-                class="mouse elevation-0 primary pa-0 ma-o"
-                style="left: -47px; top: 1px; height: 48px; width: 48px"
-                @click="addComment()"
+              <div v-if="canComment && $loggedIn()">
+                <v-textarea
+                  v-if="$loggedIn()"
+                  v-model="commentText"
+                  solo
+                  hide-details
+                  autofocus
+                  auto-grow
+                  rows="1"
+                  placeholder="Your comment..."
+                  class="mouse rounded-xl caption elevation-15"
+                  append-icon="mdi-send"
+                  @keydown.enter.exact.prevent="addComment()"
+                ></v-textarea>
+                <v-btn
+                  v-if="$loggedIn()"
+                  v-tooltip="'Send comment (press enter)'"
+                  icon
+                  dark
+                  large
+                  class="mouse elevation-0 primary pa-0 ma-o"
+                  style="left: -47px; top: 1px; height: 48px; width: 48px"
+                  @click="addComment()"
+                >
+                  <v-icon dark small>mdi-send</v-icon>
+                </v-btn>
+              </div>
+              <div
+                v-if="!canComment && $loggedIn()"
+                class="caption background px-4 py-2 rounded-xl elevation-2"
               >
-                <v-icon dark small>mdi-send</v-icon>
-              </v-btn>
+                You do not have sufficient permissions to add a comment to this stream.
+              </div>
               <v-btn
                 v-if="!$loggedIn()"
                 block
@@ -88,7 +96,13 @@
           @input="toggleExpand()"
         >
           <div
-            v-if="$loggedIn()"
+            v-if="!canComment && $loggedIn()"
+            class="caption background px-4 py-2 rounded-xl elevation-2"
+          >
+            You do not have sufficient permissions to add a comment to this stream.
+          </div>
+          <div
+            v-if="$loggedIn() && canComment"
             class="d-flex justify-center"
             style="position: relative; left: 24px"
           >
@@ -156,12 +170,45 @@ import debounce from 'lodash.debounce'
 
 import { getCamArray } from './viewerFrontendHelpers'
 export default {
+  apollo: {
+    user: {
+      query: gql`
+        query {
+          user {
+            name
+            id
+          }
+        }
+      `,
+      skip() {
+        return !this.$loggedIn()
+      }
+    },
+    stream: {
+      query: gql`
+        query ($streamId: String!) {
+          stream(id: $streamId) {
+            id
+            role
+          }
+        }
+      `,
+      variables() {
+        return { streamId: this.$route.params.streamId }
+      }
+    }
+  },
   data() {
     return {
       location: null,
       expand: false,
       visible: true,
       commentText: null
+    }
+  },
+  computed: {
+    canComment() {
+      return !!this.stream?.role
     }
   },
   mounted() {

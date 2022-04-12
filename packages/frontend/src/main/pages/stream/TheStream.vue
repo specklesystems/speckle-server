@@ -57,7 +57,10 @@ export default {
       }
     },
     user: {
-      query: MainUserDataQuery
+      query: MainUserDataQuery,
+      skip() {
+        return !this.$loggedIn()
+      }
     },
     $subscribe: {
       branchCreated: {
@@ -82,7 +85,7 @@ export default {
           })
         },
         skip() {
-          return !this.loggedIn
+          return !this.$loggedIn()
         }
       },
       commitCreated: {
@@ -110,14 +113,9 @@ export default {
           })
         },
         skip() {
-          return !this.loggedIn
+          return !this.$loggedIn()
         }
       }
-    }
-  },
-  computed: {
-    loggedIn() {
-      return localStorage.getItem('uuid') !== null
     }
   },
   mounted() {

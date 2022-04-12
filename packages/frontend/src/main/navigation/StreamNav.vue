@@ -1,6 +1,6 @@
 <template>
   <portal to="nav">
-    <div v-if="!loggedIn" class="px-4 my-2">
+    <div v-if="!$loggedIn()" class="px-4 my-2">
       <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
     </div>
     <v-list
@@ -323,9 +323,6 @@ export default {
     branchesTotalCount() {
       if (!this.branchQuery) return 0
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
-    },
-    loggedIn() {
-      return localStorage.getItem('uuid') !== null
     }
   },
   watch: {

@@ -14,6 +14,9 @@
       />
 
       <portal to="nav">
+        <div v-if="!$loggedIn()" class="px-4 my-2">
+          <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
+        </div>
         <v-list nav dense class="mt-0 pt-0">
           <v-list-item
             v-if="isCommit"

@@ -230,6 +230,9 @@ export default {
             resourceIds: resIds
           }
         },
+        skip() {
+          return !this.$loggedIn()
+        },
         updateQuery(prevResult, { subscriptionData }) {
           if (
             !subscriptionData ||

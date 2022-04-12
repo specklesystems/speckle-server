@@ -1,19 +1,13 @@
 <template>
   <div class="elevation-10">
     <portal-target name="nav-bottom">
-      <v-list nav dense :class="`pt-0 my-0 ${$loggedIn() ? 'pb-0' : ''}`">
+      <v-list nav dense :class="`pt-0 my-0 pb-0`">
         <v-list-item class="d-flex flex-grow-1 justify-center">
           <v-row dense style="max-width: 350px">
             <v-col v-if="$loggedIn()">
               <v-btn x-small block depressed color="error" @click="signOut()">
                 <v-icon x-small class="mr-1">mdi-account-off</v-icon>
                 Sign out
-              </v-btn>
-            </v-col>
-            <v-col v-else cols="12">
-              <v-btn x-small block depressed color="primary" to="/authn/login">
-                <v-icon x-small class="mr-1">mdi-account</v-icon>
-                Sign in
               </v-btn>
             </v-col>
             <v-col>
