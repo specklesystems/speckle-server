@@ -3,11 +3,14 @@
   "version": "2.3.17-alpha.2889",
   "private": true,
   "scripts": {
-    "dev": "vue-cli-service serve",
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "build:setup": "vue-cli-service build",
-    "serve:setup": "vue-cli-service serve",
+    "dev": "vue-cli-service serve --mode development",
+    "serve": "ws -p 8080 -d dist -r '/embed(.*) -> /embedApp.html' '/([a-zA-Z0-9-_/]*)(\\?.*)? -> /app.html' ",
+    "build": "vue-cli-service build --mode production --silent",
+    "build:dev": "vue-cli-service build --mode development --silent",
+    "build:profile": "npm run build -- --profile",
+    "build:dev:profile": "npm run build:dev -- --profile",
+    "inspect": "vue-cli-service inspect --mode production",
+    "inspect:dev": "vue-cli-service inspect --mode development",
     "lint": "eslint . --ext .js,.ts,.vue"
   },
   "engines": {
@@ -49,17 +52,29 @@
     "@vue/cli-plugin-vuex": "~4.3.0",
     "@vue/cli-service": "~4.3.0",
     "babel-eslint": "^10.1.0",
+    "babel-plugin-lodash": "^3.3.4",
+    "duplicate-dependencies-webpack-plugin": "^1.0.2",
+    "esbuild-loader": "^2.18.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-loader": "^4.0.2",
     "eslint-plugin-vue": "^8.5.0",
     "graphql-tag": "^2.11.0",
+    "local-web-server": "^5.2.0",
+    "lodash-webpack-plugin": "^0.11.6",
     "prettier": "^2.5.1",
     "sass": "~1.32.6",
     "sass-loader": "^8.0.0",
+    "speed-measure-webpack-plugin": "^1.5.0",
     "vue-cli-plugin-apollo": "~0.21.3",
     "vue-cli-plugin-vuetify": "^2.0.8",
     "vue-template-compiler": "^2.6.12",
-    "vuetify-loader": "^1.6.0"
+    "vuetify-loader": "^1.6.0",
+    "webpack-bundle-analyzer": "^4.5.0"
+  },
+  "vuePlugins": {
+    "service": [
+      "./esbuildPlugin.js"
+    ]
   }
 }

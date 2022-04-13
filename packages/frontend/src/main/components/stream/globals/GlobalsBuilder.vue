@@ -95,7 +95,7 @@
 
 <script>
 import gql from 'graphql-tag'
-import crs from 'crypto-random-string'
+import { randomString } from '@/helpers/randomHelpers'
 import objectQuery from '@/graphql/objectSingle.gql'
 
 export default {
@@ -251,7 +251,7 @@ export default {
             arr.push({
               key,
               valid: true,
-              id: crs({ length: 10 }),
+              id: randomString(10),
               value: val,
               globals: this.nestedGlobals(val),
               type: 'object' //TODO: handle references
@@ -260,7 +260,7 @@ export default {
             arr.push({
               key,
               valid: true,
-              id: crs({ length: 10 }),
+              id: randomString(10),
               value: val,
               globals: this.nestedGlobals(val),
               type: 'object'
@@ -270,7 +270,7 @@ export default {
           arr.push({
             key,
             valid: true,
-            id: crs({ length: 10 }),
+            id: randomString(10),
             value: val,
             type: 'field'
           })

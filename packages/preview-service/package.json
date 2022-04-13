@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^14.0.0"
+    "node": ">=14.0.0 <17.0.0"
   },
   "scripts": {
     "dev": "DEBUG='preview-service:*' nodemon --trace-deprecation ./bin/www",

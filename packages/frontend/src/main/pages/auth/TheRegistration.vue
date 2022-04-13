@@ -185,7 +185,7 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
-import crs from 'crypto-random-string'
+import { randomString } from '@/helpers/randomHelpers'
 
 import AuthStrategies from '@/main/components/auth/AuthStrategies.vue'
 import { isEmailValid } from '@/plugins/authHelpers'
@@ -284,7 +284,7 @@ export default {
     else this.appId = appId
 
     if (!challenge && this.appId === 'spklwebapp') {
-      this.challenge = crs({ length: 10 })
+      this.challenge = randomString({ length: 10 })
       localStorage.setItem('appChallenge', this.challenge)
     } else if (challenge) {
       this.challenge = challenge

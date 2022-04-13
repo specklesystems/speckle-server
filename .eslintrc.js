@@ -20,7 +20,7 @@ const config = {
     'prefer-const': 'warn',
     'object-shorthand': 'warn'
   },
-  ignorePatterns: ['node_modules', 'dist', 'public']
+  ignorePatterns: ['node_modules', 'dist', 'public', 'events.json', '.mocharc.js']
 }
 
 module.exports = config

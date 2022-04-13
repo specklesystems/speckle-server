@@ -24,3 +24,6 @@ packages/server/reports*
 
 **/venv/**
 **/start/
+
+# Profiler output
+events.json
