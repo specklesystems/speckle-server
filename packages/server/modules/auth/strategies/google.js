@@ -45,6 +45,12 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         const existingUser = await getUserByEmail({ email: user.email })
 
+        if (existingUser && !existingUser.verified) {
+          throw new Error(
+            'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with Google'
+          )
+        }
+
         // if there is an existing user, go ahead and log them in (regardless of
         // whether the server is invite only or not).
         if (existingUser) {

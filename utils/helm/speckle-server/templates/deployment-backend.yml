@@ -58,6 +58,7 @@ spec:
           # account for long-running migrations
           initialDelaySeconds: 600
           periodSeconds: 60
+          timeoutSeconds: 10
           exec:
             command:
               - node
@@ -67,6 +68,7 @@ spec:
         readinessProbe:
           initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 10
           exec:
             command:
               - node
