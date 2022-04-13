@@ -238,7 +238,7 @@ const store = new Vuex.Store({
             this.commit('isolateCategoryToggle', f)
           }
         }
-      } else {
+      } else if (filterBy) {
         const values = filterBy[Object.keys(filter.filterBy)[0]].not
         for (const val of values) {
           const f = {
@@ -249,6 +249,8 @@ const store = new Vuex.Store({
           }
           this.commit('hideCategoryToggle', f)
         }
+      } else if (filter.colorBy) {
+        this.commit('toggleColorByCategory', { filterKey: filter.colorBy.property })
       }
     },
     resetInternalHideIsolateObjectState(state) {
