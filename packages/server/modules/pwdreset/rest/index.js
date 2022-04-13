@@ -11,6 +11,8 @@ const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
 const { sendEmail } = require(`${appRoot}/modules/emails`)
 
 const ResetTokens = () => knex('pwdreset_tokens')
+const RefreshTokens = () => knex('refresh_tokens')
+const AuthorizationCodes = () => knex('authorization_codes')
 
 module.exports = (app) => {
   // sends a password recovery email.
@@ -127,6 +129,20 @@ This email was sent from ${serverInfo.name} at ${
       await updateUserPassword({ id: user.id, newPassword: req.body.password })
 
       await ResetTokens().where({ id: req.body.tokenId }).del()
+
+      // Delete existing auth tokens
+      await RefreshTokens().where({ userId: user.id }).del()
+      await AuthorizationCodes().where({ userId: user.id }).del()
+      await knex.raw(
+        `
+        DELETE FROM api_tokens
+        WHERE owner = ?
+        AND id NOT IN (
+          SELECT p."tokenId" FROM personal_api_tokens p WHERE p."userId" = ?
+        )
+        `,
+        [user.id, user.id]
+      )
 
       return res.status(200).send('Password reset. Please log in.')
     } catch (e) {
