@@ -17,8 +17,7 @@ workflows:
               # only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
               only:
-                # - main
-                - CI/lernaPublish
+                - main
 
       - docker-build-and-publish-server:
           filters: *filters-build
@@ -225,6 +224,7 @@ jobs:
           command: |
             git config --global user.email "devops+circleci@speckle.systems"
             git config --global user.name "CI"
+            git config --global push.default current
       - run:
           name: publish to npm
           command: npx lerna publish $IMAGE_VERSION_TAG -y --dist-tag next
