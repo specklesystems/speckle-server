@@ -211,7 +211,7 @@ jobs:
           command: npm whoami
       - run:
           name: publish to npm
-          command: npx lerna publish $IMAGE_VERSION_TAG -y next --no-git-tag-version --no-push --dist-tag
+          command: npx lerna publish $IMAGE_VERSION_TAG -y --no-git-tag-version --no-push --dist-tag next
 
   publish-helm-chart:
     docker: *docker-image
