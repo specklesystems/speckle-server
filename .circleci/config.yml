@@ -197,7 +197,9 @@ jobs:
       - run: cat workspace/env-vars >> $BASH_ENV
       - run:
           name: restore packages
-          command: npx lerna bootstrap
+          command: |
+            npm i
+            npx lerna bootstrap
       # this has to be after lerna bootstrap
       # otherwise the auth workflow of lerna is borked...
       - run:
