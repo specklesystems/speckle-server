@@ -99,6 +99,12 @@ module.exports = (app) => {
           // last = objs[objs.length - 1]
           totalProcessed += objs.length
 
+          let previouslyAwaitedPromises = 0
+          while (previouslyAwaitedPromises !== promises.length) {
+            previouslyAwaitedPromises = promises.length
+            await Promise.all(promises)
+          }
+
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
             debug('speckle:error')(
               `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
@@ -170,6 +176,12 @@ module.exports = (app) => {
           // last = objs[objs.length - 1]
           totalProcessed += objs.length
 
+          let previouslyAwaitedPromises = 0
+          while (previouslyAwaitedPromises !== promises.length) {
+            previouslyAwaitedPromises = promises.length
+            await Promise.all(promises)
+          }
+
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
             debug('speckle:error')(
               `[User ${req.context.userId || '-'}] Upload error: ${e.message}`
@@ -218,7 +230,11 @@ module.exports = (app) => {
         } MB mem`
       )
 
-      await Promise.all(promises)
+      let previouslyAwaitedPromises = 0
+      while (previouslyAwaitedPromises !== promises.length) {
+        previouslyAwaitedPromises = promises.length
+        await Promise.all(promises)
+      }
 
       res.status(201).end()
     })
