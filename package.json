@@ -11,15 +11,18 @@
     "docker:deps:up": "docker-compose -f ./docker-compose-deps.yml up -d",
     "docker:deps:down": "docker-compose -f ./docker-compose-deps.yml down",
     "dev": "lerna run dev --parallel",
-    "dev:no-server": "npm run dev -- --ignore @speckle/server"
+    "dev:no-server": "npm run dev -- --ignore @speckle/server",
+    "prepare": "husky install",
+    "postinstall": "husky install"
   },
   "devDependencies": {
     "@types/eslint": "^8.4.1",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "husky": "^7.0.4",
     "lerna": "^3.22.1",
-    "pre-commit": "^1.2.2",
+    "lint-staged": "^12.3.7",
     "prettier": "^2.5.1"
   },
   "config": {
@@ -27,8 +30,8 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
-  "pre-commit": [
-    "lint",
-    "prettier:check"
-  ]
+  "lint-staged": {
+    "*.{js,ts,vue}": "eslint --cache --max-warnings=0",
+    "*.**": "prettier --check --ignore-unknown"
+  }
 }

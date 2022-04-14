@@ -27,3 +27,6 @@ packages/server/reports*
 
 # Profiler output
 events.json
+
+# Optional eslint cache
+.eslintcache
