@@ -193,6 +193,7 @@ jobs:
     docker: *docker-image
     working_directory: *work-dir
     steps:
+      - checkout
       - run:
           # WARNING this assumes that this job is only being run with a git tag trigger
           # do not run this job with a branch filter
