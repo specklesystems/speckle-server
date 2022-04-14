@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   node: circleci/node@5.0.1
+  github-cli: circleci/github-cli@2.1.0
 
 workflows:
   version: 2
@@ -12,10 +13,12 @@ workflows:
       - get-version:
           filters: &filters-build
             tags:
-              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
+              only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+-alpha\.[0-9]+$/
+              # only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
             branches:
               only:
-                - main
+                # - main
+                - CI/lernaPublish
 
       - docker-build-and-publish-server:
           filters: *filters-build
@@ -83,16 +86,6 @@ workflows:
             - get-version
 
 jobs:
-  lint:
-    docker: &docker-image
-      - image: cimg/python:3.9-node
-    steps:
-      - checkout
-      - run: npm ci
-      - run: npx lerna bootstrap
-      - run: pip install pre-commit
-      - run: pre-commit run --all-files
-
   get-version:
     docker:
       - image: cimg/python:3.9
@@ -151,7 +144,8 @@ jobs:
           destination: package/server/coverage
 
   docker-build-and-publish: &docker-job
-    docker: *docker-image
+    docker: &docker-image
+      - image: cimg/python:3.9-node
     working_directory: *work-dir
     steps:
       - checkout
@@ -199,11 +193,18 @@ jobs:
     docker: *docker-image
     working_directory: *work-dir
     steps:
-      - checkout
+      - run:
+          # WARNING this assumes that this job is only being run with a git tag trigger
+          # do not run this job with a branch filter
+          # this checks out the tag to a new branch so that we can create
+          # a PR from the lerna changes at the end
+          name: checkout tag to a new branch
+          command: git checkout ${CIRCLE_TAG} -b release/${CIRCLE_TAG}
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: npx lerna bootstrap
+
       # this has to be after lerna bootstrap
       # otherwise the auth workflow of lerna is borked...
       - run:
@@ -223,7 +224,12 @@ jobs:
           command: |
             git config --global user.email "devops+circleci@speckle.systems"
             git config --global user.name "CI"
-      - run: npx lerna publish $IMAGE_VERSION_TAG -y
+      - run:
+          name: publish to npm
+          command: npx lerna publish $IMAGE_VERSION_TAG -y --dist-tag next
+      - run:
+          name: create PR
+          command: gh pr create --title Lerna publish ${CIRCLE_TAG} --body lerna bumping stuff
 
   publish-helm-chart:
     docker: *docker-image
