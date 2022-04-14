@@ -1,6 +1,6 @@
 {
   "name": "@speckle/frontend",
-  "version": "2.3.17-alpha.2889",
+  "version": "2.5.1-alpha.9",
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve --mode development",
@@ -17,7 +17,7 @@
     "node": "^16.0.0"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.4.2",
+    "@speckle/viewer": "^2.5.1-alpha.9",
     "@tryghost/content-api": "^1.5.12",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
