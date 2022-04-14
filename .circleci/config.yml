@@ -8,7 +8,11 @@ workflows:
 
   test-build:
     jobs:
-      - test-server
+      - test-server:
+          filters:
+            tags:
+              # run tests for all tags
+              only: /.*/
       - get-version:
           filters: &filters-build
             tags:
@@ -16,7 +20,6 @@ workflows:
             branches:
               only:
                 - main
-
       - docker-build-and-publish-server:
           filters: *filters-build
           context: &docker-hub-context
@@ -83,16 +86,6 @@ workflows:
             - get-version
 
 jobs:
-  lint:
-    docker: &docker-image
-      - image: cimg/python:3.9-node
-    steps:
-      - checkout
-      - run: npm ci
-      - run: npx lerna bootstrap
-      - run: pip install pre-commit
-      - run: pre-commit run --all-files
-
   get-version:
     docker:
       - image: cimg/python:3.9
@@ -151,7 +144,8 @@ jobs:
           destination: package/server/coverage
 
   docker-build-and-publish: &docker-job
-    docker: *docker-image
+    docker: &docker-image
+      - image: cimg/python:3.9-node
     working_directory: *work-dir
     steps:
       - checkout
@@ -203,7 +197,11 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: npx lerna bootstrap
+      - run:
+          name: restore packages
+          command: |
+            npm i
+            npx lerna bootstrap
       # this has to be after lerna bootstrap
       # otherwise the auth workflow of lerna is borked...
       - run:
@@ -215,15 +213,9 @@ jobs:
       - run:
           name: try login to npm
           command: npm whoami
-      - add_ssh_keys:
-          fingerprints:
-            - 'e4:47:eb:29:a7:0b:56:a7:9b:d3:a9:e0:05:5c:13:e3'
       - run:
-          name: setup git user
-          command: |
-            git config --global user.email "devops+circleci@speckle.systems"
-            git config --global user.name "CI"
-      - run: npx lerna publish $IMAGE_VERSION_TAG -y
+          name: publish to npm
+          command: npx lerna publish $IMAGE_VERSION_TAG -y --no-git-tag-version --no-push
 
   publish-helm-chart:
     docker: *docker-image
