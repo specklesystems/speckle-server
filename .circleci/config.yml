@@ -225,6 +225,7 @@ jobs:
             git config --global user.email "devops+circleci@speckle.systems"
             git config --global user.name "CI"
             git config --global push.default current
+            git push
       - run:
           name: publish to npm
           command: npx lerna publish $IMAGE_VERSION_TAG -y --dist-tag next
