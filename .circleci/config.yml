@@ -236,7 +236,7 @@ jobs:
           command: npx lerna publish $IMAGE_VERSION_TAG -y --dist-tag next
       - run:
           name: create PR
-          command: gh pr create --title `Lerna publish ${CIRCLE_TAG}` --body `lerna bumping stuff`
+          command: gh pr create --title 'Lerna publish ${CIRCLE_TAG}' --body 'lerna bumping stuff'
 
   publish-helm-chart:
     docker: *docker-image
