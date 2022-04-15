@@ -148,7 +148,7 @@ export default {
     if (this.$route.query.emailverfiedstatus) {
       setTimeout(() => {
         this.$eventHub.$emit('notification', {
-          text: '✉️ Email succesfully verfied!'
+          text: '✉️ Email successfully verfied!'
         })
       }, 1000) // todo: ask fabian if there's a better way, feels icky
     }

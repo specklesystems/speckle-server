@@ -26,7 +26,7 @@
       <h2>There are no global variables in this stream.</h2>
       <p class="caption">
         Global variables can hold various information that's useful across the project:
-        location (city, adress, lat & long coordinates), custom project names or tags,
+        location (city, address, lat & long coordinates), custom project names or tags,
         or any other numbers or text that you want to keep track of.
       </p>
       <template #actions>

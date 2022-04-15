@@ -189,7 +189,7 @@ export default {
     }
   },
   mounted() {
-    // for some reasons, these are not clearly intialised
+    // for some reasons, these are not clearly initialised
     this.users = []
     this.selectedIds = []
     this.selectionCenter = null

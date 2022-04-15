@@ -34,7 +34,7 @@
     },
   ],
   "settings": {
-    // Some settings below are duplicated in root/.vscode, incase the repo is opened without targetting the workspace file
+    // Some settings below are duplicated in root/.vscode, incase the repo is opened without targeting the workspace file
     // I don't think there's a way to force users to open the project as a workspace always
     "explorer.confirmDelete": false,
     "files.associations": {

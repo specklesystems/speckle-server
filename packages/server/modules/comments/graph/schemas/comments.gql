@@ -1,7 +1,7 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
   """
-  This query can be used in the follwing ways:
+  This query can be used in the following ways:
   - get all the comments for a stream: **do not pass in any resource identifiers**.
   - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
   """

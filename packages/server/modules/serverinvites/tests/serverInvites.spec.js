@@ -70,7 +70,7 @@ describe('Server Invites @server-invites', () => {
           expect(err.message).to.equal('Already invited!')
         })
     })
-    it('low multiple invites for the same email regardles of casing', async () => {
+    it('low multiple invites for the same email regardless of casing', async () => {
       await createAndSendInvite({
         email: 'dIdImItrIe@gmaIl.com',
         inviterId: actor.id,

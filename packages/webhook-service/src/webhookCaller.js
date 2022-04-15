@@ -47,8 +47,8 @@ async function makeNetworkRequest({ url, data, headersData }) {
       body: JSON.stringify(data),
       headers,
       follow: 2, // follow max 2 redirects (fetch defaults to 20)
-      timeout: 10 * 1000, // timeout after 10sec (defauls to no timeout)
-      size: 500 * 1000 // 500kb max response size, to accomodate various error responses (defaults to no limit)
+      timeout: 10 * 1000, // timeout after 10sec (defaults to no timeout)
+      size: 500 * 1000 // 500kb max response size, to accommodate various error responses (defaults to no limit)
     }).then(async (res) => ({ status: res.status, body: await res.text() }))
 
     //console.log( 'Server response:', response )
