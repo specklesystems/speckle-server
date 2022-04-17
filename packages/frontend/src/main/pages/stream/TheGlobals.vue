@@ -109,7 +109,7 @@
         </v-col>
         <!-- History -->
         <v-col cols="12" md="4">
-          <section-card expandable>
+          <section-card v-if="branch.commits" expandable>
             <template slot="header">
               Globals History ({{ branch.commits.totalCount }})
             </template>
@@ -177,6 +177,7 @@ export default {
     },
     branch: {
       query: branchQuery,
+      fetchPolicy: 'no-cache',
       variables() {
         return {
           streamId: this.streamId,
