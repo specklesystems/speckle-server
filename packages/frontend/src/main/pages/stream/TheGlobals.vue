@@ -177,6 +177,7 @@ export default {
     },
     branch: {
       query: branchQuery,
+      fetchPolicy: 'no-cache',
       variables() {
         return {
           streamId: this.streamId,
