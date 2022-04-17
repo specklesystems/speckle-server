@@ -119,7 +119,7 @@ export default {
         return data.stream.object
       },
       skip() {
-        return !!this.objectId
+        return !this.objectId
       }
     }
   },
