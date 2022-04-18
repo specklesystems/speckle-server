@@ -34,6 +34,7 @@ export default class Viewer extends EventEmitter {
     })
     this.renderer.setClearColor(0xcccccc, 0)
     this.renderer.setPixelRatio(window.devicePixelRatio)
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
     this.container.appendChild(this.renderer.domElement)
 
