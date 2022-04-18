@@ -18,10 +18,10 @@
     "node": "^16.0.0"
   },
   "scripts": {
-    "build": "NODE_ENV=production rollup --config",
+    "build": "set NODE_ENV=production && rollup --config",
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",
-    "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./example -p 3032 -o",
+    "example": "set EXAMPLE_BUILD=1 && rollup --config && http-server ./example -p 3032 -o",
     "prepublishOnly": "npm run build",
     "lint": "eslint . --ext .js,.ts"
   },
@@ -62,7 +62,7 @@
     "babel-plugin-add-module-exports": "1.0.4",
     "babel-plugin-transform-class-properties": "6.24.1",
     "browserslist": "^4.20.2",
-    "cross-env": "7.0.3",
+    "cross-env": "^7.0.3",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "http-server": "^14.1.0",

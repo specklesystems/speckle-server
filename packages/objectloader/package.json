@@ -16,7 +16,7 @@
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
     "build:dev": "rollup --config",
-    "build": "NODE_ENV=production rollup --config",
+    "build": "set NODE_ENV=production && rollup --config",
     "dev": "rollup --config --watch",
     "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./examples/browser -p 3031 -o"
   },
