@@ -81,7 +81,7 @@ module.exports = class IFCParser {
           spcklFaces.push(raw.indices[i])
         }
 
-        // Create a propper Speckle Mesh
+        // Create a proper Speckle Mesh
         const spcklMesh = {
           speckle_type: 'Objects.Geometry.Mesh',
           units: 'm',

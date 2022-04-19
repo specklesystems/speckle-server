@@ -61,7 +61,7 @@
               :style="`${stickyTop ? 'position: sticky; top: 128px;' : ''} z-index: 6`"
             />
             <div v-if="topFilters.length !== 0 && !filterSearch">
-              <v-subheader>Reccommended filters:</v-subheader>
+              <v-subheader>Recommended filters:</v-subheader>
               <div v-for="(filter, index) in topFilters" :key="index">
                 <filter-row-select
                   v-if="filter"

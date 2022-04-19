@@ -295,7 +295,7 @@ export default class SceneObjects {
 
         let materialId = `${m.type}/${m.vertexColors}/${m.color.toJSON()}/${m.side}/${
           m.transparent
-        }/${m.opactiy}/${m.emissive}/${m.metalness}/${m.roughness}/${m.wireframe}`
+        }/${m.opacity}/${m.emissive}/${m.metalness}/${m.roughness}/${m.wireframe}`
 
         materialId += `--${Object.keys(mesh.geometry.attributes).toString()}--${!!mesh
           .geometry.index}`

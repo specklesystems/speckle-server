@@ -7,7 +7,7 @@
           Great! All invites were sent.
         </v-alert>
         <v-alert v-show="errors.length !== 0" prominent dismissible type="error">
-          <p>Invite send failed for adresses:</p>
+          <p>Invite send failed for addresses:</p>
           <ul>
             <li v-for="error in errors" :key="error.email">
               {{ error.email }}: {{ error.reason }}
@@ -62,7 +62,7 @@
               </v-chip>
             </template>
           </v-combobox>
-          <p v-if="!selectedStream">Optionaly invite users to stream.</p>
+          <p v-if="!selectedStream">Optionally invite users to stream.</p>
           <stream-search-bar
             v-if="!selectedStream"
             :gotostreamonclick="false"

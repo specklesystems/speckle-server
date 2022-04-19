@@ -7,7 +7,7 @@ type: application
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
 
-# Set by the build process to the corect value
+# Set by the build process to the correct value
 # version: 0.1.0
 
 # This is the version number of the application being deployed. This version number should be
@@ -15,5 +15,5 @@ type: application
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 
-# Set by the build process to the corect value
+# Set by the build process to the correct value
 # appVersion: "2.3.3"
