@@ -24,7 +24,6 @@ module.exports = (app) => {
     }
 
     const childrenList = JSON.parse(req.body.objects)
-
     const simpleText = req.headers.accept === 'text/plain'
 
     res.writeHead(200, {
@@ -32,15 +31,11 @@ module.exports = (app) => {
       'Content-Type': simpleText ? 'text/plain; charset=UTF-8' : 'application/json'
     })
 
-    const dbStream = await getObjectsStream({
-      streamId: req.params.streamId,
-      objectIds: childrenList
-    })
+    // "output" stream, connected to res with `pipeline` (auto-closing res)
     const speckleObjStream = new SpeckleObjectsStream(simpleText)
     const gzipStream = zlib.createGzip()
 
     pipeline(
-      dbStream,
       speckleObjStream,
       gzipStream,
       new PassThrough({ highWaterMark: 16384 * 31 }),
@@ -48,9 +43,9 @@ module.exports = (app) => {
       (err) => {
         if (err) {
           debug('speckle:error')(
-            `[User ${req.context.userId || '-'}] Error streaming objects from stream ${
-              req.params.streamId
-            }: ${err}`
+            `[User ${
+              req.context.userId || '-'
+            }] App error streaming objects from stream ${req.params.streamId}: ${err}`
           )
         } else {
           debug('speckle:info')(
@@ -63,5 +58,30 @@ module.exports = (app) => {
         }
       }
     )
+
+    const cSize = 1000
+    try {
+      for (let cStart = 0; cStart < childrenList.length; cStart += cSize) {
+        const childrenChunk = childrenList.slice(cStart, cStart + cSize)
+
+        const dbStream = await getObjectsStream({
+          streamId: req.params.streamId,
+          objectIds: childrenChunk
+        })
+        await new Promise((resolve, reject) => {
+          dbStream.pipe(speckleObjStream, { end: false })
+          dbStream.once('end', resolve)
+          dbStream.once('error', reject)
+        })
+      }
+    } catch (ex) {
+      debug('speckle:error')(
+        `[User ${req.context.userId || '-'}] DB Error streaming objects from stream ${
+          req.params.streamId
+        }: ${ex}`
+      )
+      speckleObjStream.emit('error', new Error('Database streaming error'))
+    }
+    speckleObjStream.end()
   })
 }
