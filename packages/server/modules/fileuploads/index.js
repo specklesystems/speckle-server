@@ -13,7 +13,8 @@ const {
 
 const {
   checkBucket,
-  uploadFile,
+  startUploadFile,
+  finishUploadFile,
   getFileInfo,
   getFileStream
 } = require('./services/fileuploads')
@@ -125,7 +126,7 @@ exports.init = async (app) => {
           if (fileType === 'autodetect')
             fileType = filename.split('.').pop().toLowerCase()
 
-          const promise = uploadFile({
+          const promise = startUploadFile({
             streamId: req.params.streamId,
             branchName: req.params.branchName || '',
             userId: req.context.userId,
@@ -142,6 +143,9 @@ exports.init = async (app) => {
           for (const promise of fileUploadPromises) {
             const fileId = await promise
             fileIds.push(fileId)
+          }
+          for (const fileId of fileIds) {
+            await finishUploadFile({ fileId })
           }
           res.send(fileIds)
         })

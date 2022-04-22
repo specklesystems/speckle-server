@@ -60,7 +60,14 @@ module.exports = {
     return fileStream
   },
 
-  async uploadFile({ streamId, branchName, userId, fileName, fileType, fileStream }) {
+  async startUploadFile({
+    streamId,
+    branchName,
+    userId,
+    fileName,
+    fileType,
+    fileStream
+  }) {
     // Create ID and db entry
     const fileId = crs({ length: 10 })
     const dbFile = {
@@ -81,12 +88,19 @@ module.exports = {
 
     await s3.upload({ Bucket, Key, Body: fileStream }).promise()
 
+    return fileId
+  },
+
+  async finishUploadFile({ fileId }) {
+    const s3 = new S3(getS3Config())
+    const Bucket = process.env.S3_BUCKET
+    // TODO: error if missing
+    const Key = `files/${fileId}`
+
     // Get file size and update db entry
     const headResponse = await s3.headObject({ Key, Bucket }).promise()
     const fileSize = headResponse.ContentLength
 
     await FileUploads().where({ id: fileId }).update({ uploadComplete: true, fileSize })
-
-    return fileId
   }
 }
