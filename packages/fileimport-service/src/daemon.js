@@ -8,10 +8,12 @@ const fs = require('fs')
 const { spawn } = require('child_process')
 
 const ServerAPI = require('../ifc/api')
+const objDependencies = require('./objDependencies')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
-const TMP_FILE_PATH = '/tmp/file_to_import'
+const TMP_INPUT_DIR = '/tmp/file_to_import'
+const TMP_FILE_PATH = '/tmp/file_to_import/file'
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
 let shouldExit = false
@@ -54,6 +56,8 @@ async function doTask(task) {
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
+
+    fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
     const upstreamFileStream = await getFileStream({ fileId: info.fileId })
     const diskFileStream = fs.createWriteStream(TMP_FILE_PATH)
@@ -103,6 +107,29 @@ async function doTask(task) {
         },
         10 * 60 * 1000
       )
+    } else if (info.fileType === 'obj') {
+      await objDependencies.downloadDependencies({
+        objFilePath: TMP_FILE_PATH,
+        streamId: info.streamId,
+        destinationDir: TMP_INPUT_DIR
+      })
+
+      await runProcessWithTimeout(
+        'python3',
+        [
+          '-u',
+          './obj/import_file.py',
+          TMP_FILE_PATH,
+          info.userId,
+          info.streamId,
+          info.branchName,
+          `File upload: ${info.fileName}`
+        ],
+        {
+          USER_TOKEN: tempUserToken
+        },
+        10 * 60 * 1000
+      )
     } else {
       throw new Error(`File type ${info.fileType} is not supported`)
     }
@@ -140,7 +167,7 @@ async function doTask(task) {
     )
   }
 
-  if (fs.existsSync(TMP_FILE_PATH)) fs.unlinkSync(TMP_FILE_PATH)
+  fs.rmSync(TMP_INPUT_DIR, { force: true, recursive: true })
   if (fs.existsSync(TMP_RESULTS_PATH)) fs.unlinkSync(TMP_RESULTS_PATH)
 
   if (tempUserToken) {
