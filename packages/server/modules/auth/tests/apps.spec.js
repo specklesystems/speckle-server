@@ -17,6 +17,8 @@ const {
   revokeExistingAppCredentialsForUser
 } = require('../services/apps')
 
+const { Scopes } = require('@/modules/core/helpers/mainConstants')
+
 describe('Services @apps-services', () => {
   const actor = {
     name: 'Dimitrie Stefanescu',
@@ -63,7 +65,7 @@ describe('Services @apps-services', () => {
     const res = await createApp({
       name: 'test application',
       public: true,
-      scopes: ['streams:read'],
+      scopes: [Scopes.Streams.Read],
       redirectUrl: 'http://localhost:1335'
     })
 
@@ -99,7 +101,7 @@ describe('Services @apps-services', () => {
       app: {
         name: 'updated test application',
         id: myTestApp.id,
-        scopes: ['streams:read', 'users:read']
+        scopes: [Scopes.Streams.Read, Scopes.Users.Read]
       }
     })
     expect(res).to.be.a('string')
@@ -107,8 +109,8 @@ describe('Services @apps-services', () => {
     const app = await getApp({ id: myTestApp.id })
     expect(app.name).to.equal('updated test application')
     expect(app.scopes).to.be.an('array')
-    expect(app.scopes.map((s) => s.name)).to.include('users:read')
-    expect(app.scopes.map((s) => s.name)).to.include('streams:read')
+    expect(app.scopes.map((s) => s.name)).to.include(Scopes.Users.Read)
+    expect(app.scopes.map((s) => s.name)).to.include(Scopes.Streams.Read)
   })
 
   const challenge = 'random'
@@ -142,7 +144,7 @@ describe('Services @apps-services', () => {
     const validation = await validateToken(response.token)
     expect(validation.valid).to.equal(true)
     expect(validation.userId).to.equal(actor.id)
-    expect(validation.scopes[0]).to.equal('streams:read')
+    expect(validation.scopes[0]).to.equal(Scopes.Streams.Read)
   })
 
   it('Should refresh the token using the refresh token, and get a fresh refresh token and token', async () => {
@@ -185,7 +187,7 @@ describe('Services @apps-services', () => {
       app: {
         name: 'updated test application',
         id: myTestApp.id,
-        scopes: ['streams:write', 'users:read']
+        scopes: [Scopes.Streams.Write, Scopes.Users.Read]
       }
     })
 
@@ -212,6 +214,61 @@ describe('Services @apps-services', () => {
         throw new Error('this should have been rejected')
       })
       .catch((err) => expect(err.message).to.equal('Access code not found.'))
+  })
+
+  const defaultApps = ['spklwebapp', 'explorer', 'sdm', 'sca', 'spklexcel']
+  defaultApps.forEach((speckleAppId) => {
+    it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
+      const { updateDefaultApp } = require('@/modules/auth/defaultApps')
+      const unusedAccessCode = await createAuthorizationCode({
+        appId: speckleAppId,
+        userId: actor.id,
+        challenge
+      })
+      const usedAccessCode = await createAuthorizationCode({
+        appId: speckleAppId,
+        userId: actor.id,
+        challenge
+      })
+      const apiTokenResponse = await createAppTokenFromAccessCode({
+        appId: speckleAppId,
+        appSecret: speckleAppId,
+        accessCode: usedAccessCode,
+        challenge
+      })
+
+      // We now have one unused access code, an api token and a refresh token.
+      // Proceed to update the app:
+      const existingApp = await getApp({ id: speckleAppId })
+      await updateDefaultApp(
+        {
+          name: 'updated test application',
+          id: speckleAppId,
+          scopes: [Scopes.Streams.Write, Scopes.Users.Read]
+        },
+        existingApp
+      )
+
+      const validationResponse = await validateToken(apiTokenResponse.token)
+      expect(validationResponse.valid).to.equal(true)
+
+      const refreshedToken = await refreshAppToken({
+        refreshToken: apiTokenResponse.refreshToken,
+        appId: speckleAppId,
+        appSecret: speckleAppId
+      })
+      expect(refreshedToken.refreshToken).to.exist
+      expect(refreshedToken.token).to.exist
+
+      const appToken = await createAppTokenFromAccessCode({
+        appId: speckleAppId,
+        appSecret: speckleAppId,
+        accessCode: unusedAccessCode,
+        challenge: 'random'
+      })
+      expect(appToken.token).to.exist
+      expect(appToken.refreshToken).to.exist
+    })
   })
 
   it('Should revoke access for a given user', async () => {
