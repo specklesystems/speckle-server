@@ -1,11 +1,11 @@
 'use strict'
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 const Scopes = () => knex('scopes')
 const Apps = () => knex('server_apps')
 const AppScopes = () => knex('server_apps_scopes')
 
-const { getApp, revokeExistingAppCredentials } = require('./services/apps')
+const { getApp } = require('@/modules/auth/services/apps')
+const { Scopes: ScopesConst } = require('@/modules/core/helpers/mainConstants')
 
 let allScopes = []
 
@@ -57,7 +57,6 @@ async function updateDefaultApp(app, existingApp) {
   )
 
   if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
-    await revokeExistingAppCredentials({ appId: app.id })
     const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
     await AppScopes().insert(scopes)
   }
@@ -65,6 +64,8 @@ async function updateDefaultApp(app, existingApp) {
   delete app.scopes
   await Apps().where({ id: app.id }).update(app)
 }
+
+module.exports.updateDefaultApp = updateDefaultApp
 
 const SpeckleWebApp = {
   id: 'spklwebapp',
@@ -99,11 +100,12 @@ const SpeckleDesktopApp = {
   public: true,
   redirectUrl: 'speckle://account',
   scopes: [
-    'streams:read',
-    'streams:write',
-    'profile:read',
-    'profile:email',
-    'users:read'
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read
   ]
 }
 
@@ -116,11 +118,11 @@ const SpeckleConnectorApp = {
   public: true,
   redirectUrl: 'http://localhost:29363',
   scopes: [
-    'streams:read',
-    'streams:write',
-    'profile:read',
-    'profile:email',
-    'users:read'
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read
   ]
 }
 
@@ -134,10 +136,10 @@ const SpeckleExcel = {
   public: true,
   redirectUrl: 'https://speckle-excel.netlify.app',
   scopes: [
-    'streams:read',
-    'streams:write',
-    'profile:read',
-    'profile:email',
-    'users:read'
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read
   ]
 }
