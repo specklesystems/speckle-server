@@ -6,7 +6,7 @@
 /** @type {import("eslint").Linter.Config} */
 const config = {
   rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }]
+    // 'no-console': ['warn', { allow: ['warn', 'error'] }]
   }
 }
 
