@@ -25,7 +25,7 @@
           <v-card-text>
             Speckle can now process files and store them as a commit (snapshot). You can
             then access it from the Speckle API, and receive it in other applications.
-            Current supported formats are: IFC and STL. Thanks to the Open Source
+            Current supported formats are: IFC, STL and OBJ. Thanks to the Open Source
             <a
               href="https://ifcjs.github.io/info/docs/Guide/web-ifc/Introduction"
               target="_blank"
@@ -79,7 +79,7 @@
               <input
                 id="myid"
                 type="file"
-                accept=".ifc,.IFC,.stl,.STL"
+                accept=".ifc,.IFC,.stl,.STL,.obj,.OBJ,.mtl,.MTL"
                 style="display: none"
                 multiple
                 @change="onFileSelect($event)"
@@ -202,14 +202,17 @@ export default {
       this.dragError = null
       for (const file of files) {
         const extension = file.name.split('.')[1]
-        if (!extension || !['ifc', 'stl'].includes(extension.toLowerCase())) {
+        if (
+          !extension ||
+          !['ifc', 'stl', 'obj', 'mtl'].includes(extension.toLowerCase())
+        ) {
           this.dragError = `The ${extension.toLowerCase()} file extension is not yet supported`
           return
         }
 
-        if (file.size > 50626997) {
+        if (file.size > 104857600) {
           this.dragError =
-            'Your files are too powerful (for now). Maximum upload size is 50mb!'
+            'Your files are too powerful (for now). Maximum upload size is 100mb!'
           return
         }
 
