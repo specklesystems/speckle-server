@@ -18,6 +18,7 @@ const {
 } = require('../services/apps')
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
+const { updateDefaultApp } = require('@/modules/auth/defaultApps')
 
 describe('Services @apps-services', () => {
   const actor = {
@@ -219,17 +220,19 @@ describe('Services @apps-services', () => {
   const defaultApps = ['spklwebapp', 'explorer', 'sdm', 'sca', 'spklexcel']
   defaultApps.forEach((speckleAppId) => {
     it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
-      const { updateDefaultApp } = require('@/modules/auth/defaultApps')
-      const unusedAccessCode = await createAuthorizationCode({
-        appId: speckleAppId,
-        userId: actor.id,
-        challenge
-      })
-      const usedAccessCode = await createAuthorizationCode({
-        appId: speckleAppId,
-        userId: actor.id,
-        challenge
-      })
+      const [unusedAccessCode, usedAccessCode] = await Promise.all([
+        createAuthorizationCode({
+          appId: speckleAppId,
+          userId: actor.id,
+          challenge
+        }),
+        createAuthorizationCode({
+          appId: speckleAppId,
+          userId: actor.id,
+          challenge
+        })
+      ])
+
       const apiTokenResponse = await createAppTokenFromAccessCode({
         appId: speckleAppId,
         appSecret: speckleAppId,

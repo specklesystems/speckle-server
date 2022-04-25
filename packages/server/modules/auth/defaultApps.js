@@ -65,6 +65,7 @@ async function updateDefaultApp(app, existingApp) {
   await Apps().where({ id: app.id }).update(app)
 }
 
+// this is exported to be able to test the retention of permissions
 module.exports.updateDefaultApp = updateDefaultApp
 
 const SpeckleWebApp = {
@@ -100,7 +101,6 @@ const SpeckleDesktopApp = {
   public: true,
   redirectUrl: 'speckle://account',
   scopes: [
-    ScopesConst.Streams.Read,
     ScopesConst.Streams.Read,
     ScopesConst.Streams.Write,
     ScopesConst.Profile.Read,
