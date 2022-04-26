@@ -557,6 +557,9 @@ export default class Coverter {
   }
 
   async ArcToBufferGeometry(obj, scale = true) {
+    /**
+     * Old implementation
+     */
     // const radius = obj.radius
     // const curve = new THREE.EllipseCurve(
     //   0,
@@ -573,23 +576,36 @@ export default class Coverter {
     // const geometry = new THREE.BufferGeometry()
     //   .setFromPoints(points)
     //   .applyMatrix4(t)
+    // return new ObjectWrapper(geometry, obj, 'line')
     
-
+    /**
+     * New implementation, a bit verbose, but it's cleared this way.
+     */
     const origin = new Vector3(obj.plane.origin.x, obj.plane.origin.y, obj.plane.origin.z);
     const startPoint = new Vector3(obj.startPoint.x, obj.startPoint.y, obj.startPoint.z);
     const endPoint = new Vector3(obj.endPoint.x, obj.endPoint.y, obj.endPoint.z);
     const midPoint = new Vector3(obj.midPoint.x, obj.midPoint.y, obj.midPoint.z);
+
     const sagitta = new Line3(startPoint, endPoint);
+    // This the projection of the origin on the sagitta
     const sagittaCenter = sagitta.getCenter(new Vector3());
+    // Direction from the origin to the mid point
     const d0 = new Vector3().subVectors(midPoint, origin); d0.normalize();
+    // Direction from the origin to it;s projection on the sagitta
     const d1 = new Vector3().subVectors(sagittaCenter, origin); d1.normalize();
+    // If the two above directions point in opposite directions, we need to reverse the arc's winding order
     const _clockwise = d0.dot(d1) < 0;
+
+    // Here we compute arc's basis vectors using the origin and the two end points.
     const v0 = new Vector3().subVectors(startPoint, origin); v0.normalize()
     const v1 = new Vector3().subVectors(endPoint, origin); v1.normalize();
     const v2 = new Vector3().crossVectors(v0, v1); v2.normalize();
     const v3 = new Vector3().crossVectors(v2, v0); v3.normalize();
+
+    // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
     const angle = Math.acos(v0.dot(v1));
     const radius = obj.radius
+    // We draw the arc in a local un-rotated coordinate system. We rotate it later on via transformation
     const curve = new THREE.EllipseCurve(
       0,
       0, // ax, aY
@@ -600,29 +616,38 @@ export default class Coverter {
       _clockwise, // aClockwise
       0 // aRotation
     )
+    // This just samples points along the arc curve
     const points = curve.getPoints(50);
-    const matrix = new Matrix4().makeBasis(v0, v3, v2);
-    matrix.setPosition(origin);
+
+    const matrix = new Matrix4()
+    // Scale first, in order for the composition to work correctly
     const conversionFactor = scale ? getConversionFactor(obj.plane.units) : 1
-    // if (scale) {
-    //   matrix.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
-    // }
+    if (scale) {
+      matrix.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
+    }
+    // We determine the orientation of the plane using the three basis vectors computed above
+    matrix.makeBasis(v0, v3, v2);
+    // We translate it to the circle's origin
+    matrix.setPosition(origin);
+    
     const geometry = new THREE.BufferGeometry()
       .setFromPoints(points)
       .applyMatrix4(matrix)
 
-    
-    const sphere = new THREE.Mesh( new THREE.SphereGeometry( 0.25, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xffff00 } ) );
-    sphere.position.copy(origin);
-    window.v.scene.add(sphere);
+    /**
+     * Temporary, just for debugging
+     */
+    // const sphere = new THREE.Mesh( new THREE.SphereGeometry( 0.25, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xffff00 } ) );
+    // sphere.position.copy(origin);
+    // window.v.scene.add(sphere);
 
-    const spherePoints0 = new THREE.Mesh( new THREE.SphereGeometry( 0.1, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
-    spherePoints0.position.copy(startPoint);
-    window.v.scene.add(spherePoints0);
+    // const spherePoints0 = new THREE.Mesh( new THREE.SphereGeometry( 0.1, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
+    // spherePoints0.position.copy(startPoint);
+    // window.v.scene.add(spherePoints0);
 
-    const spherePoints1 = new THREE.Mesh( new THREE.SphereGeometry( 0.1, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
-    spherePoints1.position.copy(endPoint);
-    window.v.scene.add(spherePoints1);
+    // const spherePoints1 = new THREE.Mesh( new THREE.SphereGeometry( 0.1, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
+    // spherePoints1.position.copy(endPoint);
+    // window.v.scene.add(spherePoints1);
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
@@ -675,6 +700,9 @@ export default class Coverter {
       this.PointToVector3(plane.normal).normalize()
     )
     m.setPosition(this.PointToVector3(plane.origin))
+    /**
+     * I think scaling should be done first.
+     */
     if (scale) {
       m.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
     }
