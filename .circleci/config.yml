@@ -101,7 +101,7 @@ jobs:
             echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: echo $IMAGE_VERSION_TAG
-      - run: sleep 3m
+      # - run: sleep 3m
       - persist_to_workspace:
           root: workspace
           paths:
