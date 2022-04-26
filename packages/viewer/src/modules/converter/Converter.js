@@ -5,6 +5,9 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
+import { Matrix4 } from 'three'
+import { Vector3 } from 'three'
+import { Line3 } from 'three'
 
 /**
  * Utility class providing some top level conversion methods.
@@ -519,7 +522,8 @@ export default class Coverter {
 
     const buffers = []
     for (let i = 0; i < obj.segments.length; i++) {
-      const element = obj.segments[i]
+      const element = obj.segments[i];
+      console.log(element.type);
       const conv = await this.convert(element, scale)
       buffers.push(conv?.bufferGeometry)
     }
@@ -553,21 +557,72 @@ export default class Coverter {
   }
 
   async ArcToBufferGeometry(obj, scale = true) {
+    // const radius = obj.radius
+    // const curve = new THREE.EllipseCurve(
+    //   0,
+    //   0, // ax, aY
+    //   radius,
+    //   radius, // xRadius, yRadius
+    //   obj.startAngle,
+    //   obj.endAngle, // aStartAngle, aEndAngle
+    //   false, // aClockwise
+    //   0 // aRotation
+    // )
+    // const points = curve.getPoints(50);
+    // const t = this.PlaneToMatrix4(obj.plane, scale);
+    // const geometry = new THREE.BufferGeometry()
+    //   .setFromPoints(points)
+    //   .applyMatrix4(t)
+    
+
+    const origin = new Vector3(obj.plane.origin.x, obj.plane.origin.y, obj.plane.origin.z);
+    const startPoint = new Vector3(obj.startPoint.x, obj.startPoint.y, obj.startPoint.z);
+    const endPoint = new Vector3(obj.endPoint.x, obj.endPoint.y, obj.endPoint.z);
+    const midPoint = new Vector3(obj.midPoint.x, obj.midPoint.y, obj.midPoint.z);
+    const sagitta = new Line3(startPoint, endPoint);
+    const sagittaCenter = sagitta.getCenter(new Vector3());
+    const d0 = new Vector3().subVectors(midPoint, origin); d0.normalize();
+    const d1 = new Vector3().subVectors(sagittaCenter, origin); d1.normalize();
+    const _clockwise = d0.dot(d1) < 0;
+    const v0 = new Vector3().subVectors(startPoint, origin); v0.normalize()
+    const v1 = new Vector3().subVectors(endPoint, origin); v1.normalize();
+    const v2 = new Vector3().crossVectors(v0, v1); v2.normalize();
+    const v3 = new Vector3().crossVectors(v2, v0); v3.normalize();
+    const angle = Math.acos(v0.dot(v1));
     const radius = obj.radius
     const curve = new THREE.EllipseCurve(
       0,
       0, // ax, aY
       radius,
       radius, // xRadius, yRadius
-      obj.startAngle,
-      obj.endAngle, // aStartAngle, aEndAngle
-      false, // aClockwise
+      0,
+      angle, // aStartAngle, aEndAngle
+      _clockwise, // aClockwise
       0 // aRotation
     )
-    const points = curve.getPoints(50)
+    const points = curve.getPoints(50);
+    const matrix = new Matrix4().makeBasis(v0, v3, v2);
+    matrix.setPosition(origin);
+    const conversionFactor = scale ? getConversionFactor(obj.plane.units) : 1
+    // if (scale) {
+    //   matrix.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
+    // }
     const geometry = new THREE.BufferGeometry()
       .setFromPoints(points)
-      .applyMatrix4(this.PlaneToMatrix4(obj.plane, scale))
+      .applyMatrix4(matrix)
+
+    
+    const sphere = new THREE.Mesh( new THREE.SphereGeometry( 0.25, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xffff00 } ) );
+    sphere.position.copy(origin);
+    window.v.scene.add(sphere);
+
+    const spherePoints0 = new THREE.Mesh( new THREE.SphereGeometry( 0.1, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
+    spherePoints0.position.copy(startPoint);
+    window.v.scene.add(spherePoints0);
+
+    const spherePoints1 = new THREE.Mesh( new THREE.SphereGeometry( 0.1, 32, 16 ), new THREE.MeshBasicMaterial( { color: 0xff0000 } ) );
+    spherePoints1.position.copy(endPoint);
+    window.v.scene.add(spherePoints1);
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
