@@ -204,23 +204,25 @@ export default class SceneObjectManager {
   }
 
   addLine(wrapper, addToScene = true) {
-    /** 
+    /**
      * Display style doesn't seem to have anything regarding to opacity, so I assume lines/curves are always opaque?
      */
-    let material = this.lineMaterial;
-    if(wrapper.meta.displayStyle) {
-      material = this.lineMaterial.clone();
-      material.linewidth = wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1;
-      material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color));
+    let material = this.lineMaterial
+    if (wrapper.meta.displayStyle) {
+      material = this.lineMaterial.clone()
+      material.linewidth =
+        wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
+      material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color))
       // material.color.convertSRGBToLinear();
-      
-      material.clippingPlanes = this.viewer.sectionBox.planes;
-    }
-    else if (wrapper.meta.renderMaterial) {
-      material = this.lineMaterial.clone();
-      material.color = new THREE.Color(this._argbToRGB(wrapper.meta.renderMaterial.diffuse));
+
+      material.clippingPlanes = this.viewer.sectionBox.planes
+    } else if (wrapper.meta.renderMaterial) {
+      material = this.lineMaterial.clone()
+      material.color = new THREE.Color(
+        this._argbToRGB(wrapper.meta.renderMaterial.diffuse)
+      )
       // material.color.convertSRGBToLinear();
-      material.clippingPlanes = this.viewer.sectionBox.planes;
+      material.clippingPlanes = this.viewer.sectionBox.planes
     }
 
     const line = new THREE.Line(wrapper.bufferGeometry, material)
@@ -365,13 +367,9 @@ export default class SceneObjectManager {
   }
 
   _srgbToLinear(x) {
-		if (x <= 0)
-			return 0;
-		else if (x >= 1)
-			return 1;
-		else if (x < 0.04045)
-			return x / 12.92;
-		else
-			return Math.pow((x + 0.055) / 1.055, 2.4);
-	}
+    if (x <= 0) return 0
+    else if (x >= 1) return 1
+    else if (x < 0.04045) return x / 12.92
+    else return Math.pow((x + 0.055) / 1.055, 2.4)
+  }
 }
