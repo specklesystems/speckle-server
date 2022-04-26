@@ -51,6 +51,16 @@ module.exports = async (app) => {
         userId: req.user.id,
         challenge: req.session.challenge
       })
+      // const defaultApps = ['explorer', 'sdm', 'sca', 'spklexcel']
+      // await Promise.all(
+      //   defaultApps.map((appId) =>
+      //     createAuthorizationCode({
+      //       appId,
+      //       userId: req.user.id,
+      //       challenge: req.session.challenge
+      //     })
+      //   )
+      // )
       if (req.session) req.session.destroy()
       return res.redirect(`${process.env.CANONICAL_URL}?access_code=${ac}`)
     } catch (err) {
