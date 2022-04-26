@@ -210,15 +210,16 @@ export default class SceneObjectManager {
     let material = this.lineMaterial;
     if(wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone();
+      material.linewidth = wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1;
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color));
-      material.color.convertSRGBToLinear();
+      // material.color.convertSRGBToLinear();
       
       material.clippingPlanes = this.viewer.sectionBox.planes;
     }
     else if (wrapper.meta.renderMaterial) {
       material = this.lineMaterial.clone();
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.renderMaterial.diffuse));
-      material.color.convertSRGBToLinear();
+      // material.color.convertSRGBToLinear();
       material.clippingPlanes = this.viewer.sectionBox.planes;
     }
 
