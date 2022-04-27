@@ -12,6 +12,18 @@
       <div class="container">
         <div class="row">
           <div class="twelve columns h-96">
+            <input
+            id="objectUrlInput"
+            class="input"
+            type="text"
+            name="objectId"
+            placeholder="Object Url"
+            style="width: 49%"
+            value="https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f"
+            />
+            <button id="loadButton" class="button" onclick="loadData()" style="width: 29%">
+              Load Object URL
+            </button>
             <div id="renderer" />
           </div>
         </div>
