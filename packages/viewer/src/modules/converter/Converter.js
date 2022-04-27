@@ -189,7 +189,13 @@ export default class Coverter {
       const type = this.getSpeckleType(obj)
       if (this[`${type}ToBufferGeometry`]) {
         return await this[`${type}ToBufferGeometry`](obj.data || obj, scale)
-      } else return null
+      } else {
+        if(obj.displayValue) {
+          const displayValue = await this.resolveReference(obj.displayValue);
+          return await this.convert(displayValue, scale);
+        }
+      }
+      return null
     } catch (e) {
       console.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
       throw e
@@ -523,7 +529,6 @@ export default class Coverter {
     const buffers = []
     for (let i = 0; i < obj.segments.length; i++) {
       const element = obj.segments[i];
-      console.log(element.type);
       const conv = await this.convert(element, scale)
       buffers.push(conv?.bufferGeometry)
     }
