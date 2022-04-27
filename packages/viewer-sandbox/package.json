@@ -1,0 +1,25 @@
+{
+  "name": "@speckle/viewer-sandbox",
+  "version": "1.0.0",
+  "description": "Sandbox for testing, debugging & developing the viewer package",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/viewer"
+  },
+  "author": "AEC Systems",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@speckle/viewer": "^2.4.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4",
+    "vite": "^2.9.5"
+  }
+}
