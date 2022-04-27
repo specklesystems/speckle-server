@@ -14,7 +14,6 @@ Sandbox for testing, debugging & developing the viewer package
 - `npx lerna bootstrap` in repo root to set up symlink with viewer package
 - `npm run dev` to run the sandbox, it's available at `localhost:3033`
 
-## TODO
+## Linting
 
-- ESLINT & TSC check
-- Prettier
+Use `npm run lint` to run ESLint and you can also run `npm run lint:tsc` to lint with the TypeScript compiler

@@ -14,17 +14,20 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext .js,.ts"
+    "lint": "eslint . --ext .js,.ts",
+    "lint:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.4.2"
+    "@speckle/viewer": "^2.4.2",
+    "tweakpane": "^3.0.8"
   },
   "devDependencies": {
+    "@tweakpane/core": "^1.0.9",
+    "@typescript-eslint/eslint-plugin": "^5.21.0",
+    "@typescript-eslint/parser": "^5.21.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "typescript": "^4.5.4",
-    "vite": "^2.9.5",
-    "@typescript-eslint/eslint-plugin": "^5.21.0",
-    "@typescript-eslint/parser": "^5.21.0"
+    "vite": "^2.9.5"
   }
 }
