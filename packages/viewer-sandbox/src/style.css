@@ -6,3 +6,9 @@
   color: #2c3e50;
   margin-top: 60px;
 }
+
+#renderer {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
