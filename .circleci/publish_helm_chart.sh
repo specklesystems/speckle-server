@@ -6,8 +6,8 @@ RELEASE_VERSION=${IMAGE_VERSION_TAG}
 
 echo "Releasing Helm Chart version $RELEASE_VERSION"
 
-# git config --global user.email "devops+circleci@speckle.systems"
-# git config --global user.name "CI"
+git config --global user.email "devops+circleci@speckle.systems"
+git config --global user.name "CI"
 
 git clone git@github.com:specklesystems/helm.git ~/helm
 

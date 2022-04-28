@@ -66,6 +66,7 @@ class Version:
         return True
 
 if __name__ == "__main__":
+    print("\nStarting version compare\n")
     args = sys.argv[1:]
     assert(len(args) == 2)
 
@@ -77,8 +78,8 @@ if __name__ == "__main__":
     target_version = Version.parse_version_slug(target_version_slug)
 
     if (target_version > current_version):
-        print("target version is newer")
+        print("target version is newer\n")
         exit(0)
 
-    print("current version is newer")    
+    print("current version is newer\n")    
     exit(1)
