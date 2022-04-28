@@ -63,7 +63,7 @@ class Version:
         if self.pre_release_priority < other.pre_release_priority:
             return False
         
-        return False
+        return True
 
 if __name__ == "__main__":
     args = sys.argv[1:]
