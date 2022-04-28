@@ -224,7 +224,7 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      - run: sleep 3m
+      # - run: sleep 3m
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
