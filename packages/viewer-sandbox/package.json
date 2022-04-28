@@ -1,0 +1,33 @@
+{
+  "name": "@speckle/viewer-sandbox",
+  "version": "1.0.0",
+  "description": "Sandbox for testing, debugging & developing the viewer package",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/viewer"
+  },
+  "author": "AEC Systems",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.ts",
+    "lint:tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@speckle/viewer": "^2.4.2",
+    "tweakpane": "^3.0.8"
+  },
+  "devDependencies": {
+    "@tweakpane/core": "^1.0.9",
+    "@typescript-eslint/eslint-plugin": "^5.21.0",
+    "@typescript-eslint/parser": "^5.21.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "typescript": "^4.5.4",
+    "vite": "^2.9.5"
+  }
+}

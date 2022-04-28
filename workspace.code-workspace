@@ -17,6 +17,10 @@
       "name": "🔎 viewer"
     },
     {
+      "path": "packages/viewer-sandbox",
+      "name": "🚦 viewer-sandbox"
+    },
+    {
       "path": "packages/fileimport-service",
       "name": "💾 fileimport-service"
     },
@@ -31,7 +35,7 @@
     {
       "path": ".",
       "name": "🏡 root"
-    },
+    }
   ],
   "settings": {
     // Some settings below are duplicated in root/.vscode, incase the repo is opened without targeting the workspace file
