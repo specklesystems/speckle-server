@@ -293,6 +293,30 @@ describe('Services @apps-services', () => {
     })
   })
 
+  it('Updating a default app with bad data should leave the app in an untouched state', async () => {
+    const speckleAppId = 'explorer'
+    const existingApp = await getApp({ id: speckleAppId })
+    try {
+      await updateDefaultApp(
+        {
+          name: 'updated test application',
+          id: speckleAppId,
+          scopes: ['aWeird:Scope']
+        },
+        existingApp
+      )
+      throw new Error('This should have failed')
+    } catch (err) {
+      // check that the weird:Scope violates a foreign key constraint...
+      // leaky abstractions i know, but no better way to test this for now
+      expect(err.message).to.contain('server_apps_scopes_scopename_foreign')
+    }
+    const notUpdatedApp = await getApp({ id: speckleAppId })
+    // check that no harm was done
+    expect(notUpdatedApp.name).to.equal(existingApp.name)
+    expect(notUpdatedApp.scopes).to.equalInAnyOrder(existingApp.scopes)
+  })
+
   it('Should revoke access for a given user', async () => {
     const secondUser = {
       name: 'Dimitrie Stefanescu',
