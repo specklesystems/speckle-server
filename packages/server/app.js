@@ -22,6 +22,7 @@ const { ApolloServer, ForbiddenError } = require('apollo-server-express')
 
 const { buildContext } = require('./modules/shared')
 const knex = require('./db/knex')
+const { monitorActiveConnections } = require('./logging/httpServerMonitoring')
 const { buildErrorFormatter } = require('@/modules/core/graph/setup')
 const { isDevEnv, isTestEnv } = require('@/modules/core/helpers/envHelper')
 
@@ -36,15 +37,13 @@ exports.buildApolloServer = (optionOverrides) => {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
   const { graph } = require('./modules')
 
-  // (Re-)Initialise prometheus metrics
-  prometheusClient.register.clear()
-  prometheusClient.collectDefaultMetrics()
-
   // Init metrics
+  prometheusClient.register.removeSingleMetric('speckle_server_apollo_connect')
   const metricConnectCounter = new prometheusClient.Counter({
     name: 'speckle_server_apollo_connect',
     help: 'Number of connects'
   })
+  prometheusClient.register.removeSingleMetric('speckle_server_apollo_clients')
   const metricConnectedClients = new prometheusClient.Gauge({
     name: 'speckle_server_apollo_clients',
     help: 'Number of currently connected clients'
@@ -173,6 +172,7 @@ exports.startHttp = async (app, customPortOverride) => {
   }
 
   const server = http.createServer(app)
+  monitorActiveConnections(server)
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   app.set('port', port)
