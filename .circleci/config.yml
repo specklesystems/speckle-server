@@ -20,7 +20,6 @@ workflows:
             branches:
               only:
                 - main
-                - gergo/CIRacing
       - docker-build-and-publish-server:
           filters: *filters-build
           context: &docker-hub-context
@@ -224,7 +223,6 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
-      # - run: sleep 3m
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
