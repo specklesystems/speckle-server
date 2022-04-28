@@ -48,10 +48,10 @@ async function registerDefaultApp(app) {
 }
 
 async function updateDefaultApp(app, existingApp) {
-  existingApp.scopes = existingApp.scopes.map((s) => s.name)
+  const existingAppScopes = existingApp.scopes.map((s) => s.name)
 
-  const newScopes = difference(app.scopes, existingApp.scopes)
-  const removedScopes = difference(existingApp.scopes, app.scopes)
+  const newScopes = difference(app.scopes, existingAppScopes)
+  const removedScopes = difference(existingAppScopes, app.scopes)
 
   let affectedTokenIds = []
 
