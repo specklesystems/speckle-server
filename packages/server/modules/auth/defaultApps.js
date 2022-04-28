@@ -6,6 +6,7 @@ const AppScopes = () => knex('server_apps_scopes')
 
 const { getApp } = require('@/modules/auth/services/apps')
 const { Scopes: ScopesConst } = require('@/modules/core/helpers/mainConstants')
+const { difference } = require('lodash')
 
 let allScopes = []
 
@@ -49,20 +50,68 @@ async function registerDefaultApp(app) {
 async function updateDefaultApp(app, existingApp) {
   existingApp.scopes = existingApp.scopes.map((s) => s.name)
 
-  const scopeDiffA = app.scopes.filter(
-    (scope) => existingApp.scopes.indexOf(scope) === -1
-  )
-  const scopeDiffB = existingApp.scopes.filter(
-    (scope) => app.scopes.indexOf(scope) === -1
-  )
+  const newScopes = difference(app.scopes, existingApp.scopes)
+  const removedScopes = difference(existingApp.scopes, app.scopes)
 
-  if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
-    const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
-    await AppScopes().insert(scopes)
+  let affectedTokenIds = []
+
+  if (newScopes.length || removedScopes.length)
+    affectedTokenIds = await knex('user_server_app_tokens')
+      .where({ appId: app.id })
+      .pluck('tokenId')
+
+  try {
+    await knex.transaction(async (trx) => {
+      // add new scopes to the app
+      if (newScopes.length)
+        await AppScopes()
+          .insert(newScopes.map((s) => ({ appId: app.id, scopeName: s })))
+          .transacting(trx)
+
+      // remove scopes from the app
+      if (removedScopes.length)
+        await AppScopes()
+          .where({ appId: app.id })
+          .whereIn('scopeName', removedScopes)
+          .delete()
+          .transacting(trx)
+
+      //update user tokens with scope changes
+      if (affectedTokenIds.length)
+        await Promise.all(
+          affectedTokenIds.map(async (tokenId) => {
+            if (newScopes.length)
+              await knex('token_scopes')
+                .insert(newScopes.map((s) => ({ tokenId, scopeName: s })))
+                .transacting(trx)
+
+            if (removedScopes.length)
+              await knex('token_scopes')
+                .where({ tokenId })
+                .whereIn('scopeName', removedScopes)
+                .delete()
+                .transacting(trx)
+          })
+        )
+      delete app.scopes
+      await Apps().where({ id: app.id }).update(app).transacting(trx)
+      // throw new Error('just to test, that nothing changes with the trx rollback')
+    })
+  } catch (error) {
+    console.error(error)
   }
 
-  delete app.scopes
-  await Apps().where({ id: app.id }).update(app)
+  // const scopeDiffA = app.scopes.filter(
+  // (scope) => existingApp.scopes.indexOf(scope) === -1
+  // )
+  // const scopeDiffB = existingApp.scopes.filter(
+  //   (scope) => app.scopes.indexOf(scope) === -1
+  // )
+
+  // if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
+  //   const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
+  //   await AppScopes().insert(scopes)
+  // }
 }
 
 // this is exported to be able to test the retention of permissions
@@ -89,6 +138,7 @@ const SpeckleApiExplorer = {
   public: true,
   redirectUrl: new URL('/explorer', process.env.CANONICAL_URL).toString(),
   scopes: 'all'
+  // scopes: [ScopesConst.Streams.Read]
 }
 
 const SpeckleDesktopApp = {
