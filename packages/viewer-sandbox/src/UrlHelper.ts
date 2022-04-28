@@ -1,6 +1,6 @@
 interface CommitReferencedObjectUrl {
-  origin: string,
-  streamId: string,
+  origin: string
+  streamId: string
   commitId: string
 }
 
@@ -29,7 +29,7 @@ export default class UrlHelper {
     if (url.includes('overlay=')) {
       const searchParams = new URLSearchParams(parsed.search)
       const resIds = searchParams.get('overlay')?.split(',')
-      if(resIds !== undefined) {
+      if (resIds !== undefined) {
         for (const resId of resIds) {
           if (resId.length === 10) {
             objsUrls.push(
@@ -63,7 +63,7 @@ export default class UrlHelper {
             }
           }
         `,
-        variables: { streamId: ref.streamId, commitId:ref.commitId }
+        variables: { streamId: ref.streamId, commitId: ref.commitId }
       })
     })
 

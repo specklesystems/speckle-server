@@ -18,7 +18,6 @@ window.addEventListener('load', () => {
   viewer.onWindowResize()
 })
 
-
 // Load demo object
 viewer.loadObject(
   'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
