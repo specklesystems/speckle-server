@@ -5,7 +5,10 @@ import UrlHelper from './UrlHelper'
 export default class Sandbox {
   private viewer: Viewer
   private pane: Pane
-  private __resUrl!: object
+
+  private static urlParams = {
+    url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
+  }
 
   public constructor(viewer: Viewer) {
     this.viewer = viewer
@@ -13,19 +16,14 @@ export default class Sandbox {
   }
 
   public makeGenericUI() {
-    this.__resUrl = {
-      url:
-        localStorage.getItem('last-load-url') ||
-        'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
-    }
-    this.pane.addInput(this.__resUrl, 'url')
+    this.pane.addInput(Sandbox.urlParams, 'url')
 
     const loadButton = this.pane.addButton({
       title: 'Load Url'
     })
 
     loadButton.on('click', () => {
-      this.loadUrl(this.__resUrl.url)
+      this.loadUrl(Sandbox.urlParams.url)
     })
 
     const clearButton = this.pane.addButton({

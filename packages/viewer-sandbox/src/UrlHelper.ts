@@ -1,6 +1,11 @@
+interface CommitReferencedObjectUrl {
+  origin: string,
+  streamId: string,
+  commitId: string
+}
+
 export default class UrlHelper {
   static async getResourceUrls(url: string): Promise<string[]> {
-    console.log('here')
     const parsed = new URL(url)
     const streamId = url.split('/streams/')[1].substring(0, 10)
 
@@ -24,17 +29,19 @@ export default class UrlHelper {
     if (url.includes('overlay=')) {
       const searchParams = new URLSearchParams(parsed.search)
       const resIds = searchParams.get('overlay')?.split(',')
-      for (const resId of resIds) {
-        if (resId.length === 10) {
-          objsUrls.push(
-            await this.getCommitReferencedObjectUrl({
-              origin: parsed.origin,
-              streamId,
-              commitId: resId
-            })
-          )
-        } else {
-          objsUrls.push(`${parsed.origin}/streams/${streamId}/objects/${resId}`)
+      if(resIds !== undefined) {
+        for (const resId of resIds) {
+          if (resId.length === 10) {
+            objsUrls.push(
+              await this.getCommitReferencedObjectUrl({
+                origin: parsed.origin,
+                streamId,
+                commitId: resId
+              } as CommitReferencedObjectUrl)
+            )
+          } else {
+            objsUrls.push(`${parsed.origin}/streams/${streamId}/objects/${resId}`)
+          }
         }
       }
     }
@@ -42,8 +49,8 @@ export default class UrlHelper {
     return objsUrls
   }
 
-  private static async getCommitReferencedObjectUrl({ origin, streamId, commitId }) {
-    const res = await fetch(`${origin}/graphql`, {
+  private static async getCommitReferencedObjectUrl(ref: CommitReferencedObjectUrl) {
+    const res = await fetch(`${ref.origin}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -56,11 +63,11 @@ export default class UrlHelper {
             }
           }
         `,
-        variables: { streamId, commitId }
+        variables: { streamId: ref.streamId, commitId:ref.commitId }
       })
     })
 
     const { data } = await res.json()
-    return `${origin}/streams/${streamId}/objects/${data.stream.commit.referencedObject}`
+    return `${origin}/streams/${ref.streamId}/objects/${data.stream.commit.referencedObject}`
   }
 }
