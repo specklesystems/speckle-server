@@ -60,58 +60,42 @@ async function updateDefaultApp(app, existingApp) {
       .where({ appId: app.id })
       .pluck('tokenId')
 
-  try {
-    await knex.transaction(async (trx) => {
-      // add new scopes to the app
-      if (newScopes.length)
-        await AppScopes()
-          .insert(newScopes.map((s) => ({ appId: app.id, scopeName: s })))
-          .transacting(trx)
+  // the internal code block makes sure if an error occurred, the trx gets rolled back
+  await knex.transaction(async (trx) => {
+    // add new scopes to the app
+    if (newScopes.length)
+      await AppScopes()
+        .insert(newScopes.map((s) => ({ appId: app.id, scopeName: s })))
+        .transacting(trx)
 
-      // remove scopes from the app
-      if (removedScopes.length)
-        await AppScopes()
-          .where({ appId: app.id })
-          .whereIn('scopeName', removedScopes)
-          .delete()
-          .transacting(trx)
+    // remove scopes from the app
+    if (removedScopes.length)
+      await AppScopes()
+        .where({ appId: app.id })
+        .whereIn('scopeName', removedScopes)
+        .delete()
+        .transacting(trx)
 
-      //update user tokens with scope changes
-      if (affectedTokenIds.length)
-        await Promise.all(
-          affectedTokenIds.map(async (tokenId) => {
-            if (newScopes.length)
-              await knex('token_scopes')
-                .insert(newScopes.map((s) => ({ tokenId, scopeName: s })))
-                .transacting(trx)
+    //update user tokens with scope changes
+    if (affectedTokenIds.length)
+      await Promise.all(
+        affectedTokenIds.map(async (tokenId) => {
+          if (newScopes.length)
+            await knex('token_scopes')
+              .insert(newScopes.map((s) => ({ tokenId, scopeName: s })))
+              .transacting(trx)
 
-            if (removedScopes.length)
-              await knex('token_scopes')
-                .where({ tokenId })
-                .whereIn('scopeName', removedScopes)
-                .delete()
-                .transacting(trx)
-          })
-        )
-      delete app.scopes
-      await Apps().where({ id: app.id }).update(app).transacting(trx)
-      // throw new Error('just to test, that nothing changes with the trx rollback')
-    })
-  } catch (error) {
-    console.error(error)
-  }
-
-  // const scopeDiffA = app.scopes.filter(
-  // (scope) => existingApp.scopes.indexOf(scope) === -1
-  // )
-  // const scopeDiffB = existingApp.scopes.filter(
-  //   (scope) => app.scopes.indexOf(scope) === -1
-  // )
-
-  // if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
-  //   const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
-  //   await AppScopes().insert(scopes)
-  // }
+          if (removedScopes.length)
+            await knex('token_scopes')
+              .where({ tokenId })
+              .whereIn('scopeName', removedScopes)
+              .delete()
+              .transacting(trx)
+        })
+      )
+    delete app.scopes
+    await Apps().where({ id: app.id }).update(app).transacting(trx)
+  })
 }
 
 // this is exported to be able to test the retention of permissions
@@ -138,7 +122,6 @@ const SpeckleApiExplorer = {
   public: true,
   redirectUrl: new URL('/explorer', process.env.CANONICAL_URL).toString(),
   scopes: 'all'
-  // scopes: [ScopesConst.Streams.Read]
 }
 
 const SpeckleDesktopApp = {
