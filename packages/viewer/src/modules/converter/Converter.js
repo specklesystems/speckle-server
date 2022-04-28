@@ -93,7 +93,7 @@ export default class Coverter {
       }
     }
 
-    const target = obj;//obj.data || obj
+    const target = obj //obj.data || obj
 
     // Check if the object has a display value of sorts
     let displayValue =
@@ -177,12 +177,16 @@ export default class Coverter {
   }
 
   directConverterExists(obj) {
-    return this[`${this.getSpeckleType(obj)}ToBufferGeometry`] !== undefined;
+    return this[`${this.getSpeckleType(obj)}ToBufferGeometry`] !== undefined
   }
 
   getDisplayValue(obj) {
-    return obj['displayMesh'] || obj['@displayMesh'] ||
-           obj['displayValue'] || obj['@displayValue'];
+    return (
+      obj['displayMesh'] ||
+      obj['@displayMesh'] ||
+      obj['displayValue'] ||
+      obj['@displayValue']
+    )
   }
 
   /**
@@ -198,8 +202,8 @@ export default class Coverter {
       const type = this.getSpeckleType(obj)
       if (this[`${type}ToBufferGeometry`]) {
         return await this[`${type}ToBufferGeometry`](obj.data || obj, scale)
-      } 
-      /** 
+      }
+      /**
        * Regarding #723. This would be more generic and possibly handle other
        * types with missing direct convertor, however I don't feel it is the
        * 'convert' fuction's place to handle this...
@@ -212,7 +216,7 @@ export default class Coverter {
       // }
       return null
     } catch (e) {
-        console.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
+      console.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
       throw e
     }
   }
@@ -543,11 +547,10 @@ export default class Coverter {
 
     const buffers = []
     for (let i = 0; i < obj.segments.length; i++) {
-      let element = obj.segments[i];
-      let conv;
-      if(this.directConverterExists(element))
-        conv = await this.convert(element, scale)
-      else if((element = this.getDisplayValue(element)) !== undefined)
+      let element = obj.segments[i]
+      let conv
+      if (this.directConverterExists(element)) conv = await this.convert(element, scale)
+      else if ((element = this.getDisplayValue(element)) !== undefined)
         conv = await this.convert(element, scale)
 
       buffers.push(conv?.bufferGeometry)
@@ -602,33 +605,43 @@ export default class Coverter {
     //   .setFromPoints(points)
     //   .applyMatrix4(t)
     // return new ObjectWrapper(geometry, obj, 'line')
-    
+
     /**
      * New implementation, a bit verbose, but it's more clear this way.
      */
-    const origin = new Vector3(obj.plane.origin.x, obj.plane.origin.y, obj.plane.origin.z);
-    const startPoint = new Vector3(obj.startPoint.x, obj.startPoint.y, obj.startPoint.z);
-    const endPoint = new Vector3(obj.endPoint.x, obj.endPoint.y, obj.endPoint.z);
-    const midPoint = new Vector3(obj.midPoint.x, obj.midPoint.y, obj.midPoint.z);
+    const origin = new Vector3(
+      obj.plane.origin.x,
+      obj.plane.origin.y,
+      obj.plane.origin.z
+    )
+    const startPoint = new Vector3(obj.startPoint.x, obj.startPoint.y, obj.startPoint.z)
+    const endPoint = new Vector3(obj.endPoint.x, obj.endPoint.y, obj.endPoint.z)
+    const midPoint = new Vector3(obj.midPoint.x, obj.midPoint.y, obj.midPoint.z)
 
-    const chord = new Line3(startPoint, endPoint);
+    const chord = new Line3(startPoint, endPoint)
     // This the projection of the origin on the chord
-    const chordCenter = chord.getCenter(new Vector3());
+    const chordCenter = chord.getCenter(new Vector3())
     // Direction from the origin to the mid point
-    const d0 = new Vector3().subVectors(midPoint, origin); d0.normalize();
+    const d0 = new Vector3().subVectors(midPoint, origin)
+    d0.normalize()
     // Direction from the origin to it;s projection on the chord
-    const d1 = new Vector3().subVectors(chordCenter, origin); d1.normalize();
+    const d1 = new Vector3().subVectors(chordCenter, origin)
+    d1.normalize()
     // If the two above directions point in opposite directions, we need to reverse the arc's winding order
-    const _clockwise = d0.dot(d1) < 0;
+    const _clockwise = d0.dot(d1) < 0
 
     // Here we compute arc's orthonormal basis vectors using the origin and the two end points.
-    const v0 = new Vector3().subVectors(startPoint, origin); v0.normalize()
-    const v1 = new Vector3().subVectors(endPoint, origin); v1.normalize();
-    const v2 = new Vector3().crossVectors(v0, v1); v2.normalize();
-    const v3 = new Vector3().crossVectors(v2, v0); v3.normalize();
+    const v0 = new Vector3().subVectors(startPoint, origin)
+    v0.normalize()
+    const v1 = new Vector3().subVectors(endPoint, origin)
+    v1.normalize()
+    const v2 = new Vector3().crossVectors(v0, v1)
+    v2.normalize()
+    const v3 = new Vector3().crossVectors(v2, v0)
+    v3.normalize()
 
     // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
-    const angle = Math.acos(v0.dot(v1));
+    const angle = Math.acos(v0.dot(v1))
     const radius = obj.radius
     // We draw the arc in a local un-rotated coordinate system. We rotate it later on via transformation
     const curve = new THREE.EllipseCurve(
@@ -642,19 +655,21 @@ export default class Coverter {
       0 // aRotation
     )
     // This just samples points along the arc curve
-    const points = curve.getPoints(50);
+    const points = curve.getPoints(50)
 
     const matrix = new Matrix4()
     // Scale first, in order for the composition to work correctly
     const conversionFactor = scale ? getConversionFactor(obj.plane.units) : 1
     if (scale) {
-      matrix.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
+      matrix.scale(
+        new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor)
+      )
     }
     // We determine the orientation of the plane using the three basis vectors computed above
-    matrix.makeBasis(v0, v3, v2);
+    matrix.makeBasis(v0, v3, v2)
     // We translate it to the circle's origin
-    matrix.setPosition(origin);
-    
+    matrix.setPosition(origin)
+
     const geometry = new THREE.BufferGeometry()
       .setFromPoints(points)
       .applyMatrix4(matrix)
