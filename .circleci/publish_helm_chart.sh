@@ -14,7 +14,7 @@ git clone git@github.com:specklesystems/helm.git ~/helm
 # before overwriting the chart with the build version, check if the current chart version
 # is not newer than the currently build one
 
-CURRENT_VERSION=(cat charts/speckle-server/Chart.yaml | grep ^version | grep -o '2\..*')
+CURRENT_VERSION=$(cat charts/speckle-server/Chart.yaml | grep ^version | grep -o '2\..*')
 echo ${CURRENT_VERSION}
 
 ./check_version.py ${CURRENT_VERSION} ${RELEASE_VERSION}
