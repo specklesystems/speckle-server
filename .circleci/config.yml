@@ -129,6 +129,10 @@ jobs:
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
       - run:
+          command: touch .env.test
+          working_directory: 'packages/server'
+
+      - run:
           command: npm run test:report
           working_directory: 'packages/server'
 
