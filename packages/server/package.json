@@ -1,6 +1,6 @@
 {
   "name": "@speckle/server",
-  "version": "2.3.17-alpha.2889",
+  "version": "2.3.17",
   "private": true,
   "description": "",
   "homepage": "https://github.com/specklesystems/server",
@@ -65,6 +65,7 @@
     "pg-query-stream": "^4.2.1",
     "prom-client": "^14.0.1",
     "redis": "^3.1.1",
+    "response-time": "^2.3.2",
     "sanitize-html": "^2.4.0",
     "sharp": "^0.29.3",
     "string-pixel-width": "^1.10.0",

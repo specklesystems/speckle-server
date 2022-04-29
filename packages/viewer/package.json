@@ -1,6 +1,6 @@
 {
   "name": "@speckle/viewer",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "description": "A 3d viewer for Speckle, based on threejs.",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -35,7 +35,7 @@
     "threejs"
   ],
   "dependencies": {
-    "@speckle/objectloader": "^2.4.2",
+    "@speckle/objectloader": "^2.4.3",
     "camera-controls": "^1.33.1",
     "core-js": "^3.21.1",
     "hold-event": "^0.1.0",
@@ -62,7 +62,6 @@
     "babel-plugin-add-module-exports": "1.0.4",
     "babel-plugin-transform-class-properties": "6.24.1",
     "browserslist": "^4.20.2",
-    "cross-env": "7.0.3",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "http-server": "^14.1.0",
