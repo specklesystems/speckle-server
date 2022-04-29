@@ -108,7 +108,7 @@
           </section-card>
         </v-col>
         <!-- History -->
-        <v-col cols="12" md="4">
+        <v-col v-if="branch" cols="12" md="4">
           <section-card v-if="branch.commits" expandable>
             <template slot="header">
               Globals History ({{ branch.commits.totalCount }})
