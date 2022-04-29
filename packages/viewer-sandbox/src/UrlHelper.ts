@@ -68,6 +68,6 @@ export default class UrlHelper {
     })
 
     const { data } = await res.json()
-    return `${origin}/streams/${ref.streamId}/objects/${data.stream.commit.referencedObject}`
+    return `${ref.origin}/streams/${ref.streamId}/objects/${data.stream.commit.referencedObject}`
   }
 }
