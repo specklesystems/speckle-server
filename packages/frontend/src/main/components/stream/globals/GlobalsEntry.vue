@@ -6,6 +6,7 @@
       tag="ul"
       group="globals"
       v-bind="dragOptions"
+      handle=".drag-handle"
       @start="drag = true"
       @end="drag = false"
     >
@@ -13,6 +14,9 @@
         <transition type="transition" :name="!drag ? 'flip-list' : null">
           <div v-if="!entry.globals">
             <div class="d-flex align-center">
+              <v-icon color="grey darken-1" class="mb-2 mr-2 drag-handle">
+                mdi-menu
+              </v-icon>
               <v-text-field
                 ref="keyInput"
                 v-model="entry.key"
