@@ -1,6 +1,10 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
 import SceneObjects from './SceneObjects'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { Vector2 } from 'three'
+import { GEOMETRY_LINES_AS_TRIANGLES } from './converter/Geometry'
 
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
@@ -43,10 +47,22 @@ export default class SceneObjectManager {
       clippingPlanes: this.viewer.sectionBox.planes
     })
 
-    this.lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x7f7f7f,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      this.lineMaterial = new LineMaterial({
+        color: 0xffffff,
+        linewidth: 1, // in world units with size attenuation, pixels otherwise
+        worldUnits: true,
+        vertexColors: false,
+        alphaToCoverage: true,
+        resolution: this.viewer.renderer.getDrawingBufferSize(new Vector2()),
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    } else {
+      this.lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x7f7f7f,
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    }
 
     this.pointMaterial = new THREE.PointsMaterial({
       size: 2,
@@ -210,8 +226,8 @@ export default class SceneObjectManager {
     let material = this.lineMaterial
     if (wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone()
-      material.linewidth =
-        wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
+      material.linewidth = 0.1
+      // wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color))
       // material.color.convertSRGBToLinear();
 
@@ -224,8 +240,17 @@ export default class SceneObjectManager {
       // material.color.convertSRGBToLinear();
       material.clippingPlanes = this.viewer.sectionBox.planes
     }
+    material.resolution = this.viewer.renderer.getDrawingBufferSize(new Vector2())
 
-    const line = new THREE.Line(wrapper.bufferGeometry, material)
+    let line
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      line = new Line2(wrapper.bufferGeometry, material)
+      line.computeLineDistances()
+      line.scale.set(1, 1, 1)
+    } else {
+      line = new THREE.Line(wrapper.bufferGeometry, material)
+    }
+
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if (addToScene) {

@@ -5,6 +5,8 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
+import { Geometry, GEOMETRY_POSITION_ATTRIBUTE } from './Geometry'
+import { Vector3 } from 'three'
 
 /**
  * Utility class providing some top level conversion methods.
@@ -565,9 +567,15 @@ export default class Coverter {
       0 // aRotation
     )
     const points = curve.getPoints(50)
-    const geometry = new THREE.BufferGeometry()
-      .setFromPoints(points)
-      .applyMatrix4(this.PlaneToMatrix4(obj.plane, scale))
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: (() => {
+        const out = []
+        for (var k = 0; k < points.length; k++) {
+          out.push(points[k].x, points[k].y, 0)
+        }
+        return out
+      })()
+    }).applyMatrix4(this.PlaneToMatrix4(obj.plane, scale))
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
