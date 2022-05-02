@@ -182,10 +182,10 @@ export default class Coverter {
 
   getDisplayValue(obj) {
     return (
-      obj['displayMesh'] ||
-      obj['@displayMesh'] ||
       obj['displayValue'] ||
-      obj['@displayValue']
+      obj['@displayValue'] ||
+      obj['displayMesh'] ||
+      obj['@displayMesh']
     )
   }
 
@@ -725,9 +725,7 @@ export default class Coverter {
       this.PointToVector3(plane.normal).normalize()
     )
     m.setPosition(this.PointToVector3(plane.origin))
-    /**
-     * I think scaling should be done first.
-     */
+
     if (scale) {
       m.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
     }
