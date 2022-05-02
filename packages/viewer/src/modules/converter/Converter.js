@@ -466,10 +466,12 @@ export default class Coverter {
     const obj = {}
     Object.assign(obj, object)
 
-    const geometry = new THREE.BufferGeometry().setFromPoints([
-      this.PointToVector3(obj.start, scale),
-      this.PointToVector3(obj.end, scale)
-    ])
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: [
+        this.PointToVector3(obj.start, scale),
+        this.PointToVector3(obj.end, scale)
+      ]
+    })
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
@@ -493,7 +495,9 @@ export default class Coverter {
     }
     if (obj.closed) points.push(points[0])
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    })
 
     delete obj.value
     delete obj.bbox
@@ -520,12 +524,31 @@ export default class Coverter {
     Object.assign(obj, object)
 
     const buffers = []
+    let count = 0
     for (let i = 0; i < obj.segments.length; i++) {
       const element = obj.segments[i]
       const conv = await this.convert(element, scale)
       buffers.push(conv?.bufferGeometry)
+      count += conv?.bufferGeometry.attributes.instanceStart.data.array.length
     }
-    const geometry = BufferGeometryUtils.mergeBufferGeometries(buffers)
+
+    /**
+     * Definetly not the best approach, however it will do for now
+     * until we properly refactor the conversions
+     */
+    const mergedPoints = new Float32Array(count)
+    let offset = 0
+    for (var k = 0; k < buffers.length; k++) {
+      const points = buffers[k].attributes.instanceStart.data.array
+      mergedPoints.set(points, offset)
+      offset += points.length
+    }
+    const geometry = Geometry.makeLineGeometry(
+      {
+        [GEOMETRY_POSITION_ATTRIBUTE]: mergedPoints
+      },
+      true
+    )
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
@@ -544,7 +567,9 @@ export default class Coverter {
   async CircleToBufferGeometry(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     const points = this.getCircularCurvePoints(obj.plane, obj.radius * conversionFactor)
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    })
 
     // delete obj.plane
     // delete obj.value
@@ -568,13 +593,7 @@ export default class Coverter {
     )
     const points = curve.getPoints(50)
     const geometry = Geometry.makeLineGeometry({
-      [GEOMETRY_POSITION_ATTRIBUTE]: (() => {
-        const out = []
-        for (var k = 0; k < points.length; k++) {
-          out.push(points[k].x, points[k].y, 0)
-        }
-        return out
-      })()
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
     }).applyMatrix4(this.PlaneToMatrix4(obj.plane, scale))
 
     return new ObjectWrapper(geometry, obj, 'line')
@@ -614,7 +633,9 @@ export default class Coverter {
       points.push(pt)
     }
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    })
     return new ObjectWrapper(geometry, obj, 'line')
   }
 

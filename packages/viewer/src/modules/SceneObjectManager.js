@@ -47,22 +47,7 @@ export default class SceneObjectManager {
       clippingPlanes: this.viewer.sectionBox.planes
     })
 
-    if (GEOMETRY_LINES_AS_TRIANGLES) {
-      this.lineMaterial = new LineMaterial({
-        color: 0xffffff,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: true,
-        vertexColors: false,
-        alphaToCoverage: true,
-        resolution: this.viewer.renderer.getDrawingBufferSize(new Vector2()),
-        clippingPlanes: this.viewer.sectionBox.planes
-      })
-    } else {
-      this.lineMaterial = new THREE.LineBasicMaterial({
-        color: 0x7f7f7f,
-        clippingPlanes: this.viewer.sectionBox.planes
-      })
-    }
+    this.lineMaterial = this.makeLineMaterial()
 
     this.pointMaterial = new THREE.PointsMaterial({
       size: 2,
@@ -226,8 +211,13 @@ export default class SceneObjectManager {
     let material = this.lineMaterial
     if (wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone()
-      material.linewidth = 0.1
-      // wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
+      if (wrapper.meta.displayStyle.lineweight > 0) {
+        material.linewidth = wrapper.meta.displayStyle.lineweight
+        material.worldUnits = true
+      } else {
+        material.linewidth = 1
+        material.worldUnits = false
+      }
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color))
       // material.color.convertSRGBToLinear();
 
@@ -242,14 +232,7 @@ export default class SceneObjectManager {
     }
     material.resolution = this.viewer.renderer.getDrawingBufferSize(new Vector2())
 
-    let line
-    if (GEOMETRY_LINES_AS_TRIANGLES) {
-      line = new Line2(wrapper.bufferGeometry, material)
-      line.computeLineDistances()
-      line.scale.set(1, 1, 1)
-    } else {
-      line = new THREE.Line(wrapper.bufferGeometry, material)
-    }
+    let line = this.makeLineMesh(wrapper.bufferGeometry, material)
 
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
@@ -361,6 +344,41 @@ export default class SceneObjectManager {
     }
     const box = new THREE.Box3().setFromObject(this.userObjects)
     return box
+  }
+
+  makeLineMesh(geometry, material) {
+    let line
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      line = new Line2(geometry, material)
+      line.computeLineDistances()
+      line.scale.set(1, 1, 1)
+    } else {
+      line = new THREE.Line(geometry, material)
+    }
+
+    return line
+  }
+
+  makeLineMaterial() {
+    let lineMaterial
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      lineMaterial = new LineMaterial({
+        color: 0x7f7f7f,
+        linewidth: 1, // in world units with size attenuation, pixels otherwise
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: true,
+        resolution: this.viewer.renderer.getDrawingBufferSize(new Vector2()),
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    } else {
+      lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x7f7f7f,
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    }
+
+    return lineMaterial
   }
 
   _argbToRGB(argb) {

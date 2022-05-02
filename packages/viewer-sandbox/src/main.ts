@@ -23,7 +23,7 @@ sandbox.makeGenericUI()
 
 // Load demo object
 sandbox.loadUrl(
-  'https://speckle.xyz/streams/99abc74dd4/commits/ccc0baaadb'
+  'https://latest.speckle.dev/streams/3ed8357f29/commits/b21fb0dcf7?c=%5B15.7702,-36.79588,44.54544,32.22419,3.03342,-6.79766,0,1%5D'
 )
 
 viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {

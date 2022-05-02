@@ -195,6 +195,7 @@ export default class InteractionHandler {
       location: objs[0].point,
       selectionCenter
     }
+    console.log(selectionInfo)
     this.viewer.emit('select', selectionInfo)
   }
 
