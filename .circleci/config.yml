@@ -100,6 +100,7 @@ jobs:
             echo "export IMAGE_VERSION_TAG=$(.circleci/get_version.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
       - run: echo $IMAGE_VERSION_TAG
+      # - run: sleep 3m
       - persist_to_workspace:
           root: workspace
           paths:
@@ -127,6 +128,10 @@ jobs:
       - node/install-packages:
           app-dir: ~/project/packages/server
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
+
+      - run:
+          command: touch .env.test
+          working_directory: 'packages/server'
 
       - run:
           command: npm run test:report

@@ -49,7 +49,8 @@ const config = {
     connection: connectionUri || 'postgres://localhost/speckle2_dev',
     migrations: {
       directory: migrationDirs
-    }
+    },
+    pool: { min: 2, max: 4 }
   },
   production: {
     client: 'pg',
