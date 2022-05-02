@@ -182,10 +182,10 @@ export default class Coverter {
 
   getDisplayValue(obj) {
     return (
-      obj['displayMesh'] ||
-      obj['@displayMesh'] ||
       obj['displayValue'] ||
-      obj['@displayValue']
+      obj['@displayValue'] ||
+      obj['displayMesh'] ||
+      obj['@displayMesh']
     )
   }
 
