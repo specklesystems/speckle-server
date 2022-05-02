@@ -725,7 +725,9 @@ export default class Coverter {
       this.PointToVector3(plane.normal).normalize()
     )
     m.setPosition(this.PointToVector3(plane.origin))
-
+    /**
+     * I think scaling should be done first.
+     */
     if (scale) {
       m.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
     }
