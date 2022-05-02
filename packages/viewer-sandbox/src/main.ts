@@ -22,8 +22,13 @@ const sandbox = new Sandbox(viewer)
 sandbox.makeGenericUI()
 
 // Load demo object
+<<<<<<< HEAD
 sandbox.loadUrl(
   'https://latest.speckle.dev/streams/3ed8357f29/commits/b21fb0dcf7?c=%5B15.7702,-36.79588,44.54544,32.22419,3.03342,-6.79766,0,1%5D'
+=======
+viewer.loadObject(
+  'https://speckle.xyz/streams/99abc74dd4/objects/ab503a2025e706717bff467ef8f96488'
+>>>>>>> main
 )
 
 viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {

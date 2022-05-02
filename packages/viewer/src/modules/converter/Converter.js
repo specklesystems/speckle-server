@@ -6,7 +6,9 @@ import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { Geometry, GEOMETRY_POSITION_ATTRIBUTE } from './Geometry'
+import { Matrix4 } from 'three'
 import { Vector3 } from 'three'
+import { Line3 } from 'three'
 
 /**
  * Utility class providing some top level conversion methods.
@@ -92,7 +94,7 @@ export default class Coverter {
       }
     }
 
-    const target = obj.data || obj
+    const target = obj //obj.data || obj
 
     // Check if the object has a display value of sorts
     let displayValue =
@@ -175,6 +177,19 @@ export default class Coverter {
     this.activePromises -= childrenConversionPromisses.length
   }
 
+  directConverterExists(obj) {
+    return this[`${this.getSpeckleType(obj)}ToBufferGeometry`] !== undefined
+  }
+
+  getDisplayValue(obj) {
+    return (
+      obj['displayValue'] ||
+      obj['@displayValue'] ||
+      obj['displayMesh'] ||
+      obj['@displayMesh']
+    )
+  }
+
   /**
    * Directly converts an object and invokes the callback with the the conversion result.
    * If you don't know what you're doing, use traverseAndConvert() instead.
@@ -188,7 +203,19 @@ export default class Coverter {
       const type = this.getSpeckleType(obj)
       if (this[`${type}ToBufferGeometry`]) {
         return await this[`${type}ToBufferGeometry`](obj.data || obj, scale)
-      } else return null
+      }
+      /**
+       * Regarding #723. This would be more generic and possibly handle other
+       * types with missing direct convertor, however I don't feel it is the
+       * 'convert' fuction's place to handle this...
+       */
+      // else {
+      //   let element;
+      //   if((element = this.getDisplayValue(obj)) !== undefined) {
+      //     return await this.convert(element, scale);
+      //   }
+      // }
+      return null
     } catch (e) {
       console.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
       throw e
@@ -526,8 +553,12 @@ export default class Coverter {
     const buffers = []
     let count = 0
     for (let i = 0; i < obj.segments.length; i++) {
-      const element = obj.segments[i]
-      const conv = await this.convert(element, scale)
+      let element = obj.segments[i]
+      let conv
+      if (this.directConverterExists(element)) conv = await this.convert(element, scale)
+      else if ((element = this.getDisplayValue(element)) !== undefined)
+        conv = await this.convert(element, scale)
+
       buffers.push(conv?.bufferGeometry)
       count += conv?.bufferGeometry.attributes.instanceStart.data.array.length
     }
@@ -580,18 +611,91 @@ export default class Coverter {
   }
 
   async ArcToBufferGeometry(obj, scale = true) {
+    /**
+     * Old implementation
+     */
+    // const radius = obj.radius
+    // const curve = new THREE.EllipseCurve(
+    //   0,
+    //   0, // ax, aY
+    //   radius,
+    //   radius, // xRadius, yRadius
+    //   obj.startAngle,
+    //   obj.endAngle, // aStartAngle, aEndAngle
+    //   false, // aClockwise
+    //   0 // aRotation
+    // )
+    // const points = curve.getPoints(50);
+    // const t = this.PlaneToMatrix4(obj.plane, scale);
+    // const geometry = new THREE.BufferGeometry()
+    //   .setFromPoints(points)
+    //   .applyMatrix4(t)
+    // return new ObjectWrapper(geometry, obj, 'line')
+
+    /**
+     * New implementation, a bit verbose, but it's more clear this way.
+     */
+    const origin = new Vector3(
+      obj.plane.origin.x,
+      obj.plane.origin.y,
+      obj.plane.origin.z
+    )
+    const startPoint = new Vector3(obj.startPoint.x, obj.startPoint.y, obj.startPoint.z)
+    const endPoint = new Vector3(obj.endPoint.x, obj.endPoint.y, obj.endPoint.z)
+    const midPoint = new Vector3(obj.midPoint.x, obj.midPoint.y, obj.midPoint.z)
+
+    const chord = new Line3(startPoint, endPoint)
+    // This the projection of the origin on the chord
+    const chordCenter = chord.getCenter(new Vector3())
+    // Direction from the origin to the mid point
+    const d0 = new Vector3().subVectors(midPoint, origin)
+    d0.normalize()
+    // Direction from the origin to it;s projection on the chord
+    const d1 = new Vector3().subVectors(chordCenter, origin)
+    d1.normalize()
+    // If the two above directions point in opposite directions, we need to reverse the arc's winding order
+    const _clockwise = d0.dot(d1) < 0
+
+    // Here we compute arc's orthonormal basis vectors using the origin and the two end points.
+    const v0 = new Vector3().subVectors(startPoint, origin)
+    v0.normalize()
+    const v1 = new Vector3().subVectors(endPoint, origin)
+    v1.normalize()
+    const v2 = new Vector3().crossVectors(v0, v1)
+    v2.normalize()
+    const v3 = new Vector3().crossVectors(v2, v0)
+    v3.normalize()
+
+    // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
+    const angle = Math.acos(v0.dot(v1))
     const radius = obj.radius
+    // We draw the arc in a local un-rotated coordinate system. We rotate it later on via transformation
     const curve = new THREE.EllipseCurve(
       0,
       0, // ax, aY
       radius,
       radius, // xRadius, yRadius
-      obj.startAngle,
-      obj.endAngle, // aStartAngle, aEndAngle
-      false, // aClockwise
+      0,
+      angle, // aStartAngle, aEndAngle
+      _clockwise, // aClockwise
       0 // aRotation
     )
+    // This just samples points along the arc curve
     const points = curve.getPoints(50)
+
+    const matrix = new Matrix4()
+    // Scale first, in order for the composition to work correctly
+    const conversionFactor = scale ? getConversionFactor(obj.plane.units) : 1
+    if (scale) {
+      matrix.scale(
+        new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor)
+      )
+    }
+    // We determine the orientation of the plane using the three basis vectors computed above
+    matrix.makeBasis(v0, v3, v2)
+    // We translate it to the circle's origin
+    matrix.setPosition(origin)
+
     const geometry = Geometry.makeLineGeometry({
       [GEOMETRY_POSITION_ATTRIBUTE]: points
     }).applyMatrix4(this.PlaneToMatrix4(obj.plane, scale))
@@ -649,6 +753,9 @@ export default class Coverter {
       this.PointToVector3(plane.normal).normalize()
     )
     m.setPosition(this.PointToVector3(plane.origin))
+    /**
+     * I think scaling should be done first.
+     */
     if (scale) {
       m.scale(new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor))
     }
