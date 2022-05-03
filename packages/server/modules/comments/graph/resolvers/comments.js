@@ -117,7 +117,16 @@ module.exports = {
     },
 
     async commentCreate(parent, args, context) {
-      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      if (!context.userId)
+        throw new ForbiddenError('Only registered users can comment.')
+
+      const stream = await getStream({
+        streamId: args.input.streamId,
+        userId: context.userId
+      })
+
+      if (!stream.allowPublicComments)
+        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
       const id = await createComment({ userId: context.userId, input: args.input })
 
@@ -170,7 +179,16 @@ module.exports = {
     },
 
     async commentReply(parent, args, context) {
-      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      if (!context.userId)
+        throw new ForbiddenError('Only registered users can comment.')
+
+      const stream = await getStream({
+        streamId: args.input.streamId,
+        userId: context.userId
+      })
+
+      if (!stream.allowPublicComments)
+        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
 
       const id = await createCommentReply({
         authorId: context.userId,

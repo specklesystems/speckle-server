@@ -192,6 +192,7 @@ export default {
           stream(id: $streamId) {
             id
             role
+            allowPublicComments
           }
         }
       `,
