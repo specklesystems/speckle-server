@@ -1,10 +1,9 @@
 'use strict'
-const appRoot = require('app-root-path')
 const {
   validateScopes,
   validateServerRole,
   authorizeResolver
-} = require(`${appRoot}/modules/shared`)
+} = require('@/modules/shared')
 
 const { getStream } = require('../services/streams')
 

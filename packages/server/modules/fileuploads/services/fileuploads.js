@@ -1,9 +1,8 @@
 /* istanbul ignore file */
 'use strict'
 
-const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 const S3 = require('aws-sdk/clients/s3')
 
 const FileUploads = () => knex('file_uploads')

@@ -1,7 +1,6 @@
-const appRoot = require('app-root-path')
-const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
+const { authorizeResolver, pubsub } = require('@/modules/shared')
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
-const { getStream } = require(`${appRoot}/modules/core/services/streams`)
+const { getStream } = require('@/modules/core/services/streams')
 
 const {
   getComment,
@@ -14,7 +13,7 @@ const {
   archiveComment,
   editComment,
   streamResourceCheck
-} = require(`${appRoot}/modules/comments/services`)
+} = require('@/modules/comments/services')
 
 const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
   const stream = await getStream({ streamId, userId })

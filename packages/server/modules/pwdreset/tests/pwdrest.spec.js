@@ -1,12 +1,11 @@
 /* istanbul ignore file */
 const request = require('supertest')
-const appRoot = require('app-root-path')
 
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 const ResetTokens = () => knex('pwdreset_tokens')
 
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
+const { beforeEachContext } = require('@/test/hooks')
+const { createUser } = require('@/modules/core/services/users')
 
 describe('Password reset requests @passwordresets', () => {
   let app

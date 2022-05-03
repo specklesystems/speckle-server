@@ -3,9 +3,8 @@ const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const expect = require('chai').expect
 const assert = require('assert')
-const appRoot = require('app-root-path')
 
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
 const {
   archiveUser,
@@ -41,7 +40,7 @@ const {
 } = require('../services/commits')
 
 const { createObject } = require('../services/objects')
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { beforeEachContext } = require('@/test/hooks')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

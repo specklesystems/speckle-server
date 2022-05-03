@@ -1,8 +1,7 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const appRoot = require('app-root-path')
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { beforeEachContext } = require('@/test/hooks')
 
 const {
   validateServerRole,

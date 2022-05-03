@@ -1,7 +1,6 @@
 /* eslint-disable no-undef */
 /* istanbul ignore file */
 const expect = require('chai').expect
-const appRoot = require('app-root-path')
 const request = require('supertest')
 const gql = require('graphql-tag')
 const { execute } = require('apollo-link')
@@ -13,7 +12,7 @@ const { createUser } = require('../services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const { beforeEachContext } = require(`@/test/hooks`)
 
-const { sleep, noErrors } = require(`${appRoot}/test/helpers`)
+const { sleep, noErrors } = require('@/test/helpers')
 
 let addr
 let wsAddr

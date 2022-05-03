@@ -1,14 +1,13 @@
 'use strict'
 
-const appRoot = require('app-root-path')
 const {
   ForbiddenError,
   UserInputError,
   ApolloError,
   withFilter
 } = require('apollo-server-express')
-const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
-const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
+const { authorizeResolver, pubsub } = require('@/modules/shared')
+const { saveActivity } = require('@/modules/activitystream/services')
 
 const {
   createCommitByBranchName,

@@ -1,5 +1,4 @@
 'use strict'
-const appRoot = require('app-root-path')
 const { UserInputError } = require('apollo-server-express')
 const {
   getUser,
@@ -15,7 +14,7 @@ const {
   unmakeUserAdmin,
   archiveUser
 } = require('../../services/users')
-const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
+const { saveActivity } = require('@/modules/activitystream/services')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 

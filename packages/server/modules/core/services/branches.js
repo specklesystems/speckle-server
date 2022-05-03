@@ -1,7 +1,6 @@
 'use strict'
 const crs = require('crypto-random-string')
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')

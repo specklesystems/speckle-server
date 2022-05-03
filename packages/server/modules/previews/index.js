@@ -8,7 +8,7 @@ const {
   contextMiddleware,
   validateScopes,
   authorizeResolver
-} = require(`${appRoot}/modules/shared`)
+} = require('@/modules/shared')
 
 const { getStream } = require('../core/services/streams')
 const { getObject } = require('../core/services/objects')
