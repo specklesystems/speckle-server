@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { Color } from 'three'
 
 export default class InteractionHandler {
   constructor(viewer) {
@@ -28,6 +31,15 @@ export default class InteractionHandler {
     this.selectionEdgesMaterial = new THREE.LineBasicMaterial({ color: 0x23f3bd })
     this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
+    this.selectionLine2Material = new LineMaterial({
+      color: 0x0b55d2,
+      linewidth: 1,
+      worldUnits: false,
+      vertexColors: false,
+      alphaToCoverage: true,
+      resolution: this.viewer.renderer.getDrawingBufferSize(new THREE.Vector2()),
+      clippingPlanes: this.viewer.sectionBox.planes
+    })
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add(this.selectedObjects)
     this.selectedObjects.renderOrder = 1000
@@ -146,6 +158,9 @@ export default class InteractionHandler {
 
     switch (selType) {
       case 'Block': {
+        /**
+         * Currently lines inside a group will not highlight
+         */
         const blockObjs = this.getBlockObjectsCloned(rootBlock)
         for (const child of blockObjs) {
           child.userData = { id: rootBlock.userData.id }
@@ -169,6 +184,19 @@ export default class InteractionHandler {
         //this.viewer.outlinePass.selectedObjects.push( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
       }
+      case 'Line2': {
+        let material = this.selectionLine2Material.clone()
+        material.linewidth = objs[0].object.material.linewidth
+        material.worldUnits = objs[0].object.material.worldUnits
+        material.alphaToCoverage = objs[0].object.material.alphaToCoverage
+        const l = new Line2(objs[0].object.geometry, material)
+        l.renderOrder = -1
+        l.computeLineDistances()
+        l.scale.set(1, 1, 1)
+        l.userData = { id: objs[0].object.userData.id }
+        this.selectedObjects.add(l)
+        break
+      }
       case 'Point':
         console.warn('Point selection not implemented.')
         return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
@@ -183,6 +211,12 @@ export default class InteractionHandler {
     }
 
     const box = new THREE.Box3().setFromObject(this.selectedObjects)
+    if (selType == 'Line2') {
+      const expand = objs[0].object.material.worldUnits
+        ? objs[0].object.material.linewidth * 0.5
+        : 0
+      box.expandByScalar(expand)
+    }
     const boxHelper = new THREE.Box3Helper(box, 0x047efb)
     this.selectionBox.clear()
     this.selectionBox.add(boxHelper)
@@ -195,7 +229,7 @@ export default class InteractionHandler {
       location: objs[0].point,
       selectionCenter
     }
-    console.log(selectionInfo)
+    // console.log(selectionInfo)
     this.viewer.emit('select', selectionInfo)
   }
 

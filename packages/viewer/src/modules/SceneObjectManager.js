@@ -233,7 +233,6 @@ export default class SceneObjectManager {
     material.resolution = this.viewer.renderer.getDrawingBufferSize(new Vector2())
 
     let line = this.makeLineMesh(wrapper.bufferGeometry, material)
-
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if (addToScene) {
@@ -367,7 +366,7 @@ export default class SceneObjectManager {
         linewidth: 1, // in world units with size attenuation, pixels otherwise
         worldUnits: false,
         vertexColors: false,
-        alphaToCoverage: true,
+        alphaToCoverage: false,
         resolution: this.viewer.renderer.getDrawingBufferSize(new Vector2()),
         clippingPlanes: this.viewer.sectionBox.planes
       })

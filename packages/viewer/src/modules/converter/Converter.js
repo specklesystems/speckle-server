@@ -5,7 +5,11 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
-import { Geometry, GEOMETRY_POSITION_ATTRIBUTE } from './Geometry'
+import {
+  Geometry,
+  GEOMETRY_LINES_AS_TRIANGLES,
+  GEOMETRY_POSITION_ATTRIBUTE
+} from './Geometry'
 import { Matrix4 } from 'three'
 import { Vector3 } from 'three'
 import { Line3 } from 'three'
@@ -560,26 +564,32 @@ export default class Coverter {
         conv = await this.convert(element, scale)
 
       buffers.push(conv?.bufferGeometry)
-      count += conv?.bufferGeometry.attributes.instanceStart.data.array.length
+      if (GEOMETRY_LINES_AS_TRIANGLES)
+        count += conv?.bufferGeometry.attributes.instanceStart.data.array.length
     }
 
     /**
      * Definetly not the best approach, however it will do for now
      * until we properly refactor the conversions
      */
-    const mergedPoints = new Float32Array(count)
-    let offset = 0
-    for (var k = 0; k < buffers.length; k++) {
-      const points = buffers[k].attributes.instanceStart.data.array
-      mergedPoints.set(points, offset)
-      offset += points.length
+    let geometry
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      const mergedPoints = new Float32Array(count)
+      let offset = 0
+      for (var k = 0; k < buffers.length; k++) {
+        const points = buffers[k].attributes.instanceStart.data.array
+        mergedPoints.set(points, offset)
+        offset += points.length
+      }
+      geometry = Geometry.makeLineGeometry(
+        {
+          [GEOMETRY_POSITION_ATTRIBUTE]: mergedPoints
+        },
+        true
+      )
+    } else {
+      geometry = BufferGeometryUtils.mergeBufferGeometries(buffers)
     }
-    const geometry = Geometry.makeLineGeometry(
-      {
-        [GEOMETRY_POSITION_ATTRIBUTE]: mergedPoints
-      },
-      true
-    )
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
@@ -698,7 +708,7 @@ export default class Coverter {
 
     const geometry = Geometry.makeLineGeometry({
       [GEOMETRY_POSITION_ATTRIBUTE]: points
-    }).applyMatrix4(this.PlaneToMatrix4(obj.plane, scale))
+    }).applyMatrix4(matrix)
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
