@@ -13,7 +13,7 @@ const { createPersonalAccessToken } = require('../services/tokens')
 const { beforeEachContext } = require(`@/test/hooks`)
 
 const { sleep, noErrors } = require('@/test/helpers')
-const appRoot = require('app-root-path')
+const { appRoot } = require('@/bootstrap')
 
 let addr
 let wsAddr

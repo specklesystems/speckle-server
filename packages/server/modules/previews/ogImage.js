@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 'use strict'
 
-const appRoot = require('app-root-path')
 const sharp = require('sharp')
 const xmlescape = require('xml-escape')
 const pixelWidth = require('string-pixel-width')
@@ -26,7 +25,7 @@ module.exports = {
     // console.log( streamName, pixelWidth( title, { font: 'open sans', size: 48 } ), ' / ', imgWidth - 2 * panelPadding - 305 )
 
     const logo = await sharp(
-      `${appRoot}/modules/previews/assets/speckle_logo_and_text.png`
+      require.resolve('@/modules/previews/assets/speckle_logo_and_text.png')
     )
       .resize({ height: panelHeight })
       .toBuffer()
