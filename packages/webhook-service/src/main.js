@@ -3,6 +3,7 @@
 const crypto = require('crypto')
 const knex = require('./knex')
 const fs = require('fs')
+const metrics = require('./prometheusMetrics')
 
 let shouldExit = false
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
@@ -94,6 +95,7 @@ async function doTask(task) {
     `,
       [err.toString(), task.id]
     )
+    metrics.metricOperationErrors.labels('webhook').inc()
   }
 }
 
@@ -112,11 +114,16 @@ async function tick() {
       return
     }
 
+    const metricDurationEnd = metrics.metricDuration.startTimer()
+
     await doTask(task)
+
+    metricDurationEnd({ op: 'webhook' })
 
     // Check for another task very soon
     setTimeout(tick, 10)
   } catch (err) {
+    metrics.metricOperationErrors.labels('main_loop').inc()
     console.log('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
@@ -129,6 +136,7 @@ async function main() {
     shouldExit = true
     console.log('Shutting down...')
   })
+  metrics.initPrometheusMetrics()
 
   tick()
 }

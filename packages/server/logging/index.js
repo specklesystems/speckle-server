@@ -15,7 +15,12 @@ module.exports = function (app) {
   if (!prometheusInitialized) {
     prometheusInitialized = true
     prometheusClient.register.clear()
+    prometheusClient.register.setDefaultLabels({
+      project: 'speckle-server',
+      app: 'server'
+    })
     prometheusClient.collectDefaultMetrics()
+
     initKnexPrometheusMetrics()
   }
 

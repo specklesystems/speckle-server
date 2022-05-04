@@ -4,16 +4,20 @@ metadata:
   name: speckle-server
   namespace: {{ .Values.namespace }}
   annotations:
+    {{- if .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    {{- end }}
     nginx.ingress.kubernetes.io/proxy-body-size: "100m"
     nginx.org/client-max-body-size: "100m"
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
+  {{- if .Values.cert_manager_issuer }}
   tls:
   - hosts:
     - {{ .Values.domain }}
     secretName: server-tls
+  {{- end }}
   rules:
   - host: {{ .Values.domain }}
     http:
