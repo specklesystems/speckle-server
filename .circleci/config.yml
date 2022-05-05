@@ -62,6 +62,12 @@ workflows:
             - get-version
             - test-server
 
+      - docker-build-and-publish-monitor-container:
+          context: *docker-hub-context
+          filters: *filters-build
+          requires:
+            - get-version
+
       - publish-helm-chart:
           filters: *filters-build
           requires:
@@ -72,6 +78,7 @@ workflows:
             - docker-build-and-publish-webhooks
             - docker-build-and-publish-file-imports
             - docker-build-and-publish-previews
+            - docker-build-and-publish-monitor-container
             - docker-build-and-publish-test-container
 
       - publish-npm:
@@ -193,6 +200,12 @@ jobs:
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: test-deployment
+
+  docker-build-and-publish-monitor-container:
+    <<: *docker-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: monitor-deployment
 
   publish-npm:
     docker: *docker-image

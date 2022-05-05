@@ -16,8 +16,10 @@ module.exports = {
         labelNames: ['route']
       })
     }
+
     return responseTime(function (req, res, time) {
       let route = 'unknown'
+      if (req.originalUrl === '/graphql') route = '/graphql'
       if (req.route && req.route.path) route = req.route.path
       metricRequestDuration.labels(route).observe(time / 1000)
     })

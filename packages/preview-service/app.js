@@ -10,10 +10,6 @@ const indexRouter = require('./routes/index')
 const previewRouter = require('./routes/preview')
 const objectsRouter = require('./routes/objects')
 const apiRouter = require('./routes/api')
-const prometheusClient = require('prom-client')
-
-prometheusClient.register.clear()
-prometheusClient.collectDefaultMetrics()
 
 const app = express()
 
@@ -28,16 +24,6 @@ app.use('/', indexRouter)
 app.use('/preview', previewRouter)
 app.use('/objects', objectsRouter)
 app.use('/api', apiRouter)
-
-// Expose prometheus metrics
-app.get('/metrics', async (req, res) => {
-  try {
-    res.set('Content-Type', prometheusClient.register.contentType)
-    res.end(await prometheusClient.register.metrics())
-  } catch (ex) {
-    res.status(500).end(ex.message)
-  }
-})
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

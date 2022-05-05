@@ -1,6 +1,7 @@
 namespace: speckle-test
 
-domain: myspeckleserver
+domain: speckle.minikube
+ssl_canonical_url: false
 
 docker_image_tag: 'local'
 
@@ -13,4 +14,5 @@ s3:
   access_key: 'minioadmin'
   create_bucket: 'true'
 
-cert_manager_issuer: letsencrypt-staging
+cert_manager_issuer: ~
+enable_prometheus_monitoring: true
