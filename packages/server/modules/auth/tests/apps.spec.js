@@ -1,10 +1,9 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const appRoot = require('app-root-path')
 
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
-const { validateToken } = require(`${appRoot}/modules/core/services/tokens`)
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { createUser } = require('@/modules/core/services/users')
+const { validateToken } = require('@/modules/core/services/tokens')
+const { beforeEachContext } = require('@/test/hooks')
 const {
   getApp,
   getAllPublicApps,

@@ -1,8 +1,6 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const appRoot = require('app-root-path')
-
 const { createUser } = require('../services/users')
 const {
   createStream,
@@ -22,8 +20,8 @@ const {
 const { createObject } = require('../services/objects')
 const { createCommitByBranchName } = require('../services/commits')
 
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
-const { sleep } = require(`${appRoot}/test/helpers`)
+const { beforeEachContext } = require('@/test/hooks')
+const { sleep } = require('@/test/helpers')
 
 describe('Streams @core-streams', () => {
   const userOne = {

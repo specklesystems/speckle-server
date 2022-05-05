@@ -1,7 +1,6 @@
 'use strict'
 
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 const crs = require('crypto-random-string')
 
 const WebhooksConfig = () => knex('webhooks_config')

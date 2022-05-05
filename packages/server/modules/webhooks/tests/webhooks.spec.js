@@ -2,9 +2,8 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const appRoot = require('app-root-path')
-const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
-const { noErrors } = require(`${appRoot}/test/helpers`)
+const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
+const { noErrors } = require('@/test/helpers')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const {
   createWebhook,

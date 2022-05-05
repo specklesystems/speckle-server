@@ -1,6 +1,5 @@
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
-const roles = require(`${appRoot}/modules/core/roles.js`)
+const knex = require('@/db/knex')
+const roles = require('@/modules/core/roles.js')
 
 const Users = () => knex('users')
 

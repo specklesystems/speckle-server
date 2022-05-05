@@ -15,7 +15,7 @@
     "node": "^16.0.0"
   },
   "scripts": {
-    "dev": "cross-env NODE_ENV=development DEBUG=speckle:* nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
+    "dev": "cross-env 'NODE_ENV=development' 'DEBUG=speckle:*' nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
     "test": "cross-env NODE_ENV=test mocha",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter lcov mocha",
@@ -28,7 +28,6 @@
     "@sentry/tracing": "^6.17.9",
     "apollo-server-express": "^2.19.0",
     "apollo-server-testing": "^2.19.0",
-    "app-root-path": "^3.0.0",
     "auto-load": "^3.0.4",
     "aws-sdk": "^2.1075.0",
     "bcrypt": "^5.0.0",

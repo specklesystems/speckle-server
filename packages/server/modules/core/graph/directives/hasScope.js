@@ -1,7 +1,6 @@
 const { SchemaDirectiveVisitor } = require('apollo-server-express')
 const { defaultFieldResolver } = require('graphql')
-const appRoot = require('app-root-path')
-const { validateScopes } = require(`${appRoot}/modules/shared`)
+const { validateScopes } = require('@/modules/shared')
 
 module.exports = {
   hasScope: class HasScopeDirective extends SchemaDirectiveVisitor {

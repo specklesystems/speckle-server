@@ -1,7 +1,6 @@
 'use strict'
 
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
 const { dispatchStreamEvent } = require('../../webhooks/services/webhooks')
 const StreamActivity = () => knex('stream_activity')

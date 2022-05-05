@@ -1,18 +1,15 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const appRoot = require('app-root-path')
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { beforeEachContext } = require('@/test/hooks')
 const request = require('supertest')
 
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
-const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
+const { createUser } = require('@/modules/core/services/users')
+const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
 
-const {
-  sendEmailVerification
-} = require(`${appRoot}/modules/emails/services/verification`)
+const { sendEmailVerification } = require('@/modules/emails/services/verification')
 
 const Verifications = () => knex('email_verifications')
 
