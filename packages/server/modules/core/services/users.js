@@ -1,9 +1,8 @@
 'use strict'
 const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
-const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
+const knex = require('@/db/knex')
+const { saveActivity } = require('@/modules/activitystream/services')
 
 const Users = () => knex('users')
 const Acl = () => knex('server_acl')

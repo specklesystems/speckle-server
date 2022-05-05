@@ -2,14 +2,13 @@
 'use strict'
 
 const debug = require('debug')
-const appRoot = require('app-root-path')
 const Busboy = require('busboy')
 
 const {
   contextMiddleware,
   validateScopes,
   authorizeResolver
-} = require(`${appRoot}/modules/shared`)
+} = require('@/modules/shared')
 
 const {
   checkBucket,

@@ -1,6 +1,5 @@
 'use strict'
-const appRoot = require('app-root-path')
-const { validateServerRole, validateScopes } = require(`${appRoot}/modules/shared`)
+const { validateServerRole, validateScopes } = require('@/modules/shared')
 const {
   updateServerInfo,
   getServerInfo,

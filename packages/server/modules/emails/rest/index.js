@@ -1,8 +1,7 @@
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
-const { getUserByEmail } = require(`${appRoot}/modules/core/services/users`)
-const { contextMiddleware } = require(`${appRoot}/modules/shared`)
+const { getUserByEmail } = require('@/modules/core/services/users')
+const { contextMiddleware } = require('@/modules/shared')
 const {
   sendEmailVerification,
   isVerificationValid

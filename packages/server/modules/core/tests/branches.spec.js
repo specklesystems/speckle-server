@@ -2,8 +2,7 @@
 const chai = require('chai')
 const assert = require('assert')
 
-const appRoot = require('app-root-path')
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { beforeEachContext } = require('@/test/hooks')
 
 const expect = chai.expect
 

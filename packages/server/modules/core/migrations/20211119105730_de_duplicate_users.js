@@ -5,8 +5,7 @@ https://speckle.community/t/error-in-grasshopper-while-receiving-data-you-dont-h
 */
 
 exports.up = async (knex) => {
-  const appRoot = require('app-root-path')
-  const roles = require(`${appRoot}/modules/core/roles.js`)
+  const roles = require('@/modules/core/roles.js')
 
   const Users = () => knex('users')
 

@@ -1,8 +1,7 @@
 'use strict'
 
-const appRoot = require('app-root-path')
-const { createAndSendInvite } = require(`${appRoot}/modules/serverinvites/services`)
-const { authorizeResolver } = require(`${appRoot}/modules/shared`)
+const { createAndSendInvite } = require('@/modules/serverinvites/services')
+const { authorizeResolver } = require('@/modules/shared')
 
 module.exports = {
   Mutation: {

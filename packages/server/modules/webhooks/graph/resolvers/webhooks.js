@@ -1,7 +1,6 @@
-const appRoot = require('app-root-path')
 const { ForbiddenError } = require('apollo-server-express')
 
-const { authorizeResolver } = require(`${appRoot}/modules/shared`)
+const { authorizeResolver } = require('@/modules/shared')
 const {
   createWebhook,
   getWebhook,

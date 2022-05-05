@@ -1,13 +1,12 @@
 'use strict'
 
-const appRoot = require('app-root-path')
 const {
   ForbiddenError,
   UserInputError,
   ApolloError,
   withFilter
 } = require('apollo-server-express')
-const { authorizeResolver, pubsub } = require(`${appRoot}/modules/shared`)
+const { authorizeResolver, pubsub } = require('@/modules/shared')
 
 const {
   createBranch,
@@ -19,7 +18,7 @@ const {
 } = require('../../services/branches')
 
 const { getUserById } = require('../../services/users')
-const { saveActivity } = require(`${appRoot}/modules/activitystream/services`)
+const { saveActivity } = require('@/modules/activitystream/services')
 
 // subscription events
 const BRANCH_CREATED = 'BRANCH_CREATED'

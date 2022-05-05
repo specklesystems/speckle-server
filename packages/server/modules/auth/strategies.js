@@ -1,12 +1,11 @@
 'use strict'
-const appRoot = require('app-root-path')
 
 const redis = require('redis')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
 
-const sentry = require(`${appRoot}/logging/sentryHelper`)
+const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 
 module.exports = async (app) => {
