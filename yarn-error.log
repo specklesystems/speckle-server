@@ -1,0 +1,64 @@
+Arguments: 
+  /home/gergojedlicska/.asdf/installs/nodejs/16.15.0/bin/node /home/gergojedlicska/.node/corepack/yarn/1.22.15/bin/yarn.js
+
+PATH: 
+  /home/gergojedlicska/.asdf/plugins/nodejs/shims:/home/gergojedlicska/.asdf/installs/nodejs/16.15.0/.npm/bin:/home/gergojedlicska/.asdf/installs/nodejs/16.15.0/bin:/home/gergojedlicska/.asdf/shims:/home/gergojedlicska/.asdf/bin:/home/gergojedlicska/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/gergojedlicska/.dotnet/tools
+
+Yarn version: 
+  1.22.15
+
+Node version: 
+  16.15.0
+
+Platform: 
+  linux x64
+
+Trace: 
+  Error: ENOENT: no such file or directory, copyfile '/home/gergojedlicska/.cache/yarn/v6/npm-globals-13.13.0-ac32261060d8070e2719dd6998406e27d2b5727b-integrity/node_modules/globals/globals.json' -> '/home/gergojedlicska/Speckle/speckle-server/node_modules/@eslint/eslintrc/node_modules/globals/globals.json'
+
+npm manifest: 
+  {
+    "name": "root",
+    "private": true,
+    "workspaces":[
+      "packages/*"
+    ],
+    "engines": {
+      "node": ">=14.0.0 <17.0.0"
+    },
+    "scripts": {
+      "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+      "prettier:check": "prettier --check .",
+      "prettier:fix": "prettier --write .",
+      "docker:deps:up": "docker-compose -f ./docker-compose-deps.yml up -d",
+      "docker:deps:down": "docker-compose -f ./docker-compose-deps.yml down",
+      "dev": "lerna run dev --parallel",
+      "dev:no-server": "npm run dev -- --ignore @speckle/server",
+      "prepare": "husky install",
+      "postinstall": "husky install"
+    },
+    "devDependencies": {
+      "@types/eslint": "^8.4.1",
+      "cz-conventional-changelog": "^3.3.0",
+      "eslint": "^8.11.0",
+      "eslint-config-prettier": "^8.5.0",
+      "husky": "^7.0.4",
+      "lint-staged": "^12.3.7",
+      "prettier": "^2.5.1"
+    },
+    "config": {
+      "commitizen": {
+        "path": "./node_modules/cz-conventional-changelog"
+      }
+    },
+    "lint-staged": {
+      "*.{js,ts,vue}": "eslint --cache --max-warnings=0",
+      "*.**": "prettier --check --ignore-unknown"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

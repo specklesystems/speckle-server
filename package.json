@@ -1,4 +1,8 @@
 {
+  "packageManager": "yarn@3.2.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "name": "root",
   "private": true,
   "engines": {

@@ -30,3 +30,11 @@ events.json
 
 # Optional eslint cache
 .eslintcache
+
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
