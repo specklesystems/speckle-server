@@ -14,7 +14,7 @@ const { isTestEnv } = require('./modules/core/helpers/envHelper')
 // If running in test env, load .env.test first
 // (appRoot necessary, cause env files aren't loaded through require() calls)
 if (isTestEnv()) {
-  const { error } = dotenv.config({ path: require.resolve('@/.env.test') })
+  const { error } = dotenv.config({ path: `${appRoot}/.env.test` })
   if (error) {
     const e = new Error(
       'Attempting to run tests without an .env.test file properly set up! Check readme!'
@@ -24,7 +24,7 @@ if (isTestEnv()) {
   }
 }
 
-dotenv.config({ path: require.resolve('@/.env') })
+dotenv.config({ path: `${appRoot}/.env` })
 
 module.exports = {
   appRoot
