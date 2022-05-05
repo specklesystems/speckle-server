@@ -28,7 +28,7 @@ rm -rf ~/helm/charts/speckle-server
 cp -r utils/helm/speckle-server ~/helm/charts/speckle-server
 
 sed -i 's/version: [^\s]*/version: '$RELEASE_VERSION'/g' ~/helm/charts/speckle-server/Chart.yaml
-sed -i 's/appVersion: [^\s]*/appVersion: '$RELEASE_VERSION'/g' ~/helm/charts/speckle-server/Chart.yaml
+sed -i 's/appVersion: [^\s]*/appVersion: '\"$RELEASE_VERSION\"'/g' ~/helm/charts/speckle-server/Chart.yaml
 
 sed -i 's/docker_image_tag: [^\s]*/docker_image_tag: '$RELEASE_VERSION'/g' ~/helm/charts/speckle-server/values.yaml
 
