@@ -12,3 +12,4 @@ lerna.json
 .eslintrc.json
 .mocharc.js
 readme.md
+**/Dockerfile

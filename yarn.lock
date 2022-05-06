@@ -4017,6 +4017,7 @@ __metadata:
     compression: ^1.7.4
     concurrently: ^7.0.0
     connect-redis: ^6.1.1
+    cors: ^2.8.5
     cross-env: ^7.0.3
     crypto-random-string: ^3.2.0
     dataloader: ^2.0.0
