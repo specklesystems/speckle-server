@@ -139,7 +139,7 @@ export default {
       'comment_created',
       'comment_updated',
       'comment_archived',
-      'comment_replied',
+      'comment_replied'
     ],
     validation: {
       urlRules: [
