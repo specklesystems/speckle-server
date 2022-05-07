@@ -135,7 +135,11 @@ export default {
       'commit_receive',
       'commit_delete',
       'stream_permissions_add',
-      'stream_permissions_remove'
+      'stream_permissions_remove',
+      'comment_created',
+      'comment_updated',
+      'comment_archived',
+      'comment_replied',
     ],
     validation: {
       urlRules: [

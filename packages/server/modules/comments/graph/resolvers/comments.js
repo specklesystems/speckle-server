@@ -1,6 +1,7 @@
 const { authorizeResolver, pubsub } = require('@/modules/shared')
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
 const { getStream } = require('@/modules/core/services/streams')
+const { saveActivity } = require('@/modules/activitystream/services')
 
 const {
   getComment,
@@ -120,6 +121,18 @@ module.exports = {
 
       const id = await createComment({ userId: context.userId, input: args.input })
 
+      if (id) {
+        await saveActivity({
+          streamId: args.input.streamId,
+          resourceType: 'comment',
+          resourceId: id,
+          actionType: 'comment_created',
+          userId: context.userId,
+          info: { input: args.input },
+          message: `Comment added: ${id} (${args.input})`
+        })
+      }
+
       await pubsub.publish('COMMENT_ACTIVITY', {
         commentActivity: {
           ...args.input,
@@ -140,7 +153,17 @@ module.exports = {
 
     async commentEdit(parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
-      await editComment({ userId: context.userId, input: args.input })
+      await editComment({ userId: context.userId, input: args.input }) // ? should this return something indicating success?
+      await saveActivity({
+        streamId: args.input.streamId,
+        resourceType: 'comment',
+        resourceId: args.input.id,
+        actionType: 'comment_updated',
+        userId: context.userId,
+        info: { input: args.input },
+        message: `Comment updated: ${args.input.id} (${args.input})`
+      })
+
       return true
     },
 
@@ -157,7 +180,20 @@ module.exports = {
         userId: context.userId,
         auth: context.auth
       })
-      await archiveComment({ ...args, userId: context.userId })
+      const archived = await archiveComment({ ...args, userId: context.userId })
+
+      if (archived) {
+        await saveActivity({
+          streamId: args.streamId,
+          resourceType: 'comment',
+          resourceId: args.commentId,
+          actionType: 'comment_archived',
+          userId: context.userId,
+          info: { archived: args.archived },
+          message: `Comment archived: ${args.commentId} (${args.archived})`
+        })
+      }
+
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {
           eventType: args.archived ? 'comment-archived' : 'comment-added'
@@ -178,6 +214,18 @@ module.exports = {
         text: args.input.text,
         data: args.input.data
       })
+
+      if (id) {
+        await saveActivity({
+          streamId: args.input.streamId,
+          resourceType: 'comment',
+          resourceId: id,
+          actionType: 'comment_replied',
+          userId: context.userId,
+          info: { input: args.input },
+          message: `Comment added: ${id} (${args.input})`
+        })
+      }
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {
