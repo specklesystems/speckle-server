@@ -1,0 +1,14 @@
+0 silly argv { _: [ 'clean' ], lernaVersion: '4.0.0', '$0': 'lerna' }
+1 notice cli v4.0.0
+2 verbose rootPath /home/doc/speckle-server
+3 info versioning independent
+4 error Error: Invalid package name "@rollup-plugin-typescript2": name can only contain URL-friendly characters
+4 error     at invalidPackageName (/home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/npm-package-arg/npa.js:84:15)
+4 error     at Result.setName (/home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/npm-package-arg/npa.js:119:11)
+4 error     at new Result (/home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/npm-package-arg/npa.js:110:10)
+4 error     at Function.resolve (/home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/npm-package-arg/npa.js:54:15)
+4 error     at /home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/@lerna/package-graph/index.js:66:30
+4 error     at Array.forEach (<anonymous>)
+4 error     at /home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/@lerna/package-graph/index.js:60:38
+4 error     at Map.forEach (<anonymous>)
+4 error     at new PackageGraph (/home/doc/.nvm/versions/node/v16.15.0/lib/node_modules/lerna/node_modules/@lerna/package-graph/index.js:49:10)

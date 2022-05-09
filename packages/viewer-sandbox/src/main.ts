@@ -2,16 +2,13 @@ import { Pane } from 'tweakpane'
 import { Viewer } from '@speckle/viewer'
 import './style.css'
 
-const container = document.querySelector<HTMLDivElement>('#renderer')
+const container = document.querySelector<HTMLDivElement>('#renderer') as HTMLElement
 if (!container) {
   throw new Error("Couldn't find #app container!")
 }
 
 // Viewer setup
-const viewer = new Viewer({
-  container,
-  showStats: true
-})
+const viewer = new Viewer(container)
 
 window.addEventListener('load', () => {
   viewer.onWindowResize()
