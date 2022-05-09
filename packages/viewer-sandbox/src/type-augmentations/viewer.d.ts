@@ -12,6 +12,7 @@ declare module '@speckle/viewer' {
     })
 
     async loadObject(url: string, token?: string, enableCaching? = true): Promise<void>
+    async unloadAll()
     onWindowResize(): void
     on<A1 = unknown, A2 = unknown, A3 = unknown>(
       event: string,
