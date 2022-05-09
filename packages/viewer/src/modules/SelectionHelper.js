@@ -17,6 +17,8 @@ export default class SelectionHelper extends EventEmitter {
     this.viewer = parent
     this.raycaster = new THREE.Raycaster()
     this.raycaster.params.Line.threshold = 0.1
+    this.raycaster.params.Line2 = {}
+    this.raycaster.params.Line2.threshold = 10
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;
@@ -116,6 +118,10 @@ export default class SelectionHelper extends EventEmitter {
       ? this.subset
       : this.viewer.sceneManager.filteredObjects
 
+    /**
+     * If there is only 1 object in the scene, this generates a false negative
+     */
+    if (targetObjects.length == 1) return []
     let intersectedObjects = this.raycaster.intersectObjects(targetObjects)
     // filters objects in section box mode
     if (this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion) {

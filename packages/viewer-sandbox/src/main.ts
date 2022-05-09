@@ -14,9 +14,12 @@ window.addEventListener('load', () => {
   viewer.onWindowResize()
 })
 
+const sandbox = new Sandbox(viewer)
+sandbox.makeGenericUI()
+
 // Load demo object
-viewer.loadObject(
-  'https://speckle.xyz/streams/99abc74dd4/objects/ab503a2025e706717bff467ef8f96488'
+sandbox.loadUrl(
+  'https://latest.speckle.dev/streams/3ed8357f29/commits/b21fb0dcf7'
 )
 
 viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {
@@ -25,5 +28,4 @@ viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) =>
   }
 })
 
-const sandbox = new Sandbox(viewer)
-sandbox.makeGenericUI()
+

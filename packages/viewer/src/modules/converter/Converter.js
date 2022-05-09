@@ -5,6 +5,11 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
+import {
+  Geometry,
+  GEOMETRY_LINES_AS_TRIANGLES,
+  GEOMETRY_POSITION_ATTRIBUTE
+} from './Geometry'
 import { Matrix4 } from 'three'
 import { Vector3 } from 'three'
 import { Line3 } from 'three'
@@ -492,10 +497,12 @@ export default class Coverter {
     const obj = {}
     Object.assign(obj, object)
 
-    const geometry = new THREE.BufferGeometry().setFromPoints([
-      this.PointToVector3(obj.start, scale),
-      this.PointToVector3(obj.end, scale)
-    ])
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: [
+        this.PointToVector3(obj.start, scale),
+        this.PointToVector3(obj.end, scale)
+      ]
+    })
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
@@ -519,7 +526,9 @@ export default class Coverter {
     }
     if (obj.closed) points.push(points[0])
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    })
 
     delete obj.value
     delete obj.bbox
@@ -546,6 +555,7 @@ export default class Coverter {
     Object.assign(obj, object)
 
     const buffers = []
+    let count = 0
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       let conv
@@ -554,8 +564,32 @@ export default class Coverter {
         conv = await this.convert(element, scale)
 
       buffers.push(conv?.bufferGeometry)
+      if (GEOMETRY_LINES_AS_TRIANGLES)
+        count += conv?.bufferGeometry.attributes.instanceStart.data.array.length
     }
-    const geometry = BufferGeometryUtils.mergeBufferGeometries(buffers)
+
+    /**
+     * Definetly not the best approach, however it will do for now
+     * until we properly refactor the conversions
+     */
+    let geometry
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      const mergedPoints = new Float32Array(count)
+      let offset = 0
+      for (var k = 0; k < buffers.length; k++) {
+        const points = buffers[k].attributes.instanceStart.data.array
+        mergedPoints.set(points, offset)
+        offset += points.length
+      }
+      geometry = Geometry.makeLineGeometry(
+        {
+          [GEOMETRY_POSITION_ATTRIBUTE]: mergedPoints
+        },
+        true
+      )
+    } else {
+      geometry = BufferGeometryUtils.mergeBufferGeometries(buffers)
+    }
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
@@ -574,7 +608,9 @@ export default class Coverter {
   async CircleToBufferGeometry(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     const points = this.getCircularCurvePoints(obj.plane, obj.radius * conversionFactor)
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    })
 
     // delete obj.plane
     // delete obj.value
@@ -670,9 +706,9 @@ export default class Coverter {
     // We translate it to the circle's origin
     matrix.setPosition(origin)
 
-    const geometry = new THREE.BufferGeometry()
-      .setFromPoints(points)
-      .applyMatrix4(matrix)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    }).applyMatrix4(matrix)
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
@@ -711,7 +747,9 @@ export default class Coverter {
       points.push(pt)
     }
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    const geometry = Geometry.makeLineGeometry({
+      [GEOMETRY_POSITION_ATTRIBUTE]: points
+    })
     return new ObjectWrapper(geometry, obj, 'line')
   }
 

@@ -1,6 +1,10 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
 import SceneObjects from './SceneObjects'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { Vector2 } from 'three'
+import { GEOMETRY_LINES_AS_TRIANGLES } from './converter/Geometry'
 
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
@@ -43,10 +47,7 @@ export default class SceneObjectManager {
       clippingPlanes: this.viewer.sectionBox.planes
     })
 
-    this.lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x7f7f7f,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.lineMaterial = this.makeLineMaterial()
 
     this.pointMaterial = new THREE.PointsMaterial({
       size: 2,
@@ -210,11 +211,13 @@ export default class SceneObjectManager {
     let material = this.lineMaterial
     if (wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone()
-      // This will only add confusion since it *might* work on some platforms.
-      // However, it's in pixels and the displayStyle will express the thickness in world units
-      // This will be replaced by the upcoming change to line rendering which supports variable
-      // thickness in both world space and pixels
-      // material.linewidth = wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
+      if (wrapper.meta.displayStyle.lineweight > 0) {
+        material.linewidth = wrapper.meta.displayStyle.lineweight
+        material.worldUnits = true
+      } else {
+        material.linewidth = 1
+        material.worldUnits = false
+      }
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color))
       // material.color.convertSRGBToLinear();
 
@@ -227,8 +230,9 @@ export default class SceneObjectManager {
       // material.color.convertSRGBToLinear();
       material.clippingPlanes = this.viewer.sectionBox.planes
     }
+    material.resolution = this.viewer.renderer.getDrawingBufferSize(new Vector2())
 
-    const line = new THREE.Line(wrapper.bufferGeometry, material)
+    let line = this.makeLineMesh(wrapper.bufferGeometry, material)
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if (addToScene) {
@@ -339,6 +343,41 @@ export default class SceneObjectManager {
     }
     const box = new THREE.Box3().setFromObject(this.userObjects)
     return box
+  }
+
+  makeLineMesh(geometry, material) {
+    let line
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      line = new Line2(geometry, material)
+      line.computeLineDistances()
+      line.scale.set(1, 1, 1)
+    } else {
+      line = new THREE.Line(geometry, material)
+    }
+
+    return line
+  }
+
+  makeLineMaterial() {
+    let lineMaterial
+    if (GEOMETRY_LINES_AS_TRIANGLES) {
+      lineMaterial = new LineMaterial({
+        color: 0x7f7f7f,
+        linewidth: 1, // in world units with size attenuation, pixels otherwise
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: false,
+        resolution: this.viewer.renderer.getDrawingBufferSize(new Vector2()),
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    } else {
+      lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x7f7f7f,
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    }
+
+    return lineMaterial
   }
 
   _argbToRGB(argb) {
