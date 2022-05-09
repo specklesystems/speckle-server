@@ -17,7 +17,7 @@ class Version:
             return 1
         if self.pre_release_tag == 'beta':
             return 2
-        return 0
+        return 10
 
 
     @staticmethod
@@ -61,6 +61,7 @@ class Version:
         if self.pre_release_priority > other.pre_release_priority:
             return True
         if self.pre_release_priority < other.pre_release_priority:
+            print('foo')
             return False
         
         return True
