@@ -1,4 +1,4 @@
-import { Viewer } from '@speckle/viewer'
+import { Viewer, IViewer } from '@speckle/viewer'
 import './style.css'
 import Sandbox from './Sandbox'
 
@@ -8,7 +8,8 @@ if (!container) {
 }
 
 // Viewer setup
-const viewer = new Viewer(container)
+const viewer = new Viewer(container) as IViewer
+await viewer.init();
 
 window.addEventListener('load', () => {
   viewer.onWindowResize()
@@ -16,10 +17,10 @@ window.addEventListener('load', () => {
 
 const sandbox = new Sandbox(viewer)
 sandbox.makeGenericUI()
-
+sandbox.makeSceneUI()
 // Load demo object
 sandbox.loadUrl(
-  'https://latest.speckle.dev/streams/3ed8357f29/commits/b21fb0dcf7'
+  'https://latest.speckle.dev/streams/2158263a8f/commits/3a629fc558'
 )
 
 viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {

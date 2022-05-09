@@ -16,5 +16,5 @@
         "skipLibCheck": true,
         "allowJs": true
     },
-    "files": ["src/modules/IViewer.ts", "src/modules/Viewer.ts"]
+    "files": ["src/modules/IViewer.ts", "src/modules/Viewer.ts", "src/modules/Assets.ts"]
 }

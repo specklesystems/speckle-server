@@ -13,6 +13,7 @@ import { Clock, CubeCamera, Mesh } from 'three';
 import { DefaultViewerParams, IViewer, ViewerParams } from './IViewer';
 import { Scene } from 'three';
 import { WebGLRenderer } from 'three';
+import { Assets } from './Assets';
 
 export class Viewer extends EventEmitter implements IViewer {
     private clock: Clock;
@@ -34,6 +35,8 @@ export class Viewer extends EventEmitter implements IViewer {
     private renderer: WebGLRenderer;
     public cameraHandler: CameraHandler;
 
+    public static Assets: Assets;
+
     public constructor(container: HTMLElement, params: ViewerParams = DefaultViewerParams) {
         super();
 
@@ -52,9 +55,13 @@ export class Viewer extends EventEmitter implements IViewer {
         });
         this.renderer.setClearColor(0xcccccc, 0);
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        // this.renderer.outputEncoding = THREE.sRGBEncoding; // This will be required. But first some other things
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.LinearToneMapping;
+        this.renderer.toneMappingExposure = 0.4;
         this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
         this.container.appendChild(this.renderer.domElement);
+
+        Viewer.Assets = new Assets(this.renderer);
 
         this.cameraHandler = new CameraHandler(this);
 
@@ -100,7 +107,11 @@ export class Viewer extends EventEmitter implements IViewer {
         this.inProgressOperations = 0;
     }
 
-    sceneLights() {
+    public async init(): Promise<void> {
+        this.scene.environment = await Viewer.Assets.getEnvironment('http://localhost:3033/sample-hdri.exr');
+    }
+
+    private sceneLights() {
         // const dirLight = new THREE.DirectionalLight( 0xffffff, 0.1 )
         // dirLight.color.setHSL( 0.1, 1, 0.95 )
         // dirLight.position.set( -1, 1.75, 1 )
@@ -160,13 +171,13 @@ export class Viewer extends EventEmitter implements IViewer {
         this.scene.add(group);
     }
 
-    onWindowResize() {
+    private onWindowResize() {
         this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight);
         // this.composer.setSize( this.container.offsetWidth, this.container.offsetHeight )
         this.needsRender = true;
     }
 
-    animate() {
+    private animate() {
         const delta = this.clock.getDelta();
 
         const hasControlsUpdated = this.cameraHandler.controls.update(delta);
@@ -176,7 +187,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
         // you can skip this condition to render though
         if (hasControlsUpdated || this.needsRender) {
-            this.needsRender = false;
+            // this.needsRender = false;
             if (this.stats) this.stats.begin();
             this.render();
             if (this.stats && document.getElementById('info-draws')) document.getElementById('info-draws').textContent = '' + this.renderer.info.render.calls;
@@ -184,56 +195,35 @@ export class Viewer extends EventEmitter implements IViewer {
         }
     }
 
-    render() {
-        if (this.reflections && this.reflectionsNeedUpdate) {
-            // Note: scene based "dynamic" reflections need to be handled a bit more carefully, or else:
-            // GL ERROR :GL_INVALID_OPERATION : glDrawElements: Source and destination textures of the draw are the same.
-            // First remove the env map from all materials
-            for (const obj of this.sceneManager.filteredObjects) {
-                ((obj as Mesh).material as any).envMap = null; // For now
-            }
-
-            // Second, set a scene background color (renderer is transparent by default)
-            // and then finally update the cubemap camera.
-            this.scene.background = new THREE.Color('#F0F3F8');
-            this.cubeCamera.update(this.renderer, this.scene);
-            this.scene.background = null;
-
-            // Finally, re-set the env maps of all materials
-            for (const obj of this.sceneManager.filteredObjects) {
-                ((obj as Mesh).material as any).envMap = this.cubeCamera.renderTarget.texture; //For now
-            }
-            this.reflectionsNeedUpdate = false;
-        }
-
+    private render() {
         this.renderer.render(this.scene, this.cameraHandler.activeCam.camera);
     }
 
-    toggleSectionBox() {
+    public toggleSectionBox() {
         this.sectionBox.toggle();
     }
 
-    sectionBoxOff() {
+    public sectionBoxOff() {
         this.sectionBox.off();
     }
 
-    sectionBoxOn() {
+    public sectionBoxOn() {
         this.sectionBox.on();
     }
 
-    zoomExtents(fit, transition) {
+    public zoomExtents(fit, transition) {
         this.interactions.zoomExtents(fit, transition);
     }
 
-    setProjectionMode(mode) {
+    public setProjectionMode(mode) {
         this.cameraHandler.activeCam = mode;
     }
 
-    toggleCameraProjection() {
+    public toggleCameraProjection() {
         this.cameraHandler.toggleCameras();
     }
 
-    async loadObject(url, token, enableCaching = true) {
+    public async loadObject(url, token, enableCaching = true) {
         try {
             if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true);
 
@@ -245,7 +235,7 @@ export class Viewer extends EventEmitter implements IViewer {
         }
     }
 
-    async cancelLoad(url, unload = false) {
+    public async cancelLoad(url, unload = false) {
         this.loaders[url].cancelLoad();
         if (unload) {
             await this.unloadObject(url);
@@ -253,7 +243,7 @@ export class Viewer extends EventEmitter implements IViewer {
         return;
     }
 
-    async unloadObject(url) {
+    public async unloadObject(url) {
         try {
             if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true);
 
@@ -264,7 +254,7 @@ export class Viewer extends EventEmitter implements IViewer {
         }
     }
 
-    async unloadAll() {
+    public async unloadAll() {
         for (const key of Object.keys(this.loaders)) {
             await this.loaders[key].unload();
             delete this.loaders[key];
@@ -273,7 +263,7 @@ export class Viewer extends EventEmitter implements IViewer {
         return;
     }
 
-    async applyFilter(filter) {
+    public async applyFilter(filter: any) {
         try {
             if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true);
 
@@ -284,11 +274,11 @@ export class Viewer extends EventEmitter implements IViewer {
         }
     }
 
-    getObjectsProperties(includeAll = true) {
+    public getObjectsProperties(includeAll = true) {
         return this.sceneManager.sceneObjects.getObjectsProperties(includeAll);
     }
 
-    dispose() {
+    public dispose() {
         // TODO: currently it's easier to simply refresh the page :)
     }
 }

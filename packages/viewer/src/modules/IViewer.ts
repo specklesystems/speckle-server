@@ -13,9 +13,20 @@ export const DefaultViewerParams: ViewerParams = {
  * Carried over from the old Viewer. To be extended/changed
  */
 export interface IViewer {
+    init(): Promise<void>;
     toggleSectionBox();
     sectionBoxOff();
     sectionBoxOn();
     zoomExtents(fit: number, transition: boolean);
     toggleCameraProjection();
+
+    loadObject(url: string, token: string, enableCaching?: boolean): Promise<void>;
+    cancelLoad(url: string, unload?: boolean): Promise<void>;
+    unloadObject(url: string): Promise<void>;
+    unloadAll(): Promise<void>;
+
+    applyFilter(filter: any): Promise<any>;
+    getObjectsProperties(includeAll?: boolean);
+
+    dispose();
 }
