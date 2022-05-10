@@ -2,7 +2,7 @@ import { Viewer } from '@speckle/viewer'
 import './style.css'
 import Sandbox from './Sandbox'
 
-const container = document.querySelector<HTMLDivElement>('#renderer') as HTMLElement
+const container = document.querySelector<HTMLElement>('#renderer')
 if (!container) {
   throw new Error("Couldn't find #app container!")
 }
