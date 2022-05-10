@@ -14,28 +14,13 @@ import { Scene } from 'three'
 import { WebGLRenderer } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
+import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
 
-export interface ViewerParams {
-  postprocessing: boolean
-  reflections: boolean
-  showStats: boolean
-}
-
-export const DefaultViewerParams: ViewerParams = {
-  postprocessing: false,
-  reflections: true,
-  showStats: true
-}
-
-export class Viewer extends EventEmitter {
+export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
-  //   private postprocessing: boolean
-  //   private reflections: boolean
-  //   private reflectionsNeedUpdate: boolean
   private container: HTMLElement
   private cubeCamera: CubeCamera
   private stats: Optional<Stats>
-  //   private mouseOverRenderer: boolean
   private loaders: any
   private needsRender: boolean
   private inProgressOperations: number
@@ -60,7 +45,6 @@ export class Viewer extends EventEmitter {
     this.clock = new THREE.Clock()
 
     this.container = container || document.getElementById('renderer')
-    // this.postprocessing = params.postprocessing
     this.scene = new THREE.Scene()
 
     this.renderer = new THREE.WebGLRenderer({
@@ -80,8 +64,6 @@ export class Viewer extends EventEmitter {
 
     this.cameraHandler = new CameraHandler(this)
 
-    // this.reflections = params.reflections
-    // this.reflectionsNeedUpdate = true
     const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(512, {
       format: THREE.RGBFormat,
       generateMipmaps: true,
@@ -96,14 +78,6 @@ export class Viewer extends EventEmitter {
     }
 
     window.addEventListener('resize', this.onWindowResize.bind(this), false)
-
-    // this.mouseOverRenderer = false
-    this.renderer.domElement.addEventListener('mouseover', () => {
-      //   this.mouseOverRenderer = true
-    })
-    this.renderer.domElement.addEventListener('mouseout', () => {
-      //   this.mouseOverRenderer = false
-    })
 
     this.loaders = {}
 
@@ -190,7 +164,6 @@ export class Viewer extends EventEmitter {
 
   onWindowResize() {
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
-    // this.composer.setSize( this.container.offsetWidth, this.container.offsetHeight )
     this.needsRender = true
   }
 
@@ -198,7 +171,6 @@ export class Viewer extends EventEmitter {
     const delta = this.clock.getDelta()
 
     const hasControlsUpdated = this.cameraHandler.controls.update(delta)
-    // const hasOrthoControlsUpdated = this.cameraHandler.cameras[1].controls.update( delta )
 
     requestAnimationFrame(this.animate.bind(this))
 
