@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
-import { Color } from 'three'
 
 export default class InteractionHandler {
   constructor(viewer) {
@@ -185,7 +184,7 @@ export default class InteractionHandler {
         break
       }
       case 'Line2': {
-        let material = this.selectionLine2Material.clone()
+        const material = this.selectionLine2Material.clone()
         material.linewidth = objs[0].object.material.linewidth
         material.worldUnits = objs[0].object.material.worldUnits
         material.alphaToCoverage = objs[0].object.material.alphaToCoverage

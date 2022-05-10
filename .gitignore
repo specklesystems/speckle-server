@@ -30,3 +30,5 @@ events.json
 
 # Optional eslint cache
 .eslintcache
+
+lerna-debug.log

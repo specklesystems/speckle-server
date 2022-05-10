@@ -1,15 +1,14 @@
-import commonjs from '@rollup/plugin-commonjs';
-import nodeResolve from '@rollup/plugin-node-resolve';
-import { terser } from 'rollup-plugin-terser';
-import { babel } from '@rollup/plugin-babel';
-import clean from 'rollup-plugin-delete';
-import pkg from './package.json';
-import typescript from '@rollup/plugin-typescript';
+import commonjs from '@rollup/plugin-commonjs'
+import nodeResolve from '@rollup/plugin-node-resolve'
+import { terser } from 'rollup-plugin-terser'
+import clean from 'rollup-plugin-delete'
+import pkg from './package.json'
+import typescript2 from 'rollup-plugin-typescript2'
 
-const isProd = process.env.NODE_ENV === 'production';
-const isExample = !!process.env.EXAMPLE_BUILD;
+const isProd = process.env.NODE_ENV === 'production'
+const isExample = !!process.env.EXAMPLE_BUILD
 
-const sourcemap = isProd ? false : 'inline';
+const sourcemap = isProd ? false : 'inline'
 
 /**
  * Build config
@@ -17,51 +16,53 @@ const sourcemap = isProd ? false : 'inline';
  * @returns {import('rollup').RollupOptions}
  */
 function buildConfig(isWebBuild = false) {
-    /** @type {import('rollup').RollupOptions} */
-    const config = {
-        input: isWebBuild ? 'src/example.js' : 'src/index.js',
-        output: [
+  /** @type {import('rollup').RollupOptions} */
+  const config = {
+    input: isWebBuild ? 'src/example.js' : 'src/index.js',
+    output: [
+      {
+        file: isWebBuild
+          ? 'example/speckleviewer.web.js'
+          : 'dist/speckleviewer.esm.mjs',
+        format: 'esm',
+        sourcemap
+      },
+      ...(isWebBuild
+        ? []
+        : [
             {
-                file: isWebBuild ? 'example/speckleviewer.web.js' : 'dist/speckleviewer.esm.js',
-                format: 'esm',
-                sourcemap
-            },
-            ...(isWebBuild
-                ? []
-                : [
-                      {
-                          file: 'dist/speckleviewer.js',
-                          format: 'cjs',
-                          sourcemap
-                      }
-                  ])
-        ],
-        plugins: [
-            ...(isWebBuild
-                ? [
-                      // Bundling in all deps in web build
-                      commonjs(),
-                      nodeResolve(),
-                      typescript()
-                  ]
-                : [
-                      // Cleaning dir only inside dist
-                      clean({ targets: 'dist/*' }),
-                      typescript({
-                          include: 'src/**/*.{js,ts}'
-                      })
-                  ]),
-            babel({ babelHelpers: 'bundled' }),
-            ...(isProd ? [terser()] : [])
-        ],
-        external: isWebBuild
-            ? undefined
-            : // In non web build we don't want to bundle in any deps
-              Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`))
-    };
+              file: 'dist/speckleviewer.js',
+              format: 'cjs',
+              sourcemap
+            }
+          ])
+    ],
+    plugins: [
+      typescript2({
+        tsconfigOverride: {
+          sourceMap: sourcemap
+        }
+      }),
+      ...(isWebBuild
+        ? [
+            // Bundling in all deps in web build
+            commonjs(),
+            nodeResolve()
+          ]
+        : [
+            // Cleaning dir only inside dist
+            clean({ targets: 'dist/*' })
+          ]),
+      ...(isProd ? [terser()] : [])
+    ],
+    external: isWebBuild
+      ? undefined
+      : // In non web build we don't want to bundle in any deps
+        Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`))
+  }
 
-    return config;
+  return config
 }
 
-const config = isExample ? buildConfig(true) : buildConfig();
-export default config;
+const config = isExample ? buildConfig(true) : buildConfig()
+export default config
