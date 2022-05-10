@@ -44,8 +44,19 @@ def tick(cur):
         GROUP BY ("fileType", "convertedStatus")
         '''
     )
+    # put in a dictionary so we fill non-existing statuses with zeroes
+    # (query can return PENDING files, then the next query will not return any PENDING rows. -> need to reset the metric to 0)
+    used_labels = {}
     for row in cur:
-        PROM['fileimports'].labels(row[0], str(row[1])).set(row[2])
+        if row[0] not in used_labels:
+            used_labels[row[0]] = {}
+        used_labels[row[0]][str(row[1])] = row[2]
+    for file_type in used_labels:
+        for status in range(4):
+            if str(status) in used_labels[file_type]:
+                PROM['fileimports'].labels(file_type, str(status)).set(used_labels[file_type][str(status)])
+            else:
+                PROM['fileimports'].labels(file_type, str(status)).set(0)
 
     cur.execute(
         '''
@@ -65,8 +76,14 @@ def tick(cur):
         GROUP BY status
         '''
     )
+    values = {}
     for row in cur:
-        PROM['webhooks'].labels(str(row[0])).set(row[1])
+        values[str(row[0])] = row[1]
+    for status in range(4):
+        if str(status) in values:
+            PROM['webhooks'].labels(str(status)).set(values[str(status)])
+        else:
+            PROM['webhooks'].labels(str(status)).set(0)
 
     # Previews
     cur.execute(
@@ -76,8 +93,14 @@ def tick(cur):
         GROUP BY "previewStatus"
         '''
     )
+    values = {}
     for row in cur:
-        PROM['previews'].labels(str(row[0])).set(row[1])
+        values[str(row[0])] = row[1]
+    for status in range(4):
+        if str(status) in values:
+            PROM['previews'].labels(str(status)).set(values[str(status)])
+        else:
+            PROM['previews'].labels(str(status)).set(0)
 
 def main():
     start_http_server(9092)
@@ -86,9 +109,13 @@ def main():
         conn = None
         cur = None
         try:
+            t0 = time.time()
             conn = psycopg2.connect(PG_CONNECTION_STRING)
             cur = conn.cursor()
+            t1 = time.time()
             tick(cur)
+            t2 = time.time()
+            LOG.info("[%s] Updated metrics. (connected in %s, queried in %s)", t2, t1 - t0, t2 - t1)
         except Exception as ex:
             LOG.error("Error: %s", str(ex))
         finally:

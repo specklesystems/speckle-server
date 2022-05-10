@@ -1,5 +1,6 @@
 {
   "name": "@speckle/viewer-sandbox",
+  "private": true,
   "version": "1.0.0",
   "description": "Sandbox for testing, debugging & developing the viewer package",
   "homepage": "https://speckle.systems",
