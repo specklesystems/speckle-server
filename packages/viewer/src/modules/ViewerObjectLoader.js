@@ -79,6 +79,7 @@ export default class ViewerObjectLoader {
       }
       await this.converter.asyncPause()
       if (first) {
+        console.log(obj)
         firstObjectPromise = this.converter.traverseAndConvert(
           obj,
           async (objectWrapper) => {
