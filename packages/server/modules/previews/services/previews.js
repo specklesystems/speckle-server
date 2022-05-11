@@ -1,8 +1,7 @@
 /* istanbul ignore file */
 'use strict'
 
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
 const ObjectPreview = () => knex('object_preview')
 const Previews = () => knex('previews')

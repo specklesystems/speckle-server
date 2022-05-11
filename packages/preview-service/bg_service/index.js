@@ -4,6 +4,7 @@ const crypto = require('crypto')
 const knex = require('../knex')
 const fetch = require('node-fetch')
 const fs = require('fs')
+const metrics = require('./prometheusMetrics')
 
 let shouldExit = false
 
@@ -78,6 +79,7 @@ async function doTask(task) {
     `,
       [{}, task.streamId, task.objectId]
     )
+    metrics.metricOperationErrors.labels('preview').inc()
   }
 }
 
@@ -96,11 +98,16 @@ async function tick() {
       return
     }
 
+    const metricDurationEnd = metrics.metricDuration.startTimer()
+
     await doTask(task)
+
+    metricDurationEnd({ op: 'preview' })
 
     // Check for another task very soon
     setTimeout(tick, 10)
   } catch (err) {
+    metrics.metricOperationErrors.labels('main_loop').inc()
     console.log('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
@@ -118,6 +125,8 @@ async function startPreviewService() {
     shouldExit = true
     console.log('Shutting down...')
   })
+
+  metrics.initPrometheusMetrics()
 
   tick()
 }

@@ -1,8 +1,7 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const appRoot = require('app-root-path')
 
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
+const { createUser } = require('@/modules/core/services/users')
 
 const {
   createAndSendInvite,
@@ -11,14 +10,11 @@ const {
   validateInvite,
   useInvite,
   sanitizeMessage
-} = require(`${appRoot}/modules/serverinvites/services`)
-const {
-  createStream,
-  getUserStreams
-} = require(`${appRoot}/modules/core/services/streams`)
-const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
+} = require('@/modules/serverinvites/services')
+const { createStream, getUserStreams } = require('@/modules/core/services/streams')
+const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
 
-const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
+const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 
 describe('Server Invites @server-invites', () => {
   describe('Services @server-invites-services', () => {

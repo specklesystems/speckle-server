@@ -1,5 +1,5 @@
 const knex = require('@/db/knex')
-const appRoot = require('app-root-path')
+const { appRoot } = require('@/bootstrap')
 const fs = require('fs/promises')
 
 /** @type {import('yargs').CommandModule} */

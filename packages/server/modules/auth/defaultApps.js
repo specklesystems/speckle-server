@@ -1,11 +1,13 @@
 'use strict'
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const debug = require('debug')
+const knex = require('@/db/knex')
 const Scopes = () => knex('scopes')
 const Apps = () => knex('server_apps')
 const AppScopes = () => knex('server_apps_scopes')
 
-const { getApp, revokeExistingAppCredentials } = require('./services/apps')
+const { getApp } = require('@/modules/auth/services/apps')
+const { Scopes: ScopesConst } = require('@/modules/core/helpers/mainConstants')
+const { difference } = require('lodash')
 
 let allScopes = []
 
@@ -47,24 +49,60 @@ async function registerDefaultApp(app) {
 }
 
 async function updateDefaultApp(app, existingApp) {
-  existingApp.scopes = existingApp.scopes.map((s) => s.name)
+  const existingAppScopes = existingApp.scopes.map((s) => s.name)
 
-  const scopeDiffA = app.scopes.filter(
-    (scope) => existingApp.scopes.indexOf(scope) === -1
-  )
-  const scopeDiffB = existingApp.scopes.filter(
-    (scope) => app.scopes.indexOf(scope) === -1
-  )
+  const newScopes = difference(app.scopes, existingAppScopes)
+  const removedScopes = difference(existingAppScopes, app.scopes)
 
-  if (scopeDiffA.length !== 0 || scopeDiffB.length !== 0) {
-    await revokeExistingAppCredentials({ appId: app.id })
-    const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
-    await AppScopes().insert(scopes)
+  let affectedTokenIds = []
+
+  if (newScopes.length || removedScopes.length) {
+    debug('speckle:modules')(`🔑 Updating default app ${app.name}`)
+    affectedTokenIds = await knex('user_server_app_tokens')
+      .where({ appId: app.id })
+      .pluck('tokenId')
   }
 
-  delete app.scopes
-  await Apps().where({ id: app.id }).update(app)
+  // the internal code block makes sure if an error occurred, the trx gets rolled back
+  await knex.transaction(async (trx) => {
+    // add new scopes to the app
+    if (newScopes.length)
+      await AppScopes()
+        .insert(newScopes.map((s) => ({ appId: app.id, scopeName: s })))
+        .transacting(trx)
+
+    // remove scopes from the app
+    if (removedScopes.length)
+      await AppScopes()
+        .where({ appId: app.id })
+        .whereIn('scopeName', removedScopes)
+        .delete()
+        .transacting(trx)
+
+    //update user tokens with scope changes
+    if (affectedTokenIds.length)
+      await Promise.all(
+        affectedTokenIds.map(async (tokenId) => {
+          if (newScopes.length)
+            await knex('token_scopes')
+              .insert(newScopes.map((s) => ({ tokenId, scopeName: s })))
+              .transacting(trx)
+
+          if (removedScopes.length)
+            await knex('token_scopes')
+              .where({ tokenId })
+              .whereIn('scopeName', removedScopes)
+              .delete()
+              .transacting(trx)
+        })
+      )
+    delete app.scopes
+    await Apps().where({ id: app.id }).update(app).transacting(trx)
+  })
 }
+
+// this is exported to be able to test the retention of permissions
+module.exports.updateDefaultApp = updateDefaultApp
 
 const SpeckleWebApp = {
   id: 'spklwebapp',
@@ -99,11 +137,12 @@ const SpeckleDesktopApp = {
   public: true,
   redirectUrl: 'speckle://account',
   scopes: [
-    'streams:read',
-    'streams:write',
-    'profile:read',
-    'profile:email',
-    'users:read'
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read,
+    ScopesConst.Users.Invite
   ]
 }
 
@@ -116,11 +155,11 @@ const SpeckleConnectorApp = {
   public: true,
   redirectUrl: 'http://localhost:29363',
   scopes: [
-    'streams:read',
-    'streams:write',
-    'profile:read',
-    'profile:email',
-    'users:read'
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read
   ]
 }
 
@@ -134,10 +173,10 @@ const SpeckleExcel = {
   public: true,
   redirectUrl: 'https://speckle-excel.netlify.app',
   scopes: [
-    'streams:read',
-    'streams:write',
-    'profile:read',
-    'profile:email',
-    'users:read'
+    ScopesConst.Streams.Read,
+    ScopesConst.Streams.Write,
+    ScopesConst.Profile.Read,
+    ScopesConst.Profile.Email,
+    ScopesConst.Users.Read
   ]
 }

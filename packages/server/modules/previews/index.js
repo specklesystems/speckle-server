@@ -2,13 +2,12 @@
 'use strict'
 
 const debug = require('debug')
-const appRoot = require('app-root-path')
 
 const {
   contextMiddleware,
   validateScopes,
   authorizeResolver
-} = require(`${appRoot}/modules/shared`)
+} = require('@/modules/shared')
 
 const { getStream } = require('../core/services/streams')
 const { getObject } = require('../core/services/objects')
@@ -25,6 +24,12 @@ const {
 
 const { makeOgImage } = require('./ogImage')
 
+const httpErrorImage = (httpErrorCode) =>
+  require.resolve(`@/modules/previews/assets/preview_${httpErrorCode}.png`)
+
+const noPreviewImage = require.resolve('@/modules/previews/assets/no_preview.png')
+const previewErrorImage = require.resolve('@/modules/previews/assets/preview_error.png')
+
 exports.init = (app) => {
   if (process.env.DISABLE_PREVIEWS) {
     debug('speckle:modules')('📸 Object preview module is DISABLED')
@@ -36,7 +41,10 @@ exports.init = (app) => {
 
   const getObjectPreviewBufferOrFilepath = async ({ streamId, objectId, angle }) => {
     if (process.env.DISABLE_PREVIEWS) {
-      return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
+      return {
+        type: 'file',
+        file: noPreviewImage
+      }
     }
 
     // Check if objectId is valid
@@ -44,7 +52,7 @@ exports.init = (app) => {
     if (!dbObj) {
       return {
         type: 'file',
-        file: `${appRoot}/modules/previews/assets/preview_404.png`
+        file: require.resolve('@/modules/previews/assets/preview_404.png')
       }
     }
 
@@ -55,7 +63,7 @@ exports.init = (app) => {
     }
 
     if (!previewInfo || previewInfo.previewStatus !== 2 || !previewInfo.preview) {
-      return { type: 'file', file: `${appRoot}/modules/previews/assets/no_preview.png` }
+      return { type: 'file', file: noPreviewImage }
     }
 
     const previewImgId = previewInfo.preview[angle]
@@ -65,7 +73,7 @@ exports.init = (app) => {
       )
       return {
         type: 'file',
-        file: `${appRoot}/modules/previews/assets/preview_error.png`
+        file: previewErrorImage
       }
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
@@ -73,7 +81,7 @@ exports.init = (app) => {
       debug('speckle:errors')(`Error: Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
-        file: `${appRoot}/modules/previews/assets/preview_error.png`
+        file: previewErrorImage
       }
     }
     return { type: 'buffer', buffer: previewImg }
@@ -154,9 +162,7 @@ exports.init = (app) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(
-          `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
-        )
+        return res.sendFile(httpErrorImage(httpErrorCode))
       }
 
       return sendObjectPreview(
@@ -173,9 +179,7 @@ exports.init = (app) => {
     const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
     if (!hasPermissions) {
       // return res.status( httpErrorCode ).end()
-      return res.sendFile(
-        `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
-      )
+      return res.sendFile(httpErrorImage(httpErrorCode))
     }
 
     const { commits } = await getCommitsByStreamId({
@@ -184,7 +188,7 @@ exports.init = (app) => {
       ignoreGlobalsBranch: true
     })
     if (!commits || commits.length === 0) {
-      return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
+      return res.sendFile(noPreviewImage)
     }
     const lastCommit = commits[0]
 
@@ -204,9 +208,7 @@ exports.init = (app) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(
-          `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
-        )
+        return res.sendFile(httpErrorImage(httpErrorCode))
       }
 
       let commitsObj
@@ -221,7 +223,7 @@ exports.init = (app) => {
       }
       const { commits } = commitsObj
       if (!commits || commits.length === 0) {
-        return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
+        return res.sendFile(noPreviewImage)
       }
       const lastCommit = commits[0]
 
@@ -242,18 +244,14 @@ exports.init = (app) => {
       const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(
-          `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
-        )
+        return res.sendFile(httpErrorImage(httpErrorCode))
       }
 
       const commit = await getCommitById({
         streamId: req.params.streamId,
         id: req.params.commitId
       })
-      if (!commit) {
-        return res.sendFile(`${appRoot}/modules/previews/assets/no_preview.png`)
-      }
+      if (!commit) return res.sendFile(noPreviewImage)
 
       return sendObjectPreview(
         req,
@@ -269,12 +267,10 @@ exports.init = (app) => {
     '/preview/:streamId/objects/:objectId',
     contextMiddleware,
     async (req, res) => {
-      const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
+      const { hasPermissions } = await checkStreamPermissions(req)
       if (!hasPermissions) {
         // return res.status( httpErrorCode ).end()
-        return res.sendFile(
-          `${appRoot}/modules/previews/assets/preview_${httpErrorCode}.png`
-        )
+        return res.sendFile()
       }
 
       return sendObjectPreview(

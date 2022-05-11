@@ -1,6 +1,12 @@
 /* eslint-disable no-console */
 'use strict'
 
+const {
+  initPrometheusMetrics,
+  metricDuration,
+  metricInputFileSize,
+  metricOperationErrors
+} = require('./prometheusMetrics')
 const knex = require('../knex')
 
 const { getFileStream } = require('./filesApi')
@@ -39,13 +45,16 @@ async function startTask() {
 async function doTask(task) {
   let tempUserToken = null
   let serverApi = null
+  let fileTypeForMetric = 'unknown'
+  let fileSizeForMetric = 0
 
+  const metricDurationEnd = metricDuration.startTimer()
   try {
     console.log('Doing task ', task)
     const { rows } = await knex.raw(
       `
       SELECT 
-        id as "fileId", "streamId", "branchName", "userId", "fileName", "fileType"
+        id as "fileId", "streamId", "branchName", "userId", "fileName", "fileType", "fileSize"
       FROM file_uploads
       WHERE id = ?
       LIMIT 1
@@ -56,6 +65,8 @@ async function doTask(task) {
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
+    fileTypeForMetric = info.fileType || 'missing_info'
+    fileSizeForMetric = Number(info.fileSize) || 0
 
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
@@ -165,7 +176,10 @@ async function doTask(task) {
     `,
       [err.toString(), task.id]
     )
+    metricOperationErrors.labels(fileTypeForMetric).inc()
   }
+  metricDurationEnd({ op: fileTypeForMetric })
+  metricInputFileSize.labels(fileTypeForMetric).observe(fileSizeForMetric)
 
   fs.rmSync(TMP_INPUT_DIR, { force: true, recursive: true })
   if (fs.existsSync(TMP_RESULTS_PATH)) fs.unlinkSync(TMP_RESULTS_PATH)
@@ -234,6 +248,7 @@ async function tick() {
     // Check for another task very soon
     setTimeout(tick, 10)
   } catch (err) {
+    metricOperationErrors.labels('main_loop').inc()
     console.log('Error executing task: ', err)
     setTimeout(tick, 5000)
   }
@@ -241,6 +256,7 @@ async function tick() {
 
 async function main() {
   console.log('Starting FileUploads Service...')
+  initPrometheusMetrics()
 
   process.on('SIGTERM', () => {
     shouldExit = true

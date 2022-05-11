@@ -31,7 +31,8 @@ const Scopes = Object.freeze({
   },
   Users: {
     Read: 'users:read',
-    Email: 'users:email'
+    Email: 'users:email',
+    Invite: 'users:invite'
   },
   Server: {
     Stats: 'server:stats',

@@ -1,6 +1,5 @@
 'use strict'
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
 const RatelimitActions = () => knex('ratelimit_actions')
 const prometheusClient = require('prom-client')

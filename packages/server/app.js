@@ -7,15 +7,14 @@ const express = require('express')
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 require('express-async-errors')
 const compression = require('compression')
-const appRoot = require('app-root-path')
 const logger = require('morgan-debug')
 const bodyParser = require('body-parser')
 const debug = require('debug')
 const { createTerminus } = require('@godaddy/terminus')
 
 const Sentry = require('@sentry/node')
-const Logging = require(`${appRoot}/logging`)
-const { errorLoggingMiddleware } = require(`${appRoot}/logging/errorLogging`)
+const Logging = require('@/logging')
+const { errorLoggingMiddleware } = require('@/logging/errorLogging')
 const prometheusClient = require('prom-client')
 
 const { ApolloServer, ForbiddenError } = require('apollo-server-express')

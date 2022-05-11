@@ -1,18 +1,14 @@
 'use strict'
-const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 const sanitizeHtml = require('sanitize-html')
 
-const {
-  getUserByEmail,
-  getUserById
-} = require(`${appRoot}/modules/core/services/users`)
+const { getUserByEmail, getUserById } = require('@/modules/core/services/users')
 
-const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { sendEmail } = require(`${appRoot}/modules/emails`)
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { sendEmail } = require('@/modules/emails')
 
-const { grantPermissionsStream } = require(`${appRoot}/modules/core/services/streams`)
+const { grantPermissionsStream } = require('@/modules/core/services/streams')
 
 const Invites = () => knex('server_invites')
 

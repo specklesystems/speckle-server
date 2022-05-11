@@ -1,12 +1,11 @@
 'use strict'
-const appRoot = require('app-root-path')
 
 const redis = require('redis')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
 
-const sentry = require(`${appRoot}/logging/sentryHelper`)
+const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 
 module.exports = async (app) => {
@@ -51,6 +50,16 @@ module.exports = async (app) => {
         userId: req.user.id,
         challenge: req.session.challenge
       })
+      // const defaultApps = ['explorer', 'sdm', 'sca', 'spklexcel']
+      // await Promise.all(
+      //   defaultApps.map((appId) =>
+      //     createAuthorizationCode({
+      //       appId,
+      //       userId: req.user.id,
+      //       challenge: req.session.challenge
+      //     })
+      //   )
+      // )
       if (req.session) req.session.destroy()
       return res.redirect(`${process.env.CANONICAL_URL}?access_code=${ac}`)
     } catch (err) {
