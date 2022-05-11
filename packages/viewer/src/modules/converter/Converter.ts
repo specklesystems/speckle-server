@@ -4,6 +4,7 @@ import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import {
   Geometry,
+  GeometryData,
   GEOMETRY_LINES_AS_TRIANGLES,
   GEOMETRY_POSITION_ATTRIBUTE
 } from './Geometry'
@@ -13,9 +14,7 @@ import {
   BufferGeometry,
   EllipseCurve,
   Float32BufferAttribute,
-  Matrix4,
-  Uint16BufferAttribute,
-  Uint32BufferAttribute
+  Matrix4
 } from 'three'
 import { Vector3 } from 'three'
 import { Line3 } from 'three'
@@ -88,8 +87,7 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}            [description]
    */
-  //@ts-ignore
-  private async traverseAndConvert(
+  public async traverseAndConvert(
     obj: any,
     callback: ConverterResultDelegate,
     scale: boolean = true,
@@ -350,67 +348,55 @@ export default class Coverter {
     })
   }
 
-  async PointcloudToBufferGeometry(obj: any, scale: boolean = true) {
+  private async PointcloudToBufferGeometry(obj: any, scale: boolean = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
-    const buffer = new BufferGeometry()
 
     const vertices = await this.dechunk(obj.points)
-
-    buffer.setAttribute(
-      'position',
-      new Float32BufferAttribute(
-        !scale || conversionFactor === 1
-          ? vertices
-          : vertices.map((v) => v * conversionFactor),
-        3
-      )
-    )
-
     const colorsRaw = await this.dechunk(obj.colors)
+    let colors = null
 
     if (colorsRaw && colorsRaw.length !== 0) {
-      if (colorsRaw.length !== buffer.attributes.position.count) {
+      if (colorsRaw.length !== vertices.length / 3) {
         console.warn(
           `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
-
-      buffer.setAttribute(
-        'color',
-        new BufferAttribute(new Float32Array(buffer.attributes.position.count * 3), 3)
-      )
-
-      for (let i = 0; i < buffer.attributes.position.count; i++) {
-        const color = colorsRaw[i]
-        const r = (color >> 16) & 0xff
-        const g = (color >> 8) & 0xff
-        const b = color & 0xff
-        buffer.attributes.color.setXYZ(i, r / 255, g / 255, b / 255)
-      }
+      colors = Geometry.unpackColors(colorsRaw)
     }
 
-    // delete obj.points
-    // delete obj.colors
-    // delete obj.sizes // note, these might be used in the future
-
-    return new ObjectWrapper(buffer, obj, 'pointcloud')
+    return new ObjectWrapper(
+      Geometry.makePointCloudGeometry({
+        attributes: {
+          POSITION: vertices,
+          COLOR: colors
+        },
+        bakeTransform: scale
+          ? new Matrix4().makeScale(
+              conversionFactor,
+              conversionFactor,
+              conversionFactor
+            )
+          : null,
+        transform: null
+      } as GeometryData),
+      obj,
+      'pointcloud'
+    )
   }
 
-  async BrepToBufferGeometry(obj: any, scale = true) {
+  private async BrepToBufferGeometry(obj: any, scale = true) {
     try {
       if (!obj) return
 
       let displayValue = obj.displayValue || obj.displayMesh
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
 
-      const bufferGeometry = await this.MeshToBufferGeometry(
+      const { bufferGeometry } = await this.MeshToBufferGeometry(
         await this.resolveReference(displayValue),
         scale
       )
 
       // deletes known unneeded fields
-      // delete obj.displayMesh
-      // delete obj.displayValue
       delete obj.Edges
       delete obj.Faces
       delete obj.Loops
@@ -427,12 +413,12 @@ export default class Coverter {
     }
   }
 
-  async MeshToBufferGeometry(obj: any, scale: boolean = true) {
+  private async MeshToBufferGeometry(obj: any, scale: boolean = true) {
     try {
       if (!obj) return
 
       const conversionFactor = getConversionFactor(obj.units)
-      const buffer = new BufferGeometry()
+      // const buffer = new BufferGeometry()
       const indices = []
 
       if (!obj.vertices) return
@@ -440,6 +426,8 @@ export default class Coverter {
 
       const vertices = await this.dechunk(obj.vertices)
       const faces = await this.dechunk(obj.faces)
+      const colorsRaw = await this.dechunk(obj.colors)
+      let colors = null
 
       let k = 0
       while (k < faces.length) {
@@ -456,86 +444,110 @@ export default class Coverter {
             faces,
             vertices
           )
-          indices.push(...triangulation)
+          indices.push(
+            ...triangulation.filter((el) => {
+              return el !== undefined
+            })
+          )
         }
 
         k += n + 1
       }
 
-      if (vertices.length >= 65535 || indices.length >= 65535) {
-        buffer.setIndex(new Uint32BufferAttribute(indices, 1))
-      } else {
-        buffer.setIndex(new Uint16BufferAttribute(indices, 1))
-      }
-
-      buffer.setAttribute(
-        'position',
-        new Float32BufferAttribute(
-          !scale || conversionFactor === 1
-            ? vertices
-            : vertices.map((v) => v * conversionFactor),
-          3
-        )
-      )
-
-      const colorsRaw = await this.dechunk(obj.colors)
-
       if (colorsRaw && colorsRaw.length !== 0) {
-        if (colorsRaw.length !== buffer.attributes.position.count) {
+        if (colorsRaw.length !== vertices.length / 3) {
           console.warn(
             `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
           )
         }
-
-        buffer.setAttribute(
-          'color',
-          new BufferAttribute(new Float32Array(buffer.attributes.position.count * 3), 3)
-        )
-
-        for (let i = 0; i < buffer.attributes.position.count; i++) {
-          const color = colorsRaw[i]
-          const r = (color >> 16) & 0xff
-          const g = (color >> 8) & 0xff
-          const b = color & 0xff
-          buffer.attributes.color.setXYZ(i, r / 255, g / 255, b / 255)
-        }
+        colors = Geometry.unpackColors(colorsRaw)
       }
 
-      buffer.computeVertexNormals()
-      buffer.computeBoundingSphere()
-
-      return new ObjectWrapper(buffer, obj)
+      return new ObjectWrapper(
+        Geometry.makeMeshGeometry({
+          attributes: {
+            POSITION: vertices,
+            INDEX: indices,
+            COLOR: colors
+          },
+          bakeTransform: scale
+            ? new Matrix4().makeScale(
+                conversionFactor,
+                conversionFactor,
+                conversionFactor
+              )
+            : null,
+          transform: null
+        } as GeometryData),
+        obj
+      )
     } catch (e) {
       console.warn(`Failed to convert mesh with id: ${obj.id}`)
       throw e
     }
   }
 
-  async PointToBufferGeometry(obj: any, scale = true) {
-    const v = this.PointToVector3(obj, scale)
-    const buf = new BufferGeometry().setFromPoints([v])
-
-    return new ObjectWrapper(buf, obj, 'point')
+  private async PointToBufferGeometry(obj: any, scale = true) {
+    const conversionFactor = scale ? getConversionFactor(obj.units) : 1
+    return new ObjectWrapper(
+      Geometry.makePointGeometry({
+        attributes: {
+          POSITION: this.PointToFloatArray(obj)
+        },
+        bakeTransform: scale
+          ? new Matrix4().makeScale(
+              conversionFactor,
+              conversionFactor,
+              conversionFactor
+            )
+          : null,
+        transform: null
+      } as GeometryData),
+      obj,
+      'point'
+    )
   }
 
-  async LineToBufferGeometry(object: any, scale = true) {
-    if (object.value) {
-      //Old line format, treat as polyline
-      return this.PolylineToBufferGeometry(object, scale)
-    }
-    const obj: any = {}
-    Object.assign(obj, object)
+  /**
+   * LINE
+   */
+  private async LineToGeometryData(
+    obj: any,
+    scale: boolean = true
+  ): Promise<GeometryData> {
+    const conversionFactor = scale ? getConversionFactor(obj.units) : 1
+    return {
+      attributes: {
+        POSITION: this.PointToFloatArray(obj.start).concat(
+          this.PointToFloatArray(obj.end)
+        )
+      },
+      bakeTransform: scale
+        ? new Matrix4().makeScale(conversionFactor, conversionFactor, conversionFactor)
+        : null,
+      transform: null
+    } as GeometryData
+  }
 
-    const geometry = Geometry.makeLineGeometry({
-      [GEOMETRY_POSITION_ATTRIBUTE]: [
-        this.PointToVector3(obj.start, scale),
-        this.PointToVector3(obj.end, scale)
-      ]
-    })
+  private async LineToBufferGeometry(obj: any, scale = true) {
+    if (obj.value) {
+      //Old line format, treat as polyline
+      return this.PolylineToBufferGeometry(obj, scale)
+    }
+
+    const geometry = Geometry.makeLineGeometry(
+      await this.LineToGeometryData(obj, scale)
+    )
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
-  async PolylineToBufferGeometry(object: any, scale = true) {
+  /**
+   * POLYLINE
+   */
+  private async PolylineToGometryData(
+    object: any,
+    scale = true
+  ): Promise<GeometryData> {
     const obj: any = {}
     Object.assign(obj, object)
 
@@ -543,28 +555,39 @@ export default class Coverter {
 
     obj.value = await this.dechunk(obj.value)
 
-    const points = []
-    for (let i = 0; i < obj.value.length; i += 3) {
-      points.push(
-        new Vector3(
-          obj.value[i] * conversionFactor,
-          obj.value[i + 1] * conversionFactor,
-          obj.value[i + 2] * conversionFactor
-        )
-      )
-    }
-    if (obj.closed) points.push(points[0])
+    // const points = []
+    // for (let i = 0; i < obj.value.length; i += 3) {
+    //   points.push(
+    //     new Vector3(
+    //       obj.value[i] * conversionFactor,
+    //       obj.value[i + 1] * conversionFactor,
+    //       obj.value[i + 2] * conversionFactor
+    //     )
+    //   )
+    // }
+    if (obj.closed) obj.value.push(obj.value[0], obj.value[1], obj.value[2])
+    return {
+      attributes: {
+        POSITION: obj.value
+      },
+      bakeTransform: scale
+        ? new Matrix4().makeScale(conversionFactor, conversionFactor, conversionFactor)
+        : null,
+      transform: null
+    } as GeometryData
+  }
 
-    const geometry = Geometry.makeLineGeometry({
-      [GEOMETRY_POSITION_ATTRIBUTE]: points
-    })
-
-    delete obj.value
-    delete obj.bbox
+  async PolylineToBufferGeometry(obj: any, scale = true) {
+    const geometry = Geometry.makeLineGeometry(
+      await this.PolylineToGometryData(obj, scale)
+    )
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
+  /**
+   * BOX
+   */
   async BoxToBufferGeometry(object: any, scale = true) {
     const conversionFactor = scale ? getConversionFactor(object.units) : 1
 
@@ -579,6 +602,9 @@ export default class Coverter {
     return new ObjectWrapper(box, object)
   }
 
+  /**
+   * POLYCURVE
+   */
   async PolycurveToBufferGeometry(object: any, scale = true) {
     const obj: any = {}
     Object.assign(obj, object)
@@ -853,5 +879,13 @@ export default class Coverter {
       )
     }
     return v
+  }
+
+  PointToFloatArray(obj: any) {
+    if (obj.value) {
+      return [obj.value[0], obj.value[1], obj.value[2]]
+    } else {
+      return [obj.x, obj.y, obj.z]
+    }
   }
 }
