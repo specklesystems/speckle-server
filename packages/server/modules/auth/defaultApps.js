@@ -1,4 +1,5 @@
 'use strict'
+const debug = require('debug')
 const knex = require('@/db/knex')
 const Scopes = () => knex('scopes')
 const Apps = () => knex('server_apps')
@@ -55,10 +56,12 @@ async function updateDefaultApp(app, existingApp) {
 
   let affectedTokenIds = []
 
-  if (newScopes.length || removedScopes.length)
+  if (newScopes.length || removedScopes.length) {
+    debug('speckle:modules')(`🔑 Updating default app ${app.name}`)
     affectedTokenIds = await knex('user_server_app_tokens')
       .where({ appId: app.id })
       .pluck('tokenId')
+  }
 
   // the internal code block makes sure if an error occurred, the trx gets rolled back
   await knex.transaction(async (trx) => {
@@ -156,8 +159,7 @@ const SpeckleConnectorApp = {
     ScopesConst.Streams.Write,
     ScopesConst.Profile.Read,
     ScopesConst.Profile.Email,
-    ScopesConst.Users.Read,
-    ScopesConst.Users.Invite
+    ScopesConst.Users.Read
   ]
 }
 
