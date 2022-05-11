@@ -32,7 +32,7 @@ pane.addInput(PARAMS, 'color')
 
 // Load demo object
 viewer.loadObject(
-  'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
+  'https://speckle.xyz/streams/99abc74dd4/objects/ab503a2025e706717bff467ef8f96488'
 )
 
 viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {

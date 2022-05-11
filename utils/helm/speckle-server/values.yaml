@@ -1,6 +1,7 @@
 namespace: speckle-test
 
 domain: localhost
+ssl_canonical_url: true
 
 docker_image_tag: v2.3.3
 

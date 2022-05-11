@@ -3,10 +3,8 @@
 const expect = require('chai').expect
 const assert = require('assert')
 
-const appRoot = require('app-root-path')
-
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
-const { getAnIdForThisOnePlease } = require(`${appRoot}/test/helpers`)
+const { beforeEachContext } = require('@/test/hooks')
+const { getAnIdForThisOnePlease } = require('@/test/helpers')
 
 const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')

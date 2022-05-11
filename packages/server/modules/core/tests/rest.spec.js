@@ -4,10 +4,9 @@ const request = require('supertest')
 
 const assert = require('assert')
 const crypto = require('crypto')
-const appRoot = require('app-root-path')
 
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
-const { createManyObjects } = require(`${appRoot}/test/helpers`)
+const { beforeEachContext } = require('@/test/hooks')
+const { createManyObjects } = require('@/test/helpers')
 
 const { createUser } = require('../services/users')
 const { createPersonalAccessToken } = require('../services/tokens')

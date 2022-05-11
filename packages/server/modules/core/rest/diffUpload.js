@@ -2,9 +2,8 @@
 const zlib = require('zlib')
 const cors = require('cors')
 const debug = require('debug')
-const appRoot = require('app-root-path')
 
-const { contextMiddleware } = require(`${appRoot}/modules/shared`)
+const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')

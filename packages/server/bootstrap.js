@@ -5,16 +5,27 @@
 
 // Initializing module aliases for absolute import paths
 require('module-alias')({ base: __dirname })
+const appRoot = __dirname
 
 // Initializing env vars
 const dotenv = require('dotenv')
 const { isTestEnv } = require('./modules/core/helpers/envHelper')
-const appRoot = require('app-root-path')
 
 // If running in test env, load .env.test first
 // (appRoot necessary, cause env files aren't loaded through require() calls)
 if (isTestEnv()) {
-  dotenv.config({ path: `${appRoot}/.env.test` })
+  const { error } = dotenv.config({ path: `${appRoot}/.env.test` })
+  if (error) {
+    const e = new Error(
+      'Attempting to run tests without an .env.test file properly set up! Check readme!'
+    )
+    console.error(e)
+    process.exit(1)
+  }
 }
 
 dotenv.config({ path: `${appRoot}/.env` })
+
+module.exports = {
+  appRoot
+}

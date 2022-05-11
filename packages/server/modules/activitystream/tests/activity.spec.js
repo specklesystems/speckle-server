@@ -1,14 +1,13 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const appRoot = require('app-root-path')
 const { createUser } = require('../../core/services/users')
 const { createPersonalAccessToken } = require('../../core/services/tokens')
 const { createObject } = require('../../core/services/objects')
 const { getUserActivity } = require('../services')
 
-const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
-const { noErrors } = require(`${appRoot}/test/helpers`)
+const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
+const { noErrors } = require('@/test/helpers')
 
 let sendRequest
 

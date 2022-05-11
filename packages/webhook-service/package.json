@@ -24,7 +24,8 @@
     "knex": "^1.0.3",
     "node-fetch": "^2.6.1",
     "pg": "^8.6.0",
-    "private-ip": "^2.3.3"
+    "private-ip": "^2.3.3",
+    "prom-client": "^14.0.1"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

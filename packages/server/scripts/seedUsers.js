@@ -1,5 +1,5 @@
-const appRoot = require('app-root-path')
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
+require('../bootstrap')
+const { createUser } = require('@/modules/core/services/users')
 const axios = require('axios').default
 
 const main = async () => {

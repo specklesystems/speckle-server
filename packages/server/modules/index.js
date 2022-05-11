@@ -1,7 +1,7 @@
 'use strict'
 const fs = require('fs')
 const path = require('path')
-const appRoot = require('app-root-path')
+const { appRoot } = require('@/bootstrap')
 const autoload = require('auto-load')
 const { values, merge } = require('lodash')
 const { scalarResolvers, scalarSchemas } = require('./core/graph/scalars')

@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 const assert = require('assert')
-const appRoot = require('app-root-path')
 
 const {
   createUser,
@@ -12,7 +11,7 @@ const {
   unmakeUserAdmin,
   makeUserAdmin
 } = require('../services/users')
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { beforeEachContext } = require('@/test/hooks')
 
 describe('User admin @user-services', () => {
   const myTestActor = {

@@ -2,14 +2,13 @@
 const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
-const appRoot = require('app-root-path')
-const { createStream, getStream } = require(`${appRoot}/modules/core/services/streams`)
+const { createStream, getStream } = require('@/modules/core/services/streams')
 
-const { updateServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { getUserByEmail } = require(`${appRoot}/modules/core/services/users`)
-const { LIMITS } = require(`${appRoot}/modules/core/services/ratelimits`)
-const { createAndSendInvite } = require(`${appRoot}/modules/serverinvites/services`)
-const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
+const { updateServerInfo } = require('@/modules/core/services/generic')
+const { getUserByEmail } = require('@/modules/core/services/users')
+const { LIMITS } = require('@/modules/core/services/ratelimits')
+const { createAndSendInvite } = require('@/modules/serverinvites/services')
+const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const expect = chai.expect
 
 let app

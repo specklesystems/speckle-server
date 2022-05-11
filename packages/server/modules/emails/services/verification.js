@@ -1,11 +1,10 @@
-const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
 
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 const Verifications = () => knex('email_verifications')
 
-const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { sendEmail } = require(`${appRoot}/modules/emails`)
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { sendEmail } = require('@/modules/emails')
 
 const sendEmailVerification = async ({ recipient }) => {
   // we need to validate email here, since we'll send it out,

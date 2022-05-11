@@ -1,14 +1,10 @@
 'use strict'
-const appRoot = require('app-root-path')
 const crs = require('crypto-random-string')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
 
-const {
-  getUserByEmail,
-  updateUserPassword
-} = require(`${appRoot}/modules/core/services/users`)
-const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const { sendEmail } = require(`${appRoot}/modules/emails`)
+const { getUserByEmail, updateUserPassword } = require('@/modules/core/services/users')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { sendEmail } = require('@/modules/emails')
 
 const ResetTokens = () => knex('pwdreset_tokens')
 const RefreshTokens = () => knex('refresh_tokens')

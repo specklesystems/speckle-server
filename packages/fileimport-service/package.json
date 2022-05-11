@@ -28,6 +28,7 @@
     "knex": "^1.0.3",
     "node-fetch": "^2.6.5",
     "pg": "^8.7.1",
+    "prom-client": "^14.0.1",
     "valid-filename": "^3.1.0",
     "web-ifc": "^0.0.33"
   },

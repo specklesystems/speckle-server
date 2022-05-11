@@ -7,21 +7,21 @@ const express = require('express')
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 require('express-async-errors')
 const compression = require('compression')
-const appRoot = require('app-root-path')
 const logger = require('morgan-debug')
 const bodyParser = require('body-parser')
 const debug = require('debug')
 const { createTerminus } = require('@godaddy/terminus')
 
 const Sentry = require('@sentry/node')
-const Logging = require(`${appRoot}/logging`)
-const { errorLoggingMiddleware } = require(`${appRoot}/logging/errorLogging`)
+const Logging = require('@/logging')
+const { errorLoggingMiddleware } = require('@/logging/errorLogging')
 const prometheusClient = require('prom-client')
 
 const { ApolloServer, ForbiddenError } = require('apollo-server-express')
 
 const { buildContext } = require('./modules/shared')
 const knex = require('./db/knex')
+const { monitorActiveConnections } = require('./logging/httpServerMonitoring')
 const { buildErrorFormatter } = require('@/modules/core/graph/setup')
 const { isDevEnv, isTestEnv } = require('@/modules/core/helpers/envHelper')
 
@@ -36,15 +36,13 @@ exports.buildApolloServer = (optionOverrides) => {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
   const { graph } = require('./modules')
 
-  // (Re-)Initialise prometheus metrics
-  prometheusClient.register.clear()
-  prometheusClient.collectDefaultMetrics()
-
   // Init metrics
+  prometheusClient.register.removeSingleMetric('speckle_server_apollo_connect')
   const metricConnectCounter = new prometheusClient.Counter({
     name: 'speckle_server_apollo_connect',
     help: 'Number of connects'
   })
+  prometheusClient.register.removeSingleMetric('speckle_server_apollo_clients')
   const metricConnectedClients = new prometheusClient.Gauge({
     name: 'speckle_server_apollo_clients',
     help: 'Number of currently connected clients'
@@ -173,6 +171,7 @@ exports.startHttp = async (app, customPortOverride) => {
   }
 
   const server = http.createServer(app)
+  monitorActiveConnections(server)
 
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   app.set('port', port)

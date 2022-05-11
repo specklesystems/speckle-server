@@ -210,8 +210,11 @@ export default class SceneObjectManager {
     let material = this.lineMaterial
     if (wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone()
-      material.linewidth =
-        wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
+      // This will only add confusion since it *might* work on some platforms.
+      // However, it's in pixels and the displayStyle will express the thickness in world units
+      // This will be replaced by the upcoming change to line rendering which supports variable
+      // thickness in both world space and pixels
+      // material.linewidth = wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color))
       // material.color.convertSRGBToLinear();
 
