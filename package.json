@@ -14,24 +14,25 @@
     "prettier:fix": "prettier --write .",
     "docker:deps:up": "docker-compose -f ./docker-compose-deps.yml up -d",
     "docker:deps:down": "docker-compose -f ./docker-compose-deps.yml down",
-    "dev": "lerna run dev --parallel",
-    "dev:no-server": "npm run dev -- --ignore @speckle/server",
+    "dev": "yarn workspaces foreach -ptv --exclude @speckle/frontend run build:dev && yarn workspaces foreach -pv -j unlimited run dev",
+    "dev:no-server": "yarn run dev -- --exclude @speckle/server",
     "prepare": "husky install",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "cm": "cz"
   },
   "devDependencies": {
     "@types/eslint": "^8.4.1",
+    "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "husky": "^7.0.4",
-    "lerna": "^3.22.1",
     "lint-staged": "^12.3.7",
     "prettier": "^2.5.1"
   },
   "config": {
     "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
+      "path": "cz-conventional-changelog"
     }
   },
   "lint-staged": {

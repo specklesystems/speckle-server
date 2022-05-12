@@ -1,9 +1,0 @@
-{
-  "packages": ["packages/*"],
-  "version": "independent",
-  "command": {
-    "version": {
-      "message": "chore(release): publish to npm\n[skip ci]"
-    }
-  }
-}
