@@ -38,3 +38,5 @@ events.json
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+*yarn-error.log
