@@ -258,6 +258,7 @@ jobs:
       - run:
           name: auth to npm as Speckle
           command: |
+            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml 
             echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
       - run:
           name: try login to npm
@@ -266,9 +267,22 @@ jobs:
       - run:
           name: build public packages
           command: yarn workspaces foreach -ptv --no-private run build
+      - run:
+          name: bump all versions
+          # bump all versions in dependency tree order but not in parallel
+          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
+
+      - run:
+          name: publish to npm
+          command: 'yarn workspaces foreach -pv --no-private npm publish --access public --tag next'
+
       # - run:
-      #     name: publish to npm
-      #     command: npx lerna publish $IMAGE_VERSION_TAG -y --no-git-tag-version --no-push
+      # name: commit changes
+      # command: |
+      # yarn prettier:fix
+      # git add .
+      # git commit -m '[ci skip] bump version to $IMAGE_VERSION_TAG'
+      # git push
 
   publish-helm-chart:
     docker: *docker-image

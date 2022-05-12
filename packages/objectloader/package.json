@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.4.2",
+  "version": "2.5.4",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "dist/objectloader.js",
   "module": "dist/objectloader.esm.js",

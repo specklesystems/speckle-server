@@ -9,6 +9,8 @@
     "node": ">=14.0.0 <17.0.0"
   },
   "scripts": {
+    "build": "yarn workspaces foreach -ptv run build",
+    "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",

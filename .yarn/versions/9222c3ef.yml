@@ -1,0 +1,8 @@
+undecided:
+  - '@speckle/fileimport-service'
+  - '@speckle/frontend'
+  - '@speckle/objectloader'
+  - '@speckle/preview-service'
+  - '@speckle/server'
+  - '@speckle/viewer'
+  - '@speckle/viewer-sandbox'
