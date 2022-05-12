@@ -50,22 +50,7 @@
             <timeago :datetime="reply.createdAt" class="font-italic ma-1"></timeago>
           </div>
         </div>
-        <div
-          :key="index"
-          :class="`d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
-            $userId() === reply.authorId ? 'primary white--text' : 'background'
-          }`"
-        >
-          <div :class="`${$userId() === reply.authorId ? 'order-last' : ''}`">
-            <user-avatar :id="reply.authorId" :size="30" />
-          </div>
-          <div
-            :class="`mx-2 px-4 py-2 flex-grow-1 float-left caption`"
-            style="overflow-wrap: break-word"
-          >
-            {{ reply.text }}
-          </div>
-        </div>
+        <comment-thread-reply :key="index + 'reply'" :reply="reply" :stream="stream" />
       </template>
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
@@ -167,7 +152,8 @@ import debounce from 'lodash/debounce'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar'),
+    CommentThreadReply: () => import('@/main/components/comments/CommentThreadReply')
   },
   props: {
     comment: { type: Object, default: () => null }
