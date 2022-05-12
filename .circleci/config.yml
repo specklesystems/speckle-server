@@ -136,18 +136,18 @@ jobs:
       #     name: Restore Yarn Package Cache
       #     keys:
       #       - yarn-packages-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn workspaces focus --production
-          working_directory: 'packages/server'
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
+      # - run:
+      # name: Install Dependencies
+      # command: yarn workspaces focus --production
+      # working_directory: 'packages/server'
+      #
+      # - save_cache:
+      # name: Save Yarn Package Cache
+      # key: yarn-packages-{{ checksum "yarn.lock" }}
+      # paths:
+      # - .yarn/cache
+      # - .yarn/unplugged
+      #
       # - node/install-packages:
       #     app-dir: ~/project/packages/server
 
@@ -156,9 +156,8 @@ jobs:
       - run:
           command: touch .env.test
           working_directory: 'packages/server'
-
-      - run:
-          command: yarn test:report
+      - yarn run:
+          command: test:report
           working_directory: 'packages/server'
 
       - run:
