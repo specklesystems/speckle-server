@@ -148,8 +148,8 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
 
-      - node/install-packages:
-          app-dir: ~/project/packages/server
+      # - node/install-packages:
+      #     app-dir: ~/project/packages/server
 
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
