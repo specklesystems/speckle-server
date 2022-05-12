@@ -13,7 +13,9 @@
     "dev": "lerna run dev --parallel",
     "dev:no-server": "npm run dev -- --ignore @speckle/server",
     "prepare": "husky install",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "serve": "node --version",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "@types/eslint": "^8.4.1",
