@@ -156,7 +156,8 @@ jobs:
       - run:
           command: touch .env.test
           working_directory: 'packages/server'
-      - yarn run:
+
+      - yarn-run:
           command: test:report
           working_directory: 'packages/server'
 
