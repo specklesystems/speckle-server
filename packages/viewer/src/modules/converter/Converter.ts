@@ -2,19 +2,15 @@ import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUti
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
-import {
-  Geometry,
-  GeometryData,
-  GEOMETRY_LINES_AS_TRIANGLES,
-  GEOMETRY_POSITION_ATTRIBUTE
-} from './Geometry'
+import { Geometry, GeometryData } from './Geometry'
 import {
   BoxBufferGeometry,
   BufferAttribute,
   BufferGeometry,
   EllipseCurve,
   Float32BufferAttribute,
-  Matrix4
+  Matrix4,
+  Vector2
 } from 'three'
 import { Vector3 } from 'three'
 import { Line3 } from 'three'
@@ -26,6 +22,10 @@ export type ConverterGeometryDelegate = (
   object: any,
   scale?: boolean
 ) => Promise<ObjectWrapper | undefined>
+export type ConverterGeometryDataDelegate = (
+  object: any,
+  scale?: boolean
+) => Promise<GeometryData>
 
 /**
  * Utility class providing some top level conversion methods.
@@ -55,6 +55,25 @@ export default class Coverter {
     Circle: this.CircleToBufferGeometry.bind(this),
     Arc: this.ArcToBufferGeometry.bind(this),
     Ellipse: this.EllipseToBufferGeometry.bind(this)
+  }
+
+  private readonly GeometryDataConverterMapping: {
+    [name: string]: ConverterGeometryDataDelegate
+  } = {
+    View3D: this.View3DToBufferGeometry.bind(this),
+    BlockInstance: this.BlockInstanceToBufferGeometry.bind(this),
+    Pointcloud: this.PointcloudToGeometryData.bind(this),
+    Brep: this.MeshToGeometryData.bind(this),
+    Mesh: this.MeshToGeometryData.bind(this),
+    Point: this.PointToGeometryData.bind(this),
+    Line: this.LineToGeometryData.bind(this),
+    Polyline: this.PolylineToGeometryData.bind(this),
+    Box: this.BoxToGeometryData.bind(this),
+    Polycurve: this.PolycurveToGeometryData.bind(this),
+    Curve: this.PolylineToGeometryData.bind(this),
+    Circle: this.CircleToGeometryData.bind(this),
+    Arc: this.ArcToGeometryData.bind(this),
+    Ellipse: this.EllipseToGeometryData.bind(this)
   }
 
   constructor(objectLoader: any) {
@@ -235,6 +254,13 @@ export default class Coverter {
     return this.GeometryConverterMapping[this.getSpeckleType(obj)](obj, scale)
   }
 
+  private convertToGeometryData(
+    obj: any,
+    scale: boolean = true
+  ): Promise<GeometryData> {
+    return this.GeometryDataConverterMapping[this.getSpeckleType(obj)](obj, scale)
+  }
+
   private getDisplayValue(obj: any) {
     return (
       obj['displayValue'] ||
@@ -314,6 +340,9 @@ export default class Coverter {
     return type
   }
 
+  /**
+   * VIEW 3D
+   */
   private async View3DToBufferGeometry(obj: any) {
     obj.origin.units = obj.units
     obj.target.units = obj.units
@@ -324,13 +353,22 @@ export default class Coverter {
     return new ObjectWrapper(obj, obj, 'View')
   }
 
+  /**
+   * BLOCK INSTANCE
+   */
   private async BlockInstanceToBufferGeometry(obj: any, scale?: boolean) {
     const cF = scale ? getConversionFactor(obj.units) : 1
     const definition = await this.resolveReference(obj.blockDefinition)
 
-    const matrix = new Matrix4().fromArray(
-      Array.isArray(obj.transform) ? obj.transform : obj.transform.value
-    )
+    /**
+     * Speckle matrices are row major. Three's 'fromArray' function assumes
+     * the matrix is in column major. That's why we transpose it here.
+     */
+    const matrixData: number[] = Array.isArray(obj.transform)
+      ? obj.transform
+      : obj.transform.value
+    const matrix = new Matrix4().fromArray(matrixData).transpose()
+
     const geoms = []
     for (const obj of definition.geometry) {
       // Note: we are passing scale = false to the conversion of all objects, as scaling *needs* to happen
@@ -348,7 +386,10 @@ export default class Coverter {
     })
   }
 
-  private async PointcloudToBufferGeometry(obj: any, scale: boolean = true) {
+  /**
+   * POINT CLOUD
+   */
+  private async PointcloudToGeometryData(obj: any, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
 
     const vertices = await this.dechunk(obj.points)
@@ -363,27 +404,29 @@ export default class Coverter {
       }
       colors = Geometry.unpackColors(colorsRaw)
     }
+    return {
+      attributes: {
+        POSITION: vertices,
+        COLOR: colors
+      },
+      bakeTransform: scale
+        ? new Matrix4().makeScale(conversionFactor, conversionFactor, conversionFactor)
+        : null,
+      transform: null
+    } as GeometryData
+  }
 
+  private async PointcloudToBufferGeometry(obj: any, scale: boolean = true) {
     return new ObjectWrapper(
-      Geometry.makePointCloudGeometry({
-        attributes: {
-          POSITION: vertices,
-          COLOR: colors
-        },
-        bakeTransform: scale
-          ? new Matrix4().makeScale(
-              conversionFactor,
-              conversionFactor,
-              conversionFactor
-            )
-          : null,
-        transform: null
-      } as GeometryData),
+      Geometry.makePointCloudGeometry(await this.PointcloudToGeometryData(obj, scale)),
       obj,
       'pointcloud'
     )
   }
 
+  /**
+   * BREP
+   */
   private async BrepToBufferGeometry(obj: any, scale = true) {
     try {
       if (!obj) return
@@ -413,72 +456,75 @@ export default class Coverter {
     }
   }
 
+  /**
+   * MESH
+   */
+  private async MeshToGeometryData(obj: any, scale = true): Promise<GeometryData> {
+    if (!obj) return
+
+    const conversionFactor = getConversionFactor(obj.units)
+    // const buffer = new BufferGeometry()
+    const indices = []
+
+    if (!obj.vertices) return
+    if (!obj.faces) return
+
+    const vertices = await this.dechunk(obj.vertices)
+    const faces = await this.dechunk(obj.faces)
+    const colorsRaw = await this.dechunk(obj.colors)
+    let colors = null
+
+    let k = 0
+    while (k < faces.length) {
+      let n = faces[k]
+      if (n <= 3) n += 3 // 0 -> 3, 1 -> 4
+
+      if (n === 3) {
+        // Triangle face
+        indices.push(faces[k + 1], faces[k + 2], faces[k + 3])
+      } else {
+        // Quad or N-gon face
+        const triangulation = MeshTriangulationHelper.triangulateFace(
+          k,
+          faces,
+          vertices
+        )
+        indices.push(
+          ...triangulation.filter((el) => {
+            return el !== undefined
+          })
+        )
+      }
+
+      k += n + 1
+    }
+
+    if (colorsRaw && colorsRaw.length !== 0) {
+      if (colorsRaw.length !== vertices.length / 3) {
+        console.warn(
+          `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
+        )
+      }
+      colors = Geometry.unpackColors(colorsRaw)
+    }
+
+    return {
+      attributes: {
+        POSITION: vertices,
+        INDEX: indices,
+        COLOR: colors
+      },
+      bakeTransform: scale
+        ? new Matrix4().makeScale(conversionFactor, conversionFactor, conversionFactor)
+        : null,
+      transform: null
+    } as GeometryData
+  }
+
   private async MeshToBufferGeometry(obj: any, scale: boolean = true) {
     try {
-      if (!obj) return
-
-      const conversionFactor = getConversionFactor(obj.units)
-      // const buffer = new BufferGeometry()
-      const indices = []
-
-      if (!obj.vertices) return
-      if (!obj.faces) return
-
-      const vertices = await this.dechunk(obj.vertices)
-      const faces = await this.dechunk(obj.faces)
-      const colorsRaw = await this.dechunk(obj.colors)
-      let colors = null
-
-      let k = 0
-      while (k < faces.length) {
-        let n = faces[k]
-        if (n <= 3) n += 3 // 0 -> 3, 1 -> 4
-
-        if (n === 3) {
-          // Triangle face
-          indices.push(faces[k + 1], faces[k + 2], faces[k + 3])
-        } else {
-          // Quad or N-gon face
-          const triangulation = MeshTriangulationHelper.triangulateFace(
-            k,
-            faces,
-            vertices
-          )
-          indices.push(
-            ...triangulation.filter((el) => {
-              return el !== undefined
-            })
-          )
-        }
-
-        k += n + 1
-      }
-
-      if (colorsRaw && colorsRaw.length !== 0) {
-        if (colorsRaw.length !== vertices.length / 3) {
-          console.warn(
-            `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
-          )
-        }
-        colors = Geometry.unpackColors(colorsRaw)
-      }
-
       return new ObjectWrapper(
-        Geometry.makeMeshGeometry({
-          attributes: {
-            POSITION: vertices,
-            INDEX: indices,
-            COLOR: colors
-          },
-          bakeTransform: scale
-            ? new Matrix4().makeScale(
-                conversionFactor,
-                conversionFactor,
-                conversionFactor
-              )
-            : null,
-          transform: null
-        } as GeometryData),
+        Geometry.makeMeshGeometry(await this.MeshToGeometryData(obj, scale)),
         obj
       )
     } catch (e) {
@@ -487,22 +533,25 @@ export default class Coverter {
     }
   }
 
-  private async PointToBufferGeometry(obj: any, scale = true) {
+  /**
+   * POINT
+   */
+  private async PointToGeometryData(obj: any, scale = true): Promise<GeometryData> {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
+    return {
+      attributes: {
+        POSITION: this.PointToFloatArray(obj)
+      },
+      bakeTransform: scale
+        ? new Matrix4().makeScale(conversionFactor, conversionFactor, conversionFactor)
+        : null,
+      transform: null
+    } as GeometryData
+  }
+
+  private async PointToBufferGeometry(obj: any, scale = true) {
     return new ObjectWrapper(
-      Geometry.makePointGeometry({
-        attributes: {
-          POSITION: this.PointToFloatArray(obj)
-        },
-        bakeTransform: scale
-          ? new Matrix4().makeScale(
-              conversionFactor,
-              conversionFactor,
-              conversionFactor
-            )
-          : null,
-        transform: null
-      } as GeometryData),
+      Geometry.makePointGeometry(await this.PointToGeometryData(obj, scale)),
       obj,
       'point'
     )
@@ -544,7 +593,7 @@ export default class Coverter {
   /**
    * POLYLINE
    */
-  private async PolylineToGometryData(
+  private async PolylineToGeometryData(
     object: any,
     scale = true
   ): Promise<GeometryData> {
@@ -555,16 +604,6 @@ export default class Coverter {
 
     obj.value = await this.dechunk(obj.value)
 
-    // const points = []
-    // for (let i = 0; i < obj.value.length; i += 3) {
-    //   points.push(
-    //     new Vector3(
-    //       obj.value[i] * conversionFactor,
-    //       obj.value[i + 1] * conversionFactor,
-    //       obj.value[i + 2] * conversionFactor
-    //     )
-    //   )
-    // }
     if (obj.closed) obj.value.push(obj.value[0], obj.value[1], obj.value[2])
     return {
       attributes: {
@@ -579,7 +618,7 @@ export default class Coverter {
 
   async PolylineToBufferGeometry(obj: any, scale = true) {
     const geometry = Geometry.makeLineGeometry(
-      await this.PolylineToGometryData(obj, scale)
+      await this.PolylineToGeometryData(obj, scale)
     )
 
     return new ObjectWrapper(geometry, obj, 'line')
@@ -588,7 +627,12 @@ export default class Coverter {
   /**
    * BOX
    */
-  async BoxToBufferGeometry(object: any, scale = true) {
+  private async BoxToGeometryData(object: any, scale = true) {
+    /**
+     * Right, so we're cheating here a bit. We're using three's box geometry
+     * to get the vertices and indices. Normally we could(should) do that by hand
+     * but it's too late in the evenning atm...
+     */
     const conversionFactor = scale ? getConversionFactor(object.units) : 1
 
     const move = this.PointToVector3(object.basePlane.origin)
@@ -597,15 +641,26 @@ export default class Coverter {
     const height = (object.zSize.end - object.zSize.start) * conversionFactor
 
     const box = new BoxBufferGeometry(width, depth, height, 1, 1, 1)
-    box.applyMatrix4(new Matrix4().setPosition(move))
-
-    return new ObjectWrapper(box, object)
+    return {
+      attributes: {
+        POSITION: box.attributes.position.array,
+        INDEX: box.index.array
+      },
+      bakeTransform: new Matrix4().setPosition(move),
+      transform: null
+    } as GeometryData
+  }
+  async BoxToBufferGeometry(object: any, scale = true) {
+    return new ObjectWrapper(
+      Geometry.makeMeshGeometry(await this.BoxToGeometryData(object, scale)),
+      object
+    )
   }
 
   /**
    * POLYCURVE
    */
-  async PolycurveToBufferGeometry(object: any, scale = true) {
+  async PolycurveToGeometryData(object: any, scale = true): Promise<GeometryData> {
     const obj: any = {}
     Object.assign(obj, object)
 
@@ -614,41 +669,30 @@ export default class Coverter {
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       let conv
-      if (this.directConverterExists(element)) conv = await this.convert(element, scale)
-      else if ((element = this.getDisplayValue(element)) !== undefined)
-        conv = await this.convert(element, scale)
-
-      buffers.push(conv?.bufferGeometry)
-      if (GEOMETRY_LINES_AS_TRIANGLES)
-        count += conv?.bufferGeometry.attributes.instanceStart.data.array.length
-    }
-
-    /**
-     * Definetly not the best approach, however it will do for now
-     * until we properly refactor the conversions
-     */
-    let geometry
-    if (GEOMETRY_LINES_AS_TRIANGLES) {
-      const mergedPoints = new Float32Array(count)
-      let offset = 0
-      for (var k = 0; k < buffers.length; k++) {
-        const points = buffers[k].attributes.instanceStart.data.array
-        mergedPoints.set(points, offset)
-        offset += points.length
+      if (this.getSpeckleType(element) == 'Arc') {
+        console.log('arc')
       }
-      geometry = Geometry.makeLineGeometry(
-        {
-          [GEOMETRY_POSITION_ATTRIBUTE]: mergedPoints
-        },
-        true
-      )
-    } else {
-      geometry = BufferGeometryUtils.mergeBufferGeometries(buffers)
+      if (this.directConverterExists(element))
+        conv = await this.convertToGeometryData(element, scale)
+      else if ((element = this.getDisplayValue(element)) !== undefined)
+        conv = await this.convertToGeometryData(element, scale)
+
+      buffers.push(conv)
     }
 
-    return new ObjectWrapper(geometry, obj, 'line')
+    return Geometry.mergeGeometryData(buffers)
   }
 
+  async PolycurveToBufferGeometry(object: any, scale = true) {
+    const geometryData: GeometryData = await this.PolycurveToGeometryData(object, scale)
+    const geometry = Geometry.makeLineGeometry(geometryData)
+
+    return new ObjectWrapper(geometry, Object.assign({}, object), 'line')
+  }
+
+  /**
+   * CURVE
+   */
   async CurveToBufferGeometry(object: any, scale = true) {
     const obj: any = {}
     Object.assign(obj, object)
@@ -660,46 +704,31 @@ export default class Coverter {
     return new ObjectWrapper(poly.bufferGeometry, obj, 'line')
   }
 
-  async CircleToBufferGeometry(obj: any, scale = true) {
+  /**
+   * CIRCLE
+   */
+  async CircleToGeometryData(obj: any, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     const points = this.getCircularCurvePoints(obj.plane, obj.radius * conversionFactor)
-    const geometry = Geometry.makeLineGeometry({
-      [GEOMETRY_POSITION_ATTRIBUTE]: points
-    })
-
-    // delete obj.plane
-    // delete obj.value
-    // delete obj.speckle_type
-    // delete obj.bbox
-
+    return {
+      attributes: {
+        POSITION: this.FlattenVector3Array(points)
+      },
+      bakeTransform: null,
+      transform: null
+    } as GeometryData
+  }
+  async CircleToBufferGeometry(obj: any, scale = true) {
+    const geometry = Geometry.makeLineGeometry(
+      await this.CircleToGeometryData(obj, scale)
+    )
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
-  async ArcToBufferGeometry(obj: any, scale = true) {
-    /**
-     * Old implementation
-     */
-    // const radius = obj.radius
-    // const curve = new THREE.EllipseCurve(
-    //   0,
-    //   0, // ax, aY
-    //   radius,
-    //   radius, // xRadius, yRadius
-    //   obj.startAngle,
-    //   obj.endAngle, // aStartAngle, aEndAngle
-    //   false, // aClockwise
-    //   0 // aRotation
-    // )
-    // const points = curve.getPoints(50);
-    // const t = this.PlaneToMatrix4(obj.plane, scale);
-    // const geometry = new THREE.BufferGeometry()
-    //   .setFromPoints(points)
-    //   .applyMatrix4(t)
-    // return new ObjectWrapper(geometry, obj, 'line')
-
-    /**
-     * New implementation, a bit verbose, but it's more clear this way.
-     */
+  /**
+   * ARC
+   */
+  async ArcToGeometryData(obj: any, scale = true) {
     const origin = new Vector3(
       obj.plane.origin.x,
       obj.plane.origin.y,
@@ -759,14 +788,25 @@ export default class Coverter {
     // We translate it to the circle's origin
     matrix.setPosition(origin)
 
-    const geometry = Geometry.makeLineGeometry({
-      [GEOMETRY_POSITION_ATTRIBUTE]: points
-    }).applyMatrix4(matrix)
+    return {
+      attributes: {
+        POSITION: this.FlattenVector3Array(points)
+      },
+      bakeTransform: matrix,
+      transform: null
+    } as GeometryData
+  }
+
+  async ArcToBufferGeometry(obj: any, scale = true) {
+    const geometry = Geometry.makeLineGeometry(await this.ArcToGeometryData(obj, scale))
 
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
-  async EllipseToBufferGeometry(obj: any, scale = true) {
+  /**
+   * ELLIPSE
+   */
+  async EllipseToGeometryData(obj: any, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
 
     const center = new Vector3(
@@ -800,12 +840,25 @@ export default class Coverter {
       points.push(pt)
     }
 
-    const geometry = Geometry.makeLineGeometry({
-      [GEOMETRY_POSITION_ATTRIBUTE]: points
-    })
+    return {
+      attributes: {
+        POSITION: this.FlattenVector3Array(points)
+      },
+      bakeTransform: null,
+      transform: null
+    } as GeometryData
+  }
+
+  async EllipseToBufferGeometry(obj: any, scale = true) {
+    const geometry = Geometry.makeLineGeometry(
+      await this.EllipseToGeometryData(obj, scale)
+    )
     return new ObjectWrapper(geometry, obj, 'line')
   }
 
+  /**
+   * UTILS
+   */
   PlaneToMatrix4(plane: any, scale = true) {
     const m = new Matrix4()
     const conversionFactor = scale ? getConversionFactor(plane.units) : 1
@@ -887,5 +940,15 @@ export default class Coverter {
     } else {
       return [obj.x, obj.y, obj.z]
     }
+  }
+
+  FlattenVector3Array(input: Vector3[] | Vector2[]): number[] {
+    const output = new Array(input.length * 3)
+    for (var k = 0, l = 0; k < input.length; k++, l += 3) {
+      output[l] = input[k].x
+      output[l + 1] = input[k].y
+      output[l + 2] = input[k].hasOwnProperty('z') ? (input[k] as any).z : 0
+    }
+    return output
   }
 }

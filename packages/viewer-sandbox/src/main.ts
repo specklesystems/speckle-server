@@ -19,7 +19,7 @@ const sandbox = new Sandbox(viewer)
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 // Load demo object
-sandbox.loadUrl('https://latest.speckle.dev/streams/2158263a8f/commits/3a629fc558')
+sandbox.loadUrl('https://latest.speckle.dev/streams/3ed8357f29/commits/b21fb0dcf7?c=%5B76.08416,-35.25872,38.49991,56.56326,-4.19138,5.61052,0,1%5D')
 
 viewer.on('load-progress', (a: { progress: number; id: string; url: string }) => {
   if (a.progress >= 1) {

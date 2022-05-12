@@ -1,4 +1,5 @@
 import {
+  BoxBufferGeometry,
   BufferGeometry,
   Float32BufferAttribute,
   Matrix4,
@@ -17,27 +18,10 @@ export enum GeometryAttributes {
   INDEX = 'INDEX'
 }
 
-export class GeometryData {
+export interface GeometryData {
   attributes: Partial<Record<GeometryAttributes, number[]>>
   bakeTransform: Matrix4
   transform: Matrix4
-
-  applyMatrix4(m: Matrix4) {
-    if (!this.attributes.POSITION) return
-
-    const e = m.elements
-
-    for (var k = 0; k < this.attributes.POSITION.length; k += 3) {
-      const x = this.attributes.POSITION[k],
-        y = this.attributes.POSITION[k + 1],
-        z = this.attributes.POSITION[k + 2]
-      const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
-
-      this.attributes.POSITION[k] = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
-      this.attributes.POSITION[k + 1] = (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
-      this.attributes.POSITION[k + 2] = (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
-    }
-  }
 }
 
 /**
@@ -51,6 +35,9 @@ export class Geometry {
     return Geometry.makeMeshGeometry(geometryData)
   }
   static makeMeshGeometry(geometryData: GeometryData): BufferGeometry {
+    if (geometryData.bakeTransform) {
+      Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
+    }
     const buffer = new BufferGeometry()
 
     if (geometryData.attributes.INDEX) {
@@ -69,10 +56,6 @@ export class Geometry {
         'position',
         new Float32BufferAttribute(geometryData.attributes.POSITION, 3)
       )
-
-      if (geometryData.bakeTransform) {
-        buffer.attributes.position.applyMatrix4(geometryData.bakeTransform)
-      }
     }
 
     if (geometryData.attributes.COLOR) {
@@ -89,6 +72,9 @@ export class Geometry {
   }
 
   static makeLineGeometry(geometryData: GeometryData) {
+    if (geometryData.bakeTransform) {
+      Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
+    }
     if (GEOMETRY_LINES_AS_TRIANGLES) {
       return this.makeLineGeometry_TRIANGLE(geometryData)
     } else {
@@ -112,10 +98,112 @@ export class Geometry {
   }
 
   static makeLineGeometry_TRIANGLE(geometryData: GeometryData) {
-    const geometry = new LineGeometry()
-    geometry.setPositions(geometryData.attributes.POSITION)
-    if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
-    return geometry
+    try {
+      const geometry = new LineGeometry()
+      geometry.setPositions(geometryData.attributes.POSITION)
+      if (geometryData.attributes.COLOR)
+        geometry.setColors(geometryData.attributes.COLOR)
+      return geometry
+    } catch (e) {
+      console.log('plm')
+    }
+  }
+
+  static mergeGeometryAttribute(
+    attributes: number[][],
+    target: Float32Array
+  ): ArrayLike<number> {
+    let arrayLength = 0
+    for (let k = 0; k < attributes.length; k++) {
+      arrayLength += attributes[k].length
+    }
+    let offset = 0
+    for (let k = 0; k < attributes.length; k++) {
+      target.set(attributes[k], offset)
+      offset += attributes[k].length
+    }
+    return target
+  }
+
+  static mergeIndexAttribute(
+    indexAttributes: number[][],
+    positionAttributes: number[][]
+  ): number[] {
+    let indexOffset = 0
+    const mergedIndex = []
+
+    for (let i = 0; i < indexAttributes.length; ++i) {
+      const index = indexAttributes[i]
+
+      for (let j = 0; j < index.length; ++j) {
+        mergedIndex.push(index[j] + indexOffset)
+      }
+
+      indexOffset += positionAttributes.length
+    }
+    return mergedIndex
+  }
+
+  static mergeGeometryData(geometries: GeometryData[]): GeometryData {
+    const sampleAttributes = geometries[0].attributes
+    const mergedGeometry = {
+      attributes: {},
+      bakeTransform: null,
+      transform: null
+    } as GeometryData
+
+    for (let i = 0; i < geometries.length; i++) {
+      Geometry.transformGeometryData(geometries[i], geometries[i].bakeTransform)
+    }
+
+    if (sampleAttributes[GeometryAttributes.INDEX]) {
+      const indexAttributes = geometries.map(
+        (item) => item.attributes[GeometryAttributes.INDEX]
+      )
+      const positionAttributes = geometries.map(
+        (item) => item.attributes[GeometryAttributes.POSITION]
+      )
+      mergedGeometry.attributes[GeometryAttributes.INDEX] =
+        Geometry.mergeIndexAttribute(indexAttributes, positionAttributes)
+    }
+
+    for (let k in sampleAttributes) {
+      if (k != GeometryAttributes.INDEX) {
+        const attributes = geometries.map((item) => {
+          return item.attributes[k]
+        })
+        mergedGeometry.attributes[k] = Geometry.mergeGeometryAttribute(
+          attributes,
+          new Float32Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
+        )
+      }
+    }
+
+    return mergedGeometry
+  }
+
+  public static transformGeometryData(geometryData: GeometryData, m: Matrix4) {
+    try {
+      if (!geometryData.attributes.POSITION) return
+
+      const e = m.elements
+
+      for (var k = 0; k < geometryData.attributes.POSITION.length; k += 3) {
+        const x = geometryData.attributes.POSITION[k],
+          y = geometryData.attributes.POSITION[k + 1],
+          z = geometryData.attributes.POSITION[k + 2]
+        const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
+
+        geometryData.attributes.POSITION[k] =
+          (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
+        geometryData.attributes.POSITION[k + 1] =
+          (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
+        geometryData.attributes.POSITION[k + 2] =
+          (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
+      }
+    } catch (e) {
+      console.log('plm')
+    }
   }
 
   public static unpackColors(int32Colors: number[]): number[] {
