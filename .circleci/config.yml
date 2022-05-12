@@ -20,6 +20,8 @@ workflows:
             branches:
               only:
                 - main
+                - gergo/yarn
+
       - docker-build-and-publish-server:
           filters: *filters-build
           context: &docker-hub-context
@@ -86,7 +88,9 @@ workflows:
             tags:
               only: *filters-tag
             branches:
-              ignore: /.*/
+              only:
+                - gergo/yarn
+              # ignore: /.*/
           context:
             - npm-registry
           requires:
@@ -232,13 +236,22 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
-          name: restore packages
-          command: |
-            npm i
-            npx lerna bootstrap
-      # this has to be after lerna bootstrap
-      # otherwise the auth workflow of lerna is borked...
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
       - run:
           name: auth to npm as Speckle
           command: |
@@ -247,10 +260,14 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
       - run:
           name: try login to npm
-          command: npm whoami
+          command: yarn npm whoami
+
       - run:
-          name: publish to npm
-          command: npx lerna publish $IMAGE_VERSION_TAG -y --no-git-tag-version --no-push
+          name: build public packages
+          command: yarn workspaces foreach -ptv --no-private run build
+      # - run:
+      #     name: publish to npm
+      #     command: npx lerna publish $IMAGE_VERSION_TAG -y --no-git-tag-version --no-push
 
   publish-helm-chart:
     docker: *docker-image
