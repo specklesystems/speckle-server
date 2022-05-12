@@ -132,24 +132,24 @@ jobs:
       CANONICAL_URL: 'http://localhost:3000'
     steps:
       - checkout
-      # - restore_cache:
-      #     name: Restore Yarn Package Cache
-      #     keys:
-      #       - yarn-packages-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
-          command: yarn workspaces focus --production
+          command: yarn workspaces focus
           working_directory: 'packages/server'
-      #
-      # - save_cache:
-      # name: Save Yarn Package Cache
-      # key: yarn-packages-{{ checksum "yarn.lock" }}
-      # paths:
-      # - .yarn/cache
-      # - .yarn/unplugged
-      #
-      # - node/install-packages:
-      #     app-dir: ~/project/packages/server
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - node/install-packages:
+          app-dir: ~/project/packages/server
 
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
