@@ -255,9 +255,7 @@ jobs:
       - run:
           name: auth to npm as Speckle
           command: |
-            echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
-            echo "registry=http://registry.npmjs.org/" >> .npmrc
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+            echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
       - run:
           name: try login to npm
           command: yarn npm whoami
