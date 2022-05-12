@@ -45,7 +45,11 @@ const config = {
     })
   ],
   resolve: {
-    modules: [path.resolve('./node_modules'), path.resolve('.render_page/src')],
+    modules: [
+      path.resolve('../../node_modules'),
+      path.resolve('./node_modules'),
+      path.resolve('.render_page/src')
+    ],
     extensions: ['.json', '.js']
   },
   devServer: {
