@@ -11,13 +11,14 @@ RUN apt-get update && apt-get install -y \
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
 RUN chmod +x /wait
 
-WORKDIR /app
+WORKDIR /speckle-server
 
+COPY .yarnrc.yml .
+COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
-RUN corepack enable && yarn plugin import workspace-tools
 
-COPY packages/server/package.json ./packages/server/
-WORKDIR /app/packages/server
+WORKDIR /speckle-server/packages/server
+COPY packages/server/package.json .
 RUN yarn workspaces focus --production
 
 COPY packages/server .

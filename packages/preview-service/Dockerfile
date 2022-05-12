@@ -2,41 +2,34 @@
 
 
 # build stage
-FROM node:14.16-buster-slim as deps-build 
+FROM node:14.16-buster-slim as build-stage
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-WORKDIR /opt/objectloader
-COPY packages/objectloader/package*.json ./
-RUN npm install --production=false
-COPY packages/objectloader .
-RUN npm run build
-# this whole thing is required cause npm 6.* doesn't allow for pack output dir specification
-RUN mkdir /packages
-# invoke npm pack and move its result to the packages folder when done
-RUN mv $(npm pack) /packages/
 
-WORKDIR /opt/viewer
-COPY packages/viewer/package*.json ./
-# this installs objectloader from a tarball 
-RUN npm i $(find /packages -type f -name "speckle*.tgz")
-# Install dependencies and devDependencies
-RUN npm install --production=false
-COPY packages/viewer .
-RUN npm run build
-RUN mv $(npm pack) /packages/
+WORKDIR /speckle-server
+COPY .yarnrc.yml .
+COPY .yarn ./.yarn
+COPY package.json yarn.lock ./
 
-FROM node:14.16-buster-slim as build-stage
+# Onyl copy in the relevant package.json files for the dependencies
+COPY packages/preview-service/package.json ./packages/preview-service/
+COPY packages/viewer/package.json ./packages/viewer/
+COPY packages/objectloader/package.json ./packages/objectloader/
 
-WORKDIR /opt/preview-service
-COPY --from=deps-build /packages /packages
-COPY packages/preview-service/package*.json ./
-# this installs viewer and objectloader from a tarball
-RUN npm i $(find /packages -type f -name "speckle*.tgz")
-RUN npm ci --production=false
-COPY packages/preview-service .
-RUN npm run build-fe
+RUN yarn workspaces focus -A
+RUN yarn 
+
+# Onyl copy in the relevant source files for the dependencies
+COPY packages/objectloader ./packages/objectloader/
+COPY packages/viewer ./packages/viewer/
+COPY packages/preview-service ./packages/preview-service/
+
+# This way the foreach only builds the frontend and its deps
+RUN yarn workspaces foreach -pt run build
+
+
 
 FROM node:14.16-buster-slim as node
 
@@ -55,9 +48,20 @@ RUN chmod +x /wait
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-COPY --from=build-stage /opt/preview-service /opt/preview-service
+WORKDIR /speckle-server
+COPY .yarnrc.yml .
+COPY .yarn ./.yarn
+COPY package.json yarn.lock ./
 
-WORKDIR /opt/preview-service
+RUN yarn plugin import workspace-tools
+
+# Onyl copy in the relevant package.json files for the dependencies
+COPY packages/preview-service/package.json ./packages/preview-service/
+
+WORKDIR /speckle-server/packages/preview-service
+
+RUN yarn workspaces focus --production
+COPY --from=build-stage /speckle-server/packages/preview-service ./
 
 ENTRYPOINT [ "tini", "--" ]
-CMD ["node", "bin/www"]
+CMD ["yarn", "node", "bin/www"]
