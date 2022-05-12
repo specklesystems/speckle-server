@@ -34,6 +34,7 @@
           </template>
           <v-card-text>
             <v-form ref="form" v-model="valid" class="px-2" @submit.prevent="save">
+              <h2>Name and description</h2>
               <v-text-field
                 v-model="name"
                 :rules="validation.nameRules"
@@ -49,7 +50,7 @@
                 class="mt-5"
                 :disabled="stream.role !== 'stream:owner'"
               />
-
+              <h2>Privacy</h2>
               <v-switch
                 v-model="isPublic"
                 inset
@@ -63,6 +64,25 @@
                 persistent-hint
                 :disabled="stream.role !== 'stream:owner'"
               />
+              <br />
+              <h2>Comments</h2>
+              <v-switch
+                v-model="allowPublicComments"
+                inset
+                class="mt-5"
+                :label="
+                  allowPublicComments
+                    ? 'Anyone can comment'
+                    : 'Only collaborators can comment'
+                "
+                :hint="
+                  allowPublicComments
+                    ? 'Any signed in user can leave a comment.'
+                    : 'Only collaborators can comment.'
+                "
+                persistent-hint
+                :disabled="stream.role !== 'stream:owner'"
+              />
             </v-form>
           </v-card-text>
           <v-card-actions>
@@ -71,6 +91,7 @@
               color="primary"
               type="submit"
               :disabled="!canSave"
+              block
               @click="save"
             >
               Save Changes
@@ -79,7 +100,7 @@
         </section-card>
       </v-col>
       <v-col cols="12">
-        <section-card expandable :expand="false">
+        <section-card :expand="true">
           <template #header>Danger Zone</template>
 
           <v-card-text class="d-flex align-center">
@@ -169,6 +190,7 @@ export default {
             name
             description
             isPublic
+            allowPublicComments
             role
           }
         }
@@ -185,7 +207,8 @@ export default {
           ({
             name: this.name,
             description: this.description,
-            isPublic: this.isPublic
+            isPublic: this.isPublic,
+            allowPublicComments: this.allowPublicComments
           } = stream)
 
         return stream
@@ -202,6 +225,7 @@ export default {
     streamNameConfirm: '',
     description: null,
     isPublic: true,
+    allowPublicComments: true,
     validation: {
       nameRules: [(v) => !!v || 'A stream must have a name!']
     }
@@ -213,7 +237,8 @@ export default {
         this.valid &&
         (this.name !== this.stream.name ||
           this.description !== this.stream.description ||
-          this.isPublic !== this.stream.isPublic)
+          this.isPublic !== this.stream.isPublic ||
+          this.allowPublicComments !== this.stream.allowPublicComments)
       )
     }
   },
@@ -234,7 +259,9 @@ export default {
               id: this.stream.id,
               name: this.name,
               description: this.description,
-              isPublic: this.isPublic
+              isPublic: this.isPublic,
+              // TODO: Dim needs to move, programming flow broken here
+              allowPublicComments: this.allowPublicComments
             }
           }
         })
