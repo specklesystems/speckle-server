@@ -18,6 +18,7 @@
     "node": "^16.0.0"
   },
   "scripts": {
+    "start": "node src/example.js",
     "build": "NODE_ENV=production rollup --config",
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",
@@ -66,6 +67,7 @@
     "eslint-config-prettier": "^8.5.0",
     "http-server": "^14.1.0",
     "jest": "27.2.5",
+    "jquery": "^3.6.0",
     "mocha": "^9.1.2",
     "prettier": "^2.5.1",
     "rollup": "^2.70.1",
