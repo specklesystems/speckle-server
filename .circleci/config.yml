@@ -1,7 +1,7 @@
 version: 2.1
 
-orbs:
-  node: circleci/node@5.0.1
+# orbs:
+# node: circleci/node@5.0.1
 
 workflows:
   version: 2
@@ -136,10 +136,10 @@ jobs:
       #     name: Restore Yarn Package Cache
       #     keys:
       #       - yarn-packages-{{ checksum "yarn.lock" }}
-      # - run:
-      # name: Install Dependencies
-      # command: yarn workspaces focus --production
-      # working_directory: 'packages/server'
+      - run:
+          name: Install Dependencies
+          command: yarn workspaces focus --production
+          working_directory: 'packages/server'
       #
       # - save_cache:
       # name: Save Yarn Package Cache
@@ -157,8 +157,8 @@ jobs:
           command: touch .env.test
           working_directory: 'packages/server'
 
-      - yarn-run:
-          command: test:report
+      - run:
+          command: yarn test:report
           working_directory: 'packages/server'
 
       - run:
