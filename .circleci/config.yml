@@ -178,7 +178,7 @@ jobs:
 
   docker-build-and-publish: &docker-job
     docker: &docker-image
-      - image: cimg/python:3.9.12-node
+      - image: cimg/node:16.15
     working_directory: *work-dir
     steps:
       - checkout
