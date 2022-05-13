@@ -27,9 +27,9 @@ const v = new Viewer({
 
 ### Development
 
-For testing purposes you can see viewer in action by running `npm run example`, which will run an example server at 'http://127.0.0.1:3002'.
+For testing purposes you can see viewer in action by running `yarn example`, which will run an example server at 'http://127.0.0.1:3002'.
 
-To build the library run `npm run build`, to build a dev (unminified w/ sourcemaps) build run `npm run build:dev` and to run a dev build in watch mode run `npm run dev`.
+To build the library run `yarn build`, to build a dev (unminified w/ sourcemaps) build run `yarn build:dev` and to run a dev build in watch mode run `yarn dev`.
 
 ## API
 

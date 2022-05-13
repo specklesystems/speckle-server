@@ -42,8 +42,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.3.21",
     "vuetify-image-input": "^19.1.0",
-    "vuex": "^3.6.2",
-    "webpack": "^4.46.0"
+    "vuex": "^3.6.2"
   },
   "devDependencies": {
     "@mdi/font": "^5.8.55",
@@ -71,6 +70,7 @@
     "vue-cli-plugin-vuetify": "^2.0.8",
     "vue-template-compiler": "^2.6.12",
     "vuetify-loader": "^1.6.0",
+    "webpack": "^4.46.0",
     "webpack-bundle-analyzer": "^4.5.0"
   },
   "vuePlugins": {

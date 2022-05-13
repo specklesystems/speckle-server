@@ -19,7 +19,7 @@
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
     "test": "cross-env NODE_ENV=test mocha",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter lcov mocha",
-    "test:report": "npm run test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
+    "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {

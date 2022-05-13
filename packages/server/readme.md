@@ -30,8 +30,8 @@ After you have PostgreSQL and Redis running, in the `packages/server` folder:
 - copy the `.env-example` file to `.env`,
 - (if you plan to run tests) copy the `.env.test-example` file to `.env.test`
 - If you have a custom setup, open and edit the `.env` & `.env.test` files, filling in the required variables,
-- run `npm install`,
-- finally `npm run dev`,
+- run `yarn install`,
+- finally `yarn dev`,
 - check `localhost:3000/graphql` out!
 
 ## Developing
@@ -45,7 +45,8 @@ The server consists of several semi-related components, or modules. These can be
 
 ### Frontend
 
-- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run dev` in the frontend package.
+- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`.
+  If you don't see anything, ensure you've run `yarn dev` in the frontend package.
 
 - In **production** mode, the frontend is served by an `nginx` container that proxy server requests to the server (depending on the requested path). For more information about making a production deployment, check out [our detailed guide](https://speckle.guide/dev/server-setup.html)
 
@@ -59,7 +60,10 @@ For non-authenticated api exploration, you can use the Graphql Playground which 
 
 ## Testing
 
-To run all tests, simply run `npm run test`. To run specific tests, use the `mocha --grep @subset` syntax. For example:
+To run all tests, simply run `yarn test`.
+The recommended extensions for the workspace include a test explorer, that can run individual tests.
+
+If you really want to run specific tests from a terminal, use the `mocha --grep @subset` syntax. For example:
 
 - `mocha --grep @auth --watch` to run tests pertaning to the auth module only in watch mode.
 - `mocha --grep @core-streams --watch` to run tests pertaining to stream related services.

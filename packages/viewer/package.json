@@ -22,7 +22,7 @@
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",
     "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./example -p 3032 -o",
-    "prepublishOnly": "npm run build",
+    "prepack": "yarn build",
     "lint": "eslint . --ext .js,.ts"
   },
   "author": "AEC Systems",

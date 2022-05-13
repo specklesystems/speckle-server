@@ -17,6 +17,7 @@
     "lint": "eslint . --ext .js,.ts",
     "build:dev": "rollup --config",
     "build": "NODE_ENV=production rollup --config",
+    "prepack": "yarn build",
     "dev": "rollup --config --watch",
     "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./examples/browser -p 3031 -o"
   },
