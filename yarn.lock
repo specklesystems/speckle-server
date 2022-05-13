@@ -2901,6 +2901,7 @@ __metadata:
     vuetify-image-input: ^19.1.0
     vuetify-loader: ^1.6.0
     vuex: ^3.6.2
+    webpack: ^4.46.0
     webpack-bundle-analyzer: ^4.5.0
   languageName: unknown
   linkType: soft
@@ -24442,7 +24443,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:^4.0.0":
+"webpack@npm:^4.0.0, webpack@npm:^4.46.0":
   version: 4.46.0
   resolution: "webpack@npm:4.46.0"
   dependencies:
