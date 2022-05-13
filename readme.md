@@ -82,6 +82,19 @@ Have you checked our [dev docs](https://speckle.guide/dev/)?
 
 We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [Local development environment](https://speckle.guide/dev/server-local-dev.html) page.
 
+### TL;DR;
+
+We're using yarn and its workspaces functionalities to manage the monorepo.
+Make sure you are using nodejs 16+.
+To get started, run:
+
+`$ corepack enable`
+`$ yarn`
+`$ yarn build`
+
+After this, you can use the scripts in the individual packages or run all in dev mode:
+`$ yarn dev`
+
 ### IDE
 
 The suggested IDE for working in this repo is VSCode, because the repo has special configs to improve the DX there (auto-format & auto-lint, recommended extensions etc.).
@@ -94,9 +107,9 @@ Please make sure you read the [contribution guidelines](https://github.com/speck
 
 When pushing commits to this repo, please follow the following guidelines:
 
-- Install [commitizen](https://www.npmjs.com/package/commitizen#commitizen-for-contributors) globally (`npm i -g commitizen`).
-- When ready to commit, `git cz` & follow the prompts.
-- Please use either `server` or `frontend` as the scope of your commit.
+- Before commiting, make sure `$ yarn lint` and `$ yarn prettier:check` checks pass, othewise the pre-commit hook fails.
+- When ready to commit, `$ yarn cz` & follow the prompts.
+- Please use the name of the package as the scope of your commit.
 
 ### Security
 
