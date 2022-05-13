@@ -1,8 +1,5 @@
 version: 2.1
 
-# orbs:
-# node: circleci/node@5.0.1
-
 workflows:
   version: 2
 
@@ -20,7 +17,6 @@ workflows:
             branches:
               only:
                 - main
-                - gergo/yarn
 
       - docker-build-and-publish-server:
           filters: *filters-build
@@ -88,9 +84,7 @@ workflows:
             tags:
               only: *filters-tag
             branches:
-              only:
-                - gergo/yarn
-              # ignore: /.*/
+              ignore: /.*/
           context:
             - npm-registry
           requires:
@@ -151,9 +145,6 @@ jobs:
           paths:
             - .yarn/cache
             - .yarn/unplugged
-
-      # - node/install-packages:
-      #     app-dir: ~/project/packages/server
 
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
