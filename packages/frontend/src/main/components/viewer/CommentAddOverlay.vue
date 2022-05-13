@@ -188,6 +188,7 @@ export default {
           stream(id: $streamId) {
             id
             role
+            allowPublicComments
           }
         }
       `,
@@ -206,7 +207,7 @@ export default {
   },
   computed: {
     canComment() {
-      return !!this.stream?.role
+      return !!this.stream?.role || this.stream.allowPublicComments
     }
   },
   mounted() {

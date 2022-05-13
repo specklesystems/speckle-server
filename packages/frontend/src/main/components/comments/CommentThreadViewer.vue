@@ -152,7 +152,6 @@ import debounce from 'lodash/debounce'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar'),
     CommentThreadReply: () => import('@/main/components/comments/CommentThreadReply')
   },
   props: {
@@ -290,7 +289,7 @@ export default {
   },
   computed: {
     canReply() {
-      return !!this.stream?.role
+      return !!this.stream?.role || this.stream.allowPublicComments
     },
     canArchiveThread() {
       if (!this.comment || !this.stream) return false

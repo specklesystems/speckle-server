@@ -22,8 +22,9 @@ const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
   if (!stream.isPublic && auth === false)
     throw new ForbiddenError('You are not authorized.')
 
-  if (!stream.isPublic) {
-    await authorizeResolver(userId, streamId, 'stream:reviewer')
+  if (!stream.isPublic && !!stream.role) {
+    throw new ForbiddenError('You are not authorized.')
+    // await authorizeResolver(userId, streamId, 'stream:reviewer')
   }
 }
 
@@ -106,7 +107,16 @@ module.exports = {
     },
 
     async userCommentThreadActivityBroadcast(parent, args, context) {
-      await authorizeResolver(context.userId, args.streamId, 'stream:reviewer')
+      if (!context.userId) return false
+
+      const stream = await getStream({
+        streamId: args.streamId,
+        userId: context.userId
+      })
+
+      if (!stream.allowPublicComments && !!stream.role)
+        throw new ForbiddenError('You are not authorized.')
+
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: { eventType: 'reply-typing-status', data: args.data },
         streamId: args.streamId,
@@ -124,8 +134,8 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments)
-        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      if (!stream.allowPublicComments && !!stream.role)
+        throw new ForbiddenError('You are not authorized.')
 
       const id = await createComment({ userId: context.userId, input: args.input })
 
@@ -155,7 +165,14 @@ module.exports = {
 
     // used for flagging a comment as viewed
     async commentView(parent, args, context) {
-      await authorizeResolver(context.userId, args.streamId, 'stream:reviewer')
+      const stream = await getStream({
+        streamId: args.streamId,
+        userId: context.userId
+      })
+
+      if (!stream.allowPublicComments && !!stream.role)
+        throw new ForbiddenError('You are not authorized.')
+
       await viewComment({ userId: context.userId, commentId: args.commentId })
       return true
     },
@@ -166,7 +183,7 @@ module.exports = {
         userId: context.userId,
         auth: context.auth
       })
-      await archiveComment({ ...args, userId: context.userId })
+      await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {
           eventType: args.archived ? 'comment-archived' : 'comment-added'
@@ -186,8 +203,8 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments)
-        await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      if (!stream.allowPublicComments && !!stream.role)
+        throw new ForbiddenError('You are not authorized.')
 
       const id = await createCommentReply({
         authorId: context.userId,
@@ -217,7 +234,14 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator(['VIEWER_ACTIVITY']),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          const stream = await getStream({
+            streamId: payload.streamId,
+            userId: context.userId
+          })
+
+          if (!stream.allowPublicComments && !!stream.role)
+            throw new ForbiddenError('You are not authorized.')
+
           return (
             payload.streamId === variables.streamId &&
             payload.resourceId === variables.resourceId
@@ -229,12 +253,21 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator(['COMMENT_ACTIVITY']),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          // await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          const stream = await getStream({
+            streamId: payload.streamId,
+            userId: context.userId
+          })
 
+          if (!stream.allowPublicComments && !!stream.role)
+            throw new ForbiddenError('You are not authorized.')
+
+          // if we're listening for a stream's root comments events
           if (!variables.resourceIds) {
             return payload.streamId === variables.streamId
           }
 
+          // otherwise perform a deeper check
           try {
             // prevents comment exfiltration by listening in to a auth'ed stream, but different commit ("stream hopping" for subscriptions)
             await streamResourceCheck({
@@ -264,7 +297,15 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator(['COMMENT_THREAD_ACTIVITY']),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          const stream = await getStream({
+            streamId: payload.streamId,
+            userId: context.userId
+          })
+
+          if (!stream.allowPublicComments && !!stream.role)
+            throw new ForbiddenError('You are not authorized.')
+
+          // await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
           return (
             payload.streamId === variables.streamId &&
             payload.commentId === variables.commentId
