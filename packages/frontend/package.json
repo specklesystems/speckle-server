@@ -7,8 +7,8 @@
     "serve": "ws -p 8080 -d dist -r '/embed(.*) -> /embedApp.html' '/([a-zA-Z0-9-_/]*)(\\?.*)? -> /app.html' ",
     "build": "vue-cli-service build --mode production --silent",
     "build:dev": "vue-cli-service build --mode development --silent",
-    "build:profile": "npm run build -- --profile",
-    "build:dev:profile": "npm run build:dev -- --profile",
+    "build:profile": "yarn build -- --profile",
+    "build:dev:profile": "yarn build:dev -- --profile",
     "inspect": "vue-cli-service inspect --mode production",
     "inspect:dev": "vue-cli-service inspect --mode development",
     "lint": "eslint . --ext .js,.ts,.vue"
