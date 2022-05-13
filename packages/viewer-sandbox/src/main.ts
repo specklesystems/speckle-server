@@ -13,6 +13,7 @@ const viewer = new Viewer({
   showStats: true
 })
 
+
 window.addEventListener('load', () => {
   viewer.onWindowResize()
 })
@@ -32,11 +33,17 @@ pane.addInput(PARAMS, 'color')
 
 // Load demo object
 viewer.loadObject(
-  'https://speckle.xyz/streams/99abc74dd4/objects/ab503a2025e706717bff467ef8f96488'
+  'https://speckle.xyz/streams/0d3cb7cb52/objects/f833afec2e17457f17e7f6429a106187'
 )
+
+
+viewer.applyFilter({filterBy: {'level.name': ['3FL', '4FL', '7FL']}, 
+colorBy: { property: 'level.name', 
+type: 'category', values: {'3FL': '#F0FFFF', '4FL': '#6495ED', '7FL': '#7B68EE'} }, 
+ghostOthers: true } )
 
 viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {
   if (a.progress >= 1) {
     viewer.onWindowResize()
-  }
-})
+  }})
+
