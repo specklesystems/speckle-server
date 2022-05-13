@@ -24,7 +24,6 @@ const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
 
   if (!stream.isPublic && !!stream.role) {
     throw new ForbiddenError('You are not authorized.')
-    // await authorizeResolver(userId, streamId, 'stream:reviewer')
   }
 }
 
@@ -253,7 +252,6 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator(['COMMENT_ACTIVITY']),
         async (payload, variables, context) => {
-          // await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
           const stream = await getStream({
             streamId: payload.streamId,
             userId: context.userId
@@ -305,7 +303,6 @@ module.exports = {
           if (!stream.allowPublicComments && !!stream.role)
             throw new ForbiddenError('You are not authorized.')
 
-          // await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
           return (
             payload.streamId === variables.streamId &&
             payload.commentId === variables.commentId

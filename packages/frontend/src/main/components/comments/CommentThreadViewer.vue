@@ -50,7 +50,13 @@
             <timeago :datetime="reply.createdAt" class="font-italic ma-1"></timeago>
           </div>
         </div>
-        <comment-thread-reply :key="index + 'reply'" :reply="reply" :stream="stream" />
+        <comment-thread-reply
+          :key="index + 'reply'"
+          :reply="reply"
+          :stream="stream"
+          :index="index"
+          @deleted="handleReplyDeleteEvent"
+        />
       </template>
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
@@ -289,7 +295,7 @@ export default {
   },
   computed: {
     canReply() {
-      return !!this.stream?.role || this.stream.allowPublicComments
+      return !!this.stream?.role || this.stream?.allowPublicComments
     },
     canArchiveThread() {
       if (!this.comment || !this.stream) return false
@@ -488,6 +494,14 @@ export default {
         this.comment.updatedAt = Date.now()
         this.$emit('refresh-layout') // needed for layout reshuffle in parent
       }, 100)
+    },
+    handleReplyDeleteEvent(id) {
+      if (this.comment.id === id) {
+        this.$emit('deleted', this.comment)
+        return
+      }
+      const idx = this.localReplies.findIndex((r) => r.id === id)
+      this.localReplies.splice(idx, 1)
     },
     async archiveComment() {
       try {
