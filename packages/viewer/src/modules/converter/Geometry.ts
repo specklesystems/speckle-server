@@ -98,15 +98,10 @@ export class Geometry {
   }
 
   static makeLineGeometry_TRIANGLE(geometryData: GeometryData) {
-    try {
-      const geometry = new LineGeometry()
-      geometry.setPositions(geometryData.attributes.POSITION)
-      if (geometryData.attributes.COLOR)
-        geometry.setColors(geometryData.attributes.COLOR)
-      return geometry
-    } catch (e) {
-      console.log('plm')
-    }
+    const geometry = new LineGeometry()
+    geometry.setPositions(geometryData.attributes.POSITION)
+    if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
+    return geometry
   }
 
   static mergeGeometryAttribute(
@@ -179,30 +174,31 @@ export class Geometry {
       }
     }
 
+    geometries.forEach((geometry) => {
+      for (let k in geometry.attributes) {
+        delete geometry.attributes[k]
+      }
+    })
+
     return mergedGeometry
   }
 
   public static transformGeometryData(geometryData: GeometryData, m: Matrix4) {
-    try {
-      if (!geometryData.attributes.POSITION) return
+    if (!geometryData.attributes.POSITION) return
 
-      const e = m.elements
+    const e = m.elements
 
-      for (var k = 0; k < geometryData.attributes.POSITION.length; k += 3) {
-        const x = geometryData.attributes.POSITION[k],
-          y = geometryData.attributes.POSITION[k + 1],
-          z = geometryData.attributes.POSITION[k + 2]
-        const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
+    for (var k = 0; k < geometryData.attributes.POSITION.length; k += 3) {
+      const x = geometryData.attributes.POSITION[k],
+        y = geometryData.attributes.POSITION[k + 1],
+        z = geometryData.attributes.POSITION[k + 2]
+      const w = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15])
 
-        geometryData.attributes.POSITION[k] =
-          (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
-        geometryData.attributes.POSITION[k + 1] =
-          (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
-        geometryData.attributes.POSITION[k + 2] =
-          (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
-      }
-    } catch (e) {
-      console.log('plm')
+      geometryData.attributes.POSITION[k] = (e[0] * x + e[4] * y + e[8] * z + e[12]) * w
+      geometryData.attributes.POSITION[k + 1] =
+        (e[1] * x + e[5] * y + e[9] * z + e[13]) * w
+      geometryData.attributes.POSITION[k + 2] =
+        (e[2] * x + e[6] * y + e[10] * z + e[14]) * w
     }
   }
 

@@ -669,9 +669,6 @@ export default class Coverter {
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       let conv
-      if (this.getSpeckleType(element) == 'Arc') {
-        console.log('arc')
-      }
       if (this.directConverterExists(element))
         conv = await this.convertToGeometryData(element, scale)
       else if ((element = this.getDisplayValue(element)) !== undefined)
