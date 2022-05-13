@@ -20,3 +20,5 @@ repos:
     rev: 'v2.6.2' # Use the sha / tag you want to point at
     hooks:
       - id: prettier
+ci:
+  autoupdate_schedule: quarterly
