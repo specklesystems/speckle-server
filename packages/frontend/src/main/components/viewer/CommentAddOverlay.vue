@@ -31,6 +31,7 @@
             icon
             :dark="!expand"
             :class="`mouse elevation-5 ${!expand ? 'primary' : 'background'} mr-2`"
+            :loading="loading"
             @click="toggleExpand()"
           >
             <v-icon v-if="!expand" dark>mdi-plus</v-icon>
@@ -45,6 +46,7 @@
               <v-textarea
                 v-if="$loggedIn() && canComment"
                 v-model="commentText"
+                :disabled="loading"
                 solo
                 hide-details
                 autofocus
@@ -58,6 +60,7 @@
               <v-btn
                 v-if="$loggedIn() && canComment"
                 v-tooltip="'Send comment (press enter)'"
+                :disabled="loading"
                 icon
                 dark
                 large
@@ -107,6 +110,7 @@
             <v-textarea
               v-model="commentText"
               solo
+              :disabled="loading"
               hide-details
               autofocus
               auto-grow
@@ -118,6 +122,7 @@
             ></v-textarea>
             <v-btn
               v-tooltip="'Send comment (press enter)'"
+              :disabled="loading"
               icon
               dark
               large
@@ -202,6 +207,7 @@ export default {
       location: null,
       expand: false,
       visible: true,
+      loading: false,
       commentText: null
     }
   },
@@ -227,6 +233,7 @@ export default {
   },
   methods: {
     async addComment() {
+      if (this.loading) return
       if (!this.commentText || this.commentText.length < 1) {
         this.$eventHub.$emit('notification', {
           text: `Comment cannot be empty.`
@@ -264,6 +271,7 @@ export default {
             .map((res) => ({ resourceId: res, resourceType: this.$resourceType(res) }))
         )
       }
+      this.loading = true
       try {
         await this.$apollo.mutate({
           mutation: gql`
@@ -278,6 +286,7 @@ export default {
           text: e.message
         })
       }
+      this.loading = false
       this.expand = false
       this.visible = false
       this.commentText = null
