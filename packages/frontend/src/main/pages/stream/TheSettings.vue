@@ -1,7 +1,7 @@
 <template>
   <v-container class="pa-0">
     <portal to="toolbar">
-      <div class="d-flex align-center">
+      <div v-if="stream" class="d-flex align-center">
         <div class="text-truncate">
           <router-link
             v-tooltip="stream.name"
@@ -19,7 +19,7 @@
         </div>
       </div>
     </portal>
-    <v-row>
+    <v-row v-if="stream">
       <v-col v-if="stream.role !== 'stream:owner'" cols="12">
         <v-alert type="warning">
           Your permission level ({{ stream.role }}) is not high enough to edit this
@@ -77,7 +77,7 @@
                 "
                 :hint="
                   allowPublicComments
-                    ? 'Any signed in user can leave a comment.'
+                    ? 'Any signed in user can leave a comment; the stream needs to be public.'
                     : 'Only collaborators can comment.'
                 "
                 persistent-hint
@@ -242,7 +242,14 @@ export default {
       )
     }
   },
-
+  watch: {
+    allowPublicComments(newVal) {
+      if (newVal && !this.isPublic) this.isPublic = true
+    },
+    isPublic(newVal) {
+      if (!newVal && this.allowPublicComments) this.allowPublicComments = false
+    }
+  },
   methods: {
     async save() {
       this.loading = true
@@ -260,7 +267,6 @@ export default {
               name: this.name,
               description: this.description,
               isPublic: this.isPublic,
-              // TODO: Dim needs to move, programming flow broken here
               allowPublicComments: this.allowPublicComments
             }
           }
