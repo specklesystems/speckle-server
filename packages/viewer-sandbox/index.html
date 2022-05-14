@@ -3,21 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite App</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
-    <div id="app">
+    <div style="padding-top: 20px"></div>
+    <button id="animate_button" class="btn btn-primary design-btn" style="margin: auto; display: block;">Animate</button>
+    <div class="slidecontainer" style="text-align: center">
+      <input type="range" min="0" max="10" value="0" class="slider" id="myRange" style="width: 300px">
+    </div>
+    <div id="app" style="margin-top: 10px">
       <div class="container">
         <div class="row">
           <div class="twelve columns h-96">
-            <div id="renderer" />
+            <div id="renderer"></div>
           </div>
         </div>
       </div>
     </div>
-    <div class="div">hello</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
