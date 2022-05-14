@@ -118,10 +118,16 @@
     <portal v-if="activeComments.length !== 0" to="comments">
       <comments-viewer-navbar
         :comments="activeComments"
+        :filter="commentsFilter"
         @select-comment="
           (e) => {
             if (!e.expanded && !showComments) showComments = true
             e.expanded ? collapseComment(e) : expandComment(e)
+          }
+        "
+        @set-filter="
+          (state) => {
+            commentsFilter = state
           }
         "
       />
