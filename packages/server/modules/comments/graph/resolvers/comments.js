@@ -22,7 +22,7 @@ const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
   if (!stream.isPublic && auth === false)
     throw new ForbiddenError('You are not authorized.')
 
-  if (!stream.isPublic && !!stream.role) {
+  if (!stream.isPublic && !stream.role) {
     throw new ForbiddenError('You are not authorized.')
   }
 }
@@ -113,7 +113,7 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !!stream.role)
+      if (!stream.allowPublicComments && !stream.role)
         throw new ForbiddenError('You are not authorized.')
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
@@ -133,7 +133,7 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !!stream.role)
+      if (!stream.allowPublicComments && !stream.role)
         throw new ForbiddenError('You are not authorized.')
 
       const id = await createComment({ userId: context.userId, input: args.input })
@@ -169,7 +169,7 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !!stream.role)
+      if (!stream.allowPublicComments && !stream.role)
         throw new ForbiddenError('You are not authorized.')
 
       await viewComment({ userId: context.userId, commentId: args.commentId })
@@ -202,7 +202,7 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !!stream.role)
+      if (!stream.allowPublicComments && !stream.role)
         throw new ForbiddenError('You are not authorized.')
 
       const id = await createCommentReply({
@@ -238,7 +238,7 @@ module.exports = {
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !!stream.role)
+          if (!stream.allowPublicComments && !stream.role)
             throw new ForbiddenError('You are not authorized.')
 
           return (
@@ -257,7 +257,7 @@ module.exports = {
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !!stream.role)
+          if (!stream.allowPublicComments && !stream.role)
             throw new ForbiddenError('You are not authorized.')
 
           // if we're listening for a stream's root comments events
@@ -300,7 +300,7 @@ module.exports = {
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !!stream.role)
+          if (!stream.allowPublicComments && !stream.role)
             throw new ForbiddenError('You are not authorized.')
 
           return (

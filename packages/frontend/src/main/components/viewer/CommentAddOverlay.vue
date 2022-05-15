@@ -159,6 +159,19 @@
             <v-icon small class="mr-1">mdi-account</v-icon>
             Sign in to comment
           </v-btn>
+          <div class="my-2 d-flex justify-center" style="position: relative">
+            <template v-for="reaction in $store.state.commentReactions">
+              <v-btn
+                :key="reaction"
+                class="mr-2"
+                fab
+                small
+                @click="addCommentDirect(reaction)"
+              >
+                <span class="text-h6">{{ reaction }}</span>
+              </v-btn>
+            </template>
+          </div>
         </v-dialog>
       </div>
     </v-slide-x-transition>
