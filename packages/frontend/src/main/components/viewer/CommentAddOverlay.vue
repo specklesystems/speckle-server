@@ -22,7 +22,7 @@
         class="absolute-pos"
       >
         <div
-          class="d-flex align-center"
+          class="d-flex"
           :style="`height: 48px; width: ${$vuetify.breakpoint.xs ? '90vw' : '320px'}`"
         >
           <v-btn
@@ -34,42 +34,57 @@
             :loading="loading"
             @click="toggleExpand()"
           >
-            <v-icon v-if="!expand" dark>mdi-plus</v-icon>
+            <v-icon v-if="!expand" dark small>mdi-message</v-icon>
             <v-icon v-else dark x-small>mdi-close</v-icon>
           </v-btn>
           <v-slide-x-transition>
             <div
               v-if="expand && !$vuetify.breakpoint.xs"
-              style="width: 100%"
-              class="d-flex"
+              style="width: 100%; top: -10px; position: relative"
+              class=""
             >
-              <v-textarea
-                v-if="$loggedIn() && canComment"
-                v-model="commentText"
-                :disabled="loading"
-                solo
-                hide-details
-                autofocus
-                auto-grow
-                rows="1"
-                placeholder="Your comment..."
-                class="mouse rounded-xl caption elevation-15"
-                append-icon="mdi-send"
-                @keydown.enter.exact.prevent="addComment()"
-              ></v-textarea>
-              <v-btn
-                v-if="$loggedIn() && canComment"
-                v-tooltip="'Send comment (press enter)'"
-                :disabled="loading"
-                icon
-                dark
-                large
-                class="mouse elevation-0 primary pa-0 ma-o"
-                style="left: -47px; top: 1px; height: 48px; width: 48px"
-                @click="addComment()"
-              >
-                <v-icon dark small>mdi-send</v-icon>
-              </v-btn>
+              <div class="d-flex">
+                <v-textarea
+                  v-if="$loggedIn() && canComment"
+                  v-model="commentText"
+                  :disabled="loading"
+                  solo
+                  hide-details
+                  autofocus
+                  auto-grow
+                  rows="1"
+                  placeholder="Your comment..."
+                  class="mouse rounded-xl caption elevation-15"
+                  append-icon="mdi-send"
+                  @keydown.enter.exact.prevent="addComment()"
+                ></v-textarea>
+                <v-btn
+                  v-if="$loggedIn() && canComment"
+                  v-tooltip="'Send comment (press enter)'"
+                  :disabled="loading"
+                  icon
+                  dark
+                  large
+                  class="mouse elevation-0 primary pa-0 ma-o"
+                  style="left: -47px; top: 1px; height: 48px; width: 48px"
+                  @click="addComment()"
+                >
+                  <v-icon dark small>mdi-send</v-icon>
+                </v-btn>
+              </div>
+              <div v-if="$loggedIn() && canComment" class="d-flex mt-2 mouse">
+                <template v-for="reaction in $store.state.commentReactions">
+                  <v-btn
+                    :key="reaction"
+                    class="mr-2"
+                    fab
+                    small
+                    @click="addCommentDirect(reaction)"
+                  >
+                    <span class="text-h6">{{ reaction }}</span>
+                  </v-btn>
+                </template>
+              </div>
               <div
                 v-if="!canComment && $loggedIn()"
                 class="caption background px-4 py-2 rounded-xl elevation-2"
@@ -213,7 +228,7 @@ export default {
   },
   computed: {
     canComment() {
-      return !!this.stream?.role || this.stream.allowPublicComments
+      return !!this.stream?.role || this.stream?.allowPublicComments
     }
   },
   mounted() {
@@ -232,6 +247,10 @@ export default {
     )
   },
   methods: {
+    async addCommentDirect(emoji) {
+      this.commentText = emoji
+      await this.addComment()
+    },
     async addComment() {
       if (this.loading) return
       if (!this.commentText || this.commentText.length < 1) {

@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-
+import emojis from './emojis'
 Vue.use(Vuex)
 
 // Note: this is currently used only for 3d viewer filtering purposes. All other state
@@ -21,7 +21,9 @@ const store = new Vuex.Store({
     hideCategoryValues: [],
     selectedComment: null,
     addingComment: false,
-    preventCommentCollapse: false
+    preventCommentCollapse: false,
+    commentReactions: ['❤️', '✏️', '🔥', '📍'],
+    emojis
   },
   mutations: {
     setViewerBusy(state, { viewerBusyState }) {
