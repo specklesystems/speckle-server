@@ -1,9 +1,11 @@
 <template>
   <div
     class="no-mouse pa-2"
-    :style="`${
-      $vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'
-    } xxx-background: rgba(0.5, 0.5, 0.5, 0.5)`"
+    :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'} ${
+      hovered ? 'opacity: 1;' : 'opacity: 1;'
+    } transition: opacity 0.2s ease;`"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
   >
     <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5 mouse">
       <v-btn
@@ -284,6 +286,7 @@ export default {
   },
   data() {
     return {
+      hovered: true,
       replyText: null,
       localReplies: [],
       minimize: false,
@@ -349,7 +352,7 @@ export default {
       deep: true,
       async handler(newVal) {
         if (!this.$loggedIn() || !this.canReply) return
-
+        this.hovered = true
         await this.$apollo.mutate({
           mutation: gql`
             mutation commentView($streamId: String!, $commentId: String!) {
