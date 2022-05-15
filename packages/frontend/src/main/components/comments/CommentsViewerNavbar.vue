@@ -27,7 +27,7 @@
     <v-scroll-y-transition>
       <div v-show="expand" class="px-2">
         <div class="d-flex align-center px-2 mb-3">
-          <span class="caption mr-3">Filter</span>
+          <span class="caption mr-1">Filter</span>
           <v-btn
             x-small
             class="ml-2"
@@ -35,6 +35,7 @@
             :zzzcolor="`${filter === 'all' ? 'primary' : ''}`"
             @click="$emit('set-filter', 'all')"
           >
+            <v-icon x-small class="mr-2">mdi-comment-outline</v-icon>
             all
           </v-btn>
           <v-btn
@@ -44,6 +45,7 @@
             :zzzcolor="`${filter === 'unread' ? 'primary' : ''}`"
             @click="$emit('set-filter', 'unread')"
           >
+            <v-icon x-small class="mr-2">mdi-comment-alert-outline</v-icon>
             unread
           </v-btn>
           <v-btn
@@ -53,6 +55,7 @@
             :zzzcolor="`${filter === 'none' ? 'primary' : ''}`"
             @click="$emit('set-filter', 'none')"
           >
+            <v-icon x-small class="mr-2">mdi-comment-off-outline</v-icon>
             none
           </v-btn>
         </div>
