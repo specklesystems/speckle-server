@@ -38,7 +38,11 @@ import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css'
 Vue.use(PerfectScrollbar)
 
 import VTooltip from 'v-tooltip'
-Vue.use(VTooltip, { defaultDelay: 300, defaultBoundariesElement: document.body })
+Vue.use(VTooltip, {
+  defaultDelay: 300,
+  defaultBoundariesElement: document.body,
+  defaultHtml: false
+})
 
 import VueMixpanel from 'vue-mixpanel'
 Vue.use(VueMixpanel, {

@@ -34,7 +34,7 @@ async function makeNetworkRequest({ url, data, headersData }) {
     }
   }
 
-  const httpSuccessCodes = [200]
+  const httpSuccessCodes = [200, 201, 202, 204]
   const headers = { 'Content-Type': 'application/json' }
   for (const k in headersData) headers[k] = headersData[k]
 

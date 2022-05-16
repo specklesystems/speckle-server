@@ -18,11 +18,12 @@
             {{ stream.role.split(':')[1] }}
           </v-chip>
           <span
-            v-tooltip="
-              `Last updated: ${new Date(stream.updatedAt).toLocaleString()}<br>
-          Commits: ${stream.commits.totalCount} <br>
-          Branches: ${stream.branches.totalCount}`
-            "
+            v-tooltip="{
+              html: true,
+              content: `Last updated: ${new Date(stream.updatedAt).toLocaleString()}<br>
+                Commits: ${stream.commits.totalCount} <br>
+                Branches: ${stream.branches.totalCount}`
+            }"
             class="caption mx-1"
           >
             Updated

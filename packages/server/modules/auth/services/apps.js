@@ -39,6 +39,7 @@ module.exports = {
         'server_apps.id',
         'server_apps.name',
         'server_apps.description',
+        'server_apps.trustByDefault',
         'server_apps.logo',
         'server_apps.termsAndConditionsLink',
         'users.name as authorName',
