@@ -52,6 +52,12 @@
               small
               icon
               :class="`elevation-5 pa-0 ma-0 mouse ${
+                $store.state.emojis.indexOf(comment.text.split(' ')[0]) != -1 &&
+                !comment.expanded
+                  ? 'emoji-btn transparent elevation-0'
+                  : ''
+              }
+              ${
                 comment.expanded || comment.bouncing || isUnread(comment)
                   ? 'dark white--text primary'
                   : 'background'
@@ -66,7 +72,7 @@
                 <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
               </template>
               <template v-else-if="!comment.expanded">
-                <span>
+                <span class="text-h5">
                   {{ comment.text.split(' ')[0] }}
                 </span>
               </template>
@@ -560,6 +566,13 @@ export default {
 }
 </script>
 <style scoped>
+>>> .emoji-btn {
+  background-color: initial !important;
+}
+>>> .emoji-btn .v-btn__content {
+  color: initial;
+}
+
 .absolute-pos {
   pointer-events: auto;
   position: absolute;

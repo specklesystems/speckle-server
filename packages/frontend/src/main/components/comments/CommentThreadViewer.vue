@@ -1,9 +1,11 @@
 <template>
   <div
-    class="no-mouse pa-2"
-    :style="`${$vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'} ${
-      hovered ? 'opacity: 1;' : 'opacity: 1;'
-    } transition: opacity 0.2s ease;`"
+    class="no-mouse py-2 pl-2"
+    :style="`${
+      $vuetify.breakpoint.xs
+        ? 'width: 90vw; padding-right:30px;'
+        : 'padding-right:30px; width: 330px;'
+    } ${hovered ? 'opacity: 1;' : 'opacity: 1;'} transition: opacity 0.2s ease;`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >

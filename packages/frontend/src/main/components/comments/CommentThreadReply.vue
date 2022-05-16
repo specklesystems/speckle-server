@@ -1,49 +1,38 @@
 <template>
-  <div class="" @mouseenter="hover = true" @mouseleave="hover = false">
+  <!-- eslint-disable vue/no-v-html -->
+  <div
+    class="d-flex align-center"
+    @mouseenter="hover = true"
+    @mouseleave="hover = false"
+  >
     <div
       v-if="!link"
       :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
         $userId() === reply.authorId ? 'primary white--text' : 'background'
       }`"
+      style="width: 290px"
     >
-      <v-scroll-x-transition>
-        <v-btn
-          v-show="hover && canArchive"
-          v-tooltip="'Archive'"
-          x-small
-          icon
-          class="ml-1"
-          @click="showArchiveDialog = true"
-        >
-          <v-icon small>mdi-delete</v-icon>
-        </v-btn>
-      </v-scroll-x-transition>
       <div
-        :class="`d-inline-block ${$userId() === reply.authorId ? 'order-last' : ''}`"
+        :class="`d-inline-block ${
+          $userId() === reply.authorId ? 'xxx-order-last' : ''
+        }`"
       >
         <user-avatar :id="reply.authorId" :size="30" />
       </div>
-      <div :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`">
-        {{ reply.text }}
-        <!-- <br />
-        {{ canArchive }} -->
-      </div>
-    </div>
-    <div v-else :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center`">
-      <v-scroll-x-transition>
-        <v-btn
-          v-show="hover && canArchive"
-          v-tooltip="'Archive'"
-          x-small
-          icon
-          class="ml-1"
-          @click="showArchiveDialog = true"
-        >
-          <v-icon small>mdi-delete</v-icon>
-        </v-btn>
-      </v-scroll-x-transition>
       <div
-        :class="`d-inline-block ${$userId() === reply.authorId ? 'order-last' : ''}`"
+        :class="`reply-box d-inline-block mx-2 py-2 flex-grow-1 float-left caption`"
+        v-html="linkifiedText"
+      ></div>
+    </div>
+    <div
+      v-else
+      style="width: 300px"
+      :class="`flex-grow-1 d-flex px-2 py-1 mb-2 align-center`"
+    >
+      <div
+        :class="`d-inline-block ${
+          $userId() === reply.authorId ? 'xxx-order-last' : ''
+        }`"
       >
         <user-avatar :id="reply.authorId" :size="30" />
       </div>
@@ -70,6 +59,20 @@
           </v-btn>
         </div>
       </div>
+    </div>
+    <div style="width: 20px; overflow: hidden">
+      <v-scroll-x-transition>
+        <v-btn
+          v-show="hover && canArchive"
+          v-tooltip="'Archive'"
+          x-small
+          icon
+          class="ml-1"
+          @click="showArchiveDialog = true"
+        >
+          <v-icon small>mdi-delete</v-icon>
+        </v-btn>
+      </v-scroll-x-transition>
     </div>
     <v-dialog v-model="showArchiveDialog" max-width="500">
       <v-card>
@@ -100,6 +103,8 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import linkifyUrls from 'linkify-urls'
+
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
@@ -130,6 +135,17 @@ export default {
       } catch {
         return null
       }
+    },
+    linkifiedText() {
+      return linkifyUrls(this.reply.text, {
+        attributes: {
+          target: '_blank',
+          class:
+            this.reply.authorId === this.$userId()
+              ? 'comment-link white--text font-weight-bold text-decoration-none'
+              : 'comment-link font-weight-bold text-decoration-none'
+        }
+      })
     }
   },
   methods: {
@@ -162,6 +178,10 @@ export default {
 }
 </script>
 <style scoped>
+>>> .comment-link:after {
+  content: ' ↗ ';
+}
+
 .reply-box {
   white-space: pre-wrap;
   word-break: break-word;

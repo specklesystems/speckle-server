@@ -81,7 +81,12 @@
                     small
                     @click="addCommentDirect(reaction)"
                   >
-                    <span class="text-h6">{{ reaction }}</span>
+                    <span
+                      class="text-h5"
+                      style="position: relative; top: 1px; left: -1px"
+                    >
+                      {{ reaction }}
+                    </span>
                   </v-btn>
                 </template>
               </div>
@@ -109,7 +114,7 @@
           v-if="$vuetify.breakpoint.xs"
           v-model="expand"
           class="elevation-0 flat"
-          @input="toggleExpand()"
+          @click:outside="toggleExpand()"
         >
           <div
             v-if="!canComment && $loggedIn()"
@@ -168,7 +173,9 @@
                 small
                 @click="addCommentDirect(reaction)"
               >
-                <span class="text-h6">{{ reaction }}</span>
+                <span class="text-h5" style="position: relative; top: 1px; left: -1px">
+                  {{ reaction }}
+                </span>
               </v-btn>
             </template>
           </div>

@@ -24,6 +24,7 @@
     "apexcharts": "^3.33.1",
     "crypto-random-string": "^3.3.0",
     "dompurify": "^2.3.6",
+    "linkify-urls": "^4.0.0",
     "lodash": "^4.17.21",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
