@@ -60,11 +60,15 @@
                 comment.expanded ? collapseComment(comment) : expandComment(comment)
               "
             >
-              <template v-if="$store.state.emojis.indexOf(comment.text) == -1">
+              <template
+                v-if="$store.state.emojis.indexOf(comment.text.split(' ')[0]) == -1"
+              >
                 <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
               </template>
               <template v-else-if="!comment.expanded">
-                <span class="text-subtitle-1">{{ comment.text }}</span>
+                <span>
+                  {{ comment.text.split(' ')[0] }}
+                </span>
               </template>
               <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
             </v-btn>
