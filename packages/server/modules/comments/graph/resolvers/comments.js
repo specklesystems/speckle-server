@@ -1,6 +1,7 @@
 const { authorizeResolver, pubsub } = require('@/modules/shared')
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
 const { getStream } = require('@/modules/core/services/streams')
+const { saveActivity } = require('@/modules/activitystream/services')
 
 const {
   getComment,
@@ -153,10 +154,21 @@ module.exports = {
         resourceIds: args.input.resources.map((res) => res.resourceId).join(',') // TODO: hack for now
       })
 
+      await saveActivity({
+        streamId: args.input.streamId,
+        resourceType: 'comment',
+        resourceId: id,
+        actionType: 'comment_created',
+        userId: context.userId,
+        info: { input: args.input },
+        message: `Comment added: ${id} (${args.input})`
+      })
+
       return id
     },
 
     async commentEdit(parent, args, context) {
+      // NOTE: This is NOT in use anywhere
       await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
       await editComment({ userId: context.userId, input: args.input })
       return true
@@ -182,13 +194,25 @@ module.exports = {
         userId: context.userId,
         auth: context.auth
       })
+
       await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {
           eventType: args.archived ? 'comment-archived' : 'comment-added'
         },
         streamId: args.streamId,
         commentId: args.commentId
+      })
+
+      await saveActivity({
+        streamId: args.streamId,
+        resourceType: 'comment',
+        resourceId: args.commentId,
+        actionType: 'comment_archived',
+        userId: context.userId,
+        info: { input: args },
+        message: `Comment archived`
       })
       return true
     },
@@ -224,6 +248,16 @@ module.exports = {
         },
         streamId: args.input.streamId,
         commentId: args.input.parentComment
+      })
+
+      await saveActivity({
+        streamId: args.input.streamId,
+        resourceType: 'comment',
+        resourceId: args.input.parentComment,
+        actionType: 'comment_reply',
+        userId: context.userId,
+        info: { input: args.input },
+        message: `Comment reply created.`
       })
       return id
     }
