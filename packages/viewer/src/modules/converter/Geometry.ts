@@ -1,12 +1,16 @@
 import {
+  Box3,
   BoxBufferGeometry,
+  BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
   Matrix4,
   Uint16BufferAttribute,
-  Uint32BufferAttribute
+  Uint32BufferAttribute,
+  Vector3
 } from 'three'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
+import { World } from '../World'
 
 export const GEOMETRY_LINES_AS_TRIANGLES = true
 export enum GeometryAttributes {
@@ -29,78 +33,138 @@ export interface GeometryData {
  */
 export class Geometry {
   static makePointGeometry(geometryData: GeometryData): BufferGeometry {
-    return Geometry.makeMeshGeometry(geometryData)
+    const geometry = Geometry.makeMeshGeometry(geometryData)
+    World.expandWorld(geometry.boundingBox)
+    return geometry
   }
   static makePointCloudGeometry(geometryData: GeometryData): BufferGeometry {
-    return Geometry.makeMeshGeometry(geometryData)
+    const geometry = Geometry.makeMeshGeometry(geometryData)
+    World.expandWorld(geometry.boundingBox)
+    return geometry
   }
   static makeMeshGeometry(geometryData: GeometryData): BufferGeometry {
     if (geometryData.bakeTransform) {
       Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
     }
-    const buffer = new BufferGeometry()
+    const geometry = new BufferGeometry()
 
     if (geometryData.attributes.INDEX) {
       if (
         geometryData.attributes.POSITION.length >= 65535 ||
         geometryData.attributes.INDEX.length >= 65535
       ) {
-        buffer.setIndex(new Uint32BufferAttribute(geometryData.attributes.INDEX, 1))
+        geometry.setIndex(new Uint32BufferAttribute(geometryData.attributes.INDEX, 1))
       } else {
-        buffer.setIndex(new Uint16BufferAttribute(geometryData.attributes.INDEX, 1))
+        geometry.setIndex(new Uint16BufferAttribute(geometryData.attributes.INDEX, 1))
       }
     }
-
+    const position_low = new Float32Array(geometryData.attributes.POSITION.length)
+    const position_high = new Float32Array(geometryData.attributes.POSITION.length)
     if (geometryData.attributes.POSITION) {
-      buffer.setAttribute(
+      for (var k = 0; k < geometryData.attributes.POSITION.length; k++) {
+        const doubleValue = geometryData.attributes.POSITION[k]
+        if (doubleValue >= 0.0) {
+          const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+          position_high[k] = doubleHigh
+          position_low[k] = doubleValue - doubleHigh
+        } else {
+          const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+          position_high[k] = -doubleHigh
+          position_low[k] = doubleValue + doubleHigh
+        }
+      }
+      geometry.setAttribute(
         'position',
         new Float32BufferAttribute(geometryData.attributes.POSITION, 3)
       )
     }
 
     if (geometryData.attributes.COLOR) {
-      buffer.setAttribute(
+      geometry.setAttribute(
         'color',
         new Float32BufferAttribute(geometryData.attributes.COLOR, 3)
       )
     }
 
-    buffer.computeVertexNormals()
-    buffer.computeBoundingSphere()
+    geometry.computeVertexNormals()
+    geometry.computeBoundingSphere()
+    geometry.computeBoundingBox()
 
-    return buffer
+    World.expandWorld(geometry.boundingBox)
+
+    geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+    geometry.setAttribute('position_high', new Float32BufferAttribute(position_high, 3))
+
+    return geometry
   }
 
   static makeLineGeometry(geometryData: GeometryData) {
     if (geometryData.bakeTransform) {
       Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
     }
+    let geometry: { boundingBox: Box3 }
     if (GEOMETRY_LINES_AS_TRIANGLES) {
-      return this.makeLineGeometry_TRIANGLE(geometryData)
+      geometry = this.makeLineGeometry_TRIANGLE(geometryData)
     } else {
-      return this.makeLineGeometry_LINE(geometryData)
+      geometry = this.makeLineGeometry_LINE(geometryData)
     }
+    World.expandWorld(geometry.boundingBox)
+
+    return geometry
   }
 
   static makeLineGeometry_LINE(geometryData: GeometryData) {
-    const buffer = new BufferGeometry()
+    const geometry = new BufferGeometry()
     if (geometryData.attributes.POSITION) {
-      buffer.setAttribute(
+      geometry.setAttribute(
         'position',
         new Float32BufferAttribute(geometryData.attributes.POSITION, 3)
       )
-
-      if (geometryData.bakeTransform) {
-        buffer.attributes.position.applyMatrix4(geometryData.bakeTransform)
+    }
+    geometry.computeBoundingBox()
+    const position_low = new Float32Array(geometryData.attributes.POSITION.length)
+    const position_high = new Float32Array(geometryData.attributes.POSITION.length)
+    if (geometryData.attributes.POSITION) {
+      for (var k = 0; k < geometryData.attributes.POSITION.length; k++) {
+        const doubleValue = geometryData.attributes.POSITION[k]
+        if (doubleValue >= 0.0) {
+          const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+          position_high[k] = doubleHigh
+          position_low[k] = doubleValue - doubleHigh
+        } else {
+          const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+          position_high[k] = -doubleHigh
+          position_low[k] = doubleValue + doubleHigh
+        }
       }
     }
-    return buffer
+    geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+    geometry.setAttribute('position_high', new Float32BufferAttribute(position_high, 3))
+
+    return geometry
   }
 
   static makeLineGeometry_TRIANGLE(geometryData: GeometryData) {
     const geometry = new LineGeometry()
     geometry.setPositions(geometryData.attributes.POSITION)
     if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
+    geometry.computeBoundingBox()
+    const position_low = new Float32Array(geometryData.attributes.POSITION.length)
+    const position_high = new Float32Array(geometryData.attributes.POSITION.length)
+    for (var k = 0; k < geometryData.attributes.POSITION.length; k++) {
+      const doubleValue = geometryData.attributes.POSITION[k]
+      if (doubleValue >= 0.0) {
+        const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+        position_high[k] = doubleHigh
+        position_low[k] = doubleValue - doubleHigh
+      } else {
+        const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+        position_high[k] = -doubleHigh
+        position_low[k] = doubleValue + doubleHigh
+      }
+    }
+    geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+    geometry.setAttribute('position_high', new Float32BufferAttribute(position_high, 3))
     return geometry
   }
 
@@ -214,5 +278,38 @@ export class Geometry {
       colors[i * 3 + 2] = b / 255
     }
     return colors
+  }
+
+  public static DoubleToHighLow(input: Vector3, low: Vector3, high: Vector3) {
+    let doubleValue = input.x
+    if (doubleValue >= 0.0) {
+      const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+      high.x = doubleHigh
+      low.x = doubleValue - doubleHigh
+    } else {
+      const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+      high.x = -doubleHigh
+      low.x = doubleValue + doubleHigh
+    }
+    doubleValue = input.y
+    if (doubleValue >= 0.0) {
+      const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+      high.y = doubleHigh
+      low.y = doubleValue - doubleHigh
+    } else {
+      const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+      high.y = -doubleHigh
+      low.y = doubleValue + doubleHigh
+    }
+    doubleValue = input.z
+    if (doubleValue >= 0.0) {
+      const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+      high.z = doubleHigh
+      low.z = doubleValue - doubleHigh
+    } else {
+      const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+      high.z = -doubleHigh
+      low.z = doubleValue + doubleHigh
+    }
   }
 }

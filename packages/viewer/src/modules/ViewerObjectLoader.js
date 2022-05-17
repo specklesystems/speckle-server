@@ -67,6 +67,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
+    let parsedObjects = [] // Temporary until refactor
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.viewer.emit('load-progress', {
@@ -85,7 +86,7 @@ export default class ViewerObjectLoader {
           async (objectWrapper) => {
             await this.converter.asyncPause()
             objectWrapper.meta.__importedUrl = this.objectUrl
-            this.viewer.sceneManager.addObject(objectWrapper)
+            parsedObjects.push(objectWrapper) // Temporary until refactor
             viewerLoads++
           }
         )
@@ -103,7 +104,13 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
+    // Temporary until refactor
+    for (var k = 0; k < parsedObjects.length; k++) {
+      await this.converter.asyncPause()
+      this.viewer.sceneManager.addObject(parsedObjects[k])
+    }
     await this.viewer.sceneManager.postLoadFunction()
+    this.viewer.emit('load-complete')
 
     if (viewerLoads === 0) {
       console.warn(`Viewer: no 3d objects found in object ${this.objectId}`)

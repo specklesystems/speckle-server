@@ -9,12 +9,13 @@ import InteractionHandler from './InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Clock, CubeCamera } from 'three'
+import { Box3, Clock, CubeCamera, Vector3 } from 'three'
 import { Scene } from 'three'
 import { WebGLRenderer } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import { DefaultViewerParams, IViewer, ViewerParams } from '../IViewer'
+import { World } from './World'
 
 export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
@@ -33,6 +34,22 @@ export class Viewer extends EventEmitter implements IViewer {
   public cameraHandler: CameraHandler
 
   public static Assets: Assets
+
+  private _worldSize: Box3 = new Box3()
+  private _worldOrigin: Vector3 = new Vector3()
+  public get worldSize() {
+    World.worldBox.getCenter(this._worldOrigin)
+    const size = new Vector3().subVectors(World.worldBox.max, World.worldBox.min)
+    return {
+      x: size.x,
+      y: size.y,
+      z: size.z
+    }
+  }
+
+  public get worldOrigin() {
+    return this._worldOrigin
+  }
 
   public constructor(
     container: HTMLElement,

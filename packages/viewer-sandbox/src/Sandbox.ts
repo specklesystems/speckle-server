@@ -7,16 +7,18 @@ export default class Sandbox {
   private pane: Pane
   private tabs: any
 
-  private static urlParams = {
+  public static urlParams = {
     url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
   }
 
-  private static sceneParams = {
+  public static sceneParams = {
+    worldSize: {x: 0, y: 0, z: 0},
+    worldOrigin: {x:0, y:0, z:0},
     exposure: 0.4,
     tonemapping: 'Linear'
   }
 
-  public constructor(viewer: IViewer) {
+  public constructor(viewer: Viewer) {
     this.viewer = viewer
     this.pane = new Pane({ title: 'Sandbox', expanded: true })
     this.pane['containerElem_'].style.width = "300px";
@@ -28,6 +30,10 @@ export default class Sandbox {
         {title: 'Scene'},
       ],
     });
+  }
+
+  public refresh() {
+    this.pane.refresh();
   }
 
   public makeGenericUI() {
@@ -76,6 +82,40 @@ export default class Sandbox {
   }
 
   makeSceneUI() {
+    const worldFolder = this.tabs.pages[1].addFolder({
+      title: "World",
+      expanded: true
+    });
+    worldFolder.addInput(Sandbox.sceneParams.worldSize, 'x', {
+      disabled: true,
+      label: "Size-x",
+      step: 0.00000001
+    });
+    worldFolder.addInput(Sandbox.sceneParams.worldSize, 'y', {
+      disabled: true,
+      label: "Size-y",
+      step: 0.00000001
+    });
+    worldFolder.addInput(Sandbox.sceneParams.worldSize, 'z', {
+      disabled: true,
+      label: "Size-z",
+      step: 0.00000001
+    });
+    worldFolder.addSeparator();
+    worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'x', {
+      disabled: true,
+      label: "Origin-x"
+    });
+    worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'y', {
+      disabled: true,
+      label: "Origin-y"
+    });
+    worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'z', {
+      disabled: true,
+      label: "Origin-z"
+    });
+
+    this.tabs.pages[1].addSeparator();
     const postFolder = this.tabs.pages[1].addFolder({
       title: "Post",
       expanded: true

@@ -44,6 +44,7 @@ export default class SceneObjects {
     // When the `appliedFilter` is null, scene will contain `allObjects`. Otherwise, `filteredObjects`
     // This is to optimize the no-filter usecase, so we don't make an unnecessary clone of all the objects
     this.objectsInScene = this.allObjects
+
     this.scene.add(this.allObjects)
 
     this.isBusy = true
@@ -289,7 +290,8 @@ export default class SceneObjects {
         ) {
           // if ( mesh.type === 'Line' ) continue
           // if ( groupedObjects.children.length >= 2 ) continue
-          groupedObjects.add(mesh.clone())
+          const clone = mesh.clone()
+          groupedObjects.add(clone)
           continue
         }
 

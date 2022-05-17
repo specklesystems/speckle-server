@@ -3,9 +3,10 @@ import debounce from 'lodash.debounce'
 import SceneObjects from './SceneObjects'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
-import { Vector2 } from 'three'
+import { Matrix4, Vector2, Vector3 } from 'three'
 import { GEOMETRY_LINES_AS_TRIANGLES } from './converter/Geometry'
-
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -17,7 +18,7 @@ export default class SceneObjectManager {
 
     this.sceneObjects = new SceneObjects(viewer)
 
-    this.solidMaterial = new THREE.MeshStandardMaterial({
+    this.solidMaterial = new SpeckleStandardMaterial({
       color: 0x8d9194,
       emissive: 0x0,
       roughness: 1,
@@ -362,7 +363,7 @@ export default class SceneObjectManager {
   makeLineMaterial() {
     let lineMaterial
     if (GEOMETRY_LINES_AS_TRIANGLES) {
-      lineMaterial = new LineMaterial({
+      lineMaterial = new SpeckleLineMaterial({
         color: 0x7f7f7f,
         linewidth: 1, // in world units with size attenuation, pixels otherwise
         worldUnits: false,
