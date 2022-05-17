@@ -32,7 +32,7 @@ export interface GeometryData {
  */
 export class Geometry {
   private static _USE_RTE: boolean = true
-  private static _THICK_LINES: boolean = true
+  private static _THICK_LINES: boolean = false
   static get USE_RTE(): boolean {
     return Geometry._USE_RTE
   }
@@ -260,6 +260,27 @@ export class Geometry {
     return mergedGeometry
   }
 
+  /**
+   *
+   * @param geometry TEMPORARY
+   */
+  public static updateRTEGeometry(geometry: BufferGeometry) {
+    if (Geometry.USE_RTE) {
+      const position_low = new Float32Array(geometry.attributes.position.array.length)
+      const position_high = new Float32Array(geometry.attributes.position.array.length)
+      Geometry.DoubleToHighLowBuffer(
+        geometry.attributes.position.array,
+        position_low,
+        position_high
+      )
+      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+      geometry.setAttribute(
+        'position_high',
+        new Float32BufferAttribute(position_high, 3)
+      )
+    }
+  }
+
   public static transformGeometryData(geometryData: GeometryData, m: Matrix4) {
     if (!geometryData.attributes.POSITION) return
 
@@ -327,7 +348,7 @@ export class Geometry {
   }
 
   public static DoubleToHighLowBuffer(
-    input: number[],
+    input: ArrayLike<number>,
     position_low: Float32Array,
     position_high: Float32Array
   ) {

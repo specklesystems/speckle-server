@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { Geometry } from './converter/Geometry'
 import FilteringManager from './FilteringManager'
 
 /**
@@ -258,6 +259,7 @@ export default class SceneObjects {
     for (const element of acc) {
       element.geometry = element.geometry.clone()
       element.geometry.applyMatrix4(group.matrix)
+      Geometry.updateRTEGeometry(element.geometry) // TEMPORARY!!!
     }
     return acc
   }

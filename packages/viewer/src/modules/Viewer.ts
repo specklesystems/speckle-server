@@ -234,6 +234,12 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   private render() {
+    // this.scene.traverse((obj) => {
+    //   if (obj.type == 'Line') {
+    //     obj.updateMatrixWorld(true)
+    //     console.log(obj.matrixWorld.elements[12])
+    //   }
+    // })
     this.renderer.render(this.scene, this.cameraHandler.activeCam.camera)
   }
 

@@ -1,6 +1,6 @@
 import { speckle_line_basic_vert } from './shaders/speckle-line-basic-vert'
 import { speckle_line_basic_frag } from './shaders/speckle-line-basic-frag'
-import { UniformsUtils, ShaderLib, Vector3, LineBasicMaterial } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, LineBasicMaterial, Object3D } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
@@ -60,6 +60,13 @@ class SpeckleLineBasicMaterial extends LineBasicMaterial {
     return this
   }
 
+  dumpHierarchy(object: Object3D): string {
+    let str = `${object.type}(${object.position.x},${object.position.y},${object.position.z}) ->`
+    if (object.parent != null) {
+      str += this.dumpHierarchy(object.parent)
+    }
+    return str
+  }
   onBeforeRender(_this, scene, camera, geometry, object, group) {
     if (Geometry.USE_RTE) {
       SpeckleLineBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
