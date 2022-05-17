@@ -18,6 +18,56 @@ export default class SceneObjectManager {
 
     this.sceneObjects = new SceneObjects(viewer)
 
+    this.initMaterials()
+
+    this.postLoad = debounce(
+      () => {
+        this.postLoadFunction()
+      },
+      20,
+      { maxWait: 5000 }
+    )
+    this.skipPostLoad = skipPostLoad
+    this.loaders = []
+  }
+
+  get allObjects() {
+    return [
+      ...this.sceneObjects.allSolidObjects.children,
+      ...this.sceneObjects.allTransparentObjects.children,
+      ...this.sceneObjects.allLineObjects.children,
+      ...this.sceneObjects.allPointObjects.children
+    ]
+  }
+
+  get filteredObjects() {
+    const ret = []
+    for (const objectGroup of this.sceneObjects.objectsInScene.children) {
+      if (objectGroup.name === 'GroupedSolidObjects') continue
+      ret.push(...objectGroup.children)
+    }
+    return ret.filter((obj) => !obj.userData.hidden)
+  }
+
+  get materials() {
+    return [
+      this.lineMaterial,
+      this.pointMaterial,
+      this.transparentMaterial,
+      this.solidMaterial,
+      this.solidVertexMaterial,
+      this.pointVertexColorsMaterial
+    ]
+  }
+
+  initMaterials() {
+    if (this.solidMaterial) this.solidMaterial.dispose()
+    if (this.transparentMaterial) this.transparentMaterial.dispose()
+    if (this.solidVertexMaterial) this.solidVertexMaterial.dispose()
+    if (this.lineMaterial) this.lineMaterial.dispose()
+    if (this.pointMaterial) this.pointMaterial.dispose()
+    if (this.pointVertexColorsMaterial) this.pointVertexColorsMaterial.dispose()
+
     this.solidMaterial = new SpeckleStandardMaterial({
       color: 0x8d9194,
       emissive: 0x0,
@@ -63,47 +113,7 @@ export default class SceneObjectManager {
       vertexColors: true,
       clippingPlanes: this.viewer.sectionBox.planes
     })
-
-    this.postLoad = debounce(
-      () => {
-        this.postLoadFunction()
-      },
-      20,
-      { maxWait: 5000 }
-    )
-    this.skipPostLoad = skipPostLoad
-    this.loaders = []
   }
-
-  get allObjects() {
-    return [
-      ...this.sceneObjects.allSolidObjects.children,
-      ...this.sceneObjects.allTransparentObjects.children,
-      ...this.sceneObjects.allLineObjects.children,
-      ...this.sceneObjects.allPointObjects.children
-    ]
-  }
-
-  get filteredObjects() {
-    const ret = []
-    for (const objectGroup of this.sceneObjects.objectsInScene.children) {
-      if (objectGroup.name === 'GroupedSolidObjects') continue
-      ret.push(...objectGroup.children)
-    }
-    return ret.filter((obj) => !obj.userData.hidden)
-  }
-
-  get materials() {
-    return [
-      this.lineMaterial,
-      this.pointMaterial,
-      this.transparentMaterial,
-      this.solidMaterial,
-      this.solidVertexMaterial,
-      this.pointVertexColorsMaterial
-    ]
-  }
-
   // Note: we might switch later down the line from cloning materials to solely
   // using a few "default" ones and controlling color through vertex colors.
   // For now a small compromise to speed up dev; it is not the most memory

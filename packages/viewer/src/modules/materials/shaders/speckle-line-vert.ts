@@ -8,17 +8,11 @@ export const speckle_line_vert = /* glsl */ `
 		uniform float linewidth;
 		uniform vec2 resolution;
 
-        uniform vec3 uViewer_high;
-        uniform vec3 uViewer_low;
-
 		attribute vec3 instanceStart;
 		attribute vec3 instanceEnd;
 
 		attribute vec3 instanceColorStart;
 		attribute vec3 instanceColorEnd;
-
-        attribute vec3 position_high;
-        attribute vec3 position_low;
 
 		#ifdef WORLD_UNITS
 
@@ -47,6 +41,13 @@ export const speckle_line_vert = /* glsl */ `
 
 		#endif
 
+        #ifdef USE_RTE
+            attribute vec3 position_high;
+            attribute vec3 position_low;
+            uniform vec3 uViewer_high;
+            uniform vec3 uViewer_low;
+        #endif
+
 		void trimSegment( const in vec4 start, inout vec4 end ) {
 
 			// trim end segment so it terminates between the camera plane and the near plane
@@ -63,9 +64,7 @@ export const speckle_line_vert = /* glsl */ `
 		}
 
 		void main() {
-            vec3 highDifference = vec3(position_high.xyz - uViewer_high);
-            vec3 lowDifference = vec3(position_low.xyz - uViewer_low);
-            vec3 computedPosition = position;//highDifference.xyz + lowDifference.xyz;
+            vec3 computedPosition = position;
 			#ifdef USE_COLOR
 
 				vColor.xyz = ( computedPosition.y < 0.5 ) ? instanceColorStart : instanceColorEnd;
@@ -82,15 +81,17 @@ export const speckle_line_vert = /* glsl */ `
 			float aspect = resolution.x / resolution.y;
 
 			// camera space
-            vec3 startHighDifference = vec3(instanceStart.xyz - uViewer_high);
-            vec3 startLowDifference = vec3(instanceStart.xyz - uViewer_low);
-            vec3 endHighDifference = vec3(instanceEnd.xyz - uViewer_high);
-            vec3 endLowDifference = vec3(instanceEnd.xyz - uViewer_low);
-			vec4 start = modelViewMatrix * vec4( startLowDifference + startHighDifference, 1.0 );
-			vec4 end = modelViewMatrix * vec4( endLowDifference + endHighDifference, 1.0 );
-
-            // vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
-			// vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
+            #ifdef USE_RTE
+                vec3 startHighDifference = vec3(instanceStart.xyz - uViewer_high);
+                vec3 startLowDifference = vec3(instanceStart.xyz - uViewer_low);
+                vec3 endHighDifference = vec3(instanceEnd.xyz - uViewer_high);
+                vec3 endLowDifference = vec3(instanceEnd.xyz - uViewer_low);
+                vec4 start = modelViewMatrix * vec4( startLowDifference + startHighDifference, 1.0 );
+                vec4 end = modelViewMatrix * vec4( endLowDifference + endHighDifference, 1.0 );
+            #else
+                vec4 start = modelViewMatrix * vec4( instanceStart, 1.0 );
+                vec4 end = modelViewMatrix * vec4( instanceEnd, 1.0 );
+            #endif
 
 			#ifdef WORLD_UNITS
 

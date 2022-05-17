@@ -51,30 +51,36 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       value: new Vector3()
     }
 
+    if (Geometry.USE_RTE) {
+      this.defines['USE_RTE'] = ' '
+    }
+
     return this
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleStandardMaterial.matBuff.elements[12] = 0
-    SpeckleStandardMaterial.matBuff.elements[13] = 0
-    SpeckleStandardMaterial.matBuff.elements[14] = 0
-    SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
-    object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
+    if (Geometry.USE_RTE) {
+      SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
+      SpeckleStandardMaterial.matBuff.elements[12] = 0
+      SpeckleStandardMaterial.matBuff.elements[13] = 0
+      SpeckleStandardMaterial.matBuff.elements[14] = 0
+      SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
+      object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
 
-    let uViewer_low = new Vector3()
-    let uViewer_high = new Vector3()
-    let uViewer = new Vector3(
-      camera.matrixWorld.elements[12],
-      camera.matrixWorld.elements[13],
-      camera.matrixWorld.elements[14]
-    )
+      let uViewer_low = new Vector3()
+      let uViewer_high = new Vector3()
+      let uViewer = new Vector3(
+        camera.matrixWorld.elements[12],
+        camera.matrixWorld.elements[13],
+        camera.matrixWorld.elements[14]
+      )
 
-    Geometry.DoubleToHighLow(uViewer, uViewer_low, uViewer_high)
-    object.frustumCulled = false
-    this.userData.uViewer_high.value.copy(uViewer_high)
-    this.userData.uViewer_low.value.copy(uViewer_low)
-    this.needsUpdate = true
+      Geometry.DoubleToHighLowVector(uViewer, uViewer_low, uViewer_high)
+      object.frustumCulled = false
+      this.userData.uViewer_high.value.copy(uViewer_high)
+      this.userData.uViewer_low.value.copy(uViewer_low)
+      this.needsUpdate = true
+    }
   }
 }
 

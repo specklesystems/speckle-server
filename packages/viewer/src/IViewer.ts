@@ -20,7 +20,7 @@ export interface IViewer {
   zoomExtents(fit: number, transition: boolean): void
   toggleCameraProjection(): void
 
-  loadObject(url: string, token: string, enableCaching?: boolean): Promise<void>
+  loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>

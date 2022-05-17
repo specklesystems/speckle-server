@@ -1,7 +1,11 @@
 export const speckle_standard_vert = /* glsl */ `
 #define STANDARD
-attribute vec3 position_high;
-attribute vec3 position_low;
+#ifdef USE_RTE
+    attribute vec3 position_high;
+    attribute vec3 position_low;
+    uniform vec3 uViewer_high;
+    uniform vec3 uViewer_low;
+#endif
 
 varying vec3 vViewPosition;
 
@@ -24,8 +28,7 @@ varying vec3 vViewPosition;
 #include <logdepthbuf_pars_vertex>
 #include <clipping_planes_pars_vertex>
 
-uniform vec3 uViewer_high;
-uniform vec3 uViewer_low;
+
 
 void main() {
 
@@ -45,9 +48,13 @@ void main() {
     #include <skinning_vertex>
     #include <displacementmap_vertex>
     //#include <project_vertex> // EDITED CHUNK
-    vec3 highDifference = vec3(position_high.xyz - uViewer_high);
-    vec3 lowDifference = vec3(position_low.xyz - uViewer_low);
-    vec4 mvPosition = vec4(highDifference.xyz + lowDifference.xyz , 1.);//vec4( transformed - uViewer, 1.0 );
+    #ifdef USE_RTE
+        vec3 highDifference = vec3(position_high.xyz - uViewer_high);
+        vec3 lowDifference = vec3(position_low.xyz - uViewer_low);
+        vec4 mvPosition = vec4(highDifference.xyz + lowDifference.xyz , 1.);
+    #else
+        vec4 mvPosition = vec4( transformed, 1.0 );
+    #endif
     
     #ifdef USE_INSTANCING
 

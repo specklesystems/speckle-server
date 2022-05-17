@@ -1,7 +1,6 @@
 import { Viewer, IViewer } from '@speckle/viewer'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
-
 export default class Sandbox {
   private viewer: IViewer
   private pane: Pane
@@ -14,6 +13,7 @@ export default class Sandbox {
   public static sceneParams = {
     worldSize: {x: 0, y: 0, z: 0},
     worldOrigin: {x:0, y:0, z:0},
+    useRTE: false,
     exposure: 0.4,
     tonemapping: 'Linear'
   }
@@ -30,6 +30,7 @@ export default class Sandbox {
         {title: 'Scene'},
       ],
     });
+    Sandbox.sceneParams.useRTE = viewer.RTE
   }
 
   public refresh() {
@@ -113,6 +114,12 @@ export default class Sandbox {
     worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'z', {
       disabled: true,
       label: "Origin-z"
+    });
+
+    worldFolder.addInput(Sandbox.sceneParams, 'useRTE', {
+      label: "RTE"
+    }).on('change', (ev: any) => {
+      this.viewer.RTE = Sandbox.sceneParams.useRTE
     });
 
     this.tabs.pages[1].addSeparator();

@@ -12,7 +12,7 @@ import {
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
 import { World } from '../World'
 
-export const GEOMETRY_LINES_AS_TRIANGLES = true
+export const GEOMETRY_LINES_AS_TRIANGLES: boolean = true
 export enum GeometryAttributes {
   POSITION = 'POSITION',
   COLOR = 'COLOR',
@@ -32,6 +32,16 @@ export interface GeometryData {
  * Implementation here will change once we start working on proper batching
  */
 export class Geometry {
+  private static _USE_RTE: boolean = true
+  static get USE_RTE(): boolean {
+    return Geometry._USE_RTE
+  }
+
+  static set USE_RTE(value: boolean) {
+    Geometry._USE_RTE = value
+    console.warn(`RTE RENDERING IS NOW ${Geometry._USE_RTE}`)
+  }
+
   static makePointGeometry(geometryData: GeometryData): BufferGeometry {
     const geometry = Geometry.makeMeshGeometry(geometryData)
     World.expandWorld(geometry.boundingBox)
@@ -58,21 +68,8 @@ export class Geometry {
         geometry.setIndex(new Uint16BufferAttribute(geometryData.attributes.INDEX, 1))
       }
     }
-    const position_low = new Float32Array(geometryData.attributes.POSITION.length)
-    const position_high = new Float32Array(geometryData.attributes.POSITION.length)
+
     if (geometryData.attributes.POSITION) {
-      for (var k = 0; k < geometryData.attributes.POSITION.length; k++) {
-        const doubleValue = geometryData.attributes.POSITION[k]
-        if (doubleValue >= 0.0) {
-          const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
-          position_high[k] = doubleHigh
-          position_low[k] = doubleValue - doubleHigh
-        } else {
-          const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
-          position_high[k] = -doubleHigh
-          position_low[k] = doubleValue + doubleHigh
-        }
-      }
       geometry.setAttribute(
         'position',
         new Float32BufferAttribute(geometryData.attributes.POSITION, 3)
@@ -92,8 +89,20 @@ export class Geometry {
 
     World.expandWorld(geometry.boundingBox)
 
-    geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-    geometry.setAttribute('position_high', new Float32BufferAttribute(position_high, 3))
+    if (Geometry.USE_RTE) {
+      const position_low = new Float32Array(geometryData.attributes.POSITION.length)
+      const position_high = new Float32Array(geometryData.attributes.POSITION.length)
+      Geometry.DoubleToHighLowBuffer(
+        geometryData.attributes.POSITION,
+        position_low,
+        position_high
+      )
+      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+      geometry.setAttribute(
+        'position_high',
+        new Float32BufferAttribute(position_high, 3)
+      )
+    }
 
     return geometry
   }
@@ -122,24 +131,20 @@ export class Geometry {
       )
     }
     geometry.computeBoundingBox()
-    const position_low = new Float32Array(geometryData.attributes.POSITION.length)
-    const position_high = new Float32Array(geometryData.attributes.POSITION.length)
-    if (geometryData.attributes.POSITION) {
-      for (var k = 0; k < geometryData.attributes.POSITION.length; k++) {
-        const doubleValue = geometryData.attributes.POSITION[k]
-        if (doubleValue >= 0.0) {
-          const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
-          position_high[k] = doubleHigh
-          position_low[k] = doubleValue - doubleHigh
-        } else {
-          const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
-          position_high[k] = -doubleHigh
-          position_low[k] = doubleValue + doubleHigh
-        }
-      }
+    if (Geometry.USE_RTE) {
+      const position_low = new Float32Array(geometryData.attributes.POSITION.length)
+      const position_high = new Float32Array(geometryData.attributes.POSITION.length)
+      Geometry.DoubleToHighLowBuffer(
+        geometryData.attributes.POSITION,
+        position_low,
+        position_high
+      )
+      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+      geometry.setAttribute(
+        'position_high',
+        new Float32BufferAttribute(position_high, 3)
+      )
     }
-    geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-    geometry.setAttribute('position_high', new Float32BufferAttribute(position_high, 3))
 
     return geometry
   }
@@ -149,22 +154,21 @@ export class Geometry {
     geometry.setPositions(geometryData.attributes.POSITION)
     if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
     geometry.computeBoundingBox()
-    const position_low = new Float32Array(geometryData.attributes.POSITION.length)
-    const position_high = new Float32Array(geometryData.attributes.POSITION.length)
-    for (var k = 0; k < geometryData.attributes.POSITION.length; k++) {
-      const doubleValue = geometryData.attributes.POSITION[k]
-      if (doubleValue >= 0.0) {
-        const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
-        position_high[k] = doubleHigh
-        position_low[k] = doubleValue - doubleHigh
-      } else {
-        const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
-        position_high[k] = -doubleHigh
-        position_low[k] = doubleValue + doubleHigh
-      }
+
+    if (Geometry.USE_RTE) {
+      const position_low = new Float32Array(geometryData.attributes.POSITION.length)
+      const position_high = new Float32Array(geometryData.attributes.POSITION.length)
+      Geometry.DoubleToHighLowBuffer(
+        geometryData.attributes.POSITION,
+        position_low,
+        position_high
+      )
+      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
+      geometry.setAttribute(
+        'position_high',
+        new Float32BufferAttribute(position_high, 3)
+      )
     }
-    geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-    geometry.setAttribute('position_high', new Float32BufferAttribute(position_high, 3))
     return geometry
   }
 
@@ -280,7 +284,7 @@ export class Geometry {
     return colors
   }
 
-  public static DoubleToHighLow(input: Vector3, low: Vector3, high: Vector3) {
+  public static DoubleToHighLowVector(input: Vector3, low: Vector3, high: Vector3) {
     let doubleValue = input.x
     if (doubleValue >= 0.0) {
       const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
@@ -310,6 +314,25 @@ export class Geometry {
       const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
       high.z = -doubleHigh
       low.z = doubleValue + doubleHigh
+    }
+  }
+
+  public static DoubleToHighLowBuffer(
+    input: number[],
+    position_low: Float32Array,
+    position_high: Float32Array
+  ) {
+    for (var k = 0; k < input.length; k++) {
+      const doubleValue = input[k]
+      if (doubleValue >= 0.0) {
+        const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
+        position_high[k] = doubleHigh
+        position_low[k] = doubleValue - doubleHigh
+      } else {
+        const doubleHigh = Math.floor(-doubleValue / 65536.0) * 65536.0
+        position_high[k] = -doubleHigh
+        position_low[k] = doubleValue + doubleHigh
+      }
     }
   }
 }
