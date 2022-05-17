@@ -7,6 +7,7 @@ import { Matrix4, Vector2, Vector3 } from 'three'
 import { Geometry } from './converter/Geometry'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import SpeckleLineBasicMaterial from './materials/SpeckleLineBasicMaterial'
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -383,7 +384,7 @@ export default class SceneObjectManager {
         clippingPlanes: this.viewer.sectionBox.planes
       })
     } else {
-      lineMaterial = new THREE.LineBasicMaterial({
+      lineMaterial = new SpeckleLineBasicMaterial({
         color: 0x7f7f7f,
         clippingPlanes: this.viewer.sectionBox.planes
       })
