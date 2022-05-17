@@ -1,6 +1,10 @@
 <template>
-  <div>
-    <v-card class="mx-2 mb-2 rounded-lg">
+  <div @mouseenter="hovered = true" @mouseleave="hovered = false">
+    <v-card
+      class="mx-2 my-4 rounded-lg"
+      :elevation="`${hovered ? 10 : 2}`"
+      style="transition: all 0.2s ease"
+    >
       <v-toolbar
         v-ripple
         class="transparent"
@@ -41,20 +45,23 @@
             mdi-filter
           </v-icon>
         </v-btn>
-        <v-btn small icon @click.stop="expanded = !expanded">
-          <v-icon x-small>{{ expanded ? 'mdi-minus' : 'mdi-plus' }}</v-icon>
-        </v-btn>
       </v-toolbar>
-      <div class="caption my-2 px-2 pb-2">
+      <div
+        class="caption my-2 px-2 pb-2"
+        style="cursor: pointer"
+        @click.stop="expanded = !expanded"
+      >
         {{ commit.message }}
         <v-divider class="my-2" />
         <timeago :datetime="commit.createdAt"></timeago>
         ,
         {{ new Date(commit.createdAt).toLocaleString() }}
+        <v-btn block depressed x-small class="mt-4" @click.stop="expanded = !expanded">
+          {{ expanded ? 'Hide' : 'Expand' }} Data View
+        </v-btn>
       </div>
       <v-expand-transition>
         <div v-show="expanded" class="px-1 pb-2">
-          <v-divider class="mx-2 my-2" />
           <object-properties
             :obj="{
               referencedId:
@@ -84,7 +91,8 @@ export default {
   },
   data() {
     return {
-      expanded: false
+      expanded: false,
+      hovered: false
     }
   },
   computed: {

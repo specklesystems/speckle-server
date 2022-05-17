@@ -138,16 +138,16 @@
         <viewer-controls @show-add-overlay="showAddOverlay = true" />
       </div>
       <div
-        style="
+        :style="`
           height: 100vh;
           width: 100%;
-          top: -64px;
+          ${!$vuetify.breakpoint.smAndDown ? 'top: -64px;' : 'top: -56px;'}
           left: 0;
           position: absolute;
           z-index: 4;
           pointer-events: none;
           overflow: none;
-        "
+        `"
         class=""
       >
         <viewer-bubbles key="a" />

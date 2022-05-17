@@ -131,11 +131,11 @@ export default {
   },
   props: {
     prop: {
-      type: Object,
+      type: [Object, Array],
       default: () => null
     },
     parent: {
-      type: Object,
+      type: [Object, Array],
       default: () => null
     },
     refId: {
