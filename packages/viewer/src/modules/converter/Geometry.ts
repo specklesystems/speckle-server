@@ -12,7 +12,6 @@ import {
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
 import { World } from '../World'
 
-export const GEOMETRY_LINES_AS_TRIANGLES: boolean = true
 export enum GeometryAttributes {
   POSITION = 'POSITION',
   COLOR = 'COLOR',
@@ -33,6 +32,7 @@ export interface GeometryData {
  */
 export class Geometry {
   private static _USE_RTE: boolean = true
+  private static _THICK_LINES: boolean = true
   static get USE_RTE(): boolean {
     return Geometry._USE_RTE
   }
@@ -40,6 +40,15 @@ export class Geometry {
   static set USE_RTE(value: boolean) {
     Geometry._USE_RTE = value
     console.warn(`RTE RENDERING IS NOW ${Geometry._USE_RTE}`)
+  }
+
+  static get THICK_LINES(): boolean {
+    return Geometry._THICK_LINES
+  }
+
+  static set THICK_LINES(value: boolean) {
+    Geometry._THICK_LINES = value
+    console.warn(`THICK_LINES IS NOW ${Geometry._THICK_LINES}`)
   }
 
   static makePointGeometry(geometryData: GeometryData): BufferGeometry {
@@ -112,7 +121,7 @@ export class Geometry {
       Geometry.transformGeometryData(geometryData, geometryData.bakeTransform)
     }
     let geometry: { boundingBox: Box3 }
-    if (GEOMETRY_LINES_AS_TRIANGLES) {
+    if (Geometry.THICK_LINES) {
       geometry = this.makeLineGeometry_TRIANGLE(geometryData)
     } else {
       geometry = this.makeLineGeometry_LINE(geometryData)

@@ -4,7 +4,7 @@ import SceneObjects from './SceneObjects'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import { Matrix4, Vector2, Vector3 } from 'three'
-import { GEOMETRY_LINES_AS_TRIANGLES } from './converter/Geometry'
+import { Geometry } from './converter/Geometry'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 /**
@@ -359,7 +359,7 @@ export default class SceneObjectManager {
 
   makeLineMesh(geometry, material) {
     let line
-    if (GEOMETRY_LINES_AS_TRIANGLES) {
+    if (Geometry.THICK_LINES) {
       line = new Line2(geometry, material)
       line.computeLineDistances()
       line.scale.set(1, 1, 1)
@@ -372,7 +372,7 @@ export default class SceneObjectManager {
 
   makeLineMaterial() {
     let lineMaterial
-    if (GEOMETRY_LINES_AS_TRIANGLES) {
+    if (Geometry.THICK_LINES) {
       lineMaterial = new SpeckleLineMaterial({
         color: 0x7f7f7f,
         linewidth: 1, // in world units with size attenuation, pixels otherwise

@@ -66,6 +66,19 @@ export class Viewer extends EventEmitter implements IViewer {
     })()
   }
 
+  public get thickLines(): boolean {
+    return Geometry.THICK_LINES
+  }
+
+  public set thickLines(value: boolean) {
+    ;(async () => {
+      await this.unloadAll()
+      Geometry.THICK_LINES = value
+      this.sceneManager.initMaterials()
+      await this.loadObject(this.sceneURL, undefined, undefined)
+    })()
+  }
+
   public constructor(
     container: HTMLElement,
     params: ViewerParams = DefaultViewerParams

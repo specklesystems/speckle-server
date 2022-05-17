@@ -14,6 +14,7 @@ export default class Sandbox {
     worldSize: {x: 0, y: 0, z: 0},
     worldOrigin: {x:0, y:0, z:0},
     useRTE: false,
+    thickLines: true,
     exposure: 0.4,
     tonemapping: 'Linear'
   }
@@ -31,6 +32,7 @@ export default class Sandbox {
       ],
     });
     Sandbox.sceneParams.useRTE = viewer.RTE
+    Sandbox.sceneParams.thickLines = viewer.thickLines;
   }
 
   public refresh() {
@@ -120,6 +122,12 @@ export default class Sandbox {
       label: "RTE"
     }).on('change', (ev: any) => {
       this.viewer.RTE = Sandbox.sceneParams.useRTE
+    });
+
+    worldFolder.addInput(Sandbox.sceneParams, 'thickLines', {
+      label: "Thick Lines"
+    }).on('change', (ev: any) => {
+      this.viewer.thickLines = Sandbox.sceneParams.thickLines
     });
 
     this.tabs.pages[1].addSeparator();
