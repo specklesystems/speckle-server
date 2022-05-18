@@ -18,7 +18,7 @@ export default class SelectionHelper extends EventEmitter {
     this.raycaster = new THREE.Raycaster()
     this.raycaster.params.Line.threshold = 0.1
     this.raycaster.params.Line2 = {}
-    this.raycaster.params.Line2.threshold = 10
+    this.raycaster.params.Line2.threshold = 1
 
     // optional param allows for raycasting against a subset of objects
     // this.subset = typeof _options !== 'undefined' && typeof _options.subset !== 'undefined'  ? _options.subset : null;

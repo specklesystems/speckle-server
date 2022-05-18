@@ -44,7 +44,7 @@
     "hold-event": "^0.1.0",
     "lodash.debounce": "^4.0.8",
     "rainbowvis.js": "^1.0.1",
-    "three": "^0.136.0"
+    "three": "^0.140.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.3",
