@@ -8,7 +8,6 @@
       <router-link :to="`/streams/${stream.id}`">
         <preview-image
           :url="`/preview/${stream.id}`"
-          :color="hover"
           :height="previewHeight"
         ></preview-image>
         <stream-favorite-btn :user="user" :stream="stream" class="favorite-button" />

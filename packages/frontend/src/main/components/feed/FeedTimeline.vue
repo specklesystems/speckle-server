@@ -168,8 +168,12 @@ export default {
         }
         const test = prev[prev.length - 1][0]
         let action = 'split' // split | combine | skip
+
         if (curr.actionType === test.actionType && curr.streamId === test.streamId) {
-          if (curr.actionType.includes('stream_permissions')) {
+          if (
+            curr.actionType.includes('stream_permissions') ||
+            curr.actionType.includes('comment_')
+          ) {
             //skip multiple stream_permission actions on the same user, just pick the last!
             if (
               prev[prev.length - 1].some(
