@@ -27,9 +27,10 @@
       <!-- Comment bubbles -->
       <div
         v-for="comment in activeComments"
+        v-show="isVisible(comment)"
         :key="comment.id"
         :ref="`comment-${comment.id}`"
-        :class="`absolute-pos rounded-xl no-mouse`"
+        :class="`absolute-pos rounded-xl no-mouse `"
         :style="`transition: opacity 0.2s ease; z-index:${
           comment.expanded ? '20' : '10'
         }; ${
@@ -51,6 +52,12 @@
               small
               icon
               :class="`elevation-5 pa-0 ma-0 mouse ${
+                $store.state.emojis.indexOf(comment.text.split(' ')[0]) != -1 &&
+                !comment.expanded
+                  ? 'emoji-btn transparent elevation-0'
+                  : ''
+              }
+              ${
                 comment.expanded || comment.bouncing || isUnread(comment)
                   ? 'dark white--text primary'
                   : 'background'
@@ -59,7 +66,16 @@
                 comment.expanded ? collapseComment(comment) : expandComment(comment)
               "
             >
-              <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
+              <template
+                v-if="$store.state.emojis.indexOf(comment.text.split(' ')[0]) == -1"
+              >
+                <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
+              </template>
+              <template v-else-if="!comment.expanded">
+                <span class="text-h5">
+                  {{ comment.text.split(' ')[0] }}
+                </span>
+              </template>
               <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
             </v-btn>
             <v-slide-x-transition>
@@ -88,6 +104,7 @@
       <!-- Comment Threads -->
       <div
         v-for="comment in activeComments"
+        v-show="isVisible(comment)"
         :key="comment.id + '-card'"
         :ref="`commentcard-${comment.id}`"
         :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
@@ -116,10 +133,16 @@
     <portal v-if="activeComments.length !== 0" to="comments">
       <comments-viewer-navbar
         :comments="activeComments"
+        :filter="commentsFilter"
         @select-comment="
           (e) => {
             if (!e.expanded && !showComments) showComments = true
             e.expanded ? collapseComment(e) : expandComment(e)
+          }
+        "
+        @set-filter="
+          (state) => {
+            commentsFilter = state
           }
         "
       />
@@ -127,14 +150,19 @@
     <portal to="viewercontrols" :order="5">
       <v-btn
         key="comment-toggle-button"
-        v-tooltip="`Toggle comments (${activeComments.length})`"
+        v-tooltip="currentCommentVisStatus"
         rounded
         icon
         class="mr-2"
         @click="toggleComments()"
       >
-        <v-icon v-if="showComments" small>mdi-comment-outline</v-icon>
-        <v-icon v-if="!showComments" small>mdi-comment-off-outline</v-icon>
+        <v-icon v-if="commentsFilter === 'all'" small>mdi-comment-outline</v-icon>
+        <v-icon v-if="commentsFilter === 'unread'" small class="primary--text">
+          mdi-comment-alert-outline
+        </v-icon>
+        <v-icon v-if="commentsFilter === 'none'" small>mdi-comment-off-outline</v-icon>
+        <!-- {{ commentsFilter }} -->
+        <!-- <v-icon v-if="!showComments" small>mdi-comment-off-outline</v-icon> -->
       </v-btn>
     </portal>
   </div>
@@ -270,6 +298,7 @@ export default {
     return {
       localComments: [],
       showComments: true,
+      commentsFilter: 'all', // 'unread', 'none'
       openCommentOnInit: null
     }
   },
@@ -279,6 +308,17 @@ export default {
     },
     hasExpandedComment() {
       return this.localComments.filter((c) => c.expanded).length !== 0
+    },
+    currentCommentVisStatus() {
+      switch (this.commentsFilter) {
+        case 'all':
+          return 'Showing all comments'
+        case 'unread':
+          return 'Showing unread comments only'
+        case 'none':
+          return 'Comments hidden'
+      }
+      return ''
     }
   },
   mounted() {
@@ -326,8 +366,31 @@ export default {
     isUnread(comment) {
       return new Date(comment.updatedAt) - new Date(comment.viewedAt) > 0
     },
+    isVisible(comment) {
+      if (comment.expanded) return true
+      switch (this.commentsFilter) {
+        case 'all':
+          return true
+        case 'unread':
+          return this.isUnread(comment)
+        case 'none':
+          return false
+      }
+      return true
+    },
     toggleComments() {
-      this.showComments = !this.showComments
+      // this.showComments = !this.showComments
+      switch (this.commentsFilter) {
+        case 'all':
+          this.commentsFilter = 'unread'
+          break
+        case 'unread':
+          this.commentsFilter = 'none'
+          break
+        case 'none':
+          this.commentsFilter = 'all'
+          break
+      }
     },
     expandComment(comment) {
       for (const c of this.localComments) {
@@ -503,6 +566,13 @@ export default {
 }
 </script>
 <style scoped>
+>>> .emoji-btn {
+  background-color: initial !important;
+}
+>>> .emoji-btn .v-btn__content {
+  color: initial;
+}
+
 .absolute-pos {
   pointer-events: auto;
   position: absolute;

@@ -1,9 +1,13 @@
 <template>
   <div
-    class="no-mouse pa-2"
+    class="no-mouse py-2 pl-2"
     :style="`${
-      $vuetify.breakpoint.xs ? 'width: 90vw;' : 'width: 300px;'
-    } xxx-background: rgba(0.5, 0.5, 0.5, 0.5)`"
+      $vuetify.breakpoint.xs
+        ? 'width: 90vw; padding-right:30px;'
+        : 'padding-right:30px; width: 330px;'
+    } ${hovered ? 'opacity: 1;' : 'opacity: 1;'} transition: opacity 0.2s ease;`"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
   >
     <div v-if="$vuetify.breakpoint.xs" class="text-right mb-5 mouse">
       <v-btn
@@ -50,22 +54,13 @@
             <timeago :datetime="reply.createdAt" class="font-italic ma-1"></timeago>
           </div>
         </div>
-        <div
-          :key="index"
-          :class="`d-flex px-2 py-1 mb-2 align-center rounded-xl elevation-2 ${
-            $userId() === reply.authorId ? 'primary white--text' : 'background'
-          }`"
-        >
-          <div :class="`${$userId() === reply.authorId ? 'order-last' : ''}`">
-            <user-avatar :id="reply.authorId" :size="30" />
-          </div>
-          <div
-            :class="`mx-2 px-4 py-2 flex-grow-1 float-left caption`"
-            style="overflow-wrap: break-word"
-          >
-            {{ reply.text }}
-          </div>
-        </div>
+        <comment-thread-reply
+          :key="index + 'reply'"
+          :reply="reply"
+          :stream="stream"
+          :index="index"
+          @deleted="handleReplyDeleteEvent"
+        />
       </template>
       <div v-if="$loggedIn()" class="px-0 mb-4">
         <v-slide-y-transition>
@@ -167,7 +162,7 @@ import debounce from 'lodash/debounce'
 
 export default {
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    CommentThreadReply: () => import('@/main/components/comments/CommentThreadReply')
   },
   props: {
     comment: { type: Object, default: () => null }
@@ -192,6 +187,7 @@ export default {
           stream(id: $streamId) {
             id
             role
+            allowPublicComments
           }
         }
       `,
@@ -292,6 +288,7 @@ export default {
   },
   data() {
     return {
+      hovered: true,
       replyText: null,
       localReplies: [],
       minimize: false,
@@ -303,7 +300,7 @@ export default {
   },
   computed: {
     canReply() {
-      return !!this.stream?.role
+      return !!this.stream?.role || this.stream?.allowPublicComments
     },
     canArchiveThread() {
       if (!this.comment || !this.stream) return false
@@ -357,7 +354,7 @@ export default {
       deep: true,
       async handler(newVal) {
         if (!this.$loggedIn() || !this.canReply) return
-
+        this.hovered = true
         await this.$apollo.mutate({
           mutation: gql`
             mutation commentView($streamId: String!, $commentId: String!) {
@@ -502,6 +499,14 @@ export default {
         this.comment.updatedAt = Date.now()
         this.$emit('refresh-layout') // needed for layout reshuffle in parent
       }, 100)
+    },
+    handleReplyDeleteEvent(id) {
+      if (this.comment.id === id) {
+        this.$emit('deleted', this.comment)
+        return
+      }
+      const idx = this.localReplies.findIndex((r) => r.id === id)
+      this.localReplies.splice(idx, 1)
     },
     async archiveComment() {
       try {

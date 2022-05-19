@@ -36,7 +36,7 @@ export default {
   },
   props: {
     obj: {
-      type: Object,
+      type: [Object, Array],
       default: () => null
     },
     streamId: {
@@ -106,8 +106,8 @@ export default {
     generateKVPs() {
       for (const key of Object.keys(this.realObject)) {
         if (this.ignoredProps.indexOf(key) !== -1) continue
-        const value = this.realObject[key]
-        const type = Array.isArray(this.realObject[key])
+        let value = this.realObject[key]
+        let type = Array.isArray(this.realObject[key])
           ? 'array'
           : typeof this.realObject[key]
         const extras = []
@@ -119,6 +119,13 @@ export default {
           !this.realObject.speckle_type?.includes('Objects')
         )
           extras.push('visibility')
+
+        // handle undefined as well as null 'values'
+        // eslint-disable-next-line eqeqeq
+        if (value == null) {
+          value = 'null'
+          type = 'null'
+        }
 
         this.kvps.push({
           key: this.cleanKey(key),
