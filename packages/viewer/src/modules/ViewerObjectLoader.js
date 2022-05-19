@@ -1,5 +1,6 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
+import { Geometry } from './converter/Geometry'
 
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
@@ -104,6 +105,7 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
+    // Geometry.applyWorldTransform(parsedObjects)
     // Temporary until refactor
     for (var k = 0; k < parsedObjects.length; k++) {
       await this.converter.asyncPause()

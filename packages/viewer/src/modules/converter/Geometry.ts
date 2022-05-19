@@ -4,6 +4,8 @@ import {
   BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
+  InstancedInterleavedBuffer,
+  InterleavedBufferAttribute,
   Matrix4,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
@@ -11,6 +13,7 @@ import {
 } from 'three'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js'
 import { World } from '../World'
+import ObjectWrapper from './ObjectWrapper'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -32,7 +35,7 @@ export interface GeometryData {
  */
 export class Geometry {
   private static _USE_RTE: boolean = true
-  private static _THICK_LINES: boolean = false
+  private static _THICK_LINES: boolean = true
   static get USE_RTE(): boolean {
     return Geometry._USE_RTE
   }
@@ -99,18 +102,7 @@ export class Geometry {
     World.expandWorld(geometry.boundingBox)
 
     if (Geometry.USE_RTE) {
-      const position_low = new Float32Array(geometryData.attributes.POSITION.length)
-      const position_high = new Float32Array(geometryData.attributes.POSITION.length)
-      Geometry.DoubleToHighLowBuffer(
-        geometryData.attributes.POSITION,
-        position_low,
-        position_high
-      )
-      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-      geometry.setAttribute(
-        'position_high',
-        new Float32BufferAttribute(position_high, 3)
-      )
+      Geometry.updateRTEGeometry(geometry)
     }
 
     return geometry
@@ -141,18 +133,7 @@ export class Geometry {
     }
     geometry.computeBoundingBox()
     if (Geometry.USE_RTE) {
-      const position_low = new Float32Array(geometryData.attributes.POSITION.length)
-      const position_high = new Float32Array(geometryData.attributes.POSITION.length)
-      Geometry.DoubleToHighLowBuffer(
-        geometryData.attributes.POSITION,
-        position_low,
-        position_high
-      )
-      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-      geometry.setAttribute(
-        'position_high',
-        new Float32BufferAttribute(position_high, 3)
-      )
+      Geometry.updateRTEGeometry(geometry)
     }
 
     return geometry
@@ -165,20 +146,78 @@ export class Geometry {
     geometry.computeBoundingBox()
 
     if (Geometry.USE_RTE) {
-      const position_low = new Float32Array(geometryData.attributes.POSITION.length)
-      const position_high = new Float32Array(geometryData.attributes.POSITION.length)
-      Geometry.DoubleToHighLowBuffer(
-        geometryData.attributes.POSITION,
-        position_low,
-        position_high
-      )
-      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-      geometry.setAttribute(
-        'position_high',
-        new Float32BufferAttribute(position_high, 3)
-      )
+      Geometry.updateRTEGeometry(geometry)
     }
     return geometry
+  }
+
+  /**
+   *
+   * @param geometry TEMPORARY!!!
+   */
+  public static updateRTEGeometry(geometry: BufferGeometry) {
+    if (Geometry.USE_RTE) {
+      if (geometry.type == 'BufferGeometry') {
+        const position_low = new Float32Array(geometry.attributes.position.array.length)
+        const position_high = new Float32Array(
+          geometry.attributes.position.array.length
+        )
+        Geometry.DoubleToHighLowBuffer(
+          geometry.attributes.position.array,
+          position_low,
+          position_high
+        )
+        geometry.setAttribute(
+          'position_low',
+          new Float32BufferAttribute(position_low, 3)
+        )
+        geometry.setAttribute(
+          'position_high',
+          new Float32BufferAttribute(position_high, 3)
+        )
+      } else if (geometry.type == 'LineGeometry') {
+        const position_low = new Float32Array(
+          geometry.attributes.instanceStart.array.length
+        )
+        const position_high = new Float32Array(
+          geometry.attributes.instanceStart.array.length
+        )
+
+        Geometry.DoubleToHighLowBuffer(
+          geometry.attributes.instanceStart.array,
+          position_low,
+          position_high
+        )
+
+        const instanceBufferLow = new InstancedInterleavedBuffer(
+          new Float32Array(position_low),
+          6,
+          1
+        ) // xyz, xyz
+        geometry.setAttribute(
+          'instanceStartLow',
+          new InterleavedBufferAttribute(instanceBufferLow, 3, 0)
+        ) // xyz
+        geometry.setAttribute(
+          'instanceEndLow',
+          new InterleavedBufferAttribute(instanceBufferLow, 3, 3)
+        ) // xyz
+
+        const instanceBufferHigh = new InstancedInterleavedBuffer(
+          new Float32Array(position_high),
+          6,
+          1
+        ) // xyz, xyz
+        geometry.setAttribute(
+          'instanceStartHigh',
+          new InterleavedBufferAttribute(instanceBufferHigh, 3, 0)
+        ) // xyz
+        geometry.setAttribute(
+          'instanceEndHigh',
+          new InterleavedBufferAttribute(instanceBufferHigh, 3, 3)
+        ) // xyz
+      }
+    }
   }
 
   static mergeGeometryAttribute(
@@ -262,22 +301,28 @@ export class Geometry {
 
   /**
    *
-   * @param geometry TEMPORARY
+   * @param wrappers TEMPORARY!!!
+   * @returns
    */
-  public static updateRTEGeometry(geometry: BufferGeometry) {
-    if (Geometry.USE_RTE) {
-      const position_low = new Float32Array(geometry.attributes.position.array.length)
-      const position_high = new Float32Array(geometry.attributes.position.array.length)
-      Geometry.DoubleToHighLowBuffer(
-        geometry.attributes.position.array,
-        position_low,
-        position_high
-      )
-      geometry.setAttribute('position_low', new Float32BufferAttribute(position_low, 3))
-      geometry.setAttribute(
-        'position_high',
-        new Float32BufferAttribute(position_high, 3)
-      )
+  public static applyWorldTransform(wrappers: Array<ObjectWrapper>) {
+    const worldCenter = World.worldBox.getCenter(new Vector3())
+    worldCenter.negate()
+    const transform = new Matrix4().setPosition(worldCenter)
+    World.worldBox.makeEmpty()
+    for (var k = 0; k < wrappers.length; k++) {
+      const wrapper = wrappers[k]
+      if (Array.isArray(wrapper.bufferGeometry)) {
+        Geometry.applyWorldTransform(wrapper.bufferGeometry)
+        return
+      }
+      try {
+        wrapper.bufferGeometry.applyMatrix4(transform)
+        wrapper.bufferGeometry.computeBoundingBox()
+        World.expandWorld(wrapper.bufferGeometry.boundingBox)
+        Geometry.updateRTEGeometry(wrapper.bufferGeometry)
+      } catch (e) {
+        console.log(e)
+      }
     }
   }
 
@@ -349,8 +394,8 @@ export class Geometry {
 
   public static DoubleToHighLowBuffer(
     input: ArrayLike<number>,
-    position_low: Float32Array,
-    position_high: Float32Array
+    position_low: number[] | Float32Array,
+    position_high: number[] | Float32Array
   ) {
     for (var k = 0; k < input.length; k++) {
       const doubleValue = input[k]
@@ -364,5 +409,22 @@ export class Geometry {
         position_low[k] = doubleValue + doubleHigh
       }
     }
+  }
+
+  public static InterleaveBuffers(
+    input0: number[] | Float32Array,
+    input1: number[] | Float32Array
+  ) {
+    const out = new Array<number>(input0.length + input1.length)
+    for (var k = 0, l = 0; k < out.length; k += 6, l += 3) {
+      out[k] = input0[k]
+      out[k + 1] = input0[k + 1]
+      out[k + 2] = input0[k + 2]
+
+      out[k + 3] = input1[k]
+      out[k + 4] = input1[k + 1]
+      out[k + 5] = input1[k + 2]
+    }
+    return out
   }
 }

@@ -42,8 +42,12 @@ export const speckle_line_vert = /* glsl */ `
 		#endif
 
         #ifdef USE_RTE
-            attribute vec3 position_high;
-            attribute vec3 position_low;
+            // attribute vec3 position_high;
+            // attribute vec3 position_low;
+			attribute vec3 instanceStartLow;
+            attribute vec3 instanceStartHigh;
+			attribute vec3 instanceEndLow;
+            attribute vec3 instanceEndHigh;
             uniform vec3 uViewer_high;
             uniform vec3 uViewer_low;
         #endif
@@ -82,10 +86,10 @@ export const speckle_line_vert = /* glsl */ `
 
 			// camera space
             #ifdef USE_RTE
-                vec3 startHighDifference = vec3(instanceStart.xyz - uViewer_high);
-                vec3 startLowDifference = vec3(instanceStart.xyz - uViewer_low);
-                vec3 endHighDifference = vec3(instanceEnd.xyz - uViewer_high);
-                vec3 endLowDifference = vec3(instanceEnd.xyz - uViewer_low);
+                vec3 startHighDifference = vec3(instanceStartHigh.xyz - uViewer_high);
+                vec3 startLowDifference = vec3(instanceStartLow.xyz - uViewer_low);
+                vec3 endHighDifference = vec3(instanceEndHigh.xyz - uViewer_high);
+                vec3 endLowDifference = vec3(instanceEndLow.xyz - uViewer_low);
                 vec4 start = modelViewMatrix * vec4( startLowDifference + startHighDifference, 1.0 );
                 vec4 end = modelViewMatrix * vec4( endLowDifference + endHighDifference, 1.0 );
             #else

@@ -62,6 +62,7 @@ export class Viewer extends EventEmitter implements IViewer {
       await this.unloadAll()
       Geometry.USE_RTE = value
       this.sceneManager.initMaterials()
+      World.resetWorld()
       await this.loadObject(this.sceneURL, undefined, undefined)
     })()
   }
@@ -75,6 +76,7 @@ export class Viewer extends EventEmitter implements IViewer {
       await this.unloadAll()
       Geometry.THICK_LINES = value
       this.sceneManager.initMaterials()
+      World.resetWorld()
       await this.loadObject(this.sceneURL, undefined, undefined)
     })()
   }

@@ -24,5 +24,6 @@ export class World {
 
   public static resetWorld() {
     World.worldBox.makeEmpty()
+    this.boxes.length = 0
   }
 }
