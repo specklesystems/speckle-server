@@ -1,5 +1,6 @@
 const { authorizeResolver, pubsub } = require('@/modules/shared')
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
+const { Forbidden } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { saveActivity } = require('@/modules/activitystream/services')
 
@@ -170,8 +171,13 @@ module.exports = {
     async commentEdit(parent, args, context) {
       // NOTE: This is NOT in use anywhere
       await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
-      await editComment({ userId: context.userId, input: args.input })
-      return true
+      try {
+        await editComment({ userId: context.userId, input: args.input })
+        return true
+      } catch (err) {
+        if (err instanceof Forbidden) throw new ForbiddenError(err.message)
+        throw err
+      }
     },
 
     // used for flagging a comment as viewed
