@@ -1,4 +1,7 @@
 FROM node:16.13-bullseye-slim as node
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+ARG SPECKLE_SERVER_VERSION=custom
 
 RUN apt-get update && apt-get install -y \
   tini \
@@ -8,16 +11,17 @@ RUN apt-get update && apt-get install -y \
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.8.0/wait /wait
 RUN chmod +x /wait
 
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
+WORKDIR /speckle-server
 
-ARG SPECKLE_SERVER_VERSION=custom
-ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
-WORKDIR /app
+COPY .yarnrc.yml .
+COPY .yarn ./.yarn
+COPY package.json yarn.lock ./
 
-COPY packages/server/package*.json ./
-RUN npm ci
+WORKDIR /speckle-server/packages/server
+COPY packages/server/package.json .
+RUN yarn workspaces focus --production
 
 COPY packages/server .
 
-CMD ["node", "bin/www"]
+ENV SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
+CMD ["yarn", "node", "bin/www"]

@@ -1,6 +1,6 @@
 {
   "name": "@speckle/viewer",
-  "version": "2.4.2",
+  "version": "2.5.4",
   "description": "A 3d viewer for Speckle, based on threejs.",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -22,7 +22,7 @@
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",
     "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./example -p 3032 -o",
-    "prepublishOnly": "npm run build",
+    "prepack": "yarn build",
     "lint": "eslint . --ext .js,.ts"
   },
   "author": "AEC Systems",
@@ -35,7 +35,7 @@
     "threejs"
   ],
   "dependencies": {
-    "@speckle/objectloader": "^2.4.2",
+    "@speckle/objectloader": "workspace:^",
     "camera-controls": "^1.33.1",
     "core-js": "^3.21.1",
     "hold-event": "^0.1.0",

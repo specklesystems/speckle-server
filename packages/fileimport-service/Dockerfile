@@ -12,14 +12,19 @@ RUN chmod +x /wait
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-WORKDIR /app
+WORKDIR /speckle-server
 
-COPY packages/fileimport-service/package*.json ./
-RUN npm ci
+COPY .yarnrc.yml .
+COPY .yarn ./.yarn
+COPY package.json yarn.lock ./
+
+WORKDIR /speckle-server/packages/fileimport-service
+COPY packages/fileimport-service/package.json ./
+RUN yarn workspaces focus --production
 
 COPY packages/fileimport-service/requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY packages/fileimport-service .
 
-CMD ["node", "src/daemon.js"]
+CMD ["yarn", "node", "src/daemon.js"]

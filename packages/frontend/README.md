@@ -10,7 +10,7 @@ Note that this package contains two vue apps, the main frontend (located under @
 
 Notes:
 
-- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `npm run serve` in the frontend package.
+- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`. If you don't see anything, ensure you've run `yarn serve` in the frontend package.
 
 - In **production** mode, the Speckle Frontend will be statically served by nginx (see the Dockerfile in the current directory).
 
@@ -22,18 +22,12 @@ Comprehensive developer and user documentation can be found in our:
 
 ## Project setup
 
-The frontend now includes the viewer. Until we get to publish it as a separate module, there's a few extra steps:
-
-- make sure you build the [Speckle Viewer](../viewer)
-- afterwards, run
-  ```
-  lerna bootstrap
-  ```
+Make sure you follow the Developing and Debugging section in the project root readme.
 
 ### Compiles and hot-reloads for development
 
 ```
-npm run serve
+yarn serve
 ```
 
 ### Packaging for production

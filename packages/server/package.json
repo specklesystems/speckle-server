@@ -1,6 +1,6 @@
 {
   "name": "@speckle/server",
-  "version": "2.3.17-alpha.2889",
+  "version": "2.5.4",
   "private": true,
   "description": "",
   "homepage": "https://github.com/specklesystems/server",
@@ -19,7 +19,7 @@
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
     "test": "cross-env NODE_ENV=test mocha",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter lcov mocha",
-    "test:report": "npm run test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
+    "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
@@ -35,6 +35,7 @@
     "busboy": "^1.4.0",
     "compression": "^1.7.4",
     "connect-redis": "^6.1.1",
+    "cors": "^2.8.5",
     "crypto-random-string": "^3.2.0",
     "dataloader": "^2.0.0",
     "debug": "^4.3.1",
@@ -42,9 +43,10 @@
     "express": "^4.17.3",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.17.1",
-    "graphql": "^15.8.0",
+    "graphql": "^15",
     "graphql-redis-subscriptions": "^2.2.2",
     "graphql-scalars": "^1.6.1",
+    "graphql-subscriptions": "^2.0.0",
     "graphql-tag": "^2.11.0",
     "graphql-tools": "^4.0.7",
     "ioredis": "^4.19.4",
@@ -68,12 +70,12 @@
     "sanitize-html": "^2.4.0",
     "sharp": "^0.29.3",
     "string-pixel-width": "^1.10.0",
+    "subscriptions-transport-ws": "0.9.0",
     "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@apollo/client": "^3.5.9",
     "@types/lodash": "^4.14.180",
     "@types/mocha": "^7.0.2",
     "@types/module-alias": "^2.0.1",
@@ -92,7 +94,6 @@
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "http-proxy-middleware": "^1.0.6",
-    "lerna": "^3.22.1",
     "mocha": "^7.2.0",
     "mocha-junit-reporter": "^2.0.2",
     "nodemon": "^2.0.6",

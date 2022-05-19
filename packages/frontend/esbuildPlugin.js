@@ -18,7 +18,7 @@ function plugin(api) {
     // Add caching config
     jsRule
       .use('cache-loader')
-      .loader(require.resolve('cache-loader'))
+      .loader('cache-loader')
       .options(
         api.genCacheConfig('js-esbuild-loader', {
           target,

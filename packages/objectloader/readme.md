@@ -14,7 +14,7 @@ This is a small utility class that helps you stream an object and all its sub-co
 
 ### Examples
 
-If you've got this repo checked out locally, you can run `npm run example` to run an example web page running ObjectLoader in the browser at 'http://127.0.0.1:3031/'. This will run the example HTML found under ./examples/browser/'.
+If you've got this repo checked out locally, you can run `yarn example` to run an example web page running ObjectLoader in the browser at 'http://127.0.0.1:3031/'. This will run the example HTML found under ./examples/browser/'.
 
 To test ObjectLoader in a node environment, just run `node ./examples/node/script.mjs`
 
@@ -80,7 +80,8 @@ let loader = new ObjectLoader({
 
 ## Development
 
-Run `npm run build` to build prod release, run `npm run build:dev` to build dev release. Or run `npm run dev` to run the build in `watch` mode.
+Run `yarn build` to build prod release, run `yarn build:dev` to build dev release.
+Or run `yarn dev` to run the build in `watch` mode.
 
 ## Community
 

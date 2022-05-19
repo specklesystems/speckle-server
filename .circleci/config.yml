@@ -1,8 +1,5 @@
 version: 2.1
 
-orbs:
-  node: circleci/node@5.0.1
-
 workflows:
   version: 2
 
@@ -20,6 +17,7 @@ workflows:
             branches:
               only:
                 - main
+
       - docker-build-and-publish-server:
           filters: *filters-build
           context: &docker-hub-context
@@ -81,16 +79,16 @@ workflows:
             - docker-build-and-publish-monitor-container
             - docker-build-and-publish-test-container
 
-#       - publish-npm:
-#           filters:
-#             tags:
-#               only: *filters-tag
-#             branches:
-#               ignore: /.*/
-#           context:
-#             - npm-registry
-#           requires:
-#             - get-version
+      - publish-npm:
+          filters:
+            tags:
+              only: *filters-tag
+            branches:
+              ignore: /.*/
+          context:
+            - npm-registry
+          requires:
+            - get-version
 
 jobs:
   get-version:
@@ -115,7 +113,7 @@ jobs:
 
   test-server:
     docker:
-      - image: cimg/node:lts
+      - image: cimg/node:16.15
       - image: cimg/redis:6.2.6
       - image: 'cimg/postgres:12.8'
         environment:
@@ -132,8 +130,22 @@ jobs:
       CANONICAL_URL: 'http://localhost:3000'
     steps:
       - checkout
-      - node/install-packages:
-          app-dir: ~/project/packages/server
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn workspaces focus
+          working_directory: 'packages/server'
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
       - run: 'dockerize -wait tcp://localhost:5432 -timeout 1m'
 
       - run:
@@ -141,7 +153,7 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          command: npm run test:report
+          command: yarn test:report
           working_directory: 'packages/server'
 
       - run:
@@ -157,7 +169,7 @@ jobs:
 
   docker-build-and-publish: &docker-job
     docker: &docker-image
-      - image: cimg/python:3.9-node
+      - image: cimg/node:16.15
     working_directory: *work-dir
     steps:
       - checkout
@@ -165,6 +177,9 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
+          # a weird issue with yarn installing packages throwing EPERM errors
+          # this fixes it
+          version: 20.10.12
           docker_layer_caching: true
       - run:
           name: Build and Publish
@@ -215,25 +230,50 @@ jobs:
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
+
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
-          name: restore packages
-          command: |
-            npm i
-            npx lerna bootstrap
-      # this has to be after lerna bootstrap
-      # otherwise the auth workflow of lerna is borked...
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
       - run:
           name: auth to npm as Speckle
           command: |
-            echo "@speckle:registry=https://registry.npmjs.org" >> .npmrc
-            echo "registry=http://registry.npmjs.org/" >> .npmrc
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> .npmrc
+            echo "npmRegistryServer: https://registry.npmjs.org/" >> .yarnrc.yml 
+            echo "npmAuthToken: ${NPM_TOKEN}" >> .yarnrc.yml
       - run:
           name: try login to npm
-          command: npm whoami
+          command: yarn npm whoami
+
+      - run:
+          name: build public packages
+          command: yarn workspaces foreach -ptv --no-private run build
+      - run:
+          name: bump all versions
+          # bump all versions in dependency tree order but not in parallel
+          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
+
       - run:
           name: publish to npm
-          command: npx lerna publish $IMAGE_VERSION_TAG -y --no-git-tag-version --no-push
+          command: 'yarn workspaces foreach -pv --no-private npm publish --access public --tag next'
+
+      # - run:
+      # name: commit changes
+      # command: |
+      # yarn prettier:fix
+      # git add .
+      # git commit -m '[ci skip] bump version to $IMAGE_VERSION_TAG'
+      # git push
 
   publish-helm-chart:
     docker: *docker-image
