@@ -2,6 +2,7 @@ export const speckle_line_frag = /* glsl */ `
 		uniform vec3 diffuse;
 		uniform float opacity;
 		uniform float linewidth;
+		// varying vec3 debugColor;
 
 		#ifdef USE_DASH
 
@@ -18,6 +19,7 @@ export const speckle_line_frag = /* glsl */ `
 			varying vec4 worldPos;
 			varying vec3 worldStart;
 			varying vec3 worldEnd;
+			varying float correctedLineWidth;
 
 			#ifdef USE_DASH
 
@@ -91,7 +93,7 @@ export const speckle_line_frag = /* glsl */ `
 				vec3 p2 = rayEnd * params.y;
 				vec3 delta = p1 - p2;
 				float len = length( delta );
-				float norm = len / linewidth;
+				float norm = len / correctedLineWidth;
 
 				#ifndef USE_DASH
 

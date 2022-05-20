@@ -227,6 +227,7 @@ export default class SceneObjectManager {
       if (wrapper.meta.displayStyle.lineweight > 0) {
         material.linewidth = wrapper.meta.displayStyle.lineweight
         material.worldUnits = true
+        material.pixelThreshold = 0.5
       } else {
         material.linewidth = 1
         material.worldUnits = false

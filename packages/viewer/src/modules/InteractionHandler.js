@@ -189,7 +189,6 @@ export default class InteractionHandler {
         material.worldUnits = objs[0].object.material.worldUnits
         material.alphaToCoverage = objs[0].object.material.alphaToCoverage
         const l = new Line2(objs[0].object.geometry, material)
-        l.renderOrder = -1
         l.computeLineDistances()
         l.scale.set(1, 1, 1)
         l.userData = { id: objs[0].object.userData.id }

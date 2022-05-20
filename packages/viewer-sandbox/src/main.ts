@@ -33,4 +33,4 @@ viewer.on('load-complete', ()=> {
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 // Load demo object
-sandbox.loadUrl('https://latest.speckle.dev/streams/444bfbd6e4/commits/8f297ad0cd')
+sandbox.loadUrl('https://latest.speckle.dev/streams/3ed8357f29/commits/b21fb0dcf7')

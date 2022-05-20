@@ -7,18 +7,22 @@ export const speckle_line_vert = /* glsl */ `
 
 		uniform float linewidth;
 		uniform vec2 resolution;
+		uniform float pixelThreshold;
+		#define SEARCH_STEPS 10
 
 		attribute vec3 instanceStart;
 		attribute vec3 instanceEnd;
 
 		attribute vec3 instanceColorStart;
 		attribute vec3 instanceColorEnd;
+		// varying vec3 debugColor;
 
 		#ifdef WORLD_UNITS
 
 			varying vec4 worldPos;
 			varying vec3 worldStart;
 			varying vec3 worldEnd;
+			varying float correctedLineWidth;
 
 			#ifdef USE_DASH
 
@@ -65,6 +69,14 @@ export const speckle_line_vert = /* glsl */ `
 
 			end.xyz = mix( start.xyz, end.xyz, alpha );
 
+		}
+
+		float screenSpaceDistance(vec4 p0, vec4 p1) {
+			p0 = projectionMatrix * p0;
+			p0 /= p0.w;
+			p1 = projectionMatrix * p1;
+			p1 /= p1.w;
+			return length(p1.xy - p0.xy);
 		}
 
 		void main() {
@@ -185,12 +197,34 @@ export const speckle_line_vert = /* glsl */ `
 
 				}
 
+				// debugColor = vec3(0., 0., 1.);
+				correctedLineWidth = linewidth;
+				vec3 cOffset = offset;
+				
 				// adjust for linewidth
 				offset *= linewidth * 0.5;
 
 				// set the world position
 				worldPos = ( computedPosition.y < 0.5 ) ? start : end;
-				worldPos.xyz += offset;
+
+				/*
+				Not great, not terrible
+				*/
+				float d;
+				float offsetStep = linewidth;
+				vec3 move = offset;
+				float pixelSize = length(vec2(pixelThreshold/resolution.x + pixelThreshold/resolution.y));
+				for(int i = 0; i < SEARCH_STEPS; i++){
+					move = cOffset * offsetStep;
+					d = screenSpaceDistance(worldPos, worldPos + vec4(move, 0.));
+					if(d > pixelSize) {
+						correctedLineWidth = offsetStep;
+						break;
+					}
+					offsetStep += offsetStep;
+				}
+
+				worldPos.xyz += move;
 
 				// project the worldpos
 				vec4 clip = projectionMatrix * worldPos;

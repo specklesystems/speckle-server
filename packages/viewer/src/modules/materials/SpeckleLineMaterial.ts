@@ -1,12 +1,30 @@
 import { speckle_line_vert } from './shaders/speckle-line-vert'
 import { speckle_line_frag } from './shaders/speckle-line-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshStandardMaterial } from 'three'
+import {
+  UniformsUtils,
+  ShaderLib,
+  Vector3,
+  MeshStandardMaterial,
+  Box3,
+  Camera,
+  Mesh,
+  Object3D,
+  Vector4,
+  Vector2,
+  PerspectiveCamera,
+  OrthographicCamera
+} from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 
 class SpeckleLineMaterial extends LineMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
+
+  public set pixelThreshold(value: number) {
+    this.userData.pixelThreshold.value = value
+    this.needsUpdate = true
+  }
 
   constructor(parameters, defines = []) {
     super(parameters)
@@ -16,6 +34,9 @@ class SpeckleLineMaterial extends LineMaterial {
     }
     this.userData.uViewer_low = {
       value: new Vector3()
+    }
+    this.userData.pixelThreshold = {
+      value: 0
     }
     ;(this as any).vertProgram = speckle_line_vert
     ;(this as any).fragProgram = speckle_line_frag
@@ -27,6 +48,9 @@ class SpeckleLineMaterial extends LineMaterial {
         },
         uViewer_low: {
           value: this.userData.uViewer_low.value
+        },
+        pixelThreshold: {
+          value: this.userData.pixelThreshold
         }
       }
     ])
@@ -34,6 +58,7 @@ class SpeckleLineMaterial extends LineMaterial {
     this.onBeforeCompile = function (shader) {
       shader.uniforms.uViewer_high = this.userData.uViewer_high
       shader.uniforms.uViewer_low = this.userData.uViewer_low
+      shader.uniforms.pixelThreshold = this.userData.pixelThreshold
       shader.vertexShader = this.vertProgram
       shader.fragmentShader = this.fragProgram
     }
@@ -55,6 +80,9 @@ class SpeckleLineMaterial extends LineMaterial {
     }
     this.userData.uViewer_low = {
       value: new Vector3()
+    }
+    this.userData.pixelThreshold = {
+      value: source.userData.pixelThreshold.value
     }
 
     return this
