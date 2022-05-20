@@ -217,7 +217,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.1.0, @babel/core@npm:^7.11.0, @babel/core@npm:^7.12.3, @babel/core@npm:^7.17.5, @babel/core@npm:^7.17.9, @babel/core@npm:^7.7.2, @babel/core@npm:^7.7.5, @babel/core@npm:^7.8.0, @babel/core@npm:^7.9.0":
+"@babel/core@npm:^7.1.0, @babel/core@npm:^7.11.0, @babel/core@npm:^7.12.3, @babel/core@npm:^7.17.5, @babel/core@npm:^7.7.2, @babel/core@npm:^7.7.5, @babel/core@npm:^7.8.0, @babel/core@npm:^7.9.0":
   version: 7.17.10
   resolution: "@babel/core@npm:7.17.10"
   dependencies:
@@ -2835,10 +2835,10 @@ __metadata:
     crypto-random-string: ^3.3.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^1.0.3
+    knex: ^2.0.0
     node-fetch: ^2.6.5
     nodemon: ^2.0.13
-    pg: ^8.7.1
+    pg: ^8.7.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     valid-filename: ^3.1.0
@@ -2907,7 +2907,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectloader@^2.4.2, @speckle/objectloader@workspace:^, @speckle/objectloader@workspace:packages/objectloader":
+"@speckle/objectloader@workspace:^, @speckle/objectloader@workspace:packages/objectloader":
   version: 0.0.0-use.local
   resolution: "@speckle/objectloader@workspace:packages/objectloader"
   dependencies:
@@ -2930,24 +2930,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectloader@npm:2.4.2":
-  version: 2.4.2
-  resolution: "@speckle/objectloader@npm:2.4.2"
-  dependencies:
-    "@babel/core": ^7.17.9
-    core-js: ^3.21.1
-    regenerator-runtime: ^0.13.7
-  checksum: a8dff45029ea2a59ad242831c49aaf33ff5b93ec546e29490a949f7e61bf51f4033d0d0430a78bf09950702ba9003f78b220a6dcc378830afcbfd3b0772c023e
-  languageName: node
-  linkType: hard
-
 "@speckle/preview-service@workspace:packages/preview-service":
   version: 0.0.0-use.local
   resolution: "@speckle/preview-service@workspace:packages/preview-service"
   dependencies:
     "@babel/core": ^7.17.5
-    "@speckle/objectloader": 2.4.2
-    "@speckle/viewer": 2.4.2
+    "@speckle/objectloader": "workspace:^"
+    "@speckle/viewer": "workspace:^"
     babel-loader: ^8.2.2
     clean-webpack-plugin: ^4.0.0-alpha.0
     cookie-parser: ~1.4.4
@@ -2959,12 +2948,11 @@ __metadata:
     file-type: ^16.3.0
     html-webpack-plugin: ^5.3.1
     http-errors: ~1.6.3
-    knex: ^1.0.3
+    knex: ^2.0.0
     morgan: ~1.9.1
     node-fetch: ^2.6.1
     nodemon: ^2.0.7
-    pg: ^8.6.0
-    pg-query-stream: ^4.1.0
+    pg: ^8.7.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     puppeteer: ^13.3.2
@@ -3025,7 +3013,7 @@ __metadata:
     graphql-tools: ^4.0.7
     http-proxy-middleware: ^1.0.6
     ioredis: ^4.19.4
-    knex: ^1.0.3
+    knex: ^2.0.0
     lodash: ^4.17.21
     mocha: ^7.2.0
     mocha-junit-reporter: ^2.0.2
@@ -3041,8 +3029,7 @@ __metadata:
     passport-github2: ^0.1.12
     passport-google-oauth2: ^0.2.0
     passport-google-oauth20: ^2.0.0
-    pg: ^8.5.1
-    pg-query-stream: ^4.2.1
+    pg: ^8.7.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     redis: ^3.1.1
@@ -3075,22 +3062,6 @@ __metadata:
     vite: ^2.9.5
   languageName: unknown
   linkType: soft
-
-"@speckle/viewer@npm:2.4.2":
-  version: 2.4.2
-  resolution: "@speckle/viewer@npm:2.4.2"
-  dependencies:
-    "@speckle/objectloader": ^2.4.2
-    camera-controls: ^1.33.1
-    core-js: ^3.21.1
-    hold-event: ^0.1.0
-    lodash.debounce: ^4.0.8
-    rainbowvis.js: ^1.0.1
-    regenerator-runtime: ^0.13.7
-    three: ^0.136.0
-  checksum: 4f54f354c896f2ccc1aa69dbdc12a8480037de2ab406fff6571bf6291bbd575e0c6b5328417b9caf46fe82134daf7a923915b01f7935ef9d95c6ec76225232f6
-  languageName: node
-  linkType: hard
 
 "@speckle/viewer@workspace:^, @speckle/viewer@workspace:packages/viewer":
   version: 0.0.0-use.local
@@ -3141,9 +3112,9 @@ __metadata:
     cross-env: ^7.0.3
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^1.0.3
+    knex: ^2.0.0
     node-fetch: ^2.6.1
-    pg: ^8.6.0
+    pg: ^8.7.3
     prettier: ^2.5.1
     private-ip: ^2.3.3
     prom-client: ^14.0.1
@@ -15319,9 +15290,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knex@npm:^1.0.3":
-  version: 1.0.7
-  resolution: "knex@npm:1.0.7"
+"knex@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "knex@npm:2.0.0"
   dependencies:
     colorette: 2.0.16
     commander: ^9.1.0
@@ -15338,8 +15309,6 @@ __metadata:
     tarn: ^3.0.2
     tildify: 2.0.0
   peerDependenciesMeta:
-    "@vscode/sqlite3":
-      optional: true
     better-sqlite3:
       optional: true
     mysql:
@@ -15350,11 +15319,13 @@ __metadata:
       optional: true
     pg-native:
       optional: true
+    sqlite3:
+      optional: true
     tedious:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: 57608a3a6813cb66da6f5a078016338166c53ab2cbaab66e81492352023db88fc158e4ad6bbd2156cd9d7c9cac14a4b1e581dd8232b4f9bab2285ea6f1efc5cf
+  checksum: c2b5bf0b511a2736310ffe59bfdccfa5721d95b8692c36ad085871f494cdfbe1817cc9c2521c0b1dda46b934b048bfd10675eaf93460fcc66476cca1b0af875f
   languageName: node
   linkType: hard
 
@@ -18663,15 +18634,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg-cursor@npm:^2.7.3":
-  version: 2.7.3
-  resolution: "pg-cursor@npm:2.7.3"
-  peerDependencies:
-    pg: ^8
-  checksum: a6b7615f382c8dd0b76cc4f34aa761fc490fbca1660ee59b6b1ea50012b17c8b5f6269f3abb3881eda25584af2645b5f07323b1758cd5ae8f2f496253da8b235
-  languageName: node
-  linkType: hard
-
 "pg-int8@npm:1.0.1":
   version: 1.0.1
   resolution: "pg-int8@npm:1.0.1"
@@ -18695,15 +18657,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg-query-stream@npm:^4.1.0, pg-query-stream@npm:^4.2.1":
-  version: 4.2.3
-  resolution: "pg-query-stream@npm:4.2.3"
-  dependencies:
-    pg-cursor: ^2.7.3
-  checksum: 70cea5c298e06e893f2c872877ac0300d254cc6dc61a24d9af3ef4cfbf97bfc0f9b1214dbb72dd00e8685c3eddd2db31020c79dbfadeb3edee32ef3c4fae665c
-  languageName: node
-  linkType: hard
-
 "pg-types@npm:^2.1.0":
   version: 2.2.0
   resolution: "pg-types@npm:2.2.0"
@@ -18717,7 +18670,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg@npm:^8.5.1, pg@npm:^8.6.0, pg@npm:^8.7.1":
+"pg@npm:^8.7.3":
   version: 8.7.3
   resolution: "pg@npm:8.7.3"
   dependencies:
