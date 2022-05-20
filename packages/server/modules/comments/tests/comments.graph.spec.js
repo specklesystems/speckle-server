@@ -4,12 +4,16 @@ const { buildApolloServer } = require('@/app')
 const { addLoadersToCtx } = require('@/modules/shared')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles, AllScopes } = require('@/modules/core/helpers/mainConstants')
-const { grantPermissionsStream } = require('@/modules/core/services/streams')
+const {
+  grantPermissionsStream,
+  updateStream
+} = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('apollo-server-express')
 const { createStream } = require('@/modules/core/services/streams')
 const { createObject } = require('@/modules/core/services/objects')
 const { createComment, createCommentReply } = require('@/modules/comments/services')
+const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 describe('Subscriptions @comments', () => {
   // the idea here, is to use a pubsub.asyncIterator and count the expected events
@@ -247,11 +251,39 @@ const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
 }
 
 const queryComment = async ({ apollo, resources, shouldSucceed }) => {
+  const commentId = await createComment({
+    userId: resources.testActorId,
+    input: {
+      streamId: resources.streamId,
+      text: 'im expecting some replies here',
+      data: {},
+      resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
+    }
+  })
+  const numberOfComments = 3
+
+  const commentPromises = [...Array(numberOfComments).keys()].map((key) =>
+    createCommentReply({
+      authorId: resources.testActorId,
+      parentCommentId: commentId,
+      streamId: resources.streamId,
+      data: {},
+      text: `${key}`
+    })
+  )
+  const commentIds = await Promise.all(commentPromises)
   const res = await apollo.executeOperation({
     query: gql`
       query ($id: String!, $streamId: String!) {
         comment(id: $id, streamId: $streamId) {
           id
+          replies {
+            totalCount
+            items {
+              id
+              text
+            }
+          }
         }
       }
     `,
@@ -263,6 +295,10 @@ const queryComment = async ({ apollo, resources, shouldSucceed }) => {
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.comment.id).to.exist
     expect(res.data.comment.id).to.equal(resources.commentId)
+    expect(res.data.comment.replies.totalCount).to.equal(numberOfComments)
+    expect(res.data.comment.replies.items.map((i) => i.id)).to.deep.equalInAnyOrder(
+      commentIds
+    )
   })
 }
 const queryComments = async ({ apollo, resources, shouldSucceed }) => {
@@ -277,13 +313,13 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
   })
   const numberOfComments = 3
   const commentIds = await Promise.all(
-    Array(numberOfComments).fill(
+    [...Array(numberOfComments).keys()].map((key) =>
       createCommentReply({
         authorId: resources.testActorId,
         parentCommentId: commentId,
         streamId: resources.streamId,
         data: {},
-        text: 'fizz'
+        text: `${key}`
       })
     )
   )
@@ -310,19 +346,157 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
     }
   })
   testResult(shouldSucceed, res, (res) => {
-    expect(res.data.comments.totalCount).to.equal(numberOfComments)
-    expect(res.data.comments.items.map((i) => i.id)).to.deep.equalInAnyOrder(commentIds)
+    expect(res.data.comments.totalCount).to.be.greaterThanOrEqual(numberOfComments)
+    expect(res.data.comments.items.map((i) => i.id)).to.include.members(commentIds)
+  })
+}
+
+const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => {
+  const streamId = await createStream({
+    name: 'test',
+    description: 'foo',
+    ownerId: resources.testActorId
+  })
+
+  await createComment({
+    userId: resources.testActorId,
+    input: {
+      streamId,
+      text: 'im expecting some replies here',
+      data: {},
+      resources: [{ resourceId: streamId, resourceType: 'stream' }]
+    }
+  })
+
+  const res = await apollo.executeOperation({
+    query: gql`
+      query ($id: String!) {
+        stream(id: $id) {
+          id
+          commentCount
+        }
+      }
+    `,
+    variables: { id: streamId }
+  })
+  testResult(shouldSucceed, res, (res) => {
+    expect(res.data.stream.commentCount).to.equal(1)
+  })
+}
+
+const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => {
+  const objectId = await createObject(resources.streamId, { foo: 'bar' })
+  await createComment({
+    userId: resources.testActorId,
+    input: {
+      streamId: resources.streamId,
+      text: 'im expecting some replies here',
+      data: {},
+      resources: [{ resourceId: objectId, resourceType: 'object' }]
+    }
+  })
+
+  const res = await apollo.executeOperation({
+    query: gql`
+      query ($id: String!, $objectId: String!) {
+        stream(id: $id) {
+          object(id: $objectId) {
+            commentCount
+          }
+        }
+      }
+    `,
+    variables: { id: resources.streamId, objectId }
+  })
+  testResult(shouldSucceed, res, (res) => {
+    expect(res.data.stream.object.commentCount).to.equal(1)
+  })
+}
+
+const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => {
+  const objectId = await createObject(resources.streamId, { foo: 'bar' })
+  const commitId = await createCommitByBranchName({
+    streamId: resources.streamId,
+    branchName: 'main',
+    objectId,
+    authorId: resources.testActorId,
+    message: 'bumm'
+  })
+  await createComment({
+    userId: resources.testActorId,
+    input: {
+      streamId: resources.streamId,
+      text: 'im expecting some replies here',
+      data: {},
+      resources: [{ resourceId: commitId, resourceType: 'commit' }]
+    }
+  })
+
+  const res = await apollo.executeOperation({
+    query: gql`
+      query ($id: String!, $commitId: String!) {
+        stream(id: $id) {
+          commit(id: $commitId) {
+            commentCount
+          }
+        }
+      }
+    `,
+    variables: { id: resources.streamId, commitId }
+  })
+  testResult(shouldSucceed, res, (res) => {
+    expect(res.data.stream.commit.commentCount).to.equal(1)
+  })
+}
+
+const queryCommitCollectionCommentCount = async ({
+  apollo,
+  resources,
+  shouldSucceed
+}) => {
+  const objectId = await createObject(resources.streamId, { foo: 'bar' })
+  const commitId = await createCommitByBranchName({
+    streamId: resources.streamId,
+    branchName: 'main',
+    objectId,
+    authorId: resources.testActorId,
+    message: 'bumm'
+  })
+  await createComment({
+    userId: resources.testActorId,
+    input: {
+      streamId: resources.streamId,
+      text: 'im expecting some replies here',
+      data: {},
+      resources: [{ resourceId: commitId, resourceType: 'commit' }]
+    }
+  })
+
+  const res = await apollo.executeOperation({
+    query: gql`
+      query ($id: String!) {
+        user(id: $id) {
+          commits {
+            items {
+              commentCount
+            }
+          }
+        }
+      }
+    `,
+    variables: { id: resources.testActorId }
+  })
+  testResult(shouldSucceed, res, (res) => {
+    res.data.user.commits.items
+      .map((i) => i.commentCount)
+      .map((commentCount) => {
+        expect(commentCount).to.be.greaterThanOrEqual(1)
+      })
   })
 }
 
 // eslint-disable-next-line no-unused-vars
-const actions = [
-  'queryComments',
-  'queryStreamCommentCount',
-  'queryCommitCommentCount',
-  'queryObjectCommentCount',
-  'queryCommitCollectionCommentCount'
-]
+const actions = ['queryCommitCommentCount', 'queryCommitCollectionCommentCount']
 
 describe('Graphql @comments', () => {
   // this user will be admin by default
@@ -343,8 +517,38 @@ describe('Graphql @comments', () => {
 
   const ownedStream = {
     name: 'stream owner',
-    isPublic: true,
+    isPublic: false,
     role: Roles.Stream.Owner
+  }
+
+  const contributorStream = {
+    name: 'contributions are welcome',
+    isPublic: false,
+    role: Roles.Stream.Contributor
+  }
+
+  const reviewerStream = {
+    name: 'no work, just talk',
+    isPublic: false,
+    role: Roles.Stream.Contributor
+  }
+
+  const noAccessStream = {
+    name: 'aint nobody canna cross it',
+    isPublic: false,
+    role: null
+  }
+
+  const publicStream = {
+    name: 'come take a look',
+    isPublic: true,
+    role: null
+  }
+
+  const publicStreamWithPublicComments = {
+    name: 'the gossip protocol',
+    isPublic: true,
+    role: null
   }
 
   const testData = [
@@ -364,7 +568,109 @@ describe('Graphql @comments', () => {
             [editOthersComment, false],
             [replyToAComment, true],
             [queryComment, true],
-            [queryComments, true]
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
+            [queryCommitCollectionCommentCount, true]
+          ]
+        },
+        {
+          stream: contributorStream,
+          cases: [
+            [writeComment, true],
+            [broadcastViewerActivity, true],
+            [broadcastCommentActivity, true],
+            [viewAComment, true],
+            [archiveMyComment, true],
+            [archiveOthersComment, false],
+            [editMyComment, true],
+            [editOthersComment, false],
+            [replyToAComment, true],
+            [queryComment, true],
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
+            [queryCommitCollectionCommentCount, true]
+          ]
+        },
+        {
+          stream: reviewerStream,
+          cases: [
+            [writeComment, true],
+            [broadcastViewerActivity, true],
+            [broadcastCommentActivity, true],
+            [viewAComment, true],
+            [archiveMyComment, true],
+            [archiveOthersComment, false],
+            [editMyComment, true],
+            [editOthersComment, false],
+            [replyToAComment, true],
+            [queryComment, true],
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
+            [queryCommitCollectionCommentCount, true]
+          ]
+        },
+        {
+          stream: noAccessStream,
+          cases: [
+            [writeComment, false],
+            [broadcastViewerActivity, false],
+            [broadcastCommentActivity, false],
+            [viewAComment, false],
+            [archiveOthersComment, false],
+            [editOthersComment, false],
+            [replyToAComment, true],
+            [queryComment, false],
+            [queryComments, false],
+            [queryStreamCommentCount, false],
+            [queryObjectCommentCount, false],
+            [queryCommitCommentCount, false],
+            [queryCommitCollectionCommentCount, false]
+          ]
+        },
+        {
+          stream: publicStream,
+          cases: [
+            [writeComment, true],
+            [broadcastViewerActivity, true],
+            [broadcastCommentActivity, true],
+            [viewAComment, true],
+            [archiveMyComment, true],
+            [archiveOthersComment, false],
+            [editMyComment, true],
+            [editOthersComment, false],
+            [replyToAComment, true],
+            [queryComment, true],
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
+            [queryCommitCollectionCommentCount, true]
+          ]
+        },
+        {
+          stream: publicStreamWithPublicComments,
+          cases: [
+            [writeComment, true],
+            [broadcastViewerActivity, true],
+            [broadcastCommentActivity, true],
+            [viewAComment, true],
+            [archiveMyComment, true],
+            [archiveOthersComment, false],
+            [editMyComment, true],
+            [editOthersComment, false],
+            [replyToAComment, true],
+            [queryComment, true],
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
+            [queryCommitCollectionCommentCount, true]
           ]
         }
       ]
@@ -381,8 +687,13 @@ describe('Graphql @comments', () => {
             [viewAComment, false],
             [archiveOthersComment, false],
             [editOthersComment, false],
-            [replyToAComment, false],
-            [queryComment, true] // should this be
+            [replyToAComment, true],
+            [queryComment, false],
+            [queryComments, false],
+            [queryStreamCommentCount, false],
+            [queryObjectCommentCount, false],
+            [queryCommitCommentCount, false],
+            [queryCommitCollectionCommentCount, false]
           ]
         }
       ]
@@ -403,6 +714,27 @@ describe('Graphql @comments', () => {
     )
 
     ownedStream.id = await createStream({ ...ownedStream, ownerId: myTestActor.id })
+    contributorStream.id = await createStream({
+      ...contributorStream,
+      ownerId: myTestActor.id
+    })
+    reviewerStream.id = await createStream({
+      ...reviewerStream,
+      ownerId: myTestActor.id
+    })
+    noAccessStream.id = await createStream({
+      ...noAccessStream,
+      ownerId: myTestActor.id
+    })
+    publicStream.id = await createStream({
+      ...publicStream,
+      ownerId: myTestActor.id
+    })
+    publicStreamWithPublicComments.id = await createStream({
+      ...publicStreamWithPublicComments,
+      ownerId: myTestActor.id
+    })
+    await updateStream({ ...publicStreamWithPublicComments, allowPublicComments: true })
   })
   testData.forEach((userContext) => {
     const user = userContext.user
@@ -450,10 +782,10 @@ describe('Graphql @comments', () => {
             testActorId: myTestActor.id
           }
         })
-        describe(`testing ${
-          streamContext.cases.length
-        } cases of acting on a stream where I'm a ${
-          user ? stream.role : 'trouble:maker'
+        describe(`testing ${streamContext.cases.length} cases of acting on ${
+          stream.name
+        } stream where I'm a ${
+          user && stream.role ? stream.role : 'trouble:maker'
         }`, () => {
           streamContext.cases.forEach(([testCase, shouldSucceed]) => {
             it(`${shouldSucceed ? 'can' : 'am not allowed to'} ${
