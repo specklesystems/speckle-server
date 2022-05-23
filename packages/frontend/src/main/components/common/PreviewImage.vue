@@ -1,18 +1,29 @@
 <template>
-  <div @mouseenter="hovered = true" @mouseleave="hovered = false" @mousemove="setIndex">
+  <div
+    style="position: relative"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
+    @mousemove="setIndex"
+  >
     <v-img
       ref="cover"
       :height="height"
       cover
       :class="`${color ? '' : 'grasycale-img'} preview-img`"
-      :src="previewImages[imageIndex]"
+      :src="revImg[imageIndex]"
       :gradient="`to top right, ${
         $vuetify.theme.dark
           ? 'rgba(100,115,201,.13), rgba(25,32,72,.2)'
           : 'rgba(100,115,231,.075), rgba(25,32,72,.02)'
       }`"
     />
-    <v-progress-linear v-show="loading" indeterminate height="2" />
+    <v-progress-linear
+      v-show="loading"
+      indeterminate
+      height="4"
+      style="position: absolute; bottom: 0"
+    />
+    <!-- <span class="caption">{{ imageIndex }}</span> -->
   </div>
 </template>
 <script>
@@ -43,10 +54,16 @@ export default {
       currentPreviewImg: '',
       previewImages: [],
       imageIndex: 0,
+      legacyMode: false,
       angles: [
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
         22, 23, 0
       ]
+    }
+  },
+  computed: {
+    revImg() {
+      return !this.legacyMode ? this.previewImages : [...this.previewImages].reverse()
     }
   },
   watch: {
@@ -66,7 +83,7 @@ export default {
       const x = e.clientX - rect.left
       const step = rect.width / this.previewImages.length
       let index = Math.round(x / step)
-      if (index >= this.previewImages.length) index = this.previewImages.length - 1
+      if (index >= this.previewImages.length) index = 0
       this.imageIndex = index
     },
     async getPreviewImage(angle = 0) {
@@ -94,7 +111,9 @@ export default {
           const img = await this.getPreviewImage(this.angles[i])
           this.$set(this.previewImages, i, img)
         } catch (err) {
+          console.log(err)
           // on the legacy track!
+          this.legacyMode = true
           this.previewImages.unshift(await this.getPreviewImage(-1))
           this.previewImages.unshift(await this.getPreviewImage(-2))
           // We have the image at 0, skipping
