@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <span class="font-weight-bold mr-2">Your Streams</span>
       <span class="caption">({{ streams ? streams.totalCount : '...' }})</span>
       <div class="d-none d-md-inline-block">
@@ -82,6 +82,12 @@
 <script>
 import streamsQuery from '@/graphql/streams.gql'
 import { MainUserDataQuery } from '@/graphql/user'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheStreams',
@@ -101,7 +107,8 @@ export default {
   data() {
     return {
       streamFilter: 1,
-      infiniteId: 0
+      infiniteId: 0,
+      portalIdentity: 'streams'
     }
   },
   computed: {
@@ -121,6 +128,12 @@ export default {
      */
     allStreamsLoaded() {
       return this.streams && this.streams.items.length >= this.streams.totalCount
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
   },
   watch: {
@@ -133,6 +146,10 @@ export default {
       this.$apollo.queries.streams.refetch()
       this.$router.replace({ path: this.$route.path, query: null })
     }
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     checkFilter(role) {

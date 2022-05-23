@@ -3,7 +3,8 @@ import Vue from 'vue'
 export const STANDARD_PORTAL_KEYS = {
   Toolbar: 'toolbar',
   Actions: 'actions',
-  Nav: 'nav'
+  Nav: 'nav',
+  SubnavAdmin: 'subnav-admin'
 }
 
 /**
@@ -33,6 +34,13 @@ function recalculateState() {
       if (!highestPriorityIdentity || data.priority > highestPriority) {
         highestPriorityIdentity = identity
         highestPriority = data.priority
+      } else if (
+        highestPriority === data.priority &&
+        highestPriorityIdentity === identity
+      ) {
+        console.error(
+          'Multiple portals with the same priority encountered, your portals might not act deterministically'
+        )
       }
     }
     newPortals[portalKey] = highestPriorityIdentity
@@ -76,7 +84,9 @@ export function claimPortals(portals, identity, priority) {
  * @param {string} identity
  */
 export function unclaimPortal(portal, identity) {
-  delete claims[portal][identity]
+  if (claims[portal]) {
+    delete claims[portal][identity]
+  }
   recalculateState()
 }
 

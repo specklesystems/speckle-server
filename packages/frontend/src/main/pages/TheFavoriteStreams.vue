@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       Favorite Streams
       <span v-if="streams.length" class="caption">
         ({{ user.favoriteStreams.totalCount }})
@@ -36,6 +36,12 @@
 </template>
 <script>
 import { UserFavoriteStreamsQuery } from '@/graphql/user'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheFavoriteStreams',
@@ -50,6 +56,7 @@ export default {
       query: UserFavoriteStreamsQuery
     }
   },
+  data: () => ({ portalIdentity: 'favorite-streams' }),
   computed: {
     streams() {
       return this.user?.favoriteStreams?.items || []
@@ -62,7 +69,19 @@ export default {
         this.streams.length &&
         this.streams.length >= this.user.favoriteStreams.totalCount
       )
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     infiniteHandler($state) {

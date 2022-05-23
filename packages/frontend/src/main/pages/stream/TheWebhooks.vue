@@ -53,7 +53,7 @@
       </p>
     </error-placeholder>
 
-    <v-container v-if="!$apollo.loading && webhooks.length !== 0" fluid class="pa-0">
+    <v-container v-if="showToolbar && canRenderToolbarPortal" fluid class="pa-0">
       <portal to="toolbar">
         <div class="d-flex align-center">
           <div class="text-truncate">
@@ -268,6 +268,13 @@
 
 <script>
 import webhooksQuery from '@/graphql/webhooks.gql'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   name: 'TheWebhooks',
   components: {
@@ -304,14 +311,39 @@ export default {
       editWebhookDialog: false,
       statusReportsDialog: false,
       selectedWebhook: null,
-      error: null
+      error: null,
+      portalIdentity: 'stream-webhooks'
     }
   },
   computed: {
     webhooks() {
       if (this.stream) return this.stream.webhooks.items
       return []
+    },
+    showToolbar() {
+      return !this.$apollo.loading && this.webhooks.length !== 0
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
+  },
+  watch: {
+    showToolbar: {
+      handler(newVal) {
+        if (newVal) {
+          claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+        } else {
+          unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+        }
+      },
+      immediate: true
+    }
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
   },
   methods: {
     getStatusIcon(webhook) {

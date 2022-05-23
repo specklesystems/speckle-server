@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="px-0 py-0" xxxstyle="max-width: 768px">
-    <portal v-if="stream" to="toolbar">
+    <portal v-if="stream && canRenderToolbarPortal" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -236,6 +236,12 @@ import gql from 'graphql-tag'
 import streamCollaboratorsQuery from '@/graphql/streamCollaborators.gql'
 import userSearchQuery from '@/graphql/userSearch.gql'
 import { FullServerInfoQuery } from '@/graphql/server'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheCollaborators',
@@ -251,7 +257,8 @@ export default {
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    loading: false
+    loading: false,
+    portalIdentity: 'stream-collaborators'
   }),
   apollo: {
     stream: {
@@ -305,6 +312,12 @@ export default {
       }
       return ret
     },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    },
     collaborators() {
       if (!this.stream) return []
       return this.stream.collaborators.filter((user) => user.id !== this.myId)
@@ -334,6 +347,12 @@ export default {
     myId() {
       return localStorage.getItem('uuid')
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     getRoleCount(role) {

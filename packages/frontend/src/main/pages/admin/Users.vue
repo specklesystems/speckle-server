@@ -1,11 +1,11 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       User Management (showing
       <span v-if="users">{{ users.items.length }} of {{ users.totalCount }} users</span>
       )
     </portal>
-    <portal to="actions">
+    <portal v-if="canRenderActionsPortal" to="actions">
       <v-pagination
         v-model="currentPage"
         :length="numberOfPages"
@@ -101,6 +101,12 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
+import {
+  claimPortals,
+  unclaimPortals,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'UserAdmin',
@@ -129,7 +135,8 @@ export default {
       showConfirmDialog: false,
       showDeleteDialog: false,
       manipulatedUser: null,
-      newRole: null
+      newRole: null,
+      portalIdentity: 'admin-users'
     }
   },
   computed: {
@@ -164,7 +171,32 @@ export default {
         roleItems.push({ text: this.roleLookupTable[role], value: role })
       }
       return roleItems
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    },
+    canRenderActionsPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
+        this.portalIdentity
+      )
     }
+  },
+  mounted() {
+    claimPortals(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      this.portalIdentity,
+      1
+    )
+  },
+  beforeDestroy() {
+    unclaimPortals(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      this.portalIdentity
+    )
   },
   methods: {
     initiateDeleteUser(user) {

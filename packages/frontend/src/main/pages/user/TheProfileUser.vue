@@ -1,6 +1,8 @@
 <template>
   <v-container fluid class="pa-0">
-    <portal v-if="user" to="toolbar">Profile Page of {{ user.name }}</portal>
+    <portal v-if="canRenderToolbarPortal && user" to="toolbar">
+      Profile Page of {{ user.name }}
+    </portal>
     <v-row v-if="$apollo.loading">
       <v-col cols="12">
         <v-skeleton-loader type="card, article"></v-skeleton-loader>
@@ -40,6 +42,12 @@
 <script>
 import ListItemStream from '@/main/components/user/ListItemStream'
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheProfileUser',
@@ -48,7 +56,7 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     ListItemStream
   },
-  data: () => ({}),
+  data: () => ({ portalIdentity: 'user-profile' }),
   apollo: {
     user: {
       query: gql`
@@ -87,7 +95,20 @@ export default {
       }
     }
   },
-  computed: {},
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
+  },
   created() {
     // Move to self profile
     if (this.$route.params.userId === localStorage.getItem('uuid')) {

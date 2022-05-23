@@ -1,5 +1,5 @@
 <template>
-  <portal to="toolbar">
+  <portal v-if="canRenderToolbarPortal" to="toolbar">
     <div class="d-flex align-center">
       <div class="text-truncate flex-shrink-0 flex-lg-shrink-1">
         <router-link
@@ -43,6 +43,13 @@
   </portal>
 </template>
 <script>
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   props: {
     stream: {
@@ -51,7 +58,7 @@ export default {
     }
   },
   data() {
-    return { showInfo: false }
+    return { showInfo: false, portalIdentity: 'stream-commit-objects' }
   },
   computed: {
     commitDate() {
@@ -60,7 +67,19 @@ export default {
       const options = { year: 'numeric', month: 'long', day: 'numeric' }
 
       return date.toLocaleString(undefined, options)
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   }
 }
 </script>

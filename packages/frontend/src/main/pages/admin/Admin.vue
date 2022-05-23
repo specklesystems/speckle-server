@@ -5,7 +5,7 @@
 
   <v-container v-else-if="isAdmin" class="pa-0">
     <admin-nav />
-    <portal to="actions"><div></div></portal>
+    <portal v-if="canRenderActionsPortal" to="actions"><div></div></portal>
     <v-container fluid class="pa-0">
       <transition name="fade">
         <router-view></router-view>
@@ -21,6 +21,12 @@
 
 <script>
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'AdminPanel',
@@ -30,7 +36,8 @@ export default {
   },
   data() {
     return {
-      adminNav: true
+      adminNav: true,
+      portalIdentity: 'admin'
     }
   },
   apollo: {
@@ -49,7 +56,19 @@ export default {
   computed: {
     isAdmin() {
       return this.user?.role === 'server:admin'
+    },
+    canRenderActionsPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
+        this.portalIdentity
+      )
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Actions, this.portalIdentity, 0)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Actions, this.portalIdentity)
   }
 }
 </script>

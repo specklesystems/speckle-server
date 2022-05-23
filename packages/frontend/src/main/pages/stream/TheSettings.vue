@@ -1,6 +1,6 @@
 <template>
   <v-container class="pa-0">
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div v-if="stream" class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -175,6 +175,12 @@
 
 <script>
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheSettings',
@@ -228,7 +234,8 @@ export default {
     allowPublicComments: true,
     validation: {
       nameRules: [(v) => !!v || 'A stream must have a name!']
-    }
+    },
+    portalIdentity: 'stream-settings'
   }),
   computed: {
     canSave() {
@@ -240,6 +247,12 @@ export default {
           this.isPublic !== this.stream.isPublic ||
           this.allowPublicComments !== this.stream.allowPublicComments)
       )
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
   },
   watch: {
@@ -249,6 +262,12 @@ export default {
     isPublic(newVal) {
       if (!newVal && this.allowPublicComments) this.allowPublicComments = false
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     async save() {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="font-weight-bold">
         Your Latest Commits
         <span v-if="user" class="caption">({{ user.commits.totalCount }})</span>
@@ -61,12 +61,30 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   name: 'TheCommits',
   components: {
     InfiniteLoading: () => import('vue-infinite-loading'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
+  },
+  data: () => ({
+    portalIdentity: 'commits'
+  }),
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    }
   },
   apollo: {
     user: {
@@ -94,6 +112,12 @@ export default {
         }
       `
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     infiniteHandler($state) {

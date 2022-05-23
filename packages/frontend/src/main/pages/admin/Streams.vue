@@ -1,12 +1,12 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       Stream Administration
       <span v-if="adminStreams">
         ({{ adminStreams.items.length }} of {{ adminStreams.totalCount }} streams)
       </span>
     </portal>
-    <portal to="actions">
+    <portal v-if="canRenderActionsPortal" to="actions">
       <v-pagination
         v-model="currentPage"
         :length="numberOfPages"
@@ -108,6 +108,12 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
+import {
+  claimPortals,
+  unclaimPortals,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'AdminStreams',
@@ -129,10 +135,23 @@ export default {
       adminStreams: {
         items: [],
         totalCount: 0
-      }
+      },
+      portalIdentity: 'admin-streams'
     }
   },
   computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    },
+    canRenderActionsPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
+        this.portalIdentity
+      )
+    },
     numberOfPages() {
       return Math.ceil(this.adminStreams.totalCount / this.queryLimit)
     },
@@ -189,6 +208,19 @@ export default {
         this.navigateNext({ visibility })
       }
     }
+  },
+  mounted() {
+    claimPortals(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      this.portalIdentity,
+      1
+    )
+  },
+  beforeDestroy() {
+    unclaimPortals(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      this.portalIdentity
+    )
   },
   methods: {
     initiateDeleteStreams(stream) {

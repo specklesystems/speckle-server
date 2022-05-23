@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div v-if="stream" class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -128,6 +128,12 @@
 
 <script>
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheUploads',
@@ -186,10 +192,24 @@ export default {
       files: [],
       showUploadDialog: false,
       error: null,
-      dragError: null
+      dragError: null,
+      portalIdentity: 'stream-uploads'
     }
   },
-  computed: {},
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
+  },
   methods: {
     onFileSelect(e) {
       this.parseFiles(e.target.files)

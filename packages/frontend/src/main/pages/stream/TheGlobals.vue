@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -149,6 +149,12 @@
 <script>
 import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheGlobals',
@@ -194,7 +200,8 @@ export default {
       branchName: 'globals', //TODO: handle multipile globals branches,
       revealBuilder: false,
       loading: false,
-      showHistory: true
+      showHistory: true,
+      portalIdentity: 'stream-globals'
     }
   },
   computed: {
@@ -210,7 +217,19 @@ export default {
     },
     objectId() {
       return this.commit?.referencedObject
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     async createGlobals() {
@@ -245,5 +264,3 @@ export default {
   }
 }
 </script>
-
-<style scoped></style>

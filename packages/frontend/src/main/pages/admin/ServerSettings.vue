@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">Server Info and Settings</portal>
+    <portal v-if="canRenderToolbarPortal" to="toolbar">Server Info and Settings</portal>
     <section-card>
       <v-card-text>Here you can edit your server's basic information.</v-card-text>
     </section-card>
@@ -47,6 +47,12 @@
 import gql from 'graphql-tag'
 import { MainServerInfoQuery } from '@/graphql/server'
 import pick from 'lodash/pick'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'ServerInfoAdminCard',
@@ -84,7 +90,8 @@ export default {
           hint: 'Only users with an invitation will be able to join',
           type: 'boolean'
         }
-      }
+      },
+      portalIdentity: 'admin-settings'
     }
   },
   apollo: {
@@ -96,6 +103,20 @@ export default {
         return data.serverInfo
       }
     }
+  },
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     async saveEdit() {

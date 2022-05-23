@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="font-weight-bold">Feed</div>
     </portal>
     <v-row>
@@ -12,11 +12,33 @@
   </div>
 </template>
 <script>
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   name: 'TheFeed',
   components: {
     FeedTimeline: () => import('@/main/components/feed/FeedTimeline.vue'),
     LatestBlogposts: () => import('@/main/components/feed/LatestBlogposts')
+  },
+  data: () => ({ portalIdentity: 'feed' }),
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   }
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div v-if="!$apollo.loading" class="d-flex align-center">
         <div class="text-truncate flex-shrink-1">
           <router-link
@@ -68,6 +68,12 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheComments',
@@ -81,11 +87,24 @@ export default {
       localComments: [],
       showArchivedComments: false,
       commentFilter: 1,
-      cursor: null
+      cursor: null,
+      portalIdentity: 'stream-comments'
+    }
+  },
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
   },
   mounted() {
     this.$apollo.queries.comments.refetch()
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   apollo: {
     stream: {
@@ -184,4 +203,3 @@ export default {
   }
 }
 </script>
-<style scoped></style>

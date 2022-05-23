@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">Bulk Invites</portal>
+    <portal v-if="canRenderToolbarPortal" to="toolbar">Bulk Invites</portal>
     <section-card>
       <v-card-text>
         <v-alert v-model="success" prominent timeout="3000" dismissible type="success">
@@ -93,6 +93,12 @@ import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
 import { isEmailValid } from '@/plugins/authHelpers'
 import { MainServerInfoQuery } from '@/graphql/server'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'AdminInvites',
@@ -125,12 +131,19 @@ export default {
             else return true
           }
         ]
-      }
+      },
+      portalIdentity: 'admin-invites'
     }
   },
   computed: {
     submitable() {
       return this.chips && this.chips.length !== 0
+    },
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
     }
   },
   apollo: {
@@ -148,6 +161,12 @@ export default {
     serverInfo: {
       query: MainServerInfoQuery
     }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     setStream(stream) {
