@@ -179,7 +179,7 @@ export default {
     }
   },
   data() {
-    return { showCommitInfo: false, portalIdentity: 'stream-commit' }
+    return { showCommitInfo: false }
   }
 }
 </script>

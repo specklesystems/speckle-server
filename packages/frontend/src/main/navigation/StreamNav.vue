@@ -275,8 +275,7 @@ export default {
   data() {
     return {
       branchMenuOpen: false,
-      newBranchDialog: false,
-      portalIdentity: 'stream-nav'
+      newBranchDialog: false
     }
   },
   computed: {

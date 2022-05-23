@@ -233,8 +233,7 @@ export default {
     allowPublicComments: true,
     validation: {
       nameRules: [(v) => !!v || 'A stream must have a name!']
-    },
-    portalIdentity: 'stream-settings'
+    }
   }),
   computed: {
     canSave() {

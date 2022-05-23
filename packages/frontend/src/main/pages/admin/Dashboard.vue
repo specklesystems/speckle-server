@@ -22,7 +22,6 @@ export default {
     ActivityCard: () => import('@/main/components/admin/ActivityCard'),
     VersionInfoCard: () => import('@/main/components/admin/VersionInfoCard')
   },
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-dashboard', 1)],
-  data: () => ({ portalIdentity: 'admin-dashboard' })
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-dashboard', 1)]
 }
 </script>

@@ -191,8 +191,7 @@ export default {
       files: [],
       showUploadDialog: false,
       error: null,
-      dragError: null,
-      portalIdentity: 'stream-uploads'
+      dragError: null
     }
   },
   methods: {

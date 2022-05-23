@@ -74,9 +74,6 @@ export default {
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'commits', 0)],
-  data: () => ({
-    portalIdentity: 'commits'
-  }),
   apollo: {
     user: {
       query: gql`

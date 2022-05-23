@@ -57,7 +57,6 @@ export default {
       query: UserFavoriteStreamsQuery
     }
   },
-  data: () => ({ portalIdentity: 'favorite-streams' }),
   computed: {
     streams() {
       return this.user?.favoriteStreams?.items || []

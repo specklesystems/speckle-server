@@ -37,7 +37,6 @@ import {
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 export default {
-  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.SubnavAdmin], 'admin-nav', 0)],
-  data: () => ({ portalIdentity: 'admin-nav' })
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.SubnavAdmin], 'admin-nav', 0)]
 }
 </script>
