@@ -1,41 +1,22 @@
 <template>
   <div
     :style="`position: relative; height: ${height}px;`"
+    :class="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
     @mousemove="setIndex"
   >
     <!-- 
-    Note: sketchfab stitches all frames into one single image and controls its visibility
-    by modifying the background position. Results in reliably less flickering, but it's a 
-    longer more tough implementation. At one point, we could ask the backend for a pre-stitched
-    frame and do the same.
+    Note: alternate style, sketchfab inspired! We are controlling image display via manipulating
+    bg image props position. Results in less dom elements, and no flickering! 
     -->
-    <template v-for="(img, index) in revImg">
-      <v-img
-        ref="cover"
-        :key="index"
-        :height="height"
-        cover
-        :class="`${color ? '' : 'grasycale-img'} preview-img`"
-        :src="img"
-        :style="`position: absolute; top: 0; transition: opacity 0.01s ease; opacity:${
-          index === imageIndex ? 1 : 0
-        };`"
-        :gradient="`to top right, ${
-          $vuetify.theme.dark
-            ? 'rgba(100,115,201,.13), rgba(25,32,72,.2)'
-            : 'rgba(100,115,231,.075), rgba(25,32,72,.02)'
-        }`"
-      />
-    </template>
+    <div :style="bgStyle"></div>
     <v-progress-linear
       v-show="loading"
       indeterminate
       height="4"
       style="position: absolute; bottom: 0"
     />
-    <!-- <span class="caption">{{ imageIndex }}</span> -->
   </div>
 </template>
 <script>
@@ -53,7 +34,7 @@ export default {
       type: Number,
       default: 180
     },
-    full: {
+    rotate: {
       type: Boolean,
       default: false
     }
@@ -75,11 +56,32 @@ export default {
   },
   computed: {
     revImg() {
-      return !this.legacyMode ? this.previewImages : [...this.previewImages].reverse()
+      return this.legacyMode ? this.previewImages : [...this.previewImages].reverse()
+    },
+    bgStyle() {
+      let bgStyle = `
+        height: 100%;
+        width: 100%;
+        background-size: cover;
+        background-image:`
+
+      for (let i = 0; i < this.revImg.length; i++) {
+        bgStyle += `url(${this.revImg[i]})${i !== this.revImg.length - 1 ? ',' : ';'}`
+      }
+      bgStyle += `
+      background-position:`
+      for (let i = 0; i < this.revImg.length; i++) {
+        bgStyle += `${i === this.imageIndex ? 'center' : '10000px'}${
+          i !== this.revImg.length - 1 ? ',' : ';'
+        }`
+      }
+      return bgStyle
     }
   },
+
   watch: {
     hovered(val) {
+      if (!this.rotate) return
       if (!val || this.hasStartedLoadingImages) return
       this.getOtherAngles()
       this.hasStartedLoadingImages = true
