@@ -9,6 +9,7 @@
         <preview-image
           :url="`/preview/${streamId}/commits/${commit.id}`"
           :height="previewHeight"
+          rotate
         ></preview-image>
       </router-link>
       <v-toolbar class="transparent elevation-0" dense>

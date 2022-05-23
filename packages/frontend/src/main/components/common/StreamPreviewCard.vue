@@ -9,6 +9,7 @@
         <preview-image
           :url="`/preview/${stream.id}`"
           :height="previewHeight"
+          rotate
         ></preview-image>
         <stream-favorite-btn :user="user" :stream="stream" class="favorite-button" />
       </router-link>
