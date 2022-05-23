@@ -33,6 +33,11 @@
     "lint-staged": "^12.3.7",
     "prettier": "^2.5.1"
   },
+  "resolutions": {
+    "tslib": "^2.3.1",
+    "core-js": "3.22.4",
+    "vue-cli-plugin-apollo/graphql": "^15"
+  },
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
