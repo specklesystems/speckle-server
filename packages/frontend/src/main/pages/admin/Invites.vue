@@ -94,10 +94,8 @@ import DOMPurify from 'dompurify'
 import { isEmailValid } from '@/plugins/authHelpers'
 import { MainServerInfoQuery } from '@/graphql/server'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -106,6 +104,7 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     StreamSearchBar: () => import('@/main/components/common/SearchBar')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-invites', 1)],
   data() {
     return {
       valid: false,
@@ -131,19 +130,12 @@ export default {
             else return true
           }
         ]
-      },
-      portalIdentity: 'admin-invites'
+      }
     }
   },
   computed: {
     submitable() {
       return this.chips && this.chips.length !== 0
-    },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
     }
   },
   apollo: {
@@ -161,12 +153,6 @@ export default {
     serverInfo: {
       query: MainServerInfoQuery
     }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     setStream(stream) {

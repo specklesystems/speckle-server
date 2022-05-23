@@ -22,10 +22,8 @@
 <script>
 import gql from 'graphql-tag'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -34,10 +32,10 @@ export default {
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
     AdminNav: () => import('@/main/navigation/AdminNav')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Actions], 'admin', 0)],
   data() {
     return {
-      adminNav: true,
-      portalIdentity: 'admin'
+      adminNav: true
     }
   },
   apollo: {
@@ -56,19 +54,7 @@ export default {
   computed: {
     isAdmin() {
       return this.user?.role === 'server:admin'
-    },
-    canRenderActionsPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
-        this.portalIdentity
-      )
     }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Actions, this.portalIdentity, 0)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Actions, this.portalIdentity)
   }
 }
 </script>

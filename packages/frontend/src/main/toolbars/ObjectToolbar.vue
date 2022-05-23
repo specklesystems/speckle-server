@@ -44,13 +44,14 @@
 </template>
 <script>
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-commit-objects', 1)
+  ],
   props: {
     stream: {
       type: Object,
@@ -58,7 +59,7 @@ export default {
     }
   },
   data() {
-    return { showInfo: false, portalIdentity: 'stream-commit-objects' }
+    return { showInfo: false }
   },
   computed: {
     commitDate() {
@@ -67,19 +68,7 @@ export default {
       const options = { year: 'numeric', month: 'long', day: 'numeric' }
 
       return date.toLocaleString(undefined, options)
-    },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
     }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   }
 }
 </script>

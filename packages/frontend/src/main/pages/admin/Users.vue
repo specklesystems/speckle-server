@@ -102,10 +102,8 @@
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
 import {
-  claimPortals,
-  unclaimPortals,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -114,6 +112,13 @@ export default {
     UserListItem: () => import('@/main/components/admin/UserListItem'),
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Actions, STANDARD_PORTAL_KEYS.Toolbar],
+      'admin-users',
+      1
+    )
+  ],
   props: {
     limit: { type: [Number, String], required: false, default: 20 },
     page: { type: [Number, String], required: false, default: 1 },
@@ -135,8 +140,7 @@ export default {
       showConfirmDialog: false,
       showDeleteDialog: false,
       manipulatedUser: null,
-      newRole: null,
-      portalIdentity: 'admin-users'
+      newRole: null
     }
   },
   computed: {
@@ -171,32 +175,7 @@ export default {
         roleItems.push({ text: this.roleLookupTable[role], value: role })
       }
       return roleItems
-    },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    },
-    canRenderActionsPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
-        this.portalIdentity
-      )
     }
-  },
-  mounted() {
-    claimPortals(
-      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
-      this.portalIdentity,
-      1
-    )
-  },
-  beforeDestroy() {
-    unclaimPortals(
-      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
-      this.portalIdentity
-    )
   },
   methods: {
     initiateDeleteUser(user) {

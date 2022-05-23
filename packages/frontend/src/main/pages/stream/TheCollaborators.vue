@@ -237,10 +237,8 @@ import streamCollaboratorsQuery from '@/graphql/streamCollaborators.gql'
 import userSearchQuery from '@/graphql/userSearch.gql'
 import { FullServerInfoQuery } from '@/graphql/server'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -251,14 +249,16 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     StreamInviteDialog: () => import('@/main/dialogs/StreamInviteDialog')
   },
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-collaborators', 1)
+  ],
   data: () => ({
     search: '',
     selectedUsers: null,
     selectedRole: null,
     userSearch: { items: [] },
     serverInfo: { roles: [] },
-    loading: false,
-    portalIdentity: 'stream-collaborators'
+    loading: false
   }),
   apollo: {
     stream: {
@@ -312,12 +312,6 @@ export default {
       }
       return ret
     },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    },
     collaborators() {
       if (!this.stream) return []
       return this.stream.collaborators.filter((user) => user.id !== this.myId)
@@ -347,12 +341,6 @@ export default {
     myId() {
       return localStorage.getItem('uuid')
     }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     getRoleCount(role) {

@@ -83,10 +83,8 @@
 import streamsQuery from '@/graphql/streams.gql'
 import { MainUserDataQuery } from '@/graphql/user'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -96,6 +94,7 @@ export default {
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'streams', 0)],
   apollo: {
     streams: {
       query: streamsQuery
@@ -107,8 +106,7 @@ export default {
   data() {
     return {
       streamFilter: 1,
-      infiniteId: 0,
-      portalIdentity: 'streams'
+      infiniteId: 0
     }
   },
   computed: {
@@ -128,12 +126,6 @@ export default {
      */
     allStreamsLoaded() {
       return this.streams && this.streams.items.length >= this.streams.totalCount
-    },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
     }
   },
   watch: {
@@ -146,10 +138,6 @@ export default {
       this.$apollo.queries.streams.refetch()
       this.$router.replace({ path: this.$route.path, query: null })
     }
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     checkFilter(role) {

@@ -13,10 +13,8 @@
 </template>
 <script>
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -25,20 +23,6 @@ export default {
     FeedTimeline: () => import('@/main/components/feed/FeedTimeline.vue'),
     LatestBlogposts: () => import('@/main/components/feed/LatestBlogposts')
   },
-  data: () => ({ portalIdentity: 'feed' }),
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
-  }
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'feed', 0)]
 }
 </script>

@@ -48,10 +48,8 @@ import gql from 'graphql-tag'
 import { MainServerInfoQuery } from '@/graphql/server'
 import pick from 'lodash/pick'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -59,6 +57,7 @@ export default {
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-settings', 1)],
   data() {
     return {
       edit: false,
@@ -90,8 +89,7 @@ export default {
           hint: 'Only users with an invitation will be able to join',
           type: 'boolean'
         }
-      },
-      portalIdentity: 'admin-settings'
+      }
     }
   },
   apollo: {
@@ -103,20 +101,6 @@ export default {
         return data.serverInfo
       }
     }
-  },
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     async saveEdit() {

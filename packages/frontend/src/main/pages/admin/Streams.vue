@@ -109,10 +109,8 @@
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
 import {
-  claimPortals,
-  unclaimPortals,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -121,6 +119,13 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     StreamListItem: () => import('@/main/components/admin/StreamListItem')
   },
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      'admin-streams',
+      1
+    )
+  ],
   props: {
     page: { type: [Number, String], required: false, default: null },
     limit: { type: [Number, String], required: false, default: 20 },
@@ -135,23 +140,10 @@ export default {
       adminStreams: {
         items: [],
         totalCount: 0
-      },
-      portalIdentity: 'admin-streams'
+      }
     }
   },
   computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    },
-    canRenderActionsPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
-        this.portalIdentity
-      )
-    },
     numberOfPages() {
       return Math.ceil(this.adminStreams.totalCount / this.queryLimit)
     },
@@ -208,19 +200,6 @@ export default {
         this.navigateNext({ visibility })
       }
     }
-  },
-  mounted() {
-    claimPortals(
-      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
-      this.portalIdentity,
-      1
-    )
-  },
-  beforeDestroy() {
-    unclaimPortals(
-      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
-      this.portalIdentity
-    )
   },
   methods: {
     initiateDeleteStreams(stream) {

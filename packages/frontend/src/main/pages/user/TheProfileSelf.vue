@@ -42,10 +42,8 @@
 import { ProfileSelfQuery } from '@/graphql/user'
 import { signOut } from '@/plugins/authHelpers'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -58,25 +56,13 @@ export default {
     UserAuthorisedApps: () => import('@/main/components/user/UserAuthorisedApps'),
     UserDeleteCard: () => import('@/main/components/user/UserDeleteCard')
   },
-  data: () => ({ portalIdentity: 'user-profile-self' }),
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'user-profile-self', 1)
+  ],
   apollo: {
     user: {
       query: ProfileSelfQuery
     }
-  },
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     update() {

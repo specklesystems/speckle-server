@@ -1,5 +1,5 @@
 <template>
-  <portal v-if="canRenderSubnavPortal" to="subnav-admin">
+  <portal v-if="canRenderSubnavAdminPortal" to="subnav-admin">
     <v-list class="ml-12 pr-0" dense nav subheader>
       <v-list-item to="/admin/dashboard" exact>
         <v-list-item-content>
@@ -33,26 +33,11 @@
 </template>
 <script>
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 export default {
-  data: () => ({ portalIdentity: 'admin-nav' }),
-  computed: {
-    canRenderSubnavPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.SubnavAdmin] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.SubnavAdmin, this.portalIdentity, 0)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.SubnavAdmin, this.portalIdentity)
-  }
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.SubnavAdmin], 'admin-nav', 0)],
+  data: () => ({ portalIdentity: 'admin-nav' })
 }
 </script>

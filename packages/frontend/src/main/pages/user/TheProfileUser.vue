@@ -43,10 +43,8 @@
 import ListItemStream from '@/main/components/user/ListItemStream'
 import gql from 'graphql-tag'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -56,7 +54,7 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     ListItemStream
   },
-  data: () => ({ portalIdentity: 'user-profile' }),
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'user-profile', 1)],
   apollo: {
     user: {
       query: gql`
@@ -94,20 +92,6 @@ export default {
         }
       }
     }
-  },
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   created() {
     // Move to self profile

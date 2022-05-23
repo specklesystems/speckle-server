@@ -160,10 +160,8 @@
 </template>
 <script>
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -173,6 +171,7 @@ export default {
     CommitReceivedReceipts: () =>
       import('@/main/components/common/CommitReceivedReceipts')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-commit', 1)],
   props: {
     stream: {
       type: Object,
@@ -181,20 +180,6 @@ export default {
   },
   data() {
     return { showCommitInfo: false, portalIdentity: 'stream-commit' }
-  },
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   }
 }
 </script>

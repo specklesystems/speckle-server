@@ -1,4 +1,7 @@
 import Vue from 'vue'
+import camelCase from 'lodash/camelCase'
+import upperFirst from 'lodash/upperFirst'
+import reduce from 'lodash/reduce'
 
 export const STANDARD_PORTAL_KEYS = {
   Toolbar: 'toolbar',
@@ -98,5 +101,61 @@ export function unclaimPortal(portal, identity) {
 export function unclaimPortals(portals, identity) {
   for (const portal of portals) {
     unclaimPortal(portal, identity)
+  }
+}
+
+/**
+ * Check if portal source is allowed to render in the target portal
+ * @param {string} portal
+ * @param {string} identity
+ * @returns {boolean}
+ */
+export function canRenderPortalSource(portal, identity) {
+  return portalsState.currentPortals[portal] === identity
+}
+
+/**
+ * Build mixin for tracking whether portal targets can be rendered to
+ * @param {string[]} portals Portal identifier keys
+ * @param {string} identity The unique identity of the portal source
+ * @param {number} priority Priority starting from 0. Higher priorities will take precedence
+ * over other portal sources.
+ */
+export function buildPortalStateMixin(portals, identity, priority) {
+  return {
+    computed: {
+      /**
+       * Object with keys of portal names and values representing if the component
+       * is allowed to use those portals
+       */
+      allowedPortals() {
+        const res = {}
+        for (const portal of portals) {
+          res[portal] = portalsState.currentPortals[portal] === identity
+        }
+        return res
+      },
+
+      /**
+       * Dynamically generates `canRenderXPortal` computeds
+       */
+      ...reduce(
+        portals,
+        (res, portal) => {
+          const computedKey = `canRender${upperFirst(camelCase(portal))}Portal`
+          res[computedKey] = function () {
+            return !!this.allowedPortals[portal]
+          }
+          return res
+        },
+        {}
+      )
+    },
+    mounted() {
+      claimPortals(portals, identity, priority)
+    },
+    beforeDestroy() {
+      unclaimPortals(portals, identity)
+    }
   }
 }

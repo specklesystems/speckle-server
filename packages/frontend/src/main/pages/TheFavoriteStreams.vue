@@ -37,10 +37,8 @@
 <script>
 import { UserFavoriteStreamsQuery } from '@/graphql/user'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -51,6 +49,9 @@ export default {
     InfiniteLoading: () => import('vue-infinite-loading'),
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue')
   },
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'favorite-streams', 0)
+  ],
   apollo: {
     user: {
       query: UserFavoriteStreamsQuery
@@ -69,19 +70,7 @@ export default {
         this.streams.length &&
         this.streams.length >= this.user.favoriteStreams.totalCount
       )
-    },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
     }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 0)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     infiniteHandler($state) {

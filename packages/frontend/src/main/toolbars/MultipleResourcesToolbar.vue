@@ -28,13 +28,18 @@
 </template>
 <script>
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Toolbar],
+      'stream-commit-multiple-resources',
+      1
+    )
+  ],
   props: {
     stream: {
       type: Object,
@@ -44,21 +49,6 @@ export default {
       type: Array,
       default: () => []
     }
-  },
-  data: () => ({ portalIdentity: 'stream-commit-multiple-resources' }),
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   }
 }
 </script>

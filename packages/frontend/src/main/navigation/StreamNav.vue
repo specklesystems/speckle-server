@@ -223,16 +223,15 @@
 <script>
 import gql from 'graphql-tag'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
   components: {
     NewBranch: () => import('@/main/dialogs/NewBranch')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Nav], 'stream-nav', 0)],
   props: {
     stream: {
       type: Object,
@@ -331,11 +330,6 @@ export default {
     branchesTotalCount() {
       if (!this.branchQuery) return 0
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
-    },
-    canRenderNavPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Nav] === this.portalIdentity
-      )
     }
   },
   watch: {
@@ -349,10 +343,6 @@ export default {
     this.$eventHub.$on('branch-refresh', () => {
       this.$apollo.queries.branchQuery.refetch()
     })
-    claimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity, 0)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity)
   }
 }
 </script>

@@ -222,10 +222,8 @@ import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue' // do not import async
 import { resourceType } from '@/plugins/resourceIdentifier'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -248,6 +246,9 @@ export default {
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay')
   },
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Nav], 'stream-commit-viewer', 1)
+  ],
   data: () => ({
     loadedModel: false,
     loadProgress: 0,
@@ -261,8 +262,7 @@ export default {
     resourceType: null,
     resources: [],
     showAddOverlay: false,
-    viewerBusy: false,
-    portalIdentity: 'stream-commit-viewer'
+    viewerBusy: false
   }),
   computed: {
     isCommit() {
@@ -284,11 +284,6 @@ export default {
     },
     singleResourceError() {
       return this.resources.length === 1 && this.resources[0].data.error
-    },
-    canRenderNavPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Nav] === this.portalIdentity
-      )
     }
   },
   watch: {
@@ -327,7 +322,6 @@ export default {
     }
   },
   async mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity, 1)
     this.$eventHub.$emit('page-load', true)
     this.resources.push({
       type: resourceType(this.$route.params.resourceId),
@@ -454,9 +448,6 @@ export default {
         }, 1000)
       )
     }, 300)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity)
   },
   methods: {
     async loadCommit(id) {

@@ -176,10 +176,8 @@
 <script>
 import gql from 'graphql-tag'
 import {
-  claimPortal,
-  unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -187,6 +185,7 @@ export default {
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-settings', 1)],
   apollo: {
     stream: {
       query: gql`
@@ -247,12 +246,6 @@ export default {
           this.isPublic !== this.stream.isPublic ||
           this.allowPublicComments !== this.stream.allowPublicComments)
       )
-    },
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
     }
   },
   watch: {
@@ -262,12 +255,6 @@ export default {
     isPublic(newVal) {
       if (!newVal && this.allowPublicComments) this.allowPublicComments = false
     }
-  },
-  mounted() {
-    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
-  },
-  beforeDestroy() {
-    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
   },
   methods: {
     async save() {

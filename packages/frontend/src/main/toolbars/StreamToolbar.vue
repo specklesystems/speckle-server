@@ -72,10 +72,8 @@
 </template>
 <script>
 import {
-  claimPortals,
-  unclaimPortals,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -85,39 +83,19 @@ export default {
     StreamFavoriteBtn: () =>
       import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
   },
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Actions, STANDARD_PORTAL_KEYS.Toolbar],
+      'stream-main',
+      0
+    )
+  ],
   props: {
     stream: { type: Object, required: true },
     user: { type: Object, default: () => null }
   },
   data() {
     return { shareStream: false, portalIdentity: 'stream-main' }
-  },
-  computed: {
-    canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
-    },
-    canRenderActionsPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
-        this.portalIdentity
-      )
-    }
-  },
-  mounted() {
-    claimPortals(
-      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
-      this.portalIdentity,
-      0
-    )
-  },
-  beforeDestroy() {
-    unclaimPortals(
-      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
-      this.portalIdentity
-    )
   }
 }
 </script>
