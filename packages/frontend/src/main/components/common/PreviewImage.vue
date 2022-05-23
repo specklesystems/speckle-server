@@ -1,22 +1,34 @@
 <template>
   <div
-    style="position: relative"
+    :style="`position: relative; height: ${height}px;`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
     @mousemove="setIndex"
   >
-    <v-img
-      ref="cover"
-      :height="height"
-      cover
-      :class="`${color ? '' : 'grasycale-img'} preview-img`"
-      :src="revImg[imageIndex]"
-      :gradient="`to top right, ${
-        $vuetify.theme.dark
-          ? 'rgba(100,115,201,.13), rgba(25,32,72,.2)'
-          : 'rgba(100,115,231,.075), rgba(25,32,72,.02)'
-      }`"
-    />
+    <!-- 
+    Note: sketchfab stitches all frames into one single image and controls its visibility
+    by modifying the background position. Results in reliably less flickering, but it's a 
+    longer more tough implementation. At one point, we could ask the backend for a pre-stitched
+    frame and do the same.
+    -->
+    <template v-for="(img, index) in revImg">
+      <v-img
+        ref="cover"
+        :key="index"
+        :height="height"
+        cover
+        :class="`${color ? '' : 'grasycale-img'} preview-img`"
+        :src="img"
+        :style="`position: absolute; top: 0; transition: opacity 0.01s ease; opacity:${
+          index === imageIndex ? 1 : 0
+        };`"
+        :gradient="`to top right, ${
+          $vuetify.theme.dark
+            ? 'rgba(100,115,201,.13), rgba(25,32,72,.2)'
+            : 'rgba(100,115,231,.075), rgba(25,32,72,.02)'
+        }`"
+      />
+    </template>
     <v-progress-linear
       v-show="loading"
       indeterminate
