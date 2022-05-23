@@ -271,8 +271,8 @@ import webhooksQuery from '@/graphql/webhooks.gql'
 import {
   claimPortal,
   unclaimPortal,
-  portalsState,
-  STANDARD_PORTAL_KEYS
+  STANDARD_PORTAL_KEYS,
+  canRenderPortalSource
 } from '@/main/utils/portalStateManager'
 
 export default {
@@ -324,10 +324,7 @@ export default {
       return !this.$apollo.loading && this.webhooks.length !== 0
     },
     canRenderToolbarPortal() {
-      return (
-        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
-        this.portalIdentity
-      )
+      return canRenderPortalSource(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
     }
   },
   watch: {

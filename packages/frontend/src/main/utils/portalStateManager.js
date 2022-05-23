@@ -17,16 +17,16 @@ export const STANDARD_PORTAL_KEYS = {
  */
 
 /**
- * @type {{currentPortals: Object<string, string>}}
- */
-export const portalsState = Vue.observable({
-  currentPortals: {}
-})
-
-/**
  * @type {Object<string, Object<string, {priority: number }>>}
  */
 const claims = {}
+
+/**
+ * @type {{currentPortals: Object<string, string>}}
+ */
+const portalsState = Vue.observable({
+  currentPortals: {}
+})
 
 function recalculateState() {
   const newPortals = {}
