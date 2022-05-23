@@ -1,6 +1,6 @@
 <template>
   <div v-if="stream">
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -41,7 +41,7 @@
         </div>
       </div>
     </portal>
-    <portal to="actions">
+    <portal v-if="canRenderActionsPortal" to="actions">
       <span v-if="user" style="position: relative; right: -5px">
         <stream-favorite-btn :stream="stream" :user="user" />
       </span>
@@ -71,6 +71,13 @@
   </div>
 </template>
 <script>
+import {
+  claimPortals,
+  unclaimPortals,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   components: {
     CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
@@ -83,7 +90,34 @@ export default {
     user: { type: Object, default: () => null }
   },
   data() {
-    return { shareStream: false }
+    return { shareStream: false, portalIdentity: 'stream-main' }
+  },
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    },
+    canRenderActionsPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Actions] ===
+        this.portalIdentity
+      )
+    }
+  },
+  mounted() {
+    claimPortals(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      this.portalIdentity,
+      0
+    )
+  },
+  beforeDestroy() {
+    unclaimPortals(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      this.portalIdentity
+    )
   }
 }
 </script>

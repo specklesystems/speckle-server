@@ -1,5 +1,5 @@
 <template>
-  <portal to="nav">
+  <portal v-if="canRenderNavPortal" to="nav">
     <div v-if="!$loggedIn()" class="px-4 my-2">
       <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
     </div>
@@ -222,6 +222,13 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   components: {
     NewBranch: () => import('@/main/dialogs/NewBranch')
@@ -269,7 +276,8 @@ export default {
   data() {
     return {
       branchMenuOpen: false,
-      newBranchDialog: false
+      newBranchDialog: false,
+      portalIdentity: 'stream-nav'
     }
   },
   computed: {
@@ -323,6 +331,11 @@ export default {
     branchesTotalCount() {
       if (!this.branchQuery) return 0
       return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
+    },
+    canRenderNavPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Nav] === this.portalIdentity
+      )
     }
   },
   watch: {
@@ -336,6 +349,10 @@ export default {
     this.$eventHub.$on('branch-refresh', () => {
       this.$apollo.queries.branchQuery.refetch()
     })
+    claimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity, 0)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity)
   }
 }
 </script>

@@ -13,7 +13,7 @@
         :resources="resources"
       />
 
-      <portal to="nav">
+      <portal v-if="canRenderNavPortal" to="nav">
         <div v-if="!$loggedIn()" class="px-4 my-2">
           <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
         </div>
@@ -221,6 +221,12 @@ import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue' // do not import async
 import { resourceType } from '@/plugins/resourceIdentifier'
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
 
 export default {
   components: {
@@ -255,7 +261,8 @@ export default {
     resourceType: null,
     resources: [],
     showAddOverlay: false,
-    viewerBusy: false
+    viewerBusy: false,
+    portalIdentity: 'stream-commit-viewer'
   }),
   computed: {
     isCommit() {
@@ -277,6 +284,11 @@ export default {
     },
     singleResourceError() {
       return this.resources.length === 1 && this.resources[0].data.error
+    },
+    canRenderNavPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Nav] === this.portalIdentity
+      )
     }
   },
   watch: {
@@ -315,6 +327,7 @@ export default {
     }
   },
   async mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity, 1)
     this.$eventHub.$emit('page-load', true)
     this.resources.push({
       type: resourceType(this.$route.params.resourceId),
@@ -441,6 +454,9 @@ export default {
         }, 1000)
       )
     }, 300)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Nav, this.portalIdentity)
   },
   methods: {
     async loadCommit(id) {

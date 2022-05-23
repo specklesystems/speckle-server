@@ -1,5 +1,5 @@
 <template>
-  <portal to="toolbar">
+  <portal v-if="canRenderToolbarPortal" to="toolbar">
     <div class="d-flex align-center">
       <!-- <div class="text-truncate flex-shrink-0">
         <router-link v-tooltip="'all streams'" to="/streams" class="text-decoration-none mx-1">
@@ -159,6 +159,13 @@
   </portal>
 </template>
 <script>
+import {
+  claimPortal,
+  unclaimPortal,
+  portalsState,
+  STANDARD_PORTAL_KEYS
+} from '@/main/utils/portalStateManager'
+
 export default {
   components: {
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
@@ -173,8 +180,21 @@ export default {
     }
   },
   data() {
-    return { showCommitInfo: false }
+    return { showCommitInfo: false, portalIdentity: 'stream-commit' }
   },
-  computed: {}
+  computed: {
+    canRenderToolbarPortal() {
+      return (
+        portalsState.currentPortals[STANDARD_PORTAL_KEYS.Toolbar] ===
+        this.portalIdentity
+      )
+    }
+  },
+  mounted() {
+    claimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity, 1)
+  },
+  beforeDestroy() {
+    unclaimPortal(STANDARD_PORTAL_KEYS.Toolbar, this.portalIdentity)
+  }
 }
 </script>
