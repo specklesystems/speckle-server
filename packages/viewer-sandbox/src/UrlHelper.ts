@@ -50,9 +50,17 @@ export default class UrlHelper {
   }
 
   private static async getCommitReferencedObjectUrl(ref: CommitReferencedObjectUrl) {
+    const headers: { 'Content-Type': string; Authorization: string } = {
+      'Content-Type': 'application/json',
+      Authorization: ''
+    }
+    const authToken = localStorage.getItem('AuthToken')
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`
+    }
     const res = await fetch(`${ref.origin}/graphql`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         query: `
           query Stream($streamId: String!, $commitId: String!) {

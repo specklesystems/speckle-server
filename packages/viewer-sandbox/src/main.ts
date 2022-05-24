@@ -17,20 +17,19 @@ window.addEventListener('load', () => {
   viewer.onWindowResize()
 })
 
-
 viewer.on('load-progress', (a: { progress: number; id: string; url: string }) => {
   if (a.progress >= 1) {
     viewer.onWindowResize()
   }
 })
 
-viewer.on('load-complete', ()=> {
-  Object.assign(Sandbox.sceneParams.worldSize, viewer.worldSize);
-  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.worldOrigin);
-  sandbox.refresh();
+viewer.on('load-complete', () => {
+  Object.assign(Sandbox.sceneParams.worldSize, viewer.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.worldOrigin)
+  sandbox.refresh()
 })
 
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 // Load demo object
-sandbox.loadUrl('https://latest.speckle.dev/streams/018a30bc2c/commits/c87747b13a?c=%5B222.89773,-58.80633,133.66034,394.47075,161.10635,15.35102,0,1%5D')
+sandbox.loadUrl('https://speckle.xyz/streams/9217731fc1/commits/751ae5dac7')
