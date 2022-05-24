@@ -1,33 +1,46 @@
 {
+  "packageManager": "yarn@3.2.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "name": "root",
   "private": true,
   "engines": {
     "node": ">=14.0.0 <17.0.0"
   },
   "scripts": {
+    "build": "yarn workspaces foreach -ptv run build",
+    "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "docker:deps:up": "docker-compose -f ./docker-compose-deps.yml up -d",
     "docker:deps:down": "docker-compose -f ./docker-compose-deps.yml down",
-    "dev": "lerna run dev --parallel",
-    "dev:no-server": "npm run dev -- --ignore @speckle/server",
+    "dev": "yarn workspaces foreach -piv -j unlimited run dev",
+    "dev:no-server": "yarn workspaces foreach --exclude @speckle/server -piv -j unlimited run dev",
+    "dev:minimal": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend}' run dev",
     "prepare": "husky install",
-    "postinstall": "husky install"
+    "postinstall": "husky install",
+    "cm": "cz"
   },
   "devDependencies": {
     "@types/eslint": "^8.4.1",
+    "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "husky": "^7.0.4",
-    "lerna": "^3.22.1",
     "lint-staged": "^12.3.7",
     "prettier": "^2.5.1"
   },
+  "resolutions": {
+    "tslib": "^2.3.1",
+    "core-js": "3.22.4",
+    "vue-cli-plugin-apollo/graphql": "^15"
+  },
   "config": {
     "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
+      "path": "cz-conventional-changelog"
     }
   },
   "lint-staged": {

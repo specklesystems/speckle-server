@@ -18,14 +18,7 @@
         />
       </div>
       <div class="text-right flex-grow-1">
-        <v-btn
-          v-tooltip="'TODO: Add by object id'"
-          dark
-          small
-          icon
-          class="ml-2"
-          @click="showObjectDialog = true"
-        >
+        <v-btn dark small icon class="ml-2" @click="showObjectDialog = true">
           <v-icon small>mdi-cube-outline</v-icon>
         </v-btn>
         <v-btn dark icon class="ml-2" @click="$emit('close')">

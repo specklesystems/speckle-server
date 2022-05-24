@@ -1,10 +1,9 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
 
-const appRoot = require('app-root-path')
-const { init } = require(`${appRoot}/app`)
-const knex = require(`${appRoot}/db/knex`)
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { init } = require('@/app')
+const knex = require('@/db/knex')
+const { beforeEachContext } = require('@/test/hooks')
 
 // NOTE:
 // These tests check that the initialization routine of the whole server

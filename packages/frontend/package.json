@@ -1,14 +1,14 @@
 {
   "name": "@speckle/frontend",
-  "version": "2.3.17-alpha.2889",
+  "version": "2.5.4",
   "private": true,
   "scripts": {
     "dev": "vue-cli-service serve --mode development",
     "serve": "ws -p 8080 -d dist -r '/embed(.*) -> /embedApp.html' '/([a-zA-Z0-9-_/]*)(\\?.*)? -> /app.html' ",
     "build": "vue-cli-service build --mode production --silent",
     "build:dev": "vue-cli-service build --mode development --silent",
-    "build:profile": "npm run build -- --profile",
-    "build:dev:profile": "npm run build:dev -- --profile",
+    "build:profile": "yarn build -- --profile",
+    "build:dev:profile": "yarn build:dev -- --profile",
     "inspect": "vue-cli-service inspect --mode production",
     "inspect:dev": "vue-cli-service inspect --mode development",
     "lint": "eslint . --ext .js,.ts,.vue"
@@ -17,13 +17,14 @@
     "node": "^16.0.0"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.4.2",
+    "@speckle/viewer": "workspace:^",
     "@tryghost/content-api": "^1.5.12",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "@vuejs-community/vue-filter-date-parse": "^1.1.6",
     "apexcharts": "^3.33.1",
     "crypto-random-string": "^3.3.0",
     "dompurify": "^2.3.6",
+    "linkify-urls": "^4.0.0",
     "lodash": "^4.17.21",
     "numeral": "^2.0.6",
     "portal-vue": "^2.1.7",
@@ -70,6 +71,7 @@
     "vue-cli-plugin-vuetify": "^2.0.8",
     "vue-template-compiler": "^2.6.12",
     "vuetify-loader": "^1.6.0",
+    "webpack": "^4.46.0",
     "webpack-bundle-analyzer": "^4.5.0"
   },
   "vuePlugins": {

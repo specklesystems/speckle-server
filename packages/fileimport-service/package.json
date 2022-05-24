@@ -1,7 +1,7 @@
 {
   "name": "@speckle/fileimport-service",
   "private": true,
-  "version": "2.3.17-alpha.2889",
+  "version": "2.5.4",
   "description": "Parse and import files of various types into a stream",
   "author": "Dimitrie Stefanescu <didimitrie@gmail.com>",
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
@@ -28,6 +28,7 @@
     "knex": "^1.0.3",
     "node-fetch": "^2.6.5",
     "pg": "^8.7.1",
+    "prom-client": "^14.0.1",
     "valid-filename": "^3.1.0",
     "web-ifc": "^0.0.33"
   },

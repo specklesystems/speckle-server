@@ -10,10 +10,10 @@ Sandbox for testing, debugging & developing the viewer package
 
 ### Instructions
 
-- `npm install` in this package
-- `npx lerna bootstrap` in repo root to set up symlink with viewer package
-- `npm run dev` to run the sandbox, it's available at `localhost:3033`
+- `yarn` in the repo root to configure project dependencies
+- `yarn build` in repo root to build all dependencies
+- `yarn dev` to run the sandbox, it's available at `localhost:3033`
 
 ## Linting
 
-Use `npm run lint` to run ESLint and you can also run `npm run lint:tsc` to lint with the TypeScript compiler
+Use `yarn lint` to run ESLint and you can also run `yarn lint:tsc` to lint with the TypeScript compiler

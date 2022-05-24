@@ -1,6 +1,6 @@
 <template>
   <!-- eslint-disable vue/no-v-html -->
-  <v-timeline-item medium>
+  <v-timeline-item v-show="!activityGroup[0].actionType.includes('comment_')" medium>
     <template #icon>
       <user-avatar v-if="user" :id="user.id" :avatar="user.avatar" :name="user.name" />
     </template>

@@ -1,13 +1,12 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
 const chai = require('chai')
-const appRoot = require('app-root-path')
 
 const expect = chai.expect
 
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
-const { createPersonalAccessToken } = require(`${appRoot}/modules/core/services/tokens`)
-const { beforeEachContext, initializeTestServer } = require(`${appRoot}/test/hooks`)
+const { createUser } = require('@/modules/core/services/users')
+const { createPersonalAccessToken } = require('@/modules/core/services/tokens')
+const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const {
   createAuthorizationCode,
   createAppTokenFromAccessCode

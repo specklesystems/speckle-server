@@ -77,7 +77,11 @@ spec:
 
         env:
           - name: CANONICAL_URL
+            {{- if .Values.ssl_canonical_url }}
             value: https://{{ .Values.domain }}
+            {{- else }}
+            value: http://{{ .Values.domain }}
+            {{- end }}
 
           - name: PORT
             value: "3000"

@@ -31,4 +31,12 @@ events.json
 # Optional eslint cache
 .eslintcache
 
-lerna-debug.log
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+*yarn-error.log

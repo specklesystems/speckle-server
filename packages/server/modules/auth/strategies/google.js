@@ -3,16 +3,9 @@
 const passport = require('passport')
 const GoogleStrategy = require('passport-google-oauth20').Strategy
 const debug = require('debug')
-const appRoot = require('app-root-path')
-const {
-  findOrCreateUser,
-  getUserByEmail
-} = require(`${appRoot}/modules/core/services/users`)
-const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const {
-  validateInvite,
-  useInvite
-} = require(`${appRoot}/modules/serverinvites/services`)
+const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { validateInvite, useInvite } = require('@/modules/serverinvites/services')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {

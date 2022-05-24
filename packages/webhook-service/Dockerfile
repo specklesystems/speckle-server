@@ -10,11 +10,16 @@ RUN chmod +x /wait
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
-WORKDIR /app
+WORKDIR /speckle-server
 
-COPY packages/webhook-service/package*.json ./
-RUN npm ci
+COPY .yarnrc.yml .
+COPY .yarn ./.yarn
+COPY package.json yarn.lock ./
+
+WORKDIR /speckle-server/packages/webhook-service
+COPY packages/webhook-service/package.json .
+RUN yarn workspaces focus --production
 
 COPY packages/webhook-service/src .
 
-CMD ["node", "main.js"]
+CMD ["yarn", "node", "main.js"]

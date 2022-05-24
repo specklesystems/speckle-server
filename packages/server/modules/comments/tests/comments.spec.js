@@ -2,13 +2,12 @@
 const expect = require('chai').expect
 const crs = require('crypto-random-string')
 
-const appRoot = require('app-root-path')
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
-const { createStream } = require(`${appRoot}/modules/core/services/streams`)
-const { createCommitByBranchName } = require(`${appRoot}/modules/core/services/commits`)
+const { beforeEachContext } = require('@/test/hooks')
+const { createUser } = require('@/modules/core/services/users')
+const { createStream } = require('@/modules/core/services/streams')
+const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
-const { createObject } = require(`${appRoot}/modules/core/services/objects`)
+const { createObject } = require('@/modules/core/services/objects')
 const {
   createComment,
   getComments,
@@ -77,6 +76,22 @@ describe('Comments @comments', () => {
       objectId: testObject2.id,
       authorId: user.id
     })
+  })
+
+  it('Should not accept complex HTML in the comment text', async () => {
+    const commentId = await createComment({
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
+        text: 'Some <img src/onerror=alert(1)> <strong>epic</strong> <a href="javascript:alert(1)">cool</a> text!',
+        data: { justSome: crs({ length: 10 }) }
+      }
+    })
+
+    const comment = await getComment({ id: commentId })
+    expect(comment).to.be.ok
+    expect((comment.text.match(/alert/) || []).length).to.equal(0)
   })
 
   it('Should not be allowed to comment without specifying at least one target resource', async () => {

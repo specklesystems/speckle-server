@@ -1,10 +1,9 @@
 /* istanbul ignore file */
 const expect = require('chai').expect
-const appRoot = require('app-root-path')
 
-const { createUser } = require(`${appRoot}/modules/core/services/users`)
-const { validateToken } = require(`${appRoot}/modules/core/services/tokens`)
-const { beforeEachContext } = require(`${appRoot}/test/hooks`)
+const { createUser } = require(`@/modules/core/services/users`)
+const { validateToken } = require(`@/modules/core/services/tokens`)
+const { beforeEachContext } = require(`@/test/hooks`)
 const {
   getApp,
   getAllPublicApps,
@@ -16,6 +15,10 @@ const {
   refreshAppToken,
   revokeExistingAppCredentialsForUser
 } = require('../services/apps')
+
+const { Scopes } = require('@/modules/core/helpers/mainConstants')
+const { updateDefaultApp } = require('@/modules/auth/defaultApps')
+const knex = require('@/db/knex')
 
 describe('Services @apps-services', () => {
   const actor = {
@@ -63,7 +66,7 @@ describe('Services @apps-services', () => {
     const res = await createApp({
       name: 'test application',
       public: true,
-      scopes: ['streams:read'],
+      scopes: [Scopes.Streams.Read],
       redirectUrl: 'http://localhost:1335'
     })
 
@@ -99,7 +102,7 @@ describe('Services @apps-services', () => {
       app: {
         name: 'updated test application',
         id: myTestApp.id,
-        scopes: ['streams:read', 'users:read']
+        scopes: [Scopes.Streams.Read, Scopes.Users.Read]
       }
     })
     expect(res).to.be.a('string')
@@ -107,8 +110,8 @@ describe('Services @apps-services', () => {
     const app = await getApp({ id: myTestApp.id })
     expect(app.name).to.equal('updated test application')
     expect(app.scopes).to.be.an('array')
-    expect(app.scopes.map((s) => s.name)).to.include('users:read')
-    expect(app.scopes.map((s) => s.name)).to.include('streams:read')
+    expect(app.scopes.map((s) => s.name)).to.include(Scopes.Users.Read)
+    expect(app.scopes.map((s) => s.name)).to.include(Scopes.Streams.Read)
   })
 
   const challenge = 'random'
@@ -142,7 +145,7 @@ describe('Services @apps-services', () => {
     const validation = await validateToken(response.token)
     expect(validation.valid).to.equal(true)
     expect(validation.userId).to.equal(actor.id)
-    expect(validation.scopes[0]).to.equal('streams:read')
+    expect(validation.scopes[0]).to.equal(Scopes.Streams.Read)
   })
 
   it('Should refresh the token using the refresh token, and get a fresh refresh token and token', async () => {
@@ -185,7 +188,7 @@ describe('Services @apps-services', () => {
       app: {
         name: 'updated test application',
         id: myTestApp.id,
-        scopes: ['streams:write', 'users:read']
+        scopes: [Scopes.Streams.Write, Scopes.Users.Read]
       }
     })
 
@@ -212,6 +215,106 @@ describe('Services @apps-services', () => {
         throw new Error('this should have been rejected')
       })
       .catch((err) => expect(err.message).to.equal('Access code not found.'))
+  })
+
+  const defaultApps = ['spklwebapp', 'explorer', 'sdm', 'sca', 'spklexcel']
+  defaultApps.forEach((speckleAppId) => {
+    it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
+      const [unusedAccessCode, usedAccessCode] = await Promise.all([
+        createAuthorizationCode({
+          appId: speckleAppId,
+          userId: actor.id,
+          challenge
+        }),
+        createAuthorizationCode({
+          appId: speckleAppId,
+          userId: actor.id,
+          challenge
+        })
+      ])
+
+      const apiTokenResponse = await createAppTokenFromAccessCode({
+        appId: speckleAppId,
+        appSecret: speckleAppId,
+        accessCode: usedAccessCode,
+        challenge
+      })
+
+      // We now have one unused access code, an api token and a refresh token.
+      // Proceed to update the app:
+      const existingApp = await getApp({ id: speckleAppId })
+
+      const newScopes = [Scopes.Streams.Write, Scopes.Users.Read]
+
+      await updateDefaultApp(
+        {
+          name: 'updated test application',
+          id: speckleAppId,
+          scopes: newScopes
+        },
+        existingApp
+      )
+      const updatedApp = await getApp({ id: speckleAppId })
+
+      expect(updatedApp.scopes.map((s) => s.name)).to.equalInAnyOrder(newScopes)
+
+      const validationResponse = await validateToken(apiTokenResponse.token)
+      expect(validationResponse.valid).to.equal(true)
+
+      const refreshedToken = await refreshAppToken({
+        refreshToken: apiTokenResponse.refreshToken,
+        appId: speckleAppId,
+        appSecret: speckleAppId
+      })
+      expect(refreshedToken.refreshToken).to.exist
+      expect(refreshedToken.token).to.exist
+
+      const appToken = await createAppTokenFromAccessCode({
+        appId: speckleAppId,
+        appSecret: speckleAppId,
+        accessCode: unusedAccessCode,
+        challenge: 'random'
+      })
+      expect(appToken.token).to.exist
+      expect(appToken.refreshToken).to.exist
+
+      const apiTokens = await knex('user_server_app_tokens')
+        .join(
+          'token_scopes',
+          'user_server_app_tokens.tokenId',
+          '=',
+          'token_scopes.tokenId'
+        )
+        .where({
+          appId: speckleAppId
+        })
+
+      expect(newScopes).to.include.members(apiTokens.map((t) => t.scopeName))
+    })
+  })
+
+  it('Updating a default app with bad data should leave the app in an untouched state', async () => {
+    const speckleAppId = 'explorer'
+    const existingApp = await getApp({ id: speckleAppId })
+    try {
+      await updateDefaultApp(
+        {
+          name: 'updated test application',
+          id: speckleAppId,
+          scopes: ['aWeird:Scope']
+        },
+        existingApp
+      )
+      throw new Error('This should have failed')
+    } catch (err) {
+      // check that the weird:Scope violates a foreign key constraint...
+      // leaky abstractions i know, but no better way to test this for now
+      expect(err.message).to.contain('server_apps_scopes_scopename_foreign')
+    }
+    const notUpdatedApp = await getApp({ id: speckleAppId })
+    // check that no harm was done
+    expect(notUpdatedApp.name).to.equal(existingApp.name)
+    expect(notUpdatedApp.scopes).to.equalInAnyOrder(existingApp.scopes)
   })
 
   it('Should revoke access for a given user', async () => {

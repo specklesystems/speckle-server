@@ -3,9 +3,8 @@ const zlib = require('zlib')
 const cors = require('cors')
 const Busboy = require('busboy')
 const debug = require('debug')
-const appRoot = require('app-root-path')
 
-const { contextMiddleware } = require(`${appRoot}/modules/shared`)
+const { contextMiddleware } = require('@/modules/shared')
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('../services/objects')

@@ -1,6 +1,7 @@
 {
   "name": "@speckle/viewer-sandbox",
-  "version": "1.0.0",
+  "private": true,
+  "version": "2.5.4",
   "description": "Sandbox for testing, debugging & developing the viewer package",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -18,7 +19,7 @@
     "lint:tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@speckle/viewer": "^2.4.2",
+    "@speckle/viewer": "workspace:^",
     "tweakpane": "^3.0.8"
   },
   "devDependencies": {

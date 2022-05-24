@@ -1,13 +1,22 @@
 'use strict'
 const crs = require('crypto-random-string')
-const appRoot = require('app-root-path')
-const knex = require(`${appRoot}/db/knex`)
+const knex = require('@/db/knex')
+const sanitizeHtml = require('sanitize-html')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
 const CommentViews = () => knex('comment_views')
 
 module.exports = {
+  /**
+   * Format comment text field (e.g. for returning to frontend or saving to DB)
+   * @param {Object} comment
+   * @returns {string}
+   */
+  formatCommentText(comment) {
+    if (!comment || !comment.text) return ''
+    return sanitizeHtml(comment.text)
+  },
   async streamResourceCheck({ streamId, resources }) {
     // this itches - a for loop with queries... but okay let's hit the road now
     for (const res of resources) {
@@ -75,6 +84,7 @@ module.exports = {
 
     comment.id = crs({ length: 10 })
     comment.authorId = userId
+    comment.text = module.exports.formatCommentText(comment)
 
     await Comments().insert(comment)
     try {
@@ -106,6 +116,8 @@ module.exports = {
       streamId,
       parentComment: parentCommentId
     }
+    comment.text = module.exports.formatCommentText(comment)
+
     await Comments().insert(comment)
     try {
       const commentLink = { resourceId: parentCommentId, resourceType: 'comment' }

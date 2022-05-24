@@ -1,6 +1,6 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.4.2",
+  "version": "2.5.4",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
   "main": "dist/objectloader.js",
   "module": "dist/objectloader.esm.js",
@@ -17,6 +17,7 @@
     "lint": "eslint . --ext .js,.ts",
     "build:dev": "rollup --config",
     "build": "NODE_ENV=production rollup --config",
+    "prepack": "yarn build",
     "dev": "rollup --config --watch",
     "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./examples/browser -p 3031 -o"
   },

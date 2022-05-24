@@ -1,18 +1,14 @@
 'use strict'
-const appRoot = require('app-root-path')
 const debug = require('debug')
 const {
   createUser,
   updateUser,
   validatePasssword,
   getUserByEmail
-} = require(`${appRoot}/modules/core/services/users`)
-const { getServerInfo } = require(`${appRoot}/modules/core/services/generic`)
-const {
-  validateInvite,
-  useInvite
-} = require(`${appRoot}/modules/serverinvites/services`)
-const { respectsLimits } = require(`${appRoot}/modules/core/services/ratelimits`)
+} = require('@/modules/core/services/users')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { validateInvite, useInvite } = require('@/modules/serverinvites/services')
+const { respectsLimits } = require('@/modules/core/services/ratelimits')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
