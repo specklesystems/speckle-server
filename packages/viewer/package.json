@@ -9,9 +9,9 @@
     "directory": "packages/viewer"
   },
   "main": "dist/speckleviewer.js",
-  "module": "dist/speckleviewer.esm.mjs",
+  "module": "dist/speckleviewer.esm.js",
   "exports": {
-    ".": "./dist/speckleviewer.esm.mjs"
+    ".": "./dist/speckleviewer.esm.js"
   },
   "types": "./dist/index.d.ts",
   "sourceType": "module",

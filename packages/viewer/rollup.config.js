@@ -21,9 +21,7 @@ function buildConfig(isWebBuild = false) {
     input: isWebBuild ? 'src/example.js' : 'src/index.js',
     output: [
       {
-        file: isWebBuild
-          ? 'example/speckleviewer.web.js'
-          : 'dist/speckleviewer.esm.mjs',
+        file: isWebBuild ? 'example/speckleviewer.web.js' : 'dist/speckleviewer.esm.js',
         format: 'esm',
         sourcemap
       },
