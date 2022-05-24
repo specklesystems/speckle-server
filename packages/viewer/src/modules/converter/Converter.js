@@ -644,7 +644,7 @@ export default class Coverter {
      * values outside that interval, but due to floating point precision, you sometimes get -1.0000000004, which
      * makes acos return NaN
      */
-    const dot = Math.min(Math.max(v0.dot(v1, -1), 1))
+    const dot = Math.min(Math.max(v0.dot(v1), -1), 1)
     // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
     const angle = Math.acos(dot)
     const radius = obj.radius
