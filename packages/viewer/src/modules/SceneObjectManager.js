@@ -8,6 +8,7 @@ import { Geometry } from './converter/Geometry'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import SpeckleLineBasicMaterial from './materials/SpeckleLineBasicMaterial'
+import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -69,35 +70,44 @@ export default class SceneObjectManager {
     if (this.pointMaterial) this.pointMaterial.dispose()
     if (this.pointVertexColorsMaterial) this.pointVertexColorsMaterial.dispose()
 
-    this.solidMaterial = new SpeckleStandardMaterial({
-      color: 0x8d9194,
-      emissive: 0x0,
-      roughness: 1,
-      metalness: 0,
-      side: THREE.DoubleSide,
-      // envMap: this.viewer.cubeCamera.renderTarget.texture,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.solidMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0x8d9194,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        // envMap: this.viewer.cubeCamera.renderTarget.texture,
+        clippingPlanes: this.viewer.sectionBox.planes
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : undefined
+    )
 
-    this.transparentMaterial = new THREE.MeshStandardMaterial({
-      color: 0xa0a4a8,
-      emissive: 0x0,
-      roughness: 0,
-      metalness: 0.5,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.4,
-      // envMap: this.viewer.cubeCamera.renderTarget.texture,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.transparentMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0xa0a4a8,
+        emissive: 0x0,
+        roughness: 0,
+        metalness: 0.5,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.4,
+        // envMap: this.viewer.cubeCamera.renderTarget.texture,
+        clippingPlanes: this.viewer.sectionBox.planes
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : undefined
+    )
 
-    this.solidVertexMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      vertexColors: THREE.VertexColors,
-      side: THREE.DoubleSide,
-      reflectivity: 0,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.solidVertexMaterial = new SpeckleBasicMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: THREE.VertexColors,
+        side: THREE.DoubleSide,
+        reflectivity: 0,
+        clippingPlanes: this.viewer.sectionBox.planes
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : undefined
+    )
 
     this.lineMaterial = this.makeLineMaterial()
 

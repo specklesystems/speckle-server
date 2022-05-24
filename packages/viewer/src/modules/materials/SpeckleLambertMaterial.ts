@@ -1,10 +1,10 @@
-import { speckle_standard_vert } from './shaders/speckle-standard-vert'
-import { speckle_standard_frag } from './shaders/speckle-standard-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshStandardMaterial } from 'three'
+import { speckle_lambert_vert } from './shaders/speckle-lambert-vert'
+import { speckle_lambert_frag } from './shaders/speckle-lambert-frag'
+import { UniformsUtils, ShaderLib, Vector3, MeshLambertMaterial } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
-class SpeckleStandardMaterial extends MeshStandardMaterial {
+class SpeckleLambertMaterial extends MeshLambertMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
   constructor(parameters, defines = []) {
     super(parameters)
@@ -15,8 +15,8 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
-    ;(this as any).vertProgram = speckle_standard_vert
-    ;(this as any).fragProgram = speckle_standard_frag
+    ;(this as any).vertProgram = speckle_lambert_vert
+    ;(this as any).fragProgram = speckle_lambert_frag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {
@@ -40,7 +40,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       this.defines = {}
     }
     for (var k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ' '
+      this.defines[defines[k]] = ''
     }
   }
 
@@ -63,12 +63,12 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
     if (Geometry.USE_RTE) {
-      SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
-      SpeckleStandardMaterial.matBuff.elements[12] = 0
-      SpeckleStandardMaterial.matBuff.elements[13] = 0
-      SpeckleStandardMaterial.matBuff.elements[14] = 0
-      SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
-      object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
+      SpeckleLambertMaterial.matBuff.copy(camera.matrixWorldInverse)
+      SpeckleLambertMaterial.matBuff.elements[12] = 0
+      SpeckleLambertMaterial.matBuff.elements[13] = 0
+      SpeckleLambertMaterial.matBuff.elements[14] = 0
+      SpeckleLambertMaterial.matBuff.multiply(object.matrixWorld)
+      object.modelViewMatrix.copy(SpeckleLambertMaterial.matBuff)
 
       let uViewer_low = new Vector3()
       let uViewer_high = new Vector3()
@@ -87,4 +87,4 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
   }
 }
 
-export default SpeckleStandardMaterial
+export default SpeckleLambertMaterial

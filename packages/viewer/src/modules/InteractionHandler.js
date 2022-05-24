@@ -2,6 +2,8 @@ import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import SpeckleLambertMaterial from './materials/SpeckleLambertMaterial'
+import { Geometry } from './converter/Geometry'
 
 export default class InteractionHandler {
   constructor(viewer) {
@@ -12,23 +14,26 @@ export default class InteractionHandler {
       sectionBox: this.sectionBox,
       hover: false
     })
-    this.selectionMeshMaterial = new THREE.MeshLambertMaterial({
-      color: 0x0b55d2,
-      side: THREE.DoubleSide,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.3
-    })
+    this.selectionMeshMaterial = new SpeckleLambertMaterial(
+      {
+        color: 0x0b55d2,
+        side: THREE.DoubleSide,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.3
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : []
+    )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     // Fix overlapping faces flickering
     this.selectionMeshMaterial.polygonOffset = true
     this.selectionMeshMaterial.polygonOffsetFactor = -0.1
 
-    this.selectionLineMaterial = new THREE.LineBasicMaterial({ color: 0x0b55d2 })
-    this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // this.selectionLineMaterial = new THREE.LineBasicMaterial({ color: 0x0b55d2 })
+    // this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
-    this.selectionEdgesMaterial = new THREE.LineBasicMaterial({ color: 0x23f3bd })
-    this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // this.selectionEdgesMaterial = new THREE.LineBasicMaterial({ color: 0x23f3bd })
+    // this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
     this.selectionLine2Material = new LineMaterial({
       color: 0x0b55d2,
@@ -45,13 +50,16 @@ export default class InteractionHandler {
     this.selectionBox = new THREE.Group()
     this.viewer.scene.add(this.selectionBox)
 
-    this.overlayMeshMaterial = new THREE.MeshLambertMaterial({
-      color: 0x57f7ff,
-      side: THREE.DoubleSide,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.7
-    })
+    this.overlayMeshMaterial = new SpeckleLambertMaterial(
+      {
+        color: 0x57f7ff,
+        side: THREE.DoubleSide,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.7
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : []
+    )
     this.overlayMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     this.overlaidObjects = new THREE.Group()
     this.viewer.scene.add(this.overlaidObjects)

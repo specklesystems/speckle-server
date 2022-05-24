@@ -1,4 +1,6 @@
 import { Viewer, IViewer } from '@speckle/viewer'
+import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
+import { Object3D } from '@speckle/viewer/node_modules/@types/three'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 export default class Sandbox {
@@ -15,6 +17,7 @@ export default class Sandbox {
     worldOrigin: {x:0, y:0, z:0},
     useRTE: false,
     thickLines: true,
+    pixelThreshold: 0.5,
     exposure: 0.4,
     tonemapping: 'Linear'
   }
@@ -128,6 +131,18 @@ export default class Sandbox {
       label: "Thick Lines"
     }).on('change', (ev: any) => {
       this.viewer.thickLines = Sandbox.sceneParams.thickLines
+    });
+
+     worldFolder.addInput(Sandbox.sceneParams, 'pixelThreshold', {
+      min: 0,
+      max: 5,
+    }).on('change', (ev: any) => {
+      this.viewer.scene.traverse((object: Object3D) => {
+        if(object.type == "Line2"){
+          //@ts-ignore
+          (object.material as SpeckleLineMaterial).pixelThreshold = Sandbox.sceneParams.pixelThreshold;
+        }
+      })
     });
 
     this.tabs.pages[1].addSeparator();
