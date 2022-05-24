@@ -41,7 +41,12 @@ export default {
       renderDomElement.id = 'renderer'
     }
     if (!window.__viewer) {
-      window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
+      const params = {
+        postprocessing: false,
+        reflections: false,
+        showStats: false
+      }
+      window.__viewer = new Viewer(renderDomElement, params)
     }
 
     this.domElement = renderDomElement
