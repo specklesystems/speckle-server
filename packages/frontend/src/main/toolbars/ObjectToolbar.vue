@@ -1,5 +1,5 @@
 <template>
-  <portal to="toolbar">
+  <portal v-if="canRenderToolbarPortal" to="toolbar">
     <div class="d-flex align-center">
       <div class="text-truncate flex-shrink-0 flex-lg-shrink-1">
         <router-link
@@ -43,7 +43,15 @@
   </portal>
 </template>
 <script>
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+
 export default {
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-commit-objects', 1)
+  ],
   props: {
     stream: {
       type: Object,

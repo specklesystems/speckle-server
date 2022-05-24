@@ -1,11 +1,11 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       User Management (showing
       <span v-if="users">{{ users.items.length }} of {{ users.totalCount }} users</span>
       )
     </portal>
-    <portal to="actions">
+    <portal v-if="canRenderActionsPortal" to="actions">
       <v-pagination
         v-model="currentPage"
         :length="numberOfPages"
@@ -101,6 +101,10 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'UserAdmin',
@@ -108,6 +112,13 @@ export default {
     UserListItem: () => import('@/main/components/admin/UserListItem'),
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Actions, STANDARD_PORTAL_KEYS.Toolbar],
+      'admin-users',
+      1
+    )
+  ],
   props: {
     limit: { type: [Number, String], required: false, default: 20 },
     page: { type: [Number, String], required: false, default: 1 },

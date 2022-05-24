@@ -5,7 +5,7 @@
 
   <v-container v-else-if="isAdmin" class="pa-0">
     <admin-nav />
-    <portal to="actions"><div></div></portal>
+    <portal v-if="canRenderActionsPortal" to="actions"><div></div></portal>
     <v-container fluid class="pa-0">
       <transition name="fade">
         <router-view></router-view>
@@ -21,6 +21,10 @@
 
 <script>
 import gql from 'graphql-tag'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'AdminPanel',
@@ -28,6 +32,7 @@ export default {
     ErrorPlaceholder: () => import('@/main/components/common/ErrorPlaceholder'),
     AdminNav: () => import('@/main/navigation/AdminNav')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Actions], 'admin', 0)],
   data() {
     return {
       adminNav: true

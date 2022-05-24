@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">Bulk Invites</portal>
+    <portal v-if="canRenderToolbarPortal" to="toolbar">Bulk Invites</portal>
     <section-card>
       <v-card-text>
         <v-alert v-model="success" prominent timeout="3000" dismissible type="success">
@@ -93,6 +93,10 @@ import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
 import { isEmailValid } from '@/plugins/authHelpers'
 import { MainServerInfoQuery } from '@/graphql/server'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'AdminInvites',
@@ -100,6 +104,7 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     StreamSearchBar: () => import('@/main/components/common/SearchBar')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-invites', 1)],
   data() {
     return {
       valid: false,

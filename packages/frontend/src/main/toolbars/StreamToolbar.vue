@@ -1,6 +1,6 @@
 <template>
   <div v-if="stream">
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -41,7 +41,7 @@
         </div>
       </div>
     </portal>
-    <portal to="actions">
+    <portal v-if="canRenderActionsPortal" to="actions">
       <span v-if="user" style="position: relative; right: -5px">
         <stream-favorite-btn :stream="stream" :user="user" />
       </span>
@@ -71,6 +71,11 @@
   </div>
 </template>
 <script>
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+
 export default {
   components: {
     CollaboratorsDisplay: () => import('@/main/components/stream/CollaboratorsDisplay'),
@@ -78,12 +83,19 @@ export default {
     StreamFavoriteBtn: () =>
       import('@/main/components/stream/favorites/StreamFavoriteBtn.vue')
   },
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Actions, STANDARD_PORTAL_KEYS.Toolbar],
+      'stream-main',
+      0
+    )
+  ],
   props: {
     stream: { type: Object, required: true },
     user: { type: Object, default: () => null }
   },
   data() {
-    return { shareStream: false }
+    return { shareStream: false, portalIdentity: 'stream-main' }
   }
 }
 </script>

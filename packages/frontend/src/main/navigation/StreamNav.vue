@@ -1,5 +1,5 @@
 <template>
-  <portal to="nav">
+  <portal v-if="canRenderNavPortal" to="nav">
     <div v-if="!$loggedIn()" class="px-4 my-2">
       <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
     </div>
@@ -222,10 +222,16 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+
 export default {
   components: {
     NewBranch: () => import('@/main/dialogs/NewBranch')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Nav], 'stream-nav', 0)],
   props: {
     stream: {
       type: Object,

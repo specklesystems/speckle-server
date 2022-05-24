@@ -1,12 +1,12 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       Stream Administration
       <span v-if="adminStreams">
         ({{ adminStreams.items.length }} of {{ adminStreams.totalCount }} streams)
       </span>
     </portal>
-    <portal to="actions">
+    <portal v-if="canRenderActionsPortal" to="actions">
       <v-pagination
         v-model="currentPage"
         :length="numberOfPages"
@@ -108,6 +108,10 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'AdminStreams',
@@ -115,6 +119,13 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     StreamListItem: () => import('@/main/components/admin/StreamListItem')
   },
+  mixins: [
+    buildPortalStateMixin(
+      [STANDARD_PORTAL_KEYS.Toolbar, STANDARD_PORTAL_KEYS.Actions],
+      'admin-streams',
+      1
+    )
+  ],
   props: {
     page: { type: [Number, String], required: false, default: null },
     limit: { type: [Number, String], required: false, default: 20 },
