@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -149,6 +149,10 @@
 <script>
 import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheGlobals',
@@ -158,6 +162,7 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-globals', 1)],
   apollo: {
     stream: {
       query: gql`
@@ -245,5 +250,3 @@ export default {
   }
 }
 </script>
-
-<style scoped></style>

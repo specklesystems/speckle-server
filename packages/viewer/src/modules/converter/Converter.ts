@@ -1,17 +1,8 @@
-import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { Geometry, GeometryData } from './Geometry'
-import {
-  BoxBufferGeometry,
-  BufferAttribute,
-  BufferGeometry,
-  EllipseCurve,
-  Float32BufferAttribute,
-  Matrix4,
-  Vector2
-} from 'three'
+import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2 } from 'three'
 import { Vector3 } from 'three'
 import { Line3 } from 'three'
 
@@ -19,11 +10,11 @@ export type ConverterResultDelegate = (
   object: ObjectWrapper | undefined
 ) => Promise<void>
 export type ConverterGeometryDelegate = (
-  object: any,
+  object,
   scale?: boolean
 ) => Promise<ObjectWrapper | undefined>
 export type ConverterGeometryDataDelegate = (
-  object: any,
+  object,
   scale?: boolean
 ) => Promise<GeometryData>
 
@@ -32,7 +23,7 @@ export type ConverterGeometryDataDelegate = (
  * Warning: HIC SVNT DRACONES.
  */
 export default class Coverter {
-  private objectLoader: any
+  private objectLoader
   private curveSegmentLength: number
   private lastAsyncPause: number
   private activePromises: number
@@ -76,7 +67,7 @@ export default class Coverter {
     Ellipse: this.EllipseToGeometryData.bind(this)
   }
 
-  constructor(objectLoader: any) {
+  constructor(objectLoader: unknown) {
     if (!objectLoader) {
       console.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -107,10 +98,10 @@ export default class Coverter {
    * @return {[type]}            [description]
    */
   public async traverseAndConvert(
-    obj: any,
+    obj,
     callback: ConverterResultDelegate,
-    scale: boolean = true,
-    parents: any[] = []
+    scale = true,
+    parents: [] = []
   ) {
     await this.asyncPause()
 
@@ -181,7 +172,7 @@ export default class Coverter {
               convertedElement?.geometryType
             )
           ) // use the parent's metadata!
-        } catch (e: any) {
+        } catch (e) {
           console.warn(
             `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
           )
@@ -243,25 +234,19 @@ export default class Coverter {
     this.activePromises -= childrenConversionPromisses.length
   }
 
-  private directConverterExists(obj: any) {
+  private directConverterExists(obj) {
     return this.getSpeckleType(obj) in this.GeometryConverterMapping
   }
 
-  private directConvert(
-    obj: any,
-    scale: boolean = true
-  ): Promise<ObjectWrapper | undefined> {
+  private directConvert(obj, scale = true): Promise<ObjectWrapper | undefined> {
     return this.GeometryConverterMapping[this.getSpeckleType(obj)](obj, scale)
   }
 
-  private convertToGeometryData(
-    obj: any,
-    scale: boolean = true
-  ): Promise<GeometryData> {
+  private convertToGeometryData(obj, scale = true): Promise<GeometryData> {
     return this.GeometryDataConverterMapping[this.getSpeckleType(obj)](obj, scale)
   }
 
-  private getDisplayValue(obj: any) {
+  private getDisplayValue(obj) {
     return (
       obj['displayValue'] ||
       obj['@displayValue'] ||
@@ -277,7 +262,7 @@ export default class Coverter {
    * @param  {Function} callback [description]
    * @return {[type]}     [description]
    */
-  private async convert(obj: any, scale: boolean = true) {
+  private async convert(obj, scale = true) {
     if (obj.referencedId) obj = await this.resolveReference(obj)
     try {
       if (this.directConverterExists(obj)) {
@@ -295,7 +280,7 @@ export default class Coverter {
    * @param  {[type]} arr [description]
    * @return {[type]}     [description]
    */
-  private async dechunk(arr: any[]) {
+  private async dechunk(arr) {
     if (!arr || arr.length === 0) return arr
     // Handles pre-chunking objects, or arrs that have not been chunked
     if (!arr[0].referencedId) return arr
@@ -317,7 +302,7 @@ export default class Coverter {
    * @param  {[type]} obj [description]
    * @return {[type]}     [description]
    */
-  private async resolveReference(obj: any) {
+  private async resolveReference(obj) {
     if (obj.referencedId) {
       const resolvedObj = await this.objectLoader.getObject(obj.referencedId)
       // this.asyncPause()
@@ -330,7 +315,7 @@ export default class Coverter {
    * @param  {[type]} obj [description]
    * @return {[type]}     [description]
    */
-  private getSpeckleType(obj: any): string {
+  private getSpeckleType(obj): string {
     let type = 'Base'
     if (obj.data)
       type = obj.data.speckle_type
@@ -343,7 +328,7 @@ export default class Coverter {
   /**
    * VIEW 3D
    */
-  private async View3DToBufferGeometry(obj: any) {
+  private async View3DToBufferGeometry(obj) {
     obj.origin.units = obj.units
     obj.target.units = obj.units
     const origin = this.PointToVector3(obj.origin)
@@ -356,7 +341,7 @@ export default class Coverter {
   /**
    * BLOCK INSTANCE
    */
-  private async BlockInstanceToBufferGeometry(obj: any, scale?: boolean) {
+  private async BlockInstanceToBufferGeometry(obj, scale?: boolean) {
     const cF = scale ? getConversionFactor(obj.units) : 1
     const definition = await this.resolveReference(obj.blockDefinition)
 
@@ -389,7 +374,7 @@ export default class Coverter {
   /**
    * POINT CLOUD
    */
-  private async PointcloudToGeometryData(obj: any, scale = true) {
+  private async PointcloudToGeometryData(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
 
     const vertices = await this.dechunk(obj.points)
@@ -416,7 +401,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  private async PointcloudToBufferGeometry(obj: any, scale: boolean = true) {
+  private async PointcloudToBufferGeometry(obj, scale = true) {
     return new ObjectWrapper(
       Geometry.makePointCloudGeometry(await this.PointcloudToGeometryData(obj, scale)),
       obj,
@@ -427,7 +412,7 @@ export default class Coverter {
   /**
    * BREP
    */
-  private async BrepToBufferGeometry(obj: any, scale = true) {
+  private async BrepToBufferGeometry(obj, scale = true) {
     try {
       if (!obj) return
 
@@ -459,7 +444,7 @@ export default class Coverter {
   /**
    * MESH
    */
-  private async MeshToGeometryData(obj: any, scale = true): Promise<GeometryData> {
+  private async MeshToGeometryData(obj, scale = true): Promise<GeometryData> {
     if (!obj) return
 
     const conversionFactor = getConversionFactor(obj.units)
@@ -521,7 +506,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  private async MeshToBufferGeometry(obj: any, scale: boolean = true) {
+  private async MeshToBufferGeometry(obj, scale = true) {
     try {
       return new ObjectWrapper(
         Geometry.makeMeshGeometry(await this.MeshToGeometryData(obj, scale)),
@@ -536,7 +521,7 @@ export default class Coverter {
   /**
    * POINT
    */
-  private async PointToGeometryData(obj: any, scale = true): Promise<GeometryData> {
+  private async PointToGeometryData(obj, scale = true): Promise<GeometryData> {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     return {
       attributes: {
@@ -549,7 +534,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  private async PointToBufferGeometry(obj: any, scale = true) {
+  private async PointToBufferGeometry(obj, scale = true) {
     return new ObjectWrapper(
       Geometry.makePointGeometry(await this.PointToGeometryData(obj, scale)),
       obj,
@@ -560,10 +545,7 @@ export default class Coverter {
   /**
    * LINE
    */
-  private async LineToGeometryData(
-    obj: any,
-    scale: boolean = true
-  ): Promise<GeometryData> {
+  private async LineToGeometryData(obj, scale = true): Promise<GeometryData> {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     return {
       attributes: {
@@ -578,7 +560,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  private async LineToBufferGeometry(obj: any, scale = true) {
+  private async LineToBufferGeometry(obj, scale = true) {
     if (obj.value) {
       //Old line format, treat as polyline
       return this.PolylineToBufferGeometry(obj, scale)
@@ -593,11 +575,8 @@ export default class Coverter {
   /**
    * POLYLINE
    */
-  private async PolylineToGeometryData(
-    object: any,
-    scale = true
-  ): Promise<GeometryData> {
-    const obj: any = {}
+  private async PolylineToGeometryData(object, scale = true): Promise<GeometryData> {
+    const obj = Object.create({})
     Object.assign(obj, object)
 
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
@@ -616,7 +595,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  async PolylineToBufferGeometry(obj: any, scale = true) {
+  async PolylineToBufferGeometry(obj, scale = true) {
     const geometry = Geometry.makeLineGeometry(
       await this.PolylineToGeometryData(obj, scale)
     )
@@ -627,7 +606,7 @@ export default class Coverter {
   /**
    * BOX
    */
-  private async BoxToGeometryData(object: any, scale = true) {
+  private async BoxToGeometryData(object, scale = true) {
     /**
      * Right, so we're cheating here a bit. We're using three's box geometry
      * to get the vertices and indices. Normally we could(should) do that by hand
@@ -650,7 +629,7 @@ export default class Coverter {
       transform: null
     } as GeometryData
   }
-  async BoxToBufferGeometry(object: any, scale = true) {
+  async BoxToBufferGeometry(object, scale = true) {
     return new ObjectWrapper(
       Geometry.makeMeshGeometry(await this.BoxToGeometryData(object, scale)),
       object
@@ -660,12 +639,11 @@ export default class Coverter {
   /**
    * POLYCURVE
    */
-  async PolycurveToGeometryData(object: any, scale = true): Promise<GeometryData> {
-    const obj: any = {}
+  async PolycurveToGeometryData(object, scale = true): Promise<GeometryData> {
+    const obj = Object.create({})
     Object.assign(obj, object)
 
     const buffers = []
-    let count = 0
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       let conv
@@ -680,7 +658,7 @@ export default class Coverter {
     return Geometry.mergeGeometryData(buffers)
   }
 
-  async PolycurveToBufferGeometry(object: any, scale = true) {
+  async PolycurveToBufferGeometry(object, scale = true) {
     const geometryData: GeometryData = await this.PolycurveToGeometryData(object, scale)
     const geometry = Geometry.makeLineGeometry(geometryData)
 
@@ -690,8 +668,8 @@ export default class Coverter {
   /**
    * CURVE
    */
-  async CurveToBufferGeometry(object: any, scale = true) {
-    const obj: any = {}
+  async CurveToBufferGeometry(object, scale = true) {
+    const obj = Object.create({})
     Object.assign(obj, object)
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
@@ -704,7 +682,7 @@ export default class Coverter {
   /**
    * CIRCLE
    */
-  async CircleToGeometryData(obj: any, scale = true) {
+  async CircleToGeometryData(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     const points = this.getCircularCurvePoints(obj.plane, obj.radius * conversionFactor)
     return {
@@ -715,7 +693,7 @@ export default class Coverter {
       transform: null
     } as GeometryData
   }
-  async CircleToBufferGeometry(obj: any, scale = true) {
+  async CircleToBufferGeometry(obj, scale = true) {
     const geometry = Geometry.makeLineGeometry(
       await this.CircleToGeometryData(obj, scale)
     )
@@ -725,7 +703,7 @@ export default class Coverter {
   /**
    * ARC
    */
-  async ArcToGeometryData(obj: any, scale = true) {
+  async ArcToGeometryData(obj, scale = true) {
     const origin = new Vector3(
       obj.plane.origin.x,
       obj.plane.origin.y,
@@ -756,9 +734,14 @@ export default class Coverter {
     v2.normalize()
     const v3 = new Vector3().crossVectors(v2, v0)
     v3.normalize()
-
+    /**
+     * We clamp the dot value to [-1,1] since that's the domain acos is defined on. Normally dot won't return
+     * values outside that interval, but due to floating point precision, you sometimes get -1.0000000004, which
+     * makes acos return NaN
+     */
+    const dot = Math.min(Math.max(v0.dot(v1), -1), 1)
     // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
-    const angle = Math.acos(v0.dot(v1))
+    const angle = Math.acos(dot)
     const radius = obj.radius
     // We draw the arc in a local un-rotated coordinate system. We rotate it later on via transformation
     const curve = new EllipseCurve(
@@ -794,7 +777,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  async ArcToBufferGeometry(obj: any, scale = true) {
+  async ArcToBufferGeometry(obj, scale = true) {
     const geometry = Geometry.makeLineGeometry(await this.ArcToGeometryData(obj, scale))
 
     return new ObjectWrapper(geometry, obj, 'line')
@@ -803,7 +786,7 @@ export default class Coverter {
   /**
    * ELLIPSE
    */
-  async EllipseToGeometryData(obj: any, scale = true) {
+  async EllipseToGeometryData(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
 
     const center = new Vector3(
@@ -846,7 +829,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  async EllipseToBufferGeometry(obj: any, scale = true) {
+  async EllipseToBufferGeometry(obj, scale = true) {
     const geometry = Geometry.makeLineGeometry(
       await this.EllipseToGeometryData(obj, scale)
     )
@@ -856,7 +839,7 @@ export default class Coverter {
   /**
    * UTILS
    */
-  PlaneToMatrix4(plane: any, scale = true) {
+  PlaneToMatrix4(plane, scale = true) {
     const m = new Matrix4()
     const conversionFactor = scale ? getConversionFactor(plane.units) : 1
 
@@ -876,8 +859,8 @@ export default class Coverter {
   }
 
   getCircularCurvePoints(
-    plane: any,
-    radius: any,
+    plane,
+    radius,
     startAngle = 0,
     endAngle = 2 * Math.PI,
     res = this.curveSegmentLength
@@ -910,7 +893,7 @@ export default class Coverter {
     return points
   }
 
-  PointToVector3(obj: any, scale = true) {
+  PointToVector3(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     let v = null
     if (obj.value) {
@@ -931,7 +914,7 @@ export default class Coverter {
     return v
   }
 
-  PointToFloatArray(obj: any) {
+  PointToFloatArray(obj) {
     if (obj.value) {
       return [obj.value[0], obj.value[1], obj.value[2]]
     } else {
@@ -941,10 +924,12 @@ export default class Coverter {
 
   FlattenVector3Array(input: Vector3[] | Vector2[]): number[] {
     const output = new Array(input.length * 3)
-    for (var k = 0, l = 0; k < input.length; k++, l += 3) {
-      output[l] = input[k].x
-      output[l + 1] = input[k].y
-      output[l + 2] = input[k].hasOwnProperty('z') ? (input[k] as any).z : 0
+    const vBuff = []
+    for (let k = 0, l = 0; k < input.length; k++, l += 3) {
+      input[k].toArray(vBuff)
+      output[l] = vBuff[0]
+      output[l + 1] = vBuff[1]
+      output[l + 2] = vBuff[2] ? vBuff[2] : 0
     }
     return output
   }

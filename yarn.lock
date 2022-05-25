@@ -217,7 +217,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.1.0, @babel/core@npm:^7.11.0, @babel/core@npm:^7.12.3, @babel/core@npm:^7.17.5, @babel/core@npm:^7.17.9, @babel/core@npm:^7.7.2, @babel/core@npm:^7.7.5, @babel/core@npm:^7.8.0, @babel/core@npm:^7.9.0":
+"@babel/core@npm:^7.1.0, @babel/core@npm:^7.11.0, @babel/core@npm:^7.12.3, @babel/core@npm:^7.17.5, @babel/core@npm:^7.7.2, @babel/core@npm:^7.7.5, @babel/core@npm:^7.8.0, @babel/core@npm:^7.9.0":
   version: 7.17.10
   resolution: "@babel/core@npm:7.17.10"
   dependencies:
@@ -2907,7 +2907,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectloader@^2.4.2, @speckle/objectloader@workspace:^, @speckle/objectloader@workspace:packages/objectloader":
+"@speckle/objectloader@workspace:^, @speckle/objectloader@workspace:packages/objectloader":
   version: 0.0.0-use.local
   resolution: "@speckle/objectloader@workspace:packages/objectloader"
   dependencies:
@@ -2930,24 +2930,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectloader@npm:2.4.2":
-  version: 2.4.2
-  resolution: "@speckle/objectloader@npm:2.4.2"
-  dependencies:
-    "@babel/core": ^7.17.9
-    core-js: ^3.21.1
-    regenerator-runtime: ^0.13.7
-  checksum: a8dff45029ea2a59ad242831c49aaf33ff5b93ec546e29490a949f7e61bf51f4033d0d0430a78bf09950702ba9003f78b220a6dcc378830afcbfd3b0772c023e
-  languageName: node
-  linkType: hard
-
 "@speckle/preview-service@workspace:packages/preview-service":
   version: 0.0.0-use.local
   resolution: "@speckle/preview-service@workspace:packages/preview-service"
   dependencies:
     "@babel/core": ^7.17.5
-    "@speckle/objectloader": 2.4.2
-    "@speckle/viewer": 2.4.2
+    "@speckle/objectloader": "workspace:^"
+    "@speckle/viewer": "workspace:^"
     babel-loader: ^8.2.2
     clean-webpack-plugin: ^4.0.0-alpha.0
     cookie-parser: ~1.4.4
@@ -3075,22 +3064,6 @@ __metadata:
     vite: ^2.9.5
   languageName: unknown
   linkType: soft
-
-"@speckle/viewer@npm:2.4.2":
-  version: 2.4.2
-  resolution: "@speckle/viewer@npm:2.4.2"
-  dependencies:
-    "@speckle/objectloader": ^2.4.2
-    camera-controls: ^1.33.1
-    core-js: ^3.21.1
-    hold-event: ^0.1.0
-    lodash.debounce: ^4.0.8
-    rainbowvis.js: ^1.0.1
-    regenerator-runtime: ^0.13.7
-    three: ^0.136.0
-  checksum: 4f54f354c896f2ccc1aa69dbdc12a8480037de2ab406fff6571bf6291bbd575e0c6b5328417b9caf46fe82134daf7a923915b01f7935ef9d95c6ec76225232f6
-  languageName: node
-  linkType: hard
 
 "@speckle/viewer@workspace:^, @speckle/viewer@workspace:packages/viewer":
   version: 0.0.0-use.local

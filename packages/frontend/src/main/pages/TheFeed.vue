@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="font-weight-bold">Feed</div>
     </portal>
     <v-row>
@@ -12,11 +12,17 @@
   </div>
 </template>
 <script>
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+
 export default {
   name: 'TheFeed',
   components: {
     FeedTimeline: () => import('@/main/components/feed/FeedTimeline.vue'),
     LatestBlogposts: () => import('@/main/components/feed/LatestBlogposts')
-  }
+  },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'feed', 0)]
 }
 </script>

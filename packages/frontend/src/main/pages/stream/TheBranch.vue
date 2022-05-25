@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <branch-toolbar
-      v-if="stream && stream.branch"
+      v-if="canRenderToolbarPortal && stream && stream.branch"
       :stream="stream"
       @edit-branch="branchEditDialog = true"
     />
@@ -102,6 +102,10 @@
 <script>
 import gql from 'graphql-tag'
 import branchQuery from '@/graphql/branch.gql'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheBranch',
@@ -114,6 +118,7 @@ export default {
     BranchToolbar: () => import('@/main/toolbars/BranchToolbar'),
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-branch', 1)],
   data() {
     return {
       branchEditDialog: false,
@@ -129,7 +134,8 @@ export default {
           streamId: this.streamId,
           branchName: this.$route.params.branchName.toLowerCase()
         }
-      }
+      },
+      fetchPolicy: 'network-only'
     },
     $subscribe: {
       commitCreated: {

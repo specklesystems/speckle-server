@@ -10,7 +10,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.environmentSrc =
-  'https://speckle-xyz-release.ams3.digitaloceanspaces.com/assets/studio010.hdr'
+  'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
 const viewer = new Viewer(container, params)
 await viewer.init()
 
