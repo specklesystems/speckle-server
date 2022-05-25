@@ -174,7 +174,7 @@ exports.init = (app) => {
       return res.sendFile(noPreviewImage)
     }
     const lastCommit = commits[0]
-    console.log(req.params.angle || DEFAULT_ANGLE)
+
     return sendObjectPreview(
       req,
       res,
@@ -235,7 +235,7 @@ exports.init = (app) => {
         id: req.params.commitId
       })
       if (!commit) return res.sendFile(noPreviewImage)
-      console.log(req.params.angle || DEFAULT_ANGLE)
+
       return sendObjectPreview(
         req,
         res,
@@ -255,7 +255,7 @@ exports.init = (app) => {
         // return res.status( httpErrorCode ).end()
         return res.sendFile()
       }
-      console.log(req.params.angle || DEFAULT_ANGLE)
+
       return sendObjectPreview(
         req,
         res,
