@@ -12,7 +12,12 @@
     bg image props position. Results in less dom elements, and no flickering! 
     -->
     <div :style="bgStyle"></div>
-    <v-progress-linear v-show="loading" indeterminate height="4" style="position: absolute; bottom: 0" />
+    <v-progress-linear
+      v-show="loading"
+      indeterminate
+      height="4"
+      style="position: absolute; bottom: 0"
+    />
   </div>
 </template>
 <script>
@@ -44,7 +49,10 @@ export default {
       previewImages: [],
       imageIndex: 0,
       legacyMode: false,
-      angles: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0]
+      angles: [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+        22, 23, 0
+      ]
     }
   },
   computed: {
@@ -64,7 +72,9 @@ export default {
       bgStyle += `
       background-position:`
       for (let i = 0; i < this.revImg.length; i++) {
-        bgStyle += `${i === this.imageIndex ? 'center' : '10000px'}${i !== this.revImg.length - 1 ? ',' : ';'}`
+        bgStyle += `${i === this.imageIndex ? 'center' : '10000px'}${
+          i !== this.revImg.length - 1 ? ',' : ';'
+        }`
       }
       return bgStyle
     }
@@ -85,7 +95,11 @@ export default {
     parseTouch(e) {
       if (this.hasStartedLoadingImages && this.loading && !this.rotate) return
       this.hovered = true
-      this.setIndex({ target: e.target, clientX: e.touches[0].clientX, clientY: e.touches[0].clientY })
+      this.setIndex({
+        target: e.target,
+        clientX: e.touches[0].clientX,
+        clientY: e.touches[0].clientY
+      })
     },
     setIndex(e) {
       if (this.hasStartedLoadingImages && this.loading && !this.rotate) return
