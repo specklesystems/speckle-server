@@ -1,4 +1,4 @@
-import { Viewer } from '@speckle/viewer'
+import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 import './style.css'
 import Sandbox from './Sandbox'
 
@@ -8,7 +8,10 @@ if (!container) {
 }
 
 // Viewer setup
-const viewer = new Viewer(container)
+const params = DefaultViewerParams
+params.environmentSrc =
+  'https://speckle-xyz-release.ams3.digitaloceanspaces.com/assets/studio010.hdr'
+const viewer = new Viewer(container, params)
 await viewer.init()
 
 const sandbox = new Sandbox(viewer)
@@ -32,4 +35,4 @@ viewer.on('load-complete', () => {
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 // Load demo object
-sandbox.loadUrl('https://speckle.xyz/streams/9217731fc1/commits/751ae5dac7')
+sandbox.loadUrl('https://latest.speckle.dev/streams/2158263a8f/commits/3a629fc558')

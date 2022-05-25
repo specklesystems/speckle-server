@@ -23,7 +23,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private container: HTMLElement
   private cubeCamera: CubeCamera
   private stats: Optional<Stats>
-  private loaders: any
+  private loaders: unknown
   private needsRender: boolean
   private inProgressOperations: number
 
@@ -33,7 +33,8 @@ export class Viewer extends EventEmitter implements IViewer {
   public interactions: InteractionHandler
   private renderer: WebGLRenderer
   public cameraHandler: CameraHandler
-  private sceneURL: string
+  private sceneURL: string // Temporary
+  private startupParams: ViewerParams
 
   public static Assets: Assets
 
@@ -88,7 +89,7 @@ export class Viewer extends EventEmitter implements IViewer {
     super()
 
     window.THREE = THREE
-
+    this.startupParams = params
     this.clock = new THREE.Clock()
 
     this.container = container || document.getElementById('renderer')
@@ -144,9 +145,11 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public async init(): Promise<void> {
-    this.scene.environment = await Viewer.Assets.getEnvironment(
-      'http://localhost:3033/sample-hdri.exr'
-    )
+    if (this.startupParams.environmentSrc) {
+      this.scene.environment = await Viewer.Assets.getEnvironment(
+        this.startupParams.environmentSrc
+      )
+    }
   }
 
   private sceneLights() {
@@ -310,7 +313,7 @@ export class Viewer extends EventEmitter implements IViewer {
     return
   }
 
-  public async applyFilter(filter: any) {
+  public async applyFilter(filter: unknown) {
     try {
       if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
 

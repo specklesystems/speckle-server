@@ -2,12 +2,14 @@ export interface ViewerParams {
   postprocessing: boolean
   reflections: boolean
   showStats: boolean
+  environmentSrc: string
 }
 
 export const DefaultViewerParams: ViewerParams = {
   postprocessing: false,
   reflections: true,
-  showStats: true
+  showStats: true,
+  environmentSrc: null
 }
 /**
  * Carried over from the old Viewer. To be extended/changed
@@ -25,8 +27,8 @@ export interface IViewer {
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
 
-  applyFilter(filter: any): Promise<any>
-  getObjectsProperties(includeAll?: boolean): any
+  applyFilter(filter: unknown): Promise<unknown>
+  getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void
 }
