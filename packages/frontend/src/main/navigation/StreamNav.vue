@@ -241,6 +241,7 @@ export default {
             branches {
               totalCount
               items {
+                id
                 name
                 description
                 author {

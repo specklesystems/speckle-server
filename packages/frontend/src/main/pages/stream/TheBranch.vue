@@ -129,7 +129,8 @@ export default {
           streamId: this.streamId,
           branchName: this.$route.params.branchName.toLowerCase()
         }
-      }
+      },
+      fetchPolicy: 'network-only'
     },
     $subscribe: {
       commitCreated: {
