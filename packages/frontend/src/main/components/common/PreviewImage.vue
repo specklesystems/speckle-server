@@ -4,7 +4,10 @@
     :class="`${$vuetify.theme.dark ? 'grey darken-4' : 'grey lighten-4'}`"
     @mouseenter="hovered = true"
     @touchmove="parseTouch"
-    @mouseleave="hovered = false"
+    @mouseleave="
+      hovered = false
+      imageIndex = 0
+    "
     @mousemove="setIndex"
   >
     <!-- 
@@ -12,7 +15,12 @@
     bg image props position. Results in less dom elements, and no flickering! 
     -->
     <div :style="bgStyle"></div>
-    <v-progress-linear v-show="loading" indeterminate height="4" style="position: absolute; bottom: 0" />
+    <v-progress-linear
+      v-show="loading"
+      indeterminate
+      height="2"
+      style="position: absolute; bottom: 0"
+    />
   </div>
 </template>
 <script>
@@ -44,7 +52,10 @@ export default {
       previewImages: [],
       imageIndex: 0,
       legacyMode: false,
-      angles: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0]
+      angles: [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+        22, 23, 0
+      ]
     }
   },
   computed: {
@@ -64,7 +75,9 @@ export default {
       bgStyle += `
       background-position:`
       for (let i = 0; i < this.revImg.length; i++) {
-        bgStyle += `${i === this.imageIndex ? 'center' : '10000px'}${i !== this.revImg.length - 1 ? ',' : ';'}`
+        bgStyle += `${i === this.imageIndex ? 'center' : '10000px'}${
+          i !== this.revImg.length - 1 ? ',' : ';'
+        }`
       }
       return bgStyle
     }
@@ -83,17 +96,27 @@ export default {
   },
   methods: {
     parseTouch(e) {
-      if (this.hasStartedLoadingImages && this.loading && !this.rotate) return
+      if (this.loading || !this.rotate) {
+        this.imageIndex = 0
+        return
+      }
       this.hovered = true
-      this.setIndex({ target: e.target, clientX: e.touches[0].clientX, clientY: e.touches[0].clientY })
+      this.setIndex({
+        target: e.target,
+        clientX: e.touches[0].clientX,
+        clientY: e.touches[0].clientY
+      })
     },
     setIndex(e) {
-      if (this.hasStartedLoadingImages && this.loading && !this.rotate) return
+      if (this.loading || !this.rotate) {
+        this.imageIndex = 0
+        return
+      }
       const rect = e.target.getBoundingClientRect()
       const x = e.clientX - rect.left
       const step = rect.width / this.previewImages.length
       let index = Math.round(x / step)
-      if (index >= this.previewImages.length) index = 0
+      if (index >= this.previewImages.length) index = this.previewImages.length - 1
       this.imageIndex = index
     },
     async getPreviewImage(angle = 0) {
@@ -114,24 +137,32 @@ export default {
       // labelled angles (-2, -1, 0, 1, 2). We have now switched to generating full 360deg previews in increments
       // of 15 deg, going clockwise straight. Eg., 0 = 0deg, 1 = 15deg, 2 = 30 deg, etc.
       this.loading = true
-      // starting in reverse to quickly figure out if we're on the legacy track!
-      for (let i = this.angles.length - 1; i > 0; i--) {
-        if (this.angles[i] === 0) continue // we already have this one loaded
-        try {
-          const img = await this.getPreviewImage(this.angles[i])
-          this.$set(this.previewImages, i, img)
-        } catch (err) {
-          console.log(err)
-          // on the legacy track!
-          this.legacyMode = true
-          this.previewImages.unshift(await this.getPreviewImage(-1))
-          this.previewImages.unshift(await this.getPreviewImage(-2))
-          // We have the image at 0, skipping
-          this.previewImages.push(await this.getPreviewImage(1))
-          this.previewImages.push(await this.getPreviewImage(2))
-          this.loading = false
-          break
+
+      try {
+        const img = await this.getPreviewImage(this.angles[this.angles.length - 1])
+        this.$set(this.previewImages, this.angles.length - 1, img)
+        const promises = []
+        for (let i = 1; i < this.angles.length; i++) {
+          promises.push(this.getPreviewImage(this.angles[i]))
         }
+
+        const otherImgs = await Promise.all(promises)
+        for (let i = 0; i < otherImgs.length; i++) {
+          this.$set(this.previewImages, i + 1, otherImgs[i])
+        }
+      } catch {
+        // legacy track
+        this.legacyMode = true
+        const otherImgs = await Promise.all([
+          this.getPreviewImage(-1),
+          this.getPreviewImage(-2),
+          this.getPreviewImage(1),
+          this.getPreviewImage(2)
+        ])
+        this.previewImages.unshift(otherImgs[0])
+        this.previewImages.unshift(otherImgs[1])
+        this.previewImages.push(otherImgs[2])
+        this.previewImages.push(otherImgs[3])
       }
       this.loading = false
     }
