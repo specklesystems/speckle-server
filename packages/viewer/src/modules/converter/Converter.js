@@ -665,15 +665,19 @@ export default class Coverter {
     const matrix = new Matrix4()
     // Scale first, in order for the composition to work correctly
     const conversionFactor = scale ? getConversionFactor(obj.plane.units) : 1
+    // We determine the orientation of the plane using the three basis vectors computed above
+    const R = new Matrix4().makeBasis(v0, v3, v2)
+    // We translate it to the circle's origin (considering the origin's scaling as aswell )
+    const T = new Matrix4().setPosition(origin.multiplyScalar(conversionFactor))
+
+    matrix.multiply(T).multiply(R)
+
     if (scale) {
-      matrix.scale(
+      const S = new Matrix4().scale(
         new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor)
       )
+      matrix.multiply(S)
     }
-    // We determine the orientation of the plane using the three basis vectors computed above
-    matrix.makeBasis(v0, v3, v2)
-    // We translate it to the circle's origin
-    matrix.setPosition(origin)
 
     const geometry = new THREE.BufferGeometry()
       .setFromPoints(points)
