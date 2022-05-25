@@ -19,8 +19,8 @@
     "lint": "eslint . --ext .js,.ts"
   },
   "dependencies": {
-    "@speckle/objectloader": "2.4.2",
-    "@speckle/viewer": "2.4.2",
+    "@speckle/objectloader": "workspace:^",
+    "@speckle/viewer": "workspace:^",
     "cookie-parser": "~1.4.4",
     "crypto": "^1.0.1",
     "debug": "~2.6.9",
