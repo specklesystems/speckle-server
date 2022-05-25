@@ -93,9 +93,23 @@ export default {
         this.loading = false
         this.$emit('refetch-branches')
         this.$emit('close')
-        this.$router.push(
-          `/streams/${this.$route.params.streamId}/branches/${this.name.toLowerCase()}`
-        )
+
+        try {
+          await this.$router.push(
+            `/streams/${
+              this.$route.params.streamId
+            }/branches/${this.name.toLowerCase()}`
+          )
+        } catch (routerErr) {
+          if (routerErr?.name === 'NavigationDuplicated') {
+            // Just created a new branch, while we're on its 404 page
+            // Kind of an edge case, so as reloading the page is easier, i'll just do that instead of messing
+            // with the Apollo cache
+            location.reload()
+          } else {
+            throw routerErr
+          }
+        }
       } catch (err) {
         this.showError = true
         if (err.message.includes('branches_streamid_name_unique'))
