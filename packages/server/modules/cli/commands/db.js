@@ -1,7 +1,7 @@
 /** @type {import('yargs').CommandModule} */
 const command = {
   command: 'db',
-  describe: 'DB & Migration actions',
+  describe: 'DB actions - migrations, seeding',
   builder(yargs) {
     return yargs.commandDir('db').demandCommand()
   }

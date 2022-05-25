@@ -15,11 +15,18 @@ const { createStream } = require('@/modules/core/services/streams')
 const { createObject } = require('@/modules/core/services/objects')
 const { createComment } = require('@/modules/comments/services')
 const { createCommitByBranchName } = require('@/modules/core/services/commits')
+const {
+  convertBasicStringToDocument
+} = require('@/modules/core/services/richTextEditorService')
 
 describe('Subscriptions @comments', () => {
   // the idea here, is to use a pubsub.asyncIterator and count the expected events
   it('Should publish events to pubsub, test it by registering a subscriber')
 })
+
+function buildCommentInputFromString(textString) {
+  return convertBasicStringToDocument(textString)
+}
 
 const testForbiddenResponse = (result) => {
   expect(result.errors, 'This should have failed').to.exist
@@ -46,7 +53,7 @@ const writeComment = async ({ apollo, resources, shouldSucceed }) => {
     variables: {
       input: {
         streamId: resources.streamId,
-        text: 'foo',
+        text: buildCommentInputFromString('foo'),
         data: {},
         resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
       }
@@ -121,11 +128,11 @@ const viewAComment = async ({ apollo, resources, shouldSucceed }) => {
 
 const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
   const context = await apollo.context()
-  const commentId = await createComment({
+  const { id: commentId } = await createComment({
     userId: context.userId,
     input: {
       streamId: resources.streamId,
-      text: 'i wrote this myself',
+      text: buildCommentInputFromString('i wrote this myself'),
       data: {},
       resources: [
         { resourceId: resources.streamId, resourceType: 'stream' },
@@ -165,11 +172,11 @@ const archiveOthersComment = async ({ apollo, resources, shouldSucceed }) => {
 
 const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
   const context = await apollo.context()
-  const commentId = await createComment({
+  const { id: commentId } = await createComment({
     userId: context.userId,
     input: {
       streamId: resources.streamId,
-      text: 'i wrote this myself',
+      text: buildCommentInputFromString('i wrote this myself'),
       data: {},
       resources: [
         { resourceId: resources.streamId, resourceType: 'stream' },
@@ -187,7 +194,7 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
       input: {
         streamId: resources.streamId,
         id: commentId,
-        text: 'im going to overwrite myself'
+        text: buildCommentInputFromString('im going to overwrite myself')
       }
     }
   })
@@ -207,7 +214,9 @@ const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
       input: {
         streamId: resources.streamId,
         id: resources.commentId,
-        text: 'what you wrote is dumb, here, let me fix it for you'
+        text: buildCommentInputFromString(
+          'what you wrote is dumb, here, let me fix it for you'
+        )
       }
     }
   })
@@ -227,7 +236,9 @@ const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
       input: {
         streamId: resources.streamId,
         parentComment: resources.commentId,
-        text: 'what you wrote is dump, here, let me fix it for you',
+        text: buildCommentInputFromString(
+          'what you wrote is dump, here, let me fix it for you'
+        ),
         data: {}
       }
     }
@@ -248,7 +259,9 @@ const queryComment = async ({ apollo, resources, shouldSucceed }) => {
             totalCount
             items {
               id
-              text
+              text {
+                doc
+              }
             }
           }
         }
@@ -279,11 +292,11 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
         userId: resources.testActorId,
         input: {
           streamId: resources.streamId,
-          text: `${key}`,
+          text: buildCommentInputFromString(`${key}`),
           data: {},
           resources: [{ resourceId: objectId, resourceType: 'object' }]
         }
-      })
+      }).then((c) => c.id)
     )
   )
 
@@ -294,7 +307,9 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
           totalCount
           items {
             id
-            text
+            text {
+              doc
+            }
           }
         }
       }
@@ -318,7 +333,7 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     userId: resources.testActorId,
     input: {
       streamId: resources.streamId,
-      text: 'im expecting some replies here',
+      text: buildCommentInputFromString('im expecting some replies here'),
       data: {},
       resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
     }
@@ -349,7 +364,7 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     userId: resources.testActorId,
     input: {
       streamId: resources.streamId,
-      text: 'im expecting some replies here',
+      text: buildCommentInputFromString('im expecting some replies here'),
       data: {},
       resources: [{ resourceId: objectId, resourceType: 'object' }]
     }
@@ -388,7 +403,7 @@ const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => 
     userId: resources.testActorId,
     input: {
       streamId: resources.streamId,
-      text: 'im expecting some replies here',
+      text: buildCommentInputFromString('im expecting some replies here'),
       data: {},
       resources: [{ resourceId: commitId, resourceType: 'commit' }]
     }
@@ -431,7 +446,7 @@ const queryCommitCollectionCommentCount = async ({
     userId: resources.testActorId,
     input: {
       streamId: resources.streamId,
-      text: 'im expecting some replies here',
+      text: buildCommentInputFromString('im expecting some replies here'),
       data: {},
       resources: [{ resourceId: commitId, resourceType: 'commit' }]
     }
@@ -817,11 +832,11 @@ describe('Graphql @comments', () => {
 
           const objectId = await createObject(stream.id, { test: 'object' })
 
-          const commentId = await createComment({
+          const { id: commentId } = await createComment({
             userId: myTestActor.id,
             input: {
               streamId: stream.id,
-              text: 'foo',
+              text: buildCommentInputFromString('foo'),
               data: {},
               resources: [{ resourceId: stream.id, resourceType: 'stream' }]
             }

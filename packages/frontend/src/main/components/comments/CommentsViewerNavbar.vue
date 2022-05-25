@@ -81,7 +81,7 @@
             }`"
             style="line-height: 30px"
           >
-            {{ comment.text }}
+            {{ documentToBasicString(comment.text.doc) }}
           </v-col>
           <v-col
             cols="3"
@@ -121,6 +121,8 @@
   </div>
 </template>
 <script>
+import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
+
 export default {
   components: {
     UserAvatar: () => import('@/main/components/common/UserAvatar')
@@ -137,7 +139,8 @@ export default {
   },
   data() {
     return {
-      expand: true
+      expand: true,
+      documentToBasicString
     }
   },
   computed: {

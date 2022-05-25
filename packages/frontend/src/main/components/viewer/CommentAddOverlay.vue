@@ -19,12 +19,9 @@
       <div
         v-show="visible && !$store.state.selectedComment"
         ref="commentButton"
-        class="absolute-pos"
+        class="new-comment-overlay absolute-pos"
       >
-        <div
-          class="d-flex"
-          :style="`height: 48px; width: ${$vuetify.breakpoint.xs ? '90vw' : '320px'}`"
-        >
+        <div class="d-flex">
           <v-btn
             v-tooltip="!expand ? 'Add a comment (ctrl + shift + c)' : 'Cancel'"
             small
@@ -43,36 +40,29 @@
               style="width: 100%; top: -10px; position: relative"
               class=""
             >
-              <div class="d-flex">
-                <v-textarea
-                  v-if="$loggedIn() && canComment"
+              <div v-if="$loggedIn() && canComment" class="d-flex mouse">
+                <comment-editor
                   v-model="commentText"
-                  :disabled="loading"
-                  solo
-                  hide-details
-                  autofocus
-                  auto-grow
-                  rows="1"
-                  placeholder="Your comment..."
-                  class="mouse rounded-xl caption elevation-15"
-                  append-icon="mdi-send"
-                  @keydown.enter.exact.prevent="addComment()"
-                ></v-textarea>
+                  adding-comment
+                  style="width: 300px"
+                  class="elevation-5"
+                  max-height="300px"
+                  @submit="addComment()"
+                />
+              </div>
+              <div v-if="$loggedIn() && canComment" class="d-flex mt-2 mouse">
                 <v-btn
-                  v-if="$loggedIn() && canComment"
                   v-tooltip="'Send comment (press enter)'"
                   :disabled="loading"
                   icon
                   dark
-                  large
-                  class="mouse elevation-0 primary pa-0 ma-o"
-                  style="left: -47px; top: 1px; height: 48px; width: 48px"
+                  fab
+                  small
+                  class="primary mr-2 elevation-4"
                   @click="addComment()"
                 >
                   <v-icon dark small>mdi-send</v-icon>
                 </v-btn>
-              </div>
-              <div v-if="$loggedIn() && canComment" class="d-flex mt-2 mouse">
                 <template v-for="reaction in $store.state.commentReactions">
                   <v-btn
                     :key="reaction"
@@ -101,7 +91,7 @@
                 block
                 depressed
                 color="primary"
-                class="rounded-xl mouse"
+                class="rounded-xl mouse mt-2"
                 to="/authn/login"
               >
                 <v-icon small class="mr-1">mdi-account</v-icon>
@@ -125,46 +115,46 @@
           <div
             v-if="$loggedIn() && canComment"
             class="d-flex justify-center"
-            style="position: relative; left: 24px"
+            style="position: relative"
           >
-            <v-textarea
+            <comment-editor
               v-model="commentText"
-              solo
+              adding-comment
+              style="width: 100%"
+              class="elevation-5"
+              max-height="60vh"
               :disabled="loading"
-              hide-details
-              autofocus
-              auto-grow
-              rows="1"
-              placeholder="Your comment..."
-              class="mouse rounded-xl caption elevation-15"
-              append-icon="mdi-send"
-              @keydown.enter.exact.prevent="addComment()"
-            ></v-textarea>
+              @submit="addComment()"
+            />
+          </div>
+          <div
+            v-if="$loggedIn() && canComment"
+            class="my-2 d-flex justify-center"
+            style="position: relative"
+          >
             <v-btn
               v-tooltip="'Send comment (press enter)'"
               :disabled="loading"
               icon
               dark
-              large
-              class="mouse elevation-0 primary pa-0 ma-o"
-              style="left: -47px; top: 1px; height: 48px; width: 48px"
+              fab
+              small
+              class="primary mr-2 elevation-4"
               @click="addComment()"
             >
               <v-icon dark small>mdi-send</v-icon>
             </v-btn>
-          </div>
-          <v-btn
-            v-if="!$loggedIn()"
-            block
-            depressed
-            color="primary"
-            class="rounded-xl"
-            to="/authn/login"
-          >
-            <v-icon small class="mr-1">mdi-account</v-icon>
-            Sign in to comment
-          </v-btn>
-          <div class="my-2 d-flex justify-center" style="position: relative">
+            <v-btn
+              v-if="!$loggedIn()"
+              block
+              depressed
+              color="primary"
+              class="rounded-xl"
+              to="/authn/login"
+            >
+              <v-icon small class="mr-1">mdi-account</v-icon>
+              Sign in to comment
+            </v-btn>
             <template v-for="reaction in $store.state.commentReactions">
               <v-btn
                 :key="reaction"
@@ -173,7 +163,7 @@
                 small
                 @click="addCommentDirect(reaction)"
               >
-                <span class="text-h5" style="position: relative; top: 1px; left: -1px">
+                <span class="text-h5">
                   {{ reaction }}
                 </span>
               </v-btn>
@@ -203,10 +193,24 @@
 <script>
 import * as THREE from 'three'
 import gql from 'graphql-tag'
-import debounce from 'lodash/debounce'
-
+import { debounce, throttle } from 'lodash'
 import { getCamArray } from './viewerFrontendHelpers'
+import CommentEditor from '@/main/components/comments/CommentEditor.vue'
+import {
+  basicStringToDocument,
+  isDocEmpty
+} from '@/main/lib/common/text-editor/documentHelper'
+import {
+  VIEWER_UPDATE_THROTTLE_TIME,
+  SMART_EDITOR_SCHEMA
+} from '@/main/lib/viewer/comments/commentsHelper'
+import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
+
 export default {
+  components: { CommentEditor },
+  mixins: [
+    buildResizeHandlerMixin({ shouldThrottle: true, wait: VIEWER_UPDATE_THROTTLE_TIME })
+  ],
   apollo: {
     user: {
       query: gql`
@@ -242,7 +246,8 @@ export default {
       expand: false,
       visible: true,
       loading: false,
-      commentText: null
+      commentText: null,
+      editorSchemaOptions: SMART_EDITOR_SCHEMA
     }
   },
   computed: {
@@ -251,28 +256,43 @@ export default {
     }
   },
   mounted() {
-    window.__viewer.on('select', debounce(this.handleSelect, 10))
+    this.viewerSelectHandler = debounce(this.handleSelect, 10)
+    window.__viewer.on('select', this.viewerSelectHandler)
+
+    // Throttling update, cause it happens way too often and triggers expensive DOM updates
+    // Smoothing out the animation with CSS transitions (check style)
+    this.viewerControlsUpdateHandler = throttle(() => {
+      this.updateCommentBubble()
+    }, VIEWER_UPDATE_THROTTLE_TIME)
     window.__viewer.cameraHandler.controls.addEventListener(
       'update',
-      this.updateCommentBubble
+      this.viewerControlsUpdateHandler
     )
-    // this.$refs.commentTextArea.calculateInputHeight()
-    document.addEventListener(
-      'keyup',
-      function (e) {
-        // console.log(e)
-        if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
-      }.bind(this)
+
+    this.docKeyUpHandler = (e) => {
+      if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
+    }
+    document.addEventListener('keyup', this.docKeyUpHandler)
+  },
+  beforeDestroy() {
+    window.__viewer.removeListener('select', this.viewerSelectHandler)
+    window.__viewer.cameraHandler.controls.removeEventListener(
+      'update',
+      this.viewerControlsUpdateHandler
     )
+    document.removeEventListener('keyup', this.docKeyUpHandler)
   },
   methods: {
+    onWindowResize() {
+      this.updateCommentBubble()
+    },
     async addCommentDirect(emoji) {
-      this.commentText = emoji
+      this.commentText = basicStringToDocument(emoji, this.editorSchemaOptions)
       await this.addComment()
     },
     async addComment() {
       if (this.loading) return
-      if (!this.commentText || this.commentText.length < 1) {
+      if (isDocEmpty(this.commentText)) {
         this.$eventHub.$emit('notification', {
           text: `Comment cannot be empty.`
         })
@@ -413,7 +433,7 @@ export default {
   }
 }
 </script>
-<style scoped>
+<style scoped lang="scss">
 ::v-deep .v-dialog {
   box-shadow: none;
   overflow-y: hidden;
@@ -435,5 +455,11 @@ export default {
 
 .transition {
   transition: all 0.2s ease;
+}
+
+.new-comment-overlay {
+  $timing: 0.1s;
+  transition: left $timing linear, right $timing linear, top $timing linear,
+    bottom $timing linear;
 }
 </style>

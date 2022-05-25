@@ -1,0 +1,16 @@
+type SmartTextEditorValue {
+  """
+  The version of the schema
+  """
+  version: String!
+
+  """
+  The type of editor value (comment, blog post etc.)
+  """
+  type: String!
+
+  """
+  The actual (ProseMirror) document representing the text
+  """
+  doc: JSONObject!
+}

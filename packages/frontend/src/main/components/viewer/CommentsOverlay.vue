@@ -28,12 +28,11 @@
       <div
         v-for="comment in activeComments"
         v-show="isVisible(comment)"
+        :id="`comment-${comment.id}`"
         :key="comment.id"
         :ref="`comment-${comment.id}`"
-        :class="`absolute-pos rounded-xl no-mouse `"
-        :style="`transition: opacity 0.2s ease; z-index:${
-          comment.expanded ? '20' : '10'
-        }; ${
+        :class="`comment-bubble absolute-pos rounded-xl no-mouse `"
+        :style="` z-index:${comment.expanded ? '20' : '10'}; ${
           hasExpandedComment &&
           !comment.expanded &&
           !comment.hovered &&
@@ -52,8 +51,7 @@
               small
               icon
               :class="`elevation-5 pa-0 ma-0 mouse ${
-                $store.state.emojis.indexOf(comment.text.split(' ')[0]) != -1 &&
-                !comment.expanded
+                getLeadingEmoji(comment) && !comment.expanded
                   ? 'emoji-btn transparent elevation-0'
                   : ''
               }
@@ -66,14 +64,12 @@
                 comment.expanded ? collapseComment(comment) : expandComment(comment)
               "
             >
-              <template
-                v-if="$store.state.emojis.indexOf(comment.text.split(' ')[0]) == -1"
-              >
+              <template v-if="!getLeadingEmoji(comment)">
                 <v-icon v-if="!comment.expanded" x-small class="">mdi-comment</v-icon>
               </template>
               <template v-else-if="!comment.expanded">
                 <span class="text-h5">
-                  {{ comment.text.split(' ')[0] }}
+                  {{ getLeadingEmoji(comment) }}
                 </span>
               </template>
               <v-icon v-if="comment.expanded" x-small class="">mdi-close</v-icon>
@@ -105,9 +101,10 @@
       <div
         v-for="comment in activeComments"
         v-show="isVisible(comment)"
+        :id="`commentcard-${comment.id}`"
         :key="comment.id + '-card'"
         :ref="`commentcard-${comment.id}`"
-        :class="`hover-bg absolute-pos rounded-xl overflow-y-auto ${
+        :class="`comment-thread simple-scrollbar hover-bg absolute-pos rounded-xl overflow-y-auto ${
           comment.hovered && false ? 'background elevation-5' : ''
         }`"
         :style="`z-index:${comment.expanded ? '20' : '10'};`"
@@ -120,7 +117,7 @@
             <comment-thread-viewer
               :comment="comment"
               @bounce="bounceComment"
-              @refresh-layout="updateCommentBubbles()"
+              @refresh-layout="onThreadRefreshLayout"
               @close="collapseComment"
               @deleted="handleDeletion"
               @add-resources="(e) => $emit('add-resources', e)"
@@ -169,8 +166,11 @@
 </template>
 <script>
 import * as THREE from 'three'
-import debounce from 'lodash/debounce'
+import { debounce, throttle } from 'lodash'
 import gql from 'graphql-tag'
+import { VIEWER_UPDATE_THROTTLE_TIME } from '@/main/lib/viewer/comments/commentsHelper'
+import { buildResizeHandlerMixin } from '@/main/lib/common/web-apis/mixins/windowResizeHandler'
+import { documentToBasicString } from '@/main/lib/common/text-editor/documentHelper'
 
 export default {
   components: {
@@ -178,6 +178,9 @@ export default {
     CommentsViewerNavbar: () =>
       import('@/main/components/comments/CommentsViewerNavbar')
   },
+  mixins: [
+    buildResizeHandlerMixin({ shouldThrottle: true, wait: VIEWER_UPDATE_THROTTLE_TIME })
+  ],
   apollo: {
     comments: {
       query: gql`
@@ -188,7 +191,9 @@ export default {
             items {
               id
               authorId
-              text
+              text {
+                doc
+              }
               createdAt
               updatedAt
               viewedAt
@@ -285,6 +290,7 @@ export default {
             if (!newComment.archived) this.localComments.push(newComment)
 
             setTimeout(() => {
+              console.log('updateQuery timeout')
               this.updateCommentBubbles()
               this.bounceComment(newComment.id)
             }, 10)
@@ -338,30 +344,57 @@ export default {
         window.clearInterval(this.commentIntervalChecker)
       }, 2000)
     }
-    window.__viewer.on(
-      'select',
-      debounce(
-        function () {
-          // prevents comment collapse if filters are reset (that triggers a deselect event from the viewer)
-          if (this.$store.state.preventCommentCollapse) {
-            this.$store.commit('setPreventCommentCollapse', { value: false })
-            return
-          }
-          for (const c of this.localComments) {
-            this.collapseComment(c)
-          }
-        }.bind(this),
-        10
-      )
-    )
-    window.__viewer.cameraHandler.controls.addEventListener('update', () =>
+
+    this.viewerSelectHandler = debounce(() => {
+      // prevents comment collapse if filters are reset (that triggers a deselect event from the viewer)
+      if (this.$store.state.preventCommentCollapse) {
+        this.$store.commit('setPreventCommentCollapse', { value: false })
+        return
+      }
+      for (const c of this.localComments) {
+        this.collapseComment(c)
+      }
+    }, 10)
+    window.__viewer.on('select', this.viewerSelectHandler)
+
+    // Throttling update, cause it happens way too often and triggers expensive DOM updates
+    // Smoothing out the animation with CSS transitions (check style)
+    this.viewerControlsUpdateHandler = throttle(() => {
+      console.log('cameraHandler.controls update')
       this.updateCommentBubbles()
+    }, VIEWER_UPDATE_THROTTLE_TIME)
+    window.__viewer.cameraHandler.controls.addEventListener(
+      'update',
+      this.viewerControlsUpdateHandler
     )
     setTimeout(() => {
+      console.log('mounted timeout')
       this.updateCommentBubbles()
     }, 1000)
   },
+  beforeDestroy() {
+    window.__viewer.removeListener('select', this.viewerSelectHandler)
+    window.__viewer.cameraHandler.controls.removeEventListener(
+      'update',
+      this.viewerControlsUpdateHandler
+    )
+    window.clearInterval(this.commentIntervalChecker)
+  },
   methods: {
+    onThreadRefreshLayout() {
+      console.log('thread refresh layout')
+      this.updateCommentBubbles()
+    },
+    getLeadingEmoji(comment) {
+      const emojiWhitelist = this.$store.state.emojis
+      const commentPureText = documentToBasicString(comment.text.doc, 1)
+      const emojiCandidate = commentPureText.split(' ')[0]
+      return emojiWhitelist.includes(emojiCandidate) ? emojiCandidate : null
+    },
+    onWindowResize() {
+      console.log('on window resize')
+      this.updateCommentBubbles()
+    },
     isUnread(comment) {
       return new Date(comment.updatedAt) - new Date(comment.viewedAt) > 0
     },
@@ -399,10 +432,12 @@ export default {
           this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
+            console.log('expandComment 200 setTimeout')
             this.updateCommentBubbles()
           }, 200)
           setTimeout(() => {
             // prevents auto closing from camera moving to comment pow
+            console.log('expandComment 1000 setTimeout')
             c.preventAutoClose = false
             this.updateCommentBubbles()
           }, 1000)
@@ -453,6 +488,7 @@ export default {
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
+      console.log('updateCommentBubbles', new Date().toISOString())
       if (!this.comments) return
       const cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
@@ -564,12 +600,13 @@ export default {
   }
 }
 </script>
-<style scoped>
->>> .emoji-btn {
+<style scoped lang="scss">
+::v-deep .emoji-btn {
   background-color: initial !important;
-}
->>> .emoji-btn .v-btn__content {
-  color: initial;
+
+  .v-btn__content {
+    color: initial;
+  }
 }
 
 .absolute-pos {
@@ -602,5 +639,12 @@ export default {
 }
 .mouse {
   pointer-events: auto;
+}
+
+.comment-bubble,
+.comment-thread {
+  $timing: 0.1s;
+  transition: left $timing linear, right $timing linear, top $timing linear,
+    bottom $timing linear, opacity 0.2s ease;
 }
 </style>

@@ -1,3 +1,4 @@
+setDarkTheme
 <template>
   <div class="elevation-10">
     <portal-target name="nav-bottom">
@@ -45,6 +46,7 @@
 <script>
 import { signOut } from '@/plugins/authHelpers'
 import { MainUserDataQuery } from '@/graphql/user'
+import { setDarkTheme } from '@/main/utils/themeStateManager'
 
 export default {
   apollo: {
@@ -62,10 +64,8 @@ export default {
     },
     switchTheme() {
       this.$vuetify.theme.dark = !this.$vuetify.theme.dark
-      localStorage.setItem(
-        'darkModeEnabled',
-        this.$vuetify.theme.dark ? 'dark' : 'light'
-      )
+      setDarkTheme(this.$vuetify.theme.dark, true)
+
       this.$mixpanel.people.set(
         'Theme Web',
         this.$vuetify.theme.dark ? 'dark' : 'light'

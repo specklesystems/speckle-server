@@ -2,12 +2,13 @@
 const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
+const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 
 const ApiTokens = () => knex('api_tokens')
 const PersonalApiTokens = () => knex('personal_api_tokens')
 
 const TokenScopes = () => knex('token_scopes')
-const ServerRoles = () => knex('server_acl')
+const ServerRoles = () => ServerAclSchema.knex()
 
 module.exports = {
   /*

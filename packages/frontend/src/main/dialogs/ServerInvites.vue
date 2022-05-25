@@ -45,7 +45,7 @@
 <script>
 import gql from 'graphql-tag'
 import DOMPurify from 'dompurify'
-import { isEmailValid } from '@/plugins/authHelpers'
+import { email, required } from '@/main/lib/common/vuetify/validators'
 
 export default {
   name: 'ServerInviteDialog',
@@ -59,10 +59,7 @@ export default {
       showError: false,
       success: false,
       validation: {
-        emailRules: [
-          (v) => !!v || 'E-mail is required',
-          (v) => isEmailValid(v) || 'E-mail must be valid'
-        ],
+        emailRules: [required('E-mail is required'), email('E-mail must be valid')],
         messageRules: [
           (v) => {
             if (v.length >= 1024) return 'Message too long!'
