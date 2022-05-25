@@ -142,6 +142,7 @@ export default {
         const img = await this.getPreviewImage(this.angles[this.angles.length - 1])
         this.$set(this.previewImages, this.angles.length - 1, img)
         const promises = []
+
         for (let i = 1; i < this.angles.length; i++) {
           promises.push(this.getPreviewImage(this.angles[i]))
         }
