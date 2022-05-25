@@ -139,7 +139,7 @@ export default {
       this.loading = true
 
       try {
-        const img = await this.getPreviewImage(this.angles[this.angles.length - 1])
+        const img = await this.getPreviewImage(this.angles[this.angles.length - 1]) // note: this throws if requesting an incorrect angle.
         this.$set(this.previewImages, this.angles.length - 1, img)
         const promises = []
 
@@ -151,7 +151,7 @@ export default {
         for (let i = 0; i < otherImgs.length; i++) {
           this.$set(this.previewImages, i + 1, otherImgs[i])
         }
-      } catch {
+      } catch (e) {
         // legacy track
         this.legacyMode = true
         const otherImgs = await Promise.all([
@@ -164,6 +164,9 @@ export default {
         this.previewImages.unshift(otherImgs[1])
         this.previewImages.push(otherImgs[2])
         this.previewImages.push(otherImgs[3])
+        // TODO: Weird. getPreviewImage throws, but the try block keeps going until the for loop,
+        // resulting in an incorrect array; we need to filter out nulls/undefineds here...
+        this.previewImages = this.previewImages.filter((i) => !!i)
       }
       this.loading = false
     }
