@@ -168,8 +168,7 @@
   </div>
 </template>
 <script>
-// TODO: Need to fix the viewer package build process to be able to properly reference THREE.js
-/* global THREE */
+import * as THREE from 'three'
 import debounce from 'lodash/debounce'
 import gql from 'graphql-tag'
 

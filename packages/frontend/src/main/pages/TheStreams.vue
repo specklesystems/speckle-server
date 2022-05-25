@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <span class="font-weight-bold mr-2">Your Streams</span>
       <span class="caption">({{ streams ? streams.totalCount : '...' }})</span>
       <div class="d-none d-md-inline-block">
@@ -82,6 +82,10 @@
 <script>
 import streamsQuery from '@/graphql/streams.gql'
 import { MainUserDataQuery } from '@/graphql/user'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheStreams',
@@ -90,6 +94,7 @@ export default {
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'streams', 0)],
   apollo: {
     streams: {
       query: streamsQuery

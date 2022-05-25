@@ -639,9 +639,14 @@ export default class Coverter {
     v2.normalize()
     const v3 = new Vector3().crossVectors(v2, v0)
     v3.normalize()
-
+    /**
+     * We clamp the dot value to [-1,1] since that's the domain acos is defined on. Normally dot won't return
+     * values outside that interval, but due to floating point precision, you sometimes get -1.0000000004, which
+     * makes acos return NaN
+     */
+    const dot = Math.min(Math.max(v0.dot(v1), -1), 1)
     // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
-    const angle = Math.acos(v0.dot(v1))
+    const angle = Math.acos(dot)
     const radius = obj.radius
     // We draw the arc in a local un-rotated coordinate system. We rotate it later on via transformation
     const curve = new THREE.EllipseCurve(

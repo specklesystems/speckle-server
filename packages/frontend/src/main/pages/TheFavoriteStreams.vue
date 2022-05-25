@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       Favorite Streams
       <span v-if="streams.length" class="caption">
         ({{ user.favoriteStreams.totalCount }})
@@ -36,6 +36,10 @@
 </template>
 <script>
 import { UserFavoriteStreamsQuery } from '@/graphql/user'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheFavoriteStreams',
@@ -45,6 +49,9 @@ export default {
     InfiniteLoading: () => import('vue-infinite-loading'),
     StreamPreviewCard: () => import('@/main/components/common/StreamPreviewCard.vue')
   },
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'favorite-streams', 0)
+  ],
   apollo: {
     user: {
       query: UserFavoriteStreamsQuery

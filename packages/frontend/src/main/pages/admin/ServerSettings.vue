@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">Server Info and Settings</portal>
+    <portal v-if="canRenderToolbarPortal" to="toolbar">Server Info and Settings</portal>
     <section-card>
       <v-card-text>Here you can edit your server's basic information.</v-card-text>
     </section-card>
@@ -47,12 +47,17 @@
 import gql from 'graphql-tag'
 import { MainServerInfoQuery } from '@/graphql/server'
 import pick from 'lodash/pick'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'ServerInfoAdminCard',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-settings', 1)],
   data() {
     return {
       edit: false,

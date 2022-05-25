@@ -1,5 +1,5 @@
 <template>
-  <portal to="subnav-admin">
+  <portal v-if="canRenderSubnavAdminPortal" to="subnav-admin">
     <v-list class="ml-12 pr-0" dense nav subheader>
       <v-list-item to="/admin/dashboard" exact>
         <v-list-item-content>
@@ -32,5 +32,11 @@
   </portal>
 </template>
 <script>
-export default {}
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+export default {
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.SubnavAdmin], 'admin-nav', 0)]
+}
 </script>

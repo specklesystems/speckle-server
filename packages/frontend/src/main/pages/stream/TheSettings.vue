@@ -1,6 +1,6 @@
 <template>
   <v-container class="pa-0">
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div v-if="stream" class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -175,12 +175,17 @@
 
 <script>
 import gql from 'graphql-tag'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheSettings',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-settings', 1)],
   apollo: {
     stream: {
       query: gql`

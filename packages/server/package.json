@@ -67,7 +67,7 @@
     "prom-client": "^14.0.1",
     "redis": "^3.1.1",
     "response-time": "^2.3.2",
-    "sanitize-html": "^2.4.0",
+    "sanitize-html": "^2.7.0",
     "sharp": "^0.29.3",
     "string-pixel-width": "^1.10.0",
     "subscriptions-transport-ws": "0.9.0",

@@ -14,7 +14,8 @@ const {
   viewComment,
   archiveComment,
   editComment,
-  streamResourceCheck
+  streamResourceCheck,
+  formatCommentText
 } = require('@/modules/comments/services')
 
 const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
@@ -61,6 +62,9 @@ module.exports = {
         limit: args.limit,
         cursor: args.cursor
       })
+    },
+    text(parent) {
+      return formatCommentText(parent)
     }
   },
   Stream: {
