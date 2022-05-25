@@ -1,5 +1,6 @@
 const expect = require('chai').expect
 
+const crs = require('crypto-random-string')
 const { buildApolloServer } = require('@/app')
 const { addLoadersToCtx } = require('@/modules/shared')
 const { beforeEachContext } = require('@/test/hooks')
@@ -12,7 +13,7 @@ const { createUser } = require('@/modules/core/services/users')
 const { gql } = require('apollo-server-express')
 const { createStream } = require('@/modules/core/services/streams')
 const { createObject } = require('@/modules/core/services/objects')
-const { createComment, createCommentReply } = require('@/modules/comments/services')
+const { createComment } = require('@/modules/comments/services')
 const { createCommitByBranchName } = require('@/modules/core/services/commits')
 
 describe('Subscriptions @comments', () => {
@@ -119,22 +120,17 @@ const viewAComment = async ({ apollo, resources, shouldSucceed }) => {
 }
 
 const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
-  const commentResult = await apollo.executeOperation({
-    query: gql`
-      mutation ($input: CommentCreateInput!) {
-        commentCreate(input: $input)
-      }
-    `,
-    variables: {
-      input: {
-        streamId: resources.streamId,
-        text: 'i wrote this myself',
-        data: {},
-        resources: [
-          { resourceId: resources.streamId, resourceType: 'stream' },
-          { resourceId: resources.objectId, resourceType: 'object' }
-        ]
-      }
+  const context = await apollo.context()
+  const commentId = await createComment({
+    userId: context.userId,
+    input: {
+      streamId: resources.streamId,
+      text: 'i wrote this myself',
+      data: {},
+      resources: [
+        { resourceId: resources.streamId, resourceType: 'stream' },
+        { resourceId: resources.objectId, resourceType: 'object' }
+      ]
     }
   })
   const res = await apollo.executeOperation({
@@ -143,10 +139,7 @@ const archiveMyComment = async ({ apollo, resources, shouldSucceed }) => {
         commentArchive(streamId: $streamId, commentId: $commentId)
       }
     `,
-    variables: {
-      streamId: resources.streamId,
-      commentId: commentResult.data.commentCreate
-    }
+    variables: { streamId: resources.streamId, commentId }
   })
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.commentArchive).to.be.true
@@ -171,22 +164,17 @@ const archiveOthersComment = async ({ apollo, resources, shouldSucceed }) => {
 }
 
 const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
-  const commentResult = await apollo.executeOperation({
-    query: gql`
-      mutation ($input: CommentCreateInput!) {
-        commentCreate(input: $input)
-      }
-    `,
-    variables: {
-      input: {
-        streamId: resources.streamId,
-        text: 'i wrote this myself',
-        data: {},
-        resources: [
-          { resourceId: resources.streamId, resourceType: 'stream' },
-          { resourceId: resources.objectId, resourceType: 'object' }
-        ]
-      }
+  const context = await apollo.context()
+  const commentId = await createComment({
+    userId: context.userId,
+    input: {
+      streamId: resources.streamId,
+      text: 'i wrote this myself',
+      data: {},
+      resources: [
+        { resourceId: resources.streamId, resourceType: 'stream' },
+        { resourceId: resources.objectId, resourceType: 'object' }
+      ]
     }
   })
   const res = await apollo.executeOperation({
@@ -198,7 +186,7 @@ const editMyComment = async ({ apollo, resources, shouldSucceed }) => {
     variables: {
       input: {
         streamId: resources.streamId,
-        id: commentResult.data.commentCreate,
+        id: commentId,
         text: 'im going to overwrite myself'
       }
     }
@@ -219,7 +207,7 @@ const editOthersComment = async ({ apollo, resources, shouldSucceed }) => {
       input: {
         streamId: resources.streamId,
         id: resources.commentId,
-        text: 'what you wrote is dump, here, let me fix it for you'
+        text: 'what you wrote is dumb, here, let me fix it for you'
       }
     }
   })
@@ -251,27 +239,6 @@ const replyToAComment = async ({ apollo, resources, shouldSucceed }) => {
 }
 
 const queryComment = async ({ apollo, resources, shouldSucceed }) => {
-  const commentId = await createComment({
-    userId: resources.testActorId,
-    input: {
-      streamId: resources.streamId,
-      text: 'im expecting some replies here',
-      data: {},
-      resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
-    }
-  })
-  const numberOfComments = 3
-
-  const commentPromises = [...Array(numberOfComments).keys()].map((key) =>
-    createCommentReply({
-      authorId: resources.testActorId,
-      parentCommentId: commentId,
-      streamId: resources.streamId,
-      data: {},
-      text: `${key}`
-    })
-  )
-  const commentIds = await Promise.all(commentPromises)
   const res = await apollo.executeOperation({
     query: gql`
       query ($id: String!, $streamId: String!) {
@@ -295,31 +262,27 @@ const queryComment = async ({ apollo, resources, shouldSucceed }) => {
   testResult(shouldSucceed, res, (res) => {
     expect(res.data.comment.id).to.exist
     expect(res.data.comment.id).to.equal(resources.commentId)
-    expect(res.data.comment.replies.totalCount).to.equal(numberOfComments)
-    expect(res.data.comment.replies.items.map((i) => i.id)).to.deep.equalInAnyOrder(
-      commentIds
-    )
   })
 }
 const queryComments = async ({ apollo, resources, shouldSucceed }) => {
-  const commentId = await createComment({
-    userId: resources.testActorId,
-    input: {
-      streamId: resources.streamId,
-      text: 'im expecting some replies here',
-      data: {},
-      resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
-    }
-  })
+  const object = {
+    foo: 123,
+    bar: crs({ length: 5 })
+  }
+
+  const objectId = await createObject(resources.streamId, object)
+
   const numberOfComments = 3
   const commentIds = await Promise.all(
     [...Array(numberOfComments).keys()].map((key) =>
-      createCommentReply({
-        authorId: resources.testActorId,
-        parentCommentId: commentId,
-        streamId: resources.streamId,
-        data: {},
-        text: `${key}`
+      createComment({
+        userId: resources.testActorId,
+        input: {
+          streamId: resources.streamId,
+          text: `${key}`,
+          data: {},
+          resources: [{ resourceId: objectId, resourceType: 'object' }]
+        }
       })
     )
   )
@@ -340,31 +303,24 @@ const queryComments = async ({ apollo, resources, shouldSucceed }) => {
       streamId: resources.streamId,
       resources: [
         // i expected this to work as intersection, but it works as union
-        { resourceId: resources.streamId, resourceType: 'stream' },
-        { resourceId: commentId, resourceType: 'comment' }
+        { resourceId: objectId, resourceType: 'object' }
       ]
     }
   })
   testResult(shouldSucceed, res, (res) => {
-    expect(res.data.comments.totalCount).to.be.greaterThanOrEqual(numberOfComments)
-    expect(res.data.comments.items.map((i) => i.id)).to.include.members(commentIds)
+    expect(res.data.comments.totalCount).to.be.equal(numberOfComments)
+    expect(res.data.comments.items.map((i) => i.id)).to.be.equalInAnyOrder(commentIds)
   })
 }
 
 const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => {
-  const streamId = await createStream({
-    name: 'test',
-    description: 'foo',
-    ownerId: resources.testActorId
-  })
-
   await createComment({
     userId: resources.testActorId,
     input: {
-      streamId,
+      streamId: resources.streamId,
       text: 'im expecting some replies here',
       data: {},
-      resources: [{ resourceId: streamId, resourceType: 'stream' }]
+      resources: [{ resourceId: resources.streamId, resourceType: 'stream' }]
     }
   })
 
@@ -377,15 +333,18 @@ const queryStreamCommentCount = async ({ apollo, resources, shouldSucceed }) => 
         }
       }
     `,
-    variables: { id: streamId }
+    variables: { id: resources.streamId }
   })
   testResult(shouldSucceed, res, (res) => {
-    expect(res.data.stream.commentCount).to.equal(1)
+    expect(res.data.stream.commentCount).to.be.greaterThanOrEqual(1)
   })
 }
 
 const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => {
-  const objectId = await createObject(resources.streamId, { foo: 'bar' })
+  const objectId = await createObject(resources.streamId, {
+    foo: 'bar',
+    noise: crs({ length: 5 })
+  })
   await createComment({
     userId: resources.testActorId,
     input: {
@@ -414,7 +373,10 @@ const queryObjectCommentCount = async ({ apollo, resources, shouldSucceed }) => 
 }
 
 const queryCommitCommentCount = async ({ apollo, resources, shouldSucceed }) => {
-  const objectId = await createObject(resources.streamId, { foo: 'bar' })
+  const objectId = await createObject(resources.streamId, {
+    foo: 'bar',
+    notSignal: crs({ length: 10 })
+  })
   const commitId = await createCommitByBranchName({
     streamId: resources.streamId,
     branchName: 'main',
@@ -454,7 +416,10 @@ const queryCommitCollectionCommentCount = async ({
   resources,
   shouldSucceed
 }) => {
-  const objectId = await createObject(resources.streamId, { foo: 'bar' })
+  const objectId = await createObject(resources.streamId, {
+    foo: 'bar',
+    almostMakesSense: crs({ length: 10 })
+  })
   const commitId = await createCommitByBranchName({
     streamId: resources.streamId,
     branchName: 'main',
@@ -515,6 +480,12 @@ describe('Graphql @comments', () => {
     role: Roles.Server.User
   }
 
+  const archived = {
+    name: 'The Balrog of Morgoth',
+    email: 'durinsbane@moria.bridge',
+    role: Roles.Server.ArchivedUser
+  }
+
   const ownedStream = {
     name: 'stream owner',
     isPublic: false,
@@ -530,7 +501,7 @@ describe('Graphql @comments', () => {
   const reviewerStream = {
     name: 'no work, just talk',
     isPublic: false,
-    role: Roles.Stream.Contributor
+    role: Roles.Stream.Reviewer
   }
 
   const noAccessStream = {
@@ -565,7 +536,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, true],
             [editMyComment, true],
-            [editOthersComment, false],
+            [editOthersComment, true],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -585,7 +556,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, false],
             [editMyComment, true],
-            [editOthersComment, false],
+            [editOthersComment, true],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -605,7 +576,7 @@ describe('Graphql @comments', () => {
             [archiveMyComment, true],
             [archiveOthersComment, false],
             [editMyComment, true],
-            [editOthersComment, false],
+            [editOthersComment, true],
             [replyToAComment, true],
             [queryComment, true],
             [queryComments, true],
@@ -624,27 +595,27 @@ describe('Graphql @comments', () => {
             [viewAComment, false],
             [archiveOthersComment, false],
             [editOthersComment, false],
-            [replyToAComment, true],
+            [replyToAComment, false],
             [queryComment, false],
             [queryComments, false],
             [queryStreamCommentCount, false],
             [queryObjectCommentCount, false],
             [queryCommitCommentCount, false],
-            [queryCommitCollectionCommentCount, false]
+            [queryCommitCollectionCommentCount, true]
           ]
         },
         {
           stream: publicStream,
           cases: [
-            [writeComment, true],
+            [writeComment, false],
             [broadcastViewerActivity, true],
-            [broadcastCommentActivity, true],
+            [broadcastCommentActivity, false],
             [viewAComment, true],
-            [archiveMyComment, true],
+            [archiveMyComment, false],
             [archiveOthersComment, false],
-            [editMyComment, true],
+            [editMyComment, false],
             [editOthersComment, false],
-            [replyToAComment, true],
+            [replyToAComment, false],
             [queryComment, true],
             [queryComments, true],
             [queryStreamCommentCount, true],
@@ -676,6 +647,47 @@ describe('Graphql @comments', () => {
       ]
     },
     {
+      user: archived,
+      streamData: [
+        {
+          stream: ownedStream,
+          cases: [
+            [writeComment, false],
+            [broadcastViewerActivity, false],
+            [broadcastCommentActivity, false],
+            [viewAComment, false],
+            [archiveOthersComment, false],
+            [editOthersComment, false],
+            [replyToAComment, false],
+            [queryComment, false],
+            [queryComments, false],
+            [queryStreamCommentCount, false],
+            [queryObjectCommentCount, false],
+            [queryCommitCommentCount, false],
+            [queryCommitCollectionCommentCount, false]
+          ]
+        },
+        {
+          stream: publicStreamWithPublicComments,
+          cases: [
+            [writeComment, false],
+            [broadcastViewerActivity, false],
+            [broadcastCommentActivity, false],
+            [viewAComment, false],
+            [archiveOthersComment, false],
+            [editOthersComment, false],
+            [replyToAComment, false],
+            [queryComment, false],
+            [queryComments, false],
+            [queryStreamCommentCount, false],
+            [queryObjectCommentCount, false],
+            [queryCommitCommentCount, false],
+            [queryCommitCollectionCommentCount, false]
+          ]
+        }
+      ]
+    },
+    {
       user: null,
       streamData: [
         {
@@ -687,12 +699,48 @@ describe('Graphql @comments', () => {
             [viewAComment, false],
             [archiveOthersComment, false],
             [editOthersComment, false],
-            [replyToAComment, true],
+            [replyToAComment, false],
             [queryComment, false],
             [queryComments, false],
             [queryStreamCommentCount, false],
             [queryObjectCommentCount, false],
             [queryCommitCommentCount, false],
+            [queryCommitCollectionCommentCount, false]
+          ]
+        },
+        {
+          stream: publicStreamWithPublicComments,
+          cases: [
+            [writeComment, false],
+            [broadcastViewerActivity, false],
+            [broadcastCommentActivity, false],
+            [viewAComment, false],
+            [archiveOthersComment, false],
+            [editOthersComment, false],
+            [replyToAComment, false],
+            [queryComment, true],
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
+            [queryCommitCollectionCommentCount, false]
+          ]
+        },
+        {
+          stream: publicStream,
+          cases: [
+            [writeComment, false],
+            [broadcastViewerActivity, false],
+            [broadcastCommentActivity, false],
+            [viewAComment, false],
+            [archiveOthersComment, false],
+            [editOthersComment, false],
+            [replyToAComment, false],
+            [queryComment, true],
+            [queryComments, true],
+            [queryStreamCommentCount, true],
+            [queryObjectCommentCount, true],
+            [queryCommitCommentCount, true],
             [queryCommitCollectionCommentCount, false]
           ]
         }
@@ -704,7 +752,7 @@ describe('Graphql @comments', () => {
     await beforeEachContext()
     myTestActor.id = await createUser(myTestActor)
     await Promise.all(
-      [chadTheEngineer].map((user) =>
+      [chadTheEngineer, archived].map((user) =>
         createUser({ name: user.name, email: user.email, password: user.password })
           .then((id) => (user.id = id))
           .catch((err) => {
@@ -734,7 +782,11 @@ describe('Graphql @comments', () => {
       ...publicStreamWithPublicComments,
       ownerId: myTestActor.id
     })
-    await updateStream({ ...publicStreamWithPublicComments, allowPublicComments: true })
+    await updateStream({
+      ...publicStreamWithPublicComments,
+      streamId: publicStreamWithPublicComments.id,
+      allowPublicComments: true
+    })
   })
   testData.forEach((userContext) => {
     const user = userContext.user
@@ -756,7 +808,7 @@ describe('Graphql @comments', () => {
         const stream = streamContext.stream
         let resources
         before(async () => {
-          if (user)
+          if (user && stream.role)
             await grantPermissionsStream({
               streamId: stream.id,
               userId: user.id,

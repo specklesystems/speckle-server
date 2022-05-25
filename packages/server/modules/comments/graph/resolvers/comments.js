@@ -1,7 +1,8 @@
-const { authorizeResolver, pubsub } = require('@/modules/shared')
+const { pubsub } = require('@/modules/shared')
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
 const { Forbidden } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
+const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { saveActivity } = require('@/modules/activitystream/services')
 
 const {
@@ -18,16 +19,29 @@ const {
   formatCommentText
 } = require('@/modules/comments/services')
 
-const authorizeStreamAccess = async ({ streamId, userId, auth }) => {
+const authorizeStreamAccess = async ({
+  streamId,
+  userId,
+  serverRole,
+  auth,
+  requireRole = false
+}) => {
+  if (serverRole === Roles.Server.ArchivedUser)
+    throw new ForbiddenError('You are not authorized.')
   const stream = await getStream({ streamId, userId })
   if (!stream) throw new ApolloError('Stream not found')
 
-  if (!stream.isPublic && auth === false)
-    throw new ForbiddenError('You are not authorized.')
+  let authZed = true
 
-  if (!stream.isPublic && !stream.role) {
-    throw new ForbiddenError('You are not authorized.')
-  }
+  if (!stream.isPublic && auth === false) authZed = false
+
+  if (!stream.isPublic && !stream.role) authZed = false
+
+  if (stream.isPublic && requireRole && !stream.allowPublicComments && !stream.role)
+    authZed = false
+
+  if (!authZed) throw new ForbiddenError('You are not authorized.')
+  return stream
 }
 
 module.exports = {
@@ -36,6 +50,7 @@ module.exports = {
       await authorizeStreamAccess({
         streamId: args.streamId,
         userId: context.userId,
+        serverRole: context.role,
         auth: context.auth
       })
       const comment = await getComment({ id: args.id, userId: context.userId })
@@ -48,6 +63,7 @@ module.exports = {
       await authorizeStreamAccess({
         streamId: args.streamId,
         userId: context.userId,
+        serverRole: context.role,
         auth: context.auth
       })
       return { ...(await getComments({ ...args, userId: context.userId })) }
@@ -68,41 +84,54 @@ module.exports = {
     }
   },
   Stream: {
-    async commentCount(parent) {
+    async commentCount(parent, args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ForbiddenError('You are not authorized.')
       return await getStreamCommentCount({ streamId: parent.id })
     }
   },
   Commit: {
-    async commentCount(parent) {
+    async commentCount(parent, args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ForbiddenError('You are not authorized.')
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   CommitCollectionUserNode: {
     // urgh, i think we tripped our gql schemas in there a bit
-    async commentCount(parent) {
+    async commentCount(parent, args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ForbiddenError('You are not authorized.')
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   Object: {
-    async commentCount(parent) {
+    async commentCount(parent, args, context) {
+      if (context.role === Roles.Server.ArchivedUser)
+        throw new ForbiddenError('You are not authorized.')
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   Mutation: {
     // Used for broadcasting real time chat head bubbles and status. Does not persist anything!
     async userViewerActivityBroadcast(parent, args, context) {
-      const stream = await getStream({
+      await authorizeStreamAccess({
         streamId: args.streamId,
-        userId: context.userId
+        userId: context.userId,
+        serverRole: context.role,
+        auth: context.auth
       })
-      if (!stream) {
-        throw new ApolloError('Stream not found')
-      }
+      // const stream = await getStream({
+      //   streamId: args.streamId,
+      //   userId: context.userId
+      // })
+      // if (!stream) {
+      //   throw new ApolloError('Stream not found')
+      // }
 
-      if (!stream.isPublic && !context.auth) {
-        return false
-      }
-
+      // if (!stream.isPublic && !context.auth) {
+      //   return false
+      // }
       await pubsub.publish('VIEWER_ACTIVITY', {
         userViewerActivity: args.data,
         streamId: args.streamId,
@@ -174,9 +203,17 @@ module.exports = {
 
     async commentEdit(parent, args, context) {
       // NOTE: This is NOT in use anywhere
-      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      const stream = await authorizeStreamAccess({
+        streamId: args.input.streamId,
+        userId: context.userId,
+        serverRole: context.role,
+        auth: context.auth,
+        //public, but not public comments needs a stream role to do this
+        requireRole: true
+      })
+      const matchUser = !stream.role
       try {
-        await editComment({ userId: context.userId, input: args.input })
+        await editComment({ userId: context.userId, input: args.input, matchUser })
         return true
       } catch (err) {
         if (err instanceof Forbidden) throw new ForbiddenError(err.message)
@@ -186,14 +223,12 @@ module.exports = {
 
     // used for flagging a comment as viewed
     async commentView(parent, args, context) {
-      const stream = await getStream({
+      await authorizeStreamAccess({
         streamId: args.streamId,
-        userId: context.userId
+        userId: context.userId,
+        serverRole: context.role,
+        auth: context.auth
       })
-
-      if (!stream.allowPublicComments && !stream.role)
-        throw new ForbiddenError('You are not authorized.')
-
       await viewComment({ userId: context.userId, commentId: args.commentId })
       return true
     },
@@ -202,10 +237,18 @@ module.exports = {
       await authorizeStreamAccess({
         streamId: args.streamId,
         userId: context.userId,
-        auth: context.auth
+        serverRole: context.role,
+        auth: context.auth,
+        //public, but not public comments needs a stream role to do this
+        requireRole: true
       })
 
-      await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+      try {
+        await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+      } catch (err) {
+        if (err instanceof Forbidden) throw new ForbiddenError(err.message)
+        throw err
+      }
 
       await pubsub.publish('COMMENT_THREAD_ACTIVITY', {
         commentThreadActivity: {

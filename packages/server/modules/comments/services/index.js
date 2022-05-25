@@ -138,10 +138,10 @@ module.exports = {
     return comment.id
   },
 
-  async editComment({ userId, input }) {
+  async editComment({ userId, input, matchUser = false }) {
     const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error("The comment doesn't exist")
-    if (editedComment.authorId !== userId)
+    if (matchUser && editedComment.authorId !== userId)
       throw new Forbidden("You cannot edit someone else's comments")
 
     await Comments().where({ id: input.id }).update({ text: input.text })
@@ -188,7 +188,7 @@ module.exports = {
 
     if (comment.authorId !== userId) {
       if (!aclEntry || aclEntry.role !== 'stream:owner')
-        throw new Error("You don't have permission to archive the comment")
+        throw new Forbidden("You don't have permission to archive the comment")
     }
 
     await Comments().where({ id: commentId }).update({ archived })
