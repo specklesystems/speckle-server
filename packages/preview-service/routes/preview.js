@@ -1,8 +1,8 @@
+/* eslint-disable no-undef */
 'use strict'
-/* eslint-disable */
 
-let express = require('express')
-let router = express.Router()
+const express = require('express')
+const router = express.Router()
 const puppeteer = require('puppeteer')
 
 async function pageFunction(objectUrl) {
@@ -10,14 +10,13 @@ async function pageFunction(objectUrl) {
     await new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
-  let ret = {
+  const ret = {
     duration: 0,
     mem: 0,
     scr: {}
   }
 
-  let t0 = Date.now()
-  let stepAngle = 0.261799 // 15 deg
+  const t0 = Date.now()
 
   try {
     await v.loadObject(objectUrl, '')
@@ -59,7 +58,7 @@ async function pageFunction(objectUrl) {
 }
 
 async function getScreenshot(objectUrl) {
-  let launchParams = {
+  const launchParams = {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   }
@@ -146,7 +145,7 @@ async function getScreenshot(objectUrl) {
 }
 
 router.get('/:streamId/:objectId', async function (req, res) {
-  let objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
+  const objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
   /*
   let authToken = ''
   let authorizationHeader = req.header( 'Authorization' )
@@ -161,7 +160,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
 
   console.log(objectUrl)
 
-  let scr = await getScreenshot(objectUrl)
+  const scr = await getScreenshot(objectUrl)
 
   if (!scr) {
     return res.status(500).end()
