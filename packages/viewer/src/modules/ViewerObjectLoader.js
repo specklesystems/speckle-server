@@ -1,6 +1,5 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
-import { Geometry } from './converter/Geometry'
 
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
@@ -68,7 +67,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
-    let parsedObjects = [] // Temporary until refactor
+    const parsedObjects = [] // Temporary until refactor
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.viewer.emit('load-progress', {
@@ -81,7 +80,7 @@ export default class ViewerObjectLoader {
       }
       await this.converter.asyncPause()
       if (first) {
-        console.log(obj)
+        // console.log(obj)
         firstObjectPromise = this.converter.traverseAndConvert(
           obj,
           async (objectWrapper) => {
@@ -107,7 +106,7 @@ export default class ViewerObjectLoader {
 
     // Geometry.applyWorldTransform(parsedObjects)
     // Temporary until refactor
-    for (var k = 0; k < parsedObjects.length; k++) {
+    for (let k = 0; k < parsedObjects.length; k++) {
       await this.converter.asyncPause()
       this.viewer.sceneManager.addObject(parsedObjects[k])
     }
