@@ -259,7 +259,8 @@ export class Geometry {
     } as GeometryData
 
     for (let i = 0; i < geometries.length; i++) {
-      Geometry.transformGeometryData(geometries[i], geometries[i].bakeTransform)
+      if (geometries[i].bakeTransform)
+        Geometry.transformGeometryData(geometries[i], geometries[i].bakeTransform)
     }
 
     if (sampleAttributes[GeometryAttributes.INDEX]) {

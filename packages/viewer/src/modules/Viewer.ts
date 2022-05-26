@@ -103,7 +103,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.outputEncoding = THREE.sRGBEncoding
     this.renderer.toneMapping = THREE.LinearToneMapping
-    this.renderer.toneMappingExposure = 0.4
+    this.renderer.toneMappingExposure = 0.6
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
     this.container.appendChild(this.renderer.domElement)
 
@@ -225,7 +225,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     // you can skip this condition to render though
     if (hasControlsUpdated || this.needsRender) {
-      // this.needsRender = false;
+      this.needsRender = false
       if (this.stats) this.stats.begin()
       this.render()
 
@@ -238,12 +238,6 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   private render() {
-    // this.scene.traverse((obj) => {
-    //   if (obj.type == 'Line') {
-    //     obj.updateMatrixWorld(true)
-    //     console.log(obj.matrixWorld.elements[12])
-    //   }
-    // })
     this.renderer.render(this.scene, this.cameraHandler.activeCam.camera)
   }
 
