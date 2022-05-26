@@ -9,7 +9,7 @@ import InteractionHandler from './InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Box3, Clock, CubeCamera, Vector3 } from 'three'
+import { Clock, CubeCamera, Vector3 } from 'three'
 import { Scene } from 'three'
 import { WebGLRenderer } from 'three'
 import { Assets } from './Assets'
@@ -23,7 +23,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private container: HTMLElement
   private cubeCamera: CubeCamera
   private stats: Optional<Stats>
-  private loaders: unknown
+  private loaders: { [id: string]: ViewerObjectLoader } = {}
   private needsRender: boolean
   private inProgressOperations: number
 
@@ -33,12 +33,11 @@ export class Viewer extends EventEmitter implements IViewer {
   public interactions: InteractionHandler
   private renderer: WebGLRenderer
   public cameraHandler: CameraHandler
-  private sceneURL: string // Temporary
+  private sceneURL = '' // Temporary
   private startupParams: ViewerParams
 
   public static Assets: Assets
 
-  private _worldSize: Box3 = new Box3()
   private _worldOrigin: Vector3 = new Vector3()
   public get worldSize() {
     World.worldBox.getCenter(this._worldOrigin)
@@ -272,7 +271,11 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.toggleCameras()
   }
 
-  public async loadObject(url: string, token: string, enableCaching = true) {
+  public async loadObject(
+    url: string,
+    token: string | undefined,
+    enableCaching = true
+  ) {
     try {
       if (++this.inProgressOperations === 1) (this as EventEmitter).emit('busy', true)
 

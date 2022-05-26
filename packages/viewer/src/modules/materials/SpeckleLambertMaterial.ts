@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable camelcase */
 import { speckle_lambert_vert } from './shaders/speckle-lambert-vert'
 import { speckle_lambert_frag } from './shaders/speckle-lambert-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshLambertMaterial } from 'three'
@@ -6,6 +9,10 @@ import { Geometry } from '../converter/Geometry'
 
 class SpeckleLambertMaterial extends MeshLambertMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
+  private static readonly vecBuff0: Vector3 = new Vector3()
+  private static readonly vecBuff1: Vector3 = new Vector3()
+  private static readonly vecBuff2: Vector3 = new Vector3()
+
   constructor(parameters, defines = []) {
     super(parameters)
 
@@ -39,7 +46,7 @@ class SpeckleLambertMaterial extends MeshLambertMaterial {
     if (defines) {
       this.defines = {}
     }
-    for (var k = 0; k < defines.length; k++) {
+    for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ''
     }
   }
@@ -70,18 +77,21 @@ class SpeckleLambertMaterial extends MeshLambertMaterial {
       SpeckleLambertMaterial.matBuff.multiply(object.matrixWorld)
       object.modelViewMatrix.copy(SpeckleLambertMaterial.matBuff)
 
-      let uViewer_low = new Vector3()
-      let uViewer_high = new Vector3()
-      let uViewer = new Vector3(
+      SpeckleLambertMaterial.vecBuff0.set(
         camera.matrixWorld.elements[12],
         camera.matrixWorld.elements[13],
         camera.matrixWorld.elements[14]
       )
 
-      Geometry.DoubleToHighLowVector(uViewer, uViewer_low, uViewer_high)
-      object.frustumCulled = false
-      this.userData.uViewer_high.value.copy(uViewer_high)
-      this.userData.uViewer_low.value.copy(uViewer_low)
+      Geometry.DoubleToHighLowVector(
+        SpeckleLambertMaterial.vecBuff0,
+        SpeckleLambertMaterial.vecBuff1,
+        SpeckleLambertMaterial.vecBuff2
+      )
+
+      this.userData.uViewer_low.value.copy(SpeckleLambertMaterial.vecBuff1)
+      this.userData.uViewer_high.value.copy(SpeckleLambertMaterial.vecBuff2)
+
       this.needsUpdate = true
     }
   }

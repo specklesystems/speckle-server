@@ -1,11 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable camelcase */
 import { speckle_line_basic_vert } from './shaders/speckle-line-basic-vert'
 import { speckle_line_basic_frag } from './shaders/speckle-line-basic-frag'
-import { UniformsUtils, ShaderLib, Vector3, LineBasicMaterial, Object3D } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, LineBasicMaterial } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 
 class SpeckleLineBasicMaterial extends LineBasicMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
+  private static readonly vecBuff0: Vector3 = new Vector3()
+  private static readonly vecBuff1: Vector3 = new Vector3()
+  private static readonly vecBuff2: Vector3 = new Vector3()
 
   constructor(parameters, defines = []) {
     super(parameters)
@@ -37,7 +43,7 @@ class SpeckleLineBasicMaterial extends LineBasicMaterial {
       shader.fragmentShader = this.fragProgram
     }
 
-    for (var k = 0; k < defines.length; k++) {
+    for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ''
     }
 
@@ -60,13 +66,6 @@ class SpeckleLineBasicMaterial extends LineBasicMaterial {
     return this
   }
 
-  dumpHierarchy(object: Object3D): string {
-    let str = `${object.type}(${object.position.x},${object.position.y},${object.position.z}) ->`
-    if (object.parent != null) {
-      str += this.dumpHierarchy(object.parent)
-    }
-    return str
-  }
   onBeforeRender(_this, scene, camera, geometry, object, group) {
     if (Geometry.USE_RTE) {
       SpeckleLineBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
@@ -76,17 +75,20 @@ class SpeckleLineBasicMaterial extends LineBasicMaterial {
       SpeckleLineBasicMaterial.matBuff.multiply(object.matrixWorld)
       object.modelViewMatrix.copy(SpeckleLineBasicMaterial.matBuff)
 
-      let uViewer_low = new Vector3()
-      let uViewer_high = new Vector3()
-      let uViewer = new Vector3(
+      SpeckleLineBasicMaterial.vecBuff0.set(
         camera.matrixWorld.elements[12],
         camera.matrixWorld.elements[13],
         camera.matrixWorld.elements[14]
       )
 
-      Geometry.DoubleToHighLowVector(uViewer, uViewer_low, uViewer_high)
-      this.userData.uViewer_high.value.copy(uViewer_high)
-      this.userData.uViewer_low.value.copy(uViewer_low)
+      Geometry.DoubleToHighLowVector(
+        SpeckleLineBasicMaterial.vecBuff0,
+        SpeckleLineBasicMaterial.vecBuff1,
+        SpeckleLineBasicMaterial.vecBuff2
+      )
+      this.userData.uViewer_low.value.copy(SpeckleLineBasicMaterial.vecBuff1)
+      this.userData.uViewer_high.value.copy(SpeckleLineBasicMaterial.vecBuff2)
+
       this.needsUpdate = true
     }
   }

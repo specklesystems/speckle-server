@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable camelcase */
 import { speckle_standard_vert } from './shaders/speckle-standard-vert'
 import { speckle_standard_frag } from './shaders/speckle-standard-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshStandardMaterial } from 'three'
@@ -6,6 +9,10 @@ import { Geometry } from '../converter/Geometry'
 
 class SpeckleStandardMaterial extends MeshStandardMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
+  private static readonly vecBuff0: Vector3 = new Vector3()
+  private static readonly vecBuff1: Vector3 = new Vector3()
+  private static readonly vecBuff2: Vector3 = new Vector3()
+
   constructor(parameters, defines = []) {
     super(parameters)
 
@@ -39,7 +46,7 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
     if (defines) {
       this.defines = {}
     }
-    for (var k = 0; k < defines.length; k++) {
+    for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ' '
     }
   }
@@ -70,18 +77,21 @@ class SpeckleStandardMaterial extends MeshStandardMaterial {
       SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
       object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
 
-      let uViewer_low = new Vector3()
-      let uViewer_high = new Vector3()
-      let uViewer = new Vector3(
+      SpeckleStandardMaterial.vecBuff0.set(
         camera.matrixWorld.elements[12],
         camera.matrixWorld.elements[13],
         camera.matrixWorld.elements[14]
       )
 
-      Geometry.DoubleToHighLowVector(uViewer, uViewer_low, uViewer_high)
-      object.frustumCulled = false
-      this.userData.uViewer_high.value.copy(uViewer_high)
-      this.userData.uViewer_low.value.copy(uViewer_low)
+      Geometry.DoubleToHighLowVector(
+        SpeckleStandardMaterial.vecBuff0,
+        SpeckleStandardMaterial.vecBuff1,
+        SpeckleStandardMaterial.vecBuff2
+      )
+
+      this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
+      this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
+
       this.needsUpdate = true
     }
   }

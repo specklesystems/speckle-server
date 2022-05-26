@@ -1,26 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable camelcase */
 import { speckle_line_vert } from './shaders/speckle-line-vert'
 import { speckle_line_frag } from './shaders/speckle-line-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshStandardMaterial,
-  Box3,
-  Camera,
-  Mesh,
-  Object3D,
-  Vector4,
-  Vector2,
-  PerspectiveCamera,
-  OrthographicCamera
-} from 'three'
+import { UniformsUtils, ShaderLib, Vector3 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 
 class SpeckleLineMaterial extends LineMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
-
+  private static readonly vecBuff0: Vector3 = new Vector3()
+  private static readonly vecBuff1: Vector3 = new Vector3()
+  private static readonly vecBuff2: Vector3 = new Vector3()
   public set pixelThreshold(value: number) {
     this.userData.pixelThreshold.value = value
     this.needsUpdate = true
@@ -63,7 +55,7 @@ class SpeckleLineMaterial extends LineMaterial {
       shader.fragmentShader = this.fragProgram
     }
 
-    for (var k = 0; k < defines.length; k++) {
+    for (let k = 0; k < defines.length; k++) {
       this.defines[defines[k]] = ''
     }
 
@@ -97,17 +89,20 @@ class SpeckleLineMaterial extends LineMaterial {
       SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
       object.modelViewMatrix.copy(SpeckleLineMaterial.matBuff)
 
-      let uViewer_low = new Vector3()
-      let uViewer_high = new Vector3()
-      let uViewer = new Vector3(
+      SpeckleLineMaterial.vecBuff0.set(
         camera.matrixWorld.elements[12],
         camera.matrixWorld.elements[13],
         camera.matrixWorld.elements[14]
       )
 
-      Geometry.DoubleToHighLowVector(uViewer, uViewer_low, uViewer_high)
-      this.userData.uViewer_high.value.copy(uViewer_high)
-      this.userData.uViewer_low.value.copy(uViewer_low)
+      Geometry.DoubleToHighLowVector(
+        SpeckleLineMaterial.vecBuff0,
+        SpeckleLineMaterial.vecBuff1,
+        SpeckleLineMaterial.vecBuff2
+      )
+      this.userData.uViewer_low.value.copy(SpeckleLineMaterial.vecBuff1)
+      this.userData.uViewer_high.value.copy(SpeckleLineMaterial.vecBuff2)
+
       this.needsUpdate = true
     }
   }

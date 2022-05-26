@@ -1,7 +1,6 @@
+/* eslint-disable camelcase */
 import {
   Box3,
-  BoxBufferGeometry,
-  BufferAttribute,
   BufferGeometry,
   Float32BufferAttribute,
   InstancedInterleavedBuffer,
@@ -34,8 +33,8 @@ export interface GeometryData {
  * Implementation here will change once we start working on proper batching
  */
 export class Geometry {
-  private static _USE_RTE: boolean = true
-  private static _THICK_LINES: boolean = true
+  private static _USE_RTE = true
+  private static _THICK_LINES = true
   static get USE_RTE(): boolean {
     return Geometry._USE_RTE
   }
@@ -114,16 +113,16 @@ export class Geometry {
     }
     let geometry: { boundingBox: Box3 }
     if (Geometry.THICK_LINES) {
-      geometry = this.makeLineGeometry_TRIANGLE(geometryData)
+      geometry = this.makeLineGeometryTriangle(geometryData)
     } else {
-      geometry = this.makeLineGeometry_LINE(geometryData)
+      geometry = this.makeLineGeometryLine(geometryData)
     }
     World.expandWorld(geometry.boundingBox)
 
     return geometry
   }
 
-  static makeLineGeometry_LINE(geometryData: GeometryData) {
+  static makeLineGeometryLine(geometryData: GeometryData) {
     const geometry = new BufferGeometry()
     if (geometryData.attributes.POSITION) {
       geometry.setAttribute(
@@ -139,7 +138,7 @@ export class Geometry {
     return geometry
   }
 
-  static makeLineGeometry_TRIANGLE(geometryData: GeometryData) {
+  static makeLineGeometryTriangle(geometryData: GeometryData) {
     const geometry = new LineGeometry()
     geometry.setPositions(geometryData.attributes.POSITION)
     if (geometryData.attributes.COLOR) geometry.setColors(geometryData.attributes.COLOR)
@@ -157,7 +156,7 @@ export class Geometry {
    */
   public static updateRTEGeometry(geometry: BufferGeometry) {
     if (Geometry.USE_RTE) {
-      if (geometry.type == 'BufferGeometry') {
+      if (geometry.type === 'BufferGeometry') {
         const position_low = new Float32Array(geometry.attributes.position.array.length)
         const position_high = new Float32Array(
           geometry.attributes.position.array.length
@@ -175,7 +174,7 @@ export class Geometry {
           'position_high',
           new Float32BufferAttribute(position_high, 3)
         )
-      } else if (geometry.type == 'LineGeometry') {
+      } else if (geometry.type === 'LineGeometry') {
         const position_low = new Float32Array(
           geometry.attributes.instanceStart.array.length
         )
@@ -224,10 +223,6 @@ export class Geometry {
     attributes: number[][],
     target: Float32Array
   ): ArrayLike<number> {
-    let arrayLength = 0
-    for (let k = 0; k < attributes.length; k++) {
-      arrayLength += attributes[k].length
-    }
     let offset = 0
     for (let k = 0; k < attributes.length; k++) {
       target.set(attributes[k], offset)
@@ -278,8 +273,8 @@ export class Geometry {
         Geometry.mergeIndexAttribute(indexAttributes, positionAttributes)
     }
 
-    for (let k in sampleAttributes) {
-      if (k != GeometryAttributes.INDEX) {
+    for (const k in sampleAttributes) {
+      if (k !== GeometryAttributes.INDEX) {
         const attributes = geometries.map((item) => {
           return item.attributes[k]
         })
@@ -291,7 +286,7 @@ export class Geometry {
     }
 
     geometries.forEach((geometry) => {
-      for (let k in geometry.attributes) {
+      for (const k in geometry.attributes) {
         delete geometry.attributes[k]
       }
     })
@@ -309,7 +304,7 @@ export class Geometry {
     worldCenter.negate()
     const transform = new Matrix4().setPosition(worldCenter)
     World.worldBox.makeEmpty()
-    for (var k = 0; k < wrappers.length; k++) {
+    for (let k = 0; k < wrappers.length; k++) {
       const wrapper = wrappers[k]
       if (Array.isArray(wrapper.bufferGeometry)) {
         Geometry.applyWorldTransform(wrapper.bufferGeometry)
@@ -321,7 +316,7 @@ export class Geometry {
         World.expandWorld(wrapper.bufferGeometry.boundingBox)
         Geometry.updateRTEGeometry(wrapper.bufferGeometry)
       } catch (e) {
-        console.log(e)
+        console.warn(e)
       }
     }
   }
@@ -331,7 +326,7 @@ export class Geometry {
 
     const e = m.elements
 
-    for (var k = 0; k < geometryData.attributes.POSITION.length; k += 3) {
+    for (let k = 0; k < geometryData.attributes.POSITION.length; k += 3) {
       const x = geometryData.attributes.POSITION[k],
         y = geometryData.attributes.POSITION[k + 1],
         z = geometryData.attributes.POSITION[k + 2]
@@ -397,7 +392,7 @@ export class Geometry {
     position_low: number[] | Float32Array,
     position_high: number[] | Float32Array
   ) {
-    for (var k = 0; k < input.length; k++) {
+    for (let k = 0; k < input.length; k++) {
       const doubleValue = input[k]
       if (doubleValue >= 0.0) {
         const doubleHigh = Math.floor(doubleValue / 65536.0) * 65536.0
@@ -416,7 +411,7 @@ export class Geometry {
     input1: number[] | Float32Array
   ) {
     const out = new Array<number>(input0.length + input1.length)
-    for (var k = 0, l = 0; k < out.length; k += 6, l += 3) {
+    for (let k = 0, l = 0; k < out.length; k += 6, l += 3) {
       out[k] = input0[k]
       out[k + 1] = input0[k + 1]
       out[k + 2] = input0[k + 2]
