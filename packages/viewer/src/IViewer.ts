@@ -1,3 +1,8 @@
+// TODO: JUST A TEST, REMOVE SO WE DON'T BUNDLE IT! This image is only going to be bundled, if imported, unlike
+// everything in 'always-bundled-assets'. Also unlike those, the filename for these is going
+// to be changed with a hash while assets in 'always-bundled-assets' remain with the same names
+import RandomImportThing from './assets/only-bundled-if-imported.png'
+
 export interface ViewerParams {
   postprocessing: boolean
   reflections: boolean
@@ -9,7 +14,7 @@ export const DefaultViewerParams: ViewerParams = {
   postprocessing: false,
   reflections: true,
   showStats: true,
-  environmentSrc: null
+  environmentSrc: RandomImportThing
 }
 /**
  * Carried over from the old Viewer. To be extended/changed
