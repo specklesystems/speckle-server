@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
 import SpeckleLambertMaterial from './materials/SpeckleLambertMaterial'
 import { Geometry } from './converter/Geometry'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 
 export default class InteractionHandler {
   constructor(viewer) {
@@ -35,8 +35,8 @@ export default class InteractionHandler {
     // this.selectionEdgesMaterial = new THREE.LineBasicMaterial({ color: 0x23f3bd })
     // this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
-    this.selectionLine2Material = new LineMaterial({
-      color: 0x0b55d2,
+    this.selectionLine2Material = new SpeckleLineMaterial({
+      color: new THREE.Color(0x0b55d2),
       linewidth: 1,
       worldUnits: false,
       vertexColors: false,
@@ -44,6 +44,9 @@ export default class InteractionHandler {
       resolution: this.viewer.renderer.getDrawingBufferSize(new THREE.Vector2()),
       clippingPlanes: this.viewer.sectionBox.planes
     })
+    this.selectionLine2Material.polygonOffset = true
+    this.selectionLine2Material.polygonOffsetFactor = -0.1
+
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add(this.selectedObjects)
     this.selectedObjects.renderOrder = 1000
@@ -193,12 +196,17 @@ export default class InteractionHandler {
       }
       case 'Line2': {
         const material = this.selectionLine2Material.clone()
+        material.color = new THREE.Color(0x0b55d2) // I really don't know why I need to reassign this...
         material.linewidth = objs[0].object.material.linewidth
         material.worldUnits = objs[0].object.material.worldUnits
         material.alphaToCoverage = objs[0].object.material.alphaToCoverage
+        material.resolution = this.viewer.renderer.getDrawingBufferSize(
+          new THREE.Vector2()
+        )
         const l = new Line2(objs[0].object.geometry, material)
-        l.computeLineDistances()
-        l.scale.set(1, 1, 1)
+        // Geometry.updateRTEGeometry(l.geometry)
+        // l.computeLineDistances()
+        // l.scale.set(1, 1, 1)
         l.userData = { id: objs[0].object.userData.id }
         this.selectedObjects.add(l)
         break

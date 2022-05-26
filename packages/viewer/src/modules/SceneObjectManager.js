@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
 import SceneObjects from './SceneObjects'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { Line2 } from 'three/examples/jsm/lines/Line2.js'
-import { Matrix4, Vector2, Vector3 } from 'three'
+import { Vector2 } from 'three'
 import { Geometry } from './converter/Geometry'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
@@ -256,7 +255,7 @@ export default class SceneObjectManager {
     }
     material.resolution = this.viewer.renderer.getDrawingBufferSize(new Vector2())
 
-    let line = this.makeLineMesh(wrapper.bufferGeometry, material)
+    const line = this.makeLineMesh(wrapper.bufferGeometry, material)
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if (addToScene) {
@@ -413,30 +412,30 @@ export default class SceneObjectManager {
    * @param {*} color
    * @returns
    */
-  _normaliseColor(color) {
-    return color
-    // Note: full of **magic numbers** that will need changing once global scene
-    // is properly set up; also to test with materials coming from other software too...
-    const hsl = {}
-    color.getHSL(hsl)
+  // _normaliseColor(color) {
+  //   return color
+  //   // Note: full of **magic numbers** that will need changing once global scene
+  //   // is properly set up; also to test with materials coming from other software too...
+  //   const hsl = {}
+  //   color.getHSL(hsl)
 
-    if (hsl.s + hsl.l > 1) {
-      while (hsl.s + hsl.l > 1) {
-        hsl.s -= 0.05
-        hsl.l -= 0.05
-      }
-    }
+  //   if (hsl.s + hsl.l > 1) {
+  //     while (hsl.s + hsl.l > 1) {
+  //       hsl.s -= 0.05
+  //       hsl.l -= 0.05
+  //     }
+  //   }
 
-    if (hsl.l > 0.6) {
-      hsl.l = 0.6
-    }
+  //   if (hsl.l > 0.6) {
+  //     hsl.l = 0.6
+  //   }
 
-    if (hsl.l < 0.3) {
-      hsl.l = 0.3
-    }
+  //   if (hsl.l < 0.3) {
+  //     hsl.l = 0.3
+  //   }
 
-    color.setHSL(hsl.h, hsl.s, hsl.l)
-  }
+  //   color.setHSL(hsl.h, hsl.s, hsl.l)
+  // }
 
   _srgbToLinear(x) {
     if (x <= 0) return 0
