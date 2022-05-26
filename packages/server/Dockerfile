@@ -1,4 +1,4 @@
-FROM node:16.13-bullseye-slim as node
+FROM node:16.15-bullseye-slim as node
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 ARG SPECKLE_SERVER_VERSION=custom
