@@ -31,6 +31,7 @@
     "morgan": "~1.9.1",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
+    "pg-query-stream": "^4.2.3",
     "prom-client": "^14.0.1",
     "puppeteer": "^13.3.2",
     "yargs": "^17.3.0",

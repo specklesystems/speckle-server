@@ -2953,6 +2953,7 @@ __metadata:
     node-fetch: ^2.6.1
     nodemon: ^2.0.7
     pg: ^8.7.3
+    pg-query-stream: ^4.2.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     puppeteer: ^13.3.2
@@ -3030,6 +3031,7 @@ __metadata:
     passport-google-oauth2: ^0.2.0
     passport-google-oauth20: ^2.0.0
     pg: ^8.7.3
+    pg-query-stream: ^4.2.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     redis: ^3.1.1
@@ -18618,6 +18620,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pg-cursor@npm:^2.7.3":
+  version: 2.7.3
+  resolution: "pg-cursor@npm:2.7.3"
+  peerDependencies:
+    pg: ^8
+  checksum: a6b7615f382c8dd0b76cc4f34aa761fc490fbca1660ee59b6b1ea50012b17c8b5f6269f3abb3881eda25584af2645b5f07323b1758cd5ae8f2f496253da8b235
+  languageName: node
+  linkType: hard
+
 "pg-int8@npm:1.0.1":
   version: 1.0.1
   resolution: "pg-int8@npm:1.0.1"
@@ -18638,6 +18649,15 @@ __metadata:
   version: 1.5.0
   resolution: "pg-protocol@npm:1.5.0"
   checksum: b839d12cafe942ef9cbc5b13c174eb2356804fb4fe8ead8279f46a36be90722d19a91409955beb8a3d5301639c44854e49749de4aef02dc361fee3e2a61fb1e4
+  languageName: node
+  linkType: hard
+
+"pg-query-stream@npm:^4.2.3":
+  version: 4.2.3
+  resolution: "pg-query-stream@npm:4.2.3"
+  dependencies:
+    pg-cursor: ^2.7.3
+  checksum: 70cea5c298e06e893f2c872877ac0300d254cc6dc61a24d9af3ef4cfbf97bfc0f9b1214dbb72dd00e8685c3eddd2db31020c79dbfadeb3edee32ef3c4fae665c
   languageName: node
   linkType: hard
 
