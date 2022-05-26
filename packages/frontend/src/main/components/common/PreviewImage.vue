@@ -24,7 +24,7 @@
 
     <div
       ref="image_360"
-      xxxv-show="!legacyMode && hovered && fullPreviewImage"
+      :class="`${!color ? 'grasycale-img' : ''}`"
       :style="background360"
     ></div>
 
@@ -61,7 +61,6 @@ export default {
       isMounted: false,
       loading: false,
       hovered: false,
-      hasStartedLoadingImages: false,
       previewImage: null,
       fullPreviewImage: null,
       imageIndex: 0,
@@ -117,6 +116,7 @@ export default {
   watch: {
     hovered(val) {
       if (val && !this.fullPreviewImage) {
+        if (!this.rotate) return
         setTimeout(async () => {
           if (!this.hovered) return
           if (this.legacyMode) return
@@ -180,7 +180,6 @@ export default {
 </script>
 <style scoped>
 .grasycale-img {
-  transition: all 0.3s;
   filter: grayscale(100%);
 }
 </style>
