@@ -44,6 +44,7 @@ export default class InteractionHandler {
       resolution: this.viewer.renderer.getDrawingBufferSize(new THREE.Vector2()),
       clippingPlanes: this.viewer.sectionBox.planes
     })
+    // Not a fan of this, but it should be fine for now
     this.selectionLine2Material.polygonOffset = true
     this.selectionLine2Material.polygonOffsetFactor = -0.1
 
@@ -174,7 +175,19 @@ export default class InteractionHandler {
         const blockObjs = this.getBlockObjectsCloned(rootBlock)
         for (const child of blockObjs) {
           child.userData = { id: rootBlock.userData.id }
-          child.material = this.selectionMeshMaterial
+          if (child.type === 'Line2') {
+            const material = this.selectionLine2Material.clone()
+            material.color = new THREE.Color(0x0b55d2) // I really don't know why I need to reassign this...
+            material.linewidth = child.material.linewidth
+            material.worldUnits = child.material.worldUnits
+            material.alphaToCoverage = child.material.alphaToCoverage
+            material.resolution = this.viewer.renderer.getDrawingBufferSize(
+              new THREE.Vector2()
+            )
+            child.material = material
+          } else {
+            child.material = this.selectionMeshMaterial
+          }
           this.selectedObjects.add(child)
           //this.viewer.outlinePass.selectedObjects.push( child )
         }

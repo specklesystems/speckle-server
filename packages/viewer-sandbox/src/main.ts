@@ -1,7 +1,7 @@
 import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 
 // TODO: Just examples, delete!
-import Image from '@speckle/viewer/assets/random.png'
+// import Image from '@speckle/viewer/assets/random.png'
 // import ImageHdr from '@speckle/viewer/dist/image.hdr';
 
 import './style.css'
@@ -14,18 +14,18 @@ if (!container) {
 
 // Viewer setup
 const params = DefaultViewerParams
-// params.environmentSrc =
-//   // 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
+params.environmentSrc =
+  'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
 //   'http://localhost:3033/sample-hdri.exr'
 
 // TODO: Remove this, just a test of image bundling capabilities!
-const testImg = document.createElement('img')
+// const testImg = document.createElement('img')
 
 // TODO: TEST, REMOVE
-testImg.src = Image // Image manually imported from speckle/viewer
+// testImg.src = Image // Image manually imported from speckle/viewer
 // testImg.src = DefaultViewerParams.environmentSrc // Image that always gets bundled due to the import in speckle/viewer (remove it)
 
-document.getElementsByTagName('body')[0].appendChild(testImg)
+// document.getElementsByTagName('body')[0].appendChild(testImg)
 
 const viewer = new Viewer(container, params)
 await viewer.init()

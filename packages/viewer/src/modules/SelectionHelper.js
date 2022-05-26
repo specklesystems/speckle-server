@@ -114,10 +114,14 @@ export default class SelectionHelper extends EventEmitter {
       normalizedPosition,
       this.viewer.cameraHandler.activeCam.camera
     )
+    /**
+     * This 'subset' thing is really weird and it's breaking picking. I would gladly
+     * do something about it, however I'm afraid that it will open up a can of worms,
+     * which are out-of-scope for now 26.05.2022
+     */
     const targetObjects = this.subset
       ? this.subset
       : this.viewer.sceneManager.filteredObjects
-
     let intersectedObjects = this.raycaster.intersectObjects(targetObjects)
     // filters objects in section box mode
     if (this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion) {
