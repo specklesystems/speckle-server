@@ -1,6 +1,6 @@
 <template>
   <div class="">
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div v-if="!$apollo.loading" class="d-flex align-center">
         <div class="text-truncate flex-shrink-1">
           <router-link
@@ -68,6 +68,10 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheComments',
@@ -76,6 +80,7 @@ export default {
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder'),
     InfiniteLoading: () => import('vue-infinite-loading')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-comments', 1)],
   data() {
     return {
       localComments: [],
@@ -184,4 +189,3 @@ export default {
   }
 }
 </script>
-<style scoped></style>

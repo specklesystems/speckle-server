@@ -1,6 +1,6 @@
 <template>
   <v-container class="pa-0" fluid>
-    <portal to="toolbar"><b>Your Profile</b></portal>
+    <portal v-if="canRenderToolbarPortal" to="toolbar"><b>Your Profile</b></portal>
     <v-row>
       <v-col cols="12" lg="4">
         <user-info-card :user="user" @update="update"></user-info-card>
@@ -41,6 +41,10 @@
 <script>
 import { ProfileSelfQuery } from '@/graphql/user'
 import { signOut } from '@/plugins/authHelpers'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheProfileSelf',
@@ -52,13 +56,14 @@ export default {
     UserAuthorisedApps: () => import('@/main/components/user/UserAuthorisedApps'),
     UserDeleteCard: () => import('@/main/components/user/UserDeleteCard')
   },
-  data: () => ({}),
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'user-profile-self', 1)
+  ],
   apollo: {
     user: {
       query: ProfileSelfQuery
     }
   },
-  computed: {},
   methods: {
     update() {
       this.$apollo.queries.user.refetch()

@@ -100,7 +100,7 @@ async function doTask(task) {
         {
           USER_TOKEN: tempUserToken
         },
-        10 * 60 * 1000
+        20 * 60 * 1000
       )
     } else if (info.fileType === 'stl') {
       await runProcessWithTimeout(

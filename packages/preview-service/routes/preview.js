@@ -17,7 +17,7 @@ async function pageFunction(objectUrl) {
   }
 
   let t0 = Date.now()
-  let stepAngle = 0.261799
+  let stepAngle = 0.261799 // 15 deg
 
   try {
     await v.loadObject(objectUrl, '')
@@ -28,17 +28,10 @@ async function pageFunction(objectUrl) {
 
   v.interactions.zoomExtents(0.95, false)
   await waitForAnimation(100)
-  ret.scr['0'] = v.interactions.screenshot()
 
-  for (let i = 1; i < 3; i++) {
-    v.interactions.rotateCamera(stepAngle, undefined, false)
-    await waitForAnimation()
-    ret.scr[-1 * i + ''] = v.interactions.screenshot()
-  }
-  v.interactions.rotateCamera(-2 * stepAngle, undefined, false)
-  await waitForAnimation()
-  for (let i = 1; i < 3; i++) {
-    v.interactions.rotateCamera(-1 * stepAngle, undefined, false)
+  // full 360
+  for (let i = 0; i < 24; i++) {
+    v.interactions.rotateCamera(undefined, undefined, false)
     await waitForAnimation()
     ret.scr[i + ''] = v.interactions.screenshot()
   }

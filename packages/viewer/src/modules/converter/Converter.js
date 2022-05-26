@@ -639,9 +639,14 @@ export default class Coverter {
     v2.normalize()
     const v3 = new Vector3().crossVectors(v2, v0)
     v3.normalize()
-
+    /**
+     * We clamp the dot value to [-1,1] since that's the domain acos is defined on. Normally dot won't return
+     * values outside that interval, but due to floating point precision, you sometimes get -1.0000000004, which
+     * makes acos return NaN
+     */
+    const dot = Math.min(Math.max(v0.dot(v1), -1), 1)
     // This is just the angle between the start and end points. Should be same as obj.angleRadians(or something)
-    const angle = Math.acos(v0.dot(v1))
+    const angle = Math.acos(dot)
     const radius = obj.radius
     // We draw the arc in a local un-rotated coordinate system. We rotate it later on via transformation
     const curve = new THREE.EllipseCurve(
@@ -660,15 +665,19 @@ export default class Coverter {
     const matrix = new Matrix4()
     // Scale first, in order for the composition to work correctly
     const conversionFactor = scale ? getConversionFactor(obj.plane.units) : 1
+    // We determine the orientation of the plane using the three basis vectors computed above
+    const R = new Matrix4().makeBasis(v0, v3, v2)
+    // We translate it to the circle's origin (considering the origin's scaling as aswell )
+    const T = new Matrix4().setPosition(origin.multiplyScalar(conversionFactor))
+
+    matrix.multiply(T).multiply(R)
+
     if (scale) {
-      matrix.scale(
+      const S = new Matrix4().scale(
         new THREE.Vector3(conversionFactor, conversionFactor, conversionFactor)
       )
+      matrix.multiply(S)
     }
-    // We determine the orientation of the plane using the three basis vectors computed above
-    matrix.makeBasis(v0, v3, v2)
-    // We translate it to the circle's origin
-    matrix.setPosition(origin)
 
     const geometry = new THREE.BufferGeometry()
       .setFromPoints(points)

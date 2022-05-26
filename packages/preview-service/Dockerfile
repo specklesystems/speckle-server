@@ -53,15 +53,17 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-RUN yarn plugin import workspace-tools
-
 # Onyl copy in the relevant package.json files for the dependencies
 COPY packages/preview-service/package.json ./packages/preview-service/
 
-WORKDIR /speckle-server/packages/preview-service
+WORKDIR /speckle-server/packages
 
+COPY --from=build-stage /speckle-server/packages/objectloader ./objectloader
+COPY --from=build-stage /speckle-server/packages/viewer ./viewer
+COPY --from=build-stage /speckle-server/packages/preview-service ./preview-service
+
+WORKDIR /speckle-server/packages/preview-service
 RUN yarn workspaces focus --production
-COPY --from=build-stage /speckle-server/packages/preview-service ./
 
 ENTRYPOINT [ "tini", "--" ]
 CMD ["yarn", "node", "bin/www"]

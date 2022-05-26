@@ -78,6 +78,22 @@ describe('Comments @comments', () => {
     })
   })
 
+  it('Should not accept complex HTML in the comment text', async () => {
+    const commentId = await createComment({
+      userId: user.id,
+      input: {
+        streamId: stream.id,
+        resources: [{ resourceId: stream.id, resourceType: 'stream' }],
+        text: 'Some <img src/onerror=alert(1)> <strong>epic</strong> <a href="javascript:alert(1)">cool</a> text!',
+        data: { justSome: crs({ length: 10 }) }
+      }
+    })
+
+    const comment = await getComment({ id: commentId })
+    expect(comment).to.be.ok
+    expect((comment.text.match(/alert/) || []).length).to.equal(0)
+  })
+
   it('Should not be allowed to comment without specifying at least one target resource', async () => {
     await createComment({
       userId: user.id,

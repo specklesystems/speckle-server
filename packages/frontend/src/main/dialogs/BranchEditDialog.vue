@@ -53,7 +53,7 @@
         </v-toolbar>
         <v-card-text class="mt-4">
           You cannot undo this action. The branch
-          <code>{{ stream.branch.name }}</code>
+          <code>{{ initialBranch.name }}</code>
           will be permanently deleted. To confirm, type its name below:
           <v-text-field
             v-model="branchNameConfirmation"
@@ -67,7 +67,7 @@
           <v-btn
             color="error"
             text
-            :disabled="branchNameConfirmation !== stream.branch.name"
+            :disabled="branchNameConfirmation !== initialBranch.name"
             @click="deleteBranch()"
           >
             Delete
@@ -84,6 +84,7 @@
 import gql from 'graphql-tag'
 import isNull from 'lodash/isNull'
 import isUndefined from 'lodash/isUndefined'
+import clone from 'lodash/clone'
 
 export default {
   props: {
@@ -95,7 +96,9 @@ export default {
   data() {
     return {
       dialog: false,
-      editableBranch: this.stream.branch,
+      // Cloning to prevent mutation of this.stream.branch
+      editableBranch: clone(this.stream.branch),
+      initialBranch: clone(this.stream.branch),
       branchNameConfirmation: null,
       valid: true,
       loading: false,
@@ -129,6 +132,7 @@ export default {
             id
             branches {
               items {
+                id
                 name
               }
             }
@@ -146,7 +150,7 @@ export default {
           .map((b) => b.name)
       },
       skip() {
-        return isNull(this.stream.branch) || isUndefined(this.stream.branch)
+        return isNull(this.initialBranch) || isUndefined(this.initialBranch)
       }
     }
   },
@@ -155,6 +159,10 @@ export default {
       this.loading = true
       this.error = null
       this.$mixpanel.track('Branch Action', { type: 'action', name: 'delete' })
+
+      const streamId = this.$route.params.streamId
+      const branchId = this.initialBranch.id
+
       try {
         const res = await this.$apollo.mutate({
           mutation: gql`
@@ -164,8 +172,8 @@ export default {
           `,
           variables: {
             params: {
-              streamId: this.$route.params.streamId,
-              id: this.stream.branch.id
+              streamId,
+              id: branchId
             }
           }
         })
@@ -177,8 +185,11 @@ export default {
 
       this.loading = false
       this.showDelete = false
+      this.showDeleteDialog = false
+      this.editableBranch = null
       this.$eventHub.$emit('notification', { text: 'Branch deleted' })
       this.$router.push(`/streams/` + this.$route.params.streamId)
+      this.$emit('close')
       this.$eventHub.$emit('branch-refresh')
     },
     async updateBranch() {
@@ -189,6 +200,11 @@ export default {
 
         this.loading = true
         this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
+
+        const branchId = this.editableBranch.id
+        const newName = this.editableBranch.name
+        const newDescription = this.editableBranch.description
+
         const res = await this.$apollo.mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
@@ -198,12 +214,13 @@ export default {
           variables: {
             params: {
               streamId: this.$route.params.streamId,
-              id: this.editableBranch.id,
-              name: this.editableBranch.name,
-              description: this.editableBranch.description
+              id: branchId,
+              name: newName,
+              description: newDescription
             }
           }
         })
+
         if (!res.data.branchUpdate) throw new Error('Something went wrong!')
       } catch (err) {
         this.$eventHub.$emit('notification', { text: err.message })

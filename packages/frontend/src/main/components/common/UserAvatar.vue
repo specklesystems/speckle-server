@@ -1,6 +1,6 @@
 <template>
   <div style="display: inline-block">
-    <v-menu v-if="$loggedIn()" offset-x open-on-hover>
+    <v-menu v-if="$loggedIn()" offset-x open-on-hover :close-on-content-click="false">
       <template #activator="{ on, attrs }">
         <div v-bind="attrs" v-on="on">
           <user-avatar-icon

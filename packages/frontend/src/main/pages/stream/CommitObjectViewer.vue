@@ -13,7 +13,7 @@
         :resources="resources"
       />
 
-      <portal to="nav">
+      <portal v-if="canRenderNavPortal" to="nav">
         <div v-if="!$loggedIn()" class="px-4 my-2">
           <v-btn small block color="primary" to="/authn/login">Sign In</v-btn>
         </div>
@@ -221,6 +221,10 @@ import streamCommitQuery from '@/graphql/commit.gql'
 import streamObjectQuery from '@/graphql/objectSingleNoData.gql'
 import SpeckleViewer from '@/main/components/common/SpeckleViewer.vue' // do not import async
 import { resourceType } from '@/plugins/resourceIdentifier'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   components: {
@@ -242,6 +246,9 @@ export default {
     CommentAddOverlay: () => import('@/main/components/viewer/CommentAddOverlay'),
     CommentsOverlay: () => import('@/main/components/viewer/CommentsOverlay')
   },
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Nav], 'stream-commit-viewer', 1)
+  ],
   data: () => ({
     loadedModel: false,
     loadProgress: 0,

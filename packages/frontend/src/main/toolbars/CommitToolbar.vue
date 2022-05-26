@@ -1,5 +1,5 @@
 <template>
-  <portal to="toolbar">
+  <portal v-if="canRenderToolbarPortal" to="toolbar">
     <div class="d-flex align-center">
       <!-- <div class="text-truncate flex-shrink-0">
         <router-link v-tooltip="'all streams'" to="/streams" class="text-decoration-none mx-1">
@@ -159,6 +159,11 @@
   </portal>
 </template>
 <script>
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+
 export default {
   components: {
     SourceAppAvatar: () => import('@/main/components/common/SourceAppAvatar'),
@@ -166,6 +171,7 @@ export default {
     CommitReceivedReceipts: () =>
       import('@/main/components/common/CommitReceivedReceipts')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-commit', 1)],
   props: {
     stream: {
       type: Object,
@@ -174,7 +180,6 @@ export default {
   },
   data() {
     return { showCommitInfo: false }
-  },
-  computed: {}
+  }
 }
 </script>

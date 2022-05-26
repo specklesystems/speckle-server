@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="px-0 py-0" xxxstyle="max-width: 768px">
-    <portal v-if="stream" to="toolbar">
+    <portal v-if="stream && canRenderToolbarPortal" to="toolbar">
       <div class="d-flex align-center">
         <div class="text-truncate">
           <router-link
@@ -236,6 +236,10 @@ import gql from 'graphql-tag'
 import streamCollaboratorsQuery from '@/graphql/streamCollaborators.gql'
 import userSearchQuery from '@/graphql/userSearch.gql'
 import { FullServerInfoQuery } from '@/graphql/server'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
 
 export default {
   name: 'TheCollaborators',
@@ -245,6 +249,9 @@ export default {
     SectionCard: () => import('@/main/components/common/SectionCard'),
     StreamInviteDialog: () => import('@/main/dialogs/StreamInviteDialog')
   },
+  mixins: [
+    buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'stream-collaborators', 1)
+  ],
   data: () => ({
     search: '',
     selectedUsers: null,

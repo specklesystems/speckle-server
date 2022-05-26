@@ -1,6 +1,6 @@
 <template>
   <div>
-    <portal to="toolbar">
+    <portal v-if="canRenderToolbarPortal" to="toolbar">
       <div class="font-weight-bold">
         Your Latest Commits
         <span v-if="user" class="caption">({{ user.commits.totalCount }})</span>
@@ -61,6 +61,11 @@
 </template>
 <script>
 import gql from 'graphql-tag'
+import {
+  STANDARD_PORTAL_KEYS,
+  buildPortalStateMixin
+} from '@/main/utils/portalStateManager'
+
 export default {
   name: 'TheCommits',
   components: {
@@ -68,6 +73,7 @@ export default {
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
     NoDataPlaceholder: () => import('@/main/components/common/NoDataPlaceholder')
   },
+  mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'commits', 0)],
   apollo: {
     user: {
       query: gql`
