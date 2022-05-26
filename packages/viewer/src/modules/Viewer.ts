@@ -103,7 +103,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.outputEncoding = THREE.sRGBEncoding
     this.renderer.toneMapping = THREE.LinearToneMapping
-    this.renderer.toneMappingExposure = 0.6
+    this.renderer.toneMappingExposure = 0.5
     this.renderer.setSize(this.container.offsetWidth, this.container.offsetHeight)
     this.container.appendChild(this.renderer.domElement)
 

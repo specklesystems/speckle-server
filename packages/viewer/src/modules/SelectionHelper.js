@@ -118,10 +118,6 @@ export default class SelectionHelper extends EventEmitter {
       ? this.subset
       : this.viewer.sceneManager.filteredObjects
 
-    /**
-     * If there is only 1 object in the scene, this generates a false negative
-     */
-    if (targetObjects.length == 1) return []
     let intersectedObjects = this.raycaster.intersectObjects(targetObjects)
     // filters objects in section box mode
     if (this.viewer.sectionBox.display.visible && this.checkForSectionBoxInclusion) {

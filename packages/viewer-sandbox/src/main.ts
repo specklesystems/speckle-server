@@ -10,7 +10,8 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.environmentSrc =
-  'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
+  // 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
+  'http://localhost:3033/sample-hdri.exr'
 const viewer = new Viewer(container, params)
 await viewer.init()
 
@@ -35,4 +36,4 @@ viewer.on('load-complete', () => {
 sandbox.makeGenericUI()
 sandbox.makeSceneUI()
 // Load demo object
-sandbox.loadUrl('https://latest.speckle.dev/streams/2158263a8f/commits/3a629fc558')
+sandbox.loadUrl('https://latest.speckle.dev/streams/0c6ad366c4/commits/c4450f8ebe')

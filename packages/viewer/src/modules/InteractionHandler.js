@@ -217,7 +217,7 @@ export default class InteractionHandler {
     }
 
     const box = new THREE.Box3().setFromObject(this.selectedObjects)
-    if (selType == 'Line2') {
+    if (selType === 'Line2') {
       const expand = objs[0].object.material.worldUnits
         ? objs[0].object.material.linewidth * 0.5
         : 0
@@ -255,6 +255,7 @@ export default class InteractionHandler {
     }
     for (const child of objects) {
       child.geometry = child.geometry.clone().applyMatrix4(block.matrix)
+      Geometry.updateRTEGeometry(child.geometry)
     }
     return objects
   }
