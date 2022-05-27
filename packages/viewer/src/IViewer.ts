@@ -1,15 +1,30 @@
+import sampleHdri from './assets/sample-hdri.png'
+
 export interface ViewerParams {
   postprocessing: boolean
   reflections: boolean
   showStats: boolean
-  environmentSrc: string
+  environmentSrc: Asset | string
+}
+export enum AssetType {
+  TEXTURE_8BPP = 'png', // For now
+  TEXTURE_HDR = 'hdr',
+  TEXTURE_EXR = 'exr'
+}
+
+export interface Asset {
+  src: string
+  type: AssetType
 }
 
 export const DefaultViewerParams: ViewerParams = {
   postprocessing: false,
   reflections: true,
   showStats: true,
-  environmentSrc: null
+  environmentSrc: {
+    src: sampleHdri,
+    type: AssetType.TEXTURE_EXR
+  }
 }
 /**
  * Carried over from the old Viewer. To be extended/changed
