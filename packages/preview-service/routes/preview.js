@@ -68,29 +68,17 @@ async function getScreenshot(objectUrl) {
   const browser = await puppeteer.launch(launchParams)
   const page = await browser.newPage()
 
-  const wrapperPromise = new Promise(async (resolve, reject) => {
-    try {
-      await page.goto('http://127.0.0.1:3001/render/')
+  const wrapperPromise = (async () => {
+    await page.goto('http://127.0.0.1:3001/render/')
 
-      console.log('Page loaded')
+    console.log('Page loaded')
 
-      // Handle page crash (oom?)
-      page.on('error', (err) => {
-        reject(err)
-      })
-
-      page
-        .evaluate(pageFunction, objectUrl)
-        .then((ret) => {
-          resolve(ret)
-        })
-        .catch((err) => {
-          reject(err)
-        })
-    } catch (err) {
-      return reject(err)
-    }
-  })
+    // Handle page crash (oom?)
+    page.on('error', (err) => {
+      throw err
+    })
+    return await page.evaluate(pageFunction, objectUrl)
+  })()
 
   let ret = null
   try {
