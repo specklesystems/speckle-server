@@ -9,7 +9,7 @@ import InteractionHandler from './InteractionHandler'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox from './SectionBox'
-import { Clock, CubeCamera, Vector3 } from 'three'
+import { Clock, CubeCamera, Texture, Vector3 } from 'three'
 import { Scene } from 'three'
 import { WebGLRenderer } from 'three'
 import { Assets } from './Assets'
@@ -145,9 +145,14 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      this.scene.environment = await Viewer.Assets.getEnvironment(
-        this.startupParams.environmentSrc
-      )
+      Viewer.Assets.getEnvironment(this.startupParams.environmentSrc)
+        .then((value: Texture) => {
+          this.scene.environment = value
+        })
+        .catch((reason) => {
+          console.warn(reason)
+          console.warn('Fallback to null environment!')
+        })
     }
   }
 

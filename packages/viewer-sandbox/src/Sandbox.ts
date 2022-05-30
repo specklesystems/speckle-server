@@ -6,7 +6,7 @@ import UrlHelper from './UrlHelper'
 export default class Sandbox {
   private viewer: IViewer
   private pane: Pane
-  private tabs: any
+  private tabs
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
@@ -122,7 +122,7 @@ export default class Sandbox {
       .addInput(Sandbox.sceneParams, 'useRTE', {
         label: 'RTE'
       })
-      .on('change', (ev: any) => {
+      .on('change', () => {
         this.viewer.RTE = Sandbox.sceneParams.useRTE
       })
 
@@ -130,7 +130,7 @@ export default class Sandbox {
       .addInput(Sandbox.sceneParams, 'thickLines', {
         label: 'Thick Lines'
       })
-      .on('change', (ev: any) => {
+      .on('change', () => {
         this.viewer.thickLines = Sandbox.sceneParams.thickLines
       })
 
@@ -139,10 +139,9 @@ export default class Sandbox {
         min: 0,
         max: 5
       })
-      .on('change', (ev: any) => {
+      .on('change', () => {
         this.viewer.scene.traverse((object: Object3D) => {
-          if (object.type == 'Line2') {
-            //@ts-ignore
+          if (object.type === 'Line2') {
             ;(object.material as SpeckleLineMaterial).pixelThreshold =
               Sandbox.sceneParams.pixelThreshold
           }
@@ -160,7 +159,7 @@ export default class Sandbox {
         min: 0,
         max: 1
       })
-      .on('change', (ev: any) => {
+      .on('change', () => {
         this.viewer.renderer.toneMappingExposure = Sandbox.sceneParams.exposure
       })
 
@@ -171,7 +170,7 @@ export default class Sandbox {
           ACES: 4
         }
       })
-      .on('change', (ev: any) => {
+      .on('change', () => {
         this.viewer.renderer.toneMapping = Sandbox.sceneParams.tonemapping
       })
   }
