@@ -6,15 +6,15 @@ import UrlHelper from './UrlHelper'
 export default class Sandbox {
   private viewer: IViewer
   private pane: Pane
-  private tabs: any
+  private tabs
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/010b3af4c3/objects/a401baf38fe5809d0eb9d3c902a36e8f'
   }
 
   public static sceneParams = {
-    worldSize: {x: 0, y: 0, z: 0},
-    worldOrigin: {x:0, y:0, z:0},
+    worldSize: { x: 0, y: 0, z: 0 },
+    worldOrigin: { x: 0, y: 0, z: 0 },
     useRTE: false,
     thickLines: true,
     pixelThreshold: 0.5,
@@ -25,21 +25,18 @@ export default class Sandbox {
   public constructor(viewer: Viewer) {
     this.viewer = viewer
     this.pane = new Pane({ title: 'Sandbox', expanded: true })
-    this.pane['containerElem_'].style.width = "300px";
+    this.pane['containerElem_'].style.width = '300px'
     const t = `matrix(1.2, 0, 0, 1.2, -25, 16)`
-    this.pane['containerElem_'].style.transform = t;
+    this.pane['containerElem_'].style.transform = t
     this.tabs = this.pane.addTab({
-      pages: [
-        {title: 'General'},
-        {title: 'Scene'},
-      ],
-    });
+      pages: [{ title: 'General' }, { title: 'Scene' }]
+    })
     Sandbox.sceneParams.useRTE = viewer.RTE
-    Sandbox.sceneParams.thickLines = viewer.thickLines;
+    Sandbox.sceneParams.thickLines = viewer.thickLines
   }
 
   public refresh() {
-    this.pane.refresh();
+    this.pane.refresh()
   }
 
   public makeGenericUI() {
@@ -63,10 +60,10 @@ export default class Sandbox {
       this.viewer.unloadAll()
     })
 
-    this.tabs.pages[0].addSeparator();
-    
+    this.tabs.pages[0].addSeparator()
+
     const toggleSectionBox = this.tabs.pages[0].addButton({
-      title: "Toggle Section Box"
+      title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
       this.viewer.toggleSectionBox()
@@ -89,85 +86,93 @@ export default class Sandbox {
 
   makeSceneUI() {
     const worldFolder = this.tabs.pages[1].addFolder({
-      title: "World",
+      title: 'World',
       expanded: true
-    });
+    })
     worldFolder.addInput(Sandbox.sceneParams.worldSize, 'x', {
       disabled: true,
-      label: "Size-x",
+      label: 'Size-x',
       step: 0.00000001
-    });
+    })
     worldFolder.addInput(Sandbox.sceneParams.worldSize, 'y', {
       disabled: true,
-      label: "Size-y",
+      label: 'Size-y',
       step: 0.00000001
-    });
+    })
     worldFolder.addInput(Sandbox.sceneParams.worldSize, 'z', {
       disabled: true,
-      label: "Size-z",
+      label: 'Size-z',
       step: 0.00000001
-    });
-    worldFolder.addSeparator();
+    })
+    worldFolder.addSeparator()
     worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'x', {
       disabled: true,
-      label: "Origin-x"
-    });
+      label: 'Origin-x'
+    })
     worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'y', {
       disabled: true,
-      label: "Origin-y"
-    });
+      label: 'Origin-y'
+    })
     worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'z', {
       disabled: true,
-      label: "Origin-z"
-    });
+      label: 'Origin-z'
+    })
 
-    worldFolder.addInput(Sandbox.sceneParams, 'useRTE', {
-      label: "RTE"
-    }).on('change', (ev: any) => {
-      this.viewer.RTE = Sandbox.sceneParams.useRTE
-    });
-
-    worldFolder.addInput(Sandbox.sceneParams, 'thickLines', {
-      label: "Thick Lines"
-    }).on('change', (ev: any) => {
-      this.viewer.thickLines = Sandbox.sceneParams.thickLines
-    });
-
-     worldFolder.addInput(Sandbox.sceneParams, 'pixelThreshold', {
-      min: 0,
-      max: 5,
-    }).on('change', (ev: any) => {
-      this.viewer.scene.traverse((object: Object3D) => {
-        if(object.type == "Line2"){
-          //@ts-ignore
-          (object.material as SpeckleLineMaterial).pixelThreshold = Sandbox.sceneParams.pixelThreshold;
-        }
+    worldFolder
+      .addInput(Sandbox.sceneParams, 'useRTE', {
+        label: 'RTE'
       })
-    });
+      .on('change', () => {
+        this.viewer.RTE = Sandbox.sceneParams.useRTE
+      })
 
-    this.tabs.pages[1].addSeparator();
+    worldFolder
+      .addInput(Sandbox.sceneParams, 'thickLines', {
+        label: 'Thick Lines'
+      })
+      .on('change', () => {
+        this.viewer.thickLines = Sandbox.sceneParams.thickLines
+      })
+
+    worldFolder
+      .addInput(Sandbox.sceneParams, 'pixelThreshold', {
+        min: 0,
+        max: 5
+      })
+      .on('change', () => {
+        this.viewer.scene.traverse((object: Object3D) => {
+          if (object.type === 'Line2') {
+            ;(object.material as SpeckleLineMaterial).pixelThreshold =
+              Sandbox.sceneParams.pixelThreshold
+          }
+        })
+      })
+
+    this.tabs.pages[1].addSeparator()
     const postFolder = this.tabs.pages[1].addFolder({
-      title: "Post",
+      title: 'Post',
       expanded: true
-    });
+    })
 
-    postFolder.addInput(Sandbox.sceneParams, 'exposure', {
-      min: 0,
-      max: 1,
-    }).on('change', (ev: any) => {
-      this.viewer.renderer.toneMappingExposure = Sandbox.sceneParams.exposure;
-    });
+    postFolder
+      .addInput(Sandbox.sceneParams, 'exposure', {
+        min: 0,
+        max: 1
+      })
+      .on('change', () => {
+        this.viewer.renderer.toneMappingExposure = Sandbox.sceneParams.exposure
+      })
 
-    postFolder.addInput(Sandbox.sceneParams, 'tonemapping', {
-      options: {
+    postFolder
+      .addInput(Sandbox.sceneParams, 'tonemapping', {
+        options: {
           Linear: 1,
           ACES: 4
-      }
-    }).on('change', (ev: any) => {
+        }
+      })
+      .on('change', () => {
         this.viewer.renderer.toneMapping = Sandbox.sceneParams.tonemapping
-    });
-
-    
+      })
   }
 
   public async loadUrl(url: string) {

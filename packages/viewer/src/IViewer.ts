@@ -17,6 +17,17 @@ export interface Asset {
   type: AssetType
 }
 
+/**
+ * The default HDRI the viewer uses is actually a true HDR image (.exr),
+ * specified by the explicit TEXTURE_EXR
+ *
+ * We do this because bundling an actual .exr or .hdr image format would require
+ * anybody consuming the viewer to make adjustments to their build config, to enable
+ * its import.
+ *
+ * Three.js doesn't mind the extension of the asset you load, so an .exr hidden behind
+ * a .png will work just fine.
+ */
 export const DefaultViewerParams: ViewerParams = {
   postprocessing: false,
   reflections: true,
