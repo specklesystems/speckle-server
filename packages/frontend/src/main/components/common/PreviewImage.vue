@@ -131,7 +131,7 @@ export default {
             // else: we've aborted the request due to mouse moving out
           }
           this.loading = false
-        }, 500)
+        }, 250)
       }
 
       if (!val && this.loading) {
@@ -157,7 +157,7 @@ export default {
       const rect = e.target.getBoundingClientRect()
       const x = e.clientX - rect.left
       const step = rect.width / 24
-      let index = Math.round(x / step)
+      let index = Math.abs(24 - Math.round(x / step))
       if (index >= 24) index = 24 - 1
       this.imageIndex = index
     },
