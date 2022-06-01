@@ -1,7 +1,15 @@
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
+const { getStream } = require('@/modules/core/services/streams')
 const { getRoles } = require('@/modules/shared')
 const { ForbiddenError } = require('apollo-server-express')
 const { SpeckleForbiddenError: SFE } = require('./errors')
+
+class SpeckleContextError extends Error {
+  constructor(message) {
+    super(message)
+    this.name = 'SpeckleContextError'
+  }
+}
 
 // const authorizeStreamAccess = async ({
 //   streamId,
@@ -46,47 +54,135 @@ const { SpeckleForbiddenError: SFE } = require('./errors')
 //   throw new ForbiddenError('You do not have the required server role')
 // }
 
-const authFailed = (error) => ({ authorized: false, error })
-const authSuccess = () => ({ authorized: true, error: null })
+const authFailed = (context, error = null) => ({
+  context,
+  authResult: { authorized: false, error }
+})
+const authSuccess = (context) => ({
+  context,
+  authResult: { authorized: true, error: null }
+})
 
 const validateRole =
-  ({ requiredRole, roles, iddqd }) =>
+  ({ requiredRole, roles, iddqd, roleGetter }) =>
   async ({ context, authResult }) => {
     // having the required role doesn't rescue from authResult failure
-    if (authResult.error) return authResult
-    if (!context.auth) return authFailed(new SFE('You must provide an auth token.'))
+    if (authResult.error)
+      return authFailed(
+        context,
+        new SFE("Role validation doesn't rescue the auth pipeline")
+      )
+
+    // role validation has nothing to do with auth...
+    //this check doesn't belong here, move it out to the auth pipeline
+    if (!context.auth)
+      return authFailed(context, new SFE('Cannot validate role without auth'))
 
     const role = roles.find((r) => r.name === requiredRole)
-    const myRole = roles.find((r) => r.name === context.role)
+    const myRole = roles.find((r) => r.name === roleGetter(context))
 
-    if (!role) return authFailed(new SFE('Invalid server role requirement specified'))
-    if (!myRole) return authFailed(new SFE('Your role is not valid'))
-    if (myRole.name === iddqd || myRole.weight >= role.weight) return authSuccess()
+    if (!role) return authFailed(context, new SFE('Invalid role requirement specified'))
+    if (!myRole) return authFailed(context, new SFE('Your role is not valid'))
+    if (myRole.name === iddqd || myRole.weight >= role.weight)
+      return authSuccess(context)
 
-    return authFailed()
+    return authFailed(context, new SFE('You do not have the required role'))
   }
 
-// eslint-disable-next-line no-unused-vars
-const validateServerRole = async ({ requiredRole }) =>
-  validateRole({ requiredRole, roles: await getRoles(), iddqd: Roles.Server.Admin })
+const validateServerRole = ({ requiredRole }) =>
+  validateRole({
+    requiredRole,
+    roles: getRoles(),
+    iddqd: Roles.Server.Admin,
+    roleGetter: (context) => context.role
+  })
+
+const validateStreamRole = ({ requiredRole }) =>
+  validateRole({
+    requiredRole,
+    roles: getRoles(),
+    iddqd: Roles.Stream.Owner,
+    roleGetter: (context) => context.stream.role
+  })
+
+// this could be still useful, if the operation doesnt require a stream context
+// const authorizeResolver = refactor the implementation in ../index.js
+
+const validateScope =
+  ({ requiredScope }) =>
+  async ({ context, authResult }) => {
+    // having the required role doesn't rescue from authResult failure
+    if (authResult.error)
+      return authFailed(
+        context,
+        new SFE("Scope validation doesn't rescue the auth pipeline")
+      )
+    if (!context.scopes)
+      return authFailed(context, new SFE('You do not have the required privileges.'))
+    if (
+      context.scopes.indexOf(requiredScope) === -1 &&
+      context.scopes.indexOf('*') === -1
+    )
+      return authFailed(context, new SFE('You do not have the required privileges.'))
+    return authSuccess(context)
+  }
+
+// this doesn't do any checks  on the scopes, its sole responsibility is to add the
+// stream object to the pipeline context
+const contextRequiresStream =
+  (streamGetter) =>
+  // stream getter is an async func over { streamId, userId } returning a stream object
+  // IoC baby...
+  async ({ context, params }) => {
+    if (!params?.streamId)
+      return authFailed(
+        context,
+        new SpeckleContextError("The context doesn't have a streamId")
+      )
+    // because we're assigning to the context, it would raise if it would be null
+    // its probably?? safer than returning a new context
+    if (!context)
+      return authFailed(context, new SpeckleContextError('The context is not defined'))
+
+    // cause stream getter could throw, its not a safe function if we want to
+    // keep the pipeline rolling
+    try {
+      const stream = await streamGetter({
+        streamId: params.streamId,
+        userId: context?.userId
+      })
+      context.stream = stream
+      return authSuccess(context)
+    } catch (err) {
+      // this prob needs some more detailing to not leak internal errors
+      return authFailed(context, new SpeckleContextError(err.message))
+    }
+  }
+
+const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole = async ({
+  context,
+  authResult
+}) =>
+  context.auth && context.stream.isPublic
+    ? authSuccess(context)
+    : { context, authResult }
 
 const authPipelineCreator = (steps) => {
   const pipeline = async ({ context, params }) => {
     let authResult = { authorized: false, error: null }
     steps.forEach(async (step) => {
-      authResult = await step({ context, authResult, params })
+      ;({ context, authResult } = await step({ context, authResult, params }))
     })
     // validate auth result a bit...
-    if (!authResult.authorized && authResult.error)
+    if (authResult.authorized && authResult.error)
       throw new Error('a big fuckup on our end')
-    return authResult
+    return { context, authResult }
   }
   return pipeline
 }
 
 //we could even add an auth middleware creator
 // todo move this to a webserver related module, it has no place here
-// eslint-disable-next-line no-unused-vars
 const authMiddlewareCreator = (steps) => {
   const pipeline = authPipelineCreator(steps)
 
@@ -102,9 +198,23 @@ const authMiddlewareCreator = (steps) => {
   return middleware
 }
 
+// eslint-disable-next-line no-unused-vars
+const exampleMiddleware = authMiddlewareCreator([
+  // at some point add the context preparation here too
+  validateServerRole({ requiredRole: Roles.Server.User }),
+  validateScope({ requiredScope: Scopes.Streams.Write }),
+  contextRequiresStream(getStream),
+  validateStreamRole({ requiredRole: Roles.Stream.Reviewer }),
+  allowForRegisteredUsersOnPublicStreamsEvenWithoutRole
+])
+
 module.exports = {
   authPipelineCreator,
   authSuccess,
   authFailed,
-  validateRole
+  validateRole,
+  validateScope,
+  contextRequiresStream,
+  SpeckleContextError,
+  authMiddlewareCreator
 }
