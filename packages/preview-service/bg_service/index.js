@@ -5,6 +5,7 @@ const knex = require('../knex')
 const fetch = require('node-fetch')
 const fs = require('fs')
 const metrics = require('./prometheusMetrics')
+const joinImages = require('join-images')
 
 let shouldExit = false
 
@@ -37,7 +38,8 @@ async function doTask(task) {
     // let imgBuffer = await res.buffer()  // this gets the binary response body
 
     const metadata = {}
-
+    const allImgsArr = []
+    let i = 0
     for (const angle in res) {
       const imgBuffer = new Buffer.from(
         res[angle].replace(/^data:image\/\w+;base64,/, ''),
@@ -45,14 +47,34 @@ async function doTask(task) {
       )
       const previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
 
-      // Save preview image
-      await knex.raw(
-        'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
-        [previewId, imgBuffer]
-      )
+      // Save first preview image
+      if (i++ === 0) {
+        await knex.raw(
+          'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
+          [previewId, imgBuffer]
+        )
+        metadata[angle] = previewId
+      }
 
-      metadata[angle] = previewId
+      allImgsArr.push(imgBuffer)
     }
+
+    // stitch 360 image
+    const fullImg = await joinImages.joinImages(allImgsArr, {
+      direction: 'horizontal',
+      offset: 700,
+      margin: '0 700 0 700',
+      color: { alpha: 0, r: 0, g: 0, b: 0 }
+    })
+    const png = await fullImg.png({ quality: 95 })
+    const buff = await png.toBuffer()
+    const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
+
+    await knex.raw(
+      'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
+      [fullImgId, buff]
+    )
+    metadata['all'] = fullImgId
 
     // Update preview metadata
     await knex.raw(
@@ -77,7 +99,7 @@ async function doTask(task) {
         "preview" = ?
       WHERE "streamId" = ? AND "objectId" = ?
     `,
-      [{}, task.streamId, task.objectId]
+      [{ err: err.toString() }, task.streamId, task.objectId]
     )
     metrics.metricOperationErrors.labels('preview').inc()
   }

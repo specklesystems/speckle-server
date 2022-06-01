@@ -15,7 +15,7 @@
     "node": "^16.0.0"
   },
   "scripts": {
-    "dev": "cross-env 'NODE_ENV=development' 'DEBUG=speckle:*' nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
+    "dev": "cross-env NODE_ENV=development DEBUG='speckle:*' nodemon ./bin/www --watch . --watch ./bin/www  -e js,graphql,env",
     "dev:server:test": "cross-env NODE_ENV=test DEBUG=speckle:* node ./bin/www",
     "test": "cross-env NODE_ENV=test mocha",
     "test:coverage": "cross-env NODE_ENV=test nyc --reporter lcov mocha",
