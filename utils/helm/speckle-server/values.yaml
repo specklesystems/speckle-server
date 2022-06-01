@@ -101,3 +101,5 @@ enable_prometheus_monitoring: false
 cert_manager_issuer: letsencrypt-staging
 
 helm_test_enabled: true
+
+create_namespace: false

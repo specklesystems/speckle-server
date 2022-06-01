@@ -1,8 +1,8 @@
+/* eslint-disable no-undef */
 'use strict'
-/* eslint-disable */
 
-let express = require('express')
-let router = express.Router()
+const express = require('express')
+const router = express.Router()
 const puppeteer = require('puppeteer')
 
 async function pageFunction(objectUrl) {
@@ -10,14 +10,13 @@ async function pageFunction(objectUrl) {
     await new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
-  let ret = {
+  const ret = {
     duration: 0,
     mem: 0,
     scr: {}
   }
 
-  let t0 = Date.now()
-  let stepAngle = 0.261799 // 15 deg
+  const t0 = Date.now()
 
   try {
     await v.loadObject(objectUrl, '')
@@ -59,7 +58,7 @@ async function pageFunction(objectUrl) {
 }
 
 async function getScreenshot(objectUrl) {
-  let launchParams = {
+  const launchParams = {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   }
@@ -69,29 +68,17 @@ async function getScreenshot(objectUrl) {
   const browser = await puppeteer.launch(launchParams)
   const page = await browser.newPage()
 
-  const wrapperPromise = new Promise(async (resolve, reject) => {
-    try {
-      await page.goto('http://127.0.0.1:3001/render/')
+  const wrapperPromise = (async () => {
+    await page.goto('http://127.0.0.1:3001/render/')
 
-      console.log('Page loaded')
+    console.log('Page loaded')
 
-      // Handle page crash (oom?)
-      page.on('error', (err) => {
-        reject(err)
-      })
-
-      page
-        .evaluate(pageFunction, objectUrl)
-        .then((ret) => {
-          resolve(ret)
-        })
-        .catch((err) => {
-          reject(err)
-        })
-    } catch (err) {
-      return reject(err)
-    }
-  })
+    // Handle page crash (oom?)
+    page.on('error', (err) => {
+      throw err
+    })
+    return await page.evaluate(pageFunction, objectUrl)
+  })()
 
   let ret = null
   try {
@@ -146,7 +133,7 @@ async function getScreenshot(objectUrl) {
 }
 
 router.get('/:streamId/:objectId', async function (req, res) {
-  let objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
+  const objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
   /*
   let authToken = ''
   let authorizationHeader = req.header( 'Authorization' )
@@ -161,7 +148,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
 
   console.log(objectUrl)
 
-  let scr = await getScreenshot(objectUrl)
+  const scr = await getScreenshot(objectUrl)
 
   if (!scr) {
     return res.status(500).end()

@@ -1,4 +1,4 @@
-FROM node:16.13-bullseye-slim as node
+FROM node:16.15-bullseye-slim as node
 
 RUN apt-get update && apt-get install -y \
   tini \
