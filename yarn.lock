@@ -2835,10 +2835,10 @@ __metadata:
     crypto-random-string: ^3.3.1
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^1.0.3
+    knex: ^2.0.0
     node-fetch: ^2.6.5
     nodemon: ^2.0.13
-    pg: ^8.7.1
+    pg: ^8.7.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     valid-filename: ^3.1.0
@@ -2949,12 +2949,12 @@ __metadata:
     html-webpack-plugin: ^5.3.1
     http-errors: ~1.6.3
     join-images: ^1.1.3
-    knex: ^1.0.3
+    knex: ^2.0.0
     morgan: ~1.9.1
     node-fetch: ^2.6.1
     nodemon: ^2.0.7
-    pg: ^8.6.0
-    pg-query-stream: ^4.1.0
+    pg: ^8.7.3
+    pg-query-stream: ^4.2.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     puppeteer: ^13.3.2
@@ -3016,7 +3016,7 @@ __metadata:
     graphql-tools: ^4.0.7
     http-proxy-middleware: ^1.0.6
     ioredis: ^4.19.4
-    knex: ^1.0.3
+    knex: ^2.0.0
     lodash: ^4.17.21
     mocha: ^7.2.0
     mocha-junit-reporter: ^2.0.2
@@ -3032,8 +3032,8 @@ __metadata:
     passport-github2: ^0.1.12
     passport-google-oauth2: ^0.2.0
     passport-google-oauth20: ^2.0.0
-    pg: ^8.5.1
-    pg-query-stream: ^4.2.1
+    pg: ^8.7.3
+    pg-query-stream: ^4.2.3
     prettier: ^2.5.1
     prom-client: ^14.0.1
     redis: ^3.1.1
@@ -3116,9 +3116,9 @@ __metadata:
     cross-env: ^7.0.3
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
-    knex: ^1.0.3
+    knex: ^2.0.0
     node-fetch: ^2.6.1
-    pg: ^8.6.0
+    pg: ^8.7.3
     prettier: ^2.5.1
     private-ip: ^2.3.3
     prom-client: ^14.0.1
@@ -15290,9 +15290,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"knex@npm:^1.0.3":
-  version: 1.0.7
-  resolution: "knex@npm:1.0.7"
+"knex@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "knex@npm:2.0.0"
   dependencies:
     colorette: 2.0.16
     commander: ^9.1.0
@@ -15309,8 +15309,6 @@ __metadata:
     tarn: ^3.0.2
     tildify: 2.0.0
   peerDependenciesMeta:
-    "@vscode/sqlite3":
-      optional: true
     better-sqlite3:
       optional: true
     mysql:
@@ -15321,11 +15319,13 @@ __metadata:
       optional: true
     pg-native:
       optional: true
+    sqlite3:
+      optional: true
     tedious:
       optional: true
   bin:
     knex: bin/cli.js
-  checksum: 57608a3a6813cb66da6f5a078016338166c53ab2cbaab66e81492352023db88fc158e4ad6bbd2156cd9d7c9cac14a4b1e581dd8232b4f9bab2285ea6f1efc5cf
+  checksum: c2b5bf0b511a2736310ffe59bfdccfa5721d95b8692c36ad085871f494cdfbe1817cc9c2521c0b1dda46b934b048bfd10675eaf93460fcc66476cca1b0af875f
   languageName: node
   linkType: hard
 
@@ -18675,7 +18675,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg-query-stream@npm:^4.1.0, pg-query-stream@npm:^4.2.1":
+"pg-query-stream@npm:^4.2.3":
   version: 4.2.3
   resolution: "pg-query-stream@npm:4.2.3"
   dependencies:
@@ -18697,7 +18697,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg@npm:^8.5.1, pg@npm:^8.6.0, pg@npm:^8.7.1":
+"pg@npm:^8.7.3":
   version: 8.7.3
   resolution: "pg@npm:8.7.3"
   dependencies:
