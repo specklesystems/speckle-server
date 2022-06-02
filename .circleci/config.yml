@@ -265,7 +265,7 @@ jobs:
 
       - run:
           name: publish to npm
-          command: 'yarn workspaces foreach -pv --no-private npm publish --access public --tag next'
+          command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
 
       # - run:
       # name: commit changes

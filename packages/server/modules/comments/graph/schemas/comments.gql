@@ -202,12 +202,6 @@ extend type Mutation {
   commentReply(input: ReplyCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
-
-  commentReactionToggle(
-    streamId: String!
-    commentId: String!
-    reaction: String!
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
 }
 
 extend type Subscription {
