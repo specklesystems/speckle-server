@@ -739,7 +739,7 @@ describe('Comments @comments', () => {
       .catch((error) => expect(error.message).to.be.equal("The comment doesn't exist"))
   })
 
-  it('Should not be allowed to edit a comment of another user', async () => {
+  it('Should not be allowed to edit a comment of another user if its restricted', async () => {
     const localObjectId = await createObject(stream.id, {
       anotherTestObject: crs({ length: 10 })
     })
@@ -758,7 +758,8 @@ describe('Comments @comments', () => {
 
     await editComment({
       userId: otherUser.id,
-      input: { id: commentId, text: 'properText' }
+      input: { id: commentId, text: 'properText' },
+      matchUser: true
     })
       .then(() => {
         throw new Error('This should have been rejected')
@@ -766,6 +767,10 @@ describe('Comments @comments', () => {
       .catch((error) =>
         expect(error.message).to.be.equal("You cannot edit someone else's comments")
       )
+    const properText = 'fooood'
+    await editComment({ userId: user.id, input: { id: commentId, text: properText } })
+    const comment = await getComment({ id: commentId })
+    expect(comment.text).to.be.equal(properText)
   })
 
   it('Should be able to toggle reactions for a comment')
