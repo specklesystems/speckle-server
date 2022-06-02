@@ -1,8 +1,5 @@
-// POLYFILLS
-import 'core-js'
-import 'regenerator-runtime/runtime'
-
-import Viewer from './modules/Viewer'
+import { Viewer } from './modules/Viewer'
 import Converter from './modules/converter/Converter'
+import { DefaultViewerParams } from './IViewer'
 
-export { Viewer, Converter }
+export { Viewer, Converter, DefaultViewerParams }

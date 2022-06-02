@@ -8,7 +8,7 @@
   </div>
 </template>
 <script>
-import { Viewer } from '@speckle/viewer'
+import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 import throttle from 'lodash/throttle'
 
 export default {
@@ -41,7 +41,8 @@ export default {
       renderDomElement.id = 'renderer'
     }
     if (!window.__viewer) {
-      window.__viewer = new Viewer({ container: renderDomElement, showStats: false })
+      window.__viewer = new Viewer(renderDomElement, DefaultViewerParams)
+      await window.__viewer.init()
     }
 
     this.domElement = renderDomElement

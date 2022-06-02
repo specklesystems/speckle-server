@@ -1,9 +1,11 @@
 import commonjs from '@rollup/plugin-commonjs'
 import nodeResolve from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
-import { babel } from '@rollup/plugin-babel'
 import clean from 'rollup-plugin-delete'
 import pkg from './package.json'
+import typescript2 from 'rollup-plugin-typescript2'
+import rebasePlugin from 'rollup-plugin-rebase'
+import copyPlugin from 'rollup-plugin-copy'
 
 const isProd = process.env.NODE_ENV === 'production'
 const isExample = !!process.env.EXAMPLE_BUILD
@@ -36,6 +38,15 @@ function buildConfig(isWebBuild = false) {
           ])
     ],
     plugins: [
+      rebasePlugin({ keepName: true }),
+      copyPlugin({
+        targets: [{ src: './always-bundled-assets/**/*', dest: 'dist/assets' }]
+      }),
+      typescript2({
+        tsconfigOverride: {
+          sourceMap: sourcemap
+        }
+      }),
       ...(isWebBuild
         ? [
             // Bundling in all deps in web build
@@ -46,7 +57,6 @@ function buildConfig(isWebBuild = false) {
             // Cleaning dir only inside dist
             clean({ targets: 'dist/*' })
           ]),
-      babel({ babelHelpers: 'bundled' }),
       ...(isProd ? [terser()] : [])
     ],
     external: isWebBuild
