@@ -1,5 +1,6 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
+// import { WorldTree } from './converter/WorldTree'
 
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
@@ -106,6 +107,7 @@ export default class ViewerObjectLoader {
 
     // Geometry.applyWorldTransform(parsedObjects)
     // Temporary until refactor
+    // console.log(WorldTree.getInstance().findAll())
     for (let k = 0; k < parsedObjects.length; k++) {
       await this.converter.asyncPause()
       this.viewer.sceneManager.addObject(parsedObjects[k])

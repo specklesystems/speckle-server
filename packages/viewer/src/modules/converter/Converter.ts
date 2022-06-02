@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import ObjectWrapper from './ObjectWrapper'
 import { getConversionFactor } from './Units'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
@@ -5,6 +6,7 @@ import { Geometry, GeometryData } from './Geometry'
 import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2 } from 'three'
 import { Vector3 } from 'three'
 import { Line3 } from 'three'
+import { TreeNode, WorldTree } from './WorldTree'
 
 export type ConverterResultDelegate = (
   object: ObjectWrapper | undefined
@@ -18,11 +20,15 @@ export type ConverterGeometryDataDelegate = (
   scale?: boolean
 ) => Promise<GeometryData>
 
+export type ConverterNodeDelegate = (object, node) => Promise<void>
 /**
  * Utility class providing some top level conversion methods.
  * Warning: HIC SVNT DRACONES.
  */
 export default class Coverter {
+  PolylineToNodebind(arg0: this): ConverterNodeDelegate {
+    throw new Error('Method not implemented.')
+  }
   private objectLoader
   private curveSegmentLength: number
   private lastAsyncPause: number
@@ -67,6 +73,25 @@ export default class Coverter {
     Ellipse: this.EllipseToGeometryData.bind(this)
   }
 
+  private readonly NodeConverterMapping: {
+    [name: string]: ConverterNodeDelegate
+  } = {
+    View3D: this.View3DToNode.bind(this),
+    BlockInstance: this.BlockInstanceToNode.bind(this),
+    Pointcloud: this.PointcloudToNode.bind(this),
+    Brep: this.BrepToNode.bind(this),
+    Mesh: this.MeshToNode.bind(this),
+    Point: this.PointToNode.bind(this),
+    Line: this.LineToNode.bind(this),
+    Polyline: this.PolylineToNode.bind(this),
+    Box: this.BoxToNode.bind(this),
+    Polycurve: this.PolycurveToNode.bind(this),
+    Curve: this.CurveToNode.bind(this),
+    Circle: this.CircleToNode.bind(this),
+    Arc: this.ArcToNode.bind(this),
+    Ellipse: this.EllipseToNode.bind(this)
+  }
+
   constructor(objectLoader: unknown) {
     if (!objectLoader) {
       console.warn(
@@ -80,6 +105,7 @@ export default class Coverter {
     this.lastAsyncPause = Date.now()
     this.activePromises = 0
     this.maxChildrenPromises = 200
+    WorldTree.getInstance()
   }
 
   private async asyncPause() {
@@ -101,7 +127,8 @@ export default class Coverter {
     obj,
     callback: ConverterResultDelegate,
     scale = true,
-    parents: [] = []
+    parents: [] = [],
+    node: TreeNode = null
   ) {
     await this.asyncPause()
 
@@ -116,13 +143,14 @@ export default class Coverter {
       for (const element of obj) {
         if (typeof element !== 'object') break // exit early for non-object based arrays
         if (this.activePromises >= this.maxChildrenPromises) {
-          await this.traverseAndConvert(element, callback, scale, parents)
+          await this.traverseAndConvert(element, callback, scale, parents, node)
         } else {
           const childPromise = this.traverseAndConvert(
             element,
             callback,
             scale,
-            parents
+            parents,
+            node
           )
           childrenConversionPromisses.push(childPromise)
         }
@@ -133,6 +161,20 @@ export default class Coverter {
       return
     }
 
+    const childNode: TreeNode = WorldTree.getInstance().parse({
+      id: obj.id,
+      raw: Object.assign({}, obj),
+      geometry: null,
+      children: []
+    })
+    if (node === null) {
+      WorldTree.getInstance().addNode(childNode, node)
+      console.warn(`Added root node with id ${obj.id}`)
+    } else {
+      WorldTree.getInstance().addNode(childNode, node)
+      console.warn(`Added child node with id ${obj.id} to parent node ${node.model.id}`)
+    }
+
     // Keep track of parents. An object is his own parent, for the simplicity of working with subtrees
     obj.__parents = [...parents, obj.id]
 
@@ -141,6 +183,7 @@ export default class Coverter {
 
     if (this.directConverterExists(obj)) {
       try {
+        await this.convertToNode(obj.data || obj, childNode)
         await callback(await this.directConvert(obj.data || obj, scale))
         return
       } catch (e) {
@@ -164,6 +207,14 @@ export default class Coverter {
         displayValue = await this.resolveReference(displayValue)
         if (!displayValue.units) displayValue.units = obj.units
         try {
+          const nestedNode: TreeNode = WorldTree.getInstance().parse({
+            id: displayValue.id,
+            raw: Object.assign({}, displayValue),
+            geometry: null,
+            children: []
+          })
+          await this.convertToNode(displayValue, nestedNode)
+          childNode.model.raw.displayValue = nestedNode
           const convertedElement = await this.convert(displayValue, scale)
           await callback(
             new ObjectWrapper(
@@ -181,6 +232,14 @@ export default class Coverter {
         for (const element of displayValue) {
           const val = await this.resolveReference(element)
           if (!val.units) val.units = obj.units
+          const nestedNode: TreeNode = WorldTree.getInstance().parse({
+            id: val.id,
+            raw: Object.assign({}, val),
+            geometry: null,
+            children: []
+          })
+          await this.convertToNode(val, nestedNode)
+          childNode.model.raw.displayValue[displayValue.indexOf(element)] = nestedNode
           const convertedElement = await this.convert(val, scale)
           await callback(
             new ObjectWrapper(
@@ -196,7 +255,13 @@ export default class Coverter {
       if (obj.speckle_type.toLowerCase().includes('builtelements')) {
         if (obj['elements']) {
           childrenConversionPromisses.push(
-            this.traverseAndConvert(obj['elements'], callback, scale, obj.__parents)
+            this.traverseAndConvert(
+              obj['elements'],
+              callback,
+              scale,
+              obj.__parents,
+              childNode
+            )
           )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
@@ -210,7 +275,7 @@ export default class Coverter {
     // Last attempt: iterate through all object keys and see if we can display anything!
     // traverses the object in case there's any sub-objects we can convert.
     for (const prop in target) {
-      if (prop === '__parents' || prop === 'bbox') continue
+      if (prop === '__parents' || prop === 'bbox' || prop === '__closure') continue
       if (
         ['displayMesh', '@displayMesh', 'displayValue', '@displayValue'].includes(prop)
       )
@@ -218,13 +283,20 @@ export default class Coverter {
       if (typeof target[prop] !== 'object' || target[prop] === null) continue
 
       if (this.activePromises >= this.maxChildrenPromises) {
-        await this.traverseAndConvert(target[prop], callback, scale, obj.__parents)
+        await this.traverseAndConvert(
+          target[prop],
+          callback,
+          scale,
+          obj.__parents,
+          childNode
+        )
       } else {
         const childPromise = this.traverseAndConvert(
           target[prop],
           callback,
           scale,
-          obj.__parents
+          obj.__parents,
+          childNode
         )
         childrenConversionPromisses.push(childPromise)
       }
@@ -236,6 +308,10 @@ export default class Coverter {
 
   private directConverterExists(obj) {
     return this.getSpeckleType(obj) in this.GeometryConverterMapping
+  }
+
+  private directNodeConverterExists(obj) {
+    return this.getSpeckleType(obj) in this.NodeConverterMapping
   }
 
   private directConvert(obj, scale = true): Promise<ObjectWrapper | undefined> {
@@ -267,6 +343,19 @@ export default class Coverter {
     try {
       if (this.directConverterExists(obj)) {
         return await this.directConvert(obj.data || obj, scale)
+      }
+      return null
+    } catch (e) {
+      console.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
+      throw e
+    }
+  }
+
+  private async convertToNode(obj, node) {
+    if (obj.referencedId) obj = await this.resolveReference(obj)
+    try {
+      if (this.directNodeConverterExists(obj)) {
+        return await this.NodeConverterMapping[this.getSpeckleType(obj)](obj, node)
       }
       return null
     } catch (e) {
@@ -326,9 +415,139 @@ export default class Coverter {
   }
 
   /**
+   * 
+    NODES
+   */
+  private async View3DToNode(obj, node) {
+    return
+  }
+
+  private async BlockInstanceToNode(obj, node) {
+    const definition = await this.resolveReference(obj.blockDefinition)
+    node.model.raw.definition = definition
+    for (const def of definition.geometry) {
+      const ref = await this.resolveReference(def)
+      const childNode: TreeNode = WorldTree.getInstance().parse({
+        id: ref.id,
+        raw: Object.assign({}, ref),
+        geometry: null,
+        children: []
+      })
+      WorldTree.getInstance().addNode(childNode, node)
+      console.warn(
+        `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
+      )
+
+      await this.convertToNode(ref, childNode)
+    }
+  }
+
+  private async PointcloudToNode(obj, node) {
+    node.model.raw.points = await this.dechunk(obj.points)
+    node.model.raw.colors = await this.dechunk(obj.colors)
+  }
+
+  private async BrepToNode(obj, node) {
+    try {
+      if (!obj) return
+
+      let displayValue = obj.displayValue || obj.displayMesh
+      if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
+      const ref = await this.resolveReference(displayValue)
+      const nestedNode: TreeNode = WorldTree.getInstance().parse({
+        id: ref.id,
+        raw: Object.assign({}, ref),
+        geometry: null,
+        children: []
+      })
+      node.model.raw.displayValue = nestedNode
+
+      // deletes known unneeded fields
+      delete obj.Edges
+      delete obj.Faces
+      delete obj.Loops
+      delete obj.Trims
+      delete obj.Curve2D
+      delete obj.Curve3D
+      delete obj.Surfaces
+      delete obj.Vertices
+    } catch (e) {
+      console.warn(`Failed to convert brep id: ${obj.id}`)
+      throw e
+    }
+  }
+
+  private async MeshToNode(obj, node) {
+    if (!obj) return
+
+    if (!obj.vertices) return
+    if (!obj.faces) return
+
+    node.model.raw.vertices = await this.dechunk(obj.vertices)
+    node.model.raw.faces = await this.dechunk(obj.faces)
+    node.model.raw.colors = await this.dechunk(obj.colors)
+  }
+
+  private async PointToNode(obj, node) {
+    return
+  }
+  private async LineToNode(obj, node) {
+    return
+  }
+
+  private async PolylineToNode(obj, node) {
+    node.model.raw.value = await this.dechunk(obj.value)
+  }
+
+  private async BoxToNode(obj, node) {
+    return
+  }
+
+  private async PolycurveToNode(obj, node) {
+    for (let i = 0; i < obj.segments.length; i++) {
+      let element = obj.segments[i]
+      const nestedNode: TreeNode = WorldTree.getInstance().parse({
+        id: element.id,
+        raw: Object.assign({}, element),
+        geometry: null,
+        children: []
+      })
+      if (this.directConverterExists(element)) {
+        await this.convertToNode(element, nestedNode)
+      } else if ((element = this.getDisplayValue(element)) !== undefined) {
+        await this.convertToNode(element, nestedNode)
+      }
+    }
+  }
+
+  private async CurveToNode(obj, node) {
+    const displayValue = await this.resolveReference(obj.displayValue)
+    displayValue.units = displayValue.units || obj.units
+    const nestedNode: TreeNode = WorldTree.getInstance().parse({
+      id: displayValue.id,
+      raw: Object.assign({}, displayValue),
+      geometry: null,
+      children: []
+    })
+    node.model.raw.displayValue = nestedNode
+  }
+
+  private async CircleToNode(obj, node) {
+    return
+  }
+
+  private async ArcToNode(obj, node) {
+    return
+  }
+
+  private async EllipseToNode(obj, node) {
+    return
+  }
+
+  /**
    * VIEW 3D
    */
-  private async View3DToBufferGeometry(obj) {
+  private async View3DToBufferGeometry(obj, scale) {
     obj.origin.units = obj.units
     obj.target.units = obj.units
     const origin = this.PointToVector3(obj.origin)
@@ -358,7 +577,8 @@ export default class Coverter {
     for (const obj of definition.geometry) {
       // Note: we are passing scale = false to the conversion of all objects, as scaling *needs* to happen
       // at a global group level.
-      const res = await this.convert(await this.resolveReference(obj), false)
+      const ref = await this.resolveReference(obj)
+      const res = await this.convert(ref, false)
       // We are not baking the matrix transform in the vertices so as to allow
       // for easy composed transforms coming in at nested block levels
       // res.bufferGeometry.applyMatrix4( matrix )
@@ -402,8 +622,9 @@ export default class Coverter {
   }
 
   private async PointcloudToBufferGeometry(obj, scale = true) {
+    const geometryData = await this.PointcloudToGeometryData(obj, scale)
     return new ObjectWrapper(
-      Geometry.makePointCloudGeometry(await this.PointcloudToGeometryData(obj, scale)),
+      Geometry.makePointCloudGeometry(geometryData),
       obj,
       'pointcloud'
     )
@@ -418,11 +639,8 @@ export default class Coverter {
 
       let displayValue = obj.displayValue || obj.displayMesh
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
-
-      const { bufferGeometry } = await this.MeshToBufferGeometry(
-        await this.resolveReference(displayValue),
-        scale
-      )
+      const ref = await this.resolveReference(displayValue)
+      const { bufferGeometry } = await this.MeshToBufferGeometry(ref, scale)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -534,7 +752,7 @@ export default class Coverter {
     } as GeometryData
   }
 
-  private async PointToBufferGeometry(obj, scale = true) {
+  private async PointToBufferGeometry(obj, node, scale = true) {
     return new ObjectWrapper(
       Geometry.makePointGeometry(await this.PointToGeometryData(obj, scale)),
       obj,
@@ -673,7 +891,6 @@ export default class Coverter {
     Object.assign(obj, object)
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
-
     const poly = await this.PolylineToBufferGeometry(displayValue, scale)
 
     return new ObjectWrapper(poly.bufferGeometry, obj, 'line')

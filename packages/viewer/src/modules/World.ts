@@ -17,7 +17,7 @@ export class World {
 
   public static updateWorld() {
     World.worldBox.makeEmpty()
-    for (var k = 0; k < this.boxes.length; k++) {
+    for (let k = 0; k < this.boxes.length; k++) {
       World.worldBox.union(World.boxes[k])
     }
   }
