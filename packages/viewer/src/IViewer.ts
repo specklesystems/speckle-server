@@ -45,7 +45,7 @@ export interface IViewer {
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
-  zoomExtents(fit: number, transition: boolean): void
+  zoomExtents(fit?: number, transition?: boolean): void
   toggleCameraProjection(): void
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>

@@ -1,10 +1,11 @@
-import { Viewer, IViewer } from '@speckle/viewer'
-import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
-import { Object3D } from '@speckle/viewer/node_modules/@types/three'
+import { Viewer, SpeckleLineMaterial } from '@speckle/viewer'
+import { Object3D, LinearToneMapping } from 'three'
+import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
+
 export default class Sandbox {
-  private viewer: IViewer
+  private viewer: Viewer
   private pane: Pane
   private tabs
 
@@ -19,7 +20,7 @@ export default class Sandbox {
     thickLines: true,
     pixelThreshold: 0.5,
     exposure: 0.4,
-    tonemapping: 'Linear'
+    tonemapping: LinearToneMapping
   }
 
   public constructor(viewer: Viewer) {
@@ -142,7 +143,7 @@ export default class Sandbox {
       .on('change', () => {
         this.viewer.scene.traverse((object: Object3D) => {
           if (object.type === 'Line2') {
-            ;(object.material as SpeckleLineMaterial).pixelThreshold =
+            ;((object as Line2).material as SpeckleLineMaterial).pixelThreshold =
               Sandbox.sceneParams.pixelThreshold
           }
         })
@@ -179,7 +180,7 @@ export default class Sandbox {
     const objUrls = await UrlHelper.getResourceUrls(url)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      await this.viewer.loadObject(url)
+      await this.viewer.loadObject(url, undefined)
     }
     localStorage.setItem('last-load-url', url)
   }
