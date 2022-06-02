@@ -1,5 +1,4 @@
 import sampleHdri from './assets/sample-hdri.png'
-import { Scene, WebGLRenderer } from 'three'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -58,9 +57,4 @@ export interface IViewer {
   getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void
-
-  thickLines: boolean
-  RTE: boolean
-  scene: Scene
-  renderer: WebGLRenderer
 }

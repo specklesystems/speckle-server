@@ -1,10 +1,11 @@
-import { Viewer, IViewer, SpeckleLineMaterial } from '@speckle/viewer'
+import { Viewer, SpeckleLineMaterial } from '@speckle/viewer'
 import { Object3D, LinearToneMapping } from 'three'
+import { Line2 } from 'three/examples/jsm/lines/Line2'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 
 export default class Sandbox {
-  private viewer: IViewer
+  private viewer: Viewer
   private pane: Pane
   private tabs
 
@@ -142,7 +143,7 @@ export default class Sandbox {
       .on('change', () => {
         this.viewer.scene.traverse((object: Object3D) => {
           if (object.type === 'Line2') {
-            ;(object.material as SpeckleLineMaterial).pixelThreshold =
+            ;((object as Line2).material as SpeckleLineMaterial).pixelThreshold =
               Sandbox.sceneParams.pixelThreshold
           }
         })
@@ -179,7 +180,7 @@ export default class Sandbox {
     const objUrls = await UrlHelper.getResourceUrls(url)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      await this.viewer.loadObject(url)
+      await this.viewer.loadObject(url, undefined)
     }
     localStorage.setItem('last-load-url', url)
   }
