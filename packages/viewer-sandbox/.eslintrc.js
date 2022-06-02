@@ -21,6 +21,12 @@ const config = {
         'prettier'
       ],
       parser: '@typescript-eslint/parser'
+    },
+    {
+      files: '*.d.ts',
+      rules: {
+        '@typescript-eslint/no-unused-vars': 'off'
+      }
     }
   ]
 }

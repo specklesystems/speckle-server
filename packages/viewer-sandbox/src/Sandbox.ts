@@ -1,8 +1,8 @@
-import { Viewer, IViewer } from '@speckle/viewer'
-import SpeckleLineMaterial from '@speckle/viewer/dist/modules/materials/SpeckleLineMaterial'
-import { Object3D } from '@speckle/viewer/node_modules/@types/three'
+import { Viewer, IViewer, SpeckleLineMaterial } from '@speckle/viewer'
+import { Object3D, LinearToneMapping } from 'three'
 import { Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
+
 export default class Sandbox {
   private viewer: IViewer
   private pane: Pane
@@ -19,7 +19,7 @@ export default class Sandbox {
     thickLines: true,
     pixelThreshold: 0.5,
     exposure: 0.4,
-    tonemapping: 'Linear'
+    tonemapping: LinearToneMapping
   }
 
   public constructor(viewer: Viewer) {

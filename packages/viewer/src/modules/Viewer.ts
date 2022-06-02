@@ -31,7 +31,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public sectionBox: SectionBox
   public sceneManager: ObjectManager
   public interactions: InteractionHandler
-  private renderer: WebGLRenderer
+  public renderer: WebGLRenderer
   public cameraHandler: CameraHandler
   private sceneURL = '' // Temporary
   private startupParams: ViewerParams

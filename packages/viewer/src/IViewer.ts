@@ -1,4 +1,5 @@
 import sampleHdri from './assets/sample-hdri.png'
+import { Scene, WebGLRenderer } from 'three'
 
 export interface ViewerParams {
   postprocessing: boolean
@@ -45,7 +46,7 @@ export interface IViewer {
   toggleSectionBox(): void
   sectionBoxOff(): void
   sectionBoxOn(): void
-  zoomExtents(fit: number, transition: boolean): void
+  zoomExtents(fit?: number, transition?: boolean): void
   toggleCameraProjection(): void
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
@@ -57,4 +58,9 @@ export interface IViewer {
   getObjectsProperties(includeAll?: boolean): unknown
 
   dispose(): void
+
+  thickLines: boolean
+  RTE: boolean
+  scene: Scene
+  renderer: WebGLRenderer
 }
