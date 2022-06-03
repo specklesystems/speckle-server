@@ -2629,6 +2629,7 @@ __metadata:
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-typescript2: ^0.31.2
     three: ^0.140.0
+    tree-model: 1.0.7
     typescript: ^4.5.4
   languageName: unknown
   linkType: soft
@@ -10404,6 +10405,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"find-insert-index@npm:0.0.1":
+  version: 0.0.1
+  resolution: "find-insert-index@npm:0.0.1"
+  checksum: a77d17cfeb258c8b0618f92ec177baa2aa0ab5ef9525c27422d2b82828ab61ac1452000df0fbcabe75b2de4787133daefda573c9cab2efb15b2f517b29e79929
+  languageName: node
+  linkType: hard
+
 "find-node-modules@npm:^2.1.2":
   version: 2.1.3
   resolution: "find-node-modules@npm:2.1.3"
@@ -14938,6 +14946,13 @@ __metadata:
   version: 2.1.1
   resolution: "merge@npm:2.1.1"
   checksum: 9c36b0e25aa53b3f7305d7cf0f330397f1142cf311802b681e5619f12e986a790019b8246c1c0df21701c8652449f9046b0129551030097ef563d1958c823249
+  languageName: node
+  linkType: hard
+
+"mergesort@npm:0.0.1":
+  version: 0.0.1
+  resolution: "mergesort@npm:0.0.1"
+  checksum: f174d414944950b8d504ca7392790de74c8c6064398742a46ac3a90d993be5b1157476b14d34aa909277a939085997eb9941654efa5c4dc38aa145a7f64df7e7
   languageName: node
   linkType: hard
 
@@ -21118,6 +21133,16 @@ __metadata:
   bin:
     tree-kill: cli.js
   checksum: 49117f5f410d19c84b0464d29afb9642c863bc5ba40fcb9a245d474c6d5cc64d1b177a6e6713129eb346b40aebb9d4631d967517f9fbe8251c35b21b13cd96c7
+  languageName: node
+  linkType: hard
+
+"tree-model@npm:1.0.7":
+  version: 1.0.7
+  resolution: "tree-model@npm:1.0.7"
+  dependencies:
+    find-insert-index: 0.0.1
+    mergesort: 0.0.1
+  checksum: 4a4a5cc96e9276e65229ba0e4b1324c08328bee657cb3864791fe16f0fc04334410338e486ae74311e2d6172139b3d4cd3c0c2aa355272123cf3e3d347ec045e
   languageName: node
   linkType: hard
 
