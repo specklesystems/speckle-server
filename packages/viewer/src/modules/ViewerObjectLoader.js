@@ -1,6 +1,6 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
-// import { WorldTree } from './converter/WorldTree'
+import { WorldTree } from './converter/WorldTree'
 
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
@@ -68,7 +68,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
-    const parsedObjects = [] // Temporary until refactor
+    let parsedObjects = [] // Temporary until refactor
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.viewer.emit('load-progress', {
@@ -107,7 +107,14 @@ export default class ViewerObjectLoader {
 
     // Geometry.applyWorldTransform(parsedObjects)
     // Temporary until refactor
-    // console.log(WorldTree.getInstance().findAll())
+    WorldTree.getRenderTree().buildRenderTree()
+    // console.log(
+    WorldTree.getInstance().findAll((node) => {
+      return node.model.renderView !== null
+    })
+    // )
+    parsedObjects = WorldTree.getRenderTree().getObjectWrappers()
+
     for (let k = 0; k < parsedObjects.length; k++) {
       await this.converter.asyncPause()
       this.viewer.sceneManager.addObject(parsedObjects[k])

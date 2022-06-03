@@ -26,9 +26,6 @@ export type ConverterNodeDelegate = (object, node) => Promise<void>
  * Warning: HIC SVNT DRACONES.
  */
 export default class Coverter {
-  PolylineToNodebind(arg0: this): ConverterNodeDelegate {
-    throw new Error('Method not implemented.')
-  }
   private objectLoader
   private curveSegmentLength: number
   private lastAsyncPause: number
@@ -169,10 +166,10 @@ export default class Coverter {
     })
     if (node === null) {
       WorldTree.getInstance().addNode(childNode, node)
-      console.warn(`Added root node with id ${obj.id}`)
+      // console.warn(`Added root node with id ${obj.id}`)
     } else {
       WorldTree.getInstance().addNode(childNode, node)
-      console.warn(`Added child node with id ${obj.id} to parent node ${node.model.id}`)
+      // console.warn(`Added child node with id ${obj.id} to parent node ${node.model.id}`)
     }
 
     // Keep track of parents. An object is his own parent, for the simplicity of working with subtrees
@@ -434,9 +431,9 @@ export default class Coverter {
         children: []
       })
       WorldTree.getInstance().addNode(childNode, node)
-      console.warn(
-        `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
-      )
+      // console.warn(
+      //   `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
+      // )
 
       await this.convertToNode(ref, childNode)
     }
@@ -504,6 +501,7 @@ export default class Coverter {
   }
 
   private async PolycurveToNode(obj, node) {
+    node.model.raw.segments = []
     for (let i = 0; i < obj.segments.length; i++) {
       let element = obj.segments[i]
       const nestedNode: TreeNode = WorldTree.getInstance().parse({
@@ -517,6 +515,7 @@ export default class Coverter {
       } else if ((element = this.getDisplayValue(element)) !== undefined) {
         await this.convertToNode(element, nestedNode)
       }
+      node.model.raw.segments[i] = nestedNode
     }
   }
 
@@ -529,6 +528,7 @@ export default class Coverter {
       geometry: null,
       children: []
     })
+    await this.convertToNode(displayValue, nestedNode)
     node.model.raw.displayValue = nestedNode
   }
 

@@ -1,17 +1,19 @@
 import TreeModel from 'tree-model'
-import { GeometryData } from './Geometry'
-import { Node } from 'tree-model'
+import { NodeRenderView } from '../NodeRenderView'
+import { RenderTree } from '../RenderTree'
 
 export type TreeNode = TreeModel.Node<NodeData>
+export type SearchPredicate = (node: TreeNode) => boolean
 
 export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
-  geometry: GeometryData
+  renderView?: NodeRenderView
 }
 
 export class WorldTree {
   private static instance: WorldTree
+  private static renderTreeInstance: RenderTree
 
   private constructor() {
     this.tree = new TreeModel()
@@ -25,10 +27,22 @@ export class WorldTree {
     return WorldTree.instance
   }
 
-  private tree: TreeModel
-  private _root: TreeModel.Node<NodeData>
+  public static getRenderTree(): RenderTree {
+    if (!WorldTree.getInstance()._root) {
+      console.error(`WorldTree not initialised`)
+      return null
+    }
+    if (!WorldTree.renderTreeInstance) {
+      WorldTree.renderTreeInstance = new RenderTree(WorldTree.getInstance()._root)
+    }
 
-  public get root(): TreeModel.Node<NodeData> {
+    return WorldTree.renderTreeInstance
+  }
+
+  private tree: TreeModel
+  private _root: TreeNode
+
+  public get root(): TreeNode {
     return this._root
   }
 
@@ -44,10 +58,7 @@ export class WorldTree {
     parent.addChild(node)
   }
 
-  public findAll() {
-    return this.root.all((node: Node<NodeData>) => {
-      // const type = node.model.raw.speckle_type.split('.').reverse()[0]
-      return node.model.raw.displayValue !== undefined //type === 'Polyline'
-    })
+  public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
+    return (node ? node : this.root).all(predicate)
   }
 }

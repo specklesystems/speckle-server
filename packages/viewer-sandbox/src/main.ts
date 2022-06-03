@@ -14,8 +14,8 @@ if (!container) {
 
 // Viewer setup
 const params = DefaultViewerParams
-params.environmentSrc =
-  'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
+// params.environmentSrc =
+// 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
 //   'http://localhost:3033/sample-hdri.exr'
 
 // TODO: Remove this, just a test of image bundling capabilities!
