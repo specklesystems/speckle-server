@@ -1,7 +1,8 @@
+import { Matrix4 } from 'three'
 import { Geometry } from './converter/Geometry'
 import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import ObjectWrapper from './converter/ObjectWrapper'
-import { TreeNode } from './converter/WorldTree'
+import { TreeNode, WorldTree } from './converter/WorldTree'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 
 export class RenderTree {
@@ -31,125 +32,85 @@ export class RenderTree {
     })
   }
 
+  public computeTransform(node: TreeNode): Matrix4 {
+    const transform = new Matrix4()
+    const ancestors = WorldTree.getInstance().getAncestors(node)
+    for (let k = 0; k < ancestors.length; k++) {
+      if (ancestors[k].model.renderView) {
+        const renderNode: NodeRenderData = ancestors[k].model.renderView.getFirst()
+        if (renderNode.speckleType === SpeckleType.BlockInstance) {
+          transform.multiply(renderNode.geometry.transform)
+        }
+      }
+    }
+    return transform
+  }
+
   /**
-   * TEMPORARY
+   * TEMPORARY!!!
    */
   public getObjectWrappers() {
     const objectWrappers = []
     this.root.walk((node: TreeNode): boolean => {
       const renderView: NodeRenderView = node.model.renderView
       if (renderView) {
-        const plm = Object.keys(renderView.renderData)
-        const renderData: NodeRenderData = renderView.renderData[plm[0]]
+        const renderData: NodeRenderData = renderView.getFirst()
+        if (renderData.speckleType === SpeckleType.BlockInstance) return true
+        Geometry.transformGeometryData(renderData.geometry, this.computeTransform(node))
+        let geometry = null
+        let wrapperType = ''
         switch (renderData.speckleType) {
           case SpeckleType.Pointcloud:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makePointCloudGeometry(renderData.geometry),
-                node.model.raw,
-                'pointcloud'
-              )
-            )
+            geometry = Geometry.makePointCloudGeometry(renderData.geometry)
+            wrapperType = 'pointcloud'
             break
           case SpeckleType.Brep:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeMeshGeometry(renderData.geometry),
-                node.model.raw
-              )
-            )
+            geometry = Geometry.makeMeshGeometry(renderData.geometry)
             break
           case SpeckleType.Mesh:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeMeshGeometry(renderData.geometry),
-                node.model.raw
-              )
-            )
+            geometry = Geometry.makeMeshGeometry(renderData.geometry)
             break
           case SpeckleType.Point:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makePointGeometry(renderData.geometry),
-                node.model.raw,
-                'point'
-              )
-            )
+            geometry = Geometry.makePointGeometry(renderData.geometry)
+            wrapperType = 'point'
             break
           case SpeckleType.Line:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           case SpeckleType.Polyline:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           case SpeckleType.Box:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeMeshGeometry(renderData.geometry),
-                node.model.raw
-              )
-            )
+            geometry = Geometry.makeMeshGeometry(renderData.geometry)
             break
           case SpeckleType.Polycurve:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           case SpeckleType.Curve:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           case SpeckleType.Circle:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           case SpeckleType.Arc:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           case SpeckleType.Ellipse:
-            objectWrappers.push(
-              new ObjectWrapper(
-                Geometry.makeLineGeometry(renderData.geometry),
-                node.model.raw,
-                'line'
-              )
-            )
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
             break
           default:
-            console.warn(`Skipping geometry conversion for ${renderData.speckleType}`)
+            // console.warn(`Skipping geometry conversion for ${renderData.speckleType}`)
             return null
+        }
+        if (geometry) {
+          objectWrappers.push(new ObjectWrapper(geometry, node.model.raw, wrapperType))
         }
       }
       return true

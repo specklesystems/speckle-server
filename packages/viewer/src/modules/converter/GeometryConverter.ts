@@ -47,6 +47,8 @@ export class GeometryConverter {
   public static convertNodeToGeometryData(node: NodeData): GeometryData {
     const type = GeometryConverter.getSpeckleType(node)
     switch (type) {
+      case SpeckleType.BlockInstance:
+        return GeometryConverter.BlockInstanceToGeometryData(node)
       case SpeckleType.Pointcloud:
         return GeometryConverter.PointcloudToGeometryData(node)
       case SpeckleType.Brep:
@@ -76,6 +78,24 @@ export class GeometryConverter {
         return null
     }
   }
+  /** BLOCK INSTANCE */
+  private static BlockInstanceToGeometryData(node: NodeData): GeometryData {
+    /**
+     * Speckle matrices are row major. Three's 'fromArray' function assumes
+     * the matrix is in column major. That's why we transpose it here.
+     */
+    const matrixData: number[] = Array.isArray(node.raw.transform)
+      ? node.raw.transform
+      : node.raw.transform.value
+    const matrix = new Matrix4().fromArray(matrixData).transpose()
+
+    return {
+      attributes: null,
+      bakeTransform: null,
+      transform: matrix
+    } as GeometryData
+  }
+
   /**
    * POINT CLOUD
    */

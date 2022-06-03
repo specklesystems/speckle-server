@@ -19,4 +19,8 @@ export class NodeRenderView {
   public setData(id: string, data: NodeRenderData) {
     this._renderData[id] = data
   }
+
+  public getFirst(): NodeRenderData {
+    return Object.values(this._renderData)[0]
+  }
 }

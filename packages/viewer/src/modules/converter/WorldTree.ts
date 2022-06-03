@@ -61,4 +61,8 @@ export class WorldTree {
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
     return (node ? node : this.root).all(predicate)
   }
+
+  public getAncestors(node: TreeNode): Array<TreeNode> {
+    return node.getPath().reverse().slice(1) // We skip the node itself
+  }
 }
