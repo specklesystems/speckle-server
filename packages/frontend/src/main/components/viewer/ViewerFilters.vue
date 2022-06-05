@@ -164,12 +164,14 @@ export default {
     if (this.props) {
       this.parseAndSetFilters()
     }
-    this.$eventHub.$on('structure-filters', () => {
-      this.activeFilter = null
-    })
-    this.$eventHub.$on('selection-filters', () => {
-      this.activeFilter = null
-    })
+    if (this.$eventHub) {
+      this.$eventHub.$on('structure-filters', () => {
+        this.activeFilter = null
+      })
+      this.$eventHub.$on('selection-filters', () => {
+        this.activeFilter = null
+      })
+    }
   },
   methods: {
     parseAndSetFilters() {
