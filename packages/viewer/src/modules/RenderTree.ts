@@ -56,7 +56,7 @@ export class RenderTree {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.getFirst()
         if (renderNode.speckleType === SpeckleType.BlockInstance) {
-          transform.multiply(renderNode.geometry.transform)
+          transform.premultiply(renderNode.geometry.transform)
         }
       }
     }
@@ -100,7 +100,6 @@ export class RenderTree {
         for (const key in renderView.renderData) {
           const renderData = renderView.renderData[key]
           if (renderData.speckleType === SpeckleType.BlockInstance) continue
-
           Geometry.transformGeometryData(
             renderData.geometry,
             this.computeTransform(node)

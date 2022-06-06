@@ -62,6 +62,12 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
+  public findId(id: string, node?: TreeNode) {
+    return (node ? node : this.root).first((_node: TreeNode) => {
+      return _node.model.id === id
+    })
+  }
+
   public getAncestors(node: TreeNode): Array<TreeNode> {
     return node.getPath().reverse().slice(1) // We skip the node itself
   }

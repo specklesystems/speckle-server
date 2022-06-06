@@ -103,8 +103,6 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
-    // Geometry.applyWorldTransform(parsedObjects)
-    // Temporary until refactor
     WorldTree.getRenderTree().buildRenderTree()
     // console.log(
     WorldTree.getInstance().findAll((node) => {
