@@ -23,4 +23,8 @@ export class NodeRenderView {
   public getFirst(): NodeRenderData {
     return Object.values(this._renderData)[0]
   }
+
+  public getAll(): NodeRenderData[] {
+    return Object.values(this._renderData)
+  }
 }

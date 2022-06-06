@@ -74,7 +74,7 @@ export class GeometryConverter {
       case SpeckleType.Ellipse:
         return GeometryConverter.EllipseToGeometryData(node)
       default:
-        console.warn(`Skipping geometry conversion for ${type}`)
+        // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }
   }

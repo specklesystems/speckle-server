@@ -82,15 +82,13 @@ export default class ViewerObjectLoader {
       await this.converter.asyncPause()
       if (first) {
         // console.log(obj)
-        firstObjectPromise = this.converter.traverseAndConvert(
-          obj,
-          async (objectWrapper) => {
-            await this.converter.asyncPause()
-            objectWrapper.meta.__importedUrl = this.objectUrl
-            parsedObjects.push(objectWrapper) // Temporary until refactor
-            viewerLoads++
-          }
-        )
+        firstObjectPromise = this.converter.traverse(obj, async (objectWrapper) => {
+          await this.converter.asyncPause()
+          objectWrapper
+          // objectWrapper.meta.__importedUrl = this.objectUrl
+          // parsedObjects.push(objectWrapper) // Temporary until refactor
+          viewerLoads++
+        })
         first = false
         total = obj.totalChildrenCount
       }

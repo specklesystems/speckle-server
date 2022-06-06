@@ -179,7 +179,10 @@ export default class Sandbox {
     const objUrls = await UrlHelper.getResourceUrls(url)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      await this.viewer.loadObject(url)
+      const authToken = localStorage.getItem(
+        url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+      )
+      await this.viewer.loadObject(url, authToken)
     }
     localStorage.setItem('last-load-url', url)
   }
