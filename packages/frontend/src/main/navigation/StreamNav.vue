@@ -76,7 +76,7 @@
           </v-list-item-content>
         </v-list-item>
 
-        <div v-if="!$apollo.queries.branchQuery.loading">
+        <div v-if="!loading">
           <template v-for="(item, i) in groupedBranches">
             <v-list-item
               v-if="item.type === 'item'"
@@ -144,6 +144,9 @@
               </v-list-item>
             </v-list-group>
           </template>
+          <!-- <div>
+            <v-btn block x-small class="my-2" @click="fetchBranches()">Load More</v-btn>
+          </div> -->
         </div>
 
         <v-skeleton-loader v-else type="list-item-two-line" />
@@ -238,51 +241,19 @@ export default {
       default: () => null
     }
   },
-  apollo: {
-    branchQuery: {
-      query: gql`
-        query Stream($id: String!) {
-          branchQuery: stream(id: $id) {
-            id
-            branches {
-              totalCount
-              items {
-                id
-                name
-                description
-                author {
-                  id
-                  name
-                }
-                commits {
-                  totalCount
-                }
-              }
-            }
-          }
-        }
-      `,
-      variables() {
-        return {
-          id: this.$route.params.streamId
-        }
-      },
-      update: (data) => {
-        // console.log(data.branchQuery.branches.items)
-        return data.branchQuery
-      }
-    }
-  },
   data() {
     return {
       branchMenuOpen: false,
-      newBranchDialog: false
+      newBranchDialog: false,
+      localBranches: [],
+      branchCursor: null,
+      branchesTotalCount: 0,
+      loading: true
     }
   },
   computed: {
     groupedBranches() {
-      if (!this.branchQuery) return
-      const branches = this.branchQuery.branches.items
+      const branches = this.localBranches
       const items = []
       for (const b of branches) {
         if (b.name === 'globals') continue
@@ -315,21 +286,14 @@ export default {
         ...sorted.filter((it) => it.name === 'main'),
         ...sorted.filter((it) => it.name !== 'main')
       ]
-      // return items
     },
     sortedBranches() {
-      // TODO: group by `/` (for later)
-      if (!this.branchQuery) return
       return [
-        this.branchQuery.branches.items.find((b) => b.name === 'main'),
-        ...this.branchQuery.branches.items.filter(
+        this.localBranches.items.find((b) => b.name === 'main'),
+        ...this.localBranches.items.filter(
           (b) => b.name !== 'main' && b.name !== 'globals'
         )
       ]
-    },
-    branchesTotalCount() {
-      if (!this.branchQuery) return 0
-      return this.branchQuery.branches.items.filter((b) => b.name !== 'globals').length
     }
   },
   watch: {
@@ -340,9 +304,74 @@ export default {
   },
   mounted() {
     this.branchMenuOpen = this.$route.name.toLowerCase().includes('branch')
-    this.$eventHub.$on('branch-refresh', () => {
-      this.$apollo.queries.branchQuery.refetch()
+    this.$eventHub.$on('branch-refresh', async () => {
+      await this.refetchBranches()
     })
+    this.fetchBranches()
+  },
+  methods: {
+    async refetchBranches() {
+      this.localBranches = []
+      this.branchCursor = null
+      this.branchesTotalCount = 0
+      await this.fetchBranches()
+    },
+    async fetchBranches() {
+      this.loading = true
+      const {
+        data: {
+          stream: { branches: branchRes }
+        }
+      } = await this.$apollo.query({
+        query: gql`
+          query Stream($streamId: String!, $cursor: String) {
+            stream(id: $streamId) {
+              id
+              branches(limit: 10, cursor: $cursor) {
+                totalCount
+                cursor
+                items {
+                  id
+                  name
+                  description
+                  author {
+                    id
+                    name
+                  }
+                  commits {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'no-cache',
+        variables: {
+          streamId: this.$route.params.streamId,
+          cursor: this.branchCursor
+        }
+      })
+      // we've reached the end, no more branches
+      if (this.branchCursor === branchRes.cursor) {
+        this.loading = false
+        return
+      }
+      this.branchesTotalCount = branchRes.totalCount
+
+      for (const newBranch of branchRes.items) {
+        if (
+          this.localBranches.findIndex(
+            (oldBranch) => oldBranch.name === newBranch.name
+          ) === -1
+        ) {
+          this.localBranches.push(newBranch)
+        }
+      }
+      this.branchCursor = branchRes.cursor
+
+      await this.fetchBranches() // fetch recursively until we reach the end
+    }
   }
 }
 </script>

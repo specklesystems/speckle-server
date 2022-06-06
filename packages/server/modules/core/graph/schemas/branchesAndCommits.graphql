@@ -14,6 +14,7 @@ type Branch {
   name: String!
   author: User
   description: String
+  createdAt: DateTime
   commits(limit: Int! = 25, cursor: String): CommitCollection
 }
 
