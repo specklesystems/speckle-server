@@ -64,33 +64,44 @@ describe('Branches @core-branches', () => {
     }
   })
 
-  it('Should not allow branch names starting with # or /', async () => {
+  it('Should not allow branch names starting with # or /, or branches that have "//" in their name', async () => {
     try {
       await createBranch({ name: '/pasta', streamId: stream.id, authorId: user.id })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('names cannot start with # or /')
+      expect(err.message).to.contain('Bad name for branch.')
     }
 
     try {
       await createBranch({ name: '#rice', streamId: stream.id, authorId: user.id })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('names cannot start with # or /')
+      expect(err.message).to.contain('Bad name for branch.')
     }
 
     try {
       await updateBranch({ id: branch.id, name: '/super/part/two' })
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(err.message).to.contain('names cannot start with # or /')
+      expect(err.message).to.contain('Bad name for branch.')
     }
 
     try {
       await updateBranch({ id: branch.id, name: '#super#part#three' })
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(err.message).to.contain('names cannot start with # or /')
+      expect(err.message).to.contain('Bad name for branch.')
+    }
+
+    try {
+      await createBranch({
+        name: 'pasta//rice',
+        streamId: stream.id,
+        authorId: user.id
+      })
+      assert.fail('Illegal branch name passed through.')
+    } catch (err) {
+      expect(err.message).to.contain('Bad name for branch.')
     }
   })
 
