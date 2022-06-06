@@ -1,4 +1,4 @@
-export const speckle_line_frag = /* glsl */ `
+export const speckleLineFrag = /* glsl */ `
 		uniform vec3 diffuse;
 		uniform float opacity;
 		uniform float linewidth;

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckle_basic_vert } from './shaders/speckle-basic-vert'
-import { speckle_basic_frag } from './shaders/speckle-basic-frag'
+import { speckleBasicVert } from './shaders/speckle-basic-vert'
+import { speckleBasicFrag } from './shaders/speckle-basic-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshBasicMaterial } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -22,8 +22,8 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
     this.userData.uViewer_low = {
       value: new Vector3()
     }
-    ;(this as any).vertProgram = speckle_basic_vert
-    ;(this as any).fragProgram = speckle_basic_frag
+    ;(this as any).vertProgram = speckleBasicVert
+    ;(this as any).fragProgram = speckleBasicFrag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.standard.uniforms,
       {

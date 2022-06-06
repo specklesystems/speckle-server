@@ -31,7 +31,7 @@ export interface Asset {
 export const DefaultViewerParams: ViewerParams = {
   postprocessing: false,
   reflections: true,
-  showStats: true,
+  showStats: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
