@@ -1,4 +1,4 @@
-export const speckle_standard_frag = /* glsl */ `
+export const speckleStandardFrag = /* glsl */ `
 #define STANDARD
 
 #ifdef PHYSICAL

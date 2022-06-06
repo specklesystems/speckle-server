@@ -1,4 +1,4 @@
-export const speckle_line_basic_vert = /* glsl */ `
+export const speckleLineBasicVert = /* glsl */ `
 #include <common>
 #include <uv_pars_vertex>
 #include <uv2_pars_vertex>

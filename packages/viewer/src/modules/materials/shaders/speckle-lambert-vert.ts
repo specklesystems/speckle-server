@@ -1,4 +1,4 @@
-export const speckle_lambert_vert = /* glsl */ `
+export const speckleLambertVert = /* glsl */ `
 #define LAMBERT
 #ifdef USE_RTE
     attribute vec3 position_high;

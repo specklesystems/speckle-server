@@ -1,4 +1,4 @@
-export const speckle_line_vert = /* glsl */ `
+export const speckleLineVert = /* glsl */ `
 		#include <common>
 		#include <color_pars_vertex>
 		#include <fog_pars_vertex>
