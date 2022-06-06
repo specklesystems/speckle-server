@@ -127,6 +127,13 @@ export default {
       return localStorage.getItem('uuid')
     }
   },
+  watch: {
+    app(newVal) {
+      if (newVal && newVal.trustByDefault) {
+        this.allow()
+      }
+    }
+  },
   methods: {
     async deny() {
       this.action = -1
