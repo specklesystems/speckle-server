@@ -23,6 +23,19 @@
                 required
                 autofocus
               ></v-text-field>
+              <p>Move this commit to a different branch:</p>
+              <v-select
+                v-model="commit.branchName"
+                filled
+                dark
+                rounded
+                dense
+                hide-details
+                :items="branchNames"
+                prepend-icon="mdi-source-branch"
+                class="pb-5"
+                @change="setNewBranchName"
+              />
             </v-col>
           </v-row>
         </v-container>
@@ -91,6 +104,9 @@ export default {
   data() {
     return {
       showDeleteDialog: false,
+      localBranches: [],
+      branchCursor: null,
+      newBranch: null,
       loading: false,
       commitIdConfirmation: '',
       commit: this.stream.commit,
@@ -102,9 +118,20 @@ export default {
       valid: true
     }
   },
-  mounted() {},
+  computed: {
+    branchNames() {
+      return this.localBranches.map((b) => b.name)
+    }
+  },
+  async mounted() {
+    await this.fetchBranches()
+  },
   methods: {
+    setNewBranchName(newBranch) {
+      this.newBranch = newBranch
+    },
     async editCommit() {
+      console.log(this.commit.branch)
       this.$mixpanel.track('Commit Action', { type: 'action', name: 'update' })
       this.loading = true
       try {
@@ -118,7 +145,8 @@ export default {
             myCommit: {
               streamId: this.stream.id,
               id: this.commit.id,
-              message: this.commit.message
+              message: this.commit.message,
+              newBranchName: this.newBranch
             }
           }
         })
@@ -157,6 +185,61 @@ export default {
       )
       this.loading = false
       this.showDeleteDialog = false
+    },
+    async fetchBranches() {
+      this.loading = true
+      const {
+        data: {
+          stream: { branches: branchRes }
+        }
+      } = await this.$apollo.query({
+        query: gql`
+          query Stream($streamId: String!, $cursor: String) {
+            stream(id: $streamId) {
+              id
+              branches(limit: 10, cursor: $cursor) {
+                totalCount
+                cursor
+                items {
+                  id
+                  name
+                  description
+                  author {
+                    id
+                    name
+                  }
+                  commits {
+                    totalCount
+                  }
+                }
+              }
+            }
+          }
+        `,
+        fetchPolicy: 'no-cache',
+        variables: {
+          streamId: this.$route.params.streamId,
+          cursor: this.branchCursor
+        }
+      })
+      // we've reached the end, no more branches
+      if (this.branchCursor === branchRes.cursor) {
+        this.loading = false
+        return
+      }
+
+      for (const newBranch of branchRes.items) {
+        if (
+          this.localBranches.findIndex(
+            (oldBranch) => oldBranch.name === newBranch.name
+          ) === -1
+        ) {
+          this.localBranches.push(newBranch)
+        }
+      }
+      this.branchCursor = branchRes.cursor
+
+      await this.fetchBranches() // fetch recursively until we reach the end
     }
   }
 }
