@@ -144,9 +144,6 @@
               </v-list-item>
             </v-list-group>
           </template>
-          <!-- <div>
-            <v-btn block x-small class="my-2" @click="fetchBranches()">Load More</v-btn>
-          </div> -->
         </div>
 
         <v-skeleton-loader v-else type="list-item-two-line" />
