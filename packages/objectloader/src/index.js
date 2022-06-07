@@ -30,7 +30,7 @@ export default class ObjectLoader {
     this.serverUrl = serverUrl || window.location.origin
     this.streamId = streamId
     this.objectId = objectId
-    console.log('Object loader constructor called!')
+    // console.log('Object loader constructor called!')
     try {
       this.token = token || localStorage.getItem('AuthToken')
     } catch (error) {
@@ -253,7 +253,7 @@ export default class ObjectLoader {
       count += 1
       yield obj
     }
-    console.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
+    // console.log(`Loaded ${count} objects in: ${(Date.now() - t0) / 1000}`)
   }
 
   processLine(chunk) {
@@ -303,7 +303,7 @@ export default class ObjectLoader {
         splitBeforeCacheCheck[3].push(childrenIds[crtChildIndex])
       }
 
-      console.log('Cache check for: ', splitBeforeCacheCheck)
+      // console.log('Cache check for: ', splitBeforeCacheCheck)
 
       const newChildren = []
       let nextCachePromise = this.cacheGetObjects(splitBeforeCacheCheck[0])
