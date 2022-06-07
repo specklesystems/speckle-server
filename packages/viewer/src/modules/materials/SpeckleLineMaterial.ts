@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckle_line_vert } from './shaders/speckle-line-vert'
+import { speckleLineVert } from './shaders/speckle-line-vert'
 import { speckle_line_frag } from './shaders/speckle-line-frag'
 import { UniformsUtils, ShaderLib, Vector3 } from 'three'
 import { Matrix4 } from 'three'
@@ -30,7 +30,7 @@ class SpeckleLineMaterial extends LineMaterial {
     this.userData.pixelThreshold = {
       value: 0
     }
-    ;(this as any).vertProgram = speckle_line_vert
+    ;(this as any).vertProgram = speckleLineVert
     ;(this as any).fragProgram = speckle_line_frag
     ;(this as any).uniforms = UniformsUtils.merge([
       ShaderLib.line.uniforms,

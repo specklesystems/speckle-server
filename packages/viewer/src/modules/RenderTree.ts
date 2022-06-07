@@ -15,13 +15,11 @@ export class RenderTree {
     this.root.walk((node: TreeNode): boolean => {
       let renderView = null
       let renderNode: { [id: string]: NodeRenderData } = this.buildRenderNode(node)
-      // console.log(node.model.raw.displayValue)
-      if (node.model.raw.displayValue) {
-        for (let k = 0; k < node.model.raw.displayValue.length; k++) {
-          const nestedRenderNode = this.buildRenderNode(node.model.raw.displayValue[k])
-          if (nestedRenderNode) {
-            renderNode = { ...renderNode, ...nestedRenderNode }
-          }
+      const nestedNodes = this.getNestedNodes(node)
+      for (let k = 0; k < nestedNodes.length; k++) {
+        const nestedRenderNode = this.buildRenderNode(nestedNodes[k])
+        if (nestedRenderNode) {
+          renderNode = { ...renderNode, ...nestedRenderNode }
         }
       }
       if (Object.keys(renderNode).length > 0) {
@@ -31,6 +29,31 @@ export class RenderTree {
       node.model.renderView = renderView
       return true
     })
+  }
+
+  /**
+   * I REALLY don't like this...
+   */
+  private getNodeDisplayValue = (node: TreeNode) => {
+    return (
+      node.model.raw['displayValue'] ||
+      node.model.raw['@displayValue'] ||
+      node.model.raw['displayMesh'] ||
+      node.model.raw['@displayMesh']
+    )
+  }
+
+  private getNestedNodes(node: TreeNode): Array<TreeNode> {
+    const displayValue = this.getNodeDisplayValue(node)
+
+    if (displayValue) {
+      if (Array.isArray(displayValue)) {
+        return displayValue
+      } else {
+        return [displayValue]
+      }
+    }
+    return []
   }
 
   private buildRenderNode(node: TreeNode): { [id: string]: NodeRenderData } {
@@ -73,16 +96,16 @@ export class RenderTree {
     if (parentNode.model.id === id) {
       return parentNode.model.raw
     }
-
-    if (parentNode.model.raw.displayValue) {
-      if (Array.isArray(parentNode.model.raw.displayValue)) {
-        for (const k in parentNode.model.raw.displayValue) {
-          if (parentNode.model.raw.displayValue[k].model.id === id) {
-            return parentNode.model.raw.displayValue[k].model.raw
+    const displayValue = this.getNodeDisplayValue(parentNode)
+    if (displayValue) {
+      if (Array.isArray(displayValue)) {
+        for (const k in displayValue) {
+          if (displayValue[k].model.id === id) {
+            return displayValue[k].model.raw
           }
         }
       } else {
-        return parentNode.model.raw.displayValue.model.raw
+        return displayValue.model.raw
       }
     }
 

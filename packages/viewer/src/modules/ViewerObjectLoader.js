@@ -109,6 +109,7 @@ export default class ViewerObjectLoader {
       return node.model.renderView !== null
     })
     // )
+    // console.log(WorldTree.getInstance().findId('47c6c646a2aeb3d54c443fcbf70abc61'))
     parsedObjects = WorldTree.getRenderTree().getObjectWrappers()
 
     for (let k = 0; k < parsedObjects.length; k++) {

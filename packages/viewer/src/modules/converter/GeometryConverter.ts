@@ -78,6 +78,7 @@ export class GeometryConverter {
         return null
     }
   }
+
   /** BLOCK INSTANCE */
   private static BlockInstanceToGeometryData(node: NodeData): GeometryData {
     /**

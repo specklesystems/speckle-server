@@ -126,6 +126,7 @@ export default class Coverter {
 
     // Check if the object has a display value of sorts
     let displayValue = this.getDisplayValue(target)
+
     if (displayValue) {
       if (!Array.isArray(displayValue)) {
         displayValue = await this.resolveReference(displayValue)
