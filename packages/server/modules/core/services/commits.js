@@ -62,10 +62,7 @@ module.exports = {
     parents
   }) {
     branchName = branchName.toLowerCase()
-    const myBranch = await getBranchByNameAndStreamId({
-      streamId,
-      name: branchName
-    })
+    const myBranch = await getBranchByNameAndStreamId({ streamId, name: branchName })
 
     if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
@@ -81,7 +78,29 @@ module.exports = {
     })
   },
 
-  async updateCommit({ id, message }) {
+  async updateCommit({ streamId, id, message, newBranchName }) {
+    if (newBranchName) {
+      try {
+        const newBranch = await getBranchByNameAndStreamId({
+          streamId,
+          name: newBranchName
+        })
+        const { branchName: oldBranchName } = await module.exports.getCommitById({
+          streamId,
+          id
+        })
+        const oldBranch = await getBranchByNameAndStreamId({
+          streamId,
+          name: oldBranchName
+        })
+
+        await BranchCommits()
+          .where({ branchId: oldBranch.id, commitId: id })
+          .update({ branchId: newBranch.id })
+      } catch (e) {
+        throw new Error('Failed to update commit branch. ')
+      }
+    }
     return await Commits().where({ id }).update({ message })
   },
 

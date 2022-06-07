@@ -164,7 +164,11 @@ input CommitCreateInput {
 input CommitUpdateInput {
   streamId: String!
   id: String!
-  message: String!
+  message: String
+  """
+  To move the commit to a different branch, please the name of the branch.
+  """
+  newBranchName: String
 }
 
 input CommitReceivedInput {
