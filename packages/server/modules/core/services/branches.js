@@ -32,8 +32,10 @@ module.exports = {
   },
 
   validateBranchName({ name }) {
-    if (name.startsWith('/') || name.startsWith('#'))
-      throw new Error('Branch names cannot start with # or /.')
+    if (name.startsWith('/') || name.startsWith('#') || name.indexOf('//') !== -1)
+      throw new Error(
+        'Bad name for branch. Branch names cannot start with "#" or "/", or have multiple slashes next to each other (e.g., "//").'
+      )
   },
 
   async getBranchById({ id }) {
@@ -44,7 +46,7 @@ module.exports = {
     limit = limit || 25
     const query = Branches().select('*').where({ streamId })
 
-    if (cursor) query.andWhere('createdAt', '<', cursor)
+    if (cursor) query.andWhere('createdAt', '>', cursor)
     query.orderBy('createdAt').limit(limit)
 
     const totalCount = await module.exports.getBranchesByStreamIdTotalCount({

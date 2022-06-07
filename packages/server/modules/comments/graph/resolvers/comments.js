@@ -307,7 +307,7 @@ module.exports = {
         streamId: args.input.streamId,
         resourceType: 'comment',
         resourceId: args.input.parentComment,
-        actionType: 'comment_reply',
+        actionType: 'comment_replied',
         userId: context.userId,
         info: { input: args.input },
         message: `Comment reply created.`
