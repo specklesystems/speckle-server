@@ -27,7 +27,6 @@
               <v-select
                 v-model="commit.branchName"
                 filled
-                dark
                 rounded
                 dense
                 hide-details
