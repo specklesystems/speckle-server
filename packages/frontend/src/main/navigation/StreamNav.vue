@@ -304,6 +304,9 @@ export default {
     this.$eventHub.$on('branch-refresh', async () => {
       await this.refetchBranches()
     })
+    this.$eventHub.$on('show-new-branch-dialog', () => {
+      this.newBranchDialog = true
+    })
     this.fetchBranches()
   },
   methods: {

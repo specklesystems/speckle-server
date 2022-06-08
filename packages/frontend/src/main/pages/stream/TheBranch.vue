@@ -9,15 +9,8 @@
       <v-col v-if="stream && stream.branch" cols="12">
         <v-row v-if="stream.branch.commits.items.length > 0">
           <v-col cols="12">
-            <commit-preview-card
-              :commit="latestCommit"
-              :preview-height="320"
-              :show-stream-and-branch="false"
-            />
-          </v-col>
-          <v-col cols="12">
-            <v-toolbar flat class="transparent">
-              <v-toolbar-title>Older Commits</v-toolbar-title>
+            <v-toolbar flat dense class="transparent">
+              <v-toolbar-title>Branch Commits</v-toolbar-title>
               <v-spacer></v-spacer>
               <v-btn
                 v-tooltip="`View as a ${listMode ? 'gallery' : 'list'}`"
@@ -32,26 +25,31 @@
         </v-row>
         <v-row v-if="!listMode">
           <v-col
-            v-for="commit in allPreviousCommits"
+            v-for="(commit, index) in allCommits"
             :key="commit.id + 'card'"
             cols="12"
             sm="6"
             md="4"
             xl="3"
           >
-            <commit-preview-card :commit="commit" :show-stream-and-branch="false" />
+            <commit-preview-card
+              :commit="commit"
+              :show-stream-and-branch="false"
+              :highlight="index === 0"
+            />
           </v-col>
         </v-row>
         <v-row v-if="listMode">
           <v-col v-if="stream && stream.branch && listMode" cols="12" class="px-4">
             <v-list v-if="stream.branch.commits.items.length > 0" class="transparent">
               <list-item-commit
-                v-for="item in allPreviousCommits"
+                v-for="(item, index) in allCommits"
                 :key="item.id + 'list'"
                 :commit="item"
                 :stream-id="streamId"
                 show-received-receipts
                 class="mb-1 rounded"
+                :highlight="index === 0"
               ></list-item-commit>
             </v-list>
           </v-col>
@@ -218,6 +216,14 @@ export default {
       )
         return this.stream.branch.commits.items.slice(1)
       else return null
+    },
+    allCommits() {
+      if (
+        this.stream.branch.commits.items &&
+        this.stream.branch.commits.items.length > 0
+      )
+        return this.stream.branch.commits.items
+      else return []
     }
   },
   mounted() {
