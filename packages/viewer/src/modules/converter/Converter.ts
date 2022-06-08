@@ -462,7 +462,7 @@ export default class Coverter {
     let k = 0
     while (k < faces.length) {
       let n = faces[k]
-      if (n <= 3) n += 3 // 0 -> 3, 1 -> 4
+      if (n < 3) n += 3 // 0 -> 3, 1 -> 4
 
       if (n === 3) {
         // Triangle face
