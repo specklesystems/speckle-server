@@ -3,6 +3,7 @@ import { Geometry } from './converter/Geometry'
 import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import ObjectWrapper from './converter/ObjectWrapper'
 import { TreeNode, WorldTree } from './converter/WorldTree'
+import Materials from './materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 
 export class RenderTree {
@@ -17,14 +18,14 @@ export class RenderTree {
       let renderNode: { [id: string]: NodeRenderData } = this.buildRenderNode(node)
       const nestedNodes = this.getNestedNodes(node)
       for (let k = 0; k < nestedNodes.length; k++) {
-        const nestedRenderNode = this.buildRenderNode(nestedNodes[k])
+        const nestedRenderNode = this.buildRenderNode(nestedNodes[k], node)
         if (nestedRenderNode) {
           renderNode = { ...renderNode, ...nestedRenderNode }
         }
       }
       if (Object.keys(renderNode).length > 0) {
         renderView = new NodeRenderView()
-        for (const k in renderNode) renderView.setData(k, renderNode[k])
+        for (const k in renderNode) renderView.setRenderNode(k, renderNode[k])
       }
       node.model.renderView = renderView
       return true
@@ -56,17 +57,27 @@ export class RenderTree {
     return []
   }
 
-  private buildRenderNode(node: TreeNode): { [id: string]: NodeRenderData } {
+  private buildRenderNode(
+    node: TreeNode,
+    containerNode?: TreeNode
+  ): { [id: string]: NodeRenderData } {
     const ret: { [id: string]: NodeRenderData } = {}
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
       const renderData: NodeRenderData = {
         speckleType: GeometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
+        renderMaterial:
+          Materials.renderMaterialFromNode(node) ||
+          Materials.renderMaterialFromNode(containerNode),
+        displayStyle:
+          Materials.displayStyleFromNode(node) ||
+          Materials.displayStyleFromNode(containerNode),
         batchId: 'n/a',
         batchIndexStart: 0,
         batchIndexCount: 0
       }
+
       ret[node.model.id] = renderData
     }
     return ret
@@ -77,13 +88,29 @@ export class RenderTree {
     const ancestors = WorldTree.getInstance().getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
-        const renderNode: NodeRenderData = ancestors[k].model.renderView.getFirst()
+        const renderNode: NodeRenderData =
+          ancestors[k].model.renderView.getFirstRenderNode()
         if (renderNode.speckleType === SpeckleType.BlockInstance) {
           transform.premultiply(renderNode.geometry.transform)
         }
       }
     }
     return transform
+  }
+
+  public getRenderNodes(type: SpeckleType): NodeRenderData[] {
+    const nodes = []
+    this.root.walk((node: TreeNode): boolean => {
+      if (GeometryConverter.getSpeckleType(node.model) === type)
+        nodes.push(node.model.renderView.getRenderNode(node.model.id))
+      const nestedNodes = this.getNestedNodes(node)
+      for (let k = 0; k < nestedNodes.length; k++) {
+        if (GeometryConverter.getSpeckleType(nestedNodes[k].model) === type)
+          nodes.push(node.model.renderView.getRenderNode(nestedNodes[k].model.id))
+      }
+      return true
+    })
+    return nodes
   }
 
   /** TEMPORARY, MIGHT NOT BE NEEDED */

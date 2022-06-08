@@ -1,9 +1,21 @@
 import { GeometryData } from './converter/Geometry'
 import { SpeckleType } from './converter/GeometryConverter'
 
+export interface RenderMaterial {
+  id: string
+  color: number
+}
+
+export interface DisplayStyle {
+  id: string
+  color: number
+}
+
 export interface NodeRenderData {
   speckleType: SpeckleType
   geometry: GeometryData
+  renderMaterial: RenderMaterial
+  displayStyle: DisplayStyle
   batchId: string
   batchIndexStart: number
   batchIndexCount: number
@@ -16,15 +28,19 @@ export class NodeRenderView {
     return this._renderData
   }
 
-  public setData(id: string, data: NodeRenderData) {
+  public setRenderNode(id: string, data: NodeRenderData) {
     this._renderData[id] = data
   }
 
-  public getFirst(): NodeRenderData {
+  public getRenderNode(id: string) {
+    return this._renderData[id]
+  }
+
+  public getFirstRenderNode(): NodeRenderData {
     return Object.values(this._renderData)[0]
   }
 
-  public getAll(): NodeRenderData[] {
+  public getAllRenderNodes(): NodeRenderData[] {
     return Object.values(this._renderData)
   }
 }
