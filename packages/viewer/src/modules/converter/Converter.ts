@@ -684,7 +684,16 @@ export default class Coverter {
    */
   async CircleToGeometryData(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
-    const points = this.getCircularCurvePoints(obj.plane, obj.radius * conversionFactor)
+    const points = this.getCircularCurvePoints(
+      obj.plane,
+      obj.radius * conversionFactor,
+      0,
+      2 * Math.PI,
+      scale
+        ? this.curveSegmentLength * getConversionFactor(obj.units)
+        : this.curveSegmentLength,
+      scale
+    )
     return {
       attributes: {
         POSITION: this.FlattenVector3Array(points)
@@ -869,10 +878,11 @@ export default class Coverter {
     radius,
     startAngle = 0,
     endAngle = 2 * Math.PI,
-    res = this.curveSegmentLength
+    res = this.curveSegmentLength,
+    scale
   ) {
     // Get alignment vectors
-    const center = this.PointToVector3(plane.origin)
+    const center = this.PointToVector3(plane.origin, scale)
     const xAxis = this.PointToVector3(plane.xdir)
     const yAxis = this.PointToVector3(plane.ydir)
 

@@ -8,6 +8,7 @@ import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import SpeckleLineBasicMaterial from './materials/SpeckleLineBasicMaterial'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
+import { getConversionFactor } from './converter/Units'
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -234,7 +235,11 @@ export default class SceneObjectManager {
     if (wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone()
       if (wrapper.meta.displayStyle.lineweight > 0) {
-        material.linewidth = wrapper.meta.displayStyle.lineweight
+        material.linewidth =
+          wrapper.meta.displayStyle.lineweight *
+          getConversionFactor(
+            wrapper.meta.displayStyle.units ? wrapper.meta.displayStyle.units : 'm' // We default to meters, since we don't have access to the parent's units (in this implementation)
+          )
         material.worldUnits = true
         material.pixelThreshold = 0.5
       } else {
