@@ -16,6 +16,8 @@ export class RenderTree {
     this.root.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
+      if (node.model.renderView && node.model.renderView.hasGeometry)
+        Geometry.transformGeometryData(rendeNode.geometry, this.computeTransform(node))
       return true
     })
   }
@@ -33,10 +35,7 @@ export class RenderTree {
           Materials.renderMaterialFromNode(node.parent),
         displayStyle:
           Materials.displayStyleFromNode(node) ||
-          Materials.displayStyleFromNode(node.parent),
-        batchId: 'n/a',
-        batchIndexStart: 0,
-        batchIndexCount: 0
+          Materials.displayStyleFromNode(node.parent)
       }
     }
     return ret
@@ -77,7 +76,7 @@ export class RenderTree {
       if (renderView) {
         const renderData = renderView.renderData
         if (renderData.speckleType === SpeckleType.BlockInstance) return true
-        Geometry.transformGeometryData(renderData.geometry, this.computeTransform(node))
+        // Geometry.transformGeometryData(renderData.geometry, this.computeTransform(node))
         let geometry = null
         let wrapperType = ''
         /** ULTA-TEMPORARY */

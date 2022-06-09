@@ -107,12 +107,17 @@ export default class ViewerObjectLoader {
     WorldTree.getRenderTree().buildRenderTree()
 
     batcher.makeBatches()
+    for (const k in batcher.batches) {
+      this.viewer.scene.add(batcher.batches[k].mesh)
+    }
+
     parsedObjects = WorldTree.getRenderTree().getObjectWrappers()
 
     for (let k = 0; k < parsedObjects.length; k++) {
       await this.converter.asyncPause()
       this.viewer.sceneManager.addObject(parsedObjects[k])
     }
+
     await this.viewer.sceneManager.postLoadFunction()
     this.viewer.emit('load-complete')
 

@@ -1,9 +1,12 @@
+import { generateUUID } from 'three/src/math/MathUtils'
+import Batch from './Batch'
 import { SpeckleType } from './converter/GeometryConverter'
 import { WorldTree } from './converter/WorldTree'
 import Materials from './materials/Materials'
 
 export default class Batcher {
   private materials: Materials
+  public batches: { [id: string]: Batch } = {}
 
   public constructor() {
     this.materials = new Materials()
@@ -30,6 +33,15 @@ export default class Batcher {
           const batch = rendeViews.slice(batchStart, m)
           batches.push(batch)
           batchStart += batch.length
+
+          const material = this.materials.updateMaterialMap(
+            materialHashes[k],
+            batch[0].renderData.renderMaterial
+          )
+          const batchID = generateUUID()
+          this.batches[batchID] = new Batch(batchID, batch)
+          this.batches[batchID].setMaterial(material)
+          this.batches[batchID].buildBatch()
           break
         }
       }

@@ -17,12 +17,13 @@ export interface NodeRenderData {
   geometry: GeometryData
   renderMaterial: RenderMaterial
   displayStyle: DisplayStyle
-  batchId: string
-  batchIndexStart: number
-  batchIndexCount: number
 }
 
 export class NodeRenderView {
+  private _batchId: string
+  private _batchIndexStart: number
+  private _batchIndexCount: number
+
   private readonly _renderData: NodeRenderData
   private _materialHash: number
 
@@ -34,9 +35,23 @@ export class NodeRenderView {
     return this._materialHash
   }
 
+  public get hasGeometry() {
+    return this._renderData.geometry && this._renderData.geometry.attributes
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
     this._materialHash = this.getMaterialHash(data.renderMaterial)
+
+    this._batchId
+    this._batchIndexCount
+    this._batchIndexStart
+  }
+
+  public setBatchData(id: string, start: number, count: number) {
+    this._batchId = id
+    this._batchIndexStart = start
+    this._batchIndexCount = count
   }
 
   private getMaterialHash(material: RenderMaterial) {
