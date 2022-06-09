@@ -139,7 +139,7 @@ export default class Coverter {
             children: []
           })
           await this.convertToNode(displayValue, nestedNode)
-          childNode.model.raw.displayValue = nestedNode
+          WorldTree.getInstance().addNode(nestedNode, childNode)
           await callback(
             new ObjectWrapper(
               null, //convertedElement?.bufferGeometry,
@@ -163,8 +163,7 @@ export default class Coverter {
             children: []
           })
           await this.convertToNode(val, nestedNode)
-          const displayValue = this.getDisplayValue(childNode.model.raw)
-          displayValue[displayValue.indexOf(element)] = nestedNode
+          WorldTree.getInstance().addNode(nestedNode, childNode)
           await callback(
             new ObjectWrapper(
               null, //convertedElement?.bufferGeometry,
@@ -334,7 +333,8 @@ export default class Coverter {
         geometry: null,
         children: []
       })
-      node.model.raw.displayValue = nestedNode
+      await this.convertToNode(ref, nestedNode)
+      WorldTree.getInstance().addNode(nestedNode, node)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -392,7 +392,7 @@ export default class Coverter {
         children: []
       })
       await this.convertToNode(element, nestedNode)
-      node.model.raw.segments[i] = nestedNode
+      WorldTree.getInstance().addNode(nestedNode, node)
     }
   }
 
@@ -406,7 +406,7 @@ export default class Coverter {
       children: []
     })
     await this.convertToNode(displayValue, nestedNode)
-    node.model.raw.displayValue = nestedNode
+    WorldTree.getInstance().addNode(nestedNode, node)
   }
 
   private async CircleToNode(obj, node) {

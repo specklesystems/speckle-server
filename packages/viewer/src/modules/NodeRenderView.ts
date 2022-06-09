@@ -12,6 +12,7 @@ export interface DisplayStyle {
 }
 
 export interface NodeRenderData {
+  id: string
   speckleType: SpeckleType
   geometry: GeometryData
   renderMaterial: RenderMaterial
@@ -22,25 +23,13 @@ export interface NodeRenderData {
 }
 
 export class NodeRenderView {
-  private readonly _renderData: { [id: string]: NodeRenderData } = {}
+  private readonly _renderData: NodeRenderData
 
   public get renderData() {
     return this._renderData
   }
 
-  public setRenderNode(id: string, data: NodeRenderData) {
-    this._renderData[id] = data
-  }
-
-  public getRenderNode(id: string) {
-    return this._renderData[id]
-  }
-
-  public getFirstRenderNode(): NodeRenderData {
-    return Object.values(this._renderData)[0]
-  }
-
-  public getAllRenderNodes(): NodeRenderData[] {
-    return Object.values(this._renderData)
+  public constructor(data: NodeRenderData) {
+    this._renderData = data
   }
 }

@@ -14,71 +14,31 @@ export class RenderTree {
 
   public buildRenderTree() {
     this.root.walk((node: TreeNode): boolean => {
-      let renderView = null
-      let renderNode: { [id: string]: NodeRenderData } = this.buildRenderNode(node)
-      const nestedNodes = this.getNestedNodes(node)
-      for (let k = 0; k < nestedNodes.length; k++) {
-        const nestedRenderNode = this.buildRenderNode(nestedNodes[k], node)
-        if (nestedRenderNode) {
-          renderNode = { ...renderNode, ...nestedRenderNode }
-        }
-      }
-      if (Object.keys(renderNode).length > 0) {
-        renderView = new NodeRenderView()
-        for (const k in renderNode) renderView.setRenderNode(k, renderNode[k])
-      }
-      node.model.renderView = renderView
+      const rendeNode = this.buildRenderNode(node)
+      node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       return true
     })
   }
 
-  /**
-   * I REALLY don't like this...
-   */
-  private getNodeDisplayValue = (node: TreeNode) => {
-    return (
-      node.model.raw['displayValue'] ||
-      node.model.raw['@displayValue'] ||
-      node.model.raw['displayMesh'] ||
-      node.model.raw['@displayMesh']
-    )
-  }
-
-  private getNestedNodes(node: TreeNode): Array<TreeNode> {
-    const displayValue = this.getNodeDisplayValue(node)
-
-    if (displayValue) {
-      if (Array.isArray(displayValue)) {
-        return displayValue
-      } else {
-        return [displayValue]
-      }
-    }
-    return []
-  }
-
-  private buildRenderNode(
-    node: TreeNode,
-    containerNode?: TreeNode
-  ): { [id: string]: NodeRenderData } {
-    const ret: { [id: string]: NodeRenderData } = {}
+  private buildRenderNode(node: TreeNode): NodeRenderData {
+    let ret: NodeRenderData = null
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
+
     if (geometryData) {
-      const renderData: NodeRenderData = {
+      ret = {
+        id: node.model.id,
         speckleType: GeometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
         renderMaterial:
           Materials.renderMaterialFromNode(node) ||
-          Materials.renderMaterialFromNode(containerNode),
+          Materials.renderMaterialFromNode(node.parent),
         displayStyle:
           Materials.displayStyleFromNode(node) ||
-          Materials.displayStyleFromNode(containerNode),
+          Materials.displayStyleFromNode(node.parent),
         batchId: 'n/a',
         batchIndexStart: 0,
         batchIndexCount: 0
       }
-
-      ret[node.model.id] = renderData
     }
     return ret
   }
@@ -88,8 +48,7 @@ export class RenderTree {
     const ancestors = WorldTree.getInstance().getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
-        const renderNode: NodeRenderData =
-          ancestors[k].model.renderView.getFirstRenderNode()
+        const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
         if (renderNode.speckleType === SpeckleType.BlockInstance) {
           transform.premultiply(renderNode.geometry.transform)
         }
@@ -99,46 +58,16 @@ export class RenderTree {
   }
 
   public getRenderNodes(type: SpeckleType): NodeRenderData[] {
-    const nodes = []
-    this.root.walk((node: TreeNode): boolean => {
-      if (GeometryConverter.getSpeckleType(node.model) === type)
-        nodes.push(node.model.renderView.getRenderNode(node.model.id))
-      const nestedNodes = this.getNestedNodes(node)
-      for (let k = 0; k < nestedNodes.length; k++) {
-        if (GeometryConverter.getSpeckleType(nestedNodes[k].model) === type)
-          nodes.push(node.model.renderView.getRenderNode(nestedNodes[k].model.id))
-      }
-      return true
-    })
-    return nodes
+    return this.root
+      .all((node: TreeNode): boolean => {
+        return (
+          node.model.renderView !== null &&
+          node.model.renderView.renderData.speckleType === type
+        )
+      })
+      .map((val: TreeNode) => val.model.renderView.renderData)
   }
 
-  /** TEMPORARY, MIGHT NOT BE NEEDED */
-  private getMetaForRenderNode(parentNode: TreeNode, id: string) {
-    if (!parentNode) {
-      // TODO (if required)
-      return null
-    }
-
-    if (parentNode.model.id === id) {
-      return parentNode.model.raw
-    }
-    const displayValue = this.getNodeDisplayValue(parentNode)
-    if (displayValue) {
-      if (Array.isArray(displayValue)) {
-        for (const k in displayValue) {
-          if (displayValue[k].model.id === id) {
-            return displayValue[k].model.raw
-          }
-        }
-      } else {
-        return displayValue.model.raw
-      }
-    }
-
-    console.warn(`Could not find ${id} in parent node ${parentNode.model.id}`)
-    return null
-  }
   /**
    * TEMPORARY!!!
    */
@@ -147,69 +76,64 @@ export class RenderTree {
     this.root.walk((node: TreeNode): boolean => {
       const renderView: NodeRenderView = node.model.renderView
       if (renderView) {
-        for (const key in renderView.renderData) {
-          const renderData = renderView.renderData[key]
-          if (renderData.speckleType === SpeckleType.BlockInstance) continue
-          Geometry.transformGeometryData(
-            renderData.geometry,
-            this.computeTransform(node)
-          )
-          let geometry = null
-          let wrapperType = ''
-          const metaObj = this.getMetaForRenderNode(node, key)
-          switch (renderData.speckleType) {
-            case SpeckleType.Pointcloud:
-              geometry = Geometry.makePointCloudGeometry(renderData.geometry)
-              wrapperType = 'pointcloud'
-              break
-            case SpeckleType.Brep:
-              geometry = Geometry.makeMeshGeometry(renderData.geometry)
-              break
-            case SpeckleType.Mesh:
-              geometry = Geometry.makeMeshGeometry(renderData.geometry)
-              break
-            case SpeckleType.Point:
-              geometry = Geometry.makePointGeometry(renderData.geometry)
-              wrapperType = 'point'
-              break
-            case SpeckleType.Line:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            case SpeckleType.Polyline:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            case SpeckleType.Box:
-              geometry = Geometry.makeMeshGeometry(renderData.geometry)
-              break
-            case SpeckleType.Polycurve:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            case SpeckleType.Curve:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            case SpeckleType.Circle:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            case SpeckleType.Arc:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            case SpeckleType.Ellipse:
-              geometry = Geometry.makeLineGeometry(renderData.geometry)
-              wrapperType = 'line'
-              break
-            default:
-              // console.warn(`Skipping geometry conversion for ${renderData.speckleType}`)
-              return null
-          }
-          if (geometry) {
-            objectWrappers.push(new ObjectWrapper(geometry, metaObj, wrapperType))
-          }
+        const renderData = renderView.renderData
+        if (renderData.speckleType === SpeckleType.BlockInstance) return true
+        Geometry.transformGeometryData(renderData.geometry, this.computeTransform(node))
+        let geometry = null
+        let wrapperType = ''
+        const metaObj = node.model.raw
+        switch (renderData.speckleType) {
+          case SpeckleType.Pointcloud:
+            geometry = Geometry.makePointCloudGeometry(renderData.geometry)
+            wrapperType = 'pointcloud'
+            break
+          case SpeckleType.Brep:
+            geometry = Geometry.makeMeshGeometry(renderData.geometry)
+            break
+          case SpeckleType.Mesh:
+            geometry = Geometry.makeMeshGeometry(renderData.geometry)
+            break
+          case SpeckleType.Point:
+            geometry = Geometry.makePointGeometry(renderData.geometry)
+            wrapperType = 'point'
+            break
+          case SpeckleType.Line:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          case SpeckleType.Polyline:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          case SpeckleType.Box:
+            geometry = Geometry.makeMeshGeometry(renderData.geometry)
+            break
+          case SpeckleType.Polycurve:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          case SpeckleType.Curve:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          case SpeckleType.Circle:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          case SpeckleType.Arc:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          case SpeckleType.Ellipse:
+            geometry = Geometry.makeLineGeometry(renderData.geometry)
+            wrapperType = 'line'
+            break
+          default:
+            // console.warn(`Skipping geometry conversion for ${renderData.speckleType}`)
+            return null
+        }
+        if (geometry) {
+          objectWrappers.push(new ObjectWrapper(geometry, metaObj, wrapperType))
         }
       }
       return true
