@@ -1,7 +1,6 @@
 /* istanbul ignore file */
 'use strict'
 
-const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const S3 = require('aws-sdk/clients/s3')
 
@@ -59,16 +58,8 @@ module.exports = {
     return fileStream
   },
 
-  async startUploadFile({
-    streamId,
-    branchName,
-    userId,
-    fileName,
-    fileType,
-    fileStream
-  }) {
+  async startUploadFile({ fileId, streamId, branchName, userId, fileName, fileType }) {
     // Create ID and db entry
-    const fileId = crs({ length: 10 })
     const dbFile = {
       id: fileId,
       streamId,
@@ -80,26 +71,22 @@ module.exports = {
     await FileUploads().insert(dbFile)
 
     // Upload stream
-    const s3 = new S3(getS3Config())
-    const Bucket = process.env.S3_BUCKET
+    // const s3 = new S3(getS3Config())
+    // const Bucket = process.env.S3_BUCKET
     // TODO: error if missing
-    const Key = `files/${fileId}`
+    // const Key = `files/${fileId}`
 
-    await s3.upload({ Bucket, Key, Body: fileStream }).promise()
+    // await s3.upload({ Bucket, Key, Body: fileStream }).promise()
 
     return fileId
   },
 
-  async finishUploadFile({ fileId }) {
-    const s3 = new S3(getS3Config())
-    const Bucket = process.env.S3_BUCKET
+  async finishUploadFile({ fileId, fileSize }) {
     // TODO: error if missing
-    const Key = `files/${fileId}`
 
     // Get file size and update db entry
-    const headResponse = await s3.headObject({ Key, Bucket }).promise()
-    const fileSize = headResponse.ContentLength
 
+    //somehow get the file checksum, its supposed to be on an http trailer value
     await FileUploads().where({ id: fileId }).update({ uploadComplete: true, fileSize })
   }
 }

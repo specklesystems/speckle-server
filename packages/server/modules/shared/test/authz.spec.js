@@ -18,7 +18,7 @@ describe('AuthZ @shared', () => {
   })
 
   describe('Role validation', () => {
-    const roles = [
+    const rolesLookup = async () => [
       { name: '1', weight: 1 },
       { name: '2', weight: 2 },
       { name: '3', weight: 3 },
@@ -81,8 +81,9 @@ describe('AuthZ @shared', () => {
       it(`${testCase.name}`, async () => {
         const step = validateRole({
           requiredRole: testCase.requiredRole,
-          roles,
-          iddqd: '42'
+          rolesLookup,
+          iddqd: '42',
+          roleGetter: (context) => context.role
         })
         const { authResult, context } = await step({
           context: testCase.context,
@@ -103,21 +104,27 @@ describe('AuthZ @shared', () => {
       })
     )
     it('Role validation fails if input authResult is already in an error state', async () => {
-      const step = validateRole({ requiredRole: 'goku', roles, iddqd: '42' })
-      const { authResult } = await step({ context: {}, authResult: { error: true } })
-      expect(authResult.authorized).to.equal(false)
-      expect(authResult.error.message).to.equal(
-        new SFE("Role validation doesn't rescue the auth pipeline").message
-      )
+      const step = validateRole({ requiredRole: 'goku', rolesLookup, iddqd: '42' })
+      const error = new SFE('This will be echoed back')
+      const { authResult } = await step({
+        context: {},
+        authResult: { authorized: false, error }
+      })
+      expect(authResult.authorized).to.be.false
+      expect(authResult.error.message).to.equal(error.message)
+      expect(authResult.error.name).to.equal(error.name)
     })
   })
 
   describe('Validate scopes', () => {
     it('Scope validation fails if input authResult is already in an error state', async () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
-      const { authResult } = await step({ context: {}, authResult: { error: true } })
-      expect(authResult.authorized).to.equal(false)
       const expectedError = new SFE("Scope validation doesn't rescue the auth pipeline")
+      const { authResult } = await step({
+        context: {},
+        authResult: { authorized: false, error: expectedError }
+      })
+      expect(authResult.authorized).to.be.false
       expect(authResult.error.message).to.equal(expectedError.message)
       expect(authResult.error.name).to.equal(expectedError.name)
     })

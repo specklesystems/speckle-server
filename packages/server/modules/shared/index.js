@@ -92,12 +92,10 @@ async function contextMiddleware(req, res, next) {
 
 let roles
 
-const getRoles = () => {
-  if (roles)
-    return roles(knex('user_roles').select('*')).then((dbRoles) => {
-      roles = dbRoles
-      return roles
-    })
+const getRoles = async () => {
+  if (roles) return roles
+  roles = await knex('user_roles').select('*')
+  return roles
 }
 
 /**

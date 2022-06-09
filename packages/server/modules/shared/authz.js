@@ -1,8 +1,10 @@
 const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 const { getStream } = require('@/modules/core/services/streams')
 const { getRoles } = require('@/modules/shared')
-const { ForbiddenError } = require('apollo-server-express')
-const { SpeckleForbiddenError: SFE } = require('./errors')
+const {
+  SpeckleForbiddenError: SFE,
+  SpeckleUnauthorizedError: SUE
+} = require('./errors')
 
 class SpeckleContextError extends Error {
   constructor(message) {
@@ -64,19 +66,16 @@ const authSuccess = (context) => ({
 })
 
 const validateRole =
-  ({ requiredRole, roles, iddqd, roleGetter }) =>
+  ({ requiredRole, rolesLookup, iddqd, roleGetter }) =>
   async ({ context, authResult }) => {
+    const roles = await rolesLookup()
     // having the required role doesn't rescue from authResult failure
-    if (authResult.error)
-      return authFailed(
-        context,
-        new SFE("Role validation doesn't rescue the auth pipeline")
-      )
+    if (authResult.error) return { context, authResult }
 
     // role validation has nothing to do with auth...
     //this check doesn't belong here, move it out to the auth pipeline
     if (!context.auth)
-      return authFailed(context, new SFE('Cannot validate role without auth'))
+      return authFailed(context, new SUE('Cannot validate role without auth'))
 
     const role = roles.find((r) => r.name === requiredRole)
     const myRole = roles.find((r) => r.name === roleGetter(context))
@@ -92,7 +91,7 @@ const validateRole =
 const validateServerRole = ({ requiredRole }) =>
   validateRole({
     requiredRole,
-    roles: getRoles(),
+    rolesLookup: getRoles,
     iddqd: Roles.Server.Admin,
     roleGetter: (context) => context.role
   })
@@ -100,7 +99,7 @@ const validateServerRole = ({ requiredRole }) =>
 const validateStreamRole = ({ requiredRole }) =>
   validateRole({
     requiredRole,
-    roles: getRoles(),
+    rolesLookup: getRoles,
     iddqd: Roles.Stream.Owner,
     roleGetter: (context) => context.stream.role
   })
@@ -112,11 +111,7 @@ const validateScope =
   ({ requiredScope }) =>
   async ({ context, authResult }) => {
     // having the required role doesn't rescue from authResult failure
-    if (authResult.error)
-      return authFailed(
-        context,
-        new SFE("Scope validation doesn't rescue the auth pipeline")
-      )
+    if (authResult.error) return { context, authResult }
     if (!context.scopes)
       return authFailed(context, new SFE('You do not have the required privileges.'))
     if (
@@ -133,7 +128,7 @@ const contextRequiresStream =
   (streamGetter) =>
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
-  async ({ context, params }) => {
+  async ({ context, authResult, params }) => {
     if (!params?.streamId)
       return authFailed(
         context,
@@ -152,7 +147,7 @@ const contextRequiresStream =
         userId: context?.userId
       })
       context.stream = stream
-      return authSuccess(context)
+      return { context, authResult }
     } catch (err) {
       // this prob needs some more detailing to not leak internal errors
       return authFailed(context, new SpeckleContextError(err.message))
@@ -170,9 +165,9 @@ const allowForRegisteredUsersOnPublicStreamsEvenWithoutRole = async ({
 const authPipelineCreator = (steps) => {
   const pipeline = async ({ context, params }) => {
     let authResult = { authorized: false, error: null }
-    steps.forEach(async (step) => {
+    for (const step of steps) {
       ;({ context, authResult } = await step({ context, authResult, params }))
-    })
+    }
     // validate auth result a bit...
     if (authResult.authorized && authResult.error)
       throw new Error('a big fuckup on our end')
@@ -186,12 +181,18 @@ const authPipelineCreator = (steps) => {
 const authMiddlewareCreator = (steps) => {
   const pipeline = authPipelineCreator(steps)
 
-  const middleware = async (req, _, next) => {
-    const authResult = await pipeline({ context: req.context, params: req.params })
+  const middleware = async (req, res, next) => {
+    const { authResult } = await pipeline({ context: req.context, params: req.params })
     if (!authResult.authorized) {
       let message = 'Unknown AuthZ error'
-      if (authResult.error) message = authResult.error.message
-      throw new ForbiddenError(message)
+      let status = 500
+      if (authResult.error) {
+        message = authResult.error.message
+        if (authResult.error instanceof SUE) status = 401
+        if (authResult.error instanceof SFE) status = 403
+      }
+
+      return res.status(status).send(message)
     }
     next()
   }
@@ -214,6 +215,8 @@ module.exports = {
   authFailed,
   validateRole,
   validateScope,
+  validateServerRole,
+  validateStreamRole,
   contextRequiresStream,
   SpeckleContextError,
   authMiddlewareCreator

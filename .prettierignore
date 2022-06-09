@@ -18,3 +18,5 @@ utils/helm/speckle-server/templates
 
 # Optional eslint cache
 .eslintcache
+.venv
+venv

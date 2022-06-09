@@ -2,14 +2,12 @@
 'use strict'
 
 const debug = require('debug')
-const Busboy = require('busboy')
-
 const {
   contextMiddleware,
   validateScopes,
   authorizeResolver
 } = require('@/modules/shared')
-
+const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 const {
   checkBucket,
   startUploadFile,
@@ -18,7 +16,24 @@ const {
   getFileStream
 } = require('./services/fileuploads')
 const { getStream } = require('../core/services/streams')
+const request = require('request')
+const {
+  authMiddlewareCreator,
+  validateServerRole,
+  validateStreamRole,
+  validateScope,
+  contextRequiresStream
+} = require('@/modules/shared/authz')
 
+const permissions = [
+  validateServerRole({ requiredRole: Roles.Server.User }),
+  validateScope({ requiredScope: Scopes.Streams.Write }),
+  contextRequiresStream(getStream)
+]
+const writePermissions = [
+  ...permissions,
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+]
 exports.init = async (app) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     debug('speckle:modules')('📄 FileUploads module is DISABLED')
@@ -35,30 +50,6 @@ exports.init = async (app) => {
   }
 
   await checkBucket()
-
-  const checkStreamPermissions = async (req) => {
-    if (!req.context || !req.context.auth) {
-      return { hasPermissions: false, httpErrorCode: 401 }
-    }
-
-    try {
-      await validateScopes(req.context.scopes, 'streams:write')
-    } catch (err) {
-      return { hasPermissions: false, httpErrorCode: 401 }
-    }
-
-    try {
-      await authorizeResolver(
-        req.context.userId,
-        req.params.streamId,
-        'stream:contributor'
-      )
-    } catch (err) {
-      return { hasPermissions: false, httpErrorCode: 401 }
-    }
-
-    return { hasPermissions: true, httpErrorCode: 200 }
-  }
 
   app.get('/api/file/:fileId', contextMiddleware, async (req, res) => {
     if (process.env.DISABLE_FILE_UPLOADS) {
@@ -103,60 +94,81 @@ exports.init = async (app) => {
     })
 
     fileStream.pipe(res)
-  }),
-    app.post(
-      '/api/file/:fileType/:streamId/:branchName?',
-      contextMiddleware,
-      async (req, res) => {
-        if (process.env.DISABLE_FILE_UPLOADS) {
-          return res.status(503).send('File uploads are disabled on this server')
-        }
-        const { hasPermissions, httpErrorCode } = await checkStreamPermissions(req)
-        if (!hasPermissions) {
-          return res.status(httpErrorCode).end()
-        }
-
-        const fileUploadPromises = []
-        const busboy = Busboy({ headers: req.headers })
-
-        busboy.on('file', (name, file, info) => {
-          const { filename } = info
-          let fileType = req.params.fileType
-          if (fileType === 'autodetect')
-            fileType = filename.split('.').pop().toLowerCase()
-
-          const promise = startUploadFile({
-            streamId: req.params.streamId,
-            branchName: req.params.branchName || '',
-            userId: req.context.userId,
-            fileName: filename,
-            fileType,
-            fileStream: file
-          })
-          fileUploadPromises.push(promise)
-        })
-
-        busboy.on('finish', async function () {
-          const fileIds = []
-
-          for (const promise of fileUploadPromises) {
-            const fileId = await promise
-            fileIds.push(fileId)
+  })
+  app.post(
+    '/api/file/:fileType/:streamId/:branchName?',
+    contextMiddleware,
+    authMiddlewareCreator(writePermissions),
+    async (req, res) => {
+      req.pipe(
+        request(
+          `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
+          async (err, response, body) => {
+            if (response.statusCode === 201) {
+              const { uploadResults } = JSON.parse(body)
+              await Promise.all(
+                uploadResults.map(async (upload) => {
+                  await startUploadFile({
+                    fileId: upload.fileId,
+                    streamId: req.params.streamId,
+                    branchName: req.params.branchName || '',
+                    userId: req.context.userId,
+                    fileName: upload.fileName,
+                    fileType: upload.fileName.split('.').pop()
+                  })
+                  await finishUploadFile(upload)
+                })
+              )
+            }
+            res.status(response.statusCode).send(body)
           }
-          for (const fileId of fileIds) {
-            await finishUploadFile({ fileId })
-          }
-          res.send(fileIds)
-        })
+        )
+      )
+      // const client = new Client(process.env.CANONICAL_URL)
+      // const response = pipeline(
+      //   req,
+      //   client.pipeline(
+      //     {
+      //       path: `/api/stream/${req.params.streamId}/blob`,
+      //       method: 'POST',
+      //       headers: req.headers
+      //     },
+      //     ({ statusCode, body }) => {
+      //       if (statusCode !== 201) {
+      //         throw new Error('invalid response')
+      //       }
 
-        busboy.on('error', async (err) => {
-          console.log(`FileUpload error: ${err}`)
-          res.status(400).end('Upload request error. The server logs have more details')
-        })
-
-        req.pipe(busboy)
-      }
-    )
+      //       return body
+      //     }
+      //   ),
+      //   // res,
+      //   (err) => {
+      //     if (err) {
+      //       console.error('failed', err.message)
+      //     } else {
+      //       console.log('succeeded')
+      //     }
+      //   }
+      // )
+      // response.on('readable', async () => {
+      //   const { uploadResults } = response.read()
+      //   await Promise.all(
+      //     uploadResults.map(async (upload) => {
+      //       await startUploadFile({
+      //         fileId: upload.fileId,
+      //         streamId: req.params.streamId,
+      //         branchName: req.params.branchName || '',
+      //         userId: req.context.userId,
+      //         fileName: upload.fileName,
+      //         fileType: upload.fileName.split('.').pop()
+      //       })
+      //       await finishUploadFile(upload)
+      //     })
+      //   )
+      // })
+      // res.status(201).send(body)
+    }
+  )
 }
 
 exports.finalize = () => {}
