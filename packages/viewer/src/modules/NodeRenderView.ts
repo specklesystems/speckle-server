@@ -24,12 +24,24 @@ export interface NodeRenderData {
 
 export class NodeRenderView {
   private readonly _renderData: NodeRenderData
+  private _materialHash: number
 
   public get renderData() {
     return this._renderData
   }
 
+  public get renderMaterialHash() {
+    return this._materialHash
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
+    this._materialHash = this.getMaterialHash(data.renderMaterial)
+  }
+
+  private getMaterialHash(material: RenderMaterial) {
+    // FOR NOW
+    if (!material) return 0
+    return material.color
   }
 }

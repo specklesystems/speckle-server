@@ -1,8 +1,7 @@
 import ObjectLoader from '@speckle/objectloader'
 import Converter from './converter/Converter'
-import { SpeckleType } from './converter/GeometryConverter'
 import { WorldTree } from './converter/WorldTree'
-
+import Batcher from './Batcher'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */
@@ -104,23 +103,11 @@ export default class ViewerObjectLoader {
       await firstObjectPromise
     }
 
+    const batcher = new Batcher()
     WorldTree.getRenderTree().buildRenderTree()
-    // console.log(
-    WorldTree.getInstance().findAll((node) => {
-      return node.model.renderView !== null
-    })
-    // )
-    // console.log(WorldTree.getInstance().findId('47c6c646a2aeb3d54c443fcbf70abc61'))
+
+    batcher.makeBatches()
     parsedObjects = WorldTree.getRenderTree().getObjectWrappers()
-    console.warn(
-      WorldTree.getRenderTree()
-        .getRenderNodes(SpeckleType.Mesh)
-        .sort((a, b) => {
-          if (a.renderMaterial === null) return -1
-          if (b.renderMaterial === null) return 1
-          return a.renderMaterial.color - b.renderMaterial.color
-        })
-    )
 
     for (let k = 0; k < parsedObjects.length; k++) {
       await this.converter.asyncPause()

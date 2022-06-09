@@ -23,7 +23,6 @@ export class RenderTree {
   private buildRenderNode(node: TreeNode): NodeRenderData {
     let ret: NodeRenderData = null
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
-
     if (geometryData) {
       ret = {
         id: node.model.id,
@@ -57,15 +56,15 @@ export class RenderTree {
     return transform
   }
 
-  public getRenderNodes(type: SpeckleType): NodeRenderData[] {
+  public getRenderViews(...types: SpeckleType[]): NodeRenderView[] {
     return this.root
       .all((node: TreeNode): boolean => {
         return (
           node.model.renderView !== null &&
-          node.model.renderView.renderData.speckleType === type
+          types.includes(node.model.renderView.renderData.speckleType)
         )
       })
-      .map((val: TreeNode) => val.model.renderView.renderData)
+      .map((val: TreeNode) => val.model.renderView)
   }
 
   /**
@@ -81,7 +80,14 @@ export class RenderTree {
         Geometry.transformGeometryData(renderData.geometry, this.computeTransform(node))
         let geometry = null
         let wrapperType = ''
+        /** ULTA-TEMPORARY */
         const metaObj = node.model.raw
+        metaObj.renderMaterial = metaObj.renderMaterial
+          ? metaObj.renderMaterial
+          : node.parent.model.raw.renderMaterial
+        metaObj.displayStyle = metaObj.displayStyle
+          ? metaObj.displayStyle
+          : node.parent.model.raw.displayStyle
         switch (renderData.speckleType) {
           case SpeckleType.Pointcloud:
             geometry = Geometry.makePointCloudGeometry(renderData.geometry)

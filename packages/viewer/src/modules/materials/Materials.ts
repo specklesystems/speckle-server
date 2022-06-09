@@ -1,7 +1,11 @@
+import { DoubleSide, Material } from 'three'
 import { TreeNode } from '../converter/WorldTree'
 import { DisplayStyle, RenderMaterial } from '../NodeRenderView'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 
 export default class Materials {
+  private readonly materialMap: { [hash: number]: Material } = {}
+
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
     let renderMaterial: RenderMaterial = null
@@ -24,5 +28,20 @@ export default class Materials {
       }
     }
     return displayStyle
+  }
+
+  public updateMaterialMap(hash: number, renderMaterial: RenderMaterial) {
+    if (this.materialMap[hash]) {
+      console.warn(`Duplicate material hash found: ${hash}, overwritting`)
+    }
+
+    this.materialMap[hash] = new SpeckleStandardMaterial({
+      color: renderMaterial.color,
+      emissive: 0x0,
+      roughness: 1,
+      metalness: 0,
+      side: DoubleSide // TBD
+      // clippingPlanes: this.viewer.sectionBox.planes
+    })
   }
 }
