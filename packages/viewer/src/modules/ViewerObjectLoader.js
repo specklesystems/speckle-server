@@ -68,7 +68,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
-    let parsedObjects = [] // Temporary until refactor
+    // const parsedObjects = [] // Temporary until refactor
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.viewer.emit('load-progress', {
@@ -111,12 +111,12 @@ export default class ViewerObjectLoader {
       this.viewer.scene.add(batcher.batches[k].mesh)
     }
 
-    parsedObjects = WorldTree.getRenderTree().getObjectWrappers()
+    // parsedObjects = WorldTree.getRenderTree().getObjectWrappers()
 
-    for (let k = 0; k < parsedObjects.length; k++) {
-      await this.converter.asyncPause()
-      this.viewer.sceneManager.addObject(parsedObjects[k])
-    }
+    // for (let k = 0; k < parsedObjects.length; k++) {
+    //   await this.converter.asyncPause()
+    //   this.viewer.sceneManager.addObject(parsedObjects[k])
+    // }
 
     await this.viewer.sceneManager.postLoadFunction()
     this.viewer.emit('load-complete')

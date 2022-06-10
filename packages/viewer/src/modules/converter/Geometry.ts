@@ -30,6 +30,17 @@ export interface GeometryData {
 }
 
 /**
+ * TEMPORARY until I unifiy GeometryData
+ */
+export interface LooseGeometryData {
+  attributes: Partial<
+    Record<GeometryAttributes, Uint16Array | Uint32Array | Float32Array>
+  >
+  bakeTransform: Matrix4
+  transform: Matrix4
+}
+
+/**
  * Implementation here will change once we start working on proper batching
  */
 export class Geometry {

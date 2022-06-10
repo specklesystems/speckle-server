@@ -16,8 +16,13 @@ export class RenderTree {
     this.root.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-      if (node.model.renderView && node.model.renderView.hasGeometry)
-        Geometry.transformGeometryData(rendeNode.geometry, this.computeTransform(node))
+      if (node.model.renderView && node.model.renderView.hasGeometry) {
+        const transform = this.computeTransform(node)
+        if (rendeNode.geometry.bakeTransform) {
+          transform.premultiply(rendeNode.geometry.bakeTransform)
+        }
+        Geometry.transformGeometryData(rendeNode.geometry, transform)
+      }
       return true
     })
   }
