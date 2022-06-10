@@ -131,6 +131,8 @@ jobs:
       S3_ENDPOINT: 'http://localhost:9000'
       S3_ACCESS_KEY: 'minioadmin'
       S3_SECRET_KEY: 'minioadmin'
+      S3_BUCKET: 'speckle-server'
+      S3_CREATE_BUCKET: 'true'
     steps:
       - checkout
       - restore_cache:
