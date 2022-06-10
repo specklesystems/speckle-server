@@ -27,5 +27,5 @@ exports.up = async (knex) => {
 }
 
 exports.down = async (knex) => {
-  await knex.schema.dropTableIfExists('asset_storage')
+  await knex.schema.dropTableIfExists(TABLE_NAME)
 }

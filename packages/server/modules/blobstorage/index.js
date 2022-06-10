@@ -20,10 +20,10 @@ const {
   markUploadError,
   markUploadSuccess,
   markUploadOverFileSizeLimit,
-  deleteAsset,
-  objectLookup,
-  getStreamBlobsMetadata
-} = require('@/modules/assetstorage/services')
+  deleteBlob,
+  getBlobMetadata,
+  getBlobMetadataByFileName
+} = require('@/modules/blobstorage/services')
 const {
   SpeckleNotFoundError,
   SpeckleResourceMismatch
@@ -141,7 +141,7 @@ exports.init = async (app) => {
     authMiddlewareCreator(streamReadPermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
-        const fileInfo = await objectLookup({
+        const { fileName } = await getBlobMetadata({
           streamId: req.params.streamId,
           fileId: req.params.blobId
         })
@@ -152,7 +152,7 @@ exports.init = async (app) => {
         })
         res.writeHead(200, {
           'Content-Type': 'application/octet-stream',
-          'Content-Disposition': `attachment; filename="${fileInfo.fileName}"`
+          'Content-Disposition': `attachment; filename="${fileName}"`
         })
         fileStream.pipe(res)
       })
@@ -164,7 +164,11 @@ exports.init = async (app) => {
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
-        await deleteAsset({ streamId: req.params.streamId, fileId: req.params.blobId })
+        await deleteBlob({
+          streamId: req.params.streamId,
+          fileId: req.params.blobId,
+          deleteObject
+        })
         res.status(204).send()
       })
     }
@@ -177,7 +181,7 @@ exports.init = async (app) => {
       const fileName = req.query.fileName
 
       errorHandler(req, res, async (req, res) => {
-        const blobMetadataCollection = await getStreamBlobsMetadata({
+        const blobMetadataCollection = await getBlobMetadataByFileName({
           streamId: req.params.streamId,
           fileName
         })
