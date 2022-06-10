@@ -4,30 +4,8 @@ const fs = require('fs')
 const readline = require('readline')
 const path = require('path')
 
-// const { getFileInfoByName } = require('./filesMetadata')
 const { downloadFile, getFileInfoByName } = require('./filesApi')
 const isValidFilename = require('valid-filename')
-
-// async function tryDownloadFile({ fileName, streamId, destinationDir }) {
-//   if (!isValidFilename(fileName)) {
-//     console.log(`Invalid filename reference in OBJ dependencies: ${fileName}`)
-//     return false
-//   }
-
-//   const fileInfo = await getFileInfoByName({ streamId, fileName })
-//   if (!fileInfo) {
-//     console.log(`OBJ dependency file not found in stream: ${fileName}`)
-//     return false
-//   }
-
-//   const filePath = path.join(destinationDir, fileName)
-//   const upstreamFileStream = await getFileStream({ fileId: fileInfo.fileId })
-//   const diskFileStream = fs.createWriteStream(filePath)
-
-//   upstreamFileStream.pipe(diskFileStream)
-//   await new Promise((fulfill) => diskFileStream.on('finish', fulfill))
-//   return true
-// }
 
 const getReferencedMtlFiles = async ({ objFilePath }) => {
   const mtlFiles = []
@@ -58,6 +36,7 @@ module.exports = {
 
     console.log(`Obj file depends on ${dependencies}`)
     for (const mtlFile of dependencies) {
+      // there might be multiple files named with the same name, take the first...
       const [file] = (await getFileInfoByName({ fileName: mtlFile, streamId, token }))
         .files
       if (!file) {
@@ -68,7 +47,6 @@ module.exports = {
         console.log(`Invalid filename reference in OBJ dependencies: ${mtlFile}`)
         continue
       }
-      // there might be multiple files named with the same name, take the first...
       await downloadFile({
         fileId: file.id,
         streamId,
