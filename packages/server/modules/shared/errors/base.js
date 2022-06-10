@@ -57,24 +57,4 @@ class BaseError extends VError {
   }
 }
 
-/**
- * Use this to validate args
- */
-class InvalidArgumentError extends BaseError {
-  static code = 'INVALID_ARGUMENT_ERROR'
-  static defaultMessage = 'Invalid arguments received'
-}
-
-/**
- * Use this to throw when user tries to access data that he shouldn't have access to
- */
-class UnauthorizedAccessError extends BaseError {
-  static code = 'UNAUTHORIZED_ACCESS_ERROR'
-  static defaultMessage = 'Attempted unauthorized access to data'
-}
-
-module.exports = {
-  BaseError,
-  InvalidArgumentError,
-  UnauthorizedAccessError
-}
+module.exports = { BaseError }

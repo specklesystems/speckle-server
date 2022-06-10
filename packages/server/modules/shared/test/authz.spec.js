@@ -8,7 +8,10 @@ const {
   contextRequiresStream,
   SpeckleContextError
 } = require('@/modules/shared/authz')
-const { SpeckleForbiddenError: SFE } = require('@/modules/shared/errors')
+const {
+  SpeckleForbiddenError: SFE,
+  SpeckleUnauthorizedError: SUE
+} = require('@/modules/shared/errors')
 
 describe('AuthZ @shared', () => {
   it('Empty pipeline returns no authorization', async () => {
@@ -37,7 +40,7 @@ describe('AuthZ @shared', () => {
         name: 'Not having auth fails role validation',
         requiredRole: '2',
         context: { auth: false },
-        expectedResult: authFailed(null, new SFE('Cannot validate role without auth'))
+        expectedResult: authFailed(null, new SUE('Cannot validate role without auth'))
       },
       {
         name: 'Requiring a junk role fails auth',

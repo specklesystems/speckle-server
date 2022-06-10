@@ -1,6 +1,6 @@
 const { pubsub } = require('@/modules/shared')
 const { ForbiddenError, ApolloError, withFilter } = require('apollo-server-express')
-const { Forbidden } = require('@/modules/shared/errors')
+const { SpeckleForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { saveActivity } = require('@/modules/activitystream/services')
@@ -216,7 +216,7 @@ module.exports = {
         await editComment({ userId: context.userId, input: args.input, matchUser })
         return true
       } catch (err) {
-        if (err instanceof Forbidden) throw new ForbiddenError(err.message)
+        if (err instanceof SpeckleForbiddenError) throw new ForbiddenError(err.message)
         throw err
       }
     },
@@ -246,7 +246,7 @@ module.exports = {
       try {
         await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
       } catch (err) {
-        if (err instanceof Forbidden) throw new ForbiddenError(err.message)
+        if (err instanceof SpeckleForbiddenError) throw new ForbiddenError(err.message)
         throw err
       }
 
