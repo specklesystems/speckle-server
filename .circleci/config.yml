@@ -115,6 +115,7 @@ jobs:
     docker:
       - image: cimg/node:16.15
       - image: cimg/redis:6.2.6
+      - image: 'minio/minio'
       - image: 'cimg/postgres:12.8'
         environment:
           POSTGRES_DB: speckle2_test
