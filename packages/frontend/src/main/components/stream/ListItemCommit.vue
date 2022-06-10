@@ -1,6 +1,11 @@
 <template>
   <div>
-    <div :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`">
+    <div
+      :class="`${background} d-flex px-2 py-3 mb-2 align-center rounded-lg`"
+      :style="`transition: all 0.2s ease-in-out; ${
+        highlight ? 'outline: 0.2rem solid #047EFB;' : ''
+      }`"
+    >
       <div class="flex-shrink-0">
         <user-avatar :id="commit.authorId" :size="30" />
       </div>
@@ -92,6 +97,10 @@ export default {
     links: {
       type: Boolean,
       default: true
+    },
+    highlight: {
+      type: Boolean,
+      default: false
     }
   },
   apollo: {

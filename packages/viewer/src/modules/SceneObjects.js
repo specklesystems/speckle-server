@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { Geometry } from './converter/Geometry'
 import FilteringManager from './FilteringManager'
 
 /**
@@ -44,6 +45,7 @@ export default class SceneObjects {
     // When the `appliedFilter` is null, scene will contain `allObjects`. Otherwise, `filteredObjects`
     // This is to optimize the no-filter usecase, so we don't make an unnecessary clone of all the objects
     this.objectsInScene = this.allObjects
+
     this.scene.add(this.allObjects)
 
     this.isBusy = true
@@ -257,6 +259,7 @@ export default class SceneObjects {
     for (const element of acc) {
       element.geometry = element.geometry.clone()
       element.geometry.applyMatrix4(group.matrix)
+      Geometry.updateRTEGeometry(element.geometry) // TEMPORARY!!!
     }
     return acc
   }
@@ -289,7 +292,8 @@ export default class SceneObjects {
         ) {
           // if ( mesh.type === 'Line' ) continue
           // if ( groupedObjects.children.length >= 2 ) continue
-          groupedObjects.add(mesh.clone())
+          const clone = mesh.clone()
+          groupedObjects.add(clone)
           continue
         }
 

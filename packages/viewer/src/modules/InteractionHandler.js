@@ -1,5 +1,9 @@
 import * as THREE from 'three'
 import SelectionHelper from './SelectionHelper'
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import SpeckleLambertMaterial from './materials/SpeckleLambertMaterial'
+import { Geometry } from './converter/Geometry'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 
 export default class InteractionHandler {
   constructor(viewer) {
@@ -10,23 +14,39 @@ export default class InteractionHandler {
       sectionBox: this.sectionBox,
       hover: false
     })
-    this.selectionMeshMaterial = new THREE.MeshLambertMaterial({
-      color: 0x0b55d2,
-      side: THREE.DoubleSide,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.3
-    })
+    this.selectionMeshMaterial = new SpeckleLambertMaterial(
+      {
+        color: 0x0b55d2,
+        side: THREE.DoubleSide,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.3
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : []
+    )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     // Fix overlapping faces flickering
     this.selectionMeshMaterial.polygonOffset = true
     this.selectionMeshMaterial.polygonOffsetFactor = -0.1
 
-    this.selectionLineMaterial = new THREE.LineBasicMaterial({ color: 0x0b55d2 })
-    this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // this.selectionLineMaterial = new THREE.LineBasicMaterial({ color: 0x0b55d2 })
+    // this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
 
-    this.selectionEdgesMaterial = new THREE.LineBasicMaterial({ color: 0x23f3bd })
-    this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // this.selectionEdgesMaterial = new THREE.LineBasicMaterial({ color: 0x23f3bd })
+    // this.selectionEdgesMaterial.clippingPlanes = this.viewer.sectionBox.planes
+
+    this.selectionLine2Material = new SpeckleLineMaterial({
+      color: new THREE.Color(0x0b55d2),
+      linewidth: 1,
+      worldUnits: false,
+      vertexColors: false,
+      alphaToCoverage: true,
+      resolution: this.viewer.renderer.getDrawingBufferSize(new THREE.Vector2()),
+      clippingPlanes: this.viewer.sectionBox.planes
+    })
+    // Not a fan of this, but it should be fine for now
+    this.selectionLine2Material.polygonOffset = true
+    this.selectionLine2Material.polygonOffsetFactor = -0.1
 
     this.selectedObjects = new THREE.Group()
     this.viewer.scene.add(this.selectedObjects)
@@ -34,13 +54,16 @@ export default class InteractionHandler {
     this.selectionBox = new THREE.Group()
     this.viewer.scene.add(this.selectionBox)
 
-    this.overlayMeshMaterial = new THREE.MeshLambertMaterial({
-      color: 0x57f7ff,
-      side: THREE.DoubleSide,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.7
-    })
+    this.overlayMeshMaterial = new SpeckleLambertMaterial(
+      {
+        color: 0x57f7ff,
+        side: THREE.DoubleSide,
+        wireframe: false,
+        transparent: true,
+        opacity: 0.7
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : []
+    )
     this.overlayMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     this.overlaidObjects = new THREE.Group()
     this.viewer.scene.add(this.overlaidObjects)
@@ -146,10 +169,25 @@ export default class InteractionHandler {
 
     switch (selType) {
       case 'Block': {
+        /**
+         * Currently lines inside a group will not highlight
+         */
         const blockObjs = this.getBlockObjectsCloned(rootBlock)
         for (const child of blockObjs) {
           child.userData = { id: rootBlock.userData.id }
-          child.material = this.selectionMeshMaterial
+          if (child.type === 'Line2') {
+            const material = this.selectionLine2Material.clone()
+            material.color = new THREE.Color(0x0b55d2) // I really don't know why I need to reassign this...
+            material.linewidth = child.material.linewidth
+            material.worldUnits = child.material.worldUnits
+            material.alphaToCoverage = child.material.alphaToCoverage
+            material.resolution = this.viewer.renderer.getDrawingBufferSize(
+              new THREE.Vector2()
+            )
+            child.material = material
+          } else {
+            child.material = this.selectionMeshMaterial
+          }
           this.selectedObjects.add(child)
           //this.viewer.outlinePass.selectedObjects.push( child )
         }
@@ -169,6 +207,23 @@ export default class InteractionHandler {
         //this.viewer.outlinePass.selectedObjects.push( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
       }
+      case 'Line2': {
+        const material = this.selectionLine2Material.clone()
+        material.color = new THREE.Color(0x0b55d2) // I really don't know why I need to reassign this...
+        material.linewidth = objs[0].object.material.linewidth
+        material.worldUnits = objs[0].object.material.worldUnits
+        material.alphaToCoverage = objs[0].object.material.alphaToCoverage
+        material.resolution = this.viewer.renderer.getDrawingBufferSize(
+          new THREE.Vector2()
+        )
+        const l = new Line2(objs[0].object.geometry, material)
+        // Geometry.updateRTEGeometry(l.geometry)
+        // l.computeLineDistances()
+        // l.scale.set(1, 1, 1)
+        l.userData = { id: objs[0].object.userData.id }
+        this.selectedObjects.add(l)
+        break
+      }
       case 'Point':
         console.warn('Point selection not implemented.')
         return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
@@ -183,6 +238,12 @@ export default class InteractionHandler {
     }
 
     const box = new THREE.Box3().setFromObject(this.selectedObjects)
+    if (selType === 'Line2') {
+      const expand = objs[0].object.material.worldUnits
+        ? objs[0].object.material.linewidth * 0.5
+        : 0
+      box.expandByScalar(expand)
+    }
     const boxHelper = new THREE.Box3Helper(box, 0x047efb)
     this.selectionBox.clear()
     this.selectionBox.add(boxHelper)
@@ -195,6 +256,7 @@ export default class InteractionHandler {
       location: objs[0].point,
       selectionCenter
     }
+    // console.log(selectionInfo)
     this.viewer.emit('select', selectionInfo)
   }
 
@@ -214,6 +276,7 @@ export default class InteractionHandler {
     }
     for (const child of objects) {
       child.geometry = child.geometry.clone().applyMatrix4(block.matrix)
+      Geometry.updateRTEGeometry(child.geometry)
     }
     return objects
   }

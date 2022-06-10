@@ -134,6 +134,9 @@ export default {
       'commit_update',
       'commit_receive',
       'commit_delete',
+      'comment_created',
+      'comment_archived',
+      'comment_replied',
       'stream_permissions_add',
       'stream_permissions_remove'
     ],

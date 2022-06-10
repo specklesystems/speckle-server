@@ -1,7 +1,14 @@
 import * as THREE from 'three'
 import debounce from 'lodash.debounce'
 import SceneObjects from './SceneObjects'
-
+import { Line2 } from 'three/examples/jsm/lines/Line2.js'
+import { Vector2 } from 'three'
+import { Geometry } from './converter/Geometry'
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import SpeckleLineBasicMaterial from './materials/SpeckleLineBasicMaterial'
+import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
+import { getConversionFactor } from './converter/Units'
 /**
  * Manages objects and provides some convenience methods to focus on the entire scene, or one specific object.
  */
@@ -13,54 +20,7 @@ export default class SceneObjectManager {
 
     this.sceneObjects = new SceneObjects(viewer)
 
-    this.solidMaterial = new THREE.MeshStandardMaterial({
-      color: 0x8d9194,
-      emissive: 0x0,
-      roughness: 1,
-      metalness: 0,
-      side: THREE.DoubleSide,
-      envMap: this.viewer.cubeCamera.renderTarget.texture,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
-
-    this.transparentMaterial = new THREE.MeshStandardMaterial({
-      color: 0xa0a4a8,
-      emissive: 0x0,
-      roughness: 0,
-      metalness: 0.5,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.4,
-      envMap: this.viewer.cubeCamera.renderTarget.texture,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
-
-    this.solidVertexMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      vertexColors: THREE.VertexColors,
-      side: THREE.DoubleSide,
-      reflectivity: 0,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
-
-    this.lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x7f7f7f,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
-
-    this.pointMaterial = new THREE.PointsMaterial({
-      size: 2,
-      sizeAttenuation: false,
-      color: 0x7f7f7f,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
-
-    this.pointVertexColorsMaterial = new THREE.PointsMaterial({
-      size: 2,
-      sizeAttenuation: false,
-      vertexColors: true,
-      clippingPlanes: this.viewer.sectionBox.planes
-    })
+    this.initMaterials()
 
     this.postLoad = debounce(
       () => {
@@ -102,6 +62,69 @@ export default class SceneObjectManager {
     ]
   }
 
+  initMaterials() {
+    if (this.solidMaterial) this.solidMaterial.dispose()
+    if (this.transparentMaterial) this.transparentMaterial.dispose()
+    if (this.solidVertexMaterial) this.solidVertexMaterial.dispose()
+    if (this.lineMaterial) this.lineMaterial.dispose()
+    if (this.pointMaterial) this.pointMaterial.dispose()
+    if (this.pointVertexColorsMaterial) this.pointVertexColorsMaterial.dispose()
+
+    this.solidMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0x8d9194,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        // envMap: this.viewer.cubeCamera.renderTarget.texture,
+        clippingPlanes: this.viewer.sectionBox.planes
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : undefined
+    )
+
+    this.transparentMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0xa0a4a8,
+        emissive: 0x0,
+        roughness: 0,
+        metalness: 0.5,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.4,
+        // envMap: this.viewer.cubeCamera.renderTarget.texture,
+        clippingPlanes: this.viewer.sectionBox.planes
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : undefined
+    )
+
+    this.solidVertexMaterial = new SpeckleBasicMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: THREE.VertexColors,
+        side: THREE.DoubleSide,
+        reflectivity: 0,
+        clippingPlanes: this.viewer.sectionBox.planes
+      },
+      Geometry.USE_RTE ? ['USE_RTE'] : undefined
+    )
+
+    this.lineMaterial = this.makeLineMaterial()
+
+    this.pointMaterial = new THREE.PointsMaterial({
+      size: 2,
+      sizeAttenuation: false,
+      color: 0x7f7f7f,
+      clippingPlanes: this.viewer.sectionBox.planes
+    })
+
+    this.pointVertexColorsMaterial = new THREE.PointsMaterial({
+      size: 2,
+      sizeAttenuation: false,
+      vertexColors: true,
+      clippingPlanes: this.viewer.sectionBox.planes
+    })
+  }
   // Note: we might switch later down the line from cloning materials to solely
   // using a few "default" ones and controlling color through vertex colors.
   // For now a small compromise to speed up dev; it is not the most memory
@@ -142,7 +165,8 @@ export default class SceneObjectManager {
     if (wrapper.meta.renderMaterial) {
       const renderMat = wrapper.meta.renderMaterial
       const color = new THREE.Color(this._argbToRGB(renderMat.diffuse))
-      this._normaliseColor(color)
+      color.convertSRGBToLinear()
+      // this._normaliseColor(color);
       // Is it a transparent material?
       if (renderMat.opacity !== 1) {
         const material = this.transparentMaterial.clone()
@@ -210,11 +234,18 @@ export default class SceneObjectManager {
     let material = this.lineMaterial
     if (wrapper.meta.displayStyle) {
       material = this.lineMaterial.clone()
-      // This will only add confusion since it *might* work on some platforms.
-      // However, it's in pixels and the displayStyle will express the thickness in world units
-      // This will be replaced by the upcoming change to line rendering which supports variable
-      // thickness in both world space and pixels
-      // material.linewidth = wrapper.meta.displayStyle.lineweight > 0 ? wrapper.meta.displayStyle : 1
+      if (wrapper.meta.displayStyle.lineweight > 0) {
+        material.linewidth =
+          wrapper.meta.displayStyle.lineweight *
+          getConversionFactor(
+            wrapper.meta.displayStyle.units ? wrapper.meta.displayStyle.units : 'm' // We default to meters, since we don't have access to the parent's units (in this implementation)
+          )
+        material.worldUnits = true
+        material.pixelThreshold = 0.5
+      } else {
+        material.linewidth = 1
+        material.worldUnits = false
+      }
       material.color = new THREE.Color(this._argbToRGB(wrapper.meta.displayStyle.color))
       // material.color.convertSRGBToLinear();
 
@@ -227,8 +258,9 @@ export default class SceneObjectManager {
       // material.color.convertSRGBToLinear();
       material.clippingPlanes = this.viewer.sectionBox.planes
     }
+    material.resolution = this.viewer.renderer.getDrawingBufferSize(new Vector2())
 
-    const line = new THREE.Line(wrapper.bufferGeometry, material)
+    const line = this.makeLineMesh(wrapper.bufferGeometry, material)
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if (addToScene) {
@@ -256,8 +288,8 @@ export default class SceneObjectManager {
     } else if (wrapper.meta.renderMaterial) {
       const renderMat = wrapper.meta.renderMaterial
       const color = new THREE.Color(this._argbToRGB(renderMat.diffuse))
-
-      this._normaliseColor(color)
+      color.convertSRGBToLinear()
+      // this._normaliseColor(color);
       const material = this.pointMaterial.clone()
       material.clippingPlanes = this.viewer.sectionBox.planes
       // material.clippingPlanes = this.viewer.interactions.sectionBox.planes
@@ -341,33 +373,74 @@ export default class SceneObjectManager {
     return box
   }
 
+  makeLineMesh(geometry, material) {
+    let line
+    if (Geometry.THICK_LINES) {
+      line = new Line2(geometry, material)
+      line.computeLineDistances()
+      line.scale.set(1, 1, 1)
+    } else {
+      line = new THREE.Line(geometry, material)
+    }
+
+    return line
+  }
+
+  makeLineMaterial() {
+    let lineMaterial
+    if (Geometry.THICK_LINES) {
+      lineMaterial = new SpeckleLineMaterial({
+        color: 0x7f7f7f,
+        linewidth: 1, // in world units with size attenuation, pixels otherwise
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: false,
+        resolution: this.viewer.renderer.getDrawingBufferSize(new Vector2()),
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    } else {
+      lineMaterial = new SpeckleLineBasicMaterial({
+        color: 0x7f7f7f,
+        clippingPlanes: this.viewer.sectionBox.planes
+      })
+    }
+
+    return lineMaterial
+  }
+
   _argbToRGB(argb) {
     return '#' + ('000000' + (argb & 0xffffff).toString(16)).slice(-6)
   }
 
-  _normaliseColor(color) {
-    // Note: full of **magic numbers** that will need changing once global scene
-    // is properly set up; also to test with materials coming from other software too...
-    const hsl = {}
-    color.getHSL(hsl)
+  /**
+   * This has been retired. We're using proper srbg->linear conversions now
+   * @param {*} color
+   * @returns
+   */
+  // _normaliseColor(color) {
+  //   return color
+  //   // Note: full of **magic numbers** that will need changing once global scene
+  //   // is properly set up; also to test with materials coming from other software too...
+  //   const hsl = {}
+  //   color.getHSL(hsl)
 
-    if (hsl.s + hsl.l > 1) {
-      while (hsl.s + hsl.l > 1) {
-        hsl.s -= 0.05
-        hsl.l -= 0.05
-      }
-    }
+  //   if (hsl.s + hsl.l > 1) {
+  //     while (hsl.s + hsl.l > 1) {
+  //       hsl.s -= 0.05
+  //       hsl.l -= 0.05
+  //     }
+  //   }
 
-    if (hsl.l > 0.6) {
-      hsl.l = 0.6
-    }
+  //   if (hsl.l > 0.6) {
+  //     hsl.l = 0.6
+  //   }
 
-    if (hsl.l < 0.3) {
-      hsl.l = 0.3
-    }
+  //   if (hsl.l < 0.3) {
+  //     hsl.l = 0.3
+  //   }
 
-    color.setHSL(hsl.h, hsl.s, hsl.l)
-  }
+  //   color.setHSL(hsl.h, hsl.s, hsl.l)
+  // }
 
   _srgbToLinear(x) {
     if (x <= 0) return 0

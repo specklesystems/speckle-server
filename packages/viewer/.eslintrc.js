@@ -14,7 +14,19 @@ const config = {
   rules: {
     'no-console': ['warn', { allow: ['warn', 'error'] }]
   },
-  ignorePatterns: ['dist2', 'example/speckleviewer.web.js']
+  ignorePatterns: ['dist2', 'example/speckleviewer.web.js'],
+  overrides: [
+    {
+      files: '*.ts',
+      plugins: ['@typescript-eslint'],
+      extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        'prettier'
+      ],
+      parser: '@typescript-eslint/parser'
+    }
+  ]
 }
 
 module.exports = config

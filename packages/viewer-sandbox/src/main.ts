@@ -1,42 +1,44 @@
-import { Pane } from 'tweakpane'
-import { Viewer } from '@speckle/viewer'
-import './style.css'
+import { Viewer, DefaultViewerParams } from '@speckle/viewer'
 
-const container = document.querySelector<HTMLDivElement>('#renderer')
+import './style.css'
+import Sandbox from './Sandbox'
+
+const container = document.querySelector<HTMLElement>('#renderer')
 if (!container) {
   throw new Error("Couldn't find #app container!")
 }
 
 // Viewer setup
-const viewer = new Viewer({
-  container,
-  showStats: true
-})
+const params = DefaultViewerParams
+params.showStats = true
+// params.environmentSrc =
+// 'https://speckle-xyz-assets.ams3.digitaloceanspaces.com/studio010.hdr'
+// 'http://localhost:3033/sample-hdri.exr'
+
+const viewer = new Viewer(container, params)
+await viewer.init()
+
+const sandbox = new Sandbox(viewer)
 
 window.addEventListener('load', () => {
   viewer.onWindowResize()
 })
 
-// Tweakpane setup
-const PARAMS = {
-  factor: 123,
-  title: 'hello',
-  color: '#ff0055'
-}
-
-const pane = new Pane()
-
-pane.addInput(PARAMS, 'factor')
-pane.addInput(PARAMS, 'title')
-pane.addInput(PARAMS, 'color')
-
-// Load demo object
-viewer.loadObject(
-  'https://speckle.xyz/streams/9217731fc1/objects/111a9dc2ed245f26a6584354b11b083f'
-)
-
-viewer.on<{ progress: number; id: string; url: string }>('load-progress', (a) => {
+viewer.on('load-progress', (a: { progress: number; id: string; url: string }) => {
   if (a.progress >= 1) {
     viewer.onWindowResize()
   }
 })
+
+viewer.on('load-complete', () => {
+  Object.assign(Sandbox.sceneParams.worldSize, viewer.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, viewer.worldOrigin)
+  sandbox.refresh()
+})
+
+sandbox.makeGenericUI()
+sandbox.makeSceneUI()
+// Load demo object
+sandbox.loadUrl(
+  'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
+)

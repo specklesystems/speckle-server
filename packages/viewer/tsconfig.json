@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "module": "es2020",
+    "lib": ["DOM"],
+    "moduleResolution": "Node",
+    "strict": false,
+    "sourceMap": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noImplicitReturns": false,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true
+  },
+  "include": ["./src/**/*"],
+  "exclude": ["dist"]
+}

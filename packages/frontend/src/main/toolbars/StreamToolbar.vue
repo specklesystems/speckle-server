@@ -24,14 +24,12 @@
                 Commits: ${stream.commits.totalCount} <br>
                 Branches: ${stream.branches.totalCount}`
             }"
-            class="caption mx-1"
+            class="caption mx-2"
           >
-            Updated
-            <timeago :datetime="stream.updatedAt"></timeago>
-            <v-icon style="font-size: 11px" class="ml-1">mdi-source-commit</v-icon>
+            <!-- <v-icon style="font-size: 11px" class="ml-1">mdi-source-commit</v-icon>
             {{ stream.commits.totalCount }}
             <v-icon style="font-size: 11px" class="ml-1">mdi-source-branch</v-icon>
-            {{ stream.branches.totalCount }}
+            {{ stream.branches.totalCount }} -->
             <v-icon x-small class="">mdi-heart-multiple</v-icon>
             {{ stream.favoritesCount }}
           </span>
