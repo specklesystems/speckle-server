@@ -1,14 +1,10 @@
 const debug = require('debug')
 const { contextMiddleware } = require('@/modules/shared')
-const { getStream } = require('@/modules/core/services/streams')
-const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
 const Busboy = require('busboy')
 const {
   authMiddlewareCreator,
-  validateServerRole,
-  validateStreamRole,
-  validateScope,
-  contextRequiresStream
+  streamReadPermissions,
+  streamWritePermissions
 } = require('@/modules/shared/authz')
 const {
   ensureStorageAccess,
@@ -32,21 +28,6 @@ const {
   SpeckleNotFoundError,
   SpeckleResourceMismatch
 } = require('@/modules/shared/errors')
-
-const permissions = [
-  validateServerRole({ requiredRole: Roles.Server.User }),
-  validateScope({ requiredScope: Scopes.Streams.Write }),
-  contextRequiresStream(getStream)
-]
-const writePermissions = [
-  ...permissions,
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
-]
-
-const readPermissions = [
-  ...permissions,
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
-]
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -85,7 +66,7 @@ exports.init = async (app) => {
   app.post(
     '/api/stream/:streamId/blob',
     contextMiddleware,
-    authMiddlewareCreator(writePermissions),
+    authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       // no checking of startup conditions, just dont init the endpoints if not configured right
       //authorize request
@@ -157,7 +138,7 @@ exports.init = async (app) => {
   app.get(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
-    authMiddlewareCreator(readPermissions),
+    authMiddlewareCreator(streamReadPermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
         const fileInfo = await objectLookup({
@@ -180,7 +161,7 @@ exports.init = async (app) => {
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
     contextMiddleware,
-    authMiddlewareCreator(writePermissions),
+    authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
         await deleteAsset({ streamId: req.params.streamId, fileId: req.params.blobId })
@@ -191,7 +172,7 @@ exports.init = async (app) => {
   app.get(
     '/api/stream/:streamId/blobs',
     contextMiddleware,
-    authMiddlewareCreator(writePermissions),
+    authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
       const fileName = req.query.fileName
 
@@ -208,7 +189,7 @@ exports.init = async (app) => {
   app.delete(
     '/api/stream/:streamId/blobs',
     contextMiddleware,
-    authMiddlewareCreator(writePermissions)
+    authMiddlewareCreator(streamWritePermissions)
     // async (req, res) => {}
   )
 }

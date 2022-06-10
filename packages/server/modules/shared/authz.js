@@ -219,5 +219,17 @@ module.exports = {
   validateStreamRole,
   contextRequiresStream,
   SpeckleContextError,
-  authMiddlewareCreator
+  authMiddlewareCreator,
+  streamWritePermissions: [
+    validateServerRole({ requiredRole: Roles.Server.User }),
+    validateScope({ requiredScope: Scopes.Streams.Write }),
+    contextRequiresStream(getStream),
+    validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+  ],
+  streamReadPermissions: [
+    validateServerRole({ requiredRole: Roles.Server.User }),
+    validateScope({ requiredScope: Scopes.Streams.Read }),
+    contextRequiresStream(getStream),
+    validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+  ]
 }
