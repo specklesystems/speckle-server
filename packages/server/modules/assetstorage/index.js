@@ -25,7 +25,8 @@ const {
   markUploadSuccess,
   markUploadOverFileSizeLimit,
   deleteAsset,
-  objectLookup
+  objectLookup,
+  getStreamBlobsMetadata
 } = require('@/modules/assetstorage/services')
 const {
   SpeckleNotFoundError,
@@ -184,6 +185,23 @@ exports.init = async (app) => {
       errorHandler(req, res, async (req, res) => {
         await deleteAsset({ streamId: req.params.streamId, fileId: req.params.blobId })
         res.status(204).send()
+      })
+    }
+  )
+  app.get(
+    '/api/stream/:streamId/blobs',
+    contextMiddleware,
+    authMiddlewareCreator(writePermissions),
+    async (req, res) => {
+      const fileName = req.query.fileName
+
+      errorHandler(req, res, async (req, res) => {
+        const blobMetadataCollection = await getStreamBlobsMetadata({
+          streamId: req.params.streamId,
+          fileName
+        })
+
+        res.status(200).send({ files: blobMetadataCollection })
       })
     }
   )

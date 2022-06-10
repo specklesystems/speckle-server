@@ -72,6 +72,12 @@ const updateUpload = async (streamId, fileId, updateCallback) => {
   return { fileId, fileName, ...updateData }
 }
 
+const getStreamBlobsMetadata = async ({ streamId, fileName = null }) => {
+  let query = AssetStorage().where({ streamId })
+  if (fileName) query = query.andWhere({ fileName })
+  return await query
+}
+
 module.exports = {
   objectLookup,
   uploadFileStream,
@@ -79,5 +85,6 @@ module.exports = {
   markUploadOverFileSizeLimit,
   markUploadError,
   getFileStream,
-  deleteAsset
+  deleteAsset,
+  getStreamBlobsMetadata
 }

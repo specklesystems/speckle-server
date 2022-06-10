@@ -2,27 +2,31 @@
 'use strict'
 const fs = require('fs')
 const path = require('node:path')
-const { fetch } = require('undici')
-const { Readable } = require('node:stream')
+const { stream, fetch } = require('undici')
 
-const getFileStream = async ({ fileId, streamId, token }) => {
-  const response = await fetch(
-    `http://localhost:3000/api/stream/${streamId}/blob/${fileId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-  )
-  return Readable.from(response.body)
-}
 module.exports = {
   async downloadFile({ fileId, streamId, token, destination }) {
     fs.mkdirSync(path.dirname(destination), { recursive: true })
-    const upstreamFileStream = await getFileStream({ fileId, streamId, token })
-    const diskFileStream = fs.createWriteStream(destination)
-    upstreamFileStream.pipe(diskFileStream)
-
-    await new Promise((resolve) => diskFileStream.on('finish', resolve))
+    await stream(
+      `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blob/${fileId}`,
+      {
+        opaque: fs.createWriteStream(destination),
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      },
+      ({ opaque }) => opaque
+    )
+  },
+  async getFileInfoByName({ fileName, streamId, token }) {
+    const response = await fetch(
+      `${process.env.SPECKLE_SERVER_URL}/api/stream/${streamId}/blobs?fileName=${fileName}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    )
+    return response.json()
   }
 }

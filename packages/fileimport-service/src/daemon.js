@@ -70,7 +70,12 @@ async function doTask(task) {
     })
     tempUserToken = token
 
-    await downloadFile({ ...info, token, destination: TMP_FILE_PATH })
+    await downloadFile({
+      fileId: info.id,
+      streamId: info.streamId,
+      token,
+      destination: TMP_FILE_PATH
+    })
 
     if (info.fileType === 'ifc') {
       await runProcessWithTimeout(
@@ -108,7 +113,8 @@ async function doTask(task) {
       await objDependencies.downloadDependencies({
         objFilePath: TMP_FILE_PATH,
         streamId: info.streamId,
-        destinationDir: TMP_INPUT_DIR
+        destinationDir: TMP_INPUT_DIR,
+        token: tempUserToken
       })
 
       await runProcessWithTimeout(
