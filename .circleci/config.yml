@@ -141,7 +141,7 @@ jobs:
           docker_layer_caching: true
       - run:
           name: Start minio
-          command: docker run -p 9000:9000 quay.io/minio/minio server
+          command: docker run -p 9000:9000 quay.io/minio/minio server /data --console-address ":9001"
       - checkout
       - restore_cache:
           name: Restore Yarn Package Cache
