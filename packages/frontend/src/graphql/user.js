@@ -65,7 +65,7 @@ export const MainUserDataQuery = gql`
  * Main metadata + extra info shown on profile page
  */
 export const ProfileSelfQuery = gql`
-  query MainUserData {
+  query ExtraUserData {
     user {
       ...CommonUserFields
       totalOwnedStreamsFavorites

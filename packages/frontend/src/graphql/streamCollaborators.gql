@@ -1,4 +1,4 @@
-query Stream($id: String!) {
+query StreamWithCollaborators($id: String!) {
   stream(id: $id) {
     id
     name
