@@ -157,9 +157,9 @@ export default class Batch {
     } else {
       this.geometry = this.makeLineGeometryLine(position)
     }
-    // if (Geometry.USE_RTE) {
-    //   Geometry.updateRTEGeometry(this.geometry)
-    // }
+    if (Geometry.USE_RTE) {
+      Geometry.updateRTEGeometry(this.geometry)
+    }
     World.expandWorld(this.geometry.boundingBox)
   }
 

@@ -59,9 +59,9 @@ class SpeckleLineMaterial extends LineMaterial {
       this.defines[defines[k]] = ''
     }
 
-    // if (Geometry.USE_RTE) {
-    //   this.defines['USE_RTE'] = ' '
-    // }
+    if (Geometry.USE_RTE) {
+      this.defines['USE_RTE'] = ' '
+    }
   }
 
   copy(source) {
@@ -87,7 +87,7 @@ class SpeckleLineMaterial extends LineMaterial {
       SpeckleLineMaterial.matBuff.elements[13] = 0
       SpeckleLineMaterial.matBuff.elements[14] = 0
       SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
-      // object.modelViewMatrix.copy(SpeckleLineMaterial.matBuff)
+      object.modelViewMatrix.copy(SpeckleLineMaterial.matBuff)
 
       SpeckleLineMaterial.vecBuff0.set(
         camera.matrixWorld.elements[12],

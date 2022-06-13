@@ -185,7 +185,10 @@ export class Geometry {
           'position_high',
           new Float32BufferAttribute(position_high, 3)
         )
-      } else if (geometry.type === 'LineGeometry') {
+      } else if (
+        geometry.type === 'LineGeometry' ||
+        geometry.type === 'LineSegmentsGeometry'
+      ) {
         const position_low = new Float32Array(
           geometry.attributes.instanceStart.array.length
         )
