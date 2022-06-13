@@ -137,7 +137,9 @@ export default {
         query ($streamId: String!, $id: String!) {
           comment(streamId: $streamId, id: $id) {
             id
-            text
+            text {
+              doc
+            }
             authorId
             screenshot
             createdAt
