@@ -2,10 +2,15 @@
 const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
+const {
+  ServerAcl: ServerAclSchema,
+  Users: UsersSchema
+} = require('@/modules/core/dbSchema')
+
 const { saveActivity } = require('@/modules/activitystream/services')
 
-const Users = () => knex('users')
-const Acl = () => knex('server_acl')
+const Users = () => UsersSchema.knex()
+const Acl = () => ServerAclSchema.knex()
 
 const debug = require('debug')
 const { deleteStream } = require('./streams')
@@ -127,6 +132,9 @@ module.exports = {
     await Users().where({ id }).update({ passwordDigest })
   },
 
+  /**
+   * User search available for normal server users. It's more limited because of the lower access level.
+   */
   async searchUsers(searchQuery, limit, cursor, archived = false) {
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
@@ -188,6 +196,10 @@ module.exports = {
     return await Users().where({ id }).del()
   },
 
+  /**
+   * Get all users or filter them with the specified searchQuery. This is meant for
+   * server admins, because it exposes the User object (& thus the email).
+   */
   async getUsers(limit = 10, offset = 0, searchQuery = null) {
     // sanitize limit
     const maxLimit = 200
@@ -203,7 +215,10 @@ module.exports = {
           .orWhere('company', 'ILIKE', `%${searchQuery}%`)
       })
     }
-    const users = await query.limit(limit).offset(offset)
+
+    query.limit(limit).offset(offset)
+
+    const users = await query
     users.map((user) => delete user.passwordDigest)
     return users
   },

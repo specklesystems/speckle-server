@@ -5,7 +5,7 @@ const yargs = require('yargs')
 require('../bootstrap')
 
 const execution = yargs
-  .scriptName('./bin/cli')
+  .scriptName('yarn cli')
   .usage('$0 <cmd> [args]')
   .commandDir(path.resolve(__dirname, '../modules/cli/commands'))
   .demandCommand()

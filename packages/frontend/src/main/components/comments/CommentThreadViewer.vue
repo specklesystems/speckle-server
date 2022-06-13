@@ -1,11 +1,13 @@
 <template>
   <div
-    class="no-mouse py-2 pl-2"
+    class="no-mouse py-2"
     :style="`${
       $vuetify.breakpoint.xs
         ? 'width: 90vw; padding-right:30px;'
-        : 'padding-right:30px; width: 330px;'
-    } ${hovered ? 'opacity: 1;' : 'opacity: 1;'} transition: opacity 0.2s ease;`"
+        : 'padding-right:30px;'
+    } ${
+      hovered ? 'opacity: 1;' : 'opacity: 1;'
+    } transition: opacity 0.2s ease; padding-left: 6px;`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
@@ -28,7 +30,11 @@
         <v-icon small>mdi-close</v-icon>
       </v-btn>
     </div>
-    <div v-show="!minimize" style="width: 100%" class="mouse">
+    <div
+      v-show="!$vuetify.breakpoint.xs || !minimize"
+      style="width: 100%"
+      class="mouse"
+    >
       <div
         v-if="!isComplete"
         class="warning rounded-xl py-2 caption mb-2 text-center"
@@ -71,21 +77,17 @@
             {{ typingStatusText }}
           </div>
         </v-slide-y-transition>
-        <div v-if="canReply">
-          <v-textarea
+        <div v-if="canReply" class="d-flex">
+          <comment-editor
             v-model="replyText"
+            adding-comment
+            max-height="300px"
+            class="mb-2 elevation-5 rounded-xl"
+            :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
             :disabled="loadingReply"
-            solo
-            hide-details
-            auto-grow
-            rows="1"
-            placeholder="Reply (press enter to send)"
-            class="rounded-xl mb-2 caption"
-            append-icon="mdi-send"
             @input="debTypingUpdate"
-            @click:append="addReply"
-            @keydown.enter.exact.prevent="addReply()"
-          ></v-textarea>
+            @submit="addReply()"
+          />
         </div>
         <div v-else class="caption background rounded-xl py-2 px-4 elevation-2">
           You do not have sufficient permissions to reply to comments in this stream.
@@ -93,11 +95,11 @@
         <div v-show="loadingReply" class="px-2">
           <v-progress-linear indeterminate />
         </div>
-        <div ref="replyinput" class="text-right">
+        <div ref="replyinput" class="d-flex justify-space-between align-center">
           <v-btn
             v-show="canArchiveThread"
             v-tooltip="'Marks this thread as archived.'"
-            class="white--text mt-2 mr-2"
+            class="white--text ml-2"
             small
             icon
             depressed
@@ -106,17 +108,30 @@
           >
             <v-icon small>mdi-delete-outline</v-icon>
           </v-btn>
-          <v-btn
-            v-tooltip="'Share this comment as a link!'"
-            class="white--text mt-2 mr-2 rounded-xl elevation-4"
-            small
-            depressed
-            color="primary"
-            @click="copyCommentLinkToClip()"
-          >
-            <v-icon small class="mr-2">mdi-share-variant</v-icon>
-            share
-          </v-btn>
+          <div class="pr-5">
+            <v-btn
+              v-tooltip="'Copy comment url to clipboard'"
+              :disabled="loadingReply"
+              class="mouse elevation-5 background mr-3"
+              icon
+              large
+              @click="copyCommentLinkToClip()"
+            >
+              <v-icon dark small>mdi-share-variant</v-icon>
+            </v-btn>
+
+            <v-btn
+              v-tooltip="'Send comment (press enter)'"
+              :disabled="loadingReply"
+              class="mouse elevation-5 primary"
+              icon
+              dark
+              large
+              @click="addReply()"
+            >
+              <v-icon dark small>mdi-send</v-icon>
+            </v-btn>
+          </div>
         </div>
         <v-dialog v-model="showArchiveDialog" max-width="500">
           <v-card>
@@ -159,10 +174,15 @@
 <script>
 import gql from 'graphql-tag'
 import debounce from 'lodash/debounce'
+import CommentThreadReply from '@/main/components/comments/CommentThreadReply.vue'
+import CommentEditor from '@/main/components/comments/CommentEditor.vue'
+import { isDocEmpty } from '@/main/lib/common/text-editor/documentHelper'
+import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 
 export default {
   components: {
-    CommentThreadReply: () => import('@/main/components/comments/CommentThreadReply')
+    CommentThreadReply,
+    CommentEditor
   },
   props: {
     comment: { type: Object, default: () => null }
@@ -207,7 +227,9 @@ export default {
               cursor
               items {
                 id
-                text
+                text {
+                  doc
+                }
                 authorId
                 createdAt
               }
@@ -295,7 +317,8 @@ export default {
       showArchiveDialog: false,
       loadingReply: false,
       whoIsTyping: [],
-      isTyping: true
+      isTyping: true,
+      editorSchemaOptions: SMART_EDITOR_SCHEMA
     }
   },
   computed: {
@@ -456,7 +479,7 @@ export default {
       return delta > 450000
     },
     async addReply() {
-      if (!this.replyText || this.replyText.length < 1) {
+      if (isDocEmpty(this.replyText)) {
         this.$eventHub.$emit('notification', {
           text: `Cannot post an empty reply.`
         })

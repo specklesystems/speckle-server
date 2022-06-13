@@ -46,7 +46,7 @@
     </v-app-bar>
     <v-main class="background">
       <email-verification-banner
-        v-if="user && !user.verified"
+        v-if="!hideEmailBanner && user && !user.verified"
         :user="user"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
@@ -116,17 +116,22 @@ export default {
       drawer: true,
       navWidth: 300,
       navRestWidth: 300,
-      borderSize: 3
+      borderSize: 3,
+      hideEmailBanner: false
     }
   },
   watch: {
-    $route(to) {
-      if (!to.meta.resizableNavbar) {
-        this.navWidth = this.navRestWidth
-      }
-      if (to.meta.resizableNavbar && window.__lastNavSize) {
-        this.navWidth = window.__lastNavSize
-      }
+    $route: {
+      handler(to) {
+        if (!to.meta.resizableNavbar) {
+          this.navWidth = this.navRestWidth
+        }
+        if (to.meta.resizableNavbar && window.__lastNavSize) {
+          this.navWidth = window.__lastNavSize
+        }
+        this.hideEmailBanner = !!to.meta.hideEmailBanner
+      },
+      immediate: true
     }
   },
   mounted() {

@@ -126,3 +126,5 @@ function initVue() {
     render: (h) => h(App)
   }).$mount('#app')
 }
+
+export { apolloProvider }

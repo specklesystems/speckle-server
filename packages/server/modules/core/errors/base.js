@@ -73,8 +73,15 @@ class UnauthorizedAccessError extends BaseError {
   static defaultMessage = 'Attempted unauthorized access to data'
 }
 
+class RichTextParseError extends BaseError {
+  static code = 'RICH_TEXT_PARSE_ERROR'
+  static defaultMessage =
+    'An error occurred while trying to parse the rich text document'
+}
+
 module.exports = {
   BaseError,
   InvalidArgumentError,
-  UnauthorizedAccessError
+  UnauthorizedAccessError,
+  RichTextParseError
 }
