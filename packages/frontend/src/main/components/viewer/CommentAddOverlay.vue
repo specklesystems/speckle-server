@@ -45,24 +45,15 @@
                   v-model="commentText"
                   adding-comment
                   style="width: 300px"
-                  class="elevation-5"
+                  class="elevation-5 rounded-xl"
                   max-height="300px"
                   @submit="addComment()"
                 />
               </div>
-              <div v-if="$loggedIn() && canComment" class="d-flex mt-2 mouse">
-                <v-btn
-                  v-tooltip="'Send comment (press enter)'"
-                  :disabled="loading"
-                  icon
-                  dark
-                  fab
-                  small
-                  class="primary mr-2 elevation-4"
-                  @click="addComment()"
-                >
-                  <v-icon dark small>mdi-send</v-icon>
-                </v-btn>
+              <div
+                v-if="$loggedIn() && canComment"
+                class="d-flex mt-2 mouse justify-end"
+              >
                 <template v-for="reaction in $store.state.commentReactions">
                   <v-btn
                     :key="reaction"
@@ -79,6 +70,18 @@
                     </span>
                   </v-btn>
                 </template>
+                <v-btn
+                  v-tooltip="'Send comment (press enter)'"
+                  :disabled="loading"
+                  icon
+                  dark
+                  fab
+                  small
+                  class="primary mr-2 elevation-10"
+                  @click="addComment()"
+                >
+                  <v-icon dark small>mdi-send</v-icon>
+                </v-btn>
               </div>
               <div
                 v-if="!canComment && $loggedIn()"
@@ -121,7 +124,7 @@
               v-model="commentText"
               adding-comment
               style="width: 100%"
-              class="elevation-5"
+              class="elevation-5 rounded-xl"
               max-height="60vh"
               :disabled="loading"
               @submit="addComment()"
@@ -132,18 +135,6 @@
             class="my-2 d-flex justify-center"
             style="position: relative"
           >
-            <v-btn
-              v-tooltip="'Send comment (press enter)'"
-              :disabled="loading"
-              icon
-              dark
-              fab
-              small
-              class="primary mr-2 elevation-4"
-              @click="addComment()"
-            >
-              <v-icon dark small>mdi-send</v-icon>
-            </v-btn>
             <v-btn
               v-if="!$loggedIn()"
               block
@@ -168,6 +159,18 @@
                 </span>
               </v-btn>
             </template>
+            <v-btn
+              v-tooltip="'Send comment (press enter)'"
+              :disabled="loading"
+              icon
+              dark
+              fab
+              small
+              class="primary mr-2 elevation-4"
+              @click="addComment()"
+            >
+              <v-icon dark small>mdi-send</v-icon>
+            </v-btn>
           </div>
         </v-dialog>
       </div>

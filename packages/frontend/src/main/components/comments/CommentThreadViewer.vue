@@ -80,9 +80,10 @@
         <div v-if="canReply" class="d-flex">
           <comment-editor
             v-model="replyText"
+            adding-comment
             max-height="300px"
-            class="mb-2 elevation-5"
-            :style="{ width: $vuetify.breakpoint.xs ? '100%' : '300px' }"
+            class="mb-2 elevation-5 rounded-xl"
+            :style="{ width: $vuetify.breakpoint.xs ? '100%' : '290px' }"
             :disabled="loadingReply"
             @input="debTypingUpdate"
             @submit="addReply()"
@@ -96,38 +97,39 @@
         </div>
         <div ref="replyinput" class="d-flex justify-space-between align-center">
           <v-btn
-            v-tooltip="'Send comment (press enter)'"
-            :disabled="loadingReply"
-            class="mouse elevation-5 primary"
+            v-show="canArchiveThread"
+            v-tooltip="'Marks this thread as archived.'"
+            class="white--text ml-2"
+            small
             icon
-            dark
-            large
-            @click="addReply()"
+            depressed
+            color="error"
+            @click="showArchiveDialog = true"
           >
-            <v-icon dark small>mdi-send</v-icon>
+            <v-icon small>mdi-delete-outline</v-icon>
           </v-btn>
-          <div>
+          <div class="pr-5">
             <v-btn
-              v-tooltip="'Share this comment as a link!'"
-              class="rounded-xl elevation-5"
-              small
-              depressed
+              v-tooltip="'Copy comment url to clipboard'"
+              :disabled="loadingReply"
+              class="mouse elevation-5 background mr-3"
+              icon
+              large
               @click="copyCommentLinkToClip()"
             >
-              <v-icon small class="mr-2">mdi-share-variant</v-icon>
-              Share
+              <v-icon dark small>mdi-share-variant</v-icon>
             </v-btn>
+
             <v-btn
-              v-show="canArchiveThread"
-              v-tooltip="'Marks this thread as archived.'"
-              class="white--text ml-2"
-              small
+              v-tooltip="'Send comment (press enter)'"
+              :disabled="loadingReply"
+              class="mouse elevation-5 primary"
               icon
-              depressed
-              color="error"
-              @click="showArchiveDialog = true"
+              dark
+              large
+              @click="addReply()"
             >
-              <v-icon small>mdi-delete-outline</v-icon>
+              <v-icon dark small>mdi-send</v-icon>
             </v-btn>
           </div>
         </div>

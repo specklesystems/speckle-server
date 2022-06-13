@@ -48,7 +48,9 @@ export default {
       }
     },
     placeholder() {
-      return this.addingComment ? 'Your comment...' : 'Reply...'
+      return this.addingComment
+        ? 'Your comment... (press enter to send)'
+        : 'Reply... (press enter to send)'
     }
   },
   methods: {
