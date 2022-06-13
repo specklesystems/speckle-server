@@ -100,20 +100,22 @@
       <!-- Comment Threads -->
       <div
         v-for="comment in activeComments"
-        v-show="isVisible(comment)"
         :id="`commentcard-${comment.id}`"
         :key="comment.id + '-card'"
         :ref="`commentcard-${comment.id}`"
         :class="`comment-thread simple-scrollbar hover-bg absolute-pos rounded-xl overflow-y-auto ${
           comment.hovered && false ? 'background elevation-5' : ''
         }`"
-        :style="`z-index:${comment.expanded ? '20' : '10'};`"
+        :style="{
+          zIndex: comment.expanded ? 20 : 10,
+          visibility: comment.expanded ? 'visible' : 'hidden'
+        }"
         @mouseenter="comment.hovered = true"
         @mouseleave="comment.hovered = false"
       >
         <!-- <v-card class="elevation-0 ma-0 transparent" style="height: 100%"> -->
         <v-fade-transition>
-          <div v-show="comment.expanded">
+          <div>
             <comment-thread-viewer
               :comment="comment"
               @bounce="bounceComment"
@@ -290,7 +292,7 @@ export default {
             if (!newComment.archived) this.localComments.push(newComment)
 
             setTimeout(() => {
-              console.log('updateQuery timeout')
+              // console.log('updateQuery timeout')
               this.updateCommentBubbles()
               this.bounceComment(newComment.id)
             }, 10)
@@ -360,7 +362,7 @@ export default {
     // Throttling update, cause it happens way too often and triggers expensive DOM updates
     // Smoothing out the animation with CSS transitions (check style)
     this.viewerControlsUpdateHandler = throttle(() => {
-      console.log('cameraHandler.controls update')
+      // console.log('cameraHandler.controls update')
       this.updateCommentBubbles()
     }, VIEWER_UPDATE_THROTTLE_TIME)
     window.__viewer.cameraHandler.controls.addEventListener(
@@ -368,7 +370,7 @@ export default {
       this.viewerControlsUpdateHandler
     )
     setTimeout(() => {
-      console.log('mounted timeout')
+      // console.log('mounted timeout')
       this.updateCommentBubbles()
     }, 1000)
   },
@@ -382,7 +384,7 @@ export default {
   },
   methods: {
     onThreadRefreshLayout() {
-      console.log('thread refresh layout')
+      // console.log('thread refresh layout')
       this.updateCommentBubbles()
     },
     getLeadingEmoji(comment) {
@@ -392,7 +394,7 @@ export default {
       return emojiWhitelist.includes(emojiCandidate) ? emojiCandidate : null
     },
     onWindowResize() {
-      console.log('on window resize')
+      // console.log('on window resize')
       this.updateCommentBubbles()
     },
     isUnread(comment) {
@@ -432,12 +434,12 @@ export default {
           this.setCommentPow(c)
           setTimeout(() => {
             c.expanded = true
-            console.log('expandComment 200 setTimeout')
+            // console.log('expandComment 200 setTimeout')
             this.updateCommentBubbles()
           }, 200)
           setTimeout(() => {
             // prevents auto closing from camera moving to comment pow
-            console.log('expandComment 1000 setTimeout')
+            // console.log('expandComment 1000 setTimeout')
             c.preventAutoClose = false
             this.updateCommentBubbles()
           }, 1000)
@@ -488,7 +490,7 @@ export default {
       this.updateCommentBubbles()
     },
     updateCommentBubbles() {
-      console.log('updateCommentBubbles', new Date().toISOString())
+      // console.log('updateCommentBubbles', new Date().toISOString())
       if (!this.comments) return
       const cam = window.__viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
