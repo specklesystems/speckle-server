@@ -115,7 +115,6 @@ jobs:
     docker:
       - image: cimg/node:16.15
       - image: cimg/redis:6.2.6
-      - image: 'minio/minio'
       - image: 'cimg/postgres:12.8'
         environment:
           POSTGRES_DB: speckle2_test
@@ -135,6 +134,9 @@ jobs:
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
     steps:
+      - run:
+          name: Start minio
+          command: docker run -p 9000:9000 quay.io/minio/minio server
       - checkout
       - restore_cache:
           name: Restore Yarn Package Cache
