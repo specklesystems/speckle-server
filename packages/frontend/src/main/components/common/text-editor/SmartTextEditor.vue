@@ -43,8 +43,6 @@ import { getEditorExtensions } from '@/main/lib/common/text-editor/tipTapExtensi
 import SmartTextEditorLinkDialog from '@/main/components/common/text-editor/SmartTextEditorLinkDialog.vue'
 import { VCard, VCardText } from 'vuetify/lib'
 
-// TODO: Check issues reported by Dim in Discord
-
 export default {
   name: 'SmartTextEditor',
   components: {

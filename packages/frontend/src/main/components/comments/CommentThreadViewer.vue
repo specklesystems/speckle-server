@@ -177,8 +177,6 @@ import CommentEditor from '@/main/components/comments/CommentEditor.vue'
 import { isDocEmpty } from '@/main/lib/common/text-editor/documentHelper'
 import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 
-// TODO: Check occasional repositioning issue on small screen viewer
-
 export default {
   components: {
     CommentThreadReply,

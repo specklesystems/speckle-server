@@ -226,8 +226,6 @@ import {
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 
-// TODO: Thread: validate what happens when height is too big (on small/big screens)
-
 export default {
   components: {
     SpeckleViewer,
