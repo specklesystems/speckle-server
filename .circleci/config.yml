@@ -134,6 +134,11 @@ jobs:
       S3_BUCKET: 'speckle-server'
       S3_CREATE_BUCKET: 'true'
     steps:
+      - setup_remote_docker:
+          # a weird issue with yarn installing packages throwing EPERM errors
+          # this fixes it
+          version: 20.10.12
+          docker_layer_caching: true
       - run:
           name: Start minio
           command: docker run -p 9000:9000 quay.io/minio/minio server
