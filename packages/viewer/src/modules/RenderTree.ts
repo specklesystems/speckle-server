@@ -31,19 +31,44 @@ export class RenderTree {
     let ret: NodeRenderData = null
     const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
+      const renderMaterialNode = this.getRenderMaterialNode(node)
+      const displayStyleNode = this.getDisplayStyleNode(node)
       ret = {
         id: node.model.id,
         speckleType: GeometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
-        renderMaterial:
-          Materials.renderMaterialFromNode(node) ||
-          Materials.renderMaterialFromNode(node.parent),
-        displayStyle:
-          Materials.displayStyleFromNode(node) ||
-          Materials.displayStyleFromNode(node.parent)
+        renderMaterial: Materials.renderMaterialFromNode(renderMaterialNode),
+        /** Line-type geometry can also use a renderMaterial*/
+        displayStyle: Materials.displayStyleFromNode(
+          displayStyleNode || renderMaterialNode
+        )
       }
     }
     return ret
+  }
+
+  private getRenderMaterialNode(node: TreeNode): TreeNode {
+    if (node.model.raw.renderMaterial) {
+      return node
+    }
+    const ancestors = WorldTree.getInstance().getAncestors(node)
+    for (let k = 0; k < ancestors.length; k++) {
+      if (ancestors[k].model.raw.renderMaterial) {
+        return ancestors[k]
+      }
+    }
+  }
+
+  private getDisplayStyleNode(node: TreeNode): TreeNode {
+    if (node.model.raw.displayStyle) {
+      return node
+    }
+    const ancestors = WorldTree.getInstance().getAncestors(node)
+    for (let k = 0; k < ancestors.length; k++) {
+      if (ancestors[k].model.raw.displayStyle) {
+        return ancestors[k]
+      }
+    }
   }
 
   public computeTransform(node: TreeNode): Matrix4 {

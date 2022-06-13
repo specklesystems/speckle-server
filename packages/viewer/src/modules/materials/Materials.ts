@@ -25,8 +25,7 @@ export default class Materials {
     if (!node) return null
     let displayStyle: DisplayStyle = null
     if (node.model.raw.displayStyle) {
-      /** If there are no units specified, we ignore the line width value.
-       */
+      /** If there are no units specified, we ignore the line width value */
       let lineWeigth = node.model.raw.displayStyle.lineweigth
       const units = node.model.raw.displayStyle.units
       lineWeigth = units ? lineWeigth * getConversionFactor(units) : 0
@@ -49,7 +48,7 @@ export default class Materials {
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
         {
-          color: 0xff00ff,
+          color: 0x000000,
           emissive: 0x0,
           roughness: 1,
           metalness: 0,
@@ -118,7 +117,7 @@ export default class Materials {
     type: GeometryType
   ): Material {
     if (this.materialMap[hash]) {
-      // console.warn(`Duplicate material hash found: ${hash}`)
+      console.warn(`Duplicate material hash found: ${hash}`)
       return this.materialMap[hash]
     }
 

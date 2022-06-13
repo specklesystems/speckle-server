@@ -71,21 +71,26 @@ export default class Batcher {
           rendeViews[m].renderMaterialHash !== materialHashes[k] ||
           m === rendeViews.length - 1
         ) {
-          const batch = rendeViews.slice(batchStart, m)
+          const batch = rendeViews.slice(
+            batchStart,
+            batchStart === rendeViews.length - 1 ? undefined : m
+          )
           batches.push(batch)
           batchStart += batch.length
-
           let matRef = null
+
           if (batchType === GeometryType.MESH) {
             matRef = batch[0].renderData.renderMaterial
           } else if (batchType === GeometryType.LINE) {
             matRef = batch[0].renderData.displayStyle
           }
+
           const material = this.materials.updateMaterialMap(
             materialHashes[k],
             matRef,
             batchType
           )
+
           const batchID = generateUUID()
           this.batches[batchID] = new Batch(batchID, batch)
           this.batches[batchID].setMaterial(material)

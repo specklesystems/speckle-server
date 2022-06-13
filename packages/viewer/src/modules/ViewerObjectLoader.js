@@ -108,8 +108,8 @@ export default class ViewerObjectLoader {
     const batcher = new Batcher()
     WorldTree.getRenderTree().buildRenderTree()
 
-    // batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
-    batcher.makeBatches(GeometryType.LINE, SpeckleType.Line)
+    batcher.makeBatches(GeometryType.MESH, SpeckleType.Mesh)
+    // batcher.makeBatches(GeometryType.LINE, SpeckleType.Line)
     for (const k in batcher.batches) {
       this.viewer.scene.add(batcher.batches[k].mesh)
     }
