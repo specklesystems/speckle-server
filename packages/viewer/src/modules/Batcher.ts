@@ -1,5 +1,5 @@
 import { generateUUID } from 'three/src/math/MathUtils'
-import Batch, { BatchType } from './Batch'
+import Batch, { GeometryType } from './Batch'
 import { SpeckleType } from './converter/GeometryConverter'
 import { WorldTree } from './converter/WorldTree'
 import Materials from './materials/Materials'
@@ -10,7 +10,7 @@ export default class Batcher {
 
   public constructor() {
     this.materials = new Materials()
-    this.materials
+    this.materials.createDefaultMaterials()
   }
 
   // public makeBatches() {
@@ -50,9 +50,9 @@ export default class Batcher {
   //   console.warn(batches)
   // }
 
-  public makeBatches() {
+  public makeBatches(batchType: GeometryType, ...speckleType: SpeckleType[]) {
     const rendeViews = WorldTree.getRenderTree()
-      .getRenderViews(SpeckleType.Line)
+      .getRenderViews(...speckleType)
       .sort((a, b) => {
         if (a.renderMaterialHash === 0) return -1
         if (b.renderMaterialHash === 0) return 1
@@ -61,6 +61,7 @@ export default class Batcher {
     const materialHashes = [
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
+    console.warn(materialHashes)
     console.warn(rendeViews)
     const batches = []
     let batchStart = 0
@@ -74,15 +75,21 @@ export default class Batcher {
           batches.push(batch)
           batchStart += batch.length
 
+          let matRef = null
+          if (batchType === GeometryType.MESH) {
+            matRef = batch[0].renderData.renderMaterial
+          } else if (batchType === GeometryType.LINE) {
+            matRef = batch[0].renderData.displayStyle
+          }
           const material = this.materials.updateMaterialMap(
             materialHashes[k],
-            batch[0].renderData.displayStyle,
-            BatchType.LINE
+            matRef,
+            batchType
           )
           const batchID = generateUUID()
           this.batches[batchID] = new Batch(batchID, batch)
           this.batches[batchID].setMaterial(material)
-          this.batches[batchID].buildBatch(BatchType.LINE)
+          this.batches[batchID].buildBatch(batchType)
           break
         }
       }

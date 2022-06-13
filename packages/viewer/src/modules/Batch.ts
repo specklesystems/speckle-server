@@ -15,7 +15,7 @@ import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { NodeRenderView } from './NodeRenderView'
 import { World } from './World'
 
-export enum BatchType {
+export enum GeometryType {
   MESH,
   LINE
 }
@@ -41,12 +41,12 @@ export default class Batch {
     this.geometry
   }
 
-  public buildBatch(type: BatchType) {
+  public buildBatch(type: GeometryType) {
     switch (type) {
-      case BatchType.MESH:
+      case GeometryType.MESH:
         this.buildMeshBatch()
         break
-      case BatchType.LINE:
+      case GeometryType.LINE:
         this.buildLineBatch()
         break
     }

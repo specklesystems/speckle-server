@@ -1,3 +1,4 @@
+import { GeometryType } from './Batch'
 import { GeometryData } from './converter/Geometry'
 import { SpeckleType } from './converter/GeometryConverter'
 
@@ -9,6 +10,7 @@ export interface RenderMaterial {
 export interface DisplayStyle {
   id: string
   color: number
+  lineWeigth: number
 }
 
 export interface NodeRenderData {
@@ -26,6 +28,19 @@ export class NodeRenderView {
 
   private readonly _renderData: NodeRenderData
   private _materialHash: number
+  private _geometryType: GeometryType
+
+  public static readonly NullRenderMaterialHash = this.hashCode(
+    GeometryType.MESH.toString()
+  )
+  public static readonly NullDisplayStyleHash = this.hashCode(
+    GeometryType.LINE.toString()
+  )
+  private static hashCode(s: string) {
+    let h
+    for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
+    return h
+  }
 
   public get renderData() {
     return this._renderData
@@ -39,9 +54,14 @@ export class NodeRenderView {
     return this._renderData.geometry && this._renderData.geometry.attributes
   }
 
+  public get geometryType() {
+    return this._geometryType
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
-    this._materialHash = this.getMaterialHash(data.renderMaterial)
+    this._geometryType = this.getGeometryType()
+    this._materialHash = this.getMaterialHash()
 
     this._batchId
     this._batchIndexCount
@@ -54,9 +74,23 @@ export class NodeRenderView {
     this._batchIndexCount = count
   }
 
-  private getMaterialHash(material: RenderMaterial) {
-    // FOR NOW
-    if (!material) return 0
-    return material.color
+  public getGeometryType(): GeometryType {
+    switch (this._renderData.speckleType) {
+      case SpeckleType.Mesh:
+        return GeometryType.MESH
+
+      default:
+        return GeometryType.LINE
+    }
+  }
+
+  private getMaterialHash() {
+    const mat = this.renderData.renderMaterial
+      ? this.renderData.renderMaterial.color.toString()
+      : this.renderData.displayStyle
+      ? this.renderData.displayStyle.color.toString()
+      : ''
+    const s = this.geometryType.toString() + mat
+    return NodeRenderView.hashCode(s)
   }
 }
