@@ -1,5 +1,5 @@
 <template lang="html">
-  <div style="height: 100vh; position: relative" class="transparent">
+  <div style="height: 100vh; position: relative" class="speckle-viewer transparent">
     <div
       id="rendererparent"
       ref="rendererparent"
@@ -89,7 +89,7 @@ export default {
 <style>
 #rendererparent {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
   height: 100vh;
 }
