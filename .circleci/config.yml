@@ -115,7 +115,6 @@ jobs:
     docker:
       - image: cimg/node:16.15
       - image: cimg/redis:6.2.6
-      - image: quay.io/minio/minio
       - image: 'cimg/postgres:12.8'
         environment:
           POSTGRES_DB: speckle2_test
@@ -129,6 +128,7 @@ jobs:
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
       CANONICAL_URL: 'http://localhost:3000'
+      DISABLE_FILE_UPLOADS: 'true'
       S3_ENDPOINT: 'http://localhost:9000'
       S3_ACCESS_KEY: 'minioadmin'
       S3_SECRET_KEY: 'minioadmin'
@@ -152,7 +152,7 @@ jobs:
             - .yarn/cache
             - .yarn/unplugged
 
-      - run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:9000 -timeout 1m'
+      - run: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
           command: touch .env.test
