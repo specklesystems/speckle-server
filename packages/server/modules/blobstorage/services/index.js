@@ -61,7 +61,8 @@ const getBlobMetadataCollection = async ({ streamId, query, limit, cursor }) => 
 }
 
 const blobCollectionSummary = async ({ streamId, query }) => {
-  return await blobQuery({ streamId, query }).sum('fileSize').count('id')
+  const [summary] = await blobQuery({ streamId, query }).sum('fileSize').count('id')
+  return { totalSize: summary.sum ?? 0, totalCount: summary.count }
 }
 
 const getFileStream = async ({ getObjectStream, streamId, blobId }) => {

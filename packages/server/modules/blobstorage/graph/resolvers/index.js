@@ -13,7 +13,7 @@ module.exports = {
   Stream: {
     async blobs(parent, args) {
       const streamId = parent.id
-      const summary = await blobCollectionSummary({
+      const { totalCount, totalSize } = await blobCollectionSummary({
         streamId,
         query: args.query
       })
@@ -24,8 +24,8 @@ module.exports = {
         cursor: args.cursor
       })
       return {
-        totalCount: summary.count,
-        totalSize: summary.sum,
+        totalCount,
+        totalSize,
         cursor: blobs.cursor,
         items: blobs.blobs
       }
