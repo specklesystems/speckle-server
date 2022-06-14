@@ -5,6 +5,7 @@ import { SpeckleType } from './converter/GeometryConverter'
 export interface RenderMaterial {
   id: string
   color: number
+  opacity: number
 }
 
 export interface DisplayStyle {
@@ -84,11 +85,27 @@ export class NodeRenderView {
     }
   }
 
+  private renderMaterialToString() {
+    return (
+      this.renderData.renderMaterial.color.toString() +
+      '/' +
+      this.renderData.renderMaterial.opacity.toString()
+    )
+  }
+
+  private displayStyleToString() {
+    return (
+      this.renderData.displayStyle.color.toString() +
+      '/' +
+      this.renderData.displayStyle.lineWeigth.toString()
+    )
+  }
+
   private getMaterialHash() {
     const mat = this.renderData.renderMaterial
-      ? this.renderData.renderMaterial.color.toString()
+      ? this.renderMaterialToString()
       : this.renderData.displayStyle
-      ? this.renderData.displayStyle.color.toString()
+      ? this.displayStyleToString()
       : ''
     const s = this.geometryType.toString() + mat
     return NodeRenderView.hashCode(s)

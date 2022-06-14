@@ -15,7 +15,8 @@ export default class Materials {
     if (node.model.raw.renderMaterial) {
       renderMaterial = {
         id: node.model.raw.renderMaterial.id,
-        color: node.model.raw.renderMaterial.diffuse
+        color: node.model.raw.renderMaterial.diffuse,
+        opacity: node.model.raw.renderMaterial.opacity
       }
     }
     return renderMaterial
@@ -82,11 +83,14 @@ export default class Materials {
         emissive: 0x0,
         roughness: 1,
         metalness: 0,
+        opacity: materialData.opacity,
         side: DoubleSide // TBD
         // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
+    mat.transparent = mat.opacity < 1 ? true : false
+    mat.color.convertSRGBToLinear()
     return mat
   }
 
