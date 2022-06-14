@@ -1,4 +1,4 @@
-const { RichTextParseError } = require('@/modules/core/errors/base')
+const { SpeckleRichTextParseError } = require('@/modules/shared/errors/base')
 const {
   isTextEditorValueSchema,
   isTextEditorDoc,
@@ -17,7 +17,7 @@ const COMMENT_SCHEMA_TYPE = 'stream_comment'
  */
 function buildCommentTextFromInput(doc) {
   if (!isTextEditorDoc(doc)) {
-    throw new RichTextParseError('Unexpected comment input doc!')
+    throw new SpeckleRichTextParseError('Unexpected comment input doc!')
   }
 
   return {
@@ -43,7 +43,7 @@ function ensureCommentSchema(stringOrSchema) {
     return buildCommentTextFromInput(basicTextDoc)
   }
 
-  throw new RichTextParseError('Unexpected comment schema format')
+  throw new SpeckleRichTextParseError('Unexpected comment schema format')
 }
 
 module.exports = {

@@ -29,11 +29,17 @@ class SpeckleInvalidArgumentError extends BaseError {
   static code = 'INVALID_ARGUMENT_ERROR'
   static defaultMessage = 'Invalid arguments received'
 }
+class SpeckleRichTextParseError extends BaseError {
+  static code = 'RICH_TEXT_PARSE_ERROR'
+  static defaultMessage =
+    'An error occurred while trying to parse the rich text document'
+}
 
 module.exports = {
   SpeckleForbiddenError,
   SpeckleUnauthorizedError,
   SpeckleNotFoundError,
   SpeckleResourceMismatch,
-  SpeckleInvalidArgumentError
+  SpeckleInvalidArgumentError,
+  SpeckleRichTextParseError
 }
