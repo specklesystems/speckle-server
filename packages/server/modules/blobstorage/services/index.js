@@ -38,6 +38,32 @@ const getBlobMetadata = async ({ streamId, blobId }) => {
   return obj
 }
 
+const blobQuery = ({ streamId, query }) => {
+  let blobs = BlobStorage().where({ streamId })
+  if (query) blobs = blobs.andWhereLike('fileName', `%${query}%`)
+  return blobs
+}
+
+const getBlobMetadataCollection = async ({ streamId, query, limit, cursor }) => {
+  const cursorTarget = 'createdAt'
+  const limitMax = 25
+  const queryLimit = limit && limit < limitMax ? limit : limitMax
+  const blobs = blobQuery({ streamId, query })
+    .orderBy(cursorTarget, 'desc')
+    .limit(queryLimit)
+  if (cursor) query.andWhere(cursorTarget, '<', cursor)
+
+  const rows = await blobs
+  return {
+    blobs: rows,
+    cursor: rows.length > 0 ? rows[rows.length - 1][cursorTarget].toISOString() : null
+  }
+}
+
+const blobCollectionSummary = async ({ streamId, query }) => {
+  return await blobQuery({ streamId, query }).sum('fileSize').count('id')
+}
+
 const getFileStream = async ({ getObjectStream, streamId, blobId }) => {
   const { objectKey } = await getBlobMetadata({ streamId, blobId })
   return await getObjectStream({ objectKey })
@@ -71,12 +97,6 @@ const updateBlobMetadata = async (streamId, blobId, updateCallback) => {
   return { blobId, fileName, ...updateData }
 }
 
-const getBlobMetadataByFileName = async ({ streamId, fileName = null }) => {
-  let query = BlobStorage().where({ streamId })
-  if (fileName) query = query.andWhere({ fileName })
-  return await query
-}
-
 module.exports = {
   getBlobMetadata,
   uploadFileStream,
@@ -85,5 +105,6 @@ module.exports = {
   markUploadError,
   getFileStream,
   deleteBlob,
-  getBlobMetadataByFileName
+  getBlobMetadataCollection,
+  blobCollectionSummary
 }

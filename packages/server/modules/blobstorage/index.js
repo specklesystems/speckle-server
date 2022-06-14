@@ -22,7 +22,7 @@ const {
   markUploadOverFileSizeLimit,
   deleteBlob,
   getBlobMetadata,
-  getBlobMetadataByFileName
+  getBlobMetadataCollection
 } = require('@/modules/blobstorage/services')
 const {
   SpeckleNotFoundError,
@@ -81,12 +81,12 @@ exports.init = async (app) => {
         const { filename: fileName } = info
         const fileType = fileName.split('.').pop().toLowerCase()
 
-        const fileId = crs({ length: 10 })
+        const blobId = crs({ length: 10 })
 
-        uploadOperations[fileId] = uploadFileStream(
+        uploadOperations[blobId] = uploadFileStream(
           storeFileStream,
           { streamId, userId: req.context.userId },
-          { fileId, fileName, fileType, fileStream: file }
+          { blobId, fileName, fileType, fileStream: file }
         )
 
         //this file level 'close' is fired when a single file upload finishes
@@ -94,20 +94,20 @@ exports.init = async (app) => {
         file.on('close', async () => {
           //this is handled by the file.on('limit', ...) event
           if (file.truncated) return
-          await uploadOperations[fileId]
+          await uploadOperations[blobId]
           finalizePromises.push(
-            markUploadSuccess(getObjectAttributes, streamId, fileId)
+            markUploadSuccess(getObjectAttributes, streamId, blobId)
           )
         })
         file.on('limit', () => {
           finalizePromises.push(
-            markUploadOverFileSizeLimit(deleteObject, streamId, fileId)
+            markUploadOverFileSizeLimit(deleteObject, streamId, blobId)
           )
         })
         file.on('error', (err) => {
           console.log(err)
           finalizePromises.push(
-            markUploadError(deleteObject, fileId, 'i need some error info here')
+            markUploadError(deleteObject, blobId, 'i need some error info here')
           )
         })
       })
@@ -143,12 +143,12 @@ exports.init = async (app) => {
       errorHandler(req, res, async (req, res) => {
         const { fileName } = await getBlobMetadata({
           streamId: req.params.streamId,
-          fileId: req.params.blobId
+          blobId: req.params.blobId
         })
         const fileStream = await getFileStream({
           getObjectStream,
           streamId: req.params.streamId,
-          fileId: req.params.blobId
+          blobId: req.params.blobId
         })
         res.writeHead(200, {
           'Content-Type': 'application/octet-stream',
@@ -166,7 +166,7 @@ exports.init = async (app) => {
       errorHandler(req, res, async (req, res) => {
         await deleteBlob({
           streamId: req.params.streamId,
-          fileId: req.params.blobId,
+          blobId: req.params.blobId,
           deleteObject
         })
         res.status(204).send()
@@ -181,12 +181,12 @@ exports.init = async (app) => {
       const fileName = req.query.fileName
 
       errorHandler(req, res, async (req, res) => {
-        const blobMetadataCollection = await getBlobMetadataByFileName({
+        const blobMetadataCollection = await getBlobMetadataCollection({
           streamId: req.params.streamId,
-          fileName
+          query: fileName
         })
 
-        res.status(200).send({ files: blobMetadataCollection })
+        res.status(200).send(blobMetadataCollection)
       })
     }
   )
