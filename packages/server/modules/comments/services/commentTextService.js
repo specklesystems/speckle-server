@@ -1,4 +1,4 @@
-const { SpeckleRichTextParseError } = require('@/modules/shared/errors/base')
+const { SpeckleRichTextParseError } = require('@/modules/shared/errors')
 const {
   isTextEditorValueSchema,
   isTextEditorDoc,
